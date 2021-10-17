@@ -1,0 +1,120 @@
+{
+    "name": "mangareader",
+    "productName": "Manga Reader",
+    "version": "1.2.1",
+    "description": "App to read manga on desktop",
+    "main": "./.webpack/main/index.js",
+    "author": {
+        "name": "mienaiyami <https://github.com/mienaiyami>",
+        "email": "sukoonkumar2@gmail.com"
+    },
+    "scripts": {
+        "start": "electron-forge start",
+        "package": "electron-forge package",
+        "make": "electron-forge make",
+        "release": "electron-forge publish"
+    },
+    "license": "MIT",
+    "dependencies": {
+        "@electron/remote": "^2.0.1",
+        "@fortawesome/fontawesome-svg-core": "^1.2.36",
+        "@fortawesome/free-brands-svg-icons": "^5.15.4",
+        "@fortawesome/free-regular-svg-icons": "^5.15.4",
+        "@fortawesome/free-solid-svg-icons": "^5.15.4",
+        "@fortawesome/react-fontawesome": "^0.1.15",
+        "node-fetch": "^3.0.0",
+        "react": "17.0.2",
+        "react-dom": "17.0.2",
+        "react-hot-loader": "4.13.0"
+    },
+    "devDependencies": {
+        "@babel/core": "7.14.6",
+        "@babel/plugin-transform-runtime": "7.14.5",
+        "@babel/preset-env": "7.14.5",
+        "@babel/preset-react": "7.14.5",
+        "@babel/preset-typescript": "7.14.5",
+        "@electron-forge/cli": "6.0.0-beta.56",
+        "@electron-forge/maker-deb": "6.0.0-beta.56",
+        "@electron-forge/maker-rpm": "6.0.0-beta.56",
+        "@electron-forge/maker-squirrel": "6.0.0-beta.56",
+        "@electron-forge/maker-zip": "6.0.0-beta.56",
+        "@electron-forge/plugin-webpack": "6.0.0-beta.56",
+        "@marshallofsound/webpack-asset-relocator-loader": "0.5.0",
+        "@testing-library/jest-dom": "5.14.1",
+        "@testing-library/react": "11.2.7",
+        "@types/electron-devtools-installer": "2.2.0",
+        "@types/react": "17.0.11",
+        "@types/react-dom": "17.0.8",
+        "@typescript-eslint/eslint-plugin": "^5.0.0",
+        "@typescript-eslint/parser": "^5.0.0",
+        "babel-loader": "8.2.2",
+        "cross-env": "7.0.3",
+        "css-loader": "^6.4.0",
+        "electron": "13.1.2",
+        "eslint": "7.29.0",
+        "eslint-plugin-import": "2.23.4",
+        "eslint-plugin-node": "11.1.0",
+        "eslint-plugin-react": "7.24.0",
+        "file-loader": "^6.2.0",
+        "npm-run-all": "4.1.5",
+        "sass": "^1.43.2",
+        "sass-loader": "^12.2.0",
+        "style-loader": "^3.3.0",
+        "typescript": "4.3.4",
+        "url-loader": "^4.1.1",
+        "wait-on": "5.3.0",
+        "webpack": "^5.58.2"
+    },
+    "config": {
+        "forge": {
+            "packagerConfig": {
+                "name": "Manga Reader",
+                "executableName": "manga-reader",
+                "icon": "assets/icon",
+                "extraResource": [
+                    "assets"
+                ]
+            },
+            "plugins": [
+                [
+                    "@electron-forge/plugin-webpack",
+                    {
+                        "mainConfig": "./webpack/main.webpack.js",
+                        "renderer": {
+                            "config": "./webpack/renderer.webpack.js",
+                            "entryPoints": [
+                                {
+                                    "html": "./public/index.html",
+                                    "js": "./src/index.tsx",
+                                    "name": "home"
+                                }
+                            ]
+                        }
+                    }
+                ]
+            ],
+            "makers": [
+                {
+                    "name": "@electron-forge/maker-squirrel",
+                    "config": {
+                        "name": "Electron Starter"
+                    }
+                },
+                {
+                    "name": "@electron-forge/maker-zip",
+                    "platforms": [
+                        "darwin"
+                    ]
+                },
+                {
+                    "name": "@electron-forge/maker-deb",
+                    "config": {}
+                },
+                {
+                    "name": "@electron-forge/maker-rpm",
+                    "config": {}
+                }
+            ]
+        }
+    }
+}
