@@ -9,13 +9,14 @@ const Settings = ({
     promptSetDefaultLocation: () => void;
 }): ReactElement => {
     const historyBtnRef = useRef<HTMLButtonElement>(null);
+    const historyInputRef = useRef<HTMLInputElement>(null);
     const {
         isSettingOpen,
         setSettingOpen,
         appSettings,
+        setAppSettings,
         bookmarks,
         setBookmarks,
-        history,
     } = useContext(AppContext);
     return (
         <div id="settings" data-state={isSettingOpen ? "open" : "closed"}>
@@ -48,39 +49,64 @@ const Settings = ({
                         <div className="current">
                             <input
                                 type="number"
-                                value={appSettings.historyLimit}
+                                defaultValue={appSettings.historyLimit}
+                                ref={historyInputRef}
                                 onKeyDown={(e) => {
                                     if (e.key === "Enter") {
                                         historyBtnRef.current?.click();
                                     }
                                 }}
-                                readOnly
+                                readOnly={true}
                             />
                             <button
                                 data-type="enable"
                                 ref={historyBtnRef}
-                                onClick={() => {
-                                    // if($(this).attr('data-type')==='enable'){
-                                    //     $(this).attr('data-type','set')
-                                    //     $(this).addClass('enabled');
-                                    //     $(this).html('Set New')
-                                    //     $(this).siblings('input').removeAttr('disabled');
-                                    //     $(this).siblings('input').trigger('focus').trigger('select')
-                                    //     return;
-                                    // }if($(this).attr('data-type')==='set'){
-                                    //     $(this).attr('data-type','enable')
-                                    //     $(this).removeClass('enabled');
-                                    //     $(this).html('Done')
-                                    //     $(this).prop('disabled',true)
-                                    //     setTimeout(()=>{
-                                    //         $(this).html('Change Default')
-                                    //         $(this).removeAttr('disabled')
-                                    //     },3000)
-                                    //     $(this).siblings('input').prop('disabled',true)
-                                    //     localStorage.setItem('historyLimit',$(this).siblings('input').val())
-                                    //     historyLimit = $(this).siblings('input').val()
-                                    //     return;
-                                    // }
+                                onClick={(e) => {
+                                    if (
+                                        e.currentTarget.getAttribute(
+                                            "data-type"
+                                        ) === "enable"
+                                    ) {
+                                        historyInputRef.current?.removeAttribute(
+                                            "readonly"
+                                        );
+                                        historyInputRef.current?.focus();
+                                        e.currentTarget.textContent = "Confirm";
+                                        e.currentTarget.setAttribute(
+                                            "data-type",
+                                            "set"
+                                        );
+                                        e.currentTarget.classList.add(
+                                            "enabled"
+                                        );
+                                    } else if (
+                                        e.currentTarget.getAttribute(
+                                            "data-type"
+                                        ) === "set"
+                                    ) {
+                                        setAppSettings((init) => {
+                                            if (historyInputRef.current) {
+                                                init.historyLimit = parseInt(
+                                                    historyInputRef.current
+                                                        .value
+                                                );
+                                            }
+                                            return { ...init };
+                                        });
+                                        historyInputRef.current?.setAttribute(
+                                            "readonly",
+                                            "true"
+                                        );
+                                        e.currentTarget.textContent =
+                                            "Change Default";
+                                        e.currentTarget.setAttribute(
+                                            "data-type",
+                                            "enable"
+                                        );
+                                        e.currentTarget.classList.remove(
+                                            "enabled"
+                                        );
+                                    }
                                 }}
                             >
                                 Change Default
@@ -153,33 +179,38 @@ const Settings = ({
                             </button>
                             <button
                                 onClick={() => {
-                                    // let btn = $(this);
-                                    // let confirm1 = dialog.showMessageBoxSync({
-                                    //     type: 'warning',
-                                    //     title:'Delete BookMarks',
-                                    //     message: 'are you sure you want to remove bookmark?',
-                                    //     buttons: ['yes', 'no'],
-                                    // });
-                                    // if(confirm1==undefined) return;
-                                    // if(confirm1===1) return;
-                                    // if(confirm1===0){
-                                    //     let confirm2 = dialog.showMessageBoxSync({
-                                    //         type: 'warning',
-                                    //         title:'Delete BookMarks',
-                                    //         message: 'are you really sure you want to remove bookmark?\\nThis process is irreversible.',
-                                    //         buttons: ['yes', 'no'],
-                                    //     });
-                                    //     if(confirm2===1) return;
-                                    // }
-                                    // bookmarkPaths =[];
-                                    // $('#bookmarksTab .location-cont').html('<p>No items</p>');
-                                    // localStorage.setItem('bookmarkPaths', JSON.stringify(bookmarkPaths));
-                                    // btn.html('Done')
-                                    // btn.prop('disabled',true)
-                                    // setTimeout(()=>{
-                                    //     btn.html('Delete All Bookmarks')
-                                    //     btn.removeAttr('disabled')
-                                    // },3000)
+                                    const confirm1 =
+                                        window.electron.dialog.showMessageBoxSync(
+                                            // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+                                            // @ts-ignore
+                                            window.electron.BrowserWindow.getFocusedWindow(),
+                                            {
+                                                type: "warning",
+                                                title: "Delete BookMarks",
+                                                message:
+                                                    "are you sure you want to remove bookmark?",
+                                                buttons: ["yes", "no"],
+                                            }
+                                        );
+                                    if (confirm1 == undefined) return;
+                                    if (confirm1 === 1) return;
+                                    if (confirm1 === 0) {
+                                        const confirm2 =
+                                            window.electron.dialog.showMessageBoxSync(
+                                                // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+                                                // @ts-ignore
+                                                window.electron.BrowserWindow.getFocusedWindow(),
+                                                {
+                                                    type: "warning",
+                                                    title: "Delete BookMarks",
+                                                    message:
+                                                        "are you really sure you want to remove bookmark?\nThis process is irreversible.",
+                                                    buttons: ["yes", "no"],
+                                                }
+                                            );
+                                        if (confirm2 === 1) return;
+                                    }
+                                    setBookmarks([]);
                                 }}
                             >
                                 Delete All Bookmarks

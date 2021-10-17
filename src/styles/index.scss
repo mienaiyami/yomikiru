@@ -32,7 +32,6 @@
     background: none;
 }
 ::-webkit-scrollbar-thumb {
-    border-radius: 10px;
     min-height: 70px;
     background: #555;
 }
@@ -266,6 +265,7 @@ body {
         }
         .tabCont {
             display: flex;
+            flex-direction: row;
             position: relative;
             width: 100%;
             height: 100%;

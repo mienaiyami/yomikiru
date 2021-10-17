@@ -3,7 +3,7 @@ import App from "./App";
 import * as path from "path";
 import * as fs from "fs";
 import { clipboard, ipcRenderer, remote, shell } from "electron";
-import { app, dialog } from "@electron/remote";
+import { app, dialog, BrowserWindow } from "@electron/remote";
 import "./styles/index.scss";
 declare global {
     interface Window {
@@ -12,7 +12,7 @@ declare global {
             dialog: typeof dialog;
             shell: typeof shell;
             ipcRenderer: typeof ipcRenderer;
-            remote: typeof remote;
+            BrowserWindow: typeof BrowserWindow;
         };
         path: typeof path;
         fs: typeof fs;

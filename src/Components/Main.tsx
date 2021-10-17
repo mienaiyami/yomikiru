@@ -3,6 +3,7 @@ import { AppContext } from "../App";
 import BookmarkTab from "./BookmarkTab";
 import HistoryTab from "./HistoryTab";
 import LocationsTab from "./LocationsTab";
+import Reader from "./Reader";
 import Settings from "./Settings";
 
 const Main = ({
@@ -10,20 +11,17 @@ const Main = ({
 }: {
     promptSetDefaultLocation: () => void;
 }): ReactElement => {
-    const {
-        appSettings,
-        // setAppSettings,
-        // isSettingOpen,
-        // setSettingOpen,
-        // pageNumberInputRef,
-    } = useContext(AppContext);
+    const { appSettings, readerOpen, setReaderOpen } = useContext(AppContext);
     const [currentLink, setCurrentLink] = useState(appSettings.baseDir);
     useEffect(() => {
         setCurrentLink(appSettings.baseDir);
     }, [appSettings]);
     return (
         <div id="app">
-            <div className="tabCont">
+            <div
+                className="tabCont"
+                style={{ display: readerOpen ? "none" : "flex" }}
+            >
                 <LocationsTab
                     mangaPath={appSettings.baseDir}
                     currentLink={currentLink}
@@ -35,6 +33,7 @@ const Main = ({
                 <HistoryTab />
             </div>
             <Settings promptSetDefaultLocation={promptSetDefaultLocation} />
+            <Reader />
         </div>
     );
 };

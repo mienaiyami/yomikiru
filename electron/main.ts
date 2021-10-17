@@ -63,10 +63,6 @@ function createWindow() {
         }
         mainWindow.maximize();
     });
-    ipcMain.on("currentWindow", () => {
-        mainWindow.webContents.send("log");
-        console.log("aaaaaaaaaaaa");
-    });
     mainWindow.on("maximize", () => {
         mainWindow.webContents.send("isMaximized");
     });

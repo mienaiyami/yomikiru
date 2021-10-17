@@ -66,6 +66,9 @@ interface IAppContext {
     setSettingOpen: React.Dispatch<React.SetStateAction<boolean>>;
     appSettings: appsettings;
     setAppSettings: React.Dispatch<React.SetStateAction<appsettings>>;
+    readerOpen: boolean;
+    setReaderOpen: React.Dispatch<React.SetStateAction<boolean>>;
+    openInReader: (link: string) => void;
 }
 // eslint-disable-next-line @typescript-eslint/ban-ts-comment
 // @ts-ignore
@@ -77,10 +80,21 @@ const App = (): ReactElement => {
     const pageNumberInputRef: React.RefObject<HTMLInputElement> = createRef();
     const [bookmarks, setBookmarks] = useState<string[]>(bookmarkDataInit);
     const [history, setHistory] = useState<string[]>(historyDataInit);
+    const [readerOpen, setReaderOpen] = useState(false);
+    const openInReader = (link: string) => {
+        link = window.path.normalize(link);
+        if (
+            window.fs.existsSync(link) &&
+            window.fs.lstatSync(link).isDirectory
+        ) {
+            const dirContent = window.fs.readdirSync(link);
+        }
+    };
     const promptSetDefaultLocation = (): void => {
-        console.log(window.electron.ipcRenderer.send("currentWindow"));
         const result = window.electron.dialog.showOpenDialogSync(
-            window.electron.remote.getCurrentWindow(),
+            // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+            // @ts-ignore
+            window.electron.BrowserWindow.getFocusedWindow(),
             {
                 properties: ["openFile", "openDirectory"],
             }
@@ -96,9 +110,6 @@ const App = (): ReactElement => {
     };
     useEffect(() => {
         setFirstRendered(true);
-        window.electron.ipcRenderer.on("log", () =>
-            console.log("aaaaaaaaaaaaaaaaaa")
-        );
     }, []);
     useEffect(() => {
         if (firstRendered) {
@@ -154,6 +165,9 @@ const App = (): ReactElement => {
                 setSettingOpen,
                 appSettings,
                 setAppSettings,
+                readerOpen,
+                setReaderOpen,
+                openInReader,
             }}
         >
             <TopBar ref={pageNumberInputRef} />

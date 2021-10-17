@@ -8,14 +8,15 @@ import {
     faSort,
 } from "@fortawesome/free-solid-svg-icons";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
+import { useContext } from "react";
+import { AppContext } from "../App";
 
-const Reader = ({
-    pageNumberInputRef,
-}: {
-    pageNumberInputRef: React.RefObject<HTMLInputElement>;
-}) => {
+const Reader = () => {
+    const { appSettings, readerOpen, setReaderOpen, pageNumberInputRef } =
+        useContext(AppContext);
+
     return (
-        <div id="reader">
+        <div id="reader" style={{ display: readerOpen ? "block" : "none" }}>
             <div className="ctrl-bar">
                 <svg
                     xmlns="http://www.w3.org/2000/svg"
