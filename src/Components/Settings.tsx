@@ -3,43 +3,25 @@ import { faGithub } from "@fortawesome/free-brands-svg-icons";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { ReactElement, useContext, useRef, useState } from "react";
 
-const Settings = ({
-    promptSetDefaultLocation,
-}: {
-    promptSetDefaultLocation: () => void;
-}): ReactElement => {
+const Settings = ({ promptSetDefaultLocation }: { promptSetDefaultLocation: () => void }): ReactElement => {
     const historyBtnRef = useRef<HTMLButtonElement>(null);
     const historyInputRef = useRef<HTMLInputElement>(null);
-    const {
-        isSettingOpen,
-        setSettingOpen,
-        appSettings,
-        setAppSettings,
-        bookmarks,
-        setBookmarks,
-    } = useContext(AppContext);
+    const { isSettingOpen, setSettingOpen, appSettings, setAppSettings, bookmarks, setBookmarks } =
+        useContext(AppContext);
     return (
         <div id="settings" data-state={isSettingOpen ? "open" : "closed"}>
-            <div
-                className="clickClose"
-                onClick={() => setSettingOpen(false)}
-            ></div>
+            <div className="clickClose" onClick={() => setSettingOpen(false)}></div>
             <div className="cont">
                 <h1>Settings</h1>
                 <div className="content">
                     <div className="settingItem defaultLocation">
                         <div className="name">Default Location:</div>
                         <div className="current">
-                            <input
-                                type="text"
-                                value={appSettings.baseDir}
-                                readOnly
-                            />
+                            <input type="text" value={appSettings.baseDir} readOnly />
                             <button
                                 onClick={() => {
                                     promptSetDefaultLocation();
-                                }}
-                            >
+                                }}>
                                 Change Default
                             </button>
                         </div>
@@ -51,7 +33,7 @@ const Settings = ({
                                 type="number"
                                 defaultValue={appSettings.historyLimit}
                                 ref={historyInputRef}
-                                onKeyDown={(e) => {
+                                onKeyDown={e => {
                                     if (e.key === "Enter") {
                                         historyBtnRef.current?.click();
                                     }
@@ -61,54 +43,26 @@ const Settings = ({
                             <button
                                 data-type="enable"
                                 ref={historyBtnRef}
-                                onClick={(e) => {
-                                    if (
-                                        e.currentTarget.getAttribute(
-                                            "data-type"
-                                        ) === "enable"
-                                    ) {
-                                        historyInputRef.current?.removeAttribute(
-                                            "readonly"
-                                        );
+                                onClick={e => {
+                                    if (e.currentTarget.getAttribute("data-type") === "enable") {
+                                        historyInputRef.current?.removeAttribute("readonly");
                                         historyInputRef.current?.focus();
                                         e.currentTarget.textContent = "Confirm";
-                                        e.currentTarget.setAttribute(
-                                            "data-type",
-                                            "set"
-                                        );
-                                        e.currentTarget.classList.add(
-                                            "enabled"
-                                        );
-                                    } else if (
-                                        e.currentTarget.getAttribute(
-                                            "data-type"
-                                        ) === "set"
-                                    ) {
-                                        setAppSettings((init) => {
+                                        e.currentTarget.setAttribute("data-type", "set");
+                                        e.currentTarget.classList.add("enabled");
+                                    } else if (e.currentTarget.getAttribute("data-type") === "set") {
+                                        setAppSettings(init => {
                                             if (historyInputRef.current) {
-                                                init.historyLimit = parseInt(
-                                                    historyInputRef.current
-                                                        .value
-                                                );
+                                                init.historyLimit = parseInt(historyInputRef.current.value);
                                             }
                                             return { ...init };
                                         });
-                                        historyInputRef.current?.setAttribute(
-                                            "readonly",
-                                            "true"
-                                        );
-                                        e.currentTarget.textContent =
-                                            "Change Default";
-                                        e.currentTarget.setAttribute(
-                                            "data-type",
-                                            "enable"
-                                        );
-                                        e.currentTarget.classList.remove(
-                                            "enabled"
-                                        );
+                                        historyInputRef.current?.setAttribute("readonly", "true");
+                                        e.currentTarget.textContent = "Change Default";
+                                        e.currentTarget.setAttribute("data-type", "enable");
+                                        e.currentTarget.classList.remove("enabled");
                                     }
-                                }}
-                            >
+                                }}>
                                 Change Default
                             </button>
                         </div>
@@ -117,47 +71,34 @@ const Settings = ({
                         <div className="name">Bookmarks:</div>
                         <div className="current">
                             <button
-                                onClick={(e) => {
-                                    const opt =
-                                        window.electron.dialog.showSaveDialogSync(
+                                onClick={e => {
+                                    const opt = window.electron.dialog.showSaveDialogSync({
+                                        title: "Export Bookmarks",
+                                        filters: [
                                             {
-                                                title: "Export Bookmarks",
-                                                filters: [
-                                                    {
-                                                        name: "Json",
-                                                        extensions: ["json"],
-                                                    },
-                                                ],
-                                            }
-                                        );
+                                                name: "Json",
+                                                extensions: ["json"],
+                                            },
+                                        ],
+                                    });
                                     if (opt == undefined) return;
-                                    window.fs.writeFileSync(
-                                        opt,
-                                        JSON.stringify(bookmarks) ||
-                                            JSON.stringify([])
-                                    );
-                                }}
-                            >
+                                    window.fs.writeFileSync(opt, JSON.stringify(bookmarks) || JSON.stringify([]));
+                                }}>
                                 Export
                             </button>
                             <button
                                 onClick={() => {
-                                    const opt =
-                                        window.electron.dialog.showOpenDialogSync(
+                                    const opt = window.electron.dialog.showOpenDialogSync({
+                                        properties: ["openFile"],
+                                        filters: [
                                             {
-                                                properties: ["openFile"],
-                                                filters: [
-                                                    {
-                                                        name: "Json",
-                                                        extensions: ["json"],
-                                                    },
-                                                ],
-                                            }
-                                        );
+                                                name: "Json",
+                                                extensions: ["json"],
+                                            },
+                                        ],
+                                    });
                                     if (opt == undefined) return;
-                                    const data: string[] = JSON.parse(
-                                        window.fs.readFileSync(opt[0], "utf8")
-                                    );
+                                    const data: string[] = JSON.parse(window.fs.readFileSync(opt[0], "utf8"));
                                     const dataToAdd: string[] = [];
                                     // let similarFound = 0;
                                     // data.forEach((item) => {
@@ -173,46 +114,39 @@ const Settings = ({
                                     //     buttons: ['Ok'],
                                     // });
                                     // setBookmarks([...bookmarks,...dataToAdd])
-                                }}
-                            >
+                                }}>
                                 Import
                             </button>
                             <button
                                 onClick={() => {
-                                    const confirm1 =
-                                        window.electron.dialog.showMessageBoxSync(
-                                            // eslint-disable-next-line @typescript-eslint/ban-ts-comment
-                                            // @ts-ignore
-                                            window.electron.BrowserWindow.getFocusedWindow(),
+                                    const confirm1 = window.electron.dialog.showMessageBoxSync(
+                                        window.electron.BrowserWindow.getFocusedWindow() ||
+                                            window.electron.BrowserWindow.getAllWindows()[0],
+                                        {
+                                            type: "warning",
+                                            title: "Delete BookMarks",
+                                            message: "are you sure you want to remove bookmark?",
+                                            buttons: ["yes", "no"],
+                                        }
+                                    );
+                                    if (confirm1 == undefined) return;
+                                    if (confirm1 === 1) return;
+                                    if (confirm1 === 0) {
+                                        const confirm2 = window.electron.dialog.showMessageBoxSync(
+                                            window.electron.BrowserWindow.getFocusedWindow() ||
+                                                window.electron.BrowserWindow.getAllWindows()[0],
                                             {
                                                 type: "warning",
                                                 title: "Delete BookMarks",
                                                 message:
-                                                    "are you sure you want to remove bookmark?",
+                                                    "are you really sure you want to remove bookmark?\nThis process is irreversible.",
                                                 buttons: ["yes", "no"],
                                             }
                                         );
-                                    if (confirm1 == undefined) return;
-                                    if (confirm1 === 1) return;
-                                    if (confirm1 === 0) {
-                                        const confirm2 =
-                                            window.electron.dialog.showMessageBoxSync(
-                                                // eslint-disable-next-line @typescript-eslint/ban-ts-comment
-                                                // @ts-ignore
-                                                window.electron.BrowserWindow.getFocusedWindow(),
-                                                {
-                                                    type: "warning",
-                                                    title: "Delete BookMarks",
-                                                    message:
-                                                        "are you really sure you want to remove bookmark?\nThis process is irreversible.",
-                                                    buttons: ["yes", "no"],
-                                                }
-                                            );
                                         if (confirm2 === 1) return;
                                     }
                                     setBookmarks([]);
-                                }}
-                            >
+                                }}>
                                 Delete All Bookmarks
                             </button>
                         </div>
@@ -237,8 +171,7 @@ const Settings = ({
                                         "https://github.com/mienaiyami/offline-manga-reader/issues"
                                     )
                                 }
-                                tabIndex={-1}
-                            >
+                                tabIndex={-1}>
                                 <FontAwesomeIcon icon={faGithub} /> Submit Issue
                             </button>
                         </div>

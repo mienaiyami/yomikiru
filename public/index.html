@@ -12,19 +12,22 @@
             }
             const global = globalThis;
 
-            const path = require("path");
-            const fs = require("fs");
-            const { clipboard, ipcRenderer, shell } = require("electron");
-            const { app, dialog, BrowserWindow } = require("@electron/remote");
-            window.fs = fs;
-            window.path = path;
-            window.electron = {
-                app,
-                dialog,
-                shell,
-                ipcRenderer,
-                BrowserWindow,
-            };
+            // const path = require("path");
+            // const fs = require("fs");
+            // const { clipboard, ipcRenderer, shell, remote } = require("electron");
+            // const { app, dialog, BrowserWindow } = require("@electron/remote");
+            // let app = remote.app;
+            // let dialog = remote.dialog;
+            // let BrowserWindow = remote.BrowserWindow;
+            // window.fs = fs;
+            // window.path = path;
+            // window.electron = {
+            //     app,
+            //     dialog,
+            //     shell,
+            //     ipcRenderer,
+            //     BrowserWindow,
+            // };
         </script>
     </head>
     <body>

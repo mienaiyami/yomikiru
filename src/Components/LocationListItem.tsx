@@ -1,20 +1,21 @@
 import { faAngleRight } from "@fortawesome/free-solid-svg-icons";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import { ReactElement, useState } from "react";
+import { ReactElement, useContext, useState } from "react";
+import { AppContext } from "../App";
 
 const LocationListItem = ({
     name,
     link,
     inHistory,
-    displayList,
     setCurrentLink,
 }: {
     name: string;
     link: string;
-    displayList: (link: string) => void;
     setCurrentLink: React.Dispatch<React.SetStateAction<string>>;
     inHistory?: boolean;
 }): ReactElement => {
+    const { openInReader } = useContext(AppContext);
+
     const [alreadyRead, setAlreadyRead] = useState(inHistory || false);
     return (
         <li className={alreadyRead ? "already-read" : ""}>
@@ -22,20 +23,18 @@ const LocationListItem = ({
                 className="a-context"
                 onClick={() => {
                     console.log("aaaaaa");
-                    if (
-                        window.fs.existsSync(link) &&
-                        window.fs.lstatSync(link).isDirectory()
-                    )
+                    if (window.fs.existsSync(link) && window.fs.lstatSync(link).isDirectory())
                         setCurrentLink(link);
                 }}
                 // data-name="${e}"
                 // data-link="${link}"
             >
-                {name}
+                <span className="text">{name}</span>
             </a>
             <button
                 title="Open In Reader"
                 className="open-in-reader-btn"
+                onClick={() => openInReader(link)}
                 // onclick="makeImg($(this).siblings('a').attr('data-link'))"
             >
                 <FontAwesomeIcon icon={faAngleRight} />

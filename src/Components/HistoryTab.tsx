@@ -1,8 +1,11 @@
 import { faTrash } from "@fortawesome/free-solid-svg-icons";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import { ReactElement } from "react";
+import { ReactElement, useContext } from "react";
+import { AppContext } from "../App";
+import BookmarkHistoryListItem from "./BookmarkHistoryListItem";
 
 const HistoryTab = (): ReactElement => {
+    const { history } = useContext(AppContext);
     return (
         <div className="contTab" id="historyTab">
             <h2>
@@ -10,13 +13,16 @@ const HistoryTab = (): ReactElement => {
                 <button
                     // onClick="clearHistory()"
                     tabIndex={-1}
-                    data-tooltip="Clear All"
-                >
+                    data-tooltip="Clear All">
                     <FontAwesomeIcon icon={faTrash} />
                 </button>
             </h2>
             <div className="location-cont">
-                <ol></ol>
+                <ol>
+                    {history.map(e => (
+                        <BookmarkHistoryListItem {...e} />
+                    ))}
+                </ol>
             </div>
         </div>
     );

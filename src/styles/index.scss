@@ -69,16 +69,14 @@ body {
             background: #000;
             left: 100%;
             top: 50%;
-            transform: translate(var(--translate)) scale(0)
-                rotate(var(--rotate));
+            transform: translate(var(--translate)) scale(0) rotate(var(--rotate));
             padding: 3px 5px;
             transition: 0.1s transform;
             border-radius: 5px;
         }
         &:hover::before {
             visibility: visible;
-            transform: translate(var(--translate)) scale(1)
-                rotate(var(--rotate));
+            transform: translate(var(--translate)) scale(1) rotate(var(--rotate));
         }
     }
     #topBar {
@@ -86,18 +84,21 @@ body {
         top: 0;
         left: 0;
         display: flex;
+        align-items: center;
+        justify-content: center;
         width: 100vw;
         height: var(--titleBar-height);
         user-select: none;
         background: var(--topBar-color);
-        align-items: center;
-        justify-content: center;
-        .titleBar {
-            position: relative;
+        .homeBtns {
+            position: absolute;
+            left: 0;
+            top: 0;
             display: flex;
-            width: 100%;
-            height: 100%;
+            flex-direction: row;
             align-items: center;
+            width: calc(var(--button-width) * 5);
+            height: 100%;
             // overflow: hidden;
             // .appIcon {
             //     width: var(--button-width);
@@ -127,17 +128,6 @@ body {
                     background: var(--topBar-hover-color);
                 }
             }
-            .githubbtn {
-                margin-right: calc(var(--button-width) * 2);
-            }
-            .title {
-                position: relative;
-                text-align: center;
-                white-space: nowrap;
-                margin-left: auto;
-                margin-right: auto;
-                font-size: 25px;
-            }
         }
         .titleDragable {
             position: absolute;
@@ -147,10 +137,28 @@ body {
             width: 100%;
             -webkit-app-region: drag;
         }
-        .titleBarBtns {
-            // margin-left: auto;
+        .mainTitleCont {
+            position: absolute;
+            height: 100%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            width: calc(100% - (var(--button-width) * 10));
+            .title {
+                position: relative;
+                max-width: 100%;
+                white-space: nowrap;
+                overflow: hidden;
+                text-overflow: ellipsis;
+                font-size: 25px;
+            }
+        }
+        .windowBtnCont {
             -webkit-app-region: no-drag;
-            position: relative;
+            position: absolute;
+            width: calc(var(--button-width) * 5);
+            top: 0;
+            right: 0;
             z-index: 3000;
             display: flex;
             flex-direction: row;
@@ -316,8 +324,18 @@ body {
                             a {
                                 cursor: pointer;
                                 padding: 5px 5px;
-                                border-radius: 2px;
+                                display: flex;
+                                flex-direction: row;
                                 width: 100%;
+                                height: 100%;
+                                overflow: hidden;
+                                .text {
+                                    overflow: hidden;
+                                    text-overflow: ellipsis;
+                                    display: -webkit-box;
+                                    -webkit-line-clamp: 2; /* number of lines to show */
+                                    -webkit-box-orient: vertical;
+                                }
                                 &::before {
                                     counter-increment: countList;
                                     content: counter(countList) ".\00a0";
@@ -803,8 +821,7 @@ body {
                             }
                             &:nth-child(3) {
                                 transform-origin: middle;
-                                transform: translate(-50%, -100%)
-                                    rotate(calc(2 * var(--rotate)));
+                                transform: translate(-50%, -100%) rotate(calc(2 * var(--rotate)));
                                 top: 50%;
                                 // left: 15%; //(100%- width)/2
                             }

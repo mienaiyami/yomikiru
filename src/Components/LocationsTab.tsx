@@ -1,47 +1,44 @@
-import { faAngleUp, faSort } from "@fortawesome/free-solid-svg-icons";
-import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import { ReactElement, useEffect, useRef, useState } from "react";
-import LocationListItem from "./LocationListItem";
+import { faAngleUp, faSort } from "@fortawesome/free-solid-svg-icons"
+import { FontAwesomeIcon } from "@fortawesome/react-fontawesome"
+import { ReactElement, useEffect, useRef, useState } from "react"
+import LocationListItem from "./LocationListItem"
 
 const LocationsTab = ({
     mangaPath,
     currentLink,
     setCurrentLink,
 }: {
-    mangaPath: string;
-    currentLink: string;
-    setCurrentLink: React.Dispatch<React.SetStateAction<string>>;
+    mangaPath: string
+    currentLink: string
+    setCurrentLink: React.Dispatch<React.SetStateAction<string>>
 }): ReactElement => {
-    const [locations, setLocations] = useState<string[]>([]);
-    const [isLoadingFile, setIsLoadingFile] = useState(true);
-    const [filter, setfilter] = useState<string>("");
-    const inputRef = useRef<HTMLInputElement>(null);
+    const [locations, setLocations] = useState<string[]>([])
+    const [isLoadingFile, setIsLoadingFile] = useState(true)
+    const [filter, setfilter] = useState<string>("")
+    const inputRef = useRef<HTMLInputElement>(null)
     const displayList = (link: string): void => {
-        if (
-            window.fs.existsSync(link) &&
-            window.fs.lstatSync(link).isDirectory()
-        ) {
-            setIsLoadingFile(true);
+        if (window.fs.existsSync(link) && window.fs.lstatSync(link).isDirectory()) {
+            setIsLoadingFile(true)
             window.fs.readdir(link, (err, files) => {
-                if (err) return console.error(err);
-                const dirNames: string[] = files;
-                console.log(link);
+                if (err) return console.error(err)
+                const dirNames: string[] = files
+                console.log(link)
                 if (inputRef.current) {
-                    inputRef.current.value = "";
+                    inputRef.current.value = ""
                 }
-                setIsLoadingFile(false);
-                setLocations(dirNames);
+                setIsLoadingFile(false)
+                setLocations(dirNames)
                 // .map(e=>window.path.join(currentLink,e))
-            });
+            })
         }
-    };
+    }
     useEffect(() => {
         //    inputRef.current?.addEventListener('change',(e)=>{})
-    }, []);
+    }, [])
     useEffect(() => {
-        displayList(currentLink);
-        setfilter("");
-    }, [currentLink]);
+        displayList(currentLink)
+        setfilter("")
+    }, [currentLink])
     return (
         <div className="contTab" id="locationTab">
             <h2>
@@ -54,9 +51,8 @@ const LocationsTab = ({
                 <button
                     tabIndex={-1}
                     onClick={() => {
-                        setCurrentLink((link) => window.path.dirname(link));
-                    }}
-                >
+                        setCurrentLink(link => window.path.dirname(link))
+                    }}>
                     <FontAwesomeIcon icon={faAngleUp} />
                 </button>
                 <input
@@ -68,13 +64,13 @@ const LocationsTab = ({
                     title="Type to Search"
                     data-tooltip="Type to Search"
                     tabIndex={-1}
-                    onChange={(e) => {
-                        const val = e.target.value;
-                        let filter = "";
+                    onChange={e => {
+                        const val = e.target.value
+                        let filter = ""
                         for (let i = 0; i < val.length; i++) {
-                            filter += val[i] + ".*";
+                            filter += val[i] + ".*"
                         }
-                        setfilter(filter);
+                        setfilter(filter)
                     }}
                 />
             </div>
@@ -85,7 +81,7 @@ const LocationsTab = ({
                     <p>No Items</p>
                 ) : (
                     <ol>
-                        {locations.map((e) => {
+                        {locations.map(e => {
                             if (new RegExp(filter, "ig").test(e))
                                 return (
                                     <LocationListItem
@@ -93,16 +89,15 @@ const LocationsTab = ({
                                         link={window.path.join(currentLink, e)}
                                         inHistory={false}
                                         key={e}
-                                        displayList={displayList}
                                         setCurrentLink={setCurrentLink}
                                     />
-                                );
+                                )
                         })}
                     </ol>
                 )}
             </div>
         </div>
-    );
-};
+    )
+}
 
-export default LocationsTab;
+export default LocationsTab

@@ -1,25 +1,11 @@
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import React, {
-    forwardRef,
-    ReactElement,
-    useContext,
-    useEffect,
-    useState,
-} from "react";
+import { forwardRef, ReactElement, useContext, useEffect, useState } from "react";
 import { faGithub } from "@fortawesome/free-brands-svg-icons";
-import {
-    faHome,
-    faCog,
-    faMinus,
-    faTimes,
-} from "@fortawesome/free-solid-svg-icons";
-import {
-    faWindowMaximize,
-    faWindowRestore,
-} from "@fortawesome/free-regular-svg-icons";
+import { faHome, faCog, faMinus, faTimes } from "@fortawesome/free-solid-svg-icons";
+import { faWindowMaximize, faWindowRestore } from "@fortawesome/free-regular-svg-icons";
 import { AppContext } from "../App";
 
-const TopBar = forwardRef((props, pageNumberInputRef: any): ReactElement => {
+const TopBar = forwardRef((): ReactElement => {
     const [isMaximized, setMaximized] = useState(true);
     useEffect(() => {
         window.electron.ipcRenderer.on("isMaximized", () => {
@@ -29,61 +15,77 @@ const TopBar = forwardRef((props, pageNumberInputRef: any): ReactElement => {
             setMaximized(false);
         });
     }, []);
-    const { setSettingOpen } = useContext(AppContext);
+    const [title, setTitle] = useState<string>("Manga Reader");
+    const { setSettingOpen, pageNumberInputRef, mangaInReader, isReaderOpen } = useContext(AppContext);
+    const setTitleWithSize = () => {
+        if (mangaInReader) {
+            let mangaName = mangaInReader.mangaName;
+            let chapterName = mangaInReader.chapterName;
+            if (mangaName.length > 13) mangaName = mangaName.substr(0, 10) + "...";
+            if (chapterName.length > 83) chapterName = chapterName.substr(0, 80) + "...";
+            const title = mangaName + " | " + chapterName;
+            setTitle(title);
+            document.title = title;
+            console.log(title);
+        }
+    };
+    useEffect(() => {
+        setTitleWithSize();
+        window.addEventListener("resize", () => {
+            setTitleWithSize();
+        });
+    }, [mangaInReader]);
     return (
         <div id="topBar">
             <div className="titleDragable"></div>
-            <div className="titleBar">
+            <div className="homeBtns">
                 <button
                     className="home"
                     onClick={() => window.location.reload()}
                     tabIndex={-1}
-                    data-tooltip="Home"
-                >
+                    data-tooltip="Home">
                     <FontAwesomeIcon icon={faHome} />
                 </button>
                 <button
                     className="settingsBtn"
                     onClick={() => {
-                        setSettingOpen((state) => !state);
+                        setSettingOpen(state => !state);
                     }}
                     tabIndex={-1}
-                    data-tooltip="Settings"
-                >
+                    data-tooltip="Settings">
                     <FontAwesomeIcon icon={faCog} />
                 </button>
                 <button
                     className="githubbtn"
                     onClick={() =>
-                        window.electron.shell.openExternal(
-                            "https://github.com/mienaiYami/offline-manga-reader"
-                        )
+                        window.electron.shell.openExternal("https://github.com/mienaiYami/offline-manga-reader")
                     }
                     tabIndex={-1}
-                    data-tooltip="Github"
-                >
+                    data-tooltip="Github">
                     <FontAwesomeIcon icon={faGithub} />
                 </button>
-                <div className="title">Manga Reader</div>
             </div>
-
-            <div className="titleBarBtns">
+            <div className="mainTitleCont">
+                <div className="title">{title}</div>
+            </div>
+            <div className="windowBtnCont">
                 <label
                     id="pageNumbers"
                     title="Nagivate To Page Number"
-                    ref={pageNumberInputRef}
                     htmlFor="NavigateToPageInput"
                     data-tooltip="Navigate To Page Number"
-                >
+                    style={{ visibility: isReaderOpen ? "visible" : "hidden" }}>
                     <input
                         type="number"
                         title="Nagivate To Page Number"
                         id="NavigateToPageInput"
                         placeholder="Page Num."
+                        ref={pageNumberInputRef}
+                        // onChange={()=>{}}
                         tabIndex={-1}
                         min="1"
                     />
-                    <span className="totalPage">/40</span>
+                    <span className="totalPage">/{mangaInReader?.pages || 0}</span>
                 </label>
                 <button
                     tabIndex={-1}
@@ -91,8 +93,7 @@ const TopBar = forwardRef((props, pageNumberInputRef: any): ReactElement => {
                     title="Minimize"
                     onClick={() => {
                         window.electron.ipcRenderer.send("minimizeApp");
-                    }}
-                >
+                    }}>
                     <FontAwesomeIcon icon={faMinus} />
                 </button>
                 <button
@@ -101,11 +102,8 @@ const TopBar = forwardRef((props, pageNumberInputRef: any): ReactElement => {
                     title={isMaximized ? "Restore" : "Maximize"}
                     onClick={() => {
                         window.electron.ipcRenderer.send("maximizeRestoreApp");
-                    }}
-                >
-                    <FontAwesomeIcon
-                        icon={isMaximized ? faWindowRestore : faWindowMaximize}
-                    />
+                    }}>
+                    <FontAwesomeIcon icon={isMaximized ? faWindowRestore : faWindowMaximize} />
                 </button>
                 <button
                     tabIndex={-1}
@@ -113,8 +111,7 @@ const TopBar = forwardRef((props, pageNumberInputRef: any): ReactElement => {
                     title="Close"
                     onClick={() => {
                         window.electron.ipcRenderer.send("closeApp");
-                    }}
-                >
+                    }}>
                     <FontAwesomeIcon icon={faTimes} />
                 </button>
             </div>
