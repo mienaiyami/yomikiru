@@ -17,7 +17,6 @@ import { homedir } from "os";
 import * as remote from "@electron/remote/main";
 remote.initialize();
 let mainWindow: BrowserWindow;
-
 declare const HOME_WEBPACK_ENTRY: string;
 // declare const MAIN_WINDOW_PRELOAD_WEBPACK_ENTRY: string;
 
@@ -82,8 +81,7 @@ async function checkforupdate() {
     const currentAppVersion = app.getVersion().split(".");
     if (
         latestVersion[0] > currentAppVersion[0] ||
-        (latestVersion[0] === currentAppVersion[0] &&
-            latestVersion[1] > currentAppVersion[1]) ||
+        (latestVersion[0] === currentAppVersion[0] && latestVersion[1] > currentAppVersion[1]) ||
         (latestVersion[0] === currentAppVersion[0] &&
             latestVersion[1] === currentAppVersion[1] &&
             latestVersion[2] > currentAppVersion[2])
@@ -100,11 +98,9 @@ async function checkforupdate() {
                     buttons: ["Yes", "No"],
                 }
             )
-            .then((response) => {
+            .then(response => {
                 if (response.response === 0) {
-                    shell.openExternal(
-                        "https://mienaiyami.github.io/mangareader/"
-                    );
+                    shell.openExternal("https://mienaiyami.github.io/mangareader/");
                 }
             });
     }
@@ -117,9 +113,7 @@ const reactDevToolsPath = path.join(
 app.on("ready", async () => {
     createWindow();
     globalShortcut.register("f1", () => {
-        shell.openExternal(
-            "https://github.com/mienaiyami/offline-manga-reader"
-        );
+        shell.openExternal("https://github.com/mienaiyami/offline-manga-reader");
     });
     await session.defaultSession.loadExtension(reactDevToolsPath);
     const template: MenuItemConstructorOptions[] = [

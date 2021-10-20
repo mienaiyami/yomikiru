@@ -2,6 +2,7 @@ import { faAngleRight } from "@fortawesome/free-solid-svg-icons";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { ReactElement, useContext, useState } from "react";
 import { AppContext } from "../App";
+import { MainContext } from "./Main";
 
 const LocationListItem = ({
     name,
@@ -15,19 +16,23 @@ const LocationListItem = ({
     inHistory?: boolean;
 }): ReactElement => {
     const { openInReader } = useContext(AppContext);
-
-    const [alreadyRead, setAlreadyRead] = useState(inHistory || false);
+    const { showContextMenu } = useContext(MainContext);
     return (
-        <li className={alreadyRead ? "already-read" : ""}>
+        <li className={inHistory ? "already-read" : ""}>
             <a
                 className="a-context"
+                title={name}
                 onClick={() => {
-                    console.log("aaaaaa");
                     if (window.fs.existsSync(link) && window.fs.lstatSync(link).isDirectory())
                         setCurrentLink(link);
                 }}
-                // data-name="${e}"
-                // data-link="${link}"
+                onContextMenu={e => {
+                    showContextMenu({
+                        e: e.nativeEvent,
+                        isFile: true,
+                        link: link,
+                    });
+                }}
             >
                 <span className="text">{name}</span>
             </a>

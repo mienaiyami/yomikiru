@@ -1,31 +1,61 @@
 import {
     faArrowLeft,
     faArrowRight,
+    faBars,
     faBookmark,
     faFile,
     faMinus,
     faPlus,
-    faSort,
+    faTimes,
 } from "@fortawesome/free-solid-svg-icons";
+import { faBookmark as farBookmark } from "@fortawesome/free-regular-svg-icons";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { useContext, useEffect, useState } from "react";
 import { AppContext } from "../App";
+import ReaderSideList from "./ReaderSideList";
+import { MainContext } from "./Main";
 
 const Reader = () => {
     const {
         appSettings,
+        setAppSettings,
         isReaderOpen,
         setReaderOpen,
         pageNumberInputRef,
         linkInReader,
         setLinkInReader,
+        mangaInReader,
         setMangaInReader,
         setLoadingManga,
         setHistory,
+        bookmarks,
+        setBookmarks,
+        addNewBookmark,
+        setLoadingMangaPercent,
+        setCurrentPageNumber,
+        pageNumChangeDisabled,
+        prevNextChapter,
     } = useContext(AppContext);
+    const { showContextMenu } = useContext(MainContext);
     const [images, setImages] = useState<string[]>([]);
-    const loadImg = (link: string) => {
-        // setLoadingManga(true);
+    const [wideimages, setWideImages] = useState<string[]>([]);
+    const [imagesLength, setImagesLength] = useState(0);
+    const [imagesLoaded, setImagesLoaded] = useState(0);
+    const [isCtrlsOpen, setctrlOpen] = useState(false);
+    const [isBookmarked, setBookmarked] = useState(bookmarks.map(e => e.link).includes(linkInReader));
+    const changePageNumber = () => {
+        if (!pageNumChangeDisabled) {
+            const elem = document.elementFromPoint(window.innerWidth / 2, window.innerHeight / 4);
+            if (elem && elem.tagName === "IMG") {
+                // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+                const pageNumber = parseInt(elem.getAttribute("data-pagenumber")!);
+                if (pageNumber) setCurrentPageNumber(pageNumber);
+            }
+        }
+    };
+    const checkForImgsAndLoad = (link: string) => {
+        setLoadingManga(true);
+        setLoadingMangaPercent(0);
         window.fs.readdir(link, (err, files) => {
             if (err) return console.error(err);
             if (files.length <= 0) {
@@ -39,18 +69,20 @@ const Reader = () => {
                         detail: link,
                     }
                 );
-                setLinkInReader("");
+                setLinkInReader(mangaInReader?.link || "");
                 return setLoadingManga(false);
             }
             const supportedFormat = [".jpg", ".jpeg", ".png", "webp", ".svg", ".apng", ".gif", "avif"];
             const binFiles: string[] = [];
-            const imgs = files.filter(e => {
-                if (window.path.extname(e) === ".bin") {
-                    binFiles.push(e);
-                    return true;
-                }
-                return supportedFormat.includes(window.path.extname(e));
-            });
+            const imgs = files
+                .filter(e => {
+                    if (window.path.extname(e) === ".bin") {
+                        binFiles.push(e);
+                        return true;
+                    }
+                    return supportedFormat.includes(window.path.extname(e));
+                })
+                .sort(window.betterSortOrder);
             if (imgs.length <= 0) {
                 window.electron.dialog.showMessageBox(
                     window.electron.BrowserWindow.getFocusedWindow() ||
@@ -61,7 +93,7 @@ const Reader = () => {
                         message: "Folder doesn't contain any supported image format.",
                     }
                 );
-                setLinkInReader("");
+                setLinkInReader(mangaInReader?.link || "");
                 return setLoadingManga(false);
             }
             if (binFiles.length > 0) {
@@ -69,7 +101,6 @@ const Reader = () => {
                 binFiles.forEach(e => {
                     errMsg += e + "\n";
                 });
-                console.log(errMsg);
                 window.electron.dialog.showMessageBox(
                     window.electron.BrowserWindow.getFocusedWindow() ||
                         window.electron.BrowserWindow.getAllWindows()[0],
@@ -81,35 +112,85 @@ const Reader = () => {
                     }
                 );
             }
-            const linksplitted = link.split(window.path.sep);
-            const mangaOpened: ListItem = {
-                mangaName: linksplitted[linksplitted.length - 2],
-                chapterName: linksplitted[linksplitted.length - 1],
-                link,
-                date: new Date().toLocaleString(),
-                pages: imgs.length,
-            };
-            setMangaInReader(mangaOpened);
-            setHistory(initial => [mangaOpened, ...initial]);
-            setImages(imgs);
-            setLoadingManga(false);
-            setReaderOpen(true);
+            loadImg(link, imgs);
         });
     };
-    useEffect(() => {
+    const loadImg = (link: string, imgs: string[]) => {
         setImages([]);
+        setWideImages([]);
+        setCurrentPageNumber(1);
+        setImagesLength(0);
+        setImagesLoaded(0);
+        const linksplitted = link.split(window.path.sep);
+        const mangaOpened: ListItem = {
+            mangaName: linksplitted[linksplitted.length - 2],
+            chapterName: linksplitted[linksplitted.length - 1],
+            link,
+            date: new Date().toLocaleString(),
+            pages: imgs.length,
+        };
+        setMangaInReader(mangaOpened);
+        setHistory(initial => {
+            const newData = [];
+            if (initial.length > 0 && initial[0].link === mangaOpened.link) {
+                initial.shift();
+                newData.push(mangaOpened, ...initial);
+                if (initial.length >= appSettings.historyLimit) {
+                    newData.length = appSettings.historyLimit;
+                }
+                return newData;
+            }
+            newData.push(mangaOpened, ...initial);
+            return newData;
+        });
+        setImagesLength(imgs.length);
+        setImages(imgs);
+        setReaderOpen(true);
+    };
+    useEffect(() => {
+        if (imagesLoaded !== 0 && imagesLength !== 0) {
+            setLoadingMangaPercent((100 * imagesLoaded) / imagesLength);
+            if (imagesLength === imagesLoaded) {
+                setLoadingManga(false);
+            }
+        }
+    }, [imagesLoaded]);
+    useEffect(() => {
         if (linkInReader && linkInReader !== "") {
-            loadImg(linkInReader);
-            console.log(appSettings.readerWidth);
+            if (linkInReader === "first") {
+                window.electron.dialog.showMessageBox(
+                    window.electron.BrowserWindow.getFocusedWindow() ||
+                        window.electron.BrowserWindow.getAllWindows()[0],
+                    {
+                        title: "Error",
+                        type: "error",
+                        message: "First Chapter in List",
+                    }
+                );
+                setLinkInReader(mangaInReader?.link || "");
+                return;
+            }
+            if (linkInReader === "last") {
+                window.electron.dialog.showMessageBox(
+                    window.electron.BrowserWindow.getFocusedWindow() ||
+                        window.electron.BrowserWindow.getAllWindows()[0],
+                    {
+                        title: "Error",
+                        type: "error",
+                        message: "Last Chapter in List",
+                    }
+                );
+                setLinkInReader(mangaInReader?.link || "");
+                return;
+            }
+            if (mangaInReader && mangaInReader.link === linkInReader) return;
+            checkForImgsAndLoad(linkInReader);
         }
     }, [linkInReader]);
     return (
-        <div id="reader" style={{ display: isReaderOpen ? "block" : "none" }}>
+        <div id="reader" style={{ display: isReaderOpen ? "block" : "none" }} onScroll={() => changePageNumber()}>
             <div className="ctrl-bar">
-                <svg
-                    xmlns="http://www.w3.org/2000/svg"
-                    // style="display: none"
-                >
+                <svg xmlns="http://www.w3.org/2000/svg" style={{ display: "none" }}>
                     <defs>
                         <filter id="goo">
                             <feGaussianBlur in="SourceGraphic" stdDeviation="10" result="blur" />
@@ -124,103 +205,153 @@ const Reader = () => {
                     </defs>
                 </svg>
                 <button
-                    className="ctrl-menu-item ctrl-menu-extender nonFocusable"
+                    className={`ctrl-menu-item ctrl-menu-extender ${isCtrlsOpen ? "open" : ""}`}
                     tabIndex={-1}
-                    id="ctrl-menu-extender"
-                    data-tooltip="Tools">
-                    <div className="cont">
-                        <div className="bar"></div>
-                        <div className="bar"></div>
-                        <div className="bar"></div>
-                    </div>
+                    onClick={() => {
+                        setctrlOpen(init => !init);
+                    }}
+                    data-tooltip="Tools"
+                >
+                    <FontAwesomeIcon icon={isCtrlsOpen ? faTimes : faBars} />
                 </button>
                 <div className="ctrl-menu">
                     <button
-                        className="ctrl-menu-item nonFocusable"
+                        className="ctrl-menu-item"
                         tabIndex={-1}
-                        id="ctrl-menu-plus"
-                        data-tooltip="Size +">
+                        data-tooltip="Size +"
+                        onClick={() => {
+                            setAppSettings(init => {
+                                init.readerWidth =
+                                    init.readerWidth + 5 > 100
+                                        ? 100
+                                        : init.readerWidth + 5 < 20
+                                        ? 20
+                                        : init.readerWidth + 5;
+                                return { ...init };
+                            });
+                        }}
+                    >
                         <FontAwesomeIcon icon={faPlus} />
                     </button>
                     <button
-                        className="ctrl-menu-item nonFocusable"
+                        className="ctrl-menu-item"
                         tabIndex={-1}
-                        id="ctrl-menu-minus"
-                        data-tooltip="Size -">
+                        data-tooltip="Size -"
+                        onClick={() => {
+                            setAppSettings(init => {
+                                init.readerWidth =
+                                    init.readerWidth - 5 > 100
+                                        ? 100
+                                        : init.readerWidth - 5 < 20
+                                        ? 20
+                                        : init.readerWidth - 5;
+                                return { ...init };
+                            });
+                        }}
+                    >
                         <FontAwesomeIcon icon={faMinus} />
                     </button>
                     <button
-                        className="ctrl-menu-item nonFocusable"
+                        className="ctrl-menu-item"
                         tabIndex={-1}
-                        id="ctrl-menu-prev"
-                        data-tooltip="Open Previous">
+                        data-tooltip="Open Previous"
+                        onClick={() => {
+                            setLinkInReader(prevNextChapter.prev);
+                        }}
+                    >
                         <FontAwesomeIcon icon={faArrowLeft} />
                     </button>
                     <button
-                        className="ctrl-menu-item nonFocusable"
+                        className="ctrl-menu-item"
                         tabIndex={-1}
-                        id="ctrl-menu-next"
-                        data-tooltip="Open Next">
+                        data-tooltip="Open Next"
+                        onClick={() => {
+                            setLinkInReader(prevNextChapter.next);
+                        }}
+                    >
                         <FontAwesomeIcon icon={faArrowRight} />
                     </button>
                     <button
-                        className="ctrl-menu-item nonFocusable"
+                        className="ctrl-menu-item"
                         tabIndex={-1}
-                        id="ctrl-menu-bookmark"
-                        data-tooltip="Bookmark">
-                        <FontAwesomeIcon icon={faBookmark} />
+                        data-tooltip="Bookmark"
+                        onClick={() => {
+                            if (isBookmarked) {
+                                return window.electron.dialog
+                                    .showMessageBox(
+                                        window.electron.BrowserWindow.getFocusedWindow() ||
+                                            window.electron.BrowserWindow.getAllWindows()[0],
+                                        {
+                                            title: "Warning",
+                                            type: "warning",
+                                            message: "Remove Bookmark?",
+                                            buttons: ["Yes", "No"],
+                                        }
+                                    )
+                                    .then(res => {
+                                        if (res.response === 0) {
+                                            setBookmarks(init => [...init.filter(e => e.link !== linkInReader)]);
+                                            setBookmarked(false);
+                                        }
+                                    });
+                            }
+                            if (mangaInReader) {
+                                addNewBookmark(mangaInReader);
+                                setBookmarked(true);
+                            }
+                        }}
+                    >
+                        <FontAwesomeIcon icon={isBookmarked ? faBookmark : farBookmark} />
                     </button>
                     <button
-                        className="ctrl-menu-item nonFocusable"
+                        className="ctrl-menu-item"
                         tabIndex={-1}
-                        id="ctrl-menu-page"
                         data-tooltip="Navigate To Page"
-                        onClick={() => pageNumberInputRef.current?.focus()}>
+                        onClick={() => pageNumberInputRef.current?.focus()}
+                    >
                         <FontAwesomeIcon icon={faFile} />
                     </button>
                 </div>
             </div>
-            <div className="currentMangaList">
-                <div className="tool">
-                    <input
-                        type="text"
-                        name=""
-                        id="locationInput2"
-                        spellCheck={false}
-                        placeholder="Type to Search"
-                        tabIndex={-1}
-                        data-tooltip="Navigate To Page"
-                    />
-                    <button id="inverseSort2" tabIndex={-1} data-value="normal" data-tooltip="Sort">
-                        <FontAwesomeIcon icon={faSort} />
-                    </button>
-                </div>
-                <h1>
-                    Manga: <span className="mangaName"></span>
-                    <br />
-                    Chapter: <span className="chapterName"></span>
-                </h1>
-                <div className="location-cont">
-                    <ol></ol>
-                </div>
-            </div>
+            <ReaderSideList />
             <section className="imgCont">
-                {images.map(e => (
+                {images.map((e, i) => (
                     <img
                         src={
                             window.electron.app.isPackaged
-                                ? ""
+                                ? window.path.normalize(mangaInReader?.link + "\\" + e)
                                 : "http://localhost:5000/" +
-                                  window.path.normalize(linkInReader + "\\" + e).replace("D:\\", "")
+                                  window.path.normalize(mangaInReader?.link + "\\" + e).replace("D:\\", "")
                         }
-                        style={{ width: appSettings.readerWidth + "%" }}
-                        onLoad={e => {
-                            if (e.currentTarget.offsetHeight / e.currentTarget.offsetWidth <= 1.2) {
-                                e.currentTarget.style.width = appSettings.readerWidth * 1.8 + "%";
+                        style={{
+                            width:
+                                (wideimages.includes(e)
+                                    ? appSettings.readerWidth * 1.8
+                                    : appSettings.readerWidth) + "%",
+                        }}
+                        data-pagenumber={i + 1}
+                        onContextMenu={ev => {
+                            showContextMenu({
+                                isImg: true,
+                                e: ev.nativeEvent,
+                                link: window.path.normalize(mangaInReader?.link + "\\" + e),
+                            });
+                        }}
+                        onError={() => {
+                            setImagesLoaded(init => init + 1);
+                        }}
+                        onAbort={() => {
+                            setImagesLoaded(init => init + 1);
+                        }}
+                        onLoad={ev => {
+                            setImagesLoaded(init => init + 1);
+                            if (ev.currentTarget.offsetHeight / ev.currentTarget.offsetWidth <= 1.2) {
+                                setWideImages(init => [...init, e]);
                             }
                         }}
                         title={e}
-                        key={e}></img>
+                        key={e}
+                    ></img>
                 ))}
             </section>
         </div>

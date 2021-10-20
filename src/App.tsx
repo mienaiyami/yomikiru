@@ -37,7 +37,9 @@ const getBookmarkAndHistory = () => {
     if (window.fs.existsSync(historyPath)) {
         const rawdata = window.fs.readFileSync(historyPath, "utf8");
         if (JSON.parse(rawdata)) {
-            historyDataInit.push(...JSON.parse(rawdata));
+            const data = JSON.parse(rawdata);
+            if (data.length >= settings.historyLimit) data.length = settings.historyLimit;
+            historyDataInit.push(...data);
         }
     } else {
         window.fs.writeFile(historyPath, "[]", err => {
@@ -63,14 +65,31 @@ interface IAppContext {
     openInReader: (link: string) => void;
     isLoadingManga: boolean;
     setLoadingManga: React.Dispatch<React.SetStateAction<boolean>>;
-    loadingScreenRef: React.RefObject<HTMLDivElement>;
     linkInReader: string;
     setLinkInReader: React.Dispatch<React.SetStateAction<string>>;
     mangaInReader: ListItem | null;
     setMangaInReader: React.Dispatch<React.SetStateAction<ListItem | null>>;
-    // loadingMangaPercent: number;
-    // setLoadingMangaPercent: React.Dispatch<React.SetStateAction<number>>;
+    addNewBookmark: (newBk: ListItem) => Promise<Electron.MessageBoxReturnValue> | undefined;
+    loadingMangaPercent: number;
+    setLoadingMangaPercent: React.Dispatch<React.SetStateAction<number>>;
+    currentPageNumber: number;
+    setCurrentPageNumber: React.Dispatch<React.SetStateAction<number>>;
+    scrollToPage: (pageNumber: number) => void;
+    pageNumChangeDisabled: boolean;
+    setPageNumChangeDisabled: React.Dispatch<React.SetStateAction<boolean>>;
+    prevNextChapter: {
+        prev: string;
+        next: string;
+    };
+    setPrevNextChapter: React.Dispatch<
+        React.SetStateAction<{
+            prev: string;
+            next: string;
+        }>
+    >;
+    closeReader: () => void;
 }
+
 // eslint-disable-next-line @typescript-eslint/ban-ts-comment
 // @ts-ignore
 export const AppContext = createContext<IAppContext>();
@@ -80,18 +99,40 @@ const App = (): ReactElement => {
     const [isSettingOpen, setSettingOpen] = useState(false);
     const [isReaderOpen, setReaderOpen] = useState(false);
     const [isLoadingManga, setLoadingManga] = useState(false);
-    //todo : remove loading screen
-    // const [loadingMangaPercent, setLoadingMangaPercent] = useState(0);
+    const [currentPageNumber, setCurrentPageNumber] = useState(1);
+    const [pageNumChangeDisabled, setPageNumChangeDisabled] = useState(false);
+    const [loadingMangaPercent, setLoadingMangaPercent] = useState(100);
     const [linkInReader, setLinkInReader] = useState<string>("");
+    const [prevNextChapter, setPrevNextChapter] = useState({ prev: "", next: "" });
     const [mangaInReader, setMangaInReader] = useState<ListItem | null>(null);
     const pageNumberInputRef: React.RefObject<HTMLInputElement> = createRef();
-    const loadingScreenRef: React.RefObject<HTMLDivElement> = createRef();
     const [bookmarks, setBookmarks] = useState<ListItem[]>(bookmarkDataInit);
     const [history, setHistory] = useState<ListItem[]>(historyDataInit);
     const openInReader = async (link: string) => {
         link = window.path.normalize(link);
-        if (window.fs.existsSync(link) && window.fs.lstatSync(link).isDirectory) {
+        if (window.fs.existsSync(link) && window.fs.lstatSync(link).isDirectory()) {
             setLinkInReader(link);
+        }
+    };
+    const closeReader = () => {
+        setReaderOpen(false);
+        setLinkInReader("");
+        setMangaInReader(null);
+    };
+    const addNewBookmark = (newBk: ListItem) => {
+        if (newBk) {
+            if (bookmarks.map(e => e.link).includes(newBk.link)) {
+                return window.electron.dialog.showMessageBox(
+                    window.electron.BrowserWindow.getFocusedWindow() ||
+                        window.electron.BrowserWindow.getAllWindows()[0],
+                    {
+                        title: "Bookmark Already Exist",
+                        type: "warning",
+                        message: "Bookmark Already Exist",
+                    }
+                );
+            }
+            setBookmarks(init => [newBk, ...init]);
         }
     };
     const promptSetDefaultLocation = (): void => {
@@ -104,7 +145,6 @@ const App = (): ReactElement => {
         if (!result) return;
         let path = "";
         if (result) path = window.path.normalize(result[0] + "\\");
-        console.log("path", path);
         setAppSettings(init => {
             init.baseDir = path;
             return { ...init };
@@ -112,7 +152,19 @@ const App = (): ReactElement => {
     };
     useEffect(() => {
         setFirstRendered(true);
+        window.titleBarHeight = parseFloat(
+            window.getComputedStyle(document.body).getPropertyValue("--titleBar-height")
+        );
     }, []);
+    const scrollToPage = (pageNumber: number) => {
+        const reader = document.querySelector("#reader");
+        if (reader) {
+            const imgElem = document.querySelector("#reader .imgCont img[data-pagenumber='" + pageNumber + "']");
+            if (imgElem) {
+                imgElem.scrollIntoView();
+            }
+        }
+    };
     useEffect(() => {
         if (firstRendered) {
             if (settings.baseDir === "") {
@@ -130,27 +182,21 @@ const App = (): ReactElement => {
         }
     }, [firstRendered]);
     useEffect(() => {
-        // console.log(bookmarks);
         if (firstRendered) {
-            console.log("fffff");
             window.fs.writeFile(bookmarksPath, JSON.stringify(bookmarks), err => {
                 if (err) console.error(err);
             });
         }
     }, [bookmarks]);
     useEffect(() => {
-        // console.log(history);
         if (firstRendered) {
-            console.log("fffff");
             window.fs.writeFile(historyPath, JSON.stringify(history), err => {
                 if (err) console.error(err);
             });
         }
     }, [history]);
     useEffect(() => {
-        // console.log(appSettings);
         if (firstRendered) {
-            console.log("fffff");
             window.fs.writeFile(settingsPath, JSON.stringify(appSettings), err => {
                 if (err) console.error(err);
             });
@@ -173,14 +219,23 @@ const App = (): ReactElement => {
                 openInReader,
                 isLoadingManga,
                 setLoadingManga,
-                loadingScreenRef,
                 linkInReader,
                 setLinkInReader,
                 mangaInReader,
                 setMangaInReader,
-                // loadingMangaPercent,
-                // setLoadingMangaPercent,
-            }}>
+                addNewBookmark,
+                loadingMangaPercent,
+                setLoadingMangaPercent,
+                currentPageNumber,
+                setCurrentPageNumber,
+                scrollToPage,
+                pageNumChangeDisabled,
+                setPageNumChangeDisabled,
+                prevNextChapter,
+                setPrevNextChapter,
+                closeReader,
+            }}
+        >
             <TopBar ref={pageNumberInputRef} />
             <Main promptSetDefaultLocation={promptSetDefaultLocation} />
         </AppContext.Provider>

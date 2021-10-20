@@ -1,11 +1,29 @@
-import { ReactElement } from "react";
+import { ReactElement, useContext } from "react";
+import { AppContext } from "../App";
+import BookmarkHistoryListItem from "./BookmarkHistoryListItem";
 
 const BookmarkTab = (): ReactElement => {
+    const { bookmarks, setBookmarks } = useContext(AppContext);
+
     return (
-        <div className="contTab" id="bookmarksTab">
+        <div className="contTab listCont" id="bookmarksTab">
             <h2>Bookmarks</h2>
             <div className="location-cont">
-                <ol></ol>
+                {bookmarks.length === 0 ? (
+                    <p>No Bookmarks...</p>
+                ) : (
+                    <ol>
+                        {bookmarks.map((e, i) => (
+                            <BookmarkHistoryListItem
+                                isHistory={false}
+                                isBookmark={true}
+                                index={i}
+                                {...e}
+                                key={e.link}
+                            />
+                        ))}
+                    </ol>
+                )}
             </div>
         </div>
     );

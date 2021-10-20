@@ -1,16 +1,20 @@
-import { forwardRef, ReactElement, useContext } from "react";
+import { ReactElement, useContext } from "react";
 import { AppContext } from "../App";
 
-const LoadingScreen = forwardRef((): ReactElement => {
-    const { loadingScreenRef, isLoadingManga } = useContext(AppContext);
-    //!remove loadingScreenRef after test
+const LoadingScreen = (): ReactElement => {
+    const { isLoadingManga, loadingMangaPercent } = useContext(AppContext);
     return (
-        <div id="loadingScreen" ref={loadingScreenRef} style={{ display: isLoadingManga ? "grid" : "none" }}>
+        <div id="loadingScreen" style={{ display: isLoadingManga ? "grid" : "none" }}>
             <div className="loadingBarCont">
-                <div className="loadingbar"></div>
+                <div
+                    className="loadingbar"
+                    style={{
+                        width: Math.floor(loadingMangaPercent) > 100 ? 100 : Math.floor(loadingMangaPercent) + "%",
+                    }}
+                ></div>
             </div>
         </div>
     );
-});
+};
 
 export default LoadingScreen;

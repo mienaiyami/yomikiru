@@ -5,24 +5,49 @@ import { AppContext } from "../App";
 import BookmarkHistoryListItem from "./BookmarkHistoryListItem";
 
 const HistoryTab = (): ReactElement => {
-    const { history } = useContext(AppContext);
+    const { history, setHistory } = useContext(AppContext);
     return (
-        <div className="contTab" id="historyTab">
+        <div className="contTab listCont" id="historyTab">
             <h2>
                 History
                 <button
-                    // onClick="clearHistory()"
+                    onClick={() => {
+                        window.electron.dialog
+                            .showMessageBox(
+                                window.electron.BrowserWindow.getFocusedWindow() ||
+                                    window.electron.BrowserWindow.getAllWindows()[0],
+                                {
+                                    title: "Warning",
+                                    type: "warning",
+                                    message: "Are you sure you want to clear history",
+                                    buttons: ["Yes", "No"],
+                                }
+                            )
+                            .then(res => {
+                                if (res && res.response === 0) setHistory([]);
+                            });
+                    }}
                     tabIndex={-1}
                     data-tooltip="Clear All">
                     <FontAwesomeIcon icon={faTrash} />
                 </button>
             </h2>
             <div className="location-cont">
-                <ol>
-                    {history.map(e => (
-                        <BookmarkHistoryListItem {...e} />
-                    ))}
-                </ol>
+                {history.length === 0 ? (
+                    <p>No History...</p>
+                ) : (
+                    <ol>
+                        {history.map((e, i) => (
+                            <BookmarkHistoryListItem
+                                isBookmark={false}
+                                isHistory={true}
+                                index={i}
+                                {...e}
+                                key={e.date}
+                            />
+                        ))}
+                    </ol>
+                )}
             </div>
         </div>
     );

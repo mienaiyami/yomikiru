@@ -40,12 +40,13 @@
 }
 body {
     font-family: "Roboto";
+    font-weight: 400;
     width: 100vw;
     height: 100vh;
     color: #ffffff;
     background: var(--color-primary);
     user-select: none;
-    overflow-x: hidden;
+    overflow: hidden;
     button {
         font-family: inherit;
     }
@@ -267,8 +268,122 @@ body {
             }
         }
         input {
+            background: var(--input-bg);
+            overflow: scroll;
+            cursor: text;
+            color: #ffffff;
+            font-family: "roboto";
+            outline: none;
+            border-radius: 3px;
+            width: 100%;
+            border: none;
+            font-size: 20px;
+            padding: 10px;
             &:focus {
-                outline: 1px solid var(--color-secondary);
+                box-shadow: var(--color-secondary) 0 0 0px 1px;
+            }
+        }
+        .listCont {
+            .location-cont {
+                // padding: 10px 10px;
+                position: relative;
+                height: 100%;
+                overflow-y: scroll;
+                overflow-x: visible;
+                ol {
+                    position: relative;
+                    counter-reset: countList;
+                    li {
+                        position: relative;
+                        display: flex;
+                        width: 100%;
+                        align-items: stretch;
+                        border-radius: 2px;
+                        background: var(--listItem-bg-color);
+                        border-bottom: 1px solid var(--color-secondary);
+                        height: 100%;
+                        &:hover {
+                            background-color: var(--listItem-hover-color);
+                        }
+                        a {
+                            cursor: pointer;
+                            padding: auto;
+                            display: flex;
+                            flex-direction: row;
+                            padding: 5px;
+                            align-items: center;
+                            flex-direction: row;
+                            width: 100%;
+                            overflow: hidden;
+                            .pageNum {
+                                margin-left: auto;
+                                min-width: 2em;
+                                text-align: end;
+                            }
+                            .text {
+                                overflow: hidden;
+                                text-overflow: ellipsis;
+                                display: -webkit-box;
+                                -webkit-line-clamp: 2; /* number of lines to show */
+                                -webkit-box-orient: vertical;
+                            }
+                            &::before {
+                                counter-increment: countList;
+                                content: counter(countList) ".\00a0";
+                            }
+                        }
+                        button {
+                            margin: 0;
+                            cursor: pointer;
+                            user-select: none;
+                            padding: 5px 15px;
+                            box-sizing: border-box;
+                            align-self: stretch;
+                            border: none;
+                            color: #ffffff;
+                            font-size: 20px;
+                            background: #353535;
+                            &:hover {
+                                background: #6b6b6b;
+                            }
+                        }
+                    }
+                    .alreadyRead {
+                        background: var(--listItem-alreadyRead-color);
+                        &:hover {
+                            background-color: var(--listItem-hover-color);
+                        }
+                    }
+                    .current {
+                        a {
+                            text-decoration: underline overline wavy;
+                        }
+                    }
+                }
+            }
+            .tool {
+                display: flex;
+                flex-direction: column;
+                gap: 5px;
+                margin-bottom: 5px;
+                .currentPath {
+                    user-select: text;
+                }
+                .cont {
+                    gap: 5px;
+                    display: flex;
+                    flex-direction: row;
+                }
+                button {
+                    padding: 0;
+                    width: 50px;
+                    height: 100%;
+                    &::before {
+                        left: 50%;
+                        top: 0;
+                        --translate: -50%, calc(-100% - 10px);
+                    }
+                }
             }
         }
         .tabCont {
@@ -297,68 +412,6 @@ body {
                         margin-left: 5px;
                     }
                 }
-                .location-cont {
-                    padding: 10px 10px;
-                    position: relative;
-                    box-sizing: border-box;
-                    height: 100%;
-                    overflow-y: scroll;
-                    overflow-x: visible;
-                    ol {
-                        position: relative;
-                        counter-reset: countList;
-                        li {
-                            position: relative;
-                            display: flex;
-                            width: 100%;
-                            align-items: center;
-                            // justify-content: space-between;
-                            border-radius: 2px;
-                            // margin-bottom: 2px;
-                            background: var(--listItem-bg-color);
-                            border-bottom: 1px solid var(--color-secondary);
-                            height: 100%;
-                            &:hover {
-                                background-color: var(--listItem-hover-color);
-                            }
-                            a {
-                                cursor: pointer;
-                                padding: 5px 5px;
-                                display: flex;
-                                flex-direction: row;
-                                width: 100%;
-                                height: 100%;
-                                overflow: hidden;
-                                .text {
-                                    overflow: hidden;
-                                    text-overflow: ellipsis;
-                                    display: -webkit-box;
-                                    -webkit-line-clamp: 2; /* number of lines to show */
-                                    -webkit-box-orient: vertical;
-                                }
-                                &::before {
-                                    counter-increment: countList;
-                                    content: counter(countList) ".\00a0";
-                                }
-                            }
-                            button {
-                                margin: 0;
-                                cursor: pointer;
-                                user-select: none;
-                                padding: 5px 15px;
-                                box-sizing: border-box;
-                                align-self: stretch;
-                                border: none;
-                                color: #ffffff;
-                                font-size: 20px;
-                                background: #353535;
-                                &:hover {
-                                    background: #6b6b6b;
-                                }
-                            }
-                        }
-                    }
-                }
             }
             .divider {
                 width: 20px;
@@ -367,64 +420,9 @@ body {
                 background-color: #8f8f8f2d;
                 // margin: 0 20px;
             }
-            #locationTab {
-                // grid-area: locations;
-                .tool {
-                    display: flex;
-                    flex-direction: row;
-                    gap: 5px;
-                    button {
-                        padding: 0;
-                        width: 50px;
-                        height: 100%;
-                        &::before {
-                            left: 50%;
-                            top: 0;
-                            --translate: -50%, calc(-100% - 10px);
-                        }
-                    }
-                    input {
-                        font-size: 20px;
-                        padding: 10px;
-                        overflow: scroll;
-                        width: 100%;
-                        cursor: text;
-                        background: #ffffff10;
-                        color: #ffffff;
-                        font-family: "Roboto";
-                        // font-weight: 200;
-                        border-radius: 3px;
-                        border: none;
-                    }
-                }
-                .location-cont {
-                    ol {
-                        li {
-                            a {
-                                cursor: default;
-                            }
-                            .open-in-reader-btn {
-                                background: var(--btn-color1);
-                                &:hover {
-                                    background: var(--btn-color2);
-                                    &::before {
-                                        display: block;
-                                    }
-                                }
-                            }
-                        }
-                        .already-read {
-                            background: var(--listItem-alreadyRead-color);
-                            &:hover {
-                                background-color: var(--listItem-hover-color);
-                            }
-                        }
-                    }
-                }
-            }
         }
 
-        #contextMenu {
+        .contextMenu {
             position: absolute;
             top: 0;
             left: 0;
@@ -432,14 +430,17 @@ body {
             box-sizing: border-box;
             padding: 10px 0px;
             border-radius: 5px;
-            width: 240px;
-            display: none;
+            min-width: 240px;
             z-index: 10000;
             user-select: none;
+            &:active,
+            &:focus {
+                outline: none;
+            }
             ul {
                 list-style: none;
                 li {
-                    padding: 10px 15px;
+                    padding: 10px 10px;
                     cursor: default;
                     &:hover {
                         background: var(--btn-color1);
@@ -447,7 +448,7 @@ body {
                 }
             }
         }
-        #fileInfo {
+        .infoOnHover {
             position: absolute;
             top: 0;
             left: 0;
@@ -455,17 +456,15 @@ body {
             box-sizing: border-box;
             padding: 10px 10px;
             border-radius: 5px;
-            max-width: 300px;
-            transform: translate(-100%, 0);
-            transition: 0.1s top, 0.5s width;
+            width: 300px;
             z-index: 1000;
             display: flex;
-            visibility: hidden;
             flex-direction: column;
+            transition: 0.1s top;
             .info-cont {
                 width: 100%;
                 display: grid;
-                grid-template-columns: 100px 1fr;
+                grid-template-columns: 4em 1fr;
                 .info {
                     word-wrap: none;
                 }
@@ -504,7 +503,7 @@ body {
                 background: var(--color-primary);
                 border-radius: 10px;
                 transition: 0.2s all;
-                width: calc(max(700px, 70%));
+                width: calc(max(700px, 60%));
                 height: 90%;
                 transform: scale(0);
                 box-shadow: rgba(0, 0, 0, 0.3) 0px 0px 19px 25px;
@@ -604,9 +603,7 @@ body {
                     position: relative;
                     width: 0;
                     height: 100%;
-                    /* border-radius: 5px; */
                     background-color: var(--color-secondary);
-                    transition: 0.3s;
                 }
             }
         }
@@ -619,51 +616,23 @@ body {
             .currentMangaList {
                 background: var(--color-tertiary);
                 height: 100%;
-                width: 40%;
+                width: clamp(400px, 40%, 500px);
                 z-index: 100;
                 position: absolute;
                 left: 0;
-                // display: grid;
-                // grid-template-rows: 5% 5% 90%;
+                top: 0;
                 display: flex;
                 flex-direction: column;
-                top: 0;
                 padding: 20px;
                 padding-top: 0;
                 box-sizing: border-box;
                 transform: translateX(-99%);
                 transition: 0.2s transform;
-                &:hover {
+                &.open {
                     transform: translateX(0);
-                }
-                .tool {
-                    display: flex;
-                    flex-direction: row;
-                    gap: 2px;
-                    #inverseSort2 {
-                        padding: 0;
-                        width: 50px;
-                        height: 100%;
-                    }
-                    input {
-                        font-size: 20px;
-                        padding: 10px 10px;
-                        height: 40px;
-                        margin: 0 auto;
-                        overflow: scroll;
-                        width: 100%;
-                        cursor: text;
-                        background: var(--input-bg);
-                        color: #ffffff;
-                        font-family: "roboto";
-                        // font-weight: 200;
-                        border-radius: 3px;
-                        border: none;
-                    }
                 }
                 h1 {
                     font-size: 20px;
-                    // cursor: text;
                     span {
                         cursor: text;
                         font-weight: 300;
@@ -673,46 +642,7 @@ body {
                 }
                 .location-cont {
                     margin-top: 5px;
-                    overflow: scroll;
-                    overflow-x: hidden;
-                    ol {
-                        counter-reset: countList;
-                        li {
-                            display: flex;
-                            width: 100%;
-                            align-items: center;
-                            // justify-content: space-between;
-                            border-radius: 2px;
-                            border-bottom: 1px solid var(--color-secondary);
-                            &:hover {
-                                background-color: var(--listItem-hover-color);
-                            }
-                            a {
-                                cursor: pointer;
-                                padding: 5px 5px;
-                                border-radius: 2px;
-                                display: flex;
-                                flex-direction: row;
-                                .pageNum {
-                                    margin-left: auto;
-                                    min-width: 2em;
-                                    text-align: end;
-                                    // margin-left: max(auto, 10px);
-                                }
-                                width: 100%;
-                                &::before {
-                                    counter-increment: countList;
-                                    content: counter(countList) ".\00a0";
-                                }
-                            }
-                        }
-                        .already-read {
-                            background: var(--listItem-alreadyRead-color);
-                            &:hover {
-                                background-color: var(--listItem-hover-color);
-                            }
-                        }
-                    }
+                    padding: 0;
                 }
             }
             .ctrl-bar {
@@ -770,64 +700,11 @@ body {
                     cursor: pointer;
                     z-index: 2;
                     position: relative;
-                    .cont {
-                        display: flex;
-                        flex-direction: column;
-                        align-items: center;
-                        cursor: pointer;
-                        width: 50%;
-                        height: 50%;
-                        justify-content: center;
-                        position: relative;
-                        z-index: 2;
-                        transition: 0.2s transform;
+                }
+                .open ~ .ctrl-menu {
+                    display: block;
+                }
 
-                        .bar {
-                            cursor: pointer;
-                            position: absolute;
-                            width: 100%;
-                            height: 3px;
-                            background: #fff;
-                            transition: 0.4s all;
-                            left: 50%;
-                            &:nth-child(1) {
-                                top: 0;
-                                transform: translate(-50%, 0);
-                            }
-                            &:nth-child(2) {
-                                top: 50%;
-                                transform: translate(-50%, -50%);
-                            }
-                            &:nth-child(3) {
-                                top: 100%;
-                                transform: translate(-50%, -100%);
-                            }
-                        }
-                    }
-                }
-                .ctrl-menu-extender-open {
-                    .cont {
-                        --rotate: 45deg;
-                        transform: rotate(var(--rotate));
-                        .bar {
-                            &:nth-child(1) {
-                                transform-origin: middle;
-                                transform: translate(-50%, -100%);
-                                top: 50%;
-                                // left: 15%; //(100%- width)/2
-                            }
-                            &:nth-child(2) {
-                                width: 0;
-                            }
-                            &:nth-child(3) {
-                                transform-origin: middle;
-                                transform: translate(-50%, -100%) rotate(calc(2 * var(--rotate)));
-                                top: 50%;
-                                // left: 15%; //(100%- width)/2
-                            }
-                        }
-                    }
-                }
                 .ctrl-menu {
                     display: none;
                 }

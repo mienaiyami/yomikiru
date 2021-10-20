@@ -72,15 +72,20 @@ const Settings = ({ promptSetDefaultLocation }: { promptSetDefaultLocation: () =
                         <div className="current">
                             <button
                                 onClick={e => {
-                                    const opt = window.electron.dialog.showSaveDialogSync({
-                                        title: "Export Bookmarks",
-                                        filters: [
-                                            {
-                                                name: "Json",
-                                                extensions: ["json"],
-                                            },
-                                        ],
-                                    });
+                                    const opt = window.electron.dialog.showSaveDialogSync(
+                                        window.electron.BrowserWindow.getFocusedWindow() ||
+                                            window.electron.BrowserWindow.getAllWindows()[0],
+                                        {
+                                            title: "Export Bookmarks",
+                                            defaultPath: "bookmarks.json",
+                                            filters: [
+                                                {
+                                                    name: "json",
+                                                    extensions: ["json"],
+                                                },
+                                            ],
+                                        }
+                                    );
                                     if (opt == undefined) return;
                                     window.fs.writeFileSync(opt, JSON.stringify(bookmarks) || JSON.stringify([]));
                                 }}>
@@ -88,15 +93,19 @@ const Settings = ({ promptSetDefaultLocation }: { promptSetDefaultLocation: () =
                             </button>
                             <button
                                 onClick={() => {
-                                    const opt = window.electron.dialog.showOpenDialogSync({
-                                        properties: ["openFile"],
-                                        filters: [
-                                            {
-                                                name: "Json",
-                                                extensions: ["json"],
-                                            },
-                                        ],
-                                    });
+                                    const opt = window.electron.dialog.showOpenDialogSync(
+                                        window.electron.BrowserWindow.getFocusedWindow() ||
+                                            window.electron.BrowserWindow.getAllWindows()[0],
+                                        {
+                                            properties: ["openFile"],
+                                            filters: [
+                                                {
+                                                    name: "Json",
+                                                    extensions: ["json"],
+                                                },
+                                            ],
+                                        }
+                                    );
                                     if (opt == undefined) return;
                                     const data: string[] = JSON.parse(window.fs.readFileSync(opt[0], "utf8"));
                                     const dataToAdd: string[] = [];
