@@ -30,9 +30,9 @@ const createWindow = (link?: string) => {
         show: false,
         webPreferences: {
             nodeIntegration: true,
-            contextIsolation: true,
+            contextIsolation: false,
             enableRemoteModule: true,
-            preload: HOME_PRELOAD_WEBPACK_ENTRY,
+            // preload: HOME_PRELOAD_WEBPACK_ENTRY,
         },
     });
     console.log(newWindow);

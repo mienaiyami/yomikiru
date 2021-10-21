@@ -1,4 +1,4 @@
-// import "./MainImports";
+import "./MainImports";
 import { createContext, createRef, ReactElement, useEffect, useState } from "react";
 import Main from "./Components/Main";
 import TopBar from "./Components/TopBar";
