@@ -26,9 +26,14 @@ const settings: appsettings = JSON.parse(window.fs.readFileSync(settingsPath, "u
 const getBookmarkAndHistory = () => {
     if (window.fs.existsSync(bookmarksPath)) {
         const rawdata = window.fs.readFileSync(bookmarksPath, "utf8");
-        if (JSON.parse(rawdata)) {
-            bookmarkDataInit.push(...JSON.parse(rawdata));
+        if (!rawdata) return;
+        try {
+            JSON.parse(rawdata);
+        } catch (err) {
+            return;
         }
+        const data = JSON.parse(rawdata) || [];
+        bookmarkDataInit.push(...JSON.parse(rawdata));
     } else {
         window.fs.writeFile(bookmarksPath, "[]", (err) => {
             if (err) console.error(err);
@@ -36,11 +41,15 @@ const getBookmarkAndHistory = () => {
     }
     if (window.fs.existsSync(historyPath)) {
         const rawdata = window.fs.readFileSync(historyPath, "utf8");
-        if (JSON.parse(rawdata)) {
-            const data = JSON.parse(rawdata);
-            if (data.length >= settings.historyLimit) data.length = settings.historyLimit;
-            historyDataInit.push(...data);
+        if (!rawdata) return;
+        try {
+            JSON.parse(rawdata);
+        } catch (err) {
+            return;
         }
+        const data = JSON.parse(rawdata) || [];
+        if (data.length >= settings.historyLimit) data.length = settings.historyLimit;
+        historyDataInit.push(...data);
     } else {
         window.fs.writeFile(historyPath, "[]", (err) => {
             if (err) console.error(err);
@@ -103,7 +112,7 @@ const App = (): ReactElement => {
     const [currentPageNumber, setCurrentPageNumber] = useState(1);
     const [pageNumChangeDisabled, setPageNumChangeDisabled] = useState(false);
     const [loadingMangaPercent, setLoadingMangaPercent] = useState(100);
-    const [linkInReader, setLinkInReader] = useState<string>("");
+    const [linkInReader, setLinkInReader] = useState<string>(window.loadManga || "");
     const [prevNextChapter, setPrevNextChapter] = useState({ prev: "", next: "" });
     const [mangaInReader, setMangaInReader] = useState<ListItem | null>(null);
     const pageNumberInputRef: React.RefObject<HTMLInputElement> = createRef();
@@ -163,17 +172,20 @@ const App = (): ReactElement => {
     };
     useEffect(() => {
         setFirstRendered(true);
+        window.electron.ipcRenderer.on("loadMangaFromLink", (e, data) => {
+            if (data.link && data.link !== "") openInReader(data.link);
+        });
+        console.log("ddddddddddddddddddddddd", window.loadManga);
         window.app.titleBarHeight = parseFloat(
             window.getComputedStyle(document.body).getPropertyValue("--titleBar-height")
         );
-        if (window.loadManga !== "") openInReader(window.loadManga);
     }, []);
     const scrollToPage = (pageNumber: number) => {
         const reader = document.querySelector("#reader");
         if (reader) {
             const imgElem = document.querySelector("#reader .imgCont img[data-pagenumber='" + pageNumber + "']");
             if (imgElem) {
-                imgElem.scrollIntoView();
+                imgElem.scrollIntoView({ behavior: "auto", block: "start" });
             }
         }
     };

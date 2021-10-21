@@ -36,7 +36,7 @@ const LocationsTab = ({
         setfilter("");
     }, [currentLink]);
     const List = (locations: string[], filter: string) => {
-        return locations.map(e => {
+        return locations.map((e) => {
             if (new RegExp(filter, "ig").test(e))
                 return (
                     <LocationListItem
@@ -56,9 +56,9 @@ const LocationsTab = ({
                 <button
                     data-tooltip="Sort"
                     tabIndex={-1}
-                    onFocus={e => e.currentTarget.blur()}
+                    onFocus={(e) => e.currentTarget.blur()}
                     onClick={() =>
-                        setAppSettings(init => {
+                        setAppSettings((init) => {
                             switch (init.locationListSortType) {
                                 case "normal":
                                     init.locationListSortType = "inverse";
@@ -81,9 +81,9 @@ const LocationsTab = ({
                 <div className="cont">
                     <button
                         tabIndex={-1}
-                        onFocus={e => e.currentTarget.blur()}
+                        onFocus={(e) => e.currentTarget.blur()}
                         onClick={() => {
-                            setCurrentLink(link => window.path.dirname(link));
+                            setCurrentLink((link) => window.path.dirname(link));
                         }}
                     >
                         <FontAwesomeIcon icon={faAngleUp} />
@@ -97,7 +97,7 @@ const LocationsTab = ({
                         title="Type to Search"
                         data-tooltip="Type to Search"
                         tabIndex={-1}
-                        onChange={e => {
+                        onChange={(e) => {
                             const val = e.target.value;
                             let filter = "";
                             for (let i = 0; i < val.length; i++) {

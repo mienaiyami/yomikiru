@@ -6,12 +6,13 @@ import { ReactElement, useContext, useRef, useState } from "react";
 const Settings = ({ promptSetDefaultLocation }: { promptSetDefaultLocation: () => void }): ReactElement => {
     const historyBtnRef = useRef<HTMLButtonElement>(null);
     const historyInputRef = useRef<HTMLInputElement>(null);
+    const [mouseOnInput, setMouseOnInput] = useState(false);
     const { isSettingOpen, setSettingOpen, appSettings, setAppSettings, bookmarks, setBookmarks } =
         useContext(AppContext);
     return (
         <div id="settings" data-state={isSettingOpen ? "open" : "closed"}>
             <div className="clickClose" onClick={() => setSettingOpen(false)}></div>
-            <div className="cont">
+            <div className="cont" style={{ overflow: mouseOnInput ? "hidden" : "auto" }}>
                 <h1>Settings</h1>
                 <div className="content">
                     <div className="settingItem defaultLocation">
@@ -19,7 +20,7 @@ const Settings = ({ promptSetDefaultLocation }: { promptSetDefaultLocation: () =
                         <div className="current">
                             <input type="text" value={appSettings.baseDir} readOnly />
                             <button
-                                onFocus={e => e.currentTarget.blur()}
+                                onFocus={(e) => e.currentTarget.blur()}
                                 onClick={() => {
                                     promptSetDefaultLocation();
                                 }}
@@ -35,18 +36,20 @@ const Settings = ({ promptSetDefaultLocation }: { promptSetDefaultLocation: () =
                                 type="number"
                                 defaultValue={appSettings.historyLimit}
                                 ref={historyInputRef}
-                                onKeyDown={e => {
+                                onKeyDown={(e) => {
                                     if (e.key === "Enter") {
                                         historyBtnRef.current?.click();
                                     }
                                 }}
+                                onMouseEnter={() => setMouseOnInput(true)}
+                                onMouseLeave={() => setMouseOnInput(false)}
                                 readOnly={true}
                             />
                             <button
                                 data-type="enable"
-                                onFocus={e => e.currentTarget.blur()}
+                                onFocus={(e) => e.currentTarget.blur()}
                                 ref={historyBtnRef}
-                                onClick={e => {
+                                onClick={(e) => {
                                     if (e.currentTarget.getAttribute("data-type") === "enable") {
                                         historyInputRef.current?.removeAttribute("readonly");
                                         historyInputRef.current?.focus();
@@ -54,7 +57,7 @@ const Settings = ({ promptSetDefaultLocation }: { promptSetDefaultLocation: () =
                                         e.currentTarget.setAttribute("data-type", "set");
                                         e.currentTarget.classList.add("enabled");
                                     } else if (e.currentTarget.getAttribute("data-type") === "set") {
-                                        setAppSettings(init => {
+                                        setAppSettings((init) => {
                                             if (historyInputRef.current) {
                                                 init.historyLimit = parseInt(historyInputRef.current.value);
                                             }
@@ -75,8 +78,8 @@ const Settings = ({ promptSetDefaultLocation }: { promptSetDefaultLocation: () =
                         <div className="name">Bookmarks:</div>
                         <div className="current">
                             <button
-                                onFocus={e => e.currentTarget.blur()}
-                                onClick={e => {
+                                onFocus={(e) => e.currentTarget.blur()}
+                                onClick={(e) => {
                                     const opt = window.electron.dialog.showSaveDialogSync(
                                         window.electron.BrowserWindow.getFocusedWindow() ||
                                             window.electron.BrowserWindow.getAllWindows()[0],
@@ -98,7 +101,7 @@ const Settings = ({ promptSetDefaultLocation }: { promptSetDefaultLocation: () =
                                 Export
                             </button>
                             <button
-                                onFocus={e => e.currentTarget.blur()}
+                                onFocus={(e) => e.currentTarget.blur()}
                                 onClick={() => {
                                     const opt = window.electron.dialog.showOpenDialogSync(
                                         window.electron.BrowserWindow.getFocusedWindow() ||
@@ -135,7 +138,7 @@ const Settings = ({ promptSetDefaultLocation }: { promptSetDefaultLocation: () =
                                 Import
                             </button>
                             <button
-                                onFocus={e => e.currentTarget.blur()}
+                                onFocus={(e) => e.currentTarget.blur()}
                                 onClick={() => {
                                     const confirm1 = window.electron.dialog.showMessageBoxSync(
                                         window.electron.BrowserWindow.getFocusedWindow() ||
@@ -184,7 +187,7 @@ const Settings = ({ promptSetDefaultLocation }: { promptSetDefaultLocation: () =
                         <div className="name">Issues? :</div>
                         <div className="current">
                             <button
-                                onFocus={e => e.currentTarget.blur()}
+                                onFocus={(e) => e.currentTarget.blur()}
                                 className="postIssue"
                                 onClick={() =>
                                     window.electron.shell.openExternal(

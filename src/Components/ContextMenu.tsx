@@ -47,7 +47,7 @@ const ContextMenu = forwardRef((props: Iprops | null, ref: React.ForwardedRef<HT
             onBlur={() => {
                 props?.closeContextMenu();
             }}
-            onClick={e => {
+            onClick={(e) => {
                 e.currentTarget.blur();
             }}
             ref={ref}
@@ -88,7 +88,7 @@ const ContextMenu = forwardRef((props: Iprops | null, ref: React.ForwardedRef<HT
                         role="menuitem"
                         onClick={() => {
                             if (props?.item)
-                                setHistory(init => {
+                                setHistory((init) => {
                                     const newData = init;
                                     newData.splice(props.item?.index || 0, 1);
                                     return [...newData];
@@ -105,7 +105,7 @@ const ContextMenu = forwardRef((props: Iprops | null, ref: React.ForwardedRef<HT
                 ) : isBookmark ? (
                     <li
                         role="menuitem"
-                        onClick={() => setBookmarks(init => [...init.filter(e => e.link !== link)])}
+                        onClick={() => setBookmarks((init) => [...init.filter((e) => e.link !== link)])}
                     >
                         Remove Bookmark
                     </li>

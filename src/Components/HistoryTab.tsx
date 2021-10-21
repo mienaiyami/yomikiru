@@ -11,7 +11,7 @@ const HistoryTab = (): ReactElement => {
             <h2>
                 History
                 <button
-                    onFocus={e => e.currentTarget.blur()}
+                    onFocus={(e) => e.currentTarget.blur()}
                     onClick={() => {
                         window.electron.dialog
                             .showMessageBox(
@@ -24,7 +24,7 @@ const HistoryTab = (): ReactElement => {
                                     buttons: ["Yes", "No"],
                                 }
                             )
-                            .then(res => {
+                            .then((res) => {
                                 if (res && res.response === 0) setHistory([]);
                             });
                     }}

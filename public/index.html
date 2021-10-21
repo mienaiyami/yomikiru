@@ -12,18 +12,14 @@
             // }
             window.app = {};
             const global = globalThis;
-            const collator = Intl.Collator(undefined, { numeric: true, sensitivity: "base" });
-            window.app.betterSortOrder = collator.compare;
-
-            // TODO:
             window.loadManga = "";
-            window.addEventListener("message", (e) => {
-                if (e.data.message && e.data.message === "loadMangaFromLink") {
-                    console.log("aaaaaa");
-                    if (e.data.link) window.loadManga = e.data.link;
-                    console.log(window.electron);
-                }
-            });
+            // window.addEventListener("message", (e) => {
+            //     if (e.data.message && e.data.message === "loadMangaFromLink") {
+            //         console.log("aaaaaa");
+            //         if (e.data.link) window.loadManga = e.data.link;
+            //         console.log(window.electron);
+            //     }
+            // });
         </script>
     </head>
     <body>

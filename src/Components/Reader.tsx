@@ -32,10 +32,12 @@ const Reader = () => {
         setBookmarks,
         addNewBookmark,
         setLoadingMangaPercent,
+        currentPageNumber,
         setCurrentPageNumber,
         pageNumChangeDisabled,
         closeReader,
         prevNextChapter,
+        scrollToPage,
     } = useContext(AppContext);
     const { showContextMenu } = useContext(MainContext);
     const [images, setImages] = useState<string[]>([]);
@@ -43,7 +45,7 @@ const Reader = () => {
     const [imagesLength, setImagesLength] = useState(0);
     const [imagesLoaded, setImagesLoaded] = useState(0);
     const [isCtrlsOpen, setctrlOpen] = useState(false);
-    const [isBookmarked, setBookmarked] = useState(bookmarks.map(e => e.link).includes(linkInReader));
+    const [isBookmarked, setBookmarked] = useState(false);
     const sizePlusRef = useRef<HTMLButtonElement>(null);
     const sizeMinusRef = useRef<HTMLButtonElement>(null);
     const openPrevRef = useRef<HTMLButtonElement>(null);
@@ -74,7 +76,7 @@ const Reader = () => {
     useLayoutEffect(() => {
         window.app.clickDelay = 100;
         window.app.lastClick = 0;
-        window.addEventListener("keypress", e => {
+        window.addEventListener("keypress", (e) => {
             if (window.app.isReaderOpen && document.activeElement!.tagName === "BODY") {
                 if (e.shiftKey && e.key === " ") {
                     e.preventDefault();
@@ -126,7 +128,9 @@ const Reader = () => {
             }
         });
         window.addEventListener("keyup", () => {
-            readerRef.current!.style.scrollBehavior = "smooth";
+            if (window.app.isReaderOpen && document.activeElement!.tagName === "BODY") {
+                document.body.style.scrollBehavior = "smooth";
+            }
         });
     }, []);
     const changePageNumber = () => {
@@ -134,7 +138,7 @@ const Reader = () => {
             const elem = document.elementFromPoint(window.innerWidth / 2, window.innerHeight / 4);
             if (elem && elem.tagName === "IMG") {
                 // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-                const pageNumber = parseInt(elem.getAttribute("pagenumber")!);
+                const pageNumber = parseInt(elem.getAttribute("data-pagenumber")!);
                 if (pageNumber) setCurrentPageNumber(pageNumber);
             }
         }
@@ -161,7 +165,7 @@ const Reader = () => {
             const supportedFormat = [".jpg", ".jpeg", ".png", "webp", ".svg", ".apng", ".gif", "avif"];
             const binFiles: string[] = [];
             const imgs = files
-                .filter(e => {
+                .filter((e) => {
                     if (window.path.extname(e) === ".bin") {
                         binFiles.push(e);
                         return true;
@@ -184,7 +188,7 @@ const Reader = () => {
             }
             if (binFiles.length > 0) {
                 let errMsg = "";
-                binFiles.forEach(e => {
+                binFiles.forEach((e) => {
                     errMsg += e + "\n";
                 });
                 window.electron.dialog.showMessageBox(
@@ -207,6 +211,7 @@ const Reader = () => {
         setCurrentPageNumber(1);
         setImagesLength(0);
         setImagesLoaded(0);
+        setBookmarked(bookmarks.map((e) => e.link).includes(link));
         const linksplitted = link.split(window.path.sep);
         const mangaOpened: ListItem = {
             mangaName: linksplitted[linksplitted.length - 2],
@@ -216,7 +221,7 @@ const Reader = () => {
             pages: imgs.length,
         };
         setMangaInReader(mangaOpened);
-        setHistory(initial => {
+        setHistory((initial) => {
             const newData = [];
             if (initial.length > 0 && initial[0].link === mangaOpened.link) {
                 initial.shift();
@@ -241,6 +246,9 @@ const Reader = () => {
             }
         }
     }, [imagesLoaded]);
+    useEffect(() => {
+        scrollToPage(currentPageNumber);
+    }, [appSettings.readerWidth]);
     useEffect(() => {
         if (linkInReader && linkInReader !== "") {
             if (linkInReader === "first") {
@@ -298,7 +306,7 @@ const Reader = () => {
                 <Button
                     className={`ctrl-menu-item ctrl-menu-extender ${isCtrlsOpen ? "open" : ""}`}
                     clickAction={() => {
-                        setctrlOpen(init => !init);
+                        setctrlOpen((init) => !init);
                     }}
                     tooltip="Tools"
                 >
@@ -310,7 +318,7 @@ const Reader = () => {
                         tooltip="Size +"
                         btnRef={sizePlusRef}
                         clickAction={() => {
-                            setAppSettings(init => {
+                            setAppSettings((init) => {
                                 init.readerWidth =
                                     init.readerWidth + 5 > 100
                                         ? 100
@@ -329,7 +337,7 @@ const Reader = () => {
                         tooltip="Size -"
                         btnRef={sizeMinusRef}
                         clickAction={() => {
-                            setAppSettings(init => {
+                            setAppSettings((init) => {
                                 init.readerWidth =
                                     init.readerWidth - 5 > 100
                                         ? 100
@@ -382,9 +390,11 @@ const Reader = () => {
                                             buttons: ["Yes", "No"],
                                         }
                                     )
-                                    .then(res => {
+                                    .then((res) => {
                                         if (res.response === 0) {
-                                            setBookmarks(init => [...init.filter(e => e.link !== linkInReader)]);
+                                            setBookmarks((init) => [
+                                                ...init.filter((e) => e.link !== linkInReader),
+                                            ]);
                                             setBookmarked(false);
                                         }
                                     });
@@ -425,7 +435,7 @@ const Reader = () => {
                                     : appSettings.readerWidth) + "%",
                         }}
                         data-pagenumber={i + 1}
-                        onContextMenu={ev => {
+                        onContextMenu={(ev) => {
                             showContextMenu({
                                 isImg: true,
                                 e: ev.nativeEvent,
@@ -433,15 +443,15 @@ const Reader = () => {
                             });
                         }}
                         onError={() => {
-                            setImagesLoaded(init => init + 1);
+                            setImagesLoaded((init) => init + 1);
                         }}
                         onAbort={() => {
-                            setImagesLoaded(init => init + 1);
+                            setImagesLoaded((init) => init + 1);
                         }}
-                        onLoad={ev => {
-                            setImagesLoaded(init => init + 1);
+                        onLoad={(ev) => {
+                            setImagesLoaded((init) => init + 1);
                             if (ev.currentTarget.offsetHeight / ev.currentTarget.offsetWidth <= 1.2) {
-                                setWideImages(init => [...init, e]);
+                                setWideImages((init) => [...init, e]);
                             }
                         }}
                         title={e}
@@ -461,7 +471,7 @@ const Button = (props: any) => {
             ref={props.btnRef}
             onClick={props.clickAction}
             tabIndex={-1}
-            onFocus={e => e.currentTarget.blur()}
+            onFocus={(e) => e.currentTarget.blur()}
         >
             {props.children}
         </button>

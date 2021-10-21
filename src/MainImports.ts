@@ -1,5 +1,8 @@
 import { app, dialog, BrowserWindow, clipboard, nativeImage } from "@electron/remote";
 import { ipcRenderer, shell } from "electron";
+/*//! i know its dangerous but its offline app and i was unable to get BrowserWindow to work
+  //! in renderer with contextBridge from preload
+ */
 import path from "path";
 import fs from "fs";
 declare global {

@@ -51,7 +51,6 @@ body {
         font-family: inherit;
     }
     --titleBar-height: 40px;
-    // scroll-behavior: smooth;
     --button-width: 55px;
     [data-tooltip] {
         position: relative;
@@ -91,6 +90,9 @@ body {
         height: var(--titleBar-height);
         user-select: none;
         background: var(--topBar-color);
+        button {
+            font-size: 18px;
+        }
         .homeBtns {
             position: absolute;
             left: 0;
@@ -286,7 +288,6 @@ body {
         }
         .listCont {
             .location-cont {
-                // padding: 10px 10px;
                 position: relative;
                 height: 100%;
                 overflow-y: scroll;
@@ -461,7 +462,6 @@ body {
             z-index: 1000;
             display: flex;
             flex-direction: column;
-            transition: 0.1s top;
             .info-cont {
                 width: 100%;
                 display: grid;
