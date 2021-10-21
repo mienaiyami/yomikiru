@@ -6,28 +6,24 @@
         <meta name="viewport" content="width=device-width, initial-scale=1.0" />
         <title>Manga Reader</title>
         <script>
-            if (typeof module === "object") {
-                window.module = module;
-                module = undefined;
-            }
+            // if (typeof module === "object") {
+            //     window.module = module;
+            //     module = undefined;
+            // }
+            window.app = {};
             const global = globalThis;
+            const collator = Intl.Collator(undefined, { numeric: true, sensitivity: "base" });
+            window.app.betterSortOrder = collator.compare;
 
-            // const path = require("path");
-            // const fs = require("fs");
-            // const { clipboard, ipcRenderer, shell, remote } = require("electron");
-            // const { app, dialog, BrowserWindow } = require("@electron/remote");
-            // let app = remote.app;
-            // let dialog = remote.dialog;
-            // let BrowserWindow = remote.BrowserWindow;
-            // window.fs = fs;
-            // window.path = path;
-            // window.electron = {
-            //     app,
-            //     dialog,
-            //     shell,
-            //     ipcRenderer,
-            //     BrowserWindow,
-            // };
+            // TODO:
+            window.loadManga = "";
+            window.addEventListener("message", (e) => {
+                if (e.data.message && e.data.message === "loadMangaFromLink") {
+                    console.log("aaaaaa");
+                    if (e.data.link) window.loadManga = e.data.link;
+                    console.log(window.electron);
+                }
+            });
         </script>
     </head>
     <body>

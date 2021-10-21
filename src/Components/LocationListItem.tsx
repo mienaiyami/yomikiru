@@ -39,6 +39,7 @@ const LocationListItem = ({
             <button
                 title="Open In Reader"
                 className="open-in-reader-btn"
+                onFocus={e => e.currentTarget.blur()}
                 onClick={() => openInReader(link)}
                 // onclick="makeImg($(this).siblings('a').attr('data-link'))"
             >

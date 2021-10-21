@@ -10,7 +10,7 @@ import {
 } from "@fortawesome/free-solid-svg-icons";
 import { faBookmark as farBookmark } from "@fortawesome/free-regular-svg-icons";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import { useContext, useEffect, useState } from "react";
+import { useContext, useEffect, useLayoutEffect, useRef, useState } from "react";
 import { AppContext } from "../App";
 import ReaderSideList from "./ReaderSideList";
 import { MainContext } from "./Main";
@@ -34,6 +34,7 @@ const Reader = () => {
         setLoadingMangaPercent,
         setCurrentPageNumber,
         pageNumChangeDisabled,
+        closeReader,
         prevNextChapter,
     } = useContext(AppContext);
     const { showContextMenu } = useContext(MainContext);
@@ -43,12 +44,97 @@ const Reader = () => {
     const [imagesLoaded, setImagesLoaded] = useState(0);
     const [isCtrlsOpen, setctrlOpen] = useState(false);
     const [isBookmarked, setBookmarked] = useState(bookmarks.map(e => e.link).includes(linkInReader));
+    const sizePlusRef = useRef<HTMLButtonElement>(null);
+    const sizeMinusRef = useRef<HTMLButtonElement>(null);
+    const openPrevRef = useRef<HTMLButtonElement>(null);
+    const openNextRef = useRef<HTMLButtonElement>(null);
+    const navToPageRef = useRef<HTMLButtonElement>(null);
+    const addToBookmarRef = useRef<HTMLButtonElement>(null);
+    const readerRef = useRef<HTMLDivElement>(null);
+    const scrollReader = (intensity: -2 | -1 | 1 | 2) => {
+        if (readerRef.current && window.app.lastClick <= Date.now() - window.app.clickDelay) {
+            window.app.lastClick = Date.now();
+            let startTime: number, prevTime: number;
+            readerRef.current.style.scrollBehavior = "auto";
+            const anim = (timeStamp: DOMTimeStamp) => {
+                if (startTime === undefined) startTime = timeStamp;
+                const elapsed = timeStamp - startTime;
+                if (prevTime !== timeStamp && readerRef.current) {
+                    readerRef.current.scrollBy(0, intensity * 30);
+                }
+                if (elapsed < window.app.clickDelay) {
+                    prevTime = timeStamp;
+                    window.requestAnimationFrame(anim);
+                }
+            };
+            window.requestAnimationFrame(anim);
+            return;
+        }
+    };
+    useLayoutEffect(() => {
+        window.app.clickDelay = 100;
+        window.app.lastClick = 0;
+        window.addEventListener("keypress", e => {
+            if (window.app.isReaderOpen && document.activeElement!.tagName === "BODY") {
+                if (e.shiftKey && e.key === " ") {
+                    e.preventDefault();
+                    scrollReader(-2);
+                    return;
+                }
+                switch (e.key) {
+                    case "h":
+                        closeReader();
+                        break;
+                    case "f":
+                        navToPageRef.current?.click();
+                        break;
+                    case "]":
+                        openNextRef.current?.click();
+                        break;
+                    case "[":
+                        openPrevRef.current?.click();
+                        break;
+                    case "b":
+                        addToBookmarRef.current?.click();
+                        break;
+                    case "=":
+                    case "+":
+                        sizePlusRef.current?.click();
+                        break;
+                    case "-":
+                        sizeMinusRef.current?.click();
+                        break;
+                    case " ":
+                        e.preventDefault();
+                        scrollReader(2);
+                        break;
+                    case "s":
+                    case "d":
+                    case "ArrowRight":
+                    case "ArrowDown":
+                        scrollReader(1);
+                        break;
+                    case "w":
+                    case "a":
+                    case "ArrowLeft":
+                    case "ArrowUp":
+                        scrollReader(-1);
+                        break;
+                    default:
+                        break;
+                }
+            }
+        });
+        window.addEventListener("keyup", () => {
+            readerRef.current!.style.scrollBehavior = "smooth";
+        });
+    }, []);
     const changePageNumber = () => {
         if (!pageNumChangeDisabled) {
             const elem = document.elementFromPoint(window.innerWidth / 2, window.innerHeight / 4);
             if (elem && elem.tagName === "IMG") {
                 // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-                const pageNumber = parseInt(elem.getAttribute("data-pagenumber")!);
+                const pageNumber = parseInt(elem.getAttribute("pagenumber")!);
                 if (pageNumber) setCurrentPageNumber(pageNumber);
             }
         }
@@ -82,7 +168,7 @@ const Reader = () => {
                     }
                     return supportedFormat.includes(window.path.extname(e));
                 })
-                .sort(window.betterSortOrder);
+                .sort(window.app.betterSortOrder);
             if (imgs.length <= 0) {
                 window.electron.dialog.showMessageBox(
                     window.electron.BrowserWindow.getFocusedWindow() ||
@@ -188,7 +274,12 @@ const Reader = () => {
         }
     }, [linkInReader]);
     return (
-        <div id="reader" style={{ display: isReaderOpen ? "block" : "none" }} onScroll={() => changePageNumber()}>
+        <div
+            ref={readerRef}
+            id="reader"
+            style={{ display: isReaderOpen ? "block" : "none" }}
+            onScroll={() => changePageNumber()}
+        >
             <div className="ctrl-bar">
                 <svg xmlns="http://www.w3.org/2000/svg" style={{ display: "none" }}>
                     <defs>
@@ -204,22 +295,21 @@ const Reader = () => {
                         </filter>
                     </defs>
                 </svg>
-                <button
+                <Button
                     className={`ctrl-menu-item ctrl-menu-extender ${isCtrlsOpen ? "open" : ""}`}
-                    tabIndex={-1}
-                    onClick={() => {
+                    clickAction={() => {
                         setctrlOpen(init => !init);
                     }}
-                    data-tooltip="Tools"
+                    tooltip="Tools"
                 >
                     <FontAwesomeIcon icon={isCtrlsOpen ? faTimes : faBars} />
-                </button>
+                </Button>
                 <div className="ctrl-menu">
-                    <button
+                    <Button
                         className="ctrl-menu-item"
-                        tabIndex={-1}
-                        data-tooltip="Size +"
-                        onClick={() => {
+                        tooltip="Size +"
+                        btnRef={sizePlusRef}
+                        clickAction={() => {
                             setAppSettings(init => {
                                 init.readerWidth =
                                     init.readerWidth + 5 > 100
@@ -232,12 +322,13 @@ const Reader = () => {
                         }}
                     >
                         <FontAwesomeIcon icon={faPlus} />
-                    </button>
-                    <button
+                    </Button>
+                    <Button
                         className="ctrl-menu-item"
                         tabIndex={-1}
-                        data-tooltip="Size -"
-                        onClick={() => {
+                        tooltip="Size -"
+                        btnRef={sizeMinusRef}
+                        clickAction={() => {
                             setAppSettings(init => {
                                 init.readerWidth =
                                     init.readerWidth - 5 > 100
@@ -250,32 +341,35 @@ const Reader = () => {
                         }}
                     >
                         <FontAwesomeIcon icon={faMinus} />
-                    </button>
-                    <button
+                    </Button>
+                    <Button
                         className="ctrl-menu-item"
                         tabIndex={-1}
-                        data-tooltip="Open Previous"
-                        onClick={() => {
+                        btnRef={openPrevRef}
+                        tooltip="Open Previous"
+                        clickAction={() => {
                             setLinkInReader(prevNextChapter.prev);
                         }}
                     >
                         <FontAwesomeIcon icon={faArrowLeft} />
-                    </button>
-                    <button
+                    </Button>
+                    <Button
                         className="ctrl-menu-item"
                         tabIndex={-1}
-                        data-tooltip="Open Next"
-                        onClick={() => {
+                        btnRef={openNextRef}
+                        tooltip="Open Next"
+                        clickAction={() => {
                             setLinkInReader(prevNextChapter.next);
                         }}
                     >
                         <FontAwesomeIcon icon={faArrowRight} />
-                    </button>
-                    <button
+                    </Button>
+                    <Button
                         className="ctrl-menu-item"
                         tabIndex={-1}
-                        data-tooltip="Bookmark"
-                        onClick={() => {
+                        tooltip="Bookmark"
+                        btnRef={addToBookmarRef}
+                        clickAction={() => {
                             if (isBookmarked) {
                                 return window.electron.dialog
                                     .showMessageBox(
@@ -302,15 +396,16 @@ const Reader = () => {
                         }}
                     >
                         <FontAwesomeIcon icon={isBookmarked ? faBookmark : farBookmark} />
-                    </button>
-                    <button
+                    </Button>
+                    <Button
                         className="ctrl-menu-item"
                         tabIndex={-1}
-                        data-tooltip="Navigate To Page"
-                        onClick={() => pageNumberInputRef.current?.focus()}
+                        btnRef={navToPageRef}
+                        tooltip="Navigate To Page"
+                        clickAction={() => pageNumberInputRef.current?.focus()}
                     >
                         <FontAwesomeIcon icon={faFile} />
-                    </button>
+                    </Button>
                 </div>
             </div>
             <ReaderSideList />
@@ -355,6 +450,21 @@ const Reader = () => {
                 ))}
             </section>
         </div>
+    );
+};
+
+const Button = (props: any) => {
+    return (
+        <button
+            className={props.className}
+            data-tooltip={props.tooltip}
+            ref={props.btnRef}
+            onClick={props.clickAction}
+            tabIndex={-1}
+            onFocus={e => e.currentTarget.blur()}
+        >
+            {props.children}
+        </button>
     );
 };
 

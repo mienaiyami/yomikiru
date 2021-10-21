@@ -6,7 +6,7 @@ interface Iprops extends IContextMenuData {
     realRef: React.RefObject<HTMLDivElement>;
 }
 const ContextMenu = forwardRef((props: Iprops | null, ref: React.ForwardedRef<HTMLDivElement>) => {
-    const { openInReader, setBookmarks, setHistory, addNewBookmark } = useContext(AppContext);
+    const { openInReader, setBookmarks, setHistory, addNewBookmark, openInNewWindow } = useContext(AppContext);
     const [link, setLink] = useState("");
     const [pos, setPos] = useState({ x: 0, y: 0 });
     const [visible, setVisible] = useState(false);
@@ -24,12 +24,12 @@ const ContextMenu = forwardRef((props: Iprops | null, ref: React.ForwardedRef<HT
             if (props.isBookmark || props.isHistory || props.isFile || props.isImg) {
                 if (props.realRef.current) {
                     let x = props.e.clientX;
-                    let y = props.e.clientY - window.titleBarHeight;
+                    let y = props.e.clientY - window.app.titleBarHeight;
                     if (x >= window.innerWidth - props.realRef.current.offsetWidth - 10) {
                         x -= props.realRef.current.offsetWidth;
                     }
                     if (y >= window.innerHeight - props.realRef.current.offsetHeight - 10) {
-                        y -= props.realRef.current.offsetHeight - window.titleBarHeight;
+                        y -= props.realRef.current.offsetHeight - window.app.titleBarHeight;
                     }
                     setPos({ x, y });
                 }
@@ -74,7 +74,9 @@ const ContextMenu = forwardRef((props: Iprops | null, ref: React.ForwardedRef<HT
                 ) : (
                     ""
                 )}
-                {/* <li role="menuitem">Open in new Window</li> */}
+                <li role="menuitem" onClick={() => openInNewWindow(link)}>
+                    Open in new Window
+                </li>
                 <li role="menuitem" onClick={() => window.electron.shell.showItemInFolder(link)}>
                     Show in File Explorer
                 </li>

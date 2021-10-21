@@ -27,9 +27,9 @@ const InfoOnHover = (props: IhoverInfo) => {
                         document.querySelector<HTMLDivElement>(props.parent)!.getBoundingClientRect().x -
                         hoverInfoWidth;
                 }
-                let y = props.y - window.titleBarHeight;
-                if (y > window.innerHeight - ref.current.offsetHeight - window.titleBarHeight - 5) {
-                    y = window.innerHeight - ref.current.offsetHeight - window.titleBarHeight - 5;
+                let y = props.y - window.app.titleBarHeight;
+                if (y > window.innerHeight - ref.current.offsetHeight - window.app.titleBarHeight - 5) {
+                    y = window.innerHeight - ref.current.offsetHeight - window.app.titleBarHeight - 5;
                 }
                 setPos({ x, y });
             }

@@ -22,7 +22,7 @@ const LocationsTab = ({
             setIsLoadingFile(true);
             window.fs.readdir(link, (err, files) => {
                 if (err) return console.error(err);
-                const dirNames: string[] = files.sort(window.betterSortOrder);
+                const dirNames: string[] = files.sort(window.app.betterSortOrder);
                 if (inputRef.current) {
                     inputRef.current.value = "";
                 }
@@ -56,6 +56,7 @@ const LocationsTab = ({
                 <button
                     data-tooltip="Sort"
                     tabIndex={-1}
+                    onFocus={e => e.currentTarget.blur()}
                     onClick={() =>
                         setAppSettings(init => {
                             switch (init.locationListSortType) {
@@ -80,6 +81,7 @@ const LocationsTab = ({
                 <div className="cont">
                     <button
                         tabIndex={-1}
+                        onFocus={e => e.currentTarget.blur()}
                         onClick={() => {
                             setCurrentLink(link => window.path.dirname(link));
                         }}

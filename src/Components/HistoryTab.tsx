@@ -11,6 +11,7 @@ const HistoryTab = (): ReactElement => {
             <h2>
                 History
                 <button
+                    onFocus={e => e.currentTarget.blur()}
                     onClick={() => {
                         window.electron.dialog
                             .showMessageBox(
@@ -28,7 +29,8 @@ const HistoryTab = (): ReactElement => {
                             });
                     }}
                     tabIndex={-1}
-                    data-tooltip="Clear All">
+                    data-tooltip="Clear All"
+                >
                     <FontAwesomeIcon icon={faTrash} />
                 </button>
             </h2>

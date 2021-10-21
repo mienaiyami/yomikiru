@@ -19,9 +19,11 @@ const Settings = ({ promptSetDefaultLocation }: { promptSetDefaultLocation: () =
                         <div className="current">
                             <input type="text" value={appSettings.baseDir} readOnly />
                             <button
+                                onFocus={e => e.currentTarget.blur()}
                                 onClick={() => {
                                     promptSetDefaultLocation();
-                                }}>
+                                }}
+                            >
                                 Change Default
                             </button>
                         </div>
@@ -42,6 +44,7 @@ const Settings = ({ promptSetDefaultLocation }: { promptSetDefaultLocation: () =
                             />
                             <button
                                 data-type="enable"
+                                onFocus={e => e.currentTarget.blur()}
                                 ref={historyBtnRef}
                                 onClick={e => {
                                     if (e.currentTarget.getAttribute("data-type") === "enable") {
@@ -62,7 +65,8 @@ const Settings = ({ promptSetDefaultLocation }: { promptSetDefaultLocation: () =
                                         e.currentTarget.setAttribute("data-type", "enable");
                                         e.currentTarget.classList.remove("enabled");
                                     }
-                                }}>
+                                }}
+                            >
                                 Change Default
                             </button>
                         </div>
@@ -71,6 +75,7 @@ const Settings = ({ promptSetDefaultLocation }: { promptSetDefaultLocation: () =
                         <div className="name">Bookmarks:</div>
                         <div className="current">
                             <button
+                                onFocus={e => e.currentTarget.blur()}
                                 onClick={e => {
                                     const opt = window.electron.dialog.showSaveDialogSync(
                                         window.electron.BrowserWindow.getFocusedWindow() ||
@@ -88,10 +93,12 @@ const Settings = ({ promptSetDefaultLocation }: { promptSetDefaultLocation: () =
                                     );
                                     if (opt == undefined) return;
                                     window.fs.writeFileSync(opt, JSON.stringify(bookmarks) || JSON.stringify([]));
-                                }}>
+                                }}
+                            >
                                 Export
                             </button>
                             <button
+                                onFocus={e => e.currentTarget.blur()}
                                 onClick={() => {
                                     const opt = window.electron.dialog.showOpenDialogSync(
                                         window.electron.BrowserWindow.getFocusedWindow() ||
@@ -123,10 +130,12 @@ const Settings = ({ promptSetDefaultLocation }: { promptSetDefaultLocation: () =
                                     //     buttons: ['Ok'],
                                     // });
                                     // setBookmarks([...bookmarks,...dataToAdd])
-                                }}>
+                                }}
+                            >
                                 Import
                             </button>
                             <button
+                                onFocus={e => e.currentTarget.blur()}
                                 onClick={() => {
                                     const confirm1 = window.electron.dialog.showMessageBoxSync(
                                         window.electron.BrowserWindow.getFocusedWindow() ||
@@ -155,7 +164,8 @@ const Settings = ({ promptSetDefaultLocation }: { promptSetDefaultLocation: () =
                                         if (confirm2 === 1) return;
                                     }
                                     setBookmarks([]);
-                                }}>
+                                }}
+                            >
                                 Delete All Bookmarks
                             </button>
                         </div>
@@ -174,13 +184,15 @@ const Settings = ({ promptSetDefaultLocation }: { promptSetDefaultLocation: () =
                         <div className="name">Issues? :</div>
                         <div className="current">
                             <button
+                                onFocus={e => e.currentTarget.blur()}
                                 className="postIssue"
                                 onClick={() =>
                                     window.electron.shell.openExternal(
                                         "https://github.com/mienaiyami/offline-manga-reader/issues"
                                     )
                                 }
-                                tabIndex={-1}>
+                                tabIndex={-1}
+                            >
                                 <FontAwesomeIcon icon={faGithub} /> Submit Issue
                             </button>
                         </div>
@@ -195,7 +207,7 @@ const Settings = ({ promptSetDefaultLocation }: { promptSetDefaultLocation: () =
                                 <th>Function</th>
                             </tr>
                             <tr>
-                                <td>- and = and +</td>
+                                <td> - and = and +</td>
                                 <td>size</td>
                             </tr>
                             <tr>
@@ -208,23 +220,19 @@ const Settings = ({ promptSetDefaultLocation }: { promptSetDefaultLocation: () =
                             </tr>
                             <tr>
                                 <td>h</td>
-                                <td>Home/Refresh</td>
+                                <td>Home</td>
+                            </tr>
+                            <tr>
+                                <td>ctrl r</td>
+                                <td>Reload</td>
                             </tr>
                             <tr>
                                 <td>f</td>
                                 <td>search page number</td>
                             </tr>
                             <tr>
-                                <td>&lt; and &gt;</td>
+                                <td>[ and ]</td>
                                 <td>prev/next</td>
-                            </tr>
-                            <tr>
-                                <td>Enter or /</td>
-                                <td>focus input box(home page only)</td>
-                            </tr>
-                            <tr>
-                                <td>ctrl + s</td>
-                                <td>settings</td>
                             </tr>
                         </tbody>
                     </table>

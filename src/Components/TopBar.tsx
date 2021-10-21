@@ -6,16 +6,8 @@ import { faWindowMaximize, faWindowRestore } from "@fortawesome/free-regular-svg
 import { AppContext } from "../App";
 
 const TopBar = forwardRef((props, forwaredRef: React.ForwardedRef<HTMLInputElement>): ReactElement => {
-    const [isMaximized, setMaximized] = useState(true);
-    useEffect(() => {
-        window.electron.ipcRenderer.on("isMaximized", () => {
-            setMaximized(true);
-        });
-        window.electron.ipcRenderer.on("isRestored", () => {
-            setMaximized(false);
-        });
-    }, []);
     const [title, setTitle] = useState<string>("Manga Reader");
+    const [isMaximized, setMaximized] = useState(window.electron.BrowserWindow.getFocusedWindow()?.isMaximized);
     const {
         setSettingOpen,
         mangaInReader,
@@ -38,6 +30,16 @@ const TopBar = forwardRef((props, forwaredRef: React.ForwardedRef<HTMLInputEleme
         }
     };
     useEffect(() => {
+        window.electron.BrowserWindow.getFocusedWindow()?.on("maximize", () => setMaximized(true));
+        window.electron.BrowserWindow.getFocusedWindow()?.on("unmaximize", () => setMaximized(false));
+        // window.electron.ipcRenderer.on("isMaximized", () => {
+        //     setMaximized(true);
+        // });
+        // window.electron.ipcRenderer.on("isRestored", () => {
+        //     setMaximized(false);
+        // });
+    }, []);
+    useEffect(() => {
         setTitleWithSize();
     }, [mangaInReader]);
 
@@ -52,6 +54,7 @@ const TopBar = forwardRef((props, forwaredRef: React.ForwardedRef<HTMLInputEleme
             <div className="homeBtns">
                 <button
                     className="home"
+                    onFocus={(e) => e.currentTarget.blur()}
                     onClick={() => {
                         closeReader();
                         // window.location.reload();
@@ -63,8 +66,9 @@ const TopBar = forwardRef((props, forwaredRef: React.ForwardedRef<HTMLInputEleme
                 </button>
                 <button
                     className="settingsBtn"
+                    onFocus={(e) => e.currentTarget.blur()}
                     onClick={() => {
-                        setSettingOpen(state => !state);
+                        setSettingOpen((state) => !state);
                     }}
                     tabIndex={-1}
                     data-tooltip="Settings"
@@ -73,6 +77,7 @@ const TopBar = forwardRef((props, forwaredRef: React.ForwardedRef<HTMLInputEleme
                 </button>
                 <button
                     className="githubbtn"
+                    onFocus={(e) => e.currentTarget.blur()}
                     onClick={() =>
                         window.electron.shell.openExternal("https://github.com/mienaiYami/offline-manga-reader")
                     }
@@ -100,13 +105,13 @@ const TopBar = forwardRef((props, forwaredRef: React.ForwardedRef<HTMLInputEleme
                         defaultValue={1}
                         placeholder="Page Num."
                         ref={forwaredRef}
-                        onFocus={e => {
+                        onFocus={(e) => {
                             e.currentTarget.select();
                         }}
                         onBlur={() => {
                             setPageNumChangeDisabled(false);
                         }}
-                        onKeyUp={e => {
+                        onKeyUp={(e) => {
                             if (/[0-9]/gi.test(e.key) || e.key === "Backspace") {
                                 const pagenumber = parseInt(e.currentTarget.value);
                                 if (!pagenumber) return;
@@ -132,8 +137,9 @@ const TopBar = forwardRef((props, forwaredRef: React.ForwardedRef<HTMLInputEleme
                     tabIndex={-1}
                     id="minimizeBtn"
                     title="Minimize"
+                    onFocus={(e) => e.currentTarget.blur()}
                     onClick={() => {
-                        window.electron.ipcRenderer.send("minimizeApp");
+                        window.electron.BrowserWindow.getFocusedWindow()?.minimize();
                     }}
                 >
                     <FontAwesomeIcon icon={faMinus} />
@@ -141,9 +147,11 @@ const TopBar = forwardRef((props, forwaredRef: React.ForwardedRef<HTMLInputEleme
                 <button
                     tabIndex={-1}
                     id="maximizeRestoreBtn"
+                    onFocus={(e) => e.currentTarget.blur()}
                     title={isMaximized ? "Restore" : "Maximize"}
                     onClick={() => {
-                        window.electron.ipcRenderer.send("maximizeRestoreApp");
+                        if (isMaximized) return window.electron.BrowserWindow.getFocusedWindow()?.restore();
+                        window.electron.BrowserWindow.getFocusedWindow()?.maximize();
                     }}
                 >
                     <FontAwesomeIcon icon={isMaximized ? faWindowRestore : faWindowMaximize} />
@@ -152,8 +160,9 @@ const TopBar = forwardRef((props, forwaredRef: React.ForwardedRef<HTMLInputEleme
                     tabIndex={-1}
                     id="closeBtn"
                     title="Close"
+                    onFocus={(e) => e.currentTarget.blur()}
                     onClick={() => {
-                        window.electron.ipcRenderer.send("closeApp");
+                        window.electron.BrowserWindow.getFocusedWindow()?.close();
                     }}
                 >
                     <FontAwesomeIcon icon={faTimes} />

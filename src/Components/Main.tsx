@@ -1,4 +1,4 @@
-import { createContext, ReactElement, useContext, useEffect, useRef, useState } from "react";
+import { createContext, ReactElement, useContext, useEffect, useLayoutEffect, useRef, useState } from "react";
 import { AppContext } from "../App";
 import BookmarkTab from "./BookmarkTab";
 import ContextMenu from "./ContextMenu";
@@ -39,6 +39,13 @@ const Main = ({ promptSetDefaultLocation }: { promptSetDefaultLocation: () => vo
         setContextMenuData(null);
         setContextMenuOpen(false);
     };
+    useLayoutEffect(() => {
+        document.addEventListener("click", () => setInfoOnHover(null));
+        document.addEventListener("resize", () => setInfoOnHover(null));
+    }, []);
+    useEffect(() => {
+        setInfoOnHover(null);
+    }, [linkInReader]);
     return (
         <MainContext.Provider value={{ showContextMenu, isContextMenuOpen, setInfoOnHover }}>
             <div id="app">

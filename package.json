@@ -87,7 +87,10 @@
                                 {
                                     "html": "./public/index.html",
                                     "js": "./src/index.tsx",
-                                    "name": "home"
+                                    "name": "home",
+                                    "preload": {
+                                        "js": "./electron/preload.ts"
+                                    }
                                 }
                             ]
                         }

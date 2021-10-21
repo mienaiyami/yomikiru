@@ -1,4 +1,4 @@
-import "./MainImports";
+// import "./MainImports";
 import { createContext, createRef, ReactElement, useEffect, useState } from "react";
 import Main from "./Components/Main";
 import TopBar from "./Components/TopBar";
@@ -30,7 +30,7 @@ const getBookmarkAndHistory = () => {
             bookmarkDataInit.push(...JSON.parse(rawdata));
         }
     } else {
-        window.fs.writeFile(bookmarksPath, "[]", err => {
+        window.fs.writeFile(bookmarksPath, "[]", (err) => {
             if (err) console.error(err);
         });
     }
@@ -42,7 +42,7 @@ const getBookmarkAndHistory = () => {
             historyDataInit.push(...data);
         }
     } else {
-        window.fs.writeFile(historyPath, "[]", err => {
+        window.fs.writeFile(historyPath, "[]", (err) => {
             if (err) console.error(err);
         });
     }
@@ -88,6 +88,7 @@ interface IAppContext {
         }>
     >;
     closeReader: () => void;
+    openInNewWindow: (link: string) => void;
 }
 
 // eslint-disable-next-line @typescript-eslint/ban-ts-comment
@@ -108,20 +109,25 @@ const App = (): ReactElement => {
     const pageNumberInputRef: React.RefObject<HTMLInputElement> = createRef();
     const [bookmarks, setBookmarks] = useState<ListItem[]>(bookmarkDataInit);
     const [history, setHistory] = useState<ListItem[]>(historyDataInit);
-    const openInReader = async (link: string) => {
+    const openInReader = (link: string) => {
         link = window.path.normalize(link);
+        console.log(link);
         if (window.fs.existsSync(link) && window.fs.lstatSync(link).isDirectory()) {
             setLinkInReader(link);
         }
     };
+
     const closeReader = () => {
         setReaderOpen(false);
         setLinkInReader("");
         setMangaInReader(null);
     };
+    useEffect(() => {
+        window.app.isReaderOpen = isReaderOpen;
+    }, [isReaderOpen]);
     const addNewBookmark = (newBk: ListItem) => {
         if (newBk) {
-            if (bookmarks.map(e => e.link).includes(newBk.link)) {
+            if (bookmarks.map((e) => e.link).includes(newBk.link)) {
                 return window.electron.dialog.showMessageBox(
                     window.electron.BrowserWindow.getFocusedWindow() ||
                         window.electron.BrowserWindow.getAllWindows()[0],
@@ -132,7 +138,7 @@ const App = (): ReactElement => {
                     }
                 );
             }
-            setBookmarks(init => [newBk, ...init]);
+            setBookmarks((init) => [newBk, ...init]);
         }
     };
     const promptSetDefaultLocation = (): void => {
@@ -145,16 +151,22 @@ const App = (): ReactElement => {
         if (!result) return;
         let path = "";
         if (result) path = window.path.normalize(result[0] + "\\");
-        setAppSettings(init => {
+        setAppSettings((init) => {
             init.baseDir = path;
             return { ...init };
         });
     };
+    const openInNewWindow = (link: string) => {
+        // const newWindow = window.open(document.URL);
+        // newWindow?.postMessage({ message: "loadMangaFromLink", link }, "*");
+        window.electron.ipcRenderer.send("openLinkInNewWindow", link);
+    };
     useEffect(() => {
         setFirstRendered(true);
-        window.titleBarHeight = parseFloat(
+        window.app.titleBarHeight = parseFloat(
             window.getComputedStyle(document.body).getPropertyValue("--titleBar-height")
         );
+        if (window.loadManga !== "") openInReader(window.loadManga);
     }, []);
     const scrollToPage = (pageNumber: number) => {
         const reader = document.querySelector("#reader");
@@ -183,21 +195,21 @@ const App = (): ReactElement => {
     }, [firstRendered]);
     useEffect(() => {
         if (firstRendered) {
-            window.fs.writeFile(bookmarksPath, JSON.stringify(bookmarks), err => {
+            window.fs.writeFile(bookmarksPath, JSON.stringify(bookmarks), (err) => {
                 if (err) console.error(err);
             });
         }
     }, [bookmarks]);
     useEffect(() => {
         if (firstRendered) {
-            window.fs.writeFile(historyPath, JSON.stringify(history), err => {
+            window.fs.writeFile(historyPath, JSON.stringify(history), (err) => {
                 if (err) console.error(err);
             });
         }
     }, [history]);
     useEffect(() => {
         if (firstRendered) {
-            window.fs.writeFile(settingsPath, JSON.stringify(appSettings), err => {
+            window.fs.writeFile(settingsPath, JSON.stringify(appSettings), (err) => {
                 if (err) console.error(err);
             });
         }
@@ -234,6 +246,7 @@ const App = (): ReactElement => {
                 prevNextChapter,
                 setPrevNextChapter,
                 closeReader,
+                openInNewWindow,
             }}
         >
             <TopBar ref={pageNumberInputRef} />

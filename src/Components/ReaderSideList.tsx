@@ -29,7 +29,6 @@ const ReaderSideList = () => {
             const nextIndex = listDataName.indexOf(mangaInReader.chapterName) + 1;
             const prevCh = prevIndex < 0 ? "first" : dir + chapterData[prevIndex].name;
             const nextCh = nextIndex >= chapterData.length ? "last" : dir + chapterData[nextIndex].name;
-            console.log({ prev: prevCh, next: nextCh });
             setPrevNextChapter({ prev: prevCh, next: nextCh });
         }
     };
@@ -48,12 +47,11 @@ const ReaderSideList = () => {
                 const supportedFormat = [".jpg", ".jpeg", ".png", "webp", ".svg", ".apng", ".gif", "avif"];
                 window.fs.readdir(dir, (err, files) => {
                     if (err) return console.error(err);
-                    files.sort(window.betterSortOrder);
+                    files.sort(window.app.betterSortOrder);
                     const listData: { name: string; pages: number }[] = [];
                     let validFile = 0;
                     let responseCompleted = 0;
                     const whenDone = () => {
-                        // console.log("aaaaa", validFile, responseCompleted);
                         changePrevNext();
                         setChapterData(listData);
                     };
@@ -147,6 +145,7 @@ const ReaderSideList = () => {
                         tabIndex={-1}
                         data-value="normal"
                         data-tooltip="Sort"
+                        onFocus={e => e.currentTarget.blur()}
                         onClick={() =>
                             setAppSettings(init => {
                                 switch (init.locationListSortType) {
