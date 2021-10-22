@@ -162,7 +162,7 @@ const Reader = () => {
                 setLinkInReader(mangaInReader?.link || "");
                 return setLoadingManga(false);
             }
-            const supportedFormat = [".jpg", ".jpeg", ".png", "webp", ".svg", ".apng", ".gif", "avif"];
+            const supportedFormat = [".jpg", ".jpeg", ".png", ".webp", ".svg", ".apng", ".gif", "avif"];
             const binFiles: string[] = [];
             const imgs = files
                 .filter((e) => {

@@ -3,13 +3,10 @@ import {
     session,
     BrowserWindow,
     Menu,
-    MenuItem,
     globalShortcut,
-    dialog,
     shell,
     ipcMain,
     MenuItemConstructorOptions,
-    protocol,
 } from "electron";
 import path from "path";
 import { homedir } from "os";
@@ -47,25 +44,8 @@ const createWindow = (link?: string) => {
         newWindow.maximize();
         newWindow.show();
     });
-    newWindow.webContents.setWindowOpenHandler(({ url }) => {
+    newWindow.webContents.setWindowOpenHandler(() => {
         return { action: "deny" };
-        // return {
-        //     action: "allow",
-        //     overrideBrowserWindowOptions: {
-        //         width: 1200,
-        //         height: 800,
-        //         minWidth: 940,
-        //         minHeight: 560,
-        //         frame: false,
-        //         backgroundColor: "#272727",
-        //         webPreferences: {
-        //             nodeIntegration: false,
-        //             // contextIsolation: false,
-        //             enableRemoteModule: true,
-        //             // preload: HOME_PRELOAD_WEBPACK_ENTRY,
-        //         },
-        //     },
-        // };
     });
 };
 const registerListener = () => {

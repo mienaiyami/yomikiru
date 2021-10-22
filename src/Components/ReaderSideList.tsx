@@ -44,7 +44,7 @@ const ReaderSideList = () => {
             prevMangaRef.current = mangaInReader.mangaName;
             const fn = async () => {
                 const dir = mangaInReader.link.replace(mangaInReader.chapterName, "");
-                const supportedFormat = [".jpg", ".jpeg", ".png", "webp", ".svg", ".apng", ".gif", "avif"];
+                const supportedFormat = [".jpg", ".jpeg", ".png", ".webp", ".svg", ".apng", ".gif", "avif"];
                 window.fs.readdir(dir, (err, files) => {
                     if (err) return console.error(err);
                     files.sort(window.app.betterSortOrder);
