@@ -149,16 +149,12 @@ const Reader = () => {
         window.fs.readdir(link, (err, files) => {
             if (err) return console.error(err);
             if (files.length <= 0) {
-                window.electron.dialog.showMessageBox(
-                    window.electron.BrowserWindow.getFocusedWindow() ||
-                        window.electron.BrowserWindow.getAllWindows()[0],
-                    {
-                        type: "error",
-                        title: "No images found",
-                        message: "Folder is empty.",
-                        detail: link,
-                    }
-                );
+                window.electron.dialog.showMessageBox(window.electron.getCurrentWindow(), {
+                    type: "error",
+                    title: "No images found",
+                    message: "Folder is empty.",
+                    detail: link,
+                });
                 setLinkInReader(mangaInReader?.link || "");
                 return setLoadingManga(false);
             }
@@ -174,15 +170,11 @@ const Reader = () => {
                 })
                 .sort(window.app.betterSortOrder);
             if (imgs.length <= 0) {
-                window.electron.dialog.showMessageBox(
-                    window.electron.BrowserWindow.getFocusedWindow() ||
-                        window.electron.BrowserWindow.getAllWindows()[0],
-                    {
-                        type: "error",
-                        title: "No images found",
-                        message: "Folder doesn't contain any supported image format.",
-                    }
-                );
+                window.electron.dialog.showMessageBox(window.electron.getCurrentWindow(), {
+                    type: "error",
+                    title: "No images found",
+                    message: "Folder doesn't contain any supported image format.",
+                });
                 setLinkInReader(mangaInReader?.link || "");
                 return setLoadingManga(false);
             }
@@ -191,16 +183,12 @@ const Reader = () => {
                 binFiles.forEach((e) => {
                     errMsg += e + "\n";
                 });
-                window.electron.dialog.showMessageBox(
-                    window.electron.BrowserWindow.getFocusedWindow() ||
-                        window.electron.BrowserWindow.getAllWindows()[0],
-                    {
-                        type: "warning",
-                        title: "Warning",
-                        message: "Unable to load following files.",
-                        detail: errMsg + "from folder\n" + link,
-                    }
-                );
+                window.electron.dialog.showMessageBox(window.electron.getCurrentWindow(), {
+                    title: "Warning",
+                    type: "warning",
+                    message: "Unable to load following files.",
+                    detail: errMsg + "from folder\n" + link,
+                });
             }
             loadImg(link, imgs);
         });
@@ -252,28 +240,20 @@ const Reader = () => {
     useEffect(() => {
         if (linkInReader && linkInReader !== "") {
             if (linkInReader === "first") {
-                window.electron.dialog.showMessageBox(
-                    window.electron.BrowserWindow.getFocusedWindow() ||
-                        window.electron.BrowserWindow.getAllWindows()[0],
-                    {
-                        title: "Error",
-                        type: "error",
-                        message: "First Chapter in List",
-                    }
-                );
+                window.electron.dialog.showMessageBox(window.electron.getCurrentWindow(), {
+                    title: "Error",
+                    type: "error",
+                    message: "First Chapter in List",
+                });
                 setLinkInReader(mangaInReader?.link || "");
                 return;
             }
             if (linkInReader === "last") {
-                window.electron.dialog.showMessageBox(
-                    window.electron.BrowserWindow.getFocusedWindow() ||
-                        window.electron.BrowserWindow.getAllWindows()[0],
-                    {
-                        title: "Error",
-                        type: "error",
-                        message: "Last Chapter in List",
-                    }
-                );
+                window.electron.dialog.showMessageBox(window.electron.getCurrentWindow(), {
+                    title: "Error",
+                    type: "error",
+                    message: "Last Chapter in List",
+                });
                 setLinkInReader(mangaInReader?.link || "");
                 return;
             }
@@ -380,16 +360,12 @@ const Reader = () => {
                         clickAction={() => {
                             if (isBookmarked) {
                                 return window.electron.dialog
-                                    .showMessageBox(
-                                        window.electron.BrowserWindow.getFocusedWindow() ||
-                                            window.electron.BrowserWindow.getAllWindows()[0],
-                                        {
-                                            title: "Warning",
-                                            type: "warning",
-                                            message: "Remove Bookmark?",
-                                            buttons: ["Yes", "No"],
-                                        }
-                                    )
+                                    .showMessageBox(window.electron.getCurrentWindow(), {
+                                        title: "Warning",
+                                        type: "warning",
+                                        message: "Remove Bookmark?",
+                                        buttons: ["Yes", "No"],
+                                    })
                                     .then((res) => {
                                         if (res.response === 0) {
                                             setBookmarks((init) => [

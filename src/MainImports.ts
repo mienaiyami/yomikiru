@@ -1,4 +1,4 @@
-import { app, dialog, BrowserWindow, clipboard, nativeImage } from "@electron/remote";
+import { app, dialog, getCurrentWindow, clipboard, nativeImage } from "@electron/remote";
 import { ipcRenderer, shell } from "electron";
 /*//! i know its dangerous but its offline app and i was unable to get BrowserWindow to work
   //! in renderer with contextBridge from preload
@@ -12,7 +12,8 @@ declare global {
             dialog: typeof dialog;
             shell: typeof shell;
             ipcRenderer: typeof ipcRenderer;
-            BrowserWindow: typeof BrowserWindow;
+            // BrowserWindow: typeof BrowserWindow;
+            getCurrentWindow: typeof getCurrentWindow;
             clipboard: typeof clipboard;
             nativeImage: typeof nativeImage;
         };
@@ -28,7 +29,7 @@ declare global {
         loadManga: string;
     }
     interface appsettings {
-        theme: "dark" | "light";
+        theme: string;
         bookmarksPath: string;
         historyPath: string;
         baseDir: string;
@@ -67,7 +68,8 @@ window.electron = {
     dialog,
     shell,
     ipcRenderer,
-    BrowserWindow,
+    getCurrentWindow,
+    // BrowserWindow,
     clipboard,
     nativeImage,
 };

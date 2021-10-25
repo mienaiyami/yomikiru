@@ -27,6 +27,8 @@ export const MainContext = createContext<IMainContext>();
 const Main = ({ promptSetDefaultLocation }: { promptSetDefaultLocation: () => void }): ReactElement => {
     const { appSettings, isReaderOpen, linkInReader } = useContext(AppContext);
     const [currentLink, setCurrentLink] = useState(appSettings.baseDir);
+    const [bookmarkTabDisplay, setBookmarkTabDisplay] = useState(true);
+    const [historyTabDisplay, setHistoryTabDisplay] = useState(true);
     const [infoOnHover, setInfoOnHover] = useState<IhoverInfo | null>(null);
     const [isContextMenuOpen, setContextMenuOpen] = useState(false);
     const contextMenuRef = useRef<HTMLDivElement>(null);
@@ -55,10 +57,14 @@ const Main = ({ promptSetDefaultLocation }: { promptSetDefaultLocation: () => vo
                         currentLink={currentLink}
                         setCurrentLink={setCurrentLink}
                     />
-                    <div className="divider"></div>
-                    <BookmarkTab />
-                    <div className="divider"></div>
-                    <HistoryTab />
+                    <div className="divider" onClick={() => setBookmarkTabDisplay((i) => !i)}>
+                        <div className="bar"></div>
+                    </div>
+                    {bookmarkTabDisplay ? <BookmarkTab /> : ""}
+                    <div className="divider" onClick={() => setHistoryTabDisplay((i) => !i)}>
+                        <div className="bar"></div>
+                    </div>
+                    {historyTabDisplay ? <HistoryTab /> : ""}
                 </div>
                 <Settings promptSetDefaultLocation={promptSetDefaultLocation} />
                 <LoadingScreen />

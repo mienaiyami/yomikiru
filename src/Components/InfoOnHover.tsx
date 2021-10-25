@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useLayoutEffect, useRef, useState } from "react";
 
 interface IhoverInfo {
     item: { chapterName: string; mangaName: string; pages: number; date: string };
@@ -10,9 +10,7 @@ const InfoOnHover = (props: IhoverInfo) => {
     const [visible, setVisible] = useState(false);
     const [pos, setPos] = useState<{ x: number; y: number }>({ x: 0, y: props.y });
     const ref = useRef<HTMLDivElement>(null);
-
-    useEffect(() => {
-        const setVib = setTimeout(() => setVisible(true), 500);
+    useLayoutEffect(() => {
         if (ref.current) {
             const hoverInfoWidth = 300;
             if (document.querySelector(props.parent)) {
@@ -34,8 +32,11 @@ const InfoOnHover = (props: IhoverInfo) => {
                 setPos({ x, y });
             }
         }
+    }, [props]);
+    useEffect(() => {
+        const setVib = setTimeout(() => setVisible(true), 500);
         return () => clearTimeout(setVib);
-    }, [ref, props]);
+    }, [props]);
     return (
         <div
             className="infoOnHover"

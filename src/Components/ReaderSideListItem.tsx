@@ -35,7 +35,7 @@ const ReaderSideListItem = forwardRef(
                     onClick={() => openInReader(window.path.join(parentLink, name))}
                     title={name}
                     ref={ref}
-                    onContextMenu={e => {
+                    onContextMenu={(e) => {
                         showContextMenu({
                             e: e.nativeEvent,
                             isFile: true,
@@ -43,7 +43,7 @@ const ReaderSideListItem = forwardRef(
                         });
                     }}
                 >
-                    {name}
+                    <span className="text">{name}</span>
                     <span className="pageNum" title="Total Pages">
                         {pages}
                     </span>

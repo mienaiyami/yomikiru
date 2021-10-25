@@ -1,14 +1,23 @@
-import { AppContext } from "../App";
+import { AppContext, themesMain } from "../App";
 import { faGithub } from "@fortawesome/free-brands-svg-icons";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { ReactElement, useContext, useRef, useState } from "react";
+import useTheme from "../hooks/useTheme";
 
 const Settings = ({ promptSetDefaultLocation }: { promptSetDefaultLocation: () => void }): ReactElement => {
+    const {
+        isSettingOpen,
+        setSettingOpen,
+        appSettings,
+        setAppSettings,
+        bookmarks,
+        setBookmarks,
+        theme,
+        setTheme,
+    } = useContext(AppContext);
     const historyBtnRef = useRef<HTMLButtonElement>(null);
     const historyInputRef = useRef<HTMLInputElement>(null);
     const [mouseOnInput, setMouseOnInput] = useState(false);
-    const { isSettingOpen, setSettingOpen, appSettings, setAppSettings, bookmarks, setBookmarks } =
-        useContext(AppContext);
     return (
         <div id="settings" data-state={isSettingOpen ? "open" : "closed"}>
             <div className="clickClose" onClick={() => setSettingOpen(false)}></div>
@@ -81,8 +90,7 @@ const Settings = ({ promptSetDefaultLocation }: { promptSetDefaultLocation: () =
                                 onFocus={(e) => e.currentTarget.blur()}
                                 onClick={(e) => {
                                     const opt = window.electron.dialog.showSaveDialogSync(
-                                        window.electron.BrowserWindow.getFocusedWindow() ||
-                                            window.electron.BrowserWindow.getAllWindows()[0],
+                                        window.electron.getCurrentWindow(),
                                         {
                                             title: "Export Bookmarks",
                                             defaultPath: "bookmarks.json",
@@ -104,8 +112,7 @@ const Settings = ({ promptSetDefaultLocation }: { promptSetDefaultLocation: () =
                                 onFocus={(e) => e.currentTarget.blur()}
                                 onClick={() => {
                                     const opt = window.electron.dialog.showOpenDialogSync(
-                                        window.electron.BrowserWindow.getFocusedWindow() ||
-                                            window.electron.BrowserWindow.getAllWindows()[0],
+                                        window.electron.getCurrentWindow(),
                                         {
                                             properties: ["openFile"],
                                             filters: [
@@ -117,22 +124,26 @@ const Settings = ({ promptSetDefaultLocation }: { promptSetDefaultLocation: () =
                                         }
                                     );
                                     if (opt == undefined) return;
-                                    const data: string[] = JSON.parse(window.fs.readFileSync(opt[0], "utf8"));
-                                    const dataToAdd: string[] = [];
-                                    // let similarFound = 0;
-                                    // data.forEach((item) => {
-                                    //     if (!bookmarks.map((e) => e.link).includes(item.link)) {
-                                    //         dataToAdd.push(item);
-                                    //     } else{
-                                    //         similarFound++;
-                                    //     }
-                                    // })
-                                    // if(similarFound>0) window.electron.dialog.showMessageBoxSync({
-                                    //     type: 'warning',
-                                    //     message: 'Found '+ similarFound+ ' similar',
-                                    //     buttons: ['Ok'],
-                                    // });
-                                    // setBookmarks([...bookmarks,...dataToAdd])
+                                    const data: ListItem[] = JSON.parse(window.fs.readFileSync(opt[0], "utf8"));
+                                    const dataToAdd: ListItem[] = [];
+                                    let similarFound = 0;
+                                    data.forEach((item) => {
+                                        if (("mangaName" && "link" && "chapterName") in item) {
+                                            if (!bookmarks.map((e) => e.link).includes(item.link)) {
+                                                dataToAdd.push(item);
+                                            } else {
+                                                similarFound++;
+                                            }
+                                        }
+                                    });
+                                    if (similarFound > 0)
+                                        window.electron.dialog.showMessageBox({
+                                            type: "warning",
+                                            title: "warning",
+                                            message: "Found " + similarFound + " with same link",
+                                            buttons: ["Ok"],
+                                        });
+                                    setBookmarks([...bookmarks, ...dataToAdd]);
                                 }}
                             >
                                 Import
@@ -141,8 +152,7 @@ const Settings = ({ promptSetDefaultLocation }: { promptSetDefaultLocation: () =
                                 onFocus={(e) => e.currentTarget.blur()}
                                 onClick={() => {
                                     const confirm1 = window.electron.dialog.showMessageBoxSync(
-                                        window.electron.BrowserWindow.getFocusedWindow() ||
-                                            window.electron.BrowserWindow.getAllWindows()[0],
+                                        window.electron.getCurrentWindow(),
                                         {
                                             type: "warning",
                                             title: "Delete BookMarks",
@@ -154,8 +164,7 @@ const Settings = ({ promptSetDefaultLocation }: { promptSetDefaultLocation: () =
                                     if (confirm1 === 1) return;
                                     if (confirm1 === 0) {
                                         const confirm2 = window.electron.dialog.showMessageBoxSync(
-                                            window.electron.BrowserWindow.getFocusedWindow() ||
-                                                window.electron.BrowserWindow.getAllWindows()[0],
+                                            window.electron.getCurrentWindow(),
                                             {
                                                 type: "warning",
                                                 title: "Delete BookMarks",
@@ -173,9 +182,25 @@ const Settings = ({ promptSetDefaultLocation }: { promptSetDefaultLocation: () =
                             </button>
                         </div>
                     </div>
-                    <div className="settingItem historyLimit">
+                    <div className="settingItem themeSelector">
                         <div className="name">Theme:</div>
-                        <div className="current">Coming Soon</div>
+                        <div className="current">
+                            <p>
+                                Add custom theme by adding new item by change css variable in <br />
+                                <span className="copy">
+                                    {window.path.join(window.electron.app.getPath("userData"), "themes.json")}
+                                </span>
+                            </p>
+                            {themesMain.map((e) => (
+                                <button
+                                    className={theme === e.name ? "selected" : ""}
+                                    onClick={() => setTheme(e.name)}
+                                    key={e.name}
+                                >
+                                    {e.name}
+                                </button>
+                            ))}
+                        </div>
                     </div>
                     <div className="settingItem version">
                         <div className="name">Version:</div>
@@ -218,7 +243,7 @@ const Settings = ({ promptSetDefaultLocation }: { promptSetDefaultLocation: () =
                                 <td>scroll</td>
                             </tr>
                             <tr>
-                                <td>spacebar</td>
+                                <td>space/shift+space</td>
                                 <td>large scroll</td>
                             </tr>
                             <tr>

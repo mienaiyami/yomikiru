@@ -2,19 +2,22 @@ import "./MainImports";
 import { createContext, createRef, ReactElement, useEffect, useState } from "react";
 import Main from "./Components/Main";
 import TopBar from "./Components/TopBar";
+import useTheme from "./hooks/useTheme";
 const userDataURL = window.electron.app.getPath("userData");
 const settingsPath = window.path.join(userDataURL, "settings.json");
+const themesPath = window.path.join(userDataURL, "themes.json");
 const bookmarksPath = window.path.join(userDataURL, "bookmarks.json");
 const bookmarkDataInit: ListItem[] = [];
 const historyPath = window.path.join(userDataURL, "history.json");
 const historyDataInit: ListItem[] = [];
+const themesMain: { name: string; main: string }[] = [];
 
 if (!window.fs.existsSync(settingsPath)) {
     const settingsData: appsettings = {
-        theme: "dark",
+        theme: "theme2",
         bookmarksPath,
         historyPath,
-        baseDir: "",
+        baseDir: window.electron.app.getPath("home"),
         historyLimit: 60,
         locationListSortType: "normal",
         readerWidth: 60,
@@ -22,22 +25,19 @@ if (!window.fs.existsSync(settingsPath)) {
     window.fs.writeFileSync(settingsPath, JSON.stringify(settingsData));
 }
 const settings: appsettings = JSON.parse(window.fs.readFileSync(settingsPath, "utf-8"));
-
-const getBookmarkAndHistory = () => {
+const getDataFiles = () => {
     if (window.fs.existsSync(bookmarksPath)) {
         const rawdata = window.fs.readFileSync(bookmarksPath, "utf8");
         if (!rawdata) return;
         try {
             JSON.parse(rawdata);
         } catch (err) {
-            return;
+            console.log("Unable to parse " + bookmarksPath);
+            console.error(err);
         }
-        const data = JSON.parse(rawdata) || [];
         bookmarkDataInit.push(...JSON.parse(rawdata));
     } else {
-        window.fs.writeFile(bookmarksPath, "[]", (err) => {
-            if (err) console.error(err);
-        });
+        window.fs.writeFileSync(bookmarksPath, "[]");
     }
     if (window.fs.existsSync(historyPath)) {
         const rawdata = window.fs.readFileSync(historyPath, "utf8");
@@ -45,20 +45,50 @@ const getBookmarkAndHistory = () => {
         try {
             JSON.parse(rawdata);
         } catch (err) {
-            return;
+            console.log("Unable to parse " + historyPath);
+            console.error(err);
         }
         const data = JSON.parse(rawdata) || [];
         if (data.length >= settings.historyLimit) data.length = settings.historyLimit;
         historyDataInit.push(...data);
     } else {
-        window.fs.writeFile(historyPath, "[]", (err) => {
-            if (err) console.error(err);
-        });
+        window.fs.writeFileSync(historyPath, "[]");
+    }
+    const themes = [
+        {
+            name: "theme1",
+            main: "--body-bg: #262626;--icon-color: #fff8f0;--font-color: #fff8f0;--font-select-color: #fff8f0;--font-select-bg: #000;--color-primary: #262626;--color-secondary: #8f8f8f;--color-tertiary: #1f1f1f;--topBar-color: #1f1f1f;--topBar-hover-color: #5c5c5c;--input-bg: #383838;--btn-color1: #363636;--btn-color2: #6b6b6b;--listItem-bg-color: #00000000;--listItem-hover-color: #5c5c5c;--listItem-alreadyRead-color: #494c5a;--listItem-current: #30425a;--toolbar-btn-bg: #1f1f1f;--toolbar-btn-hover: #6b6b6b;--scrollbar-track-color: #00000000;--scrollbar-thumb-color: #545454;--scrollbar-thumb-color-hover: #878787;--divider-color: #6b6b6b;--context-menu-text: var(--font-color);--context-menu-bg: var(--color-tertiary);",
+        },
+        {
+            name: "theme2",
+            main: "--body-bg: #1e1e24;--icon-color: #fff8f0;--font-color: #fff8f0;--font-select-color: #fff8f0;--font-select-bg: #000;--color-primary: #111e4b;--color-secondary: #8f8f8f;--color-tertiary: #000000;--topBar-color: var(--body-bg);--topBar-hover-color: #62636e;--input-bg: #3b3a3e;--btn-color1: #3b3a3e;--btn-color2: #62636e;--listItem-bg-color: #00000000;--listItem-hover-color: #3b3a3e;--listItem-alreadyRead-color: #3b3a3e;--listItem-current: #585a70;--toolbar-btn-bg: #000;--toolbar-btn-hover: #6b6b6b;--scrollbar-track-color: #00000000;--scrollbar-thumb-color: #545454;--scrollbar-thumb-color-hover: #878787;--divider-color: #3b3a3e;--context-menu-text: var(--font-color);--context-menu-bg: var(--color-tertiary);",
+        },
+        {
+            name: "theme3",
+            main: "--body-bg: #ffffff;--icon-color: #000c29;--font-color: #000c29;--font-select-color: #000c29;--font-select-bg: #fff8f0;--color-primary: #487fff;--color-secondary: #1f62ff;--color-tertiary: #93b4ff;--topBar-color: #e0e0e0;--topBar-hover-color: #b6ccfe;--input-bg: #b6ccfe;--btn-color1: #b6ccfe;--btn-color2: #709bff;--listItem-bg-color: #00000000;--listItem-hover-color: #b6ccfe;--listItem-alreadyRead-color: #b6ccfe;--listItem-current: #709bff;--toolbar-btn-bg: #b6ccfe;--toolbar-btn-hover: #487fff;--scrollbar-track-color: #b6ccfe00;--scrollbar-thumb-color: #b6ccfe;--scrollbar-thumb-color-hover: #709bff;--divider-color: #b6ccfe;--context-menu-text: var(--font-color);--context-menu-bg: var(--color-tertiary);",
+        },
+    ];
+    if (window.fs.existsSync(themesPath)) {
+        const rawdata = window.fs.readFileSync(themesPath, "utf8");
+        if (!rawdata) return;
+        try {
+            JSON.parse(rawdata);
+        } catch (err) {
+            console.log("Unable to parse " + themesPath);
+            console.error(err);
+        }
+        if (JSON.parse(rawdata).length < 3) {
+            window.fs.writeFileSync(themesPath, JSON.stringify(themes));
+            return themesMain.push(...themes);
+        }
+        themesMain.push(...JSON.parse(rawdata));
+    } else {
+        themesMain.push(...themes);
+        window.fs.writeFileSync(themesPath, JSON.stringify(themes));
     }
 };
-getBookmarkAndHistory();
-
-// settings.baseDir = "";
+getDataFiles();
+export { themesMain };
 interface IAppContext {
     bookmarks: ListItem[];
     setBookmarks: React.Dispatch<React.SetStateAction<ListItem[]>>;
@@ -98,6 +128,8 @@ interface IAppContext {
     >;
     closeReader: () => void;
     openInNewWindow: (link: string) => void;
+    theme: string;
+    setTheme: React.Dispatch<React.SetStateAction<string>>;
 }
 
 // eslint-disable-next-line @typescript-eslint/ban-ts-comment
@@ -106,6 +138,7 @@ export const AppContext = createContext<IAppContext>();
 const App = (): ReactElement => {
     const [firstRendered, setFirstRendered] = useState(false);
     const [appSettings, setAppSettings] = useState(settings);
+    const [theme, setTheme] = useTheme(appSettings.theme || "theme2", themesMain);
     const [isSettingOpen, setSettingOpen] = useState(false);
     const [isReaderOpen, setReaderOpen] = useState(false);
     const [isLoadingManga, setLoadingManga] = useState(false);
@@ -118,9 +151,20 @@ const App = (): ReactElement => {
     const pageNumberInputRef: React.RefObject<HTMLInputElement> = createRef();
     const [bookmarks, setBookmarks] = useState<ListItem[]>(bookmarkDataInit);
     const [history, setHistory] = useState<ListItem[]>(historyDataInit);
+    useEffect(() => {
+        if (firstRendered) {
+            if (settings.baseDir === "") {
+                window.electron.dialog.showMessageBoxSync(window.electron.getCurrentWindow(), {
+                    type: "error",
+                    title: "Error",
+                    message: "No settings found, Select manga folder",
+                });
+                promptSetDefaultLocation();
+            }
+        }
+    }, [firstRendered]);
     const openInReader = (link: string) => {
         link = window.path.normalize(link);
-        console.log(link);
         if (window.fs.existsSync(link) && window.fs.lstatSync(link).isDirectory()) {
             setLinkInReader(link);
         }
@@ -129,6 +173,8 @@ const App = (): ReactElement => {
     const closeReader = () => {
         setReaderOpen(false);
         setLinkInReader("");
+        setLoadingManga(false);
+        setLoadingMangaPercent(0);
         setMangaInReader(null);
     };
     useEffect(() => {
@@ -137,26 +183,19 @@ const App = (): ReactElement => {
     const addNewBookmark = (newBk: ListItem) => {
         if (newBk) {
             if (bookmarks.map((e) => e.link).includes(newBk.link)) {
-                return window.electron.dialog.showMessageBox(
-                    window.electron.BrowserWindow.getFocusedWindow() ||
-                        window.electron.BrowserWindow.getAllWindows()[0],
-                    {
-                        title: "Bookmark Already Exist",
-                        type: "warning",
-                        message: "Bookmark Already Exist",
-                    }
-                );
+                return window.electron.dialog.showMessageBox(window.electron.getCurrentWindow(), {
+                    title: "Bookmark Already Exist",
+                    type: "warning",
+                    message: "Bookmark Already Exist",
+                });
             }
             setBookmarks((init) => [newBk, ...init]);
         }
     };
     const promptSetDefaultLocation = (): void => {
-        const result = window.electron.dialog.showOpenDialogSync(
-            window.electron.BrowserWindow.getFocusedWindow() || window.electron.BrowserWindow.getAllWindows()[0],
-            {
-                properties: ["openFile", "openDirectory"],
-            }
-        );
+        const result = window.electron.dialog.showOpenDialogSync(window.electron.getCurrentWindow(), {
+            properties: ["openFile", "openDirectory"],
+        });
         if (!result) return;
         let path = "";
         if (result) path = window.path.normalize(result[0] + "\\");
@@ -166,16 +205,35 @@ const App = (): ReactElement => {
         });
     };
     const openInNewWindow = (link: string) => {
-        // const newWindow = window.open(document.URL);
-        // newWindow?.postMessage({ message: "loadMangaFromLink", link }, "*");
-        window.electron.ipcRenderer.send("openLinkInNewWindow", link);
+        window.fs.readdir(link, (err, files) => {
+            if (err) return console.error(err);
+            if (files.length <= 0) {
+                window.electron.dialog.showMessageBox(window.electron.getCurrentWindow(), {
+                    type: "error",
+                    title: "No images found",
+                    message: "Folder is empty.",
+                    detail: link,
+                });
+                return;
+            }
+            const supportedFormat = [".jpg", ".jpeg", ".png", ".webp", ".svg", ".apng", ".gif", "avif"];
+            const imgs = files.filter((e) => supportedFormat.includes(window.path.extname(e)));
+            if (imgs.length <= 0) {
+                window.electron.dialog.showMessageBox(window.electron.getCurrentWindow(), {
+                    type: "error",
+                    title: "No images found",
+                    message: "Folder doesn't contain any supported image format.",
+                });
+                return;
+            }
+            window.electron.ipcRenderer.send("openLinkInNewWindow", link);
+        });
     };
     useEffect(() => {
         setFirstRendered(true);
         window.electron.ipcRenderer.on("loadMangaFromLink", (e, data) => {
-            if (data.link && data.link !== "") openInReader(data.link);
+            if (data && typeof data.link === "string" && data.link !== "") openInReader(data.link);
         });
-        console.log("ddddddddddddddddddddddd", window.loadManga);
         window.app.titleBarHeight = parseFloat(
             window.getComputedStyle(document.body).getPropertyValue("--titleBar-height")
         );
@@ -189,22 +247,7 @@ const App = (): ReactElement => {
             }
         }
     };
-    useEffect(() => {
-        if (firstRendered) {
-            if (settings.baseDir === "") {
-                window.electron.dialog.showMessageBoxSync(
-                    window.electron.BrowserWindow.getFocusedWindow() ||
-                        window.electron.BrowserWindow.getAllWindows()[0],
-                    {
-                        type: "error",
-                        title: "Error",
-                        message: "No settings found. Select manga folder",
-                    }
-                );
-                promptSetDefaultLocation();
-            }
-        }
-    }, [firstRendered]);
+
     useEffect(() => {
         if (firstRendered) {
             window.fs.writeFile(bookmarksPath, JSON.stringify(bookmarks), (err) => {
@@ -219,6 +262,14 @@ const App = (): ReactElement => {
             });
         }
     }, [history]);
+    useEffect(() => {
+        if (firstRendered) {
+            setAppSettings((init) => {
+                init.theme = theme;
+                return { ...init };
+            });
+        }
+    }, [theme]);
     useEffect(() => {
         if (firstRendered) {
             window.fs.writeFile(settingsPath, JSON.stringify(appSettings), (err) => {
@@ -259,6 +310,8 @@ const App = (): ReactElement => {
                 setPrevNextChapter,
                 closeReader,
                 openInNewWindow,
+                theme,
+                setTheme,
             }}
         >
             <TopBar ref={pageNumberInputRef} />

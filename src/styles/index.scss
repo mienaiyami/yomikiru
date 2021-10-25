@@ -1,6 +1,6 @@
 @font-face {
     font-family: "Roboto";
-    src: url("./font/RobotoCondensed-Regular.ttf");
+    src: url("./font/Roboto-Regular.ttf");
 }
 *,
 *::after,
@@ -10,41 +10,58 @@
     cursor: inherit;
     box-sizing: border-box;
 }
-:root {
-    --color-primary: #272727;
-    --color-secondary: #8f8f8f;
-    --color-tertiary: #1f1f1f;
-    --topBar-color: #1f1f1f;
-    --topBar-hover-color: #ffffff30;
-    --input-bg: #ffffff10;
-    --btn-color1: #353535;
-    --btn-color2: #6b6b6b;
-    --listItem-bg-color: #00000000;
-    --listItem-hover-color: #ffffff40;
-    --listItem-alreadyRead-color: #4a4d5b;
-    --toolbar-btn-bg: #1f1f1f;
-    --toolbar-btn-hover: #6b6b6b;
-}
 ::-webkit-scrollbar {
     width: 10px;
 }
 ::-webkit-scrollbar-track {
-    background: none;
+    background: var(--scrollbar-track-color);
 }
 ::-webkit-scrollbar-thumb {
     min-height: 70px;
-    background: #555;
+    background: var(--scrollbar-thumb-color);
 }
 ::-webkit-scrollbar-thumb:hover {
-    background: #888;
+    background: var(--scrollbar-thumb-color-hover);
+}
+::selection {
+    background: var(--font-select-color);
+    color: var(--font-select-bg);
+}
+.refrenceVariable {
+    --body-bg: #ffffff;
+    --icon-color: #000c29;
+    --font-color: #000c29;
+    --font-select-color: #000c29;
+    --font-select-bg: #fff8f0;
+    --color-primary: #487fff;
+    --color-secondary: #1f62ff;
+    --color-tertiary: #93b4ff;
+    --topBar-color: #e0e0e0;
+    --topBar-hover-color: #709bff;
+    --input-bg: #b6ccfe;
+    --btn-color1: #b6ccfe;
+    --btn-color2: #709bff;
+    --listItem-bg-color: #00000000;
+    --listItem-hover-color: #b6ccfe;
+    --listItem-alreadyRead-color: #93b4ff;
+    --listItem-current: #709bff;
+    --toolbar-btn-bg: #b6ccfe;
+    --toolbar-btn-hover: #487fff;
+    --scrollbar-track-color: #b6ccfe00;
+    --scrollbar-thumb-color: #b6ccfe;
+    --scrollbar-thumb-color-hover: #709bff;
+    --divider-color: #b6ccfe;
+    --context-menu-text: var(--font-color);
+    --context-menu-bg: var(--color-tertiary);
 }
 body {
-    font-family: "Roboto";
+    font-family: "Roboto", sans-serif;
     font-weight: 400;
+    font-size: 15px;
     width: 100vw;
     height: 100vh;
-    color: #ffffff;
-    background: var(--color-primary);
+    color: var(--font-color);
+    background: var(--body-bg);
     user-select: none;
     overflow: hidden;
     button {
@@ -71,11 +88,13 @@ body {
             top: 50%;
             transform: translate(var(--translate)) scale(0) rotate(var(--rotate));
             padding: 3px 5px;
-            transition: 0.1s transform;
             border-radius: 5px;
+            opacity: 0;
         }
         &:hover::before {
+            opacity: 1;
             visibility: visible;
+            transition: 0.5s opacity;
             transform: translate(var(--translate)) scale(1) rotate(var(--rotate));
         }
     }
@@ -90,6 +109,7 @@ body {
         height: var(--titleBar-height);
         user-select: none;
         background: var(--topBar-color);
+        z-index: 1000000;
         button {
             font-size: 18px;
         }
@@ -102,20 +122,14 @@ body {
             align-items: center;
             width: calc(var(--button-width) * 5);
             height: 100%;
-            // overflow: hidden;
-            // .appIcon {
-            //     width: var(--button-width);
-            //     margin-right: calc(var(--button-width) * 3);
-            // }
             button {
                 width: var(--button-width);
                 background: none;
                 position: relative;
-                color: #ffffff;
+                color: var(--icon-color);
                 height: 100%;
                 left: 0;
                 top: 0;
-                z-index: 3000;
                 border: none;
                 cursor: pointer;
                 &::before {
@@ -125,9 +139,10 @@ body {
                 }
                 -webkit-app-region: no-drag;
                 svg {
-                    color: #ffffff;
+                    color: var(--icon-color);
                 }
-                &:hover {
+                &:hover,
+                &:active {
                     background: var(--topBar-hover-color);
                 }
             }
@@ -199,7 +214,7 @@ body {
                     // padding: 10px;
                     height: 100%;
                     box-sizing: border-box;
-                    color: #ffffff;
+                    color: var(--font-color);
                     &::-webkit-outer-spin-button,
                     &::-webkit-inner-spin-button {
                         -webkit-appearance: none;
@@ -216,23 +231,21 @@ body {
                 z-index: inherit;
                 background: none;
                 box-sizing: border-box;
-                color: #ffffff;
+                color: var(--icon-color);
                 border: none;
                 width: var(--button-width);
                 height: 100%;
                 &:focus {
                     outline: none;
                 }
-                &:hover {
+                &:hover,
+                &:active {
                     background: var(--topBar-hover-color);
-                }
-                i {
-                    color: #ffffff;
-                    font-size: 16px;
                 }
             }
             #closeBtn {
-                &:hover {
+                &:hover,
+                &:active {
                     background: rgba(232, 17, 35, 0.9);
                 }
             }
@@ -250,14 +263,14 @@ body {
         height: calc(100% - var(--titleBar-height));
         button {
             background: var(--btn-color1);
-            &:hover {
+            &:hover,
+            &:active {
                 background: var(--btn-color2);
                 outline: none;
             }
-            color: #ffffff;
+            color: var(--icon-color);
             font-family: "Roboto";
             font-size: 20px;
-            // font-weight: 200;
             cursor: pointer;
             padding: 10px 20px;
             border-radius: 3px;
@@ -274,7 +287,7 @@ body {
             background: var(--input-bg);
             overflow: scroll;
             cursor: text;
-            color: #ffffff;
+            color: var(--font-color);
             font-family: "roboto";
             outline: none;
             border-radius: 3px;
@@ -299,22 +312,26 @@ body {
                         position: relative;
                         display: flex;
                         width: 100%;
+                        max-height: 30px;
                         align-items: stretch;
                         border-radius: 2px;
                         background: var(--listItem-bg-color);
-                        border-bottom: 1px solid var(--color-secondary);
+                        // border-bottom: 1px solid var(--color-primary);
                         height: 100%;
-                        &:hover {
+                        &:hover,
+                        &:active {
                             background-color: var(--listItem-hover-color);
                         }
                         a {
                             cursor: pointer;
-                            padding: auto;
-                            display: flex;
-                            flex-direction: row;
-                            padding: 5px;
+                            display: grid;
+                            --grid-template: 0;
+                            gap: 5px;
+                            grid-template-columns: 2.1em auto var(--grid-template);
+                            // display: flex;
+                            // flex-direction: row;
                             align-items: center;
-                            flex-direction: row;
+                            padding: 5px;
                             width: 100%;
                             overflow: hidden;
                             .pageNum {
@@ -326,12 +343,13 @@ body {
                                 overflow: hidden;
                                 text-overflow: ellipsis;
                                 display: -webkit-box;
-                                -webkit-line-clamp: 2; /* number of lines to show */
+                                -webkit-line-clamp: 1; /* number of lines to show */
                                 -webkit-box-orient: vertical;
                             }
                             &::before {
                                 counter-increment: countList;
                                 content: counter(countList) ".\00a0";
+                                text-align: right;
                             }
                         }
                         button {
@@ -342,24 +360,24 @@ body {
                             box-sizing: border-box;
                             align-self: stretch;
                             border: none;
-                            color: #ffffff;
+                            display: flex;
                             font-size: 20px;
-                            background: #353535;
-                            &:hover {
-                                background: #6b6b6b;
+                            background: var(--body-bg);
+                            &:hover,
+                            &:active {
+                                background: var(--btn-color2);
                             }
                         }
                     }
                     .alreadyRead {
                         background: var(--listItem-alreadyRead-color);
-                        &:hover {
+                        &:hover,
+                        &:active {
                             background-color: var(--listItem-hover-color);
                         }
                     }
                     .current {
-                        a {
-                            text-decoration: underline overline wavy;
-                        }
+                        background: var(--listItem-current);
                     }
                 }
             }
@@ -396,10 +414,11 @@ body {
             height: 100%;
             .contTab {
                 width: 100%;
+                // max-width: calc(100vw / 3);
                 height: 100%;
                 position: relative;
                 display: flex;
-                padding: 20px 20px;
+                padding: 20px 10px;
                 flex-direction: column;
                 h2 {
                     margin-bottom: 10px;
@@ -416,11 +435,23 @@ body {
                 }
             }
             .divider {
-                width: 20px;
-                // cursor: w-resize;
+                display: grid;
+                place-items: center;
+                cursor: pointer;
                 height: 100%;
-                background-color: #8f8f8f2d;
-                // margin: 0 20px;
+                // margin: 0 10px;
+                padding: 0 10px;
+                &:hover {
+                    .bar {
+                        background-color: var(--btn-color2);
+                    }
+                }
+                .bar {
+                    height: 100%;
+                    width: 6.9px;
+                    min-width: 6.9px;
+                    background-color: var(--btn-color1);
+                }
             }
         }
 
@@ -428,7 +459,8 @@ body {
             position: absolute;
             top: 0;
             left: 0;
-            background: #000;
+            background: var(--context-menu-bg);
+            color: var(--context-menu-text);
             box-sizing: border-box;
             padding: 10px 0px;
             border-radius: 5px;
@@ -444,8 +476,9 @@ body {
                 li {
                     padding: 10px 10px;
                     cursor: default;
-                    &:hover {
-                        background: var(--btn-color1);
+                    &:hover,
+                    &:active {
+                        background: var(--btn-color2);
                     }
                 }
             }
@@ -454,7 +487,8 @@ body {
             position: absolute;
             top: 0;
             left: 0;
-            background: #000;
+            background: var(--context-menu-bg);
+            color: var(--context-menu-text);
             box-sizing: border-box;
             padding: 10px 10px;
             border-radius: 5px;
@@ -501,9 +535,9 @@ body {
             }
             .cont {
                 position: relative;
-                background: var(--color-primary);
+                background: var(--body-bg);
                 border-radius: 10px;
-                transition: 0.2s all;
+                transition: 0.2s transform;
                 width: calc(max(700px, 60%));
                 height: 90%;
                 transform: scale(0);
@@ -518,20 +552,19 @@ body {
                     flex-direction: column;
                     padding: 20px;
                     font-size: 1.4em;
-                    gap: 10px;
                     .settingItem {
                         display: grid;
                         grid-template-columns: 30% 70%;
                         align-items: center;
-                        height: 44px;
+                        padding: 10px 0;
+                        border-bottom: 2px solid var(--divider-color);
+                        min-height: 44px;
                         .name {
                             width: 100%;
                         }
                         .current {
                             display: flex;
-                            // flex-wrap: wrap;
-                            height: 100%;
-                            align-items: center;
+                            flex-wrap: wrap;
                             gap: 10px;
                             justify-content: stretch;
                             span {
@@ -542,17 +575,28 @@ body {
                                 border: none;
                                 flex: 1;
                                 font-size: 15px;
-                                color: #fff;
-                                padding: 5px;
+                                color: var(--font-color);
                                 height: 100%;
                                 border-radius: 3px;
                             }
+                            p {
+                                font-size: 12px;
+                                width: 100%;
+                                .copy {
+                                    user-select: all;
+                                }
+                            }
                             button {
-                                height: 100%;
+                                font-size: 15px;
                             }
                             .enabled {
                                 background-color: #f003;
                             }
+                        }
+                    }
+                    .themeSelector {
+                        .selected {
+                            background-color: var(--btn-color2);
                         }
                     }
                 }
@@ -582,10 +626,9 @@ body {
         #loadingScreen {
             position: absolute;
             left: 0;
-            // top: -100%;
             top: 0;
             z-index: 1000;
-            background: var(--color-tertiary);
+            background: var(--body-bg);
             display: grid;
             place-content: center;
             display: none;
@@ -599,12 +642,12 @@ body {
                 padding: 3px;
                 box-sizing: border-box;
                 height: 30px;
-                border: 1px solid #ffffff;
+                border: 1px solid var(--color-secondary);
                 .loadingbar {
                     position: relative;
                     width: 0;
                     height: 100%;
-                    background-color: var(--color-secondary);
+                    background-color: var(--btn-color2);
                 }
             }
         }
@@ -615,7 +658,7 @@ body {
             display: none;
             overflow-x: hidden;
             .currentMangaList {
-                background: var(--color-tertiary);
+                background: var(--topBar-color);
                 height: 100%;
                 width: clamp(400px, 40%, 500px);
                 z-index: 100;
@@ -629,6 +672,18 @@ body {
                 box-sizing: border-box;
                 transform: translateX(-99%);
                 transition: 0.2s transform;
+                .indicator {
+                    position: absolute;
+                    right: 0;
+                    top: 50%;
+                    background-color: var(--topBar-color);
+                    height: 100px;
+                    border-radius: 0 5px 5px 0;
+                    width: 20px;
+                    display: grid;
+                    place-items: center;
+                    transform: translate(100%, -50%);
+                }
                 &.open {
                     transform: translateX(0);
                 }
@@ -644,25 +699,29 @@ body {
                 .location-cont {
                     margin-top: 5px;
                     padding: 0;
+                    a {
+                        --grid-template: 2.1em;
+                    }
                 }
             }
             .ctrl-bar {
                 --btn-size: 70px;
                 position: absolute;
-                color: #ffffff;
+                color: var(--icon-color);
                 border-radius: 100px;
                 right: 20px;
                 top: 10px;
                 z-index: 100;
                 filter: url("#goo");
-                &:hover {
+                &:hover,
+                &:active {
                     height: 200px;
                 }
                 .ctrl-menu-item {
                     position: relative;
                     top: 0;
                     background-color: var(--toolbar-btn-bg);
-                    color: #ffffff;
+                    color: var(--icon-color);
                     border: none;
                     width: var(--btn-size);
                     height: var(--btn-size);
@@ -673,23 +732,22 @@ body {
                     align-items: center;
                     justify-content: center;
                     cursor: pointer;
-                    // overflow: hidden;
+                    overflow: visible;
                     &::before {
                         transform-origin: right;
                         left: 0;
                         --translate: calc(-100% - 20px), -50%;
                         display: flex;
                         align-items: center;
-                        // background: #6e6e6e;
-                        opacity: 0.9;
+                        // opacity: 0.9;
                         font-size: 20px;
-                        // height: 70%;
                         filter: none;
                     }
                     i::before {
                         cursor: pointer;
                     }
-                    &:hover {
+                    &:hover,
+                    &:active {
                         background-color: var(--toolbar-btn-hover);
                     }
                     i {

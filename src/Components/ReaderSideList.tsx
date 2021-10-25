@@ -1,4 +1,4 @@
-import { faSort } from "@fortawesome/free-solid-svg-icons";
+import { faChevronRight, faSort } from "@fortawesome/free-solid-svg-icons";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { useContext, useEffect, useRef, useState } from "react";
 import { AppContext } from "../App";
@@ -47,7 +47,6 @@ const ReaderSideList = () => {
                 const supportedFormat = [".jpg", ".jpeg", ".png", ".webp", ".svg", ".apng", ".gif", "avif"];
                 window.fs.readdir(dir, (err, files) => {
                     if (err) return console.error(err);
-                    files.sort(window.app.betterSortOrder);
                     const listData: { name: string; pages: number }[] = [];
                     let validFile = 0;
                     let responseCompleted = 0;
@@ -64,14 +63,18 @@ const ReaderSideList = () => {
                                         listData.push({ name: e, pages: data.length });
                                     }
                                     if (responseCompleted >= validFile) {
-                                        setChapterData(listData);
+                                        setChapterData(
+                                            listData.sort((a, b) => window.app.betterSortOrder(a.name, b.name))
+                                        );
                                     }
                                 })
                                 .catch((err) => {
                                     console.error(err);
                                     responseCompleted++;
                                     if (responseCompleted >= validFile) {
-                                        setChapterData(listData);
+                                        setChapterData(
+                                            listData.sort((a, b) => window.app.betterSortOrder(a.name, b.name))
+                                        );
                                     }
                                 });
                         }
@@ -117,6 +120,9 @@ const ReaderSideList = () => {
                 if (!isContextMenuOpen) setListOpen(false);
             }}
         >
+            <div className="indicator">
+                <FontAwesomeIcon icon={faChevronRight} />
+            </div>
             <div className="tool">
                 <div className="cont">
                     <input

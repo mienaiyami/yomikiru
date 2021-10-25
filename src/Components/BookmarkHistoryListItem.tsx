@@ -44,7 +44,7 @@ const BookmarkHistoryListItem = (props: ListItemE) => {
                 }}
             >
                 <span className="text">
-                    {(props.mangaName.length > 30 ? props.mangaName.substr(0, 30) + "..." : props.mangaName) +
+                    {(props.mangaName.length > 15 ? props.mangaName.substr(0, 15) + "..." : props.mangaName) +
                         " | " +
                         props.chapterName}
                 </span>

@@ -1,5 +1,5 @@
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import React, { forwardRef, ReactElement, useContext, useEffect, useState } from "react";
+import React, { forwardRef, ReactElement, useContext, useEffect, useLayoutEffect, useState } from "react";
 import { faGithub } from "@fortawesome/free-brands-svg-icons";
 import { faHome, faCog, faMinus, faTimes } from "@fortawesome/free-solid-svg-icons";
 import { faWindowMaximize, faWindowRestore } from "@fortawesome/free-regular-svg-icons";
@@ -7,7 +7,7 @@ import { AppContext } from "../App";
 
 const TopBar = forwardRef((props, forwaredRef: React.ForwardedRef<HTMLInputElement>): ReactElement => {
     const [title, setTitle] = useState<string>("Manga Reader");
-    const [isMaximized, setMaximized] = useState(window.electron.BrowserWindow.getFocusedWindow()?.isMaximized);
+    const [isMaximized, setMaximized] = useState(window.electron.getCurrentWindow().isMaximized ?? true);
     const {
         setSettingOpen,
         mangaInReader,
@@ -27,17 +27,18 @@ const TopBar = forwardRef((props, forwaredRef: React.ForwardedRef<HTMLInputEleme
             const title = mangaName + " | " + chapterName;
             setTitle(title);
             document.title = title;
+            return;
         }
+        setTitle(window.electron.app.name);
+        document.title = window.electron.app.name;
     };
-    useEffect(() => {
-        window.electron.BrowserWindow.getFocusedWindow()?.on("maximize", () => setMaximized(true));
-        window.electron.BrowserWindow.getFocusedWindow()?.on("unmaximize", () => setMaximized(false));
-        // window.electron.ipcRenderer.on("isMaximized", () => {
-        //     setMaximized(true);
-        // });
-        // window.electron.ipcRenderer.on("isRestored", () => {
-        //     setMaximized(false);
-        // });
+    const attachEventListener = (): any => {
+        setMaximized(window.electron.getCurrentWindow().isMaximized);
+        window.electron.getCurrentWindow()?.on("maximize", () => setMaximized(true));
+        window.electron.getCurrentWindow()?.on("unmaximize", () => setMaximized(false));
+    };
+    useLayoutEffect(() => {
+        attachEventListener();
     }, []);
     useEffect(() => {
         setTitleWithSize();
@@ -56,8 +57,7 @@ const TopBar = forwardRef((props, forwaredRef: React.ForwardedRef<HTMLInputEleme
                     className="home"
                     onFocus={(e) => e.currentTarget.blur()}
                     onClick={() => {
-                        closeReader();
-                        // window.location.reload();
+                        isReaderOpen ? closeReader() : window.location.reload();
                     }}
                     tabIndex={-1}
                     data-tooltip="Home"
@@ -138,9 +138,7 @@ const TopBar = forwardRef((props, forwaredRef: React.ForwardedRef<HTMLInputEleme
                     id="minimizeBtn"
                     title="Minimize"
                     onFocus={(e) => e.currentTarget.blur()}
-                    onClick={() => {
-                        window.electron.BrowserWindow.getFocusedWindow()?.minimize();
-                    }}
+                    onClick={() => window.electron.getCurrentWindow().minimize()}
                 >
                     <FontAwesomeIcon icon={faMinus} />
                 </button>
@@ -150,8 +148,8 @@ const TopBar = forwardRef((props, forwaredRef: React.ForwardedRef<HTMLInputEleme
                     onFocus={(e) => e.currentTarget.blur()}
                     title={isMaximized ? "Restore" : "Maximize"}
                     onClick={() => {
-                        if (isMaximized) return window.electron.BrowserWindow.getFocusedWindow()?.restore();
-                        window.electron.BrowserWindow.getFocusedWindow()?.maximize();
+                        if (isMaximized) return window.electron.getCurrentWindow().restore();
+                        window.electron.getCurrentWindow().maximize();
                     }}
                 >
                     <FontAwesomeIcon icon={isMaximized ? faWindowRestore : faWindowMaximize} />
@@ -161,9 +159,7 @@ const TopBar = forwardRef((props, forwaredRef: React.ForwardedRef<HTMLInputEleme
                     id="closeBtn"
                     title="Close"
                     onFocus={(e) => e.currentTarget.blur()}
-                    onClick={() => {
-                        window.electron.BrowserWindow.getFocusedWindow()?.close();
-                    }}
+                    onClick={() => window.electron.getCurrentWindow().close()}
                 >
                     <FontAwesomeIcon icon={faTimes} />
                 </button>

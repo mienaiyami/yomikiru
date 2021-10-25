@@ -14,16 +14,12 @@ const HistoryTab = (): ReactElement => {
                     onFocus={(e) => e.currentTarget.blur()}
                     onClick={() => {
                         window.electron.dialog
-                            .showMessageBox(
-                                window.electron.BrowserWindow.getFocusedWindow() ||
-                                    window.electron.BrowserWindow.getAllWindows()[0],
-                                {
-                                    title: "Warning",
-                                    type: "warning",
-                                    message: "Are you sure you want to clear history",
-                                    buttons: ["Yes", "No"],
-                                }
-                            )
+                            .showMessageBox(window.electron.getCurrentWindow(), {
+                                title: "Warning",
+                                type: "warning",
+                                message: "Are you sure you want to clear history",
+                                buttons: ["Yes", "No"],
+                            })
                             .then((res) => {
                                 if (res && res.response === 0) setHistory([]);
                             });

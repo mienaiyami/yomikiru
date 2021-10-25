@@ -38,11 +38,8 @@ const createWindow = (link?: string) => {
     newWindow.loadURL(HOME_WEBPACK_ENTRY);
     newWindow.setMenuBarVisibility(false);
     newWindow.webContents.once("dom-ready", () => {
-        newWindow.webContents.send("loadMangaFromLink", { link: link || "" });
-    });
-    newWindow.once("ready-to-show", () => {
         newWindow.maximize();
-        newWindow.show();
+        newWindow.webContents.send("loadMangaFromLink", { link: link || "" });
     });
     newWindow.webContents.setWindowOpenHandler(() => {
         return { action: "deny" };
@@ -63,7 +60,7 @@ app.on("ready", async () => {
     if (!app.isPackaged) {
         const reactDevToolsPath = path.join(
             homedir(),
-            "AppData\\local\\Microsoft\\Edge\\User Data\\Default\\Extensions\\gpphkfbcpidddadnkolkpfckpihlkkil\\4.19.2_0"
+            "AppData\\local\\Microsoft\\Edge\\User Data\\Default\\Extensions\\gpphkfbcpidddadnkolkpfckpihlkkil\\4.20.2_0"
         );
         await session.defaultSession.loadExtension(reactDevToolsPath);
     }

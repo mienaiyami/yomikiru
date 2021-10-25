@@ -1,4 +1,4 @@
-import { forwardRef, useContext, useEffect, useRef, useState } from "react";
+import { forwardRef, useContext, useEffect, useState } from "react";
 import { AppContext } from "../App";
 
 interface Iprops extends IContextMenuData {
@@ -45,9 +45,10 @@ const ContextMenu = forwardRef((props: Iprops | null, ref: React.ForwardedRef<HT
             className="contextMenu"
             tabIndex={-1}
             onBlur={() => {
-                props?.closeContextMenu();
+                setTimeout(() => props?.closeContextMenu(), 100);
             }}
-            onClick={(e) => {
+            onMouseUp={(e) => {
+                e.stopPropagation();
                 e.currentTarget.blur();
             }}
             ref={ref}
@@ -57,14 +58,14 @@ const ContextMenu = forwardRef((props: Iprops | null, ref: React.ForwardedRef<HT
                 {isImg ? (
                     ""
                 ) : (
-                    <li role="menuitem" onClick={() => openInReader(link)}>
+                    <li role="menuitem" onMouseUp={() => openInReader(link)}>
                         Open
                     </li>
                 )}
                 {isImg ? (
                     <li
                         role="menuitem"
-                        onClick={() => {
+                        onMouseUp={() => {
                             const img = window.electron.nativeImage.createFromPath(props!.link);
                             if (img) window.electron.clipboard.writeImage(img);
                         }}
@@ -74,19 +75,23 @@ const ContextMenu = forwardRef((props: Iprops | null, ref: React.ForwardedRef<HT
                 ) : (
                     ""
                 )}
-                <li role="menuitem" onClick={() => openInNewWindow(link)}>
-                    Open in new Window
-                </li>
-                <li role="menuitem" onClick={() => window.electron.shell.showItemInFolder(link)}>
+                {isImg ? (
+                    ""
+                ) : (
+                    <li role="menuitem" onMouseUp={() => openInNewWindow(link)}>
+                        Open in new Window
+                    </li>
+                )}
+                <li role="menuitem" onMouseUp={() => window.electron.shell.showItemInFolder(link)}>
                     Show in File Explorer
                 </li>
-                <li role="menuitem" onClick={() => window.electron.clipboard.writeText(link)}>
+                <li role="menuitem" onMouseUp={() => window.electron.clipboard.writeText(link)}>
                     Copy Path
                 </li>
                 {isHistory ? (
                     <li
                         role="menuitem"
-                        onClick={() => {
+                        onMouseUp={() => {
                             if (props?.item)
                                 setHistory((init) => {
                                     const newData = init;
@@ -105,14 +110,14 @@ const ContextMenu = forwardRef((props: Iprops | null, ref: React.ForwardedRef<HT
                 ) : isBookmark ? (
                     <li
                         role="menuitem"
-                        onClick={() => setBookmarks((init) => [...init.filter((e) => e.link !== link)])}
+                        onMouseUp={() => setBookmarks((init) => [...init.filter((e) => e.link !== link)])}
                     >
                         Remove Bookmark
                     </li>
                 ) : (
                     <li
                         role="menuitem"
-                        onClick={() => {
+                        onMouseUp={() => {
                             if (props?.item) {
                                 const newItem: ListItem = {
                                     mangaName: props?.item?.mangaName,
