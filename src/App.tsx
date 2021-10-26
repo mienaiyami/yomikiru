@@ -98,8 +98,7 @@ const checkforupdate = async () => {
     const rawdata = await fetch(
         "https://raw.githubusercontent.com/mienaiyami/offline-manga-reader/main/package.json"
     ).then((data) => data.json());
-    // const latestVersion = await rawdata.version.split(".");
-    const latestVersion = ["2", "1", "3"];
+    const latestVersion = await rawdata.version.split(".");
     console.log("checking for update.....");
     const currentAppVersion = window.electron.app.getVersion().split(".");
     if (
