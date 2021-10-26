@@ -28,29 +28,31 @@ const settings: appsettings = JSON.parse(window.fs.readFileSync(settingsPath, "u
 const getDataFiles = () => {
     if (window.fs.existsSync(bookmarksPath)) {
         const rawdata = window.fs.readFileSync(bookmarksPath, "utf8");
-        if (!rawdata) return;
-        try {
-            JSON.parse(rawdata);
-        } catch (err) {
-            console.log("Unable to parse " + bookmarksPath);
-            console.error(err);
+        if (rawdata) {
+            try {
+                JSON.parse(rawdata);
+            } catch (err) {
+                console.log("Unable to parse " + bookmarksPath);
+                console.error(err);
+            }
+            bookmarkDataInit.push(...JSON.parse(rawdata));
         }
-        bookmarkDataInit.push(...JSON.parse(rawdata));
     } else {
         window.fs.writeFileSync(bookmarksPath, "[]");
     }
     if (window.fs.existsSync(historyPath)) {
         const rawdata = window.fs.readFileSync(historyPath, "utf8");
-        if (!rawdata) return;
-        try {
-            JSON.parse(rawdata);
-        } catch (err) {
-            console.log("Unable to parse " + historyPath);
-            console.error(err);
+        if (rawdata) {
+            try {
+                JSON.parse(rawdata);
+            } catch (err) {
+                console.log("Unable to parse " + historyPath);
+                console.error(err);
+            }
+            const data = JSON.parse(rawdata) || [];
+            if (data.length >= settings.historyLimit) data.length = settings.historyLimit;
+            historyDataInit.push(...data);
         }
-        const data = JSON.parse(rawdata) || [];
-        if (data.length >= settings.historyLimit) data.length = settings.historyLimit;
-        historyDataInit.push(...data);
     } else {
         window.fs.writeFileSync(historyPath, "[]");
     }
@@ -61,7 +63,7 @@ const getDataFiles = () => {
         },
         {
             name: "theme2",
-            main: "--body-bg: #1e1e24;--icon-color: #fff8f0;--font-color: #fff8f0;--font-select-color: #fff8f0;--font-select-bg: #000;--color-primary: #111e4b;--color-secondary: #8f8f8f;--color-tertiary: #000000;--topBar-color: var(--body-bg);--topBar-hover-color: #62636e;--input-bg: #3b3a3e;--btn-color1: #3b3a3e;--btn-color2: #62636e;--listItem-bg-color: #00000000;--listItem-hover-color: #3b3a3e;--listItem-alreadyRead-color: #3b3a3e;--listItem-current: #585a70;--toolbar-btn-bg: #000;--toolbar-btn-hover: #6b6b6b;--scrollbar-track-color: #00000000;--scrollbar-thumb-color: #545454;--scrollbar-thumb-color-hover: #878787;--divider-color: #3b3a3e;--context-menu-text: var(--font-color);--context-menu-bg: var(--color-tertiary);",
+            main: "--body-bg: #1e1e24;--icon-color: #fff8f0;--font-color: #fff8f0;--font-select-color: #fff8f0;--font-select-bg: #000;--color-primary: #111e4b;--color-secondary: #8f8f8f;--color-tertiary: #000000;--topBar-color: #17171c;--topBar-hover-color: #62636e;--input-bg: #3b3a3e;--btn-color1: #3b3a3e;--btn-color2: #62636e;--listItem-bg-color: #00000000;--listItem-hover-color: #3b3a3e;--listItem-alreadyRead-color: #3b3a3e;--listItem-current: #585a70;--toolbar-btn-bg: #000;--toolbar-btn-hover: #6b6b6b;--scrollbar-track-color: #00000000;--scrollbar-thumb-color: #545454;--scrollbar-thumb-color-hover: #878787;--divider-color: #3b3a3e;--context-menu-text: var(--font-color);--context-menu-bg: var(--color-tertiary);",
         },
         {
             name: "theme3",
@@ -70,18 +72,19 @@ const getDataFiles = () => {
     ];
     if (window.fs.existsSync(themesPath)) {
         const rawdata = window.fs.readFileSync(themesPath, "utf8");
-        if (!rawdata) return;
-        try {
-            JSON.parse(rawdata);
-        } catch (err) {
-            console.log("Unable to parse " + themesPath);
-            console.error(err);
+        if (rawdata) {
+            try {
+                JSON.parse(rawdata);
+            } catch (err) {
+                console.log("Unable to parse " + themesPath);
+                console.error(err);
+            }
+            if (JSON.parse(rawdata).length < 3) {
+                window.fs.writeFileSync(themesPath, JSON.stringify(themes));
+                return themesMain.push(...themes);
+            }
+            themesMain.push(...JSON.parse(rawdata));
         }
-        if (JSON.parse(rawdata).length < 3) {
-            window.fs.writeFileSync(themesPath, JSON.stringify(themes));
-            return themesMain.push(...themes);
-        }
-        themesMain.push(...JSON.parse(rawdata));
     } else {
         themesMain.push(...themes);
         window.fs.writeFileSync(themesPath, JSON.stringify(themes));
@@ -89,6 +92,50 @@ const getDataFiles = () => {
 };
 getDataFiles();
 export { themesMain };
+
+const checkforupdate = async () => {
+    const downloadLink = "https://github.com/mienaiyami/react-ts-offline-manga-reader/releases/";
+    const rawdata = await fetch(
+        "https://raw.githubusercontent.com/mienaiyami/offline-manga-reader/main/package.json"
+    ).then((data) => data.json());
+    // const latestVersion = await rawdata.version.split(".");
+    const latestVersion = ["2", "1", "3"];
+    console.log("checking for update.....");
+    const currentAppVersion = window.electron.app.getVersion().split(".");
+    if (
+        latestVersion[0] > currentAppVersion[0] ||
+        (latestVersion[0] === currentAppVersion[0] && latestVersion[1] > currentAppVersion[1])
+    ) {
+        window.electron.dialog
+            .showMessageBox(window.electron.getCurrentWindow(), {
+                title: "New Major Version Available",
+                type: "info",
+                message: "New Major Version Available.\nGo to download page?",
+                buttons: ["Yes", "No"],
+            })
+            .then((response) => {
+                if (response.response === 0) window.electron.shell.openExternal(downloadLink);
+            });
+        return;
+    }
+    if (
+        latestVersion[0] === currentAppVersion[0] &&
+        latestVersion[1] === currentAppVersion[1] &&
+        latestVersion[2] > currentAppVersion[2]
+    ) {
+        window.electron.dialog
+            .showMessageBox(window.electron.getCurrentWindow(), {
+                title: "New Version Available",
+                type: "info",
+                message: "Minor Update(you can skip).\nGo to download page?",
+                buttons: ["Yes", "No"],
+            })
+            .then((response) => {
+                if (response.response === 0) window.electron.shell.openExternal(downloadLink);
+            });
+        return;
+    }
+};
 interface IAppContext {
     bookmarks: ListItem[];
     setBookmarks: React.Dispatch<React.SetStateAction<ListItem[]>>;
@@ -233,6 +280,9 @@ const App = (): ReactElement => {
         setFirstRendered(true);
         window.electron.ipcRenderer.on("loadMangaFromLink", (e, data) => {
             if (data && typeof data.link === "string" && data.link !== "") openInReader(data.link);
+        });
+        window.electron.ipcRenderer.on("checkforupdate", () => {
+            checkforupdate();
         });
         window.app.titleBarHeight = parseFloat(
             window.getComputedStyle(document.body).getPropertyValue("--titleBar-height")

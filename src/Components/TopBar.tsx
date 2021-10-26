@@ -79,7 +79,9 @@ const TopBar = forwardRef((props, forwaredRef: React.ForwardedRef<HTMLInputEleme
                     className="githubbtn"
                     onFocus={(e) => e.currentTarget.blur()}
                     onClick={() =>
-                        window.electron.shell.openExternal("https://github.com/mienaiYami/offline-manga-reader")
+                        window.electron.shell.openExternal(
+                            "https://github.com/mienaiyami/react-ts-offline-manga-reader"
+                        )
                     }
                     tabIndex={-1}
                     data-tooltip="Github"

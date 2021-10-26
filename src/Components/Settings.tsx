@@ -216,7 +216,7 @@ const Settings = ({ promptSetDefaultLocation }: { promptSetDefaultLocation: () =
                                 className="postIssue"
                                 onClick={() =>
                                     window.electron.shell.openExternal(
-                                        "https://github.com/mienaiyami/offline-manga-reader/issues"
+                                        "https://github.com/mienaiyami/react-ts-offline-manga-reader/issue"
                                     )
                                 }
                                 tabIndex={-1}

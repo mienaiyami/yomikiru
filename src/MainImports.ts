@@ -12,7 +12,6 @@ declare global {
             dialog: typeof dialog;
             shell: typeof shell;
             ipcRenderer: typeof ipcRenderer;
-            // BrowserWindow: typeof BrowserWindow;
             getCurrentWindow: typeof getCurrentWindow;
             clipboard: typeof clipboard;
             nativeImage: typeof nativeImage;
@@ -69,7 +68,6 @@ window.electron = {
     shell,
     ipcRenderer,
     getCurrentWindow,
-    // BrowserWindow,
     clipboard,
     nativeImage,
 };

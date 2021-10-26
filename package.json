@@ -1,7 +1,7 @@
 {
     "name": "mangareader",
     "productName": "Manga Reader",
-    "version": "2.1.0",
+    "version": "2.1.1",
     "description": "App to read manga on desktop",
     "main": "./.webpack/main/index.js",
     "author": {
@@ -12,6 +12,7 @@
         "start": "electron-forge start",
         "package": "electron-forge package",
         "make": "electron-forge make",
+        "dist": "",
         "release": "electron-forge publish"
     },
     "license": "MIT",
@@ -22,6 +23,7 @@
         "@fortawesome/free-regular-svg-icons": "^5.15.4",
         "@fortawesome/free-solid-svg-icons": "^5.15.4",
         "@fortawesome/react-fontawesome": "^0.1.15",
+        "electron-squirrel-startup": "^1.0.0",
         "react": "17.0.2",
         "react-dom": "17.0.2",
         "react-hot-loader": "^4.13.0"
@@ -39,14 +41,13 @@
         "@electron-forge/maker-zip": "6.0.0-beta.56",
         "@electron-forge/plugin-webpack": "6.0.0-beta.56",
         "@marshallofsound/webpack-asset-relocator-loader": "0.5.0",
-        "@testing-library/jest-dom": "5.14.1",
-        "@testing-library/react": "11.2.7",
         "@types/electron-devtools-installer": "2.2.0",
         "@types/node": "^16.11.1",
         "@types/react": "17.0.11",
         "@types/react-dom": "17.0.8",
         "@typescript-eslint/eslint-plugin": "^5.0.0",
         "@typescript-eslint/parser": "^5.0.0",
+        "asar": "^3.1.0",
         "babel-loader": "8.2.2",
         "cross-env": "7.0.3",
         "css-loader": "^6.4.0",
@@ -68,7 +69,7 @@
     "config": {
         "forge": {
             "packagerConfig": {
-                "name": "Managa Reader"
+                "name": "MangaReader"
             },
             "plugins": [
                 [
@@ -92,9 +93,9 @@
                 {
                     "name": "@electron-forge/maker-squirrel",
                     "config": {
-                        "name": "manga-reader",
-                        "exe": "Manga Reader.exe",
-                        "setupExe": "manga-reader.exe"
+                        "name": "mangareader",
+                        "exe": "MangaReader.exe",
+                        "setupExe": "MangaReader.exe"
                     }
                 }
             ]
