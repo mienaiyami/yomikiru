@@ -12,18 +12,21 @@ const InfoOnHover = (props: IhoverInfo) => {
     const ref = useRef<HTMLDivElement>(null);
     useLayoutEffect(() => {
         if (ref.current) {
-            const hoverInfoWidth = 300;
             if (document.querySelector(props.parent)) {
                 let x = 0;
                 if (props.parent === "#bookmarksTab .location-cont") {
-                    // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
                     x = document.querySelector<HTMLDivElement>(props.parent)!.getBoundingClientRect().right;
+                    if (x + ref.current.offsetWidth > window.innerWidth) {
+                        x =
+                            document.querySelector<HTMLDivElement>(props.parent)!.getBoundingClientRect().left -
+                            ref.current.offsetWidth;
+                    }
                 }
                 if (props.parent === "#historyTab .location-cont") {
                     x =
                         // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
                         document.querySelector<HTMLDivElement>(props.parent)!.getBoundingClientRect().x -
-                        hoverInfoWidth;
+                        ref.current.offsetWidth;
                 }
                 let y = props.y - window.app.titleBarHeight;
                 if (y > window.innerHeight - ref.current.offsetHeight - window.app.titleBarHeight - 5) {

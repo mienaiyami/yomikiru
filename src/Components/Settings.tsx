@@ -186,7 +186,7 @@ const Settings = ({ promptSetDefaultLocation }: { promptSetDefaultLocation: () =
                         <div className="name">Theme:</div>
                         <div className="current">
                             <p>
-                                Add custom theme by adding new item by change css variable in <br />
+                                Add custom theme by adding new item with changed css variable in <br />
                                 <span className="copy">
                                     {window.path.join(window.electron.app.getPath("userData"), "themes.json")}
                                 </span>

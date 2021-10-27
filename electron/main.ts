@@ -111,7 +111,6 @@ const registerListener = () => {
         createWindow(link);
     });
 };
-console.log("aaaaaaaaaaaa");
 app.on("ready", async () => {
     registerListener();
     createWindow();
