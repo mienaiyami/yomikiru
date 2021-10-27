@@ -11,11 +11,11 @@ import {
 } from "electron";
 import path from "path";
 import fs from "fs";
-import { homedir } from "os";
+import { homedir, tmpdir } from "os";
 import * as remote from "@electron/remote/main";
 remote.initialize();
 declare const HOME_WEBPACK_ENTRY: string;
-import { spawnSync } from "child_process";
+import { spawn, spawnSync } from "child_process";
 if (require("electron-squirrel-startup")) app.quit();
 const handleSquirrelEvent = () => {
     if (process.argv.length === 1) {
@@ -54,10 +54,40 @@ const handleSquirrelEvent = () => {
             break;
 
         case "--squirrel-uninstall":
-            fs.unlinkSync(
-                path.resolve(homedir(), "AppData/Roaming/Microsoft/Windows/Start Menu/Programs/Manga Reader.lnk")
-            );
-            fs.unlinkSync(path.resolve(homedir(), "Desktop/Manga Reader.lnk"));
+            if (
+                fs.existsSync(
+                    path.resolve(
+                        homedir(),
+                        "AppData/Roaming/Microsoft/Windows/Start Menu/Programs/Manga Reader.lnk"
+                    )
+                )
+            )
+                fs.unlinkSync(
+                    path.resolve(
+                        homedir(),
+                        "AppData/Roaming/Microsoft/Windows/Start Menu/Programs/Manga Reader.lnk"
+                    )
+                );
+            if (fs.existsSync(path.resolve(homedir(), "Desktop/Manga Reader.lnk")))
+                fs.unlinkSync(path.resolve(homedir(), "Desktop/Manga Reader.lnk"));
+            const uninstallFull = `
+            set WshShell = CreateObject("Wscript.shell")
+            WScript.Sleep 30000
+            Dim FSO
+            set FSO=CreateObject("Scripting.FileSystemObject")
+            FSO.DeleteFolder("${app.getPath("userData")}")
+            FSO.DeleteFolder("${rootFolder}\\*")
+            `;
+            const temp = fs.mkdtempSync(path.join(tmpdir(), "foo-"));
+            fs.writeFileSync(path.join(temp, "uninstall.vbs"), uninstallFull);
+            // const cmd = spawn("cmd.exe", ["/K"], { detached: true });
+            // cmd.stdin.write("start " + temp + " \r\n");
+            spawn("cscript.exe", [path.resolve(temp, "uninstall.vbs")], {
+                detached: true,
+            });
+            // spawnSync("cscript.exe", [path.resolve(temp, "uninstall.vbs")]);
+            // fs.unlinkSync(path.resolve(rootFolder));
+            // fs.unlinkSync(app.getPath("userData"));
             app.quit();
             break;
 
