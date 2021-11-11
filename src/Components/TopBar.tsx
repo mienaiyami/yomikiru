@@ -22,17 +22,17 @@ const TopBar = forwardRef((props, forwaredRef: React.ForwardedRef<HTMLInputEleme
         if (mangaInReader) {
             let mangaName = mangaInReader.mangaName;
             let chapterName = mangaInReader.chapterName;
-            if (mangaName.length > 13) mangaName = mangaName.substr(0, 10) + "...";
+            if (mangaName.length > 13) mangaName = mangaName.substr(0, 20) + "...";
             if (chapterName.length > 83) chapterName = chapterName.substr(0, 80) + "...";
             const title = mangaName + " | " + chapterName;
-            setTitle(title);
+            setTitle(chapterName);
             document.title = title;
             return;
         }
         setTitle(window.electron.app.name);
         document.title = window.electron.app.name;
     };
-    const attachEventListener = (): any => {
+    const attachEventListener = () => {
         setMaximized(window.electron.getCurrentWindow().isMaximized);
         window.electron.getCurrentWindow()?.on("maximize", () => setMaximized(true));
         window.electron.getCurrentWindow()?.on("unmaximize", () => setMaximized(false));

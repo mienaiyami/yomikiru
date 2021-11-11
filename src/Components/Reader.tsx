@@ -44,7 +44,7 @@ const Reader = () => {
     const [wideimages, setWideImages] = useState<string[]>([]);
     const [imagesLength, setImagesLength] = useState(0);
     const [imagesLoaded, setImagesLoaded] = useState(0);
-    const [isCtrlsOpen, setctrlOpen] = useState(false);
+    const [isCtrlsOpen, setctrlOpen] = useState(true);
     const [isBookmarked, setBookmarked] = useState(false);
     const sizePlusRef = useRef<HTMLButtonElement>(null);
     const sizeMinusRef = useRef<HTMLButtonElement>(null);

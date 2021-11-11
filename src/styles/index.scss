@@ -663,6 +663,9 @@ body {
             scroll-behavior: smooth;
             display: none;
             overflow-x: hidden;
+            &::-webkit-scrollbar-track {
+                background: var(--topBar-color);
+            }
             .currentMangaList {
                 background: var(--topBar-color);
                 height: 100%;
@@ -674,7 +677,7 @@ body {
                 display: flex;
                 flex-direction: column;
                 padding: 20px;
-                padding-top: 0;
+                padding-top: 5px;
                 box-sizing: border-box;
                 transform: translateX(-99%);
                 transition: 0.2s transform;

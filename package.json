@@ -1,7 +1,7 @@
 {
     "name": "mangareader",
     "productName": "Manga Reader",
-    "version": "2.1.4",
+    "version": "2.1.5",
     "description": "App to read manga on desktop",
     "main": "./.webpack/main/index.js",
     "author": {
@@ -69,7 +69,7 @@
     "config": {
         "forge": {
             "packagerConfig": {
-                "name": "MangaReader"
+                "name": "Manga Reader"
             },
             "plugins": [
                 [
@@ -94,8 +94,8 @@
                     "name": "@electron-forge/maker-squirrel",
                     "config": {
                         "name": "mangareader",
-                        "exe": "MangaReader.exe",
-                        "setupExe": "MangaReader.exe"
+                        "exe": "Manga Reader.exe",
+                        "setupExe": "Manga Reader.exe"
                     }
                 }
             ]

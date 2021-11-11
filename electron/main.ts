@@ -103,6 +103,18 @@ if (handleSquirrelEvent()) {
 // declare const HOME_PRELOAD_WEBPACK_ENTRY: string;
 const windowsCont: (BrowserWindow | null)[] = [];
 let isFirstWindow = true;
+
+app.setUserTasks([
+    {
+        program: process.execPath,
+        arguments: "--new-window",
+        iconPath: process.execPath,
+        iconIndex: 0,
+        title: "New Window",
+        description: "Create a new window",
+    },
+]);
+
 const createWindow = (link?: string) => {
     const newWindow = new BrowserWindow({
         width: 1200,
@@ -144,15 +156,16 @@ const registerListener = () => {
 app.on("ready", async () => {
     registerListener();
     createWindow();
-    globalShortcut.register("f1", () => {
-        shell.openExternal("https://github.com/mienaiyami/react-ts-offline-manga-reader");
-    });
     if (!app.isPackaged) {
-        const reactDevToolsPath = path.join(
-            homedir(),
-            "AppData\\local\\Microsoft\\Edge\\User Data\\Default\\Extensions\\gpphkfbcpidddadnkolkpfckpihlkkil\\4.20.2_0"
-        );
-        await session.defaultSession.loadExtension(reactDevToolsPath);
+        try {
+            const reactDevToolsPath = path.join(
+                homedir(),
+                "AppData\\local\\Microsoft\\Edge\\User Data\\Default\\Extensions\\gpphkfbcpidddadnkolkpfckpihlkkil\\4.20.2_0"
+            );
+            await session.defaultSession.loadExtension(reactDevToolsPath);
+        } catch (err) {
+            console.error(err);
+        }
     }
     const template: MenuItemConstructorOptions[] = [
         {
@@ -177,7 +190,21 @@ app.on("ready", async () => {
                 { role: "resetZoom" },
                 { role: "zoomIn", accelerator: "CommandOrControl+=" },
                 { role: "zoomOut" },
-                { type: "separator" },
+            ],
+        },
+        {
+            label: "Others",
+            submenu: [
+                {
+                    role: "help",
+                    accelerator: "F1",
+                    click: () => shell.openExternal("https://github.com/mienaiyami/react-ts-offline-manga-reader"),
+                },
+                {
+                    label: "New Window",
+                    accelerator: process.platform === "darwin" ? "Cmd+N" : "Ctrl+N",
+                    click: () => createWindow(),
+                },
             ],
         },
     ];

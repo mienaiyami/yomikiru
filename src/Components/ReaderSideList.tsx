@@ -11,11 +11,13 @@ const ReaderSideList = () => {
     const [chapterData, setChapterData] = useState<{ name: string; pages: number }[]>([]);
     const [filter, setfilter] = useState<string>("");
     const [isListOpen, setListOpen] = useState(false);
+    const [preventListClose, setpreventListClose] = useState(false);
     const prevMangaRef = useRef<string>("");
     const [historySimple, sethistorySimple] = useState(history.map((e) => e.chapterName));
     const currentLinkInListRef = useRef<HTMLAnchorElement>(null);
     useEffect(() => {
-        if (!isContextMenuOpen) setListOpen(false);
+        if (!isContextMenuOpen) return setListOpen(false);
+        setpreventListClose(true);
     }, [isContextMenuOpen]);
     useEffect(() => {
         sethistorySimple(history.map((e) => e.chapterName));
@@ -50,7 +52,7 @@ const ReaderSideList = () => {
                     const listData: { name: string; pages: number }[] = [];
                     let validFile = 0;
                     let responseCompleted = 0;
-                    files.forEach((e, i) => {
+                    files.forEach((e) => {
                         const path = dir + "\\" + e;
                         if (window.fs.lstatSync(path).isDirectory()) {
                             validFile++;
@@ -114,11 +116,26 @@ const ReaderSideList = () => {
         <div
             className={`currentMangaList listCont ${isListOpen ? "open" : ""}`}
             onMouseEnter={() => {
+                setpreventListClose(true);
                 if (!isListOpen) setListOpen(true);
             }}
-            onMouseLeave={() => {
-                if (!isContextMenuOpen) setListOpen(false);
+            onMouseLeave={(e) => {
+                if (preventListClose && !isContextMenuOpen && !e.currentTarget.contains(document.activeElement))
+                    setListOpen(false);
+                setpreventListClose(false);
             }}
+            onMouseDown={(e) => {
+                if (e.target instanceof Node && e.currentTarget.contains(e.target)) setpreventListClose(true);
+            }}
+            onBlur={(e) => {
+                if (!preventListClose && !e.currentTarget.contains(document.activeElement)) setListOpen(false);
+            }}
+            onKeyDown={(e) => {
+                if (e.key === "Escape") {
+                    e.currentTarget.blur();
+                }
+            }}
+            tabIndex={-1}
         >
             <div className="indicator">
                 <FontAwesomeIcon icon={faChevronRight} />
@@ -140,6 +157,11 @@ const ReaderSideList = () => {
                                 filter += val[i] + ".*";
                             }
                             setfilter(filter);
+                        }}
+                        onKeyDown={(e) => {
+                            if (e.key === "Escape") {
+                                e.currentTarget.blur();
+                            }
                         }}
                     />
                     <button
