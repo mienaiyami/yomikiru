@@ -95,14 +95,12 @@ const TopBar = forwardRef((props, forwaredRef: React.ForwardedRef<HTMLInputEleme
             <div className="windowBtnCont">
                 <label
                     id="pageNumbers"
-                    title="Nagivate To Page Number"
                     htmlFor="NavigateToPageInput"
                     data-tooltip="Navigate To Page Number"
                     style={{ visibility: isReaderOpen ? "visible" : "hidden" }}
                 >
                     <input
                         type="number"
-                        title="Nagivate To Page Number"
                         id="NavigateToPageInput"
                         defaultValue={1}
                         placeholder="Page Num."
@@ -113,13 +111,18 @@ const TopBar = forwardRef((props, forwaredRef: React.ForwardedRef<HTMLInputEleme
                         onBlur={() => {
                             setPageNumChangeDisabled(false);
                         }}
+                        onKeyDown={(e) => {
+                            if (
+                                !(
+                                    /[0-9]/gi.test(e.key) ||
+                                    e.key === "Backspace" ||
+                                    e.key == "Enter" ||
+                                    e.key == "Escape"
+                                )
+                            )
+                                e.preventDefault();
+                        }}
                         onKeyUp={(e) => {
-                            if (/[0-9]/gi.test(e.key) || e.key === "Backspace") {
-                                const pagenumber = parseInt(e.currentTarget.value);
-                                if (!pagenumber) return;
-                                setPageNumChangeDisabled(true);
-                                scrollToPage(pagenumber);
-                            }
                             if (e.key == "Enter" || e.key == "Escape") {
                                 e.currentTarget.blur();
                             }
@@ -127,8 +130,19 @@ const TopBar = forwardRef((props, forwaredRef: React.ForwardedRef<HTMLInputEleme
                                 const pagenumber = parseInt(e.currentTarget.value);
                                 if (!pagenumber) return;
                                 setPageNumChangeDisabled(true);
-                                scrollToPage(pagenumber);
+                                scrollToPage(pagenumber, () => {
+                                    setPageNumChangeDisabled(false);
+                                });
+                                return;
                             }
+                            if (/[0-9]/gi.test(e.key) || e.key === "Backspace") {
+                                const pagenumber = parseInt(e.currentTarget.value);
+                                if (!pagenumber) return;
+                                setPageNumChangeDisabled(true);
+                                scrollToPage(pagenumber);
+                                return;
+                            }
+                            e.preventDefault();
                         }}
                         tabIndex={-1}
                         min="1"

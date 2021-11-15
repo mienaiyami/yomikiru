@@ -25,7 +25,16 @@ const LocationsTab = forwardRef(
             if (window.fs.existsSync(link) && window.fs.lstatSync(link).isDirectory()) {
                 setIsLoadingFile(true);
                 window.fs.readdir(link, (err, files) => {
-                    if (err) return console.error(err);
+                    if (err) {
+                        console.error(err);
+                        window.electron.dialog.showMessageBox(window.electron.getCurrentWindow(), {
+                            type: "error",
+                            title: err.name,
+                            message: "Error no.: " + err.errno,
+                            detail: err.message,
+                        });
+                        return;
+                    }
                     const dirNames: string[] = files.sort(window.app.betterSortOrder);
                     if (inputRef.current) {
                         inputRef.current.value = "";

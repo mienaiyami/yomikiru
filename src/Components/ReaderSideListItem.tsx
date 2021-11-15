@@ -7,17 +7,17 @@ const ReaderSideListItem = forwardRef(
         {
             name,
             pages,
-            parentLink,
+            link,
             alreadyRead,
             current,
             realRef,
         }: {
             name: string;
             pages: number;
-            parentLink: string;
+            link: string;
             alreadyRead: boolean;
             current: boolean;
-            realRef?: React.RefObject<HTMLAnchorElement>;
+            realRef?: React.RefObject<HTMLAnchorElement> | null;
         },
         ref: React.ForwardedRef<HTMLAnchorElement>
     ) => {
@@ -32,14 +32,14 @@ const ReaderSideListItem = forwardRef(
             <li className={(alreadyRead ? "alreadyRead" : "") + " " + (current ? "current" : "")}>
                 <a
                     className="a-context"
-                    onClick={() => openInReader(window.path.join(parentLink, name))}
+                    onClick={() => openInReader(link)}
                     title={name}
                     ref={ref}
                     onContextMenu={(e) => {
                         showContextMenu({
                             e: e.nativeEvent,
                             isFile: true,
-                            link: window.path.join(parentLink, name),
+                            link: link,
                         });
                     }}
                 >

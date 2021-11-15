@@ -1,8 +1,9 @@
 import { AppContext, themesMain } from "../App";
 import { faGithub } from "@fortawesome/free-brands-svg-icons";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import { ReactElement, useContext, useRef, useState } from "react";
+import { ReactElement, useContext, useEffect, useRef, useState } from "react";
 import useTheme from "../hooks/useTheme";
+import { faTimes } from "@fortawesome/free-solid-svg-icons";
 
 const Settings = ({ promptSetDefaultLocation }: { promptSetDefaultLocation: () => void }): ReactElement => {
     const {
@@ -15,14 +16,35 @@ const Settings = ({ promptSetDefaultLocation }: { promptSetDefaultLocation: () =
         theme,
         setTheme,
     } = useContext(AppContext);
+    const settingContRef = useRef<HTMLDivElement>(null);
     const historyBtnRef = useRef<HTMLButtonElement>(null);
     const historyInputRef = useRef<HTMLInputElement>(null);
     const [mouseOnInput, setMouseOnInput] = useState(false);
+    useEffect(() => {
+        if (isSettingOpen) {
+            setTimeout(() => {
+                settingContRef.current?.focus();
+            }, 300);
+        }
+    }, [isSettingOpen]);
     return (
         <div id="settings" data-state={isSettingOpen ? "open" : "closed"}>
             <div className="clickClose" onClick={() => setSettingOpen(false)}></div>
-            <div className="cont" style={{ overflow: mouseOnInput ? "hidden" : "auto" }}>
-                <h1>Settings</h1>
+            <div
+                className="cont"
+                style={{ overflow: mouseOnInput ? "hidden" : "auto" }}
+                onKeyDown={(e) => {
+                    if (e.key === "Escape") setSettingOpen(false);
+                }}
+                tabIndex={-1}
+                ref={settingContRef}
+            >
+                <h1>
+                    Settings{" "}
+                    <button onClick={() => setSettingOpen(false)}>
+                        <FontAwesomeIcon icon={faTimes} />
+                    </button>{" "}
+                </h1>
                 <div className="content">
                     <div className="settingItem defaultLocation">
                         <div className="name">Default Location:</div>
@@ -261,6 +283,10 @@ const Settings = ({ promptSetDefaultLocation }: { promptSetDefaultLocation: () =
                             <tr>
                                 <td>[ and ]</td>
                                 <td>prev/next</td>
+                            </tr>
+                            <tr>
+                                <td>Ctrl+N</td>
+                                <td>New Window</td>
                             </tr>
                         </tbody>
                     </table>

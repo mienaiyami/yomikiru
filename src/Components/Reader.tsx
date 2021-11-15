@@ -35,7 +35,6 @@ const Reader = () => {
         currentPageNumber,
         setCurrentPageNumber,
         pageNumChangeDisabled,
-        closeReader,
         prevNextChapter,
         scrollToPage,
     } = useContext(AppContext);
@@ -46,6 +45,7 @@ const Reader = () => {
     const [imagesLoaded, setImagesLoaded] = useState(0);
     const [isCtrlsOpen, setctrlOpen] = useState(true);
     const [isBookmarked, setBookmarked] = useState(false);
+    const [scrollPosPercent, setScrollPosPercent] = useState(0);
     const sizePlusRef = useRef<HTMLButtonElement>(null);
     const sizeMinusRef = useRef<HTMLButtonElement>(null);
     const openPrevRef = useRef<HTMLButtonElement>(null);
@@ -53,16 +53,15 @@ const Reader = () => {
     const navToPageRef = useRef<HTMLButtonElement>(null);
     const addToBookmarRef = useRef<HTMLButtonElement>(null);
     const readerRef = useRef<HTMLDivElement>(null);
-    const scrollReader = (intensity: -2 | -1 | 1 | 2) => {
+    const scrollReader = (intensity: -4 | -1 | 1 | 4) => {
         if (readerRef.current && window.app.lastClick <= Date.now() - window.app.clickDelay) {
             window.app.lastClick = Date.now();
             let startTime: number, prevTime: number;
-            readerRef.current.style.scrollBehavior = "auto";
             const anim = (timeStamp: DOMTimeStamp) => {
                 if (startTime === undefined) startTime = timeStamp;
                 const elapsed = timeStamp - startTime;
                 if (prevTime !== timeStamp && readerRef.current) {
-                    readerRef.current.scrollBy(0, intensity * 30);
+                    readerRef.current.scrollBy(0, intensity * 10);
                 }
                 if (elapsed < window.app.clickDelay) {
                     prevTime = timeStamp;
@@ -76,17 +75,14 @@ const Reader = () => {
     useLayoutEffect(() => {
         window.app.clickDelay = 100;
         window.app.lastClick = 0;
-        window.addEventListener("keypress", (e) => {
+        window.addEventListener("keydown", (e) => {
             if (window.app.isReaderOpen && document.activeElement!.tagName === "BODY") {
                 if (e.shiftKey && e.key === " ") {
                     e.preventDefault();
-                    scrollReader(-2);
+                    scrollReader(-4);
                     return;
                 }
                 switch (e.key) {
-                    case "h":
-                        closeReader();
-                        break;
                     case "f":
                         navToPageRef.current?.click();
                         break;
@@ -108,7 +104,7 @@ const Reader = () => {
                         break;
                     case " ":
                         e.preventDefault();
-                        scrollReader(2);
+                        scrollReader(4);
                         break;
                     case "s":
                     case "d":
@@ -127,12 +123,10 @@ const Reader = () => {
                 }
             }
         });
-        window.addEventListener("keyup", () => {
-            if (window.app.isReaderOpen && document.activeElement!.tagName === "BODY") {
-                document.body.style.scrollBehavior = "smooth";
-            }
-        });
     }, []);
+    const makeScrollPos = () => {
+        if (readerRef.current) setScrollPosPercent(readerRef.current.scrollTop / readerRef.current.scrollHeight);
+    };
     const changePageNumber = () => {
         if (!pageNumChangeDisabled) {
             const elem = document.elementFromPoint(window.innerWidth / 2, window.innerHeight / 4);
@@ -147,7 +141,18 @@ const Reader = () => {
         setLoadingManga(true);
         setLoadingMangaPercent(0);
         window.fs.readdir(link, (err, files) => {
-            if (err) return console.error(err);
+            if (err) {
+                console.error(err);
+                window.electron.dialog.showMessageBox(window.electron.getCurrentWindow(), {
+                    type: "error",
+                    title: err.name,
+                    message: "Error no.: " + err.errno,
+                    detail: err.message,
+                });
+                setLoadingManga(false);
+                setLoadingMangaPercent(0);
+                return;
+            }
             if (files.length <= 0) {
                 window.electron.dialog.showMessageBox(window.electron.getCurrentWindow(), {
                     type: "error",
@@ -156,7 +161,9 @@ const Reader = () => {
                     detail: link,
                 });
                 setLinkInReader(mangaInReader?.link || "");
-                return setLoadingManga(false);
+                setLoadingManga(false);
+                setLoadingMangaPercent(0);
+                return;
             }
             const supportedFormat = [".jpg", ".jpeg", ".png", ".webp", ".svg", ".apng", ".gif", "avif"];
             const binFiles: string[] = [];
@@ -176,7 +183,9 @@ const Reader = () => {
                     message: "Folder doesn't contain any supported image format.",
                 });
                 setLinkInReader(mangaInReader?.link || "");
-                return setLoadingManga(false);
+                setLoadingManga(false);
+                setLoadingMangaPercent(0);
+                return;
             }
             if (binFiles.length > 0) {
                 let errMsg = "";
@@ -194,6 +203,7 @@ const Reader = () => {
         });
     };
     const loadImg = (link: string, imgs: string[]) => {
+        link = window.path.normalize(link);
         setImages([]);
         setWideImages([]);
         setCurrentPageNumber(1);
@@ -213,13 +223,11 @@ const Reader = () => {
             const newData = [];
             if (initial.length > 0 && initial[0].link === mangaOpened.link) {
                 initial.shift();
-                newData.push(mangaOpened, ...initial);
-                if (initial.length >= appSettings.historyLimit) {
-                    newData.length = appSettings.historyLimit;
-                }
-                return newData;
             }
             newData.push(mangaOpened, ...initial);
+            if (newData.length >= appSettings.historyLimit) {
+                newData.length = appSettings.historyLimit;
+            }
             return newData;
         });
         setImagesLength(imgs.length);
@@ -234,29 +242,11 @@ const Reader = () => {
             }
         }
     }, [imagesLoaded]);
-    useEffect(() => {
-        scrollToPage(currentPageNumber);
+    useLayoutEffect(() => {
+        readerRef.current?.scrollTo(0, scrollPosPercent * readerRef.current.scrollHeight);
     }, [appSettings.readerWidth]);
     useEffect(() => {
         if (linkInReader && linkInReader !== "") {
-            if (linkInReader === "first") {
-                window.electron.dialog.showMessageBox(window.electron.getCurrentWindow(), {
-                    title: "Error",
-                    type: "error",
-                    message: "First Chapter in List",
-                });
-                setLinkInReader(mangaInReader?.link || "");
-                return;
-            }
-            if (linkInReader === "last") {
-                window.electron.dialog.showMessageBox(window.electron.getCurrentWindow(), {
-                    title: "Error",
-                    type: "error",
-                    message: "Last Chapter in List",
-                });
-                setLinkInReader(mangaInReader?.link || "");
-                return;
-            }
             if (mangaInReader && mangaInReader.link === linkInReader) return;
             checkForImgsAndLoad(linkInReader);
         }
@@ -266,7 +256,9 @@ const Reader = () => {
             ref={readerRef}
             id="reader"
             style={{ display: isReaderOpen ? "block" : "none" }}
-            onScroll={() => changePageNumber()}
+            onScroll={() => {
+                changePageNumber();
+            }}
         >
             <div className="ctrl-bar">
                 <svg xmlns="http://www.w3.org/2000/svg" style={{ display: "none" }}>
@@ -298,6 +290,7 @@ const Reader = () => {
                         tooltip="Size +"
                         btnRef={sizePlusRef}
                         clickAction={() => {
+                            makeScrollPos();
                             setAppSettings((init) => {
                                 init.readerWidth =
                                     init.readerWidth + 5 > 100
@@ -313,10 +306,10 @@ const Reader = () => {
                     </Button>
                     <Button
                         className="ctrl-menu-item"
-                        tabIndex={-1}
                         tooltip="Size -"
                         btnRef={sizeMinusRef}
                         clickAction={() => {
+                            makeScrollPos();
                             setAppSettings((init) => {
                                 init.readerWidth =
                                     init.readerWidth - 5 > 100
@@ -332,9 +325,9 @@ const Reader = () => {
                     </Button>
                     <Button
                         className="ctrl-menu-item"
-                        tabIndex={-1}
                         btnRef={openPrevRef}
                         tooltip="Open Previous"
+                        disabled={prevNextChapter.prev === "first"}
                         clickAction={() => {
                             setLinkInReader(prevNextChapter.prev);
                         }}
@@ -343,9 +336,9 @@ const Reader = () => {
                     </Button>
                     <Button
                         className="ctrl-menu-item"
-                        tabIndex={-1}
                         btnRef={openNextRef}
                         tooltip="Open Next"
+                        disabled={prevNextChapter.next === "last"}
                         clickAction={() => {
                             setLinkInReader(prevNextChapter.next);
                         }}
@@ -354,7 +347,6 @@ const Reader = () => {
                     </Button>
                     <Button
                         className="ctrl-menu-item"
-                        tabIndex={-1}
                         tooltip="Bookmark"
                         btnRef={addToBookmarRef}
                         clickAction={() => {
@@ -385,7 +377,6 @@ const Reader = () => {
                     </Button>
                     <Button
                         className="ctrl-menu-item"
-                        tabIndex={-1}
                         btnRef={navToPageRef}
                         tooltip="Navigate To Page"
                         clickAction={() => pageNumberInputRef.current?.focus()}
@@ -447,6 +438,7 @@ const Button = (props: any) => {
             ref={props.btnRef}
             onClick={props.clickAction}
             tabIndex={-1}
+            disabled={props.disabled}
             onFocus={(e) => e.currentTarget.blur()}
         >
             {props.children}

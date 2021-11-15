@@ -552,6 +552,13 @@ body {
                 > h1 {
                     border-bottom: 1px solid var(--color-secondary);
                     padding: 10px;
+                    position: sticky;
+                    top: 0;
+                    background-color: inherit;
+                    display: flex;
+                    button {
+                        margin-left: auto;
+                    }
                 }
                 .content {
                     display: flex;
@@ -660,7 +667,7 @@ body {
         #reader {
             width: 100vw;
             height: 100%;
-            scroll-behavior: smooth;
+            // scroll-behavior: smooth;
             display: none;
             overflow-x: hidden;
             &::-webkit-scrollbar-track {
@@ -740,7 +747,7 @@ body {
                     display: flex;
                     align-items: center;
                     justify-content: center;
-                    cursor: pointer;
+                    cursor: default;
                     overflow: visible;
                     &::before {
                         transform-origin: right;
@@ -752,16 +759,12 @@ body {
                         font-size: 20px;
                         filter: none;
                     }
-                    i::before {
+                    &:not(:disabled) {
                         cursor: pointer;
-                    }
-                    &:hover,
-                    &:active {
-                        background-color: var(--toolbar-btn-hover);
-                    }
-                    i {
-                        font-size: 15px;
-                        cursor: pointer;
+                        &:hover,
+                        &:active {
+                            background-color: var(--toolbar-btn-hover);
+                        }
                     }
                 }
                 .ctrl-menu-extender {
@@ -786,6 +789,8 @@ body {
                 img {
                     max-width: 100%;
                     min-width: 20%;
+                    //todo: remove after test
+                    filter: invert(1);
                 }
             }
         }

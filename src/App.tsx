@@ -3,6 +3,7 @@ import { createContext, createRef, ReactElement, useEffect, useState } from "rea
 import Main from "./Components/Main";
 import TopBar from "./Components/TopBar";
 import useTheme from "./hooks/useTheme";
+import checkforupdate from "./checkforupdate";
 const userDataURL = window.electron.app.getPath("userData");
 const settingsPath = window.path.join(userDataURL, "settings.json");
 const themesPath = window.path.join(userDataURL, "themes.json");
@@ -93,48 +94,6 @@ const getDataFiles = () => {
 getDataFiles();
 export { themesMain };
 
-const checkforupdate = async () => {
-    const downloadLink = "https://github.com/mienaiyami/react-ts-offline-manga-reader/releases/";
-    const rawdata = await fetch(
-        "https://raw.githubusercontent.com/mienaiyami/offline-manga-reader/main/package.json"
-    ).then((data) => data.json());
-    const latestVersion = await rawdata.version.split(".");
-    console.log("checking for update.....");
-    const currentAppVersion = window.electron.app.getVersion().split(".");
-    if (
-        latestVersion[0] > currentAppVersion[0] ||
-        (latestVersion[0] === currentAppVersion[0] && latestVersion[1] > currentAppVersion[1])
-    ) {
-        window.electron.dialog
-            .showMessageBox(window.electron.getCurrentWindow(), {
-                title: "New Major Version Available",
-                type: "info",
-                message: "New Major Version Available.\nGo to download page?",
-                buttons: ["Yes", "No"],
-            })
-            .then((response) => {
-                if (response.response === 0) window.electron.shell.openExternal(downloadLink);
-            });
-        return;
-    }
-    if (
-        latestVersion[0] === currentAppVersion[0] &&
-        latestVersion[1] === currentAppVersion[1] &&
-        latestVersion[2] > currentAppVersion[2]
-    ) {
-        window.electron.dialog
-            .showMessageBox(window.electron.getCurrentWindow(), {
-                title: "New Version Available",
-                type: "info",
-                message: "Minor Update(you can skip).\nGo to download page?",
-                buttons: ["Yes", "No"],
-            })
-            .then((response) => {
-                if (response.response === 0) window.electron.shell.openExternal(downloadLink);
-            });
-        return;
-    }
-};
 interface IAppContext {
     bookmarks: ListItem[];
     setBookmarks: React.Dispatch<React.SetStateAction<ListItem[]>>;
@@ -159,7 +118,7 @@ interface IAppContext {
     setLoadingMangaPercent: React.Dispatch<React.SetStateAction<number>>;
     currentPageNumber: number;
     setCurrentPageNumber: React.Dispatch<React.SetStateAction<number>>;
-    scrollToPage: (pageNumber: number) => void;
+    scrollToPage: (pageNumber: number, callback?: () => any) => void;
     pageNumChangeDisabled: boolean;
     setPageNumChangeDisabled: React.Dispatch<React.SetStateAction<boolean>>;
     prevNextChapter: {
@@ -252,7 +211,16 @@ const App = (): ReactElement => {
     };
     const openInNewWindow = (link: string) => {
         window.fs.readdir(link, (err, files) => {
-            if (err) return console.error(err);
+            if (err) {
+                console.error(err);
+                window.electron.dialog.showMessageBox(window.electron.getCurrentWindow(), {
+                    type: "error",
+                    title: err.name,
+                    message: "Error no.: " + err.errno,
+                    detail: err.message,
+                });
+                return;
+            }
             if (files.length <= 0) {
                 window.electron.dialog.showMessageBox(window.electron.getCurrentWindow(), {
                     type: "error",
@@ -277,6 +245,7 @@ const App = (): ReactElement => {
     };
     useEffect(() => {
         setFirstRendered(true);
+        checkforupdate();
         window.electron.ipcRenderer.on("loadMangaFromLink", (e, data) => {
             if (data && typeof data.link === "string" && data.link !== "") openInReader(data.link);
         });
@@ -286,13 +255,24 @@ const App = (): ReactElement => {
         window.app.titleBarHeight = parseFloat(
             window.getComputedStyle(document.body).getPropertyValue("--titleBar-height")
         );
+        const refreshOrCloseReader = (e: KeyboardEvent) => {
+            if (e.key === "h") {
+                if (window.app.isReaderOpen) return closeReader();
+                window.location.reload();
+            }
+        };
+        window.addEventListener("keydown", refreshOrCloseReader);
+        return () => {
+            removeEventListener("keydown", refreshOrCloseReader);
+        };
     }, []);
-    const scrollToPage = (pageNumber: number) => {
+    const scrollToPage = (pageNumber: number, callback?: () => any) => {
         const reader = document.querySelector("#reader");
         if (reader) {
             const imgElem = document.querySelector("#reader .imgCont img[data-pagenumber='" + pageNumber + "']");
             if (imgElem) {
-                imgElem.scrollIntoView({ behavior: "auto", block: "start" });
+                imgElem.scrollIntoView({ behavior: "smooth", block: "start" });
+                if (callback) setTimeout(callback, 1500);
             }
         }
     };
@@ -300,14 +280,30 @@ const App = (): ReactElement => {
     useEffect(() => {
         if (firstRendered) {
             window.fs.writeFile(bookmarksPath, JSON.stringify(bookmarks), (err) => {
-                if (err) console.error(err);
+                if (err) {
+                    console.error(err);
+                    window.electron.dialog.showMessageBox(window.electron.getCurrentWindow(), {
+                        type: "error",
+                        title: err.name,
+                        message: "Error no.: " + err.errno,
+                        detail: err.message,
+                    });
+                }
             });
         }
     }, [bookmarks]);
     useEffect(() => {
         if (firstRendered) {
             window.fs.writeFile(historyPath, JSON.stringify(history), (err) => {
-                if (err) console.error(err);
+                if (err) {
+                    console.error(err);
+                    window.electron.dialog.showMessageBox(window.electron.getCurrentWindow(), {
+                        type: "error",
+                        title: err.name,
+                        message: "Error no.: " + err.errno,
+                        detail: err.message,
+                    });
+                }
             });
         }
     }, [history]);
@@ -322,7 +318,15 @@ const App = (): ReactElement => {
     useEffect(() => {
         if (firstRendered) {
             window.fs.writeFile(settingsPath, JSON.stringify(appSettings), (err) => {
-                if (err) console.error(err);
+                if (err) {
+                    console.error(err);
+                    window.electron.dialog.showMessageBox(window.electron.getCurrentWindow(), {
+                        type: "error",
+                        title: err.name,
+                        message: "Error no.: " + err.errno,
+                        detail: err.message,
+                    });
+                }
             });
         }
     }, [appSettings]);

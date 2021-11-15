@@ -1,4 +1,4 @@
-import { faChevronRight, faSort } from "@fortawesome/free-solid-svg-icons";
+import { faChevronRight, faSort, faSyncAlt } from "@fortawesome/free-solid-svg-icons";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { useContext, useEffect, useRef, useState } from "react";
 import { AppContext } from "../App";
@@ -13,14 +13,15 @@ const ReaderSideList = () => {
     const [isListOpen, setListOpen] = useState(false);
     const [preventListClose, setpreventListClose] = useState(false);
     const prevMangaRef = useRef<string>("");
-    const [historySimple, sethistorySimple] = useState(history.map((e) => e.chapterName));
+    const [historySimple, sethistorySimple] = useState(history.map((e) => e.link));
+    //TODO: useless rn
     const currentLinkInListRef = useRef<HTMLAnchorElement>(null);
     useEffect(() => {
         if (!isContextMenuOpen) return setListOpen(false);
         setpreventListClose(true);
     }, [isContextMenuOpen]);
     useEffect(() => {
-        sethistorySimple(history.map((e) => e.chapterName));
+        sethistorySimple(history.map((e) => e.link));
     }, [history]);
 
     const changePrevNext = () => {
@@ -37,6 +38,56 @@ const ReaderSideList = () => {
     useEffect(() => {
         if (chapterData.length >= 0) changePrevNext();
     }, [chapterData]);
+    const makeChapterList = async () => {
+        if (mangaInReader) {
+            const dir = mangaInReader.link.replace(mangaInReader.chapterName, "");
+            const supportedFormat = [".jpg", ".jpeg", ".png", ".webp", ".svg", ".apng", ".gif", "avif"];
+            window.fs.readdir(dir, (err, files) => {
+                if (err) {
+                    console.error(err);
+                    window.electron.dialog.showMessageBox(window.electron.getCurrentWindow(), {
+                        type: "error",
+                        title: err.name,
+                        message: "Error no.: " + err.errno,
+                        detail: err.message,
+                    });
+                    return;
+                }
+                const listData: { name: string; pages: number }[] = [];
+                let validFile = 0;
+                let responseCompleted = 0;
+                files.forEach((e) => {
+                    const path = dir + "\\" + e;
+                    if (window.fs.lstatSync(path).isDirectory()) {
+                        validFile++;
+                        window.fs.promises
+                            .readdir(path)
+                            .then((data) => {
+                                responseCompleted++;
+                                data = data.filter((e) => supportedFormat.includes(window.path.extname(e)));
+                                if (data.length > 0) {
+                                    listData.push({ name: e, pages: data.length });
+                                }
+                                if (responseCompleted >= validFile) {
+                                    setChapterData(
+                                        listData.sort((a, b) => window.app.betterSortOrder(a.name, b.name))
+                                    );
+                                }
+                            })
+                            .catch((err) => {
+                                console.error(err);
+                                responseCompleted++;
+                                if (responseCompleted >= validFile) {
+                                    setChapterData(
+                                        listData.sort((a, b) => window.app.betterSortOrder(a.name, b.name))
+                                    );
+                                }
+                            });
+                    }
+                });
+            });
+        }
+    };
     useEffect(() => {
         if (mangaInReader) {
             if (prevMangaRef.current === mangaInReader.mangaName) {
@@ -44,72 +95,27 @@ const ReaderSideList = () => {
                 return;
             }
             prevMangaRef.current = mangaInReader.mangaName;
-            const fn = async () => {
-                const dir = mangaInReader.link.replace(mangaInReader.chapterName, "");
-                const supportedFormat = [".jpg", ".jpeg", ".png", ".webp", ".svg", ".apng", ".gif", "avif"];
-                window.fs.readdir(dir, (err, files) => {
-                    if (err) return console.error(err);
-                    const listData: { name: string; pages: number }[] = [];
-                    let validFile = 0;
-                    let responseCompleted = 0;
-                    files.forEach((e) => {
-                        const path = dir + "\\" + e;
-                        if (window.fs.lstatSync(path).isDirectory()) {
-                            validFile++;
-                            window.fs.promises
-                                .readdir(path)
-                                .then((data) => {
-                                    responseCompleted++;
-                                    data = data.filter((e) => supportedFormat.includes(window.path.extname(e)));
-                                    if (data.length > 0) {
-                                        listData.push({ name: e, pages: data.length });
-                                    }
-                                    if (responseCompleted >= validFile) {
-                                        setChapterData(
-                                            listData.sort((a, b) => window.app.betterSortOrder(a.name, b.name))
-                                        );
-                                    }
-                                })
-                                .catch((err) => {
-                                    console.error(err);
-                                    responseCompleted++;
-                                    if (responseCompleted >= validFile) {
-                                        setChapterData(
-                                            listData.sort((a, b) => window.app.betterSortOrder(a.name, b.name))
-                                        );
-                                    }
-                                });
-                        }
-                    });
-                });
-            };
-            fn();
+            makeChapterList();
         }
     }, [mangaInReader]);
     const List = (chapterData: { name: string; pages: number }[], filter: string) => {
         return chapterData.map((e) => {
-            if (new RegExp(filter, "ig").test(e.name))
-                return mangaInReader?.chapterName === e.name ? (
+            if (mangaInReader && new RegExp(filter, "ig").test(e.name)) {
+                const link = mangaInReader.link.replace(mangaInReader.chapterName, e.name);
+                const current = mangaInReader?.chapterName === e.name;
+                return (
                     <ReaderSideListItem
                         name={e.name}
-                        alreadyRead={historySimple.includes(e.name)}
+                        alreadyRead={historySimple.includes(link)}
                         key={e.name}
                         pages={e.pages}
-                        current={true}
-                        ref={currentLinkInListRef}
-                        realRef={currentLinkInListRef}
-                        parentLink={mangaInReader ? mangaInReader.link.replace(mangaInReader.chapterName, "") : ""}
-                    />
-                ) : (
-                    <ReaderSideListItem
-                        name={e.name}
-                        alreadyRead={historySimple.includes(e.name)}
-                        key={e.name}
-                        pages={e.pages}
-                        current={false}
-                        parentLink={mangaInReader ? mangaInReader.link.replace(mangaInReader.chapterName, "") : ""}
+                        current={current}
+                        ref={current ? currentLinkInListRef : null}
+                        realRef={current ? currentLinkInListRef : null}
+                        link={link}
                     />
                 );
+            }
         });
     };
     return (
@@ -145,7 +151,6 @@ const ReaderSideList = () => {
                     <input
                         type="text"
                         name=""
-                        id="locationInput2"
                         spellCheck={false}
                         placeholder="Type to Search"
                         tabIndex={-1}
@@ -165,9 +170,17 @@ const ReaderSideList = () => {
                         }}
                     />
                     <button
-                        id="inverseSort2"
                         tabIndex={-1}
-                        data-value="normal"
+                        data-tooltip="Refresh"
+                        onFocus={(e) => e.currentTarget.blur()}
+                        onClick={() => {
+                            makeChapterList();
+                        }}
+                    >
+                        <FontAwesomeIcon icon={faSyncAlt} />
+                    </button>
+                    <button
+                        tabIndex={-1}
                         data-tooltip="Sort"
                         onFocus={(e) => e.currentTarget.blur()}
                         onClick={() =>
