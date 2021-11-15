@@ -245,7 +245,6 @@ const App = (): ReactElement => {
     };
     useEffect(() => {
         setFirstRendered(true);
-        checkforupdate();
         window.electron.ipcRenderer.on("loadMangaFromLink", (e, data) => {
             if (data && typeof data.link === "string" && data.link !== "") openInReader(data.link);
         });

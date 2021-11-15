@@ -6,7 +6,6 @@ export default async () => {
     const latestVersion = await rawdata.version.split(".");
     console.log("checking for update.....");
     const currentAppVersion = window.electron.app.getVersion().split(".");
-    console.log(latestVersion, currentAppVersion);
     if (
         latestVersion[0] > currentAppVersion[0] ||
         (latestVersion[0] === currentAppVersion[0] && latestVersion[1] > currentAppVersion[1])
