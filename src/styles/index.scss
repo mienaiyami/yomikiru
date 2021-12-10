@@ -283,7 +283,8 @@ body {
                 cursor: pointer;
             }
         }
-        input {
+        input[type="text"],
+        input[type="number"] {
             background: var(--input-bg);
             overflow: scroll;
             cursor: text;
@@ -592,6 +593,15 @@ body {
                                 height: 100%;
                                 border-radius: 3px;
                             }
+                            label {
+                                display: flex;
+                                cursor: pointer;
+                                background-color: var(--input-bg);
+                                padding: 5px;
+                                gap: 5px;
+                                border-radius: 3px;
+                                
+                            }
                             p {
                                 font-size: 12px;
                                 width: 100%;
@@ -605,11 +615,9 @@ body {
                             .enabled {
                                 background-color: #f003;
                             }
-                        }
-                    }
-                    .themeSelector {
-                        .selected {
-                            background-color: var(--btn-color2);
+                            .selected {
+                                background-color: var(--btn-color2);
+                            }
                         }
                     }
                 }

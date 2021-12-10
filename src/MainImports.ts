@@ -35,6 +35,7 @@ declare global {
         historyLimit: number;
         locationListSortType: "normal" | "inverse";
         readerWidth: number;
+        variableImageSize:boolean;
     }
     interface ListItem {
         mangaName: string;

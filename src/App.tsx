@@ -22,6 +22,7 @@ if (!window.fs.existsSync(settingsPath)) {
         historyLimit: 60,
         locationListSortType: "normal",
         readerWidth: 60,
+        variableImageSize:true,
     };
     window.fs.writeFileSync(settingsPath, JSON.stringify(settingsData));
 }

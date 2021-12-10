@@ -110,6 +110,7 @@ const LocationsTab = forwardRef(
                             title="Type to Search"
                             data-tooltip="Type to Search"
                             tabIndex={-1}
+                            onKeyDown={(e)=>e.stopPropagation()}
                             onChange={(e) => {
                                 const val = e.target.value;
                                 let filter = "";

@@ -164,6 +164,7 @@ const ReaderSideList = () => {
                             setfilter(filter);
                         }}
                         onKeyDown={(e) => {
+                            e.stopPropagation()
                             if (e.key === "Escape") {
                                 e.currentTarget.blur();
                             }

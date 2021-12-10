@@ -112,6 +112,7 @@ const TopBar = forwardRef((props, forwaredRef: React.ForwardedRef<HTMLInputEleme
                             setPageNumChangeDisabled(false);
                         }}
                         onKeyDown={(e) => {
+                            e.stopPropagation();
                             if (
                                 !(
                                     /[0-9]/gi.test(e.key) ||

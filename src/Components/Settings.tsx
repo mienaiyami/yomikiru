@@ -68,6 +68,7 @@ const Settings = ({ promptSetDefaultLocation }: { promptSetDefaultLocation: () =
                                 defaultValue={appSettings.historyLimit}
                                 ref={historyInputRef}
                                 onKeyDown={(e) => {
+                                    e.stopPropagation();
                                     if (e.key === "Enter") {
                                         historyBtnRef.current?.click();
                                     }
@@ -228,6 +229,20 @@ const Settings = ({ promptSetDefaultLocation }: { promptSetDefaultLocation: () =
                         <div className="name">Version:</div>
                         <div className="current">
                             <span>{window.electron.app.getVersion()}</span>
+                        </div>
+                    </div>
+                    <div className="settingItem defaultLocation">
+                        <div className="name">Other settings</div>
+                        <div className="current">
+                            <label className={appSettings.variableImageSize?'selected':''}>
+                                <input type="checkbox" defaultChecked={appSettings.variableImageSize} onChange={(e)=>{
+                                    setAppSettings((init)=>{
+                                        init.variableImageSize=e.currentTarget.checked;
+                                        return {...init};
+                                    })
+                                }}/>
+                                <p>Variable image size depending on width(prefered for manga where some images consist of 2 pages).</p>
+                            </label>
                         </div>
                     </div>
                     <div className="settingItem issue">

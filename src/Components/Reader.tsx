@@ -417,7 +417,7 @@ const Reader = () => {
                         }}
                         onLoad={(ev) => {
                             setImagesLoaded((init) => init + 1);
-                            if (ev.currentTarget.offsetHeight / ev.currentTarget.offsetWidth <= 1.2) {
+                            if (appSettings.variableImageSize && ev.currentTarget.offsetHeight / ev.currentTarget.offsetWidth <= 1.2) {
                                 setWideImages((init) => [...init, e]);
                             }
                         }}
