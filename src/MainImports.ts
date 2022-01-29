@@ -26,6 +26,8 @@ declare global {
             lastClick: number;
         };
         loadManga: string;
+        cachedImageList: { link: string; images: string[] };
+        temp: any;
     }
     interface appsettings {
         theme: string;
@@ -35,7 +37,7 @@ declare global {
         historyLimit: number;
         locationListSortType: "normal" | "inverse";
         readerWidth: number;
-        variableImageSize:boolean;
+        variableImageSize: boolean;
     }
     interface ListItem {
         mangaName: string;

@@ -22,7 +22,7 @@ if (!window.fs.existsSync(settingsPath)) {
         historyLimit: 60,
         locationListSortType: "normal",
         readerWidth: 60,
-        variableImageSize:true,
+        variableImageSize: true,
     };
     window.fs.writeFileSync(settingsPath, JSON.stringify(settingsData));
 }
@@ -136,6 +136,11 @@ interface IAppContext {
     openInNewWindow: (link: string) => void;
     theme: string;
     setTheme: React.Dispatch<React.SetStateAction<string>>;
+    checkValidFolder: (
+        link: string,
+        callback: (isValid?: boolean, imgs?: string[]) => void,
+        sendImgs?: boolean
+    ) => void;
 }
 
 // eslint-disable-next-line @typescript-eslint/ban-ts-comment
@@ -169,11 +174,91 @@ const App = (): ReactElement => {
             }
         }
     }, [firstRendered]);
+    const checkValidFolder = (
+        link: string,
+        callback: (isValid?: boolean, imgs?: string[]) => void,
+        sendImgs?: boolean
+    ): void => {
+        window.fs.readdir(link, (err, files) => {
+            if (err) {
+                console.error(err);
+                window.electron.dialog.showMessageBox(window.electron.getCurrentWindow(), {
+                    type: "error",
+                    title: err.name,
+                    message: "Error no.: " + err.errno,
+                    detail: err.message,
+                });
+                callback(false);
+                return;
+            }
+            if (files.length <= 0) {
+                window.electron.dialog.showMessageBox(window.electron.getCurrentWindow(), {
+                    type: "error",
+                    title: "No images found",
+                    message: "Folder is empty.",
+                    detail: link,
+                });
+                callback(false);
+                return;
+            }
+            if (sendImgs) {
+                setLoadingManga(true);
+                setLoadingMangaPercent(0);
+            }
+            const supportedFormat = [".jpg", ".jpeg", ".png", ".webp", ".svg", ".apng", ".gif", "avif"];
+            const binFiles: string[] = [];
+            const imgs = files.filter((e) => {
+                if (window.path.extname(e) === ".bin") {
+                    binFiles.push(e);
+                    return true;
+                }
+                return supportedFormat.includes(window.path.extname(e));
+            });
+            if (imgs.length <= 0) {
+                window.electron.dialog.showMessageBox(window.electron.getCurrentWindow(), {
+                    type: "error",
+                    title: "No images found",
+                    message: "Folder doesn't contain any supported image format.",
+                });
+                setLoadingManga(false);
+                callback(false);
+                return;
+            }
+            if (sendImgs) {
+                if (binFiles.length > 0) {
+                    let errMsg = "";
+                    binFiles.forEach((e) => {
+                        errMsg += e + "\n";
+                    });
+                    window.electron.dialog.showMessageBox(window.electron.getCurrentWindow(), {
+                        title: "Warning",
+                        type: "warning",
+                        message: "Unable to load following files. Possibly a download error.",
+                        detail: errMsg + "from folder\n" + link,
+                    });
+                }
+                callback(true, imgs.sort(window.app.betterSortOrder));
+                return;
+            }
+            callback(true);
+        });
+    };
     const openInReader = (link: string) => {
         link = window.path.normalize(link);
-        if (window.fs.existsSync(link) && window.fs.lstatSync(link).isDirectory()) {
-            setLinkInReader(link);
-        }
+        if (link === linkInReader) return;
+        checkValidFolder(
+            link,
+            (isValid, imgs) => {
+                if (isValid && imgs) {
+                    window.cachedImageList = {
+                        link,
+                        images: imgs,
+                    };
+                    setLinkInReader(link);
+                }
+            },
+            true
+        );
     };
 
     const closeReader = () => {
@@ -211,38 +296,13 @@ const App = (): ReactElement => {
         });
     };
     const openInNewWindow = (link: string) => {
-        window.fs.readdir(link, (err, files) => {
-            if (err) {
-                console.error(err);
-                window.electron.dialog.showMessageBox(window.electron.getCurrentWindow(), {
-                    type: "error",
-                    title: err.name,
-                    message: "Error no.: " + err.errno,
-                    detail: err.message,
-                });
-                return;
-            }
-            if (files.length <= 0) {
-                window.electron.dialog.showMessageBox(window.electron.getCurrentWindow(), {
-                    type: "error",
-                    title: "No images found",
-                    message: "Folder is empty.",
-                    detail: link,
-                });
-                return;
-            }
-            const supportedFormat = [".jpg", ".jpeg", ".png", ".webp", ".svg", ".apng", ".gif", "avif"];
-            const imgs = files.filter((e) => supportedFormat.includes(window.path.extname(e)));
-            if (imgs.length <= 0) {
-                window.electron.dialog.showMessageBox(window.electron.getCurrentWindow(), {
-                    type: "error",
-                    title: "No images found",
-                    message: "Folder doesn't contain any supported image format.",
-                });
-                return;
-            }
-            window.electron.ipcRenderer.send("openLinkInNewWindow", link);
-        });
+        checkValidFolder(
+            link,
+            (isValid) => {
+                if (isValid) window.electron.ipcRenderer.send("openLinkInNewWindow", link);
+            },
+            false
+        );
     };
     useEffect(() => {
         setFirstRendered(true);
@@ -365,6 +425,7 @@ const App = (): ReactElement => {
                 openInNewWindow,
                 theme,
                 setTheme,
+                checkValidFolder,
             }}
         >
             <TopBar ref={pageNumberInputRef} />

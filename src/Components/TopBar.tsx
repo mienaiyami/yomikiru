@@ -25,11 +25,12 @@ const TopBar = forwardRef((props, forwaredRef: React.ForwardedRef<HTMLInputEleme
             if (mangaName.length > 13) mangaName = mangaName.substr(0, 20) + "...";
             if (chapterName.length > 83) chapterName = chapterName.substr(0, 80) + "...";
             const title = mangaName + " | " + chapterName;
-            setTitle(chapterName);
+            setTitle(chapterName.concat(window.electron.app.isPackaged ? "" : " - dev"));
             document.title = title;
             return;
         }
-        setTitle(window.electron.app.name);
+        setTitle(window.electron.app.name.concat(window.electron.app.isPackaged ? "" : " - dev"));
+        console.log(window.electron.app.name.concat(window.electron.app.isPackaged ? "" : " - dev"));
         document.title = window.electron.app.name;
     };
     const attachEventListener = () => {

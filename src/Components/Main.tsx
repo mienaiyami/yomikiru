@@ -63,6 +63,7 @@ const Main = ({ promptSetDefaultLocation }: { promptSetDefaultLocation: () => vo
     useEffect(() => {
         setInfoOnHover(null);
     }, [linkInReader]);
+
     //! did i really wasted time on this
     //
     //
@@ -166,6 +167,7 @@ const Main = ({ promptSetDefaultLocation }: { promptSetDefaultLocation: () => vo
     //!i really didnt need this
     //!why did i do this
     //
+
     const toggleTab = (whichTab?: "bookmark" | "history") => {
         const width1 = (tabContRef.current!.offsetWidth - 2 * dividerWidth) / 3;
         const width2 = (tabContRef.current!.offsetWidth - 2 * dividerWidth) / 2;

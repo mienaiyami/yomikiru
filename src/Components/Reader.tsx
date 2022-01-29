@@ -37,6 +37,7 @@ const Reader = () => {
         pageNumChangeDisabled,
         prevNextChapter,
         scrollToPage,
+        checkValidFolder,
     } = useContext(AppContext);
     const { showContextMenu } = useContext(MainContext);
     const [images, setImages] = useState<string[]>([]);
@@ -138,69 +139,19 @@ const Reader = () => {
         }
     };
     const checkForImgsAndLoad = (link: string) => {
-        setLoadingManga(true);
-        setLoadingMangaPercent(0);
-        window.fs.readdir(link, (err, files) => {
-            if (err) {
-                console.error(err);
-                window.electron.dialog.showMessageBox(window.electron.getCurrentWindow(), {
-                    type: "error",
-                    title: err.name,
-                    message: "Error no.: " + err.errno,
-                    detail: err.message,
-                });
-                setLoadingManga(false);
-                setLoadingMangaPercent(0);
-                return;
-            }
-            if (files.length <= 0) {
-                window.electron.dialog.showMessageBox(window.electron.getCurrentWindow(), {
-                    type: "error",
-                    title: "No images found",
-                    message: "Folder is empty.",
-                    detail: link,
-                });
+        if (window.cachedImageList?.link === link && window.cachedImageList.images) {
+            console.log("using cached image list for " + link);
+            loadImg(link, window.cachedImageList.images);
+            return;
+        }
+        checkValidFolder(
+            link,
+            (isValid, imgs) => {
+                if (isValid && imgs) return loadImg(link, imgs);
                 setLinkInReader(mangaInReader?.link || "");
-                setLoadingManga(false);
-                setLoadingMangaPercent(0);
-                return;
-            }
-            const supportedFormat = [".jpg", ".jpeg", ".png", ".webp", ".svg", ".apng", ".gif", "avif"];
-            const binFiles: string[] = [];
-            const imgs = files
-                .filter((e) => {
-                    if (window.path.extname(e) === ".bin") {
-                        binFiles.push(e);
-                        return true;
-                    }
-                    return supportedFormat.includes(window.path.extname(e));
-                })
-                .sort(window.app.betterSortOrder);
-            if (imgs.length <= 0) {
-                window.electron.dialog.showMessageBox(window.electron.getCurrentWindow(), {
-                    type: "error",
-                    title: "No images found",
-                    message: "Folder doesn't contain any supported image format.",
-                });
-                setLinkInReader(mangaInReader?.link || "");
-                setLoadingManga(false);
-                setLoadingMangaPercent(0);
-                return;
-            }
-            if (binFiles.length > 0) {
-                let errMsg = "";
-                binFiles.forEach((e) => {
-                    errMsg += e + "\n";
-                });
-                window.electron.dialog.showMessageBox(window.electron.getCurrentWindow(), {
-                    title: "Warning",
-                    type: "warning",
-                    message: "Unable to load following files.",
-                    detail: errMsg + "from folder\n" + link,
-                });
-            }
-            loadImg(link, imgs);
-        });
+            },
+            true
+        );
     };
     const loadImg = (link: string, imgs: string[]) => {
         link = window.path.normalize(link);
@@ -417,7 +368,10 @@ const Reader = () => {
                         }}
                         onLoad={(ev) => {
                             setImagesLoaded((init) => init + 1);
-                            if (appSettings.variableImageSize && ev.currentTarget.offsetHeight / ev.currentTarget.offsetWidth <= 1.2) {
+                            if (
+                                appSettings.variableImageSize &&
+                                ev.currentTarget.offsetHeight / ev.currentTarget.offsetWidth <= 1.2
+                            ) {
                                 setWideImages((init) => [...init, e]);
                             }
                         }}
