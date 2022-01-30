@@ -66,6 +66,9 @@ body {
     overflow: hidden;
     button {
         font-family: inherit;
+        &:disabled {
+            pointer-events: none;
+        }
     }
     --titleBar-height: 40px;
     --button-width: 55px;
@@ -86,10 +89,12 @@ body {
             background: #000;
             left: 100%;
             top: 50%;
+            height: fit-content;
             transform: translate(var(--translate)) scale(0) rotate(var(--rotate));
             padding: 3px 5px;
             border-radius: 5px;
             opacity: 0;
+            pointer-events: none;
         }
         &:hover::before {
             opacity: 1;
@@ -382,7 +387,7 @@ body {
                     }
                 }
             }
-            .tool {
+            .tools {
                 display: flex;
                 flex-direction: column;
                 gap: 5px;
@@ -390,19 +395,25 @@ body {
                 .currentPath {
                     user-select: text;
                 }
-                .cont {
+                .row1 {
                     gap: 5px;
                     display: flex;
                     flex-direction: row;
+                    height: 44px;
                 }
                 button {
-                    padding: 0;
-                    width: 50px;
+                    // padding: 0;
+                    width: var(--button-width);
                     height: 100%;
+                    overflow: visible;
+                    display: flex;
+                    align-items: center;
+                    justify-content: center;
+                    width: 45px;
                     &::before {
-                        left: 50%;
+                        left: 0;
                         top: 0;
-                        --translate: -50%, calc(-100% - 10px);
+                        --translate: 0%, calc(-100% - 10px);
                     }
                 }
             }
@@ -600,7 +611,6 @@ body {
                                 padding: 5px;
                                 gap: 5px;
                                 border-radius: 3px;
-                                
                             }
                             p {
                                 font-size: 12px;
@@ -727,19 +737,62 @@ body {
                         --grid-template: 2.1em;
                     }
                 }
+                .tools {
+                    button {
+                        &::before {
+                            left: 50%;
+                            top: 100%;
+                            --translate: -50%, 10px;
+                        }
+                    }
+                    .row2 {
+                        display: flex;
+                        flex-direction: row;
+                        width: 100%;
+                        height: 44px;
+                        gap: 5px;
+                        justify-content: stretch;
+                        button {
+                            width: 100%;
+                            &::before {
+                                left: 50%;
+                                top: 0;
+                                --translate: -50%, calc(-100% - 10px);
+                            }
+                        }
+                        button:nth-child(2) {
+                            width: auto;
+                        }
+                    }
+                }
             }
-            .ctrl-bar {
+            #readerSettings {
                 --btn-size: 70px;
                 position: absolute;
                 color: var(--icon-color);
+                background-color: var(--toolbar-btn-bg);
                 border-radius: 100px;
                 right: 20px;
                 top: 10px;
                 z-index: 100;
-                filter: url("#goo");
+                // filter: url("#goo");
                 &:hover,
                 &:active {
                     height: 200px;
+                }
+                button {
+                    position: relative;
+                    border: none;
+                    width: var(--btn-size);
+                    height: var(--btn-size);
+                    padding: 10px;
+                    // border-radius: 100%;
+                    border-radius: 0;
+                    display: flex;
+                    align-items: center;
+                    justify-content: center;
+                }
+                .extender {
                 }
                 .ctrl-menu-item {
                     position: relative;
@@ -750,7 +803,8 @@ body {
                     width: var(--btn-size);
                     height: var(--btn-size);
                     padding: 10px;
-                    border-radius: 100%;
+                    // border-radius: 100%;
+                    border-radius: 0;
                     z-index: inherit;
                     display: flex;
                     align-items: center;
@@ -765,7 +819,6 @@ body {
                         align-items: center;
                         // opacity: 0.9;
                         font-size: 20px;
-                        filter: none;
                     }
                     &:not(:disabled) {
                         cursor: pointer;
@@ -796,7 +849,7 @@ body {
                 align-items: center;
                 img {
                     max-width: 100%;
-                    min-width: 20%;
+                    min-width: 5px;
                 }
             }
         }

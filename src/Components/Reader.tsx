@@ -1,14 +1,4 @@
-import {
-    faArrowLeft,
-    faArrowRight,
-    faBars,
-    faBookmark,
-    faFile,
-    faMinus,
-    faPlus,
-    faTimes,
-} from "@fortawesome/free-solid-svg-icons";
-import { faBookmark as farBookmark } from "@fortawesome/free-regular-svg-icons";
+import { faBars, faMinus, faPlus, faTimes } from "@fortawesome/free-solid-svg-icons";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { useContext, useEffect, useLayoutEffect, useRef, useState } from "react";
 import { AppContext } from "../App";
@@ -29,30 +19,26 @@ const Reader = () => {
         setLoadingManga,
         setHistory,
         bookmarks,
-        setBookmarks,
-        addNewBookmark,
         setLoadingMangaPercent,
-        currentPageNumber,
+        // currentPageNumber,
         setCurrentPageNumber,
         pageNumChangeDisabled,
-        prevNextChapter,
-        scrollToPage,
+        // scrollToPage,
         checkValidFolder,
     } = useContext(AppContext);
     const { showContextMenu } = useContext(MainContext);
     const [images, setImages] = useState<string[]>([]);
-    const [wideimages, setWideImages] = useState<string[]>([]);
+    const [wideImages, setWideImages] = useState<string[]>([]);
     const [imagesLength, setImagesLength] = useState(0);
     const [imagesLoaded, setImagesLoaded] = useState(0);
-    const [isCtrlsOpen, setctrlOpen] = useState(true);
+    const [isCtrlsOpen, setCtrlOpen] = useState(true);
     const [isBookmarked, setBookmarked] = useState(false);
     const [scrollPosPercent, setScrollPosPercent] = useState(0);
     const sizePlusRef = useRef<HTMLButtonElement>(null);
     const sizeMinusRef = useRef<HTMLButtonElement>(null);
     const openPrevRef = useRef<HTMLButtonElement>(null);
     const openNextRef = useRef<HTMLButtonElement>(null);
-    const navToPageRef = useRef<HTMLButtonElement>(null);
-    const addToBookmarRef = useRef<HTMLButtonElement>(null);
+    const addToBookmarkRef = useRef<HTMLButtonElement>(null);
     const readerRef = useRef<HTMLDivElement>(null);
     const scrollReader = (intensity: -4 | -1 | 1 | 4) => {
         if (readerRef.current && window.app.lastClick <= Date.now() - window.app.clickDelay) {
@@ -85,7 +71,7 @@ const Reader = () => {
                 }
                 switch (e.key) {
                     case "f":
-                        navToPageRef.current?.click();
+                        pageNumberInputRef.current?.focus();
                         break;
                     case "]":
                         openNextRef.current?.click();
@@ -94,7 +80,7 @@ const Reader = () => {
                         openPrevRef.current?.click();
                         break;
                     case "b":
-                        addToBookmarRef.current?.click();
+                        addToBookmarkRef.current?.click();
                         break;
                     case "=":
                     case "+":
@@ -142,6 +128,7 @@ const Reader = () => {
         if (window.cachedImageList?.link === link && window.cachedImageList.images) {
             console.log("using cached image list for " + link);
             loadImg(link, window.cachedImageList.images);
+            window.cachedImageList = { link: "", images: [] };
             return;
         }
         checkValidFolder(
@@ -211,7 +198,7 @@ const Reader = () => {
                 changePageNumber();
             }}
         >
-            <div className="ctrl-bar">
+            <div id="readerSettings">
                 <svg xmlns="http://www.w3.org/2000/svg" style={{ display: "none" }}>
                     <defs>
                         <filter id="goo">
@@ -229,7 +216,7 @@ const Reader = () => {
                 <Button
                     className={`ctrl-menu-item ctrl-menu-extender ${isCtrlsOpen ? "open" : ""}`}
                     clickAction={() => {
-                        setctrlOpen((init) => !init);
+                        setCtrlOpen((init) => !init);
                     }}
                     tooltip="Tools"
                 >
@@ -243,12 +230,13 @@ const Reader = () => {
                         clickAction={() => {
                             makeScrollPos();
                             setAppSettings((init) => {
+                                const steps = Math.max(1, Math.min(5, 1 + Math.log10(init.readerWidth)));
                                 init.readerWidth =
-                                    init.readerWidth + 5 > 100
+                                    init.readerWidth + steps > 100
                                         ? 100
-                                        : init.readerWidth + 5 < 20
-                                        ? 20
-                                        : init.readerWidth + 5;
+                                        : init.readerWidth + steps < 0
+                                        ? 0
+                                        : init.readerWidth + steps;
                                 return { ...init };
                             });
                         }}
@@ -262,81 +250,28 @@ const Reader = () => {
                         clickAction={() => {
                             makeScrollPos();
                             setAppSettings((init) => {
+                                const steps = Math.max(1, Math.min(5, 1 + Math.log10(init.readerWidth)));
                                 init.readerWidth =
-                                    init.readerWidth - 5 > 100
+                                    init.readerWidth - steps > 100
                                         ? 100
-                                        : init.readerWidth - 5 < 20
-                                        ? 20
-                                        : init.readerWidth - 5;
+                                        : init.readerWidth - steps < 0
+                                        ? 0
+                                        : init.readerWidth - steps;
                                 return { ...init };
                             });
                         }}
                     >
                         <FontAwesomeIcon icon={faMinus} />
                     </Button>
-                    <Button
-                        className="ctrl-menu-item"
-                        btnRef={openPrevRef}
-                        tooltip="Open Previous"
-                        disabled={prevNextChapter.prev === "first"}
-                        clickAction={() => {
-                            setLinkInReader(prevNextChapter.prev);
-                        }}
-                    >
-                        <FontAwesomeIcon icon={faArrowLeft} />
-                    </Button>
-                    <Button
-                        className="ctrl-menu-item"
-                        btnRef={openNextRef}
-                        tooltip="Open Next"
-                        disabled={prevNextChapter.next === "last"}
-                        clickAction={() => {
-                            setLinkInReader(prevNextChapter.next);
-                        }}
-                    >
-                        <FontAwesomeIcon icon={faArrowRight} />
-                    </Button>
-                    <Button
-                        className="ctrl-menu-item"
-                        tooltip="Bookmark"
-                        btnRef={addToBookmarRef}
-                        clickAction={() => {
-                            if (isBookmarked) {
-                                return window.electron.dialog
-                                    .showMessageBox(window.electron.getCurrentWindow(), {
-                                        title: "Warning",
-                                        type: "warning",
-                                        message: "Remove Bookmark?",
-                                        buttons: ["Yes", "No"],
-                                    })
-                                    .then((res) => {
-                                        if (res.response === 0) {
-                                            setBookmarks((init) => [
-                                                ...init.filter((e) => e.link !== linkInReader),
-                                            ]);
-                                            setBookmarked(false);
-                                        }
-                                    });
-                            }
-                            if (mangaInReader) {
-                                addNewBookmark(mangaInReader);
-                                setBookmarked(true);
-                            }
-                        }}
-                    >
-                        <FontAwesomeIcon icon={isBookmarked ? faBookmark : farBookmark} />
-                    </Button>
-                    <Button
-                        className="ctrl-menu-item"
-                        btnRef={navToPageRef}
-                        tooltip="Navigate To Page"
-                        clickAction={() => pageNumberInputRef.current?.focus()}
-                    >
-                        <FontAwesomeIcon icon={faFile} />
-                    </Button>
                 </div>
             </div>
-            <ReaderSideList />
+            <ReaderSideList
+                openNextRef={openNextRef}
+                openPrevRef={openPrevRef}
+                addToBookmarkRef={addToBookmarkRef}
+                isBookmarked={isBookmarked}
+                setBookmarked={setBookmarked}
+            />
             <section className="imgCont">
                 {images.map((e, i) => (
                     <img
@@ -348,8 +283,8 @@ const Reader = () => {
                         }
                         style={{
                             width:
-                                (wideimages.includes(e)
-                                    ? appSettings.readerWidth * 1.8
+                                (wideImages.includes(e)
+                                    ? appSettings.readerWidth * 2.0
                                     : appSettings.readerWidth) + "%",
                         }}
                         data-pagenumber={i + 1}

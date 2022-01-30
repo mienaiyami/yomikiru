@@ -1,12 +1,43 @@
-import { faChevronRight, faSort, faSyncAlt } from "@fortawesome/free-solid-svg-icons";
+import {
+    faChevronRight,
+    faSort,
+    faSyncAlt,
+    faArrowLeft,
+    faArrowRight,
+    faBookmark,
+} from "@fortawesome/free-solid-svg-icons";
+import { faBookmark as farBookmark } from "@fortawesome/free-regular-svg-icons";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { useContext, useEffect, useRef, useState } from "react";
 import { AppContext } from "../App";
 import { MainContext } from "./Main";
 import ReaderSideListItem from "./ReaderSideListItem";
 
-const ReaderSideList = () => {
-    const { mangaInReader, history, setAppSettings, appSettings, setPrevNextChapter } = useContext(AppContext);
+const ReaderSideList = ({
+    openNextRef,
+    openPrevRef,
+    addToBookmarkRef,
+    isBookmarked,
+    setBookmarked,
+}: {
+    openNextRef: React.RefObject<HTMLButtonElement>;
+    openPrevRef: React.RefObject<HTMLButtonElement>;
+    addToBookmarkRef: React.RefObject<HTMLButtonElement>;
+    isBookmarked: boolean;
+    setBookmarked: React.Dispatch<React.SetStateAction<boolean>>;
+}) => {
+    const {
+        mangaInReader,
+        history,
+        setAppSettings,
+        appSettings,
+        prevNextChapter,
+        setPrevNextChapter,
+        setBookmarks,
+        addNewBookmark,
+        linkInReader,
+        setLinkInReader,
+    } = useContext(AppContext);
     const { isContextMenuOpen } = useContext(MainContext);
     const [chapterData, setChapterData] = useState<{ name: string; pages: number }[]>([]);
     const [filter, setfilter] = useState<string>("");
@@ -146,8 +177,8 @@ const ReaderSideList = () => {
             <div className="indicator">
                 <FontAwesomeIcon icon={faChevronRight} />
             </div>
-            <div className="tool">
-                <div className="cont">
+            <div className="tools">
+                <div className="row1">
                     <input
                         type="text"
                         name=""
@@ -164,7 +195,7 @@ const ReaderSideList = () => {
                             setfilter(filter);
                         }}
                         onKeyDown={(e) => {
-                            e.stopPropagation()
+                            e.stopPropagation();
                             if (e.key === "Escape") {
                                 e.currentTarget.blur();
                             }
@@ -203,6 +234,60 @@ const ReaderSideList = () => {
                         <FontAwesomeIcon icon={faSort} />
                     </button>
                 </div>
+                <div className="row2">
+                    <Button
+                        className="ctrl-menu-item"
+                        btnRef={openPrevRef}
+                        tooltip="Open Previous"
+                        disabled={prevNextChapter.prev === "first"}
+                        clickAction={() => {
+                            setLinkInReader(prevNextChapter.prev);
+                        }}
+                    >
+                        <FontAwesomeIcon icon={faArrowLeft} />
+                    </Button>
+                    <Button
+                        className="ctrl-menu-item"
+                        tooltip="Bookmark"
+                        btnRef={addToBookmarkRef}
+                        clickAction={() => {
+                            if (isBookmarked) {
+                                return window.electron.dialog
+                                    .showMessageBox(window.electron.getCurrentWindow(), {
+                                        title: "Warning",
+                                        type: "warning",
+                                        message: "Remove Bookmark?",
+                                        buttons: ["Yes", "No"],
+                                    })
+                                    .then((res) => {
+                                        if (res.response === 0) {
+                                            setBookmarks((init) => [
+                                                ...init.filter((e) => e.link !== linkInReader),
+                                            ]);
+                                            setBookmarked(false);
+                                        }
+                                    });
+                            }
+                            if (mangaInReader) {
+                                addNewBookmark(mangaInReader);
+                                setBookmarked(true);
+                            }
+                        }}
+                    >
+                        <FontAwesomeIcon icon={isBookmarked ? faBookmark : farBookmark} />
+                    </Button>
+                    <Button
+                        className="ctrl-menu-item"
+                        btnRef={openNextRef}
+                        tooltip="Open Next"
+                        disabled={prevNextChapter.next === "last"}
+                        clickAction={() => {
+                            setLinkInReader(prevNextChapter.next);
+                        }}
+                    >
+                        <FontAwesomeIcon icon={faArrowRight} />
+                    </Button>
+                </div>
             </div>
             <h1>
                 Manga: <span className="mangaName">{mangaInReader?.mangaName}</span>
@@ -224,4 +309,19 @@ const ReaderSideList = () => {
     );
 };
 
+const Button = (props: any) => {
+    return (
+        <button
+            className={props.className}
+            data-tooltip={props.tooltip}
+            ref={props.btnRef}
+            onClick={props.clickAction}
+            tabIndex={-1}
+            disabled={props.disabled}
+            onFocus={(e) => e.currentTarget.blur()}
+        >
+            {props.children}
+        </button>
+    );
+};
 export default ReaderSideList;

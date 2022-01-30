@@ -89,11 +89,12 @@ const LocationsTab = forwardRef(
                         <FontAwesomeIcon icon={faSort} />
                     </button>
                 </h2>
-                <div className="tool">
+                <div className="tools">
                     <span className="currentPath">Current: {currentLink}</span>
-                    <div className="cont">
+                    <div className="row1">
                         <button
                             tabIndex={-1}
+                            data-tooltip="Directory Up"
                             onFocus={(e) => e.currentTarget.blur()}
                             onClick={() => {
                                 setCurrentLink((link) => window.path.dirname(link));
@@ -110,7 +111,7 @@ const LocationsTab = forwardRef(
                             title="Type to Search"
                             data-tooltip="Type to Search"
                             tabIndex={-1}
-                            onKeyDown={(e)=>e.stopPropagation()}
+                            onKeyDown={(e) => e.stopPropagation()}
                             onChange={(e) => {
                                 const val = e.target.value;
                                 let filter = "";

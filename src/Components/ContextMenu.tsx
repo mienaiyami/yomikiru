@@ -82,7 +82,12 @@ const ContextMenu = forwardRef((props: Iprops | null, ref: React.ForwardedRef<HT
                         Open in new Window
                     </li>
                 )}
-                <li role="menuitem" onMouseUp={() => window.electron.shell.showItemInFolder(link)}>
+                <li
+                    role="menuitem"
+                    onMouseUp={() => {
+                        window.electron.shell.showItemInFolder(link);
+                    }}
+                >
                     Show in File Explorer
                 </li>
                 <li role="menuitem" onMouseUp={() => window.electron.clipboard.writeText(link)}>

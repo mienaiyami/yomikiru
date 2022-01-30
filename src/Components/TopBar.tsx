@@ -76,19 +76,6 @@ const TopBar = forwardRef((props, forwaredRef: React.ForwardedRef<HTMLInputEleme
                 >
                     <FontAwesomeIcon icon={faCog} />
                 </button>
-                <button
-                    className="githubbtn"
-                    onFocus={(e) => e.currentTarget.blur()}
-                    onClick={() =>
-                        window.electron.shell.openExternal(
-                            "https://github.com/mienaiyami/react-ts-offline-manga-reader"
-                        )
-                    }
-                    tabIndex={-1}
-                    data-tooltip="Github"
-                >
-                    <FontAwesomeIcon icon={faGithub} />
-                </button>
             </div>
             <div className="mainTitleCont">
                 <div className="title">{title}</div>
