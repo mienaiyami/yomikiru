@@ -69,6 +69,10 @@ body {
         &:disabled {
             pointer-events: none;
         }
+        &:focus {
+            outline: none;
+            box-shadow: var(--color-secondary) 0 0 0px 1px;
+        }
     }
     --titleBar-height: 40px;
     --button-width: 55px;
@@ -281,9 +285,9 @@ body {
             border-radius: 3px;
             border: none;
             overflow: hidden;
-            &:focus {
-                outline: none;
-            }
+            // &:focus {
+            //     outline: none;
+            // }
             i::before {
                 cursor: pointer;
             }
@@ -370,7 +374,8 @@ body {
                             font-size: 20px;
                             background: var(--body-bg);
                             &:hover,
-                            &:active {
+                            &:active,
+                            &:focus {
                                 background: var(--btn-color2);
                             }
                         }
@@ -658,7 +663,7 @@ body {
             position: absolute;
             left: 0;
             top: 0;
-            z-index: 1000;
+            z-index: 100000;
             background: var(--body-bg);
             display: grid;
             place-content: center;
@@ -685,7 +690,6 @@ body {
         #reader {
             width: 100vw;
             height: 100%;
-            // scroll-behavior: smooth;
             display: none;
             overflow-x: hidden;
             &::-webkit-scrollbar-track {
@@ -767,33 +771,84 @@ body {
                 }
             }
             #readerSettings {
-                --btn-size: 70px;
+                // --btn-size: 70px;
+                --extender-size: 60px;
                 position: absolute;
                 color: var(--icon-color);
-                background-color: var(--toolbar-btn-bg);
-                border-radius: 100px;
-                right: 20px;
-                top: 10px;
+                background-color: var(--topBar-color);
+                right: 10px;
+                top: 0;
                 z-index: 100;
-                // filter: url("#goo");
-                &:hover,
-                &:active {
-                    height: 200px;
+                border-radius: 0 0 0 10px;
+                width: 300px;
+                // height: 240px;
+                // transition: 0.5s width, 0.5s height;
+                &.closed {
+                    width: var(--extender-size);
+                    height: var(--extender-size);
+                    border-radius: 0 0 0 20px;
+                    .main {
+                        display: none;
+                    }
                 }
                 button {
                     position: relative;
                     border: none;
-                    width: var(--btn-size);
-                    height: var(--btn-size);
+                    min-width: 50px;
                     padding: 10px;
-                    // border-radius: 100%;
-                    border-radius: 0;
                     display: flex;
                     align-items: center;
                     justify-content: center;
+                    font-size: 15px;
                 }
-                .extender {
+                .menuExtender {
+                    z-index: 101;
+                    position: absolute;
+                    width: var(--extender-size);
+                    height: var(--extender-size);
+                    right: 0;
+                    top: 0;
+                    border-radius: 0 0 0 20px;
+                    font-size: 20px;
+                    background: var(--topBar-color);
+                    &:hover,
+                    &:active,
+                    &:focus {
+                        background: var(--btn-color2);
+                    }
+                    &::before {
+                        top: 0;
+                        left: 0;
+                        --translate: calc(-100% - 10px), -50%;
+                    }
                 }
+                .main {
+                    width: 100%;
+                    height: 100%;
+                    position: relative;
+                    display: flex;
+                    flex-direction: column;
+                    padding: 5px 10px;
+                    .settingItem {
+                        display: flex;
+                        flex-direction: column;
+                        padding: 5px 0;
+                        // border-bottom: 2px solid var(--divider-color);
+                        gap: 5px;
+                        .name {
+                            font-size: 20px;
+                        }
+                        .options {
+                            display: flex;
+                            flex-direction: row;
+                            gap: 5px;
+                            .optionSelected {
+                                background-color: var(--btn-color2);
+                            }
+                        }
+                    }
+                }
+
                 .ctrl-menu-item {
                     position: relative;
                     top: 0;

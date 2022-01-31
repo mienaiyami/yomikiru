@@ -4,6 +4,7 @@ import { useContext, useEffect, useLayoutEffect, useRef, useState } from "react"
 import { AppContext } from "../App";
 import ReaderSideList from "./ReaderSideList";
 import { MainContext } from "./Main";
+import ReaderSettings from "./ReaderSettings";
 
 const Reader = () => {
     const {
@@ -31,9 +32,9 @@ const Reader = () => {
     const [wideImages, setWideImages] = useState<string[]>([]);
     const [imagesLength, setImagesLength] = useState(0);
     const [imagesLoaded, setImagesLoaded] = useState(0);
-    const [isCtrlsOpen, setCtrlOpen] = useState(true);
     const [isBookmarked, setBookmarked] = useState(false);
     const [scrollPosPercent, setScrollPosPercent] = useState(0);
+    const readerSettingExtender = useRef<HTMLButtonElement>(null);
     const sizePlusRef = useRef<HTMLButtonElement>(null);
     const sizeMinusRef = useRef<HTMLButtonElement>(null);
     const openPrevRef = useRef<HTMLButtonElement>(null);
@@ -72,6 +73,10 @@ const Reader = () => {
                 switch (e.key) {
                     case "f":
                         pageNumberInputRef.current?.focus();
+                        break;
+                    case "q":
+                        readerSettingExtender.current?.click();
+                        readerSettingExtender.current?.focus();
                         break;
                     case "]":
                         openNextRef.current?.click();
@@ -198,73 +203,13 @@ const Reader = () => {
                 changePageNumber();
             }}
         >
-            <div id="readerSettings">
-                <svg xmlns="http://www.w3.org/2000/svg" style={{ display: "none" }}>
-                    <defs>
-                        <filter id="goo">
-                            <feGaussianBlur in="SourceGraphic" stdDeviation="10" result="blur" />
-                            <feColorMatrix
-                                in="blur"
-                                type="matrix"
-                                values="1 0 0 0 0  0 1 0 0 0  0 0 1 0 0  0 0 0 18 -7"
-                                result="goo"
-                            />
-                            <feBlend in="SourceGraphic" in2="goo" />
-                        </filter>
-                    </defs>
-                </svg>
-                <Button
-                    className={`ctrl-menu-item ctrl-menu-extender ${isCtrlsOpen ? "open" : ""}`}
-                    clickAction={() => {
-                        setCtrlOpen((init) => !init);
-                    }}
-                    tooltip="Tools"
-                >
-                    <FontAwesomeIcon icon={isCtrlsOpen ? faTimes : faBars} />
-                </Button>
-                <div className="ctrl-menu">
-                    <Button
-                        className="ctrl-menu-item"
-                        tooltip="Size +"
-                        btnRef={sizePlusRef}
-                        clickAction={() => {
-                            makeScrollPos();
-                            setAppSettings((init) => {
-                                const steps = Math.max(1, Math.min(5, 1 + Math.log10(init.readerWidth)));
-                                init.readerWidth =
-                                    init.readerWidth + steps > 100
-                                        ? 100
-                                        : init.readerWidth + steps < 0
-                                        ? 0
-                                        : init.readerWidth + steps;
-                                return { ...init };
-                            });
-                        }}
-                    >
-                        <FontAwesomeIcon icon={faPlus} />
-                    </Button>
-                    <Button
-                        className="ctrl-menu-item"
-                        tooltip="Size -"
-                        btnRef={sizeMinusRef}
-                        clickAction={() => {
-                            makeScrollPos();
-                            setAppSettings((init) => {
-                                const steps = Math.max(1, Math.min(5, 1 + Math.log10(init.readerWidth)));
-                                init.readerWidth =
-                                    init.readerWidth - steps > 100
-                                        ? 100
-                                        : init.readerWidth - steps < 0
-                                        ? 0
-                                        : init.readerWidth - steps;
-                                return { ...init };
-                            });
-                        }}
-                    >
-                        <FontAwesomeIcon icon={faMinus} />
-                    </Button>
-                </div>
-            </div>
+            <ReaderSettings
+                readerRef={readerRef}
+                makeScrollPos={makeScrollPos}
+                readerSettingExtender={readerSettingExtender}
+                sizePlusRef={sizePlusRef}
+                sizeMinusRef={sizeMinusRef}
+            />
             <ReaderSideList
                 openNextRef={openNextRef}
                 openPrevRef={openPrevRef}
@@ -316,22 +261,6 @@ const Reader = () => {
                 ))}
             </section>
         </div>
-    );
-};
-
-const Button = (props: any) => {
-    return (
-        <button
-            className={props.className}
-            data-tooltip={props.tooltip}
-            ref={props.btnRef}
-            onClick={props.clickAction}
-            tabIndex={-1}
-            disabled={props.disabled}
-            onFocus={(e) => e.currentTarget.blur()}
-        >
-            {props.children}
-        </button>
     );
 };
 

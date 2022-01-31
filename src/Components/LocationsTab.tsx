@@ -69,7 +69,7 @@ const LocationsTab = forwardRef(
                     <button
                         data-tooltip="Sort"
                         tabIndex={-1}
-                        onFocus={(e) => e.currentTarget.blur()}
+                        // onFocus={(e) => e.currentTarget.blur()}
                         onClick={() =>
                             setAppSettings((init) => {
                                 switch (init.locationListSortType) {
@@ -95,7 +95,7 @@ const LocationsTab = forwardRef(
                         <button
                             tabIndex={-1}
                             data-tooltip="Directory Up"
-                            onFocus={(e) => e.currentTarget.blur()}
+                            // onFocus={(e) => e.currentTarget.blur()}
                             onClick={() => {
                                 setCurrentLink((link) => window.path.dirname(link));
                             }}

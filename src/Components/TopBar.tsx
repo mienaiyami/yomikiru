@@ -1,11 +1,10 @@
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import React, { forwardRef, ReactElement, useContext, useEffect, useLayoutEffect, useState } from "react";
-import { faGithub } from "@fortawesome/free-brands-svg-icons";
 import { faHome, faCog, faMinus, faTimes } from "@fortawesome/free-solid-svg-icons";
 import { faWindowMaximize, faWindowRestore } from "@fortawesome/free-regular-svg-icons";
 import { AppContext } from "../App";
 
-const TopBar = forwardRef((props, forwaredRef: React.ForwardedRef<HTMLInputElement>): ReactElement => {
+const TopBar = forwardRef((props, forwardedRef: React.ForwardedRef<HTMLInputElement>): ReactElement => {
     const [title, setTitle] = useState<string>("Manga Reader");
     const [isMaximized, setMaximized] = useState(window.electron.getCurrentWindow().isMaximized ?? true);
     const {
@@ -92,7 +91,7 @@ const TopBar = forwardRef((props, forwaredRef: React.ForwardedRef<HTMLInputEleme
                         id="NavigateToPageInput"
                         defaultValue={1}
                         placeholder="Page Num."
-                        ref={forwaredRef}
+                        ref={forwardedRef}
                         onFocus={(e) => {
                             e.currentTarget.select();
                         }}

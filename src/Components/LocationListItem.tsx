@@ -26,20 +26,21 @@ const LocationListItem = ({
                     if (window.fs.existsSync(link) && window.fs.lstatSync(link).isDirectory())
                         setCurrentLink(link);
                 }}
-                onContextMenu={e => {
+                onContextMenu={(e) => {
                     showContextMenu({
                         e: e.nativeEvent,
                         isFile: true,
                         link: link,
                     });
                 }}
+                tabIndex={-1}
             >
                 <span className="text">{name}</span>
             </a>
             <button
                 title="Open In Reader"
                 className="open-in-reader-btn"
-                onFocus={e => e.currentTarget.blur()}
+                // onFocus={(e) => e.currentTarget.blur()}
                 onClick={() => openInReader(link)}
                 // onclick="makeImg($(this).siblings('a').attr('data-link'))"
             >

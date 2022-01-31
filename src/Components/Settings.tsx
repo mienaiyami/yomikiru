@@ -40,10 +40,10 @@ const Settings = ({ promptSetDefaultLocation }: { promptSetDefaultLocation: () =
                 ref={settingContRef}
             >
                 <h1>
-                    Settings{" "}
+                    Settings
                     <button onClick={() => setSettingOpen(false)}>
                         <FontAwesomeIcon icon={faTimes} />
-                    </button>{" "}
+                    </button>
                 </h1>
                 <div className="content">
                     <div className="settingItem defaultLocation">
@@ -51,7 +51,7 @@ const Settings = ({ promptSetDefaultLocation }: { promptSetDefaultLocation: () =
                         <div className="current">
                             <input type="text" value={appSettings.baseDir} readOnly />
                             <button
-                                onFocus={(e) => e.currentTarget.blur()}
+                                // onFocus={(e) => e.currentTarget.blur()}
                                 onClick={() => {
                                     promptSetDefaultLocation();
                                 }}
@@ -79,7 +79,7 @@ const Settings = ({ promptSetDefaultLocation }: { promptSetDefaultLocation: () =
                             />
                             <button
                                 data-type="enable"
-                                onFocus={(e) => e.currentTarget.blur()}
+                                // onFocus={(e) => e.currentTarget.blur()}
                                 ref={historyBtnRef}
                                 onClick={(e) => {
                                     if (e.currentTarget.getAttribute("data-type") === "enable") {
@@ -110,7 +110,7 @@ const Settings = ({ promptSetDefaultLocation }: { promptSetDefaultLocation: () =
                         <div className="name">Bookmarks:</div>
                         <div className="current">
                             <button
-                                onFocus={(e) => e.currentTarget.blur()}
+                                // onFocus={(e) => e.currentTarget.blur()}
                                 onClick={(e) => {
                                     const opt = window.electron.dialog.showSaveDialogSync(
                                         window.electron.getCurrentWindow(),
@@ -132,7 +132,7 @@ const Settings = ({ promptSetDefaultLocation }: { promptSetDefaultLocation: () =
                                 Export
                             </button>
                             <button
-                                onFocus={(e) => e.currentTarget.blur()}
+                                // onFocus={(e) => e.currentTarget.blur()}
                                 onClick={() => {
                                     const opt = window.electron.dialog.showOpenDialogSync(
                                         window.electron.getCurrentWindow(),
@@ -172,7 +172,7 @@ const Settings = ({ promptSetDefaultLocation }: { promptSetDefaultLocation: () =
                                 Import
                             </button>
                             <button
-                                onFocus={(e) => e.currentTarget.blur()}
+                                // onFocus={(e) => e.currentTarget.blur()}
                                 onClick={() => {
                                     const confirm1 = window.electron.dialog.showMessageBoxSync(
                                         window.electron.getCurrentWindow(),
@@ -234,14 +234,21 @@ const Settings = ({ promptSetDefaultLocation }: { promptSetDefaultLocation: () =
                     <div className="settingItem defaultLocation">
                         <div className="name">Other settings</div>
                         <div className="current">
-                            <label className={appSettings.variableImageSize?'selected':''}>
-                                <input type="checkbox" defaultChecked={appSettings.variableImageSize} onChange={(e)=>{
-                                    setAppSettings((init)=>{
-                                        init.variableImageSize=e.currentTarget.checked;
-                                        return {...init};
-                                    })
-                                }}/>
-                                <p>Variable image size depending on width(prefered for manga where some images consist of 2 pages).</p>
+                            <label className={appSettings.variableImageSize ? "selected" : ""}>
+                                <input
+                                    type="checkbox"
+                                    defaultChecked={appSettings.variableImageSize}
+                                    onChange={(e) => {
+                                        setAppSettings((init) => {
+                                            init.variableImageSize = e.currentTarget.checked;
+                                            return { ...init };
+                                        });
+                                    }}
+                                />
+                                <p>
+                                    Variable image size depending on width(prefered for manga where some images
+                                    consist of 2 pages).
+                                </p>
                             </label>
                         </div>
                     </div>
@@ -249,14 +256,13 @@ const Settings = ({ promptSetDefaultLocation }: { promptSetDefaultLocation: () =
                         <div className="name">Issues? :</div>
                         <div className="current">
                             <button
-                                onFocus={(e) => e.currentTarget.blur()}
+                                // onFocus={(e) => e.currentTarget.blur()}
                                 className="postIssue"
                                 onClick={() =>
                                     window.electron.shell.openExternal(
                                         "https://github.com/mienaiyami/react-ts-offline-manga-reader/issues"
                                     )
                                 }
-                                tabIndex={-1}
                             >
                                 <FontAwesomeIcon icon={faGithub} /> Submit Issue
                             </button>
@@ -274,6 +280,10 @@ const Settings = ({ promptSetDefaultLocation }: { promptSetDefaultLocation: () =
                             <tr>
                                 <td> - and = and +</td>
                                 <td>size</td>
+                            </tr>
+                            <tr>
+                                <td> q</td>
+                                <td>reader settings</td>
                             </tr>
                             <tr>
                                 <td>wsad and arrow keys</td>

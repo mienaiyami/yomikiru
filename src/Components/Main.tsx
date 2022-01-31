@@ -59,6 +59,13 @@ const Main = ({ promptSetDefaultLocation }: { promptSetDefaultLocation: () => vo
     useLayoutEffect(() => {
         document.addEventListener("click", () => setInfoOnHover(null));
         document.addEventListener("resize", () => setInfoOnHover(null));
+        document.addEventListener("wheel", () => closeContextMenu());
+
+        if (tabContRef.current) {
+            setDividerWidth(
+                parseInt(window.getComputedStyle(tabContRef.current).getPropertyValue("--divider-width"))
+            );
+        }
     }, []);
     useEffect(() => {
         setInfoOnHover(null);
@@ -313,13 +320,6 @@ const Main = ({ promptSetDefaultLocation }: { promptSetDefaultLocation: () => vo
             }
         }
     };
-    useLayoutEffect(() => {
-        if (tabContRef.current) {
-            setDividerWidth(
-                parseInt(window.getComputedStyle(tabContRef.current).getPropertyValue("--divider-width"))
-            );
-        }
-    }, []);
     return (
         <MainContext.Provider value={{ showContextMenu, isContextMenuOpen, setInfoOnHover }}>
             <div id="app">

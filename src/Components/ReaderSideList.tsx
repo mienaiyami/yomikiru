@@ -204,7 +204,7 @@ const ReaderSideList = ({
                     <button
                         tabIndex={-1}
                         data-tooltip="Refresh"
-                        onFocus={(e) => e.currentTarget.blur()}
+                        // onFocus={(e) => e.currentTarget.blur()}
                         onClick={() => {
                             makeChapterList();
                         }}
@@ -214,7 +214,7 @@ const ReaderSideList = ({
                     <button
                         tabIndex={-1}
                         data-tooltip="Sort"
-                        onFocus={(e) => e.currentTarget.blur()}
+                        // onFocus={(e) => e.currentTarget.blur()}
                         onClick={() =>
                             setAppSettings((init) => {
                                 switch (init.locationListSortType) {
@@ -318,7 +318,7 @@ const Button = (props: any) => {
             onClick={props.clickAction}
             tabIndex={-1}
             disabled={props.disabled}
-            onFocus={(e) => e.currentTarget.blur()}
+            // onFocus={(e) => e.currentTarget.blur()}
         >
             {props.children}
         </button>

@@ -20,7 +20,7 @@ const HistoryTab = forwardRef(
                 <h2>
                     History
                     <button
-                        onFocus={(e) => e.currentTarget.blur()}
+                        // onFocus={(e) => e.currentTarget.blur()}
                         onClick={() => {
                             window.electron.dialog
                                 .showMessageBox(window.electron.getCurrentWindow(), {
