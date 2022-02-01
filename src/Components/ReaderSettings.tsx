@@ -17,10 +17,26 @@ const ReaderSettings = ({
     sizePlusRef: React.RefObject<HTMLButtonElement>;
     sizeMinusRef: React.RefObject<HTMLButtonElement>;
 }) => {
-    const { setAppSettings } = useContext(AppContext);
+    const { appSettings, setAppSettings } = useContext(AppContext);
     const [isReaderSettingsOpen, setReaderSettingOpen] = useState(false);
-    const [readerTypeSelected, setReaderTypeSelected] = useState(0);
-    const [pagesPerRowSelected, setPagesPerRowSelected] = useState(0);
+    const [readerTypeSelected, setReaderTypeSelected] = useState<0 | 1>(
+        appSettings.readerSettings.readerTypeSelected
+    );
+    const [pagesPerRowSelected, setPagesPerRowSelected] = useState<0 | 1 | 2>(
+        appSettings.readerSettings.pagesPerRowSelected
+    );
+    useEffect(() => {
+        setAppSettings((init) => {
+            init.readerSettings.readerTypeSelected = readerTypeSelected;
+            return { ...init };
+        });
+    }, [readerTypeSelected]);
+    useEffect(() => {
+        setAppSettings((init) => {
+            init.readerSettings.pagesPerRowSelected = pagesPerRowSelected;
+            return { ...init };
+        });
+    }, [pagesPerRowSelected]);
     return (
         <div
             id="readerSettings"
@@ -32,7 +48,6 @@ const ReaderSettings = ({
                     if (readerRef.current) readerRef.current.focus();
                 }
             }}
-            tabIndex={-1}
         >
             <h2></h2>
             <button
@@ -48,43 +63,51 @@ const ReaderSettings = ({
             </button>
             <div className="main">
                 <div className="settingItem">
-                    <div className="name">Size</div>
+                    <div className="name">
+                        Size {Math.round(appSettings.readerSettings.readerWidth * 100) / 100}%
+                    </div>
                     <div className="options">
-                        <button
-                            ref={sizePlusRef}
-                            onClick={() => {
-                                makeScrollPos();
-                                setAppSettings((init) => {
-                                    const steps = Math.max(1, Math.min(5, 1 + Math.log10(init.readerWidth)));
-                                    init.readerWidth =
-                                        init.readerWidth + steps > 100
-                                            ? 100
-                                            : init.readerWidth + steps < 0
-                                            ? 0
-                                            : init.readerWidth + steps;
-                                    return { ...init };
-                                });
-                            }}
-                        >
-                            <FontAwesomeIcon icon={faPlus} />
-                        </button>
                         <button
                             ref={sizeMinusRef}
                             onClick={() => {
                                 makeScrollPos();
                                 setAppSettings((init) => {
-                                    const steps = Math.max(1, Math.min(5, 1 + Math.log10(init.readerWidth)));
-                                    init.readerWidth =
-                                        init.readerWidth - steps > 100
+                                    const steps = Math.max(
+                                        1,
+                                        Math.min(5, 1 + Math.log10(init.readerSettings.readerWidth))
+                                    );
+                                    init.readerSettings.readerWidth =
+                                        init.readerSettings.readerWidth - steps > 100
                                             ? 100
-                                            : init.readerWidth - steps < 0
-                                            ? 0
-                                            : init.readerWidth - steps;
+                                            : init.readerSettings.readerWidth - steps < 1
+                                            ? 1
+                                            : init.readerSettings.readerWidth - steps;
                                     return { ...init };
                                 });
                             }}
                         >
                             <FontAwesomeIcon icon={faMinus} />
+                        </button>
+                        <button
+                            ref={sizePlusRef}
+                            onClick={() => {
+                                makeScrollPos();
+                                setAppSettings((init) => {
+                                    const steps = Math.max(
+                                        1,
+                                        Math.min(5, 1 + Math.log10(init.readerSettings.readerWidth))
+                                    );
+                                    init.readerSettings.readerWidth =
+                                        init.readerSettings.readerWidth + steps > 100
+                                            ? 100
+                                            : init.readerSettings.readerWidth + steps < 1
+                                            ? 1
+                                            : init.readerSettings.readerWidth + steps;
+                                    return { ...init };
+                                });
+                            }}
+                        >
+                            <FontAwesomeIcon icon={faPlus} />
                         </button>
                     </div>
                 </div>
@@ -101,7 +124,7 @@ const ReaderSettings = ({
                             className={readerTypeSelected === 1 ? "optionSelected" : ""}
                             onClick={() => setReaderTypeSelected(1)}
                         >
-                            Click for next Page
+                            Click to Move
                         </button>
                     </div>
                 </div>
@@ -110,22 +133,85 @@ const ReaderSettings = ({
                     <div className="options">
                         <button
                             className={pagesPerRowSelected === 0 ? "optionSelected" : ""}
-                            onClick={() => setPagesPerRowSelected(0)}
+                            onClick={() => {
+                                setPagesPerRowSelected(0);
+                                if (pagesPerRowSelected === 0) return;
+                                setAppSettings((init) => {
+                                    init.readerSettings.readerWidth /= 2;
+                                    if (init.readerSettings.readerWidth > 100)
+                                        init.readerSettings.readerWidth = 100;
+                                    if (init.readerSettings.readerWidth < 1) init.readerSettings.readerWidth = 1;
+                                    return { ...init };
+                                });
+                            }}
                         >
                             1
                         </button>
                         <button
                             className={pagesPerRowSelected === 1 ? "optionSelected" : ""}
-                            onClick={() => setPagesPerRowSelected(1)}
+                            onClick={() => {
+                                setPagesPerRowSelected(1);
+                                if (pagesPerRowSelected === 1 || pagesPerRowSelected === 2) return;
+                                setAppSettings((init) => {
+                                    init.readerSettings.readerWidth *= 2;
+                                    if (init.readerSettings.readerWidth > 100)
+                                        init.readerSettings.readerWidth = 100;
+                                    if (init.readerSettings.readerWidth < 1) init.readerSettings.readerWidth = 1;
+                                    return { ...init };
+                                });
+                            }}
                         >
                             2
                         </button>
                         <button
                             className={pagesPerRowSelected === 2 ? "optionSelected" : ""}
-                            onClick={() => setPagesPerRowSelected(2)}
+                            onClick={() => {
+                                setPagesPerRowSelected(2);
+                                if (pagesPerRowSelected === 1 || pagesPerRowSelected === 2) return;
+                                setAppSettings((init) => {
+                                    init.readerSettings.readerWidth *= 2;
+                                    if (init.readerSettings.readerWidth > 100)
+                                        init.readerSettings.readerWidth = 100;
+                                    if (init.readerSettings.readerWidth < 1) init.readerSettings.readerWidth = 1;
+                                    return { ...init };
+                                });
+                            }}
                         >
-                            2 alt
+                            2 odd
                         </button>
+                    </div>
+                </div>
+                <div className="settingItem">
+                    <div className="name">Other settings</div>
+                    <div className="options col">
+                        <label className={appSettings.readerSettings.variableImageSize ? "optionSelected" : ""}>
+                            <input
+                                type="checkbox"
+                                disabled={appSettings.readerSettings.pagesPerRowSelected !== 0}
+                                checked={appSettings.readerSettings.variableImageSize}
+                                onChange={(e) => {
+                                    setAppSettings((init) => {
+                                        init.readerSettings.variableImageSize = e.currentTarget.checked;
+                                        return { ...init };
+                                    });
+                                }}
+                            />
+                            <p>Variable image size depending on width(e.g. image is 2 pages of manga).</p>
+                        </label>
+                        <label className={appSettings.readerSettings.gapBetweenRows ? "optionSelected" : ""}>
+                            <input
+                                type="checkbox"
+                                disabled={appSettings.readerSettings.readerTypeSelected !== 0}
+                                checked={appSettings.readerSettings.gapBetweenRows}
+                                onChange={(e) => {
+                                    setAppSettings((init) => {
+                                        init.readerSettings.gapBetweenRows = e.currentTarget.checked;
+                                        return { ...init };
+                                    });
+                                }}
+                            />
+                            <p>Gap between rows.</p>
+                        </label>
                     </div>
                 </div>
             </div>
@@ -147,13 +233,13 @@ const ReaderSettings = ({
                     clickAction={() => {
                         makeScrollPos();
                         setAppSettings((init) => {
-                            const steps = Math.max(1, Math.min(5, 1 + Math.log10(init.readerWidth)));
-                            init.readerWidth =
-                                init.readerWidth + steps > 100
+                            const steps = Math.max(1, Math.min(5, 1 + Math.log10(init.readerSettings.readerWidth)));
+                            init.readerSettings.readerWidth =
+                                init.readerSettings.readerWidth + steps > 100
                                     ? 100
-                                    : init.readerWidth + steps < 0
+                                    : init.readerSettings.readerWidth + steps < 0
                                     ? 0
-                                    : init.readerWidth + steps;
+                                    : init.readerSettings.readerWidth + steps;
                             return { ...init };
                         });
                     }}
@@ -167,13 +253,13 @@ const ReaderSettings = ({
                     clickAction={() => {
                         makeScrollPos();
                         setAppSettings((init) => {
-                            const steps = Math.max(1, Math.min(5, 1 + Math.log10(init.readerWidth)));
-                            init.readerWidth =
-                                init.readerWidth - steps > 100
+                            const steps = Math.max(1, Math.min(5, 1 + Math.log10(init.readerSettings.readerWidth)));
+                            init.readerSettings.readerWidth =
+                                init.readerSettings.readerWidth - steps > 100
                                     ? 100
-                                    : init.readerWidth - steps < 0
+                                    : init.readerSettings.readerWidth - steps < 0
                                     ? 0
-                                    : init.readerWidth - steps;
+                                    : init.readerSettings.readerWidth - steps;
                             return { ...init };
                         });
                     }}

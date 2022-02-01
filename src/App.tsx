@@ -13,7 +13,7 @@ const historyPath = window.path.join(userDataURL, "history.json");
 const historyDataInit: ListItem[] = [];
 const themesMain: { name: string; main: string }[] = [];
 
-if (!window.fs.existsSync(settingsPath)) {
+const makeSettingsJson = () => {
     const settingsData: appsettings = {
         theme: "theme2",
         bookmarksPath,
@@ -21,12 +21,52 @@ if (!window.fs.existsSync(settingsPath)) {
         baseDir: window.electron.app.getPath("home"),
         historyLimit: 60,
         locationListSortType: "normal",
-        readerWidth: 60,
-        variableImageSize: true,
+        readerSettings: {
+            readerWidth: 60,
+            variableImageSize: true,
+            readerTypeSelected: 0,
+            pagesPerRowSelected: 0,
+            gapBetweenRows: true,
+        },
     };
     window.fs.writeFileSync(settingsPath, JSON.stringify(settingsData));
+};
+
+if (!window.fs.existsSync(settingsPath)) {
+    makeSettingsJson();
+}
+try {
+    JSON.parse(window.fs.readFileSync(settingsPath, "utf-8"));
+} catch (err) {
+    console.log("Unable to parse " + settingsPath + "\n" + "Writing new ettings.json");
+    console.error(err);
+    makeSettingsJson();
+}
+function isSettingsValid(): boolean {
+    const settings: appsettings = JSON.parse(window.fs.readFileSync(settingsPath, "utf-8"));
+    return (
+        typeof settings.theme === "string" &&
+        typeof settings.bookmarksPath === "string" &&
+        typeof settings.historyPath === "string" &&
+        typeof settings.baseDir === "string" &&
+        typeof settings.historyLimit === "number" &&
+        settings.locationListSortType === ("normal" || "inverse") &&
+        typeof settings.readerSettings === "object" &&
+        typeof settings.readerSettings.readerWidth === "number" &&
+        typeof settings.readerSettings.variableImageSize === "boolean" &&
+        typeof settings.readerSettings.gapBetweenRows === "boolean" &&
+        (settings.readerSettings.readerTypeSelected === 0 || settings.readerSettings.readerTypeSelected === 1) &&
+        (settings.readerSettings.pagesPerRowSelected === 0 ||
+            settings.readerSettings.pagesPerRowSelected === 1 ||
+            settings.readerSettings.pagesPerRowSelected === 2)
+    );
+}
+if (!isSettingsValid()) {
+    console.warn(`Settings in ${settingsPath} are not invalid. Re-writing settings.`);
+    makeSettingsJson();
 }
 const settings: appsettings = JSON.parse(window.fs.readFileSync(settingsPath, "utf-8"));
+
 const getDataFiles = () => {
     if (window.fs.existsSync(bookmarksPath)) {
         const rawdata = window.fs.readFileSync(bookmarksPath, "utf8");
@@ -119,7 +159,9 @@ interface IAppContext {
     setLoadingMangaPercent: React.Dispatch<React.SetStateAction<number>>;
     currentPageNumber: number;
     setCurrentPageNumber: React.Dispatch<React.SetStateAction<number>>;
-    scrollToPage: (pageNumber: number, callback?: () => any) => void;
+    currentImageRow: number;
+    setCurrentImageRow: React.Dispatch<React.SetStateAction<number>>;
+    scrollToPage: (pageNumber: number, callback?: () => void) => void;
     pageNumChangeDisabled: boolean;
     setPageNumChangeDisabled: React.Dispatch<React.SetStateAction<boolean>>;
     prevNextChapter: {
@@ -141,6 +183,7 @@ interface IAppContext {
         callback: (isValid?: boolean, imgs?: string[]) => void,
         sendImgs?: boolean
     ) => void;
+    promptSetDefaultLocation: () => void;
 }
 
 // eslint-disable-next-line @typescript-eslint/ban-ts-comment
@@ -154,6 +197,7 @@ const App = (): ReactElement => {
     const [isReaderOpen, setReaderOpen] = useState(false);
     const [isLoadingManga, setLoadingManga] = useState(false);
     const [currentPageNumber, setCurrentPageNumber] = useState(1);
+    const [currentImageRow, setCurrentImageRow] = useState(1);
     const [pageNumChangeDisabled, setPageNumChangeDisabled] = useState(false);
     const [loadingMangaPercent, setLoadingMangaPercent] = useState(100);
     const [linkInReader, setLinkInReader] = useState<string>(window.loadManga || "");
@@ -326,13 +370,24 @@ const App = (): ReactElement => {
             removeEventListener("keydown", refreshOrCloseReader);
         };
     }, []);
-    const scrollToPage = (pageNumber: number, callback?: () => any) => {
+    const scrollToPage = (pageNumber: number, callback?: () => void) => {
         const reader = document.querySelector("#reader");
         if (reader) {
-            const imgElem = document.querySelector("#reader .imgCont img[data-pagenumber='" + pageNumber + "']");
-            if (imgElem) {
-                imgElem.scrollIntoView({ behavior: "smooth", block: "start" });
-                if (callback) setTimeout(callback, 1500);
+            if (pageNumber >= 1 && pageNumber <= (mangaInReader?.pages || 1)) {
+                //! pageNumber no longer in use
+                const imgElem = document.querySelector(
+                    "#reader .imgCont img[data-pagenumber='" + pageNumber + "']"
+                );
+                if (appSettings.readerSettings.readerTypeSelected === 1) {
+                    const rowNumber = parseInt(imgElem?.parentElement?.getAttribute("data-imagerow") || "1");
+                    setCurrentImageRow(rowNumber);
+                    if (callback) setTimeout(callback, 1500);
+                } else {
+                    if (imgElem) {
+                        imgElem.scrollIntoView({ behavior: "smooth", block: "start" });
+                        if (callback) setTimeout(callback, 1500);
+                    }
+                }
             }
         }
     };
@@ -416,6 +471,8 @@ const App = (): ReactElement => {
                 setLoadingMangaPercent,
                 currentPageNumber,
                 setCurrentPageNumber,
+                currentImageRow,
+                setCurrentImageRow,
                 scrollToPage,
                 pageNumChangeDisabled,
                 setPageNumChangeDisabled,
@@ -426,10 +483,11 @@ const App = (): ReactElement => {
                 theme,
                 setTheme,
                 checkValidFolder,
+                promptSetDefaultLocation,
             }}
         >
-            <TopBar ref={pageNumberInputRef} />
-            <Main promptSetDefaultLocation={promptSetDefaultLocation} />
+            <TopBar />
+            <Main />
         </AppContext.Provider>
     );
 };

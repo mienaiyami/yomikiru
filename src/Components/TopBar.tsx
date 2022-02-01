@@ -1,10 +1,10 @@
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import React, { forwardRef, ReactElement, useContext, useEffect, useLayoutEffect, useState } from "react";
+import { ReactElement, useContext, useEffect, useLayoutEffect, useState } from "react";
 import { faHome, faCog, faMinus, faTimes } from "@fortawesome/free-solid-svg-icons";
 import { faWindowMaximize, faWindowRestore } from "@fortawesome/free-regular-svg-icons";
 import { AppContext } from "../App";
 
-const TopBar = forwardRef((props, forwardedRef: React.ForwardedRef<HTMLInputElement>): ReactElement => {
+const TopBar = (): ReactElement => {
     const [title, setTitle] = useState<string>("Manga Reader");
     const [isMaximized, setMaximized] = useState(window.electron.getCurrentWindow().isMaximized ?? true);
     const {
@@ -29,7 +29,6 @@ const TopBar = forwardRef((props, forwardedRef: React.ForwardedRef<HTMLInputElem
             return;
         }
         setTitle(window.electron.app.name.concat(window.electron.app.isPackaged ? "" : " - dev"));
-        console.log(window.electron.app.name.concat(window.electron.app.isPackaged ? "" : " - dev"));
         document.title = window.electron.app.name;
     };
     const attachEventListener = () => {
@@ -91,7 +90,7 @@ const TopBar = forwardRef((props, forwardedRef: React.ForwardedRef<HTMLInputElem
                         id="NavigateToPageInput"
                         defaultValue={1}
                         placeholder="Page Num."
-                        ref={forwardedRef}
+                        ref={pageNumberInputRef}
                         onFocus={(e) => {
                             e.currentTarget.select();
                         }}
@@ -170,6 +169,6 @@ const TopBar = forwardRef((props, forwardedRef: React.ForwardedRef<HTMLInputElem
             </div>
         </div>
     );
-});
+};
 
 export default TopBar;

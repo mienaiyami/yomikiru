@@ -10,7 +10,6 @@ const LocationsTab = forwardRef(
             currentLink,
             setCurrentLink,
         }: {
-            mangaPath: string;
             currentLink: string;
             setCurrentLink: React.Dispatch<React.SetStateAction<string>>;
         },

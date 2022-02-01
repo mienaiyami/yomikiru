@@ -5,6 +5,12 @@ import { ipcRenderer } from "electron";
  */
 import path from "path";
 import fs from "fs";
+
+declare module "react" {
+    interface CSSProperties {
+        [key: `--${string}`]: string | number;
+    }
+}
 declare global {
     interface Window {
         electron: {
@@ -36,8 +42,13 @@ declare global {
         baseDir: string;
         historyLimit: number;
         locationListSortType: "normal" | "inverse";
-        readerWidth: number;
-        variableImageSize: boolean;
+        readerSettings: {
+            readerWidth: number;
+            variableImageSize: boolean;
+            readerTypeSelected: 0 | 1;
+            pagesPerRowSelected: 0 | 1 | 2;
+            gapBetweenRows: boolean;
+        };
     }
     interface ListItem {
         mangaName: string;

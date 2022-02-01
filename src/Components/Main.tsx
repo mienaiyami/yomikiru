@@ -33,7 +33,7 @@ interface IMainContext {
 // @ts-ignore
 export const MainContext = createContext<IMainContext>();
 
-const Main = ({ promptSetDefaultLocation }: { promptSetDefaultLocation: () => void }): ReactElement => {
+const Main = (): ReactElement => {
     const { appSettings, isReaderOpen, linkInReader } = useContext(AppContext);
     const [currentLink, setCurrentLink] = useState(appSettings.baseDir);
     const [bookmarkTabDisplay, setBookmarkTabDisplay] = useState(true);
@@ -67,6 +67,7 @@ const Main = ({ promptSetDefaultLocation }: { promptSetDefaultLocation: () => vo
             );
         }
     }, []);
+    useLayoutEffect(() => setCurrentLink(appSettings.baseDir), [appSettings.baseDir]);
     useEffect(() => {
         setInfoOnHover(null);
     }, [linkInReader]);
@@ -324,12 +325,7 @@ const Main = ({ promptSetDefaultLocation }: { promptSetDefaultLocation: () => vo
         <MainContext.Provider value={{ showContextMenu, isContextMenuOpen, setInfoOnHover }}>
             <div id="app">
                 <div className="tabCont" ref={tabContRef} style={{ display: isReaderOpen ? "none" : "flex" }}>
-                    <LocationsTab
-                        mangaPath={appSettings.baseDir}
-                        currentLink={currentLink}
-                        setCurrentLink={setCurrentLink}
-                        ref={locationTabRef}
-                    />
+                    <LocationsTab currentLink={currentLink} setCurrentLink={setCurrentLink} ref={locationTabRef} />
                     <div className="divider" onClick={() => toggleTab("bookmark")}>
                         <div className="bar"></div>
                     </div>
@@ -339,7 +335,7 @@ const Main = ({ promptSetDefaultLocation }: { promptSetDefaultLocation: () => vo
                     </div>
                     <HistoryTab historyTabDisplay={historyTabDisplay} ref={historyTabRef} />
                 </div>
-                <Settings promptSetDefaultLocation={promptSetDefaultLocation} />
+                <Settings />
                 <LoadingScreen />
                 {isContextMenuOpen ? (
                     contextMenuData ? (

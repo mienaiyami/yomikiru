@@ -14,14 +14,14 @@ import { MainContext } from "./Main";
 import ReaderSideListItem from "./ReaderSideListItem";
 
 const ReaderSideList = ({
-    openNextRef,
-    openPrevRef,
+    openNextChapterRef,
+    openPrevChapterRef,
     addToBookmarkRef,
     isBookmarked,
     setBookmarked,
 }: {
-    openNextRef: React.RefObject<HTMLButtonElement>;
-    openPrevRef: React.RefObject<HTMLButtonElement>;
+    openNextChapterRef: React.RefObject<HTMLButtonElement>;
+    openPrevChapterRef: React.RefObject<HTMLButtonElement>;
     addToBookmarkRef: React.RefObject<HTMLButtonElement>;
     isBookmarked: boolean;
     setBookmarked: React.Dispatch<React.SetStateAction<boolean>>;
@@ -237,7 +237,7 @@ const ReaderSideList = ({
                 <div className="row2">
                     <Button
                         className="ctrl-menu-item"
-                        btnRef={openPrevRef}
+                        btnRef={openPrevChapterRef}
                         tooltip="Open Previous"
                         disabled={prevNextChapter.prev === "first"}
                         clickAction={() => {
@@ -278,7 +278,7 @@ const ReaderSideList = ({
                     </Button>
                     <Button
                         className="ctrl-menu-item"
-                        btnRef={openNextRef}
+                        btnRef={openNextChapterRef}
                         tooltip="Open Next"
                         disabled={prevNextChapter.next === "last"}
                         clickAction={() => {
