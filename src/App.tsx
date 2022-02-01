@@ -33,12 +33,13 @@ const makeSettingsJson = () => {
 };
 
 if (!window.fs.existsSync(settingsPath)) {
+    window.dialog.warn({ message: "No settings found, Select manga folder to make default in settings" });
     makeSettingsJson();
 }
 try {
     JSON.parse(window.fs.readFileSync(settingsPath, "utf-8"));
 } catch (err) {
-    console.log("Unable to parse " + settingsPath + "\n" + "Writing new ettings.json");
+    window.dialog.customError({ message: "Unable to parse " + settingsPath + "\n" + "Writing new settings.json" });
     console.error(err);
     makeSettingsJson();
 }
@@ -62,6 +63,7 @@ function isSettingsValid(): boolean {
     );
 }
 if (!isSettingsValid()) {
+    window.dialog.customError({ message: `Settings in ${settingsPath} are not invalid. Re-writing settings.` });
     console.warn(`Settings in ${settingsPath} are not invalid. Re-writing settings.`);
     makeSettingsJson();
 }
@@ -74,7 +76,7 @@ const getDataFiles = () => {
             try {
                 JSON.parse(rawdata);
             } catch (err) {
-                console.log("Unable to parse " + bookmarksPath);
+                window.dialog.customError({ message: "Unable to parse " + bookmarksPath });
                 console.error(err);
             }
             bookmarkDataInit.push(...JSON.parse(rawdata));
@@ -88,7 +90,7 @@ const getDataFiles = () => {
             try {
                 JSON.parse(rawdata);
             } catch (err) {
-                console.log("Unable to parse " + historyPath);
+                window.dialog.customError({ message: "Unable to parse " + historyPath });
                 console.error(err);
             }
             const data = JSON.parse(rawdata) || [];
@@ -118,7 +120,7 @@ const getDataFiles = () => {
             try {
                 JSON.parse(rawdata);
             } catch (err) {
-                console.log("Unable to parse " + themesPath);
+                window.dialog.customError({ message: "Unable to parse " + themesPath });
                 console.error(err);
             }
             if (JSON.parse(rawdata).length < 3) {
@@ -209,11 +211,7 @@ const App = (): ReactElement => {
     useEffect(() => {
         if (firstRendered) {
             if (settings.baseDir === "") {
-                window.electron.dialog.showMessageBoxSync(window.electron.getCurrentWindow(), {
-                    type: "error",
-                    title: "Error",
-                    message: "No settings found, Select manga folder",
-                });
+                window.dialog.customError({ message: "No settings found, Select manga folder" });
                 promptSetDefaultLocation();
             }
         }
@@ -226,18 +224,12 @@ const App = (): ReactElement => {
         window.fs.readdir(link, (err, files) => {
             if (err) {
                 console.error(err);
-                window.electron.dialog.showMessageBox(window.electron.getCurrentWindow(), {
-                    type: "error",
-                    title: err.name,
-                    message: "Error no.: " + err.errno,
-                    detail: err.message,
-                });
+                window.dialog.nodeError(err);
                 callback(false);
                 return;
             }
             if (files.length <= 0) {
-                window.electron.dialog.showMessageBox(window.electron.getCurrentWindow(), {
-                    type: "error",
+                window.dialog.customError({
                     title: "No images found",
                     message: "Folder is empty.",
                     detail: link,
@@ -259,8 +251,7 @@ const App = (): ReactElement => {
                 return supportedFormat.includes(window.path.extname(e));
             });
             if (imgs.length <= 0) {
-                window.electron.dialog.showMessageBox(window.electron.getCurrentWindow(), {
-                    type: "error",
+                window.dialog.customError({
                     title: "No images found",
                     message: "Folder doesn't contain any supported image format.",
                 });
@@ -274,9 +265,8 @@ const App = (): ReactElement => {
                     binFiles.forEach((e) => {
                         errMsg += e + "\n";
                     });
-                    window.electron.dialog.showMessageBox(window.electron.getCurrentWindow(), {
+                    window.dialog.warn({
                         title: "Warning",
-                        type: "warning",
                         message: "Unable to load following files. Possibly a download error.",
                         detail: errMsg + "from folder\n" + link,
                     });
@@ -318,9 +308,8 @@ const App = (): ReactElement => {
     const addNewBookmark = (newBk: ListItem) => {
         if (newBk) {
             if (bookmarks.map((e) => e.link).includes(newBk.link)) {
-                return window.electron.dialog.showMessageBox(window.electron.getCurrentWindow(), {
+                return window.dialog.warn({
                     title: "Bookmark Already Exist",
-                    type: "warning",
                     message: "Bookmark Already Exist",
                 });
             }
@@ -397,12 +386,7 @@ const App = (): ReactElement => {
             window.fs.writeFile(bookmarksPath, JSON.stringify(bookmarks), (err) => {
                 if (err) {
                     console.error(err);
-                    window.electron.dialog.showMessageBox(window.electron.getCurrentWindow(), {
-                        type: "error",
-                        title: err.name,
-                        message: "Error no.: " + err.errno,
-                        detail: err.message,
-                    });
+                    window.dialog.nodeError(err);
                 }
             });
         }
@@ -412,12 +396,7 @@ const App = (): ReactElement => {
             window.fs.writeFile(historyPath, JSON.stringify(history), (err) => {
                 if (err) {
                     console.error(err);
-                    window.electron.dialog.showMessageBox(window.electron.getCurrentWindow(), {
-                        type: "error",
-                        title: err.name,
-                        message: "Error no.: " + err.errno,
-                        detail: err.message,
-                    });
+                    window.dialog.nodeError(err);
                 }
             });
         }
@@ -435,12 +414,7 @@ const App = (): ReactElement => {
             window.fs.writeFile(settingsPath, JSON.stringify(appSettings), (err) => {
                 if (err) {
                     console.error(err);
-                    window.electron.dialog.showMessageBox(window.electron.getCurrentWindow(), {
-                        type: "error",
-                        title: err.name,
-                        message: "Error no.: " + err.errno,
-                        detail: err.message,
-                    });
+                    window.dialog.nodeError(err);
                 }
             });
         }

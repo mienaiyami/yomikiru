@@ -10,12 +10,11 @@ export default async () => {
         latestVersion[0] > currentAppVersion[0] ||
         (latestVersion[0] === currentAppVersion[0] && latestVersion[1] > currentAppVersion[1])
     ) {
-        window.electron.dialog
-            .showMessageBox(window.electron.getCurrentWindow(), {
-                title: "New Major Version Available",
-                type: "info",
-                message: "New Major Version Available.\nGo to download page?",
-                buttons: ["Yes", "No"],
+        window.dialog
+            .confirm({
+                title: "New Version Available",
+                message: "New Major Update Available.\nGo to download page?",
+                noOption: false,
             })
             .then((response) => {
                 if (response.response === 0) window.electron.shell.openExternal(downloadLink);
@@ -27,12 +26,11 @@ export default async () => {
         latestVersion[1] === currentAppVersion[1] &&
         latestVersion[2] > currentAppVersion[2]
     ) {
-        window.electron.dialog
-            .showMessageBox(window.electron.getCurrentWindow(), {
+        window.dialog
+            .confirm({
                 title: "New Version Available",
-                type: "info",
                 message: "Minor Update(you can skip).\nGo to download page?",
-                buttons: ["Yes", "No"],
+                noOption: false,
             })
             .then((response) => {
                 if (response.response === 0) window.electron.shell.openExternal(downloadLink);

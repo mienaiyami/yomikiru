@@ -22,12 +22,11 @@ const HistoryTab = forwardRef(
                     <button
                         // onFocus={(e) => e.currentTarget.blur()}
                         onClick={() => {
-                            window.electron.dialog
-                                .showMessageBox(window.electron.getCurrentWindow(), {
+                            window.dialog
+                                .warn({
                                     title: "Warning",
-                                    type: "warning",
                                     message: "Are you sure you want to clear history",
-                                    buttons: ["Yes", "No"],
+                                    noOption: false,
                                 })
                                 .then((res) => {
                                     if (res && res.response === 0) setHistory([]);

@@ -76,12 +76,7 @@ const ReaderSideList = ({
             window.fs.readdir(dir, (err, files) => {
                 if (err) {
                     console.error(err);
-                    window.electron.dialog.showMessageBox(window.electron.getCurrentWindow(), {
-                        type: "error",
-                        title: err.name,
-                        message: "Error no.: " + err.errno,
-                        detail: err.message,
-                    });
+                    window.dialog.nodeError(err);
                     return;
                 }
                 const listData: { name: string; pages: number }[] = [];
@@ -252,12 +247,11 @@ const ReaderSideList = ({
                         btnRef={addToBookmarkRef}
                         clickAction={() => {
                             if (isBookmarked) {
-                                return window.electron.dialog
-                                    .showMessageBox(window.electron.getCurrentWindow(), {
+                                return window.dialog
+                                    .warn({
                                         title: "Warning",
-                                        type: "warning",
                                         message: "Remove Bookmark?",
-                                        buttons: ["Yes", "No"],
+                                        noOption: false,
                                     })
                                     .then((res) => {
                                         if (res.response === 0) {

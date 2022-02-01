@@ -16,6 +16,7 @@ const Reader = () => {
         setMangaInReader,
         setLoadingManga,
         setHistory,
+        prevNextChapter,
         bookmarks,
         setLoadingMangaPercent,
         // currentPageNumber,
@@ -142,12 +143,34 @@ const Reader = () => {
     };
 
     const openPrevPage = () => {
-        if (currentImageRow <= 1) return;
+        if (currentImageRow <= 1) {
+            window.dialog
+                .confirm({
+                    title: "Confirm",
+                    noOption: false,
+                    message: "Open previous chapter? - " + prevNextChapter.prev,
+                })
+                .then((response) => {
+                    if (response.response === 0) openPrevChapterRef.current?.click();
+                });
+            return;
+        }
         setCurrentImageRow((init) => init - 1);
         if (imgContRef.current) imgContRef.current.scrollTop = 0;
     };
     const openNextPage = () => {
-        if (currentImageRow >= imageRowCount) return;
+        if (currentImageRow >= imageRowCount) {
+            window.dialog
+                .confirm({
+                    title: "Confirm",
+                    noOption: false,
+                    message: "Open Next chapter? - " + prevNextChapter.next,
+                })
+                .then((response) => {
+                    if (response.response === 0) openNextChapterRef.current?.click();
+                });
+            return;
+        }
         setCurrentImageRow((init) => init + 1);
         if (imgContRef.current) imgContRef.current.scrollTop = 0;
     };

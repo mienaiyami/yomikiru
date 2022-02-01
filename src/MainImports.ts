@@ -34,6 +34,40 @@ declare global {
         loadManga: string;
         cachedImageList: { link: string; images: string[] };
         temp: any;
+        dialog: {
+            nodeError: (err: NodeJS.ErrnoException) => Promise<Electron.MessageBoxReturnValue>;
+            customError: ({
+                title,
+                message,
+                detail,
+            }: {
+                title?: string;
+                message: string;
+                detail?: string | undefined;
+            }) => Promise<Electron.MessageBoxReturnValue>;
+            warn: ({
+                title,
+                message,
+                detail,
+                noOption,
+            }: {
+                title?: string;
+                message: string;
+                detail?: string | undefined;
+                noOption?: boolean;
+            }) => Promise<Electron.MessageBoxReturnValue>;
+            confirm: ({
+                title,
+                message,
+                detail,
+                noOption,
+            }: {
+                title?: string;
+                message: string;
+                detail?: string | undefined;
+                noOption?: boolean;
+            }) => Promise<Electron.MessageBoxReturnValue>;
+        };
     }
     interface appsettings {
         theme: string;
@@ -84,4 +118,57 @@ window.electron = {
     getCurrentWindow,
     clipboard,
     nativeImage,
+};
+
+window.dialog = {
+    nodeError: (err: NodeJS.ErrnoException) =>
+        window.electron.dialog.showMessageBox(window.electron.getCurrentWindow(), {
+            type: "error",
+            title: err.name,
+            message: "Error no.: " + err.errno,
+            detail: err.message,
+        }),
+    customError: ({ title = "Error", message, detail }: { title?: string; message: string; detail?: string }) =>
+        window.electron.dialog.showMessageBox(window.electron.getCurrentWindow(), {
+            type: "error",
+            title: title,
+            message: message,
+            detail: detail,
+        }),
+    warn: ({
+        title = "Warning",
+        message,
+        detail,
+        noOption = true,
+    }: {
+        title?: string;
+        message: string;
+        detail?: string;
+        noOption?: boolean;
+    }) =>
+        window.electron.dialog.showMessageBox(window.electron.getCurrentWindow(), {
+            type: "warning",
+            title: title,
+            message: message,
+            detail: detail,
+            buttons: noOption ? [] : ["Yes", "No"],
+        }),
+    confirm: ({
+        title = "Confirm",
+        message,
+        detail,
+        noOption = true,
+    }: {
+        title?: string;
+        message: string;
+        detail?: string;
+        noOption?: boolean;
+    }) =>
+        window.electron.dialog.showMessageBox(window.electron.getCurrentWindow(), {
+            type: "info",
+            title: title,
+            message: message,
+            detail: detail,
+            buttons: noOption ? [] : ["Yes", "No"],
+        }),
 };

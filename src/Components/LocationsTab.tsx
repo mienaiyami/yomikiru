@@ -26,12 +26,7 @@ const LocationsTab = forwardRef(
                 window.fs.readdir(link, (err, files) => {
                     if (err) {
                         console.error(err);
-                        window.electron.dialog.showMessageBox(window.electron.getCurrentWindow(), {
-                            type: "error",
-                            title: err.name,
-                            message: "Error no.: " + err.errno,
-                            detail: err.message,
-                        });
+                        window.dialog.nodeError(err);
                         return;
                     }
                     const dirNames: string[] = files.sort(window.app.betterSortOrder);

@@ -161,11 +161,9 @@ const Settings = (): ReactElement => {
                                         }
                                     });
                                     if (similarFound > 0)
-                                        window.electron.dialog.showMessageBox({
-                                            type: "warning",
+                                        window.dialog.warn({
                                             title: "warning",
                                             message: "Found " + similarFound + " with same link",
-                                            buttons: ["Ok"],
                                         });
                                     setBookmarks([...bookmarks, ...dataToAdd]);
                                 }}
