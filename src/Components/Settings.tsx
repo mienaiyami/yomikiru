@@ -246,6 +246,15 @@ const Settings = (): ReactElement => {
                             </button>
                         </div>
                     </div>
+                    {/* <div className="settingItem version">
+                        <div className="name">Others:</div>
+                        <div className="current">
+                            <label>
+                                <input type="checkbox" />
+                                <p>Show Loading Screen</p>
+                            </label>
+                        </div>
+                    </div> */}
                 </div>
                 <h1>Shortcut Keys</h1>
                 <div className="shortcutKey">
@@ -256,16 +265,20 @@ const Settings = (): ReactElement => {
                                 <th>Function</th>
                             </tr>
                             <tr>
-                                <td> - and = and +</td>
+                                <td> - , =, +, ctrl+scroll</td>
                                 <td>size</td>
                             </tr>
                             <tr>
-                                <td> q</td>
+                                <td>q</td>
                                 <td>reader settings</td>
                             </tr>
                             <tr>
-                                <td>wsad and arrow keys</td>
+                                <td>w, s, ↑, ↓</td>
                                 <td>scroll</td>
+                            </tr>
+                            <tr>
+                                <td>a, d, ←, → </td>
+                                <td>prev/next page</td>
                             </tr>
                             <tr>
                                 <td>space/shift+space</td>
@@ -276,7 +289,7 @@ const Settings = (): ReactElement => {
                                 <td>Home</td>
                             </tr>
                             <tr>
-                                <td>ctrl r</td>
+                                <td>ctrl+r</td>
                                 <td>Reload</td>
                             </tr>
                             <tr>
@@ -288,7 +301,7 @@ const Settings = (): ReactElement => {
                                 <td>prev/next</td>
                             </tr>
                             <tr>
-                                <td>Ctrl+N</td>
+                                <td>ctrl+n</td>
                                 <td>New Window</td>
                             </tr>
                         </tbody>

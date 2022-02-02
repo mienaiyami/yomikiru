@@ -63,19 +63,32 @@ const ReaderSettings = ({
             </button>
             <div className="main">
                 <div className="settingItem">
-                    <div className="name">
-                        Size {Math.round(appSettings.readerSettings.readerWidth * 100) / 100}%
-                    </div>
+                    <div className="name">Size</div>
                     <div className="options">
+                        <label>
+                            <input
+                                type="number"
+                                value={appSettings.readerSettings.readerWidth}
+                                min={1}
+                                max={100}
+                                onKeyDown={(e) => e.stopPropagation()}
+                                onChange={(e) => {
+                                    setAppSettings((init) => {
+                                        let value = e.target.valueAsNumber;
+                                        if (!value) value = 0;
+                                        init.readerSettings.readerWidth = value >= 100 ? 100 : value;
+                                        return { ...init };
+                                    });
+                                }}
+                            />
+                            %
+                        </label>
                         <button
                             ref={sizeMinusRef}
-                            onClick={() => {
+                            onClick={(e) => {
                                 makeScrollPos();
                                 setAppSettings((init) => {
-                                    const steps = Math.max(
-                                        1,
-                                        Math.min(5, 1 + Math.log10(init.readerSettings.readerWidth))
-                                    );
+                                    const steps = appSettings.readerSettings.readerWidth <= 20 ? 5 : 10;
                                     init.readerSettings.readerWidth =
                                         init.readerSettings.readerWidth - steps > 100
                                             ? 100
@@ -84,6 +97,7 @@ const ReaderSettings = ({
                                             : init.readerSettings.readerWidth - steps;
                                     return { ...init };
                                 });
+                                // e.currentTarget.dispatchEvent(new MouseEvent(type:"")))
                             }}
                         >
                             <FontAwesomeIcon icon={faMinus} />
@@ -93,10 +107,7 @@ const ReaderSettings = ({
                             onClick={() => {
                                 makeScrollPos();
                                 setAppSettings((init) => {
-                                    const steps = Math.max(
-                                        1,
-                                        Math.min(5, 1 + Math.log10(init.readerSettings.readerWidth))
-                                    );
+                                    const steps = appSettings.readerSettings.readerWidth <= 20 ? 5 : 10;
                                     init.readerSettings.readerWidth =
                                         init.readerSettings.readerWidth + steps > 100
                                             ? 100
@@ -233,7 +244,7 @@ const ReaderSettings = ({
                     clickAction={() => {
                         makeScrollPos();
                         setAppSettings((init) => {
-                            const steps = Math.max(1, Math.min(5, 1 + Math.log10(init.readerSettings.readerWidth)));
+                            const steps Math.floor(= Math.min(10,appSettings.readerSettings.readerWidth/2));
                             init.readerSettings.readerWidth =
                                 init.readerSettings.readerWidth + steps > 100
                                     ? 100
@@ -253,7 +264,7 @@ const ReaderSettings = ({
                     clickAction={() => {
                         makeScrollPos();
                         setAppSettings((init) => {
-                            const steps = Math.max(1, Math.min(5, 1 + Math.log10(init.readerSettings.readerWidth)));
+                            const steps Math.floor(= Math.min(10,appSettings.readerSettings.readerWidth/2));
                             init.readerSettings.readerWidth =
                                 init.readerSettings.readerWidth - steps > 100
                                     ? 100

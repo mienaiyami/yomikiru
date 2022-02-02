@@ -74,6 +74,10 @@ body {
             box-shadow: var(--color-secondary) 0 0 0px 1px;
         }
     }
+    div:focus {
+        outline: none;
+    }
+
     --titleBar-height: 40px;
     --button-width: 55px;
     [data-tooltip] {
@@ -397,8 +401,18 @@ body {
                 flex-direction: column;
                 gap: 5px;
                 margin-bottom: 5px;
+                --button-width1: 45px;
                 .currentPath {
                     user-select: text;
+                    display: flex;
+                    gap: 10px;
+                    align-items: center;
+                    border-bottom: 5px solid var(--divider-color);
+                    padding-bottom: 5px;
+                    button {
+                        padding: 5px;
+                        min-width: calc(var(--button-width) * 2 + 5px);
+                    }
                 }
                 .row1 {
                     gap: 5px;
@@ -414,7 +428,6 @@ body {
                     display: flex;
                     align-items: center;
                     justify-content: center;
-                    width: 45px;
                     &::before {
                         left: 0;
                         top: 0;
@@ -434,7 +447,7 @@ body {
             height: 100%;
             .contTab {
                 width: 100%;
-                overflow: hidden;
+                // overflow: hidden;
                 height: 100%;
                 position: relative;
                 display: flex;
@@ -852,12 +865,19 @@ body {
                             &.col {
                                 flex-direction: column;
                             }
+                            input[type="number"] {
+                                width: 60px;
+                                padding: 5px;
+                                padding-right: 0;
+                            }
                             label {
                                 display: flex;
                                 cursor: pointer;
                                 background-color: var(--input-bg);
                                 padding: 5px;
                                 gap: 5px;
+                                font-size: 20px;
+                                align-items: center;
                                 border-radius: 3px;
                                 p {
                                     font-size: 10px;
@@ -897,6 +917,7 @@ body {
                     img {
                         width: var(--varWidth);
                         max-width: 100%;
+                        min-width: 1%;
                     }
                     &.twoPagePerRow {
                         img {

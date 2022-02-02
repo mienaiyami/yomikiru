@@ -241,14 +241,13 @@ const App = (): ReactElement => {
                 setLoadingManga(true);
                 setLoadingMangaPercent(0);
             }
-            const supportedFormat = [".jpg", ".jpeg", ".png", ".webp", ".svg", ".apng", ".gif", "avif"];
             const binFiles: string[] = [];
             const imgs = files.filter((e) => {
                 if (window.path.extname(e) === ".bin") {
                     binFiles.push(e);
                     return true;
                 }
-                return supportedFormat.includes(window.path.extname(e));
+                return window.supportedFormats.includes(window.path.extname(e));
             });
             if (imgs.length <= 0) {
                 window.dialog.customError({

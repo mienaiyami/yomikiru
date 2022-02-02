@@ -40,7 +40,7 @@ const ReaderSideList = ({
     } = useContext(AppContext);
     const { isContextMenuOpen } = useContext(MainContext);
     const [chapterData, setChapterData] = useState<{ name: string; pages: number }[]>([]);
-    const [filter, setfilter] = useState<string>("");
+    const [filter, setFilter] = useState<string>("");
     const [isListOpen, setListOpen] = useState(false);
     const [preventListClose, setpreventListClose] = useState(false);
     const prevMangaRef = useRef<string>("");
@@ -72,7 +72,6 @@ const ReaderSideList = ({
     const makeChapterList = async () => {
         if (mangaInReader) {
             const dir = mangaInReader.link.replace(mangaInReader.chapterName, "");
-            const supportedFormat = [".jpg", ".jpeg", ".png", ".webp", ".svg", ".apng", ".gif", "avif"];
             window.fs.readdir(dir, (err, files) => {
                 if (err) {
                     console.error(err);
@@ -90,7 +89,9 @@ const ReaderSideList = ({
                             .readdir(path)
                             .then((data) => {
                                 responseCompleted++;
-                                data = data.filter((e) => supportedFormat.includes(window.path.extname(e)));
+                                data = data.filter((e) =>
+                                    window.supportedFormats.includes(window.path.extname(e))
+                                );
                                 if (data.length > 0) {
                                     listData.push({ name: e, pages: data.length });
                                 }
@@ -179,7 +180,7 @@ const ReaderSideList = ({
                         name=""
                         spellCheck={false}
                         placeholder="Type to Search"
-                        tabIndex={-1}
+                        // tabIndex={-1}
                         data-tooltip="Navigate To Page"
                         onChange={(e) => {
                             const val = e.target.value;
@@ -187,19 +188,21 @@ const ReaderSideList = ({
                             for (let i = 0; i < val.length; i++) {
                                 filter += val[i] + ".*";
                             }
-                            setfilter(filter);
+                            setFilter(filter);
                         }}
                         onKeyDown={(e) => {
                             e.stopPropagation();
+                            if (/\[|\]|\(|\)|\*|\+|\?/gi.test(e.key)) {
+                                e.preventDefault();
+                            }
                             if (e.key === "Escape") {
                                 e.currentTarget.blur();
                             }
                         }}
                     />
                     <button
-                        tabIndex={-1}
+                        // tabIndex={-1}
                         data-tooltip="Refresh"
-                        // onFocus={(e) => e.currentTarget.blur()}
                         onClick={() => {
                             makeChapterList();
                         }}
@@ -207,9 +210,8 @@ const ReaderSideList = ({
                         <FontAwesomeIcon icon={faSyncAlt} />
                     </button>
                     <button
-                        tabIndex={-1}
+                        // tabIndex={-1}
                         data-tooltip="Sort"
-                        // onFocus={(e) => e.currentTarget.blur()}
                         onClick={() =>
                             setAppSettings((init) => {
                                 switch (init.locationListSortType) {
@@ -310,7 +312,7 @@ const Button = (props: any) => {
             data-tooltip={props.tooltip}
             ref={props.btnRef}
             onClick={props.clickAction}
-            tabIndex={-1}
+            // tabIndex={-1}
             disabled={props.disabled}
             // onFocus={(e) => e.currentTarget.blur()}
         >

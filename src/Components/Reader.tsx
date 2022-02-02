@@ -70,13 +70,21 @@ const Reader = () => {
     useLayoutEffect(() => {
         window.app.clickDelay = 100;
         window.app.lastClick = 0;
-        window.addEventListener("keydown", (e) => {
-            if (window.app.isReaderOpen && document.activeElement!.tagName === "BODY") {
-                if (e.shiftKey && e.key === " ") {
-                    e.preventDefault();
-                    scrollReader(-4);
+        window.addEventListener("wheel", (e) => {
+            if (e.ctrlKey) {
+                if (e.deltaY < 0) {
+                    sizePlusRef.current?.click();
                     return;
                 }
+                if (e.deltaY > 0) {
+                    sizeMinusRef.current?.click();
+                    return;
+                }
+            }
+        });
+        window.addEventListener("keydown", (e) => {
+            // /&& document.activeElement!.tagName === "BODY"
+            if (window.app.isReaderOpen) {
                 switch (e.key) {
                     case "f":
                         navToPageButtonRef.current?.click();
@@ -101,28 +109,41 @@ const Reader = () => {
                     case "-":
                         sizeMinusRef.current?.click();
                         break;
-                    case " ":
-                        e.preventDefault();
-                        scrollReader(4);
-                        break;
-                    case "d":
-                    case "ArrowRight":
-                        if (appSettings.readerSettings.readerTypeSelected === 1) openNextPageRef.current?.click();
-                        break;
-                    case "s":
-                    case "ArrowDown":
-                        scrollReader(1);
-                        break;
-                    case "a":
-                    case "ArrowLeft":
-                        if (appSettings.readerSettings.readerTypeSelected === 1) openPrevPageRef.current?.click();
-                        break;
-                    case "w":
-                    case "ArrowUp":
-                        scrollReader(-1);
-                        break;
                     default:
                         break;
+                }
+                if (document.activeElement!.tagName === "BODY" || document.activeElement === readerRef.current) {
+                    if (e.shiftKey && e.key === " ") {
+                        e.preventDefault();
+                        scrollReader(-4);
+                        return;
+                    }
+                    switch (e.key) {
+                        case " ":
+                            e.preventDefault();
+                            scrollReader(4);
+                            break;
+                        case "d":
+                        case "ArrowRight":
+                            if (appSettings.readerSettings.readerTypeSelected === 1)
+                                openNextPageRef.current?.click();
+                            break;
+                        case "s":
+                        case "ArrowDown":
+                            scrollReader(1);
+                            break;
+                        case "a":
+                        case "ArrowLeft":
+                            if (appSettings.readerSettings.readerTypeSelected === 1)
+                                openPrevPageRef.current?.click();
+                            break;
+                        case "w":
+                        case "ArrowUp":
+                            scrollReader(-1);
+                            break;
+                        default:
+                            break;
+                    }
                 }
             }
         });
@@ -346,6 +367,7 @@ const Reader = () => {
             onScroll={() => {
                 changePageNumber();
             }}
+            tabIndex={-1}
         >
             <ReaderSettings
                 readerRef={readerRef}

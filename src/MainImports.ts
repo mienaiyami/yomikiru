@@ -22,6 +22,7 @@ declare global {
             clipboard: typeof clipboard;
             nativeImage: typeof nativeImage;
         };
+        supportedFormats: string[];
         path: typeof path;
         fs: typeof fs;
         app: {
@@ -108,6 +109,7 @@ declare global {
 }
 window.path = path;
 window.fs = fs;
+window.supportedFormats = [".jpg", ".jpeg", ".png", ".webp", ".svg", ".apng", ".gif", "avif"];
 const collator = Intl.Collator(undefined, { numeric: true, sensitivity: "base" });
 window.app.betterSortOrder = collator.compare;
 window.electron = {

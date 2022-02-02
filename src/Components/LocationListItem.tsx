@@ -1,6 +1,6 @@
 import { faAngleRight } from "@fortawesome/free-solid-svg-icons";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import { ReactElement, useContext, useState } from "react";
+import { ReactElement, useContext } from "react";
 import { AppContext } from "../App";
 import { MainContext } from "./Main";
 
@@ -23,8 +23,11 @@ const LocationListItem = ({
                 className="a-context"
                 title={name}
                 onClick={() => {
-                    if (window.fs.existsSync(link) && window.fs.lstatSync(link).isDirectory())
-                        setCurrentLink(link);
+                    if (!window.fs.existsSync(link)) {
+                        window.dialog.customError({ message: "Directory/File doesn't exist." });
+                        return;
+                    }
+                    setCurrentLink(link);
                 }}
                 onContextMenu={(e) => {
                     showContextMenu({
