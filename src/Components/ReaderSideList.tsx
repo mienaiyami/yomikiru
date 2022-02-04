@@ -8,7 +8,7 @@ import {
 } from "@fortawesome/free-solid-svg-icons";
 import { faBookmark as farBookmark } from "@fortawesome/free-regular-svg-icons";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import { useContext, useEffect, useRef, useState } from "react";
+import { useContext, useEffect, useLayoutEffect, useRef, useState } from "react";
 import { AppContext } from "../App";
 import { MainContext } from "./Main";
 import ReaderSideListItem from "./ReaderSideListItem";
@@ -19,12 +19,20 @@ const ReaderSideList = ({
     addToBookmarkRef,
     isBookmarked,
     setBookmarked,
+    isSideListPinned,
+    setSideListPinned,
+    setSideListWidth,
+    makeScrollPos,
 }: {
     openNextChapterRef: React.RefObject<HTMLButtonElement>;
     openPrevChapterRef: React.RefObject<HTMLButtonElement>;
     addToBookmarkRef: React.RefObject<HTMLButtonElement>;
     isBookmarked: boolean;
     setBookmarked: React.Dispatch<React.SetStateAction<boolean>>;
+    isSideListPinned: boolean;
+    setSideListPinned: React.Dispatch<React.SetStateAction<boolean>>;
+    setSideListWidth: React.Dispatch<React.SetStateAction<number>>;
+    makeScrollPos: () => void;
 }) => {
     const {
         mangaInReader,
@@ -45,6 +53,8 @@ const ReaderSideList = ({
     const [preventListClose, setpreventListClose] = useState(false);
     const prevMangaRef = useRef<string>("");
     const [historySimple, sethistorySimple] = useState(history.map((e) => e.link));
+    const [draggingResizer, setDraggingResizer] = useState(false);
+
     //TODO: useless rn
     const currentLinkInListRef = useRef<HTMLAnchorElement>(null);
     useEffect(() => {
@@ -54,7 +64,11 @@ const ReaderSideList = ({
     useEffect(() => {
         sethistorySimple(history.map((e) => e.link));
     }, [history]);
-
+    useLayoutEffect(() => {
+        if (isSideListPinned) {
+            setListOpen(true);
+        }
+    }, [isSideListPinned]);
     const changePrevNext = () => {
         if (mangaInReader) {
             const listDataName = chapterData.map((e) => e.name);
@@ -145,6 +159,35 @@ const ReaderSideList = ({
             }
         });
     };
+    const handleResizerDrag = (e: MouseEvent) => {
+        if (draggingResizer) {
+            if (isSideListPinned) {
+                makeScrollPos();
+            }
+            const width =
+                e.clientX > (window.innerWidth * 90) / 100
+                    ? (window.innerWidth * 90) / 100
+                    : e.clientX < 192
+                    ? 192
+                    : e.clientX;
+            setSideListWidth(width);
+        }
+    };
+    const handleResizerMouseUp = () => {
+        setDraggingResizer(false);
+    };
+    useLayoutEffect(() => {
+        document.body.style.cursor = "auto";
+        if (draggingResizer) {
+            document.body.style.cursor = "ew-resize";
+        }
+        window.addEventListener("mousemove", handleResizerDrag);
+        window.addEventListener("mouseup", handleResizerMouseUp);
+        return () => {
+            window.removeEventListener("mousemove", handleResizerDrag);
+            window.addEventListener("mouseup", handleResizerMouseUp);
+        };
+    }, [draggingResizer]);
     return (
         <div
             className={`currentMangaList listCont ${isListOpen ? "open" : ""}`}
@@ -153,9 +196,15 @@ const ReaderSideList = ({
                 if (!isListOpen) setListOpen(true);
             }}
             onMouseLeave={(e) => {
-                if (preventListClose && !isContextMenuOpen && !e.currentTarget.contains(document.activeElement))
-                    setListOpen(false);
-                setpreventListClose(false);
+                if (!isSideListPinned) {
+                    if (
+                        preventListClose &&
+                        !isContextMenuOpen &&
+                        !e.currentTarget.contains(document.activeElement)
+                    )
+                        setListOpen(false);
+                    setpreventListClose(false);
+                }
             }}
             onMouseDown={(e) => {
                 if (e.target instanceof Node && e.currentTarget.contains(e.target)) setpreventListClose(true);
@@ -170,9 +219,22 @@ const ReaderSideList = ({
             }}
             tabIndex={-1}
         >
-            <div className="indicator">
+            <div
+                className="indicator"
+                onClick={() => {
+                    makeScrollPos();
+                    setSideListPinned((init) => !init);
+                }}
+            >
                 <FontAwesomeIcon icon={faChevronRight} />
             </div>
+            <div
+                className="reSizer"
+                onMouseDown={() => {
+                    setDraggingResizer(true);
+                }}
+                onMouseUp={handleResizerMouseUp}
+            ></div>
             <div className="tools">
                 <div className="row1">
                     <input

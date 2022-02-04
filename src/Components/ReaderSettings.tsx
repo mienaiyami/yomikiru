@@ -73,6 +73,7 @@ const ReaderSettings = ({
                                 max={100}
                                 onKeyDown={(e) => e.stopPropagation()}
                                 onChange={(e) => {
+                                    makeScrollPos();
                                     setAppSettings((init) => {
                                         let value = e.target.valueAsNumber;
                                         if (!value) value = 0;

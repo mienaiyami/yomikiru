@@ -267,6 +267,7 @@ body {
     #root {
         width: 100%;
         height: 100%;
+        overflow: hidden;
     }
     #app {
         position: relative;
@@ -702,18 +703,30 @@ body {
         }
         #reader {
             width: 100vw;
+            // height: calc(100vh - var(--titleBar-height));
             height: 100%;
             display: none;
+            overflow-x: hidden;
             overflow: auto;
-            overflow-y: scroll;
-            // overflow-x: hidden;
+            // --mangaListWidth: clamp(400px, 40%, 500px);
+            --mangaListWidth: 450px;
+            &.sideListPinned {
+                overflow: hidden;
+                .currentMangaList {
+                    position: sticky;
+                    max-width: none;
+                    min-width: none;
+                }
+            }
             &::-webkit-scrollbar-track {
                 background: var(--topBar-color);
             }
             .currentMangaList {
                 background: var(--topBar-color);
-                height: 100%;
-                width: clamp(400px, 40%, 500px);
+                height: calc(100vh - var(--titleBar-height));
+                width: var(--mangaListWidth);
+                min-width: 196px;
+                max-width: 90%;
                 z-index: 100;
                 position: absolute;
                 left: 0;
@@ -727,6 +740,7 @@ body {
                 transition: 0.2s transform;
                 .indicator {
                     position: absolute;
+                    cursor: pointer;
                     right: 0;
                     top: 50%;
                     background-color: var(--topBar-color);
@@ -736,6 +750,21 @@ body {
                     display: grid;
                     place-items: center;
                     transform: translate(100%, -50%);
+                    &:hover {
+                        background-color: var(--btn-color2);
+                    }
+                }
+                .reSizer {
+                    position: absolute;
+                    cursor: ew-resize;
+                    right: 0;
+                    top: 0;
+                    background-color: var(--topBar-color);
+                    width: 10px;
+                    height: 100%;
+                    &:hover {
+                        background-color: var(--btn-color2);
+                    }
                 }
                 &.open {
                     transform: translateX(0);
@@ -896,6 +925,7 @@ body {
                 position: relative;
                 flex-direction: column;
                 align-items: center;
+                overflow: auto;
                 --varWidth: 100%;
                 &.readerMode1 {
                     justify-content: center;

@@ -70,6 +70,7 @@ declare global {
             }) => Promise<Electron.MessageBoxReturnValue>;
         };
     }
+    //! edit settingValidatorData and default settings in app.tsx when adding new settings
     interface appsettings {
         theme: string;
         bookmarksPath: string;
@@ -83,6 +84,7 @@ declare global {
             readerTypeSelected: 0 | 1;
             pagesPerRowSelected: 0 | 1 | 2;
             gapBetweenRows: boolean;
+            sideListWidth: number;
         };
     }
     interface ListItem {
@@ -107,6 +109,23 @@ declare global {
         item?: ListItemE;
     }
 }
+export const settingValidatorData = {
+    theme: "string",
+    bookmarksPath: "string",
+    historyPath: "string",
+    baseDir: "string",
+    historyLimit: "number",
+    locationListSortType: ["normal", "inverse"],
+    readerSettings: {
+        readerWidth: "number",
+        variableImageSize: "boolean",
+        readerTypeSelected: [0, 1],
+        pagesPerRowSelected: [0, 1, 2],
+        gapBetweenRows: "boolean",
+        sideListWidth: "number",
+    },
+};
+
 window.path = path;
 window.fs = fs;
 window.supportedFormats = [".jpg", ".jpeg", ".png", ".webp", ".svg", ".apng", ".gif", "avif"];

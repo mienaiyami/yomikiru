@@ -7,6 +7,7 @@ import ReaderSettings from "./ReaderSettings";
 const Reader = () => {
     const {
         appSettings,
+        setAppSettings,
         isReaderOpen,
         setReaderOpen,
         pageNumberInputRef,
@@ -35,6 +36,8 @@ const Reader = () => {
     const [imageRowCount, setImageRowCount] = useState(0);
     const [imagesLength, setImagesLength] = useState(0);
     const [imagesLoaded, setImagesLoaded] = useState(0);
+    const [isSideListPinned, setSideListPinned] = useState(false);
+    const [sideListWidth, setSideListWidth] = useState(appSettings.readerSettings.sideListWidth || 450);
     const [isBookmarked, setBookmarked] = useState(false);
     const [scrollPosPercent, setScrollPosPercent] = useState(0);
     const readerSettingExtender = useRef<HTMLButtonElement>(null);
@@ -149,6 +152,8 @@ const Reader = () => {
         });
     }, []);
     const makeScrollPos = () => {
+        if (isSideListPinned && imgContRef.current)
+            return setScrollPosPercent(imgContRef.current.scrollTop / imgContRef.current.scrollHeight);
         if (readerRef.current) setScrollPosPercent(readerRef.current.scrollTop / readerRef.current.scrollHeight);
     };
     const changePageNumber = () => {
@@ -349,7 +354,8 @@ const Reader = () => {
     }, [imagesLoaded]);
     useLayoutEffect(() => {
         readerRef.current?.scrollTo(0, scrollPosPercent * readerRef.current.scrollHeight);
-    }, [appSettings.readerSettings.readerWidth]);
+        imgContRef.current?.scrollTo(0, scrollPosPercent * imgContRef.current.scrollHeight);
+    }, [appSettings.readerSettings.readerWidth, isSideListPinned]);
     useEffect(() => {
         if (linkInReader && linkInReader !== "") {
             if (mangaInReader && mangaInReader.link === linkInReader) return;
@@ -357,13 +363,27 @@ const Reader = () => {
         }
     }, [linkInReader]);
     useLayoutEffect(() => {
+        if (isSideListPinned) {
+            readerRef.current?.scrollTo(0, scrollPosPercent * readerRef.current.scrollHeight);
+        }
+        setAppSettings((init) => {
+            init.readerSettings.sideListWidth = sideListWidth;
+            return { ...init };
+        });
+    }, [sideListWidth]);
+    useLayoutEffect(() => {
         changePageNumber();
     }, [currentImageRow]);
     return (
         <div
             ref={readerRef}
             id="reader"
-            style={{ display: isReaderOpen ? "block" : "none" }}
+            className={isSideListPinned ? "sideListPinned" : ""}
+            style={{
+                gridTemplateColumns: sideListWidth + "px auto",
+                display: isReaderOpen ? (isSideListPinned ? "grid" : "block") : "none",
+                "--mangaListWidth": sideListWidth + "px",
+            }}
             onScroll={() => {
                 changePageNumber();
             }}
@@ -382,6 +402,10 @@ const Reader = () => {
                 addToBookmarkRef={addToBookmarkRef}
                 isBookmarked={isBookmarked}
                 setBookmarked={setBookmarked}
+                isSideListPinned={isSideListPinned}
+                setSideListPinned={setSideListPinned}
+                setSideListWidth={setSideListWidth}
+                makeScrollPos={makeScrollPos}
             />
             <div className="hiddenPageMover" style={{ display: "none" }}>
                 <button ref={openPrevPageRef} onClick={openPrevPage}>

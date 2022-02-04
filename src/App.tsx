@@ -4,6 +4,7 @@ import Main from "./Components/Main";
 import TopBar from "./Components/TopBar";
 import useTheme from "./hooks/useTheme";
 import checkforupdate from "./checkforupdate";
+import { settingValidatorData } from "./MainImports";
 const userDataURL = window.electron.app.getPath("userData");
 const settingsPath = window.path.join(userDataURL, "settings.json");
 const themesPath = window.path.join(userDataURL, "themes.json");
@@ -13,8 +14,8 @@ const historyPath = window.path.join(userDataURL, "history.json");
 const historyDataInit: ListItem[] = [];
 const themesMain: { name: string; main: string }[] = [];
 
-const makeSettingsJson = () => {
-    const settingsData: appsettings = {
+const makeSettingsJson = (locations?: string[]) => {
+    const settingsDataNew: appsettings = {
         theme: "theme2",
         bookmarksPath,
         historyPath,
@@ -27,9 +28,18 @@ const makeSettingsJson = () => {
             readerTypeSelected: 0,
             pagesPerRowSelected: 0,
             gapBetweenRows: true,
+            sideListWidth: 450,
         },
     };
-    window.fs.writeFileSync(settingsPath, JSON.stringify(settingsData));
+    if (locations) {
+        const settingsDataSaved: appsettings = JSON.parse(window.fs.readFileSync(settingsPath, "utf-8"));
+        locations.forEach((e) => {
+            // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+            // @ts-ignore
+            settingsDataSaved[e] = settingsDataNew[e];
+        });
+        window.fs.writeFileSync(settingsPath, JSON.stringify(settingsDataSaved));
+    } else window.fs.writeFileSync(settingsPath, JSON.stringify(settingsDataNew));
 };
 
 if (!window.fs.existsSync(settingsPath)) {
@@ -43,29 +53,84 @@ try {
     console.error(err);
     makeSettingsJson();
 }
-function isSettingsValid(): boolean {
+//! this function have a lot of @ts-ignore
+function isSettingsValid(): { isValid: boolean; location: string[] } {
     const settings: appsettings = JSON.parse(window.fs.readFileSync(settingsPath, "utf-8"));
-    return (
-        typeof settings.theme === "string" &&
-        typeof settings.bookmarksPath === "string" &&
-        typeof settings.historyPath === "string" &&
-        typeof settings.baseDir === "string" &&
-        typeof settings.historyLimit === "number" &&
-        settings.locationListSortType === ("normal" || "inverse") &&
-        typeof settings.readerSettings === "object" &&
-        typeof settings.readerSettings.readerWidth === "number" &&
-        typeof settings.readerSettings.variableImageSize === "boolean" &&
-        typeof settings.readerSettings.gapBetweenRows === "boolean" &&
-        (settings.readerSettings.readerTypeSelected === 0 || settings.readerSettings.readerTypeSelected === 1) &&
-        (settings.readerSettings.pagesPerRowSelected === 0 ||
-            settings.readerSettings.pagesPerRowSelected === 1 ||
-            settings.readerSettings.pagesPerRowSelected === 2)
-    );
+    const output: { isValid: boolean; location: string[] } = {
+        isValid: true,
+        location: [],
+    };
+    for (const key in settingValidatorData) {
+        if (!Object.prototype.hasOwnProperty.call(settings, key)) {
+            output.isValid = false;
+            output.location.push(key);
+            continue;
+        }
+        // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+        // @ts-ignore
+        if (typeof settingValidatorData[key] === "string" && typeof settings[key] !== settingValidatorData[key]) {
+            output.isValid = false;
+            output.location.push(key);
+            continue;
+        }
+
+        // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+        // @ts-ignore
+        if (settingValidatorData[key] instanceof Array) {
+            // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+            // @ts-ignore
+            if (!settingValidatorData[key].includes(settings[key])) {
+                output.isValid = false;
+                output.location.push(key);
+            }
+            continue;
+        }
+        // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+        // @ts-ignore
+        if (settingValidatorData[key] instanceof Object) {
+            // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+            // @ts-ignore
+            for (const key2 in settingValidatorData[key]) {
+                // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+                // @ts-ignore
+                if (!Object.prototype.hasOwnProperty.call(settings[key], key2)) {
+                    output.isValid = false;
+                    output.location.push(key);
+                    continue;
+                }
+                if (
+                    // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+                    // @ts-ignore
+                    typeof settingValidatorData[key][key2] === "string" &&
+                    // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+                    // @ts-ignore
+                    typeof settings[key][key2] !== settingValidatorData[key][key2]
+                ) {
+                    output.isValid = false;
+                    output.location.push(key);
+                    continue;
+                }
+                // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+                // @ts-ignore
+                if (settingValidatorData[key][key2] instanceof Array) {
+                    // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+                    // @ts-ignore
+                    if (!settingValidatorData[key][key2].includes(settings[key][key2])) {
+                        output.isValid = false;
+                        output.location.push(key);
+                    }
+                    continue;
+                }
+            }
+        }
+    }
+    return output;
 }
-if (!isSettingsValid()) {
-    window.dialog.customError({ message: `Settings in ${settingsPath} are not invalid. Re-writing settings.` });
-    console.warn(`Settings in ${settingsPath} are not invalid. Re-writing settings.`);
-    makeSettingsJson();
+if (!isSettingsValid().isValid) {
+    window.dialog.customError({ message: `Some Settings in ${settingsPath} invalid. Re-writing some settings.` });
+    console.warn(`Some Settings in ${settingsPath} invalid. Re-writing some settings.`);
+    console.log(isSettingsValid());
+    makeSettingsJson(isSettingsValid().location);
 }
 const settings: appsettings = JSON.parse(window.fs.readFileSync(settingsPath, "utf-8"));
 
