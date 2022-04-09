@@ -256,6 +256,20 @@ const Settings = (): ReactElement => {
                         </div>
                     </div> */}
                 </div>
+                <h1>Features</h1>
+                <div className="features">
+                    <ul>
+                        <li>you can make custom theme by editing theme.json.</li>
+                        <li>you dont need to type whole word in search.</li>
+                        <li>
+                            you can open next/prev chapter in "infinite scrolling" mode by clicking on right/left
+                            part of screen when on scroll 0 or 100%.
+                        </li>
+                        <li>you can bring side list by moving mouse to left of screen.</li>
+                        <li>you can pin and resize of side list.</li>
+                        <li>you can shrink home page tabs by clicking dividers.</li>
+                    </ul>
+                </div>
                 <h1>Shortcut Keys</h1>
                 <div className="shortcutKey">
                     <table>

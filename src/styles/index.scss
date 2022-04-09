@@ -650,6 +650,12 @@ body {
                         }
                     }
                 }
+                .features {
+                    ul {
+                        list-style-type: disc;
+                        margin: 25px;
+                    }
+                }
                 .shortcutKey {
                     padding: 20px;
                     display: grid;

@@ -1,10 +1,10 @@
 import {
-    faChevronRight,
     faSort,
     faSyncAlt,
     faArrowLeft,
     faArrowRight,
     faBookmark,
+    faThumbtack,
 } from "@fortawesome/free-solid-svg-icons";
 import { faBookmark as farBookmark } from "@fortawesome/free-regular-svg-icons";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
@@ -226,7 +226,10 @@ const ReaderSideList = ({
                     setSideListPinned((init) => !init);
                 }}
             >
-                <FontAwesomeIcon icon={faChevronRight} />
+                <FontAwesomeIcon
+                    icon={faThumbtack}
+                    style={{ transform: isSideListPinned ? "rotate(45deg)" : "" }}
+                />
             </div>
             <div
                 className="reSizer"

@@ -55,7 +55,7 @@ const Reader = () => {
         if (readerRef.current && window.app.lastClick <= Date.now() - window.app.clickDelay) {
             window.app.lastClick = Date.now();
             let startTime: number, prevTime: number;
-            const anim = (timeStamp: DOMTimeStamp) => {
+            const anim = (timeStamp: number) => {
                 if (startTime === undefined) startTime = timeStamp;
                 const elapsed = timeStamp - startTime;
                 if (prevTime !== timeStamp && readerRef.current) {
@@ -128,8 +128,9 @@ const Reader = () => {
                             break;
                         case "d":
                         case "ArrowRight":
-                            if (appSettings.readerSettings.readerTypeSelected === 1)
+                            if (appSettings.readerSettings.readerTypeSelected === 1) {
                                 openNextPageRef.current?.click();
+                            }
                             break;
                         case "s":
                         case "ArrowDown":
@@ -137,8 +138,9 @@ const Reader = () => {
                             break;
                         case "a":
                         case "ArrowLeft":
-                            if (appSettings.readerSettings.readerTypeSelected === 1)
+                            if (appSettings.readerSettings.readerTypeSelected === 1) {
                                 openPrevPageRef.current?.click();
+                            }
                             break;
                         case "w":
                         case "ArrowUp":
@@ -182,7 +184,7 @@ const Reader = () => {
             return;
         }
         setCurrentImageRow((init) => init - 1);
-        if (imgContRef.current) imgContRef.current.scrollTop = 0;
+        if (readerRef.current) readerRef.current.scrollTop = 0;
     };
     const openNextPage = () => {
         if (currentImageRow >= imageRowCount) {
@@ -198,7 +200,7 @@ const Reader = () => {
             return;
         }
         setCurrentImageRow((init) => init + 1);
-        if (imgContRef.current) imgContRef.current.scrollTop = 0;
+        if (readerRef.current) readerRef.current.scrollTop = 0;
     };
 
     const checkForImgsAndLoad = (link: string) => {
@@ -431,8 +433,18 @@ const Reader = () => {
                         (e.target as HTMLElement).tagName === "IMG"
                     ) {
                         const clickPos = (e.clientX / e.currentTarget.offsetWidth) * 100;
-                        if (clickPos <= 50) openPrevPage();
-                        if (clickPos > 50) openNextPage();
+                        if (clickPos <= 50) openPrevPageRef.current?.click();
+                        if (clickPos > 50) openNextPageRef.current?.click();
+                    }
+                    if (
+                        appSettings.readerSettings.readerTypeSelected === 0 &&
+                        readerRef.current &&
+                        (readerRef.current.scrollTop <= 300 ||
+                            readerRef.current.scrollTop >= readerRef.current.scrollHeight - 300)
+                    ) {
+                        const clickPos = (e.clientX / e.currentTarget.offsetWidth) * 100;
+                        if (clickPos <= 50) openPrevChapterRef.current?.click();
+                        if (clickPos > 50) openNextChapterRef.current?.click();
                     }
                 }}
                 style={{
