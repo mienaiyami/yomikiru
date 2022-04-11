@@ -47,6 +47,7 @@ const ReaderSideList = ({
         setLinkInReader,
     } = useContext(AppContext);
     const { isContextMenuOpen } = useContext(MainContext);
+    const sideListRef = useRef<HTMLDivElement>(null);
     const [chapterData, setChapterData] = useState<{ name: string; pages: number }[]>([]);
     const [filter, setFilter] = useState<string>("");
     const [isListOpen, setListOpen] = useState(false);
@@ -217,12 +218,17 @@ const ReaderSideList = ({
                     e.currentTarget.blur();
                 }
             }}
+            ref={sideListRef}
             tabIndex={-1}
         >
             <div
                 className="indicator"
                 onClick={() => {
                     makeScrollPos();
+                    if (isSideListPinned) {
+                        sideListRef.current?.blur();
+                        setListOpen(false);
+                    }
                     setSideListPinned((init) => !init);
                 }}
             >

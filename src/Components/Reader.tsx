@@ -439,12 +439,27 @@ const Reader = () => {
                     if (
                         appSettings.readerSettings.readerTypeSelected === 0 &&
                         readerRef.current &&
-                        (readerRef.current.scrollTop <= 300 ||
-                            readerRef.current.scrollTop >= readerRef.current.scrollHeight - 300)
+                        imgContRef.current
                     ) {
-                        const clickPos = (e.clientX / e.currentTarget.offsetWidth) * 100;
-                        if (clickPos <= 50) openPrevChapterRef.current?.click();
-                        if (clickPos > 50) openNextChapterRef.current?.click();
+                        if (isSideListPinned) {
+                            if (
+                                imgContRef.current.scrollTop <= 100 ||
+                                imgContRef.current.scrollTop >=
+                                    imgContRef.current.scrollHeight - window.innerHeight - 200
+                            ) {
+                                const clickPos = ((e.clientX - sideListWidth) / e.currentTarget.offsetWidth) * 100;
+                                if (clickPos <= 50) openPrevChapterRef.current?.click();
+                                if (clickPos > 50) openNextChapterRef.current?.click();
+                            }
+                        } else if (
+                            readerRef.current.scrollTop <= 100 ||
+                            readerRef.current.scrollTop >=
+                                readerRef.current.scrollHeight - window.innerHeight - 200
+                        ) {
+                            const clickPos = (e.clientX / e.currentTarget.offsetWidth) * 100;
+                            if (clickPos <= 50) openPrevChapterRef.current?.click();
+                            if (clickPos > 50) openNextChapterRef.current?.click();
+                        }
                     }
                 }}
                 style={{
