@@ -51,9 +51,12 @@ const Reader = () => {
     const addToBookmarkRef = useRef<HTMLButtonElement>(null);
     const readerRef = useRef<HTMLDivElement>(null);
     const imgContRef = useRef<HTMLDivElement>(null);
+
     const scrollReader = (intensity: -4 | -1 | 1 | 4) => {
-        if (readerRef.current && window.app.lastClick <= Date.now() - window.app.clickDelay) {
-            window.app.lastClick = Date.now();
+        // ! remove window.app.lastClick after next update if no problems
+        // && window.app.lastClick <= Date.now() - window.app.clickDelay
+        if (readerRef.current) {
+            // window.app.lastClick = Date.now();
             let startTime: number, prevTime: number;
             const anim = (timeStamp: number) => {
                 if (startTime === undefined) startTime = timeStamp;
@@ -72,7 +75,7 @@ const Reader = () => {
     };
     useLayoutEffect(() => {
         window.app.clickDelay = 100;
-        window.app.lastClick = 0;
+        // window.app.lastClick = 0;
         window.addEventListener("wheel", (e) => {
             if (e.ctrlKey) {
                 if (e.deltaY < 0) {
@@ -85,6 +88,7 @@ const Reader = () => {
                 }
             }
         });
+        // register shortcuts
         window.addEventListener("keydown", (e) => {
             // /&& document.activeElement!.tagName === "BODY"
             if (window.app.isReaderOpen) {
@@ -121,6 +125,7 @@ const Reader = () => {
                         scrollReader(-4);
                         return;
                     }
+                    window.app.keydown = true;
                     switch (e.key) {
                         case " ":
                             e.preventDefault();
@@ -151,6 +156,9 @@ const Reader = () => {
                     }
                 }
             }
+        });
+        window.addEventListener("keyup", () => {
+            window.app.keydown = false;
         });
     }, []);
     const makeScrollPos = () => {

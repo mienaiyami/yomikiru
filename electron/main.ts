@@ -16,6 +16,7 @@ import * as remote from "@electron/remote/main";
 remote.initialize();
 declare const HOME_WEBPACK_ENTRY: string;
 import { spawn, spawnSync } from "child_process";
+
 if (require("electron-squirrel-startup")) app.quit();
 const handleSquirrelEvent = () => {
     if (process.argv.length === 1) {
@@ -100,6 +101,18 @@ const handleSquirrelEvent = () => {
 if (handleSquirrelEvent()) {
     app.quit();
 }
+// ! find a way to put this in script
+// ! need to change manually and then forge make
+const IS_PORTABLE = false;
+
+if (IS_PORTABLE) {
+    const folderPath = path.join(app.getAppPath(), "../../userdata/");
+    if (!fs.existsSync(folderPath)) {
+        fs.mkdirSync(folderPath);
+    }
+    app.setPath("userData", folderPath);
+}
+
 // declare const HOME_PRELOAD_WEBPACK_ENTRY: string;
 const windowsCont: (BrowserWindow | null)[] = [];
 let isFirstWindow = true;

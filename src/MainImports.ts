@@ -29,6 +29,8 @@ declare global {
             betterSortOrder: (x: string, y: string) => number;
             titleBarHeight: number;
             isReaderOpen: boolean;
+            // to remove later
+            keydown: boolean;
             clickDelay: number;
             lastClick: number;
         };

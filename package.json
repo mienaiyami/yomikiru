@@ -5,13 +5,15 @@
     "description": "App to read manga on desktop",
     "main": "./.webpack/main/index.js",
     "author": {
-        "name": "mienaiyami <https://github.com/mienaiyami>",
-        "email": "sukoonkumar2@gmail.com"
+        "name": "mienaiyami <https://github.com/mienaiyami>"
     },
     "scripts": {
         "start": "electron-forge start",
         "package": "electron-forge package",
-        "make": "electron-forge make",
+        "make": "electron-forge make --targets=@electron-forge/maker-zip",
+        "makeExe": "electron-forge make && electron-forge make --arch=ia32",
+        "makeZip": "electron-forge make --targets=@electron-forge/maker-zip && electron-forge make --targets=@electron-forge/maker-zip --arch=ia32",
+        "makeAll": "npm run make64 && make32",
         "dist": "",
         "release": "electron-forge publish"
     },
@@ -67,38 +69,6 @@
         "webpack": "^5.58.2"
     },
     "config": {
-        "forge": {
-            "packagerConfig": {
-                "name": "Manga Reader"
-            },
-            "plugins": [
-                [
-                    "@electron-forge/plugin-webpack",
-                    {
-                        "mainConfig": "./webpack/main.webpack.js",
-                        "renderer": {
-                            "config": "./webpack/renderer.webpack.js",
-                            "entryPoints": [
-                                {
-                                    "html": "./public/index.html",
-                                    "js": "./src/index.tsx",
-                                    "name": "home"
-                                }
-                            ]
-                        }
-                    }
-                ]
-            ],
-            "makers": [
-                {
-                    "name": "@electron-forge/maker-squirrel",
-                    "config": {
-                        "name": "mangareader",
-                        "exe": "Manga Reader.exe",
-                        "setupExe": "Manga Reader.exe"
-                    }
-                }
-            ]
-        }
+        "forge": "forge.config.js"
     }
 }

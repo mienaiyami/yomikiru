@@ -231,7 +231,7 @@ const Settings = (): ReactElement => {
                         </div>
                     </div>
                     <div className="settingItem issue">
-                        <div className="name">Issues? :</div>
+                        <div className="name">Issues/Feature Request :</div>
                         <div className="current">
                             <button
                                 // onFocus={(e) => e.currentTarget.blur()}
