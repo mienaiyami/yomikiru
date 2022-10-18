@@ -80,6 +80,7 @@ declare global {
         baseDir: string;
         historyLimit: number;
         locationListSortType: "normal" | "inverse";
+        updateCheckerEnabled: boolean;
         readerSettings: {
             readerWidth: number;
             variableImageSize: boolean;
@@ -118,6 +119,7 @@ export const settingValidatorData = {
     baseDir: "string",
     historyLimit: "number",
     locationListSortType: ["normal", "inverse"],
+    updateCheckerEnabled: "boolean",
     readerSettings: {
         readerWidth: "number",
         variableImageSize: "boolean",

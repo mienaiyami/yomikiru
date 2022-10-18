@@ -1,4 +1,4 @@
-export default async () => {
+export default async (promtAfterCheck = false) => {
     const downloadLink = "https://github.com/mienaiyami/react-ts-offline-manga-reader/releases/";
     const rawdata = await fetch(
         "https://raw.githubusercontent.com/mienaiyami/react-ts-offline-manga-reader/master/package.json"
@@ -38,4 +38,7 @@ export default async () => {
         return;
     }
     console.log("Running latest version.");
+    if (promtAfterCheck) {
+        window.dialog.confirm({ message: "Running latest version" });
+    }
 };

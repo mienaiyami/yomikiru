@@ -40,6 +40,7 @@ const Reader = () => {
     const [sideListWidth, setSideListWidth] = useState(appSettings.readerSettings.sideListWidth || 450);
     const [isBookmarked, setBookmarked] = useState(false);
     const [scrollPosPercent, setScrollPosPercent] = useState(0);
+    const [zenMode, setZenMode] = useState(false);
     const readerSettingExtender = useRef<HTMLButtonElement>(null);
     const sizePlusRef = useRef<HTMLButtonElement>(null);
     const sizeMinusRef = useRef<HTMLButtonElement>(null);
@@ -73,6 +74,13 @@ const Reader = () => {
             return;
         }
     };
+    useEffect(() => {
+        if (zenMode) {
+            document.body.classList.add("zenMode");
+        } else {
+            document.body.classList.remove("zenMode");
+        }
+    }, [zenMode]);
     useLayoutEffect(() => {
         window.app.clickDelay = 100;
         // window.app.lastClick = 0;
@@ -95,6 +103,12 @@ const Reader = () => {
                 switch (e.key) {
                     case "f":
                         navToPageButtonRef.current?.click();
+                        break;
+                    case "`":
+                        setZenMode((prev) => !prev);
+                        break;
+                    case "Escape":
+                        setZenMode(false);
                         break;
                     case "q":
                         readerSettingExtender.current?.click();

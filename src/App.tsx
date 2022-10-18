@@ -22,6 +22,7 @@ const makeSettingsJson = (locations?: string[]) => {
         baseDir: window.electron.app.getPath("home"),
         historyLimit: 60,
         locationListSortType: "normal",
+        updateCheckerEnabled: true,
         readerSettings: {
             readerWidth: 60,
             variableImageSize: true,
@@ -34,6 +35,13 @@ const makeSettingsJson = (locations?: string[]) => {
     if (locations) {
         const settingsDataSaved: appsettings = JSON.parse(window.fs.readFileSync(settingsPath, "utf-8"));
         locations.forEach((e) => {
+            if (!(e in settingsDataSaved)) {
+                console.info(e, "missing from settings,adding new...");
+                // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+                // @ts-ignore
+                // settingsDataSaved[e]=settingsDataNew[e]
+                // return
+            }
             // eslint-disable-next-line @typescript-eslint/ban-ts-comment
             // @ts-ignore
             settingsDataSaved[e] = settingsDataNew[e];
@@ -407,7 +415,7 @@ const App = (): ReactElement => {
             if (data && typeof data.link === "string" && data.link !== "") openInReader(data.link);
         });
         window.electron.ipcRenderer.on("checkforupdate", () => {
-            checkforupdate();
+            if (appSettings.updateCheckerEnabled) checkforupdate();
         });
         window.app.titleBarHeight = parseFloat(
             window.getComputedStyle(document.body).getPropertyValue("--titleBar-height")

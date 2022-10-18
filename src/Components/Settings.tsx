@@ -4,6 +4,7 @@ import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { ReactElement, useContext, useEffect, useRef, useState } from "react";
 import useTheme from "../hooks/useTheme";
 import { faTimes } from "@fortawesome/free-solid-svg-icons";
+import checkforupdate from "../checkforupdate";
 
 const Settings = (): ReactElement => {
     const {
@@ -224,18 +225,17 @@ const Settings = (): ReactElement => {
                             ))}
                         </div>
                     </div>
-                    <div className="settingItem version">
+                    <div className="settingItem">
                         <div className="name">Version:</div>
                         <div className="current">
                             <span>{window.electron.app.getVersion()}</span>
                         </div>
                     </div>
-                    <div className="settingItem issue">
+                    <div className="settingItem">
                         <div className="name">Issues/Feature Request :</div>
                         <div className="current">
                             <button
                                 // onFocus={(e) => e.currentTarget.blur()}
-                                className="postIssue"
                                 onClick={() =>
                                     window.electron.shell.openExternal(
                                         "https://github.com/mienaiyami/react-ts-offline-manga-reader/issues"
@@ -244,6 +244,48 @@ const Settings = (): ReactElement => {
                             >
                                 <FontAwesomeIcon icon={faGithub} /> Submit Issue
                             </button>
+                        </div>
+                    </div>
+                    <div className="settingItem">
+                        <div className="name">File Explorer Option :</div>
+                        <div className="current">
+                            <button onClick={() => window.electron.ipcRenderer.send("addOptionToExplorerMenu")}>
+                                Add
+                            </button>
+                            <button onClick={() => window.electron.ipcRenderer.send("deleteOptionInExplorerMenu")}>
+                                Remove
+                            </button>
+                        </div>
+                    </div>
+                    <div className="settingItem">
+                        <div className="name">Author :</div>
+                        <div className="current">
+                            <button
+                                onClick={() =>
+                                    window.electron.shell.openExternal("https://github.com/mienaiyami/")
+                                }
+                            >
+                                <FontAwesomeIcon icon={faGithub} /> MienaiYami
+                            </button>
+                        </div>
+                    </div>
+                    <div className="settingItem">
+                        <div className="name">Check for Update :</div>
+                        <div className="current">
+                            <label className={appSettings.updateCheckerEnabled ? "selected" : ""}>
+                                <input
+                                    type="checkbox"
+                                    checked={appSettings.updateCheckerEnabled}
+                                    onChange={(e) => {
+                                        setAppSettings((init) => {
+                                            init.updateCheckerEnabled = e.currentTarget.checked;
+                                            return { ...init };
+                                        });
+                                    }}
+                                />
+                                <p>Check on Startup</p>
+                            </label>
+                            <button onClick={() => checkforupdate(true)}>Check for Update</button>
                         </div>
                     </div>
                     {/* <div className="settingItem version">
@@ -259,15 +301,25 @@ const Settings = (): ReactElement => {
                 <h1>Features</h1>
                 <div className="features">
                     <ul>
-                        <li>you can make custom theme by editing theme.json.</li>
-                        <li>you dont need to type whole word in search.</li>
+                        <li>
+                            you can make custom theme by editing themes.json. Or click ctrl+shift+i, then from the
+                            styles panel change colors element.style, then copy inside {`{}`}, then open
+                            themes.json, go to the end and before ] add ",{`{name:name,main:your-copied-thing}`}"
+                        </li>
+                        <li>you dont need to type whole word in search(e.g. for "One piece" type "op").</li>
                         <li>
                             you can open next/prev chapter in "infinite scrolling" mode by clicking on right/left
-                            part of screen when on scroll 0 or 100%.
+                            part of screen or a/d(Keys) when on scroll 0 or 100%.
                         </li>
                         <li>you can bring side list by moving mouse to left of screen.</li>
                         <li>you can pin and resize of side list.</li>
                         <li>you can shrink home page tabs by clicking dividers.</li>
+                        <li>
+                            you can open chapter directly from file explorer on right clicking folder after
+                            enabling "File Explorer Option" (Note that this only opens chapter containing images
+                            and not Manga Folder).
+                        </li>
+                        <li>Zen Mode: hide ui and only show images</li>
                     </ul>
                 </div>
                 <h1>Shortcut Keys</h1>

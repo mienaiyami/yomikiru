@@ -17,7 +17,58 @@ remote.initialize();
 declare const HOME_WEBPACK_ENTRY: string;
 import { spawn, spawnSync } from "child_process";
 
+import sudo from "@vscode/sudo-prompt";
+
 if (require("electron-squirrel-startup")) app.quit();
+
+// registery, add option to open in reader to explorer context menu
+const addOptionToExplorerMenu = () => {
+    const regInit = `Windows Registry Editor Version 5.00
+    
+    ; Setup context menu item for click on folders tree item:
+    [HKEY_CURRENT_USER\\Software\\Classes\\directory\\shell\\mangareader\\command]
+    @="${app.getPath("exe").replace(/\\/g, "\\\\")} \\"%V\\""
+    
+    ; Optional: specify an icon for the item:   
+    [HKEY_CURRENT_USER\\Software\\Classes\\directory\\shell\\mangareader]
+    @="Open in Manga Reader"
+    "icon"="${app.getPath("exe").replace(/\\/g, "\\\\")}"
+    `;
+
+    const tempPath = app.getPath("temp");
+    fs.writeFileSync(path.join(tempPath, "createOpenWithMangaReader.reg"), regInit);
+
+    const op = {
+        name: "MangaReader",
+        icns: app.getPath("exe"),
+    };
+    sudo.exec(
+        "regedit.exe /S " + path.join(tempPath, "createOpenWithMangaReader.reg"),
+        op,
+        function (error, stdout, stderr) {
+            if (error) throw error;
+        }
+    );
+};
+const deleteOptionInExplorerMenu = () => {
+    const regDelete = `Windows Registry Editor Version 5.00
+    
+    [-HKEY_CURRENT_USER\\Software\\Classes\\directory\\shell\\mangareader]
+    `;
+    fs.writeFileSync(path.join(app.getPath("temp"), "deleteOpenWithMangaReader.reg"), regDelete);
+    const op = {
+        name: "MangaReader",
+        icns: app.getPath("exe"),
+    };
+    sudo.exec(
+        "regedit.exe /S " + path.join(app.getPath("temp"), "deleteOpenWithMangaReader.reg"),
+        op,
+        function (error, stdout, stderr) {
+            if (error) throw error;
+        }
+    );
+};
+
 const handleSquirrelEvent = () => {
     if (process.argv.length === 1) {
         return false;
@@ -69,6 +120,7 @@ const handleSquirrelEvent = () => {
                         "AppData/Roaming/Microsoft/Windows/Start Menu/Programs/Manga Reader.lnk"
                     )
                 );
+            deleteOptionInExplorerMenu();
             if (fs.existsSync(path.resolve(homedir(), "Desktop/Manga Reader.lnk")))
                 fs.unlinkSync(path.resolve(homedir(), "Desktop/Manga Reader.lnk"));
             const uninstallFull = `
@@ -101,6 +153,12 @@ const handleSquirrelEvent = () => {
 if (handleSquirrelEvent()) {
     app.quit();
 }
+// when manga reader opened from context menu "open with manga reader"
+let openFolderOnLaunch = "";
+if (app.isPackaged && process.argv[1] && fs.existsSync(process.argv[1])) {
+    openFolderOnLaunch = process.argv[1];
+}
+
 // ! find a way to put this in script
 // ! need to change manually and then forge make
 const IS_PORTABLE = false;
@@ -154,6 +212,7 @@ const createWindow = (link?: string) => {
         newWindow.webContents.send("loadMangaFromLink", { link: link || "" });
         if (isFirstWindow) {
             newWindow.webContents.send("checkforupdate");
+            newWindow.webContents.send("loadMangaFromLink", { link: openFolderOnLaunch });
             isFirstWindow = false;
         }
     });
@@ -164,6 +223,12 @@ const createWindow = (link?: string) => {
 const registerListener = () => {
     ipcMain.on("openLinkInNewWindow", (e, link) => {
         createWindow(link);
+    });
+    ipcMain.on("addOptionToExplorerMenu", () => {
+        addOptionToExplorerMenu();
+    });
+    ipcMain.on("deleteOptionInExplorerMenu", () => {
+        deleteOptionInExplorerMenu();
     });
 };
 app.on("ready", async () => {
