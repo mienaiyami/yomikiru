@@ -689,10 +689,10 @@ body {
                             // border-bottom: 1px solid var(--color-secondary);
                         }
                         tr {
-                            border: 1px solid var(--color-secondary);
-                            td:first-child {
-                                text-align: end;
-                            }
+                            box-shadow: inset 0 0 0px 1px var(--color-secondary);
+                            // td:first-child {
+                            //     text-align: end;
+                            // }
                         }
                     }
                 }
@@ -938,7 +938,7 @@ body {
                                 align-items: center;
                                 border-radius: 3px;
                                 p {
-                                    font-size: 10px;
+                                    font-size: 15px;
                                 }
                                 input:disabled ~ p {
                                     opacity: 0.5;

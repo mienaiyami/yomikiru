@@ -225,27 +225,6 @@ const Settings = (): ReactElement => {
                         </div>
                     </div>
                     <div className="settingItem">
-                        <div className="name">Version:</div>
-                        <div className="current">
-                            <span>{window.electron.app.getVersion()}</span>
-                        </div>
-                    </div>
-                    <div className="settingItem">
-                        <div className="name">Issues/Feature Request :</div>
-                        <div className="current">
-                            <button
-                                // onFocus={(e) => e.currentTarget.blur()}
-                                onClick={() =>
-                                    window.electron.shell.openExternal(
-                                        "https://github.com/mienaiyami/react-ts-offline-manga-reader/issues"
-                                    )
-                                }
-                            >
-                                <FontAwesomeIcon icon={faGithub} /> Submit Issue
-                            </button>
-                        </div>
-                    </div>
-                    <div className="settingItem">
                         <div className="name">File Explorer Option :</div>
                         <div className="current">
                             <button onClick={() => window.electron.ipcRenderer.send("addOptionToExplorerMenu")}>
@@ -253,18 +232,6 @@ const Settings = (): ReactElement => {
                             </button>
                             <button onClick={() => window.electron.ipcRenderer.send("deleteOptionInExplorerMenu")}>
                                 Remove
-                            </button>
-                        </div>
-                    </div>
-                    <div className="settingItem">
-                        <div className="name">Author :</div>
-                        <div className="current">
-                            <button
-                                onClick={() =>
-                                    window.electron.shell.openExternal("https://github.com/mienaiyami/")
-                                }
-                            >
-                                <FontAwesomeIcon icon={faGithub} /> MienaiYami
                             </button>
                         </div>
                     </div>
@@ -306,6 +273,55 @@ const Settings = (): ReactElement => {
                             </label>
                         </div>
                     </div> */}
+                </div>
+                <h1>About</h1>
+                <div className="content">
+                    <div className="settingItem">
+                        <div className="name">Version:</div>
+                        <div className="current">
+                            <span>{window.electron.app.getVersion()}</span>
+                        </div>
+                    </div>
+                    <div className="settingItem">
+                        <div className="name">Issues/Feature Request :</div>
+                        <div className="current">
+                            <button
+                                // onFocus={(e) => e.currentTarget.blur()}
+                                onClick={() =>
+                                    window.electron.shell.openExternal(
+                                        "https://github.com/mienaiyami/react-ts-offline-manga-reader/issues"
+                                    )
+                                }
+                            >
+                                <FontAwesomeIcon icon={faGithub} /> Submit Issue
+                            </button>
+                            <button
+                                onClick={(e) => {
+                                    const target = e.currentTarget;
+                                    target.innerText = "Copied!";
+                                    window.electron.clipboard.writeText("mienaiyami0@gmail.com");
+                                    setTimeout(() => {
+                                        target.innerText = "mienaiyami0@gmail.com";
+                                    }, 3000);
+                                }}
+                            >
+                                mienaiyami0@gmail.com
+                            </button>
+                        </div>
+                    </div>
+
+                    <div className="settingItem">
+                        <div className="name">Author :</div>
+                        <div className="current">
+                            <button
+                                onClick={() =>
+                                    window.electron.shell.openExternal("https://github.com/mienaiyami/")
+                                }
+                            >
+                                <FontAwesomeIcon icon={faGithub} /> MienaiYami
+                            </button>
+                        </div>
+                    </div>
                 </div>
                 <h1>Features</h1>
                 <div className="features">
