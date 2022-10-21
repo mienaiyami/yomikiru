@@ -92,14 +92,6 @@ const handleSquirrelEvent = () => {
         case "--squirrel-updated":
             // const createShortcutArgs = ["--createShortcut", exeName, "-l", "Desktop,StartMenu"];
             // spawnUpdate(createShortcutArgs);
-            if (
-                fs.existsSync(
-                    app.getPath("home") +
-                        "\\AppData\\Roaming\\Microsoft\\Windows\\Start Menu\\Programs\\Manga Reader.lnk"
-                )
-            ) {
-                break;
-            }
             const vbsScript = `
             Set WshShell = CreateObject("Wscript.shell")
             strDesktop = WshShell.SpecialFolders("Desktop")

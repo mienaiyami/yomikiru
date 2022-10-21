@@ -9,8 +9,8 @@ import logger from "electron-log";
 
 const fileToKeep = ["bookmarks.json", "history.json", "settings.json", "themes.json", "logs", "main.log"];
 
-// const downloadLink = "https://github.com/mienaiyami/react-ts-offline-manga-reader/releases/download/v";
-const downloadLink = "https://github.com/mienaiyami/electron-updater-test/releases/download/v";
+const downloadLink = "https://github.com/mienaiyami/react-ts-offline-manga-reader/releases/download/v";
+// const downloadLink = "https://github.com/mienaiyami/electron-updater-test/releases/download/v";
 const checkForUpdate = async (windowId: number, promptAfterCheck = false) => {
     const rawdata = await fetch(
         "https://raw.githubusercontent.com/mienaiyami/react-ts-offline-manga-reader/master/package.json"
