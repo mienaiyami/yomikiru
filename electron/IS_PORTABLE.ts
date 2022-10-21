@@ -1,4 +1,4 @@
 // change before npm run make
-const isPortable = true;
+const isPortable = false;
 
 export default isPortable;

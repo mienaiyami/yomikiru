@@ -59,8 +59,8 @@ const downloadUpdates = (latestVersion: string, windowId: number) => {
     const tempPath = path.join(app.getPath("temp"), "manga reader updates " + new Date().toDateString());
     if (fs.existsSync(tempPath)) spawnSync("powershell.exe", [`rm "${tempPath}" -r -force`]);
     fs.mkdirSync(tempPath);
+    logger.log(tempPath);
     if (IS_PORTABLE) {
-        logger.log(tempPath);
         const dl = downloadLink + latestVersion + "/" + `Manga.Reader-win32-${latestVersion}-Portable.zip`;
         const filePath = path.join(tempPath, "updates.zip");
         const extractPath = path.join(tempPath, "updates");
@@ -82,21 +82,9 @@ const downloadUpdates = (latestVersion: string, windowId: number) => {
                         logger.log("Removing /userdata from " + extractPath);
                         fs.rmdirSync(extractPath + "\\" + "userdata");
                     }
-                    // logger.log("Coping " + app.getPath("userData") + " to " + extractPath + "\\userdata");
-                    // fs.mkdirSync(path.join(extractPath, "userdata"));
-                    // logger.log(`Copy-Item "${app.getPath("userData")}\\*" "${extractPath}\\"`);
-                    //path added to -exclude
-                    // spawnSync("powershell.exe", [
-                    //     `Copy-Item -Path "${app.getPath(
-                    //         "userData"
-                    //     )}\\*" -Destination "${extractPath}\\userdata\\" -Recurse`,
-                    // ]);
                     const appDirName = path.join(app.getPath("exe"), "../");
                     app.on("before-quit", () => {
                         logger.log("Installing updates...");
-                        // logger.log(
-                        //     `powershell.exe Start-Sleep -Seconds 5.0 ; Remove-Item -Recurse -Force '${appDirName}\\*' -Exclude 'userdata' ; ; Move-Item -Path '${extractPath}\\*' -Destination '${appDirName}'`
-                        // );
                         spawn(
                             "start",
                             [
@@ -132,6 +120,42 @@ const downloadUpdates = (latestVersion: string, windowId: number) => {
         });
     } else {
         const dl = downloadLink + latestVersion + "/" + `Manga.Reader-${latestVersion}-Setup.exe`;
+        const filePath = path.join(tempPath, `Manga.Reader-${latestVersion}-Setup.exe`);
+        const ps = spawn("powershell.exe", [`iwr -outf "${filePath}" "${dl}"`]);
+        ps.on("error", (err) => logger.error(err));
+        ps.stderr.on("data", (e) => logger.error("ps stderr: ", e.toString()));
+        ps.stdout.on("data", (e) => logger.log("ps stdout: ", e.toString()));
+        ps.on("close", () => {
+            if (fs.existsSync(filePath)) {
+                logger.log(`Manga.Reader-${latestVersion}-Setup.exe downloaded.`);
+                app.on("before-quit", () => {
+                    logger.log("Installing updates...");
+                    logger.log(`powershell.exe Start-Sleep -Seconds 5.0 ;Start-Process '${filePath}'`);
+                    spawn("start", [`powershell.exe Start-Sleep -Seconds 5.0 ; Start-Process '${filePath}'`], {
+                        shell: true,
+                    }).on("exit", process.exit);
+                    logger.log("Quitting app...");
+                });
+                logger.log("Preparing to install updates...");
+                dialog
+                    .showMessageBox(BrowserWindow.fromId(windowId ?? 0)!, {
+                        type: "info",
+                        title: "Updates downloaded",
+                        message: "Updates downloaded.",
+                        buttons: ["Install Now", "Install on Close"],
+                    })
+                    .then((res) => {
+                        if (res.response === 0) {
+                            logger.log("Selected option to install now.");
+                            app.quit();
+                        } else {
+                            logger.log("Selected option to install on close.");
+                        }
+                    });
+            } else {
+                logger.log("File did not download.");
+            }
+        });
     }
 };
 export default checkForUpdate;

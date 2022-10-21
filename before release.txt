@@ -1,1 +1,3 @@
 rename .exe and .zip 
+.zip - Manga.Reader-win32-${latestVersion}-Portable.zip
+.exe - Manga.Reader-${latestVersion}-Setup.exe
