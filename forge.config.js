@@ -1,3 +1,5 @@
+// eslint-disable-next-line @typescript-eslint/no-var-requires
+const packageJSON = require("./package.json");
 module.exports = {
     packagerConfig: {
         name: "Manga Reader",
@@ -26,11 +28,12 @@ module.exports = {
             config: {
                 // name: "mangareader",
                 // exe: "Manga Reader.exe",
-                setupExe: "Manga Reader Setup.exe",
+                // setupExe: `${packageJSON.name}_${packageJSON.version}_windows-setup.exe`,
             },
         },
         // {
         //     name: "@electron-forge/maker-zip",
+        //     dir: `${packageJSON.name}_${packageJSON.version}_windows-portable`,
         // },
     ],
 };

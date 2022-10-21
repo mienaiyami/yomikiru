@@ -1,23 +1,31 @@
 /* eslint-disable no-case-declarations */
-import {
-    app,
-    session,
-    BrowserWindow,
-    Menu,
-    globalShortcut,
-    shell,
-    ipcMain,
-    MenuItemConstructorOptions,
-} from "electron";
+import { app, session, BrowserWindow, Menu, shell, ipcMain, MenuItemConstructorOptions } from "electron";
 import path from "path";
 import fs from "fs";
+import IS_PORTABLE from "./IS_PORTABLE";
 import { homedir, tmpdir } from "os";
 import * as remote from "@electron/remote/main";
 remote.initialize();
 declare const HOME_WEBPACK_ENTRY: string;
 import { spawn, spawnSync } from "child_process";
+import log from "electron-log";
+
+// ! find a way to put this in script
+// ! need to change manually and then forge make
+
+if (IS_PORTABLE) {
+    const folderPath = path.join(app.getAppPath(), "../../userdata/");
+    if (!fs.existsSync(folderPath)) {
+        fs.mkdirSync(folderPath);
+    }
+    app.setPath("userData", folderPath);
+}
+
+log.transports.file.resolvePath = () => path.join(app.getPath("userData"), "logs/main.log");
+log.log("Starting app...");
 
 import sudo from "@vscode/sudo-prompt";
+import checkForUpdate from "./updater";
 
 if (require("electron-squirrel-startup")) app.quit();
 
@@ -46,7 +54,7 @@ const addOptionToExplorerMenu = () => {
         "regedit.exe /S " + path.join(tempPath, "createOpenWithMangaReader.reg"),
         op,
         function (error, stdout, stderr) {
-            if (error) throw error;
+            if (error) log.error(error);
         }
     );
 };
@@ -64,7 +72,7 @@ const deleteOptionInExplorerMenu = () => {
         "regedit.exe /S " + path.join(app.getPath("temp"), "deleteOpenWithMangaReader.reg"),
         op,
         function (error, stdout, stderr) {
-            if (error) throw error;
+            if (error) log.error(error);
         }
     );
 };
@@ -84,6 +92,14 @@ const handleSquirrelEvent = () => {
         case "--squirrel-updated":
             // const createShortcutArgs = ["--createShortcut", exeName, "-l", "Desktop,StartMenu"];
             // spawnUpdate(createShortcutArgs);
+            if (
+                fs.existsSync(
+                    app.getPath("home") +
+                        "\\AppData\\Roaming\\Microsoft\\Windows\\Start Menu\\Programs\\Manga Reader.lnk"
+                )
+            ) {
+                break;
+            }
             const vbsScript = `
             Set WshShell = CreateObject("Wscript.shell")
             strDesktop = WshShell.SpecialFolders("Desktop")
@@ -159,18 +175,6 @@ if (app.isPackaged && process.argv[1] && fs.existsSync(process.argv[1])) {
     openFolderOnLaunch = process.argv[1];
 }
 
-// ! find a way to put this in script
-// ! need to change manually and then forge make
-const IS_PORTABLE = false;
-
-if (IS_PORTABLE) {
-    const folderPath = path.join(app.getAppPath(), "../../userdata/");
-    if (!fs.existsSync(folderPath)) {
-        fs.mkdirSync(folderPath);
-    }
-    app.setPath("userData", folderPath);
-}
-
 // declare const HOME_PRELOAD_WEBPACK_ENTRY: string;
 const windowsCont: (BrowserWindow | null)[] = [];
 let isFirstWindow = true;
@@ -211,7 +215,7 @@ const createWindow = (link?: string) => {
         newWindow.maximize();
         newWindow.webContents.send("loadMangaFromLink", { link: link || "" });
         if (isFirstWindow) {
-            newWindow.webContents.send("checkforupdate");
+            newWindow.webContents.send("canCheckForUpdate");
             newWindow.webContents.send("loadMangaFromLink", { link: openFolderOnLaunch });
             isFirstWindow = false;
         }
@@ -230,6 +234,12 @@ const registerListener = () => {
     ipcMain.on("deleteOptionInExplorerMenu", () => {
         deleteOptionInExplorerMenu();
     });
+    ipcMain.on("canCheckForUpdate_response", (e, res, windowId) => {
+        if (res) checkForUpdate(windowId);
+    });
+    ipcMain.on("checkForUpdate", (e, windowId, promptAfterCheck = false) => {
+        checkForUpdate(windowId, promptAfterCheck);
+    });
 };
 app.on("ready", async () => {
     registerListener();
@@ -242,7 +252,7 @@ app.on("ready", async () => {
             );
             await session.defaultSession.loadExtension(reactDevToolsPath);
         } catch (err) {
-            console.error(err);
+            log.error(err);
         }
     }
     const template: MenuItemConstructorOptions[] = [

@@ -5,9 +5,9 @@ const LoadingScreen = (): ReactElement => {
     const { isLoadingManga, loadingMangaPercent, mangaInReader } = useContext(AppContext);
     return (
         <div id="loadingScreen" style={{ display: isLoadingManga ? "grid" : "none" }}>
-            <div className="name">
+            {/* <div className="name">
                 ({mangaInReader?.pages}) {mangaInReader?.mangaName} - {mangaInReader?.chapterName}
-            </div>
+            </div> */}
             <div className="loadingBarCont">
                 <div
                     className="loadingbar"

@@ -1,11 +1,10 @@
-import { app, dialog, getCurrentWindow, clipboard, nativeImage, shell } from "@electron/remote";
+import { app, dialog, getCurrentWindow, clipboard, nativeImage, shell, BrowserWindow } from "@electron/remote";
 import { ipcRenderer } from "electron";
 /*//! i know its dangerous but its offline app and i was unable to get BrowserWindow to work
   //! in renderer with contextBridge from preload
  */
 import path from "path";
 import fs from "fs";
-
 declare module "react" {
     interface CSSProperties {
         [key: `--${string}`]: string | number;
@@ -19,6 +18,7 @@ declare global {
             shell: typeof shell;
             ipcRenderer: typeof ipcRenderer;
             getCurrentWindow: typeof getCurrentWindow;
+            getAllWindows: Electron.BrowserWindow[];
             clipboard: typeof clipboard;
             nativeImage: typeof nativeImage;
         };
@@ -143,8 +143,8 @@ window.electron = {
     getCurrentWindow,
     clipboard,
     nativeImage,
+    getAllWindows: BrowserWindow.getAllWindows(),
 };
-
 window.dialog = {
     nodeError: (err: NodeJS.ErrnoException) =>
         window.electron.dialog.showMessageBox(window.electron.getCurrentWindow(), {

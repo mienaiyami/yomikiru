@@ -4,7 +4,6 @@ import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { ReactElement, useContext, useEffect, useRef, useState } from "react";
 import useTheme from "../hooks/useTheme";
 import { faTimes } from "@fortawesome/free-solid-svg-icons";
-import checkforupdate from "../checkforupdate";
 
 const Settings = (): ReactElement => {
     const {
@@ -285,7 +284,17 @@ const Settings = (): ReactElement => {
                                 />
                                 <p>Check on Startup</p>
                             </label>
-                            <button onClick={() => checkforupdate(true)}>Check for Update</button>
+                            <button
+                                onClick={() => {
+                                    window.electron.ipcRenderer.send(
+                                        "checkForUpdate",
+                                        window.electron.getCurrentWindow().id,
+                                        true
+                                    );
+                                }}
+                            >
+                                Check for Update
+                            </button>
                         </div>
                     </div>
                     {/* <div className="settingItem version">
@@ -333,6 +342,10 @@ const Settings = (): ReactElement => {
                             <tr>
                                 <td> - , =, +, ctrl+scroll</td>
                                 <td>size</td>
+                            </tr>
+                            <tr>
+                                <td> `</td>
+                                <td>Zen Mode</td>
                             </tr>
                             <tr>
                                 <td>q</td>

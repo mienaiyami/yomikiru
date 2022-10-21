@@ -3,7 +3,6 @@ import { createContext, createRef, ReactElement, useEffect, useState } from "rea
 import Main from "./Components/Main";
 import TopBar from "./Components/TopBar";
 import useTheme from "./hooks/useTheme";
-import checkforupdate from "./checkforupdate";
 import { settingValidatorData } from "./MainImports";
 const userDataURL = window.electron.app.getPath("userData");
 const settingsPath = window.path.join(userDataURL, "settings.json");
@@ -414,8 +413,12 @@ const App = (): ReactElement => {
         window.electron.ipcRenderer.on("loadMangaFromLink", (e, data) => {
             if (data && typeof data.link === "string" && data.link !== "") openInReader(data.link);
         });
-        window.electron.ipcRenderer.on("checkforupdate", () => {
-            if (appSettings.updateCheckerEnabled) checkforupdate();
+        window.electron.ipcRenderer.on("canCheckForUpdate", () => {
+            window.electron.ipcRenderer.send(
+                "canCheckForUpdate_response",
+                appSettings.updateCheckerEnabled,
+                window.electron.getCurrentWindow().id
+            );
         });
         window.app.titleBarHeight = parseFloat(
             window.getComputedStyle(document.body).getPropertyValue("--titleBar-height")
