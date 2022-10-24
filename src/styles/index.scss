@@ -977,6 +977,7 @@ body {
                         width: var(--varWidth);
                         max-width: 100%;
                         min-width: 1%;
+                        // image-rendering: pixelated;
                     }
                     &.twoPagePerRow {
                         img {

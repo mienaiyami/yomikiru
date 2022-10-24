@@ -449,6 +449,9 @@ const Reader = () => {
                     (appSettings.readerSettings.gapBetweenRows ? "gap " : "") +
                     (appSettings.readerSettings.readerTypeSelected === 1 ? "readerMode1" : "")
                 }
+                style={{
+                    "--varWidth": appSettings.readerSettings.readerWidth + "%",
+                }}
                 onClick={(e) => {
                     if (
                         appSettings.readerSettings.readerTypeSelected === 1 &&
@@ -483,9 +486,6 @@ const Reader = () => {
                             if (clickPos > 50) openNextChapterRef.current?.click();
                         }
                     }
-                }}
-                style={{
-                    "--varWidth": appSettings.readerSettings.readerWidth + "%",
                 }}
             >
                 {imageElements.map((e, i) => (

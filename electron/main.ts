@@ -182,6 +182,8 @@ app.setUserTasks([
     },
 ]);
 
+app.disableHardwareAcceleration();
+
 const createWindow = (link?: string) => {
     const newWindow = new BrowserWindow({
         width: 1200,
@@ -198,6 +200,7 @@ const createWindow = (link?: string) => {
             // preload: HOME_PRELOAD_WEBPACK_ENTRY,
         },
     });
+    // newWindow.webContents.setFrameRate(60);
     const currentWindowIndex = windowsCont.length;
     windowsCont.push(newWindow);
     newWindow.on("close", () => (windowsCont[currentWindowIndex] = null));
