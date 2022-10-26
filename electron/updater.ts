@@ -28,7 +28,7 @@ const checkForUpdate = async (windowId: number, promptAfterCheck = false) => {
             latestVersion[2] > currentAppVersion[2])
     ) {
         dialog
-            .showMessageBox(BrowserWindow.fromId(windowId ?? 0)!, {
+            .showMessageBox(BrowserWindow.fromId(windowId ?? 1)!, {
                 type: "info",
                 title: "New Version Available",
                 message: `New Version Available.\nCurrent Version:\t${currentAppVersion.join(
@@ -36,6 +36,7 @@ const checkForUpdate = async (windowId: number, promptAfterCheck = false) => {
                 )}\nLatest Version:\t${latestVersion.join(".")}
                 `,
                 buttons: ["Download Now", "Download Later"],
+                cancelId: 1,
             })
             .then((response) => {
                 if (response.response === 0) downloadUpdates(latestVersion.join("."), windowId);
@@ -44,7 +45,7 @@ const checkForUpdate = async (windowId: number, promptAfterCheck = false) => {
     }
     logger.log("Running latest version.");
     if (promptAfterCheck) {
-        dialog.showMessageBox(BrowserWindow.fromId(windowId ?? 0)!, {
+        dialog.showMessageBox(BrowserWindow.fromId(windowId ?? 1)!, {
             type: "info",
             title: "Manga Reader",
             message: "Running latest version",
@@ -60,16 +61,39 @@ const downloadUpdates = (latestVersion: string, windowId: number) => {
     if (fs.existsSync(tempPath)) spawnSync("powershell.exe", [`rm "${tempPath}" -r -force`]);
     fs.mkdirSync(tempPath);
     logger.log(tempPath);
+    const downloadError = (dl: string) => {
+        dialog.showMessageBox(BrowserWindow.fromId(windowId ?? 1)!, {
+            type: "error",
+            title: "Download Error",
+            message: "File did not download.\n" + dl,
+        });
+    };
+    const promptInstall = () => {
+        dialog
+            .showMessageBox(BrowserWindow.fromId(windowId ?? 1)!, {
+                type: "info",
+                title: "Updates downloaded",
+                message: "Updates downloaded.",
+                buttons: ["Install Now", "Install on Close"],
+                cancelId: 1,
+            })
+            .then((res) => {
+                if (res.response === 0) {
+                    logger.log("Selected option to install now.");
+                    app.quit();
+                } else {
+                    logger.log("Selected option to install on close.");
+                }
+            });
+    };
     if (IS_PORTABLE) {
         const dl = downloadLink + latestVersion + "/" + `Manga.Reader-win32-${latestVersion}-Portable.zip`;
         const filePath = path.join(tempPath, "updates.zip");
         const extractPath = path.join(tempPath, "updates");
         if (!fs.existsSync(extractPath)) fs.mkdirSync(extractPath);
         const ps = spawn("powershell.exe", [`iwr -outf "${filePath}" "${dl}"`]);
-        ps.on("error", (err) => logger.error(err));
-        ps.stderr.on("data", (e) => logger.error("ps stderr: ", e.toString()));
-        ps.stdout.on("data", (e) => logger.log("ps stdout: ", e.toString()));
-        ps.on("close", () => {
+
+        const updateHandler = () => {
             if (fs.existsSync(filePath)) {
                 logger.log("portable.zip downloaded.");
                 crossZip.unzip(filePath, extractPath, (err) => {
@@ -98,34 +122,29 @@ const downloadUpdates = (latestVersion: string, windowId: number) => {
                     });
 
                     logger.log("Preparing to install updates...");
-                    dialog
-                        .showMessageBox(BrowserWindow.fromId(windowId ?? 0)!, {
-                            type: "info",
-                            title: "Updates downloaded",
-                            message: "Updates downloaded.",
-                            buttons: ["Install Now", "Install on Close"],
-                        })
-                        .then((res) => {
-                            if (res.response === 0) {
-                                logger.log("Selected option to install now.");
-                                app.quit();
-                            } else {
-                                logger.log("Selected option to install on close.");
-                            }
-                        });
+                    promptInstall();
                 });
             } else {
-                logger.log("File did not download.");
+                logger.error("File did not download.");
+                downloadError(dl);
             }
+        };
+        ps.on("error", (err) => logger.error(err));
+        ps.stderr.on("data", (e) => {
+            logger.error("ps stderr: ", e.toString());
+            logger.error("File did not download.");
+            ps.off("close", updateHandler);
+            ps.stderr.removeAllListeners();
+            downloadError(dl);
         });
+        ps.stdout.on("data", (e) => logger.log("ps stdout: ", e.toString()));
+        ps.on("close", updateHandler);
     } else {
         const dl = downloadLink + latestVersion + "/" + `Manga.Reader-${latestVersion}-Setup.exe`;
         const filePath = path.join(tempPath, `Manga.Reader-${latestVersion}-Setup.exe`);
         const ps = spawn("powershell.exe", [`iwr -outf "${filePath}" "${dl}"`]);
-        ps.on("error", (err) => logger.error(err));
-        ps.stderr.on("data", (e) => logger.error("ps stderr: ", e.toString()));
-        ps.stdout.on("data", (e) => logger.log("ps stdout: ", e.toString()));
-        ps.on("close", () => {
+
+        const updateHandler = () => {
             if (fs.existsSync(filePath)) {
                 logger.log(`Manga.Reader-${latestVersion}-Setup.exe downloaded.`);
                 app.on("before-quit", () => {
@@ -137,25 +156,23 @@ const downloadUpdates = (latestVersion: string, windowId: number) => {
                     logger.log("Quitting app...");
                 });
                 logger.log("Preparing to install updates...");
-                dialog
-                    .showMessageBox(BrowserWindow.fromId(windowId ?? 0)!, {
-                        type: "info",
-                        title: "Updates downloaded",
-                        message: "Updates downloaded.",
-                        buttons: ["Install Now", "Install on Close"],
-                    })
-                    .then((res) => {
-                        if (res.response === 0) {
-                            logger.log("Selected option to install now.");
-                            app.quit();
-                        } else {
-                            logger.log("Selected option to install on close.");
-                        }
-                    });
+                promptInstall();
             } else {
-                logger.log("File did not download.");
+                logger.error("File did not download.eeeeeeeeeeeeeeeeeeeeeeeeee");
+                downloadError(dl);
             }
+        };
+
+        ps.on("error", (err) => logger.error(err));
+        ps.stderr.on("data", (e) => {
+            logger.error("ps stderr: ", e.toString());
+            logger.error("File did not download.");
+            ps.off("close", updateHandler);
+            ps.stderr.removeAllListeners();
+            downloadError(dl);
         });
+        ps.stdout.on("data", (e) => logger.log("ps stdout: ", e.toString()));
+        ps.on("close", updateHandler);
     }
 };
 export default checkForUpdate;

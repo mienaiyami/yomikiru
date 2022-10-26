@@ -9,6 +9,9 @@
     },
     "scripts": {
         "start": "electron-forge start",
+        "eslint": "eslint",
+        "tslint": "tsc --noemit",
+        "lint": "eslint && tsc --noemit",
         "package": "electron-forge package",
         "make": "electron-forge make --arch=ia32",
         "makeExe": "electron-forge make --arch=ia32",

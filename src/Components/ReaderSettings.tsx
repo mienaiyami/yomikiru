@@ -1,8 +1,7 @@
 import { faBars, faMinus, faPlus, faTimes } from "@fortawesome/free-solid-svg-icons";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import React, { useContext, useEffect, useRef, useState } from "react";
+import React, { useContext, useEffect, useState } from "react";
 import { AppContext } from "../App";
-import { MainContext } from "./Main";
 
 const ReaderSettings = ({
     makeScrollPos,
@@ -25,6 +24,19 @@ const ReaderSettings = ({
     const [pagesPerRowSelected, setPagesPerRowSelected] = useState<0 | 1 | 2>(
         appSettings.readerSettings.pagesPerRowSelected
     );
+    const [maxWidth, setMaxWidth] = useState<number>(appSettings.readerSettings.widthClamped ? 100 : 500);
+
+    useEffect(() => {
+        console.log(maxWidth);
+        setMaxWidth(appSettings.readerSettings.widthClamped ? 100 : 500);
+        if (appSettings.readerSettings.widthClamped) {
+            if (appSettings.readerSettings.readerWidth > 100)
+                setAppSettings((init) => {
+                    init.readerSettings.readerWidth = 100;
+                    return { ...init };
+                });
+        }
+    }, [appSettings.readerSettings.widthClamped]);
     useEffect(() => {
         setAppSettings((init) => {
             init.readerSettings.readerTypeSelected = readerTypeSelected;
@@ -70,14 +82,15 @@ const ReaderSettings = ({
                                 type="number"
                                 value={appSettings.readerSettings.readerWidth}
                                 min={1}
-                                max={100}
+                                max={maxWidth}
                                 onKeyDown={(e) => e.stopPropagation()}
                                 onChange={(e) => {
                                     makeScrollPos();
                                     setAppSettings((init) => {
                                         let value = e.target.valueAsNumber;
+                                        console.log(value);
                                         if (!value) value = 0;
-                                        init.readerSettings.readerWidth = value >= 100 ? 100 : value;
+                                        init.readerSettings.readerWidth = value >= maxWidth ? maxWidth : value;
                                         return { ...init };
                                     });
                                 }}
@@ -86,13 +99,13 @@ const ReaderSettings = ({
                         </label>
                         <button
                             ref={sizeMinusRef}
-                            onClick={(e) => {
+                            onClick={() => {
                                 makeScrollPos();
                                 setAppSettings((init) => {
                                     const steps = appSettings.readerSettings.readerWidth <= 20 ? 5 : 10;
                                     init.readerSettings.readerWidth =
-                                        init.readerSettings.readerWidth - steps > 100
-                                            ? 100
+                                        init.readerSettings.readerWidth - steps > maxWidth
+                                            ? maxWidth
                                             : init.readerSettings.readerWidth - steps < 1
                                             ? 1
                                             : init.readerSettings.readerWidth - steps;
@@ -110,8 +123,8 @@ const ReaderSettings = ({
                                 setAppSettings((init) => {
                                     const steps = appSettings.readerSettings.readerWidth <= 20 ? 5 : 10;
                                     init.readerSettings.readerWidth =
-                                        init.readerSettings.readerWidth + steps > 100
-                                            ? 100
+                                        init.readerSettings.readerWidth + steps > maxWidth
+                                            ? maxWidth
                                             : init.readerSettings.readerWidth + steps < 1
                                             ? 1
                                             : init.readerSettings.readerWidth + steps;
@@ -121,6 +134,19 @@ const ReaderSettings = ({
                         >
                             <FontAwesomeIcon icon={faPlus} />
                         </button>
+                        <label>
+                            <input
+                                type="checkbox"
+                                checked={appSettings.readerSettings.widthClamped}
+                                onChange={(e) =>
+                                    setAppSettings((init) => {
+                                        init.readerSettings.widthClamped = e.target.checked;
+                                        return { ...init };
+                                    })
+                                }
+                            />
+                            Clamp
+                        </label>
                     </div>
                 </div>
                 <div className="settingItem">
@@ -150,8 +176,8 @@ const ReaderSettings = ({
                                 if (pagesPerRowSelected === 0) return;
                                 setAppSettings((init) => {
                                     init.readerSettings.readerWidth /= 2;
-                                    if (init.readerSettings.readerWidth > 100)
-                                        init.readerSettings.readerWidth = 100;
+                                    if (init.readerSettings.readerWidth > maxWidth)
+                                        init.readerSettings.readerWidth = maxWidth;
                                     if (init.readerSettings.readerWidth < 1) init.readerSettings.readerWidth = 1;
                                     return { ...init };
                                 });
@@ -166,8 +192,8 @@ const ReaderSettings = ({
                                 if (pagesPerRowSelected === 1 || pagesPerRowSelected === 2) return;
                                 setAppSettings((init) => {
                                     init.readerSettings.readerWidth *= 2;
-                                    if (init.readerSettings.readerWidth > 100)
-                                        init.readerSettings.readerWidth = 100;
+                                    if (init.readerSettings.readerWidth > maxWidth)
+                                        init.readerSettings.readerWidth = maxWidth;
                                     if (init.readerSettings.readerWidth < 1) init.readerSettings.readerWidth = 1;
                                     return { ...init };
                                 });
@@ -182,8 +208,8 @@ const ReaderSettings = ({
                                 if (pagesPerRowSelected === 1 || pagesPerRowSelected === 2) return;
                                 setAppSettings((init) => {
                                     init.readerSettings.readerWidth *= 2;
-                                    if (init.readerSettings.readerWidth > 100)
-                                        init.readerSettings.readerWidth = 100;
+                                    if (init.readerSettings.readerWidth > maxWidth)
+                                        init.readerSettings.readerWidth = maxWidth;
                                     if (init.readerSettings.readerWidth < 1) init.readerSettings.readerWidth = 1;
                                     return { ...init };
                                 });
@@ -223,79 +249,25 @@ const ReaderSettings = ({
                                 }}
                             />
                             <p>Gap between rows.</p>
+                            <input
+                                type="number"
+                                value={appSettings.readerSettings.gapSize}
+                                disabled={!appSettings.readerSettings.gapBetweenRows}
+                                min={0}
+                                onChange={(e) => {
+                                    setAppSettings((init) => {
+                                        let value = e.target.valueAsNumber;
+                                        if (!value) value = 0;
+                                        init.readerSettings.gapSize = value;
+                                        return { ...init };
+                                    });
+                                }}
+                            />
                         </label>
                     </div>
                 </div>
             </div>
-            {/* <Button
-                className={`ctrl-menu-item ctrl-menu-extender ${isReaderSettingsOpen ? "open" : ""}`}
-                clickAction={() => {
-                    setReaderSettingOpen((init) => !init);
-                }}
-                tooltip="Tools"
-            >
-                <FontAwesomeIcon icon={isReaderSettingsOpen ? faTimes : faBars} />
-            </Button> */}
-
-            {/* <div className="ctrl-menu">
-                <Button
-                    className="ctrl-menu-item"
-                    tooltip="Size +"
-                    btnRef={sizePlusRef}
-                    clickAction={() => {
-                        makeScrollPos();
-                        setAppSettings((init) => {
-                            const steps Math.floor(= Math.min(10,appSettings.readerSettings.readerWidth/2));
-                            init.readerSettings.readerWidth =
-                                init.readerSettings.readerWidth + steps > 100
-                                    ? 100
-                                    : init.readerSettings.readerWidth + steps < 0
-                                    ? 0
-                                    : init.readerSettings.readerWidth + steps;
-                            return { ...init };
-                        });
-                    }}
-                >
-                    <FontAwesomeIcon icon={faPlus} />
-                </Button>
-                <Button
-                    className="ctrl-menu-item"
-                    tooltip="Size -"
-                    btnRef={sizeMinusRef}
-                    clickAction={() => {
-                        makeScrollPos();
-                        setAppSettings((init) => {
-                            const steps Math.floor(= Math.min(10,appSettings.readerSettings.readerWidth/2));
-                            init.readerSettings.readerWidth =
-                                init.readerSettings.readerWidth - steps > 100
-                                    ? 100
-                                    : init.readerSettings.readerWidth - steps < 0
-                                    ? 0
-                                    : init.readerSettings.readerWidth - steps;
-                            return { ...init };
-                        });
-                    }}
-                >
-                    <FontAwesomeIcon icon={faMinus} />
-                </Button>
-            </div> */}
         </div>
-    );
-};
-
-const Button = (props: any) => {
-    return (
-        <button
-            className={props.className}
-            data-tooltip={props.tooltip}
-            ref={props.btnRef}
-            onClick={props.clickAction}
-            // tabIndex={-1}
-            disabled={props.disabled}
-            // onFocus={(e) => e.currentTarget.blur()}
-        >
-            {props.children}
-        </button>
     );
 };
 

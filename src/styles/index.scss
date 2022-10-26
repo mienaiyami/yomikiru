@@ -55,6 +55,9 @@
     --context-menu-bg: var(--color-tertiary);
 }
 body.zenMode {
+    ::-webkit-scrollbar {
+        display: none;
+    }
     #app #reader .currentMangaList,
     #readerSettings,
     #topBar {
@@ -916,6 +919,7 @@ body {
                         .options {
                             display: flex;
                             flex-direction: row;
+                            flex-wrap: wrap;
                             gap: 5px;
                             .optionSelected {
                                 background-color: var(--btn-color2);
@@ -954,14 +958,15 @@ body {
                 position: relative;
                 flex-direction: column;
                 align-items: center;
-                overflow: auto;
+                // overflow: auto;
                 --varWidth: 100%;
+                --gapSize: 10px;
                 &.readerMode1 {
                     justify-content: center;
                     min-height: 100%;
                 }
                 &.gap {
-                    gap: 10px;
+                    gap: var(--gapSize);
                 }
                 .row {
                     display: flex;
@@ -975,8 +980,8 @@ body {
                     }
                     img {
                         width: var(--varWidth);
-                        max-width: 100%;
-                        min-width: 1%;
+                        // max-width: 100%;
+                        // min-width: 1%;
                         // image-rendering: pixelated;
                     }
                     &.twoPagePerRow {

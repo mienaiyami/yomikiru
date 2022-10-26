@@ -9,6 +9,7 @@
         "outDir": "./dist",
         "strict": true,
         "esModuleInterop": true,
-        "typeRoots": ["./node_modules/@types"]
+        "typeRoots": ["./node_modules/@types"],
+        "skipLibCheck": true
     }
 }

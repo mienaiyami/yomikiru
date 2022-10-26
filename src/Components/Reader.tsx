@@ -77,8 +77,10 @@ const Reader = () => {
     useEffect(() => {
         if (zenMode) {
             document.body.classList.add("zenMode");
+            document.body.requestFullscreen();
         } else {
             document.body.classList.remove("zenMode");
+            if (document.fullscreenElement) document.exitFullscreen();
         }
     }, [zenMode]);
     useLayoutEffect(() => {
@@ -451,6 +453,7 @@ const Reader = () => {
                 }
                 style={{
                     "--varWidth": appSettings.readerSettings.readerWidth + "%",
+                    "--gapSize": appSettings.readerSettings.gapSize + "px",
                 }}
                 onClick={(e) => {
                     if (

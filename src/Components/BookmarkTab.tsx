@@ -7,7 +7,7 @@ const BookmarkTab = forwardRef(
         { bookmarkTabDisplay }: { bookmarkTabDisplay: boolean },
         ref: React.ForwardedRef<HTMLDivElement>
     ): ReactElement => {
-        const { bookmarks, setBookmarks } = useContext(AppContext);
+        const { bookmarks } = useContext(AppContext);
 
         return (
             <div

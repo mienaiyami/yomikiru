@@ -72,24 +72,6 @@ declare global {
             }) => Promise<Electron.MessageBoxReturnValue>;
         };
     }
-    //! edit settingValidatorData and default settings in app.tsx when adding new settings
-    interface appsettings {
-        theme: string;
-        bookmarksPath: string;
-        historyPath: string;
-        baseDir: string;
-        historyLimit: number;
-        locationListSortType: "normal" | "inverse";
-        updateCheckerEnabled: boolean;
-        readerSettings: {
-            readerWidth: number;
-            variableImageSize: boolean;
-            readerTypeSelected: 0 | 1;
-            pagesPerRowSelected: 0 | 1 | 2;
-            gapBetweenRows: boolean;
-            sideListWidth: number;
-        };
-    }
     interface ListItem {
         mangaName: string;
         chapterName: string;
@@ -111,6 +93,26 @@ declare global {
         e: MouseEvent;
         item?: ListItemE;
     }
+    //! edit settingValidatorData and default settings in app.tsx when adding new settings
+    interface appsettings {
+        theme: string;
+        bookmarksPath: string;
+        historyPath: string;
+        baseDir: string;
+        historyLimit: number;
+        locationListSortType: "normal" | "inverse";
+        updateCheckerEnabled: boolean;
+        readerSettings: {
+            readerWidth: number;
+            variableImageSize: boolean;
+            readerTypeSelected: 0 | 1;
+            pagesPerRowSelected: 0 | 1 | 2;
+            gapBetweenRows: boolean;
+            sideListWidth: number;
+            widthClamped: boolean;
+            gapSize: number;
+        };
+    }
 }
 export const settingValidatorData = {
     theme: "string",
@@ -127,6 +129,8 @@ export const settingValidatorData = {
         pagesPerRowSelected: [0, 1, 2],
         gapBetweenRows: "boolean",
         sideListWidth: "number",
+        widthClamped: true,
+        gapSize: "number",
     },
 };
 

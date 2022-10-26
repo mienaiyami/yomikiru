@@ -38,7 +38,7 @@ const BookmarkHistoryListItem = (props: ListItemE) => {
                         });
                     }, 500);
                 }}
-                onMouseLeave={(e) => {
+                onMouseLeave={() => {
                     clearTimeout(timeOutOnHover);
                     setInfoOnHover(null);
                 }}

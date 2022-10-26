@@ -20,7 +20,7 @@ if (IS_PORTABLE) {
     }
     app.setPath("userData", folderPath);
 }
-
+// ! change path in settings.tsx as well if changing log path
 log.transports.file.resolvePath = () => path.join(app.getPath("userData"), "logs/main.log");
 log.log("Starting app...");
 
@@ -50,13 +50,9 @@ const addOptionToExplorerMenu = () => {
         name: "MangaReader",
         icns: app.getPath("exe"),
     };
-    sudo.exec(
-        "regedit.exe /S " + path.join(tempPath, "createOpenWithMangaReader.reg"),
-        op,
-        function (error, stdout, stderr) {
-            if (error) log.error(error);
-        }
-    );
+    sudo.exec("regedit.exe /S " + path.join(tempPath, "createOpenWithMangaReader.reg"), op, function (error) {
+        if (error) log.error(error);
+    });
 };
 const deleteOptionInExplorerMenu = () => {
     const regDelete = `Windows Registry Editor Version 5.00
@@ -71,7 +67,7 @@ const deleteOptionInExplorerMenu = () => {
     sudo.exec(
         "regedit.exe /S " + path.join(app.getPath("temp"), "deleteOpenWithMangaReader.reg"),
         op,
-        function (error, stdout, stderr) {
+        function (error) {
             if (error) log.error(error);
         }
     );

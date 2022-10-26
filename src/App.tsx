@@ -29,6 +29,8 @@ const makeSettingsJson = (locations?: string[]) => {
             pagesPerRowSelected: 0,
             gapBetweenRows: true,
             sideListWidth: 450,
+            widthClamped: true,
+            gapSize:10
         },
     };
     if (locations) {
@@ -140,7 +142,6 @@ if (!isSettingsValid().isValid) {
     makeSettingsJson(isSettingsValid().location);
 }
 const settings: appsettings = JSON.parse(window.fs.readFileSync(settingsPath, "utf-8"));
-
 const getDataFiles = () => {
     if (window.fs.existsSync(bookmarksPath)) {
         const rawdata = window.fs.readFileSync(bookmarksPath, "utf8");
@@ -372,6 +373,9 @@ const App = (): ReactElement => {
         setLoadingManga(false);
         setLoadingMangaPercent(0);
         setMangaInReader(null);
+
+        document.body.classList.remove("zenMode");
+        if (document.fullscreenElement) document.exitFullscreen();
     };
     useEffect(() => {
         window.app.isReaderOpen = isReaderOpen;

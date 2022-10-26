@@ -309,7 +309,6 @@ const Settings = (): ReactElement => {
                             </button>
                         </div>
                     </div>
-
                     <div className="settingItem">
                         <div className="name">Author :</div>
                         <div className="current">
@@ -319,6 +318,20 @@ const Settings = (): ReactElement => {
                                 }
                             >
                                 <FontAwesomeIcon icon={faGithub} /> MienaiYami
+                            </button>
+                        </div>
+                    </div>
+                    <div className="settingItem">
+                        <div className="name">Logs :</div>
+                        <div className="current">
+                            <button
+                                onClick={() =>
+                                    window.electron.shell.showItemInFolder(
+                                        window.path.join(window.electron.app.getPath("userData"), "logs/main.log")
+                                    )
+                                }
+                            >
+                                Open Logs
                             </button>
                         </div>
                     </div>
