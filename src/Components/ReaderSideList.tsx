@@ -252,7 +252,6 @@ const ReaderSideList = ({
                         spellCheck={false}
                         placeholder="Type to Search"
                         // tabIndex={-1}
-                        data-tooltip="Navigate To Page"
                         onChange={(e) => {
                             const val = e.target.value;
                             let filter = "";

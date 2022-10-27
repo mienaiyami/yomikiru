@@ -685,6 +685,10 @@ body {
                     padding: 20px;
                     display: grid;
                     place-items: center;
+                    p {
+                        width: 100%;
+                        padding-bottom: 10px;
+                    }
                     table {
                         border-spacing: 0;
                         width: 100%;

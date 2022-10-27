@@ -280,7 +280,6 @@ const getDataFiles = () => {
         window.fs.writeFileSync(shortcutsPath, JSON.stringify(shortcutSchema));
         shortcutsInit.push(...shortcutSchema);
     }
-    console.log(shortcutsInit);
     const themes = [
         {
             name: "theme1",

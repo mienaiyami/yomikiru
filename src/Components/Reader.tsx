@@ -120,7 +120,6 @@ const Reader = () => {
         shortcuts.forEach((e) => {
             shortcutkey[e.command] = { key1: e.key1, key2: e.key2 };
         });
-        console.log(shortcutkey);
         const registerShortcuts = (e: KeyboardEvent) => {
             // /&& document.activeElement!.tagName === "BODY"
             if (window.app.isReaderOpen) {

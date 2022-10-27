@@ -30,6 +30,49 @@ const Settings = (): ReactElement => {
             }, 300);
         }
     }, [isSettingOpen]);
+
+    const reservedKeys = ["h", "Control", "Tab", "Shift", "Alt", "Escape"];
+    const ShortcutInput = ({ which, i }: { which: "key1" | "key2"; i: number }) => (
+        <input
+            type="text"
+            value={shortcuts[i][which] === " " ? "Space" : shortcuts[i][which]}
+            onKeyDown={(e) => {
+                e.stopPropagation();
+            }}
+            onKeyUp={(e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                if (reservedKeys.includes(e.key)) {
+                    console.warn(e.key + " is reserved key.");
+                    e.currentTarget.focus();
+                    return;
+                }
+                settingContRef.current?.focus();
+                if (e.key === "Backspace") {
+                    console.log(`Deleting shortcut ${shortcuts[i].command}.${which}`);
+                    setShortcuts((init) => {
+                        init[i][which] = "";
+                        return [...init];
+                    });
+                    return;
+                }
+                const dupIndex = shortcuts.findIndex((elem) => elem.key1 === e.key || elem.key2 === e.key);
+                if (dupIndex >= 0) {
+                    console.warn(`${e.key} key already bind to "${shortcuts[dupIndex].name}"`);
+                    window.dialog.warn({ message: `${e.key} key already bind to "${shortcuts[dupIndex].name}".` });
+                    return;
+                }
+                console.log(`Setting shortcut ${shortcuts[i].command}.${which} to ${e.key}`);
+                setShortcuts((init) => {
+                    init[i][which] = e.key;
+                    return [...init];
+                });
+            }}
+            readOnly
+            spellCheck={false}
+        />
+    );
+
     return (
         <div id="settings" data-state={isSettingOpen ? "open" : "closed"}>
             <div className="clickClose" onClick={() => setSettingOpen(false)}></div>
@@ -344,7 +387,7 @@ const Settings = (): ReactElement => {
                         <li>
                             you can make custom theme by editing themes.json. Or click ctrl+shift+i, then from the
                             styles panel change colors element.style, then copy inside {`{}`}, then open
-                            themes.json, go to the end and before ] add ",{`{name:name,main:your-copied-thing}`}"
+                            themes.json, go to the end and before ] add ",{`{name:name,main:your-copied-thing}`}".
                         </li>
                         <li>you dont need to type whole word in search(e.g. for "One piece" type "op").</li>
                         <li>
@@ -359,11 +402,15 @@ const Settings = (): ReactElement => {
                             enabling "File Explorer Option" (Note that this only opens chapter containing images
                             and not Manga Folder).
                         </li>
-                        <li>Zen Mode: hide ui and only show images</li>
+                        <li>Zen Mode: hide ui and only show images.</li>
                     </ul>
                 </div>
                 <h1>Shortcut Keys</h1>
                 <div className="shortcutKey">
+                    <p>
+                        BackSpace to remove. Reserved keys {reservedKeys.join(", ")}. Changes apply on
+                        refresh(click home icon, h(twice) or ctrl+r).
+                    </p>
                     <table>
                         <tbody>
                             <tr>
@@ -374,22 +421,8 @@ const Settings = (): ReactElement => {
                                 <tr key={e.command}>
                                     <td>{e.name}</td>
                                     <td>
-                                        {/* {e.key1} , {e.key2} */}
-                                        <input
-                                            type="text"
-                                            value={e.key1 === " " ? "Space" : e.key1}
-                                            onKeyUp={(e) => {
-                                                console.log(e.key);
-                                            }}
-                                            readOnly
-                                            spellCheck={false}
-                                        />
-                                        <input
-                                            type="text"
-                                            value={e.key2 === " " ? "Space" : e.key2}
-                                            readOnly
-                                            spellCheck={false}
-                                        />
+                                        <ShortcutInput which="key1" i={i} />
+                                        <ShortcutInput which="key2" i={i} />
                                     </td>
                                 </tr>
                             ))}
@@ -428,6 +461,10 @@ const Settings = (): ReactElement => {
                             <tr>
                                 <td>New Window</td>
                                 <td>ctrl+n</td>
+                            </tr>
+                            <tr>
+                                <td>size</td>
+                                <td>ctrl+scroll</td>
                             </tr>
                             <tr>
                                 <td>Home</td>
