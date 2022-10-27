@@ -2,7 +2,6 @@ import { AppContext, themesMain } from "../App";
 import { faGithub } from "@fortawesome/free-brands-svg-icons";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { ReactElement, useContext, useEffect, useRef, useState } from "react";
-import useTheme from "../hooks/useTheme";
 import { faTimes } from "@fortawesome/free-solid-svg-icons";
 
 const Settings = (): ReactElement => {
@@ -157,7 +156,7 @@ const Settings = (): ReactElement => {
                         <div className="current">
                             <button
                                 // onFocus={(e) => e.currentTarget.blur()}
-                                onClick={(e) => {
+                                onClick={() => {
                                     const opt = window.electron.dialog.showSaveDialogSync(
                                         window.electron.getCurrentWindow(),
                                         {
@@ -377,6 +376,15 @@ const Settings = (): ReactElement => {
                                 }
                             >
                                 Open Logs
+                            </button>
+                            <button
+                                onClick={() =>
+                                    window.electron.shell.openExternal(
+                                        "https://github.com/mienaiyami/react-ts-offline-manga-reader/releases"
+                                    )
+                                }
+                            >
+                                Changelogs
                             </button>
                         </div>
                     </div>

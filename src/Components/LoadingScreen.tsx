@@ -2,7 +2,7 @@ import { ReactElement, useContext } from "react";
 import { AppContext } from "../App";
 
 const LoadingScreen = (): ReactElement => {
-    const { isLoadingManga, loadingMangaPercent, mangaInReader } = useContext(AppContext);
+    const { isLoadingManga, loadingMangaPercent } = useContext(AppContext);
     return (
         <div id="loadingScreen" style={{ display: isLoadingManga ? "grid" : "none" }}>
             {/* <div className="name">

@@ -1,5 +1,5 @@
 // ! check if it really need forward ref
-import { forwardRef, useContext, useEffect, useRef, useState } from "react";
+import { forwardRef, useContext, useEffect } from "react";
 import { AppContext } from "../App";
 import { MainContext } from "./Main";
 
