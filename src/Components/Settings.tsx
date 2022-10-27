@@ -15,6 +15,8 @@ const Settings = (): ReactElement => {
         setBookmarks,
         theme,
         setTheme,
+        shortcuts,
+        setShortcuts,
         promptSetDefaultLocation,
     } = useContext(AppContext);
     const settingContRef = useRef<HTMLDivElement>(null);
@@ -365,52 +367,79 @@ const Settings = (): ReactElement => {
                     <table>
                         <tbody>
                             <tr>
-                                <th>Key</th>
                                 <th>Function</th>
+                                <th>Key</th>
                             </tr>
-                            <tr>
-                                <td> - , =, +, ctrl+scroll</td>
+                            {shortcuts.map((e, i) => (
+                                <tr key={e.command}>
+                                    <td>{e.name}</td>
+                                    <td>
+                                        {/* {e.key1} , {e.key2} */}
+                                        <input
+                                            type="text"
+                                            value={e.key1 === " " ? "Space" : e.key1}
+                                            onKeyUp={(e) => {
+                                                console.log(e.key);
+                                            }}
+                                            readOnly
+                                            spellCheck={false}
+                                        />
+                                        <input
+                                            type="text"
+                                            value={e.key2 === " " ? "Space" : e.key2}
+                                            readOnly
+                                            spellCheck={false}
+                                        />
+                                    </td>
+                                </tr>
+                            ))}
+                            {/* <tr>
                                 <td>size</td>
+                                <td> - , =, +, ctrl+scroll</td>
                             </tr>
                             <tr>
-                                <td> `</td>
                                 <td>Zen Mode</td>
+                                <td> `</td>
                             </tr>
                             <tr>
-                                <td>q</td>
                                 <td>reader settings</td>
+                                <td>q</td>
                             </tr>
                             <tr>
-                                <td>w, s, ↑, ↓</td>
                                 <td>scroll</td>
+                                <td>w, s, ↑, ↓</td>
                             </tr>
                             <tr>
-                                <td>a, d, ←, → </td>
                                 <td>prev/next page</td>
+                                <td>a, d, ←, → </td>
                             </tr>
                             <tr>
-                                <td>space/shift+space</td>
                                 <td>large scroll</td>
+                                <td>space/shift+space</td>
                             </tr>
                             <tr>
-                                <td>h</td>
-                                <td>Home</td>
-                            </tr>
-                            <tr>
-                                <td>ctrl+r</td>
-                                <td>Reload</td>
-                            </tr>
-                            <tr>
-                                <td>f</td>
                                 <td>search page number</td>
+                                <td>f</td>
                             </tr>
                             <tr>
-                                <td>[ and ]</td>
                                 <td>prev/next</td>
+                                <td>[ and ]</td>
+                            </tr> */}
+                            <tr>
+                                <td>New Window</td>
+                                <td>ctrl+n</td>
                             </tr>
                             <tr>
-                                <td>ctrl+n</td>
-                                <td>New Window</td>
+                                <td>Home</td>
+                                <td>h</td>
+                            </tr>
+                            <tr>
+                                <td>Reload</td>
+                                <td>ctrl+r</td>
+                            </tr>
+                            <tr>
+                                <td>Dev Tool</td>
+                                <td>ctrl+shift+i</td>
                             </tr>
                         </tbody>
                     </table>

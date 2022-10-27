@@ -84,6 +84,12 @@ declare global {
         isBookmark: boolean;
         isHistory: boolean;
     }
+    interface ShortcutSchema {
+        command: shortcutCommand;
+        name: string;
+        key1: string;
+        key2: string;
+    }
     interface IContextMenuData {
         isBookmark?: boolean;
         isHistory?: boolean;
@@ -113,6 +119,21 @@ declare global {
             gapSize: number;
         };
     }
+
+    type shortcutCommand =
+        | "navToPage"
+        | "toggleZenMode"
+        | "readerSettings"
+        | "nextChapter"
+        | "prevChapter"
+        | "bookmark"
+        | "sizePlus"
+        | "sizeMinus"
+        | "largeScroll"
+        | "nextPage"
+        | "prevPage"
+        | "scrollDown"
+        | "scrollUp";
 }
 export const settingValidatorData = {
     theme: "string",

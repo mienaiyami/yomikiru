@@ -6,12 +6,14 @@ import useTheme from "./hooks/useTheme";
 import { settingValidatorData } from "./MainImports";
 const userDataURL = window.electron.app.getPath("userData");
 const settingsPath = window.path.join(userDataURL, "settings.json");
-const themesPath = window.path.join(userDataURL, "themes.json");
 const bookmarksPath = window.path.join(userDataURL, "bookmarks.json");
 const bookmarkDataInit: ListItem[] = [];
 const historyPath = window.path.join(userDataURL, "history.json");
 const historyDataInit: ListItem[] = [];
+const themesPath = window.path.join(userDataURL, "themes.json");
 const themesMain: { name: string; main: string }[] = [];
+const shortcutsPath = window.path.join(userDataURL, "shortcuts.json");
+const shortcutsInit: ShortcutSchema[] = [];
 
 const makeSettingsJson = (locations?: string[]) => {
     const settingsDataNew: appsettings = {
@@ -30,7 +32,7 @@ const makeSettingsJson = (locations?: string[]) => {
             gapBetweenRows: true,
             sideListWidth: 450,
             widthClamped: true,
-            gapSize:10
+            gapSize: 10,
         },
     };
     if (locations) {
@@ -147,12 +149,15 @@ const getDataFiles = () => {
         const rawdata = window.fs.readFileSync(bookmarksPath, "utf8");
         if (rawdata) {
             try {
-                JSON.parse(rawdata);
+                const data = JSON.parse(rawdata);
+                bookmarkDataInit.push(...data);
             } catch (err) {
-                window.dialog.customError({ message: "Unable to parse " + bookmarksPath });
+                window.dialog.customError({
+                    message: "Unable to parse " + bookmarksPath + "\nMaking new bookmarks.json...",
+                });
                 console.error(err);
+                window.fs.writeFileSync(bookmarksPath, "[]");
             }
-            bookmarkDataInit.push(...JSON.parse(rawdata));
         }
     } else {
         window.fs.writeFileSync(bookmarksPath, "[]");
@@ -161,18 +166,121 @@ const getDataFiles = () => {
         const rawdata = window.fs.readFileSync(historyPath, "utf8");
         if (rawdata) {
             try {
-                JSON.parse(rawdata);
+                const data = JSON.parse(rawdata);
+                if (data.length >= settings.historyLimit) data.length = settings.historyLimit;
+                historyDataInit.push(...data);
             } catch (err) {
-                window.dialog.customError({ message: "Unable to parse " + historyPath });
+                window.dialog.customError({
+                    message: "Unable to parse " + historyPath + "\nMaking new history.json...",
+                });
                 console.error(err);
+                window.fs.writeFileSync(historyPath, "[]");
             }
-            const data = JSON.parse(rawdata) || [];
-            if (data.length >= settings.historyLimit) data.length = settings.historyLimit;
-            historyDataInit.push(...data);
         }
     } else {
         window.fs.writeFileSync(historyPath, "[]");
     }
+
+    const shortcutSchema: ShortcutSchema[] = [
+        {
+            command: "navToPage",
+            name: "Search Page Number",
+            key1: "f",
+            key2: "",
+        },
+        {
+            command: "toggleZenMode",
+            name: "Toggle Zen Mode",
+            key1: "`",
+            key2: "",
+        },
+        {
+            command: "readerSettings",
+            name: "Open/Close Reader Settings",
+            key1: "q",
+            key2: "",
+        },
+        {
+            command: "nextChapter",
+            name: "Next Chapter",
+            key1: "]",
+            key2: "",
+        },
+        {
+            command: "prevChapter",
+            name: "Previous Chapter",
+            key1: "[",
+            key2: "",
+        },
+        {
+            command: "bookmark",
+            name: "Bookmark",
+            key1: "b",
+            key2: "",
+        },
+        {
+            command: "sizePlus",
+            name: "Increase image size",
+            key1: "=",
+            key2: "+",
+        },
+        {
+            command: "sizeMinus",
+            name: "Decrease image size",
+            key1: "-",
+            key2: "",
+        },
+        {
+            command: "largeScroll",
+            name: "Bigger Scroll (Shift+key for reverse)",
+            key1: " ",
+            key2: "",
+        },
+        {
+            command: "scrollUp",
+            name: "Scroll Up",
+            key1: "w",
+            key2: "ArrowUp",
+        },
+        {
+            command: "scrollDown",
+            name: "Scroll Down",
+            key1: "s",
+            key2: "ArrowDown",
+        },
+        {
+            command: "prevPage",
+            name: "Previous Page",
+            key1: "a",
+            key2: "ArrowLeft",
+        },
+        {
+            command: "nextPage",
+            name: "Next Page",
+            key1: "d",
+            key2: "ArrowRight",
+        },
+    ];
+    if (window.fs.existsSync(shortcutsPath)) {
+        const rawdata = window.fs.readFileSync(shortcutsPath, "utf8");
+        if (rawdata) {
+            try {
+                const data = JSON.parse(rawdata);
+                shortcutsInit.push(...data);
+            } catch (err) {
+                window.dialog.customError({
+                    message: "Unable to parse " + shortcutsPath + "\nMaking new shortcuts.json...",
+                });
+                console.error(err);
+                window.fs.writeFileSync(shortcutsPath, JSON.stringify(shortcutSchema));
+                shortcutsInit.push(...shortcutSchema);
+            }
+        }
+    } else {
+        window.fs.writeFileSync(shortcutsPath, JSON.stringify(shortcutSchema));
+        shortcutsInit.push(...shortcutSchema);
+    }
+    console.log(shortcutsInit);
     const themes = [
         {
             name: "theme1",
@@ -192,15 +300,19 @@ const getDataFiles = () => {
         if (rawdata) {
             try {
                 JSON.parse(rawdata);
+                themesMain.push(...JSON.parse(rawdata));
             } catch (err) {
-                window.dialog.customError({ message: "Unable to parse " + themesPath });
+                window.dialog.customError({
+                    message: "Unable to parse " + themesPath + "\nMaking new themes.json...",
+                });
                 console.error(err);
-            }
-            if (JSON.parse(rawdata).length < 3) {
+                themesMain.push(...themes);
                 window.fs.writeFileSync(themesPath, JSON.stringify(themes));
-                return themesMain.push(...themes);
             }
-            themesMain.push(...JSON.parse(rawdata));
+            // if (JSON.parse(rawdata).length < 3) {
+            //     window.fs.writeFileSync(themesPath, JSON.stringify(themes));
+            //     themesMain.push(...themes);
+            // }else
         }
     } else {
         themesMain.push(...themes);
@@ -215,6 +327,8 @@ interface IAppContext {
     setBookmarks: React.Dispatch<React.SetStateAction<ListItem[]>>;
     history: ListItem[];
     setHistory: React.Dispatch<React.SetStateAction<ListItem[]>>;
+    shortcuts: ShortcutSchema[];
+    setShortcuts: React.Dispatch<React.SetStateAction<ShortcutSchema[]>>;
     pageNumberInputRef: React.RefObject<HTMLInputElement>;
     isSettingOpen: boolean;
     setSettingOpen: React.Dispatch<React.SetStateAction<boolean>>;
@@ -278,9 +392,11 @@ const App = (): ReactElement => {
     const [linkInReader, setLinkInReader] = useState<string>(window.loadManga || "");
     const [prevNextChapter, setPrevNextChapter] = useState({ prev: "", next: "" });
     const [mangaInReader, setMangaInReader] = useState<ListItem | null>(null);
-    const pageNumberInputRef: React.RefObject<HTMLInputElement> = createRef();
     const [bookmarks, setBookmarks] = useState<ListItem[]>(bookmarkDataInit);
     const [history, setHistory] = useState<ListItem[]>(historyDataInit);
+    const [shortcuts, setShortcuts] = useState<ShortcutSchema[]>(shortcutsInit);
+    const pageNumberInputRef: React.RefObject<HTMLInputElement> = createRef();
+
     useEffect(() => {
         if (firstRendered) {
             if (settings.baseDir === "") {
@@ -482,6 +598,16 @@ const App = (): ReactElement => {
     }, [history]);
     useEffect(() => {
         if (firstRendered) {
+            window.fs.writeFile(shortcutsPath, JSON.stringify(shortcuts), (err) => {
+                if (err) {
+                    console.error(err);
+                    window.dialog.nodeError(err);
+                }
+            });
+        }
+    }, [shortcuts]);
+    useEffect(() => {
+        if (firstRendered) {
             setAppSettings((init) => {
                 init.theme = theme;
                 return { ...init };
@@ -505,6 +631,8 @@ const App = (): ReactElement => {
                 setBookmarks,
                 history,
                 setHistory,
+                shortcuts,
+                setShortcuts,
                 pageNumberInputRef,
                 isSettingOpen,
                 setSettingOpen,

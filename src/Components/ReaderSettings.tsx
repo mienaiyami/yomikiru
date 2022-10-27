@@ -27,7 +27,6 @@ const ReaderSettings = ({
     const [maxWidth, setMaxWidth] = useState<number>(appSettings.readerSettings.widthClamped ? 100 : 500);
 
     useEffect(() => {
-        console.log(maxWidth);
         setMaxWidth(appSettings.readerSettings.widthClamped ? 100 : 500);
         if (appSettings.readerSettings.widthClamped) {
             if (appSettings.readerSettings.readerWidth > 100)
@@ -88,7 +87,6 @@ const ReaderSettings = ({
                                     makeScrollPos();
                                     setAppSettings((init) => {
                                         let value = e.target.valueAsNumber;
-                                        console.log(value);
                                         if (!value) value = 0;
                                         init.readerSettings.readerWidth = value >= maxWidth ? maxWidth : value;
                                         return { ...init };

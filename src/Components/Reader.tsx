@@ -7,6 +7,7 @@ import ReaderSettings from "./ReaderSettings";
 const Reader = () => {
     const {
         appSettings,
+        shortcuts,
         setAppSettings,
         isReaderOpen,
         setReaderOpen,
@@ -98,73 +99,105 @@ const Reader = () => {
                 }
             }
         });
-        // register shortcuts
-        window.addEventListener("keydown", (e) => {
+        // const getKey1 = (command: shortcutCommand): string => {
+        //     let key = "";
+        //     console.log("aaaaaaaaaa");
+        //     const index = shortcutSchema.findIndex((e) => e.command === command);
+        //     if (index >= 0) key = shortcutSchema[index].key1;
+        //     if (index < 0) console.error("getKey: did not found command " + command);
+        //     return key;
+        // };
+        // const getKey2 = (command: shortcutCommand): string => {
+        //     let key = "";
+        //     console.log("aaaaaaaaaa");
+        //     const index = shortcutSchema.findIndex((e) => e.command === command);
+        //     if (index >= 0) key = shortcutSchema[index].key2;
+        //     if (index < 0) console.error("getKey: did not found command " + command);
+        //     return key;
+        // };
+
+        const shortcutkey: { [e in shortcutCommand]?: { key1: string; key2: string } } = {};
+        shortcuts.forEach((e) => {
+            shortcutkey[e.command] = { key1: e.key1, key2: e.key2 };
+        });
+        console.log(shortcutkey);
+        const registerShortcuts = (e: KeyboardEvent) => {
             // /&& document.activeElement!.tagName === "BODY"
             if (window.app.isReaderOpen) {
                 switch (e.key) {
-                    case "f":
+                    case shortcutkey.navToPage?.key1:
+                    case shortcutkey.navToPage?.key2:
                         navToPageButtonRef.current?.click();
                         break;
-                    case "`":
+                    case shortcutkey.toggleZenMode?.key1:
+                    case shortcutkey.toggleZenMode?.key2:
                         setZenMode((prev) => !prev);
                         break;
                     case "Escape":
                         setZenMode(false);
                         break;
-                    case "q":
+                    case shortcutkey.readerSettings?.key1:
+                    case shortcutkey.readerSettings?.key2:
                         readerSettingExtender.current?.click();
                         readerSettingExtender.current?.focus();
                         break;
-                    case "]":
+                    case shortcutkey.nextChapter?.key1:
+                    case shortcutkey.nextChapter?.key2:
                         openNextChapterRef.current?.click();
                         break;
-                    case "[":
+                    case shortcutkey.prevChapter?.key1:
+                    case shortcutkey.prevChapter?.key2:
                         openPrevChapterRef.current?.click();
                         break;
-                    case "b":
+                    case shortcutkey.bookmark?.key1:
+                    case shortcutkey.bookmark?.key2:
                         addToBookmarkRef.current?.click();
                         break;
-                    case "=":
-                    case "+":
+                    case shortcutkey.sizePlus?.key1:
+                    case shortcutkey.sizePlus?.key2:
                         sizePlusRef.current?.click();
                         break;
-                    case "-":
+                    case shortcutkey.sizeMinus?.key1:
+                    case shortcutkey.sizeMinus?.key2:
                         sizeMinusRef.current?.click();
                         break;
                     default:
                         break;
                 }
                 if (document.activeElement!.tagName === "BODY" || document.activeElement === readerRef.current) {
-                    if (e.shiftKey && e.key === " ") {
+                    window.app.keydown = true;
+                    if (
+                        e.shiftKey &&
+                        (e.key === shortcutkey.largeScroll?.key1 || e.key === shortcutkey.largeScroll?.key2)
+                    ) {
                         e.preventDefault();
                         scrollReader(-4);
                         return;
                     }
-                    window.app.keydown = true;
                     switch (e.key) {
-                        case " ":
+                        case shortcutkey.largeScroll?.key1:
+                        case shortcutkey.largeScroll?.key2:
                             e.preventDefault();
                             scrollReader(4);
                             break;
-                        case "d":
-                        case "ArrowRight":
+                        case shortcutkey.nextPage?.key1:
+                        case shortcutkey.nextPage?.key2:
                             if (appSettings.readerSettings.readerTypeSelected === 1) {
                                 openNextPageRef.current?.click();
                             }
                             break;
-                        case "s":
-                        case "ArrowDown":
+                        case shortcutkey.scrollDown?.key1:
+                        case shortcutkey.scrollDown?.key2:
                             scrollReader(1);
                             break;
-                        case "a":
-                        case "ArrowLeft":
+                        case shortcutkey.prevPage?.key1:
+                        case shortcutkey.prevPage?.key2:
                             if (appSettings.readerSettings.readerTypeSelected === 1) {
                                 openPrevPageRef.current?.click();
                             }
                             break;
-                        case "w":
-                        case "ArrowUp":
+                        case shortcutkey.scrollUp?.key1:
+                        case shortcutkey.scrollUp?.key2:
                             scrollReader(-1);
                             break;
                         default:
@@ -172,10 +205,14 @@ const Reader = () => {
                     }
                 }
             }
-        });
+        };
+        window.addEventListener("keydown", registerShortcuts);
         window.addEventListener("keyup", () => {
             window.app.keydown = false;
         });
+        return () => {
+            window.removeEventListener("keydown", registerShortcuts);
+        };
     }, []);
     const makeScrollPos = () => {
         if (isSideListPinned && imgContRef.current)
@@ -196,6 +233,7 @@ const Reader = () => {
 
     const openPrevPage = () => {
         if (currentImageRow <= 1) {
+            if (prevNextChapter.next === "first") return;
             window.dialog
                 .confirm({
                     title: "Confirm",
@@ -212,6 +250,7 @@ const Reader = () => {
     };
     const openNextPage = () => {
         if (currentImageRow >= imageRowCount) {
+            if (prevNextChapter.next === "last") return;
             window.dialog
                 .confirm({
                     title: "Confirm",

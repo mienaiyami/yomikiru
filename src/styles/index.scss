@@ -76,6 +76,9 @@ body {
     height: 100vh;
     color: var(--font-color);
     background: var(--body-bg);
+    &::backdrop {
+        background: var(--body-bg);
+    }
     user-select: none;
     overflow: hidden;
     button {
@@ -689,7 +692,11 @@ body {
                         td {
                             width: 50%;
                             padding: 10px 10px;
-                            // border-bottom: 1px solid var(--color-secondary);
+                            display: inline-flex;
+                            gap: 20px;
+                            input {
+                                font-size: inherit;
+                            }
                         }
                         tr {
                             box-shadow: inset 0 0 0px 1px var(--color-secondary);
