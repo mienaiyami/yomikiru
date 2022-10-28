@@ -760,6 +760,9 @@ body {
                     max-width: none;
                     min-width: none;
                 }
+                .imgCont {
+                    overflow: auto;
+                }
             }
             &::-webkit-scrollbar-track {
                 background: var(--topBar-color);

@@ -77,6 +77,7 @@ const Reader = () => {
     };
     useEffect(() => {
         if (zenMode) {
+            setSideListPinned(false);
             document.body.classList.add("zenMode");
             document.body.requestFullscreen();
         } else {
@@ -211,6 +212,9 @@ const Reader = () => {
         });
         return () => {
             window.removeEventListener("keydown", registerShortcuts);
+            window.removeEventListener("keyup", () => {
+                window.app.keydown = false;
+            });
         };
     }, []);
     const makeScrollPos = () => {
@@ -449,7 +453,7 @@ const Reader = () => {
                 "--mangaListWidth": sideListWidth + "px",
             }}
             onScroll={() => {
-                changePageNumber();
+                if (appSettings.readerSettings.readerTypeSelected === 0 && !isSideListPinned) changePageNumber();
             }}
             tabIndex={-1}
         >
@@ -492,6 +496,10 @@ const Reader = () => {
                 style={{
                     "--varWidth": appSettings.readerSettings.readerWidth + "%",
                     "--gapSize": appSettings.readerSettings.gapSize + "px",
+                }}
+                onScroll={() => {
+                    if (appSettings.readerSettings.readerTypeSelected === 0 && isSideListPinned)
+                        changePageNumber();
                 }}
                 onClick={(e) => {
                     if (
