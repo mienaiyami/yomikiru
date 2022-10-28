@@ -1,7 +1,7 @@
 {
     "name": "mangareader",
     "productName": "Manga Reader",
-    "version": "2.3.1",
+    "version": "2.3.2",
     "description": "App to read manga on desktop",
     "main": "./.webpack/main/index.js",
     "author": {
