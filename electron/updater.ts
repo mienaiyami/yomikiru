@@ -10,16 +10,19 @@ import logger from "electron-log";
 const fileToKeep = ["bookmarks.json", "history.json", "settings.json", "themes.json", "logs", "main.log"];
 
 const downloadLink = "https://github.com/mienaiyami/react-ts-offline-manga-reader/releases/download/v";
-// const downloadLink = "https://github.com/mienaiyami/electron-updater-test/releases/download/v";
 const checkForUpdate = async (windowId: number, promptAfterCheck = false) => {
     const rawdata = await fetch(
         "https://raw.githubusercontent.com/mienaiyami/react-ts-offline-manga-reader/master/package.json"
     ).then((data) => data.json());
-    const latestVersion: string[] = await rawdata.version.split(".");
+    const latestVersion: number[] = await rawdata.version.split(".").map((e: string) => parseInt(e));
     logger.log("checking for update...");
-    const currentAppVersion = app.getVersion().split(".");
+    const currentAppVersion = app
+        .getVersion()
+        .split(".")
+        .map((e) => parseInt(e));
     logger.log("Latest version ", latestVersion.join("."));
     logger.log("Current version ", currentAppVersion.join("."));
+
     if (
         latestVersion[0] > currentAppVersion[0] ||
         (latestVersion[0] === currentAppVersion[0] && latestVersion[1] > currentAppVersion[1]) ||
