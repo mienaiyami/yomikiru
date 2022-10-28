@@ -502,13 +502,11 @@ const Reader = () => {
                         changePageNumber();
                 }}
                 onClick={(e) => {
-                    if (
-                        appSettings.readerSettings.readerTypeSelected === 1 &&
-                        (e.target as HTMLElement).tagName === "IMG"
-                    ) {
+                    // && (e.target as HTMLElement).tagName === "IMG"
+                    if (appSettings.readerSettings.readerTypeSelected === 1) {
                         const clickPos = (e.clientX / e.currentTarget.offsetWidth) * 100;
-                        if (clickPos <= 50) openPrevPageRef.current?.click();
-                        if (clickPos > 50) openNextPageRef.current?.click();
+                        if (clickPos <= 40) openPrevPageRef.current?.click();
+                        if (clickPos > 60) openNextPageRef.current?.click();
                     }
                     if (
                         appSettings.readerSettings.readerTypeSelected === 0 &&
@@ -522,8 +520,8 @@ const Reader = () => {
                                     imgContRef.current.scrollHeight - window.innerHeight - 200
                             ) {
                                 const clickPos = ((e.clientX - sideListWidth) / e.currentTarget.offsetWidth) * 100;
-                                if (clickPos <= 50) openPrevChapterRef.current?.click();
-                                if (clickPos > 50) openNextChapterRef.current?.click();
+                                if (clickPos <= 20) openPrevChapterRef.current?.click();
+                                if (clickPos > 80) openNextChapterRef.current?.click();
                             }
                         } else if (
                             readerRef.current.scrollTop <= 100 ||
@@ -531,8 +529,8 @@ const Reader = () => {
                                 readerRef.current.scrollHeight - window.innerHeight - 200
                         ) {
                             const clickPos = (e.clientX / e.currentTarget.offsetWidth) * 100;
-                            if (clickPos <= 50) openPrevChapterRef.current?.click();
-                            if (clickPos > 50) openNextChapterRef.current?.click();
+                            if (clickPos <= 20) openPrevChapterRef.current?.click();
+                            if (clickPos > 80) openNextChapterRef.current?.click();
                         }
                     }
                 }}

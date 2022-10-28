@@ -12,6 +12,7 @@
 }
 ::-webkit-scrollbar {
     width: 10px;
+    height: 10px;
 }
 ::-webkit-scrollbar-track {
     background: var(--scrollbar-track-color);
@@ -19,6 +20,9 @@
 ::-webkit-scrollbar-thumb {
     min-height: 70px;
     background: var(--scrollbar-thumb-color);
+}
+::-webkit-scrollbar-corner {
+    background: var(--scrollbar-track-color);
 }
 ::-webkit-scrollbar-thumb:hover {
     background: var(--scrollbar-thumb-color-hover);
@@ -764,7 +768,8 @@ body {
                     overflow: auto;
                 }
             }
-            &::-webkit-scrollbar-track {
+            &::-webkit-scrollbar-track,
+            &::-webkit-scrollbar-corner {
                 background: var(--topBar-color);
             }
             .currentMangaList {
