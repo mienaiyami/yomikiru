@@ -2,7 +2,7 @@ import fs from "fs";
 import path from "path";
 import IS_PORTABLE from "./IS_PORTABLE";
 import { spawn, spawnSync } from "child_process";
-import { app, BrowserWindow, dialog } from "electron";
+import { app, BrowserWindow, dialog, shell } from "electron";
 import fetch from "electron-fetch";
 import crossZip from "cross-zip";
 import logger from "electron-log";
@@ -38,11 +38,15 @@ const checkForUpdate = async (windowId: number, promptAfterCheck = false) => {
                     "."
                 )}\nLatest Version:\t${latestVersion.join(".")}
                 `,
-                buttons: ["Download Now", "Download Later"],
+                buttons: ["Download Now", "Download and show Changelog", "Download Later"],
                 cancelId: 1,
             })
             .then((response) => {
                 if (response.response === 0) downloadUpdates(latestVersion.join("."), windowId);
+                if (response.response === 1) {
+                    downloadUpdates(latestVersion.join("."), windowId);
+                    shell.openExternal("https://github.com/mienaiyami/react-ts-offline-manga-reader/releases");
+                }
             });
         return;
     }
@@ -58,7 +62,6 @@ const checkForUpdate = async (windowId: number, promptAfterCheck = false) => {
 };
 
 const downloadUpdates = (latestVersion: string, windowId: number) => {
-    logger.log("running ps...");
     logger.log("Downloading updates...");
     const tempPath = path.join(app.getPath("temp"), "manga reader updates " + new Date().toDateString());
     if (fs.existsSync(tempPath)) spawnSync("powershell.exe", [`rm "${tempPath}" -r -force`]);
