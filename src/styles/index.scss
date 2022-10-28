@@ -999,19 +999,36 @@ body {
                     }
                     img {
                         width: var(--varWidth);
-                        // max-width: 100%;
+                        max-width: 500%;
                         // min-width: 1%;
                         // image-rendering: pixelated;
                     }
+                    &.widthClamped {
+                        img {
+                            max-width: 100%;
+                        }
+                    }
                     &.twoPagePerRow {
                         img {
-                            max-width: 50%;
+                            max-width: 250%;
                             width: calc(var(--varWidth) / 2);
                         }
                         &.wide {
                             img {
-                                max-width: 100%;
+                                max-width: 500%;
                                 width: var(--varWidth);
+                            }
+                        }
+                        &.widthClamped {
+                            img {
+                                max-width: 50%;
+                                width: calc(var(--varWidth) / 2);
+                            }
+                            &.wide {
+                                img {
+                                    max-width: 100%;
+                                    width: var(--varWidth);
+                                }
                             }
                         }
                     }

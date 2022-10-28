@@ -540,7 +540,8 @@ const Reader = () => {
                         className={
                             "row " +
                             (wideImageContMap.includes(i) ? "wide " : "") +
-                            (appSettings.readerSettings.pagesPerRowSelected !== 0 ? "twoPagePerRow " : "")
+                            (appSettings.readerSettings.pagesPerRowSelected !== 0 ? "twoPagePerRow " : "") +
+                            (appSettings.readerSettings.widthClamped ? "widthClamped " : "")
                         }
                         data-imagerow={i + 1}
                         style={{
