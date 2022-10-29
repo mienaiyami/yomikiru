@@ -1,5 +1,5 @@
 import { app, dialog, getCurrentWindow, clipboard, nativeImage, shell, BrowserWindow } from "@electron/remote";
-import { ipcRenderer } from "electron";
+import { ipcRenderer, webFrame } from "electron";
 /*//! i know its dangerous but its offline app and i was unable to get BrowserWindow to work
   //! in renderer with contextBridge from preload
  */
@@ -21,6 +21,7 @@ declare global {
             getAllWindows: Electron.BrowserWindow[];
             clipboard: typeof clipboard;
             nativeImage: typeof nativeImage;
+            webFrame: typeof webFrame;
         };
         supportedFormats: string[];
         path: typeof path;
@@ -169,6 +170,7 @@ window.electron = {
     clipboard,
     nativeImage,
     getAllWindows: BrowserWindow.getAllWindows(),
+    webFrame,
 };
 window.dialog = {
     nodeError: (err: NodeJS.ErrnoException) =>

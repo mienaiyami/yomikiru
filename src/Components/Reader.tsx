@@ -322,6 +322,7 @@ const Reader = () => {
         setReaderOpen(true);
     };
     useLayoutEffect(() => {
+        window.electron.webFrame.clearCache();
         images.forEach((e, i) => {
             const img = document.createElement("img");
             img.src = window.electron.app.isPackaged

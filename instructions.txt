@@ -6,3 +6,5 @@ rename .exe and .zip
 
 tag v${version} before push
 make sure version is same in package.json
+
+push tag and release before pushing git(package.json) to prevent update prompt with no link
