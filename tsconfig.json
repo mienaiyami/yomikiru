@@ -2,12 +2,13 @@
     "compilerOptions": {
         "target": "esnext",
         "module": "commonjs",
-        "lib": ["dom", "es2015", "es2016", "es2017"],
+        "lib": ["dom", "es2015", "es2016", "es2017", "DOM.Iterable"],
         "allowJs": true,
         "jsx": "react-jsx",
         "sourceMap": true,
         "outDir": "./dist",
         "strict": true,
+        "resolveJsonModule": true,
         "esModuleInterop": true,
         "typeRoots": ["./node_modules/@types"],
         "skipLibCheck": true

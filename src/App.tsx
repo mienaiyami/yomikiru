@@ -4,6 +4,8 @@ import Main from "./Components/Main";
 import TopBar from "./Components/TopBar";
 import useTheme from "./hooks/useTheme";
 import { settingValidatorData } from "./MainImports";
+import themesRaw from "./themeInit.json";
+
 const userDataURL = window.electron.app.getPath("userData");
 const settingsPath = window.path.join(userDataURL, "settings.json");
 const bookmarksPath = window.path.join(userDataURL, "bookmarks.json");
@@ -11,7 +13,7 @@ const bookmarkDataInit: ListItem[] = [];
 const historyPath = window.path.join(userDataURL, "history.json");
 const historyDataInit: ListItem[] = [];
 const themesPath = window.path.join(userDataURL, "themes.json");
-const themesMain: { name: string; main: string }[] = [];
+const themesMain: ThemeData[] = [];
 const shortcutsPath = window.path.join(userDataURL, "shortcuts.json");
 const shortcutsInit: ShortcutSchema[] = [];
 
@@ -280,33 +282,35 @@ const getDataFiles = () => {
         window.fs.writeFileSync(shortcutsPath, JSON.stringify(shortcutSchema));
         shortcutsInit.push(...shortcutSchema);
     }
-    const themes = [
-        {
-            name: "theme1",
-            main: "--body-bg: #262626;--icon-color: #fff8f0;--font-color: #fff8f0;--font-select-color: #fff8f0;--font-select-bg: #000;--color-primary: #262626;--color-secondary: #8f8f8f;--color-tertiary: #1f1f1f;--topBar-color: #1f1f1f;--topBar-hover-color: #5c5c5c;--input-bg: #383838;--btn-color1: #363636;--btn-color2: #6b6b6b;--listItem-bg-color: #00000000;--listItem-hover-color: #5c5c5c;--listItem-alreadyRead-color: #494c5a;--listItem-current: #30425a;--toolbar-btn-bg: #1f1f1f;--toolbar-btn-hover: #6b6b6b;--scrollbar-track-color: #00000000;--scrollbar-thumb-color: #545454;--scrollbar-thumb-color-hover: #878787;--divider-color: #6b6b6b;--context-menu-text: var(--font-color);--context-menu-bg: var(--color-tertiary);",
-        },
-        {
-            name: "theme2",
-            main: "--body-bg: #1e1e24;--icon-color: #fff8f0;--font-color: #fff8f0;--font-select-color: #fff8f0;--font-select-bg: #000;--color-primary: #111e4b;--color-secondary: #8f8f8f;--color-tertiary: #000000;--topBar-color: #17171c;--topBar-hover-color: #62636e;--input-bg: #3b3a3e;--btn-color1: #3b3a3e;--btn-color2: #62636e;--listItem-bg-color: #00000000;--listItem-hover-color: #55535b;--listItem-alreadyRead-color: #37343f;--listItem-current: #585a70;--toolbar-btn-bg: var(--topBar-color);--toolbar-btn-hover: var(--topBar-hover-color);--scrollbar-track-color: #00000000;--scrollbar-thumb-color: #545454;--scrollbar-thumb-color-hover: #878787;--divider-color: #3b3a3e;--context-menu-text: var(--font-color);--context-menu-bg: var(--color-tertiary);",
-        },
-        {
-            name: "theme3",
-            main: "--body-bg: #ffffff;--icon-color: #000c29;--font-color: #000c29;--font-select-color: #000c29;--font-select-bg: #fff8f0;--color-primary: #487fff;--color-secondary: #1f62ff;--color-tertiary: #93b4ff;--topBar-color: #e0e0e0;--topBar-hover-color: #b6ccfe;--input-bg: #b6ccfe;--btn-color1: #b6ccfe;--btn-color2: #709bff;--listItem-bg-color: #00000000;--listItem-hover-color: #b6ccfe;--listItem-alreadyRead-color: #d0dcff;--listItem-current: #709bff;--toolbar-btn-bg: var(--topBar-color);--toolbar-btn-hover: var(--topBar-hover-color);--scrollbar-track-color: #b6ccfe00;--scrollbar-thumb-color: #b6ccfe;--scrollbar-thumb-color-hover: #709bff;--divider-color: #b6ccfe;--context-menu-text: var(--font-color);--context-menu-bg: var(--color-tertiary);",
-        },
-    ];
+
+    // const themes = [
+    //     {
+    //         name: "theme1",
+    //         main: "--body-bg: #262626;--icon-color: #fff8f0;--font-color: #fff8f0;--font-select-color: #fff8f0;--font-select-bg: #000;--color-primary: #262626;--color-secondary: #8f8f8f;--color-tertiary: #1f1f1f;--topBar-color: #1f1f1f;--topBar-hover-color: #5c5c5c;--input-bg: #383838;--btn-color1: #363636;--btn-color2: #6b6b6b;--listItem-bg-color: #00000000;--listItem-hover-color: #5c5c5c;--listItem-alreadyRead-color: #494c5a;--listItem-current: #30425a;--toolbar-btn-bg: #1f1f1f;--toolbar-btn-hover: #6b6b6b;--scrollbar-track-color: #00000000;--scrollbar-thumb-color: #545454;--scrollbar-thumb-color-hover: #878787;--divider-color: #6b6b6b;--context-menu-text: var(--font-color);--context-menu-bg: var(--color-tertiary);",
+    //     },
+    //     {
+    //         name: "theme2",
+    //         main: "--body-bg: #1e1e24;--icon-color: #fff8f0;--font-color: #fff8f0;--font-select-color: #fff8f0;--font-select-bg: #000;--color-primary: #111e4b;--color-secondary: #8f8f8f;--color-tertiary: #000000;--topBar-color: #17171c;--topBar-hover-color: #62636e;--input-bg: #3b3a3e;--btn-color1: #3b3a3e;--btn-color2: #62636e;--listItem-bg-color: #00000000;--listItem-hover-color: #55535b;--listItem-alreadyRead-color: #37343f;--listItem-current: #585a70;--toolbar-btn-bg: var(--topBar-color);--toolbar-btn-hover: var(--topBar-hover-color);--scrollbar-track-color: #00000000;--scrollbar-thumb-color: #545454;--scrollbar-thumb-color-hover: #878787;--divider-color: #3b3a3e;--context-menu-text: var(--font-color);--context-menu-bg: var(--color-tertiary);",
+    //     },
+    //     {
+    //         name: "theme3",
+    //         main: "--body-bg: #ffffff;--icon-color: #000c29;--font-color: #000c29;--font-select-color: #000c29;--font-select-bg: #fff8f0;--color-primary: #487fff;--color-secondary: #1f62ff;--color-tertiary: #93b4ff;--topBar-color: #e0e0e0;--topBar-hover-color: #b6ccfe;--input-bg: #b6ccfe;--btn-color1: #b6ccfe;--btn-color2: #709bff;--listItem-bg-color: #00000000;--listItem-hover-color: #b6ccfe;--listItem-alreadyRead-color: #d0dcff;--listItem-current: #709bff;--toolbar-btn-bg: var(--topBar-color);--toolbar-btn-hover: var(--topBar-hover-color);--scrollbar-track-color: #b6ccfe00;--scrollbar-thumb-color: #b6ccfe;--scrollbar-thumb-color-hover: #709bff;--divider-color: #b6ccfe;--context-menu-text: var(--font-color);--context-menu-bg: var(--color-tertiary);",
+    //     },
+    // ];
     if (window.fs.existsSync(themesPath)) {
         const rawdata = window.fs.readFileSync(themesPath, "utf8");
         if (rawdata) {
             try {
-                JSON.parse(rawdata);
-                themesMain.push(...JSON.parse(rawdata));
+                const data: ThemeData[] = JSON.parse(rawdata);
+                if (!data[0].main["--body-bg"]) throw "Theme variable does not exist on theme.main";
+                themesMain.push(...data);
             } catch (err) {
                 window.dialog.customError({
                     message: "Unable to parse " + themesPath + "\nMaking new themes.json...",
                 });
                 console.error(err);
-                themesMain.push(...themes);
-                window.fs.writeFileSync(themesPath, JSON.stringify(themes));
+                themesMain.push(...themesRaw);
+                window.fs.writeFileSync(themesPath, JSON.stringify(themesRaw));
             }
             // if (JSON.parse(rawdata).length < 3) {
             //     window.fs.writeFileSync(themesPath, JSON.stringify(themes));
@@ -314,8 +318,8 @@ const getDataFiles = () => {
             // }else
         }
     } else {
-        themesMain.push(...themes);
-        window.fs.writeFileSync(themesPath, JSON.stringify(themes));
+        themesMain.push(...themesRaw);
+        window.fs.writeFileSync(themesPath, JSON.stringify(themesRaw));
     }
 };
 getDataFiles();
@@ -328,6 +332,8 @@ interface IAppContext {
     setHistory: React.Dispatch<React.SetStateAction<ListItem[]>>;
     shortcuts: ShortcutSchema[];
     setShortcuts: React.Dispatch<React.SetStateAction<ShortcutSchema[]>>;
+    allThemes: ThemeData[];
+    setAllThemes: React.Dispatch<React.SetStateAction<ThemeData[]>>;
     pageNumberInputRef: React.RefObject<HTMLInputElement>;
     isSettingOpen: boolean;
     setSettingOpen: React.Dispatch<React.SetStateAction<boolean>>;
@@ -381,6 +387,7 @@ const App = (): ReactElement => {
     const [firstRendered, setFirstRendered] = useState(false);
     const [appSettings, setAppSettings] = useState(settings);
     const [theme, setTheme] = useTheme(appSettings.theme || "theme2", themesMain);
+    const [allThemes, setAllThemes] = useState(themesMain);
     const [isSettingOpen, setSettingOpen] = useState(false);
     const [isReaderOpen, setReaderOpen] = useState(false);
     const [isLoadingManga, setLoadingManga] = useState(false);
@@ -613,6 +620,17 @@ const App = (): ReactElement => {
             });
         }
     }, [theme]);
+    // useEffect(() => {
+    //     if (firstRendered) {
+    //         console.log(allThemes);
+    //         window.fs.writeFile(themesPath, JSON.stringify(shortcuts), (err) => {
+    //             if (err) {
+    //                 console.error(err);
+    //                 window.dialog.nodeError(err);
+    //             }
+    //         });
+    //     }
+    // }, [allThemes]);
     useEffect(() => {
         if (firstRendered) {
             window.fs.writeFile(settingsPath, JSON.stringify(appSettings), (err) => {
@@ -662,6 +680,8 @@ const App = (): ReactElement => {
                 openInNewWindow,
                 theme,
                 setTheme,
+                allThemes,
+                setAllThemes,
                 checkValidFolder,
                 promptSetDefaultLocation,
             }}

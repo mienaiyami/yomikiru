@@ -1,8 +1,8 @@
-import { AppContext, themesMain } from "../App";
+import { AppContext } from "../App";
 import { faGithub } from "@fortawesome/free-brands-svg-icons";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import { ReactElement, useContext, useEffect, useRef, useState } from "react";
-import { faTimes } from "@fortawesome/free-solid-svg-icons";
+import { ReactElement, useContext, useEffect, useLayoutEffect, useRef, useState } from "react";
+import { faLink, faPlus, faTimes, faUnlink } from "@fortawesome/free-solid-svg-icons";
 
 const Settings = (): ReactElement => {
     const {
@@ -14,6 +14,8 @@ const Settings = (): ReactElement => {
         setBookmarks,
         theme,
         setTheme,
+        allThemes,
+        setAllThemes,
         shortcuts,
         setShortcuts,
         promptSetDefaultLocation,
@@ -21,6 +23,8 @@ const Settings = (): ReactElement => {
     const settingContRef = useRef<HTMLDivElement>(null);
     const historyBtnRef = useRef<HTMLButtonElement>(null);
     const historyInputRef = useRef<HTMLInputElement>(null);
+    const themeMakerRef = useRef<HTMLDivElement>(null);
+    const themeNameInputRef = useRef<HTMLInputElement>(null);
     const [mouseOnInput, setMouseOnInput] = useState(false);
     useEffect(() => {
         if (isSettingOpen) {
@@ -31,6 +35,46 @@ const Settings = (): ReactElement => {
     }, [isSettingOpen]);
 
     const reservedKeys = ["h", "Control", "Tab", "Shift", "Alt", "Escape"];
+    const randomString = (length: number) => {
+        let result = "";
+        const characters = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789";
+        for (let i = 0; i <= length; i++) {
+            result += characters.charAt(Math.floor(Math.random() * characters.length));
+        }
+        return result;
+    };
+    const saveTheme = () => {
+        let name = "";
+        if (
+            themeNameInputRef.current!.value === "" ||
+            allThemes.map((e) => e.name).includes(themeNameInputRef.current!.value)
+        ) {
+            name = randomString(6);
+        } else name = themeNameInputRef.current!.value;
+        const props: ThemeDataMain[] = [...themeMakerRef.current!.getElementsByClassName("newThemeMakerProp")].map(
+            (e) => (e as HTMLElement).innerText as ThemeDataMain
+        );
+        themeNameInputRef.current!.value = randomString(6);
+        // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+        //@ts-ignore
+        const newThemeData: { [e in ThemeDataMain]: string } = {};
+        [...themeMakerRef.current!.getElementsByClassName("newThemeMakerRow")].forEach((e, i) => {
+            if (e.getElementsByTagName("label")[0].classList.contains("selected")) {
+                newThemeData[props[i]] = (
+                    e.getElementsByClassName("newThemeMakerColorOrVar")[0] as HTMLInputElement
+                ).value;
+            } else {
+                newThemeData[props[i]] = (
+                    e.getElementsByClassName("newThemeMakerColorFull")[0] as HTMLInputElement
+                ).value;
+            }
+        });
+        setAllThemes((init) => {
+            init.push({ name: name, main: newThemeData });
+            return [...init];
+        });
+    };
+
     const ShortcutInput = ({ which, i }: { which: "key1" | "key2"; i: number }) => (
         <input
             type="text"
@@ -71,13 +115,85 @@ const Settings = (): ReactElement => {
             spellCheck={false}
         />
     );
+    const ThemeElement = ({ color, prop }: { color: string; prop: ThemeDataMain }): ReactElement => {
+        const ref = useRef<HTMLInputElement>(null);
+        const [firstRendered, setFirstRendered] = useState(false);
+        const [rawColor, setRawColor] = useState(color);
+        const [rawColorWhole, setRawColorWhole] = useState(color);
+        const [opacity, setOpacity] = useState(color.length > 7 ? parseInt(color.substring(7), 16) / 2.55 : 100);
+        const [checked, setChecked] = useState(color.substring(0, 4) === "var(" ? true : false);
+
+        // todo : make similar system for rawColorWhole
+        return (
+            <td>
+                <label className={checked ? "selected" : ""}>
+                    <input
+                        type="checkbox"
+                        defaultChecked={checked}
+                        ref={ref}
+                        onChange={() => setChecked((init) => !init)}
+                    />
+                    <FontAwesomeIcon icon={checked ? faUnlink : faLink} />
+                </label>
+                {checked ? (
+                    <input
+                        type="text"
+                        value={rawColorWhole}
+                        list="cssColorVariableList"
+                        spellCheck={false}
+                        className="newThemeMakerColorOrVar"
+                        onChange={(e) => {
+                            setRawColorWhole(e.target.value);
+                        }}
+                    />
+                ) : (
+                    <>
+                        <input
+                            type="color"
+                            value={rawColor}
+                            // className="newThemeMakerColor"
+                            onChange={(e) => {
+                                setRawColor(e.target.value === "" ? "#000000" : e.target.value);
+                            }}
+                        />
+                        <input
+                            type="number"
+                            //! remove mouseOnInput from whole file
+                            // onMouseEnter={() => setMouseOnInput(true)}
+                            // onMouseLeave={() => setMouseOnInput(false)}
+                            min={0}
+                            max={100}
+                            value={Math.ceil(opacity)}
+                            // className="newThemeMakerOpacity"
+                            onChange={(e) => {
+                                setOpacity(() => {
+                                    const value = e.target.valueAsNumber ?? 100;
+                                    return value;
+                                });
+                            }}
+                        />
+                        <input
+                            type="text"
+                            className="newThemeMakerColorFull"
+                            value={
+                                rawColor +
+                                (Math.ceil(opacity * 2.55).toString(16).length < 2
+                                    ? "0" + Math.ceil(opacity * 2.55).toString(16)
+                                    : Math.ceil(opacity * 2.55).toString(16))
+                            }
+                            readOnly
+                        />
+                    </>
+                )}
+            </td>
+        );
+    };
 
     return (
         <div id="settings" data-state={isSettingOpen ? "open" : "closed"}>
             <div className="clickClose" onClick={() => setSettingOpen(false)}></div>
             <div
-                className="cont"
-                style={{ overflow: mouseOnInput ? "hidden" : "auto" }}
+                className={"cont"}
                 onKeyDown={(e) => {
                     if (e.key === "Escape") setSettingOpen(false);
                 }}
@@ -86,7 +202,7 @@ const Settings = (): ReactElement => {
             >
                 <h1>
                     Settings
-                    <button onClick={() => setSettingOpen(false)}>
+                    <button onClick={() => setSettingOpen(false)} className="closeBtn">
                         <FontAwesomeIcon icon={faTimes} />
                     </button>
                 </h1>
@@ -118,8 +234,8 @@ const Settings = (): ReactElement => {
                                         historyBtnRef.current?.click();
                                     }
                                 }}
-                                onMouseEnter={() => setMouseOnInput(true)}
-                                onMouseLeave={() => setMouseOnInput(false)}
+                                // onMouseEnter={() => setMouseOnInput(true)}
+                                // onMouseLeave={() => setMouseOnInput(false)}
                                 readOnly={true}
                             />
                             <button
@@ -257,7 +373,7 @@ const Settings = (): ReactElement => {
                                     {window.path.join(window.electron.app.getPath("userData"), "themes.json")}
                                 </span>
                             </p>
-                            {themesMain.map((e) => (
+                            {allThemes.map((e) => (
                                 <button
                                     className={theme === e.name ? "selected" : ""}
                                     onClick={() => setTheme(e.name)}
@@ -266,6 +382,14 @@ const Settings = (): ReactElement => {
                                     {e.name}
                                 </button>
                             ))}
+                            <button
+                                onClick={() => {
+                                    themeMakerRef.current?.focus();
+                                    themeMakerRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
+                                }}
+                            >
+                                <FontAwesomeIcon icon={faPlus} />
+                            </button>
                         </div>
                     </div>
                     <div className="settingItem">
@@ -390,7 +514,7 @@ const Settings = (): ReactElement => {
                     </div>
                 </div>
                 <h1>Features</h1>
-                <div className="features">
+                <div className="content features">
                     <ul>
                         <li>
                             you can make custom theme by editing themes.json. Or click ctrl+shift+i, then from the
@@ -434,38 +558,6 @@ const Settings = (): ReactElement => {
                                     </td>
                                 </tr>
                             ))}
-                            {/* <tr>
-                                <td>size</td>
-                                <td> - , =, +, ctrl+scroll</td>
-                            </tr>
-                            <tr>
-                                <td>Zen Mode</td>
-                                <td> `</td>
-                            </tr>
-                            <tr>
-                                <td>reader settings</td>
-                                <td>q</td>
-                            </tr>
-                            <tr>
-                                <td>scroll</td>
-                                <td>w, s, ↑, ↓</td>
-                            </tr>
-                            <tr>
-                                <td>prev/next page</td>
-                                <td>a, d, ←, → </td>
-                            </tr>
-                            <tr>
-                                <td>large scroll</td>
-                                <td>space/shift+space</td>
-                            </tr>
-                            <tr>
-                                <td>search page number</td>
-                                <td>f</td>
-                            </tr>
-                            <tr>
-                                <td>prev/next</td>
-                                <td>[ and ]</td>
-                            </tr> */}
                             <tr>
                                 <td>New Window</td>
                                 <td>ctrl+n</td>
@@ -486,6 +578,47 @@ const Settings = (): ReactElement => {
                                 <td>Dev Tool</td>
                                 <td>ctrl+shift+i</td>
                             </tr>
+                        </tbody>
+                    </table>
+                </div>
+                <h1>
+                    Make Theme
+                    <input type="text" defaultValue={randomString(6)} ref={themeNameInputRef} />
+                    <button
+                        onClick={() => {
+                            saveTheme();
+                        }}
+                    >
+                        Save
+                    </button>
+                </h1>
+                <div className="themeMaker" ref={themeMakerRef}>
+                    <datalist id="cssColorVariableList">
+                        {Object.keys(
+                            allThemes.find((e) => {
+                                return e.name === theme;
+                            })!.main
+                        ).map((e) => (
+                            <option key={e} value={`var(${e})`}>{`var(${e})`}</option>
+                        ))}
+                    </datalist>
+                    <p>
+                        To use previously defined color, click on link button then type example "var(--body-bg)" in
+                        input box. Or you can type hex color in it as well (#RRGGBBAA).
+                    </p>
+                    <table>
+                        <tbody>
+                            <tr>
+                                <th>Property</th>
+                                <th>Color</th>
+                            </tr>
+                            {Object.entries(allThemes.find((e) => e.name === theme)!.main).map((e) => (
+                                <tr key={e[0]} className="newThemeMakerRow">
+                                    <td className="newThemeMakerProp">{e[0]}</td>
+                                    {/* <td>{e[1]}</td> */}
+                                    <ThemeElement color={e[1]} prop={e[0] as ThemeDataMain} />
+                                </tr>
+                            ))}
                         </tbody>
                     </table>
                 </div>

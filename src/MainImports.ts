@@ -73,6 +73,39 @@ declare global {
             }) => Promise<Electron.MessageBoxReturnValue>;
         };
     }
+    //! try to map strings to main
+    type ThemeDataMain =
+        | "--body-bg"
+        | "--icon-color"
+        | "--font-color"
+        | "--font-select-color"
+        | "--font-select-bg"
+        | "--color-primary"
+        | "--color-secondary"
+        | "--color-tertiary"
+        | "--topBar-color"
+        | "--topBar-hover-color"
+        | "--input-bg"
+        | "--btn-color1"
+        | "--btn-color2"
+        | "--listItem-bg-color"
+        | "--listItem-hover-color"
+        | "--listItem-alreadyRead-color"
+        | "--listItem-current"
+        | "--toolbar-btn-bg"
+        | "--toolbar-btn-hover"
+        | "--scrollbar-track-color"
+        | "--scrollbar-thumb-color"
+        | "--scrollbar-thumb-color-hover"
+        | "--divider-color"
+        | "--context-menu-text"
+        | "--context-menu-bg";
+    interface ThemeData {
+        name: string;
+        main: {
+            [e in ThemeDataMain]: string;
+        };
+    }
     interface ListItem {
         mangaName: string;
         chapterName: string;
