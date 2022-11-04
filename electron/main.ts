@@ -20,6 +20,9 @@ if (IS_PORTABLE) {
     }
     app.setPath("userData", folderPath);
 }
+
+app.disableHardwareAcceleration();
+
 // ! change path in settings.tsx as well if changing log path
 log.transports.file.resolvePath = () => path.join(app.getPath("userData"), "logs/main.log");
 log.log("Starting app...");
@@ -177,8 +180,6 @@ app.setUserTasks([
         description: "Create a new window",
     },
 ]);
-
-app.disableHardwareAcceleration();
 
 const createWindow = (link?: string) => {
     const newWindow = new BrowserWindow({
