@@ -237,6 +237,7 @@ window.dialog = {
             message: message,
             detail: detail,
             buttons: noOption ? [] : ["Yes", "No"],
+            defaultId: 1,
         }),
     confirm: ({
         title = "Confirm",

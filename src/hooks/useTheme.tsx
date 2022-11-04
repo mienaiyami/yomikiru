@@ -24,6 +24,11 @@ export default function useTheme(
                 window.fs.unlinkSync(window.path.join(window.electron.app.getPath("userData"), "themes.json"));
                 window.location.reload();
             }
+        } else {
+            window.dialog.customError({
+                title: "Error",
+                message: `Theme "${theme}" does not exist. Try fixing or deleting theme.json and settings.json in "userdata" folder.(at "%appdata%/Manga Reader/" or in main folder on Portable version)`,
+            });
         }
     }, [theme]);
     return [theme, setTheme];

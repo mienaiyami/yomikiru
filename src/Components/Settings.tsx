@@ -2,7 +2,7 @@ import { AppContext } from "../App";
 import { faGithub } from "@fortawesome/free-brands-svg-icons";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { ReactElement, useContext, useEffect, useLayoutEffect, useRef, useState } from "react";
-import { faLink, faPlus, faTimes, faUnlink } from "@fortawesome/free-solid-svg-icons";
+import { faLink, faPlus, faTimes, faTrash, faUnlink } from "@fortawesome/free-solid-svg-icons";
 
 const Settings = (): ReactElement => {
     const {
@@ -73,6 +73,9 @@ const Settings = (): ReactElement => {
             init.push({ name: name, main: newThemeData });
             return [...init];
         });
+        setTheme(name);
+        //! save theme on pc after adding to allThemes
+        //! make ability to delete and edit themes
     };
 
     const ShortcutInput = ({ which, i }: { which: "key1" | "key2"; i: number }) => (
@@ -118,11 +121,32 @@ const Settings = (): ReactElement => {
     const ThemeElement = ({ color, prop }: { color: string; prop: ThemeDataMain }): ReactElement => {
         const ref = useRef<HTMLInputElement>(null);
         const [firstRendered, setFirstRendered] = useState(false);
-        const [rawColor, setRawColor] = useState(color);
+        const [rawColor, setRawColor] = useState(color.substring(0, 7));
         const [rawColorWhole, setRawColorWhole] = useState(color);
         const [opacity, setOpacity] = useState(color.length > 7 ? parseInt(color.substring(7), 16) / 2.55 : 100);
         const [checked, setChecked] = useState(color.substring(0, 4) === "var(" ? true : false);
 
+        useEffect(() => {
+            setFirstRendered(true);
+        }, []);
+        useLayoutEffect(() => {
+            if (firstRendered) {
+                // console.log(
+                //     prop,
+                //     rawColor.substring(0, 7) +
+                //         (Math.ceil(opacity * 2.55).toString(16).length < 2
+                //             ? "0" + Math.ceil(opacity * 2.55).toString(16)
+                //             : Math.ceil(opacity * 2.55).toString(16))
+                // );
+                document.body.style.setProperty(
+                    prop,
+                    rawColor.substring(0, 7) +
+                        (Math.ceil(opacity * 2.55).toString(16).length < 2
+                            ? "0" + Math.ceil(opacity * 2.55).toString(16)
+                            : Math.ceil(opacity * 2.55).toString(16))
+                );
+            }
+        }, [rawColor, opacity]);
         // todo : make similar system for rawColorWhole
         return (
             <td>
@@ -150,11 +174,12 @@ const Settings = (): ReactElement => {
                     <>
                         <input
                             type="color"
-                            value={rawColor}
+                            value={rawColor || "#000000"}
                             // className="newThemeMakerColor"
                             onChange={(e) => {
-                                setRawColor(e.target.value === "" ? "#000000" : e.target.value);
+                                setRawColor(e.target.value === "" ? "#000000" : e.target.value.substring(0, 7));
                             }}
+                            title="Color"
                         />
                         <input
                             type="number"
@@ -163,7 +188,8 @@ const Settings = (): ReactElement => {
                             // onMouseLeave={() => setMouseOnInput(false)}
                             min={0}
                             max={100}
-                            value={Math.ceil(opacity)}
+                            value={Math.ceil(opacity) || 100}
+                            title="Opacity"
                             // className="newThemeMakerOpacity"
                             onChange={(e) => {
                                 setOpacity(() => {
@@ -176,11 +202,12 @@ const Settings = (): ReactElement => {
                             type="text"
                             className="newThemeMakerColorFull"
                             value={
-                                rawColor +
+                                rawColor.substring(0, 7) +
                                 (Math.ceil(opacity * 2.55).toString(16).length < 2
                                     ? "0" + Math.ceil(opacity * 2.55).toString(16)
                                     : Math.ceil(opacity * 2.55).toString(16))
                             }
+                            style={{ display: "none" }}
                             readOnly
                         />
                     </>
@@ -367,20 +394,43 @@ const Settings = (): ReactElement => {
                     <div className="settingItem themeSelector">
                         <div className="name">Theme:</div>
                         <div className="current">
-                            <p>
+                            {/* <p>
                                 Add custom theme by adding new item with changed css variable in <br />
                                 <span className="copy">
                                     {window.path.join(window.electron.app.getPath("userData"), "themes.json")}
                                 </span>
-                            </p>
-                            {allThemes.map((e) => (
-                                <button
-                                    className={theme === e.name ? "selected" : ""}
-                                    onClick={() => setTheme(e.name)}
-                                    key={e.name}
-                                >
-                                    {e.name}
-                                </button>
+                            </p> */}
+                            {allThemes.map((e, i) => (
+                                <div className="themeButtons" key={e.name}>
+                                    <button
+                                        className={theme === e.name ? "selected" : ""}
+                                        onClick={() => setTheme(e.name)}
+                                    >
+                                        {e.name}
+                                    </button>
+                                    <button
+                                        onClick={() => {
+                                            if (e.name === theme) {
+                                                window.dialog.warn({
+                                                    message: "Choose other theme before deleting this one.",
+                                                });
+                                                return;
+                                            }
+                                            window.dialog
+                                                .confirm({ message: `Delete theme "${e.name}"`, noOption: false })
+                                                .then((res) => {
+                                                    if (res.response === 0) {
+                                                        setAllThemes((init) => {
+                                                            init.splice(i, 1);
+                                                            return [...init];
+                                                        });
+                                                    }
+                                                });
+                                        }}
+                                    >
+                                        <FontAwesomeIcon icon={faTrash} />
+                                    </button>
+                                </div>
                             ))}
                             <button
                                 onClick={() => {
@@ -583,7 +633,14 @@ const Settings = (): ReactElement => {
                 </div>
                 <h1>
                     Make Theme
-                    <input type="text" defaultValue={randomString(6)} ref={themeNameInputRef} />
+                    <input
+                        type="text"
+                        defaultValue={randomString(6)}
+                        ref={themeNameInputRef}
+                        onKeyDown={(e) => {
+                            e.stopPropagation();
+                        }}
+                    />
                     <button
                         onClick={() => {
                             saveTheme();
@@ -605,12 +662,15 @@ const Settings = (): ReactElement => {
                     <p>
                         To use previously defined color, click on link button then type example "var(--body-bg)" in
                         input box. Or you can type hex color in it as well (#RRGGBBAA).
+                        <br />
+                        If you want to edit existing theme, click on theme then click on plus icon then change
+                        theme according to your liking.
                     </p>
                     <table>
                         <tbody>
                             <tr>
                                 <th>Property</th>
-                                <th>Color</th>
+                                <th>Color/Opacity</th>
                             </tr>
                             {Object.entries(allThemes.find((e) => e.name === theme)!.main).map((e) => (
                                 <tr key={e[0]} className="newThemeMakerRow">

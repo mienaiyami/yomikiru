@@ -324,6 +324,20 @@ const getDataFiles = () => {
 };
 getDataFiles();
 export { themesMain };
+if (!themesMain.map((e) => e.name).includes(settings.theme)) {
+    window.electron.dialog
+        .showMessageBox(window.electron.getCurrentWindow(), {
+            type: "error",
+            title: "Error",
+            message: `Theme "${settings.theme}" does not exist. Try fixing or deleting theme.json and settings.json in "userdata" folder.(at "%appdata%/Manga Reader/" or in main folder on Portable version)`,
+            buttons: ["Ok", "Open Location"],
+        })
+        .then((res) => {
+            if (res.response === 1) {
+                window.electron.shell.showItemInFolder(themesPath);
+            }
+        });
+}
 
 interface IAppContext {
     bookmarks: ListItem[];
@@ -386,8 +400,8 @@ export const AppContext = createContext<IAppContext>();
 const App = (): ReactElement => {
     const [firstRendered, setFirstRendered] = useState(false);
     const [appSettings, setAppSettings] = useState(settings);
-    const [theme, setTheme] = useTheme(appSettings.theme || "theme2", themesMain);
     const [allThemes, setAllThemes] = useState(themesMain);
+    const [theme, setTheme] = useTheme(appSettings.theme || "theme2", allThemes);
     const [isSettingOpen, setSettingOpen] = useState(false);
     const [isReaderOpen, setReaderOpen] = useState(false);
     const [isLoadingManga, setLoadingManga] = useState(false);
@@ -620,17 +634,16 @@ const App = (): ReactElement => {
             });
         }
     }, [theme]);
-    // useEffect(() => {
-    //     if (firstRendered) {
-    //         console.log(allThemes);
-    //         window.fs.writeFile(themesPath, JSON.stringify(shortcuts), (err) => {
-    //             if (err) {
-    //                 console.error(err);
-    //                 window.dialog.nodeError(err);
-    //             }
-    //         });
-    //     }
-    // }, [allThemes]);
+    useEffect(() => {
+        if (firstRendered) {
+            window.fs.writeFile(themesPath, JSON.stringify(allThemes), (err) => {
+                if (err) {
+                    console.error(err);
+                    window.dialog.nodeError(err);
+                }
+            });
+        }
+    }, [allThemes]);
     useEffect(() => {
         if (firstRendered) {
             window.fs.writeFile(settingsPath, JSON.stringify(appSettings), (err) => {

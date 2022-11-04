@@ -682,6 +682,18 @@ body {
                                 background-color: var(--btn-color2);
                             }
                         }
+                        &.themeSelector {
+                            .themeButtons {
+                                button:nth-child(1) {
+                                    border-top-right-radius: 0;
+                                    border-bottom-right-radius: 0;
+                                }
+                                button:nth-child(2) {
+                                    border-top-left-radius: 0;
+                                    border-bottom-left-radius: 0;
+                                }
+                            }
+                        }
                     }
                 }
                 .features {
@@ -702,9 +714,12 @@ body {
                         user-select: text;
                         display: inline-flex;
                         align-items: center;
+                        height: 55px;
                         input[type="color"] {
                             appearance: none;
                             border: none;
+                            width: 100%;
+                            height: 100%;
                             &::-webkit-color-swatch-wrapper {
                                 padding: 0;
                             }
