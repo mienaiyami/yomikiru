@@ -7,7 +7,7 @@ import fetch from "electron-fetch";
 import crossZip from "cross-zip";
 import logger from "electron-log";
 
-const fileToKeep = ["bookmarks.json", "history.json", "settings.json", "themes.json", "logs", "main.log"];
+const fileToKeep = ["bookmarks.json", "history.json", "settings.json", "themes.json","shortcuts.json", "logs", "main.log"];
 
 const downloadLink = "https://github.com/mienaiyami/react-ts-offline-manga-reader/releases/download/v";
 const checkForUpdate = async (windowId: number, promptAfterCheck = false) => {
