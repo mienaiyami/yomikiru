@@ -11,6 +11,34 @@ declare module "react" {
     }
 }
 declare global {
+    //! try to map strings to main
+    type ThemeDataMain =
+        | "--body-bg"
+        | "--sideList-bg"
+        | "--icon-color"
+        | "--font-color"
+        | "--font-select-color"
+        | "--font-select-bg"
+        | "--color-primary"
+        | "--color-secondary"
+        | "--color-tertiary"
+        | "--topBar-color"
+        | "--topBar-hover-color"
+        | "--input-bg"
+        | "--btn-color1"
+        | "--btn-color2"
+        | "--listItem-bg-color"
+        | "--listItem-hover-color"
+        | "--listItem-alreadyRead-color"
+        | "--listItem-current"
+        | "--toolbar-btn-bg"
+        | "--toolbar-btn-hover"
+        | "--scrollbar-track-color"
+        | "--scrollbar-thumb-color"
+        | "--scrollbar-thumb-color-hover"
+        | "--divider-color"
+        | "--context-menu-text"
+        | "--context-menu-bg";
     interface Window {
         electron: {
             app: typeof app;
@@ -26,6 +54,7 @@ declare global {
         supportedFormats: string[];
         path: typeof path;
         fs: typeof fs;
+        themeProps: {[e in ThemeDataMain]: string};
         app: {
             betterSortOrder: (x: string, y: string) => number;
             titleBarHeight: number;
@@ -73,33 +102,6 @@ declare global {
             }) => Promise<Electron.MessageBoxReturnValue>;
         };
     }
-    //! try to map strings to main
-    type ThemeDataMain =
-        | "--body-bg"
-        | "--icon-color"
-        | "--font-color"
-        | "--font-select-color"
-        | "--font-select-bg"
-        | "--color-primary"
-        | "--color-secondary"
-        | "--color-tertiary"
-        | "--topBar-color"
-        | "--topBar-hover-color"
-        | "--input-bg"
-        | "--btn-color1"
-        | "--btn-color2"
-        | "--listItem-bg-color"
-        | "--listItem-hover-color"
-        | "--listItem-alreadyRead-color"
-        | "--listItem-current"
-        | "--toolbar-btn-bg"
-        | "--toolbar-btn-hover"
-        | "--scrollbar-track-color"
-        | "--scrollbar-thumb-color"
-        | "--scrollbar-thumb-color-hover"
-        | "--divider-color"
-        | "--context-menu-text"
-        | "--context-menu-bg";
     interface ThemeData {
         name: string;
         main: {
@@ -119,7 +121,7 @@ declare global {
         isHistory: boolean;
     }
     interface ShortcutSchema {
-        command: shortcutCommand;
+        command: shortcutCommands;
         name: string;
         key1: string;
         key2: string;
@@ -154,7 +156,7 @@ declare global {
         };
     }
 
-    type shortcutCommand =
+    type shortcutCommands =
         | "navToPage"
         | "toggleZenMode"
         | "readerSettings"
@@ -192,6 +194,35 @@ export const settingValidatorData = {
 window.path = path;
 window.fs = fs;
 window.supportedFormats = [".jpg", ".jpeg", ".png", ".webp", ".svg", ".apng", ".gif", "avif"];
+window.themeProps = {
+    "--body-bg":"",
+    "--sideList-bg":"",
+    "--icon-color":"",
+    "--font-color":"",
+    "--font-select-color":"",
+    "--font-select-bg":"",
+    "--color-primary":"",
+    "--color-secondary":"",
+    "--color-tertiary":"",
+    "--topBar-color":"",
+    "--topBar-hover-color":"",
+    "--input-bg":"",
+    "--btn-color1":"",
+    "--btn-color2":"",
+    "--listItem-bg-color":"",
+    "--listItem-hover-color":"",
+    "--listItem-alreadyRead-color":"",
+    "--listItem-current":"",
+    "--toolbar-btn-bg":"",
+    "--toolbar-btn-hover":"",
+    "--scrollbar-track-color":"",
+    "--scrollbar-thumb-color":"",
+    "--scrollbar-thumb-color-hover":"",
+    "--divider-color":"",
+    "--context-menu-text":"",
+    "--context-menu-bg":"",
+
+};
 const collator = Intl.Collator(undefined, { numeric: true, sensitivity: "base" });
 window.app.betterSortOrder = collator.compare;
 window.electron = {

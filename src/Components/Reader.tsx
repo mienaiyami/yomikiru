@@ -117,7 +117,7 @@ const Reader = () => {
         //     return key;
         // };
 
-        const shortcutkey: { [e in shortcutCommand]?: { key1: string; key2: string } } = {};
+        const shortcutkey: { [e in shortcutCommands]?: { key1: string; key2: string } } = {};
         shortcuts.forEach((e) => {
             shortcutkey[e.command] = { key1: e.key1, key2: e.key2 };
         });

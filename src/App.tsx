@@ -302,15 +302,29 @@ const getDataFiles = () => {
         if (rawdata) {
             try {
                 const data: ThemeData[] = JSON.parse(rawdata);
-                if (!data[0].main["--body-bg"]) throw "Theme variable does not exist on theme.main";
+                // validate theme data
+                if(typeof data[0].main==="string" || !Array.isArray(data) ) throw "Theme variable does not exist on theme.main";
+                for(const prop in window.themeProps){
+                    let rewriteNeeded=false
+                    data.forEach(e=>{
+                        if(!e.main[(prop as ThemeDataMain)]){
+                            console.log(`${prop} does not exist on ${e.name} theme. Adding it.`)
+                            rewriteNeeded=true
+                            e.main[(prop as ThemeDataMain)]="#ffffff"
+                        }
+                    })
+                    console.log(data[2])
+                    if(rewriteNeeded) window.fs.writeFileSync(themesPath, JSON.stringify(data))
+                    if (!data[0].main["--body-bg"]) throw "Theme variable does not exist on theme.main";
+                }
                 themesMain.push(...data);
             } catch (err) {
                 window.dialog.customError({
-                    message: "Unable to parse " + themesPath + "\nMaking new themes.json...",
+                    message: "Unable to parse " + themesPath + "\nMaking new themes.json..."+"\n"+err,
                 });
                 console.error(err);
                 themesMain.push(...themesRaw);
-                window.fs.writeFileSync(themesPath, JSON.stringify(themesRaw));
+                // window.fs.writeFileSync(themesPath, JSON.stringify(themesRaw));
             }
             // if (JSON.parse(rawdata).length < 3) {
             //     window.fs.writeFileSync(themesPath, JSON.stringify(themes));

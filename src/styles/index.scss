@@ -33,6 +33,7 @@
 }
 .refrenceVariable {
     --body-bg: #ffffff;
+    --sideList-bg:var(--body-bg);
     --icon-color: #000c29;
     --font-color: #000c29;
     --font-select-color: #000c29;
@@ -727,6 +728,14 @@ body {
                                 border: none;
                             }
                         }
+                        .resetBtn{
+                            background-color: var(--input-bg);
+                            padding: 10px;
+                            font-size: 15px;
+                            align-items: center;
+                            border-radius: 3px;
+                            overflow: initial;
+                        }
                         label {
                             cursor: pointer;
                             background-color: var(--input-bg);
@@ -831,7 +840,7 @@ body {
                 background: var(--topBar-color);
             }
             .currentMangaList {
-                background: var(--topBar-color);
+                background: var(--sideList-bg);
                 height: calc(100vh - var(--titleBar-height));
                 width: var(--mangaListWidth);
                 min-width: 196px;
@@ -852,7 +861,7 @@ body {
                     cursor: pointer;
                     right: 0;
                     top: 50%;
-                    background-color: var(--topBar-color);
+                    background-color: var(--sideList-bg);
                     height: 100px;
                     border-radius: 0 5px 5px 0;
                     width: 20px;
@@ -868,7 +877,7 @@ body {
                     cursor: ew-resize;
                     right: 0;
                     top: 0;
-                    background-color: var(--topBar-color);
+                    background-color: var(--sideList-bg);
                     width: 10px;
                     height: 100%;
                     &:hover {
@@ -928,7 +937,7 @@ body {
                 --extender-size: 60px;
                 position: absolute;
                 color: var(--icon-color);
-                background-color: var(--topBar-color);
+                background-color: var(--body-bg);
                 right: 10px;
                 top: 0;
                 z-index: 100;
@@ -964,7 +973,7 @@ body {
                     border-radius: 0 0 0 20px;
                     font-size: 20px;
                     opacity: 0.5;
-                    background: var(--topBar-color);
+                    background: var(--sideList-bg);
                     &:hover,
                     &:active,
                     &:focus {
@@ -1035,6 +1044,10 @@ body {
                 position: relative;
                 flex-direction: column;
                 align-items: center;
+                
+                //! for original size image
+                overflow-x: unset;
+
                 // overflow: auto;
                 --varWidth: 100%;
                 --gapSize: 10px;

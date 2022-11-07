@@ -2,7 +2,7 @@ import { AppContext } from "../App";
 import { faGithub } from "@fortawesome/free-brands-svg-icons";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { ReactElement, useContext, useEffect, useLayoutEffect, useRef, useState } from "react";
-import { faLink, faPlus, faTimes, faTrash, faUnlink } from "@fortawesome/free-solid-svg-icons";
+import { faLink, faPlus, faSync, faTimes, faTrash, faUnlink } from "@fortawesome/free-solid-svg-icons";
 
 const Settings = (): ReactElement => {
     const {
@@ -25,7 +25,8 @@ const Settings = (): ReactElement => {
     const historyInputRef = useRef<HTMLInputElement>(null);
     const themeMakerRef = useRef<HTMLDivElement>(null);
     const themeNameInputRef = useRef<HTMLInputElement>(null);
-    const [mouseOnInput, setMouseOnInput] = useState(false);
+    // const [mouseOnInput, setMouseOnInput] = useState(false);
+
     useEffect(() => {
         if (isSettingOpen) {
             setTimeout(() => {
@@ -150,6 +151,13 @@ const Settings = (): ReactElement => {
         // todo : make similar system for rawColorWhole
         return (
             <td>
+                <button className="resetBtn" onClick={()=>{
+                    setRawColor(color)
+                    setOpacity(color.length > 7 ? parseInt(color.substring(7), 16) / 2.55 : 100)
+                    setRawColorWhole(color)
+                }}>
+                    <FontAwesomeIcon icon={faSync} />
+                </button>
                 <label className={checked ? "selected" : ""}>
                     <input
                         type="checkbox"

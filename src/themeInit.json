@@ -26,7 +26,8 @@
             "--scrollbar-thumb-color-hover": "#878787",
             "--divider-color": "#6b6b6b",
             "--context-menu-text": "var(--font-color)",
-            "--context-menu-bg": "var(--color-tertiary)"
+            "--context-menu-bg": "var(--color-tertiary)",
+            "--sideList-bg": "var(--body-bg)"
         }
     },
     {
@@ -56,7 +57,8 @@
             "--scrollbar-thumb-color-hover": "#878787",
             "--divider-color": "#3b3a3e",
             "--context-menu-text": "var(--font-color)",
-            "--context-menu-bg": "var(--color-tertiary)"
+            "--context-menu-bg": "var(--color-tertiary)",
+            "--sideList-bg": "var(--body-bg)"
         }
     },
     {
@@ -86,7 +88,8 @@
             "--scrollbar-thumb-color-hover": "#709bff",
             "--divider-color": "#b6ccfe",
             "--context-menu-text": "var(--font-color)",
-            "--context-menu-bg": "var(--color-tertiary)"
+            "--context-menu-bg": "var(--color-tertiary)",
+            "--sideList-bg": "var(--body-bg)"
         }
     }
 ]
