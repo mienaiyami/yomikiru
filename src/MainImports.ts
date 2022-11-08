@@ -39,6 +39,22 @@ declare global {
         | "--divider-color"
         | "--context-menu-text"
         | "--context-menu-bg";
+    //! edit window.shortcutsFunctions as well
+    type ShortcutCommands =
+        | "navToPage"
+        | "toggleZenMode"
+        | "readerSettings"
+        | "nextChapter"
+        | "prevChapter"
+        | "bookmark"
+        | "sizePlus"
+        | "sizeMinus"
+        | "largeScroll"
+        | "nextPage"
+        | "prevPage"
+        | "scrollDown"
+        | "scrollUp"
+        | "showHidePageNumberInZen";
     interface Window {
         electron: {
             app: typeof app;
@@ -54,7 +70,8 @@ declare global {
         supportedFormats: string[];
         path: typeof path;
         fs: typeof fs;
-        themeProps: {[e in ThemeDataMain]: string};
+        themeProps: { [e in ThemeDataMain]: string };
+        shortcutsFunctions: ShortcutSchema[];
         app: {
             betterSortOrder: (x: string, y: string) => number;
             titleBarHeight: number;
@@ -121,7 +138,7 @@ declare global {
         isHistory: boolean;
     }
     interface ShortcutSchema {
-        command: shortcutCommands;
+        command: ShortcutCommands;
         name: string;
         key1: string;
         key2: string;
@@ -155,21 +172,6 @@ declare global {
             gapSize: number;
         };
     }
-
-    type shortcutCommands =
-        | "navToPage"
-        | "toggleZenMode"
-        | "readerSettings"
-        | "nextChapter"
-        | "prevChapter"
-        | "bookmark"
-        | "sizePlus"
-        | "sizeMinus"
-        | "largeScroll"
-        | "nextPage"
-        | "prevPage"
-        | "scrollDown"
-        | "scrollUp";
 }
 export const settingValidatorData = {
     theme: "string",
@@ -195,34 +197,119 @@ window.path = path;
 window.fs = fs;
 window.supportedFormats = [".jpg", ".jpeg", ".png", ".webp", ".svg", ".apng", ".gif", "avif"];
 window.themeProps = {
-    "--body-bg":"",
-    "--sideList-bg":"",
-    "--icon-color":"",
-    "--font-color":"",
-    "--font-select-color":"",
-    "--font-select-bg":"",
-    "--color-primary":"",
-    "--color-secondary":"",
-    "--color-tertiary":"",
-    "--topBar-color":"",
-    "--topBar-hover-color":"",
-    "--input-bg":"",
-    "--btn-color1":"",
-    "--btn-color2":"",
-    "--listItem-bg-color":"",
-    "--listItem-hover-color":"",
-    "--listItem-alreadyRead-color":"",
-    "--listItem-current":"",
-    "--toolbar-btn-bg":"",
-    "--toolbar-btn-hover":"",
-    "--scrollbar-track-color":"",
-    "--scrollbar-thumb-color":"",
-    "--scrollbar-thumb-color-hover":"",
-    "--divider-color":"",
-    "--context-menu-text":"",
-    "--context-menu-bg":"",
-
+    "--body-bg": "",
+    "--sideList-bg": "",
+    "--icon-color": "",
+    "--font-color": "",
+    "--font-select-color": "",
+    "--font-select-bg": "",
+    "--color-primary": "",
+    "--color-secondary": "",
+    "--color-tertiary": "",
+    "--topBar-color": "",
+    "--topBar-hover-color": "",
+    "--input-bg": "",
+    "--btn-color1": "",
+    "--btn-color2": "",
+    "--listItem-bg-color": "",
+    "--listItem-hover-color": "",
+    "--listItem-alreadyRead-color": "",
+    "--listItem-current": "",
+    "--toolbar-btn-bg": "",
+    "--toolbar-btn-hover": "",
+    "--scrollbar-track-color": "",
+    "--scrollbar-thumb-color": "",
+    "--scrollbar-thumb-color-hover": "",
+    "--divider-color": "",
+    "--context-menu-text": "",
+    "--context-menu-bg": "",
 };
+window.shortcutsFunctions = [
+    {
+        command: "navToPage",
+        name: "Search Page Number",
+        key1: "f",
+        key2: "",
+    },
+    {
+        command: "toggleZenMode",
+        name: "Toggle Zen Mode",
+        key1: "`",
+        key2: "",
+    },
+    {
+        command: "readerSettings",
+        name: "Open/Close Reader Settings",
+        key1: "q",
+        key2: "",
+    },
+    {
+        command: "nextChapter",
+        name: "Next Chapter",
+        key1: "]",
+        key2: "",
+    },
+    {
+        command: "prevChapter",
+        name: "Previous Chapter",
+        key1: "[",
+        key2: "",
+    },
+    {
+        command: "bookmark",
+        name: "Bookmark",
+        key1: "b",
+        key2: "",
+    },
+    {
+        command: "sizePlus",
+        name: "Increase image size",
+        key1: "=",
+        key2: "+",
+    },
+    {
+        command: "sizeMinus",
+        name: "Decrease image size",
+        key1: "-",
+        key2: "",
+    },
+    {
+        command: "largeScroll",
+        name: "Bigger Scroll (Shift+key for reverse)",
+        key1: " ",
+        key2: "",
+    },
+    {
+        command: "scrollUp",
+        name: "Scroll Up",
+        key1: "w",
+        key2: "ArrowUp",
+    },
+    {
+        command: "scrollDown",
+        name: "Scroll Down",
+        key1: "s",
+        key2: "ArrowDown",
+    },
+    {
+        command: "prevPage",
+        name: "Previous Page",
+        key1: "a",
+        key2: "ArrowLeft",
+    },
+    {
+        command: "nextPage",
+        name: "Next Page",
+        key1: "d",
+        key2: "ArrowRight",
+    },
+    {
+        command: "showHidePageNumberInZen",
+        name: "Show/Hide Page number in Zen Mode",
+        key1: "1",
+        key2: "",
+    },
+];
 const collator = Intl.Collator(undefined, { numeric: true, sensitivity: "base" });
 window.app.betterSortOrder = collator.compare;
 window.electron = {

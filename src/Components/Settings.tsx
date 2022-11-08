@@ -151,11 +151,14 @@ const Settings = (): ReactElement => {
         // todo : make similar system for rawColorWhole
         return (
             <td>
-                <button className="resetBtn" onClick={()=>{
-                    setRawColor(color)
-                    setOpacity(color.length > 7 ? parseInt(color.substring(7), 16) / 2.55 : 100)
-                    setRawColorWhole(color)
-                }}>
+                <button
+                    className="resetBtn"
+                    onClick={() => {
+                        setRawColor(color);
+                        setOpacity(color.length > 7 ? parseInt(color.substring(7), 16) / 2.55 : 100);
+                        setRawColorWhole(color);
+                    }}
+                >
                     <FontAwesomeIcon icon={faSync} />
                 </button>
                 <label className={checked ? "selected" : ""}>
@@ -595,7 +598,26 @@ const Settings = (): ReactElement => {
                         <li>Zen Mode: hide ui and only show images.</li>
                     </ul>
                 </div>
-                <h1>Shortcut Keys</h1>
+                <h1>
+                    Shortcut Keys{" "}
+                    <button
+                        onClick={() => {
+                            window.dialog
+                                .confirm({
+                                    title: "Confirm",
+                                    message: "Reset Shortcuts to default?",
+                                    noOption: false,
+                                })
+                                .then((res) => {
+                                    if (res.response === 0) {
+                                        setShortcuts(window.shortcutsFunctions);
+                                    }
+                                });
+                        }}
+                    >
+                        <FontAwesomeIcon icon={faSync} />
+                    </button>
+                </h1>
                 <div className="shortcutKey">
                     <p>
                         BackSpace to remove. Reserved keys {reservedKeys.join(", ")}. Changes apply on

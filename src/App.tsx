@@ -183,144 +183,62 @@ const getDataFiles = () => {
         window.fs.writeFileSync(historyPath, "[]");
     }
 
-    const shortcutSchema: ShortcutSchema[] = [
-        {
-            command: "navToPage",
-            name: "Search Page Number",
-            key1: "f",
-            key2: "",
-        },
-        {
-            command: "toggleZenMode",
-            name: "Toggle Zen Mode",
-            key1: "`",
-            key2: "",
-        },
-        {
-            command: "readerSettings",
-            name: "Open/Close Reader Settings",
-            key1: "q",
-            key2: "",
-        },
-        {
-            command: "nextChapter",
-            name: "Next Chapter",
-            key1: "]",
-            key2: "",
-        },
-        {
-            command: "prevChapter",
-            name: "Previous Chapter",
-            key1: "[",
-            key2: "",
-        },
-        {
-            command: "bookmark",
-            name: "Bookmark",
-            key1: "b",
-            key2: "",
-        },
-        {
-            command: "sizePlus",
-            name: "Increase image size",
-            key1: "=",
-            key2: "+",
-        },
-        {
-            command: "sizeMinus",
-            name: "Decrease image size",
-            key1: "-",
-            key2: "",
-        },
-        {
-            command: "largeScroll",
-            name: "Bigger Scroll (Shift+key for reverse)",
-            key1: " ",
-            key2: "",
-        },
-        {
-            command: "scrollUp",
-            name: "Scroll Up",
-            key1: "w",
-            key2: "ArrowUp",
-        },
-        {
-            command: "scrollDown",
-            name: "Scroll Down",
-            key1: "s",
-            key2: "ArrowDown",
-        },
-        {
-            command: "prevPage",
-            name: "Previous Page",
-            key1: "a",
-            key2: "ArrowLeft",
-        },
-        {
-            command: "nextPage",
-            name: "Next Page",
-            key1: "d",
-            key2: "ArrowRight",
-        },
-    ];
+    // shortcuts
     if (window.fs.existsSync(shortcutsPath)) {
         const rawdata = window.fs.readFileSync(shortcutsPath, "utf8");
         if (rawdata) {
             try {
-                const data = JSON.parse(rawdata);
+                const data: ShortcutSchema[] = JSON.parse(rawdata);
+                // check if shortcut key is missing in shortcuts.json, if so then add
+                const shortcutKeyEntries = data.map((e) => e.command);
+                const shortcutKeyOriginal = window.shortcutsFunctions.map((e) => e.command);
+                let rewriteNeeded = false;
+                shortcutKeyOriginal.forEach((e) => {
+                    if (!shortcutKeyEntries.includes(e)) {
+                        console.log(`Function ${e} does not exist in shortcuts.json. Adding it.`);
+                        rewriteNeeded = true;
+                        data.push(window.shortcutsFunctions.find((a) => a.command === e)!);
+                    }
+                });
+                if (rewriteNeeded) window.fs.writeFileSync(shortcutsPath, JSON.stringify(data));
                 shortcutsInit.push(...data);
             } catch (err) {
                 window.dialog.customError({
                     message: "Unable to parse " + shortcutsPath + "\nMaking new shortcuts.json...",
                 });
                 console.error(err);
-                window.fs.writeFileSync(shortcutsPath, JSON.stringify(shortcutSchema));
-                shortcutsInit.push(...shortcutSchema);
+                window.fs.writeFileSync(shortcutsPath, JSON.stringify(window.shortcutsFunctions));
+                shortcutsInit.push(...window.shortcutsFunctions);
             }
         }
     } else {
-        window.fs.writeFileSync(shortcutsPath, JSON.stringify(shortcutSchema));
-        shortcutsInit.push(...shortcutSchema);
+        window.fs.writeFileSync(shortcutsPath, JSON.stringify(window.shortcutsFunctions));
+        shortcutsInit.push(...window.shortcutsFunctions);
     }
-
-    // const themes = [
-    //     {
-    //         name: "theme1",
-    //         main: "--body-bg: #262626;--icon-color: #fff8f0;--font-color: #fff8f0;--font-select-color: #fff8f0;--font-select-bg: #000;--color-primary: #262626;--color-secondary: #8f8f8f;--color-tertiary: #1f1f1f;--topBar-color: #1f1f1f;--topBar-hover-color: #5c5c5c;--input-bg: #383838;--btn-color1: #363636;--btn-color2: #6b6b6b;--listItem-bg-color: #00000000;--listItem-hover-color: #5c5c5c;--listItem-alreadyRead-color: #494c5a;--listItem-current: #30425a;--toolbar-btn-bg: #1f1f1f;--toolbar-btn-hover: #6b6b6b;--scrollbar-track-color: #00000000;--scrollbar-thumb-color: #545454;--scrollbar-thumb-color-hover: #878787;--divider-color: #6b6b6b;--context-menu-text: var(--font-color);--context-menu-bg: var(--color-tertiary);",
-    //     },
-    //     {
-    //         name: "theme2",
-    //         main: "--body-bg: #1e1e24;--icon-color: #fff8f0;--font-color: #fff8f0;--font-select-color: #fff8f0;--font-select-bg: #000;--color-primary: #111e4b;--color-secondary: #8f8f8f;--color-tertiary: #000000;--topBar-color: #17171c;--topBar-hover-color: #62636e;--input-bg: #3b3a3e;--btn-color1: #3b3a3e;--btn-color2: #62636e;--listItem-bg-color: #00000000;--listItem-hover-color: #55535b;--listItem-alreadyRead-color: #37343f;--listItem-current: #585a70;--toolbar-btn-bg: var(--topBar-color);--toolbar-btn-hover: var(--topBar-hover-color);--scrollbar-track-color: #00000000;--scrollbar-thumb-color: #545454;--scrollbar-thumb-color-hover: #878787;--divider-color: #3b3a3e;--context-menu-text: var(--font-color);--context-menu-bg: var(--color-tertiary);",
-    //     },
-    //     {
-    //         name: "theme3",
-    //         main: "--body-bg: #ffffff;--icon-color: #000c29;--font-color: #000c29;--font-select-color: #000c29;--font-select-bg: #fff8f0;--color-primary: #487fff;--color-secondary: #1f62ff;--color-tertiary: #93b4ff;--topBar-color: #e0e0e0;--topBar-hover-color: #b6ccfe;--input-bg: #b6ccfe;--btn-color1: #b6ccfe;--btn-color2: #709bff;--listItem-bg-color: #00000000;--listItem-hover-color: #b6ccfe;--listItem-alreadyRead-color: #d0dcff;--listItem-current: #709bff;--toolbar-btn-bg: var(--topBar-color);--toolbar-btn-hover: var(--topBar-hover-color);--scrollbar-track-color: #b6ccfe00;--scrollbar-thumb-color: #b6ccfe;--scrollbar-thumb-color-hover: #709bff;--divider-color: #b6ccfe;--context-menu-text: var(--font-color);--context-menu-bg: var(--color-tertiary);",
-    //     },
-    // ];
+    // theme
     if (window.fs.existsSync(themesPath)) {
         const rawdata = window.fs.readFileSync(themesPath, "utf8");
         if (rawdata) {
             try {
                 const data: ThemeData[] = JSON.parse(rawdata);
                 // validate theme data
-                if(typeof data[0].main==="string" || !Array.isArray(data) ) throw "Theme variable does not exist on theme.main";
-                for(const prop in window.themeProps){
-                    let rewriteNeeded=false
-                    data.forEach(e=>{
-                        if(!e.main[(prop as ThemeDataMain)]){
-                            console.log(`${prop} does not exist on ${e.name} theme. Adding it.`)
-                            rewriteNeeded=true
-                            e.main[(prop as ThemeDataMain)]="#ffffff"
+                if (typeof data[0].main === "string" || !Array.isArray(data))
+                    throw "Theme variable does not exist on theme.main";
+                for (const prop in window.themeProps) {
+                    let rewriteNeeded = false;
+                    data.forEach((e) => {
+                        if (!e.main[prop as ThemeDataMain]) {
+                            console.log(`${prop} does not exist on ${e.name} theme. Adding it.`);
+                            rewriteNeeded = true;
+                            e.main[prop as ThemeDataMain] = "#ffffff";
                         }
-                    })
-                    console.log(data[2])
-                    if(rewriteNeeded) window.fs.writeFileSync(themesPath, JSON.stringify(data))
-                    if (!data[0].main["--body-bg"]) throw "Theme variable does not exist on theme.main";
+                    });
+                    if (rewriteNeeded) window.fs.writeFileSync(themesPath, JSON.stringify(data));
                 }
                 themesMain.push(...data);
             } catch (err) {
                 window.dialog.customError({
-                    message: "Unable to parse " + themesPath + "\nMaking new themes.json..."+"\n"+err,
+                    message: "Unable to parse " + themesPath + "\nMaking new themes.json..." + "\n" + err,
                 });
                 console.error(err);
                 themesMain.push(...themesRaw);
