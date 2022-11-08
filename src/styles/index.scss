@@ -68,6 +68,9 @@ body.zenMode {
     #topBar {
         display: none;
     }
+    #app #reader .zenModePageNumber.show{
+        display: block;
+    }
     #app {
         top: 0;
         height: 100%;
@@ -838,6 +841,17 @@ body {
             &::-webkit-scrollbar-track,
             &::-webkit-scrollbar-corner {
                 background: var(--topBar-color);
+            }
+            .zenModePageNumber{
+                position: fixed;
+                display: none;
+                z-index: 100;
+                right: 0;
+                padding: 5px;
+                font-size: 30px;
+                color: var(--font-color);
+                border-bottom-left-radius: 10px;
+                background-color: var(--body-bg);
             }
             .currentMangaList {
                 background: var(--sideList-bg);

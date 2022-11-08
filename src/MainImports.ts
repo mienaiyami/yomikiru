@@ -170,6 +170,7 @@ declare global {
             sideListWidth: number;
             widthClamped: boolean;
             gapSize: number;
+            showPageNumberInZenMode: boolean;
         };
     }
 }
@@ -190,6 +191,7 @@ export const settingValidatorData = {
         sideListWidth: "number",
         widthClamped: true,
         gapSize: "number",
+        showPageNumberInZenMode: "boolean",
     },
 };
 

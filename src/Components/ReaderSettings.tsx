@@ -262,6 +262,21 @@ const ReaderSettings = ({
                                 }}
                             />
                         </label>
+                        <label
+                            className={appSettings.readerSettings.showPageNumberInZenMode ? "optionSelected" : ""}
+                        >
+                            <input
+                                type="checkbox"
+                                checked={appSettings.readerSettings.showPageNumberInZenMode}
+                                onChange={(e) => {
+                                    setAppSettings((init) => {
+                                        init.readerSettings.showPageNumberInZenMode = e.currentTarget.checked;
+                                        return { ...init };
+                                    });
+                                }}
+                            />
+                            <p>Show Page Number in Zen Mode.</p>
+                        </label>
                     </div>
                 </div>
             </div>

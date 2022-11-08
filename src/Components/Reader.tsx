@@ -23,6 +23,7 @@ const Reader = () => {
         setLoadingMangaPercent,
         // currentPageNumber,
         currentImageRow,
+        currentPageNumber,
         setCurrentPageNumber,
         setCurrentImageRow,
         pageNumChangeDisabled,
@@ -486,6 +487,13 @@ const Reader = () => {
                 <button ref={navToPageButtonRef} onClick={() => pageNumberInputRef.current?.focus()}>
                     Nav to page number
                 </button>
+            </div>
+            <div
+                className={
+                    "zenModePageNumber " + (appSettings.readerSettings.showPageNumberInZenMode ? "show" : "")
+                }
+            >
+                {currentPageNumber}/{mangaInReader?.pages}
             </div>
             <section
                 ref={imgContRef}

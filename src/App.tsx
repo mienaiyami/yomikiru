@@ -35,6 +35,7 @@ const makeSettingsJson = (locations?: string[]) => {
             sideListWidth: 450,
             widthClamped: true,
             gapSize: 10,
+            showPageNumberInZenMode: true,
         },
     };
     if (locations) {
