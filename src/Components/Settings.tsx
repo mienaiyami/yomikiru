@@ -94,7 +94,7 @@ const Settings = (): ReactElement => {
                 e.preventDefault();
                 e.stopPropagation();
                 if (reservedKeys.includes(e.key)) {
-                    console.warn(e.key + " is reserved key.");
+                    window.logger.warn(e.key + " is reserved key.");
                     e.currentTarget.focus();
                     return;
                 }
@@ -109,8 +109,10 @@ const Settings = (): ReactElement => {
                 }
                 const dupIndex = shortcuts.findIndex((elem) => elem.key1 === e.key || elem.key2 === e.key);
                 if (dupIndex >= 0) {
-                    console.warn(`${e.key} key already bind to "${shortcuts[dupIndex].name}"`);
-                    window.dialog.warn({ message: `${e.key} key already bind to "${shortcuts[dupIndex].name}".` });
+                    window.logger.warn(`"${e.key}" key already bind to "${shortcuts[dupIndex].name}"`);
+                    window.dialog.warn({
+                        message: `"${e.key}" key already bind to "${shortcuts[dupIndex].name}".`,
+                    });
                     return;
                 }
                 window.logger.log(`Setting shortcut ${shortcuts[i].command}.${which} to ${e.key}`);

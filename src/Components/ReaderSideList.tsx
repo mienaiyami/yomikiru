@@ -89,7 +89,7 @@ const ReaderSideList = ({
             const dir = mangaInReader.link.replace(mangaInReader.chapterName, "");
             window.fs.readdir(dir, (err, files) => {
                 if (err) {
-                    console.error(err);
+                    window.logger.error(err);
                     window.dialog.nodeError(err);
                     return;
                 }
@@ -117,7 +117,7 @@ const ReaderSideList = ({
                                 }
                             })
                             .catch((err) => {
-                                console.error(err);
+                                window.logger.error(err);
                                 responseCompleted++;
                                 if (responseCompleted >= validFile) {
                                     setChapterData(

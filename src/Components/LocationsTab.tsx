@@ -33,7 +33,7 @@ const LocationsTab = forwardRef(
                 setIsLoadingFile(true);
                 window.fs.readdir(currentLink, (err, files) => {
                     if (err) {
-                        console.error(err);
+                        window.logger.error(err);
                         window.dialog.nodeError(err);
                         return;
                     }

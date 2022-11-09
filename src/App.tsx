@@ -6,6 +6,8 @@ import useTheme from "./hooks/useTheme";
 import { settingValidatorData } from "./MainImports";
 import themesRaw from "./themeInit.json";
 
+window.logger.log("New window opening...");
+
 const userDataURL = window.electron.app.getPath("userData");
 const settingsPath = window.path.join(userDataURL, "settings.json");
 const bookmarksPath = window.path.join(userDataURL, "bookmarks.json");
@@ -42,7 +44,7 @@ const makeSettingsJson = (locations?: string[]) => {
         const settingsDataSaved: appsettings = JSON.parse(window.fs.readFileSync(settingsPath, "utf-8"));
         locations.forEach((e) => {
             if (!(e in settingsDataSaved)) {
-                console.info(e, "missing from settings,adding new...");
+                window.logger.log(`"${e}"`, "missing from settings, adding new...");
                 // eslint-disable-next-line @typescript-eslint/ban-ts-comment
                 // @ts-ignore
                 // settingsDataSaved[e]=settingsDataNew[e]
@@ -64,7 +66,7 @@ try {
     JSON.parse(window.fs.readFileSync(settingsPath, "utf-8"));
 } catch (err) {
     window.dialog.customError({ message: "Unable to parse " + settingsPath + "\n" + "Writing new settings.json" });
-    console.error(err);
+    window.logger.error(err);
     makeSettingsJson();
 }
 //! this function have a lot of @ts-ignore
@@ -142,7 +144,7 @@ function isSettingsValid(): { isValid: boolean; location: string[] } {
 }
 if (!isSettingsValid().isValid) {
     window.dialog.customError({ message: `Some Settings in ${settingsPath} invalid. Re-writing some settings.` });
-    console.warn(`Some Settings in ${settingsPath} invalid. Re-writing some settings.`);
+    window.logger.warn(`Some Settings in ${settingsPath} invalid. Re-writing some settings.`);
     window.logger.log(isSettingsValid());
     makeSettingsJson(isSettingsValid().location);
 }
@@ -158,7 +160,7 @@ const getDataFiles = () => {
                 window.dialog.customError({
                     message: "Unable to parse " + bookmarksPath + "\nMaking new bookmarks.json...",
                 });
-                console.error(err);
+                window.logger.error(err);
                 window.fs.writeFileSync(bookmarksPath, "[]");
             }
         }
@@ -176,7 +178,7 @@ const getDataFiles = () => {
                 window.dialog.customError({
                     message: "Unable to parse " + historyPath + "\nMaking new history.json...",
                 });
-                console.error(err);
+                window.logger.error(err);
                 window.fs.writeFileSync(historyPath, "[]");
             }
         }
@@ -207,7 +209,7 @@ const getDataFiles = () => {
                 window.dialog.customError({
                     message: "Unable to parse " + shortcutsPath + "\nMaking new shortcuts.json...",
                 });
-                console.error(err);
+                window.logger.error(err);
                 window.fs.writeFileSync(shortcutsPath, JSON.stringify(window.shortcutsFunctions));
                 shortcutsInit.push(...window.shortcutsFunctions);
             }
@@ -241,7 +243,7 @@ const getDataFiles = () => {
                 window.dialog.customError({
                     message: "Unable to parse " + themesPath + "\nMaking new themes.json..." + "\n" + err,
                 });
-                console.error(err);
+                window.logger.error(err);
                 themesMain.push(...themesRaw);
                 // window.fs.writeFileSync(themesPath, JSON.stringify(themesRaw));
             }
@@ -370,7 +372,7 @@ const App = (): ReactElement => {
     ): void => {
         window.fs.readdir(link, (err, files) => {
             if (err) {
-                console.error(err);
+                window.logger.error(err);
                 window.dialog.nodeError(err);
                 callback(false);
                 return;
@@ -538,7 +540,7 @@ const App = (): ReactElement => {
         if (firstRendered) {
             window.fs.writeFile(bookmarksPath, JSON.stringify(bookmarks), (err) => {
                 if (err) {
-                    console.error(err);
+                    window.logger.error(err);
                     window.dialog.nodeError(err);
                 }
             });
@@ -548,7 +550,7 @@ const App = (): ReactElement => {
         if (firstRendered) {
             window.fs.writeFile(historyPath, JSON.stringify(history), (err) => {
                 if (err) {
-                    console.error(err);
+                    window.logger.error(err);
                     window.dialog.nodeError(err);
                 }
             });
@@ -558,7 +560,7 @@ const App = (): ReactElement => {
         if (firstRendered) {
             window.fs.writeFile(shortcutsPath, JSON.stringify(shortcuts), (err) => {
                 if (err) {
-                    console.error(err);
+                    window.logger.error(err);
                     window.dialog.nodeError(err);
                 }
             });
@@ -576,7 +578,7 @@ const App = (): ReactElement => {
         if (firstRendered) {
             window.fs.writeFile(themesPath, JSON.stringify(allThemes), (err) => {
                 if (err) {
-                    console.error(err);
+                    window.logger.error(err);
                     window.dialog.nodeError(err);
                 }
             });
@@ -586,7 +588,7 @@ const App = (): ReactElement => {
         if (firstRendered) {
             window.fs.writeFile(settingsPath, JSON.stringify(appSettings), (err) => {
                 if (err) {
-                    console.error(err);
+                    window.logger.error(err);
                     window.dialog.nodeError(err);
                 }
             });
