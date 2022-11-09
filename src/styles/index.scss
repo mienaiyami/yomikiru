@@ -848,10 +848,11 @@ body {
                 display: none;
                 z-index: 100;
                 right: 0;
+                bottom: 0;
                 padding: 5px;
                 font-size: 30px;
                 color: var(--font-color);
-                border-bottom-left-radius: 10px;
+                border-top-left-radius: 10px;
                 background-color: var(--zenModePageIndicator-bg);
             }
             .currentMangaList {

@@ -518,6 +518,20 @@ const Settings = (): ReactElement => {
                         </div>
                     </div>
                     <div className="settingItem">
+                        <div className="name">Home:</div>
+                        <div className="current">
+                            <button
+                                onClick={() =>
+                                    window.electron.shell.openExternal(
+                                        "https://github.com/mienaiyami/react-ts-offline-manga-reader/"
+                                    )
+                                }
+                            >
+                                <FontAwesomeIcon icon={faGithub} /> Home Page
+                            </button>
+                        </div>
+                    </div>
+                    <div className="settingItem">
                         <div className="name">Issues/Feature Request :</div>
                         <div className="current">
                             <button

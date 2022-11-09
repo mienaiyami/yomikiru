@@ -7,7 +7,15 @@ import fetch from "electron-fetch";
 import crossZip from "cross-zip";
 import logger from "electron-log";
 
-const fileToKeep = ["bookmarks.json", "history.json", "settings.json", "themes.json","shortcuts.json", "logs", "main.log"];
+const fileToKeep = [
+    "bookmarks.json",
+    "history.json",
+    "settings.json",
+    "themes.json",
+    "shortcuts.json",
+    "logs",
+    "main.log",
+];
 
 const downloadLink = "https://github.com/mienaiyami/react-ts-offline-manga-reader/releases/download/v";
 const checkForUpdate = async (windowId: number, promptAfterCheck = false) => {
@@ -45,7 +53,17 @@ const checkForUpdate = async (windowId: number, promptAfterCheck = false) => {
                 if (response.response === 0) downloadUpdates(latestVersion.join("."), windowId);
                 if (response.response === 1) {
                     downloadUpdates(latestVersion.join("."), windowId);
-                    shell.openExternal("https://github.com/mienaiyami/react-ts-offline-manga-reader/releases");
+                    // shell.openExternal("https://github.com/mienaiyami/react-ts-offline-manga-reader/releases");
+
+                    const newWindow = new BrowserWindow({
+                        width: 1200,
+                        height: 800,
+                        minWidth: 940,
+                        minHeight: 560,
+                        backgroundColor: "#272727",
+                    });
+                    newWindow.loadURL("https://github.com/mienaiyami/react-ts-offline-manga-reader/releases");
+                    newWindow.setMenuBarVisibility(false);
                 }
             });
         return;
