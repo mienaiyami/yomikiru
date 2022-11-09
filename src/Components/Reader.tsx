@@ -201,6 +201,14 @@ const Reader = () => {
                         case shortcutkey.scrollUp?.key2:
                             scrollReader(-1);
                             break;
+                        case shortcutkey.showHidePageNumberInZen?.key1:
+                        case shortcutkey.showHidePageNumberInZen?.key2:
+                            setAppSettings((init) => {
+                                init.readerSettings.showPageNumberInZenMode =
+                                    !init.readerSettings.showPageNumberInZenMode;
+                                return { ...init };
+                            });
+                            break;
                         default:
                             break;
                     }

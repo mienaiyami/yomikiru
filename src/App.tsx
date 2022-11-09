@@ -231,7 +231,7 @@ const getDataFiles = () => {
                         if (!e.main[prop as ThemeDataMain]) {
                             console.log(`${prop} does not exist on ${e.name} theme. Adding it.`);
                             rewriteNeeded = true;
-                            e.main[prop as ThemeDataMain] = "#ffffff";
+                            e.main[prop as ThemeDataMain] = "#000000";
                         }
                     });
                     if (rewriteNeeded) window.fs.writeFileSync(themesPath, JSON.stringify(data));
@@ -263,10 +263,15 @@ if (!themesMain.map((e) => e.name).includes(settings.theme)) {
             type: "error",
             title: "Error",
             message: `Theme "${settings.theme}" does not exist. Try fixing or deleting theme.json and settings.json in "userdata" folder.(at "%appdata%/Manga Reader/" or in main folder on Portable version)`,
-            buttons: ["Ok", "Open Location"],
+            buttons: ["Ok", "Temporary fix", "Open Location"],
         })
         .then((res) => {
             if (res.response === 1) {
+                settings.theme = themesMain[0].name;
+                window.fs.writeFileSync(settingsPath, JSON.stringify(settings));
+                window.location.reload();
+            }
+            if (res.response === 2) {
                 window.electron.shell.showItemInFolder(themesPath);
             }
         });

@@ -58,6 +58,7 @@
     --divider-color: #b6ccfe;
     --context-menu-text: var(--font-color);
     --context-menu-bg: var(--color-tertiary);
+    --zenModePageIndicator-bg:var(var(--body-bg))
 }
 body.zenMode {
     ::-webkit-scrollbar {
@@ -851,7 +852,7 @@ body {
                 font-size: 30px;
                 color: var(--font-color);
                 border-bottom-left-radius: 10px;
-                background-color: var(--body-bg);
+                background-color: var(--zenModePageIndicator-bg);
             }
             .currentMangaList {
                 background: var(--sideList-bg);

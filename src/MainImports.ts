@@ -38,7 +38,8 @@ declare global {
         | "--scrollbar-thumb-color-hover"
         | "--divider-color"
         | "--context-menu-text"
-        | "--context-menu-bg";
+        | "--context-menu-bg"
+        | "--zenModePageIndicator-bg";
     //! edit window.shortcutsFunctions as well
     type ShortcutCommands =
         | "navToPage"
@@ -225,6 +226,7 @@ window.themeProps = {
     "--divider-color": "",
     "--context-menu-text": "",
     "--context-menu-bg": "",
+    "--zenModePageIndicator-bg": "",
 };
 window.shortcutsFunctions = [
     {

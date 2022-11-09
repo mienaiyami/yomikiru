@@ -46,10 +46,14 @@ const Settings = (): ReactElement => {
     };
     const saveTheme = () => {
         let name = "";
-        if (
-            themeNameInputRef.current!.value === "" ||
-            allThemes.map((e) => e.name).includes(themeNameInputRef.current!.value)
-        ) {
+        if (allThemes.map((e) => e.name).includes(themeNameInputRef.current!.value)) {
+            window.dialog.customError({
+                title: "Error",
+                message: `Theme name "${themeNameInputRef.current!.value}" already exist, choose something else.`,
+            });
+            return;
+        }
+        if (themeNameInputRef.current!.value === "") {
             name = randomString(6);
         } else name = themeNameInputRef.current!.value;
         const props: ThemeDataMain[] = [...themeMakerRef.current!.getElementsByClassName("newThemeMakerProp")].map(
