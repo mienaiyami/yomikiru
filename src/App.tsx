@@ -143,7 +143,7 @@ function isSettingsValid(): { isValid: boolean; location: string[] } {
 if (!isSettingsValid().isValid) {
     window.dialog.customError({ message: `Some Settings in ${settingsPath} invalid. Re-writing some settings.` });
     console.warn(`Some Settings in ${settingsPath} invalid. Re-writing some settings.`);
-    console.log(isSettingsValid());
+    window.logger.log(isSettingsValid());
     makeSettingsJson(isSettingsValid().location);
 }
 const settings: appsettings = JSON.parse(window.fs.readFileSync(settingsPath, "utf-8"));
@@ -196,7 +196,7 @@ const getDataFiles = () => {
                 let rewriteNeeded = false;
                 shortcutKeyOriginal.forEach((e) => {
                     if (!shortcutKeyEntries.includes(e)) {
-                        console.log(`Function ${e} does not exist in shortcuts.json. Adding it.`);
+                        window.logger.log(`Function ${e} does not exist in shortcuts.json. Adding it.`);
                         rewriteNeeded = true;
                         data.push(window.shortcutsFunctions.find((a) => a.command === e)!);
                     }
@@ -229,7 +229,7 @@ const getDataFiles = () => {
                     let rewriteNeeded = false;
                     data.forEach((e) => {
                         if (!e.main[prop as ThemeDataMain]) {
-                            console.log(`${prop} does not exist on ${e.name} theme. Adding it.`);
+                            window.logger.log(`${prop} does not exist on ${e.name} theme. Adding it.`);
                             rewriteNeeded = true;
                             e.main[prop as ThemeDataMain] = "#000000";
                         }

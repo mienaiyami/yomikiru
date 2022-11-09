@@ -1,5 +1,7 @@
 import { app, dialog, getCurrentWindow, clipboard, nativeImage, shell, BrowserWindow } from "@electron/remote";
 import { ipcRenderer, webFrame } from "electron";
+import log from "electron-log";
+log.transports.file.resolvePath = () => path.join(app.getPath("userData"), "logs/renderer.log");
 /*//! i know its dangerous but its offline app and i was unable to get BrowserWindow to work
   //! in renderer with contextBridge from preload
  */
@@ -68,6 +70,7 @@ declare global {
             nativeImage: typeof nativeImage;
             webFrame: typeof webFrame;
         };
+        logger: typeof log;
         supportedFormats: string[];
         path: typeof path;
         fs: typeof fs;
@@ -314,6 +317,7 @@ window.shortcutsFunctions = [
         key2: "",
     },
 ];
+window.logger = log;
 const collator = Intl.Collator(undefined, { numeric: true, sensitivity: "base" });
 window.app.betterSortOrder = collator.compare;
 window.electron = {

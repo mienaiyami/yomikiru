@@ -100,7 +100,7 @@ const Settings = (): ReactElement => {
                 }
                 settingContRef.current?.focus();
                 if (e.key === "Backspace") {
-                    console.log(`Deleting shortcut ${shortcuts[i].command}.${which}`);
+                    window.logger.log(`Deleting shortcut ${shortcuts[i].command}.${which}`);
                     setShortcuts((init) => {
                         init[i][which] = "";
                         return [...init];
@@ -113,7 +113,7 @@ const Settings = (): ReactElement => {
                     window.dialog.warn({ message: `${e.key} key already bind to "${shortcuts[dupIndex].name}".` });
                     return;
                 }
-                console.log(`Setting shortcut ${shortcuts[i].command}.${which} to ${e.key}`);
+                window.logger.log(`Setting shortcut ${shortcuts[i].command}.${which} to ${e.key}`);
                 setShortcuts((init) => {
                     init[i][which] = e.key;
                     return [...init];
