@@ -94,7 +94,7 @@ const Settings = (): ReactElement => {
                 e.preventDefault();
                 e.stopPropagation();
                 if (reservedKeys.includes(e.key)) {
-                    window.logger.warn(e.key + " is reserved key.");
+                    window.logger.warn(`"${e.key}"` + " is reserved key.");
                     e.currentTarget.focus();
                     return;
                 }
@@ -115,7 +115,7 @@ const Settings = (): ReactElement => {
                     });
                     return;
                 }
-                window.logger.log(`Setting shortcut ${shortcuts[i].command}.${which} to ${e.key}`);
+                window.logger.log(`Setting shortcut ${shortcuts[i].command}.${which} to "${e.key}"`);
                 setShortcuts((init) => {
                     init[i][which] = e.key;
                     return [...init];
@@ -640,8 +640,9 @@ const Settings = (): ReactElement => {
                 </h1>
                 <div className="shortcutKey">
                     <p>
-                        BackSpace to remove. Reserved keys {reservedKeys.join(", ")}. Changes apply on
-                        refresh(click home icon, h(twice) or ctrl+r).
+                        BackSpace to remove.
+                        <br /> Reserved keys ({reservedKeys.join(", ")}).
+                        <br /> Changes apply on refresh(click home icon(twice), h(twice) or ctrl+r).
                     </p>
                     <table>
                         <tbody>
