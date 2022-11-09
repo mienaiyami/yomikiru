@@ -664,7 +664,7 @@ const Settings = (): ReactElement => {
                                 <td>ctrl+n</td>
                             </tr>
                             <tr>
-                                <td>size</td>
+                                <td>Reader width</td>
                                 <td>ctrl+scroll</td>
                             </tr>
                             <tr>
@@ -678,6 +678,10 @@ const Settings = (): ReactElement => {
                             <tr>
                                 <td>Dev Tool</td>
                                 <td>ctrl+shift+i</td>
+                            </tr>
+                            <tr>
+                                <td>UI Scale(Only works)</td>
+                                <td>"ctrl" + "-"(scale down) / "ctrl" + "="(scale up) / ctrl + 0(reset)</td>
                             </tr>
                         </tbody>
                     </table>
