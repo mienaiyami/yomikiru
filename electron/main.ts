@@ -21,7 +21,7 @@ if (IS_PORTABLE) {
     app.setPath("userData", folderPath);
 }
 
-app.disableHardwareAcceleration();
+// app.disableHardwareAcceleration();
 
 // ! change path in settings.tsx as well if changing log path
 log.transports.file.resolvePath = () => path.join(app.getPath("userData"), "logs/main.log");

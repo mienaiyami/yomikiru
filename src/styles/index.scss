@@ -33,7 +33,7 @@
 }
 .refrenceVariable {
     --body-bg: #ffffff;
-    --sideList-bg:var(--body-bg);
+    --sideList-bg: var(--body-bg);
     --icon-color: #000c29;
     --font-color: #000c29;
     --font-select-color: #000c29;
@@ -58,7 +58,7 @@
     --divider-color: #b6ccfe;
     --context-menu-text: var(--font-color);
     --context-menu-bg: var(--color-tertiary);
-    --zenModePageIndicator-bg:var(var(--body-bg))
+    --zenModePageIndicator-bg: var(var(--body-bg));
 }
 body.zenMode {
     ::-webkit-scrollbar {
@@ -69,7 +69,7 @@ body.zenMode {
     #topBar {
         display: none;
     }
-    #app #reader .zenModePageNumber.show{
+    #app #reader .zenModePageNumber.show {
         display: block;
     }
     #app {
@@ -732,7 +732,7 @@ body {
                                 border: none;
                             }
                         }
-                        .resetBtn{
+                        .resetBtn {
                             background-color: var(--input-bg);
                             padding: 10px;
                             font-size: 15px;
@@ -843,7 +843,7 @@ body {
             &::-webkit-scrollbar-corner {
                 background: var(--topBar-color);
             }
-            .zenModePageNumber{
+            .zenModePageNumber {
                 position: fixed;
                 display: none;
                 z-index: 100;
@@ -1060,7 +1060,11 @@ body {
                 position: relative;
                 flex-direction: column;
                 align-items: center;
-                
+
+                // hope it prevent stuttering 
+                transform: translate3d(0, 0, 1px);
+                backface-visibility: hidden;
+
                 //! for original size image
                 overflow-x: unset;
 
@@ -1087,6 +1091,9 @@ body {
                     img {
                         width: var(--varWidth);
                         max-width: 500%;
+                        // hope it prevent stuttering 
+                        transform: translate3d(0, 0, 1px);
+                        backface-visibility: hidden;
                         // min-width: 1%;
                         // image-rendering: pixelated;
                     }
