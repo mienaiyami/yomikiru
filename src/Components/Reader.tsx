@@ -65,7 +65,11 @@ const Reader = () => {
                 if (startTime === undefined) startTime = timeStamp;
                 const elapsed = timeStamp - startTime;
                 if (prevTime !== timeStamp && readerRef.current) {
-                    readerRef.current.scrollBy(0, intensity * 10);
+                    if (isSideListPinned && imgContRef.current) {
+                        imgContRef.current.scrollBy(0, intensity * 10);
+                    } else {
+                        readerRef.current.scrollBy(0, intensity * 10);
+                    }
                 }
                 if (elapsed < window.app.clickDelay) {
                     prevTime = timeStamp;
@@ -89,7 +93,7 @@ const Reader = () => {
     useLayoutEffect(() => {
         window.app.clickDelay = 100;
         // window.app.lastClick = 0;
-        window.addEventListener("wheel", (e) => {
+        const wheelFunction = (e: WheelEvent) => {
             if (e.ctrlKey) {
                 if (e.deltaY < 0) {
                     sizePlusRef.current?.click();
@@ -100,23 +104,8 @@ const Reader = () => {
                     return;
                 }
             }
-        });
-        // const getKey1 = (command: shortcutCommand): string => {
-        //     let key = "";
-        //     console.log("aaaaaaaaaa");
-        //     const index = shortcutSchema.findIndex((e) => e.command === command);
-        //     if (index >= 0) key = shortcutSchema[index].key1;
-        //     if (index < 0) console.error("getKey: did not found command " + command);
-        //     return key;
-        // };
-        // const getKey2 = (command: shortcutCommand): string => {
-        //     let key = "";
-        //     console.log("aaaaaaaaaa");
-        //     const index = shortcutSchema.findIndex((e) => e.command === command);
-        //     if (index >= 0) key = shortcutSchema[index].key2;
-        //     if (index < 0) console.error("getKey: did not found command " + command);
-        //     return key;
-        // };
+        };
+        window.addEventListener("wheel", wheelFunction);
 
         const shortcutkey: { [e in ShortcutCommands]?: { key1: string; key2: string } } = {};
         shortcuts.forEach((e) => {
@@ -220,12 +209,13 @@ const Reader = () => {
             window.app.keydown = false;
         });
         return () => {
+            window.removeEventListener("wheel", wheelFunction);
             window.removeEventListener("keydown", registerShortcuts);
             window.removeEventListener("keyup", () => {
                 window.app.keydown = false;
             });
         };
-    }, []);
+    }, [isSideListPinned]);
     const makeScrollPos = () => {
         if (isSideListPinned && imgContRef.current)
             return setScrollPosPercent(imgContRef.current.scrollTop / imgContRef.current.scrollHeight);
