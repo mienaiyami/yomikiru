@@ -59,7 +59,7 @@ const ReaderSideList = ({
     //TODO: useless rn
     const currentLinkInListRef = useRef<HTMLAnchorElement>(null);
     useEffect(() => {
-        if (!isContextMenuOpen) return setListOpen(false);
+        if (!isContextMenuOpen && !isSideListPinned) return setListOpen(false);
         setpreventListClose(true);
     }, [isContextMenuOpen]);
     useEffect(() => {
