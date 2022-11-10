@@ -91,6 +91,8 @@ const TopBar = (): ReactElement => {
                         defaultValue={1}
                         placeholder="Page Num."
                         ref={pageNumberInputRef}
+                        min="1"
+                        max={mangaInReader?.pages || 0}
                         onFocus={(e) => {
                             e.currentTarget.select();
                         }}
@@ -114,7 +116,12 @@ const TopBar = (): ReactElement => {
                                 e.currentTarget.blur();
                             }
                             if (e.key === "Enter") {
-                                const pagenumber = parseInt(e.currentTarget.value);
+                                let pagenumber = parseInt(e.currentTarget.value);
+                                if (pagenumber > (mangaInReader?.pages || 0))
+                                    pagenumber = mangaInReader?.pages || 0;
+                                if (pageNumberInputRef.current && pageNumberInputRef.current) {
+                                    pageNumberInputRef.current.value = pagenumber.toString();
+                                }
                                 if (!pagenumber) return;
                                 setPageNumChangeDisabled(true);
                                 scrollToPage(pagenumber, () => {
@@ -123,7 +130,12 @@ const TopBar = (): ReactElement => {
                                 return;
                             }
                             if (/[0-9]/gi.test(e.key) || e.key === "Backspace") {
-                                const pagenumber = parseInt(e.currentTarget.value);
+                                let pagenumber = parseInt(e.currentTarget.value);
+                                if (pagenumber > (mangaInReader?.pages || 0))
+                                    pagenumber = mangaInReader?.pages || 0;
+                                if (pageNumberInputRef.current && pageNumberInputRef.current) {
+                                    pageNumberInputRef.current.value = pagenumber.toString();
+                                }
                                 if (!pagenumber) return;
                                 setPageNumChangeDisabled(true);
                                 scrollToPage(pagenumber);
@@ -132,7 +144,6 @@ const TopBar = (): ReactElement => {
                             e.preventDefault();
                         }}
                         tabIndex={-1}
-                        min="1"
                     />
                     <span className="totalPage">/{mangaInReader?.pages || 0}</span>
                 </label>
