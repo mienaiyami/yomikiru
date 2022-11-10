@@ -332,20 +332,24 @@ window.electron = {
     webFrame,
 };
 window.dialog = {
-    nodeError: (err: NodeJS.ErrnoException) =>
-        window.electron.dialog.showMessageBox(window.electron.getCurrentWindow(), {
+    nodeError: (err: NodeJS.ErrnoException) => {
+        window.logger.error(err);
+        return window.electron.dialog.showMessageBox(window.electron.getCurrentWindow(), {
             type: "error",
             title: err.name,
             message: "Error no.: " + err.errno,
             detail: err.message,
-        }),
-    customError: ({ title = "Error", message, detail }: { title?: string; message: string; detail?: string }) =>
-        window.electron.dialog.showMessageBox(window.electron.getCurrentWindow(), {
+        });
+    },
+    customError: ({ title = "Error", message, detail }: { title?: string; message: string; detail?: string }) => {
+        window.logger.error("Error:", message, detail || "");
+        return window.electron.dialog.showMessageBox(window.electron.getCurrentWindow(), {
             type: "error",
             title: title,
             message: message,
             detail: detail,
-        }),
+        });
+    },
     warn: ({
         title = "Warning",
         message,
@@ -356,15 +360,17 @@ window.dialog = {
         message: string;
         detail?: string;
         noOption?: boolean;
-    }) =>
-        window.electron.dialog.showMessageBox(window.electron.getCurrentWindow(), {
+    }) => {
+        window.logger.warn(message, detail || "");
+        return window.electron.dialog.showMessageBox(window.electron.getCurrentWindow(), {
             type: "warning",
             title: title,
             message: message,
             detail: detail,
             buttons: noOption ? [] : ["Yes", "No"],
             defaultId: 1,
-        }),
+        });
+    },
     confirm: ({
         title = "Confirm",
         message,

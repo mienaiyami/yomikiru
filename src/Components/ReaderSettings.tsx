@@ -232,7 +232,7 @@ const ReaderSettings = ({
                                     });
                                 }}
                             />
-                            <p>Variable image size depending on width(e.g. image is 2 pages of manga).</p>
+                            <p>width*2 for 2-page-span-images/wide images(e.g. image is 2 pages of manga).</p>
                         </label>
                         <label className={appSettings.readerSettings.gapBetweenRows ? "optionSelected" : ""}>
                             <input

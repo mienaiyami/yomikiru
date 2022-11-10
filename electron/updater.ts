@@ -15,6 +15,7 @@ const fileToKeep = [
     "shortcuts.json",
     "logs",
     "main.log",
+    "renderer.log",
 ];
 
 const downloadLink = "https://github.com/mienaiyami/react-ts-offline-manga-reader/releases/download/v";
