@@ -1061,10 +1061,6 @@ body {
                 flex-direction: column;
                 align-items: center;
 
-                // hope it prevent stuttering 
-                transform: translate3d(0, 0, 1px);
-                backface-visibility: hidden;
-
                 //! for original size image
                 overflow-x: unset;
 
@@ -1091,9 +1087,6 @@ body {
                     img {
                         width: var(--varWidth);
                         max-width: 500%;
-                        // hope it prevent stuttering 
-                        transform: translate3d(0, 0, 1px);
-                        backface-visibility: hidden;
                         // min-width: 1%;
                         // image-rendering: pixelated;
                     }
