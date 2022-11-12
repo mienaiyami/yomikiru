@@ -332,6 +332,7 @@ const Reader = () => {
             img.onload = () => {
                 setImageWidthContainer((init) => [...init, { index: i, isWide: img.height / img.width <= 1.2 }]);
                 setImagesLoaded((init) => init + 1);
+                img.decode();
             };
             img.onerror = () => {
                 setImageWidthContainer((init) => [...init, { index: i, isWide: false }]);
@@ -356,6 +357,7 @@ const Reader = () => {
                             : "http://localhost:5000/" +
                               window.path.normalize(mangaInReader?.link + "\\" + name).replace("D:\\", "")
                     }
+                    onLoad={(e) => (e.target as HTMLImageElement).decode()}
                     data-pagenumber={index + 1}
                     onContextMenu={(ev) => {
                         showContextMenu({
