@@ -70,6 +70,7 @@ declare global {
             nativeImage: typeof nativeImage;
             webFrame: typeof webFrame;
         };
+        currentPageNumber: number;
         logger: typeof log;
         supportedFormats: string[];
         path: typeof path;
@@ -201,6 +202,7 @@ export const settingValidatorData = {
 
 window.path = path;
 window.fs = fs;
+window.currentPageNumber = 1;
 window.supportedFormats = [".jpg", ".jpeg", ".png", ".webp", ".svg", ".apng", ".gif", "avif"];
 window.themeProps = {
     "--body-bg": "",

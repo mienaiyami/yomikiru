@@ -305,8 +305,6 @@ interface IAppContext {
     addNewBookmark: (newBk: ListItem) => Promise<Electron.MessageBoxReturnValue> | undefined;
     loadingMangaPercent: number;
     setLoadingMangaPercent: React.Dispatch<React.SetStateAction<number>>;
-    currentPageNumber: number;
-    setCurrentPageNumber: React.Dispatch<React.SetStateAction<number>>;
     currentImageRow: number;
     setCurrentImageRow: React.Dispatch<React.SetStateAction<number>>;
     scrollToPage: (pageNumber: number, callback?: () => void) => void;
@@ -345,7 +343,6 @@ const App = (): ReactElement => {
     const [isSettingOpen, setSettingOpen] = useState(false);
     const [isReaderOpen, setReaderOpen] = useState(false);
     const [isLoadingManga, setLoadingManga] = useState(false);
-    const [currentPageNumber, setCurrentPageNumber] = useState(1);
     const [currentImageRow, setCurrentImageRow] = useState(1);
     const [pageNumChangeDisabled, setPageNumChangeDisabled] = useState(false);
     const [loadingMangaPercent, setLoadingMangaPercent] = useState(100);
@@ -620,8 +617,6 @@ const App = (): ReactElement => {
                 addNewBookmark,
                 loadingMangaPercent,
                 setLoadingMangaPercent,
-                currentPageNumber,
-                setCurrentPageNumber,
                 currentImageRow,
                 setCurrentImageRow,
                 scrollToPage,

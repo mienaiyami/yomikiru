@@ -11,7 +11,6 @@ const TopBar = (): ReactElement => {
         setSettingOpen,
         mangaInReader,
         isReaderOpen,
-        currentPageNumber,
         scrollToPage,
         setPageNumChangeDisabled,
         pageNumberInputRef,
@@ -38,16 +37,15 @@ const TopBar = (): ReactElement => {
     };
     useLayoutEffect(() => {
         attachEventListener();
+        window.addEventListener("pageNumberChange", () => {
+            (document.querySelector("#NavigateToPageInput") as HTMLInputElement).value =
+                window.currentPageNumber.toString();
+        });
     }, []);
     useEffect(() => {
         setTitleWithSize();
     }, [mangaInReader]);
 
-    useEffect(() => {
-        if (pageNumberInputRef.current && pageNumberInputRef.current) {
-            pageNumberInputRef.current.value = currentPageNumber.toString();
-        }
-    }, [currentPageNumber]);
     return (
         <div id="topBar">
             <div className="titleDragable"></div>

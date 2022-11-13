@@ -21,10 +21,7 @@ const Reader = () => {
         prevNextChapter,
         bookmarks,
         setLoadingMangaPercent,
-        // currentPageNumber,
         currentImageRow,
-        currentPageNumber,
-        setCurrentPageNumber,
         setCurrentImageRow,
         pageNumChangeDisabled,
         // scrollToPage,
@@ -43,6 +40,7 @@ const Reader = () => {
     const [isBookmarked, setBookmarked] = useState(false);
     const [scrollPosPercent, setScrollPosPercent] = useState(0);
     const [zenMode, setZenMode] = useState(false);
+    const [currentPageNumber, setCurrentPageNumber] = useState(1);
     const readerSettingExtender = useRef<HTMLButtonElement>(null);
     const sizePlusRef = useRef<HTMLButtonElement>(null);
     const sizeMinusRef = useRef<HTMLButtonElement>(null);
@@ -80,6 +78,11 @@ const Reader = () => {
             return;
         }
     };
+    const pageChangeEvent = new Event("pageNumberChange");
+    useLayoutEffect(() => {
+        window.currentPageNumber = currentPageNumber;
+        window.dispatchEvent(pageChangeEvent);
+    }, [currentPageNumber]);
     useEffect(() => {
         if (zenMode) {
             setSideListPinned(false);
@@ -228,7 +231,7 @@ const Reader = () => {
                 const pageNumber = parseInt(elem.getAttribute("data-pagenumber") || "1");
                 setCurrentPageNumber(pageNumber);
                 const rowNumber = parseInt(elem.parentElement?.getAttribute("data-imagerow") || "1");
-                setCurrentImageRow(rowNumber);
+                // setCurrentImageRow(rowNumber);
             }
         }
     };
