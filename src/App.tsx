@@ -39,7 +39,7 @@ const makeSettingsJson = (locations?: string[]) => {
             gapSize: 10,
             showPageNumberInZenMode: true,
             scrollSpeed: 5,
-            largeScrollMultiplier: 4,
+            largeScrollMultiplier: 15,
         },
     };
     if (locations) {
