@@ -11,7 +11,6 @@ const TopBar = (): ReactElement => {
         setSettingOpen,
         mangaInReader,
         isReaderOpen,
-        scrollToPage,
         setPageNumChangeDisabled,
         pageNumberInputRef,
         closeReader,
@@ -122,7 +121,7 @@ const TopBar = (): ReactElement => {
                                 }
                                 if (!pagenumber) return;
                                 setPageNumChangeDisabled(true);
-                                scrollToPage(pagenumber, () => {
+                                window.scrollToPage(pagenumber, () => {
                                     setPageNumChangeDisabled(false);
                                 });
                                 return;
@@ -136,7 +135,7 @@ const TopBar = (): ReactElement => {
                                 }
                                 if (!pagenumber) return;
                                 setPageNumChangeDisabled(true);
-                                scrollToPage(pagenumber);
+                                window.scrollToPage(pagenumber);
                                 return;
                             }
                             e.preventDefault();

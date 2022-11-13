@@ -21,10 +21,7 @@ const Reader = () => {
         prevNextChapter,
         bookmarks,
         setLoadingMangaPercent,
-        currentImageRow,
-        setCurrentImageRow,
         pageNumChangeDisabled,
-        // scrollToPage,
         checkValidFolder,
     } = useContext(AppContext);
     const { showContextMenu } = useContext(MainContext);
@@ -40,7 +37,10 @@ const Reader = () => {
     const [isBookmarked, setBookmarked] = useState(false);
     const [scrollPosPercent, setScrollPosPercent] = useState(0);
     const [zenMode, setZenMode] = useState(false);
+    // used to be in app.tsx then sent to topBar.tsx by context provider but caused performance issue, now using window.currentPageNumber
     const [currentPageNumber, setCurrentPageNumber] = useState(1);
+    const [currentImageRow, setCurrentImageRow] = useState(1);
+
     const readerSettingExtender = useRef<HTMLButtonElement>(null);
     const sizePlusRef = useRef<HTMLButtonElement>(null);
     const sizeMinusRef = useRef<HTMLButtonElement>(null);
@@ -79,6 +79,29 @@ const Reader = () => {
         }
     };
     const pageChangeEvent = new Event("pageNumberChange");
+
+    const scrollToPage = (pageNumber: number, callback?: () => void) => {
+        const reader = document.querySelector("#reader");
+        if (reader) {
+            if (pageNumber >= 1 && pageNumber <= (mangaInReader?.pages || 1)) {
+                //! pageNumber no longer in use
+                const imgElem = document.querySelector(
+                    "#reader .imgCont img[data-pagenumber='" + pageNumber + "']"
+                );
+                if (appSettings.readerSettings.readerTypeSelected === 1) {
+                    const rowNumber = parseInt(imgElem?.parentElement?.getAttribute("data-imagerow") || "1");
+                    setCurrentImageRow(rowNumber);
+                    if (callback) setTimeout(callback, 1500);
+                } else {
+                    if (imgElem) {
+                        imgElem.scrollIntoView({ behavior: "smooth", block: "start" });
+                        if (callback) setTimeout(callback, 1500);
+                    }
+                }
+            }
+        }
+    };
+    window.scrollToPage = scrollToPage;
     useLayoutEffect(() => {
         window.currentPageNumber = currentPageNumber;
         window.dispatchEvent(pageChangeEvent);
@@ -231,7 +254,7 @@ const Reader = () => {
                 const pageNumber = parseInt(elem.getAttribute("data-pagenumber") || "1");
                 setCurrentPageNumber(pageNumber);
                 const rowNumber = parseInt(elem.parentElement?.getAttribute("data-imagerow") || "1");
-                // setCurrentImageRow(rowNumber);
+                setCurrentImageRow(rowNumber);
             }
         }
     };

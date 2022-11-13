@@ -305,9 +305,6 @@ interface IAppContext {
     addNewBookmark: (newBk: ListItem) => Promise<Electron.MessageBoxReturnValue> | undefined;
     loadingMangaPercent: number;
     setLoadingMangaPercent: React.Dispatch<React.SetStateAction<number>>;
-    currentImageRow: number;
-    setCurrentImageRow: React.Dispatch<React.SetStateAction<number>>;
-    scrollToPage: (pageNumber: number, callback?: () => void) => void;
     pageNumChangeDisabled: boolean;
     setPageNumChangeDisabled: React.Dispatch<React.SetStateAction<boolean>>;
     prevNextChapter: {
@@ -343,7 +340,6 @@ const App = (): ReactElement => {
     const [isSettingOpen, setSettingOpen] = useState(false);
     const [isReaderOpen, setReaderOpen] = useState(false);
     const [isLoadingManga, setLoadingManga] = useState(false);
-    const [currentImageRow, setCurrentImageRow] = useState(1);
     const [pageNumChangeDisabled, setPageNumChangeDisabled] = useState(false);
     const [loadingMangaPercent, setLoadingMangaPercent] = useState(100);
     const [linkInReader, setLinkInReader] = useState<string>(window.loadManga || "");
@@ -511,27 +507,6 @@ const App = (): ReactElement => {
             removeEventListener("keydown", refreshOrCloseReader);
         };
     }, []);
-    const scrollToPage = (pageNumber: number, callback?: () => void) => {
-        const reader = document.querySelector("#reader");
-        if (reader) {
-            if (pageNumber >= 1 && pageNumber <= (mangaInReader?.pages || 1)) {
-                //! pageNumber no longer in use
-                const imgElem = document.querySelector(
-                    "#reader .imgCont img[data-pagenumber='" + pageNumber + "']"
-                );
-                if (appSettings.readerSettings.readerTypeSelected === 1) {
-                    const rowNumber = parseInt(imgElem?.parentElement?.getAttribute("data-imagerow") || "1");
-                    setCurrentImageRow(rowNumber);
-                    if (callback) setTimeout(callback, 1500);
-                } else {
-                    if (imgElem) {
-                        imgElem.scrollIntoView({ behavior: "smooth", block: "start" });
-                        if (callback) setTimeout(callback, 1500);
-                    }
-                }
-            }
-        }
-    };
 
     useEffect(() => {
         if (firstRendered) {
@@ -617,9 +592,6 @@ const App = (): ReactElement => {
                 addNewBookmark,
                 loadingMangaPercent,
                 setLoadingMangaPercent,
-                currentImageRow,
-                setCurrentImageRow,
-                scrollToPage,
                 pageNumChangeDisabled,
                 setPageNumChangeDisabled,
                 prevNextChapter,

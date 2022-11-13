@@ -71,6 +71,7 @@ declare global {
             webFrame: typeof webFrame;
         };
         currentPageNumber: number;
+        scrollToPage: (pageNumber: number, callback?: () => void) => void;
         logger: typeof log;
         supportedFormats: string[];
         path: typeof path;
