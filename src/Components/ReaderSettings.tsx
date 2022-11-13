@@ -218,6 +218,29 @@ const ReaderSettings = ({
                     </div>
                 </div>
                 <div className="settingItem">
+                    <div className="name">Scroll Speed</div>
+                    <div className="options">
+                        <label>
+                            Normal Scroll
+                            <input
+                                type="number"
+                                min={1}
+                                max={100}
+                                value={appSettings.readerSettings.scrollSpeed}
+                            />
+                        </label>
+                        <label>
+                            Larger Scroll
+                            <input
+                                type="number"
+                                min={1}
+                                max={100}
+                                value={appSettings.readerSettings.largeScrollMultiplier}
+                            />
+                        </label>
+                    </div>
+                </div>
+                <div className="settingItem">
                     <div className="name">Other settings</div>
                     <div className="options col">
                         <label className={appSettings.readerSettings.variableImageSize ? "optionSelected" : ""}>
