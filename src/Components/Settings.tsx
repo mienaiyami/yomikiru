@@ -205,11 +205,14 @@ const Settings = (): ReactElement => {
                             // onMouseLeave={() => setMouseOnInput(false)}
                             min={0}
                             max={100}
-                            value={Math.ceil(opacity) || 100}
+                            value={Math.ceil(opacity) ?? 100}
                             title="Opacity"
                             // className="newThemeMakerOpacity"
                             onChange={(e) => {
                                 setOpacity(() => {
+                                    if (e.target.value === "") {
+                                        e.target.value = "0";
+                                    }
                                     const value = e.target.valueAsNumber ?? 100;
                                     return value;
                                 });
@@ -642,7 +645,6 @@ const Settings = (): ReactElement => {
                     <p>
                         BackSpace to remove.
                         <br /> Reserved keys ({reservedKeys.join(", ")}).
-                        <br /> Changes apply on refresh(click home icon(twice), h(twice) or ctrl+r).
                     </p>
                     <table>
                         <tbody>

@@ -221,21 +221,39 @@ const ReaderSettings = ({
                     <div className="name">Scroll Speed</div>
                     <div className="options">
                         <label>
-                            Normal Scroll
+                            Scroll 1
                             <input
                                 type="number"
                                 min={1}
                                 max={100}
                                 value={appSettings.readerSettings.scrollSpeed}
+                                onChange={(e) => {
+                                    setAppSettings((init) => {
+                                        let value = e.currentTarget.valueAsNumber;
+                                        if (value > 100) value = 100;
+                                        if (value < 1) value = 1;
+                                        init.readerSettings.scrollSpeed = value;
+                                        return { ...init };
+                                    });
+                                }}
                             />
                         </label>
                         <label>
-                            Larger Scroll
+                            Scroll 2
                             <input
                                 type="number"
                                 min={1}
                                 max={100}
                                 value={appSettings.readerSettings.largeScrollMultiplier}
+                                onChange={(e) => {
+                                    setAppSettings((init) => {
+                                        let value = e.currentTarget.valueAsNumber;
+                                        if (value > 100) value = 100;
+                                        if (value < 1) value = 1;
+                                        init.readerSettings.largeScrollMultiplier = value;
+                                        return { ...init };
+                                    });
+                                }}
                             />
                         </label>
                     </div>

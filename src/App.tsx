@@ -498,15 +498,15 @@ const App = (): ReactElement => {
         window.app.titleBarHeight = parseFloat(
             window.getComputedStyle(document.body).getPropertyValue("--titleBar-height")
         );
-        const refreshOrCloseReader = (e: KeyboardEvent) => {
+        const eventsOnStart = (e: KeyboardEvent) => {
             if (e.key === "h") {
                 if (window.app.isReaderOpen) return closeReader();
                 window.location.reload();
             }
         };
-        window.addEventListener("keydown", refreshOrCloseReader);
+        window.addEventListener("keydown", eventsOnStart);
         return () => {
-            removeEventListener("keydown", refreshOrCloseReader);
+            removeEventListener("keydown", eventsOnStart);
         };
     }, []);
 

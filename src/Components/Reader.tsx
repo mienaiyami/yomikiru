@@ -53,7 +53,7 @@ const Reader = () => {
     const readerRef = useRef<HTMLDivElement>(null);
     const imgContRef = useRef<HTMLDivElement>(null);
 
-    const scrollReader = (intensity: -4 | -1 | 1 | 4) => {
+    const scrollReader = (intensity: number) => {
         // ! remove window.app.lastClick after next update if no problems
         // && window.app.lastClick <= Date.now() - window.app.clickDelay
         if (readerRef.current) {
@@ -64,9 +64,9 @@ const Reader = () => {
                 const elapsed = timeStamp - startTime;
                 if (prevTime !== timeStamp && readerRef.current) {
                     if (isSideListPinned && imgContRef.current) {
-                        imgContRef.current.scrollBy(0, intensity * appSettings.readerSettings.scrollSpeed);
+                        imgContRef.current.scrollBy(0, intensity);
                     } else {
-                        readerRef.current.scrollBy(0, intensity * appSettings.readerSettings.scrollSpeed);
+                        readerRef.current.scrollBy(0, intensity);
                     }
                 }
                 if (elapsed < window.app.clickDelay) {
@@ -187,14 +187,14 @@ const Reader = () => {
                         (e.key === shortcutkey.largeScroll?.key1 || e.key === shortcutkey.largeScroll?.key2)
                     ) {
                         e.preventDefault();
-                        scrollReader(-4);
+                        scrollReader(0 - appSettings.readerSettings.largeScrollMultiplier);
                         return;
                     }
                     switch (e.key) {
                         case shortcutkey.largeScroll?.key1:
                         case shortcutkey.largeScroll?.key2:
                             e.preventDefault();
-                            scrollReader(4);
+                            scrollReader(appSettings.readerSettings.largeScrollMultiplier);
                             break;
                         case shortcutkey.nextPage?.key1:
                         case shortcutkey.nextPage?.key2:
@@ -204,7 +204,7 @@ const Reader = () => {
                             break;
                         case shortcutkey.scrollDown?.key1:
                         case shortcutkey.scrollDown?.key2:
-                            scrollReader(1);
+                            scrollReader(appSettings.readerSettings.scrollSpeed);
                             break;
                         case shortcutkey.prevPage?.key1:
                         case shortcutkey.prevPage?.key2:
@@ -214,7 +214,7 @@ const Reader = () => {
                             break;
                         case shortcutkey.scrollUp?.key1:
                         case shortcutkey.scrollUp?.key2:
-                            scrollReader(-1);
+                            scrollReader(0 - appSettings.readerSettings.scrollSpeed);
                             break;
                         case shortcutkey.showHidePageNumberInZen?.key1:
                         case shortcutkey.showHidePageNumberInZen?.key2:
@@ -241,7 +241,7 @@ const Reader = () => {
                 window.app.keydown = false;
             });
         };
-    }, [isSideListPinned, appSettings,shortcuts]);
+    }, [isSideListPinned, appSettings, shortcuts]);
     const makeScrollPos = () => {
         if (isSideListPinned && imgContRef.current)
             return setScrollPosPercent(imgContRef.current.scrollTop / imgContRef.current.scrollHeight);
