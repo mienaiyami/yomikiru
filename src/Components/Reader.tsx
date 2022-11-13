@@ -64,9 +64,9 @@ const Reader = () => {
                 const elapsed = timeStamp - startTime;
                 if (prevTime !== timeStamp && readerRef.current) {
                     if (isSideListPinned && imgContRef.current) {
-                        imgContRef.current.scrollBy(0, intensity * 10);
+                        imgContRef.current.scrollBy(0, intensity * appSettings.readerSettings.scrollSpeed);
                     } else {
-                        readerRef.current.scrollBy(0, intensity * 10);
+                        readerRef.current.scrollBy(0, intensity * appSettings.readerSettings.scrollSpeed);
                     }
                 }
                 if (elapsed < window.app.clickDelay) {
@@ -241,7 +241,7 @@ const Reader = () => {
                 window.app.keydown = false;
             });
         };
-    }, [isSideListPinned]);
+    }, [isSideListPinned, appSettings,shortcuts]);
     const makeScrollPos = () => {
         if (isSideListPinned && imgContRef.current)
             return setScrollPosPercent(imgContRef.current.scrollTop / imgContRef.current.scrollHeight);

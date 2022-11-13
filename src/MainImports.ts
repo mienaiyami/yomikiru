@@ -177,6 +177,8 @@ declare global {
             widthClamped: boolean;
             gapSize: number;
             showPageNumberInZenMode: boolean;
+            scrollSpeed: number;
+            largeScrollMultiplier: number;
         };
     }
 }
@@ -198,6 +200,8 @@ export const settingValidatorData = {
         widthClamped: true,
         gapSize: "number",
         showPageNumberInZenMode: "boolean",
+        scrollSpeed: "number",
+        largeScrollMultiplier: "number",
     },
 };
 

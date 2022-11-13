@@ -38,6 +38,8 @@ const makeSettingsJson = (locations?: string[]) => {
             widthClamped: true,
             gapSize: 10,
             showPageNumberInZenMode: true,
+            scrollSpeed: 5,
+            largeScrollMultiplier: 4,
         },
     };
     if (locations) {
