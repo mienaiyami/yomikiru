@@ -249,7 +249,10 @@ const Reader = () => {
     };
     const changePageNumber = () => {
         if (!pageNumChangeDisabled) {
-            const elem = document.elementFromPoint(window.innerWidth / 2, window.innerHeight / 4);
+            const elem = document.elementFromPoint(
+                imgContRef.current!.clientWidth / 2 + imgContRef.current!.offsetLeft,
+                window.innerHeight / 4
+            );
             if (elem && elem.tagName === "IMG") {
                 const pageNumber = parseInt(elem.getAttribute("data-pagenumber") || "1");
                 setCurrentPageNumber(pageNumber);
@@ -386,8 +389,6 @@ const Reader = () => {
                         const img = e.target as HTMLImageElement;
                         img.decode().catch((e) => console.error(e));
                     }}
-                    // decoding="sync"
-                    // loading="eager"
                     data-pagenumber={index + 1}
                     onContextMenu={(ev) => {
                         showContextMenu({
