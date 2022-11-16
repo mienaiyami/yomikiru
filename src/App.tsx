@@ -6,7 +6,7 @@ import useTheme from "./hooks/useTheme";
 import { settingValidatorData } from "./MainImports";
 import themesRaw from "./themeInit.json";
 
-window.logger.log("New window opening...");
+// window.logger.log("New window opening...");
 
 const userDataURL = window.electron.app.getPath("userData");
 const settingsPath = window.path.join(userDataURL, "settings.json");

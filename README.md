@@ -19,7 +19,8 @@ Offline Manga/Manhwa Reader (not a downloader) built with react and typescript. 
 
 ## Screenshots
 
-<https://user-images.githubusercontent.com/84740082/160238433-6d5afb62-0992-4183-9374-74e33e3021ce.mp4>
+https://user-images.githubusercontent.com/84740082/160238433-6d5afb62-0992-4183-9374-74e33e3021ce.mp4
+
 ![demo](github%20assets/1.png)
 ![demo](github%20assets/2.png)
 ![demo](github%20assets/3.png)

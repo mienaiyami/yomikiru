@@ -13,6 +13,8 @@ import log from "electron-log";
 // ! find a way to put this in script
 // ! need to change manually and then forge make
 
+if (require("electron-squirrel-startup")) app.quit();
+
 if (IS_PORTABLE) {
     const folderPath = path.join(app.getAppPath(), "../../userdata/");
     if (!fs.existsSync(folderPath)) {
@@ -29,8 +31,6 @@ log.log("Starting app...");
 
 import sudo from "@vscode/sudo-prompt";
 import checkForUpdate from "./updater";
-
-if (require("electron-squirrel-startup")) app.quit();
 
 // registery, add option to open in reader to explorer context menu
 const addOptionToExplorerMenu = () => {
