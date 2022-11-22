@@ -1,5 +1,5 @@
 /* eslint-disable no-case-declarations */
-import { app, session, BrowserWindow, Menu, shell, ipcMain, MenuItemConstructorOptions } from "electron";
+import { app, session, BrowserWindow, Menu, shell, ipcMain, MenuItemConstructorOptions, dialog } from "electron";
 import path from "path";
 import fs from "fs";
 import IS_PORTABLE from "./IS_PORTABLE";
@@ -200,12 +200,12 @@ const createWindow = (link?: string) => {
     // newWindow.webContents.setFrameRate(60);
     const currentWindowIndex = windowsCont.length;
     windowsCont.push(newWindow);
-    newWindow.on("close", () => (windowsCont[currentWindowIndex] = null));
     newWindow.loadURL(HOME_WEBPACK_ENTRY);
     newWindow.setMenuBarVisibility(false);
     newWindow.webContents.once("dom-ready", () => {
         newWindow.maximize();
         newWindow.webContents.send("loadMangaFromLink", { link: link || "" });
+        newWindow.webContents.send("setWindowIndex", currentWindowIndex);
         if (isFirstWindow) {
             newWindow.webContents.send("canCheckForUpdate");
             newWindow.webContents.send("loadMangaFromLink", { link: openFolderOnLaunch });
@@ -231,6 +231,24 @@ const registerListener = () => {
     });
     ipcMain.on("checkForUpdate", (e, windowId, promptAfterCheck = false) => {
         checkForUpdate(windowId, promptAfterCheck);
+    });
+    ipcMain.on("askBeforeClose", (e, windowId, ask = false, currentWindowIndex) => {
+        const window = BrowserWindow.fromId(windowId || 0)!;
+        window.on("close", (e) => {
+            if (ask) {
+                const res = dialog.showMessageBoxSync(window, {
+                    message: "Close this window?",
+                    title: "Manga Reader",
+                    buttons: ["No", "Yes"],
+                    type: "question",
+                });
+                if (res === 0) {
+                    e.preventDefault();
+                    return;
+                }
+            }
+            windowsCont[currentWindowIndex] = null;
+        });
     });
 };
 app.on("ready", async () => {

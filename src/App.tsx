@@ -28,6 +28,7 @@ const makeSettingsJson = (locations?: string[]) => {
         historyLimit: 60,
         locationListSortType: "normal",
         updateCheckerEnabled: true,
+        askBeforeClosing: false,
         readerSettings: {
             readerWidth: 60,
             variableImageSize: true,
@@ -487,6 +488,15 @@ const App = (): ReactElement => {
         setFirstRendered(true);
         window.electron.ipcRenderer.on("loadMangaFromLink", (e, data) => {
             if (data && typeof data.link === "string" && data.link !== "") openInReader(data.link);
+        });
+        window.electron.ipcRenderer.on("setWindowIndex", (e, data) => {
+            console.log("window index is ", data);
+            window.electron.ipcRenderer.send(
+                "askBeforeClose",
+                window.electron.getCurrentWindow().id,
+                appSettings.askBeforeClosing,
+                data
+            );
         });
         window.electron.ipcRenderer.on("canCheckForUpdate", () => {
             window.electron.ipcRenderer.send(

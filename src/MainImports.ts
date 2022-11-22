@@ -167,6 +167,7 @@ declare global {
         historyLimit: number;
         locationListSortType: "normal" | "inverse";
         updateCheckerEnabled: boolean;
+        askBeforeClosing: boolean;
         readerSettings: {
             readerWidth: number;
             variableImageSize: boolean;
@@ -190,6 +191,7 @@ export const settingValidatorData = {
     historyLimit: "number",
     locationListSortType: ["normal", "inverse"],
     updateCheckerEnabled: "boolean",
+    askBeforeClosing: "boolean",
     readerSettings: {
         readerWidth: "number",
         variableImageSize: "boolean",

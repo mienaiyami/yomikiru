@@ -502,6 +502,24 @@ const Settings = (): ReactElement => {
                             </button>
                         </div>
                     </div>
+                    <div className="settingItem">
+                        <div className="name">Ask before closing window? (need restart) :</div>
+                        <div className="current">
+                            <label className={appSettings.askBeforeClosing ? "selected" : ""}>
+                                <input
+                                    type="checkbox"
+                                    checked={appSettings.askBeforeClosing}
+                                    onChange={(e) => {
+                                        setAppSettings((init) => {
+                                            init.askBeforeClosing = e.currentTarget.checked;
+                                            return { ...init };
+                                        });
+                                    }}
+                                />
+                                <p>{appSettings.askBeforeClosing ? "Yes" : "No"}</p>
+                            </label>
+                        </div>
+                    </div>
                     {/* <div className="settingItem version">
                         <div className="name">Others:</div>
                         <div className="current">
