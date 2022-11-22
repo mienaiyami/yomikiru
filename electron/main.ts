@@ -170,17 +170,6 @@ if (app.isPackaged && process.argv[1] && fs.existsSync(process.argv[1])) {
 const windowsCont: (BrowserWindow | null)[] = [];
 let isFirstWindow = true;
 
-app.setUserTasks([
-    {
-        program: process.execPath,
-        arguments: "--new-window",
-        iconPath: process.execPath,
-        iconIndex: 0,
-        title: "New Window",
-        description: "Create a new window",
-    },
-]);
-
 const createWindow = (link?: string) => {
     const newWindow = new BrowserWindow({
         width: 1200,
@@ -216,6 +205,25 @@ const createWindow = (link?: string) => {
         return { action: "deny" };
     });
 };
+
+const gotTheLock = app.requestSingleInstanceLock();
+if (!gotTheLock) {
+    app.quit();
+}
+app.on("second-instance", () => {
+    log.log("second instance detected, opening new window...");
+    createWindow();
+});
+app.setUserTasks([
+    {
+        program: process.execPath,
+        arguments: "--new-window",
+        iconPath: process.execPath,
+        iconIndex: 0,
+        title: "New Window",
+        description: "Create a new window",
+    },
+]);
 const registerListener = () => {
     ipcMain.on("openLinkInNewWindow", (e, link) => {
         createWindow(link);

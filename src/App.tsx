@@ -490,7 +490,6 @@ const App = (): ReactElement => {
             if (data && typeof data.link === "string" && data.link !== "") openInReader(data.link);
         });
         window.electron.ipcRenderer.on("setWindowIndex", (e, data) => {
-            console.log("window index is ", data);
             window.electron.ipcRenderer.send(
                 "askBeforeClose",
                 window.electron.getCurrentWindow().id,
