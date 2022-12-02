@@ -219,9 +219,15 @@ const gotTheLock = app.requestSingleInstanceLock();
 if (!gotTheLock) {
     app.quit();
 }
-app.on("second-instance", () => {
-    log.log("second instance detected, opening new window...");
-    createWindow();
+app.on("second-instance", (event, commandLine) => {
+    if (commandLine.length >= 3) {
+        // for file explorer option
+        if (fs.existsSync(commandLine[2])) createWindow(commandLine[2]);
+    }
+    if (commandLine.length <= 2 || commandLine.includes("--new-window")) {
+        log.log("second instance detected, opening new window...");
+        createWindow();
+    }
 });
 app.setUserTasks([
     {
