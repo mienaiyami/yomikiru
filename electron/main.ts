@@ -34,16 +34,20 @@ import checkForUpdate from "./updater";
 
 // registery, add option to open in reader to explorer context menu
 const addOptionToExplorerMenu = () => {
+    app;
+    const appPath = IS_PORTABLE
+        ? app.getPath("exe").replace(/\\/g, "\\\\")
+        : path.join(app.getPath("exe").replace(/\\/g, "\\\\"), `../../${app.name}.exe`);
     const regInit = `Windows Registry Editor Version 5.00
     
     ; Setup context menu item for click on folders tree item:
     [HKEY_CURRENT_USER\\Software\\Classes\\directory\\shell\\mangareader\\command]
-    @="${app.getPath("exe").replace(/\\/g, "\\\\")} \\"%V\\""
+    @="${appPath} \\"%V\\""
     
     ; Optional: specify an icon for the item:   
     [HKEY_CURRENT_USER\\Software\\Classes\\directory\\shell\\mangareader]
     @="Open in Manga Reader"
-    "icon"="${app.getPath("exe").replace(/\\/g, "\\\\")}"
+    "icon"="${appPath}"
     `;
 
     const tempPath = app.getPath("temp");
@@ -83,27 +87,32 @@ const handleSquirrelEvent = () => {
     const appFolder = path.resolve(process.execPath, "..");
     const rootFolder = path.resolve(appFolder, "..");
     // const updateDotExe = path.resolve(path.join(rootFolder, "Update.exe"));
-    const exeName = process.execPath;
+    const appPath = IS_PORTABLE
+        ? app.getPath("exe").replace(/\\/g, "\\\\")
+        : path.join(app.getPath("exe").replace(/\\/g, "\\\\"), `../../${app.name}.exe`);
     // const spawnUpdate = (args: any) => spawn(updateDotExe, args);
     const squirrelEvent = process.argv[1];
     switch (squirrelEvent) {
         case "--squirrel-install":
         case "--squirrel-updated":
-            // const createShortcutArgs = ["--createShortcut", exeName, "-l", "Desktop,StartMenu"];
-            // spawnUpdate(createShortcutArgs);
+            // const createShortcutArgs = [
+            //     `--createShortcut="${app.getName()}.exe"`,
+            //     "--shortcut-locations=Desktop,StartMenu",
+            // ];
+            // spawn(path.join(appPath, "../Update.exe"), createShortcutArgs, { detached: true });
             const vbsScript = `
             Set WshShell = CreateObject("Wscript.shell")
             strDesktop = WshShell.SpecialFolders("Desktop")
             Set oMyShortcut = WshShell.CreateShortcut(strDesktop + "\\Manga Reader.lnk")
             oMyShortcut.WindowStyle = "1"
             oMyShortcut.IconLocation = "${path.resolve(rootFolder, "app.ico")}"
-            OMyShortcut.TargetPath = "${exeName}"
+            OMyShortcut.TargetPath = "${appPath}"
             oMyShortCut.Save
             strStartMenu = WshShell.SpecialFolders("StartMenu")
             Set oMyShortcut2 = WshShell.CreateShortcut(strStartMenu + "\\programs\\Manga Reader.lnk")
             oMyShortcut2.WindowStyle = "1"
             oMyShortcut2.IconLocation = "${path.resolve(rootFolder, "app.ico")}"
-            OMyShortcut2.TargetPath = "${exeName}"
+            OMyShortcut2.TargetPath = "${appPath}"
             oMyShortCut2.Save
             `;
             fs.writeFileSync(path.resolve(rootFolder, "shortcut.vbs"), vbsScript);
