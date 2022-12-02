@@ -48,7 +48,7 @@ const checkForUpdate = async (windowId: number, promptAfterCheck = false) => {
                 )}\nLatest Version:\t${latestVersion.join(".")}
                 `,
                 buttons: ["Download Now", "Download and show Changelog", "Download Later"],
-                cancelId: 1,
+                cancelId: 2,
             })
             .then((response) => {
                 if (response.response === 0) downloadUpdates(latestVersion.join("."), windowId);
