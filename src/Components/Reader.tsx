@@ -579,6 +579,7 @@ const Reader = () => {
                     <div
                         className={
                             "row " +
+                            (appSettings.readerSettings.readingSide === 1 ? "rtl " : "ltr ") +
                             (wideImageContMap.includes(i) ? "wide " : "") +
                             (appSettings.readerSettings.pagesPerRowSelected !== 0 ? "twoPagePerRow " : "") +
                             (appSettings.readerSettings.widthClamped ? "widthClamped " : "")

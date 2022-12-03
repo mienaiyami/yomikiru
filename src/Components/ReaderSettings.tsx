@@ -218,7 +218,36 @@ const ReaderSettings = ({
                     </div>
                 </div>
                 <div className="settingItem">
-                    <div className="name">Scroll Speed</div>
+                    <div className="name">Reading side</div>
+                    <div className="options">
+                        <button
+                            className={appSettings.readerSettings.readingSide === 0 ? "optionSelected" : ""}
+                            disabled={pagesPerRowSelected === 0}
+                            onClick={() => {
+                                setAppSettings((init) => {
+                                    init.readerSettings.readingSide = 0;
+                                    return { ...init };
+                                });
+                            }}
+                        >
+                            ltr
+                        </button>
+                        <button
+                            className={appSettings.readerSettings.readingSide === 1 ? "optionSelected" : ""}
+                            disabled={pagesPerRowSelected === 0}
+                            onClick={() => {
+                                setAppSettings((init) => {
+                                    init.readerSettings.readingSide = 1;
+                                    return { ...init };
+                                });
+                            }}
+                        >
+                            rtl
+                        </button>
+                    </div>
+                </div>
+                <div className="settingItem">
+                    <div className="name">Scroll Speed(with keys)</div>
                     <div className="options">
                         <label>
                             Scroll 1

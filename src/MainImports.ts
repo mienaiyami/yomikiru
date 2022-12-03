@@ -180,6 +180,8 @@ declare global {
             showPageNumberInZenMode: boolean;
             scrollSpeed: number;
             largeScrollMultiplier: number;
+            // 0: "ltr"| 1: "rtl"
+            readingSide: 0 | 1;
         };
     }
 }
@@ -204,6 +206,7 @@ export const settingValidatorData = {
         showPageNumberInZenMode: "boolean",
         scrollSpeed: "number",
         largeScrollMultiplier: "number",
+        readingSide: [0, 1],
     },
 };
 

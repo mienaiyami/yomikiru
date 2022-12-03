@@ -1207,6 +1207,10 @@ body {
                                 padding-right: 0;
                             }
 
+                            button:disabled {
+                                opacity: 0.5;
+                            }
+
                             label {
                                 display: flex;
                                 cursor: pointer;
@@ -1255,9 +1259,16 @@ body {
 
                 .row {
                     display: flex;
-                    flex-direction: row-reverse;
                     justify-content: center;
                     width: 100%;
+
+                    &.rtl {
+                        flex-direction: row;
+                    }
+
+                    &.rtl {
+                        flex-direction: row-reverse;
+                    }
 
                     &.wide {
                         img {

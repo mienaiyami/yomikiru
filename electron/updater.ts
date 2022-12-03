@@ -183,7 +183,7 @@ const downloadUpdates = (latestVersion: string, windowId: number) => {
                 logger.log("Preparing to install updates...");
                 promptInstall();
             } else {
-                logger.error("File did not download.eeeeeeeeeeeeeeeeeeeeeeeeee");
+                logger.error("File did not download.");
                 downloadError(dl);
             }
         };
