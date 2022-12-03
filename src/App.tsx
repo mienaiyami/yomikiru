@@ -47,16 +47,17 @@ const makeSettingsJson = (locations?: string[]) => {
     if (locations) {
         const settingsDataSaved: appsettings = JSON.parse(window.fs.readFileSync(settingsPath, "utf-8"));
         locations.forEach((e) => {
-            if (!(e in settingsDataSaved)) {
-                window.logger.log(`"${e}"`, "missing from settings, adding new...");
-                // eslint-disable-next-line @typescript-eslint/ban-ts-comment
-                // @ts-ignore
-                // settingsDataSaved[e]=settingsDataNew[e]
-                // return
-            }
+            window.logger.log(`"SETTINGS: ${e}" missing/corrupted in app settings, adding new...`);
+            const l: string[] = e.split(".");
             // eslint-disable-next-line @typescript-eslint/ban-ts-comment
             // @ts-ignore
-            settingsDataSaved[e] = settingsDataNew[e];
+            if (l.length === 1) settingsDataSaved[l[0]] = settingsDataNew[l[0]];
+            // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+            // @ts-ignore
+            if (l.length === 2) settingsDataSaved[l[0]][l[1]] = settingsDataNew[l[0]][l[1]];
+            // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+            // @ts-ignore
+            if (l.length === 3) settingsDataSaved[l[0]][l[1]][l[2]] = settingsDataNew[l[0]][l[1]][l[2]];
         });
         window.fs.writeFileSync(settingsPath, JSON.stringify(settingsDataSaved));
     } else window.fs.writeFileSync(settingsPath, JSON.stringify(settingsDataNew));
@@ -115,7 +116,7 @@ function isSettingsValid(): { isValid: boolean; location: string[] } {
                 // @ts-ignore
                 if (!Object.prototype.hasOwnProperty.call(settings[key], key2)) {
                     output.isValid = false;
-                    output.location.push(key);
+                    output.location.push(`${key}.${key2}`);
                     continue;
                 }
                 if (
@@ -127,7 +128,7 @@ function isSettingsValid(): { isValid: boolean; location: string[] } {
                     typeof settings[key][key2] !== settingValidatorData[key][key2]
                 ) {
                     output.isValid = false;
-                    output.location.push(key);
+                    output.location.push(`${key}.${key2}`);
                     continue;
                 }
                 // eslint-disable-next-line @typescript-eslint/ban-ts-comment
@@ -137,7 +138,7 @@ function isSettingsValid(): { isValid: boolean; location: string[] } {
                     // @ts-ignore
                     if (!settingValidatorData[key][key2].includes(settings[key][key2])) {
                         output.isValid = false;
-                        output.location.push(key);
+                        output.location.push(`${key}.${key2}`);
                     }
                     continue;
                 }
