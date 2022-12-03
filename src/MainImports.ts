@@ -1,4 +1,4 @@
-import { app, dialog, getCurrentWindow, clipboard, nativeImage, shell, BrowserWindow } from "@electron/remote";
+import { app, dialog, getCurrentWindow, clipboard, nativeImage, shell } from "@electron/remote";
 import { ipcRenderer, webFrame } from "electron";
 import log from "electron-log";
 log.transports.file.resolvePath = () => path.join(app.getPath("userData"), "logs/renderer.log");
@@ -65,7 +65,6 @@ declare global {
             shell: typeof shell;
             ipcRenderer: typeof ipcRenderer;
             getCurrentWindow: typeof getCurrentWindow;
-            getAllWindows: Electron.BrowserWindow[];
             clipboard: typeof clipboard;
             nativeImage: typeof nativeImage;
             webFrame: typeof webFrame;
@@ -340,7 +339,6 @@ window.electron = {
     getCurrentWindow,
     clipboard,
     nativeImage,
-    getAllWindows: BrowserWindow.getAllWindows(),
     webFrame,
 };
 window.dialog = {
