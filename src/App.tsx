@@ -41,7 +41,7 @@ const makeSettingsJson = (locations?: string[]) => {
             showPageNumberInZenMode: true,
             scrollSpeed: 5,
             largeScrollMultiplier: 15,
-            readingSide: 0,
+            readingSide: 1,
         },
     };
     if (locations) {
