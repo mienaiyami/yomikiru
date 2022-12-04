@@ -1,8 +1,13 @@
-change value in electron/IS_PORTABLE.ts before make and makeZip
+{
+    dont need anymore
+    run node makeAll.js
 
-rename .exe and .zip 
-.zip - Manga.Reader-win32-${latestVersion}-Portable.zip
-.exe - Manga.Reader-${latestVersion}-Setup.exe
+    change value in electron/IS_PORTABLE.ts before make and makeZip
+
+    rename .exe and .zip 
+    .zip - Manga.Reader-win32-${latestVersion}-Portable.zip
+    .exe - Manga.Reader-${latestVersion}-Setup.exe
+}
 
 tag v${version} before push
 make sure version is same in package.json

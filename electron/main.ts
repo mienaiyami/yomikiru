@@ -10,10 +10,10 @@ declare const HOME_WEBPACK_ENTRY: string;
 import { spawn, spawnSync } from "child_process";
 import log from "electron-log";
 
+if (require("electron-squirrel-startup")) app.quit();
+
 // ! find a way to put this in script
 // ! need to change manually and then forge make
-
-if (require("electron-squirrel-startup")) app.quit();
 
 if (IS_PORTABLE) {
     const folderPath = path.join(app.getAppPath(), "../../userdata/");
@@ -32,7 +32,7 @@ log.log("Starting app...");
 import sudo from "@vscode/sudo-prompt";
 import checkForUpdate from "./updater";
 
-// registery, add option to open in reader to explorer context menu
+// registry, add option to open in reader to explorer context menu
 const addOptionToExplorerMenu = () => {
     app;
     const appPath = IS_PORTABLE
@@ -186,7 +186,7 @@ const createWindow = (link?: string) => {
         minWidth: 940,
         minHeight: 560,
         frame: false,
-        backgroundColor: "#272727",
+        backgroundColor: "#000000",
         show: false,
         webPreferences: {
             nodeIntegration: true,
@@ -256,7 +256,7 @@ const registerListener = () => {
         checkForUpdate(windowId, promptAfterCheck);
     });
     ipcMain.on("askBeforeClose", (e, windowId, ask = false, currentWindowIndex) => {
-        const window = BrowserWindow.fromId(windowId || 0)!;
+        const window = BrowserWindow.fromId(windowId)!;
         window.on("close", (e) => {
             if (ask) {
                 const res = dialog.showMessageBoxSync(window, {
@@ -274,20 +274,18 @@ const registerListener = () => {
         });
     });
 };
-app.on("ready", async () => {
-    registerListener();
-    createWindow();
-    if (!app.isPackaged) {
-        try {
-            const reactDevToolsPath = path.join(
-                homedir(),
-                "AppData\\local\\Microsoft\\Edge\\User Data\\Default\\Extensions\\gpphkfbcpidddadnkolkpfckpihlkkil\\4.20.2_0"
-            );
-            await session.defaultSession.loadExtension(reactDevToolsPath);
-        } catch (err) {
-            log.error(err);
-        }
-    }
+app.on("ready", () => {
+    // if (!app.isPackaged) {
+    //     try {
+    //         const reactDevToolsPath = path.join(
+    //             homedir(),
+    //             "AppData\\local\\Microsoft\\Edge\\User Data\\Default\\Extensions\\gpphkfbcpidddadnkolkpfckpihlkkil\\4.20.2_0"
+    //         );
+    //         await session.defaultSession.loadExtension(reactDevToolsPath);
+    //     } catch (err) {
+    //         log.error(err);
+    //     }
+    // }
     const template: MenuItemConstructorOptions[] = [
         {
             label: "Edit",
@@ -331,6 +329,8 @@ app.on("ready", async () => {
     ];
     const menu = Menu.buildFromTemplate(template);
     Menu.setApplicationMenu(menu);
+    registerListener();
+    createWindow();
 });
 
 app.on("window-all-closed", () => {
