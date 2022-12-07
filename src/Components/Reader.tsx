@@ -54,10 +54,7 @@ const Reader = () => {
     const imgContRef = useRef<HTMLDivElement>(null);
 
     const scrollReader = (intensity: number) => {
-        // ! remove window.app.lastClick after next update if no problems
-        // && window.app.lastClick <= Date.now() - window.app.clickDelay
         if (readerRef.current) {
-            // window.app.lastClick = Date.now();
             let startTime: number, prevTime: number;
             const anim = (timeStamp: number) => {
                 if (startTime === undefined) startTime = timeStamp;
@@ -118,7 +115,6 @@ const Reader = () => {
     }, [zenMode]);
     useLayoutEffect(() => {
         window.app.clickDelay = 100;
-        // window.app.lastClick = 0;
         const wheelFunction = (e: WheelEvent) => {
             if (e.ctrlKey) {
                 if (e.deltaY < 0) {
@@ -349,7 +345,7 @@ const Reader = () => {
         setImages(imgs);
         setReaderOpen(true);
     };
-    //! check if below code is really needed or not
+    //!! check if below code is really needed or not
     useLayoutEffect(() => {
         window.electron.webFrame.clearCache();
         images.forEach((e, i) => {

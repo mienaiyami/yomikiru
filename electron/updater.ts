@@ -126,11 +126,6 @@ const downloadUpdates = (latestVersion: string, windowId: number) => {
                     logger.log("Successfully extracted at " + extractPath);
                     const appPath = path.join(app.getAppPath(), "../../");
                     logger.log("Moving files to ", appPath);
-                    if (fs.existsSync(extractPath + "\\" + "userdata")) {
-                        // ! possibily not working or totally useless
-                        logger.log("Removing /userdata from " + extractPath);
-                        fs.rmdirSync(extractPath + "\\" + "userdata");
-                    }
                     const appDirName = path.join(app.getPath("exe"), "../");
                     app.on("before-quit", () => {
                         logger.log("Installing updates...");

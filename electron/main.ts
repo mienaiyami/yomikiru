@@ -11,10 +11,6 @@ import { spawn, spawnSync } from "child_process";
 import log from "electron-log";
 
 if (require("electron-squirrel-startup")) app.quit();
-
-// ! find a way to put this in script
-// ! need to change manually and then forge make
-
 if (IS_PORTABLE) {
     const folderPath = path.join(app.getAppPath(), "../../userdata/");
     if (!fs.existsSync(folderPath)) {
@@ -25,7 +21,7 @@ if (IS_PORTABLE) {
 
 app.disableHardwareAcceleration();
 
-// ! change path in settings.tsx as well if changing log path
+// change path in settings.tsx as well if changing log path
 log.transports.file.resolvePath = () => path.join(app.getPath("userData"), "logs/main.log");
 log.log("Starting app...");
 

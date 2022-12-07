@@ -74,7 +74,7 @@ try {
     window.logger.error(err);
     makeSettingsJson();
 }
-//! this function have a lot of @ts-ignore
+//! fix : this function have a lot of @ts-ignore
 function isSettingsValid(): { isValid: boolean; location: string[] } {
     const settings: appsettings = JSON.parse(window.fs.readFileSync(settingsPath, "utf-8"));
     const output: { isValid: boolean; location: string[] } = {

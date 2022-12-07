@@ -25,7 +25,6 @@ const Settings = (): ReactElement => {
     const historyInputRef = useRef<HTMLInputElement>(null);
     const themeMakerRef = useRef<HTMLDivElement>(null);
     const themeNameInputRef = useRef<HTMLInputElement>(null);
-    // const [mouseOnInput, setMouseOnInput] = useState(false);
 
     useEffect(() => {
         if (isSettingOpen) {
@@ -71,8 +70,6 @@ const Settings = (): ReactElement => {
             return [...init];
         });
         setTheme(name);
-        //! save theme on pc after adding to allThemes
-        //! make ability to delete and edit themes
     };
 
     const ShortcutInput = ({ which, i }: { which: "key1" | "key2"; i: number }) => (
@@ -192,9 +189,6 @@ const Settings = (): ReactElement => {
                         />
                         <input
                             type="number"
-                            //! remove mouseOnInput from whole file
-                            // onMouseEnter={() => setMouseOnInput(true)}
-                            // onMouseLeave={() => setMouseOnInput(false)}
                             min={0}
                             max={100}
                             value={Math.ceil(opacity) ?? 100}
@@ -273,8 +267,6 @@ const Settings = (): ReactElement => {
                                         historyBtnRef.current?.click();
                                     }
                                 }}
-                                // onMouseEnter={() => setMouseOnInput(true)}
-                                // onMouseLeave={() => setMouseOnInput(false)}
                                 readOnly={true}
                             />
                             <button
