@@ -258,6 +258,14 @@ const registerListener = () => {
     ipcMain.on("askBeforeClose", (e, windowId, ask = false, currentWindowIndex) => {
         const window = BrowserWindow.fromId(windowId)!;
         window.on("close", (e) => {
+            window.webContents.executeJavaScript("window.app.deleteDirOnClose").then((e: string[]) => {
+                e.forEach((link) => {
+                    if (fs.existsSync(link))
+                        fs.rmSync(link, {
+                            recursive: true,
+                        });
+                });
+            });
             if (ask) {
                 const res = dialog.showMessageBoxSync(window, {
                     message: "Close this window?",

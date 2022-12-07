@@ -349,14 +349,14 @@ const Reader = () => {
         setImages(imgs);
         setReaderOpen(true);
     };
+    //! check if below code is really needed or not
     useLayoutEffect(() => {
         window.electron.webFrame.clearCache();
         images.forEach((e, i) => {
             const img = document.createElement("img");
             img.src = window.electron.app.isPackaged
-                ? window.path.normalize(mangaInReader?.link + "\\" + e)
-                : "http://localhost:5000/" +
-                  window.path.normalize(mangaInReader?.link + "\\" + e).replace("D:\\", "");
+                ? e
+                : "http://localhost:5000/" + e.replace("D:\\", "").replace("C:\\", "");
 
             img.onload = () => {
                 setImageWidthContainer((init) => [...init, { index: i, isWide: img.height / img.width <= 1.2 }]);
@@ -377,13 +377,12 @@ const Reader = () => {
             imageWidthContainer.sort((a, b) => a.index - b.index);
             const tempImageElements = [];
             const tempWideImageContMap: number[] = [];
-            const Image = ({ name, index }: { name: string; index: number }) => (
+            const Image = ({ imgLink, index }: { imgLink: string; index: number }) => (
                 <img
                     src={
                         window.electron.app.isPackaged
-                            ? window.path.normalize(mangaInReader?.link + "\\" + name)
-                            : "http://localhost:5000/" +
-                              window.path.normalize(mangaInReader?.link + "\\" + name).replace("D:\\", "")
+                            ? imgLink
+                            : "http://localhost:5000/" + imgLink.replace("D:\\", "").replace("C:\\", "")
                     }
                     onLoad={(e) => {
                         const img = e.target as HTMLImageElement;
@@ -394,7 +393,7 @@ const Reader = () => {
                         showContextMenu({
                             isImg: true,
                             e: ev.nativeEvent,
-                            link: window.path.normalize(mangaInReader?.link + "\\" + name),
+                            link: imgLink,
                         });
                     }}
                     // title={name}
@@ -407,31 +406,31 @@ const Reader = () => {
             // if(appSettings.readerSettings.pagesPerRowSelected === 0)
             for (let index = 0; index < images.length; index++) {
                 if (appSettings.readerSettings.pagesPerRowSelected === 0) {
-                    tempImageElements.push([<Image name={images[index]} index={index} key={images[index]} />]);
+                    tempImageElements.push([<Image imgLink={images[index]} index={index} key={images[index]} />]);
                     if (wideImageEnabled && imageWidthContainer[index].isWide)
                         tempWideImageContMap.push(tempImageElements.length - 1);
                     continue;
                 }
                 if (wideImageEnabled && imageWidthContainer[index].isWide) {
-                    tempImageElements.push([<Image name={images[index]} index={index} key={images[index]} />]);
+                    tempImageElements.push([<Image imgLink={images[index]} index={index} key={images[index]} />]);
                     tempWideImageContMap.push(tempImageElements.length - 1);
                     continue;
                 }
                 if (appSettings.readerSettings.pagesPerRowSelected === 2 && index === 0) {
-                    tempImageElements.push([<Image name={images[index]} index={index} key={images[index]} />]);
+                    tempImageElements.push([<Image imgLink={images[index]} index={index} key={images[index]} />]);
                     continue;
                 }
                 if (index === images.length - 1) {
-                    tempImageElements.push([<Image name={images[index]} index={index} key={images[index]} />]);
+                    tempImageElements.push([<Image imgLink={images[index]} index={index} key={images[index]} />]);
                     continue;
                 }
                 if (wideImageEnabled && imageWidthContainer[index + 1].isWide) {
-                    tempImageElements.push([<Image name={images[index]} index={index} key={images[index]} />]);
+                    tempImageElements.push([<Image imgLink={images[index]} index={index} key={images[index]} />]);
                     continue;
                 }
                 tempImageElements.push([
-                    <Image name={images[index]} index={index} key={images[index]} />,
-                    <Image name={images[index + 1]} index={index + 1} key={images[index + 1]} />,
+                    <Image imgLink={images[index]} index={index} key={images[index]} />,
+                    <Image imgLink={images[index + 1]} index={index + 1} key={images[index + 1]} />,
                 ]);
                 index++;
             }

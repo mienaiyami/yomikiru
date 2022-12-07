@@ -27,7 +27,9 @@ const LocationListItem = ({
                         window.dialog.customError({ message: "Directory/File doesn't exist." });
                         return;
                     }
-                    setCurrentLink(link);
+                    if ([".zip", ".cbz"].includes(window.path.extname(name))) {
+                        openInReader(link);
+                    } else setCurrentLink(link);
                 }}
                 onContextMenu={(e) => {
                     showContextMenu({

@@ -36,14 +36,6 @@ const Settings = (): ReactElement => {
     }, [isSettingOpen]);
 
     const reservedKeys = ["h", "Control", "Tab", "Shift", "Alt", "Escape"];
-    const randomString = (length: number) => {
-        let result = "";
-        const characters = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789";
-        for (let i = 0; i <= length; i++) {
-            result += characters.charAt(Math.floor(Math.random() * characters.length));
-        }
-        return result;
-    };
     const saveTheme = () => {
         let name = "";
         if (allThemes.map((e) => e.name).includes(themeNameInputRef.current!.value)) {
@@ -54,12 +46,12 @@ const Settings = (): ReactElement => {
             return;
         }
         if (themeNameInputRef.current!.value === "") {
-            name = randomString(6);
+            name = window.app.randomString(6);
         } else name = themeNameInputRef.current!.value;
         const props: ThemeDataMain[] = [...themeMakerRef.current!.getElementsByClassName("newThemeMakerProp")].map(
             (e) => (e as HTMLElement).innerText as ThemeDataMain
         );
-        themeNameInputRef.current!.value = randomString(6);
+        themeNameInputRef.current!.value = window.app.randomString(6);
         // eslint-disable-next-line @typescript-eslint/ban-ts-comment
         //@ts-ignore
         const newThemeData: { [e in ThemeDataMain]: string } = {};
@@ -710,7 +702,7 @@ const Settings = (): ReactElement => {
                     Make Theme
                     <input
                         type="text"
-                        defaultValue={randomString(6)}
+                        defaultValue={window.app.randomString(6)}
                         ref={themeNameInputRef}
                         onKeyDown={(e) => {
                             e.stopPropagation();

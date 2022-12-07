@@ -125,6 +125,13 @@ const ReaderSideList = ({
                                     );
                                 }
                             });
+                    } else if ([".zip", ".cbz"].includes(window.path.extname(path))) {
+                        validFile++;
+                        responseCompleted++;
+                        listData.push({ name: e, pages: 0 });
+                        if (responseCompleted >= validFile) {
+                            setChapterData(listData.sort((a, b) => window.app.betterSortOrder(a.name, b.name)));
+                        }
                     }
                 });
             });

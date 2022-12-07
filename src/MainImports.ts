@@ -1,5 +1,6 @@
 import { app, dialog, getCurrentWindow, clipboard, nativeImage, shell } from "@electron/remote";
 import { ipcRenderer, webFrame } from "electron";
+import crossZip from "cross-zip";
 import log from "electron-log";
 log.transports.file.resolvePath = () => path.join(app.getPath("userData"), "logs/renderer.log");
 /*//! i know its dangerous but its offline app and i was unable to get BrowserWindow to work
@@ -69,6 +70,7 @@ declare global {
             nativeImage: typeof nativeImage;
             webFrame: typeof webFrame;
         };
+        crossZip: typeof crossZip;
         currentPageNumber: number;
         scrollToPage: (pageNumber: number, callback?: () => void) => void;
         logger: typeof log;
@@ -79,8 +81,10 @@ declare global {
         shortcutsFunctions: ShortcutSchema[];
         app: {
             betterSortOrder: (x: string, y: string) => number;
+            deleteDirOnClose: string;
             titleBarHeight: number;
             isReaderOpen: boolean;
+            randomString: (length: number) => string;
             // to remove later
             keydown: boolean;
             clickDelay: number;
@@ -95,10 +99,12 @@ declare global {
                 title,
                 message,
                 detail,
+                log,
             }: {
                 title?: string;
                 message: string;
                 detail?: string | undefined;
+                log?: boolean;
             }) => Promise<Electron.MessageBoxReturnValue>;
             warn: ({
                 title,
@@ -329,8 +335,17 @@ window.shortcutsFunctions = [
     },
 ];
 window.logger = log;
+window.crossZip = crossZip;
 const collator = Intl.Collator(undefined, { numeric: true, sensitivity: "base" });
 window.app.betterSortOrder = collator.compare;
+window.app.randomString = (length: number) => {
+    let result = "";
+    const characters = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789";
+    for (let i = 0; i <= length; i++) {
+        result += characters.charAt(Math.floor(Math.random() * characters.length));
+    }
+    return result;
+};
 window.electron = {
     app,
     dialog,
@@ -351,8 +366,8 @@ window.dialog = {
             detail: err.message,
         });
     },
-    customError: ({ title = "Error", message, detail }: { title?: string; message: string; detail?: string }) => {
-        window.logger.error("Error:", message, detail || "");
+    customError: ({ title = "Error", message, detail, log = true }) => {
+        if (log) window.logger.error("Error:", message, detail || "");
         return window.electron.dialog.showMessageBox(window.electron.getCurrentWindow(), {
             type: "error",
             title: title,
@@ -360,18 +375,8 @@ window.dialog = {
             detail: detail,
         });
     },
-    warn: ({
-        title = "Warning",
-        message,
-        detail,
-        noOption = true,
-    }: {
-        title?: string;
-        message: string;
-        detail?: string;
-        noOption?: boolean;
-    }) => {
-        window.logger.warn(message, detail || "");
+    warn: ({ title = "Warning", message, detail, noOption = true }) => {
+        // window.logger.warn(message, detail || "");
         return window.electron.dialog.showMessageBox(window.electron.getCurrentWindow(), {
             type: "warning",
             title: title,
@@ -381,17 +386,7 @@ window.dialog = {
             defaultId: 1,
         });
     },
-    confirm: ({
-        title = "Confirm",
-        message,
-        detail,
-        noOption = true,
-    }: {
-        title?: string;
-        message: string;
-        detail?: string;
-        noOption?: boolean;
-    }) =>
+    confirm: ({ title = "Confirm", message, detail, noOption = true }) =>
         window.electron.dialog.showMessageBox(window.electron.getCurrentWindow(), {
             type: "info",
             title: title,

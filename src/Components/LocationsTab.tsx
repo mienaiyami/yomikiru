@@ -43,7 +43,10 @@ const LocationsTab = forwardRef(
                     const dirNames: string[] = files
                         .filter((e) => {
                             try {
-                                if (window.fs.lstatSync(window.path.join(currentLink, e)).isDirectory())
+                                if (
+                                    window.fs.lstatSync(window.path.join(currentLink, e)).isDirectory() ||
+                                    [".zip", ".cbz"].includes(window.path.extname(e))
+                                )
                                     return true;
                             } catch {
                                 return false;
