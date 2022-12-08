@@ -18,17 +18,17 @@ if (IS_PORTABLE) {
     }
     app.setPath("userData", folderPath);
 }
-
+// disabling hardware acceleration because it causes reader to stutter when scrolling
 app.disableHardwareAcceleration();
 
-// change path in settings.tsx as well if changing log path
+// change path in `settings.tsx as well if changing log path
 log.transports.file.resolvePath = () => path.join(app.getPath("userData"), "logs/main.log");
 log.log("Starting app...");
 
 import sudo from "@vscode/sudo-prompt";
 import checkForUpdate from "./updater";
 
-// registry, add option to open in reader to explorer context menu
+// registry, add option "open in reader" in  explorer context menu
 const addOptionToExplorerMenu = () => {
     app;
     const appPath = IS_PORTABLE
@@ -57,6 +57,7 @@ const addOptionToExplorerMenu = () => {
         if (error) log.error(error);
     });
 };
+// registry, remove option "open in reader" in explorer context menu
 const deleteOptionInExplorerMenu = () => {
     const regDelete = `Windows Registry Editor Version 5.00
     
@@ -175,6 +176,10 @@ if (app.isPackaged && process.argv[1] && fs.existsSync(process.argv[1])) {
 const windowsCont: (BrowserWindow | null)[] = [];
 let isFirstWindow = true;
 
+/**
+ * Create main reader window.
+ * @param link (optional) open given link/location in manga reader after loading window.
+ */
 const createWindow = (link?: string) => {
     const newWindow = new BrowserWindow({
         width: 1200,
@@ -197,6 +202,7 @@ const createWindow = (link?: string) => {
     newWindow.loadURL(HOME_WEBPACK_ENTRY);
     newWindow.setMenuBarVisibility(false);
     newWindow.webContents.once("dom-ready", () => {
+        // maximize also unhide window
         newWindow.maximize();
         newWindow.webContents.send("loadMangaFromLink", { link: link || "" });
         newWindow.webContents.send("setWindowIndex", currentWindowIndex);
@@ -211,6 +217,9 @@ const createWindow = (link?: string) => {
     });
 };
 
+/**
+ * code to make sure only one instance of app is running at one time.
+ *  */
 const gotTheLock = app.requestSingleInstanceLock();
 if (!gotTheLock) {
     app.quit();
@@ -225,6 +234,7 @@ app.on("second-instance", (event, commandLine) => {
         createWindow();
     }
 });
+// taskbar right click option
 app.setUserTasks([
     {
         program: process.execPath,
@@ -254,6 +264,7 @@ const registerListener = () => {
     ipcMain.on("askBeforeClose", (e, windowId, ask = false, currentWindowIndex) => {
         const window = BrowserWindow.fromId(windowId)!;
         window.on("close", (e) => {
+            //! not working, check later
             window.webContents.executeJavaScript("window.app.deleteDirOnClose").then((link: string) => {
                 if (fs.existsSync(link))
                     fs.rmSync(link, {
@@ -288,6 +299,10 @@ app.on("ready", () => {
     //         log.error(err);
     //     }
     // }
+
+    /**
+     * enables basic shortcut keys such as copy, paste, reload, etc.
+     */
     const template: MenuItemConstructorOptions[] = [
         {
             label: "Edit",

@@ -14,7 +14,10 @@ declare module "react" {
     }
 }
 declare global {
-    //! try to map strings to main
+    //! try to map strings to theme.main
+    /**
+     * css variable names of theme
+     */
     type ThemeDataMain =
         | "--body-bg"
         | "--sideList-bg"
@@ -44,6 +47,9 @@ declare global {
         | "--context-menu-bg"
         | "--zenModePageIndicator-bg";
     //! edit window.shortcutsFunctions as well
+    /**
+     * Available shortcut commands.
+     */
     type ShortcutCommands =
         | "navToPage"
         | "toggleZenMode"
@@ -70,10 +76,16 @@ declare global {
             nativeImage: typeof nativeImage;
             webFrame: typeof webFrame;
         };
+        /**
+         * Library to un-archive zip or cbz.
+         */
         crossZip: typeof crossZip;
         currentPageNumber: number;
         scrollToPage: (pageNumber: number, callback?: () => void) => void;
         logger: typeof log;
+        /**
+         * Supported image formats.
+         */
         supportedFormats: string[];
         path: typeof path;
         fs: typeof fs;
@@ -90,6 +102,10 @@ declare global {
             clickDelay: number;
             lastClick: number;
         };
+        /**
+         * Link of manga to be opened in reader only on start of new window.
+         * Changed on window load, if `loadManga!==""` then open link (loadManga).
+         */
         loadManga: string;
         cachedImageList: { link: string; images: string[] };
         temp: any;
@@ -171,12 +187,24 @@ declare global {
         baseDir: string;
         historyLimit: number;
         locationListSortType: "normal" | "inverse";
+        /**
+         * Check for new update on start of app.
+         */
         updateCheckerEnabled: boolean;
         askBeforeClosing: boolean;
         readerSettings: {
             readerWidth: number;
             variableImageSize: boolean;
+            /**
+             * * `0` - Infinite scroll
+             * * `1` - Click to move
+             */
             readerTypeSelected: 0 | 1;
+            /**
+             * * `0` - One page per row.
+             * * `1` - Two pages per row.
+             * * `2` - Two pages per row, but first row only has one.
+             */
             pagesPerRowSelected: 0 | 1 | 2;
             gapBetweenRows: boolean;
             sideListWidth: number;
@@ -186,6 +214,11 @@ declare global {
             scrollSpeed: number;
             largeScrollMultiplier: number;
             // 0: "ltr"| 1: "rtl"
+            /**
+             * reading direction in two pages per row
+             * * `0` - ltr
+             * * `1` - rtl
+             */
             readingSide: 0 | 1;
         };
     }

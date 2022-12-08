@@ -7,6 +7,10 @@ import fetch from "electron-fetch";
 import crossZip from "cross-zip";
 import logger from "electron-log";
 
+/**
+ * prevent deletion of these files in "Portable" version of app on installing new update.
+ * add new settings/store file to this.
+ */
 const fileToKeep = [
     "bookmarks.json",
     "history.json",
@@ -19,6 +23,11 @@ const fileToKeep = [
 ];
 
 const downloadLink = "https://github.com/mienaiyami/react-ts-offline-manga-reader/releases/download/v";
+/**
+ *
+ * @param windowId id of window in which message box should be shown
+ * @param promptAfterCheck (false by default) Show message box if current version is same as latest version.
+ */
 const checkForUpdate = async (windowId: number, promptAfterCheck = false) => {
     const rawdata = await fetch(
         "https://raw.githubusercontent.com/mienaiyami/react-ts-offline-manga-reader/master/package.json"
@@ -79,7 +88,11 @@ const checkForUpdate = async (windowId: number, promptAfterCheck = false) => {
         });
     }
 };
-
+/**
+ *
+ * @param latestVersion latest version ex. "2.3.8"
+ * @param windowId id of window in which message box should be shown
+ */
 const downloadUpdates = (latestVersion: string, windowId: number) => {
     logger.log("Downloading updates...");
     const tempPath = path.join(app.getPath("temp"), "manga reader updates " + new Date().toDateString());

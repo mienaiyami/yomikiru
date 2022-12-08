@@ -19,6 +19,10 @@ const themesMain: ThemeData[] = [];
 const shortcutsPath = window.path.join(userDataURL, "shortcuts.json");
 const shortcutsInit: ShortcutSchema[] = [];
 
+/**
+ * Make settings.json for app.
+ * @param locations (optional) only update given locations in settings.json.
+ */
 const makeSettingsJson = (locations?: string[]) => {
     const settingsDataNew: appsettings = {
         theme: "theme2",
@@ -75,6 +79,12 @@ try {
     makeSettingsJson();
 }
 //! fix : this function have a lot of @ts-ignore
+/**
+ * Check if settings.json is valid or not.
+ * @returns
+ * * `isValid` - boolean
+ * * `location` - array of invalid settings location
+ */
 function isSettingsValid(): { isValid: boolean; location: string[] } {
     const settings: appsettings = JSON.parse(window.fs.readFileSync(settingsPath, "utf-8"));
     const output: { isValid: boolean; location: string[] } = {
@@ -363,8 +373,18 @@ const App = (): ReactElement => {
             }
         }
     }, [firstRendered]);
+    /**
+     * Check if `{link}` has images or is in archive format(zip,cbz).
+     * If link is a archive then extract it in temp dir and check for images.
+     * @param link link of folder containing images or zip/cbz.
+     * @param callback `{imgs}` array of full link of images.
+     * @param sendImgs send full images links after done.
+     */
     const checkValidFolder = (
         link: string,
+        /**
+         * `{imgs}` array of full link of images.
+         */
         callback: (isValid?: boolean, imgs?: string[]) => void,
         sendImgs?: boolean
     ): void => {
@@ -462,6 +482,10 @@ const App = (): ReactElement => {
             });
         tempFn(linkMain);
     };
+    /**
+     * Check if folder have images then open those images in reader.
+     * @param link link of folder containing images to be opened in reader.
+     */
     const openInReader = (link: string) => {
         link = window.path.normalize(link);
         if (link === linkInReader) return;

@@ -75,6 +75,7 @@ const Reader = () => {
             return;
         }
     };
+    //! check if really needed
     const pageChangeEvent = new Event("pageNumberChange");
 
     const scrollToPage = (pageNumber: number, callback?: () => void) => {
@@ -292,7 +293,13 @@ const Reader = () => {
         setCurrentImageRow((init) => init + 1);
         if (readerRef.current) readerRef.current.scrollTop = 0;
     };
-
+    /**
+     * Check if directory `link` have images or not.
+     * If any image is found then load images otherwise keep linkInReader same as before.
+     * @param link Local link of folder containing images.
+     * @example
+     * "D://manga/chapter/"
+     */
     const checkForImgsAndLoad = (link: string) => {
         if (window.cachedImageList?.link === link && window.cachedImageList.images) {
             // console.log("using cached image list for " + link);
