@@ -4,3 +4,4 @@ packages
 .webpack
 out
 .vscode
+yarn-error.log

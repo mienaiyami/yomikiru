@@ -95,7 +95,10 @@ const checkForUpdate = async (windowId: number, promptAfterCheck = false) => {
  */
 const downloadUpdates = (latestVersion: string, windowId: number) => {
     logger.log("Downloading updates...");
-    const tempPath = path.join(app.getPath("temp"), "manga reader updates " + new Date().toDateString());
+    const tempPath = path.join(
+        app.getPath("temp"),
+        "manga reader updates " + new Date().toLocaleString("en-UK", { hour12: true })
+    );
     if (fs.existsSync(tempPath)) spawnSync("powershell.exe", [`rm "${tempPath}" -r -force`]);
     fs.mkdirSync(tempPath);
     logger.log(tempPath);

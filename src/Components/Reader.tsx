@@ -333,7 +333,7 @@ const Reader = () => {
             mangaName: linksplitted[linksplitted.length - 2],
             chapterName: linksplitted[linksplitted.length - 1],
             link,
-            date: new Date().toLocaleString(),
+            date: new Date().toLocaleString("en-UK", { hour12: true }),
             pages: imgs.length,
         };
         setMangaInReader(mangaOpened);

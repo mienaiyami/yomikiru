@@ -18,8 +18,7 @@
         "makeZip": "electron-forge make --targets=@electron-forge/maker-zip --arch=ia32",
         "makeAll": "npm run makeExe && npm run makeZip",
         "dist": "",
-        "release": "electron-forge publish",
-        "docs": "npx typedoc --tsconfig ./tsconfig.json"
+        "release": "electron-forge publish"
     },
     "license": "MIT",
     "dependencies": {

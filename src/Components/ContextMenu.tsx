@@ -129,7 +129,7 @@ const ContextMenu = forwardRef((props: Iprops | null, ref: React.ForwardedRef<HT
                                     chapterName: props?.item?.chapterName,
                                     pages: props?.item?.pages,
                                     link: link,
-                                    date: new Date().toLocaleString(),
+                                    date: new Date().toLocaleString("en-UK", { hour12: true }),
                                 };
                                 addNewBookmark(newItem);
                             }
