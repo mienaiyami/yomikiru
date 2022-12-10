@@ -1,5 +1,5 @@
 name: Question
-description: Report errors or unexpected behavior
+description: Ask question related to this app.
 labels:
 - question
 body:
