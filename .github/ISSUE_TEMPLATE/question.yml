@@ -1,0 +1,11 @@
+name: Question
+description: Report errors or unexpected behavior
+labels:
+- question
+body:
+- type: textarea
+  attributes:
+    label: Question
+    description: Question.
+  validations:
+    required: true

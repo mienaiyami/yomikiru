@@ -1,0 +1,9 @@
+name: Blank Issue
+description: New blank issue
+body:
+- type: textarea
+  attributes:
+    label: Question
+    description: Question.
+  validations:
+    required: true
