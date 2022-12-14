@@ -33,12 +33,13 @@ const addOptionToExplorerMenu = () => {
     app;
     const appPath = IS_PORTABLE
         ? app.getPath("exe").replace(/\\/g, "\\\\")
-        : path.join(app.getPath("exe").replace(/\\/g, "\\\\"), `../../${app.name}.exe`);
+        : path.join(app.getPath("exe"), `../../${app.name}.exe`).replace(/\\/g, "\\\\");
+    console.log(appPath);
     const regInit = `Windows Registry Editor Version 5.00
     
     ; Setup context menu item for click on folders tree item:
     [HKEY_CURRENT_USER\\Software\\Classes\\directory\\shell\\mangareader\\command]
-    @="${appPath} \\"%V\\""
+    @="\\"${appPath}\\" \\"%V\\""
     
     ; Optional: specify an icon for the item:   
     [HKEY_CURRENT_USER\\Software\\Classes\\directory\\shell\\mangareader]
