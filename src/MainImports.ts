@@ -251,7 +251,24 @@ export const settingValidatorData = {
 window.path = path;
 window.fs = fs;
 window.currentPageNumber = 1;
-window.supportedFormats = [".jpg", ".jpeg", ".png", ".webp", ".svg", ".apng", ".gif", "avif"];
+window.supportedFormats = [
+    ".jpg",
+    ".jpeg",
+    ".png",
+    ".webp",
+    ".svg",
+    ".apng",
+    ".gif",
+    ".avif",
+    ".JPG",
+    ".JPEG",
+    ".PNG",
+    ".WEBP",
+    ".SVG",
+    ".APNG",
+    ".GIF",
+    ".AVIF",
+];
 window.themeProps = {
     "--body-bg": "",
     "--sideList-bg": "",
