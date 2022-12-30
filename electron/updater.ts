@@ -6,7 +6,7 @@ import { app, BrowserWindow, dialog } from "electron";
 import fetch from "electron-fetch";
 import crossZip from "cross-zip";
 import logger from "electron-log";
-
+import { download, File } from "electron-dl";
 /**
  * prevent deletion of these files in "Portable" version of app on installing new update.
  * add new settings/store file to this.
@@ -56,8 +56,8 @@ const checkForUpdate = async (windowId: number, promptAfterCheck = false) => {
                     "."
                 )}\nLatest Version:\t${latestVersion.join(".")}
                 `,
-                buttons: ["Download Now", "Download and show Changelog", "Download Later"],
-                cancelId: 2,
+                buttons: ["Download Now", "Download and show Changelog", "Show Changelog", "Download Later"],
+                cancelId: 3,
             })
             .then((response) => {
                 if (response.response === 0) downloadUpdates(latestVersion.join("."), windowId);
@@ -65,6 +65,17 @@ const checkForUpdate = async (windowId: number, promptAfterCheck = false) => {
                     downloadUpdates(latestVersion.join("."), windowId);
                     // shell.openExternal("https://github.com/mienaiyami/react-ts-offline-manga-reader/releases");
 
+                    const newWindow = new BrowserWindow({
+                        width: 1200,
+                        height: 800,
+                        minWidth: 940,
+                        minHeight: 560,
+                        backgroundColor: "#272727",
+                    });
+                    newWindow.loadURL("https://github.com/mienaiyami/react-ts-offline-manga-reader/releases");
+                    newWindow.setMenuBarVisibility(false);
+                }
+                if (response.response === 2) {
                     const newWindow = new BrowserWindow({
                         width: 1200,
                         height: 800,
@@ -94,18 +105,9 @@ const checkForUpdate = async (windowId: number, promptAfterCheck = false) => {
  * @param windowId id of window in which message box should be shown
  */
 const downloadUpdates = (latestVersion: string, windowId: number) => {
-    logger.log("Downloading updates...");
     const tempPath = path.join(app.getPath("temp"), "manga reader updates " + new Date().toDateString());
     if (fs.existsSync(tempPath)) spawnSync("powershell.exe", [`rm "${tempPath}" -r -force`]);
     fs.mkdirSync(tempPath);
-    logger.log(tempPath);
-    const downloadError = (dl: string) => {
-        dialog.showMessageBox(BrowserWindow.fromId(windowId ?? 1)!, {
-            type: "error",
-            title: "Download Error",
-            message: "File did not download.\n" + dl,
-        });
-    };
     const promptInstall = () => {
         dialog
             .showMessageBox(BrowserWindow.fromId(windowId ?? 1)!, {
@@ -124,88 +126,69 @@ const downloadUpdates = (latestVersion: string, windowId: number) => {
                 }
             });
     };
+    const downloadFile = (dl: string, callback: (file: File) => void) => {
+        download(BrowserWindow.fromId(windowId ?? 1)!, dl, {
+            directory: tempPath,
+            onStarted: () => {
+                logger.log("Downloading updates...");
+                logger.log(dl, `"${tempPath}"`);
+                dialog.showMessageBox(BrowserWindow.fromId(windowId ?? 1)!, {
+                    message: "Download Started",
+                    type: "info",
+                });
+            },
+            onCancel: () => {
+                logger.log("Download canceled.");
+            },
+            errorMessage: "Download error while downloading updates.",
+            onCompleted: (file) => callback(file),
+            showProgressBar: true,
+        });
+    };
     if (IS_PORTABLE) {
         const dl = downloadLink + latestVersion + "/" + `Manga.Reader-win32-${latestVersion}-Portable.zip`;
-        const filePath = path.join(tempPath, "updates.zip");
         const extractPath = path.join(tempPath, "updates");
         if (!fs.existsSync(extractPath)) fs.mkdirSync(extractPath);
-        const ps = spawn("powershell.exe", [`iwr -outf "${filePath}" "${dl}"`]);
 
-        const updateHandler = () => {
-            if (fs.existsSync(filePath)) {
-                logger.log("portable.zip downloaded.");
-                crossZip.unzip(filePath, extractPath, (err) => {
-                    if (err) return logger.error(err);
-                    logger.log("Successfully extracted at " + extractPath);
-                    const appPath = path.join(app.getAppPath(), "../../");
-                    logger.log("Moving files to ", appPath);
-                    const appDirName = path.join(app.getPath("exe"), "../");
-                    app.on("before-quit", () => {
-                        logger.log("Installing updates...");
-                        spawn(
-                            "start",
-                            [
-                                `powershell.exe Start-Sleep -Seconds 5.0 ; Remove-Item -Recurse -Force '${appDirName}\\*' -Exclude ${fileToKeep.join(
-                                    ","
-                                )} ; ; Move-Item -Path '${extractPath}\\*' -Destination '${appDirName}'`,
-                            ],
-                            { shell: true }
-                        ).on("exit", process.exit);
-                        logger.log("Quitting app...");
-                    });
-
-                    logger.log("Preparing to install updates...");
-                    promptInstall();
-                });
-            } else {
-                logger.error("File did not download.");
-                downloadError(dl);
-            }
-        };
-        ps.on("error", (err) => logger.error(err));
-        ps.stderr.on("data", (e) => {
-            logger.error("ps stderr: ", e.toString());
-            logger.error("File did not download.");
-            ps.off("close", updateHandler);
-            ps.stderr.removeAllListeners();
-            downloadError(dl);
-        });
-        ps.stdout.on("data", (e) => logger.log("ps stdout: ", e.toString()));
-        ps.on("close", updateHandler);
-    } else {
-        const dl = downloadLink + latestVersion + "/" + `Manga.Reader-${latestVersion}-Setup.exe`;
-        const filePath = path.join(tempPath, `Manga.Reader-${latestVersion}-Setup.exe`);
-        const ps = spawn("powershell.exe", [`iwr -outf "${filePath}" "${dl}"`]);
-
-        const updateHandler = () => {
-            if (fs.existsSync(filePath)) {
-                logger.log(`Manga.Reader-${latestVersion}-Setup.exe downloaded.`);
+        downloadFile(dl, (file) => {
+            logger.log(`${file.filename} downloaded.`);
+            crossZip.unzip(file.path, extractPath, (err) => {
+                if (err) return logger.error(err);
+                logger.log(`Successfully extracted at "${extractPath}"`);
+                const appPath = path.join(app.getAppPath(), "../../");
+                const appDirName = path.join(app.getPath("exe"), "../");
                 app.on("before-quit", () => {
                     logger.log("Installing updates...");
-                    logger.log(`powershell.exe Start-Sleep -Seconds 5.0 ;Start-Process '${filePath}'`);
-                    spawn("start", [`powershell.exe Start-Sleep -Seconds 5.0 ; Start-Process '${filePath}'`], {
-                        shell: true,
-                    }).on("exit", process.exit);
+                    logger.log(`Moving files to "${appPath}"`);
+                    spawn(
+                        "start",
+                        [
+                            `powershell.exe Start-Sleep -Seconds 5.0 ; Remove-Item -Recurse -Force '${appDirName}\\*' -Exclude ${fileToKeep.join(
+                                ","
+                            )} ; ; Move-Item -Path '${extractPath}\\*' -Destination '${appDirName}'`,
+                        ],
+                        { shell: true }
+                    ).on("exit", process.exit);
                     logger.log("Quitting app...");
                 });
                 logger.log("Preparing to install updates...");
                 promptInstall();
-            } else {
-                logger.error("File did not download.");
-                downloadError(dl);
-            }
-        };
-
-        ps.on("error", (err) => logger.error(err));
-        ps.stderr.on("data", (e) => {
-            logger.error("ps stderr: ", e.toString());
-            logger.error("File did not download.");
-            ps.off("close", updateHandler);
-            ps.stderr.removeAllListeners();
-            downloadError(dl);
+            });
         });
-        ps.stdout.on("data", (e) => logger.log("ps stdout: ", e.toString()));
-        ps.on("close", updateHandler);
+    } else {
+        const dl = downloadLink + latestVersion + "/" + `Manga.Reader-${latestVersion}-Setup.exe`;
+        downloadFile(dl, (file) => {
+            logger.log(`${file.filename} downloaded.`);
+            app.on("before-quit", () => {
+                logger.log("Installing updates...");
+                spawn("start", [`powershell.exe Start-Sleep -Seconds 5.0 ; Start-Process '${file.path}'`], {
+                    shell: true,
+                }).on("exit", process.exit);
+                logger.log("Quitting app...");
+            });
+            logger.log("Preparing to install updates...");
+            promptInstall();
+        });
     }
 };
 export default checkForUpdate;

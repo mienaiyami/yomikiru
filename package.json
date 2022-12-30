@@ -3,7 +3,7 @@
     "productName": "Manga Reader",
     "version": "2.3.11",
     "description": "App to read manga on desktop",
-    "main": "./.webpack/main/index.js",
+    "main": ".webpack/main",
     "author": {
         "name": "mienaiyami <https://github.com/mienaiyami>"
     },
@@ -30,6 +30,7 @@
         "@fortawesome/react-fontawesome": "^0.1.15",
         "@vscode/sudo-prompt": "^9.3.1",
         "cross-zip": "^4.0.0",
+        "electron-dl": "^3.5.0",
         "electron-fetch": "^1.9.1",
         "electron-log": "^4.4.8",
         "electron-squirrel-startup": "^1.0.0",

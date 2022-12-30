@@ -1,4 +1,2 @@
-
-                    const isPortable = false;
-                    export default isPortable;
-                    
+const isPortable = true;
+export default isPortable;
