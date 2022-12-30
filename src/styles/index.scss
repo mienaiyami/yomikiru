@@ -247,7 +247,7 @@ body {
         .windowBtnCont {
             -webkit-app-region: no-drag;
             position: absolute;
-            width: calc(var(--button-width) * 5);
+            width: calc(var(--button-width) * 2 + 138px);
             top: 0;
             right: 0;
             z-index: 3000;
@@ -323,14 +323,6 @@ body {
                 &:hover,
                 &:active {
                     background: var(--topBar-hover-color);
-                }
-            }
-
-            #closeBtn {
-
-                &:hover,
-                &:active {
-                    background: rgba(232, 17, 35, 0.9);
                 }
             }
         }

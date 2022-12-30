@@ -14,14 +14,13 @@ export default function useTheme(
                     //@ts-ignore
                     themeStr += `${key}:${themeData[key]};`;
                 }
-                window.electron
-                    .getCurrentWindow()
-                    .setTitleBarOverlay({
-                        color: themeData["--topBar-color"],
-                        symbolColor: themeData["--font-color"],
-                    });
                 document.body.style.cssText = themeStr || "";
                 document.body.setAttribute("data-theme", theme);
+                window.electron.getCurrentWindow().setTitleBarOverlay({
+                    color: window.getComputedStyle(document.querySelector("body #topBar")!).backgroundColor,
+                    symbolColor: window.getComputedStyle(document.querySelector("body #topBar .homeBtns button")!)
+                        .color,
+                });
             } else {
                 window.dialog.customError({
                     title: "Error",

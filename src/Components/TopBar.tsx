@@ -1,12 +1,10 @@
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { ReactElement, useContext, useEffect, useLayoutEffect, useState } from "react";
-import { faHome, faCog, faMinus, faTimes } from "@fortawesome/free-solid-svg-icons";
-import { faWindowMaximize, faWindowRestore } from "@fortawesome/free-regular-svg-icons";
+import { faHome, faCog } from "@fortawesome/free-solid-svg-icons";
 import { AppContext } from "../App";
 
 const TopBar = (): ReactElement => {
     const [title, setTitle] = useState<string>("Manga Reader");
-    const [isMaximized, setMaximized] = useState(window.electron.getCurrentWindow().isMaximized ?? true);
     const {
         setSettingOpen,
         mangaInReader,
@@ -29,13 +27,7 @@ const TopBar = (): ReactElement => {
         setTitle(window.electron.app.name.concat(window.electron.app.isPackaged ? "" : " - dev"));
         document.title = window.electron.app.name;
     };
-    const attachEventListener = () => {
-        setMaximized(window.electron.getCurrentWindow().isMaximized);
-        window.electron.getCurrentWindow()?.on("maximize", () => setMaximized(true));
-        window.electron.getCurrentWindow()?.on("unmaximize", () => setMaximized(false));
-    };
     useLayoutEffect(() => {
-        attachEventListener();
         window.addEventListener("pageNumberChange", () => {
             (document.querySelector("#NavigateToPageInput") as HTMLInputElement).value =
                 window.currentPageNumber.toString();
@@ -144,36 +136,6 @@ const TopBar = (): ReactElement => {
                     />
                     <span className="totalPage">/{mangaInReader?.pages || 0}</span>
                 </label>
-                <button
-                    tabIndex={-1}
-                    id="minimizeBtn"
-                    title="Minimize"
-                    onFocus={(e) => e.currentTarget.blur()}
-                    onClick={() => window.electron.getCurrentWindow().minimize()}
-                >
-                    <FontAwesomeIcon icon={faMinus} />
-                </button>
-                <button
-                    tabIndex={-1}
-                    id="maximizeRestoreBtn"
-                    onFocus={(e) => e.currentTarget.blur()}
-                    title={isMaximized ? "Restore" : "Maximize"}
-                    onClick={() => {
-                        if (isMaximized) return window.electron.getCurrentWindow().restore();
-                        window.electron.getCurrentWindow().maximize();
-                    }}
-                >
-                    <FontAwesomeIcon icon={isMaximized ? faWindowRestore : faWindowMaximize} />
-                </button>
-                <button
-                    tabIndex={-1}
-                    id="closeBtn"
-                    title="Close"
-                    onFocus={(e) => e.currentTarget.blur()}
-                    onClick={() => window.electron.getCurrentWindow().close()}
-                >
-                    <FontAwesomeIcon icon={faTimes} />
-                </button>
             </div>
         </div>
     );
