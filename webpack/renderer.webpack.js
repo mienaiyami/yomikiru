@@ -5,5 +5,9 @@ module.exports = {
     module: {
         rules: require("./rules.webpack"),
     },
+    externals: {
+        electron: 'commonjs2 electron',
+    },
+    target: 'electron-renderer'
     // target: "web",
 };

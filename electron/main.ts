@@ -190,10 +190,16 @@ const createWindow = (link?: string) => {
         frame: false,
         backgroundColor: "#000000",
         show: false,
+        titleBarStyle: "hidden",
+        titleBarOverlay: {
+            color: "#2e2e2e",
+            symbolColor: "#ff6d4b",
+        },
         webPreferences: {
             nodeIntegration: true,
             contextIsolation: false,
-            enableRemoteModule: true,
+            // enableRemoteModule: true,
+            safeDialogs: true,
             // preload: HOME_PRELOAD_WEBPACK_ENTRY,
         },
     });
@@ -202,6 +208,7 @@ const createWindow = (link?: string) => {
     windowsCont.push(newWindow);
     newWindow.loadURL(HOME_WEBPACK_ENTRY);
     newWindow.setMenuBarVisibility(false);
+    remote.enable(newWindow.webContents);
     newWindow.webContents.once("dom-ready", () => {
         // maximize also unhide window
         newWindow.maximize();

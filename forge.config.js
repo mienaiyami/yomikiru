@@ -2,26 +2,22 @@ module.exports = {
     packagerConfig: {
         name: "Manga Reader",
     },
-    plugins: [
-        [
-            "@electron-forge/plugin-webpack",
-            {
-                mainConfig: "./webpack/main.webpack.js",
-                renderer: {
-                    config: "./webpack/renderer.webpack.js",
-                    entryPoints: [
-                        {
-                            html: "./public/index.html",
-                            js: "./src/index.tsx",
-                            name: "home",
-                        },
-                    ],
-                },
+    plugins: [{
+        name: "@electron-forge/plugin-webpack",
+        config: {
+            mainConfig: "./webpack/main.webpack.js",
+            "devContentSecurityPolicy": "connect-src 'self' * 'unsafe-eval'",
+            renderer: {
+                config: "./webpack/renderer.webpack.js",
+                entryPoints: [{
+                    html: "./public/index.html",
+                    js: "./src/index.tsx",
+                    name: "home",
+                }],
             },
-        ],
-    ],
-    makers: [
-        {
+        },
+    }, ],
+    makers: [{
             name: "@electron-forge/maker-squirrel",
             config: {
                 // name: "mangareader",
