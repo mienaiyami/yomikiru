@@ -49,6 +49,8 @@ declare global {
     //! edit window.shortcutsFunctions as well
     /**
      * Available shortcut commands.
+     * to add keyboard shortcuts, add command name in this type then to `window.shortcutsFunctions`
+     * then register shortcut in `Reader.tsx` under `registerShortcuts` function
      */
     type ShortcutCommands =
         | "navToPage"
@@ -64,7 +66,8 @@ declare global {
         | "prevPage"
         | "scrollDown"
         | "scrollUp"
-        | "showHidePageNumberInZen";
+        | "showHidePageNumberInZen"
+        | "toggleFitVertically";
     interface Window {
         electron: {
             app: typeof app;
@@ -165,9 +168,21 @@ declare global {
         isHistory: boolean;
     }
     interface ShortcutSchema {
+        /**
+         * name of command
+         */
         command: ShortcutCommands;
+        /**
+         * display name in settings
+         */
         name: string;
+        /**
+         * empty string for none
+         */
         key1: string;
+        /**
+         * empty string for none
+         */
         key2: string;
     }
     interface IContextMenuData {
@@ -220,6 +235,7 @@ declare global {
              * * `1` - rtl
              */
             readingSide: 0 | 1;
+            fitVertically: boolean;
         };
     }
 }
@@ -245,6 +261,7 @@ export const settingValidatorData = {
         scrollSpeed: "number",
         largeScrollMultiplier: "number",
         readingSide: [0, 1],
+        fitVertically: "boolean",
     },
 };
 
@@ -381,6 +398,12 @@ window.shortcutsFunctions = [
         command: "showHidePageNumberInZen",
         name: "Show/Hide Page number in Zen Mode",
         key1: "1",
+        key2: "",
+    },
+    {
+        command: "toggleFitVertically",
+        name: "Toggle Fit Vertically",
+        key1: "v",
         key2: "",
     },
 ];

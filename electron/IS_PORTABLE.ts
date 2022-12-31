@@ -1,2 +1,2 @@
-const isPortable = true;
+const isPortable = false;
 export default isPortable;

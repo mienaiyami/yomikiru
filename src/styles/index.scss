@@ -87,6 +87,17 @@ body.zenMode {
     #app {
         top: 0;
         height: 100%;
+
+        #reader {
+            .imgCont {
+
+                &.fitVertically .row img {
+                    width: auto !important;
+                    height: 100vh;
+
+                }
+            }
+        }
     }
 }
 
@@ -1243,6 +1254,12 @@ body {
                 &.readerMode1 {
                     justify-content: center;
                     min-height: 100%;
+                }
+
+                &.fitVertically .row img {
+                    width: auto !important;
+                    height: calc(100vh - var(--titleBar-height));
+
                 }
 
                 &.gap {

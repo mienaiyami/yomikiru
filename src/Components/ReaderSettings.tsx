@@ -1,5 +1,6 @@
-import { faBars, faMinus, faPlus, faTimes } from "@fortawesome/free-solid-svg-icons";
+import { faBars, faMinus, faPlus, faTimes, faArrowsAltV } from "@fortawesome/free-solid-svg-icons";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
+import { app } from "electron";
 import React, { useContext, useEffect, useState } from "react";
 import { AppContext } from "../App";
 
@@ -82,7 +83,11 @@ const ReaderSettings = ({
                                 value={appSettings.readerSettings.readerWidth}
                                 min={1}
                                 max={maxWidth}
-                                onKeyDown={(e) => e.stopPropagation()}
+                                onKeyDown={(e) => {
+                                    if (e.key !== "Escape") {
+                                        e.stopPropagation();
+                                    }
+                                }}
                                 onChange={(e) => {
                                     makeScrollPos();
                                     setAppSettings((init) => {
@@ -145,6 +150,17 @@ const ReaderSettings = ({
                             />
                             Clamp
                         </label>
+                        <button
+                            className={appSettings.readerSettings.fitVertically ? "optionSelected " : " "}
+                            onClick={() => {
+                                setAppSettings((init) => {
+                                    init.readerSettings.fitVertically = !init.readerSettings.fitVertically;
+                                    return { ...init };
+                                });
+                            }}
+                        >
+                            <FontAwesomeIcon icon={faArrowsAltV} />
+                        </button>
                     </div>
                 </div>
                 <div className="settingItem">

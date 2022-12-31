@@ -46,6 +46,7 @@ const makeSettingsJson = (locations?: string[]) => {
             scrollSpeed: 5,
             largeScrollMultiplier: 15,
             readingSide: 1,
+            fitVertically: false,
         },
     };
     if (locations) {

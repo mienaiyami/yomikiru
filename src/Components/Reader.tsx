@@ -221,6 +221,13 @@ const Reader = () => {
                                 return { ...init };
                             });
                             break;
+                        case shortcutkey.toggleFitVertically?.key1:
+                        case shortcutkey.toggleFitVertically?.key2:
+                            setAppSettings((init) => {
+                                init.readerSettings.fitVertically = !init.readerSettings.fitVertically;
+                                return { ...init };
+                            });
+                            break;
                         default:
                             break;
                     }
@@ -533,7 +540,8 @@ const Reader = () => {
                 className={
                     "imgCont " +
                     (appSettings.readerSettings.gapBetweenRows ? "gap " : "") +
-                    (appSettings.readerSettings.readerTypeSelected === 1 ? "readerMode1" : "")
+                    (appSettings.readerSettings.readerTypeSelected === 1 ? "readerMode1 " : "") +
+                    (appSettings.readerSettings.fitVertically ? "fitVertically " : "")
                 }
                 style={{
                     "--varWidth": appSettings.readerSettings.readerWidth + "%",

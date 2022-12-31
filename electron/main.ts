@@ -34,7 +34,6 @@ const addOptionToExplorerMenu = () => {
     const appPath = IS_PORTABLE
         ? app.getPath("exe").replace(/\\/g, "\\\\")
         : path.join(app.getPath("exe"), `../../${app.name}.exe`).replace(/\\/g, "\\\\");
-    console.log(appPath);
     const regInit = `Windows Registry Editor Version 5.00
     
     ; Setup context menu item for click on folders tree item:
@@ -301,9 +300,9 @@ app.on("ready", () => {
     //     try {
     //         const reactDevToolsPath = path.join(
     //             homedir(),
-    //             "AppData\\local\\Microsoft\\Edge\\User Data\\Default\\Extensions\\gpphkfbcpidddadnkolkpfckpihlkkil\\4.20.2_0"
+    //             "AppData\\local\\Microsoft\\Edge\\User Data\\Default\\Extensions\\fmkadmapgofadopljbjfkapdkoienihi\\4.27.1_0"
     //         );
-    //         await session.defaultSession.loadExtension(reactDevToolsPath);
+    //         session.defaultSession.loadExtension(reactDevToolsPath);
     //     } catch (err) {
     //         log.error(err);
     //     }
