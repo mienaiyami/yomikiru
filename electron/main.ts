@@ -37,13 +37,37 @@ const addOptionToExplorerMenu = () => {
     const regInit = `Windows Registry Editor Version 5.00
     
     ; Setup context menu item for click on folders tree item:
-    [HKEY_CURRENT_USER\\Software\\Classes\\directory\\shell\\mangareader\\command]
+    [HKEY_CURRENT_USER\\Software\\Classes\\directory\\shell\\MangaReader\\command]
     @="\\"${appPath}\\" \\"%V\\""
     
     ; Optional: specify an icon for the item:   
-    [HKEY_CURRENT_USER\\Software\\Classes\\directory\\shell\\mangareader]
+    [HKEY_CURRENT_USER\\Software\\Classes\\directory\\shell\\MangaReader]
     @="Open in Manga Reader"
     "icon"="${appPath}"
+
+    
+    [HKEY_CLASSES_ROOT\\.cbz\\shell\\MangaReader]
+    @="Open in Manga Reader"
+    "Icon"="${appPath}"
+
+    [HKEY_CLASSES_ROOT\\.cbz\\shell\\MangaReader\\command]
+    @="\\"${appPath}\\" \\"%V\\""
+
+
+    [HKEY_CLASSES_ROOT\\MangaReader]
+    @="Manga Reader"
+
+    [HKEY_CLASSES_ROOT\\MangaReader\\DefaultIcon]
+    @="${appPath}"
+
+    [HKEY_CLASSES_ROOT\\MangaReader\\shell\\open]
+    "Icon"="${appPath}"
+
+    [HKEY_CLASSES_ROOT\\MangaReader\\shell\\open\\command]
+    @="\\"${appPath}\\" \\"%V\\""
+
+    [HKEY_CLASSES_ROOT\\.zip\\OpenWithProgids]
+    "MangaReader"=""
     `;
 
     const tempPath = app.getPath("temp");
@@ -61,7 +85,14 @@ const addOptionToExplorerMenu = () => {
 const deleteOptionInExplorerMenu = () => {
     const regDelete = `Windows Registry Editor Version 5.00
     
-    [-HKEY_CURRENT_USER\\Software\\Classes\\directory\\shell\\mangareader]
+    [-HKEY_CURRENT_USER\\Software\\Classes\\directory\\shell\\MangaReader]
+    
+    [-HKEY_CLASSES_ROOT\\.cbz\\shell\\MangaReader]
+
+    [-HKEY_CLASSES_ROOT\\MangaReader]
+
+    [HKEY_CLASSES_ROOT\\.zip\\OpenWithProgids]
+    "MangaReader"=-
     `;
     fs.writeFileSync(path.join(app.getPath("temp"), "deleteOpenWithMangaReader.reg"), regDelete);
     const op = {
