@@ -554,7 +554,9 @@ const Reader = () => {
                 onClick={(e) => {
                     // && (e.target as HTMLElement).tagName === "IMG"
                     if (appSettings.readerSettings.readerTypeSelected === 1) {
-                        const clickPos = (e.clientX / e.currentTarget.offsetWidth) * 100;
+                        const clickPos =
+                            ((e.clientX - (isSideListPinned ? sideListWidth : 0)) / e.currentTarget.offsetWidth) *
+                            100;
                         if (clickPos <= 40) openPrevPageRef.current?.click();
                         if (clickPos > 60) openNextPageRef.current?.click();
                     }
