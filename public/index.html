@@ -16,6 +16,9 @@
         window.app = {};
         const global = globalThis;
         window.loadManga = "";
+        if (window.navigator.keyboard && window.navigator.keyboard.lock) {
+            window.navigator.keyboard.lock(["Escape"]);
+        }
         // window.addEventListener("message", (e) => {
         //     if (e.data.message && e.data.message === "loadMangaFromLink") {
         //         if (e.data.link) window.loadManga = e.data.link;
