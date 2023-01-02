@@ -117,7 +117,9 @@ const Settings = (): ReactElement => {
     const ThemeElement = ({ color, prop }: { color: string; prop: ThemeDataMain }): ReactElement => {
         const ref = useRef<HTMLInputElement>(null);
         const [firstRendered, setFirstRendered] = useState(false);
+        // ex. #ffffff
         const [rawColor, setRawColor] = useState(color.substring(0, 7));
+        // ex. #ffffffff , var(--icon-color)
         const [rawColorWhole, setRawColorWhole] = useState(color);
         const [opacity, setOpacity] = useState(color.length > 7 ? parseInt(color.substring(7), 16) / 2.55 : 100);
         const [checked, setChecked] = useState(color.substring(0, 4) === "var(" ? true : false);
@@ -134,6 +136,10 @@ const Settings = (): ReactElement => {
                 //             ? "0" + Math.ceil(opacity * 2.55).toString(16)
                 //             : Math.ceil(opacity * 2.55).toString(16))
                 // );
+                if (prop === "--icon-color")
+                    window.electron.getCurrentWindow().setTitleBarOverlay({ symbolColor: rawColor });
+                if (prop === "--topBar-color")
+                    window.electron.getCurrentWindow().setTitleBarOverlay({ color: rawColor });
                 document.body.style.setProperty(
                     prop,
                     rawColor.substring(0, 7) +
