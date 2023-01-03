@@ -1,5 +1,4 @@
-[
-    {
+[{
         "name": "theme1",
         "main": {
             "--body-bg": "#262626",
@@ -28,13 +27,13 @@
             "--context-menu-text": "var(--font-color)",
             "--context-menu-bg": "var(--color-tertiary)",
             "--sideList-bg": "var(--body-bg)",
-            "--zenModePageIndicator-bg":"var(--body-bg)"
+            "--zenModePageIndicator-bg": "var(--body-bg)"
         }
     },
     {
         "name": "theme2",
         "main": {
-            "--body-bg": "#1e1e24",
+            "--body-bg": "#000000",
             "--icon-color": "#fff8f0",
             "--font-color": "#fff8f0",
             "--font-select-color": "#fff8f0",
@@ -60,7 +59,7 @@
             "--context-menu-text": "var(--font-color)",
             "--context-menu-bg": "var(--color-tertiary)",
             "--sideList-bg": "var(--body-bg)",
-            "--zenModePageIndicator-bg":"var(--body-bg)"
+            "--zenModePageIndicator-bg": "var(--body-bg)"
         }
     },
     {
@@ -92,7 +91,7 @@
             "--context-menu-text": "var(--font-color)",
             "--context-menu-bg": "var(--color-tertiary)",
             "--sideList-bg": "var(--body-bg)",
-            "--zenModePageIndicator-bg":"var(--body-bg)"
+            "--zenModePageIndicator-bg": "var(--body-bg)"
         }
     }
 ]

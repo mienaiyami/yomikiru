@@ -324,7 +324,7 @@ window.shortcutsFunctions = [
     },
     {
         command: "toggleZenMode",
-        name: "Toggle Zen Mode",
+        name: "Toggle Zen Mode / Full Screen",
         key1: "`",
         key2: "",
     },

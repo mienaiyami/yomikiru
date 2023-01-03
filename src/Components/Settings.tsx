@@ -493,7 +493,7 @@ const Settings = (): ReactElement => {
                         </div>
                     </div>
                     <div className="settingItem">
-                        <div className="name">Ask before closing window? (need restart) :</div>
+                        <div className="name">Ask before closing window? (Needs Restart) :</div>
                         <div className="current">
                             <label className={appSettings.askBeforeClosing ? "selected" : ""}>
                                 <input
@@ -735,7 +735,7 @@ const Settings = (): ReactElement => {
                         <tbody>
                             <tr>
                                 <th>Property</th>
-                                <th>Color/Opacity</th>
+                                <th>Color-Opacity / Variable</th>
                             </tr>
                             {Object.entries(allThemes.find((e) => e.name === theme)!.main).map((e) => (
                                 <tr key={e[0]} className="newThemeMakerRow">

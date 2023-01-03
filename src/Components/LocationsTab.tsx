@@ -166,12 +166,12 @@ const LocationsTab = forwardRef(
                         <p>Loading...</p>
                     ) : locations.length === 0 ? (
                         <>
-                            <p>This folder contain {imageCount} images</p>
+                            <p>This folder contains '{imageCount}' images.</p>
                             <p>No Directory</p>
                         </>
                     ) : (
                         <>
-                            <p>This folder contain {imageCount} images</p>
+                            <p>This folder contains '{imageCount}' images.</p>
                             <ol>
                                 {appSettings.locationListSortType === "inverse"
                                     ? List([...locations].reverse(), filter)

@@ -362,10 +362,13 @@ const ReaderSideList = ({
                     </Button>
                 </div>
             </div>
-            <h1>
-                Manga: <span className="mangaName">{mangaInReader?.mangaName}</span>
-                <br />
-                Chapter: <span className="chapterName">{mangaInReader?.chapterName}</span>
+            <h1 className="in-reader">
+                <div>
+                    Manga : <span className="mangaName">{mangaInReader?.mangaName}</span>
+                </div>
+                <div>
+                    Chapter : <span className="chapterName">{mangaInReader?.chapterName}</span>
+                </div>
             </h1>
             <div className="location-cont">
                 {chapterData.length <= 0 ? (

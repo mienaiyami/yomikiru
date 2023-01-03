@@ -219,6 +219,9 @@ const getDataFiles = () => {
                         data.push(window.shortcutsFunctions.find((a) => a.command === e)!);
                     }
                 });
+                data.forEach((e) => {
+                    e.name = window.shortcutsFunctions.find((a) => a.command === e.command)?.name as string;
+                });
                 if (rewriteNeeded) window.fs.writeFileSync(shortcutsPath, JSON.stringify(data));
                 shortcutsInit.push(...data);
             } catch (err) {
