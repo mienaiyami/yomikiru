@@ -132,10 +132,10 @@ const downloadUpdates = (latestVersion: string, windowId: number) => {
             onStarted: () => {
                 logger.log("Downloading updates...");
                 logger.log(dl, `"${tempPath}"`);
-                dialog.showMessageBox(BrowserWindow.fromId(windowId ?? 1)!, {
-                    message: "Download Started",
-                    type: "info",
-                });
+                // dialog.showMessageBox(BrowserWindow.fromId(windowId ?? 1)!, {
+                //     message: "Download Started",
+                //     type: "info",
+                // });
             },
             onCancel: () => {
                 logger.log("Download canceled.");
