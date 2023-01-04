@@ -894,6 +894,7 @@ body {
                     p {
                         width: 100%;
                         padding-bottom: 10px;
+                        padding-left: 20px;
                     }
                 }
 
@@ -1058,19 +1059,34 @@ body {
                 .in-reader {
                     font-size: 20px;
                     user-select: text;
-                    border-bottom: 2px solid var(--color-secondary);
-                    border-top: 2px solid var(--color-secondary);
+                    border: solid var(--btn-color2);
+                    border-width: 4px 0;
                     margin-top: 7px;
                     margin-bottom: 5px;
                     padding: 5px;
                     display: flex;
                     flex-direction: column;
+                    // display: grid;
+                    // grid-template-columns: 75px auto;
+
                     gap: 6px;
 
-                    span {
-                        cursor: text;
-                        font-weight: 300;
-                        font-size: 16px;
+                    cursor: text;
+                    font-weight: 300;
+                    font-size: 16px;
+
+                    .prop {
+                        font-size: 20px;
+                        font-weight: 700;
+                        display: inline-block;
+                        position: relative;
+                        width: 85px;
+
+                        &::after {
+                            content: ":";
+                            position: absolute;
+                            right: 3px;
+                        }
                     }
                 }
 

@@ -609,24 +609,24 @@ const Settings = (): ReactElement => {
                 <div className="content features">
                     <ul>
                         <li>
-                            you can make custom theme by editing themes.json. Or click ctrl+shift+i, then from the
-                            styles panel change colors element.style, then copy inside {`{}`}, then open
-                            themes.json, go to the end and before ] add ",{`{name:name,main:your-copied-thing}`}".
+                            Collapse/Un-collapse Bookmarks, History page tabs by clicking on the Dividers beside
+                            them in home screen.
                         </li>
-                        <li>you dont need to type whole word in search(e.g. for "One piece" type "op").</li>
+                        <li>You don't need to type the whole word in search. (e.g. For "One Piece" type "op").</li>
                         <li>
-                            you can open next/prev chapter in "infinite scrolling" mode by clicking on right/left
-                            part of screen or a/d(Keys) when on scroll 0 or 100%.
+                            In Infinite Scroll, on First/Last page, go to Previous/Next chapter by clicking on the
+                            Left/Right part of the screen respectively
                         </li>
-                        <li>you can bring side list by moving mouse to left of screen.</li>
-                        <li>you can pin and resize of side list.</li>
-                        <li>you can shrink home page tabs by clicking dividers.</li>
                         <li>
-                            you can open chapter directly from file explorer on right clicking folder after
-                            enabling "File Explorer Option" (Note that this only opens chapter containing images
-                            and not Manga Folder).
+                            Access the side list by moving the mouse to left side of the screen. You can pin and
+                            resize the side list.
                         </li>
-                        <li>Zen Mode: hide ui and only show images.</li>
+                        <li>
+                            Open chapter directly from the file explorer after enabling 'File Explorer Option'.
+                            (Right Click on folder {"->"} Show more options {"->"} Open in Manga Reader) Note that
+                            this only opens the chapter containing images, not the Manga Folder.
+                        </li>
+                        <li>Zen Mode: Hides UI, Only shows images. (Full Screen)</li>
                     </ul>
                 </div>
                 <h1>
@@ -651,8 +651,10 @@ const Settings = (): ReactElement => {
                 </h1>
                 <div className="shortcutKey">
                     <p>
-                        BackSpace to remove.
-                        <br /> Reserved keys ({reservedKeys.join(", ")}).
+                        <ul>
+                            <li>Backspace to delete Key.</li>
+                            <li>Reserved Keys : {reservedKeys.join(", ")}.</li>
+                        </ul>
                     </p>
                     <table>
                         <tbody>
