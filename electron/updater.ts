@@ -28,7 +28,7 @@ const downloadLink = "https://github.com/mienaiyami/react-ts-offline-manga-reade
  * @param windowId id of window in which message box should be shown
  * @param promptAfterCheck (false by default) Show message box if current version is same as latest version.
  */
-const checkForUpdate = async (windowId: number, promptAfterCheck = false) => {
+const checkForUpdate = async (windowId: number, skipMinor = false, promptAfterCheck = false) => {
     const rawdata = await fetch(
         "https://raw.githubusercontent.com/mienaiyami/react-ts-offline-manga-reader/master/package.json"
     ).then((data) => data.json());
@@ -40,7 +40,12 @@ const checkForUpdate = async (windowId: number, promptAfterCheck = false) => {
         .map((e) => parseInt(e));
     logger.log("Latest version ", latestVersion.join("."));
     logger.log("Current version ", currentAppVersion.join("."));
-
+    if (skipMinor) {
+        if (latestVersion[0] === currentAppVersion[0] && latestVersion[1] === currentAppVersion[1]) {
+            logger.log("Minor update available, skipping update.");
+            return;
+        }
+    }
     if (
         latestVersion[0] > currentAppVersion[0] ||
         (latestVersion[0] === currentAppVersion[0] && latestVersion[1] > currentAppVersion[1]) ||

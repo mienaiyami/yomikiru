@@ -33,6 +33,7 @@ const makeSettingsJson = (locations?: string[]) => {
         locationListSortType: "normal",
         updateCheckerEnabled: true,
         askBeforeClosing: false,
+        skipMinorUpdate: false,
         readerSettings: {
             readerWidth: 60,
             variableImageSize: true,
@@ -571,7 +572,8 @@ const App = (): ReactElement => {
             window.electron.ipcRenderer.send(
                 "canCheckForUpdate_response",
                 appSettings.updateCheckerEnabled,
-                window.electron.getCurrentWindow().id
+                window.electron.getCurrentWindow().id,
+                appSettings.skipMinorUpdate
             );
         });
         window.app.titleBarHeight = parseFloat(

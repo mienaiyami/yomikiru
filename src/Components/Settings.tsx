@@ -247,7 +247,7 @@ const Settings = (): ReactElement => {
                 </h1>
                 <div className="content">
                     <div className="settingItem defaultLocation">
-                        <div className="name">Default Location:</div>
+                        <div className="name">Default Location</div>
                         <div className="current">
                             <input type="text" value={appSettings.baseDir} readOnly />
                             <button
@@ -261,7 +261,7 @@ const Settings = (): ReactElement => {
                         </div>
                     </div>
                     <div className="settingItem historyLimit">
-                        <div className="name">History Limit:</div>
+                        <div className="name">History Limit</div>
                         <div className="current">
                             <input
                                 type="number"
@@ -305,7 +305,7 @@ const Settings = (): ReactElement => {
                         </div>
                     </div>
                     <div className="settingItem exportBookmark">
-                        <div className="name">Bookmarks:</div>
+                        <div className="name">Bookmarks</div>
                         <div className="current">
                             <button
                                 // onFocus={(e) => e.currentTarget.blur()}
@@ -402,7 +402,7 @@ const Settings = (): ReactElement => {
                         </div>
                     </div>
                     <div className="settingItem themeSelector">
-                        <div className="name">Theme:</div>
+                        <div className="name">Theme</div>
                         <div className="current">
                             {/* <p>
                                 Add custom theme by adding new item with changed css variable in <br />
@@ -453,7 +453,7 @@ const Settings = (): ReactElement => {
                         </div>
                     </div>
                     <div className="settingItem">
-                        <div className="name">File Explorer Option :</div>
+                        <div className="name">File Explorer Option </div>
                         <div className="current">
                             <button onClick={() => window.electron.ipcRenderer.send("addOptionToExplorerMenu")}>
                                 Add
@@ -464,7 +464,7 @@ const Settings = (): ReactElement => {
                         </div>
                     </div>
                     <div className="settingItem">
-                        <div className="name">Check for Update :</div>
+                        <div className="name">Check for Update</div>
                         <div className="current">
                             <label className={appSettings.updateCheckerEnabled ? "selected" : ""}>
                                 <input
@@ -493,8 +493,8 @@ const Settings = (): ReactElement => {
                         </div>
                     </div>
                     <div className="settingItem">
-                        <div className="name">Ask before closing window? (Needs Restart) :</div>
-                        <div className="current">
+                        <div className="name">Other Settings</div>
+                        <div className="current list">
                             <label className={appSettings.askBeforeClosing ? "selected" : ""}>
                                 <input
                                     type="checkbox"
@@ -506,7 +506,20 @@ const Settings = (): ReactElement => {
                                         });
                                     }}
                                 />
-                                <p>{appSettings.askBeforeClosing ? "Yes" : "No"}</p>
+                                <p>Ask before closing window? (Needs Restart).</p>
+                            </label>
+                            <label className={appSettings.skipMinorUpdate ? "selected" : ""}>
+                                <input
+                                    type="checkbox"
+                                    checked={appSettings.skipMinorUpdate}
+                                    onChange={(e) => {
+                                        setAppSettings((init) => {
+                                            init.skipMinorUpdate = e.currentTarget.checked;
+                                            return { ...init };
+                                        });
+                                    }}
+                                />
+                                <p>Skip minor updates.</p>
                             </label>
                         </div>
                     </div>
@@ -523,13 +536,13 @@ const Settings = (): ReactElement => {
                 <h1>About</h1>
                 <div className="content">
                     <div className="settingItem">
-                        <div className="name">Version:</div>
+                        <div className="name">Version </div>
                         <div className="current">
                             <span>{window.electron.app.getVersion()}</span>
                         </div>
                     </div>
                     <div className="settingItem">
-                        <div className="name">Home:</div>
+                        <div className="name">Home</div>
                         <div className="current">
                             <button
                                 onClick={() =>
@@ -543,7 +556,7 @@ const Settings = (): ReactElement => {
                         </div>
                     </div>
                     <div className="settingItem">
-                        <div className="name">Issues/Feature Request :</div>
+                        <div className="name">Issues/Feature Request</div>
                         <div className="current">
                             <button
                                 // onFocus={(e) => e.currentTarget.blur()}
@@ -570,7 +583,7 @@ const Settings = (): ReactElement => {
                         </div>
                     </div>
                     <div className="settingItem">
-                        <div className="name">Author :</div>
+                        <div className="name">Author</div>
                         <div className="current">
                             <button
                                 onClick={() =>
@@ -582,7 +595,7 @@ const Settings = (): ReactElement => {
                         </div>
                     </div>
                     <div className="settingItem">
-                        <div className="name">Logs :</div>
+                        <div className="name">Logs</div>
                         <div className="current">
                             <button
                                 onClick={() =>
@@ -651,10 +664,8 @@ const Settings = (): ReactElement => {
                 </h1>
                 <div className="shortcutKey">
                     <p>
-                        <ul>
-                            <li>Backspace to delete Key.</li>
-                            <li>Reserved Keys : {reservedKeys.join(", ")}.</li>
-                        </ul>
+                        <li>Backspace to delete Key.</li>
+                        <li>Reserved Keys : {reservedKeys.join(", ")}.</li>
                     </p>
                     <table>
                         <tbody>

@@ -207,6 +207,7 @@ declare global {
          */
         updateCheckerEnabled: boolean;
         askBeforeClosing: boolean;
+        skipMinorUpdate: boolean;
         readerSettings: {
             readerWidth: number;
             variableImageSize: boolean;
@@ -248,6 +249,7 @@ export const settingValidatorData = {
     locationListSortType: ["normal", "inverse"],
     updateCheckerEnabled: "boolean",
     askBeforeClosing: "boolean",
+    skipMinorUpdate: "boolean",
     readerSettings: {
         readerWidth: "number",
         variableImageSize: "boolean",

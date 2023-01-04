@@ -293,11 +293,11 @@ const registerListener = () => {
     ipcMain.on("deleteOptionInExplorerMenu", () => {
         deleteOptionInExplorerMenu();
     });
-    ipcMain.on("canCheckForUpdate_response", (e, res, windowId) => {
-        if (res) checkForUpdate(windowId);
+    ipcMain.on("canCheckForUpdate_response", (e, res, windowId, skipMinor) => {
+        if (res) checkForUpdate(windowId, skipMinor);
     });
     ipcMain.on("checkForUpdate", (e, windowId, promptAfterCheck = false) => {
-        checkForUpdate(windowId, promptAfterCheck);
+        checkForUpdate(windowId, false, promptAfterCheck);
     });
     ipcMain.on("askBeforeClose", (e, windowId, ask = false, currentWindowIndex) => {
         const window = BrowserWindow.fromId(windowId)!;
