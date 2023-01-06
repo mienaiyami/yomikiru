@@ -136,6 +136,7 @@ body {
 
     --titleBar-height: 40px;
     --button-width: 55px;
+    --body-height: calc(100vh - var(--titleBar-height));
 
     [data-tooltip] {
         position: relative;
@@ -968,7 +969,7 @@ body {
 
         #reader {
             width: 100vw;
-            // height: calc(100vh - var(--titleBar-height));
+            // height: var(--body-height);
             height: 100%;
             display: none;
             overflow-x: hidden;
@@ -1010,7 +1011,7 @@ body {
 
             .currentMangaList {
                 background: var(--sideList-bg);
-                height: calc(100vh - var(--titleBar-height));
+                height: var(--body-height);
                 width: var(--mangaListWidth);
                 min-width: 196px;
                 max-width: 90%;
@@ -1153,6 +1154,10 @@ body {
                 border-radius: 0 0 0 10px;
                 width: 300px;
 
+                ::-webkit-scrollbar {
+                    display: none;
+                }
+
                 // height: 240px;
                 // transition: 0.5s width, 0.5s height;
                 &.closed {
@@ -1205,6 +1210,8 @@ body {
                 .main {
                     width: 100%;
                     height: 100%;
+                    max-height: var(--body-height);
+                    overflow: auto;
                     position: relative;
                     display: flex;
                     flex-direction: column;
@@ -1289,7 +1296,7 @@ body {
 
                 &.fitVertically .row img {
                     width: auto !important;
-                    height: calc(100vh - var(--titleBar-height));
+                    height: var(--body-height);
 
                 }
 
