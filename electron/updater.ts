@@ -57,10 +57,12 @@ const checkForUpdate = async (windowId: number, skipMinor = false, promptAfterCh
             .showMessageBox(BrowserWindow.fromId(windowId ?? 1)!, {
                 type: "info",
                 title: "New Version Available",
-                message: `New Version Available.\nCurrent Version:\t${currentAppVersion.join(
-                    "."
-                )}\nLatest Version:\t${latestVersion.join(".")}
-                `,
+                message:
+                    `Current Version : ${currentAppVersion.join(".")}\n` +
+                    `Latest Version   : ${latestVersion.join(".")}` +
+                    (latestVersion[0] === currentAppVersion[0] && latestVersion[1] === currentAppVersion[1]
+                        ? `\n\nTo skip check for minor updates, enable "skip minor update" in settings`
+                        : ""),
                 buttons: ["Download Now", "Download and show Changelog", "Show Changelog", "Download Later"],
                 cancelId: 3,
             })

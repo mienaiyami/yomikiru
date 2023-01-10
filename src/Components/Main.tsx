@@ -29,9 +29,7 @@ interface IMainContext {
     isContextMenuOpen: boolean;
     setInfoOnHover: React.Dispatch<React.SetStateAction<IhoverInfo | null>>;
 }
-// eslint-disable-next-line @typescript-eslint/ban-ts-comment
-// @ts-ignore
-export const MainContext = createContext<IMainContext>();
+export const MainContext = createContext<IMainContext>(null!);
 
 const Main = (): ReactElement => {
     const { appSettings, isReaderOpen, linkInReader } = useContext(AppContext);

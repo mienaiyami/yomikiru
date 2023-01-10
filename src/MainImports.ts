@@ -8,66 +8,74 @@ log.transports.file.resolvePath = () => path.join(app.getPath("userData"), "logs
  */
 import path from "path";
 import fs from "fs";
+import themeJSON from "./themeInit.json";
 declare module "react" {
     interface CSSProperties {
         [key: `--${string}`]: string | number;
     }
 }
+
+type WidenPrimitive<T> =
+    | (T extends number ? number : T)
+    | (T extends boolean ? boolean : T)
+    | (T extends string ? string : T)
+    | (T extends bigint ? bigint : T);
+
+type DeepArrayToUnion<T> = T extends T
+    ? {
+          -readonly [K in keyof T]: T[K] extends readonly unknown[]
+              ? DeepArrayToUnion<T[K][number]>
+              : DeepArrayToUnion<WidenPrimitive<T[K]>>;
+      }
+    : never;
+
+export const settingValidatorData = {
+    theme: "",
+    bookmarksPath: "",
+    historyPath: "",
+    baseDir: "",
+    historyLimit: 0,
+    locationListSortType: ["normal", "inverse"],
+    /**
+     * Check for new update on start of app.
+     */
+    updateCheckerEnabled: false,
+    askBeforeClosing: false,
+    skipMinorUpdate: false,
+    readerSettings: {
+        readerWidth: 0,
+        variableImageSize: false,
+        /**
+         * * `0` - Infinite scroll
+         * * `1` - Click to move
+         */
+        readerTypeSelected: [0, 1],
+        /**
+         * * `0` - One page per row.
+         * * `1` - Two pages per row.
+         * * `2` - Two pages per row, but first row only has one.
+         */
+        pagesPerRowSelected: [0, 1, 2],
+        gapBetweenRows: false,
+        sideListWidth: 0,
+        widthClamped: true,
+        gapSize: 0,
+        showPageNumberInZenMode: false,
+        scrollSpeed: 0,
+        largeScrollMultiplier: 0,
+        /**
+         * reading direction in two pages per row
+         * * `0` - ltr
+         * * `1` - rtl
+         */
+        readingSide: [0, 1],
+        fitVertically: false,
+    },
+} as const;
+
+// to add new theme property, add it to each theme in ./themeInit.json
+const themeProps = themeJSON[0].main;
 declare global {
-    //! try to map strings to theme.main
-    /**
-     * css variable names of theme
-     */
-    type ThemeDataMain =
-        | "--body-bg"
-        | "--sideList-bg"
-        | "--icon-color"
-        | "--font-color"
-        | "--font-select-color"
-        | "--font-select-bg"
-        | "--color-primary"
-        | "--color-secondary"
-        | "--color-tertiary"
-        | "--topBar-color"
-        | "--topBar-hover-color"
-        | "--input-bg"
-        | "--btn-color1"
-        | "--btn-color2"
-        | "--listItem-bg-color"
-        | "--listItem-hover-color"
-        | "--listItem-alreadyRead-color"
-        | "--listItem-current"
-        | "--toolbar-btn-bg"
-        | "--toolbar-btn-hover"
-        | "--scrollbar-track-color"
-        | "--scrollbar-thumb-color"
-        | "--scrollbar-thumb-color-hover"
-        | "--divider-color"
-        | "--context-menu-text"
-        | "--context-menu-bg"
-        | "--zenModePageIndicator-bg";
-    //! edit window.shortcutsFunctions as well
-    /**
-     * Available shortcut commands.
-     * to add keyboard shortcuts, add command name in this type then to `window.shortcutsFunctions`
-     * then register shortcut in `Reader.tsx` under `registerShortcuts` function
-     */
-    type ShortcutCommands =
-        | "navToPage"
-        | "toggleZenMode"
-        | "readerSettings"
-        | "nextChapter"
-        | "prevChapter"
-        | "bookmark"
-        | "sizePlus"
-        | "sizeMinus"
-        | "largeScroll"
-        | "nextPage"
-        | "prevPage"
-        | "scrollDown"
-        | "scrollUp"
-        | "showHidePageNumberInZen"
-        | "toggleFitVertically";
     interface Window {
         electron: {
             app: typeof app;
@@ -149,6 +157,10 @@ declare global {
             }) => Promise<Electron.MessageBoxReturnValue>;
         };
     }
+    /**
+     * css variable names of theme
+     */
+    type ThemeDataMain = keyof typeof themeProps;
     interface ThemeData {
         name: string;
         main: {
@@ -167,6 +179,27 @@ declare global {
         isBookmark: boolean;
         isHistory: boolean;
     }
+    /**
+     * Available shortcut commands.
+     * to add keyboard shortcuts, add ShortcutSchema to `window.shortcutsFunctions`
+     * then register shortcut in `Reader.tsx` under `registerShortcuts` function
+     */
+    type ShortcutCommands =
+        | "navToPage"
+        | "toggleZenMode"
+        | "readerSettings"
+        | "nextChapter"
+        | "prevChapter"
+        | "bookmark"
+        | "sizePlus"
+        | "sizeMinus"
+        | "largeScroll"
+        | "nextPage"
+        | "prevPage"
+        | "scrollDown"
+        | "scrollUp"
+        | "showHidePageNumberInZen"
+        | "toggleFitVertically";
     interface ShortcutSchema {
         /**
          * name of command
@@ -194,78 +227,8 @@ declare global {
         e: MouseEvent;
         item?: ListItemE;
     }
-    //! edit settingValidatorData and default settings in app.tsx when adding new settings
-    interface appsettings {
-        theme: string;
-        bookmarksPath: string;
-        historyPath: string;
-        baseDir: string;
-        historyLimit: number;
-        locationListSortType: "normal" | "inverse";
-        /**
-         * Check for new update on start of app.
-         */
-        updateCheckerEnabled: boolean;
-        askBeforeClosing: boolean;
-        skipMinorUpdate: boolean;
-        readerSettings: {
-            readerWidth: number;
-            variableImageSize: boolean;
-            /**
-             * * `0` - Infinite scroll
-             * * `1` - Click to move
-             */
-            readerTypeSelected: 0 | 1;
-            /**
-             * * `0` - One page per row.
-             * * `1` - Two pages per row.
-             * * `2` - Two pages per row, but first row only has one.
-             */
-            pagesPerRowSelected: 0 | 1 | 2;
-            gapBetweenRows: boolean;
-            sideListWidth: number;
-            widthClamped: boolean;
-            gapSize: number;
-            showPageNumberInZenMode: boolean;
-            scrollSpeed: number;
-            largeScrollMultiplier: number;
-            // 0: "ltr"| 1: "rtl"
-            /**
-             * reading direction in two pages per row
-             * * `0` - ltr
-             * * `1` - rtl
-             */
-            readingSide: 0 | 1;
-            fitVertically: boolean;
-        };
-    }
+    type appsettings = DeepArrayToUnion<typeof settingValidatorData>;
 }
-export const settingValidatorData = {
-    theme: "string",
-    bookmarksPath: "string",
-    historyPath: "string",
-    baseDir: "string",
-    historyLimit: "number",
-    locationListSortType: ["normal", "inverse"],
-    updateCheckerEnabled: "boolean",
-    askBeforeClosing: "boolean",
-    skipMinorUpdate: "boolean",
-    readerSettings: {
-        readerWidth: "number",
-        variableImageSize: "boolean",
-        readerTypeSelected: [0, 1],
-        pagesPerRowSelected: [0, 1, 2],
-        gapBetweenRows: "boolean",
-        sideListWidth: "number",
-        widthClamped: true,
-        gapSize: "number",
-        showPageNumberInZenMode: "boolean",
-        scrollSpeed: "number",
-        largeScrollMultiplier: "number",
-        readingSide: [0, 1],
-        fitVertically: "boolean",
-    },
-};
 
 window.path = path;
 window.fs = fs;
@@ -288,35 +251,7 @@ window.supportedFormats = [
     ".GIF",
     ".AVIF",
 ];
-window.themeProps = {
-    "--body-bg": "",
-    "--sideList-bg": "",
-    "--icon-color": "",
-    "--font-color": "",
-    "--font-select-color": "",
-    "--font-select-bg": "",
-    "--color-primary": "",
-    "--color-secondary": "",
-    "--color-tertiary": "",
-    "--topBar-color": "",
-    "--topBar-hover-color": "",
-    "--input-bg": "",
-    "--btn-color1": "",
-    "--btn-color2": "",
-    "--listItem-bg-color": "",
-    "--listItem-hover-color": "",
-    "--listItem-alreadyRead-color": "",
-    "--listItem-current": "",
-    "--toolbar-btn-bg": "",
-    "--toolbar-btn-hover": "",
-    "--scrollbar-track-color": "",
-    "--scrollbar-thumb-color": "",
-    "--scrollbar-thumb-color-hover": "",
-    "--divider-color": "",
-    "--context-menu-text": "",
-    "--context-menu-bg": "",
-    "--zenModePageIndicator-bg": "",
-};
+window.themeProps = themeProps;
 window.shortcutsFunctions = [
     {
         command: "navToPage",

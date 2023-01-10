@@ -8,10 +8,8 @@ export default function useTheme(
         if (themes.map((e) => e.name).includes(theme)) {
             let themeStr = "";
             if (themes.find((e) => e.name)) {
-                const themeData = themes.find((e) => e.name === theme)!.main;
+                const themeData: { [key: string]: string } = themes.find((e) => e.name === theme)!.main;
                 for (const key in themeData) {
-                    // eslint-disable-next-line @typescript-eslint/ban-ts-comment
-                    //@ts-ignore
                     themeStr += `${key}:${themeData[key]};`;
                 }
                 document.body.style.cssText = themeStr || "";

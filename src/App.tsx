@@ -24,7 +24,7 @@ const shortcutsInit: ShortcutSchema[] = [];
  * @param locations (optional) only update given locations in settings.json.
  */
 const makeSettingsJson = (locations?: string[]) => {
-    const settingsDataNew: appsettings = {
+    const settingsDataNew: { [key: string]: any } = {
         theme: "theme2",
         bookmarksPath,
         historyPath,
@@ -51,18 +51,12 @@ const makeSettingsJson = (locations?: string[]) => {
         },
     };
     if (locations) {
-        const settingsDataSaved: appsettings = JSON.parse(window.fs.readFileSync(settingsPath, "utf-8"));
+        const settingsDataSaved = JSON.parse(window.fs.readFileSync(settingsPath, "utf-8"));
         locations.forEach((e) => {
             window.logger.log(`"SETTINGS: ${e}" missing/corrupted in app settings, adding new...`);
             const l: string[] = e.split(".");
-            // eslint-disable-next-line @typescript-eslint/ban-ts-comment
-            // @ts-ignore
             if (l.length === 1) settingsDataSaved[l[0]] = settingsDataNew[l[0]];
-            // eslint-disable-next-line @typescript-eslint/ban-ts-comment
-            // @ts-ignore
             if (l.length === 2) settingsDataSaved[l[0]][l[1]] = settingsDataNew[l[0]][l[1]];
-            // eslint-disable-next-line @typescript-eslint/ban-ts-comment
-            // @ts-ignore
             if (l.length === 3) settingsDataSaved[l[0]][l[1]][l[2]] = settingsDataNew[l[0]][l[1]][l[2]];
         });
         window.fs.writeFileSync(settingsPath, JSON.stringify(settingsDataSaved));
@@ -80,7 +74,6 @@ try {
     window.logger.error(err);
     makeSettingsJson();
 }
-//! fix : this function have a lot of @ts-ignore
 /**
  * Check if settings.json is valid or not.
  * @returns
@@ -88,79 +81,67 @@ try {
  * * `location` - array of invalid settings location
  */
 function isSettingsValid(): { isValid: boolean; location: string[] } {
-    const settings: appsettings = JSON.parse(window.fs.readFileSync(settingsPath, "utf-8"));
+    const settings = JSON.parse(window.fs.readFileSync(settingsPath, "utf-8"));
     const output: { isValid: boolean; location: string[] } = {
         isValid: true,
         location: [],
     };
-    for (const key in settingValidatorData) {
+    Object.entries(settingValidatorData).forEach(([key, value]) => {
         if (!Object.prototype.hasOwnProperty.call(settings, key)) {
             output.isValid = false;
             output.location.push(key);
-            continue;
+            return;
         }
-        // eslint-disable-next-line @typescript-eslint/ban-ts-comment
-        // @ts-ignore
-        if (typeof settingValidatorData[key] === "string" && typeof settings[key] !== settingValidatorData[key]) {
+        if (
+            (typeof value === "string" && typeof settings[key] !== "string") ||
+            (typeof value === "number" && typeof settings[key] !== "number") ||
+            (typeof value === "boolean" && typeof settings[key] !== "boolean") ||
+            (typeof value === "object" && !(value instanceof Array) && typeof settings[key] !== "object")
+        ) {
             output.isValid = false;
             output.location.push(key);
-            continue;
+            return;
         }
-
-        // eslint-disable-next-line @typescript-eslint/ban-ts-comment
-        // @ts-ignore
-        if (settingValidatorData[key] instanceof Array) {
-            // eslint-disable-next-line @typescript-eslint/ban-ts-comment
-            // @ts-ignore
-            if (!settingValidatorData[key].includes(settings[key])) {
+        if (value instanceof Array) {
+            if (!value.includes(settings[key])) {
                 output.isValid = false;
                 output.location.push(key);
             }
-            continue;
+            return;
         }
-        // eslint-disable-next-line @typescript-eslint/ban-ts-comment
-        // @ts-ignore
-        if (settingValidatorData[key] instanceof Object) {
-            // eslint-disable-next-line @typescript-eslint/ban-ts-comment
-            // @ts-ignore
-            for (const key2 in settingValidatorData[key]) {
-                // eslint-disable-next-line @typescript-eslint/ban-ts-comment
-                // @ts-ignore
+        if (value instanceof Object) {
+            Object.entries(value).forEach(([key2, value2]) => {
                 if (!Object.prototype.hasOwnProperty.call(settings[key], key2)) {
                     output.isValid = false;
                     output.location.push(`${key}.${key2}`);
-                    continue;
+                    return;
                 }
                 if (
-                    // eslint-disable-next-line @typescript-eslint/ban-ts-comment
-                    // @ts-ignore
-                    typeof settingValidatorData[key][key2] === "string" &&
-                    // eslint-disable-next-line @typescript-eslint/ban-ts-comment
-                    // @ts-ignore
-                    typeof settings[key][key2] !== settingValidatorData[key][key2]
+                    (typeof value2 === "string" && typeof settings[key][key2] !== "string") ||
+                    (typeof value2 === "number" && typeof settings[key][key2] !== "number") ||
+                    (typeof value2 === "boolean" && typeof settings[key][key2] !== "boolean") ||
+                    (typeof value2 === "object" &&
+                        !(value2 instanceof Array) &&
+                        typeof settings[key][key2] !== "object")
                 ) {
                     output.isValid = false;
                     output.location.push(`${key}.${key2}`);
-                    continue;
+                    return;
                 }
-                // eslint-disable-next-line @typescript-eslint/ban-ts-comment
-                // @ts-ignore
-                if (settingValidatorData[key][key2] instanceof Array) {
-                    // eslint-disable-next-line @typescript-eslint/ban-ts-comment
-                    // @ts-ignore
-                    if (!settingValidatorData[key][key2].includes(settings[key][key2])) {
+                if (value2 instanceof Array) {
+                    if (!value2.includes(settings[key][key2])) {
                         output.isValid = false;
                         output.location.push(`${key}.${key2}`);
                     }
-                    continue;
+                    return;
                 }
-            }
+            });
         }
-    }
+    });
     return output;
 }
 if (!isSettingsValid().isValid) {
-    window.dialog.customError({ message: `Some Settings in ${settingsPath} invalid. Re-writing some settings.` });
+    window.dialog.customError({ message: `Settings in ${settingsPath} are invalid. Re-writing some settings.` });
     window.logger.warn(`Some Settings in ${settingsPath} invalid. Re-writing some settings.`);
     window.logger.log(isSettingsValid());
     makeSettingsJson(isSettingsValid().location);
@@ -251,9 +232,9 @@ const getDataFiles = () => {
                     let rewriteNeeded = false;
                     data.forEach((e) => {
                         if (!e.main[prop as ThemeDataMain]) {
-                            window.logger.log(`${prop} does not exist on ${e.name} theme. Adding it.`);
+                            window.logger.log(`${prop} does not exist on ${e.name} theme, adding it.`);
                             rewriteNeeded = true;
-                            e.main[prop as ThemeDataMain] = "#000000";
+                            e.main[prop as ThemeDataMain] = "#ff0000";
                         }
                     });
                     if (rewriteNeeded) window.fs.writeFileSync(themesPath, JSON.stringify(data));
@@ -349,9 +330,7 @@ interface IAppContext {
     promptSetDefaultLocation: () => void;
 }
 
-// eslint-disable-next-line @typescript-eslint/ban-ts-comment
-// @ts-ignore
-export const AppContext = createContext<IAppContext>();
+export const AppContext = createContext<IAppContext>(null!);
 const App = (): ReactElement => {
     const [firstRendered, setFirstRendered] = useState(false);
     const [appSettings, setAppSettings] = useState(settings);

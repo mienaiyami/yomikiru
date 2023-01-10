@@ -51,9 +51,7 @@ const Settings = (): ReactElement => {
             (e) => (e as HTMLElement).innerText as ThemeDataMain
         );
         themeNameInputRef.current!.value = window.app.randomString(6);
-        // eslint-disable-next-line @typescript-eslint/ban-ts-comment
-        //@ts-ignore
-        const newThemeData: { [e in ThemeDataMain]: string } = {};
+        const newThemeData = window.themeProps;
         [...themeMakerRef.current!.getElementsByClassName("newThemeMakerRow")].forEach((e, i) => {
             if (e.getElementsByTagName("label")[0].classList.contains("selected")) {
                 newThemeData[props[i]] = (
