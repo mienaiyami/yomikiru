@@ -364,9 +364,7 @@ const Reader = () => {
         window.electron.webFrame.clearCache();
         images.forEach((e, i) => {
             const img = document.createElement("img");
-            img.src = window.electron.app.isPackaged
-                ? e
-                : "http://localhost:5000/" + e.replace("D:\\", "").replace("C:\\", "");
+            img.src = e;
 
             img.onload = () => {
                 setImageWidthContainer((init) => [...init, { index: i, isWide: img.height / img.width <= 1.2 }]);
@@ -389,11 +387,7 @@ const Reader = () => {
             const tempWideImageContMap: number[] = [];
             const Image = ({ imgLink, index }: { imgLink: string; index: number }) => (
                 <img
-                    src={
-                        window.electron.app.isPackaged
-                            ? imgLink
-                            : "http://localhost:5000/" + imgLink.replace("D:\\", "").replace("C:\\", "")
-                    }
+                    src={imgLink}
                     onLoad={(e) => {
                         const img = e.target as HTMLImageElement;
                         img.decode().catch((e) => console.error(e));

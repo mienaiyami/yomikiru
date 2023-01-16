@@ -230,6 +230,7 @@ const createWindow = (link?: string) => {
             nodeIntegration: true,
             contextIsolation: false,
             // enableRemoteModule: true,
+            webSecurity: app.isPackaged,
             safeDialogs: true,
             // preload: HOME_PRELOAD_WEBPACK_ENTRY,
         },
