@@ -449,6 +449,11 @@ const Reader = () => {
         appSettings.readerSettings.variableImageSize,
     ]);
     useEffect(() => {
+        if (appSettings.readerSettings.readerTypeSelected === 0)
+            // setTimeout(() => scrollToPage(currentPageNumber), 2000);
+            scrollToPage(currentPageNumber);
+    }, [appSettings.readerSettings.readerTypeSelected, appSettings.readerSettings.fitVertically]);
+    useEffect(() => {
         if (imagesLoaded !== 0 && imagesLength !== 0) {
             setLoadingMangaPercent((100 * imagesLoaded) / imagesLength);
             if (imagesLength === imagesLoaded) {
