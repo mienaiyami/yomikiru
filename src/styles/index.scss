@@ -50,7 +50,7 @@
     --color-secondary: #1f62ff;
     --color-tertiary: #93b4ff;
     --topBar-color: #e0e0e0;
-    --topBar-hover-color: #709bff;
+    --topBar-btn-hover-color: #709bff;
     --input-bg: #b6ccfe;
     --btn-color1: #b6ccfe;
     --btn-color2: #709bff;
@@ -224,7 +224,7 @@ body {
 
                 &:hover,
                 &:active {
-                    background: var(--topBar-hover-color);
+                    background: var(--topBar-btn-hover-color);
                 }
             }
         }
@@ -313,7 +313,7 @@ body {
 
                     &:focus,
                     &:active {
-                        background: var(--topBar-hover-color);
+                        background: var(--topBar-btn-hover-color);
                         outline: none;
                     }
                 }
@@ -334,7 +334,7 @@ body {
 
                 &:hover,
                 &:active {
-                    background: var(--topBar-hover-color);
+                    background: var(--topBar-btn-hover-color);
                 }
             }
         }

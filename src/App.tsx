@@ -226,19 +226,34 @@ const getDataFiles = () => {
             try {
                 const data: ThemeData[] = JSON.parse(rawdata);
                 // validate theme data
+                let changed = false;
                 if (typeof data[0].main === "string" || !Array.isArray(data))
-                    throw "Theme variable does not exist on theme.main";
+                    throw { message: "Theme variable does not exist on theme.main" };
                 for (const prop in window.themeProps) {
                     let rewriteNeeded = false;
                     data.forEach((e) => {
                         if (!e.main[prop as ThemeDataMain]) {
-                            window.logger.log(`${prop} does not exist on ${e.name} theme, adding it.`);
-                            rewriteNeeded = true;
-                            e.main[prop as ThemeDataMain] = "#ff0000";
+                            if (themesRaw.map((t) => t.name).includes(e.name)) {
+                                window.logger.log(
+                                    `"${prop}" does not exist on default theme - "${e.name}", rewriting it whole.`
+                                );
+                                e.main = themesRaw.find((t) => t.name === e.name)!.main;
+                                rewriteNeeded = true;
+                            } else {
+                                window.logger.log(`"${prop}" does not exist on theme - "${e.name}", adding it.`);
+                                rewriteNeeded = true;
+                                changed = true;
+                                e.main[prop as ThemeDataMain] = "#ff0000";
+                            }
                         }
                     });
                     if (rewriteNeeded) window.fs.writeFileSync(themesPath, JSON.stringify(data));
                 }
+                if (changed)
+                    window.dialog.warn({
+                        message:
+                            'Some properties were missing in themes. Added new as "Red/#ff0000", change accordingly or re-edit default themes.',
+                    });
                 themesMain.push(...data);
             } catch (err) {
                 window.dialog.customError({
