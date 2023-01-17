@@ -2,7 +2,8 @@ import { AppContext } from "../App";
 import { faGithub } from "@fortawesome/free-brands-svg-icons";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { ReactElement, useContext, useEffect, useLayoutEffect, useRef, useState } from "react";
-import { faLink, faPlus, faSync, faTimes, faTrash, faUnlink } from "@fortawesome/free-solid-svg-icons";
+import { faEdit, faLink, faPlus, faSync, faTimes, faTrash, faUnlink } from "@fortawesome/free-solid-svg-icons";
+import themesRaw from "../themeInit.json";
 
 const Settings = (): ReactElement => {
     const {
@@ -35,18 +36,29 @@ const Settings = (): ReactElement => {
     }, [isSettingOpen]);
 
     const reservedKeys = ["h", "Control", "Tab", "Shift", "Alt", "Escape"];
-    const saveTheme = () => {
+    const saveTheme = (saveAndReplace = false) => {
         let name = "";
-        if (allThemes.map((e) => e.name).includes(themeNameInputRef.current!.value)) {
+        if (themeNameInputRef.current!.value === "") name = window.app.randomString(6);
+        if (saveAndReplace) name = theme;
+        else name = themeNameInputRef.current!.value;
+        console.log(
+            theme,
+            themesRaw.map((e) => e.name)
+        );
+        if (themesRaw.map((e) => e.name).includes(name)) {
+            window.dialog.customError({
+                title: "Error",
+                message: `Unable to edit default themes, save as new instead.`,
+            });
+            return;
+        }
+        if (!saveAndReplace && allThemes.map((e) => e.name).includes(themeNameInputRef.current!.value)) {
             window.dialog.customError({
                 title: "Error",
                 message: `Theme name "${themeNameInputRef.current!.value}" already exist, choose something else.`,
             });
             return;
         }
-        if (themeNameInputRef.current!.value === "") {
-            name = window.app.randomString(6);
-        } else name = themeNameInputRef.current!.value;
         const props: ThemeDataMain[] = [...themeMakerRef.current!.getElementsByClassName("newThemeMakerProp")].map(
             (e) => (e as HTMLElement).innerText as ThemeDataMain
         );
@@ -63,6 +75,13 @@ const Settings = (): ReactElement => {
                 ).value;
             }
         });
+        if (saveAndReplace) {
+            setAllThemes((init) => {
+                init[init.findIndex((e) => e.name === name)].main = newThemeData;
+                return [...init];
+            });
+            return;
+        }
         setAllThemes((init) => {
             init.push({ name: name, main: newThemeData });
             return [...init];
@@ -446,7 +465,7 @@ const Settings = (): ReactElement => {
                                     themeMakerRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
                                 }}
                             >
-                                <FontAwesomeIcon icon={faPlus} />
+                                <FontAwesomeIcon icon={faPlus} /> / <FontAwesomeIcon icon={faEdit} />
                             </button>
                         </div>
                     </div>
@@ -720,6 +739,13 @@ const Settings = (): ReactElement => {
                     <button
                         onClick={() => {
                             saveTheme();
+                        }}
+                    >
+                        Save as New
+                    </button>
+                    <button
+                        onClick={() => {
+                            saveTheme(true);
                         }}
                     >
                         Save
