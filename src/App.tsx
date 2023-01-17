@@ -240,7 +240,9 @@ const getDataFiles = () => {
                                 e.main = themesRaw.find((t) => t.name === e.name)!.main;
                                 rewriteNeeded = true;
                             } else {
-                                window.logger.log(`"${prop}" does not exist on theme - "${e.name}", adding it.`);
+                                window.logger.log(
+                                    `"${prop}" does not exist on theme - "${e.name}", adding it with value "#ff0000".`
+                                );
                                 rewriteNeeded = true;
                                 changed = true;
                                 e.main[prop as ThemeDataMain] = "#ff0000";
@@ -252,7 +254,7 @@ const getDataFiles = () => {
                 if (changed)
                     window.dialog.warn({
                         message:
-                            'Some properties were missing in themes. Added new as "Red/#ff0000", change accordingly or re-edit default themes.',
+                            'Some properties were missing in themes. Added new as "Red" color, change accordingly or re-edit default themes.\nCheck log file for exact names.',
                     });
                 themesMain.push(...data);
             } catch (err) {
