@@ -255,7 +255,7 @@ const Reader = () => {
         if (!pageNumChangeDisabled) {
             const elem = document.elementFromPoint(
                 imgContRef.current!.clientWidth / 2 + imgContRef.current!.offsetLeft,
-                window.innerHeight / 4
+                window.innerHeight / (appSettings.readerSettings.readerTypeSelected === 0 ? 4 : 2)
             );
             if (elem && elem.tagName === "IMG") {
                 const pageNumber = parseInt(elem.getAttribute("data-pagenumber") || "1");
