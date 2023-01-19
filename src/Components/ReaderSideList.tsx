@@ -105,7 +105,7 @@ const ReaderSideList = ({
                             .then((data) => {
                                 responseCompleted++;
                                 data = data.filter((e) =>
-                                    window.supportedFormats.includes(window.path.extname(e))
+                                    window.supportedFormats.includes(window.path.extname(e).toLowerCase())
                                 );
                                 if (data.length > 0) {
                                     listData.push({ name: e, pages: data.length });

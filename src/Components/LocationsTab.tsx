@@ -38,7 +38,8 @@ const LocationsTab = forwardRef(
                         return;
                     }
                     setImageCount(
-                        files.filter((e) => window.supportedFormats.includes(window.path.extname(e))).length
+                        files.filter((e) => window.supportedFormats.includes(window.path.extname(e).toLowerCase()))
+                            .length
                     );
                     const dirNames: string[] = files
                         .filter((e) => {

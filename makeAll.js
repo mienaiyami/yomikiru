@@ -33,22 +33,22 @@ const makeExe = () => {
     //     process.stdout.write(data)
     // });
     yarnSpawn.stderr.on('data', (data) => {
-        process.stdout.write(data)
+        process.stdout.write(`\x1b[91m${data}\x1b[0m`)
     });
     yarnSpawn.on('close', (code) => {
         clearInterval(a)
         console.log(`spawn yarn child process exited with code ${code}.`);
         if (fs.existsSync(`./out/make/squirrel.windows/ia32/Manga Reader-${pkgJSON.version} Setup.exe`)) {
-            console.log(".exe create successfully")
+            console.log("\x1b[92m.exe create successfully \x1b[0m")
             console.log("moving .exe ...")
             fs.rename(`./out/make/squirrel.windows/ia32/Manga Reader-${pkgJSON.version} Setup.exe`,
                 `./out/full/Manga.Reader-${pkgJSON.version}-Setup.exe`, (err) => {
                     if (err) return console.error(err)
-                    console.log("moved successfully.")
+                    console.log("\x1b[92mmoved successfully. \x1b[0m")
                     makeZip()
                 })
         } else {
-            console.log(".exe not found")
+            console.log("\x1b[91m.exe not found\x1b[0m")
         }
     });
 
@@ -65,25 +65,25 @@ const makeZip = () => {
     //     process.stdout.write(data)
     // });
     yarnSpawn.stderr.on('data', (data) => {
-        process.stdout.write(data)
+        process.stdout.write(`\x1b[91m${data}\x1b[0m`)
     });
     yarnSpawn.on('close', (code) => {
         clearInterval(a)
         console.log(`spawn yarn child process exited with code ${code}.`);
         if (fs.existsSync(`./out/make/zip/win32/ia32/Manga Reader-win32-ia32-${pkgJSON.version}.zip`)) {
-            console.log(".zip create successfully")
+            console.log("\x1b[92m.zip create successfully\x1b[0m")
             console.log("moving .zip...")
             fs.rename(`./out/make/zip/win32/ia32/Manga Reader-win32-ia32-${pkgJSON.version}.zip`,
                 `./out/full/Manga.Reader-win32-${pkgJSON.version}-Portable.zip`, (err) => {
                     if (err) return console.error(err)
-                    console.log("moved successfully.")
+                    console.log("\x1b[92mmoved successfully.\x1b[0m")
                     fs.writeFileSync("./electron/IS_PORTABLE.ts", `
                     const isPortable = false;
                     export default isPortable;
                     `)
                 })
         } else {
-            console.log(".zip not found")
+            console.log("\x1b[91m.zip not found\x1b[0m")
         }
     });
 

@@ -233,24 +233,7 @@ declare global {
 window.path = path;
 window.fs = fs;
 window.currentPageNumber = 1;
-window.supportedFormats = [
-    ".jpg",
-    ".jpeg",
-    ".png",
-    ".webp",
-    ".svg",
-    ".apng",
-    ".gif",
-    ".avif",
-    ".JPG",
-    ".JPEG",
-    ".PNG",
-    ".WEBP",
-    ".SVG",
-    ".APNG",
-    ".GIF",
-    ".AVIF",
-];
+window.supportedFormats = [".jpg", ".jpeg", ".png", ".webp", ".svg", ".apng", ".gif", ".avif"];
 window.themeProps = themeProps;
 window.shortcutsFunctions = [
     {

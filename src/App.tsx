@@ -437,7 +437,7 @@ const App = (): ReactElement => {
                         binFiles.push(e);
                         return true;
                     }
-                    return window.supportedFormats.includes(window.path.extname(e));
+                    return window.supportedFormats.includes(window.path.extname(e).toLowerCase());
                 });
                 if (imgs.length <= 0) {
                     if (
