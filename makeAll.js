@@ -25,6 +25,7 @@ console.log("\x1b[91mMake sure to edit changelog.md before pushing.\x1b[0m")
 const pushRelease = () => {
     const pushCommand = (`gh release create v${pkgJSON.version} -t v${pkgJSON.version} -F changelog.md ` +
         // `--discussion-category "General" ` +
+        "-d " +
         `./out/full/Manga.Reader-${pkgJSON.version}-Setup.exe ./out/full/Manga.Reader-win32-${pkgJSON.version}-Portable.zip`)
     const a = printProcessing("Pushing build to gh release ")
     const ghSpawn = exec(pushCommand);
@@ -37,7 +38,7 @@ const pushRelease = () => {
         if (code === 0) {
             console.log("\xb1[92mPushed release to github. https://github.com/mienaiyami/react-ts-offline-manga-reader/releases\x1b[0m");
 
-            const gitSpawn = exec(pushCommand);
+            const gitSpawn = exec("git push origin");
             gitSpawn.stderr.on('data', (data) => {
                 process.stdout.write(`\x1b[91m${data}\x1b[0m`)
             });
