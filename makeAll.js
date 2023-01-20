@@ -22,6 +22,22 @@ const printProcessing = (string) => {
     // console.log(`\x1b[31m${string} \x1b[0m`)
 }
 console.log("\x1b[91mMake sure to edit changelog.md before pushing.\x1b[0m")
+
+const makeAndPushTag = () => {
+
+    const a = printProcessing(`Tagging v${pkgJSON.version} and pushing tags`)
+    const gitSpawn = exec(`git tag -a v${pkgJSON.version} -m"v${pkgJSON.version}"`);
+    gitSpawn.stderr.on('data', (data) => {
+        process.stdout.write(`\x1b[91m${data}\x1b[0m`)
+    });
+    gitSpawn.on('close', (code) => {
+        clearInterval(a);
+        console.log(`spawn yarn child process exited with code ${code}.`);
+        pushRelease();
+    })
+
+}
+
 const pushRelease = () => {
     const pushCommand = (`gh release create v${pkgJSON.version} -t v${pkgJSON.version} -F changelog.md ` +
         // `--discussion-category "General" ` +
@@ -36,7 +52,7 @@ const pushRelease = () => {
         clearInterval(a);
         console.log(`spawn yarn child process exited with code ${code}.`);
         if (code === 0) {
-            console.log("\xb1[92mPushed release to github. https://github.com/mienaiyami/react-ts-offline-manga-reader/releases\x1b[0m");
+            console.log("\x1b[92mPushed release to github. https://github.com/mienaiyami/react-ts-offline-manga-reader/releases.\x1b[0m");
 
             const gitSpawn = exec("git push origin");
             gitSpawn.stderr.on('data', (data) => {
@@ -108,7 +124,7 @@ const makeZip = () => {
                     const isPortable = false;
                     export default isPortable;
                     `)
-                    pushRelease();
+                    makeAndPushTag();
                 })
         } else {
             console.log("\x1b[91m.zip not found\x1b[0m")
