@@ -215,8 +215,8 @@ const createWindow = (link?: string) => {
     const newWindow = new BrowserWindow({
         width: 1200,
         height: 800,
-        minWidth: 940,
-        minHeight: 560,
+        minWidth: 853,
+        minHeight: 480,
         frame: false,
         backgroundColor: "#000000",
         show: false,

@@ -18,12 +18,6 @@ import LocationsTab from "./LocationsTab";
 import Reader from "./Reader";
 import Settings from "./Settings";
 
-interface IhoverInfo {
-    item: { chapterName: string; mangaName: string; pages: number; date: string };
-    y: number;
-    parent: string;
-}
-
 interface IMainContext {
     showContextMenu: (data: IContextMenuData) => void;
     isContextMenuOpen: boolean;

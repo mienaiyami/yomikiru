@@ -31,10 +31,11 @@ const BookmarkHistoryListItem = (props: ListItemE) => {
                                 pages: props.pages,
                                 date: props.date || "",
                             },
+                            column: props.isBookmark ? 2 : 3,
                             y: target.getBoundingClientRect().y,
-                            parent: props.isBookmark
-                                ? "#bookmarksTab .location-cont"
-                                : "#historyTab .location-cont",
+                            // parent: props.isBookmark
+                            //     ? "#bookmarksTab .location-cont"
+                            //     : "#historyTab .location-cont",
                         });
                     }, 500);
                 }}
@@ -44,7 +45,7 @@ const BookmarkHistoryListItem = (props: ListItemE) => {
                 }}
             >
                 <span className="text">
-                    {(props.mangaName.length > 15 ? props.mangaName.substr(0, 15) + "..." : props.mangaName) +
+                    {(props.mangaName.length > 15 ? props.mangaName.substring(0, 15) + "..." : props.mangaName) +
                         " | " +
                         props.chapterName}
                 </span>

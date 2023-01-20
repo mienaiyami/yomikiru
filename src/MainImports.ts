@@ -227,6 +227,14 @@ declare global {
         e: MouseEvent;
         item?: ListItemE;
     }
+
+    interface IhoverInfo {
+        item: { chapterName: string; mangaName: string; pages: number; date: string };
+        column: number;
+        y: number;
+        // parent: string;
+    }
+
     type appsettings = DeepArrayToUnion<typeof settingValidatorData>;
 }
 
