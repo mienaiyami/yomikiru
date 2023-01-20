@@ -40,8 +40,8 @@ const makeAndPushTag = () => {
 
 const pushRelease = () => {
     const pushCommand = (`gh release create v${pkgJSON.version} -t v${pkgJSON.version} -F changelog.md ` +
-        // `--discussion-category "General" ` +
-        "-d " +
+        `--discussion-category "General" ` +
+        // "-d " +
         `./out/full/Manga.Reader-${pkgJSON.version}-Setup.exe ./out/full/Manga.Reader-win32-${pkgJSON.version}-Portable.zip`)
     const a = printProcessing("Pushing build to gh release ")
     const ghSpawn = exec(pushCommand);
@@ -132,4 +132,4 @@ const makeZip = () => {
     });
 
 }
-makeExe()
+setTimeout(makeExe, 3000);

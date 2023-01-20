@@ -1,6 +1,5 @@
 import { faBars, faMinus, faPlus, faTimes, faArrowsAltV } from "@fortawesome/free-solid-svg-icons";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import { app } from "electron";
 import React, { useContext, useEffect, useState } from "react";
 import { AppContext } from "../App";
 
