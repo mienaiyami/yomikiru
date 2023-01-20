@@ -41,10 +41,6 @@ const Settings = (): ReactElement => {
         if (themeNameInputRef.current!.value === "") name = window.app.randomString(6);
         if (saveAndReplace) name = theme;
         else name = themeNameInputRef.current!.value;
-        console.log(
-            theme,
-            themesRaw.map((e) => e.name)
-        );
         if (themesRaw.map((e) => e.name).includes(name)) {
             window.dialog.customError({
                 title: "Error",
