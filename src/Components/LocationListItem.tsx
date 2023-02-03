@@ -15,7 +15,7 @@ const LocationListItem = ({
     setCurrentLink: React.Dispatch<React.SetStateAction<string>>;
     inHistory?: boolean;
 }): ReactElement => {
-    const { openInReader } = useContext(AppContext);
+    const { openInReader, appSettings } = useContext(AppContext);
     const { showContextMenu } = useContext(MainContext);
     return (
         <li className={inHistory ? "already-read" : ""}>
@@ -27,7 +27,13 @@ const LocationListItem = ({
                         window.dialog.customError({ message: "Directory/File doesn't exist." });
                         return;
                     }
-                    if ([".zip", ".cbz"].includes(window.path.extname(name))) {
+                    if (
+                        appSettings.openDirectlyFromManga &&
+                        window.path.normalize(window.path.resolve(link + "../../../") + "\\") ===
+                            appSettings.baseDir
+                    ) {
+                        openInReader(link);
+                    } else if ([".zip", ".cbz"].includes(window.path.extname(name))) {
                         openInReader(link);
                     } else setCurrentLink(link);
                 }}
