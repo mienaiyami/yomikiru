@@ -534,6 +534,22 @@ const Settings = (): ReactElement => {
                                 />
                                 <p>Skip minor updates.</p>
                             </label>
+                            <label className={appSettings.openDirectlyFromManga ? "selected" : ""}>
+                                <input
+                                    type="checkbox"
+                                    checked={appSettings.openDirectlyFromManga}
+                                    onChange={(e) => {
+                                        setAppSettings((init) => {
+                                            init.openDirectlyFromManga = e.currentTarget.checked;
+                                            return { ...init };
+                                        });
+                                    }}
+                                />
+                                <p>
+                                    Open chapter directly (by clicking name instead of arrow) in reader if chapter
+                                    folder is in manga folder inside "default location".
+                                </p>
+                            </label>
                         </div>
                     </div>
                     {/* <div className="settingItem version">

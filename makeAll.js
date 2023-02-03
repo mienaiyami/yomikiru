@@ -26,14 +26,24 @@ console.log("\x1b[91mMake sure to edit changelog.md before pushing.\x1b[0m")
 const makeAndPushTag = () => {
 
     const a = printProcessing(`Tagging v${pkgJSON.version} and pushing tags`)
+    const push = () => {
+        const gitSpawn = exec(`git push --tags`);
+        gitSpawn.stderr.on('data', (data) => {
+            process.stdout.write(`\x1b[91m${data}\x1b[0m`)
+        });
+        gitSpawn.on('close', (code) => {
+            clearInterval(a);
+            console.log(`push tags: spawn yarn child process exited with code ${code}.`);
+            pushRelease();
+        })
+    }
     const gitSpawn = exec(`git tag -a v${pkgJSON.version} -m"v${pkgJSON.version}"`);
     gitSpawn.stderr.on('data', (data) => {
         process.stdout.write(`\x1b[91m${data}\x1b[0m`)
     });
     gitSpawn.on('close', (code) => {
-        clearInterval(a);
-        console.log(`spawn yarn child process exited with code ${code}.`);
-        pushRelease();
+        console.log(`git tag: spawn yarn child process exited with code ${code}.`);
+        push();
     })
 
 }
@@ -41,6 +51,7 @@ const makeAndPushTag = () => {
 const pushRelease = () => {
     const pushCommand = (`gh release create v${pkgJSON.version} -t v${pkgJSON.version} -F changelog.md ` +
         `--discussion-category "General" ` +
+        "--generate-notes " +
         // "-d " +
         `./out/full/Manga.Reader-${pkgJSON.version}-Setup.exe ./out/full/Manga.Reader-win32-${pkgJSON.version}-Portable.zip`)
     const a = printProcessing("Pushing build to gh release ")
