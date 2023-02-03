@@ -195,6 +195,26 @@ const Reader = () => {
                             break;
                         case shortcutkey.nextPage?.key1:
                         case shortcutkey.nextPage?.key2:
+                            if (
+                                appSettings.readerSettings.readerTypeSelected === 0 &&
+                                imgContRef.current &&
+                                readerRef.current
+                            ) {
+                                if (isSideListPinned) {
+                                    if (
+                                        imgContRef.current.scrollTop <= 100 ||
+                                        imgContRef.current.scrollTop >=
+                                            imgContRef.current.scrollHeight - window.innerHeight - 200
+                                    )
+                                        openNextChapterRef.current?.click();
+                                } else if (
+                                    readerRef.current.scrollTop <= 100 ||
+                                    readerRef.current.scrollTop >=
+                                        readerRef.current.scrollHeight - window.innerHeight - 200
+                                ) {
+                                    openNextChapterRef.current?.click();
+                                }
+                            }
                             if (appSettings.readerSettings.readerTypeSelected === 1) {
                                 openNextPageRef.current?.click();
                             }
@@ -205,6 +225,26 @@ const Reader = () => {
                             break;
                         case shortcutkey.prevPage?.key1:
                         case shortcutkey.prevPage?.key2:
+                            if (
+                                appSettings.readerSettings.readerTypeSelected === 0 &&
+                                imgContRef.current &&
+                                readerRef.current
+                            ) {
+                                if (isSideListPinned) {
+                                    if (
+                                        imgContRef.current.scrollTop <= 100 ||
+                                        imgContRef.current.scrollTop >=
+                                            imgContRef.current.scrollHeight - window.innerHeight - 200
+                                    )
+                                        openPrevChapterRef.current?.click();
+                                } else if (
+                                    readerRef.current.scrollTop <= 100 ||
+                                    readerRef.current.scrollTop >=
+                                        readerRef.current.scrollHeight - window.innerHeight - 200
+                                ) {
+                                    openPrevChapterRef.current?.click();
+                                }
+                            }
                             if (appSettings.readerSettings.readerTypeSelected === 1) {
                                 openPrevPageRef.current?.click();
                             }
