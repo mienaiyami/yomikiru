@@ -12,7 +12,6 @@ import { AppContext } from "../App";
 import BookmarkTab from "./BookmarkTab";
 import ContextMenu from "./ContextMenu";
 import HistoryTab from "./HistoryTab";
-import InfoOnHover from "./InfoOnHover";
 import LoadingScreen from "./LoadingScreen";
 import LocationsTab from "./LocationsTab";
 import Reader from "./Reader";
@@ -21,7 +20,6 @@ import Settings from "./Settings";
 interface IMainContext {
     showContextMenu: (data: IContextMenuData) => void;
     isContextMenuOpen: boolean;
-    setInfoOnHover: React.Dispatch<React.SetStateAction<IhoverInfo | null>>;
 }
 export const MainContext = createContext<IMainContext>(null!);
 
@@ -30,7 +28,6 @@ const Main = (): ReactElement => {
     const [currentLink, setCurrentLink] = useState(appSettings.baseDir);
     const [bookmarkTabDisplay, setBookmarkTabDisplay] = useState(true);
     const [historyTabDisplay, setHistoryTabDisplay] = useState(true);
-    const [infoOnHover, setInfoOnHover] = useState<IhoverInfo | null>(null);
     const [isContextMenuOpen, setContextMenuOpen] = useState(false);
     const contextMenuRef = useRef<HTMLDivElement>(null);
     const [contextMenuData, setContextMenuData] = useState<IContextMenuData | null>(null);
@@ -49,8 +46,6 @@ const Main = (): ReactElement => {
         setContextMenuOpen(false);
     };
     useLayoutEffect(() => {
-        document.addEventListener("click", () => setInfoOnHover(null));
-        document.addEventListener("resize", () => setInfoOnHover(null));
         document.addEventListener("wheel", () => closeContextMenu());
 
         if (tabContRef.current) {
@@ -60,9 +55,6 @@ const Main = (): ReactElement => {
         }
     }, []);
     useLayoutEffect(() => setCurrentLink(appSettings.baseDir), [appSettings.baseDir]);
-    useEffect(() => {
-        setInfoOnHover(null);
-    }, [linkInReader]);
 
     //! did i really wasted time on this
     //
@@ -314,7 +306,7 @@ const Main = (): ReactElement => {
         }
     };
     return (
-        <MainContext.Provider value={{ showContextMenu, isContextMenuOpen, setInfoOnHover }}>
+        <MainContext.Provider value={{ showContextMenu, isContextMenuOpen }}>
             <div id="app">
                 <div className="tabCont" ref={tabContRef} style={{ display: isReaderOpen ? "none" : "flex" }}>
                     <LocationsTab currentLink={currentLink} setCurrentLink={setCurrentLink} ref={locationTabRef} />
@@ -341,8 +333,6 @@ const Main = (): ReactElement => {
                 ) : (
                     ""
                 )}
-                {infoOnHover ? <InfoOnHover {...infoOnHover} /> : ""}
-                {linkInReader !== "" ? <Reader /> : ""}
             </div>
         </MainContext.Provider>
     );

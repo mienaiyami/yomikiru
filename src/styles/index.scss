@@ -425,6 +425,61 @@ body {
                             background-color: var(--listItem-hover-color);
                         }
 
+                        &:hover {
+                            .infoOnHover {
+                                // visibility: visible;
+                                animation: 1s fadeIn forwards;
+                            }
+                        }
+
+                        @keyframes fadeIn {
+                            90% {
+                                visibility: hidden;
+                            }
+
+                            100% {
+                                visibility: visible;
+                            }
+                        }
+
+                        .infoOnHover {
+                            position: fixed;
+                            visibility: hidden;
+                            pointer-events: none;
+                            top: 0;
+                            left: 0;
+                            background: var(--context-menu-bg);
+                            color: var(--context-menu-text);
+                            box-sizing: border-box;
+                            padding: 10px 10px;
+                            border-radius: 5px;
+                            width: 300px;
+                            z-index: 1000;
+                            display: flex;
+                            flex-direction: column;
+
+                            .info-cont {
+                                width: 100%;
+                                display: grid;
+                                grid-template-columns: 4em 1fr;
+                                gap: 10px;
+
+                                .title {
+                                    position: relative;
+
+                                    &::after {
+                                        content: ":";
+                                        position: absolute;
+                                        right: -2px;
+                                    }
+                                }
+
+                                .info {
+                                    word-wrap: none;
+                                }
+                            }
+                        }
+
                         a {
                             cursor: pointer;
                             display: grid;
@@ -635,41 +690,6 @@ body {
             }
         }
 
-        .infoOnHover {
-            position: absolute;
-            top: 0;
-            left: 0;
-            background: var(--context-menu-bg);
-            color: var(--context-menu-text);
-            box-sizing: border-box;
-            padding: 10px 10px;
-            border-radius: 5px;
-            width: 300px;
-            z-index: 1000;
-            display: flex;
-            flex-direction: column;
-
-            .info-cont {
-                width: 100%;
-                display: grid;
-                grid-template-columns: 4em 1fr;
-                gap: 10px;
-
-                .title {
-                    position: relative;
-
-                    &::after {
-                        content: ":";
-                        position: absolute;
-                        right: -2px;
-                    }
-                }
-
-                .info {
-                    word-wrap: none;
-                }
-            }
-        }
 
         #settings {
             width: 100%;
