@@ -95,8 +95,6 @@ declare global {
          * Library to un-archive zip or cbz.
          */
         crossZip: typeof crossZip;
-        currentPageNumber: number;
-        scrollToPage: (pageNumber: number, callback?: () => void) => void;
         logger: typeof log;
         /**
          * Supported image formats.
@@ -112,10 +110,12 @@ declare global {
             titleBarHeight: number;
             isReaderOpen: boolean;
             randomString: (length: number) => string;
-            // to remove later
-            keydown: boolean;
             clickDelay: number;
             lastClick: number;
+            currentPageNumber: number;
+            scrollToPage: (pageNumber: number, callback?: () => void) => void;
+            // to remove later
+            keydown: boolean;
         };
         /**
          * Link of manga to be opened in reader only on start of new window.
@@ -178,7 +178,10 @@ declare global {
         link: string;
         pages: number;
     }
-    interface ListItemE extends ListItem {
+    interface ChapterItem extends ListItem {
+        page: number;
+    }
+    interface ListItemE extends ChapterItem {
         index: number;
         isBookmark: boolean;
         isHistory: boolean;
@@ -233,7 +236,7 @@ declare global {
     }
 
     interface IhoverInfo {
-        item: { chapterName: string; mangaName: string; pages: number; date: string };
+        item: { chapterName: string; mangaName: string; pages: number; date: string; page: number };
         column: number;
         y: number;
         // parent: string;
@@ -244,7 +247,6 @@ declare global {
 
 window.path = path;
 window.fs = fs;
-window.currentPageNumber = 1;
 window.supportedFormats = [".jpg", ".jpeg", ".png", ".webp", ".svg", ".apng", ".gif", ".avif"];
 window.themeProps = themeProps;
 window.shortcutsFunctions = [
@@ -343,6 +345,7 @@ window.logger = log;
 window.crossZip = crossZip;
 const collator = Intl.Collator(undefined, { numeric: true, sensitivity: "base" });
 window.app.betterSortOrder = collator.compare;
+window.app.currentPageNumber = 1;
 window.app.randomString = (length: number) => {
     let result = "";
     const characters = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789";
@@ -351,6 +354,7 @@ window.app.randomString = (length: number) => {
     }
     return result;
 };
+
 window.electron = {
     app,
     dialog,

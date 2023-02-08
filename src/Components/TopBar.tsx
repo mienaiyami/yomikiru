@@ -30,7 +30,7 @@ const TopBar = (): ReactElement => {
     useLayoutEffect(() => {
         window.addEventListener("pageNumberChange", () => {
             (document.querySelector("#NavigateToPageInput") as HTMLInputElement).value =
-                window.currentPageNumber.toString();
+                window.app.currentPageNumber.toString();
         });
     }, []);
     useEffect(() => {
@@ -113,7 +113,7 @@ const TopBar = (): ReactElement => {
                                 }
                                 if (!pagenumber) return;
                                 setPageNumChangeDisabled(true);
-                                window.scrollToPage(pagenumber, () => {
+                                window.app.scrollToPage(pagenumber, () => {
                                     setPageNumChangeDisabled(false);
                                 });
                                 return;
@@ -127,7 +127,7 @@ const TopBar = (): ReactElement => {
                                 }
                                 if (!pagenumber) return;
                                 setPageNumChangeDisabled(true);
-                                window.scrollToPage(pagenumber);
+                                window.app.scrollToPage(pagenumber);
                                 return;
                             }
                             e.preventDefault();

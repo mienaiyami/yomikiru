@@ -36,6 +36,7 @@ const BookmarkHistoryListItem = (props: ListItemE) => {
                     mangaName: props.mangaName,
                     pages: props.pages,
                     date: props.date || "",
+                    page: props.page || 0,
                 }}
                 column={props.isBookmark ? 2 : 3}
                 y={linkRef.current?.getBoundingClientRect().y || 0}

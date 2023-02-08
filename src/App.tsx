@@ -11,9 +11,9 @@ import themesRaw from "./themeInit.json";
 const userDataURL = window.electron.app.getPath("userData");
 const settingsPath = window.path.join(userDataURL, "settings.json");
 const bookmarksPath = window.path.join(userDataURL, "bookmarks.json");
-const bookmarkDataInit: ListItem[] = [];
+const bookmarkDataInit: ChapterItem[] = [];
 const historyPath = window.path.join(userDataURL, "history.json");
-const historyDataInit: ListItem[] = [];
+const historyDataInit: ChapterItem[] = [];
 const themesPath = window.path.join(userDataURL, "themes.json");
 const themesMain: ThemeData[] = [];
 const shortcutsPath = window.path.join(userDataURL, "shortcuts.json");
@@ -298,10 +298,10 @@ if (!themesMain.map((e) => e.name).includes(settings.theme)) {
 }
 
 interface IAppContext {
-    bookmarks: ListItem[];
-    setBookmarks: React.Dispatch<React.SetStateAction<ListItem[]>>;
-    history: ListItem[];
-    setHistory: React.Dispatch<React.SetStateAction<ListItem[]>>;
+    bookmarks: ChapterItem[];
+    setBookmarks: React.Dispatch<React.SetStateAction<ChapterItem[]>>;
+    history: ChapterItem[];
+    setHistory: React.Dispatch<React.SetStateAction<ChapterItem[]>>;
     shortcuts: ShortcutSchema[];
     setShortcuts: React.Dispatch<React.SetStateAction<ShortcutSchema[]>>;
     allThemes: ThemeData[];
@@ -320,7 +320,7 @@ interface IAppContext {
     setLinkInReader: React.Dispatch<React.SetStateAction<string>>;
     mangaInReader: ListItem | null;
     setMangaInReader: React.Dispatch<React.SetStateAction<ListItem | null>>;
-    addNewBookmark: (newBk: ListItem) => Promise<Electron.MessageBoxReturnValue> | undefined;
+    addNewBookmark: (newBk: ChapterItem) => Promise<Electron.MessageBoxReturnValue> | undefined;
     loadingMangaPercent: number;
     setLoadingMangaPercent: React.Dispatch<React.SetStateAction<number>>;
     pageNumChangeDisabled: boolean;
@@ -361,8 +361,8 @@ const App = (): ReactElement => {
     const [linkInReader, setLinkInReader] = useState<string>(window.loadManga || "");
     const [prevNextChapter, setPrevNextChapter] = useState({ prev: "", next: "" });
     const [mangaInReader, setMangaInReader] = useState<ListItem | null>(null);
-    const [bookmarks, setBookmarks] = useState<ListItem[]>(bookmarkDataInit);
-    const [history, setHistory] = useState<ListItem[]>(historyDataInit);
+    const [bookmarks, setBookmarks] = useState<ChapterItem[]>(bookmarkDataInit);
+    const [history, setHistory] = useState<ChapterItem[]>(historyDataInit);
     const [shortcuts, setShortcuts] = useState<ShortcutSchema[]>(shortcutsInit);
     const pageNumberInputRef: React.RefObject<HTMLInputElement> = createRef();
 
@@ -518,13 +518,17 @@ const App = (): ReactElement => {
     useEffect(() => {
         window.app.isReaderOpen = isReaderOpen;
     }, [isReaderOpen]);
-    const addNewBookmark = (newBk: ListItem) => {
+    const addNewBookmark = (newBk: ChapterItem) => {
         if (newBk) {
-            if (bookmarks.map((e) => e.link).includes(newBk.link)) {
-                return window.dialog.warn({
-                    title: "Bookmark Already Exist",
-                    message: "Bookmark Already Exist",
-                });
+            // replace same link with updated pagenumber
+            const existingBookmark = bookmarks.findIndex((e) => e.link === newBk.link);
+            if (-1 < existingBookmark) {
+                //where remove?
+                if (bookmarks[existingBookmark].page === newBk.page)
+                    return window.dialog.warn({
+                        title: "Bookmark Already Exist",
+                        message: "Bookmark Already Exist",
+                    });
             }
             setBookmarks((init) => [newBk, ...init]);
         }

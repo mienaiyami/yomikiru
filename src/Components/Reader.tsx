@@ -99,9 +99,16 @@ const Reader = () => {
             }
         }
     };
-    window.scrollToPage = scrollToPage;
+    window.app.scrollToPage = scrollToPage;
     useLayoutEffect(() => {
-        window.currentPageNumber = currentPageNumber;
+        window.app.currentPageNumber = currentPageNumber;
+        setHistory((init) => {
+            if (init[0].link === linkInReader) {
+                init[0].page = currentPageNumber;
+                return [...init];
+            }
+            return init;
+        });
         window.dispatchEvent(pageChangeEvent);
     }, [currentPageNumber]);
     useEffect(() => {
@@ -384,16 +391,16 @@ const Reader = () => {
             pages: imgs.length,
         };
         setMangaInReader(mangaOpened);
-        setHistory((initial) => {
-            const newData = [];
-            if (initial.length > 0 && initial[0].link === mangaOpened.link) {
-                initial.shift();
+        // todo: add to useeffect of pagenumber
+        setHistory((init) => {
+            if (init.length > 0 && init[0].link === mangaOpened.link) {
+                init.shift();
             }
-            newData.push(mangaOpened, ...initial);
-            if (newData.length >= appSettings.historyLimit) {
-                newData.length = appSettings.historyLimit;
+            init.unshift({ ...mangaOpened, page: 1 });
+            if (init.length >= appSettings.historyLimit) {
+                init.length = appSettings.historyLimit;
             }
-            return newData;
+            return [...init];
         });
         setImagesLength(imgs.length);
         setImages(imgs);

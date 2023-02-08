@@ -124,10 +124,11 @@ const ContextMenu = forwardRef((props: Iprops | null, ref: React.ForwardedRef<HT
                         role="menuitem"
                         onMouseUp={() => {
                             if (props?.item) {
-                                const newItem: ListItem = {
+                                const newItem: ChapterItem = {
                                     mangaName: props?.item?.mangaName,
                                     chapterName: props?.item?.chapterName,
                                     pages: props?.item?.pages,
+                                    page: props?.item?.page,
                                     link: link,
                                     date: new Date().toLocaleString("en-UK", { hour12: true }),
                                 };

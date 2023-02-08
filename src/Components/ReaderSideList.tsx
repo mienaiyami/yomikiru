@@ -342,7 +342,7 @@ const ReaderSideList = ({
                                     });
                             }
                             if (mangaInReader) {
-                                addNewBookmark(mangaInReader);
+                                addNewBookmark({ ...mangaInReader, page: window.app.currentPageNumber || 0 });
                                 setBookmarked(true);
                             }
                         }}

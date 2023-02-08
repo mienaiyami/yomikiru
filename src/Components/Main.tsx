@@ -333,6 +333,7 @@ const Main = (): ReactElement => {
                 ) : (
                     ""
                 )}
+                {linkInReader !== "" ? <Reader /> : ""}
             </div>
         </MainContext.Provider>
     );

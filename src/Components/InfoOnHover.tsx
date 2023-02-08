@@ -45,6 +45,10 @@ const InfoOnHover = (props: IhoverInfo) => {
                 <div className="info">{props.item.pages}</div>
             </div>
             <div className="info-cont">
+                <div className="title">Page</div>
+                <div className="info">{props.item.page}</div>
+            </div>
+            <div className="info-cont">
                 <div className="title">Date</div>
                 <div className="info">{props.item.date}</div>
             </div>
