@@ -716,6 +716,8 @@ body {
 
                 .cont {
                     transform: scale(0);
+                    transition: .3s cubic-bezier(1, 0, 1, 1) transform;
+
                 }
             }
 
@@ -729,7 +731,7 @@ body {
                 position: relative;
                 background: var(--body-bg);
                 border-radius: 10px;
-                transition: 0.2s transform;
+                transition: .3s cubic-bezier(0, 1.15, 1, 1) transform;
                 width: calc(max(700px, 60%));
                 height: 90%;
                 transform: scale(0);
