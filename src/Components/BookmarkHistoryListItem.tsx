@@ -11,7 +11,7 @@ const BookmarkHistoryListItem = (props: ListItemE) => {
         <li>
             <a
                 className="a-context"
-                onClick={() => openInReader(props.link)}
+                onClick={() => openInReader(props.link, props.page)}
                 ref={linkRef}
                 onContextMenu={(e) => {
                     showContextMenu({

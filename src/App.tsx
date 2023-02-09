@@ -278,11 +278,12 @@ const getDataFiles = () => {
 getDataFiles();
 export { themesMain };
 if (!themesMain.map((e) => e.name).includes(settings.theme)) {
-    window.electron.dialog
-        .showMessageBox(window.electron.getCurrentWindow(), {
-            type: "error",
+    window.dialog
+        .warn({
             title: "Error",
             message: `Theme "${settings.theme}" does not exist. Try fixing or deleting theme.json and settings.json in "userdata" folder.(at "%appdata%/Manga Reader/" or in main folder on Portable version)`,
+            noOption: false,
+            defaultId: 0,
             buttons: ["Ok", "Temporary fix", "Open Location"],
         })
         .then((res) => {
@@ -313,11 +314,11 @@ interface IAppContext {
     setAppSettings: React.Dispatch<React.SetStateAction<appsettings>>;
     isReaderOpen: boolean;
     setReaderOpen: React.Dispatch<React.SetStateAction<boolean>>;
-    openInReader: (link: string) => void;
+    openInReader: (link: string, page?: number) => void;
     isLoadingManga: boolean;
     setLoadingManga: React.Dispatch<React.SetStateAction<boolean>>;
-    linkInReader: string;
-    setLinkInReader: React.Dispatch<React.SetStateAction<string>>;
+    linkInReader: { link: string; page: number };
+    setLinkInReader: React.Dispatch<React.SetStateAction<{ link: string; page: number }>>;
     mangaInReader: ListItem | null;
     setMangaInReader: React.Dispatch<React.SetStateAction<ListItem | null>>;
     addNewBookmark: (newBk: ChapterItem) => Promise<Electron.MessageBoxReturnValue> | undefined;
@@ -358,7 +359,10 @@ const App = (): ReactElement => {
     const [isLoadingManga, setLoadingManga] = useState(false);
     const [pageNumChangeDisabled, setPageNumChangeDisabled] = useState(false);
     const [loadingMangaPercent, setLoadingMangaPercent] = useState(100);
-    const [linkInReader, setLinkInReader] = useState<string>(window.loadManga || "");
+    const [linkInReader, setLinkInReader] = useState<{ link: string; page: number }>({
+        link: window.loadManga || "",
+        page: 1,
+    });
     const [prevNextChapter, setPrevNextChapter] = useState({ prev: "", next: "" });
     const [mangaInReader, setMangaInReader] = useState<ListItem | null>(null);
     const [bookmarks, setBookmarks] = useState<ChapterItem[]>(bookmarkDataInit);
@@ -487,9 +491,9 @@ const App = (): ReactElement => {
      * Check if folder have images then open those images in reader.
      * @param link link of folder containing images to be opened in reader.
      */
-    const openInReader = (link: string) => {
+    const openInReader = (link: string, page?: number) => {
         link = window.path.normalize(link);
-        if (link === linkInReader) return;
+        if (link === linkInReader.link) return;
         checkValidFolder(
             link,
             (isValid, imgs) => {
@@ -498,7 +502,7 @@ const App = (): ReactElement => {
                         link,
                         images: imgs,
                     };
-                    setLinkInReader(link);
+                    setLinkInReader({ link, page: page || 1 });
                 }
             },
             true
@@ -507,7 +511,7 @@ const App = (): ReactElement => {
 
     const closeReader = () => {
         setReaderOpen(false);
-        setLinkInReader("");
+        setLinkInReader({ link: "", page: 1 });
         setLoadingManga(false);
         setLoadingMangaPercent(0);
         setMangaInReader(null);
@@ -523,7 +527,6 @@ const App = (): ReactElement => {
             // replace same link with updated pagenumber
             const existingBookmark = bookmarks.findIndex((e) => e.link === newBk.link);
             if (-1 < existingBookmark) {
-                //where remove?
                 if (bookmarks[existingBookmark].page === newBk.page)
                     return window.dialog.warn({
                         title: "Bookmark Already Exist",
@@ -545,7 +548,6 @@ const App = (): ReactElement => {
             return { ...init };
         });
     };
-    // todo : make sure it works for .zip and .cbz
     const openInNewWindow = (link: string) => {
         checkValidFolder(
             link,

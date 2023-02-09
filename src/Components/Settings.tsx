@@ -358,8 +358,8 @@ const Settings = (): ReactElement => {
                                         }
                                     );
                                     if (opt == undefined) return;
-                                    const data: ListItem[] = JSON.parse(window.fs.readFileSync(opt[0], "utf8"));
-                                    const dataToAdd: ListItem[] = [];
+                                    const data: ChapterItem[] = JSON.parse(window.fs.readFileSync(opt[0], "utf8"));
+                                    const dataToAdd: ChapterItem[] = [];
                                     let similarFound = 0;
                                     data.forEach((item) => {
                                         if (("mangaName" && "link" && "chapterName") in item) {
@@ -383,31 +383,29 @@ const Settings = (): ReactElement => {
                             <button
                                 // onFocus={(e) => e.currentTarget.blur()}
                                 onClick={() => {
-                                    const confirm1 = window.electron.dialog.showMessageBoxSync(
-                                        window.electron.getCurrentWindow(),
-                                        {
-                                            type: "warning",
+                                    window.dialog
+                                        .warn({
                                             title: "Delete BookMarks",
                                             message: "are you sure you want to remove bookmark?",
-                                            buttons: ["yes", "no"],
-                                        }
-                                    );
-                                    if (confirm1 == undefined) return;
-                                    if (confirm1 === 1) return;
-                                    if (confirm1 === 0) {
-                                        const confirm2 = window.electron.dialog.showMessageBoxSync(
-                                            window.electron.getCurrentWindow(),
-                                            {
-                                                type: "warning",
-                                                title: "Delete BookMarks",
-                                                message:
-                                                    "are you really sure you want to remove bookmark?\nThis process is irreversible.",
-                                                buttons: ["yes", "no"],
+                                            noOption: false,
+                                        })
+                                        .then(({ response }) => {
+                                            if (response == undefined) return;
+                                            if (response === 1) return;
+                                            if (response === 0) {
+                                                window.dialog
+                                                    .warn({
+                                                        title: "Delete BookMarks",
+                                                        noOption: false,
+                                                        message:
+                                                            "are you really sure you want to remove bookmark?\nThis process is irreversible.",
+                                                    })
+                                                    .then((res) => {
+                                                        if (res.response === 1) return;
+                                                        setBookmarks([]);
+                                                    });
                                             }
-                                        );
-                                        if (confirm2 === 1) return;
-                                    }
-                                    setBookmarks([]);
+                                        });
                                 }}
                             >
                                 Delete All Bookmarks

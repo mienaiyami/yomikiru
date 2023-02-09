@@ -1,13 +1,5 @@
 /* eslint-disable @typescript-eslint/no-non-null-assertion */
-import React, {
-    createContext,
-    ReactElement,
-    useContext,
-    useEffect,
-    useLayoutEffect,
-    useRef,
-    useState,
-} from "react";
+import React, { createContext, ReactElement, useContext, useLayoutEffect, useRef, useState } from "react";
 import { AppContext } from "../App";
 import BookmarkTab from "./BookmarkTab";
 import ContextMenu from "./ContextMenu";
@@ -333,7 +325,7 @@ const Main = (): ReactElement => {
                 ) : (
                     ""
                 )}
-                {linkInReader !== "" ? <Reader /> : ""}
+                {linkInReader.link !== "" ? <Reader /> : ""}
             </div>
         </MainContext.Provider>
     );

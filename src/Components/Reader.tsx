@@ -16,6 +16,7 @@ const Reader = () => {
         setLinkInReader,
         mangaInReader,
         setMangaInReader,
+        isLoadingManga,
         setLoadingManga,
         setHistory,
         prevNextChapter,
@@ -78,7 +79,7 @@ const Reader = () => {
     //! check if really needed
     const pageChangeEvent = new Event("pageNumberChange");
 
-    const scrollToPage = (pageNumber: number, callback?: () => void) => {
+    const scrollToPage = (pageNumber: number, behavior: ScrollBehavior = "smooth", callback?: () => void) => {
         const reader = document.querySelector("#reader");
         if (reader) {
             if (pageNumber >= 1 && pageNumber <= (mangaInReader?.pages || 1)) {
@@ -92,7 +93,7 @@ const Reader = () => {
                     if (callback) setTimeout(callback, 1500);
                 } else {
                     if (imgElem) {
-                        imgElem.scrollIntoView({ behavior: "smooth", block: "start" });
+                        imgElem.scrollIntoView({ behavior, block: "start" });
                         if (callback) setTimeout(callback, 1500);
                     }
                 }
@@ -102,13 +103,14 @@ const Reader = () => {
     window.app.scrollToPage = scrollToPage;
     useLayoutEffect(() => {
         window.app.currentPageNumber = currentPageNumber;
-        setHistory((init) => {
-            if (init[0].link === linkInReader) {
-                init[0].page = currentPageNumber;
-                return [...init];
-            }
-            return init;
-        });
+        // too heavy
+        // setHistory((init) => {
+        //     if (init[0].link === linkInReader.link) {
+        //         init[0].page = currentPageNumber;
+        //         return [...init];
+        //     }
+        //     return init;
+        // });
         window.dispatchEvent(pageChangeEvent);
     }, [currentPageNumber]);
     useEffect(() => {
@@ -354,18 +356,23 @@ const Reader = () => {
      * @example
      * "D://manga/chapter/"
      */
-    const checkForImgsAndLoad = (link: string) => {
-        if (window.cachedImageList?.link === link && window.cachedImageList.images) {
+    const checkForImgsAndLoad = (readerStuff: { link: string; page: number }) => {
+        if (window.cachedImageList?.link === readerStuff.link && window.cachedImageList.images) {
             // console.log("using cached image list for " + link);
-            loadImg(link, window.cachedImageList.images);
+            loadImg(readerStuff.link, window.cachedImageList.images);
+
+            setCurrentPageNumber(readerStuff.page || 1);
             window.cachedImageList = { link: "", images: [] };
             return;
         }
         checkValidFolder(
-            link,
+            readerStuff.link,
             (isValid, imgs) => {
-                if (isValid && imgs) return loadImg(link, imgs);
-                setLinkInReader(mangaInReader?.link || "");
+                if (isValid && imgs) {
+                    setCurrentPageNumber(readerStuff.page || 1);
+                    return loadImg(readerStuff.link, imgs);
+                }
+                setLinkInReader({ link: mangaInReader?.link || "", page: 1 });
             },
             true
         );
@@ -391,7 +398,6 @@ const Reader = () => {
             pages: imgs.length,
         };
         setMangaInReader(mangaOpened);
-        // todo: add to useeffect of pagenumber
         setHistory((init) => {
             if (init.length > 0 && init[0].link === mangaOpened.link) {
                 init.shift();
@@ -505,6 +511,12 @@ const Reader = () => {
             setLoadingMangaPercent((100 * imagesLoaded) / imagesLength);
             if (imagesLength === imagesLoaded) {
                 setLoadingManga(false);
+                // console.log(currentPageNumber);
+                // setFirstScrolled(true);
+                // scrollToPage(currentPageNumber, "auto");
+                // setTimeout(() => {
+                //     scrollToPage(currentPageNumber, "auto");
+                // }, 3000);
             }
         }
     }, [imagesLoaded]);
@@ -513,11 +525,18 @@ const Reader = () => {
         imgContRef.current?.scrollTo(0, scrollPosPercent * imgContRef.current.scrollHeight);
     }, [appSettings.readerSettings.readerWidth, isSideListPinned]);
     useEffect(() => {
-        if (linkInReader && linkInReader !== "") {
-            if (mangaInReader && mangaInReader.link === linkInReader) return;
+        if (linkInReader && linkInReader.link !== "") {
+            if (mangaInReader && mangaInReader.link === linkInReader.link) return;
             checkForImgsAndLoad(linkInReader);
         }
     }, [linkInReader]);
+    useEffect(() => {
+        if (!isLoadingManga) {
+            setTimeout(() => {
+                scrollToPage(currentPageNumber, "auto");
+            }, 50);
+        }
+    }, [isLoadingManga]);
     useLayoutEffect(() => {
         if (isSideListPinned) {
             readerRef.current?.scrollTo(0, scrollPosPercent * readerRef.current.scrollHeight);
@@ -537,6 +556,7 @@ const Reader = () => {
             className={isSideListPinned ? "sideListPinned" : ""}
             style={{
                 gridTemplateColumns: sideListWidth + "px auto",
+
                 display: isReaderOpen ? (isSideListPinned ? "grid" : "block") : "none",
                 "--mangaListWidth": sideListWidth + "px",
             }}

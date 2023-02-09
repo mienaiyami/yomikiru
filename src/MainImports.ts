@@ -113,7 +113,7 @@ declare global {
             clickDelay: number;
             lastClick: number;
             currentPageNumber: number;
-            scrollToPage: (pageNumber: number, callback?: () => void) => void;
+            scrollToPage: (pageNumber: number, behavior?: ScrollBehavior, callback?: () => void) => void;
             // to remove later
             keydown: boolean;
         };
@@ -137,27 +137,48 @@ declare global {
                 detail?: string | undefined;
                 log?: boolean;
             }) => Promise<Electron.MessageBoxReturnValue>;
+            /**
+             *
+             * by default only show "Ok" button. `onOption=false` for buttons.
+             * if `onOption=false`, default buttons "Yes","No". while default return id is 1(No)
+             *
+             */
             warn: ({
                 title,
                 message,
                 detail,
                 noOption,
+                buttons,
+                defaultId,
             }: {
                 title?: string;
                 message: string;
                 detail?: string | undefined;
                 noOption?: boolean;
+                buttons?: string[];
+                defaultId?: number;
             }) => Promise<Electron.MessageBoxReturnValue>;
+
+            /**
+             *
+             * by default only show "Ok" button. `onOption=false` for buttons.
+             * if `onOption=false`, default buttons "Yes","No". while default return id is 1(No)
+             *
+             */
             confirm: ({
                 title,
                 message,
                 detail,
                 noOption,
+                buttons,
+                defaultId,
             }: {
                 title?: string;
                 message: string;
                 detail?: string | undefined;
                 noOption?: boolean;
+                buttons?: string[];
+                defaultId?: number;
             }) => Promise<Electron.MessageBoxReturnValue>;
         };
     }
@@ -384,23 +405,24 @@ window.dialog = {
             detail: detail,
         });
     },
-    warn: ({ title = "Warning", message, detail, noOption = true }) => {
+    warn: ({ title = "Warning", message, detail, noOption = true, buttons = ["Yes", "No"], defaultId = 1 }) => {
         // window.logger.warn(message, detail || "");
         return window.electron.dialog.showMessageBox(window.electron.getCurrentWindow(), {
             type: "warning",
             title: title,
             message: message,
             detail: detail,
-            buttons: noOption ? [] : ["Yes", "No"],
-            defaultId: 1,
+            buttons: noOption ? [] : buttons,
+            defaultId,
         });
     },
-    confirm: ({ title = "Confirm", message, detail, noOption = true }) =>
+    confirm: ({ title = "Confirm", message, detail, noOption = true, buttons = ["Yes", "No"] }, defaultId = 1) =>
         window.electron.dialog.showMessageBox(window.electron.getCurrentWindow(), {
             type: "info",
             title: title,
             message: message,
             detail: detail,
-            buttons: noOption ? [] : ["Yes", "No"],
+            buttons: noOption ? [] : buttons,
+            defaultId,
         }),
 };

@@ -113,7 +113,7 @@ const TopBar = (): ReactElement => {
                                 }
                                 if (!pagenumber) return;
                                 setPageNumChangeDisabled(true);
-                                window.app.scrollToPage(pagenumber, () => {
+                                window.app.scrollToPage(pagenumber, "smooth", () => {
                                     setPageNumChangeDisabled(false);
                                 });
                                 return;

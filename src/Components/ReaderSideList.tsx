@@ -315,7 +315,7 @@ const ReaderSideList = ({
                         tooltip="Open Previous"
                         disabled={prevNextChapter.prev === "first"}
                         clickAction={() => {
-                            setLinkInReader(prevNextChapter.prev);
+                            setLinkInReader({ link: prevNextChapter.prev, page: 1 });
                         }}
                     >
                         <FontAwesomeIcon icon={faArrowLeft} />
@@ -329,15 +329,26 @@ const ReaderSideList = ({
                                 return window.dialog
                                     .warn({
                                         title: "Warning",
-                                        message: "Remove Bookmark?",
+                                        message:
+                                            "Remove - Remove Bookmark\n" +
+                                            "Replace - Replace existing bookmark with current page number",
                                         noOption: false,
+                                        buttons: ["Cancel", "Remove", "Replace"],
+                                        defaultId: 0,
                                     })
-                                    .then((res) => {
-                                        if (res.response === 0) {
+                                    .then(({ response }) => {
+                                        if (response === 1) {
                                             setBookmarks((init) => [
-                                                ...init.filter((e) => e.link !== linkInReader),
+                                                ...init.filter((e) => e.link !== linkInReader.link),
                                             ]);
                                             setBookmarked(false);
+                                        }
+                                        if (response === 2) {
+                                            setBookmarks((init) => {
+                                                init.find((e) => e.link === linkInReader.link)!.page =
+                                                    window.app.currentPageNumber;
+                                                return [...init];
+                                            });
                                         }
                                     });
                             }
@@ -355,7 +366,7 @@ const ReaderSideList = ({
                         tooltip="Open Next"
                         disabled={prevNextChapter.next === "last"}
                         clickAction={() => {
-                            setLinkInReader(prevNextChapter.next);
+                            setLinkInReader({ link: prevNextChapter.next, page: 1 });
                         }}
                     >
                         <FontAwesomeIcon icon={faArrowRight} />
