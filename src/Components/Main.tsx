@@ -300,7 +300,22 @@ const Main = (): ReactElement => {
     return (
         <MainContext.Provider value={{ showContextMenu, isContextMenuOpen }}>
             <div id="app">
-                <div className="tabCont" ref={tabContRef} style={{ display: isReaderOpen ? "none" : "flex" }}>
+                <div
+                    className="tabCont"
+                    ref={tabContRef}
+                    style={{
+                        display: isReaderOpen ? "none" : "grid",
+                        // just why
+                        gridTemplateColumns:
+                            bookmarkTabDisplay && historyTabDisplay
+                                ? "calc(calc(100vw - calc(var(--divider-width) * 2)) / 3) var(--divider-width) calc(calc(100vw - calc(var(--divider-width) * 2)) / 3) var(--divider-width) calc(calc(100vw - calc(var(--divider-width) * 2)) / 3)"
+                                : !bookmarkTabDisplay && historyTabDisplay
+                                ? "calc(calc(100vw - calc(var(--divider-width) * 2)) / 2) var(--divider-width) var(--divider-width) calc(calc(100vw - calc(var(--divider-width) * 2)) / 2)"
+                                : bookmarkTabDisplay && !historyTabDisplay
+                                ? "calc(calc(100vw - calc(var(--divider-width) * 2)) / 2) var(--divider-width) calc(calc(100vw - calc(var(--divider-width) * 2)) / 2) var(--divider-width)"
+                                : "calc(calc(100vw - calc(var(--divider-width) * 2))) var(--divider-width) var(--divider-width)",
+                    }}
+                >
                     <LocationsTab currentLink={currentLink} setCurrentLink={setCurrentLink} ref={locationTabRef} />
                     <div className="divider" onClick={() => toggleTab("bookmark")}>
                         <div className="bar"></div>
