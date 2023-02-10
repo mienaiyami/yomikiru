@@ -536,7 +536,10 @@ const Reader = () => {
             className="chapterChangerScreen"
             style={{
                 display:
-                    (appSettings.readerSettings.readerTypeSelected === 0 && !isSideListPinned) ||
+                    zenMode ||
+                    (appSettings.readerSettings.readerTypeSelected === 0 &&
+                        !isSideListPinned &&
+                        !appSettings.readerSettings.disableChapterTransitionScreen) ||
                     (appSettings.readerSettings.readerTypeSelected !== 0 && chapterChangerDisplay)
                         ? "grid"
                         : "none",

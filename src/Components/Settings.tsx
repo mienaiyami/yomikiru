@@ -548,6 +548,27 @@ const Settings = (): ReactElement => {
                                     folder is in manga folder inside "default location".
                                 </p>
                             </label>
+                            <label
+                                className={
+                                    appSettings.readerSettings.disableChapterTransitionScreen ? "selected" : ""
+                                }
+                            >
+                                <input
+                                    type="checkbox"
+                                    checked={appSettings.readerSettings.disableChapterTransitionScreen}
+                                    onChange={(e) => {
+                                        setAppSettings((init) => {
+                                            init.readerSettings.disableChapterTransitionScreen =
+                                                e.currentTarget.checked;
+                                            return { ...init };
+                                        });
+                                    }}
+                                />
+                                <p>
+                                    Disable the screen that appears at start or end of chapters (only in "infinite
+                                    scroll" reader mode when "zen mode" is not on)
+                                </p>
+                            </label>
                         </div>
                     </div>
                     {/* <div className="settingItem version">

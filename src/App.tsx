@@ -49,6 +49,7 @@ const makeSettingsJson = (locations?: string[]) => {
             largeScrollMultiplier: 15,
             readingSide: 1,
             fitVertically: false,
+            disableChapterTransitionScreen: false,
         },
     };
     if (locations) {
