@@ -39,7 +39,7 @@ const BookmarkHistoryListItem = (props: ListItemE) => {
                 `Manga   : ${props.mangaName}\n` +
                 `Chapter : ${props.chapterName}\n` +
                 `Pages    : ${props.pages}\n` +
-                `Page      : ${props.page}\n` +
+                `Page      : ${props.page || 1}\n` +
                 `Date      : ${props.date}`
             }
             // onMouseOver={(e) => {
