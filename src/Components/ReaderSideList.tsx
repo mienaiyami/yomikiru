@@ -45,6 +45,7 @@ const ReaderSideList = ({
         addNewBookmark,
         linkInReader,
         setLinkInReader,
+        updateLastHistoryPageNumber,
     } = useContext(AppContext);
     const { isContextMenuOpen } = useContext(MainContext);
     const sideListRef = useRef<HTMLDivElement>(null);
@@ -315,6 +316,7 @@ const ReaderSideList = ({
                         tooltip="Open Previous"
                         disabled={prevNextChapter.prev === "~"}
                         clickAction={() => {
+                            updateLastHistoryPageNumber();
                             setLinkInReader({ link: prevNextChapter.prev, page: 1 });
                         }}
                     >
@@ -366,6 +368,7 @@ const ReaderSideList = ({
                         tooltip="Open Next"
                         disabled={prevNextChapter.next === "~"}
                         clickAction={() => {
+                            updateLastHistoryPageNumber();
                             setLinkInReader({ link: prevNextChapter.next, page: 1 });
                         }}
                     >

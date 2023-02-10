@@ -255,6 +255,9 @@ const createWindow = (link?: string) => {
     newWindow.webContents.setWindowOpenHandler(() => {
         return { action: "deny" };
     });
+    newWindow.on("close", () => {
+        newWindow.webContents.send("recordPageNumber");
+    });
 };
 
 /**

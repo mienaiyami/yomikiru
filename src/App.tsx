@@ -337,6 +337,7 @@ interface IAppContext {
         }>
     >;
     closeReader: () => void;
+    updateLastHistoryPageNumber: () => void;
     openInNewWindow: (link: string) => void;
     theme: string;
     setTheme: React.Dispatch<React.SetStateAction<string>>;
@@ -509,8 +510,17 @@ const App = (): ReactElement => {
             true
         );
     };
-
+    const updateLastHistoryPageNumber = () => {
+        setHistory((init) => {
+            if (init[0].link === linkInReader.link || linkInReader.link === "") {
+                init[0].page = window.app.currentPageNumber;
+                return [...init];
+            }
+            return init;
+        });
+    };
     const closeReader = () => {
+        updateLastHistoryPageNumber();
         setReaderOpen(false);
         setLinkInReader({ link: "", page: 1 });
         setLoadingManga(false);
@@ -578,6 +588,9 @@ const App = (): ReactElement => {
                 window.electron.getCurrentWindow().id,
                 appSettings.skipMinorUpdate
             );
+        });
+        window.electron.ipcRenderer.on("recordPageNumber", () => {
+            updateLastHistoryPageNumber();
         });
         window.app.titleBarHeight = parseFloat(
             window.getComputedStyle(document.body).getPropertyValue("--titleBar-height")
@@ -683,6 +696,7 @@ const App = (): ReactElement => {
                 prevNextChapter,
                 setPrevNextChapter,
                 closeReader,
+                updateLastHistoryPageNumber,
                 openInNewWindow,
                 theme,
                 setTheme,
