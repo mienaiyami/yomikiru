@@ -425,64 +425,63 @@ body {
                             background-color: var(--listItem-hover-color);
                         }
 
-                        &:hover {
-                            .infoOnHover {
-                                // visibility: visible;
-                                animation: 1s fadeIn forwards;
-                            }
-                        }
+                        // &:hover {
+                        //     .infoOnHover {
+                        //         // visibility: visible;
+                        //         animation: 1s fadeIn forwards;
+                        //     }
+                        // }
 
-                        @keyframes fadeIn {
-                            90% {
-                                visibility: hidden;
-                            }
+                        // @keyframes fadeIn {
+                        //     90% {
+                        //         visibility: hidden;
+                        //     }
 
-                            100% {
-                                visibility: visible;
-                            }
-                        }
+                        //     100% {
+                        //         visibility: visible;
+                        //     }
+                        // }
 
-                        .infoWrapper {
-                            position: absolute;
+                        // .infoWrapper {
+                        //     position: absolute;
 
-                            .infoOnHover {
-                                position: fixed;
-                                visibility: hidden;
-                                pointer-events: none;
-                                top: 0;
-                                left: 0;
-                                background: var(--context-menu-bg);
-                                color: var(--context-menu-text);
-                                box-sizing: border-box;
-                                padding: 10px 10px;
-                                border-radius: 5px;
-                                width: 300px;
-                                z-index: 1000;
-                                display: flex;
-                                flex-direction: column;
+                        //     .infoOnHover {
+                        //         position: fixed;
+                        //         visibility: hidden;
+                        //         pointer-events: none;
+                        //         transform: translate(-100%, 0);
+                        //         background: var(--context-menu-bg);
+                        //         color: var(--context-menu-text);
+                        //         box-sizing: border-box;
+                        //         padding: 10px 10px;
+                        //         border-radius: 5px;
+                        //         width: 300px;
+                        //         z-index: 1000;
+                        //         display: flex;
+                        //         flex-direction: column;
 
-                                .info-cont {
-                                    width: 100%;
-                                    display: grid;
-                                    grid-template-columns: 4em 1fr;
-                                    gap: 10px;
+                        //         .info-cont {
+                        //             width: 100%;
+                        //             display: grid;
+                        //             grid-template-columns: 4em 1fr;
+                        //             gap: 10px;
 
-                                    .title {
-                                        position: relative;
+                        //             .title {
+                        //                 position: relative;
 
-                                        &::after {
-                                            content: ":";
-                                            position: absolute;
-                                            right: -2px;
-                                        }
-                                    }
+                        //                 &::after {
+                        //                     content: ":";
+                        //                     position: absolute;
+                        //                     right: -2px;
+                        //                 }
+                        //             }
 
-                                    .info {
-                                        word-wrap: none;
-                                    }
-                                }
-                            }
-                        }
+                        //             .info {
+                        //                 word-wrap: none;
+                        //             }
+                        //         }
+                        //     }
+                        // }
 
                         a {
                             cursor: pointer;
