@@ -114,6 +114,7 @@ declare global {
             lastClick: number;
             currentPageNumber: number;
             scrollToPage: (pageNumber: number, behavior?: ScrollBehavior, callback?: () => void) => void;
+            keyRepeated: boolean;
             // to remove later
             keydown: boolean;
         };

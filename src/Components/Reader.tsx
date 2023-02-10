@@ -3,6 +3,8 @@ import { AppContext } from "../App";
 import ReaderSideList from "./ReaderSideList";
 import { MainContext } from "./Main";
 import ReaderSettings from "./ReaderSettings";
+import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
+import { faQuestionCircle } from "@fortawesome/free-regular-svg-icons";
 
 const Reader = () => {
     const {
@@ -41,6 +43,7 @@ const Reader = () => {
     // used to be in app.tsx then sent to topBar.tsx by context provider but caused performance issue, now using window.currentPageNumber
     const [currentPageNumber, setCurrentPageNumber] = useState(1);
     const [currentImageRow, setCurrentImageRow] = useState(1);
+    const [chapterChangerDisplay, setChapterChangerDisplay] = useState(false);
 
     const readerSettingExtender = useRef<HTMLButtonElement>(null);
     const sizePlusRef = useRef<HTMLButtonElement>(null);
@@ -123,6 +126,21 @@ const Reader = () => {
             if (document.fullscreenElement) document.exitFullscreen();
         }
     }, [zenMode]);
+    const prevNextDeciderLogic = () => {
+        if (appSettings.readerSettings.readerTypeSelected === 0 && imgContRef.current && readerRef.current) {
+            if (isSideListPinned) {
+                if (
+                    imgContRef.current.scrollTop <= window.innerHeight / 2 ||
+                    imgContRef.current.scrollTop >= imgContRef.current.scrollHeight - window.innerHeight * 1.5
+                )
+                    return 1;
+            } else if (
+                readerRef.current.scrollTop <= window.innerHeight / 2 ||
+                readerRef.current.scrollTop >= readerRef.current.scrollHeight - window.innerHeight * 1.5
+            )
+                return 2;
+        } else if (appSettings.readerSettings.readerTypeSelected === 1) return 3;
+    };
     useLayoutEffect(() => {
         window.app.clickDelay = 100;
         const wheelFunction = (e: WheelEvent) => {
@@ -145,6 +163,7 @@ const Reader = () => {
         });
         const registerShortcuts = (e: KeyboardEvent) => {
             // /&& document.activeElement!.tagName === "BODY"
+            window.app.keyRepeated = e.repeat;
             if (window.app.isReaderOpen) {
                 switch (e.key) {
                     case shortcutkey.navToPage?.key1:
@@ -203,61 +222,25 @@ const Reader = () => {
                             scrollReader(appSettings.readerSettings.largeScrollMultiplier);
                             break;
                         case shortcutkey.nextPage?.key1:
-                        case shortcutkey.nextPage?.key2:
-                            if (
-                                appSettings.readerSettings.readerTypeSelected === 0 &&
-                                imgContRef.current &&
-                                readerRef.current
-                            ) {
-                                if (isSideListPinned) {
-                                    if (
-                                        imgContRef.current.scrollTop <= 100 ||
-                                        imgContRef.current.scrollTop >=
-                                            imgContRef.current.scrollHeight - window.innerHeight - 200
-                                    )
-                                        openNextChapterRef.current?.click();
-                                } else if (
-                                    readerRef.current.scrollTop <= 100 ||
-                                    readerRef.current.scrollTop >=
-                                        readerRef.current.scrollHeight - window.innerHeight - 200
-                                ) {
-                                    openNextChapterRef.current?.click();
-                                }
-                            }
-                            if (appSettings.readerSettings.readerTypeSelected === 1) {
-                                openNextPageRef.current?.click();
-                            }
+                        case shortcutkey.nextPage?.key2: {
+                            const abc = prevNextDeciderLogic();
+                            if (abc === 1) openNextChapterRef.current?.click();
+                            else if (abc === 2) openNextChapterRef.current?.click();
+                            else if (abc === 3) openNextPageRef.current?.click();
                             break;
+                        }
                         case shortcutkey.scrollDown?.key1:
                         case shortcutkey.scrollDown?.key2:
                             scrollReader(appSettings.readerSettings.scrollSpeed);
                             break;
                         case shortcutkey.prevPage?.key1:
-                        case shortcutkey.prevPage?.key2:
-                            if (
-                                appSettings.readerSettings.readerTypeSelected === 0 &&
-                                imgContRef.current &&
-                                readerRef.current
-                            ) {
-                                if (isSideListPinned) {
-                                    if (
-                                        imgContRef.current.scrollTop <= 100 ||
-                                        imgContRef.current.scrollTop >=
-                                            imgContRef.current.scrollHeight - window.innerHeight - 200
-                                    )
-                                        openPrevChapterRef.current?.click();
-                                } else if (
-                                    readerRef.current.scrollTop <= 100 ||
-                                    readerRef.current.scrollTop >=
-                                        readerRef.current.scrollHeight - window.innerHeight - 200
-                                ) {
-                                    openPrevChapterRef.current?.click();
-                                }
-                            }
-                            if (appSettings.readerSettings.readerTypeSelected === 1) {
-                                openPrevPageRef.current?.click();
-                            }
+                        case shortcutkey.prevPage?.key2: {
+                            const abc = prevNextDeciderLogic();
+                            if (abc === 1) openPrevChapterRef.current?.click();
+                            else if (abc === 2) openPrevChapterRef.current?.click();
+                            else if (abc === 3) openPrevPageRef.current?.click();
                             break;
+                        }
                         case shortcutkey.scrollUp?.key1:
                         case shortcutkey.scrollUp?.key2:
                             scrollReader(0 - appSettings.readerSettings.scrollSpeed);
@@ -318,34 +301,32 @@ const Reader = () => {
     const openPrevPage = () => {
         if (currentImageRow <= 1) {
             if (prevNextChapter.next === "first") return;
-            window.dialog
-                .confirm({
-                    title: "Confirm",
-                    noOption: false,
-                    message: "Open previous chapter? - " + prevNextChapter.prev,
-                })
-                .then((response) => {
-                    if (response.response === 0) openPrevChapterRef.current?.click();
-                });
+            if (
+                chapterChangerDisplay &&
+                (!window.app.keydown || (window.app.keydown && !window.app.keyRepeated))
+            ) {
+                return openPrevChapterRef.current?.click();
+            }
+            setChapterChangerDisplay(true);
             return;
         }
+        if (chapterChangerDisplay) return setChapterChangerDisplay(false);
         setCurrentImageRow((init) => init - 1);
         if (readerRef.current) readerRef.current.scrollTop = 0;
     };
     const openNextPage = () => {
         if (currentImageRow >= imageRowCount) {
             if (prevNextChapter.next === "last") return;
-            window.dialog
-                .confirm({
-                    title: "Confirm",
-                    noOption: false,
-                    message: "Open Next chapter? - " + prevNextChapter.next,
-                })
-                .then((response) => {
-                    if (response.response === 0) openNextChapterRef.current?.click();
-                });
+            if (
+                chapterChangerDisplay &&
+                (!window.app.keydown || (window.app.keydown && !window.app.keyRepeated))
+            ) {
+                return openNextChapterRef.current?.click();
+            }
+            setChapterChangerDisplay(true);
             return;
         }
+        if (chapterChangerDisplay) return setChapterChangerDisplay(false);
         setCurrentImageRow((init) => init + 1);
         if (readerRef.current) readerRef.current.scrollTop = 0;
     };
@@ -389,6 +370,7 @@ const Reader = () => {
         setImageElements([]);
         setImageRowCount(0);
         setBookmarked(bookmarks.map((e) => e.link).includes(link));
+        setChapterChangerDisplay(false);
         const linksplitted = link.split(window.path.sep);
         const mangaOpened: ListItem = {
             mangaName: linksplitted[linksplitted.length - 2],
@@ -504,7 +486,7 @@ const Reader = () => {
     useEffect(() => {
         if (appSettings.readerSettings.readerTypeSelected === 0)
             // setTimeout(() => scrollToPage(currentPageNumber), 2000);
-            scrollToPage(currentPageNumber);
+            scrollToPage(currentPageNumber, "auto");
     }, [appSettings.readerSettings.readerTypeSelected, appSettings.readerSettings.fitVertically]);
     useEffect(() => {
         if (imagesLoaded !== 0 && imagesLength !== 0) {
@@ -549,6 +531,104 @@ const Reader = () => {
     useLayoutEffect(() => {
         changePageNumber();
     }, [currentImageRow]);
+    const ChapterChanger = () => (
+        <div
+            className="chapterChangerScreen"
+            style={{
+                display:
+                    (appSettings.readerSettings.readerTypeSelected === 0 && !isSideListPinned) ||
+                    (appSettings.readerSettings.readerTypeSelected !== 0 && chapterChangerDisplay)
+                        ? "grid"
+                        : "none",
+            }}
+            onClick={(e) => {
+                const abc = prevNextDeciderLogic();
+                if (abc === 1) {
+                    const clickPos = ((e.clientX - sideListWidth) / e.currentTarget.offsetWidth) * 100;
+                    if (clickPos <= 20) openPrevChapterRef.current?.click();
+                    if (clickPos > 80) openNextChapterRef.current?.click();
+                } else if (abc === 2) {
+                    const clickPos = (e.clientX / e.currentTarget.offsetWidth) * 100;
+                    if (clickPos <= 20) openPrevChapterRef.current?.click();
+                    if (clickPos > 80) openNextChapterRef.current?.click();
+                } else if (abc === 3) {
+                    const clickPos =
+                        ((e.clientX - (isSideListPinned ? sideListWidth : 0)) / e.currentTarget.offsetWidth) * 100;
+                    if (clickPos <= 40) openPrevPageRef.current?.click();
+                    if (clickPos > 60) openNextPageRef.current?.click();
+                }
+
+                const clickPos =
+                    ((e.clientX - (isSideListPinned ? sideListWidth : 0)) / e.currentTarget.offsetWidth) * 100;
+                if (appSettings.readerSettings.readerTypeSelected === 0) {
+                    if (clickPos <= 40) openPrevChapterRef.current?.click();
+                    if (clickPos > 60) openNextChapterRef.current?.click();
+                } else {
+                    if (clickPos <= 40) openPrevPageRef.current?.click();
+                    if (clickPos > 60) openNextPageRef.current?.click();
+                }
+            }}
+        >
+            <div className="wrapper">
+                <div
+                    className="a"
+                    style={{
+                        display:
+                            currentImageRow <= 1 || appSettings.readerSettings.readerTypeSelected === 0
+                                ? "flex"
+                                : "none",
+                    }}
+                >
+                    <span
+                        className="a"
+                        data-tooltip={
+                            `press "${shortcuts.find((e) => e.command === "prevPage")?.key1}"` +
+                            `${
+                                shortcuts.find((e) => e.command === "prevPage")?.key2 === ""
+                                    ? ""
+                                    : ` or "${shortcuts.find((e) => e.command === "prevPage")?.key2}"`
+                            }` +
+                            ` or click left side of screen`
+                        }
+                    >
+                        Previous
+                        <FontAwesomeIcon icon={faQuestionCircle} />:
+                    </span>
+                    <span className="b">{prevNextChapter.prev.split("\\").pop()}</span>
+                </div>
+                <div className="c">
+                    <span className="a">Current :</span>
+                    <span className="b">{mangaInReader?.chapterName || ""}</span>
+                </div>
+                <div
+                    className="b"
+                    style={{
+                        display:
+                            currentImageRow >= imageRowCount || appSettings.readerSettings.readerTypeSelected === 0
+                                ? "flex"
+                                : "none",
+                    }}
+                >
+                    <span
+                        className="a"
+                        data-tooltip={
+                            `press "${shortcuts.find((e) => e.command === "nextPage")?.key1}"` +
+                            `${
+                                shortcuts.find((e) => e.command === "nextPage")?.key2 === ""
+                                    ? ""
+                                    : ` or "${shortcuts.find((e) => e.command === "nextPage")?.key2}"`
+                            }` +
+                            ` or click right side of screen`
+                        }
+                    >
+                        Next
+                        <FontAwesomeIcon icon={faQuestionCircle} />:
+                    </span>
+                    <span className="b">{prevNextChapter.next.split("\\").pop()}</span>
+                </div>
+            </div>
+        </div>
+    );
     return (
         <div
             ref={readerRef}
@@ -601,6 +681,7 @@ const Reader = () => {
             >
                 {currentPageNumber}/{mangaInReader?.pages}
             </div>
+            <ChapterChanger />
             <section
                 ref={imgContRef}
                 className={
@@ -612,6 +693,10 @@ const Reader = () => {
                 style={{
                     "--varWidth": appSettings.readerSettings.readerWidth + "%",
                     "--gapSize": appSettings.readerSettings.gapSize + "px",
+                    display:
+                        !chapterChangerDisplay || appSettings.readerSettings.readerTypeSelected === 0
+                            ? "flex"
+                            : "none",
                 }}
                 onScroll={() => {
                     if (appSettings.readerSettings.readerTypeSelected === 0 && isSideListPinned)
@@ -619,37 +704,21 @@ const Reader = () => {
                 }}
                 onClick={(e) => {
                     // && (e.target as HTMLElement).tagName === "IMG"
-                    if (appSettings.readerSettings.readerTypeSelected === 1) {
+                    const abc = prevNextDeciderLogic();
+                    if (abc === 1) {
+                        const clickPos = ((e.clientX - sideListWidth) / e.currentTarget.offsetWidth) * 100;
+                        if (clickPos <= 20) openPrevChapterRef.current?.click();
+                        if (clickPos > 80) openNextChapterRef.current?.click();
+                    } else if (abc === 2) {
+                        const clickPos = (e.clientX / e.currentTarget.offsetWidth) * 100;
+                        if (clickPos <= 20) openPrevChapterRef.current?.click();
+                        if (clickPos > 80) openNextChapterRef.current?.click();
+                    } else if (abc === 3) {
                         const clickPos =
                             ((e.clientX - (isSideListPinned ? sideListWidth : 0)) / e.currentTarget.offsetWidth) *
                             100;
                         if (clickPos <= 40) openPrevPageRef.current?.click();
                         if (clickPos > 60) openNextPageRef.current?.click();
-                    }
-                    if (
-                        appSettings.readerSettings.readerTypeSelected === 0 &&
-                        readerRef.current &&
-                        imgContRef.current
-                    ) {
-                        if (isSideListPinned) {
-                            if (
-                                imgContRef.current.scrollTop <= 100 ||
-                                imgContRef.current.scrollTop >=
-                                    imgContRef.current.scrollHeight - window.innerHeight - 200
-                            ) {
-                                const clickPos = ((e.clientX - sideListWidth) / e.currentTarget.offsetWidth) * 100;
-                                if (clickPos <= 20) openPrevChapterRef.current?.click();
-                                if (clickPos > 80) openNextChapterRef.current?.click();
-                            }
-                        } else if (
-                            readerRef.current.scrollTop <= 100 ||
-                            readerRef.current.scrollTop >=
-                                readerRef.current.scrollHeight - window.innerHeight - 200
-                        ) {
-                            const clickPos = (e.clientX / e.currentTarget.offsetWidth) * 100;
-                            if (clickPos <= 20) openPrevChapterRef.current?.click();
-                            if (clickPos > 80) openNextChapterRef.current?.click();
-                        }
                     }
                 }}
             >
@@ -677,6 +746,7 @@ const Reader = () => {
                     </div>
                 ))}
             </section>
+            {appSettings.readerSettings.readerTypeSelected === 0 ? <ChapterChanger /> : ""}
         </div>
     );
 };

@@ -363,6 +363,7 @@ const App = (): ReactElement => {
         link: window.loadManga || "",
         page: 1,
     });
+    // link of prev/next chapter
     const [prevNextChapter, setPrevNextChapter] = useState({ prev: "", next: "" });
     const [mangaInReader, setMangaInReader] = useState<ListItem | null>(null);
     const [bookmarks, setBookmarks] = useState<ChapterItem[]>(bookmarkDataInit);

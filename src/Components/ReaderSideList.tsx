@@ -193,7 +193,7 @@ const ReaderSideList = ({
         window.addEventListener("mouseup", handleResizerMouseUp);
         return () => {
             window.removeEventListener("mousemove", handleResizerDrag);
-            window.addEventListener("mouseup", handleResizerMouseUp);
+            window.removeEventListener("mouseup", handleResizerMouseUp);
         };
     }, [draggingResizer]);
     return (

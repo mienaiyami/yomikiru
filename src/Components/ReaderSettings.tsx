@@ -27,6 +27,20 @@ const ReaderSettings = ({
     const [maxWidth, setMaxWidth] = useState<number>(appSettings.readerSettings.widthClamped ? 100 : 500);
 
     useEffect(() => {
+        if (isReaderSettingsOpen) {
+            const f = (e: KeyboardEvent) => {
+                if (e.key === "Escape") {
+                    setReaderSettingOpen(false);
+                    if (readerRef.current) readerRef.current.focus();
+                }
+            };
+            window.addEventListener("keydown", f);
+            return () => {
+                window.removeEventListener("keydown", f);
+            };
+        }
+    }, [isReaderSettingsOpen]);
+    useEffect(() => {
         setMaxWidth(appSettings.readerSettings.widthClamped ? 100 : 500);
         if (appSettings.readerSettings.widthClamped) {
             if (appSettings.readerSettings.readerWidth > 100)
