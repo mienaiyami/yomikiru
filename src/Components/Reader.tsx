@@ -384,7 +384,6 @@ const Reader = () => {
             if (init.length > 0 && init[0].link === mangaOpened.link) {
                 init.shift();
             }
-            console.log(linkInReader.page);
             init.unshift({ ...mangaOpened, page: linkInReader.page });
             if (init.length >= appSettings.historyLimit) {
                 init.length = appSettings.historyLimit;

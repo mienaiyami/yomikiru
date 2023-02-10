@@ -6,13 +6,12 @@ import { MainContext } from "./Main";
 const BookmarkHistoryListItem = (props: ListItemE) => {
     const { openInReader } = useContext(AppContext);
     const { showContextMenu } = useContext(MainContext);
-    const linkRef = useRef<HTMLAnchorElement>(null);
+    const itemRef = useRef<HTMLLIElement>(null);
     return (
-        <li>
+        <li ref={itemRef}>
             <a
                 className="a-context"
                 onClick={() => openInReader(props.link, props.page)}
-                ref={linkRef}
                 onContextMenu={(e) => {
                     showContextMenu({
                         isBookmark: props.isBookmark || false,
@@ -30,17 +29,19 @@ const BookmarkHistoryListItem = (props: ListItemE) => {
                         props.chapterName}
                 </span>
             </a>
-            <InfoOnHover
-                item={{
-                    chapterName: props.chapterName,
-                    mangaName: props.mangaName,
-                    pages: props.pages,
-                    date: props.date || "",
-                    page: props.page || 0,
-                }}
-                column={props.isBookmark ? 2 : 3}
-                y={linkRef.current?.getBoundingClientRect().y || 0}
-            />
+            <div className="infoWrapper">
+                <InfoOnHover
+                    item={{
+                        chapterName: props.chapterName,
+                        mangaName: props.mangaName,
+                        pages: props.pages,
+                        date: props.date || "",
+                        page: props.page || 0,
+                    }}
+                    column={props.isBookmark ? 2 : 3}
+                    y={itemRef.current?.getBoundingClientRect().y}
+                />
+            </div>
         </li>
     );
 };

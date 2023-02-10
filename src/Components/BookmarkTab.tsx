@@ -8,7 +8,6 @@ const BookmarkTab = forwardRef(
         ref: React.ForwardedRef<HTMLDivElement>
     ): ReactElement => {
         const { bookmarks } = useContext(AppContext);
-
         return (
             <div
                 className="contTab listCont"

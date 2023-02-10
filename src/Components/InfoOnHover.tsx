@@ -4,6 +4,7 @@ const InfoOnHover = (props: IhoverInfo) => {
     const [pos, setPos] = useState<{ x: number; y: number }>({ x: 0, y: props.y });
     const ref = useRef<HTMLDivElement>(null);
     useLayoutEffect(() => {
+        console.log("eee", props.column === 2 ? "book" : "hist", props.y);
         if (ref.current) {
             let x = 0;
             if (props.column === 2) {
@@ -31,7 +32,11 @@ const InfoOnHover = (props: IhoverInfo) => {
         }
     }, [props]);
     return (
-        <div className="infoOnHover" ref={ref} style={{ left: pos.x + "px", top: pos.y + "px" }}>
+        <div
+            className="infoOnHover"
+            ref={ref}
+            // style={{ left: pos.x + "px", top: pos.y + "px" }}
+        >
             <div className="info-cont">
                 <div className="title">Manga</div>
                 <div className="info">{props.item.mangaName}</div>
