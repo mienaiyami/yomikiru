@@ -1,5 +1,3 @@
-**Full Changelog**: https://github.com/mienaiyami/react-ts-offline-manga-reader/compare/v2.4.0...v2.5.0
-
 ## Changed
 
 - History/Bookmark info on mouse over **temporarily** replaced with default title option due to performance issue.

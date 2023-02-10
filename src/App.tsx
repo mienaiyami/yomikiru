@@ -24,7 +24,7 @@ const shortcutsInit: ShortcutSchema[] = [];
  * @param locations (optional) only update given locations in settings.json.
  */
 const makeSettingsJson = (locations?: string[]) => {
-    const settingsDataNew: { [key: string]: any } = {
+    const settingsDataNew: appsettings = {
         theme: "theme2",
         bookmarksPath,
         historyPath,
@@ -34,6 +34,7 @@ const makeSettingsJson = (locations?: string[]) => {
         updateCheckerEnabled: true,
         askBeforeClosing: false,
         skipMinorUpdate: false,
+        openDirectlyFromManga: false,
         readerSettings: {
             readerWidth: 60,
             variableImageSize: true,
@@ -55,8 +56,14 @@ const makeSettingsJson = (locations?: string[]) => {
         locations.forEach((e) => {
             window.logger.log(`"SETTINGS: ${e}" missing/corrupted in app settings, adding new...`);
             const l: string[] = e.split(".");
+            // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+            //@ts-ignore
             if (l.length === 1) settingsDataSaved[l[0]] = settingsDataNew[l[0]];
+            // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+            //@ts-ignore
             if (l.length === 2) settingsDataSaved[l[0]][l[1]] = settingsDataNew[l[0]][l[1]];
+            // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+            //@ts-ignore
             if (l.length === 3) settingsDataSaved[l[0]][l[1]][l[2]] = settingsDataNew[l[0]][l[1]][l[2]];
         });
         window.fs.writeFileSync(settingsPath, JSON.stringify(settingsDataSaved));
