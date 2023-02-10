@@ -566,7 +566,7 @@ const Settings = (): ReactElement => {
                                 />
                                 <p>
                                     Disable the screen that appears at start or end of chapters (only in "infinite
-                                    scroll" reader mode when "zen mode" is not on)
+                                    scroll" reader mode when "zen mode" is off)
                                 </p>
                             </label>
                         </div>
