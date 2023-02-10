@@ -185,15 +185,15 @@ const Reader = () => {
                         break;
                     case shortcutkey.nextChapter?.key1:
                     case shortcutkey.nextChapter?.key2:
-                        openNextChapterRef.current?.click();
+                        if (!e.repeat) openNextChapterRef.current?.click();
                         break;
                     case shortcutkey.prevChapter?.key1:
                     case shortcutkey.prevChapter?.key2:
-                        openPrevChapterRef.current?.click();
+                        if (!e.repeat) openPrevChapterRef.current?.click();
                         break;
                     case shortcutkey.bookmark?.key1:
                     case shortcutkey.bookmark?.key2:
-                        addToBookmarkRef.current?.click();
+                        if (!e.repeat) addToBookmarkRef.current?.click();
                         break;
                     case shortcutkey.sizePlus?.key1:
                     case shortcutkey.sizePlus?.key2:
