@@ -667,6 +667,13 @@ const Settings = (): ReactElement => {
                             this only opens the chapter containing images, not the Manga Folder.
                         </li>
                         <li>Zen Mode: Hides UI, Only shows images. (Full Screen)</li>
+                        <li>
+                            Open link from home location list when it is in a directory which is in set default
+                            location. e.g. if default location is "D:\manga\" and there is folder named "One Piece"
+                            in it, then any folder which is directly under "One Piece" will open directly by
+                            clicking link itself instead of clicking arrow icon beside it. (Can be enabled from
+                            settings.);
+                        </li>
                     </ul>
                 </div>
                 <h1>

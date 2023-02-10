@@ -164,7 +164,7 @@ const Reader = () => {
         const registerShortcuts = (e: KeyboardEvent) => {
             // /&& document.activeElement!.tagName === "BODY"
             window.app.keyRepeated = e.repeat;
-            if (window.app.isReaderOpen) {
+            if (window.app.isReaderOpen && !isLoadingManga) {
                 switch (e.key) {
                     case shortcutkey.navToPage?.key1:
                     case shortcutkey.navToPage?.key2:
@@ -277,7 +277,7 @@ const Reader = () => {
                 window.app.keydown = false;
             });
         };
-    }, [isSideListPinned, appSettings, shortcuts]);
+    }, [isSideListPinned, appSettings, shortcuts, isLoadingManga]);
     const makeScrollPos = () => {
         if (isSideListPinned && imgContRef.current)
             return setScrollPosPercent(imgContRef.current.scrollTop / imgContRef.current.scrollHeight);
