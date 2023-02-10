@@ -117,6 +117,7 @@ const Reader = () => {
         window.dispatchEvent(pageChangeEvent);
     }, [currentPageNumber]);
     useEffect(() => {
+        scrollToPage(currentPageNumber, "auto");
         if (zenMode) {
             setSideListPinned(false);
             document.body.classList.add("zenMode");
@@ -536,10 +537,9 @@ const Reader = () => {
             className="chapterChangerScreen"
             style={{
                 display:
-                    zenMode ||
                     (appSettings.readerSettings.readerTypeSelected === 0 &&
-                        !isSideListPinned &&
-                        !appSettings.readerSettings.disableChapterTransitionScreen) ||
+                        (zenMode ||
+                            (!isSideListPinned && !appSettings.readerSettings.disableChapterTransitionScreen))) ||
                     (appSettings.readerSettings.readerTypeSelected !== 0 && chapterChangerDisplay)
                         ? "grid"
                         : "none",
