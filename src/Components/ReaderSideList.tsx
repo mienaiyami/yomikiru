@@ -76,8 +76,8 @@ const ReaderSideList = ({
             const dir = mangaInReader.link.replace(mangaInReader.chapterName, "");
             const prevIndex = listDataName.indexOf(mangaInReader.chapterName) - 1;
             const nextIndex = listDataName.indexOf(mangaInReader.chapterName) + 1;
-            const prevCh = prevIndex < 0 ? "first" : dir + chapterData[prevIndex].name;
-            const nextCh = nextIndex >= chapterData.length ? "last" : dir + chapterData[nextIndex].name;
+            const prevCh = prevIndex < 0 ? "~" : dir + chapterData[prevIndex].name;
+            const nextCh = nextIndex >= chapterData.length ? "~" : dir + chapterData[nextIndex].name;
             setPrevNextChapter({ prev: prevCh, next: nextCh });
         }
     };
@@ -313,7 +313,7 @@ const ReaderSideList = ({
                         className="ctrl-menu-item"
                         btnRef={openPrevChapterRef}
                         tooltip="Open Previous"
-                        disabled={prevNextChapter.prev === "first"}
+                        disabled={prevNextChapter.prev === "~"}
                         clickAction={() => {
                             setLinkInReader({ link: prevNextChapter.prev, page: 1 });
                         }}
@@ -364,7 +364,7 @@ const ReaderSideList = ({
                         className="ctrl-menu-item"
                         btnRef={openNextChapterRef}
                         tooltip="Open Next"
-                        disabled={prevNextChapter.next === "last"}
+                        disabled={prevNextChapter.next === "~"}
                         clickAction={() => {
                             setLinkInReader({ link: prevNextChapter.next, page: 1 });
                         }}

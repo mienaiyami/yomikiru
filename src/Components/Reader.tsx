@@ -300,7 +300,7 @@ const Reader = () => {
 
     const openPrevPage = () => {
         if (currentImageRow <= 1) {
-            if (prevNextChapter.next === "first") return;
+            if (prevNextChapter.next === "~") return;
             if (
                 chapterChangerDisplay &&
                 (!window.app.keydown || (window.app.keydown && !window.app.keyRepeated))
@@ -316,7 +316,7 @@ const Reader = () => {
     };
     const openNextPage = () => {
         if (currentImageRow >= imageRowCount) {
-            if (prevNextChapter.next === "last") return;
+            if (prevNextChapter.next === "~") return;
             if (
                 chapterChangerDisplay &&
                 (!window.app.keydown || (window.app.keydown && !window.app.keyRepeated))
