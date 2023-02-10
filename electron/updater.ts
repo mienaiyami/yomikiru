@@ -172,7 +172,8 @@ const downloadUpdates = (latestVersion: string, windowId: number) => {
                         [
                             `powershell.exe Start-Sleep -Seconds 5.0 ; Remove-Item -Recurse -Force '${appDirName}\\*' -Exclude ${fileToKeep.join(
                                 ","
-                            )} ; ; Move-Item -Path '${extractPath}\\*' -Destination '${appDirName}'`,
+                            )} ; Write-Output 'Moving extracted files...' ; Move-Item -Path '${extractPath}\\*' -Destination '${appDirName}' ; ` +
+                                `Write-Output 'Launching app' ; ;  explorer '${app.getPath("exe")}' ; ; `,
                         ],
                         { shell: true }
                     ).on("exit", process.exit);
