@@ -121,15 +121,12 @@ const downloadUpdates = (latestVersion: string, windowId: number) => {
                 type: "info",
                 title: "Updates downloaded",
                 message: "Updates downloaded.",
-                buttons: ["Install Now", "Install on Close"],
+                buttons: ["Install Now"],
                 cancelId: 1,
             })
             .then((res) => {
                 if (res.response === 0) {
-                    logger.log("Selected option to install now.");
                     app.quit();
-                } else {
-                    logger.log("Selected option to install on close.");
                 }
             });
     };
