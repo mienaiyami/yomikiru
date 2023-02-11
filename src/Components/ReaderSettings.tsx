@@ -270,7 +270,7 @@ const ReaderSettings = ({
                                 });
                             }}
                         >
-                            ltr
+                            LTR
                         </button>
                         <button
                             className={appSettings.readerSettings.readingSide === 1 ? "optionSelected" : ""}
@@ -282,7 +282,7 @@ const ReaderSettings = ({
                                 });
                             }}
                         >
-                            rtl
+                            RTL
                         </button>
                     </div>
                 </div>
@@ -342,7 +342,7 @@ const ReaderSettings = ({
                                     });
                                 }}
                             />
-                            <p>width*2 for 2-page-span-images/wide images(e.g. image is 2 pages of manga).</p>
+                            <p>Double size for double spread pages.</p>
                         </label>
                         <label className={appSettings.readerSettings.gapBetweenRows ? "optionSelected" : ""}>
                             <input

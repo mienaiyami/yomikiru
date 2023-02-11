@@ -22,16 +22,16 @@ const LocationsTab = forwardRef(
         const [imageCount, setImageCount] = useState(0);
         const { appSettings, setAppSettings } = useContext(AppContext);
         const inputRef = useRef<HTMLInputElement>(null);
-        const displayList = (): void => {
+        const displayList = (link = currentLink): void => {
             setFilter("");
-            if (!window.fs.existsSync(currentLink)) {
+            if (!window.fs.existsSync(link)) {
                 window.dialog.customError({ message: "Directory/File doesn't exist." });
                 return;
             }
 
-            if (window.fs.existsSync(currentLink) && window.fs.lstatSync(currentLink).isDirectory()) {
+            if (window.fs.existsSync(link) && window.fs.lstatSync(link).isDirectory()) {
                 setIsLoadingFile(true);
-                window.fs.readdir(currentLink, (err, files) => {
+                window.fs.readdir(link, (err, files) => {
                     if (err) {
                         window.logger.error(err);
                         window.dialog.nodeError(err);
@@ -45,14 +45,14 @@ const LocationsTab = forwardRef(
                         .filter((e) => {
                             try {
                                 if (
-                                    window.fs.lstatSync(window.path.join(currentLink, e)).isDirectory() ||
+                                    window.fs.lstatSync(window.path.join(link, e)).isDirectory() ||
                                     [".zip", ".cbz"].includes(window.path.extname(e))
                                 )
                                     return true;
                             } catch {
                                 return false;
                             }
-                            //  return (window.fs.lstatSync(window.path.join(currentLink, e)) || false).isDirectory()
+                            //  return (window.fs.lstatSync(window.path.join(link, e)) || false).isDirectory()
                         })
                         .sort(window.app.betterSortOrder);
                     if (inputRef.current) {
@@ -137,20 +137,45 @@ const LocationsTab = forwardRef(
                             // tabIndex={-1}
                             onKeyDown={(e) => {
                                 e.stopPropagation();
-                                if (/\[|\]|\(|\)|\*|\+|\?/gi.test(e.key)) {
+                                // if (/\[|\]|\(|\)|\*|\+|\?/gi.test(e.key)) {
+                                //     e.preventDefault();
+                                // }
+                                if (/\*|\?/gi.test(e.key)) {
                                     e.preventDefault();
                                 }
                             }}
                             onChange={(e) => {
-                                const val = e.target.value;
-                                // val = val.replace("[", "\\[");
-                                // val = val.replace("]", "\\]");
-                                // val = val.replace("(", "\\(");
-                                // val = val.replace(")", "\\)");
-                                // val = val.replace("*", "\\*");
-                                // val = val.replace("+", "\\+");
+                                let val = e.target.value;
+                                val = val.replaceAll('"', "");
+                                if (/.:\\.*/.test(val)) {
+                                    setCurrentLink(window.path.normalize(val + "\\"));
+                                    return;
+                                }
+                                if (val === "..\\")
+                                    return setCurrentLink(window.path.resolve(currentLink, "..\\"));
+                                if (val[val.length - 1] === "\\")
+                                    if (
+                                        locations.find(
+                                            (e) => e.toUpperCase() === val.replaceAll("\\", "").toUpperCase()
+                                        )
+                                    )
+                                        return setCurrentLink(
+                                            window.path.normalize(currentLink + "\\" + val + "\\")
+                                        );
+                                    else val = val.replaceAll("\\", "");
+
+                                val = val.replaceAll("[", "\\[");
+                                val = val.replaceAll("]", "\\]");
+                                val = val.replaceAll("(", "\\(");
+                                val = val.replaceAll(")", "\\)");
+                                val = val.replaceAll("*", "\\-");
+                                val = val.replaceAll("+", "\\+");
                                 let filter = "";
                                 for (let i = 0; i < val.length; i++) {
+                                    if (val[i] === "\\") {
+                                        filter += "\\";
+                                        continue;
+                                    }
                                     filter += val[i] + ".*";
                                 }
                                 setFilter(filter);

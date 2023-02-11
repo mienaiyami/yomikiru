@@ -435,6 +435,7 @@ const Reader = () => {
     };
     const loadImg = (link: string, imgs: string[]) => {
         link = window.path.normalize(link);
+        if (link[link.length - 1] === "\\") link = link.substring(0, link.length - 1);
         setImages([]);
         setWideImageContMap([]);
         setCurrentPageNumber(1);
@@ -446,7 +447,7 @@ const Reader = () => {
         setImageRowCount(0);
         setBookmarked(bookmarks.map((e) => e.link).includes(link));
         setChapterChangerDisplay(false);
-        const linksplitted = link.split(window.path.sep);
+        const linksplitted = link.split(window.path.sep).filter((e) => e !== "");
         const mangaOpened: ListItem = {
             mangaName: linksplitted[linksplitted.length - 2],
             chapterName: linksplitted[linksplitted.length - 1],
