@@ -50,6 +50,7 @@ const makeSettingsJson = (locations?: string[]) => {
             readingSide: 1,
             fitVertically: false,
             disableChapterTransitionScreen: false,
+            maxWidth: 0,
         },
     };
     if (locations) {

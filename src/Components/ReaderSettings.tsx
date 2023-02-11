@@ -288,9 +288,9 @@ const ReaderSettings = ({
                 </div>
                 <div className="settingItem">
                     <div className="name">Scroll Speed(with keys)</div>
-                    <div className="options">
+                    <div className="options col">
                         <label>
-                            Scroll 1
+                            Scroll_1&nbsp;:
                             <input
                                 type="number"
                                 min={1}
@@ -308,7 +308,7 @@ const ReaderSettings = ({
                             />
                         </label>
                         <label>
-                            Scroll 2
+                            Scroll_2&nbsp;:
                             <input
                                 type="number"
                                 min={1}
@@ -356,7 +356,7 @@ const ReaderSettings = ({
                                     });
                                 }}
                             />
-                            <p>Gap between rows.</p>
+                            <p>Gap between rows&nbsp;: </p>
                             <input
                                 type="number"
                                 value={appSettings.readerSettings.gapSize}
@@ -371,6 +371,7 @@ const ReaderSettings = ({
                                     });
                                 }}
                             />
+                            px
                         </label>
                         <label
                             className={appSettings.readerSettings.showPageNumberInZenMode ? "optionSelected" : ""}
@@ -386,6 +387,27 @@ const ReaderSettings = ({
                                 }}
                             />
                             <p>Show Page Number in Zen Mode.</p>
+                        </label>
+
+                        <label title={'Disable "Size Clamp" to enable'}>
+                            Max Width&nbsp;:
+                            <input
+                                type="number"
+                                min={0}
+                                max={5000}
+                                value={appSettings.readerSettings.maxWidth}
+                                disabled={appSettings.readerSettings.widthClamped}
+                                onChange={(e) => {
+                                    setAppSettings((init) => {
+                                        let value = e.currentTarget.valueAsNumber;
+                                        if (value > 5000) value = 5000;
+                                        if (value < 0) value = 0;
+                                        init.readerSettings.maxWidth = value;
+                                        return { ...init };
+                                    });
+                                }}
+                            />
+                            px
                         </label>
                     </div>
                 </div>

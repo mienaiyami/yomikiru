@@ -75,6 +75,7 @@ export const settingValidatorData = {
         readingSide: [0, 1],
         fitVertically: false,
         disableChapterTransitionScreen: false,
+        maxWidth: 0,
     },
 } as const;
 

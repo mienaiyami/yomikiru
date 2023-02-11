@@ -503,6 +503,8 @@ const Reader = () => {
                         img.decode().catch((e) => console.error(e));
                     }}
                     draggable={false}
+                    // loading="lazy"
+                    // decoding="async"
                     data-pagenumber={index + 1}
                     onContextMenu={(ev) => {
                         showContextMenu({
@@ -821,6 +823,10 @@ const Reader = () => {
                                         ? "flex"
                                         : "none"
                                     : "flex",
+                            "--max-width":
+                                appSettings.readerSettings.maxWidth === 0
+                                    ? "500%"
+                                    : appSettings.readerSettings.maxWidth + "px",
                         }}
                         key={i}
                     >
