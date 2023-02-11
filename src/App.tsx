@@ -325,6 +325,8 @@ interface IAppContext {
     openInReader: (link: string, page?: number) => void;
     isLoadingManga: boolean;
     setLoadingManga: React.Dispatch<React.SetStateAction<boolean>>;
+    unzipping: boolean;
+    setUnzipping: React.Dispatch<React.SetStateAction<boolean>>;
     linkInReader: { link: string; page: number };
     setLinkInReader: React.Dispatch<React.SetStateAction<{ link: string; page: number }>>;
     mangaInReader: ListItem | null;
@@ -366,6 +368,7 @@ const App = (): ReactElement => {
     const [isSettingOpen, setSettingOpen] = useState(false);
     const [isReaderOpen, setReaderOpen] = useState(false);
     const [isLoadingManga, setLoadingManga] = useState(false);
+    const [unzipping, setUnzipping] = useState(false);
     const [pageNumChangeDisabled, setPageNumChangeDisabled] = useState(false);
     const [loadingMangaPercent, setLoadingMangaPercent] = useState(100);
     const [linkInReader, setLinkInReader] = useState<{ link: string; page: number }>({
@@ -404,7 +407,65 @@ const App = (): ReactElement => {
         sendImgs?: boolean
     ): void => {
         // ! changing imgs from name to link of image
-        let linkMain = link;
+        // let linkMain = link;
+        const tempFn = (link: string, last = false) =>
+            window.fs.readdir(link, (err, files) => {
+                if (err) {
+                    window.logger.error(err);
+                    window.dialog.nodeError(err);
+                    setUnzipping(false);
+                    callback(false);
+                    return;
+                }
+                if (files.length <= 0) {
+                    window.dialog.customError({
+                        title: "No images found",
+                        message: "Folder is empty.",
+                        detail: link,
+                    });
+                    setUnzipping(false);
+                    callback(false);
+                    return;
+                }
+                setUnzipping(false);
+                if (sendImgs) {
+                    setLoadingManga(true);
+                    setLoadingMangaPercent(0);
+                }
+                const imgs = files.filter((e) => {
+                    return window.supportedFormats.includes(window.path.extname(e).toLowerCase());
+                });
+                if (imgs.length <= 0) {
+                    if (
+                        !last &&
+                        files.length <= 1 &&
+                        window.fs.lstatSync(window.path.join(link, files[0])).isDirectory()
+                    ) {
+                        tempFn(
+                            // linkSplitted[linkSplitted.length - 1].replace(/(\.zip|\.cbz)/gi, "")
+                            window.path.join(link, files[0]),
+                            true
+                        );
+                        return;
+                    }
+                    window.dialog.customError({
+                        title: "No images found",
+                        message: "Folder doesn't contain any supported image format.",
+                        log: false,
+                    });
+                    setLoadingManga(false);
+                    callback(false);
+                    return;
+                }
+                if (sendImgs) {
+                    callback(
+                        true,
+                        imgs.sort(window.app.betterSortOrder).map((e) => window.path.join(link, e))
+                    );
+                    return;
+                }
+                callback(true);
+            });
         const linkSplitted = link.split(window.path.sep);
         if ([".zip", ".cbz"].includes(window.path.extname(link))) {
             let tempExtractPath = window.path.join(
@@ -421,81 +482,20 @@ const App = (): ReactElement => {
                     recursive: true,
                 });
             window.app.deleteDirOnClose = tempExtractPath;
-            window.crossZip.unzipSync(link, tempExtractPath);
-            linkMain = tempExtractPath;
-        }
-        const tempFn = (link: string, last = false) =>
-            window.fs.readdir(link, (err, files) => {
+            setUnzipping(true);
+            window.crossZip.unzip(link, tempExtractPath, (err) => {
                 if (err) {
-                    window.logger.error(err);
-                    window.dialog.nodeError(err);
-                    callback(false);
-                    return;
-                }
-                if (files.length <= 0) {
-                    window.dialog.customError({
-                        title: "No images found",
-                        message: "Folder is empty.",
-                        detail: link,
-                    });
-                    callback(false);
-                    return;
-                }
-                if (sendImgs) {
-                    setLoadingManga(true);
-                    setLoadingMangaPercent(0);
-                }
-                const binFiles: string[] = [];
-                const imgs = files.filter((e) => {
-                    if (window.path.extname(e) === ".bin") {
-                        binFiles.push(e);
-                        return true;
-                    }
-                    return window.supportedFormats.includes(window.path.extname(e).toLowerCase());
-                });
-                if (imgs.length <= 0) {
-                    if (
-                        !last &&
-                        files.length <= 1 &&
-                        window.fs.lstatSync(window.path.join(linkMain, files[0])).isDirectory()
-                    ) {
-                        tempFn(
-                            // linkSplitted[linkSplitted.length - 1].replace(/(\.zip|\.cbz)/gi, "")
-                            window.path.join(linkMain, files[0]),
-                            true
-                        );
-                        return;
-                    }
-                    window.dialog.customError({
-                        title: "No images found",
-                        message: "Folder doesn't contain any supported image format.",
+                    setUnzipping(false);
+
+                    return window.dialog.customError({
+                        message: "Error while extracting.",
+                        detail: err.message,
                         log: false,
                     });
-                    setLoadingManga(false);
-                    callback(false);
-                    return;
                 }
-                if (sendImgs) {
-                    if (binFiles.length > 0) {
-                        let errMsg = "";
-                        binFiles.forEach((e) => {
-                            errMsg += e + "\n";
-                        });
-                        window.dialog.warn({
-                            title: "Warning",
-                            message: "Unable to load following files. Possibly a download error.",
-                            detail: errMsg + "from folder\n" + link,
-                        });
-                    }
-                    callback(
-                        true,
-                        imgs.sort(window.app.betterSortOrder).map((e) => window.path.join(link, e))
-                    );
-                    return;
-                }
-                callback(true);
+                tempFn(tempExtractPath);
             });
-        tempFn(linkMain);
+        } else tempFn(link);
     };
     /**
      * Check if folder have images then open those images in reader.
@@ -692,6 +692,8 @@ const App = (): ReactElement => {
                 openInReader,
                 isLoadingManga,
                 setLoadingManga,
+                unzipping,
+                setUnzipping,
                 linkInReader,
                 setLinkInReader,
                 mangaInReader,

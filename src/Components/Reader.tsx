@@ -90,15 +90,12 @@ const Reader = () => {
                 const imgElem = document.querySelector(
                     "#reader .imgCont img[data-pagenumber='" + pageNumber + "']"
                 );
-                console.log(imgElem);
                 if (appSettings.readerSettings.readerTypeSelected === 1) {
                     const rowNumber = parseInt(imgElem?.parentElement?.getAttribute("data-imagerow") || "1");
-                    console.log("eeeee", imgElem?.parentElement?.getAttribute("data-imagerow"));
                     setCurrentImageRow(rowNumber);
                     if (callback) setTimeout(callback, 1500);
                 } else {
                     if (imgElem) {
-                        console.log("aaaaaaaaaaaaaaaaa");
                         imgElem.scrollIntoView({ behavior, block: "start" });
                         if (callback) setTimeout(callback, 1500);
                     }

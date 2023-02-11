@@ -986,6 +986,26 @@ body {
                 text-align: center;
             }
 
+            @keyframes fadeInOut {
+                0% {
+                    opacity: 1;
+                }
+
+                50% {
+                    opacity: 0.2;
+                }
+
+                100% {
+                    opacity: 1;
+                }
+
+            }
+
+            .unzipping {
+                font-size: 4em;
+                animation: 2s linear fadeInOut infinite;
+            }
+
             .loadingBarCont {
                 position: relative;
                 width: 60vw;
