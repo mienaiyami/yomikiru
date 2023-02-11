@@ -428,6 +428,7 @@ const Reader = () => {
                         const img = e.target as HTMLImageElement;
                         img.decode().catch((e) => console.error(e));
                     }}
+                    draggable={false}
                     data-pagenumber={index + 1}
                     onContextMenu={(ev) => {
                         showContextMenu({
