@@ -610,11 +610,11 @@ const Settings = (): ReactElement => {
                                 // onFocus={(e) => e.currentTarget.blur()}
                                 onClick={() =>
                                     window.electron.shell.openExternal(
-                                        "https://github.com/mienaiyami/react-ts-offline-manga-reader/issues"
+                                        "https://github.com/mienaiyami/react-ts-offline-manga-reader/issues/new/choose"
                                     )
                                 }
                             >
-                                <FontAwesomeIcon icon={faGithub} /> Submit Issue
+                                <FontAwesomeIcon icon={faGithub} /> Submit Issue / Feature Request
                             </button>
                             <button
                                 onClick={(e) => {

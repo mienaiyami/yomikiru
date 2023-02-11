@@ -1,5 +1,9 @@
-Sorry for repeated updates in single hour.
+## Added
 
-## Fixed
+- Open app automatically after updating (portable version).
 
-- Chapter transition screen not behaving as intended when reader mode is `click to move` and `zen mode` is enabled.
+## Changed
+
+- Prevent some shortcuts if key pressed is held/repeated.
+- Disable chapter transition screen in zen mode as well.
+- Images in reader are now un-draggable.

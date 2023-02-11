@@ -229,7 +229,12 @@ declare global {
         | "scrollDown"
         | "scrollUp"
         | "showHidePageNumberInZen"
-        | "toggleFitVertically";
+        | "toggleFitVertically"
+        | "selectReaderMode0"
+        | "selectReaderMode1"
+        | "selectPagePerRow1"
+        | "selectPagePerRow2"
+        | "selectPagePerRow2odd";
     interface ShortcutSchema {
         /**
          * name of command
@@ -347,13 +352,43 @@ window.shortcutsFunctions = [
     {
         command: "showHidePageNumberInZen",
         name: "Show/Hide Page number in Zen Mode",
-        key1: "1",
+        key1: "p",
         key2: "",
     },
     {
         command: "toggleFitVertically",
         name: "Toggle Fit Vertically",
         key1: "v",
+        key2: "",
+    },
+    {
+        command: "selectReaderMode0",
+        name: "Reader Mode - Infinite Scroll",
+        key1: "9",
+        key2: "",
+    },
+    {
+        command: "selectReaderMode1",
+        name: "Reader Mode - Click to Move",
+        key1: "0",
+        key2: "",
+    },
+    {
+        command: "selectPagePerRow1",
+        name: "Select Page Per Row - 1",
+        key1: "1",
+        key2: "",
+    },
+    {
+        command: "selectPagePerRow2",
+        name: "Select Page Per Row - 2",
+        key1: "2",
+        key2: "",
+    },
+    {
+        command: "selectPagePerRow2odd",
+        name: "Select Page Per Row - 2odd",
+        key1: "3",
         key2: "",
     },
 ];

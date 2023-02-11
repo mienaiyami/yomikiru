@@ -90,12 +90,15 @@ const Reader = () => {
                 const imgElem = document.querySelector(
                     "#reader .imgCont img[data-pagenumber='" + pageNumber + "']"
                 );
+                console.log(imgElem);
                 if (appSettings.readerSettings.readerTypeSelected === 1) {
                     const rowNumber = parseInt(imgElem?.parentElement?.getAttribute("data-imagerow") || "1");
+                    console.log("eeeee", imgElem?.parentElement?.getAttribute("data-imagerow"));
                     setCurrentImageRow(rowNumber);
                     if (callback) setTimeout(callback, 1500);
                 } else {
                     if (imgElem) {
+                        console.log("aaaaaaaaaaaaaaaaa");
                         imgElem.scrollIntoView({ behavior, block: "start" });
                         if (callback) setTimeout(callback, 1500);
                     }
@@ -258,6 +261,80 @@ const Reader = () => {
                         case shortcutkey.toggleFitVertically?.key2:
                             setAppSettings((init) => {
                                 init.readerSettings.fitVertically = !init.readerSettings.fitVertically;
+                                return { ...init };
+                            });
+                            break;
+                        case shortcutkey.selectReaderMode0?.key1:
+                        case shortcutkey.selectReaderMode0?.key2:
+                            setAppSettings((init) => {
+                                init.readerSettings.readerTypeSelected = 0;
+                                return { ...init };
+                            });
+                            break;
+                        case shortcutkey.selectReaderMode1?.key1:
+                        case shortcutkey.selectReaderMode1?.key2:
+                            setAppSettings((init) => {
+                                init.readerSettings.readerTypeSelected = 1;
+                                return { ...init };
+                            });
+                            break;
+                        case shortcutkey.selectPagePerRow1?.key1:
+                        case shortcutkey.selectPagePerRow1?.key2:
+                            if (appSettings.readerSettings.pagesPerRowSelected !== 0) {
+                                setAppSettings((init) => {
+                                    init.readerSettings.pagesPerRowSelected = 0;
+
+                                    init.readerSettings.readerWidth /= 2;
+                                    if (
+                                        init.readerSettings.readerWidth >
+                                        (appSettings.readerSettings.widthClamped ? 100 : 500)
+                                    )
+                                        init.readerSettings.readerWidth = appSettings.readerSettings.widthClamped
+                                            ? 100
+                                            : 500;
+                                    if (init.readerSettings.readerWidth < 1) init.readerSettings.readerWidth = 1;
+
+                                    return { ...init };
+                                });
+                            }
+                            break;
+                        case shortcutkey.selectPagePerRow2?.key1:
+                        case shortcutkey.selectPagePerRow2?.key2:
+                            setAppSettings((init) => {
+                                if (init.readerSettings.pagesPerRowSelected === 0) {
+                                    init.readerSettings.readerWidth *= 2;
+                                    if (
+                                        init.readerSettings.readerWidth >
+                                        (appSettings.readerSettings.widthClamped ? 100 : 500)
+                                    )
+                                        init.readerSettings.readerWidth = appSettings.readerSettings.widthClamped
+                                            ? 100
+                                            : 500;
+                                    if (init.readerSettings.readerWidth < 1) init.readerSettings.readerWidth = 1;
+                                }
+
+                                init.readerSettings.pagesPerRowSelected = 1;
+
+                                return { ...init };
+                            });
+                            break;
+                        case shortcutkey.selectPagePerRow2odd?.key1:
+                        case shortcutkey.selectPagePerRow2odd?.key2:
+                            setAppSettings((init) => {
+                                if (init.readerSettings.pagesPerRowSelected === 0) {
+                                    init.readerSettings.readerWidth *= 2;
+                                    if (
+                                        init.readerSettings.readerWidth >
+                                        (appSettings.readerSettings.widthClamped ? 100 : 500)
+                                    )
+                                        init.readerSettings.readerWidth = appSettings.readerSettings.widthClamped
+                                            ? 100
+                                            : 500;
+                                    if (init.readerSettings.readerWidth < 1) init.readerSettings.readerWidth = 1;
+                                }
+
+                                init.readerSettings.pagesPerRowSelected = 2;
+
                                 return { ...init };
                             });
                             break;
@@ -486,10 +563,14 @@ const Reader = () => {
         appSettings.readerSettings.variableImageSize,
     ]);
     useEffect(() => {
-        if (appSettings.readerSettings.readerTypeSelected === 0)
-            // setTimeout(() => scrollToPage(currentPageNumber), 2000);
-            scrollToPage(currentPageNumber, "auto");
-    }, [appSettings.readerSettings.readerTypeSelected, appSettings.readerSettings.fitVertically]);
+        // if (appSettings.readerSettings.readerTypeSelected === 0)
+        setTimeout(() => scrollToPage(currentPageNumber, "auto"), 100);
+        // scrollToPage(currentPageNumber, "auto");
+    }, [
+        appSettings.readerSettings.readerTypeSelected,
+        appSettings.readerSettings.fitVertically,
+        appSettings.readerSettings.pagesPerRowSelected,
+    ]);
     useEffect(() => {
         if (imagesLoaded !== 0 && imagesLength !== 0) {
             setLoadingMangaPercent((100 * imagesLoaded) / imagesLength);

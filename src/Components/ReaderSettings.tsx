@@ -18,12 +18,6 @@ const ReaderSettings = ({
 }) => {
     const { appSettings, setAppSettings } = useContext(AppContext);
     const [isReaderSettingsOpen, setReaderSettingOpen] = useState(false);
-    const [readerTypeSelected, setReaderTypeSelected] = useState<0 | 1>(
-        appSettings.readerSettings.readerTypeSelected
-    );
-    const [pagesPerRowSelected, setPagesPerRowSelected] = useState<0 | 1 | 2>(
-        appSettings.readerSettings.pagesPerRowSelected
-    );
     const [maxWidth, setMaxWidth] = useState<number>(appSettings.readerSettings.widthClamped ? 100 : 500);
 
     useEffect(() => {
@@ -50,18 +44,6 @@ const ReaderSettings = ({
                 });
         }
     }, [appSettings.readerSettings.widthClamped]);
-    useEffect(() => {
-        setAppSettings((init) => {
-            init.readerSettings.readerTypeSelected = readerTypeSelected;
-            return { ...init };
-        });
-    }, [readerTypeSelected]);
-    useEffect(() => {
-        setAppSettings((init) => {
-            init.readerSettings.pagesPerRowSelected = pagesPerRowSelected;
-            return { ...init };
-        });
-    }, [pagesPerRowSelected]);
     return (
         <div
             id="readerSettings"
@@ -150,7 +132,7 @@ const ReaderSettings = ({
                         >
                             <FontAwesomeIcon icon={faPlus} />
                         </button>
-                        <label>
+                        <label className={appSettings.readerSettings.widthClamped ? "optionSelected " : " "}>
                             <input
                                 type="checkbox"
                                 checked={appSettings.readerSettings.widthClamped}
@@ -171,6 +153,7 @@ const ReaderSettings = ({
                                     return { ...init };
                                 });
                             }}
+                            title="Fit Vertically"
                         >
                             <FontAwesomeIcon icon={faArrowsAltV} />
                         </button>
@@ -180,14 +163,24 @@ const ReaderSettings = ({
                     <div className="name">Reader Type</div>
                     <div className="options">
                         <button
-                            className={readerTypeSelected === 0 ? "optionSelected" : ""}
-                            onClick={() => setReaderTypeSelected(0)}
+                            className={appSettings.readerSettings.readerTypeSelected === 0 ? "optionSelected" : ""}
+                            onClick={() =>
+                                setAppSettings((init) => {
+                                    init.readerSettings.readerTypeSelected = 0;
+                                    return { ...init };
+                                })
+                            }
                         >
                             Infinite Scroll
                         </button>
                         <button
-                            className={readerTypeSelected === 1 ? "optionSelected" : ""}
-                            onClick={() => setReaderTypeSelected(1)}
+                            className={appSettings.readerSettings.readerTypeSelected === 1 ? "optionSelected" : ""}
+                            onClick={() =>
+                                setAppSettings((init) => {
+                                    init.readerSettings.readerTypeSelected = 1;
+                                    return { ...init };
+                                })
+                            }
                         >
                             Click to Move
                         </button>
@@ -197,31 +190,43 @@ const ReaderSettings = ({
                     <div className="name">Pages per Row</div>
                     <div className="options">
                         <button
-                            className={pagesPerRowSelected === 0 ? "optionSelected" : ""}
+                            className={
+                                appSettings.readerSettings.pagesPerRowSelected === 0 ? "optionSelected" : ""
+                            }
                             onClick={() => {
-                                setPagesPerRowSelected(0);
-                                if (pagesPerRowSelected === 0) return;
-                                setAppSettings((init) => {
-                                    init.readerSettings.readerWidth /= 2;
-                                    if (init.readerSettings.readerWidth > maxWidth)
-                                        init.readerSettings.readerWidth = maxWidth;
-                                    if (init.readerSettings.readerWidth < 1) init.readerSettings.readerWidth = 1;
-                                    return { ...init };
-                                });
+                                if (appSettings.readerSettings.pagesPerRowSelected !== 0) {
+                                    setAppSettings((init) => {
+                                        init.readerSettings.pagesPerRowSelected = 0;
+
+                                        init.readerSettings.readerWidth /= 2;
+                                        if (init.readerSettings.readerWidth > maxWidth)
+                                            init.readerSettings.readerWidth = maxWidth;
+                                        if (init.readerSettings.readerWidth < 1)
+                                            init.readerSettings.readerWidth = 1;
+
+                                        return { ...init };
+                                    });
+                                }
                             }}
                         >
                             1
                         </button>
                         <button
-                            className={pagesPerRowSelected === 1 ? "optionSelected" : ""}
+                            className={
+                                appSettings.readerSettings.pagesPerRowSelected === 1 ? "optionSelected" : ""
+                            }
                             onClick={() => {
-                                setPagesPerRowSelected(1);
-                                if (pagesPerRowSelected === 1 || pagesPerRowSelected === 2) return;
                                 setAppSettings((init) => {
-                                    init.readerSettings.readerWidth *= 2;
-                                    if (init.readerSettings.readerWidth > maxWidth)
-                                        init.readerSettings.readerWidth = maxWidth;
-                                    if (init.readerSettings.readerWidth < 1) init.readerSettings.readerWidth = 1;
+                                    if (init.readerSettings.pagesPerRowSelected === 0) {
+                                        init.readerSettings.readerWidth *= 2;
+                                        if (init.readerSettings.readerWidth > maxWidth)
+                                            init.readerSettings.readerWidth = maxWidth;
+                                        if (init.readerSettings.readerWidth < 1)
+                                            init.readerSettings.readerWidth = 1;
+                                    }
+
+                                    init.readerSettings.pagesPerRowSelected = 1;
+
                                     return { ...init };
                                 });
                             }}
@@ -229,15 +234,21 @@ const ReaderSettings = ({
                             2
                         </button>
                         <button
-                            className={pagesPerRowSelected === 2 ? "optionSelected" : ""}
+                            className={
+                                appSettings.readerSettings.pagesPerRowSelected === 2 ? "optionSelected" : ""
+                            }
                             onClick={() => {
-                                setPagesPerRowSelected(2);
-                                if (pagesPerRowSelected === 1 || pagesPerRowSelected === 2) return;
                                 setAppSettings((init) => {
-                                    init.readerSettings.readerWidth *= 2;
-                                    if (init.readerSettings.readerWidth > maxWidth)
-                                        init.readerSettings.readerWidth = maxWidth;
-                                    if (init.readerSettings.readerWidth < 1) init.readerSettings.readerWidth = 1;
+                                    if (init.readerSettings.pagesPerRowSelected === 0) {
+                                        init.readerSettings.readerWidth *= 2;
+                                        if (init.readerSettings.readerWidth > maxWidth)
+                                            init.readerSettings.readerWidth = maxWidth;
+                                        if (init.readerSettings.readerWidth < 1)
+                                            init.readerSettings.readerWidth = 1;
+                                    }
+
+                                    init.readerSettings.pagesPerRowSelected = 2;
+
                                     return { ...init };
                                 });
                             }}
@@ -251,7 +262,7 @@ const ReaderSettings = ({
                     <div className="options">
                         <button
                             className={appSettings.readerSettings.readingSide === 0 ? "optionSelected" : ""}
-                            disabled={pagesPerRowSelected === 0}
+                            disabled={appSettings.readerSettings.pagesPerRowSelected === 0}
                             onClick={() => {
                                 setAppSettings((init) => {
                                     init.readerSettings.readingSide = 0;
@@ -263,7 +274,7 @@ const ReaderSettings = ({
                         </button>
                         <button
                             className={appSettings.readerSettings.readingSide === 1 ? "optionSelected" : ""}
-                            disabled={pagesPerRowSelected === 0}
+                            disabled={appSettings.readerSettings.pagesPerRowSelected === 0}
                             onClick={() => {
                                 setAppSettings((init) => {
                                     init.readerSettings.readingSide = 1;
