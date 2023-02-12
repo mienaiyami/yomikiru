@@ -12,12 +12,12 @@ const {
 } = require("child_process")
 const pkgJSON = require("./package.json")
 
-if (fs.existsSync("./out/full")) {
-    fs.rmSync("./out/full/", {
-        recursive: true
-    })
-}
-fs.mkdirSync("./out/full")
+// if (fs.existsSync("./out/full")) {
+//     fs.rmSync("./out/full/", {
+//         recursive: true
+//     })
+// }
+// fs.mkdirSync("./out/full")
 const printProcessing = (string) => {
     let times = 0
     return setInterval(() => {
@@ -58,11 +58,17 @@ const pushRelease = () => {
     let changelog = fs.readFileSync("./changelog.md", "utf8");
     changelog = changelog.replaceAll("$$TAG$$", pkgJSON.version)
         .replaceAll("$$EXE_NAME$$", `Manga.Reader-${pkgJSON.version}-Setup.exe`)
+        .replaceAll("$$EXE_NAME_1$$", `Manga.Reader--${pkgJSON.version}--Setup.exe`)
         .replaceAll("$$ZIP_NAME$$", `Manga.Reader-win32-${pkgJSON.version}-Portable.zip`)
+        .replaceAll("$$ZIP_NAME_1$$", `Manga.Reader--win32--${pkgJSON.version}--Portable.zip`)
+    if (fs.existsSync("./changelogTemp.md"))
+        fs.rmSync("./changelogTemp.md");
+    fs.writeFileSync("./changelogTemp.md", changelog)
     const pushCommand = (`gh release create v${pkgJSON.version} -t v${pkgJSON.version} ` +
         `--discussion-category "General" ` +
         "--generate-notes " +
-        " -F changelog.md " +
+        " -F changelogTemp.md " +
+        // `--notes ""` +
         // "-d " +
         `./out/full/Manga.Reader-${pkgJSON.version}-Setup.exe ./out/full/Manga.Reader-win32-${pkgJSON.version}-Portable.zip`)
     const a = printProcessing("Pushing build to gh release ")
@@ -72,6 +78,7 @@ const pushRelease = () => {
     });
     ghSpawn.on('close', (code) => {
         clearInterval(a);
+        fs.rmSync("./changelogTemp.md");
         console.log(`spawn yarn child process exited with code ${code}.`);
         if (code === 0) {
             console.log("\x1b[92mPushed release to github. https://github.com/mienaiyami/react-ts-offline-manga-reader/releases.\x1b[0m");
@@ -147,6 +154,7 @@ const makeZip = () => {
                     export default isPortable;
                     `)
                     makeAndPushTag();
+                    // pushRelease()
                 })
         } else {
             console.log("\x1b[91m.zip not found\x1b[0m")
@@ -157,5 +165,6 @@ const makeZip = () => {
 
 rl.question("\x1b[91mMake sure to edit and commit package.json and changelog.md before starting.\x1b[0m", () => {
     makeExe()
+    // pushRelease()
     rl.close();
 })

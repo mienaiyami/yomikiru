@@ -160,7 +160,16 @@ const LocationsTab = forwardRef(
                                         )
                                     )
                                         return setCurrentLink(
-                                            window.path.normalize(currentLink + "\\" + val + "\\")
+                                            window.path.normalize(
+                                                currentLink +
+                                                    "\\" +
+                                                    locations.find(
+                                                        (e) =>
+                                                            e.toUpperCase() ===
+                                                            val.replaceAll("\\", "").toUpperCase()
+                                                    ) +
+                                                    "\\"
+                                            )
                                         );
                                     else val = val.replaceAll("\\", "");
 

@@ -1,9 +1,9 @@
 
 ## Downloads
 
-[![Download setup](https://img.shields.io/badge/Windows%20Setup%20(exe)-$$EXE_NAME$$-brightgreen?logo=windows&logoColor=blue)](https://github.com/mienaiyami/react-ts-offline-manga-reader/releases/download/v$$TAG$$/$$EXE_NAME$$)
+[![Download setup](https://img.shields.io/badge/Windows%20Setup%20(exe)-$$EXE_NAME_1$$-brightgreen?logo=windows&logoColor=blue)](https://github.com/mienaiyami/react-ts-offline-manga-reader/releases/download/v$$TAG$$/$$EXE_NAME$$)
 
-[![Download Portable](https://img.shields.io/badge/Windows%20Portable%20(zip)-$$ZIP_NAME$$-brightgreen?logo=windows&logoColor=blue)](https://github.com/mienaiyami/react-ts-offline-manga-reader/releases/download/v$$TAG$$/$$ZIP_NAME$$)
+[![Download Portable](https://img.shields.io/badge/Windows%20Portable%20(zip)-$$ZIP_NAME_1$$-brightgreen?logo=windows&logoColor=blue)](https://github.com/mienaiyami/react-ts-offline-manga-reader/releases/download/v$$TAG$$/$$ZIP_NAME$$)
 
 ---
 
