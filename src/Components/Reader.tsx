@@ -165,7 +165,7 @@ const Reader = () => {
         const registerShortcuts = (e: KeyboardEvent) => {
             // /&& document.activeElement!.tagName === "BODY"
             window.app.keyRepeated = e.repeat;
-            if (window.app.isReaderOpen && !isLoadingManga) {
+            if (window.app.isReaderOpen && !isLoadingManga && !e.ctrlKey) {
                 switch (e.key) {
                     case shortcutkey.navToPage?.key1:
                     case shortcutkey.navToPage?.key2:
