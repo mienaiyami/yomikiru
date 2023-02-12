@@ -306,6 +306,7 @@ const ReaderSettings = ({
                                     });
                                 }}
                             />
+                            px
                         </label>
                         <label>
                             Scroll_2&nbsp;:
@@ -324,6 +325,7 @@ const ReaderSettings = ({
                                     });
                                 }}
                             />
+                            px
                         </label>
                     </div>
                 </div>

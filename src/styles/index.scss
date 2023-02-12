@@ -134,6 +134,15 @@ body {
         outline: none;
     }
 
+    pre {
+        display: inline;
+        background-color: var(--btn-color2);
+        box-shadow: 0 0 2px 1px var(--btn-color1);
+        padding: 2px 4px;
+        border-radius: 4px;
+    }
+
+
     --titleBar-height: 40px;
     --button-width: 55px;
     --body-height: calc(100vh - var(--titleBar-height));
@@ -865,10 +874,11 @@ body {
 
                 .features {
                     font-size: 1em;
+                    padding: 25px;
 
                     ul {
                         list-style-type: disc;
-                        margin: 25px;
+                        margin: 4px 25px;
 
                         li {
                             padding: 4px 0;
