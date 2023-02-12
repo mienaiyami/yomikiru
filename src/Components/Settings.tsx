@@ -545,7 +545,7 @@ const Settings = (): ReactElement => {
                                 />
                                 <p>
                                     Open chapter directly (by clicking name instead of arrow) in reader if chapter
-                                    folder is in manga folder inside <pre>default location</pre>.
+                                    folder is in manga folder inside <code>default location</code>.
                                 </p>
                             </label>
                             <label
@@ -566,7 +566,7 @@ const Settings = (): ReactElement => {
                                 />
                                 <p>
                                     Disable the screen that appears at start and end of chapters (only in{" "}
-                                    <pre>infinite scroll</pre> reader mode).
+                                    <code>infinite scroll</code> reader mode).
                                 </p>
                             </label>
                         </div>
@@ -674,8 +674,8 @@ const Settings = (): ReactElement => {
                             them in home screen.
                         </li>
                         <li>
-                            You don't need to type the whole word in search. (e.g. For <pre>One Piece</pre> type{" "}
-                            <pre>op</pre>).
+                            You don't need to type the whole word in search. (e.g. For <code>One Piece</code> type{" "}
+                            <code>op</code>).
                         </li>
                         <li>
                             In Infinite Scroll mode, on First/Last page, go to Previous/Next chapter by clicking on
@@ -687,16 +687,16 @@ const Settings = (): ReactElement => {
                         </li>
                         <li>
                             Open chapter directly from the file explorer after enabling{" "}
-                            <pre>File Explorer Option</pre>. (Right Click on folder {"->"} Show more options {"->"}{" "}
-                            Open in Manga Reader) Note that this only opens the chapter containing images, not the
-                            Manga Folder.
+                            <code>File Explorer Option</code>. (Right Click on folder {"->"} Show more options{" "}
+                            {"->"} Open in Manga Reader) Note that this only opens the chapter containing images,
+                            not the Manga Folder.
                         </li>
                         <li>Zen Mode: Hides UI, Only shows images. (Full Screen)</li>
                         <li>
                             Open link from home location list when it is in a directory which is in set default
-                            location. e.g. if default location is <pre>D:\manga\</pre> and there is folder named{" "}
-                            <pre>One Piece</pre> in it, then any folder which is directly under{" "}
-                            <pre>One Piece</pre> will open directly by clicking link itself instead of clicking
+                            location. e.g. if default location is <code>D:\manga\</code> and there is folder named{" "}
+                            <code>One Piece</code> in it, then any folder which is directly under{" "}
+                            <code>One Piece</code> will open directly by clicking link itself instead of clicking
                             arrow icon beside it. (Can be enabled from settings.);
                         </li>
                         <li>
@@ -704,20 +704,20 @@ const Settings = (): ReactElement => {
                             <ul>
                                 <li>Paste link to open directly.</li>
                                 <li>
-                                    Type <pre>..\</pre> to go up directory.
+                                    Type <code>..\</code> to go up directory.
                                 </li>
                                 <li>
-                                    Type let <pre>D:\</pre> to go to <pre>D drive</pre>.
+                                    Type let <code>D:\</code> to go to <code>D drive</code>.
                                 </li>
                                 <li>
-                                    Type name ending with <pre>\</pre> to open it in search. e.g. When there is a
-                                    directory named <pre>One piece</pre> in current list, type{" "}
-                                    <pre>One Piece\</pre> to open that as new list.
+                                    Type name ending with <code>\</code> to open it in search. e.g. When there is a
+                                    directory named <code>One piece</code> in current list, type{" "}
+                                    <code>One Piece\</code> to open that as new list.
                                 </li>
                             </ul>
                         </li>
                         <li>
-                            To use <pre>max width</pre> feature, disable <pre>Size Clamp</pre>.
+                            To use <code>max width</code> feature, disable <code>Size Clamp</code>.
                         </li>
                     </ul>
                 </div>
@@ -744,14 +744,14 @@ const Settings = (): ReactElement => {
                 <div className="shortcutKey">
                     <p>
                         <li>
-                            <pre>Backspace</pre> to delete Key.
+                            <code>Backspace</code> to delete Key.
                         </li>
                         <li>
                             Reserved Keys :{" "}
                             {reservedKeys.map((e) => (
-                                <>
-                                    <pre>{e}</pre>{" "}
-                                </>
+                                <span key={e}>
+                                    <code>{e}</code>{" "}
+                                </span>
                             ))}
                             .
                         </li>
@@ -774,49 +774,49 @@ const Settings = (): ReactElement => {
                             <tr>
                                 <td>New Window</td>
                                 <td>
-                                    <pre>ctrl</pre>+<pre>n</pre>
+                                    <code>ctrl</code>+<code>n</code>
                                 </td>
                             </tr>
                             <tr>
                                 <td>Reader width</td>
                                 <td>
-                                    <pre>ctrl</pre>+<pre>scroll</pre>
+                                    <code>ctrl</code>+<code>scroll</code>
                                 </td>
                             </tr>
                             <tr>
                                 <td>Home</td>
                                 <td>
-                                    <pre>h</pre>
+                                    <code>h</code>
                                 </td>
                             </tr>
                             <tr>
                                 <td>Reload</td>
                                 <td>
-                                    <pre>ctrl</pre>+<pre>r</pre>
+                                    <code>ctrl</code>+<code>r</code>
                                 </td>
                             </tr>
                             <tr>
                                 <td>Dev Tool</td>
                                 <td>
-                                    <pre>ctrl</pre>+<pre>shift</pre>+<pre>i</pre>
+                                    <code>ctrl</code>+<code>shift</code>+<code>i</code>
                                 </td>
                             </tr>
                             <tr>
                                 <td>UI Scale Up</td>
                                 <td>
-                                    <pre>ctrl</pre> + <pre>=</pre>
+                                    <code>ctrl</code> + <code>=</code>
                                 </td>
                             </tr>
                             <tr>
                                 <td>UI Scale Down</td>
                                 <td>
-                                    <pre>ctrl</pre> + <pre>-</pre>
+                                    <code>ctrl</code> + <code>-</code>
                                 </td>
                             </tr>
                             <tr>
                                 <td>UI Scale Reset</td>
                                 <td>
-                                    <pre>ctrl</pre> + <pre>0</pre>
+                                    <code>ctrl</code> + <code>0</code>
                                 </td>
                             </tr>
                         </tbody>
@@ -859,8 +859,8 @@ const Settings = (): ReactElement => {
                     </datalist>
                     <p>
                         To use previously defined color, click on link button then type example{" "}
-                        <pre>var(--body-bg)</pre> in input box. Or you can type hex color in it as well{" "}
-                        <pre>#RRGGBBAA</pre>.
+                        <code>var(--body-bg)</code> in input box. Or you can type hex color in it as well{" "}
+                        <code>#RRGGBBAA</code>.
                         <br />
                         If you want to edit existing theme, click on theme then click on plus icon then change
                         theme according to your liking.

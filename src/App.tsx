@@ -35,6 +35,10 @@ const makeSettingsJson = (locations?: string[]) => {
         askBeforeClosing: false,
         skipMinorUpdate: false,
         openDirectlyFromManga: false,
+        showTabs: {
+            bookmark: true,
+            history: true,
+        },
         readerSettings: {
             readerWidth: 60,
             variableImageSize: true,
@@ -150,8 +154,9 @@ function isSettingsValid(): { isValid: boolean; location: string[] } {
     return output;
 }
 if (!isSettingsValid().isValid) {
-    window.dialog.customError({ message: `Settings in ${settingsPath} are invalid. Re-writing some settings.` });
-    window.logger.warn(`Some Settings in ${settingsPath} invalid. Re-writing some settings.`);
+    window.dialog.customError({
+        message: `Some settings are invalid or new settings added. Re-writing settings.`,
+    });
     window.logger.log(isSettingsValid());
     makeSettingsJson(isSettingsValid().location);
 }

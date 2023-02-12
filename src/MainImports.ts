@@ -46,6 +46,10 @@ export const settingValidatorData = {
      * Open chapter in reader directly, one folder inside of base manga dir.
      */
     openDirectlyFromManga: false,
+    showTabs: {
+        bookmark: true,
+        history: true,
+    },
     readerSettings: {
         readerWidth: 0,
         variableImageSize: false,

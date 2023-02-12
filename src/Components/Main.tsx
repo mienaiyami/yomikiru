@@ -16,19 +16,19 @@ interface IMainContext {
 export const MainContext = createContext<IMainContext>(null!);
 
 const Main = (): ReactElement => {
-    const { appSettings, isReaderOpen, linkInReader } = useContext(AppContext);
+    const { appSettings, isReaderOpen, linkInReader, setAppSettings } = useContext(AppContext);
     const [currentLink, setCurrentLink] = useState(appSettings.baseDir);
-    const [bookmarkTabDisplay, setBookmarkTabDisplay] = useState(true);
-    const [historyTabDisplay, setHistoryTabDisplay] = useState(true);
+    // const [bookmarkTabDisplay, setBookmarkTabDisplay] = useState(true);
+    // const [historyTabDisplay, setHistoryTabDisplay] = useState(true);
     const [isContextMenuOpen, setContextMenuOpen] = useState(false);
     const contextMenuRef = useRef<HTMLDivElement>(null);
     const [contextMenuData, setContextMenuData] = useState<IContextMenuData | null>(null);
-    const bookmarkTabRef = useRef<HTMLDivElement>(null);
-    const historyTabRef = useRef<HTMLDivElement>(null);
-    const locationTabRef = useRef<HTMLDivElement>(null);
-    const tabContRef = useRef<HTMLDivElement>(null);
+    // const bookmarkTabRef = useRef<HTMLDivElement>(null);
+    // const historyTabRef = useRef<HTMLDivElement>(null);
+    // const locationTabRef = useRef<HTMLDivElement>(null);
+    // const tabContRef = useRef<HTMLDivElement>(null);
     // const [gridTemplate, setGridTemplate] = useState<string>("");
-    const [dividerWidth, setDividerWidth] = useState<number>(0);
+    // const [dividerWidth, setDividerWidth] = useState<number>(0);
     const showContextMenu = (data: IContextMenuData) => {
         setContextMenuData(data);
         setContextMenuOpen(true);
@@ -40,11 +40,11 @@ const Main = (): ReactElement => {
     useLayoutEffect(() => {
         document.addEventListener("wheel", () => closeContextMenu());
 
-        if (tabContRef.current) {
-            setDividerWidth(
-                parseInt(window.getComputedStyle(tabContRef.current).getPropertyValue("--divider-width"))
-            );
-        }
+        // if (tabContRef.current) {
+        //     setDividerWidth(
+        //         parseInt(window.getComputedStyle(tabContRef.current).getPropertyValue("--divider-width"))
+        //     );
+        // }
     }, []);
     useLayoutEffect(() => setCurrentLink(appSettings.baseDir), [appSettings.baseDir]);
 
@@ -152,179 +152,203 @@ const Main = (): ReactElement => {
     //!why did i do this
     //
 
-    const toggleTab = (whichTab?: "bookmark" | "history") => {
-        const width1 = (tabContRef.current!.offsetWidth - 2 * dividerWidth) / 3;
-        const width2 = (tabContRef.current!.offsetWidth - 2 * dividerWidth) / 2;
-        const width3 = tabContRef.current!.offsetWidth - 2 * dividerWidth;
-        const maxWidth =
-            (tabContRef.current!.offsetWidth - 2 * dividerWidth) / (+!!bookmarkTabDisplay + +!!historyTabDisplay);
-        const minWidth = bookmarkTabDisplay || historyTabDisplay ? width1 : width2;
-        const speed = 150 / (+!!bookmarkTabDisplay + +!!historyTabDisplay);
-        const speed2 = 150 / (1 + +!!bookmarkTabDisplay + +!!historyTabDisplay);
-        let init1 =
-            bookmarkTabDisplay && historyTabDisplay
-                ? width1
-                : bookmarkTabDisplay || historyTabDisplay
-                ? width2
-                : width3;
-        let init2 = bookmarkTabDisplay ? (historyTabDisplay ? width1 : width2) : 0;
-        let init3 = historyTabDisplay ? (bookmarkTabDisplay ? width1 : width2) : 0;
-        let displayState;
-        let elem: HTMLDivElement;
-        let setDisplayState: (value: React.SetStateAction<boolean>) => void;
-        if (whichTab === "bookmark") displayState = bookmarkTabDisplay;
-        if (whichTab === "history") displayState = historyTabDisplay;
-        if (whichTab === "bookmark") setDisplayState = setBookmarkTabDisplay;
-        if (whichTab === "history") setDisplayState = setHistoryTabDisplay;
-        if (whichTab === "bookmark") elem = bookmarkTabRef.current!;
-        if (whichTab === "history") elem = historyTabRef.current!;
-        if (elem!) {
-            if (displayState) {
-                const animate = () => {
-                    if (whichTab === "bookmark") {
-                        init2 = init2 - speed < 0 ? 0 : init2 - speed;
-                        bookmarkTabRef.current!.style.flexBasis = init2 + "px";
-                        init1 = init1 + speed > maxWidth ? maxWidth : init1 + speed;
-                        locationTabRef.current!.style.flexBasis = init1 + "px";
-                        if (historyTabDisplay) {
-                            init3 = init3 + speed > maxWidth ? maxWidth : init3 + speed;
-                            historyTabRef.current!.style.flexBasis = init3 + "px";
-                            if (init2 <= 0 && init1 >= maxWidth && init3 >= maxWidth) {
-                                locationTabRef.current!.style.flexBasis =
-                                    "calc((100% - 2 * (var(--divider-width))) / 2)";
-                                historyTabRef.current!.style.flexBasis =
-                                    "calc((100% - 2 * (var(--divider-width))) / 2)";
-                                setDisplayState(false);
-                                return;
-                            }
-                        } else {
-                            if (init2 <= 0 && init1 >= maxWidth) {
-                                locationTabRef.current!.style.flexBasis =
-                                    "calc((100% - 2 * (var(--divider-width))) / 1)";
-                                setDisplayState(false);
-                                return;
-                            }
-                        }
-                    }
-                    if (whichTab === "history") {
-                        init3 = init3 - speed < 0 ? 0 : init3 - speed;
-                        historyTabRef.current!.style.flexBasis = init3 + "px";
-                        init1 = init1 + speed > maxWidth ? maxWidth : init1 + speed;
-                        locationTabRef.current!.style.flexBasis = init1 + "px";
-                        if (bookmarkTabDisplay) {
-                            init2 = init2 + speed > maxWidth ? maxWidth : init2 + speed;
-                            bookmarkTabRef.current!.style.flexBasis = init2 + "px";
-                            if (init3 <= 0 && init1 >= maxWidth && init2 >= maxWidth) {
-                                locationTabRef.current!.style.flexBasis =
-                                    "calc((100% - 2 * (var(--divider-width))) / 2)";
-                                bookmarkTabRef.current!.style.flexBasis =
-                                    "calc((100% - 2 * (var(--divider-width))) / 2)";
-                                setDisplayState(false);
-                                return;
-                            }
-                        } else {
-                            if (init3 <= 0 && init1 >= maxWidth) {
-                                locationTabRef.current!.style.flexBasis =
-                                    "calc((100% - 2 * (var(--divider-width))) / 1)";
-                                setDisplayState(false);
-                                return;
-                            }
-                        }
-                    }
-                    requestAnimationFrame(animate);
-                };
-                requestAnimationFrame(animate);
-            } else {
-                setDisplayState!(true);
-                const animate = () => {
-                    if (whichTab === "bookmark") {
-                        init2 = init2 + speed2 > minWidth ? minWidth : init2 + speed2;
-                        bookmarkTabRef.current!.style.flexBasis = init2 + "px";
-                        init1 = init1 - speed2 < minWidth ? minWidth : init1 - speed2;
-                        locationTabRef.current!.style.flexBasis = init1 + "px";
-                        if (historyTabDisplay) {
-                            init3 = init3 - speed2 < minWidth ? minWidth : init3 - speed2;
-                            historyTabRef.current!.style.flexBasis = init3 + "px";
-                            if (init2 >= minWidth && init1 >= minWidth && init3 >= minWidth) {
-                                locationTabRef.current!.style.flexBasis =
-                                    "calc((100% - 2 * (var(--divider-width))) / 3)";
-                                historyTabRef.current!.style.flexBasis =
-                                    "calc((100% - 2 * (var(--divider-width))) / 3)";
-                                bookmarkTabRef.current!.style.flexBasis =
-                                    "calc((100% - 2 * (var(--divider-width))) / 3)";
-                                return;
-                            }
-                        } else {
-                            if (init2 >= minWidth && init1 >= minWidth) {
-                                locationTabRef.current!.style.flexBasis =
-                                    "calc((100% - 2 * (var(--divider-width))) / 2)";
-                                bookmarkTabRef.current!.style.flexBasis =
-                                    "calc((100% - 2 * (var(--divider-width))) / 2)";
-                                return;
-                            }
-                        }
-                    }
-                    if (whichTab === "history") {
-                        init3 = init3 + speed2 > minWidth ? minWidth : init3 + speed2;
-                        historyTabRef.current!.style.flexBasis = init3 + "px";
-                        init1 = init1 - speed2 < minWidth ? minWidth : init1 - speed2;
-                        locationTabRef.current!.style.flexBasis = init1 + "px";
-                        if (bookmarkTabDisplay) {
-                            init2 = init2 - speed2 < minWidth ? minWidth : init2 - speed2;
-                            bookmarkTabRef.current!.style.flexBasis = init2 + "px";
-                            if (init3 >= minWidth && init1 >= minWidth && init3 >= minWidth) {
-                                locationTabRef.current!.style.flexBasis =
-                                    "calc((100% - 2 * (var(--divider-width))) / 3)";
-                                historyTabRef.current!.style.flexBasis =
-                                    "calc((100% - 2 * (var(--divider-width))) / 3)";
-                                bookmarkTabRef.current!.style.flexBasis =
-                                    "calc((100% - 2 * (var(--divider-width))) / 3)";
-                                return;
-                            }
-                        } else {
-                            if (init3 >= minWidth && init1 >= minWidth) {
-                                locationTabRef.current!.style.flexBasis =
-                                    "calc((100% - 2 * (var(--divider-width))) / 2)";
-                                historyTabRef.current!.style.flexBasis =
-                                    "calc((100% - 2 * (var(--divider-width))) / 2)";
-                                return;
-                            }
-                        }
-                    }
-                    requestAnimationFrame(animate);
-                };
-                requestAnimationFrame(animate);
-            }
-        }
-    };
+    // const toggleTab = (whichTab?: "bookmark" | "history") => {
+    //     const width1 = (tabContRef.current!.offsetWidth - 2 * dividerWidth) / 3;
+    //     const width2 = (tabContRef.current!.offsetWidth - 2 * dividerWidth) / 2;
+    //     const width3 = tabContRef.current!.offsetWidth - 2 * dividerWidth;
+    //     const maxWidth =
+    //         (tabContRef.current!.offsetWidth - 2 * dividerWidth) / (+!!bookmarkTabDisplay + +!!historyTabDisplay);
+    //     const minWidth = bookmarkTabDisplay || historyTabDisplay ? width1 : width2;
+    //     const speed = 150 / (+!!bookmarkTabDisplay + +!!historyTabDisplay);
+    //     const speed2 = 150 / (1 + +!!bookmarkTabDisplay + +!!historyTabDisplay);
+    //     let init1 =
+    //         bookmarkTabDisplay && historyTabDisplay
+    //             ? width1
+    //             : bookmarkTabDisplay || historyTabDisplay
+    //             ? width2
+    //             : width3;
+    //     let init2 = bookmarkTabDisplay ? (historyTabDisplay ? width1 : width2) : 0;
+    //     let init3 = historyTabDisplay ? (bookmarkTabDisplay ? width1 : width2) : 0;
+    //     let displayState;
+    //     let elem: HTMLDivElement;
+    //     let setDisplayState: (value: React.SetStateAction<boolean>) => void;
+    //     if (whichTab === "bookmark") displayState = bookmarkTabDisplay;
+    //     if (whichTab === "history") displayState = historyTabDisplay;
+    //     if (whichTab === "bookmark") setDisplayState = setBookmarkTabDisplay;
+    //     if (whichTab === "history") setDisplayState = setHistoryTabDisplay;
+    //     if (whichTab === "bookmark") elem = bookmarkTabRef.current!;
+    //     if (whichTab === "history") elem = historyTabRef.current!;
+    //     if (elem!) {
+    //         if (displayState) {
+    //             const animate = () => {
+    //                 if (whichTab === "bookmark") {
+    //                     init2 = init2 - speed < 0 ? 0 : init2 - speed;
+    //                     bookmarkTabRef.current!.style.flexBasis = init2 + "px";
+    //                     init1 = init1 + speed > maxWidth ? maxWidth : init1 + speed;
+    //                     locationTabRef.current!.style.flexBasis = init1 + "px";
+    //                     if (historyTabDisplay) {
+    //                         init3 = init3 + speed > maxWidth ? maxWidth : init3 + speed;
+    //                         historyTabRef.current!.style.flexBasis = init3 + "px";
+    //                         if (init2 <= 0 && init1 >= maxWidth && init3 >= maxWidth) {
+    //                             locationTabRef.current!.style.flexBasis =
+    //                                 "calc((100% - 2 * (var(--divider-width))) / 2)";
+    //                             historyTabRef.current!.style.flexBasis =
+    //                                 "calc((100% - 2 * (var(--divider-width))) / 2)";
+    //                             setDisplayState(false);
+    //                             return;
+    //                         }
+    //                     } else {
+    //                         if (init2 <= 0 && init1 >= maxWidth) {
+    //                             locationTabRef.current!.style.flexBasis =
+    //                                 "calc((100% - 2 * (var(--divider-width))) / 1)";
+    //                             setDisplayState(false);
+    //                             return;
+    //                         }
+    //                     }
+    //                 }
+    //                 if (whichTab === "history") {
+    //                     init3 = init3 - speed < 0 ? 0 : init3 - speed;
+    //                     historyTabRef.current!.style.flexBasis = init3 + "px";
+    //                     init1 = init1 + speed > maxWidth ? maxWidth : init1 + speed;
+    //                     locationTabRef.current!.style.flexBasis = init1 + "px";
+    //                     if (bookmarkTabDisplay) {
+    //                         init2 = init2 + speed > maxWidth ? maxWidth : init2 + speed;
+    //                         bookmarkTabRef.current!.style.flexBasis = init2 + "px";
+    //                         if (init3 <= 0 && init1 >= maxWidth && init2 >= maxWidth) {
+    //                             locationTabRef.current!.style.flexBasis =
+    //                                 "calc((100% - 2 * (var(--divider-width))) / 2)";
+    //                             bookmarkTabRef.current!.style.flexBasis =
+    //                                 "calc((100% - 2 * (var(--divider-width))) / 2)";
+    //                             setDisplayState(false);
+    //                             return;
+    //                         }
+    //                     } else {
+    //                         if (init3 <= 0 && init1 >= maxWidth) {
+    //                             locationTabRef.current!.style.flexBasis =
+    //                                 "calc((100% - 2 * (var(--divider-width))) / 1)";
+    //                             setDisplayState(false);
+    //                             return;
+    //                         }
+    //                     }
+    //                 }
+    //                 requestAnimationFrame(animate);
+    //             };
+    //             requestAnimationFrame(animate);
+    //         } else {
+    //             setDisplayState!(true);
+    //             const animate = () => {
+    //                 if (whichTab === "bookmark") {
+    //                     init2 = init2 + speed2 > minWidth ? minWidth : init2 + speed2;
+    //                     bookmarkTabRef.current!.style.flexBasis = init2 + "px";
+    //                     init1 = init1 - speed2 < minWidth ? minWidth : init1 - speed2;
+    //                     locationTabRef.current!.style.flexBasis = init1 + "px";
+    //                     if (historyTabDisplay) {
+    //                         init3 = init3 - speed2 < minWidth ? minWidth : init3 - speed2;
+    //                         historyTabRef.current!.style.flexBasis = init3 + "px";
+    //                         if (init2 >= minWidth && init1 >= minWidth && init3 >= minWidth) {
+    //                             locationTabRef.current!.style.flexBasis =
+    //                                 "calc((100% - 2 * (var(--divider-width))) / 3)";
+    //                             historyTabRef.current!.style.flexBasis =
+    //                                 "calc((100% - 2 * (var(--divider-width))) / 3)";
+    //                             bookmarkTabRef.current!.style.flexBasis =
+    //                                 "calc((100% - 2 * (var(--divider-width))) / 3)";
+    //                             return;
+    //                         }
+    //                     } else {
+    //                         if (init2 >= minWidth && init1 >= minWidth) {
+    //                             locationTabRef.current!.style.flexBasis =
+    //                                 "calc((100% - 2 * (var(--divider-width))) / 2)";
+    //                             bookmarkTabRef.current!.style.flexBasis =
+    //                                 "calc((100% - 2 * (var(--divider-width))) / 2)";
+    //                             return;
+    //                         }
+    //                     }
+    //                 }
+    //                 if (whichTab === "history") {
+    //                     init3 = init3 + speed2 > minWidth ? minWidth : init3 + speed2;
+    //                     historyTabRef.current!.style.flexBasis = init3 + "px";
+    //                     init1 = init1 - speed2 < minWidth ? minWidth : init1 - speed2;
+    //                     locationTabRef.current!.style.flexBasis = init1 + "px";
+    //                     if (bookmarkTabDisplay) {
+    //                         init2 = init2 - speed2 < minWidth ? minWidth : init2 - speed2;
+    //                         bookmarkTabRef.current!.style.flexBasis = init2 + "px";
+    //                         if (init3 >= minWidth && init1 >= minWidth && init3 >= minWidth) {
+    //                             locationTabRef.current!.style.flexBasis =
+    //                                 "calc((100% - 2 * (var(--divider-width))) / 3)";
+    //                             historyTabRef.current!.style.flexBasis =
+    //                                 "calc((100% - 2 * (var(--divider-width))) / 3)";
+    //                             bookmarkTabRef.current!.style.flexBasis =
+    //                                 "calc((100% - 2 * (var(--divider-width))) / 3)";
+    //                             return;
+    //                         }
+    //                     } else {
+    //                         if (init3 >= minWidth && init1 >= minWidth) {
+    //                             locationTabRef.current!.style.flexBasis =
+    //                                 "calc((100% - 2 * (var(--divider-width))) / 2)";
+    //                             historyTabRef.current!.style.flexBasis =
+    //                                 "calc((100% - 2 * (var(--divider-width))) / 2)";
+    //                             return;
+    //                         }
+    //                     }
+    //                 }
+    //                 requestAnimationFrame(animate);
+    //             };
+    //             requestAnimationFrame(animate);
+    //         }
+    //     }
+    // };
     return (
         <MainContext.Provider value={{ showContextMenu, isContextMenuOpen }}>
             <div id="app">
                 <div
                     className="tabCont"
-                    ref={tabContRef}
+                    // ref={tabContRef}
                     style={{
                         display: isReaderOpen ? "none" : "grid",
                         // just why
                         gridTemplateColumns:
-                            bookmarkTabDisplay && historyTabDisplay
+                            appSettings.showTabs.bookmark && appSettings.showTabs.history
                                 ? "calc(calc(100vw - calc(var(--divider-width) * 2)) / 3) var(--divider-width) calc(calc(100vw - calc(var(--divider-width) * 2)) / 3) var(--divider-width) calc(calc(100vw - calc(var(--divider-width) * 2)) / 3)"
-                                : !bookmarkTabDisplay && historyTabDisplay
+                                : !appSettings.showTabs.bookmark && appSettings.showTabs.history
                                 ? "calc(calc(100vw - calc(var(--divider-width) * 2)) / 2) var(--divider-width) var(--divider-width) calc(calc(100vw - calc(var(--divider-width) * 2)) / 2)"
-                                : bookmarkTabDisplay && !historyTabDisplay
+                                : appSettings.showTabs.bookmark && !appSettings.showTabs.history
                                 ? "calc(calc(100vw - calc(var(--divider-width) * 2)) / 2) var(--divider-width) calc(calc(100vw - calc(var(--divider-width) * 2)) / 2) var(--divider-width)"
                                 : "calc(calc(100vw - calc(var(--divider-width) * 2))) var(--divider-width) var(--divider-width)",
                     }}
                 >
-                    <LocationsTab currentLink={currentLink} setCurrentLink={setCurrentLink} ref={locationTabRef} />
-                    <div className="divider" onClick={() => toggleTab("bookmark")}>
+                    <LocationsTab
+                        currentLink={currentLink}
+                        setCurrentLink={setCurrentLink}
+                        // ref={locationTabRef}
+                    />
+                    <div
+                        className="divider"
+                        onClick={() =>
+                            setAppSettings((init) => {
+                                init.showTabs.bookmark = !init.showTabs.bookmark;
+                                return { ...init };
+                            })
+                        }
+                    >
                         <div className="bar"></div>
                     </div>
-                    <BookmarkTab bookmarkTabDisplay={bookmarkTabDisplay} ref={bookmarkTabRef} />
-                    <div className="divider" onClick={() => toggleTab("history")}>
+                    <BookmarkTab
+                    //  ref={bookmarkTabRef}
+                    />
+                    <div
+                        className="divider"
+                        onClick={() =>
+                            setAppSettings((init) => {
+                                init.showTabs.history = !init.showTabs.history;
+                                return { ...init };
+                            })
+                        }
+                    >
                         <div className="bar"></div>
                     </div>
-                    <HistoryTab historyTabDisplay={historyTabDisplay} ref={historyTabRef} />
+                    <HistoryTab
+                    // ref={historyTabRef}
+                    />
                 </div>
                 <Settings />
                 <LoadingScreen />
