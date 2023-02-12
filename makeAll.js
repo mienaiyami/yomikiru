@@ -1,5 +1,12 @@
 /* eslint-disable @typescript-eslint/no-var-requires */
 const fs = require('fs');
+const readline = require("readline");
+
+const rl = readline.createInterface({
+    input: process.stdin,
+    output: process.stdout
+});
+
 const {
     exec
 } = require("child_process")
@@ -21,7 +28,6 @@ const printProcessing = (string) => {
     }, 500);
     // console.log(`\x1b[31m${string} \x1b[0m`)
 }
-console.log("\x1b[91mMake sure to edit changelog.md before pushing.\x1b[0m")
 
 const makeAndPushTag = () => {
 
@@ -49,6 +55,10 @@ const makeAndPushTag = () => {
 }
 
 const pushRelease = () => {
+    let changelog = fs.readFileSync("./changelog.md", "utf8");
+    changelog = changelog.replaceAll("$$TAG$$", pkgJSON.version)
+        .replaceAll("$$EXE_NAME$$", `Manga.Reader-${pkgJSON.version}-Setup.exe`)
+        .replaceAll("$$ZIP_NAME$$", `Manga.Reader-win32-${pkgJSON.version}-Portable.zip`)
     const pushCommand = (`gh release create v${pkgJSON.version} -t v${pkgJSON.version} ` +
         `--discussion-category "General" ` +
         "--generate-notes " +
@@ -144,4 +154,8 @@ const makeZip = () => {
     });
 
 }
-setTimeout(makeExe, 3000);
+
+rl.question("\x1b[91mMake sure to edit and commit package.json and changelog.md before starting.\x1b[0m", () => {
+    makeExe()
+    rl.close();
+})
