@@ -29,8 +29,11 @@ const Reader = () => {
     } = useContext(AppContext);
     const { showContextMenu } = useContext(MainContext);
     const [images, setImages] = useState<string[]>([]);
-    const [imageWidthContainer, setImageWidthContainer] = useState<{ index: number; isWide: boolean }[]>([]);
-    const [imageElements, setImageElements] = useState<JSX.Element[][]>([]);
+    const [imageWidthContainer, setImageWidthContainer] = useState<
+        { index: number; isWide: boolean; img: JSX.Element }[]
+    >([]);
+    // take element from `imageWidthContainer` using index
+    const [imageElementsIndex, setImageElementsIndex] = useState<number[][]>([]);
     const [wideImageContMap, setWideImageContMap] = useState<number[]>([]);
     const [imageRowCount, setImageRowCount] = useState(0);
     const [imagesLength, setImagesLength] = useState(0);
@@ -88,7 +91,7 @@ const Reader = () => {
             if (pageNumber >= 1 && pageNumber <= (mangaInReader?.pages || 1)) {
                 //! pageNumber no longer in use
                 const imgElem = document.querySelector(
-                    "#reader .imgCont img[data-pagenumber='" + pageNumber + "']"
+                    "#reader .imgCont canvas[data-pagenumber='" + pageNumber + "']"
                 );
                 if (appSettings.readerSettings.readerTypeSelected === 1) {
                     const rowNumber = parseInt(imgElem?.parentElement?.getAttribute("data-imagerow") || "1");
@@ -364,7 +367,7 @@ const Reader = () => {
                 imgContRef.current!.clientWidth / 2 + imgContRef.current!.offsetLeft,
                 window.innerHeight / (appSettings.readerSettings.readerTypeSelected === 0 ? 4 : 2)
             );
-            if (elem && elem.tagName === "IMG") {
+            if (elem && (elem.tagName === "IMG" || elem.tagName === "CANVAS")) {
                 const pageNumber = parseInt(elem.getAttribute("data-pagenumber") || "1");
                 setCurrentPageNumber(pageNumber);
                 const rowNumber = parseInt(elem.parentElement?.getAttribute("data-imagerow") || "1");
@@ -443,7 +446,7 @@ const Reader = () => {
         setImagesLength(0);
         setImagesLoaded(0);
         setImageWidthContainer([]);
-        setImageElements([]);
+        setImageElementsIndex([]);
         setImageRowCount(0);
         setBookmarked(bookmarks.map((e) => e.link).includes(link));
         setChapterChangerDisplay(false);
@@ -470,39 +473,27 @@ const Reader = () => {
         setImages(imgs);
         setReaderOpen(true);
     };
-    //!! check if below code is really needed or not
     useLayoutEffect(() => {
         window.electron.webFrame.clearCache();
-        images.forEach((e, i) => {
-            const img = document.createElement("img");
-            img.src = e;
-
-            img.onload = () => {
-                setImageWidthContainer((init) => [...init, { index: i, isWide: img.height / img.width <= 1.2 }]);
-                setImagesLoaded((init) => init + 1);
-            };
-            img.onerror = () => {
-                setImageWidthContainer((init) => [...init, { index: i, isWide: false }]);
-                setImagesLoaded((init) => init + 1);
-            };
-            img.onabort = () => {
-                setImageWidthContainer((init) => [...init, { index: i, isWide: false }]);
-                setImagesLoaded((init) => init + 1);
-            };
-        });
-    }, [images]);
-    useLayoutEffect(() => {
-        if (images.length > 0 && images.length === imageWidthContainer.length) {
-            imageWidthContainer.sort((a, b) => a.index - b.index);
-            const tempImageElements = [];
-            const tempWideImageContMap: number[] = [];
-            const Image = ({ imgLink, index }: { imgLink: string; index: number }) => (
-                <img
-                    src={imgLink}
-                    onLoad={(e) => {
-                        const img = e.target as HTMLImageElement;
-                        img.decode().catch((e) => console.error(e));
-                    }}
+        const CanvasImg = ({ index, img }: { index: number; img: HTMLImageElement }) => {
+            const canvasRef = useRef<HTMLCanvasElement>(null);
+            useEffect(() => {
+                console.log(index);
+                if (canvasRef.current) {
+                    const ctx = canvasRef.current.getContext("2d");
+                    canvasRef.current.width = img.width;
+                    canvasRef.current.height = img.height;
+                    ctx?.drawImage(img, 0, 0);
+                }
+            }, []);
+            return (
+                <canvas
+                    // src={imgLink}
+                    // onLoad={(e) => {
+                    // const img = e.target as HTMLImageElement;
+                    // img.decode().catch((e) => console.error(e));
+                    // }}
+                    ref={canvasRef}
                     draggable={false}
                     // loading="lazy"
                     // decoding="async"
@@ -511,48 +502,81 @@ const Reader = () => {
                         showContextMenu({
                             isImg: true,
                             e: ev.nativeEvent,
-                            link: imgLink,
+                            link: images[index],
                         });
                     }}
                     // title={name}
-                    // key={name}
-                ></img>
+                ></canvas>
             );
+        };
+
+        images.forEach((e, i) => {
+            const img = document.createElement("img");
+            const reactElemImage = <CanvasImg index={i} img={img} key={"i" + i} />;
+            img.onload = () => {
+                setImageWidthContainer((init) => [
+                    ...init,
+                    {
+                        img: reactElemImage,
+                        index: i,
+                        isWide: img.height / img.width <= 1.2,
+                    },
+                ]);
+                console.log("released for render.");
+                setImagesLoaded((init) => init + 1);
+            };
+            img.onerror = () => {
+                setImageWidthContainer((init) => [...init, { img: reactElemImage, index: i, isWide: false }]);
+                setImagesLoaded((init) => init + 1);
+            };
+            img.onabort = () => {
+                setImageWidthContainer((init) => [...init, { img: reactElemImage, index: i, isWide: false }]);
+                setImagesLoaded((init) => init + 1);
+            };
+            img.src = e;
+        });
+    }, [images]);
+    //! THERE MIGHT BE A BETTER WAY TO DO THIS, TO PREVENT REMAKING CANVAS AGAIN?
+    useLayoutEffect(() => {
+        if (images.length > 0 && images.length === imageWidthContainer.length) {
+            imageWidthContainer.sort((a, b) => a.index - b.index);
+            const tempImageElements: number[][] = [];
+            const tempWideImageContMap: number[] = [];
+
             const wideImageEnabled =
                 appSettings.readerSettings.pagesPerRowSelected !== 0 ||
                 appSettings.readerSettings.variableImageSize;
             // if(appSettings.readerSettings.pagesPerRowSelected === 0)
-            for (let index = 0; index < images.length; index++) {
+            for (let index = 0; index < imageWidthContainer.length; index++) {
+                //! is there any meaning to this bs
                 if (appSettings.readerSettings.pagesPerRowSelected === 0) {
-                    tempImageElements.push([<Image imgLink={images[index]} index={index} key={images[index]} />]);
+                    tempImageElements.push([index]);
                     if (wideImageEnabled && imageWidthContainer[index].isWide)
+                        // todo : can `.length` be replace with `index`
                         tempWideImageContMap.push(tempImageElements.length - 1);
                     continue;
                 }
                 if (wideImageEnabled && imageWidthContainer[index].isWide) {
-                    tempImageElements.push([<Image imgLink={images[index]} index={index} key={images[index]} />]);
+                    tempImageElements.push([index]);
                     tempWideImageContMap.push(tempImageElements.length - 1);
                     continue;
                 }
                 if (appSettings.readerSettings.pagesPerRowSelected === 2 && index === 0) {
-                    tempImageElements.push([<Image imgLink={images[index]} index={index} key={images[index]} />]);
+                    tempImageElements.push([index]);
                     continue;
                 }
                 if (index === images.length - 1) {
-                    tempImageElements.push([<Image imgLink={images[index]} index={index} key={images[index]} />]);
+                    tempImageElements.push([index]);
                     continue;
                 }
                 if (wideImageEnabled && imageWidthContainer[index + 1].isWide) {
-                    tempImageElements.push([<Image imgLink={images[index]} index={index} key={images[index]} />]);
+                    tempImageElements.push([index]);
                     continue;
                 }
-                tempImageElements.push([
-                    <Image imgLink={images[index]} index={index} key={images[index]} />,
-                    <Image imgLink={images[index + 1]} index={index + 1} key={images[index + 1]} />,
-                ]);
+                tempImageElements.push([index, index + 1]);
                 index++;
             }
-            setImageElements(tempImageElements);
+            setImageElementsIndex(tempImageElements);
             setImageRowCount(tempImageElements.length);
             setWideImageContMap(tempWideImageContMap);
         }
@@ -807,7 +831,7 @@ const Reader = () => {
                     }
                 }}
             >
-                {imageElements.map((e, i) => (
+                {imageElementsIndex.map((e, i) => (
                     <div
                         className={
                             "row " +
@@ -831,7 +855,7 @@ const Reader = () => {
                         }}
                         key={i}
                     >
-                        {e}
+                        {e.map((e1) => imageWidthContainer[e1].img)}
                     </div>
                 ))}
             </section>

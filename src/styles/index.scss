@@ -91,7 +91,7 @@ body.zenMode {
         #reader {
             .imgCont {
 
-                &.fitVertically .row img {
+                &.fitVertically .row canvas {
                     width: auto !important;
                     height: 100vh;
 
@@ -1419,7 +1419,7 @@ body {
                     min-height: 100%;
                 }
 
-                &.fitVertically .row img {
+                &.fitVertically .row canvas {
                     width: auto !important;
                     height: var(--body-height);
 
@@ -1444,14 +1444,14 @@ body {
                     }
 
                     &.wide {
-                        img {
+                        canvas {
                             width: calc(var(--varWidth) * 2);
                             max-width: calc(var(--max-width) * 2);
 
                         }
                     }
 
-                    img {
+                    canvas {
                         max-width: calc(var(--max-width));
                         width: var(--varWidth);
 
@@ -1460,32 +1460,32 @@ body {
                     }
 
                     &.widthClamped {
-                        img {
+                        canvas {
                             max-width: 100%;
                         }
                     }
 
                     &.twoPagePerRow {
-                        img {
+                        canvas {
                             max-width: calc(var(--max-width) / 2);
                             width: calc(var(--varWidth) / 2);
                         }
 
                         &.wide {
-                            img {
+                            canvas {
                                 max-width: clc(var(--max-width));
                                 width: var(--varWidth);
                             }
                         }
 
                         &.widthClamped {
-                            img {
+                            canvas {
                                 max-width: 50%;
                                 width: calc(var(--varWidth) / 2);
                             }
 
                             &.wide {
-                                img {
+                                canvas {
                                     max-width: 100%;
                                     width: var(--varWidth);
                                 }
