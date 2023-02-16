@@ -259,23 +259,25 @@ const createWindow = (link?: string) => {
         newWindow.webContents.send("recordPageNumber");
     });
 };
-
-/**
- * code to make sure only one instance of app is running at one time.
- *  */
-const gotTheLock = app.requestSingleInstanceLock();
-if (!gotTheLock) {
-    app.quit();
-}
-app.on("second-instance", (event, commandLine) => {
-    if (commandLine.length >= 3) {
-        // for file explorer option
-        if (fs.existsSync(commandLine[2])) createWindow(commandLine[2]);
-    } else if (commandLine.length <= 2 || commandLine.includes("--new-window")) {
-        log.log("second instance detected, opening new window...");
-        createWindow();
+if (app.isPackaged) {
+    /**
+     * code to make sure only one instance of app is running at one time.
+     *  */
+    const gotTheLock = app.requestSingleInstanceLock();
+    if (!gotTheLock) {
+        app.quit();
     }
-});
+    // todo: improve
+    app.on("second-instance", (event, commandLine) => {
+        if (commandLine.length >= 3) {
+            // for file explorer option
+            if (fs.existsSync(commandLine[2])) createWindow(commandLine[2]);
+        } else if (commandLine.length <= 2 || commandLine.includes("--new-window")) {
+            log.log("second instance detected, opening new window...");
+            createWindow();
+        }
+    });
+}
 // taskbar right click option
 app.setUserTasks([
     {

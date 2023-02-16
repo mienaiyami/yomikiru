@@ -30,7 +30,7 @@ const Reader = () => {
     const { showContextMenu } = useContext(MainContext);
     const [images, setImages] = useState<string[]>([]);
     const [imageWidthContainer, setImageWidthContainer] = useState<
-        { index: number; isWide: boolean; img: JSX.Element }[]
+        { index: number; isWide: boolean; img: HTMLCanvasElement | HTMLImageElement }[]
     >([]);
     // take element from `imageWidthContainer` using index
     const [imageElementsIndex, setImageElementsIndex] = useState<number[][]>([]);
@@ -418,7 +418,7 @@ const Reader = () => {
     const checkForImgsAndLoad = (readerStuff: { link: string; page: number }) => {
         if (window.cachedImageList?.link === readerStuff.link && window.cachedImageList.images) {
             // console.log("using cached image list for " + link);
-            loadImg(readerStuff.link, window.cachedImageList.images);
+            loadImgs(readerStuff.link, window.cachedImageList.images);
 
             setCurrentPageNumber(readerStuff.page || 1);
             window.cachedImageList = { link: "", images: [] };
@@ -429,14 +429,14 @@ const Reader = () => {
             (isValid, imgs) => {
                 if (isValid && imgs) {
                     setCurrentPageNumber(readerStuff.page || 1);
-                    return loadImg(readerStuff.link, imgs);
+                    return loadImgs(readerStuff.link, imgs);
                 }
                 setLinkInReader({ link: mangaInReader?.link || "", page: 1 });
             },
             true
         );
     };
-    const loadImg = (link: string, imgs: string[]) => {
+    const loadImgs = (link: string, imgs: string[]) => {
         link = window.path.normalize(link);
         if (link[link.length - 1] === "\\") link = link.substring(0, link.length - 1);
         setImages([]);
@@ -473,76 +473,87 @@ const Reader = () => {
         setImages(imgs);
         setReaderOpen(true);
     };
+    // const CanvasImg = ({ index, img }: { index: number; img: HTMLImageElement }) => {
+    //     const canvasRef = useRef<HTMLCanvasElement>(null);
+    //     useEffect(() => {
+    //         console.log(index);
+    //         if (canvasRef.current) {
+    //             const ctx = canvasRef.current.getContext("2d");
+    //             canvasRef.current.width = img.width;
+    //             canvasRef.current.height = img.height;
+    //             ctx?.drawImage(img, 0, 0);
+    //         }
+    //     }, []);
+    //     return (
+    //         <canvas
+    //             ref={canvasRef}
+    //             draggable={false}
+    //             data-pagenumber={index + 1}
+    //             onContextMenu={(ev) => {
+    //                 showContextMenu({
+    //                     isImg: true,
+    //                     e: ev.nativeEvent,
+    //                     link: images[index],
+    //                 });
+    //             }}
+    //         ></canvas>
+    //     );
+    // };
     useLayoutEffect(() => {
         window.electron.webFrame.clearCache();
-        const CanvasImg = ({ index, img }: { index: number; img: HTMLImageElement }) => {
-            const canvasRef = useRef<HTMLCanvasElement>(null);
-            useEffect(() => {
-                console.log(index);
-                if (canvasRef.current) {
-                    const ctx = canvasRef.current.getContext("2d");
-                    canvasRef.current.width = img.width;
-                    canvasRef.current.height = img.height;
-                    ctx?.drawImage(img, 0, 0);
-                }
-            }, []);
-            return (
-                <canvas
-                    // src={imgLink}
-                    // onLoad={(e) => {
-                    // const img = e.target as HTMLImageElement;
-                    // img.decode().catch((e) => console.error(e));
-                    // }}
-                    ref={canvasRef}
-                    draggable={false}
-                    // loading="lazy"
-                    // decoding="async"
-                    data-pagenumber={index + 1}
-                    onContextMenu={(ev) => {
-                        showContextMenu({
-                            isImg: true,
-                            e: ev.nativeEvent,
-                            link: images[index],
-                        });
-                    }}
-                    // title={name}
-                ></canvas>
-            );
-        };
-
         images.forEach((e, i) => {
             const img = document.createElement("img");
-            const reactElemImage = <CanvasImg index={i} img={img} key={"i" + i} />;
+            // const reactElemImage = <CanvasImg index={i} img={img} key={"i" + i} />;
+            const canvas = document.createElement("canvas");
+            canvas.setAttribute("draggable", "false");
+            canvas.setAttribute("data-pagenumber", JSON.stringify(i + 1));
+            const ctx = canvas.getContext("2d");
+            ctx!.imageSmoothingEnabled = true;
+            ctx!.imageSmoothingQuality = "high";
             img.onload = () => {
+                canvas.width = img.width;
+                canvas.height = img.height;
+                ctx?.drawImage(img, 0, 0);
                 setImageWidthContainer((init) => [
                     ...init,
                     {
-                        img: reactElemImage,
+                        img: canvas,
                         index: i,
                         isWide: img.height / img.width <= 1.2,
                     },
                 ]);
-                console.log("released for render.");
+                // console.log("released for render.", canvas);
                 setImagesLoaded((init) => init + 1);
             };
             img.onerror = () => {
-                setImageWidthContainer((init) => [...init, { img: reactElemImage, index: i, isWide: false }]);
+                canvas.width = 500;
+                canvas.height = 100;
+                ctx?.fillText("Error occured while loading image.", 10, 10);
+                setImageWidthContainer((init) => [...init, { img: canvas, index: i, isWide: false }]);
                 setImagesLoaded((init) => init + 1);
             };
             img.onabort = () => {
-                setImageWidthContainer((init) => [...init, { img: reactElemImage, index: i, isWide: false }]);
+                canvas.width = 500;
+                canvas.height = 100;
+                ctx?.fillText("Loading of image aborted.", 10, 10);
+                setImageWidthContainer((init) => [...init, { img: canvas, index: i, isWide: false }]);
                 setImagesLoaded((init) => init + 1);
             };
             img.src = e;
         });
     }, [images]);
-    //! THERE MIGHT BE A BETTER WAY TO DO THIS, TO PREVENT REMAKING CANVAS AGAIN?
+    useEffect(() => {
+        [...document.querySelector("section.imgCont")!.children].forEach((e, i) => {
+            imageElementsIndex[i].forEach((canvasIndex) => {
+                e.appendChild(imageWidthContainer[canvasIndex].img);
+            });
+        });
+    }, [imageElementsIndex]);
     useLayoutEffect(() => {
         if (images.length > 0 && images.length === imageWidthContainer.length) {
             imageWidthContainer.sort((a, b) => a.index - b.index);
             const tempImageElements: number[][] = [];
             const tempWideImageContMap: number[] = [];
-
             const wideImageEnabled =
                 appSettings.readerSettings.pagesPerRowSelected !== 0 ||
                 appSettings.readerSettings.variableImageSize;
@@ -855,7 +866,7 @@ const Reader = () => {
                         }}
                         key={i}
                     >
-                        {e.map((e1) => imageWidthContainer[e1].img)}
+                        {/* {e.map((e1) => imageWidthContainer[e1].img)} */}
                     </div>
                 ))}
             </section>
