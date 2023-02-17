@@ -91,7 +91,7 @@ body.zenMode {
         #reader {
             .imgCont {
 
-                &.fitVertically .row canvas {
+                &.fitVertically .row .readerImg {
                     width: auto !important;
                     height: 100vh;
 
@@ -140,6 +140,7 @@ body {
         box-shadow: 0 0 2px 1px var(--btn-color1);
         padding: 2px 4px;
         border-radius: 4px;
+        white-space: nowrap;
     }
 
 
@@ -825,8 +826,8 @@ body {
                                 align-items: center;
                                 cursor: pointer;
                                 background-color: var(--input-bg);
-                                padding: 10px 20px;
-                                gap: 5px;
+                                padding: 10px 10px;
+                                gap: 10px;
                                 border-radius: 3px;
 
                                 p {
@@ -1419,7 +1420,7 @@ body {
                     min-height: 100%;
                 }
 
-                &.fitVertically .row canvas {
+                &.fitVertically .row .readerImg {
                     width: auto !important;
                     height: var(--body-height);
 
@@ -1444,14 +1445,14 @@ body {
                     }
 
                     &.wide {
-                        canvas {
+                        .readerImg {
                             width: calc(var(--varWidth) * 2);
                             max-width: calc(var(--max-width) * 2);
 
                         }
                     }
 
-                    canvas {
+                    .readerImg {
                         max-width: calc(var(--max-width));
                         width: var(--varWidth);
 
@@ -1460,32 +1461,32 @@ body {
                     }
 
                     &.widthClamped {
-                        canvas {
+                        .readerImg {
                             max-width: 100%;
                         }
                     }
 
                     &.twoPagePerRow {
-                        canvas {
+                        .readerImg {
                             max-width: calc(var(--max-width) / 2);
                             width: calc(var(--varWidth) / 2);
                         }
 
                         &.wide {
-                            canvas {
+                            .readerImg {
                                 max-width: clc(var(--max-width));
                                 width: var(--varWidth);
                             }
                         }
 
                         &.widthClamped {
-                            canvas {
+                            .readerImg {
                                 max-width: 50%;
                                 width: calc(var(--varWidth) / 2);
                             }
 
                             &.wide {
-                                canvas {
+                                .readerImg {
                                     max-width: 100%;
                                     width: var(--varWidth);
                                 }

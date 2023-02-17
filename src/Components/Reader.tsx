@@ -503,49 +503,111 @@ const Reader = () => {
         window.electron.webFrame.clearCache();
         images.forEach((e, i) => {
             const img = document.createElement("img");
-            // const reactElemImage = <CanvasImg index={i} img={img} key={"i" + i} />;
-            const canvas = document.createElement("canvas");
-            canvas.setAttribute("draggable", "false");
-            canvas.setAttribute("data-pagenumber", JSON.stringify(i + 1));
-            const ctx = canvas.getContext("2d");
-            ctx!.imageSmoothingEnabled = true;
-            ctx!.imageSmoothingQuality = "high";
-            img.onload = () => {
-                canvas.width = img.width;
-                canvas.height = img.height;
-                ctx?.drawImage(img, 0, 0);
-                setImageWidthContainer((init) => [
-                    ...init,
-                    {
-                        img: canvas,
-                        index: i,
-                        isWide: img.height / img.width <= 1.2,
-                    },
-                ]);
-                // console.log("released for render.", canvas);
-                setImagesLoaded((init) => init + 1);
-            };
-            img.onerror = () => {
-                canvas.width = 500;
-                canvas.height = 100;
-                ctx?.fillText("Error occured while loading image.", 10, 10);
-                setImageWidthContainer((init) => [...init, { img: canvas, index: i, isWide: false }]);
-                setImagesLoaded((init) => init + 1);
-            };
-            img.onabort = () => {
-                canvas.width = 500;
-                canvas.height = 100;
-                ctx?.fillText("Loading of image aborted.", 10, 10);
-                setImageWidthContainer((init) => [...init, { img: canvas, index: i, isWide: false }]);
-                setImagesLoaded((init) => init + 1);
-            };
+
+            if (appSettings.useCanvasBasedReader) {
+                // if (appSettings.disableCachingCanvas) {
+                //     img.onload = () => {
+                //         setImageWidthContainer((init) => [
+                //             ...init,
+                //             {
+                //                 img,
+                //                 index: i,
+                //                 isWide: img.height / img.width <= 1.2,
+                //             },
+                //         ]);
+                //         setImagesLoaded((init) => init + 1);
+                //     };
+                //     img.onerror = () => {
+                //         setImageWidthContainer((init) => [...init, { img, index: i, isWide: false }]);
+                //         setImagesLoaded((init) => init + 1);
+                //     };
+                //     img.onabort = () => {
+                //         setImageWidthContainer((init) => [...init, { img, index: i, isWide: false }]);
+                //         setImagesLoaded((init) => init + 1);
+                //     };
+                // } else {
+                const canvas = document.createElement("canvas");
+                canvas.setAttribute("draggable", "false");
+                canvas.setAttribute("data-pagenumber", JSON.stringify(i + 1));
+                canvas.classList.add("readerImg");
+                canvas.oncontextmenu = (ev) => {
+                    showContextMenu({
+                        isImg: true,
+                        e: ev,
+                        link: e,
+                    });
+                };
+                const ctx = canvas.getContext("2d");
+
+                img.onload = () => {
+                    canvas.width = img.width;
+                    canvas.height = img.height;
+                    ctx?.drawImage(img, 0, 0);
+                    setImageWidthContainer((init) => [
+                        ...init,
+                        {
+                            img: canvas,
+                            index: i,
+                            isWide: img.height / img.width <= 1.2,
+                        },
+                    ]);
+                    setImagesLoaded((init) => init + 1);
+                };
+                img.onerror = () => {
+                    canvas.width = 500;
+                    canvas.height = 100;
+                    ctx?.fillText("Error occured while loading image.", 10, 10);
+                    setImageWidthContainer((init) => [...init, { img: canvas, index: i, isWide: false }]);
+                    setImagesLoaded((init) => init + 1);
+                };
+                img.onabort = () => {
+                    canvas.width = 500;
+                    canvas.height = 100;
+                    ctx?.fillText("Loading of image aborted.", 10, 10);
+                    setImageWidthContainer((init) => [...init, { img: canvas, index: i, isWide: false }]);
+                    setImagesLoaded((init) => init + 1);
+                };
+            } else {
+                img.setAttribute("draggable", "false");
+                img.setAttribute("data-pagenumber", JSON.stringify(i + 1));
+                img.classList.add("readerImg");
+                img.oncontextmenu = (ev) => {
+                    showContextMenu({
+                        isImg: true,
+                        e: ev,
+                        link: e,
+                    });
+                };
+                img.onload = () => {
+                    setImageWidthContainer((init) => [
+                        ...init,
+                        {
+                            img,
+                            index: i,
+                            isWide: img.height / img.width <= 1.2,
+                        },
+                    ]);
+                    img.decode().catch((e) => console.error(e));
+                    setImagesLoaded((init) => init + 1);
+                };
+                img.onerror = () => {
+                    setImageWidthContainer((init) => [...init, { img, index: i, isWide: false }]);
+                    setImagesLoaded((init) => init + 1);
+                };
+                img.onabort = () => {
+                    setImageWidthContainer((init) => [...init, { img, index: i, isWide: false }]);
+                    setImagesLoaded((init) => init + 1);
+                };
+            }
+
             img.src = e;
         });
     }, [images]);
     useEffect(() => {
         [...document.querySelector("section.imgCont")!.children].forEach((e, i) => {
             imageElementsIndex[i].forEach((canvasIndex) => {
-                e.appendChild(imageWidthContainer[canvasIndex].img);
+                if (imageWidthContainer[canvasIndex].img instanceof Element)
+                    e.appendChild(imageWidthContainer[canvasIndex].img as HTMLElement);
             });
         });
     }, [imageElementsIndex]);
@@ -866,7 +928,17 @@ const Reader = () => {
                         }}
                         key={i}
                     >
-                        {/* {e.map((e1) => imageWidthContainer[e1].img)} */}
+                        {/* {appSettings.useCanvasBasedReader && appSettings.disableCachingCanvas
+                            ? e.map((e1) => (
+                                  <CanvasImg
+                                      index={e1}
+                                      img={
+                                          imageWidthContainer.find((e) => e.index === e1)?.img as HTMLImageElement
+                                      }
+                                      key={"i" + e1}
+                                  />
+                              ))
+                            : ""} */}
                     </div>
                 ))}
             </section>

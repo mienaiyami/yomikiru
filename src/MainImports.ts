@@ -50,6 +50,8 @@ export const settingValidatorData = {
         bookmark: true,
         history: true,
     },
+    useCanvasBasedReader: false,
+    // disableCachingCanvas: false,
     readerSettings: {
         readerWidth: 0,
         variableImageSize: false,

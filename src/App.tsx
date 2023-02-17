@@ -39,6 +39,8 @@ const makeSettingsJson = (locations?: string[]) => {
             bookmark: true,
             history: true,
         },
+        useCanvasBasedReader: false,
+        // disableCachingCanvas: false,
         readerSettings: {
             readerWidth: 60,
             variableImageSize: true,

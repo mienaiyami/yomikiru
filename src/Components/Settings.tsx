@@ -569,6 +569,42 @@ const Settings = (): ReactElement => {
                                     <code>infinite scroll</code> reader mode).
                                 </p>
                             </label>
+                            <label className={appSettings.useCanvasBasedReader ? "selected" : ""}>
+                                <input
+                                    type="checkbox"
+                                    checked={appSettings.useCanvasBasedReader}
+                                    onChange={(e) => {
+                                        setAppSettings((init) => {
+                                            init.useCanvasBasedReader = e.currentTarget.checked;
+                                            return { ...init };
+                                        });
+                                    }}
+                                />
+                                <p>
+                                    Make scrolling smooth and prevent stuttering when reading high res images.
+                                    <br />
+                                    Drawbacks include high RAM usage and less crispy images when size is set to a
+                                    low value.
+                                </p>
+                            </label>
+                            {/* <label className={appSettings.disableCachingCanvas ? "selected" : ""}>
+                                <input
+                                    type="checkbox"
+                                    disabled={!appSettings.useCanvasBasedReader}
+                                    checked={appSettings.disableCachingCanvas}
+                                    onChange={(e) => {
+                                        setAppSettings((init) => {
+                                            init.disableCachingCanvas = e.currentTarget.checked;
+                                            return { ...init };
+                                        });
+                                    }}
+                                />
+                                <p>
+                                    Enable low RAM usage. <br />
+                                    Drawbacks include high time lag when switching <code>Reader Mode</code> or{" "}
+                                    <code>Page per Row</code>.
+                                </p>
+                            </label> */}
                         </div>
                     </div>
                     {/* <div className="settingItem version">
