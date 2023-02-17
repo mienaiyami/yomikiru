@@ -1,62 +1,10 @@
-import { useContext, useEffect, useLayoutEffect, useRef, useState, useCallback, useMemo } from "react";
+import { useContext, useEffect, useLayoutEffect, useRef, useState } from "react";
 import { AppContext } from "../App";
 import ReaderSideList from "./ReaderSideList";
 import { MainContext } from "./Main";
 import ReaderSettings from "./ReaderSettings";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faQuestionCircle } from "@fortawesome/free-regular-svg-icons";
-
-const CanvasImg = ({
-    index,
-    img,
-    onCanvas,
-    showContextMenu,
-}: {
-    index: number;
-    img: HTMLImageElement;
-    onCanvas: boolean;
-    showContextMenu: (data: IContextMenuData) => void;
-}) => {
-    const canvasRef = useCallback((canvas: HTMLCanvasElement) => {
-        if (canvas !== null) {
-            console.log(index);
-            const ctx = canvas.getContext("2d");
-            canvas.width = img.width;
-            canvas.height = img.height;
-            ctx?.drawImage(img, 0, 0);
-        }
-    }, []);
-    return onCanvas ? (
-        <canvas
-            className="readerImg"
-            ref={canvasRef}
-            draggable={false}
-            data-pagenumber={index + 1}
-            onContextMenu={(ev) => {
-                showContextMenu({
-                    isImg: true,
-                    e: ev.nativeEvent,
-                    link: img.src,
-                });
-            }}
-        ></canvas>
-    ) : (
-        <img
-            className="readerImg"
-            draggable={false}
-            data-pagenumber={index + 1}
-            onContextMenu={(ev) => {
-                showContextMenu({
-                    isImg: true,
-                    e: ev.nativeEvent,
-                    link: img.src,
-                });
-            }}
-            src={img.src}
-            // onLoad={(e) => e.currentTarget.decode().catch((err) => console.error(err))}
-        ></img>
-    );
-};
 
 const Reader = () => {
     const {
@@ -81,7 +29,9 @@ const Reader = () => {
     } = useContext(AppContext);
     const { showContextMenu } = useContext(MainContext);
     const [images, setImages] = useState<string[]>([]);
-    const [imageWidthContainer, setImageWidthContainer] = useState<{ index: number; isWide: boolean }[]>([]);
+    const [imageWidthContainer, setImageWidthContainer] = useState<
+        { index: number; isWide: boolean; img: HTMLCanvasElement | HTMLImageElement }[]
+    >([]);
     // take element from `imageWidthContainer` using index
     const [imageElementsIndex, setImageElementsIndex] = useState<number[][]>([]);
     const [wideImageContMap, setWideImageContMap] = useState<number[]>([]);
@@ -109,45 +59,6 @@ const Reader = () => {
     const addToBookmarkRef = useRef<HTMLButtonElement>(null);
     const readerRef = useRef<HTMLDivElement>(null);
     const imgContRef = useRef<HTMLDivElement>(null);
-
-    const finalImages = useMemo(() => {
-        window.electron.webFrame.clearCache();
-        const elementList: JSX.Element[] = [];
-        images.forEach((e, i) => {
-            const img = document.createElement("img");
-            const image = (
-                <CanvasImg
-                    key={e}
-                    img={img}
-                    index={i}
-                    showContextMenu={showContextMenu}
-                    onCanvas={appSettings.useCanvasBasedReader}
-                />
-            );
-            img.onload = () => {
-                img.decode().catch((e) => console.error(e));
-                setImagesLoaded((init) => init + 1);
-                setImageWidthContainer((init) => [
-                    ...init,
-                    {
-                        index: i,
-                        isWide: img.height / img.width <= 1.2,
-                    },
-                ]);
-            };
-            img.onerror = () => {
-                setImageWidthContainer((init) => [...init, { index: i, isWide: false }]);
-                setImagesLoaded((init) => init + 1);
-            };
-            img.onabort = () => {
-                setImageWidthContainer((init) => [...init, { index: i, isWide: false }]);
-                setImagesLoaded((init) => init + 1);
-            };
-            img.src = e;
-            elementList.push(image);
-        });
-        return elementList;
-    }, [images]);
 
     const scrollReader = (intensity: number) => {
         if (readerRef.current) {
@@ -180,7 +91,7 @@ const Reader = () => {
             if (pageNumber >= 1 && pageNumber <= (mangaInReader?.pages || 1)) {
                 //! pageNumber no longer in use
                 const imgElem = document.querySelector(
-                    "#reader .imgCont canvas[data-pagenumber='" + pageNumber + "']"
+                    "#reader .imgCont .readerImg[data-pagenumber='" + pageNumber + "']"
                 );
                 if (appSettings.readerSettings.readerTypeSelected === 1) {
                     const rowNumber = parseInt(imgElem?.parentElement?.getAttribute("data-imagerow") || "1");
@@ -562,114 +473,97 @@ const Reader = () => {
         setImages(imgs);
         setReaderOpen(true);
     };
-
-    // useLayoutEffect(() => {
-    //     window.electron.webFrame.clearCache();
-    //     images.forEach((e, i) => {
-    //         const img = document.createElement("img");
-    //         // todo: cleanup
-    //         if (appSettings.useCanvasBasedReader) {
-    //             const canvas = (
-    //                 <CanvasImg key={e} img={img} index={i} showContextMenu={showContextMenu} onCanvas={true} />
-    //             );
-    //             // const canvas = document.createElement("canvas");
-    //             // canvas.setAttribute("draggable", "false");
-    //             // canvas.setAttribute("data-pagenumber", JSON.stringify(i + 1));
-    //             // canvas.classList.add("readerImg");
-    //             // canvas.oncontextmenu = (ev) => {
-    //             //     showContextMenu({
-    //             //         isImg: true,
-    //             //         e: ev,
-    //             //         link: e,
-    //             //     });
-    //             // };
-    //             // const ctx = canvas.getContext("2d");
-
-    //             img.onload = () => {
-    //                 img.decode().catch((e) => console.error(e));
-    //                 // canvas.width = img.width;
-    //                 // canvas.height = img.height;
-    //                 // ctx?.drawImage(img, 0, 0);
-    //                 setImagesLoaded((init) => init + 1);
-    //                 setImageWidthContainer((init) => [
-    //                     ...init,
-    //                     {
-    //                         img: canvas,
-    //                         index: i,
-    //                         isWide: img.height / img.width <= 1.2,
-    //                     },
-    //                 ]);
-    //             };
-    //             img.onerror = () => {
-    //                 // canvas.width = 500;
-    //                 // canvas.height = 100;
-    //                 // ctx?.fillText("Error occured while loading image.", 10, 10);
-    //                 setImageWidthContainer((init) => [...init, { img: canvas, index: i, isWide: false }]);
-    //                 setImagesLoaded((init) => init + 1);
-    //             };
-    //             img.onabort = () => {
-    //                 // canvas.width = 500;
-    //                 // canvas.height = 100;
-    //                 // ctx?.fillText("Loading of image aborted.", 10, 10);
-    //                 setImageWidthContainer((init) => [...init, { img: canvas, index: i, isWide: false }]);
-    //                 setImagesLoaded((init) => init + 1);
-    //             };
-    //         } else {
-    //             const image = (
-    //                 <CanvasImg key={e} img={img} index={i} showContextMenu={showContextMenu} onCanvas={false} />
-    //             );
-
-    //             img.onload = () => {
-    //                 img.decode().catch((e) => console.error(e));
-    //                 setImagesLoaded((init) => init + 1);
-    //                 setImageWidthContainer((init) => [
-    //                     ...init,
-    //                     {
-    //                         img: image,
-    //                         index: i,
-    //                         isWide: img.height / img.width <= 1.2,
-    //                     },
-    //                 ]);
-    //             };
-    //             img.onerror = () => {
-    //                 setImageWidthContainer((init) => [...init, { img: image, index: i, isWide: false }]);
-    //                 setImagesLoaded((init) => init + 1);
-    //             };
-    //             img.onabort = () => {
-    //                 setImageWidthContainer((init) => [...init, { img: image, index: i, isWide: false }]);
-    //                 setImagesLoaded((init) => init + 1);
-    //             };
-    //         }
-
-    //         img.src = e;
-    //     });
-    // }, [images]);
-
-    // useEffect(() => {
-    //     [...document.querySelector("section.imgCont")!.children].forEach((e, i) => {
-    //         imageElementsIndex[i].forEach((canvasIndex) => {
-    //             if (imageWidthContainer[canvasIndex].img instanceof Element)
-    //                 e.appendChild(imageWidthContainer[canvasIndex].img as HTMLElement);
-    //         });
-    //     });
-    // }, [imageElementsIndex]);
     useLayoutEffect(() => {
-        console.log(imagesLoaded, imagesLength);
-        if (imagesLoaded !== 0 && imagesLength !== 0) {
-            setLoadingMangaPercent((100 * imagesLoaded) / imagesLength);
-            if (imagesLength === imagesLoaded) {
-                setLoadingManga(false);
-                // console.log(currentPageNumber);
-                // setFirstScrolled(true);
-                // scrollToPage(currentPageNumber, "auto");
-                // setTimeout(() => {
-                //     scrollToPage(currentPageNumber, "auto");
-                // }, 3000);
+        window.electron.webFrame.clearCache();
+        images.forEach((e, i) => {
+            const img = document.createElement("img");
+
+            if (appSettings.useCanvasBasedReader) {
+                const canvas = document.createElement("canvas");
+                canvas.setAttribute("draggable", "false");
+                canvas.setAttribute("data-pagenumber", JSON.stringify(i + 1));
+                canvas.classList.add("readerImg");
+                canvas.oncontextmenu = (ev) => {
+                    showContextMenu({
+                        isImg: true,
+                        e: ev,
+                        link: e,
+                    });
+                };
+                const ctx = canvas.getContext("2d");
+
+                img.onload = () => {
+                    canvas.width = img.width;
+                    canvas.height = img.height;
+                    ctx?.drawImage(img, 0, 0);
+                    setImagesLoaded((init) => init + 1);
+                    setImageWidthContainer((init) => [
+                        ...init,
+                        {
+                            img: canvas,
+                            index: i,
+                            isWide: img.height / img.width <= 1.2,
+                        },
+                    ]);
+                };
+                img.onerror = () => {
+                    canvas.width = 500;
+                    canvas.height = 100;
+                    ctx?.fillText("Error occured while loading image.", 10, 10);
+                    setImagesLoaded((init) => init + 1);
+                    setImageWidthContainer((init) => [...init, { img: canvas, index: i, isWide: false }]);
+                };
+                img.onabort = () => {
+                    canvas.width = 500;
+                    canvas.height = 100;
+                    ctx?.fillText("Loading of image aborted.", 10, 10);
+                    setImagesLoaded((init) => init + 1);
+                    setImageWidthContainer((init) => [...init, { img: canvas, index: i, isWide: false }]);
+                };
+            } else {
+                img.setAttribute("draggable", "false");
+                img.setAttribute("data-pagenumber", JSON.stringify(i + 1));
+                img.classList.add("readerImg");
+                img.oncontextmenu = (ev) => {
+                    showContextMenu({
+                        isImg: true,
+                        e: ev,
+                        link: e,
+                    });
+                };
+                img.onload = () => {
+                    img.decode().catch((e) => console.error(e));
+                    setImagesLoaded((init) => init + 1);
+                    setImageWidthContainer((init) => [
+                        ...init,
+                        {
+                            img,
+                            index: i,
+                            isWide: img.height / img.width <= 1.2,
+                        },
+                    ]);
+                };
+                img.onerror = () => {
+                    setImagesLoaded((init) => init + 1);
+                    setImageWidthContainer((init) => [...init, { img, index: i, isWide: false }]);
+                };
+                img.onabort = () => {
+                    setImagesLoaded((init) => init + 1);
+                    setImageWidthContainer((init) => [...init, { img, index: i, isWide: false }]);
+                };
             }
-        }
-    }, [imagesLoaded]);
+            img.src = e;
+        });
+    }, [images]);
+    useEffect(() => {
+        [...document.querySelector("section.imgCont")!.children].forEach((e, i) => {
+            imageElementsIndex[i].forEach((canvasIndex) => {
+                if (imageWidthContainer[canvasIndex].img instanceof Element)
+                    e.appendChild(imageWidthContainer[canvasIndex].img as HTMLElement);
+            });
+        });
+    }, [imageElementsIndex]);
     useLayoutEffect(() => {
-        console.log("ddddddd", imageWidthContainer.length, imagesLength, imagesLoaded);
         if (imagesLength > 0 && imagesLength === imageWidthContainer.length) {
             imageWidthContainer.sort((a, b) => a.index - b.index);
             const tempImageElements: number[][] = [];
@@ -726,6 +620,20 @@ const Reader = () => {
         appSettings.readerSettings.fitVertically,
         appSettings.readerSettings.pagesPerRowSelected,
     ]);
+    useEffect(() => {
+        if (imagesLoaded !== 0 && imagesLength !== 0) {
+            setLoadingMangaPercent((100 * imagesLoaded) / imagesLength);
+            if (imagesLength === imagesLoaded) {
+                setLoadingManga(false);
+                // console.log(currentPageNumber);
+                // setFirstScrolled(true);
+                // scrollToPage(currentPageNumber, "auto");
+                // setTimeout(() => {
+                //     scrollToPage(currentPageNumber, "auto");
+                // }, 3000);
+            }
+        }
+    }, [imagesLoaded]);
     useLayoutEffect(() => {
         readerRef.current?.scrollTo(0, scrollPosPercent * readerRef.current.scrollHeight);
         imgContRef.current?.scrollTo(0, scrollPosPercent * imgContRef.current.scrollHeight);
@@ -971,9 +879,7 @@ const Reader = () => {
                                     : appSettings.readerSettings.maxWidth + "px",
                         }}
                         key={i}
-                    >
-                        {e.map((e1) => finalImages[e1])}
-                    </div>
+                    ></div>
                 ))}
             </section>
             {appSettings.readerSettings.readerTypeSelected === 0 ? <ChapterChanger /> : ""}
