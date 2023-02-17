@@ -1,7 +1,7 @@
 import { AppContext } from "../App";
 import { faGithub } from "@fortawesome/free-brands-svg-icons";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import { ReactElement, useContext, useEffect, useLayoutEffect, useRef, useState } from "react";
+import { ReactElement, useContext, useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
 import { faEdit, faLink, faPlus, faSync, faTimes, faTrash, faUnlink } from "@fortawesome/free-solid-svg-icons";
 import themesRaw from "../themeInit.json";
 
@@ -24,6 +24,9 @@ const Settings = (): ReactElement => {
     const settingContRef = useRef<HTMLDivElement>(null);
     const historyBtnRef = useRef<HTMLButtonElement>(null);
     const historyInputRef = useRef<HTMLInputElement>(null);
+    const currentTheme = useMemo(() => {
+        return allThemes.find((e) => e.name === theme)!.main;
+    }, [theme]);
     const themeMakerRef = useRef<HTMLDivElement>(null);
     const themeNameInputRef = useRef<HTMLInputElement>(null);
 
@@ -141,6 +144,19 @@ const Settings = (): ReactElement => {
             setFirstRendered(true);
         }, []);
         useLayoutEffect(() => {
+            let base = color;
+            while (base && currentTheme[base.replace("var(", "").replace(")", "") as ThemeDataMain]) {
+                const clr = currentTheme[base.replace("var(", "").replace(")", "") as ThemeDataMain];
+                if (clr.includes("var(")) {
+                    base = clr;
+                    continue;
+                }
+                setRawColor(clr.substring(0, 7));
+                setOpacity(clr.length > 7 ? parseInt(clr.substring(7), 16) / 2.55 : 100);
+                break;
+            }
+        }, []);
+        useLayoutEffect(() => {
             if (firstRendered) {
                 // console.log(
                 //     prop,
@@ -172,10 +188,11 @@ const Settings = (): ReactElement => {
                         setOpacity(color.length > 7 ? parseInt(color.substring(7), 16) / 2.55 : 100);
                         setRawColorWhole(color);
                     }}
+                    title="Reset"
                 >
                     <FontAwesomeIcon icon={faSync} />
                 </button>
-                <label className={checked ? "selected" : ""}>
+                <label className={checked ? "selected" : ""} title="Link to variable">
                     <input
                         type="checkbox"
                         defaultChecked={checked}
@@ -544,7 +561,7 @@ const Settings = (): ReactElement => {
                                     }}
                                 />
                                 <p>
-                                    Open chapter directly (by clicking name instead of arrow) in reader if chapter
+                                    Open chapter directly by clicking name instead of arrow in reader if chapter
                                     folder is in manga folder inside <code>default location</code>.
                                 </p>
                             </label>
@@ -565,8 +582,8 @@ const Settings = (): ReactElement => {
                                     }}
                                 />
                                 <p>
-                                    Disable the screen that appears at start and end of chapters (only in{" "}
-                                    <code>infinite scroll</code> reader mode).
+                                    Disable the screen that appears at start and end of chapters only in{" "}
+                                    <code>infinite scroll</code> reader mode.
                                 </p>
                             </label>
                             <label className={appSettings.useCanvasBasedReader ? "selected" : ""}>
@@ -773,6 +790,7 @@ const Settings = (): ReactElement => {
                                     }
                                 });
                         }}
+                        title="Reset"
                     >
                         <FontAwesomeIcon icon={faSync} />
                     </button>
@@ -893,14 +911,17 @@ const Settings = (): ReactElement => {
                             <option key={e} value={`var(${e})`}>{`var(${e})`}</option>
                         ))}
                     </datalist>
-                    <p>
-                        To use previously defined color, click on link button then type example{" "}
-                        <code>var(--body-bg)</code> in input box. Or you can type hex color in it as well{" "}
-                        <code>#RRGGBBAA</code>.
-                        <br />
-                        If you want to edit existing theme, click on theme then click on plus icon then change
-                        theme according to your liking.
-                    </p>
+                    <ul>
+                        <li>
+                            To use previously defined color, click on link button then type it like this,{" "}
+                            <code>var(--body-bg)</code> in input box. Or you can type also hex color in it as well{" "}
+                            <code>#RRGGBBAA</code>.
+                        </li>
+                        <li>
+                            If you want to edit existing theme, click on theme then click on plus icon then change
+                            theme according to your liking.
+                        </li>
+                    </ul>
                     <table>
                         <tbody>
                             <tr>
