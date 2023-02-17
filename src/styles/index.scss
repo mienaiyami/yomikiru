@@ -1414,6 +1414,7 @@ body {
                 // overflow: auto;
                 --varWidth: 100%;
                 --gapSize: 10px;
+                
 
                 &.readerMode1 {
                     justify-content: center;
@@ -1435,6 +1436,8 @@ body {
                     justify-content: center;
                     width: 100%;
                     --max-width: 250%;
+                transform : translate3d(0,0,0);
+
 
                     &.ltr {
                         flex-direction: row;
@@ -1455,6 +1458,7 @@ body {
                     .readerImg {
                         max-width: calc(var(--max-width));
                         width: var(--varWidth);
+                        transform : translate3d(0,0,0);
 
                         // min-width: 1%;
                         // image-rendering: pixelated;
