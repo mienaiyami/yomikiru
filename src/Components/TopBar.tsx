@@ -4,7 +4,7 @@ import { faHome, faCog } from "@fortawesome/free-solid-svg-icons";
 import { AppContext } from "../App";
 
 const TopBar = (): ReactElement => {
-    const [title, setTitle] = useState<string>("Manga Reader");
+    const [title, setTitle] = useState<string>("Yomikiru");
     const {
         setSettingOpen,
         mangaInReader,

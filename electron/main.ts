@@ -18,6 +18,7 @@ if (IS_PORTABLE) {
     }
     app.setPath("userData", folderPath);
 }
+
 // disabling hardware acceleration because it causes reader to stutter when scrolling
 app.disableHardwareAcceleration();
 
@@ -37,52 +38,52 @@ const addOptionToExplorerMenu = () => {
     const regInit = `Windows Registry Editor Version 5.00
     
     ; Setup context menu item for click on folders tree item:
-    [HKEY_CURRENT_USER\\Software\\Classes\\directory\\shell\\MangaReader\\command]
+    [HKEY_CURRENT_USER\\Software\\Classes\\directory\\shell\\Yomikiru\\command]
     @="\\"${appPath}\\" \\"%V\\""
     
     ; Optional: specify an icon for the item:   
-    [HKEY_CURRENT_USER\\Software\\Classes\\directory\\shell\\MangaReader]
-    @="Open in Manga Reader"
+    [HKEY_CURRENT_USER\\Software\\Classes\\directory\\shell\\Yomikiru]
+    @="Open in Yomikiru "
     "icon"="${appPath}"
 
     
-    [HKEY_CLASSES_ROOT\\.cbz\\shell\\MangaReader]
-    @="Open in Manga Reader"
+    [HKEY_CLASSES_ROOT\\.cbz\\shell\\Yomikiru]
+    @="Open in Yomikiru"
     "Icon"="${appPath}"
 
-    [HKEY_CLASSES_ROOT\\.cbz\\shell\\MangaReader\\command]
+    [HKEY_CLASSES_ROOT\\.cbz\\shell\\Yomikiru\\command]
     @="\\"${appPath}\\" \\"%V\\""
 
 
-    [HKEY_CLASSES_ROOT\\MangaReader]
-    @="Manga Reader"
+    [HKEY_CLASSES_ROOT\\Yomikiru]
+    @="Yomikiru"
 
-    [HKEY_CLASSES_ROOT\\MangaReader\\DefaultIcon]
+    [HKEY_CLASSES_ROOT\\Yomikiru\\DefaultIcon]
     @="${appPath}"
 
-    [HKEY_CLASSES_ROOT\\MangaReader\\shell\\open]
+    [HKEY_CLASSES_ROOT\\Yomikiru\\shell\\open]
     "Icon"="${appPath}"
 
-    [HKEY_CLASSES_ROOT\\MangaReader\\shell\\open\\command]
+    [HKEY_CLASSES_ROOT\\Yomikiru\\shell\\open\\command]
     @="\\"${appPath}\\" \\"%V\\""
 
     [HKEY_CLASSES_ROOT\\.zip\\OpenWithProgids]
-    "MangaReader"=""
+    "Yomikiru"=""
     `;
 
     const tempPath = app.getPath("temp");
-    fs.writeFileSync(path.join(tempPath, "createOpenWithMangaReader.reg"), regInit);
+    fs.writeFileSync(path.join(tempPath, "createOpenWithYomikiru.reg"), regInit);
 
     const op = {
-        name: "MangaReader",
+        name: "Yomikiru",
         icns: app.getPath("exe"),
     };
-    sudo.exec("regedit.exe /S " + path.join(tempPath, "createOpenWithMangaReader.reg"), op, function (error) {
+    sudo.exec("regedit.exe /S " + path.join(tempPath, "createOpenWithYomikiru.reg"), op, function (error) {
         if (error) log.error(error);
     });
 };
 // registry, remove option "open in reader" in explorer context menu
-const deleteOptionInExplorerMenu = () => {
+const deleteOldOptionInExplorerMenu = () => {
     const regDelete = `Windows Registry Editor Version 5.00
     
     [-HKEY_CURRENT_USER\\Software\\Classes\\directory\\shell\\MangaReader]
@@ -101,6 +102,31 @@ const deleteOptionInExplorerMenu = () => {
     };
     sudo.exec(
         "regedit.exe /S " + path.join(app.getPath("temp"), "deleteOpenWithMangaReader.reg"),
+        op,
+        function (error) {
+            if (error) log.error(error);
+        }
+    );
+};
+const deleteOptionInExplorerMenu = () => {
+    const regDelete = `Windows Registry Editor Version 5.00
+    
+    [-HKEY_CURRENT_USER\\Software\\Classes\\directory\\shell\\Yomikiru]
+    
+    [-HKEY_CLASSES_ROOT\\.cbz\\shell\\Yomikiru]
+
+    [-HKEY_CLASSES_ROOT\\Yomikiru]
+
+    [HKEY_CLASSES_ROOT\\.zip\\OpenWithProgids]
+    "Yomikiru"=-
+    `;
+    fs.writeFileSync(path.join(app.getPath("temp"), "deleteOpenWithYomikiru.reg"), regDelete);
+    const op = {
+        name: "Yomikiru",
+        icns: app.getPath("exe"),
+    };
+    sudo.exec(
+        "regedit.exe /S " + path.join(app.getPath("temp"), "deleteOpenWithYomikiru.reg"),
         op,
         function (error) {
             if (error) log.error(error);
@@ -131,13 +157,13 @@ const handleSquirrelEvent = () => {
             const vbsScript = `
             Set WshShell = CreateObject("Wscript.shell")
             strDesktop = WshShell.SpecialFolders("Desktop")
-            Set oMyShortcut = WshShell.CreateShortcut(strDesktop + "\\Manga Reader.lnk")
+            Set oMyShortcut = WshShell.CreateShortcut(strDesktop + "\\Yomikiru.lnk")
             oMyShortcut.WindowStyle = "1"
             oMyShortcut.IconLocation = "${path.resolve(rootFolder, "app.ico")}"
             OMyShortcut.TargetPath = "${appPath}"
             oMyShortCut.Save
             strStartMenu = WshShell.SpecialFolders("StartMenu")
-            Set oMyShortcut2 = WshShell.CreateShortcut(strStartMenu + "\\programs\\Manga Reader.lnk")
+            Set oMyShortcut2 = WshShell.CreateShortcut(strStartMenu + "\\programs\\Yomikiru.lnk")
             oMyShortcut2.WindowStyle = "1"
             oMyShortcut2.IconLocation = "${path.resolve(rootFolder, "app.ico")}"
             OMyShortcut2.TargetPath = "${appPath}"
@@ -145,28 +171,24 @@ const handleSquirrelEvent = () => {
             `;
             fs.writeFileSync(path.resolve(rootFolder, "shortcut.vbs"), vbsScript);
             spawnSync("cscript.exe", [path.resolve(rootFolder, "shortcut.vbs")]);
-            fs.unlinkSync(path.resolve(rootFolder, "shortcut.vbs"));
+
+            // fs.unlinkSync(path.resolve(rootFolder, "shortcut.vbs"));
             app.quit();
             break;
 
         case "--squirrel-uninstall":
             if (
                 fs.existsSync(
-                    path.resolve(
-                        homedir(),
-                        "AppData/Roaming/Microsoft/Windows/Start Menu/Programs/Manga Reader.lnk"
-                    )
+                    path.resolve(homedir(), "AppData/Roaming/Microsoft/Windows/Start Menu/Programs/Yomikiru.lnk")
                 )
             )
                 fs.unlinkSync(
-                    path.resolve(
-                        homedir(),
-                        "AppData/Roaming/Microsoft/Windows/Start Menu/Programs/Manga Reader.lnk"
-                    )
+                    path.resolve(homedir(), "AppData/Roaming/Microsoft/Windows/Start Menu/Programs/Yomikiru.lnk")
                 );
+            deleteOldOptionInExplorerMenu();
             deleteOptionInExplorerMenu();
-            if (fs.existsSync(path.resolve(homedir(), "Desktop/Manga Reader.lnk")))
-                fs.unlinkSync(path.resolve(homedir(), "Desktop/Manga Reader.lnk"));
+            if (fs.existsSync(path.resolve(homedir(), "Desktop/Yomikiru.lnk")))
+                fs.unlinkSync(path.resolve(homedir(), "Desktop/Yomikiru.lnk"));
             const uninstallFull = `
             set WshShell = CreateObject("Wscript.shell")
             WScript.Sleep 30000
@@ -197,6 +219,37 @@ const handleSquirrelEvent = () => {
 if (handleSquirrelEvent()) {
     app.quit();
 }
+
+if (!IS_PORTABLE) {
+    if (!fs.existsSync(path.join(app.getPath("userData"), "settings.json"))) {
+        const oldAppPath = path.join(app.getPath("userData"), "../Manga Reader/");
+        if (fs.existsSync(oldAppPath)) {
+            log.log("Old app found, coping settings files.");
+            const filesToCopy = [
+                "bookmarks.json",
+                "history.json",
+                "settings.json",
+                "themes.json",
+                "shortcuts.json",
+                "logs/main.log",
+                "logs/renderer.log",
+            ];
+            filesToCopy.forEach((e) => {
+                if (fs.existsSync(path.join(oldAppPath, e))) {
+                    fs.copyFileSync(path.join(oldAppPath, e), path.join(app.getPath("userData"), e));
+                    log.log(`${e} copied from ${path.join(oldAppPath, e)}`);
+                } else {
+                    log.log(`${e} not found in ${oldAppPath}`);
+                }
+            });
+            log.log("Uninstalling old app...");
+            const oldUpdaterPath = path.join(app.getPath("userData"), "../../local/mangareader/Update.exe");
+            spawnSync(oldUpdaterPath, ["--uninstall"]);
+            log.log("Uninstall complete.");
+        }
+    }
+}
+
 // when manga reader opened from context menu "open with manga reader"
 let openFolderOnLaunch = "";
 if (app.isPackaged && process.argv[1] && fs.existsSync(process.argv[1])) {
@@ -299,6 +352,9 @@ const registerListener = () => {
     ipcMain.on("deleteOptionInExplorerMenu", () => {
         deleteOptionInExplorerMenu();
     });
+    ipcMain.on("deleteOldOptionInExplorerMenu", () => {
+        deleteOldOptionInExplorerMenu();
+    });
     ipcMain.on("canCheckForUpdate_response", (e, res, windowId, skipMinor) => {
         if (res) checkForUpdate(windowId, skipMinor);
     });
@@ -318,7 +374,7 @@ const registerListener = () => {
             if (ask) {
                 const res = dialog.showMessageBoxSync(window, {
                     message: "Close this window?",
-                    title: "Manga Reader",
+                    title: "Yomikiru",
                     buttons: ["No", "Yes"],
                     type: "question",
                 });
@@ -378,7 +434,7 @@ app.on("ready", () => {
                 {
                     role: "help",
                     accelerator: "F1",
-                    click: () => shell.openExternal("https://github.com/mienaiyami/react-ts-offline-manga-reader"),
+                    click: () => shell.openExternal("https://github.com/mienaiyami/yomikiru"),
                 },
                 {
                     label: "New Window",

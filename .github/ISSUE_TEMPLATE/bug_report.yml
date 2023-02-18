@@ -5,7 +5,7 @@ labels:
 body:
 - type: markdown
   attributes:
-    value: Please make sure to [search for existing issues](https://github.com/mienaiyami/react-ts-offline-manga-reader/issues) before filing a new one!
+    value: Please make sure to [search for existing issues](https://github.com/mienaiyami/yomikiru/issues) before filing a new one!
 
 - type: textarea
   attributes:

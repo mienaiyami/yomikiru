@@ -297,7 +297,7 @@ if (!themesMain.map((e) => e.name).includes(settings.theme)) {
     window.dialog
         .warn({
             title: "Error",
-            message: `Theme "${settings.theme}" does not exist. Try fixing or deleting theme.json and settings.json in "userdata" folder.(at "%appdata%/Manga Reader/" or in main folder on Portable version)`,
+            message: `Theme "${settings.theme}" does not exist. Try fixing or deleting theme.json and settings.json in "userdata" folder.(at "%appdata%/Yomikiru/" or in main folder on Portable version)`,
             noOption: false,
             defaultId: 0,
             buttons: ["Ok", "Temporary fix", "Open Location"],

@@ -357,7 +357,12 @@ const ReaderSettings = ({
                             />
                             <p>Double size for double spread pages.</p>
                         </label>
-                        <label className={appSettings.readerSettings.gapBetweenRows ? "optionSelected" : ""}>
+                        <label
+                            className={
+                                (appSettings.readerSettings.gapBetweenRows ? "optionSelected " : "") +
+                                (appSettings.readerSettings.readerTypeSelected !== 0 ? "disabled " : "")
+                            }
+                        >
                             <input
                                 type="checkbox"
                                 disabled={appSettings.readerSettings.readerTypeSelected !== 0}

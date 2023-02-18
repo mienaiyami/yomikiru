@@ -30,7 +30,7 @@ export default function useTheme(
         } else {
             window.dialog.customError({
                 title: "Error",
-                message: `Theme "${theme}" does not exist. Try fixing or deleting theme.json and settings.json in "userdata" folder.(at "%appdata%/Manga Reader/" or in main folder on Portable version)`,
+                message: `Theme "${theme}" does not exist. Try fixing or deleting theme.json and settings.json in "userdata" folder.(at "%appdata%/Yomikiru/" or in main folder on Portable version)`,
             });
         }
     }, [theme]);

@@ -57,10 +57,10 @@ const makeAndPushTag = () => {
 const pushRelease = () => {
     let changelog = fs.readFileSync("./changelog.md", "utf8");
     changelog = changelog.replaceAll("$$TAG$$", pkgJSON.version)
-        .replaceAll("$$EXE_NAME$$", `Manga.Reader-${pkgJSON.version}-Setup.exe`)
-        .replaceAll("$$EXE_NAME_1$$", `Manga.Reader--${pkgJSON.version}--Setup.exe`)
-        .replaceAll("$$ZIP_NAME$$", `Manga.Reader-win32-${pkgJSON.version}-Portable.zip`)
-        .replaceAll("$$ZIP_NAME_1$$", `Manga.Reader--win32--${pkgJSON.version}--Portable.zip`)
+        .replaceAll("$$EXE_NAME$$", `Yomikiru-${pkgJSON.version}-Setup.exe`)
+        .replaceAll("$$EXE_NAME_1$$", `Yomikiru--${pkgJSON.version}--Setup.exe`)
+        .replaceAll("$$ZIP_NAME$$", `Yomikiru-win32-${pkgJSON.version}-Portable.zip`)
+        .replaceAll("$$ZIP_NAME_1$$", `Yomikiru--win32--${pkgJSON.version}--Portable.zip`)
     if (fs.existsSync("./changelogTemp.md"))
         fs.rmSync("./changelogTemp.md");
     fs.writeFileSync("./changelogTemp.md", changelog)
@@ -70,7 +70,9 @@ const pushRelease = () => {
         " -F changelogTemp.md " +
         // `--notes ""` +
         // "-d " +
-        `./out/full/Manga.Reader-${pkgJSON.version}-Setup.exe ./out/full/Manga.Reader-win32-${pkgJSON.version}-Portable.zip`)
+        `./out/full/Manga.Reader-${pkgJSON.version}-Setup.exe ./out/full/Manga.Reader-win32-${pkgJSON.version}-Portable.zip `+
+        `./out/full/Yomikiru-${pkgJSON.version}-Setup.exe ./out/full/Yomikiru-win32-${pkgJSON.version}-Portable.zip `
+        )
     const a = printProcessing("Pushing build to gh release ")
     const ghSpawn = exec(pushCommand);
     ghSpawn.stderr.on('data', (data) => {
@@ -81,7 +83,7 @@ const pushRelease = () => {
         fs.rmSync("./changelogTemp.md");
         console.log(`spawn yarn child process exited with code ${code}.`);
         if (code === 0) {
-            console.log("\x1b[92mPushed release to github. https://github.com/mienaiyami/react-ts-offline-manga-reader/releases.\x1b[0m");
+            console.log("\x1b[92mPushed release to github. https://github.com/mienaiyami/yomikiru/releases.\x1b[0m");
 
             const gitSpawn = exec("git push origin");
             gitSpawn.stderr.on('data', (data) => {
@@ -99,7 +101,7 @@ const makeExe = () => {
     export default isPortable;
     `)
     const a = printProcessing('making exe ')
-    // console.log(`./out/make/squirrel.windows/ia32/Manga Reader-${pkgJSON.version} Setup.exe`)
+    // console.log(`./out/make/squirrel.windows/ia32/Yomikiru-${pkgJSON.version} Setup.exe`)
     const yarnSpawn = exec("yarn makeExe")
     // yarnSpawn.stdout.on('data', (data) => {
     //     process.stdout.write(data)
@@ -110,11 +112,12 @@ const makeExe = () => {
     yarnSpawn.on('close', (code) => {
         clearInterval(a)
         console.log(`spawn yarn child process exited with code ${code}.`);
-        if (fs.existsSync(`./out/make/squirrel.windows/ia32/Manga Reader-${pkgJSON.version} Setup.exe`)) {
+        if (fs.existsSync(`./out/make/squirrel.windows/ia32/Yomikiru-${pkgJSON.version} Setup.exe`)) {
             console.log("\x1b[92m.exe create successfully \x1b[0m")
             console.log("moving .exe ...")
-            fs.rename(`./out/make/squirrel.windows/ia32/Manga Reader-${pkgJSON.version} Setup.exe`,
-                `./out/full/Manga.Reader-${pkgJSON.version}-Setup.exe`, (err) => {
+            fs.copyFileSync(`./out/make/squirrel.windows/ia32/Yomikiru-${pkgJSON.version} Setup.exe`,`./out/full/Manga.Reader-${pkgJSON.version}-Setup.exe`)
+            fs.rename(`./out/make/squirrel.windows/ia32/Yomikiru-${pkgJSON.version} Setup.exe`,
+                `./out/full/Yomikiru-${pkgJSON.version}-Setup.exe`, (err) => {
                     if (err) return console.error(err)
                     console.log("\x1b[92mmoved successfully. \x1b[0m")
                     makeZip()
@@ -142,11 +145,12 @@ const makeZip = () => {
     yarnSpawn.on('close', (code) => {
         clearInterval(a)
         console.log(`spawn yarn child process exited with code ${code}.`);
-        if (fs.existsSync(`./out/make/zip/win32/ia32/Manga Reader-win32-ia32-${pkgJSON.version}.zip`)) {
+        if (fs.existsSync(`./out/make/zip/win32/ia32/Yomikiru-win32-ia32-${pkgJSON.version}.zip`)) {
             console.log("\x1b[92m.zip create successfully\x1b[0m")
             console.log("moving .zip...")
-            fs.rename(`./out/make/zip/win32/ia32/Manga Reader-win32-ia32-${pkgJSON.version}.zip`,
-                `./out/full/Manga.Reader-win32-${pkgJSON.version}-Portable.zip`, (err) => {
+            fs.copyFileSync(`./out/make/zip/win32/ia32/Yomikiru-win32-ia32-${pkgJSON.version}.zip`,`./out/full/Manga.Reader-win32-${pkgJSON.version}-Portable.zip`,)
+            fs.rename(`./out/make/zip/win32/ia32/Yomikiru-win32-ia32-${pkgJSON.version}.zip`,
+                `./out/full/Yomikiru-win32-${pkgJSON.version}-Portable.zip`, (err) => {
                     if (err) return console.error(err)
                     console.log("\x1b[92mmoved successfully.\x1b[0m")
                     fs.writeFileSync("./electron/IS_PORTABLE.ts", `

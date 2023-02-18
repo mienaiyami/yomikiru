@@ -1,6 +1,6 @@
 module.exports = {
     packagerConfig: {
-        name: "Manga Reader",
+        name: "Yomikiru",
     },
     plugins: [{
         name: "@electron-forge/plugin-webpack",
@@ -20,8 +20,8 @@ module.exports = {
     makers: [{
             name: "@electron-forge/maker-squirrel",
             config: {
-                // name: "mangareader",
-                // exe: "Manga Reader.exe",
+                // name: "Yomikiru",
+                // exe: "Yomikiru.exe",
                 // setupExe: `${packageJSON.name}_${packageJSON.version}_windows-setup.exe`,
             },
         },

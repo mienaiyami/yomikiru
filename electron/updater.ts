@@ -22,16 +22,16 @@ const fileToKeep = [
     "renderer.log",
 ];
 
-const downloadLink = "https://github.com/mienaiyami/react-ts-offline-manga-reader/releases/download/v";
+const downloadLink = "https://github.com/mienaiyami/yomikiru/releases/download/v";
 /**
  *
  * @param windowId id of window in which message box should be shown
  * @param promptAfterCheck (false by default) Show message box if current version is same as latest version.
  */
 const checkForUpdate = async (windowId: number, skipMinor = false, promptAfterCheck = false) => {
-    const rawdata = await fetch(
-        "https://raw.githubusercontent.com/mienaiyami/react-ts-offline-manga-reader/master/package.json"
-    ).then((data) => data.json());
+    const rawdata = await fetch("https://raw.githubusercontent.com/mienaiyami/yomikiru/master/package.json").then(
+        (data) => data.json()
+    );
     const latestVersion: number[] = await rawdata.version.split(".").map((e: string) => parseInt(e));
     logger.log("checking for update...");
     const currentAppVersion = app
@@ -70,7 +70,7 @@ const checkForUpdate = async (windowId: number, skipMinor = false, promptAfterCh
                 if (response.response === 0) downloadUpdates(latestVersion.join("."), windowId);
                 if (response.response === 1) {
                     downloadUpdates(latestVersion.join("."), windowId);
-                    // shell.openExternal("https://github.com/mienaiyami/react-ts-offline-manga-reader/releases");
+                    // shell.openExternal("https://github.com/mienaiyami/yomikiru/releases");
 
                     const newWindow = new BrowserWindow({
                         width: 1200,
@@ -79,7 +79,7 @@ const checkForUpdate = async (windowId: number, skipMinor = false, promptAfterCh
                         minHeight: 560,
                         backgroundColor: "#272727",
                     });
-                    newWindow.loadURL("https://github.com/mienaiyami/react-ts-offline-manga-reader/releases");
+                    newWindow.loadURL("https://github.com/mienaiyami/yomikiru/releases");
                     newWindow.setMenuBarVisibility(false);
                 }
                 if (response.response === 2) {
@@ -90,7 +90,7 @@ const checkForUpdate = async (windowId: number, skipMinor = false, promptAfterCh
                         minHeight: 560,
                         backgroundColor: "#272727",
                     });
-                    newWindow.loadURL("https://github.com/mienaiyami/react-ts-offline-manga-reader/releases");
+                    newWindow.loadURL("https://github.com/mienaiyami/yomikiru/releases");
                     newWindow.setMenuBarVisibility(false);
                 }
             });
@@ -100,7 +100,7 @@ const checkForUpdate = async (windowId: number, skipMinor = false, promptAfterCh
     if (promptAfterCheck) {
         dialog.showMessageBox(BrowserWindow.fromId(windowId ?? 1)!, {
             type: "info",
-            title: "Manga Reader",
+            title: "Yomikiru",
             message: "Running latest version",
             buttons: [],
         });

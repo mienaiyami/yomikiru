@@ -511,6 +511,13 @@ const Settings = (): ReactElement => {
                                 >
                                     Remove
                                 </button>
+                                <button
+                                    onClick={() =>
+                                        window.electron.ipcRenderer.send("deleteOldOptionInExplorerMenu")
+                                    }
+                                >
+                                    Remove(Old version)
+                                </button>
                             </td>
                         </tr>
                         <tr className="settingItem">
@@ -672,7 +679,7 @@ const Settings = (): ReactElement => {
                                 <button
                                     onClick={() =>
                                         window.electron.shell.openExternal(
-                                            "https://github.com/mienaiyami/react-ts-offline-manga-reader/"
+                                            "https://github.com/mienaiyami/yomikiru/"
                                         )
                                     }
                                 >
@@ -687,7 +694,7 @@ const Settings = (): ReactElement => {
                                     // onFocus={(e) => e.currentTarget.blur()}
                                     onClick={() =>
                                         window.electron.shell.openExternal(
-                                            "https://github.com/mienaiyami/react-ts-offline-manga-reader/issues/new/choose"
+                                            "https://github.com/mienaiyami/yomikiru/issues/new/choose"
                                         )
                                     }
                                 >
@@ -737,7 +744,7 @@ const Settings = (): ReactElement => {
                                 <button
                                     onClick={() =>
                                         window.electron.shell.openExternal(
-                                            "https://github.com/mienaiyami/react-ts-offline-manga-reader/releases"
+                                            "https://github.com/mienaiyami/yomikiru/releases"
                                         )
                                     }
                                 >
@@ -777,7 +784,7 @@ const Settings = (): ReactElement => {
                             <ul>
                                 <li>
                                     Right Click on folder or .cbz/.zip &nbsp;&nbsp;&#8594;&nbsp;&nbsp; Show more
-                                    options(win11) &nbsp;&nbsp;&#8594;&nbsp;&nbsp; Open in Manga Reader.
+                                    options(win11) &nbsp;&nbsp;&#8594;&nbsp;&nbsp; Open in Yomikiru.
                                 </li>
                                 <li>
                                     Note that this only opens the chapter containing images, not the Manga Folder.
