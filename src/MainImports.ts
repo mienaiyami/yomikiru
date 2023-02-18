@@ -56,8 +56,8 @@ export const settingValidatorData = {
         readerWidth: 0,
         variableImageSize: false,
         /**
-         * * `0` - Infinite scroll
-         * * `1` - Click to move
+         * * `0` - Vertical scroll
+         * * `1` - Left to Right
          */
         readerTypeSelected: [0, 1],
         /**
@@ -328,7 +328,7 @@ window.shortcutsFunctions = [
     },
     {
         command: "largeScroll",
-        name: "Bigger Scroll (Shift+key for reverse)",
+        name: "Bigger Scroll, Scroll B (Shift+key for reverse)",
         key1: " ",
         key2: "",
     },
@@ -370,13 +370,13 @@ window.shortcutsFunctions = [
     },
     {
         command: "selectReaderMode0",
-        name: "Reader Mode - Infinite Scroll",
+        name: "Reading mode - Vertical Scroll",
         key1: "9",
         key2: "",
     },
     {
         command: "selectReaderMode1",
-        name: "Reader Mode - Click to Move",
+        name: "Reading mode - Left to Right",
         key1: "0",
         key2: "",
     },

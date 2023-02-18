@@ -13,7 +13,7 @@ Offline Manga/Manhwa Reader (not a downloader) built with react and typescript. 
 - Customizable shortcuts.
 - Multiple themes to choose from.
 - Customizable themes, make your own theme with just few clicks.
-- Reading modes - infinite scrolling, page by page.
+- Reading modes - vertical scrolling, page by page.
 - Bookmark chapters.
 - Keep history.
 - Portable version available.

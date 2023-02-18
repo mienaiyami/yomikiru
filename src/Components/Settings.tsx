@@ -180,81 +180,87 @@ const Settings = (): ReactElement => {
         }, [rawColor, opacity]);
         // todo : make similar system for rawColorWhole
         return (
-            <td>
-                <button
-                    className="resetBtn"
-                    onClick={() => {
-                        setRawColor(color);
-                        setOpacity(color.length > 7 ? parseInt(color.substring(7), 16) / 2.55 : 100);
-                        setRawColorWhole(color);
-                    }}
-                    title="Reset"
-                >
-                    <FontAwesomeIcon icon={faSync} />
-                </button>
-                <label className={checked ? "selected" : ""} title="Link to variable">
-                    <input
-                        type="checkbox"
-                        defaultChecked={checked}
-                        ref={ref}
-                        onChange={() => setChecked((init) => !init)}
-                    />
-                    <FontAwesomeIcon icon={checked ? faUnlink : faLink} />
-                </label>
-                {checked ? (
-                    <input
-                        type="text"
-                        value={rawColorWhole}
-                        list="cssColorVariableList"
-                        spellCheck={false}
-                        className="newThemeMakerColorOrVar"
-                        onChange={(e) => {
-                            setRawColorWhole(e.target.value);
+            <>
+                <td>
+                    <button
+                        className="resetBtn"
+                        onClick={() => {
+                            setRawColor(color);
+                            setOpacity(color.length > 7 ? parseInt(color.substring(7), 16) / 2.55 : 100);
+                            setRawColorWhole(color);
                         }}
-                    />
-                ) : (
-                    <>
+                        title="Reset"
+                    >
+                        <FontAwesomeIcon icon={faSync} />
+                    </button>
+                    <label className={checked ? "selected" : ""} title="Link to variable">
                         <input
-                            type="color"
-                            value={rawColor || "#000000"}
-                            // className="newThemeMakerColor"
-                            onChange={(e) => {
-                                setRawColor(e.target.value === "" ? "#000000" : e.target.value.substring(0, 7));
-                            }}
-                            title="Color"
+                            type="checkbox"
+                            defaultChecked={checked}
+                            ref={ref}
+                            onChange={() => setChecked((init) => !init)}
                         />
-                        <input
-                            type="number"
-                            min={0}
-                            max={100}
-                            value={Math.ceil(opacity) ?? 100}
-                            title="Opacity"
-                            // className="newThemeMakerOpacity"
-                            onChange={(e) => {
-                                setOpacity(() => {
-                                    if (e.target.value === "") {
-                                        e.target.value = "0";
-                                    }
-                                    const value = e.target.valueAsNumber ?? 100;
-                                    return value;
-                                });
-                            }}
-                        />
+                        <FontAwesomeIcon icon={checked ? faUnlink : faLink} />
+                    </label>
+                </td>
+                <td>
+                    {checked ? (
                         <input
                             type="text"
-                            className="newThemeMakerColorFull"
-                            value={
-                                rawColor.substring(0, 7) +
-                                (Math.ceil(opacity * 2.55).toString(16).length < 2
-                                    ? "0" + Math.ceil(opacity * 2.55).toString(16)
-                                    : Math.ceil(opacity * 2.55).toString(16))
-                            }
-                            style={{ display: "none" }}
-                            readOnly
+                            value={rawColorWhole}
+                            list="cssColorVariableList"
+                            spellCheck={false}
+                            className="newThemeMakerColorOrVar"
+                            onChange={(e) => {
+                                setRawColorWhole(e.target.value);
+                            }}
                         />
-                    </>
-                )}
-            </td>
+                    ) : (
+                        <>
+                            <input
+                                type="color"
+                                value={rawColor || "#000000"}
+                                // className="newThemeMakerColor"
+                                onChange={(e) => {
+                                    setRawColor(
+                                        e.target.value === "" ? "#000000" : e.target.value.substring(0, 7)
+                                    );
+                                }}
+                                title="Color"
+                            />
+                            <input
+                                type="number"
+                                min={0}
+                                max={100}
+                                value={Math.ceil(opacity) ?? 100}
+                                title="Opacity"
+                                // className="newThemeMakerOpacity"
+                                onChange={(e) => {
+                                    setOpacity(() => {
+                                        if (e.target.value === "") {
+                                            e.target.value = "0";
+                                        }
+                                        const value = e.target.valueAsNumber ?? 100;
+                                        return value;
+                                    });
+                                }}
+                            />
+                            <input
+                                type="text"
+                                className="newThemeMakerColorFull"
+                                value={
+                                    rawColor.substring(0, 7) +
+                                    (Math.ceil(opacity * 2.55).toString(16).length < 2
+                                        ? "0" + Math.ceil(opacity * 2.55).toString(16)
+                                        : Math.ceil(opacity * 2.55).toString(16))
+                                }
+                                style={{ display: "none" }}
+                                readOnly
+                            />
+                        </>
+                    )}
+                </td>
+            </>
         );
     };
 
@@ -275,450 +281,472 @@ const Settings = (): ReactElement => {
                         <FontAwesomeIcon icon={faTimes} />
                     </button>
                 </h1>
-                <div className="content">
-                    <div className="settingItem defaultLocation">
-                        <div className="name">Default Location</div>
-                        <div className="current">
-                            <input type="text" value={appSettings.baseDir} readOnly />
-                            <button
-                                // onFocus={(e) => e.currentTarget.blur()}
-                                onClick={() => {
-                                    promptSetDefaultLocation();
-                                }}
-                            >
-                                Change Default
-                            </button>
-                        </div>
-                    </div>
-                    <div className="settingItem historyLimit">
-                        <div className="name">History Limit</div>
-                        <div className="current">
-                            <input
-                                type="number"
-                                defaultValue={appSettings.historyLimit}
-                                ref={historyInputRef}
-                                onKeyDown={(e) => {
-                                    e.stopPropagation();
-                                    if (e.key === "Enter") {
-                                        historyBtnRef.current?.click();
-                                    }
-                                }}
-                                readOnly={true}
-                            />
-                            <button
-                                data-type="enable"
-                                // onFocus={(e) => e.currentTarget.blur()}
-                                ref={historyBtnRef}
-                                onClick={(e) => {
-                                    if (e.currentTarget.getAttribute("data-type") === "enable") {
-                                        historyInputRef.current?.removeAttribute("readonly");
-                                        historyInputRef.current?.focus();
-                                        e.currentTarget.textContent = "Confirm";
-                                        e.currentTarget.setAttribute("data-type", "set");
-                                        e.currentTarget.classList.add("enabled");
-                                    } else if (e.currentTarget.getAttribute("data-type") === "set") {
-                                        setAppSettings((init) => {
-                                            if (historyInputRef.current) {
-                                                init.historyLimit = parseInt(historyInputRef.current.value);
+                <table className="content">
+                    <tbody>
+                        <tr className="settingItem">
+                            <td className="name">Default Location</td>
+                            <td className="current">
+                                <input type="text" value={appSettings.baseDir} readOnly />
+                                <button
+                                    // onFocus={(e) => e.currentTarget.blur()}
+                                    onClick={() => {
+                                        promptSetDefaultLocation();
+                                    }}
+                                >
+                                    Change Default
+                                </button>
+                            </td>
+                        </tr>
+                        <tr className="settingItem">
+                            <td className="name">History Limit</td>
+                            <td className="current">
+                                <input
+                                    type="number"
+                                    defaultValue={appSettings.historyLimit}
+                                    ref={historyInputRef}
+                                    onKeyDown={(e) => {
+                                        e.stopPropagation();
+                                        if (e.key === "Enter") {
+                                            historyBtnRef.current?.click();
+                                        }
+                                    }}
+                                    readOnly={true}
+                                />
+                                <button
+                                    data-type="enable"
+                                    // onFocus={(e) => e.currentTarget.blur()}
+                                    ref={historyBtnRef}
+                                    onClick={(e) => {
+                                        if (e.currentTarget.getAttribute("data-type") === "enable") {
+                                            historyInputRef.current?.removeAttribute("readonly");
+                                            historyInputRef.current?.focus();
+                                            e.currentTarget.textContent = "Confirm";
+                                            e.currentTarget.setAttribute("data-type", "set");
+                                            e.currentTarget.classList.add("enabled");
+                                        } else if (e.currentTarget.getAttribute("data-type") === "set") {
+                                            setAppSettings((init) => {
+                                                if (historyInputRef.current) {
+                                                    init.historyLimit = parseInt(historyInputRef.current.value);
+                                                }
+                                                return { ...init };
+                                            });
+                                            historyInputRef.current?.setAttribute("readonly", "true");
+                                            e.currentTarget.textContent = "Change Default";
+                                            e.currentTarget.setAttribute("data-type", "enable");
+                                            e.currentTarget.classList.remove("enabled");
+                                        }
+                                    }}
+                                >
+                                    Change Default
+                                </button>
+                            </td>
+                        </tr>
+                        <tr className="settingItem exportBookmark">
+                            <td className="name">Bookmarks</td>
+                            <td className="current">
+                                <button
+                                    // onFocus={(e) => e.currentTarget.blur()}
+                                    onClick={() => {
+                                        const opt = window.electron.dialog.showSaveDialogSync(
+                                            window.electron.getCurrentWindow(),
+                                            {
+                                                title: "Export Bookmarks",
+                                                defaultPath: "bookmarks.json",
+                                                filters: [
+                                                    {
+                                                        name: "json",
+                                                        extensions: ["json"],
+                                                    },
+                                                ],
                                             }
-                                            return { ...init };
-                                        });
-                                        historyInputRef.current?.setAttribute("readonly", "true");
-                                        e.currentTarget.textContent = "Change Default";
-                                        e.currentTarget.setAttribute("data-type", "enable");
-                                        e.currentTarget.classList.remove("enabled");
-                                    }
-                                }}
-                            >
-                                Change Default
-                            </button>
-                        </div>
-                    </div>
-                    <div className="settingItem exportBookmark">
-                        <div className="name">Bookmarks</div>
-                        <div className="current">
-                            <button
-                                // onFocus={(e) => e.currentTarget.blur()}
-                                onClick={() => {
-                                    const opt = window.electron.dialog.showSaveDialogSync(
-                                        window.electron.getCurrentWindow(),
-                                        {
-                                            title: "Export Bookmarks",
-                                            defaultPath: "bookmarks.json",
-                                            filters: [
-                                                {
-                                                    name: "json",
-                                                    extensions: ["json"],
-                                                },
-                                            ],
-                                        }
-                                    );
-                                    if (opt == undefined) return;
-                                    window.fs.writeFileSync(opt, JSON.stringify(bookmarks) || JSON.stringify([]));
-                                }}
-                            >
-                                Export
-                            </button>
-                            <button
-                                // onFocus={(e) => e.currentTarget.blur()}
-                                onClick={() => {
-                                    const opt = window.electron.dialog.showOpenDialogSync(
-                                        window.electron.getCurrentWindow(),
-                                        {
-                                            properties: ["openFile"],
-                                            filters: [
-                                                {
-                                                    name: "Json",
-                                                    extensions: ["json"],
-                                                },
-                                            ],
-                                        }
-                                    );
-                                    if (opt == undefined) return;
-                                    const data: ChapterItem[] = JSON.parse(window.fs.readFileSync(opt[0], "utf8"));
-                                    const dataToAdd: ChapterItem[] = [];
-                                    let similarFound = 0;
-                                    data.forEach((item) => {
-                                        if (("mangaName" && "link" && "chapterName") in item) {
-                                            if (!bookmarks.map((e) => e.link).includes(item.link)) {
-                                                dataToAdd.push(item);
-                                            } else {
-                                                similarFound++;
+                                        );
+                                        if (opt == undefined) return;
+                                        window.fs.writeFileSync(
+                                            opt,
+                                            JSON.stringify(bookmarks) || JSON.stringify([])
+                                        );
+                                    }}
+                                >
+                                    Export
+                                </button>
+                                <button
+                                    // onFocus={(e) => e.currentTarget.blur()}
+                                    onClick={() => {
+                                        const opt = window.electron.dialog.showOpenDialogSync(
+                                            window.electron.getCurrentWindow(),
+                                            {
+                                                properties: ["openFile"],
+                                                filters: [
+                                                    {
+                                                        name: "Json",
+                                                        extensions: ["json"],
+                                                    },
+                                                ],
                                             }
-                                        }
-                                    });
-                                    if (similarFound > 0)
-                                        window.dialog.warn({
-                                            title: "warning",
-                                            message: "Found " + similarFound + " with same link",
+                                        );
+                                        if (opt == undefined) return;
+                                        const data: ChapterItem[] = JSON.parse(
+                                            window.fs.readFileSync(opt[0], "utf8")
+                                        );
+                                        const dataToAdd: ChapterItem[] = [];
+                                        let similarFound = 0;
+                                        data.forEach((item) => {
+                                            if (("mangaName" && "link" && "chapterName") in item) {
+                                                if (!bookmarks.map((e) => e.link).includes(item.link)) {
+                                                    dataToAdd.push(item);
+                                                } else {
+                                                    similarFound++;
+                                                }
+                                            }
                                         });
-                                    setBookmarks([...bookmarks, ...dataToAdd]);
-                                }}
-                            >
-                                Import
-                            </button>
-                            <button
-                                // onFocus={(e) => e.currentTarget.blur()}
-                                onClick={() => {
-                                    window.dialog
-                                        .warn({
-                                            title: "Delete BookMarks",
-                                            message: "are you sure you want to remove bookmark?",
-                                            noOption: false,
-                                        })
-                                        .then(({ response }) => {
-                                            if (response == undefined) return;
-                                            if (response === 1) return;
-                                            if (response === 0) {
+                                        if (similarFound > 0)
+                                            window.dialog.warn({
+                                                title: "warning",
+                                                message: "Found " + similarFound + " with same link",
+                                            });
+                                        setBookmarks([...bookmarks, ...dataToAdd]);
+                                    }}
+                                >
+                                    Import
+                                </button>
+                                <button
+                                    // onFocus={(e) => e.currentTarget.blur()}
+                                    onClick={() => {
+                                        window.dialog
+                                            .warn({
+                                                title: "Delete BookMarks",
+                                                message: "are you sure you want to remove bookmark?",
+                                                noOption: false,
+                                            })
+                                            .then(({ response }) => {
+                                                if (response == undefined) return;
+                                                if (response === 1) return;
+                                                if (response === 0) {
+                                                    window.dialog
+                                                        .warn({
+                                                            title: "Delete BookMarks",
+                                                            noOption: false,
+                                                            message:
+                                                                "are you really sure you want to remove bookmark?\nThis process is irreversible.",
+                                                        })
+                                                        .then((res) => {
+                                                            if (res.response === 1) return;
+                                                            setBookmarks([]);
+                                                        });
+                                                }
+                                            });
+                                    }}
+                                >
+                                    Delete All Bookmarks
+                                </button>
+                            </td>
+                        </tr>
+                        <tr className="settingItem themeSelector">
+                            <td className="name">Theme</td>
+                            <td className="current">
+                                {/* <p>
+                                        Add custom theme by adding new item with changed css variable in <br />
+                                        <span className="copy">
+                                            {window.path.join(window.electron.app.getPath("userData"), "themes.json")}
+                                        </span>
+                                    </p> */}
+                                {allThemes.map((e, i) => (
+                                    <div className="themeButtons" key={e.name}>
+                                        <button
+                                            className={theme === e.name ? "selected" : ""}
+                                            onClick={() => setTheme(e.name)}
+                                        >
+                                            {e.name}
+                                        </button>
+                                        <button
+                                            onClick={() => {
+                                                if (e.name === theme) {
+                                                    window.dialog.warn({
+                                                        message: "Choose other theme before deleting this one.",
+                                                    });
+                                                    return;
+                                                }
                                                 window.dialog
-                                                    .warn({
-                                                        title: "Delete BookMarks",
+                                                    .confirm({
+                                                        message: `Delete theme "${e.name}"`,
                                                         noOption: false,
-                                                        message:
-                                                            "are you really sure you want to remove bookmark?\nThis process is irreversible.",
                                                     })
                                                     .then((res) => {
-                                                        if (res.response === 1) return;
-                                                        setBookmarks([]);
+                                                        if (res.response === 0) {
+                                                            setAllThemes((init) => {
+                                                                init.splice(i, 1);
+                                                                return [...init];
+                                                            });
+                                                        }
                                                     });
-                                            }
+                                            }}
+                                        >
+                                            <FontAwesomeIcon icon={faTrash} />
+                                        </button>
+                                    </div>
+                                ))}
+                                <button
+                                    onClick={() => {
+                                        themeMakerRef.current?.focus();
+                                        themeMakerRef.current?.scrollIntoView({
+                                            behavior: "smooth",
+                                            block: "start",
                                         });
-                                }}
-                            >
-                                Delete All Bookmarks
-                            </button>
-                        </div>
-                    </div>
-                    <div className="settingItem themeSelector">
-                        <div className="name">Theme</div>
-                        <div className="current">
-                            {/* <p>
-                                Add custom theme by adding new item with changed css variable in <br />
-                                <span className="copy">
-                                    {window.path.join(window.electron.app.getPath("userData"), "themes.json")}
-                                </span>
-                            </p> */}
-                            {allThemes.map((e, i) => (
-                                <div className="themeButtons" key={e.name}>
-                                    <button
-                                        className={theme === e.name ? "selected" : ""}
-                                        onClick={() => setTheme(e.name)}
-                                    >
-                                        {e.name}
-                                    </button>
-                                    <button
-                                        onClick={() => {
-                                            if (e.name === theme) {
-                                                window.dialog.warn({
-                                                    message: "Choose other theme before deleting this one.",
-                                                });
-                                                return;
-                                            }
-                                            window.dialog
-                                                .confirm({ message: `Delete theme "${e.name}"`, noOption: false })
-                                                .then((res) => {
-                                                    if (res.response === 0) {
-                                                        setAllThemes((init) => {
-                                                            init.splice(i, 1);
-                                                            return [...init];
-                                                        });
-                                                    }
-                                                });
+                                    }}
+                                >
+                                    <FontAwesomeIcon icon={faPlus} /> / <FontAwesomeIcon icon={faEdit} />
+                                </button>
+                            </td>
+                        </tr>
+                        <tr className="settingItem">
+                            <td className="name">File Explorer Option </td>
+                            <td className="current">
+                                <button
+                                    onClick={() => window.electron.ipcRenderer.send("addOptionToExplorerMenu")}
+                                >
+                                    Add
+                                </button>
+                                <button
+                                    onClick={() => window.electron.ipcRenderer.send("deleteOptionInExplorerMenu")}
+                                >
+                                    Remove
+                                </button>
+                            </td>
+                        </tr>
+                        <tr className="settingItem">
+                            <td className="name">Check for Update</td>
+                            <td className="current">
+                                <label className={appSettings.updateCheckerEnabled ? "selected" : ""}>
+                                    <input
+                                        type="checkbox"
+                                        checked={appSettings.updateCheckerEnabled}
+                                        onChange={(e) => {
+                                            setAppSettings((init) => {
+                                                init.updateCheckerEnabled = e.currentTarget.checked;
+                                                return { ...init };
+                                            });
                                         }}
-                                    >
-                                        <FontAwesomeIcon icon={faTrash} />
-                                    </button>
+                                    />
+                                    <p>Check on Startup</p>
+                                </label>
+                                <button
+                                    onClick={() => {
+                                        window.electron.ipcRenderer.send(
+                                            "checkForUpdate",
+                                            window.electron.getCurrentWindow().id,
+                                            true
+                                        );
+                                    }}
+                                >
+                                    Check for Update
+                                </button>
+                            </td>
+                        </tr>
+                        <tr className="settingItem">
+                            <td className="name">Other Settings</td>
+                            <td className="current list">
+                                <label className={appSettings.askBeforeClosing ? "selected" : ""}>
+                                    <input
+                                        type="checkbox"
+                                        checked={appSettings.askBeforeClosing}
+                                        onChange={(e) => {
+                                            setAppSettings((init) => {
+                                                init.askBeforeClosing = e.currentTarget.checked;
+                                                return { ...init };
+                                            });
+                                        }}
+                                    />
+                                    <p>Ask before closing window? (Needs Restart).</p>
+                                </label>
+                                <label className={appSettings.skipMinorUpdate ? "selected" : ""}>
+                                    <input
+                                        type="checkbox"
+                                        checked={appSettings.skipMinorUpdate}
+                                        onChange={(e) => {
+                                            setAppSettings((init) => {
+                                                init.skipMinorUpdate = e.currentTarget.checked;
+                                                return { ...init };
+                                            });
+                                        }}
+                                    />
+                                    <p>Skip minor updates.</p>
+                                </label>
+                                <label className={appSettings.openDirectlyFromManga ? "selected" : ""}>
+                                    <input
+                                        type="checkbox"
+                                        checked={appSettings.openDirectlyFromManga}
+                                        onChange={(e) => {
+                                            setAppSettings((init) => {
+                                                init.openDirectlyFromManga = e.currentTarget.checked;
+                                                return { ...init };
+                                            });
+                                        }}
+                                    />
+                                    <p>
+                                        Open chapter directly by clicking name instead of arrow in reader if
+                                        chapter folder is in manga folder inside <code>default location</code>.
+                                    </p>
+                                </label>
+                                <label
+                                    className={
+                                        appSettings.readerSettings.disableChapterTransitionScreen ? "selected" : ""
+                                    }
+                                >
+                                    <input
+                                        type="checkbox"
+                                        checked={appSettings.readerSettings.disableChapterTransitionScreen}
+                                        onChange={(e) => {
+                                            setAppSettings((init) => {
+                                                init.readerSettings.disableChapterTransitionScreen =
+                                                    e.currentTarget.checked;
+                                                return { ...init };
+                                            });
+                                        }}
+                                    />
+                                    <p>
+                                        Disable the screen that appears at start and end of chapters only in{" "}
+                                        <code>vertical scroll</code> Reading mode.
+                                    </p>
+                                </label>
+                                <label className={appSettings.useCanvasBasedReader ? "selected" : ""}>
+                                    <input
+                                        type="checkbox"
+                                        checked={appSettings.useCanvasBasedReader}
+                                        onChange={(e) => {
+                                            setAppSettings((init) => {
+                                                init.useCanvasBasedReader = e.currentTarget.checked;
+                                                return { ...init };
+                                            });
+                                        }}
+                                    />
+                                    <p>
+                                        Make scrolling smooth and prevent stuttering when reading high res images.
+                                        <br />
+                                        Drawbacks include high RAM usage and less crispy images when size is set to
+                                        a low value.(BETA)
+                                    </p>
+                                </label>
+                                {/* <label className={appSettings.disableCachingCanvas ? "selected" : ""}>
+                                        <input
+                                            type="checkbox"
+                                            disabled={!appSettings.useCanvasBasedReader}
+                                            checked={appSettings.disableCachingCanvas}
+                                            onChange={(e) => {
+                                                setAppSettings((init) => {
+                                                    init.disableCachingCanvas = e.currentTarget.checked;
+                                                    return { ...init };
+                                                });
+                                            }}
+                                        />
+                                        <p>
+                                            Enable low RAM usage. <br />
+                                            Drawbacks include high time lag when switching <code>Reading mode</code> or{" "}
+                                            <code>Page per Row</code>.
+                                        </p>
+                                    </label> */}
+                            </td>
+                        </tr>
+                        {/* <div className="settingItem version">
+                                <div className="name">Others:</div>
+                                <div className="current">
+                                    <label>
+                                        <input type="checkbox" />
+                                        <p>Show Loading Screen</p>
+                                    </label>
                                 </div>
-                            ))}
-                            <button
-                                onClick={() => {
-                                    themeMakerRef.current?.focus();
-                                    themeMakerRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
-                                }}
-                            >
-                                <FontAwesomeIcon icon={faPlus} /> / <FontAwesomeIcon icon={faEdit} />
-                            </button>
-                        </div>
-                    </div>
-                    <div className="settingItem">
-                        <div className="name">File Explorer Option </div>
-                        <div className="current">
-                            <button onClick={() => window.electron.ipcRenderer.send("addOptionToExplorerMenu")}>
-                                Add
-                            </button>
-                            <button onClick={() => window.electron.ipcRenderer.send("deleteOptionInExplorerMenu")}>
-                                Remove
-                            </button>
-                        </div>
-                    </div>
-                    <div className="settingItem">
-                        <div className="name">Check for Update</div>
-                        <div className="current">
-                            <label className={appSettings.updateCheckerEnabled ? "selected" : ""}>
-                                <input
-                                    type="checkbox"
-                                    checked={appSettings.updateCheckerEnabled}
-                                    onChange={(e) => {
-                                        setAppSettings((init) => {
-                                            init.updateCheckerEnabled = e.currentTarget.checked;
-                                            return { ...init };
-                                        });
-                                    }}
-                                />
-                                <p>Check on Startup</p>
-                            </label>
-                            <button
-                                onClick={() => {
-                                    window.electron.ipcRenderer.send(
-                                        "checkForUpdate",
-                                        window.electron.getCurrentWindow().id,
-                                        true
-                                    );
-                                }}
-                            >
-                                Check for Update
-                            </button>
-                        </div>
-                    </div>
-                    <div className="settingItem">
-                        <div className="name">Other Settings</div>
-                        <div className="current list">
-                            <label className={appSettings.askBeforeClosing ? "selected" : ""}>
-                                <input
-                                    type="checkbox"
-                                    checked={appSettings.askBeforeClosing}
-                                    onChange={(e) => {
-                                        setAppSettings((init) => {
-                                            init.askBeforeClosing = e.currentTarget.checked;
-                                            return { ...init };
-                                        });
-                                    }}
-                                />
-                                <p>Ask before closing window? (Needs Restart).</p>
-                            </label>
-                            <label className={appSettings.skipMinorUpdate ? "selected" : ""}>
-                                <input
-                                    type="checkbox"
-                                    checked={appSettings.skipMinorUpdate}
-                                    onChange={(e) => {
-                                        setAppSettings((init) => {
-                                            init.skipMinorUpdate = e.currentTarget.checked;
-                                            return { ...init };
-                                        });
-                                    }}
-                                />
-                                <p>Skip minor updates.</p>
-                            </label>
-                            <label className={appSettings.openDirectlyFromManga ? "selected" : ""}>
-                                <input
-                                    type="checkbox"
-                                    checked={appSettings.openDirectlyFromManga}
-                                    onChange={(e) => {
-                                        setAppSettings((init) => {
-                                            init.openDirectlyFromManga = e.currentTarget.checked;
-                                            return { ...init };
-                                        });
-                                    }}
-                                />
-                                <p>
-                                    Open chapter directly by clicking name instead of arrow in reader if chapter
-                                    folder is in manga folder inside <code>default location</code>.
-                                </p>
-                            </label>
-                            <label
-                                className={
-                                    appSettings.readerSettings.disableChapterTransitionScreen ? "selected" : ""
-                                }
-                            >
-                                <input
-                                    type="checkbox"
-                                    checked={appSettings.readerSettings.disableChapterTransitionScreen}
-                                    onChange={(e) => {
-                                        setAppSettings((init) => {
-                                            init.readerSettings.disableChapterTransitionScreen =
-                                                e.currentTarget.checked;
-                                            return { ...init };
-                                        });
-                                    }}
-                                />
-                                <p>
-                                    Disable the screen that appears at start and end of chapters only in{" "}
-                                    <code>infinite scroll</code> reader mode.
-                                </p>
-                            </label>
-                            <label className={appSettings.useCanvasBasedReader ? "selected" : ""}>
-                                <input
-                                    type="checkbox"
-                                    checked={appSettings.useCanvasBasedReader}
-                                    onChange={(e) => {
-                                        setAppSettings((init) => {
-                                            init.useCanvasBasedReader = e.currentTarget.checked;
-                                            return { ...init };
-                                        });
-                                    }}
-                                />
-                                <p>
-                                    Make scrolling smooth and prevent stuttering when reading high res images.
-                                    <br />
-                                    Drawbacks include high RAM usage and less crispy images when size is set to a
-                                    low value.(BETA)
-                                </p>
-                            </label>
-                            {/* <label className={appSettings.disableCachingCanvas ? "selected" : ""}>
-                                <input
-                                    type="checkbox"
-                                    disabled={!appSettings.useCanvasBasedReader}
-                                    checked={appSettings.disableCachingCanvas}
-                                    onChange={(e) => {
-                                        setAppSettings((init) => {
-                                            init.disableCachingCanvas = e.currentTarget.checked;
-                                            return { ...init };
-                                        });
-                                    }}
-                                />
-                                <p>
-                                    Enable low RAM usage. <br />
-                                    Drawbacks include high time lag when switching <code>Reader Mode</code> or{" "}
-                                    <code>Page per Row</code>.
-                                </p>
-                            </label> */}
-                        </div>
-                    </div>
-                    {/* <div className="settingItem version">
-                        <div className="name">Others:</div>
-                        <div className="current">
-                            <label>
-                                <input type="checkbox" />
-                                <p>Show Loading Screen</p>
-                            </label>
-                        </div>
-                    </div> */}
-                </div>
+                            </div> */}
+                    </tbody>
+                </table>
                 <h1>About</h1>
-                <div className="content">
-                    <div className="settingItem">
-                        <div className="name">Version </div>
-                        <div className="current">
-                            <span>{window.electron.app.getVersion()}</span>
-                        </div>
-                    </div>
-                    <div className="settingItem">
-                        <div className="name">Home</div>
-                        <div className="current">
-                            <button
-                                onClick={() =>
-                                    window.electron.shell.openExternal(
-                                        "https://github.com/mienaiyami/react-ts-offline-manga-reader/"
-                                    )
-                                }
-                            >
-                                <FontAwesomeIcon icon={faGithub} /> Home Page
-                            </button>
-                        </div>
-                    </div>
-                    <div className="settingItem">
-                        <div className="name">Issues/Feature Request</div>
-                        <div className="current">
-                            <button
-                                // onFocus={(e) => e.currentTarget.blur()}
-                                onClick={() =>
-                                    window.electron.shell.openExternal(
-                                        "https://github.com/mienaiyami/react-ts-offline-manga-reader/issues/new/choose"
-                                    )
-                                }
-                            >
-                                <FontAwesomeIcon icon={faGithub} /> Submit Issue / Feature Request
-                            </button>
-                            <button
-                                onClick={(e) => {
-                                    const target = e.currentTarget;
-                                    target.innerText = "Copied!";
-                                    window.electron.clipboard.writeText("mienaiyami0@gmail.com");
-                                    setTimeout(() => {
-                                        target.innerText = "mienaiyami0@gmail.com";
-                                    }, 3000);
-                                }}
-                            >
-                                mienaiyami0@gmail.com
-                            </button>
-                        </div>
-                    </div>
-                    <div className="settingItem">
-                        <div className="name">Author</div>
-                        <div className="current">
-                            <button
-                                onClick={() =>
-                                    window.electron.shell.openExternal("https://github.com/mienaiyami/")
-                                }
-                            >
-                                <FontAwesomeIcon icon={faGithub} /> MienaiYami
-                            </button>
-                        </div>
-                    </div>
-                    <div className="settingItem">
-                        <div className="name">Logs</div>
-                        <div className="current">
-                            <button
-                                onClick={() =>
-                                    window.electron.shell.showItemInFolder(
-                                        window.path.join(window.electron.app.getPath("userData"), "logs/main.log")
-                                    )
-                                }
-                            >
-                                Open Logs
-                            </button>
-                            <button
-                                onClick={() =>
-                                    window.electron.shell.openExternal(
-                                        "https://github.com/mienaiyami/react-ts-offline-manga-reader/releases"
-                                    )
-                                }
-                            >
-                                Changelogs
-                            </button>
-                        </div>
-                    </div>
-                </div>
+                <table className="content">
+                    <tbody>
+                        <tr className="settingItem">
+                            <td className="name">Version </td>
+                            <td className="current">
+                                <span>{window.electron.app.getVersion()}</span>
+                            </td>
+                        </tr>
+                        <tr className="settingItem">
+                            <td className="name">Home</td>
+                            <td className="current">
+                                <button
+                                    onClick={() =>
+                                        window.electron.shell.openExternal(
+                                            "https://github.com/mienaiyami/react-ts-offline-manga-reader/"
+                                        )
+                                    }
+                                >
+                                    <FontAwesomeIcon icon={faGithub} /> Home Page
+                                </button>
+                            </td>
+                        </tr>
+                        <tr className="settingItem">
+                            <td className="name">Issues/Feature Request</td>
+                            <td className="current">
+                                <button
+                                    // onFocus={(e) => e.currentTarget.blur()}
+                                    onClick={() =>
+                                        window.electron.shell.openExternal(
+                                            "https://github.com/mienaiyami/react-ts-offline-manga-reader/issues/new/choose"
+                                        )
+                                    }
+                                >
+                                    <FontAwesomeIcon icon={faGithub} /> Submit Issue / Feature Request
+                                </button>
+                                <button
+                                    onClick={(e) => {
+                                        const target = e.currentTarget;
+                                        target.innerText = "Copied!";
+                                        window.electron.clipboard.writeText("mienaiyami0@gmail.com");
+                                        setTimeout(() => {
+                                            target.innerText = "mienaiyami0@gmail.com";
+                                        }, 3000);
+                                    }}
+                                >
+                                    mienaiyami0@gmail.com
+                                </button>
+                            </td>
+                        </tr>
+                        <tr className="settingItem">
+                            <td className="name">Author</td>
+                            <td className="current">
+                                <button
+                                    onClick={() =>
+                                        window.electron.shell.openExternal("https://github.com/mienaiyami/")
+                                    }
+                                >
+                                    <FontAwesomeIcon icon={faGithub} /> MienaiYami
+                                </button>
+                            </td>
+                        </tr>
+                        <tr className="settingItem">
+                            <td className="name">Logs</td>
+                            <td className="current">
+                                <button
+                                    onClick={() =>
+                                        window.electron.shell.showItemInFolder(
+                                            window.path.join(
+                                                window.electron.app.getPath("userData"),
+                                                "logs/main.log"
+                                            )
+                                        )
+                                    }
+                                >
+                                    Open Logs
+                                </button>
+                                <button
+                                    onClick={() =>
+                                        window.electron.shell.openExternal(
+                                            "https://github.com/mienaiyami/react-ts-offline-manga-reader/releases"
+                                        )
+                                    }
+                                >
+                                    Changelogs
+                                </button>
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
                 <h1>Features</h1>
                 <div className="content features">
                     <ul>
@@ -731,8 +759,13 @@ const Settings = (): ReactElement => {
                             <code>op</code>).
                         </li>
                         <li>
-                            In Infinite Scroll mode, on First/Last page, go to Previous/Next chapter by clicking on
-                            the Left/Right part of the screen respectively
+                            When using the <code>vertical Scroll</code> mode, you can change chapters on the first
+                            or last page by clicking on either side of the screen. No response in center 20% of
+                            screen.
+                            <ul>
+                                <li>Left &nbsp;&nbsp;= Previous Chapter</li>
+                                <li>Right = Next Chapter</li>
+                            </ul>
                         </li>
                         <li>
                             Access the side list by moving the mouse to left side of the screen. You can pin and
@@ -740,22 +773,33 @@ const Settings = (): ReactElement => {
                         </li>
                         <li>
                             Open chapter directly from the file explorer after enabling{" "}
-                            <code>File Explorer Option</code>. (Right Click on folder {"->"} Show more options{" "}
-                            {"->"} Open in Manga Reader) Note that this only opens the chapter containing images,
-                            not the Manga Folder.
+                            <code>File Explorer Option</code>.
+                            <ul>
+                                <li>
+                                    Right Click on folder or .cbz/.zip &nbsp;&nbsp;&#8594;&nbsp;&nbsp; Show more
+                                    options(win11) &nbsp;&nbsp;&#8594;&nbsp;&nbsp; Open in Manga Reader.
+                                </li>
+                                <li>
+                                    Note that this only opens the chapter containing images, not the Manga Folder.
+                                </li>
+                            </ul>
                         </li>
-                        <li>Zen Mode: Hides UI, Only shows images. (Full Screen)</li>
                         <li>
-                            Open link from home location list when it is in a directory which is in set default
-                            location. e.g. if default location is <code>D:\manga\</code> and there is folder named{" "}
-                            <code>One Piece</code> in it, then any folder which is directly under{" "}
-                            <code>One Piece</code> will open directly by clicking link itself instead of clicking
-                            arrow icon beside it. (Can be enabled from settings.);
+                            Zen Mode (Full Screen Mode): Hides UI, Only shows images and page number if enabled.{" "}
+                        </li>
+                        <li>
+                            Open chapter in reader directly if chapter is a sub-folder of sub-folder of{" "}
+                            <code>Default Location</code>.
+                            <br />
+                            Example: If the default location is set to <code>D:\manga</code> and there is a folder
+                            called <code>One Piece</code> within it, any sub-folder located directly under{" "}
+                            <code>One Piece</code> will open automatically by clicking its link in the home
+                            location list. This feature can be enabled in the settings.
                         </li>
                         <li>
                             Home screen search:
                             <ul>
-                                <li>Paste link to open directly.</li>
+                                <li>Paste link to set browser pasted link directly.</li>
                                 <li>
                                     Type <code>..\</code> to go up directory.
                                 </li>
@@ -770,7 +814,8 @@ const Settings = (): ReactElement => {
                             </ul>
                         </li>
                         <li>
-                            To use <code>max width</code> feature, disable <code>Size Clamp</code>.
+                            Limit width of images in reader. To use <code>Max Image Width</code> feature, disable{" "}
+                            <code>Size Clamp</code>.
                         </li>
                     </ul>
                 </div>
@@ -796,7 +841,7 @@ const Settings = (): ReactElement => {
                     </button>
                 </h1>
                 <div className="shortcutKey">
-                    <p>
+                    <ul>
                         <li>
                             <code>Backspace</code> to delete Key.
                         </li>
@@ -809,7 +854,7 @@ const Settings = (): ReactElement => {
                             ))}
                             .
                         </li>
-                    </p>
+                    </ul>
                     <table>
                         <tbody>
                             <tr>
@@ -926,6 +971,7 @@ const Settings = (): ReactElement => {
                         <tbody>
                             <tr>
                                 <th>Property</th>
+                                <th>Reset &nbsp;&nbsp;&nbsp;&nbsp;&nbsp; Link</th>
                                 <th>Color-Opacity / Variable</th>
                             </tr>
                             {Object.entries(allThemes.find((e) => e.name === theme)!.main).map((e) => (

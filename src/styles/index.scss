@@ -2,7 +2,6 @@
     font-family: "Roboto";
     src: url("./font/Roboto-Regular.ttf");
 }
-
 *,
 *::after,
 *::before {
@@ -141,6 +140,8 @@ body {
         padding: 2px 4px;
         border-radius: 4px;
         white-space: nowrap;
+        font-family: ui-monospace,SFMono-Regular,SF Mono,Menlo,Consolas,Liberation Mono,monospace;
+        font-size: 90%;
     }
 
 
@@ -715,7 +716,7 @@ body {
             display: grid;
             background: #0004;
             place-items: center;
-            transition: 0.3s all;
+            // transition: 0.3s all;
 
             &[data-state="open"] {
                 visibility: visible;
@@ -729,9 +730,8 @@ body {
                 visibility: hidden;
 
                 .cont {
-                    transform: scale(0);
-                    transition: .3s cubic-bezier(1, 0, 1, 1) transform;
-
+                    transform: scale(1.1);
+                    transition: .1s cubic-bezier(1, 0, 1, 1) transform;
                 }
             }
 
@@ -764,7 +764,8 @@ body {
                     top: 0;
                     background-color: inherit;
                     display: flex;
-                    gap: 20px;
+                    align-items: center;
+                    gap: 10px;
 
                     input {
                         width: auto;
@@ -773,32 +774,36 @@ body {
                     .closeBtn {
                         margin-left: auto;
                         width: 40px;
+                        height: 40px;;
                         padding: initial;
                     }
                 }
 
                 .content {
-                    display: flex;
-                    flex-direction: column;
+                    // display: flex;
+                    // flex-direction: column;
                     padding: 20px;
                     font-size: 1.4em;
+                    width: 100%;
 
                     .settingItem {
-                        display: grid;
+                        display: flex;
                         gap: 10px;
-                        grid-template-columns: 30% 70%;
+                        // grid-template-columns: 30% 70%;
                         align-items: center;
                         padding: 10px 0;
                         border-bottom: 2px solid var(--divider-color);
                         min-height: 44px;
 
                         .name {
-                            width: 100%;
+                            width: 30%;
                         }
 
                         .current {
                             display: flex;
                             flex-wrap: wrap;
+                            width: 70%;
+
                             gap: 10px;
                             justify-content: stretch;
 
@@ -873,30 +878,70 @@ body {
                     }
                 }
 
-                .features {
-                    font-size: 1em;
-                    padding: 25px;
+                ul {
+                    list-style-type: revert;
+                    margin: 4px 25px;
 
-                    ul {
-                        list-style-type: disc;
-                        margin: 4px 25px;
-
-                        li {
-                            padding: 4px 0;
-                        }
+                    li {
+                        padding: 4px 0;
+                        line-height: 1.5em;
                     }
                 }
 
+                .features {
+                    font-size: 1em;
+                    padding: 20px;
+                }
+
+
+                table:not(.content) {
+                    border-spacing: 0;
+                    width: 100%;
+
+                    th,
+                    td {
+                        width: 50%;
+                        padding: 10px 10px;
+                        display: inline-flex;
+                        gap: 10px;
+
+                        input {
+                            font-size: inherit;
+                        }
+                    }
+
+                    tr {
+                        box-shadow: inset 0 0 0px 1px var(--divider-color);
+                        // td:first-child {
+                        //     text-align: end;
+                        // }
+                    }
+                }
                 .themeMaker {
                     padding: 20px;
                     display: grid;
-                    place-items: center;
+                    // place-items: center;
 
-                    td {
+                    td,th {
                         user-select: text;
                         display: inline-flex;
                         align-items: center;
                         height: 55px;
+                        &:nth-child(1){
+                            width:40% ;
+                        }
+                        &:nth-child(2){
+                            width:15% ;
+                            display:inline-flex;
+                            align-items: center;
+                            gap: 20px;
+                            > button,label {
+                                width: 40px;
+                            }
+                        }
+                        &:nth-child(3){
+                            width:45% ;
+                        }
 
                         input[type="color"] {
                             appearance: none;
@@ -944,36 +989,12 @@ body {
                 .shortcutKey {
                     padding: 20px;
                     display: grid;
-                    place-items: center;
+                    // place-items: center;
 
                     p {
                         width: 100%;
                         padding-bottom: 10px;
                         padding-left: 20px;
-                    }
-                }
-
-                table {
-                    border-spacing: 0;
-                    width: 100%;
-
-                    th,
-                    td {
-                        width: 50%;
-                        padding: 10px 10px;
-                        display: inline-flex;
-                        gap: 20px;
-
-                        input {
-                            font-size: inherit;
-                        }
-                    }
-
-                    tr {
-                        box-shadow: inset 0 0 0px 1px var(--divider-color);
-                        // td:first-child {
-                        //     text-align: end;
-                        // }
                     }
                 }
             }
@@ -1368,7 +1389,7 @@ body {
                             }
 
                             input[type="number"] {
-                                width: 5em;
+                                width: 3em;
                                 padding: 5px;
                                 padding-right: 0;
                             }
@@ -1391,7 +1412,10 @@ body {
                                 p {
                                     font-size: 15px;
                                 }
-
+                                &.disabled{
+                                    opacity: 0.5;
+                                    pointer-events: none;
+                                }
                                 input:disabled~p {
                                     opacity: 0.5;
                                 }

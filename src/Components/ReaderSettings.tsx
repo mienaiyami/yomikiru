@@ -160,7 +160,7 @@ const ReaderSettings = ({
                     </div>
                 </div>
                 <div className="settingItem">
-                    <div className="name">Reader Type</div>
+                    <div className="name">Reading mode</div>
                     <div className="options">
                         <button
                             className={appSettings.readerSettings.readerTypeSelected === 0 ? "optionSelected" : ""}
@@ -171,7 +171,7 @@ const ReaderSettings = ({
                                 })
                             }
                         >
-                            Infinite Scroll
+                            Vertical Scroll
                         </button>
                         <button
                             className={appSettings.readerSettings.readerTypeSelected === 1 ? "optionSelected" : ""}
@@ -182,7 +182,7 @@ const ReaderSettings = ({
                                 })
                             }
                         >
-                            Click to Move
+                            Left to Right
                         </button>
                     </div>
                 </div>
@@ -288,9 +288,9 @@ const ReaderSettings = ({
                 </div>
                 <div className="settingItem">
                     <div className="name">Scroll Speed(with keys)</div>
-                    <div className="options col">
+                    <div className="options">
                         <label>
-                            Scroll_1&nbsp;:
+                            Scroll&nbsp;A&nbsp;:
                             <input
                                 type="number"
                                 min={1}
@@ -309,7 +309,7 @@ const ReaderSettings = ({
                             px
                         </label>
                         <label>
-                            Scroll_2&nbsp;:
+                            Scroll&nbsp;B&nbsp;:
                             <input
                                 type="number"
                                 min={1}
@@ -391,8 +391,11 @@ const ReaderSettings = ({
                             <p>Show Page Number in Zen Mode.</p>
                         </label>
 
-                        <label title={'Disable "Size Clamp" to enable'}>
-                            Max Width&nbsp;:
+                        <label
+                            title={'Disable "Size Clamp" to enable'}
+                            className={appSettings.readerSettings.widthClamped ? "disabled" : ""}
+                        >
+                            <p>Max Image Width&nbsp;:</p>
                             <input
                                 type="number"
                                 min={0}
