@@ -107,6 +107,21 @@ const Reader = () => {
         }
     };
     window.app.scrollToPage = scrollToPage;
+    const [imageDecodeQueue, setImageDecodeQueue] = useState<HTMLImageElement[]>([]);
+    const [currentlyDecoding, setCurrentlyDecoding] = useState(false);
+    useLayoutEffect(() => {
+        if (!currentlyDecoding && imageDecodeQueue.length > 0) {
+            setCurrentlyDecoding(true);
+            imageDecodeQueue
+                .shift()
+                ?.decode()
+                .then((e) => {
+                    setCurrentlyDecoding(false);
+                })
+                .catch((err) => console.error(err));
+        }
+    }, [currentlyDecoding, imageDecodeQueue]);
+
     useLayoutEffect(() => {
         window.app.currentPageNumber = currentPageNumber;
         // too heavy
@@ -532,7 +547,11 @@ const Reader = () => {
                     });
                 };
                 img.onload = () => {
-                    img.decode().catch((e) => console.error(e));
+                    // img.decode().catch((e) => console.error(e));
+                    setImageDecodeQueue((init) => {
+                        init.push(img);
+                        return [...init];
+                    });
                     setImagesLoaded((init) => init + 1);
                     setImageWidthContainer((init) => [
                         ...init,

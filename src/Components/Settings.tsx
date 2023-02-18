@@ -601,7 +601,7 @@ const Settings = (): ReactElement => {
                                     Make scrolling smooth and prevent stuttering when reading high res images.
                                     <br />
                                     Drawbacks include high RAM usage and less crispy images when size is set to a
-                                    low value.
+                                    low value.(BETA)
                                 </p>
                             </label>
                             {/* <label className={appSettings.disableCachingCanvas ? "selected" : ""}>

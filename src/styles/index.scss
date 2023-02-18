@@ -1436,7 +1436,7 @@ body {
                     justify-content: center;
                     width: 100%;
                     --max-width: 250%;
-                transform : translate3d(0,0,0);
+                    transform : translate3d(0,0,0);
 
 
                     &.ltr {
@@ -1459,6 +1459,7 @@ body {
                         max-width: calc(var(--max-width));
                         width: var(--varWidth);
                         transform : translate3d(0,0,0);
+                        image-orientation: none;
 
                         // min-width: 1%;
                         // image-rendering: pixelated;
