@@ -58,8 +58,9 @@ export const settingValidatorData = {
         /**
          * * `0` - Vertical scroll
          * * `1` - Left to Right
+         * * `2` - Right to Left
          */
-        readerTypeSelected: [0, 1],
+        readerTypeSelected: [0, 1, 2],
         /**
          * * `0` - One page per row.
          * * `1` - Two pages per row.
@@ -239,6 +240,7 @@ declare global {
         | "toggleFitVertically"
         | "selectReaderMode0"
         | "selectReaderMode1"
+        | "selectReaderMode2"
         | "selectPagePerRow1"
         | "selectPagePerRow2"
         | "selectPagePerRow2odd";
@@ -378,6 +380,12 @@ window.shortcutsFunctions = [
         command: "selectReaderMode1",
         name: "Reading mode - Left to Right",
         key1: "0",
+        key2: "",
+    },
+    {
+        command: "selectReaderMode2",
+        name: "Reading mode - Right to Left",
+        key1: "",
         key2: "",
     },
     {

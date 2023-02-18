@@ -184,6 +184,17 @@ const ReaderSettings = ({
                         >
                             Left to Right
                         </button>
+                        <button
+                            className={appSettings.readerSettings.readerTypeSelected === 2 ? "optionSelected" : ""}
+                            onClick={() =>
+                                setAppSettings((init) => {
+                                    init.readerSettings.readerTypeSelected = 2;
+                                    return { ...init };
+                                })
+                            }
+                        >
+                            Right to Left
+                        </button>
                     </div>
                 </div>
                 <div className="settingItem">

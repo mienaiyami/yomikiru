@@ -93,7 +93,7 @@ const Reader = () => {
                 const imgElem = document.querySelector(
                     "#reader .imgCont .readerImg[data-pagenumber='" + pageNumber + "']"
                 );
-                if (appSettings.readerSettings.readerTypeSelected === 1) {
+                if ([1, 2].includes(appSettings.readerSettings.readerTypeSelected)) {
                     const rowNumber = parseInt(imgElem?.parentElement?.getAttribute("data-imagerow") || "1");
                     setCurrentImageRow(rowNumber);
                     if (callback) setTimeout(callback, 1500);
@@ -145,6 +145,12 @@ const Reader = () => {
             if (document.fullscreenElement) document.exitFullscreen();
         }
     }, [zenMode]);
+    /**
+     * * readerType === 0 and on first/last page
+     * * * sideListPinned => `1`
+     * * * not pinned     => `2`
+     * * readerType [1,2] => 3
+     */
     const prevNextDeciderLogic = () => {
         if (appSettings.readerSettings.readerTypeSelected === 0 && imgContRef.current && readerRef.current) {
             if (isSideListPinned) {
@@ -158,7 +164,7 @@ const Reader = () => {
                 readerRef.current.scrollTop >= readerRef.current.scrollHeight - window.innerHeight * 1.5
             )
                 return 2;
-        } else if (appSettings.readerSettings.readerTypeSelected === 1) return 3;
+        } else if ([1, 2].includes(appSettings.readerSettings.readerTypeSelected)) return 3;
     };
     useLayoutEffect(() => {
         window.app.clickDelay = 100;
@@ -245,7 +251,12 @@ const Reader = () => {
                             const abc = prevNextDeciderLogic();
                             if (abc === 1) openNextChapterRef.current?.click();
                             else if (abc === 2) openNextChapterRef.current?.click();
-                            else if (abc === 3) openNextPageRef.current?.click();
+                            else if (abc === 3) {
+                                if (appSettings.readerSettings.readerTypeSelected === 1)
+                                    openNextPageRef.current?.click();
+                                if (appSettings.readerSettings.readerTypeSelected === 2)
+                                    openPrevPageRef.current?.click();
+                            }
                             break;
                         }
                         case shortcutkey.scrollDown?.key1:
@@ -257,7 +268,12 @@ const Reader = () => {
                             const abc = prevNextDeciderLogic();
                             if (abc === 1) openPrevChapterRef.current?.click();
                             else if (abc === 2) openPrevChapterRef.current?.click();
-                            else if (abc === 3) openPrevPageRef.current?.click();
+                            else if (abc === 3) {
+                                if (appSettings.readerSettings.readerTypeSelected === 2)
+                                    openNextPageRef.current?.click();
+                                if (appSettings.readerSettings.readerTypeSelected === 1)
+                                    openPrevPageRef.current?.click();
+                            }
                             break;
                         }
                         case shortcutkey.scrollUp?.key1:
@@ -698,28 +714,35 @@ const Reader = () => {
                 const abc = prevNextDeciderLogic();
                 if (abc === 1) {
                     const clickPos = ((e.clientX - sideListWidth) / e.currentTarget.offsetWidth) * 100;
-                    if (clickPos <= 20) openPrevChapterRef.current?.click();
-                    if (clickPos > 80) openNextChapterRef.current?.click();
+                    if (clickPos <= 40) openPrevChapterRef.current?.click();
+                    if (clickPos > 60) openNextChapterRef.current?.click();
                 } else if (abc === 2) {
                     const clickPos = (e.clientX / e.currentTarget.offsetWidth) * 100;
-                    if (clickPos <= 20) openPrevChapterRef.current?.click();
-                    if (clickPos > 80) openNextChapterRef.current?.click();
+                    if (clickPos <= 40) openPrevChapterRef.current?.click();
+                    if (clickPos > 60) openNextChapterRef.current?.click();
                 } else if (abc === 3) {
                     const clickPos =
                         ((e.clientX - (isSideListPinned ? sideListWidth : 0)) / e.currentTarget.offsetWidth) * 100;
-                    if (clickPos <= 40) openPrevPageRef.current?.click();
-                    if (clickPos > 60) openNextPageRef.current?.click();
+
+                    if (appSettings.readerSettings.readerTypeSelected === 1) {
+                        if (clickPos <= 40) openPrevPageRef.current?.click();
+                        if (clickPos > 60) openNextPageRef.current?.click();
+                    }
+                    if (appSettings.readerSettings.readerTypeSelected === 2) {
+                        if (clickPos <= 40) openNextPageRef.current?.click();
+                        if (clickPos > 60) openPrevPageRef.current?.click();
+                    }
                 }
 
-                const clickPos =
-                    ((e.clientX - (isSideListPinned ? sideListWidth : 0)) / e.currentTarget.offsetWidth) * 100;
-                if (appSettings.readerSettings.readerTypeSelected === 0) {
-                    if (clickPos <= 40) openPrevChapterRef.current?.click();
-                    if (clickPos > 60) openNextChapterRef.current?.click();
-                } else {
-                    if (clickPos <= 40) openPrevPageRef.current?.click();
-                    if (clickPos > 60) openNextPageRef.current?.click();
-                }
+                // const clickPos =
+                //     ((e.clientX - (isSideListPinned ? sideListWidth : 0)) / e.currentTarget.offsetWidth) * 100;
+                // if (appSettings.readerSettings.readerTypeSelected === 0) {
+                //     if (clickPos <= 40) openPrevChapterRef.current?.click();
+                //     if (clickPos > 60) openNextChapterRef.current?.click();
+                // } else {
+                //     if (clickPos <= 40) openPrevPageRef.current?.click();
+                //     if (clickPos > 60) openNextPageRef.current?.click();
+                // }
             }}
         >
             <div className="wrapper">
@@ -840,7 +863,7 @@ const Reader = () => {
                 className={
                     "imgCont " +
                     (appSettings.readerSettings.gapBetweenRows ? "gap " : "") +
-                    (appSettings.readerSettings.readerTypeSelected === 1 ? "readerMode1 " : "") +
+                    ([1, 2].includes(appSettings.readerSettings.readerTypeSelected) ? "readerMode1n2 " : "") +
                     (appSettings.readerSettings.fitVertically ? "fitVertically " : "")
                 }
                 style={{
@@ -870,8 +893,14 @@ const Reader = () => {
                         const clickPos =
                             ((e.clientX - (isSideListPinned ? sideListWidth : 0)) / e.currentTarget.offsetWidth) *
                             100;
-                        if (clickPos <= 40) openPrevPageRef.current?.click();
-                        if (clickPos > 60) openNextPageRef.current?.click();
+                        if (appSettings.readerSettings.readerTypeSelected === 1) {
+                            if (clickPos <= 40) openPrevPageRef.current?.click();
+                            if (clickPos > 60) openNextPageRef.current?.click();
+                        }
+                        if (appSettings.readerSettings.readerTypeSelected === 2) {
+                            if (clickPos <= 40) openNextPageRef.current?.click();
+                            if (clickPos > 60) openPrevPageRef.current?.click();
+                        }
                     }
                 }}
             >
@@ -886,12 +915,11 @@ const Reader = () => {
                         }
                         data-imagerow={i + 1}
                         style={{
-                            display:
-                                appSettings.readerSettings.readerTypeSelected === 1
-                                    ? currentImageRow === i + 1
-                                        ? "flex"
-                                        : "none"
-                                    : "flex",
+                            display: [1, 2].includes(appSettings.readerSettings.readerTypeSelected)
+                                ? currentImageRow === i + 1
+                                    ? "flex"
+                                    : "none"
+                                : "flex",
                             "--max-width":
                                 appSettings.readerSettings.maxWidth === 0
                                     ? "500%"
