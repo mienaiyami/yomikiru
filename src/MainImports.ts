@@ -411,6 +411,7 @@ window.logger = log;
 window.crossZip = crossZip;
 const collator = Intl.Collator(undefined, { numeric: true, sensitivity: "base" });
 window.app.betterSortOrder = collator.compare;
+window.app.deleteDirOnClose = "";
 window.app.currentPageNumber = 1;
 window.app.randomString = (length: number) => {
     let result = "";

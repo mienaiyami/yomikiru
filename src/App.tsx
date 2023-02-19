@@ -527,13 +527,14 @@ const App = (): ReactElement => {
         );
     };
     const updateLastHistoryPageNumber = () => {
-        setHistory((init) => {
-            if (init[0].link === linkInReader.link || linkInReader.link === "") {
-                init[0].page = window.app.currentPageNumber;
-                return [...init];
-            }
-            return init;
-        });
+        if (history.length > 0)
+            setHistory((init) => {
+                if (init[0].link === linkInReader.link || linkInReader.link === "") {
+                    init[0].page = window.app.currentPageNumber;
+                    return [...init];
+                }
+                return init;
+            });
     };
     const closeReader = () => {
         updateLastHistoryPageNumber();

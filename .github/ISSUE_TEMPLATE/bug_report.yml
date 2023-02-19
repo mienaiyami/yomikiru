@@ -7,6 +7,15 @@ body:
   attributes:
     value: Please make sure to [search for existing issues](https://github.com/mienaiyami/yomikiru/issues) before filing a new one!
 
+- type: dropdown
+  attributes:
+    label: Setup or portable version of the app?
+    options:
+      - Setup
+      - Portable
+  validations:
+    required: true
+
 - type: textarea
   attributes:
     label: Steps to reproduce

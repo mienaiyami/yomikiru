@@ -10,20 +10,9 @@
 
 App name will be changing to "Yomikiru".
 
-## Added
-
-- Added canvas as image option to make stutter-free reader. Enable from settings.
-- New reading mode "Right to Left".
-
-## Changed
-
-- Less stutter when scrolling in normal image mode.
-- UI Enhancements.
-
 ## Fixed
 
-- prev/next chapter not working when folder contain zip/cbz.
-- Linking not working in theme maker.
+- Window became blank on closing when "Ask before closing window" is enabled.
 
 ---
 
