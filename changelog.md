@@ -12,7 +12,7 @@ App name will be changing to "Yomikiru".
 
 ## Fixed
 
-- Window became blank on closing when "Ask before closing window" is enabled.
+- Window became blank on closing when "Ask before closing window" is enabled and history is empty.
 
 ---
 
