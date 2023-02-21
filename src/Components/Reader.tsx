@@ -925,11 +925,13 @@ const Reader = () => {
                                     : "none"
                                 : "flex",
                             "--max-width":
-                                appSettings.readerSettings.maxHeightWidthSelector === "width"
+                                appSettings.readerSettings.maxHeightWidthSelector === "width" &&
+                                !appSettings.readerSettings.widthClamped
                                     ? appSettings.readerSettings.maxWidth + "px"
                                     : "500%",
                             "--max-height":
-                                appSettings.readerSettings.maxHeightWidthSelector === "height"
+                                appSettings.readerSettings.maxHeightWidthSelector === "height" &&
+                                !appSettings.readerSettings.widthClamped
                                     ? appSettings.readerSettings.maxHeight + "px"
                                     : "auto",
                         }}
