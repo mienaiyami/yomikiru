@@ -529,7 +529,10 @@ const App = (): ReactElement => {
     const updateLastHistoryPageNumber = () => {
         if (history.length > 0)
             setHistory((init) => {
-                if (init[0].link === linkInReader.link || linkInReader.link === "") {
+                if (
+                    (init.length > 0 && init[0] && init[0].link && init[0].link === linkInReader.link) ||
+                    linkInReader.link === ""
+                ) {
                     init[0].page = window.app.currentPageNumber;
                     return [...init];
                 }
@@ -607,7 +610,7 @@ const App = (): ReactElement => {
             );
         });
         window.electron.ipcRenderer.on("recordPageNumber", () => {
-            updateLastHistoryPageNumber();
+            if (isReaderOpen) closeReader();
         });
         window.app.titleBarHeight = parseFloat(
             window.getComputedStyle(document.body).getPropertyValue("--titleBar-height")
