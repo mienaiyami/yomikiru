@@ -80,7 +80,14 @@ export const settingValidatorData = {
          * * `1` - rtl
          */
         readingSide: [0, 1],
-        fitVertically: false,
+        // fitVertically: false,
+        /**
+         * * `0` - None
+         * * `1` - Fit Vertically
+         * * `2` - Fit Horizontally
+         * * `3` - 1:1
+         */
+        fitOption: [0, 1, 2, 3],
         disableChapterTransitionScreen: false,
         maxWidth: 0,
     },
@@ -237,7 +244,7 @@ declare global {
         | "scrollDown"
         | "scrollUp"
         | "showHidePageNumberInZen"
-        | "toggleFitVertically"
+        | "cycleFitOptions"
         | "selectReaderMode0"
         | "selectReaderMode1"
         | "selectReaderMode2"
@@ -365,8 +372,8 @@ window.shortcutsFunctions = [
         key2: "",
     },
     {
-        command: "toggleFitVertically",
-        name: "Toggle Fit Vertically",
+        command: "cycleFitOptions",
+        name: "Cycle through fit options",
         key1: "v",
         key2: "",
     },

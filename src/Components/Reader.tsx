@@ -288,10 +288,12 @@ const Reader = () => {
                                 return { ...init };
                             });
                             break;
-                        case shortcutkey.toggleFitVertically?.key1:
-                        case shortcutkey.toggleFitVertically?.key2:
+                        case shortcutkey.cycleFitOptions?.key1:
+                        case shortcutkey.cycleFitOptions?.key2:
                             setAppSettings((init) => {
-                                init.readerSettings.fitVertically = !init.readerSettings.fitVertically;
+                                // todo: display current mode in middle of screen and fade
+                                init.readerSettings.fitOption += 1;
+                                if (init.readerSettings.fitOption === 4) init.readerSettings.fitOption = 0;
                                 return { ...init };
                             });
                             break;
@@ -652,7 +654,7 @@ const Reader = () => {
         // scrollToPage(currentPageNumber, "auto");
     }, [
         appSettings.readerSettings.readerTypeSelected,
-        appSettings.readerSettings.fitVertically,
+        appSettings.readerSettings.fitOption,
         appSettings.readerSettings.pagesPerRowSelected,
     ]);
     useEffect(() => {
@@ -862,9 +864,11 @@ const Reader = () => {
                 ref={imgContRef}
                 className={
                     "imgCont " +
-                    (appSettings.readerSettings.gapBetweenRows ? "gap " : "") +
-                    ([1, 2].includes(appSettings.readerSettings.readerTypeSelected) ? "readerMode1n2 " : "") +
-                    (appSettings.readerSettings.fitVertically ? "fitVertically " : "")
+                        (appSettings.readerSettings.gapBetweenRows ? "gap " : "") +
+                        ([1, 2].includes(appSettings.readerSettings.readerTypeSelected) ? "readerMode1n2 " : "") +
+                        ["", "fitVertically", "fitHorizontally", "original"].at(
+                            appSettings.readerSettings.fitOption
+                        ) ?? ""
                 }
                 style={{
                     "--varWidth": appSettings.readerSettings.readerWidth + "%",

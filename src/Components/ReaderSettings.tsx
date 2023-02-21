@@ -1,4 +1,4 @@
-import { faBars, faMinus, faPlus, faTimes, faArrowsAltV } from "@fortawesome/free-solid-svg-icons";
+import { faBars, faMinus, faPlus, faTimes, faArrowsAltV, faArrowsAltH } from "@fortawesome/free-solid-svg-icons";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import React, { useContext, useEffect, useState } from "react";
 import { AppContext } from "../App";
@@ -145,17 +145,50 @@ const ReaderSettings = ({
                             />
                             Clamp
                         </label>
+                    </div>
+                </div>
+                <div className="settingItem">
+                    <div className="name">Fit options</div>
+                    <div className="options">
                         <button
-                            className={appSettings.readerSettings.fitVertically ? "optionSelected " : " "}
+                            className={appSettings.readerSettings.fitOption === 1 ? "optionSelected " : " "}
                             onClick={() => {
                                 setAppSettings((init) => {
-                                    init.readerSettings.fitVertically = !init.readerSettings.fitVertically;
+                                    if (init.readerSettings.fitOption === 1) init.readerSettings.fitOption = 0;
+                                    else init.readerSettings.fitOption = 1;
                                     return { ...init };
                                 });
                             }}
                             title="Fit Vertically"
                         >
                             <FontAwesomeIcon icon={faArrowsAltV} />
+                        </button>
+                        <button
+                            className={appSettings.readerSettings.fitOption === 2 ? "optionSelected " : " "}
+                            onClick={() => {
+                                setAppSettings((init) => {
+                                    if (init.readerSettings.fitOption === 2) init.readerSettings.fitOption = 0;
+                                    else init.readerSettings.fitOption = 2;
+                                    return { ...init };
+                                });
+                            }}
+                            title="Fit Horizontally"
+                        >
+                            <FontAwesomeIcon icon={faArrowsAltH} />
+                        </button>
+                        <button
+                            className={appSettings.readerSettings.fitOption === 3 ? "optionSelected " : " "}
+                            onClick={() => {
+                                setAppSettings((init) => {
+                                    if (init.readerSettings.fitOption === 3) init.readerSettings.fitOption = 0;
+                                    else init.readerSettings.fitOption = 3;
+                                    return { ...init };
+                                });
+                            }}
+                            title="Original"
+                            style={{ fontWeight: "bold" }}
+                        >
+                            1:1
                         </button>
                     </div>
                 </div>

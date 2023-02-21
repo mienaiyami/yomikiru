@@ -95,6 +95,14 @@ body.zenMode {
                     height: 100vh;
 
                 }
+                // &.fitHorizontally .row .readerImg {
+                //     width: 100%;
+                //     height: auto !important;
+                // }
+                // &.original .row .readerImg {
+                //     width: auto !important;
+                //     height: auto !important;
+                // }
             }
         }
     }
@@ -1445,7 +1453,18 @@ body {
                 &.fitVertically .row .readerImg {
                     width: auto !important;
                     height: var(--body-height);
-
+                }
+                &.fitHorizontally .row .readerImg {
+                    width: 100%;
+                    height: auto !important;
+                }
+                &.fitHorizontally .row.twoPagePerRow .readerImg {
+                    width: auto !important;
+                    height: auto !important;
+                }
+                &.original .row .readerImg {
+                    width: auto !important;
+                    height: auto !important;
                 }
 
                 &.gap {
@@ -1497,7 +1516,6 @@ body {
                             max-width: calc(var(--max-width) / 2);
                             width: calc(var(--varWidth) / 2);
                         }
-
                         &.wide {
                             .readerImg {
                                 max-width: clc(var(--max-width));
