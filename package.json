@@ -1,7 +1,7 @@
 {
     "name": "yomikiru",
     "productName": "Yomikiru",
-    "version": "2.7.1",
+    "version": "2.7.2",
     "description": "App to read manga on desktop",
     "main": ".webpack/main",
     "author": {
