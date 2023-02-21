@@ -1,4 +1,12 @@
-import { faBars, faMinus, faPlus, faTimes, faArrowsAltV, faArrowsAltH } from "@fortawesome/free-solid-svg-icons";
+import {
+    faBars,
+    faMinus,
+    faPlus,
+    faTimes,
+    faArrowsAltV,
+    faArrowsAltH,
+    faExpandArrowsAlt,
+} from "@fortawesome/free-solid-svg-icons";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import React, { useContext, useEffect, useState } from "react";
 import { AppContext } from "../App";
@@ -150,46 +158,146 @@ const ReaderSettings = ({
                 <div className="settingItem">
                     <div className="name">Fit options</div>
                     <div className="options">
-                        <button
-                            className={appSettings.readerSettings.fitOption === 1 ? "optionSelected " : " "}
-                            onClick={() => {
-                                setAppSettings((init) => {
-                                    if (init.readerSettings.fitOption === 1) init.readerSettings.fitOption = 0;
-                                    else init.readerSettings.fitOption = 1;
-                                    return { ...init };
-                                });
-                            }}
-                            title="Fit Vertically"
-                        >
-                            <FontAwesomeIcon icon={faArrowsAltV} />
-                        </button>
-                        <button
-                            className={appSettings.readerSettings.fitOption === 2 ? "optionSelected " : " "}
-                            onClick={() => {
-                                setAppSettings((init) => {
-                                    if (init.readerSettings.fitOption === 2) init.readerSettings.fitOption = 0;
-                                    else init.readerSettings.fitOption = 2;
-                                    return { ...init };
-                                });
-                            }}
-                            title="Fit Horizontally"
-                        >
-                            <FontAwesomeIcon icon={faArrowsAltH} />
-                        </button>
-                        <button
-                            className={appSettings.readerSettings.fitOption === 3 ? "optionSelected " : " "}
-                            onClick={() => {
-                                setAppSettings((init) => {
-                                    if (init.readerSettings.fitOption === 3) init.readerSettings.fitOption = 0;
-                                    else init.readerSettings.fitOption = 3;
-                                    return { ...init };
-                                });
-                            }}
-                            title="Original"
-                            style={{ fontWeight: "bold" }}
-                        >
-                            1:1
-                        </button>
+                        <div className="row">
+                            <button
+                                className={appSettings.readerSettings.fitOption === 0 ? "optionSelected " : " "}
+                                onClick={() => {
+                                    setAppSettings((init) => {
+                                        init.readerSettings.fitOption = 0;
+                                        return { ...init };
+                                    });
+                                }}
+                                title="Free"
+                            >
+                                <FontAwesomeIcon icon={faExpandArrowsAlt} />
+                            </button>
+                            <button
+                                className={appSettings.readerSettings.fitOption === 1 ? "optionSelected " : " "}
+                                onClick={() => {
+                                    setAppSettings((init) => {
+                                        if (init.readerSettings.fitOption === 1) init.readerSettings.fitOption = 0;
+                                        else init.readerSettings.fitOption = 1;
+                                        return { ...init };
+                                    });
+                                }}
+                                title="Fit Vertically"
+                            >
+                                <FontAwesomeIcon icon={faArrowsAltV} />
+                            </button>
+                            <button
+                                className={appSettings.readerSettings.fitOption === 2 ? "optionSelected " : " "}
+                                onClick={() => {
+                                    setAppSettings((init) => {
+                                        if (init.readerSettings.fitOption === 2) init.readerSettings.fitOption = 0;
+                                        else init.readerSettings.fitOption = 2;
+                                        return { ...init };
+                                    });
+                                }}
+                                title="Fit Horizontally"
+                            >
+                                <FontAwesomeIcon icon={faArrowsAltH} />
+                            </button>
+                            <button
+                                className={appSettings.readerSettings.fitOption === 3 ? "optionSelected " : " "}
+                                onClick={() => {
+                                    setAppSettings((init) => {
+                                        if (init.readerSettings.fitOption === 3) init.readerSettings.fitOption = 0;
+                                        else init.readerSettings.fitOption = 3;
+                                        return { ...init };
+                                    });
+                                }}
+                                title="Original"
+                                style={{ fontWeight: "bold" }}
+                            >
+                                1:1
+                            </button>
+                        </div>
+                        <div className="col">
+                            <label
+                                className={
+                                    (appSettings.readerSettings.maxHeightWidthSelector === "width"
+                                        ? "optionSelected "
+                                        : "") +
+                                    (appSettings.readerSettings.widthClamped ||
+                                    appSettings.readerSettings.fitOption !== 0
+                                        ? "disabled "
+                                        : "")
+                                }
+                            >
+                                <input
+                                    type="checkbox"
+                                    checked={appSettings.readerSettings.maxHeightWidthSelector === "width"}
+                                    onChange={() => {
+                                        setAppSettings((init) => {
+                                            if (init.readerSettings.maxHeightWidthSelector !== "width")
+                                                init.readerSettings.maxHeightWidthSelector = "width";
+                                            else init.readerSettings.maxHeightWidthSelector = "none";
+                                            return { ...init };
+                                        });
+                                    }}
+                                />
+                                <p>Max Image Width&nbsp;&nbsp;:</p>
+                                <input
+                                    type="number"
+                                    min={0}
+                                    max={5000}
+                                    value={appSettings.readerSettings.maxWidth}
+                                    disabled={appSettings.readerSettings.maxHeightWidthSelector !== "width"}
+                                    onChange={(e) => {
+                                        setAppSettings((init) => {
+                                            let value = e.currentTarget.valueAsNumber;
+                                            if (value > 5000) value = 5000;
+                                            if (value < 0) value = 0;
+                                            init.readerSettings.maxWidth = value;
+                                            return { ...init };
+                                        });
+                                    }}
+                                />
+                                px
+                            </label>
+                            <label
+                                className={
+                                    (appSettings.readerSettings.maxHeightWidthSelector === "height"
+                                        ? "optionSelected "
+                                        : "") +
+                                    (appSettings.readerSettings.widthClamped ||
+                                    appSettings.readerSettings.fitOption !== 0
+                                        ? "disabled "
+                                        : "")
+                                }
+                            >
+                                <input
+                                    type="checkbox"
+                                    checked={appSettings.readerSettings.maxHeightWidthSelector === "height"}
+                                    onChange={(e) => {
+                                        setAppSettings((init) => {
+                                            if (init.readerSettings.maxHeightWidthSelector !== "height")
+                                                init.readerSettings.maxHeightWidthSelector = "height";
+                                            else init.readerSettings.maxHeightWidthSelector = "none";
+                                            return { ...init };
+                                        });
+                                    }}
+                                />
+                                <p>Max Image Height&nbsp;:</p>
+                                <input
+                                    type="number"
+                                    min={0}
+                                    max={5000}
+                                    value={appSettings.readerSettings.maxHeight}
+                                    disabled={appSettings.readerSettings.maxHeightWidthSelector !== "height"}
+                                    onChange={(e) => {
+                                        setAppSettings((init) => {
+                                            let value = e.currentTarget.valueAsNumber;
+                                            if (value > 5000) value = 5000;
+                                            if (value < 0) value = 0;
+                                            init.readerSettings.maxHeight = value;
+                                            return { ...init };
+                                        });
+                                    }}
+                                />
+                                px
+                            </label>
+                        </div>
                     </div>
                 </div>
                 <div className="settingItem">
@@ -438,30 +546,6 @@ const ReaderSettings = ({
                                 }}
                             />
                             <p>Show Page Number in Zen Mode.</p>
-                        </label>
-
-                        <label
-                            title={'Disable "Size Clamp" to enable'}
-                            className={appSettings.readerSettings.widthClamped ? "disabled" : ""}
-                        >
-                            <p>Max Image Width&nbsp;:</p>
-                            <input
-                                type="number"
-                                min={0}
-                                max={5000}
-                                value={appSettings.readerSettings.maxWidth}
-                                disabled={appSettings.readerSettings.widthClamped}
-                                onChange={(e) => {
-                                    setAppSettings((init) => {
-                                        let value = e.currentTarget.valueAsNumber;
-                                        if (value > 5000) value = 5000;
-                                        if (value < 0) value = 0;
-                                        init.readerSettings.maxWidth = value;
-                                        return { ...init };
-                                    });
-                                }}
-                            />
-                            px
                         </label>
                     </div>
                 </div>

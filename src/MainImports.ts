@@ -89,7 +89,12 @@ export const settingValidatorData = {
          */
         fitOption: [0, 1, 2, 3],
         disableChapterTransitionScreen: false,
-        maxWidth: 0,
+        /**
+         * Decide which is enabled, maxWidth or maxHeight
+         */
+        maxHeightWidthSelector: ["none", "width", "height"],
+        maxWidth: 500,
+        maxHeight: 500,
     },
 } as const;
 

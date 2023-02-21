@@ -57,7 +57,9 @@ const makeSettingsJson = (locations?: string[]) => {
             // fitVertically: false,
             fitOption: 0,
             disableChapterTransitionScreen: false,
-            maxWidth: 0,
+            maxHeightWidthSelector: "none",
+            maxHeight: 500,
+            maxWidth: 500,
         },
     };
     if (locations) {
@@ -145,6 +147,8 @@ function isSettingsValid(): { isValid: boolean; location: string[] } {
                     return;
                 }
                 if (value2 instanceof Array) {
+                    // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+                    //@ts-ignore
                     if (!value2.includes(settings[key][key2])) {
                         output.isValid = false;
                         output.location.push(`${key}.${key2}`);

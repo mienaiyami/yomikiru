@@ -1391,7 +1391,16 @@ body {
                             .optionSelected {
                                 background-color: var(--btn-color2);
                             }
-
+                            .row{
+                                display: flex;
+                                flex-direction: row;
+                                gap: 5px;
+                            }
+                            .col{
+                                display: flex;
+                                flex-direction: column;
+                                gap: 5px;
+                            }
                             &.col {
                                 flex-direction: column;
                             }
@@ -1459,7 +1468,7 @@ body {
                     height: auto !important;
                 }
                 &.fitHorizontally .row.twoPagePerRow .readerImg {
-                    width: auto !important;
+                    width: 50% !important;
                     height: auto !important;
                 }
                 &.original .row .readerImg {
@@ -1476,6 +1485,7 @@ body {
                     justify-content: center;
                     width: 100%;
                     --max-width: 250%;
+                    --max-height: auto;
                     transform : translate3d(0,0,0);
 
 
@@ -1497,6 +1507,7 @@ body {
 
                     .readerImg {
                         max-width: calc(var(--max-width));
+                        max-height: var(--max-height);
                         width: var(--varWidth);
                         transform : translate3d(0,0,0);
                         image-orientation: none;

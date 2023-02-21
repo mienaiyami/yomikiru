@@ -925,9 +925,13 @@ const Reader = () => {
                                     : "none"
                                 : "flex",
                             "--max-width":
-                                appSettings.readerSettings.maxWidth === 0
-                                    ? "500%"
-                                    : appSettings.readerSettings.maxWidth + "px",
+                                appSettings.readerSettings.maxHeightWidthSelector === "width"
+                                    ? appSettings.readerSettings.maxWidth + "px"
+                                    : "500%",
+                            "--max-height":
+                                appSettings.readerSettings.maxHeightWidthSelector === "height"
+                                    ? appSettings.readerSettings.maxHeight + "px"
+                                    : "auto",
                         }}
                         key={i}
                     ></div>
