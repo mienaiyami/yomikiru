@@ -18,7 +18,7 @@ const LocationListItem = ({
     const { openInReader, appSettings } = useContext(AppContext);
     const { showContextMenu } = useContext(MainContext);
     return (
-        <li className={inHistory ? "already-read" : ""}>
+        <li className={inHistory ? "alreadyRead" : ""}>
             <a
                 className="a-context"
                 title={name}

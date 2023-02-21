@@ -1,5 +1,5 @@
 /* eslint-disable @typescript-eslint/no-non-null-assertion */
-import React, { createContext, ReactElement, useContext, useLayoutEffect, useRef, useState } from "react";
+import { createContext, ReactElement, useContext, useLayoutEffect, useRef, useState } from "react";
 import { AppContext } from "../App";
 import BookmarkTab from "./BookmarkTab";
 import ContextMenu from "./ContextMenu";

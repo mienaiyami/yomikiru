@@ -13,7 +13,7 @@ const HistoryTab = (): ReactElement => {
             id="historyTab"
         >
             <h2>
-                History
+                Continue Reading
                 <button
                     // onFocus={(e) => e.currentTarget.blur()}
                     onClick={() => {

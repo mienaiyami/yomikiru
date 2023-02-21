@@ -297,50 +297,6 @@ const Settings = (): ReactElement => {
                                 </button>
                             </td>
                         </tr>
-                        <tr className="settingItem">
-                            <td className="name">History Limit</td>
-                            <td className="current">
-                                <input
-                                    type="number"
-                                    defaultValue={appSettings.historyLimit}
-                                    ref={historyInputRef}
-                                    onKeyDown={(e) => {
-                                        e.stopPropagation();
-                                        if (e.key === "Enter") {
-                                            historyBtnRef.current?.click();
-                                        }
-                                    }}
-                                    readOnly={true}
-                                />
-                                <button
-                                    data-type="enable"
-                                    // onFocus={(e) => e.currentTarget.blur()}
-                                    ref={historyBtnRef}
-                                    onClick={(e) => {
-                                        if (e.currentTarget.getAttribute("data-type") === "enable") {
-                                            historyInputRef.current?.removeAttribute("readonly");
-                                            historyInputRef.current?.focus();
-                                            e.currentTarget.textContent = "Confirm";
-                                            e.currentTarget.setAttribute("data-type", "set");
-                                            e.currentTarget.classList.add("enabled");
-                                        } else if (e.currentTarget.getAttribute("data-type") === "set") {
-                                            setAppSettings((init) => {
-                                                if (historyInputRef.current) {
-                                                    init.historyLimit = parseInt(historyInputRef.current.value);
-                                                }
-                                                return { ...init };
-                                            });
-                                            historyInputRef.current?.setAttribute("readonly", "true");
-                                            e.currentTarget.textContent = "Change Default";
-                                            e.currentTarget.setAttribute("data-type", "enable");
-                                            e.currentTarget.classList.remove("enabled");
-                                        }
-                                    }}
-                                >
-                                    Change Default
-                                </button>
-                            </td>
-                        </tr>
                         <tr className="settingItem exportBookmark">
                             <td className="name">Bookmarks</td>
                             <td className="current">

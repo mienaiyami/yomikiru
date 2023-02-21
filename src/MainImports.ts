@@ -34,7 +34,6 @@ export const settingValidatorData = {
     bookmarksPath: "",
     historyPath: "",
     baseDir: "",
-    historyLimit: 0,
     locationListSortType: ["normal", "inverse"],
     /**
      * Check for new update on start of app.
@@ -223,6 +222,14 @@ declare global {
     }
     interface ChapterItem extends ListItem {
         page: number;
+    }
+    interface HistoryItem extends ChapterItem {
+        /**
+         * Set of chapter names already read under same manga.
+         */
+        chaptersRead: string[];
+        // chaptersRead:Set<string>;
+        mangaLink: string;
     }
     interface ListItemE extends ChapterItem {
         index: number;

@@ -54,7 +54,7 @@ const ReaderSideList = ({
     const [isListOpen, setListOpen] = useState(false);
     const [preventListClose, setpreventListClose] = useState(false);
     const prevMangaRef = useRef<string>("");
-    const [historySimple, sethistorySimple] = useState(history.map((e) => e.link));
+    const [historySimple, sethistorySimple] = useState<string[]>([]);
     const [draggingResizer, setDraggingResizer] = useState(false);
 
     //TODO: useless rn
@@ -64,7 +64,10 @@ const ReaderSideList = ({
         setpreventListClose(true);
     }, [isContextMenuOpen]);
     useEffect(() => {
-        sethistorySimple(history.map((e) => e.link));
+        if (mangaInReader) {
+            const historyItem = history.find((e) => e.mangaLink === window.path.dirname(mangaInReader.link));
+            if (historyItem) sethistorySimple(historyItem.chaptersRead);
+        }
     }, [history]);
     useLayoutEffect(() => {
         if (isSideListPinned) {
@@ -160,7 +163,7 @@ const ReaderSideList = ({
                 return (
                     <ReaderSideListItem
                         name={e.name}
-                        alreadyRead={historySimple.includes(link)}
+                        alreadyRead={historySimple.includes(e.name)}
                         key={e.name}
                         pages={e.pages}
                         current={current}

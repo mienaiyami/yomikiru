@@ -493,13 +493,20 @@ const Reader = () => {
         };
         setMangaInReader(mangaOpened);
         setHistory((init) => {
-            if (init.length > 0 && init[0].link === mangaOpened.link) {
-                init.shift();
+            let index = -1;
+            if (init.length > 0) index = init.findIndex((e) => e.mangaLink === window.path.dirname(link));
+            let chaptersRead = new Set<string>();
+            if (index > -1) {
+                chaptersRead = new Set(init[index].chaptersRead);
+                init.splice(index, 1);
             }
-            init.unshift({ ...mangaOpened, page: linkInReader.page });
-            if (init.length >= appSettings.historyLimit) {
-                init.length = appSettings.historyLimit;
-            }
+            chaptersRead.add(mangaOpened.chapterName);
+            init.unshift({
+                ...mangaOpened,
+                page: linkInReader.page,
+                mangaLink: window.path.dirname(link),
+                chaptersRead: Array.from(chaptersRead),
+            });
             return [...init];
         });
         setImagesLength(imgs.length);

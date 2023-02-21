@@ -15,7 +15,7 @@ const LocationsTab = forwardRef(
         },
         ref: React.ForwardedRef<HTMLDivElement>
     ): ReactElement => {
-        const { openInReader } = useContext(AppContext);
+        const { openInReader, history } = useContext(AppContext);
         const [locations, setLocations] = useState<string[]>([]);
         const [isLoadingFile, setIsLoadingFile] = useState(true);
         const [filter, setFilter] = useState<string>("");
@@ -73,7 +73,11 @@ const LocationsTab = forwardRef(
                         <LocationListItem
                             name={e}
                             link={window.path.join(currentLink, e)}
-                            inHistory={false}
+                            inHistory={
+                                history
+                                    .find((e) => e.mangaLink.toLowerCase() === currentLink.toLowerCase())
+                                    ?.chaptersRead.includes(e) ?? false
+                            }
                             key={e}
                             setCurrentLink={setCurrentLink}
                         />

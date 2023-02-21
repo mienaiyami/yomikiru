@@ -484,7 +484,12 @@ const ReaderSettings = ({
                 <div className="settingItem">
                     <div className="name">Other settings</div>
                     <div className="options col">
-                        <label className={appSettings.readerSettings.variableImageSize ? "optionSelected" : ""}>
+                        <label
+                            className={
+                                (appSettings.readerSettings.variableImageSize ? "optionSelected " : "") +
+                                (appSettings.readerSettings.pagesPerRowSelected !== 0 ? "disabled" : "")
+                            }
+                        >
                             <input
                                 type="checkbox"
                                 disabled={appSettings.readerSettings.pagesPerRowSelected !== 0}

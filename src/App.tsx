@@ -13,7 +13,7 @@ const settingsPath = window.path.join(userDataURL, "settings.json");
 const bookmarksPath = window.path.join(userDataURL, "bookmarks.json");
 const bookmarkDataInit: ChapterItem[] = [];
 const historyPath = window.path.join(userDataURL, "history.json");
-const historyDataInit: ChapterItem[] = [];
+const historyDataInit: HistoryItem[] = [];
 const themesPath = window.path.join(userDataURL, "themes.json");
 const themesMain: ThemeData[] = [];
 const shortcutsPath = window.path.join(userDataURL, "shortcuts.json");
@@ -29,7 +29,6 @@ const makeSettingsJson = (locations?: string[]) => {
         bookmarksPath,
         historyPath,
         baseDir: window.electron.app.getPath("home"),
-        historyLimit: 60,
         locationListSortType: "normal",
         updateCheckerEnabled: true,
         askBeforeClosing: false,
@@ -191,12 +190,17 @@ const getDataFiles = () => {
         if (rawdata) {
             try {
                 const data = JSON.parse(rawdata);
-                if (data.length >= settings.historyLimit) data.length = settings.historyLimit;
+                if (data[0] && !data[0].chaptersRead) throw new Error("History format changed.");
                 historyDataInit.push(...data);
             } catch (err) {
-                window.dialog.customError({
-                    message: "Unable to parse " + historyPath + "\nMaking new history.json...",
-                });
+                if ((err as Error).message === "History format changed.")
+                    window.dialog.customError({
+                        message: "History format changed.\nSorry for the inconvenience.",
+                    });
+                else
+                    window.dialog.customError({
+                        message: "Unable to parse " + historyPath + "\nMaking new history.json...",
+                    });
                 window.logger.error(err);
                 window.fs.writeFileSync(historyPath, "[]");
             }
@@ -322,8 +326,8 @@ if (!themesMain.map((e) => e.name).includes(settings.theme)) {
 interface IAppContext {
     bookmarks: ChapterItem[];
     setBookmarks: React.Dispatch<React.SetStateAction<ChapterItem[]>>;
-    history: ChapterItem[];
-    setHistory: React.Dispatch<React.SetStateAction<ChapterItem[]>>;
+    history: HistoryItem[];
+    setHistory: React.Dispatch<React.SetStateAction<HistoryItem[]>>;
     shortcuts: ShortcutSchema[];
     setShortcuts: React.Dispatch<React.SetStateAction<ShortcutSchema[]>>;
     allThemes: ThemeData[];
@@ -392,7 +396,7 @@ const App = (): ReactElement => {
     const [prevNextChapter, setPrevNextChapter] = useState({ prev: "", next: "" });
     const [mangaInReader, setMangaInReader] = useState<ListItem | null>(null);
     const [bookmarks, setBookmarks] = useState<ChapterItem[]>(bookmarkDataInit);
-    const [history, setHistory] = useState<ChapterItem[]>(historyDataInit);
+    const [history, setHistory] = useState<HistoryItem[]>(historyDataInit);
     const [shortcuts, setShortcuts] = useState<ShortcutSchema[]>(shortcutsInit);
     const pageNumberInputRef: React.RefObject<HTMLInputElement> = createRef();
 
