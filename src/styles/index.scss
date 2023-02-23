@@ -1094,6 +1094,7 @@ body {
             }
 
             .zenModePageNumber {
+                pointer-events: none;
                 position: fixed;
                 display: none;
                 z-index: 100;
