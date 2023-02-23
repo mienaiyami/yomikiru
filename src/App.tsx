@@ -214,22 +214,21 @@ const getDataFiles = () => {
         const rawdata = window.fs.readFileSync(shortcutsPath, "utf8");
         if (rawdata) {
             try {
-                const data: ShortcutSchema[] = JSON.parse(rawdata);
+                let data: ShortcutSchema[] = JSON.parse(rawdata);
                 // check if shortcut key is missing in shortcuts.json, if so then add
                 const shortcutKeyEntries = data.map((e) => e.command);
                 const shortcutKeyOriginal = window.shortcutsFunctions.map((e) => e.command);
-                let rewriteNeeded = false;
-                shortcutKeyOriginal.forEach((e) => {
-                    if (!shortcutKeyEntries.includes(e)) {
+                data = data.filter((e) => shortcutKeyOriginal.includes(e.command));
+                window.shortcutsFunctions.forEach((e) => {
+                    if (!shortcutKeyEntries.includes(e.command)) {
                         window.logger.log(`Function ${e} does not exist in shortcuts.json. Adding it.`);
-                        rewriteNeeded = true;
-                        data.push(window.shortcutsFunctions.find((a) => a.command === e)!);
+                        data.push(e);
                     }
                 });
                 data.forEach((e) => {
                     e.name = window.shortcutsFunctions.find((a) => a.command === e.command)?.name as string;
                 });
-                if (rewriteNeeded) window.fs.writeFileSync(shortcutsPath, JSON.stringify(data));
+                window.fs.writeFileSync(shortcutsPath, JSON.stringify(data));
                 shortcutsInit.push(...data);
             } catch (err) {
                 window.dialog.customError({

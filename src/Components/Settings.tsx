@@ -22,8 +22,6 @@ const Settings = (): ReactElement => {
         promptSetDefaultLocation,
     } = useContext(AppContext);
     const settingContRef = useRef<HTMLDivElement>(null);
-    const historyBtnRef = useRef<HTMLButtonElement>(null);
-    const historyInputRef = useRef<HTMLInputElement>(null);
     const currentTheme = useMemo(() => {
         return allThemes.find((e) => e.name === theme)!.main;
     }, [theme]);
