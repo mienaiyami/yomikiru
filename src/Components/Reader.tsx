@@ -135,7 +135,7 @@ const Reader = () => {
         window.dispatchEvent(pageChangeEvent);
     }, [currentPageNumber]);
     useEffect(() => {
-        scrollToPage(currentPageNumber, "auto");
+        // scrollToPage(currentPageNumber, "auto");
         if (zenMode) {
             setSideListPinned(false);
             document.body.classList.add("zenMode");
