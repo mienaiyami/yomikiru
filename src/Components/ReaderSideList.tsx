@@ -112,7 +112,7 @@ const ReaderSideList = ({
                                     window.supportedFormats.includes(window.path.extname(e).toLowerCase())
                                 );
                                 if (data.length > 0) {
-                                    listData.push({ name: e, pages: data.length });
+                                    listData.push({ name: window.app.replaceExtension(e), pages: data.length });
                                 }
                                 if (responseCompleted >= validFile) {
                                     setChapterData(
@@ -133,7 +133,7 @@ const ReaderSideList = ({
                         validFile++;
                         setTimeout(() => {
                             responseCompleted++;
-                            listData.push({ name: e, pages: 0 });
+                            listData.push({ name: window.app.replaceExtension(e), pages: 0 });
                             if (responseCompleted >= validFile) {
                                 setChapterData(
                                     listData.sort((a, b) => window.app.betterSortOrder(a.name, b.name))

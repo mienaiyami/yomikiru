@@ -126,6 +126,10 @@ declare global {
         shortcutsFunctions: ShortcutSchema[];
         app: {
             betterSortOrder: (x: string, y: string) => number;
+            /**
+             * returns string where .cbz and .zip are replace with " - CBZ file" and " - ZIP file"
+             */
+            replaceExtension: (str: string) => string;
             deleteDirOnClose: string;
             titleBarHeight: number;
             isReaderOpen: boolean;
@@ -430,6 +434,9 @@ window.logger = log;
 window.crossZip = crossZip;
 const collator = Intl.Collator(undefined, { numeric: true, sensitivity: "base" });
 window.app.betterSortOrder = collator.compare;
+window.app.replaceExtension = (str) => {
+    return str.replace(/\.zip/gi, " [ZIP file]").replace(/\.cbz/gi, " [CBZ file]");
+};
 window.app.deleteDirOnClose = "";
 window.app.currentPageNumber = 1;
 window.app.randomString = (length: number) => {

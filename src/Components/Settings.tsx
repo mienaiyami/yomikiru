@@ -86,6 +86,7 @@ const Settings = (): ReactElement => {
         setTheme(name);
     };
 
+    // todo: should i put this outside?
     const ShortcutInput = ({ which, i }: { which: "key1" | "key2"; i: number }) => (
         <input
             type="text"

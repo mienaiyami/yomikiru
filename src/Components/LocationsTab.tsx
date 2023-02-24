@@ -42,18 +42,18 @@ const LocationsTab = forwardRef(
                             .length
                     );
                     const dirNames: string[] = files
-                        .filter((e) => {
-                            try {
+                        .reduce((arr: string[], cur) => {
+                            if (window.fs.existsSync(window.path.join(link, cur))) {
                                 if (
-                                    window.fs.lstatSync(window.path.join(link, e)).isDirectory() ||
-                                    [".zip", ".cbz"].includes(window.path.extname(e))
-                                )
-                                    return true;
-                            } catch {
-                                return false;
+                                    window.fs.lstatSync(window.path.join(link, cur)).isDirectory() ||
+                                    [".zip", ".cbz"].includes(window.path.extname(cur))
+                                ) {
+                                    arr.push(window.app.replaceExtension(cur));
+                                }
                             }
+                            return arr;
                             //  return (window.fs.lstatSync(window.path.join(link, e)) || false).isDirectory()
-                        })
+                        }, [])
                         .sort(window.app.betterSortOrder);
                     if (inputRef.current) {
                         inputRef.current.value = "";
