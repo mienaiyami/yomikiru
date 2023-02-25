@@ -1,9 +1,9 @@
-import { ReactElement, useContext } from "react";
-import { AppContext } from "../App";
+import { useAppSelector } from "../store/hooks";
 import BookmarkHistoryListItem from "./BookmarkHistoryListItem";
 
-const BookmarkTab = (): ReactElement => {
-    const { bookmarks, appSettings } = useContext(AppContext);
+const BookmarkTab = () => {
+    const bookmarks = useAppSelector((store) => store.bookmarks);
+    const appSettings = useAppSelector((store) => store.appSettings);
     return (
         <div
             className="contTab listCont"

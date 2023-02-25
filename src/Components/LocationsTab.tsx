@@ -1,7 +1,9 @@
 import { faAngleUp, faSort, faSyncAlt } from "@fortawesome/free-solid-svg-icons";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import React, { forwardRef, ReactElement, useContext, useEffect, useRef, useState } from "react";
+import { forwardRef, ReactElement, useContext, useEffect, useRef, useState } from "react";
 import { AppContext } from "../App";
+import { setAppSettings } from "../store/appSettings";
+import { useAppDispatch, useAppSelector } from "../store/hooks";
 import LocationListItem from "./LocationListItem";
 
 const LocationsTab = forwardRef(
@@ -15,12 +17,15 @@ const LocationsTab = forwardRef(
         },
         ref: React.ForwardedRef<HTMLDivElement>
     ): ReactElement => {
-        const { openInReader, history } = useContext(AppContext);
+        const { openInReader } = useContext(AppContext);
+        const history = useAppSelector((store) => store.history);
+        const appSettings = useAppSelector((store) => store.appSettings);
+        const dispatch = useAppDispatch();
+
         const [locations, setLocations] = useState<string[]>([]);
         const [isLoadingFile, setIsLoadingFile] = useState(true);
         const [filter, setFilter] = useState<string>("");
         const [imageCount, setImageCount] = useState(0);
-        const { appSettings, setAppSettings } = useContext(AppContext);
         const inputRef = useRef<HTMLInputElement>(null);
         const displayList = (link = currentLink): void => {
             setFilter("");
@@ -91,21 +96,23 @@ const LocationsTab = forwardRef(
                     <button
                         data-tooltip="Sort"
                         // tabIndex={-1}
-                        onClick={() =>
-                            setAppSettings((init) => {
-                                switch (init.locationListSortType) {
-                                    case "normal":
-                                        init.locationListSortType = "inverse";
-                                        break;
-                                    case "inverse":
-                                        init.locationListSortType = "normal";
-                                        break;
-                                    default:
-                                        break;
-                                }
-                                return { ...init };
-                            })
-                        }
+                        onClick={() => {
+                            dispatch(
+                                setAppSettings((init) => {
+                                    switch (init.locationListSortType) {
+                                        case "normal":
+                                            init.locationListSortType = "inverse";
+                                            break;
+                                        case "inverse":
+                                            init.locationListSortType = "normal";
+                                            break;
+                                        default:
+                                            break;
+                                    }
+                                    return { ...init };
+                                })
+                            );
+                        }}
                     >
                         <FontAwesomeIcon icon={faSort} />
                     </button>

@@ -1,12 +1,18 @@
 import { forwardRef, useContext, useEffect, useState } from "react";
 import { AppContext } from "../App";
+import { addBookmark, removeBookmark } from "../store/bookmarks";
+import { removeHistory } from "../store/history";
+import { useAppDispatch } from "../store/hooks";
+
+// todo: better prop type
 
 interface Iprops extends IContextMenuData {
     closeContextMenu: () => void;
     realRef: React.RefObject<HTMLDivElement>;
 }
 const ContextMenu = forwardRef((props: Iprops | null, ref: React.ForwardedRef<HTMLDivElement>) => {
-    const { openInReader, setBookmarks, setHistory, addNewBookmark, openInNewWindow } = useContext(AppContext);
+    const dispatch = useAppDispatch();
+    const { openInReader, openInNewWindow } = useContext(AppContext);
     const [link, setLink] = useState("");
     const [pos, setPos] = useState({ x: 0, y: 0 });
     const [visible, setVisible] = useState(false);
@@ -97,12 +103,7 @@ const ContextMenu = forwardRef((props: Iprops | null, ref: React.ForwardedRef<HT
                     <li
                         role="menuitem"
                         onMouseUp={() => {
-                            if (props?.item)
-                                setHistory((init) => {
-                                    const newData = init;
-                                    newData.splice(props.item?.index || 0, 1);
-                                    return [...newData];
-                                });
+                            if (props?.item) dispatch(removeHistory(props.item.index));
                         }}
                     >
                         Remove
@@ -113,10 +114,7 @@ const ContextMenu = forwardRef((props: Iprops | null, ref: React.ForwardedRef<HT
                 {isFile || isImg ? (
                     ""
                 ) : isBookmark ? (
-                    <li
-                        role="menuitem"
-                        onMouseUp={() => setBookmarks((init) => [...init.filter((e) => e.link !== link)])}
-                    >
+                    <li role="menuitem" onMouseUp={() => dispatch(removeBookmark(link))}>
                         Remove Bookmark
                     </li>
                 ) : (
@@ -132,7 +130,7 @@ const ContextMenu = forwardRef((props: Iprops | null, ref: React.ForwardedRef<HT
                                     link: link,
                                     date: new Date().toLocaleString("en-UK", { hour12: true }),
                                 };
-                                addNewBookmark(newItem);
+                                dispatch(addBookmark(newItem));
                             }
                         }}
                     >

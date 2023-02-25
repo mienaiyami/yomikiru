@@ -8,8 +8,9 @@ import {
     faExpandArrowsAlt,
 } from "@fortawesome/free-solid-svg-icons";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import React, { useContext, useEffect, useState } from "react";
-import { AppContext } from "../App";
+import { useEffect, useState } from "react";
+import { setAppSettings } from "../store/appSettings";
+import { useAppDispatch, useAppSelector } from "../store/hooks";
 
 const ReaderSettings = ({
     makeScrollPos,
@@ -24,7 +25,9 @@ const ReaderSettings = ({
     sizePlusRef: React.RefObject<HTMLButtonElement>;
     sizeMinusRef: React.RefObject<HTMLButtonElement>;
 }) => {
-    const { appSettings, setAppSettings } = useContext(AppContext);
+    const appSettings = useAppSelector((store) => store.appSettings);
+    const dispatch = useAppDispatch();
+
     const [isReaderSettingsOpen, setReaderSettingOpen] = useState(false);
     const [maxWidth, setMaxWidth] = useState<number>(appSettings.readerSettings.widthClamped ? 100 : 500);
 
@@ -46,10 +49,12 @@ const ReaderSettings = ({
         setMaxWidth(appSettings.readerSettings.widthClamped ? 100 : 500);
         if (appSettings.readerSettings.widthClamped) {
             if (appSettings.readerSettings.readerWidth > 100)
-                setAppSettings((init) => {
-                    init.readerSettings.readerWidth = 100;
-                    return { ...init };
-                });
+                dispatch(
+                    setAppSettings((init) => {
+                        init.readerSettings.readerWidth = 100;
+                        return { ...init };
+                    })
+                );
         }
     }, [appSettings.readerSettings.widthClamped]);
     return (
@@ -93,12 +98,14 @@ const ReaderSettings = ({
                                 }}
                                 onChange={(e) => {
                                     makeScrollPos();
-                                    setAppSettings((init) => {
-                                        let value = e.target.valueAsNumber;
-                                        if (!value) value = 0;
-                                        init.readerSettings.readerWidth = value >= maxWidth ? maxWidth : value;
-                                        return { ...init };
-                                    });
+                                    dispatch(
+                                        setAppSettings((init) => {
+                                            let value = e.target.valueAsNumber;
+                                            if (!value) value = 0;
+                                            init.readerSettings.readerWidth = value >= maxWidth ? maxWidth : value;
+                                            return { ...init };
+                                        })
+                                    );
                                 }}
                             />
                             %
@@ -107,16 +114,18 @@ const ReaderSettings = ({
                             ref={sizeMinusRef}
                             onClick={() => {
                                 makeScrollPos();
-                                setAppSettings((init) => {
-                                    const steps = appSettings.readerSettings.readerWidth <= 20 ? 5 : 10;
-                                    init.readerSettings.readerWidth =
-                                        init.readerSettings.readerWidth - steps > maxWidth
-                                            ? maxWidth
-                                            : init.readerSettings.readerWidth - steps < 1
-                                            ? 1
-                                            : init.readerSettings.readerWidth - steps;
-                                    return { ...init };
-                                });
+                                dispatch(
+                                    setAppSettings((init) => {
+                                        const steps = appSettings.readerSettings.readerWidth <= 20 ? 5 : 10;
+                                        init.readerSettings.readerWidth =
+                                            init.readerSettings.readerWidth - steps > maxWidth
+                                                ? maxWidth
+                                                : init.readerSettings.readerWidth - steps < 1
+                                                ? 1
+                                                : init.readerSettings.readerWidth - steps;
+                                        return { ...init };
+                                    })
+                                );
                                 // e.currentTarget.dispatchEvent(new MouseEvent(type:"")))
                             }}
                         >
@@ -126,16 +135,18 @@ const ReaderSettings = ({
                             ref={sizePlusRef}
                             onClick={() => {
                                 makeScrollPos();
-                                setAppSettings((init) => {
-                                    const steps = appSettings.readerSettings.readerWidth <= 20 ? 5 : 10;
-                                    init.readerSettings.readerWidth =
-                                        init.readerSettings.readerWidth + steps > maxWidth
-                                            ? maxWidth
-                                            : init.readerSettings.readerWidth + steps < 1
-                                            ? 1
-                                            : init.readerSettings.readerWidth + steps;
-                                    return { ...init };
-                                });
+                                dispatch(
+                                    setAppSettings((init) => {
+                                        const steps = appSettings.readerSettings.readerWidth <= 20 ? 5 : 10;
+                                        init.readerSettings.readerWidth =
+                                            init.readerSettings.readerWidth + steps > maxWidth
+                                                ? maxWidth
+                                                : init.readerSettings.readerWidth + steps < 1
+                                                ? 1
+                                                : init.readerSettings.readerWidth + steps;
+                                        return { ...init };
+                                    })
+                                );
                             }}
                         >
                             <FontAwesomeIcon icon={faPlus} />
@@ -145,10 +156,12 @@ const ReaderSettings = ({
                                 type="checkbox"
                                 checked={appSettings.readerSettings.widthClamped}
                                 onChange={(e) =>
-                                    setAppSettings((init) => {
-                                        init.readerSettings.widthClamped = e.target.checked;
-                                        return { ...init };
-                                    })
+                                    dispatch(
+                                        setAppSettings((init) => {
+                                            init.readerSettings.widthClamped = e.target.checked;
+                                            return { ...init };
+                                        })
+                                    )
                                 }
                             />
                             Clamp
@@ -162,10 +175,12 @@ const ReaderSettings = ({
                             <button
                                 className={appSettings.readerSettings.fitOption === 0 ? "optionSelected " : " "}
                                 onClick={() => {
-                                    setAppSettings((init) => {
-                                        init.readerSettings.fitOption = 0;
-                                        return { ...init };
-                                    });
+                                    dispatch(
+                                        setAppSettings((init) => {
+                                            init.readerSettings.fitOption = 0;
+                                            return { ...init };
+                                        })
+                                    );
                                 }}
                                 title="Free"
                             >
@@ -174,11 +189,14 @@ const ReaderSettings = ({
                             <button
                                 className={appSettings.readerSettings.fitOption === 1 ? "optionSelected " : " "}
                                 onClick={() => {
-                                    setAppSettings((init) => {
-                                        if (init.readerSettings.fitOption === 1) init.readerSettings.fitOption = 0;
-                                        else init.readerSettings.fitOption = 1;
-                                        return { ...init };
-                                    });
+                                    dispatch(
+                                        setAppSettings((init) => {
+                                            if (init.readerSettings.fitOption === 1)
+                                                init.readerSettings.fitOption = 0;
+                                            else init.readerSettings.fitOption = 1;
+                                            return { ...init };
+                                        })
+                                    );
                                 }}
                                 title="Fit Vertically"
                             >
@@ -187,11 +205,14 @@ const ReaderSettings = ({
                             <button
                                 className={appSettings.readerSettings.fitOption === 2 ? "optionSelected " : " "}
                                 onClick={() => {
-                                    setAppSettings((init) => {
-                                        if (init.readerSettings.fitOption === 2) init.readerSettings.fitOption = 0;
-                                        else init.readerSettings.fitOption = 2;
-                                        return { ...init };
-                                    });
+                                    dispatch(
+                                        setAppSettings((init) => {
+                                            if (init.readerSettings.fitOption === 2)
+                                                init.readerSettings.fitOption = 0;
+                                            else init.readerSettings.fitOption = 2;
+                                            return { ...init };
+                                        })
+                                    );
                                 }}
                                 title="Fit Horizontally"
                             >
@@ -200,11 +221,14 @@ const ReaderSettings = ({
                             <button
                                 className={appSettings.readerSettings.fitOption === 3 ? "optionSelected " : " "}
                                 onClick={() => {
-                                    setAppSettings((init) => {
-                                        if (init.readerSettings.fitOption === 3) init.readerSettings.fitOption = 0;
-                                        else init.readerSettings.fitOption = 3;
-                                        return { ...init };
-                                    });
+                                    dispatch(
+                                        setAppSettings((init) => {
+                                            if (init.readerSettings.fitOption === 3)
+                                                init.readerSettings.fitOption = 0;
+                                            else init.readerSettings.fitOption = 3;
+                                            return { ...init };
+                                        })
+                                    );
                                 }}
                                 title="Original"
                                 style={{ fontWeight: "bold" }}
@@ -228,12 +252,14 @@ const ReaderSettings = ({
                                     type="checkbox"
                                     checked={appSettings.readerSettings.maxHeightWidthSelector === "width"}
                                     onChange={() => {
-                                        setAppSettings((init) => {
-                                            if (init.readerSettings.maxHeightWidthSelector !== "width")
-                                                init.readerSettings.maxHeightWidthSelector = "width";
-                                            else init.readerSettings.maxHeightWidthSelector = "none";
-                                            return { ...init };
-                                        });
+                                        dispatch(
+                                            setAppSettings((init) => {
+                                                if (init.readerSettings.maxHeightWidthSelector !== "width")
+                                                    init.readerSettings.maxHeightWidthSelector = "width";
+                                                else init.readerSettings.maxHeightWidthSelector = "none";
+                                                return { ...init };
+                                            })
+                                        );
                                     }}
                                 />
                                 <p>Max Image Width&nbsp;&nbsp;:</p>
@@ -244,13 +270,15 @@ const ReaderSettings = ({
                                     value={appSettings.readerSettings.maxWidth}
                                     disabled={appSettings.readerSettings.maxHeightWidthSelector !== "width"}
                                     onChange={(e) => {
-                                        setAppSettings((init) => {
-                                            let value = e.currentTarget.valueAsNumber;
-                                            if (value > 5000) value = 5000;
-                                            if (value < 0) value = 0;
-                                            init.readerSettings.maxWidth = value;
-                                            return { ...init };
-                                        });
+                                        dispatch(
+                                            setAppSettings((init) => {
+                                                let value = e.currentTarget.valueAsNumber;
+                                                if (value > 5000) value = 5000;
+                                                if (value < 0) value = 0;
+                                                init.readerSettings.maxWidth = value;
+                                                return { ...init };
+                                            })
+                                        );
                                     }}
                                 />
                                 px
@@ -270,12 +298,14 @@ const ReaderSettings = ({
                                     type="checkbox"
                                     checked={appSettings.readerSettings.maxHeightWidthSelector === "height"}
                                     onChange={(e) => {
-                                        setAppSettings((init) => {
-                                            if (init.readerSettings.maxHeightWidthSelector !== "height")
-                                                init.readerSettings.maxHeightWidthSelector = "height";
-                                            else init.readerSettings.maxHeightWidthSelector = "none";
-                                            return { ...init };
-                                        });
+                                        dispatch(
+                                            setAppSettings((init) => {
+                                                if (init.readerSettings.maxHeightWidthSelector !== "height")
+                                                    init.readerSettings.maxHeightWidthSelector = "height";
+                                                else init.readerSettings.maxHeightWidthSelector = "none";
+                                                return { ...init };
+                                            })
+                                        );
                                     }}
                                 />
                                 <p>Max Image Height&nbsp;:</p>
@@ -286,13 +316,15 @@ const ReaderSettings = ({
                                     value={appSettings.readerSettings.maxHeight}
                                     disabled={appSettings.readerSettings.maxHeightWidthSelector !== "height"}
                                     onChange={(e) => {
-                                        setAppSettings((init) => {
-                                            let value = e.currentTarget.valueAsNumber;
-                                            if (value > 5000) value = 5000;
-                                            if (value < 0) value = 0;
-                                            init.readerSettings.maxHeight = value;
-                                            return { ...init };
-                                        });
+                                        dispatch(
+                                            setAppSettings((init) => {
+                                                let value = e.currentTarget.valueAsNumber;
+                                                if (value > 5000) value = 5000;
+                                                if (value < 0) value = 0;
+                                                init.readerSettings.maxHeight = value;
+                                                return { ...init };
+                                            })
+                                        );
                                     }}
                                 />
                                 px
@@ -306,10 +338,12 @@ const ReaderSettings = ({
                         <button
                             className={appSettings.readerSettings.readerTypeSelected === 0 ? "optionSelected" : ""}
                             onClick={() =>
-                                setAppSettings((init) => {
-                                    init.readerSettings.readerTypeSelected = 0;
-                                    return { ...init };
-                                })
+                                dispatch(
+                                    setAppSettings((init) => {
+                                        init.readerSettings.readerTypeSelected = 0;
+                                        return { ...init };
+                                    })
+                                )
                             }
                         >
                             Vertical Scroll
@@ -317,10 +351,12 @@ const ReaderSettings = ({
                         <button
                             className={appSettings.readerSettings.readerTypeSelected === 1 ? "optionSelected" : ""}
                             onClick={() =>
-                                setAppSettings((init) => {
-                                    init.readerSettings.readerTypeSelected = 1;
-                                    return { ...init };
-                                })
+                                dispatch(
+                                    setAppSettings((init) => {
+                                        init.readerSettings.readerTypeSelected = 1;
+                                        return { ...init };
+                                    })
+                                )
                             }
                         >
                             Left to Right
@@ -328,10 +364,12 @@ const ReaderSettings = ({
                         <button
                             className={appSettings.readerSettings.readerTypeSelected === 2 ? "optionSelected" : ""}
                             onClick={() =>
-                                setAppSettings((init) => {
-                                    init.readerSettings.readerTypeSelected = 2;
-                                    return { ...init };
-                                })
+                                dispatch(
+                                    setAppSettings((init) => {
+                                        init.readerSettings.readerTypeSelected = 2;
+                                        return { ...init };
+                                    })
+                                )
                             }
                         >
                             Right to Left
@@ -347,17 +385,18 @@ const ReaderSettings = ({
                             }
                             onClick={() => {
                                 if (appSettings.readerSettings.pagesPerRowSelected !== 0) {
-                                    setAppSettings((init) => {
-                                        init.readerSettings.pagesPerRowSelected = 0;
+                                    dispatch(
+                                        setAppSettings((init) => {
+                                            init.readerSettings.pagesPerRowSelected = 0;
 
-                                        init.readerSettings.readerWidth /= 2;
-                                        if (init.readerSettings.readerWidth > maxWidth)
-                                            init.readerSettings.readerWidth = maxWidth;
-                                        if (init.readerSettings.readerWidth < 1)
-                                            init.readerSettings.readerWidth = 1;
-
-                                        return { ...init };
-                                    });
+                                            init.readerSettings.readerWidth /= 2;
+                                            if (init.readerSettings.readerWidth > maxWidth)
+                                                init.readerSettings.readerWidth = maxWidth;
+                                            if (init.readerSettings.readerWidth < 1)
+                                                init.readerSettings.readerWidth = 1;
+                                            return { ...init };
+                                        })
+                                    );
                                 }
                             }}
                         >
@@ -368,19 +407,20 @@ const ReaderSettings = ({
                                 appSettings.readerSettings.pagesPerRowSelected === 1 ? "optionSelected" : ""
                             }
                             onClick={() => {
-                                setAppSettings((init) => {
-                                    if (init.readerSettings.pagesPerRowSelected === 0) {
-                                        init.readerSettings.readerWidth *= 2;
-                                        if (init.readerSettings.readerWidth > maxWidth)
-                                            init.readerSettings.readerWidth = maxWidth;
-                                        if (init.readerSettings.readerWidth < 1)
-                                            init.readerSettings.readerWidth = 1;
-                                    }
+                                dispatch(
+                                    setAppSettings((init) => {
+                                        if (init.readerSettings.pagesPerRowSelected === 0) {
+                                            init.readerSettings.readerWidth *= 2;
+                                            if (init.readerSettings.readerWidth > maxWidth)
+                                                init.readerSettings.readerWidth = maxWidth;
+                                            if (init.readerSettings.readerWidth < 1)
+                                                init.readerSettings.readerWidth = 1;
+                                        }
 
-                                    init.readerSettings.pagesPerRowSelected = 1;
-
-                                    return { ...init };
-                                });
+                                        init.readerSettings.pagesPerRowSelected = 1;
+                                        return { ...init };
+                                    })
+                                );
                             }}
                         >
                             2
@@ -390,19 +430,20 @@ const ReaderSettings = ({
                                 appSettings.readerSettings.pagesPerRowSelected === 2 ? "optionSelected" : ""
                             }
                             onClick={() => {
-                                setAppSettings((init) => {
-                                    if (init.readerSettings.pagesPerRowSelected === 0) {
-                                        init.readerSettings.readerWidth *= 2;
-                                        if (init.readerSettings.readerWidth > maxWidth)
-                                            init.readerSettings.readerWidth = maxWidth;
-                                        if (init.readerSettings.readerWidth < 1)
-                                            init.readerSettings.readerWidth = 1;
-                                    }
+                                dispatch(
+                                    setAppSettings((init) => {
+                                        if (init.readerSettings.pagesPerRowSelected === 0) {
+                                            init.readerSettings.readerWidth *= 2;
+                                            if (init.readerSettings.readerWidth > maxWidth)
+                                                init.readerSettings.readerWidth = maxWidth;
+                                            if (init.readerSettings.readerWidth < 1)
+                                                init.readerSettings.readerWidth = 1;
+                                        }
 
-                                    init.readerSettings.pagesPerRowSelected = 2;
-
-                                    return { ...init };
-                                });
+                                        init.readerSettings.pagesPerRowSelected = 2;
+                                        return { ...init };
+                                    })
+                                );
                             }}
                         >
                             2 odd
@@ -416,10 +457,12 @@ const ReaderSettings = ({
                             className={appSettings.readerSettings.readingSide === 0 ? "optionSelected" : ""}
                             disabled={appSettings.readerSettings.pagesPerRowSelected === 0}
                             onClick={() => {
-                                setAppSettings((init) => {
-                                    init.readerSettings.readingSide = 0;
-                                    return { ...init };
-                                });
+                                dispatch(
+                                    setAppSettings((init) => {
+                                        init.readerSettings.readingSide = 0;
+                                        return { ...init };
+                                    })
+                                );
                             }}
                         >
                             LTR
@@ -428,10 +471,12 @@ const ReaderSettings = ({
                             className={appSettings.readerSettings.readingSide === 1 ? "optionSelected" : ""}
                             disabled={appSettings.readerSettings.pagesPerRowSelected === 0}
                             onClick={() => {
-                                setAppSettings((init) => {
-                                    init.readerSettings.readingSide = 1;
-                                    return { ...init };
-                                });
+                                dispatch(
+                                    setAppSettings((init) => {
+                                        init.readerSettings.readingSide = 1;
+                                        return { ...init };
+                                    })
+                                );
                             }}
                         >
                             RTL
@@ -449,13 +494,15 @@ const ReaderSettings = ({
                                 max={100}
                                 value={appSettings.readerSettings.scrollSpeed}
                                 onChange={(e) => {
-                                    setAppSettings((init) => {
-                                        let value = e.currentTarget.valueAsNumber;
-                                        if (value > 100) value = 100;
-                                        if (value < 1) value = 1;
-                                        init.readerSettings.scrollSpeed = value;
-                                        return { ...init };
-                                    });
+                                    dispatch(
+                                        setAppSettings((init) => {
+                                            let value = e.currentTarget.valueAsNumber;
+                                            if (value > 100) value = 100;
+                                            if (value < 1) value = 1;
+                                            init.readerSettings.scrollSpeed = value;
+                                            return { ...init };
+                                        })
+                                    );
                                 }}
                             />
                             px
@@ -468,13 +515,15 @@ const ReaderSettings = ({
                                 max={100}
                                 value={appSettings.readerSettings.largeScrollMultiplier}
                                 onChange={(e) => {
-                                    setAppSettings((init) => {
-                                        let value = e.currentTarget.valueAsNumber;
-                                        if (value > 100) value = 100;
-                                        if (value < 1) value = 1;
-                                        init.readerSettings.largeScrollMultiplier = value;
-                                        return { ...init };
-                                    });
+                                    dispatch(
+                                        setAppSettings((init) => {
+                                            let value = e.currentTarget.valueAsNumber;
+                                            if (value > 100) value = 100;
+                                            if (value < 1) value = 1;
+                                            init.readerSettings.largeScrollMultiplier = value;
+                                            return { ...init };
+                                        })
+                                    );
                                 }}
                             />
                             px
@@ -495,10 +544,12 @@ const ReaderSettings = ({
                                 disabled={appSettings.readerSettings.pagesPerRowSelected !== 0}
                                 checked={appSettings.readerSettings.variableImageSize}
                                 onChange={(e) => {
-                                    setAppSettings((init) => {
-                                        init.readerSettings.variableImageSize = e.currentTarget.checked;
-                                        return { ...init };
-                                    });
+                                    dispatch(
+                                        setAppSettings((init) => {
+                                            init.readerSettings.variableImageSize = e.currentTarget.checked;
+                                            return { ...init };
+                                        })
+                                    );
                                 }}
                             />
                             <p>Double size for double spread pages.</p>
@@ -514,10 +565,12 @@ const ReaderSettings = ({
                                 disabled={appSettings.readerSettings.readerTypeSelected !== 0}
                                 checked={appSettings.readerSettings.gapBetweenRows}
                                 onChange={(e) => {
-                                    setAppSettings((init) => {
-                                        init.readerSettings.gapBetweenRows = e.currentTarget.checked;
-                                        return { ...init };
-                                    });
+                                    dispatch(
+                                        setAppSettings((init) => {
+                                            init.readerSettings.gapBetweenRows = e.currentTarget.checked;
+                                            return { ...init };
+                                        })
+                                    );
                                 }}
                             />
                             <p>Gap between rows&nbsp;: </p>
@@ -527,12 +580,14 @@ const ReaderSettings = ({
                                 disabled={!appSettings.readerSettings.gapBetweenRows}
                                 min={0}
                                 onChange={(e) => {
-                                    setAppSettings((init) => {
-                                        let value = e.target.valueAsNumber;
-                                        if (!value) value = 0;
-                                        init.readerSettings.gapSize = value;
-                                        return { ...init };
-                                    });
+                                    dispatch(
+                                        setAppSettings((init) => {
+                                            let value = e.target.valueAsNumber;
+                                            if (!value) value = 0;
+                                            init.readerSettings.gapSize = value;
+                                            return { ...init };
+                                        })
+                                    );
                                 }}
                             />
                             px
@@ -544,10 +599,12 @@ const ReaderSettings = ({
                                 type="checkbox"
                                 checked={appSettings.readerSettings.showPageNumberInZenMode}
                                 onChange={(e) => {
-                                    setAppSettings((init) => {
-                                        init.readerSettings.showPageNumberInZenMode = e.currentTarget.checked;
-                                        return { ...init };
-                                    });
+                                    dispatch(
+                                        setAppSettings((init) => {
+                                            init.readerSettings.showPageNumberInZenMode = e.currentTarget.checked;
+                                            return { ...init };
+                                        })
+                                    );
                                 }}
                             />
                             <p>Show Page Number in Zen Mode.</p>

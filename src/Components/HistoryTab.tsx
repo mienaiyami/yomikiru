@@ -1,11 +1,13 @@
 import { faTrash } from "@fortawesome/free-solid-svg-icons";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import { ReactElement, useContext } from "react";
-import { AppContext } from "../App";
+import { deleteAllHistory } from "../store/history";
+import { useAppDispatch, useAppSelector } from "../store/hooks";
 import BookmarkHistoryListItem from "./BookmarkHistoryListItem";
 
-const HistoryTab = (): ReactElement => {
-    const { history, setHistory, appSettings } = useContext(AppContext);
+const HistoryTab = () => {
+    const history = useAppSelector((store) => store.history);
+    const appSettings = useAppSelector((store) => store.appSettings);
+    const dispatch = useAppDispatch();
     return (
         <div
             className="contTab listCont"
@@ -24,7 +26,7 @@ const HistoryTab = (): ReactElement => {
                                 noOption: false,
                             })
                             .then((res) => {
-                                if (res && res.response === 0) setHistory([]);
+                                if (res && res.response === 0) dispatch(deleteAllHistory());
                             });
                     }}
                     tabIndex={-1}

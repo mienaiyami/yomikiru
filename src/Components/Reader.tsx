@@ -5,28 +5,30 @@ import { MainContext } from "./Main";
 import ReaderSettings from "./ReaderSettings";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faQuestionCircle } from "@fortawesome/free-regular-svg-icons";
+import { useAppDispatch, useAppSelector } from "../store/hooks";
+import { setAppSettings } from "../store/appSettings";
+import { setMangaInReader } from "../store/mangaInReader";
+import { setReaderOpen } from "../store/isReaderOpen";
+import { setLoadingMangaPercent } from "../store/loadingMangaPercent";
+import { setLoadingManga } from "../store/isLoadingManga";
+import { setLinkInReader } from "../store/linkInReader";
+import { newHistory } from "../store/history";
 
 const Reader = () => {
-    const {
-        appSettings,
-        shortcuts,
-        setAppSettings,
-        isReaderOpen,
-        setReaderOpen,
-        pageNumberInputRef,
-        linkInReader,
-        setLinkInReader,
-        mangaInReader,
-        setMangaInReader,
-        isLoadingManga,
-        setLoadingManga,
-        setHistory,
-        prevNextChapter,
-        bookmarks,
-        setLoadingMangaPercent,
-        pageNumChangeDisabled,
-        checkValidFolder,
-    } = useContext(AppContext);
+    const { pageNumberInputRef, checkValidFolder } = useContext(AppContext);
+
+    const appSettings = useAppSelector((store) => store.appSettings);
+    const shortcuts = useAppSelector((store) => store.shortcuts);
+    const isReaderOpen = useAppSelector((store) => store.isReaderOpen);
+    const linkInReader = useAppSelector((store) => store.linkInReader);
+    const mangaInReader = useAppSelector((store) => store.mangaInReader);
+    const isLoadingManga = useAppSelector((store) => store.isLoadingManga);
+    const bookmarks = useAppSelector((store) => store.bookmarks);
+    const pageNumChangeDisabled = useAppSelector((store) => store.pageNumChangeDisabled);
+    const prevNextChapter = useAppSelector((store) => store.prevNextChapter);
+
+    const dispatch = useAppDispatch();
+
     const { showContextMenu } = useContext(MainContext);
     const [images, setImages] = useState<string[]>([]);
     const [imageWidthContainer, setImageWidthContainer] = useState<
@@ -282,94 +284,112 @@ const Reader = () => {
                             break;
                         case shortcutkey.showHidePageNumberInZen?.key1:
                         case shortcutkey.showHidePageNumberInZen?.key2:
-                            setAppSettings((init) => {
-                                init.readerSettings.showPageNumberInZenMode =
-                                    !init.readerSettings.showPageNumberInZenMode;
-                                return { ...init };
-                            });
+                            dispatch(
+                                setAppSettings((init) => {
+                                    init.readerSettings.showPageNumberInZenMode =
+                                        !init.readerSettings.showPageNumberInZenMode;
+                                    return { ...init };
+                                })
+                            );
                             break;
                         case shortcutkey.cycleFitOptions?.key1:
                         case shortcutkey.cycleFitOptions?.key2:
-                            setAppSettings((init) => {
-                                // todo: display current mode in middle of screen and fade
-                                init.readerSettings.fitOption += 1;
-                                if (init.readerSettings.fitOption === 4) init.readerSettings.fitOption = 0;
-                                return { ...init };
-                            });
+                            dispatch(
+                                setAppSettings((init) => {
+                                    // todo: display current mode in middle of screen and fade
+                                    init.readerSettings.fitOption += 1;
+                                    if (init.readerSettings.fitOption === 4) init.readerSettings.fitOption = 0;
+                                    return { ...init };
+                                })
+                            );
                             break;
                         case shortcutkey.selectReaderMode0?.key1:
                         case shortcutkey.selectReaderMode0?.key2:
-                            setAppSettings((init) => {
-                                init.readerSettings.readerTypeSelected = 0;
-                                return { ...init };
-                            });
+                            dispatch(
+                                setAppSettings((init) => {
+                                    init.readerSettings.readerTypeSelected = 0;
+                                    return { ...init };
+                                })
+                            );
                             break;
                         case shortcutkey.selectReaderMode1?.key1:
                         case shortcutkey.selectReaderMode1?.key2:
-                            setAppSettings((init) => {
-                                init.readerSettings.readerTypeSelected = 1;
-                                return { ...init };
-                            });
+                            dispatch(
+                                setAppSettings((init) => {
+                                    init.readerSettings.readerTypeSelected = 1;
+                                    return { ...init };
+                                })
+                            );
                             break;
                         case shortcutkey.selectPagePerRow1?.key1:
                         case shortcutkey.selectPagePerRow1?.key2:
                             if (appSettings.readerSettings.pagesPerRowSelected !== 0) {
-                                setAppSettings((init) => {
-                                    init.readerSettings.pagesPerRowSelected = 0;
+                                dispatch(
+                                    setAppSettings((init) => {
+                                        init.readerSettings.pagesPerRowSelected = 0;
 
-                                    init.readerSettings.readerWidth /= 2;
-                                    if (
-                                        init.readerSettings.readerWidth >
-                                        (appSettings.readerSettings.widthClamped ? 100 : 500)
-                                    )
-                                        init.readerSettings.readerWidth = appSettings.readerSettings.widthClamped
-                                            ? 100
-                                            : 500;
-                                    if (init.readerSettings.readerWidth < 1) init.readerSettings.readerWidth = 1;
+                                        init.readerSettings.readerWidth /= 2;
+                                        if (
+                                            init.readerSettings.readerWidth >
+                                            (appSettings.readerSettings.widthClamped ? 100 : 500)
+                                        )
+                                            init.readerSettings.readerWidth = appSettings.readerSettings
+                                                .widthClamped
+                                                ? 100
+                                                : 500;
+                                        if (init.readerSettings.readerWidth < 1)
+                                            init.readerSettings.readerWidth = 1;
 
-                                    return { ...init };
-                                });
+                                        return { ...init };
+                                    })
+                                );
                             }
                             break;
                         case shortcutkey.selectPagePerRow2?.key1:
                         case shortcutkey.selectPagePerRow2?.key2:
-                            setAppSettings((init) => {
-                                if (init.readerSettings.pagesPerRowSelected === 0) {
-                                    init.readerSettings.readerWidth *= 2;
-                                    if (
-                                        init.readerSettings.readerWidth >
-                                        (appSettings.readerSettings.widthClamped ? 100 : 500)
-                                    )
-                                        init.readerSettings.readerWidth = appSettings.readerSettings.widthClamped
-                                            ? 100
-                                            : 500;
-                                    if (init.readerSettings.readerWidth < 1) init.readerSettings.readerWidth = 1;
-                                }
+                            dispatch(
+                                setAppSettings((init) => {
+                                    if (init.readerSettings.pagesPerRowSelected === 0) {
+                                        init.readerSettings.readerWidth *= 2;
+                                        if (
+                                            init.readerSettings.readerWidth >
+                                            (appSettings.readerSettings.widthClamped ? 100 : 500)
+                                        )
+                                            init.readerSettings.readerWidth = appSettings.readerSettings
+                                                .widthClamped
+                                                ? 100
+                                                : 500;
+                                        if (init.readerSettings.readerWidth < 1)
+                                            init.readerSettings.readerWidth = 1;
+                                    }
 
-                                init.readerSettings.pagesPerRowSelected = 1;
-
-                                return { ...init };
-                            });
+                                    init.readerSettings.pagesPerRowSelected = 1;
+                                    return { ...init };
+                                })
+                            );
                             break;
                         case shortcutkey.selectPagePerRow2odd?.key1:
                         case shortcutkey.selectPagePerRow2odd?.key2:
-                            setAppSettings((init) => {
-                                if (init.readerSettings.pagesPerRowSelected === 0) {
-                                    init.readerSettings.readerWidth *= 2;
-                                    if (
-                                        init.readerSettings.readerWidth >
-                                        (appSettings.readerSettings.widthClamped ? 100 : 500)
-                                    )
-                                        init.readerSettings.readerWidth = appSettings.readerSettings.widthClamped
-                                            ? 100
-                                            : 500;
-                                    if (init.readerSettings.readerWidth < 1) init.readerSettings.readerWidth = 1;
-                                }
+                            dispatch(
+                                setAppSettings((init) => {
+                                    if (init.readerSettings.pagesPerRowSelected === 0) {
+                                        init.readerSettings.readerWidth *= 2;
+                                        if (
+                                            init.readerSettings.readerWidth >
+                                            (appSettings.readerSettings.widthClamped ? 100 : 500)
+                                        )
+                                            init.readerSettings.readerWidth = appSettings.readerSettings
+                                                .widthClamped
+                                                ? 100
+                                                : 500;
+                                        if (init.readerSettings.readerWidth < 1)
+                                            init.readerSettings.readerWidth = 1;
+                                    }
 
-                                init.readerSettings.pagesPerRowSelected = 2;
-
-                                return { ...init };
-                            });
+                                    init.readerSettings.pagesPerRowSelected = 2;
+                                    return { ...init };
+                                })
+                            );
                             break;
                         default:
                             break;
@@ -464,7 +484,7 @@ const Reader = () => {
                     setCurrentPageNumber(readerStuff.page || 1);
                     return loadImgs(readerStuff.link, imgs);
                 }
-                setLinkInReader({ link: mangaInReader?.link || "", page: 1 });
+                dispatch(setLinkInReader({ link: mangaInReader?.link || "", page: 1 }));
             },
             true
         );
@@ -491,27 +511,11 @@ const Reader = () => {
             date: new Date().toLocaleString("en-UK", { hour12: true }),
             pages: imgs.length,
         };
-        setMangaInReader(mangaOpened);
-        setHistory((init) => {
-            let index = -1;
-            if (init.length > 0) index = init.findIndex((e) => e.mangaLink === window.path.dirname(link));
-            let chaptersRead = new Set<string>();
-            if (index > -1) {
-                chaptersRead = new Set(init[index].chaptersRead);
-                init.splice(index, 1);
-            }
-            chaptersRead.add(mangaOpened.chapterName);
-            init.unshift({
-                ...mangaOpened,
-                page: linkInReader.page,
-                mangaLink: window.path.dirname(link),
-                chaptersRead: Array.from(chaptersRead),
-            });
-            return [...init];
-        });
+        dispatch(setMangaInReader(mangaOpened));
+        dispatch(newHistory({ mangaOpened, page: linkInReader.page }));
         setImagesLength(imgs.length);
         setImages(imgs);
-        setReaderOpen(true);
+        dispatch(setReaderOpen(true));
     };
     useLayoutEffect(() => {
         window.electron.webFrame.clearCache();
@@ -666,9 +670,9 @@ const Reader = () => {
     ]);
     useEffect(() => {
         if (imagesLoaded !== 0 && imagesLength !== 0) {
-            setLoadingMangaPercent((100 * imagesLoaded) / imagesLength);
+            dispatch(setLoadingMangaPercent((100 * imagesLoaded) / imagesLength));
             if (imagesLength === imagesLoaded) {
-                setLoadingManga(false);
+                dispatch(setLoadingManga(false));
                 // console.log(currentPageNumber);
                 // setFirstScrolled(true);
                 // scrollToPage(currentPageNumber, "auto");
@@ -699,10 +703,12 @@ const Reader = () => {
         if (isSideListPinned) {
             readerRef.current?.scrollTo(0, scrollPosPercent * readerRef.current.scrollHeight);
         }
-        setAppSettings((init) => {
-            init.readerSettings.sideListWidth = sideListWidth;
-            return { ...init };
-        });
+        dispatch(
+            setAppSettings((init) => {
+                init.readerSettings.sideListWidth = sideListWidth;
+                return { ...init };
+            })
+        );
     }, [sideListWidth]);
     useLayoutEffect(() => {
         changePageNumber();

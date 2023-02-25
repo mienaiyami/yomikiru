@@ -1,6 +1,7 @@
 /* eslint-disable @typescript-eslint/no-non-null-assertion */
-import { createContext, ReactElement, useContext, useLayoutEffect, useRef, useState } from "react";
-import { AppContext } from "../App";
+import { createContext, ReactElement, useLayoutEffect, useRef, useState } from "react";
+import { setAppSettings } from "../store/appSettings";
+import { useAppDispatch, useAppSelector } from "../store/hooks";
 import BookmarkTab from "./BookmarkTab";
 import ContextMenu from "./ContextMenu";
 import HistoryTab from "./HistoryTab";
@@ -16,7 +17,10 @@ interface IMainContext {
 export const MainContext = createContext<IMainContext>(null!);
 
 const Main = (): ReactElement => {
-    const { appSettings, isReaderOpen, linkInReader, setAppSettings } = useContext(AppContext);
+    const appSettings = useAppSelector((store) => store.appSettings);
+    const isReaderOpen = useAppSelector((store) => store.isReaderOpen);
+    const linkInReader = useAppSelector((store) => store.linkInReader);
+    const dispatch = useAppDispatch();
     const [currentLink, setCurrentLink] = useState(appSettings.baseDir);
     // const [bookmarkTabDisplay, setBookmarkTabDisplay] = useState(true);
     // const [historyTabDisplay, setHistoryTabDisplay] = useState(true);
@@ -324,10 +328,12 @@ const Main = (): ReactElement => {
                     <div
                         className="divider"
                         onClick={() =>
-                            setAppSettings((init) => {
-                                init.showTabs.bookmark = !init.showTabs.bookmark;
-                                return { ...init };
-                            })
+                            dispatch(
+                                setAppSettings((state) => {
+                                    state.showTabs.bookmark = !state.showTabs.bookmark;
+                                    return { ...init };
+                                })
+                            )
                         }
                     >
                         <div className="bar"></div>
@@ -338,10 +344,12 @@ const Main = (): ReactElement => {
                     <div
                         className="divider"
                         onClick={() =>
-                            setAppSettings((init) => {
-                                init.showTabs.history = !init.showTabs.history;
-                                return { ...init };
-                            })
+                            dispatch(
+                                setAppSettings((state) => {
+                                    state.showTabs.history = !state.showTabs.history;
+                                    return { ...init };
+                                })
+                            )
                         }
                     >
                         <div className="bar"></div>

@@ -4,24 +4,27 @@ import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { ReactElement, useContext, useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
 import { faEdit, faLink, faPlus, faSync, faTimes, faTrash, faUnlink } from "@fortawesome/free-solid-svg-icons";
 import themesRaw from "../themeInit.json";
+import { newTheme, updateTheme, deleteTheme } from "../store/allThemes";
+import { setTheme } from "../store/theme";
+import { useAppDispatch, useAppSelector } from "../store/hooks";
+import { setShortcuts } from "../store/shortcuts";
+import { setOpenSetting } from "../store/isSettingOpen";
+import { addBookmark, removeAllBookmarks } from "../store/bookmarks";
+import { setAppSettings } from "../store/appSettings";
 
 const Settings = (): ReactElement => {
-    const {
-        isSettingOpen,
-        setSettingOpen,
-        appSettings,
-        setAppSettings,
-        bookmarks,
-        setBookmarks,
-        theme,
-        setTheme,
-        allThemes,
-        setAllThemes,
-        shortcuts,
-        setShortcuts,
-        promptSetDefaultLocation,
-    } = useContext(AppContext);
+    const { promptSetDefaultLocation } = useContext(AppContext);
+    const appSettings = useAppSelector((store) => store.appSettings);
+    const theme = useAppSelector((store) => store.theme);
+    const allThemes = useAppSelector((store) => store.allThemes);
+    const shortcuts = useAppSelector((store) => store.shortcuts);
+    const bookmarks = useAppSelector((store) => store.bookmarks);
+    const isSettingOpen = useAppSelector((store) => store.isSettingOpen);
+
+    const dispatch = useAppDispatch();
+
     const settingContRef = useRef<HTMLDivElement>(null);
+
     const currentTheme = useMemo(() => {
         return allThemes.find((e) => e.name === theme)!.main;
     }, [theme]);
@@ -73,17 +76,19 @@ const Settings = (): ReactElement => {
             }
         });
         if (saveAndReplace) {
-            setAllThemes((init) => {
-                init[init.findIndex((e) => e.name === name)].main = newThemeData;
-                return [...init];
-            });
+            dispatch(updateTheme({ themeName: name, newThemeData }));
+            // setAllThemes((init) => {
+            //     init[init.findIndex((e) => e.name === name)].main = newThemeData;
+            //     return [...init];
+            // });
             return;
         }
-        setAllThemes((init) => {
-            init.push({ name: name, main: newThemeData });
-            return [...init];
-        });
-        setTheme(name);
+        dispatch(newTheme({ name: name, main: newThemeData }));
+        // setAllThemes((init) => {
+        //     init.push({ name: name, main: newThemeData });
+        //     return [...init];
+        // });
+        dispatch(setTheme(name));
     };
 
     // todo: should i put this outside?
@@ -105,10 +110,12 @@ const Settings = (): ReactElement => {
                 settingContRef.current?.focus();
                 if (e.key === "Backspace") {
                     window.logger.log(`Deleting shortcut ${shortcuts[i].command}.${which}`);
-                    setShortcuts((init) => {
-                        init[i][which] = "";
-                        return [...init];
-                    });
+                    dispatch(
+                        setShortcuts((init) => {
+                            init[i][which] = "";
+                            return [...init];
+                        })
+                    );
                     return;
                 }
                 const dupIndex = shortcuts.findIndex((elem) => elem.key1 === e.key || elem.key2 === e.key);
@@ -120,10 +127,12 @@ const Settings = (): ReactElement => {
                     return;
                 }
                 window.logger.log(`Setting shortcut ${shortcuts[i].command}.${which} to "${e.key}"`);
-                setShortcuts((init) => {
-                    init[i][which] = e.key;
-                    return [...init];
-                });
+                dispatch(
+                    setShortcuts((init) => {
+                        init[i][which] = e.key;
+                        return [...init];
+                    })
+                );
             }}
             readOnly
             spellCheck={false}
@@ -265,18 +274,18 @@ const Settings = (): ReactElement => {
 
     return (
         <div id="settings" data-state={isSettingOpen ? "open" : "closed"}>
-            <div className="clickClose" onClick={() => setSettingOpen(false)}></div>
+            <div className="clickClose" onClick={() => dispatch(setOpenSetting(false))}></div>
             <div
                 className={"cont"}
                 onKeyDown={(e) => {
-                    if (e.key === "Escape") setSettingOpen(false);
+                    if (e.key === "Escape") dispatch(setOpenSetting(false));
                 }}
                 tabIndex={-1}
                 ref={settingContRef}
             >
                 <h1>
                     Settings
-                    <button onClick={() => setSettingOpen(false)} className="closeBtn">
+                    <button onClick={() => dispatch(setOpenSetting(false))} className="closeBtn">
                         <FontAwesomeIcon icon={faTimes} />
                     </button>
                 </h1>
@@ -318,7 +327,7 @@ const Settings = (): ReactElement => {
                                         if (opt == undefined) return;
                                         window.fs.writeFileSync(
                                             opt,
-                                            JSON.stringify(bookmarks) || JSON.stringify([])
+                                            JSON.stringify(bookmarks, null, "\t") || JSON.stringify([])
                                         );
                                     }}
                                 >
@@ -359,7 +368,7 @@ const Settings = (): ReactElement => {
                                                 title: "warning",
                                                 message: "Found " + similarFound + " with same link",
                                             });
-                                        setBookmarks([...bookmarks, ...dataToAdd]);
+                                        dispatch(addBookmark(dataToAdd));
                                     }}
                                 >
                                     Import
@@ -386,7 +395,7 @@ const Settings = (): ReactElement => {
                                                         })
                                                         .then((res) => {
                                                             if (res.response === 1) return;
-                                                            setBookmarks([]);
+                                                            dispatch(removeAllBookmarks());
                                                         });
                                                 }
                                             });
@@ -428,10 +437,11 @@ const Settings = (): ReactElement => {
                                                     })
                                                     .then((res) => {
                                                         if (res.response === 0) {
-                                                            setAllThemes((init) => {
-                                                                init.splice(i, 1);
-                                                                return [...init];
-                                                            });
+                                                            dispatch(deleteTheme(i));
+                                                            // setAllThemes((init) => {
+                                                            //     init.splice(i, 1);
+                                                            //     return [...init];
+                                                            // });
                                                         }
                                                     });
                                             }}
@@ -483,10 +493,12 @@ const Settings = (): ReactElement => {
                                         type="checkbox"
                                         checked={appSettings.updateCheckerEnabled}
                                         onChange={(e) => {
-                                            setAppSettings((init) => {
-                                                init.updateCheckerEnabled = e.currentTarget.checked;
-                                                return { ...init };
-                                            });
+                                            dispatch(
+                                                setAppSettings((init) => {
+                                                    init.updateCheckerEnabled = e.currentTarget.checked;
+                                                    return { ...init };
+                                                })
+                                            );
                                         }}
                                     />
                                     <p>Check on Startup</p>
@@ -512,10 +524,12 @@ const Settings = (): ReactElement => {
                                         type="checkbox"
                                         checked={appSettings.askBeforeClosing}
                                         onChange={(e) => {
-                                            setAppSettings((init) => {
-                                                init.askBeforeClosing = e.currentTarget.checked;
-                                                return { ...init };
-                                            });
+                                            dispatch(
+                                                setAppSettings((init) => {
+                                                    init.askBeforeClosing = e.currentTarget.checked;
+                                                    return { ...init };
+                                                })
+                                            );
                                         }}
                                     />
                                     <p>Ask before closing window? (Needs Restart).</p>
@@ -525,10 +539,12 @@ const Settings = (): ReactElement => {
                                         type="checkbox"
                                         checked={appSettings.skipMinorUpdate}
                                         onChange={(e) => {
-                                            setAppSettings((init) => {
-                                                init.skipMinorUpdate = e.currentTarget.checked;
-                                                return { ...init };
-                                            });
+                                            dispatch(
+                                                setAppSettings((init) => {
+                                                    init.skipMinorUpdate = e.currentTarget.checked;
+                                                    return { ...init };
+                                                })
+                                            );
                                         }}
                                     />
                                     <p>Skip minor updates.</p>
@@ -538,10 +554,12 @@ const Settings = (): ReactElement => {
                                         type="checkbox"
                                         checked={appSettings.openDirectlyFromManga}
                                         onChange={(e) => {
-                                            setAppSettings((init) => {
-                                                init.openDirectlyFromManga = e.currentTarget.checked;
-                                                return { ...init };
-                                            });
+                                            dispatch(
+                                                setAppSettings((init) => {
+                                                    init.openDirectlyFromManga = e.currentTarget.checked;
+                                                    return { ...init };
+                                                })
+                                            );
                                         }}
                                     />
                                     <p>
@@ -558,11 +576,13 @@ const Settings = (): ReactElement => {
                                         type="checkbox"
                                         checked={appSettings.readerSettings.disableChapterTransitionScreen}
                                         onChange={(e) => {
-                                            setAppSettings((init) => {
-                                                init.readerSettings.disableChapterTransitionScreen =
-                                                    e.currentTarget.checked;
-                                                return { ...init };
-                                            });
+                                            dispatch(
+                                                setAppSettings((init) => {
+                                                    init.readerSettings.disableChapterTransitionScreen =
+                                                        e.currentTarget.checked;
+                                                    return { ...init };
+                                                })
+                                            );
                                         }}
                                     />
                                     <p>
@@ -575,10 +595,12 @@ const Settings = (): ReactElement => {
                                         type="checkbox"
                                         checked={appSettings.useCanvasBasedReader}
                                         onChange={(e) => {
-                                            setAppSettings((init) => {
-                                                init.useCanvasBasedReader = e.currentTarget.checked;
-                                                return { ...init };
-                                            });
+                                            dispatch(
+                                                setAppSettings((init) => {
+                                                    init.useCanvasBasedReader = e.currentTarget.checked;
+                                                    return { ...init };
+                                                })
+                                            );
                                         }}
                                     />
                                     <p>
@@ -596,7 +618,8 @@ const Settings = (): ReactElement => {
                                             onChange={(e) => {
                                                 setAppSettings((init) => {
                                                     init.disableCachingCanvas = e.currentTarget.checked;
-                                                    return { ...init };
+                                                    return {...init}
+                                                    
                                                 });
                                             }}
                                         />
@@ -793,7 +816,7 @@ const Settings = (): ReactElement => {
                                 })
                                 .then((res) => {
                                     if (res.response === 0) {
-                                        setShortcuts(window.shortcutsFunctions);
+                                        dispatch(setShortcuts(window.shortcutsFunctions));
                                     }
                                 });
                         }}

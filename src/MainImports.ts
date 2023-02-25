@@ -498,3 +498,177 @@ window.dialog = {
             defaultId,
         }),
 };
+/**
+ * async file save
+ */
+const saveJSONfile = (path: string, data: any) => {
+    window.fs.writeFile(path, JSON.stringify(data, null, "\t"), (err) => {
+        if (err) {
+            window.logger.error(err);
+            window.dialog.nodeError(err);
+        }
+    });
+};
+
+const userDataURL = window.electron.app.getPath("userData");
+const settingsPath = window.path.join(userDataURL, "settings.json");
+const bookmarksPath = window.path.join(userDataURL, "bookmarks.json");
+const historyPath = window.path.join(userDataURL, "history.json");
+const themesPath = window.path.join(userDataURL, "themes.json");
+const shortcutsPath = window.path.join(userDataURL, "shortcuts.json");
+
+const defaultSettings: appsettings = {
+    theme: "theme2",
+    bookmarksPath,
+    historyPath,
+    baseDir: window.electron.app.getPath("home"),
+    locationListSortType: "normal",
+    updateCheckerEnabled: true,
+    askBeforeClosing: false,
+    skipMinorUpdate: false,
+    openDirectlyFromManga: false,
+    showTabs: {
+        bookmark: true,
+        history: true,
+    },
+    useCanvasBasedReader: false,
+    // disableCachingCanvas: false,
+    readerSettings: {
+        readerWidth: 60,
+        variableImageSize: true,
+        readerTypeSelected: 0,
+        pagesPerRowSelected: 0,
+        gapBetweenRows: true,
+        sideListWidth: 450,
+        widthClamped: true,
+        gapSize: 10,
+        showPageNumberInZenMode: true,
+        scrollSpeed: 5,
+        largeScrollMultiplier: 15,
+        readingSide: 1,
+        // fitVertically: false,
+        fitOption: 0,
+        disableChapterTransitionScreen: false,
+        maxHeightWidthSelector: "none",
+        maxHeight: 500,
+        maxWidth: 500,
+    },
+};
+
+/**
+ * Make settings.json for app.
+ * @param locations (optional) only update given locations in settings.json.
+ */
+const makeSettingsJson = (locations?: string[]) => {
+    if (locations) {
+        const settingsDataSaved = JSON.parse(window.fs.readFileSync(settingsPath, "utf-8"));
+        locations.forEach((e) => {
+            window.logger.log(`"SETTINGS: ${e}" missing/corrupted in app settings, adding new...`);
+            const l: string[] = e.split(".");
+            // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+            //@ts-ignore
+            if (l.length === 1) settingsDataSaved[l[0]] = settingsDataNew[l[0]];
+            // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+            //@ts-ignore
+            if (l.length === 2) settingsDataSaved[l[0]][l[1]] = settingsDataNew[l[0]][l[1]];
+            // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+            //@ts-ignore
+            if (l.length === 3) settingsDataSaved[l[0]][l[1]][l[2]] = settingsDataNew[l[0]][l[1]][l[2]];
+        });
+        window.fs.writeFileSync(settingsPath, JSON.stringify(settingsDataSaved, null, "\t"));
+    } else window.fs.writeFileSync(settingsPath, JSON.stringify(defaultSettings, null, "\t"));
+};
+
+if (!window.fs.existsSync(settingsPath)) {
+    window.dialog.warn({ message: "No settings found, Select manga folder to make default in settings" });
+    makeSettingsJson();
+}
+
+/**
+ * Check if settings.json is valid or not.
+ * @returns
+ * * `isValid` - boolean
+ * * `location` - array of invalid settings location, empty array if whole is corrupted
+ */
+const isSettingsValid = (): { isValid: boolean; location: string[] } => {
+    try {
+        JSON.parse(window.fs.readFileSync(settingsPath, "utf-8"));
+    } catch (err) {
+        window.logger.error(err);
+        makeSettingsJson();
+        return { isValid: false, location: [] };
+    }
+    const settings = JSON.parse(window.fs.readFileSync(settingsPath, "utf-8"));
+    const output: { isValid: boolean; location: string[] } = {
+        isValid: true,
+        location: [],
+    };
+    Object.entries(settingValidatorData).forEach(([key, value]) => {
+        if (!Object.prototype.hasOwnProperty.call(settings, key)) {
+            output.isValid = false;
+            output.location.push(key);
+            return;
+        }
+        if (
+            (typeof value === "string" && typeof settings[key] !== "string") ||
+            (typeof value === "number" && typeof settings[key] !== "number") ||
+            (typeof value === "boolean" && typeof settings[key] !== "boolean") ||
+            (typeof value === "object" && !(value instanceof Array) && typeof settings[key] !== "object")
+        ) {
+            output.isValid = false;
+            output.location.push(key);
+            return;
+        }
+        if (value instanceof Array) {
+            if (!value.includes(settings[key])) {
+                output.isValid = false;
+                output.location.push(key);
+            }
+            return;
+        }
+        if (value instanceof Object) {
+            Object.entries(value).forEach(([key2, value2]) => {
+                if (!Object.prototype.hasOwnProperty.call(settings[key], key2)) {
+                    output.isValid = false;
+                    output.location.push(`${key}.${key2}`);
+                    return;
+                }
+                if (
+                    (typeof value2 === "string" && typeof settings[key][key2] !== "string") ||
+                    (typeof value2 === "number" && typeof settings[key][key2] !== "number") ||
+                    (typeof value2 === "boolean" && typeof settings[key][key2] !== "boolean") ||
+                    (typeof value2 === "object" &&
+                        !(value2 instanceof Array) &&
+                        typeof settings[key][key2] !== "object")
+                ) {
+                    output.isValid = false;
+                    output.location.push(`${key}.${key2}`);
+                    return;
+                }
+                if (value2 instanceof Array) {
+                    // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+                    //@ts-ignore
+                    if (!value2.includes(settings[key][key2])) {
+                        output.isValid = false;
+                        output.location.push(`${key}.${key2}`);
+                    }
+                    return;
+                }
+            });
+        }
+    });
+    return output;
+};
+
+// todo: remove useless
+export {
+    settingsPath,
+    bookmarksPath,
+    historyPath,
+    themesPath,
+    shortcutsPath,
+    defaultSettings,
+    makeSettingsJson,
+    isSettingsValid,
+    saveJSONfile,
+};

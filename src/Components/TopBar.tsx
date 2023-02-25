@@ -2,17 +2,17 @@ import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { ReactElement, useContext, useEffect, useLayoutEffect, useState } from "react";
 import { faHome, faCog } from "@fortawesome/free-solid-svg-icons";
 import { AppContext } from "../App";
+import { useAppDispatch, useAppSelector } from "../store/hooks";
+import { toggleOpenSetting } from "../store/isSettingOpen";
+import { setPageNumChangeDisabled } from "../store/pageNumChangeDisabled";
 
 const TopBar = (): ReactElement => {
     const [title, setTitle] = useState<string>("Yomikiru");
-    const {
-        setSettingOpen,
-        mangaInReader,
-        isReaderOpen,
-        setPageNumChangeDisabled,
-        pageNumberInputRef,
-        closeReader,
-    } = useContext(AppContext);
+    const { pageNumberInputRef, closeReader } = useContext(AppContext);
+    const mangaInReader = useAppSelector((store) => store.mangaInReader);
+    const isReaderOpen = useAppSelector((store) => store.isReaderOpen);
+    const dispatch = useAppDispatch();
+
     const setTitleWithSize = () => {
         if (mangaInReader) {
             let mangaName = mangaInReader.mangaName;
@@ -56,7 +56,7 @@ const TopBar = (): ReactElement => {
                     className="settingsBtn"
                     onFocus={(e) => e.currentTarget.blur()}
                     onClick={() => {
-                        setSettingOpen((state) => !state);
+                        dispatch(toggleOpenSetting());
                     }}
                     tabIndex={-1}
                     data-tooltip="Settings"
@@ -86,7 +86,7 @@ const TopBar = (): ReactElement => {
                             e.currentTarget.select();
                         }}
                         onBlur={() => {
-                            setPageNumChangeDisabled(false);
+                            dispatch(setPageNumChangeDisabled(false));
                         }}
                         onKeyDown={(e) => {
                             e.stopPropagation();
@@ -112,9 +112,9 @@ const TopBar = (): ReactElement => {
                                     pageNumberInputRef.current.value = pagenumber.toString();
                                 }
                                 if (!pagenumber) return;
-                                setPageNumChangeDisabled(true);
+                                dispatch(setPageNumChangeDisabled(true));
                                 window.app.scrollToPage(pagenumber, "smooth", () => {
-                                    setPageNumChangeDisabled(false);
+                                    dispatch(setPageNumChangeDisabled(false));
                                 });
                                 return;
                             }
@@ -126,7 +126,7 @@ const TopBar = (): ReactElement => {
                                     pageNumberInputRef.current.value = pagenumber.toString();
                                 }
                                 if (!pagenumber) return;
-                                setPageNumChangeDisabled(true);
+                                dispatch(setPageNumChangeDisabled(true));
                                 window.app.scrollToPage(pagenumber);
                                 return;
                             }

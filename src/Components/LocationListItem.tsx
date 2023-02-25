@@ -2,6 +2,7 @@ import { faAngleRight } from "@fortawesome/free-solid-svg-icons";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { ReactElement, useContext } from "react";
 import { AppContext } from "../App";
+import { useAppSelector } from "../store/hooks";
 import { MainContext } from "./Main";
 
 const LocationListItem = ({
@@ -15,8 +16,9 @@ const LocationListItem = ({
     setCurrentLink: React.Dispatch<React.SetStateAction<string>>;
     inHistory?: boolean;
 }): ReactElement => {
-    const { openInReader, appSettings } = useContext(AppContext);
+    const { openInReader } = useContext(AppContext);
     const { showContextMenu } = useContext(MainContext);
+    const appSettings = useAppSelector((store) => store.appSettings);
     return (
         <li className={inHistory ? "alreadyRead" : ""}>
             <a

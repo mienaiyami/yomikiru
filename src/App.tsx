@@ -1,372 +1,31 @@
 import "./MainImports";
 import { createContext, createRef, ReactElement, useEffect, useState } from "react";
+import { useAppDispatch, useAppSelector } from "./store/hooks";
+import { setAppSettings } from "./store/appSettings";
 import Main from "./Components/Main";
 import TopBar from "./Components/TopBar";
-import useTheme from "./hooks/useTheme";
-import { settingValidatorData } from "./MainImports";
-import themesRaw from "./themeInit.json";
+import { setUnzipping } from "./store/unzipping";
+import { setLoadingManga } from "./store/isLoadingManga";
+import { setLoadingMangaPercent } from "./store/loadingMangaPercent";
+import { setLinkInReader } from "./store/linkInReader";
+import { updateLastHistoryPage } from "./store/history";
+import { setReaderOpen } from "./store/isReaderOpen";
+import { setMangaInReader } from "./store/mangaInReader";
+import { addBookmark } from "./store/bookmarks";
+import { setTheme } from "./store/theme";
 
 // window.logger.log("New window opening...");
 
-const userDataURL = window.electron.app.getPath("userData");
-const settingsPath = window.path.join(userDataURL, "settings.json");
-const bookmarksPath = window.path.join(userDataURL, "bookmarks.json");
-const bookmarkDataInit: ChapterItem[] = [];
-const historyPath = window.path.join(userDataURL, "history.json");
-const historyDataInit: HistoryItem[] = [];
-const themesPath = window.path.join(userDataURL, "themes.json");
-const themesMain: ThemeData[] = [];
-const shortcutsPath = window.path.join(userDataURL, "shortcuts.json");
-const shortcutsInit: ShortcutSchema[] = [];
-
-/**
- * Make settings.json for app.
- * @param locations (optional) only update given locations in settings.json.
- */
-const makeSettingsJson = (locations?: string[]) => {
-    const settingsDataNew: appsettings = {
-        theme: "theme2",
-        bookmarksPath,
-        historyPath,
-        baseDir: window.electron.app.getPath("home"),
-        locationListSortType: "normal",
-        updateCheckerEnabled: true,
-        askBeforeClosing: false,
-        skipMinorUpdate: false,
-        openDirectlyFromManga: false,
-        showTabs: {
-            bookmark: true,
-            history: true,
-        },
-        useCanvasBasedReader: false,
-        // disableCachingCanvas: false,
-        readerSettings: {
-            readerWidth: 60,
-            variableImageSize: true,
-            readerTypeSelected: 0,
-            pagesPerRowSelected: 0,
-            gapBetweenRows: true,
-            sideListWidth: 450,
-            widthClamped: true,
-            gapSize: 10,
-            showPageNumberInZenMode: true,
-            scrollSpeed: 5,
-            largeScrollMultiplier: 15,
-            readingSide: 1,
-            // fitVertically: false,
-            fitOption: 0,
-            disableChapterTransitionScreen: false,
-            maxHeightWidthSelector: "none",
-            maxHeight: 500,
-            maxWidth: 500,
-        },
-    };
-    if (locations) {
-        const settingsDataSaved = JSON.parse(window.fs.readFileSync(settingsPath, "utf-8"));
-        locations.forEach((e) => {
-            window.logger.log(`"SETTINGS: ${e}" missing/corrupted in app settings, adding new...`);
-            const l: string[] = e.split(".");
-            // eslint-disable-next-line @typescript-eslint/ban-ts-comment
-            //@ts-ignore
-            if (l.length === 1) settingsDataSaved[l[0]] = settingsDataNew[l[0]];
-            // eslint-disable-next-line @typescript-eslint/ban-ts-comment
-            //@ts-ignore
-            if (l.length === 2) settingsDataSaved[l[0]][l[1]] = settingsDataNew[l[0]][l[1]];
-            // eslint-disable-next-line @typescript-eslint/ban-ts-comment
-            //@ts-ignore
-            if (l.length === 3) settingsDataSaved[l[0]][l[1]][l[2]] = settingsDataNew[l[0]][l[1]][l[2]];
-        });
-        window.fs.writeFileSync(settingsPath, JSON.stringify(settingsDataSaved));
-    } else window.fs.writeFileSync(settingsPath, JSON.stringify(settingsDataNew));
-};
-
-if (!window.fs.existsSync(settingsPath)) {
-    window.dialog.warn({ message: "No settings found, Select manga folder to make default in settings" });
-    makeSettingsJson();
-}
-try {
-    JSON.parse(window.fs.readFileSync(settingsPath, "utf-8"));
-} catch (err) {
-    window.dialog.customError({ message: "Unable to parse " + settingsPath + "\n" + "Writing new settings.json" });
-    window.logger.error(err);
-    makeSettingsJson();
-}
-/**
- * Check if settings.json is valid or not.
- * @returns
- * * `isValid` - boolean
- * * `location` - array of invalid settings location
- */
-function isSettingsValid(): { isValid: boolean; location: string[] } {
-    const settings = JSON.parse(window.fs.readFileSync(settingsPath, "utf-8"));
-    const output: { isValid: boolean; location: string[] } = {
-        isValid: true,
-        location: [],
-    };
-    Object.entries(settingValidatorData).forEach(([key, value]) => {
-        if (!Object.prototype.hasOwnProperty.call(settings, key)) {
-            output.isValid = false;
-            output.location.push(key);
-            return;
-        }
-        if (
-            (typeof value === "string" && typeof settings[key] !== "string") ||
-            (typeof value === "number" && typeof settings[key] !== "number") ||
-            (typeof value === "boolean" && typeof settings[key] !== "boolean") ||
-            (typeof value === "object" && !(value instanceof Array) && typeof settings[key] !== "object")
-        ) {
-            output.isValid = false;
-            output.location.push(key);
-            return;
-        }
-        if (value instanceof Array) {
-            if (!value.includes(settings[key])) {
-                output.isValid = false;
-                output.location.push(key);
-            }
-            return;
-        }
-        if (value instanceof Object) {
-            Object.entries(value).forEach(([key2, value2]) => {
-                if (!Object.prototype.hasOwnProperty.call(settings[key], key2)) {
-                    output.isValid = false;
-                    output.location.push(`${key}.${key2}`);
-                    return;
-                }
-                if (
-                    (typeof value2 === "string" && typeof settings[key][key2] !== "string") ||
-                    (typeof value2 === "number" && typeof settings[key][key2] !== "number") ||
-                    (typeof value2 === "boolean" && typeof settings[key][key2] !== "boolean") ||
-                    (typeof value2 === "object" &&
-                        !(value2 instanceof Array) &&
-                        typeof settings[key][key2] !== "object")
-                ) {
-                    output.isValid = false;
-                    output.location.push(`${key}.${key2}`);
-                    return;
-                }
-                if (value2 instanceof Array) {
-                    // eslint-disable-next-line @typescript-eslint/ban-ts-comment
-                    //@ts-ignore
-                    if (!value2.includes(settings[key][key2])) {
-                        output.isValid = false;
-                        output.location.push(`${key}.${key2}`);
-                    }
-                    return;
-                }
-            });
-        }
-    });
-    return output;
-}
-if (!isSettingsValid().isValid) {
-    window.dialog.customError({
-        message: `Some settings are invalid or new settings added. Re-writing settings.`,
-    });
-    window.logger.log(isSettingsValid());
-    makeSettingsJson(isSettingsValid().location);
-}
-const settings: appsettings = JSON.parse(window.fs.readFileSync(settingsPath, "utf-8"));
-const getDataFiles = () => {
-    if (window.fs.existsSync(bookmarksPath)) {
-        const rawdata = window.fs.readFileSync(bookmarksPath, "utf8");
-        if (rawdata) {
-            try {
-                const data = JSON.parse(rawdata);
-                bookmarkDataInit.push(...data);
-            } catch (err) {
-                window.dialog.customError({
-                    message: "Unable to parse " + bookmarksPath + "\nMaking new bookmarks.json...",
-                });
-                window.logger.error(err);
-                window.fs.writeFileSync(bookmarksPath, "[]");
-            }
-        }
-    } else {
-        window.fs.writeFileSync(bookmarksPath, "[]");
-    }
-    if (window.fs.existsSync(historyPath)) {
-        const rawdata = window.fs.readFileSync(historyPath, "utf8");
-        if (rawdata) {
-            try {
-                const data = JSON.parse(rawdata);
-                if (data[0] && !data[0].chaptersRead) throw new Error("History format changed.");
-                historyDataInit.push(...data);
-            } catch (err) {
-                if ((err as Error).message === "History format changed.")
-                    window.dialog.customError({
-                        message: "History format changed.\nSorry for the inconvenience.",
-                    });
-                else
-                    window.dialog.customError({
-                        message: "Unable to parse " + historyPath + "\nMaking new history.json...",
-                    });
-                window.logger.error(err);
-                window.fs.writeFileSync(historyPath, "[]");
-            }
-        }
-    } else {
-        window.fs.writeFileSync(historyPath, "[]");
-    }
-
-    // shortcuts
-    if (window.fs.existsSync(shortcutsPath)) {
-        const rawdata = window.fs.readFileSync(shortcutsPath, "utf8");
-        if (rawdata) {
-            try {
-                let data: ShortcutSchema[] = JSON.parse(rawdata);
-                // check if shortcut key is missing in shortcuts.json, if so then add
-                const shortcutKeyEntries = data.map((e) => e.command);
-                const shortcutKeyOriginal = window.shortcutsFunctions.map((e) => e.command);
-                data = data.filter((e) => shortcutKeyOriginal.includes(e.command));
-                window.shortcutsFunctions.forEach((e) => {
-                    if (!shortcutKeyEntries.includes(e.command)) {
-                        window.logger.log(`Function ${e} does not exist in shortcuts.json. Adding it.`);
-                        data.push(e);
-                    }
-                });
-                data.forEach((e) => {
-                    e.name = window.shortcutsFunctions.find((a) => a.command === e.command)?.name as string;
-                });
-                window.fs.writeFileSync(shortcutsPath, JSON.stringify(data));
-                shortcutsInit.push(...data);
-            } catch (err) {
-                window.dialog.customError({
-                    message: "Unable to parse " + shortcutsPath + "\nMaking new shortcuts.json...",
-                });
-                window.logger.error(err);
-                window.fs.writeFileSync(shortcutsPath, JSON.stringify(window.shortcutsFunctions));
-                shortcutsInit.push(...window.shortcutsFunctions);
-            }
-        }
-    } else {
-        window.fs.writeFileSync(shortcutsPath, JSON.stringify(window.shortcutsFunctions));
-        shortcutsInit.push(...window.shortcutsFunctions);
-    }
-    // theme
-    if (window.fs.existsSync(themesPath)) {
-        const rawdata = window.fs.readFileSync(themesPath, "utf8");
-        if (rawdata) {
-            try {
-                const data: ThemeData[] = JSON.parse(rawdata);
-                // validate theme data
-                let changed = false;
-                if (typeof data[0].main === "string" || !Array.isArray(data))
-                    throw { message: "Theme variable does not exist on theme.main" };
-                for (const prop in window.themeProps) {
-                    let rewriteNeeded = false;
-                    data.forEach((e) => {
-                        if (!e.main[prop as ThemeDataMain]) {
-                            if (themesRaw.map((t) => t.name).includes(e.name)) {
-                                window.logger.log(
-                                    `"${prop}" does not exist on default theme - "${e.name}", rewriting it whole.`
-                                );
-                                e.main = themesRaw.find((t) => t.name === e.name)!.main;
-                                rewriteNeeded = true;
-                            } else {
-                                window.logger.log(
-                                    `"${prop}" does not exist on theme - "${e.name}", adding it with value "#ff0000".`
-                                );
-                                rewriteNeeded = true;
-                                changed = true;
-                                e.main[prop as ThemeDataMain] = "#ff0000";
-                            }
-                        }
-                    });
-                    if (rewriteNeeded) window.fs.writeFileSync(themesPath, JSON.stringify(data));
-                }
-                if (changed)
-                    window.dialog.warn({
-                        message:
-                            'Some properties were missing in themes. Added new as "Red" color, change accordingly or re-edit default themes.\nCheck log file for exact names.',
-                    });
-                themesMain.push(...data);
-            } catch (err) {
-                window.dialog.customError({
-                    message: "Unable to parse " + themesPath + "\nMaking new themes.json..." + "\n" + err,
-                });
-                window.logger.error(err);
-                themesMain.push(...themesRaw);
-                // window.fs.writeFileSync(themesPath, JSON.stringify(themesRaw));
-            }
-            // if (JSON.parse(rawdata).length < 3) {
-            //     window.fs.writeFileSync(themesPath, JSON.stringify(themes));
-            //     themesMain.push(...themes);
-            // }else
-        }
-    } else {
-        themesMain.push(...themesRaw);
-        window.fs.writeFileSync(themesPath, JSON.stringify(themesRaw));
-    }
-};
-getDataFiles();
-export { themesMain };
-if (!themesMain.map((e) => e.name).includes(settings.theme)) {
-    window.dialog
-        .warn({
-            title: "Error",
-            message: `Theme "${settings.theme}" does not exist. Try fixing or deleting theme.json and settings.json in "userdata" folder.(at "%appdata%/Yomikiru/" or in main folder on Portable version)`,
-            noOption: false,
-            defaultId: 0,
-            buttons: ["Ok", "Temporary fix", "Open Location"],
-        })
-        .then((res) => {
-            if (res.response === 1) {
-                settings.theme = themesMain[0].name;
-                window.fs.writeFileSync(settingsPath, JSON.stringify(settings));
-                window.location.reload();
-            }
-            if (res.response === 2) {
-                window.electron.shell.showItemInFolder(themesPath);
-            }
-        });
-}
+// todo: why was i exporting this?
+// export { themesMain };
 
 interface IAppContext {
-    bookmarks: ChapterItem[];
-    setBookmarks: React.Dispatch<React.SetStateAction<ChapterItem[]>>;
-    history: HistoryItem[];
-    setHistory: React.Dispatch<React.SetStateAction<HistoryItem[]>>;
-    shortcuts: ShortcutSchema[];
-    setShortcuts: React.Dispatch<React.SetStateAction<ShortcutSchema[]>>;
-    allThemes: ThemeData[];
-    setAllThemes: React.Dispatch<React.SetStateAction<ThemeData[]>>;
     pageNumberInputRef: React.RefObject<HTMLInputElement>;
-    isSettingOpen: boolean;
-    setSettingOpen: React.Dispatch<React.SetStateAction<boolean>>;
-    appSettings: appsettings;
-    setAppSettings: React.Dispatch<React.SetStateAction<appsettings>>;
-    isReaderOpen: boolean;
-    setReaderOpen: React.Dispatch<React.SetStateAction<boolean>>;
     openInReader: (link: string, page?: number) => void;
-    isLoadingManga: boolean;
-    setLoadingManga: React.Dispatch<React.SetStateAction<boolean>>;
-    unzipping: boolean;
-    setUnzipping: React.Dispatch<React.SetStateAction<boolean>>;
-    linkInReader: { link: string; page: number };
-    setLinkInReader: React.Dispatch<React.SetStateAction<{ link: string; page: number }>>;
-    mangaInReader: ListItem | null;
-    setMangaInReader: React.Dispatch<React.SetStateAction<ListItem | null>>;
-    addNewBookmark: (newBk: ChapterItem) => Promise<Electron.MessageBoxReturnValue> | undefined;
-    loadingMangaPercent: number;
-    setLoadingMangaPercent: React.Dispatch<React.SetStateAction<number>>;
-    pageNumChangeDisabled: boolean;
-    setPageNumChangeDisabled: React.Dispatch<React.SetStateAction<boolean>>;
-    prevNextChapter: {
-        prev: string;
-        next: string;
-    };
-    setPrevNextChapter: React.Dispatch<
-        React.SetStateAction<{
-            prev: string;
-            next: string;
-        }>
-    >;
+    // addNewBookmark: (newBk: ChapterItem) => Promise<Electron.MessageBoxReturnValue> | undefined;
     closeReader: () => void;
-    updateLastHistoryPageNumber: () => void;
+    // updateLastHistoryPageNumber: () => void;
     openInNewWindow: (link: string) => void;
-    theme: string;
-    setTheme: React.Dispatch<React.SetStateAction<string>>;
     checkValidFolder: (
         link: string,
         callback: (isValid?: boolean, imgs?: string[]) => void,
@@ -378,30 +37,17 @@ interface IAppContext {
 export const AppContext = createContext<IAppContext>(null!);
 const App = (): ReactElement => {
     const [firstRendered, setFirstRendered] = useState(false);
-    const [appSettings, setAppSettings] = useState(settings);
-    const [allThemes, setAllThemes] = useState(themesMain);
-    const [theme, setTheme] = useTheme(appSettings.theme || "theme2", allThemes);
-    const [isSettingOpen, setSettingOpen] = useState(false);
-    const [isReaderOpen, setReaderOpen] = useState(false);
-    const [isLoadingManga, setLoadingManga] = useState(false);
-    const [unzipping, setUnzipping] = useState(false);
-    const [pageNumChangeDisabled, setPageNumChangeDisabled] = useState(false);
-    const [loadingMangaPercent, setLoadingMangaPercent] = useState(100);
-    const [linkInReader, setLinkInReader] = useState<{ link: string; page: number }>({
-        link: window.loadManga || "",
-        page: 1,
-    });
-    // link of prev/next chapter
-    const [prevNextChapter, setPrevNextChapter] = useState({ prev: "", next: "" });
-    const [mangaInReader, setMangaInReader] = useState<ListItem | null>(null);
-    const [bookmarks, setBookmarks] = useState<ChapterItem[]>(bookmarkDataInit);
-    const [history, setHistory] = useState<HistoryItem[]>(historyDataInit);
-    const [shortcuts, setShortcuts] = useState<ShortcutSchema[]>(shortcutsInit);
+    const appSettings = useAppSelector((state) => state.appSettings);
+    const isReaderOpen = useAppSelector((state) => state.isReaderOpen);
+    const linkInReader = useAppSelector((state) => state.linkInReader);
+    const bookmarks = useAppSelector((state) => state.bookmarks);
     const pageNumberInputRef: React.RefObject<HTMLInputElement> = createRef();
 
+    const dispatch = useAppDispatch();
+    dispatch(setTheme({ theme: "theme3", allThemes: useAppSelector((store) => store.allThemes) }));
     useEffect(() => {
         if (firstRendered) {
-            if (settings.baseDir === "") {
+            if (appSettings.baseDir === "") {
                 window.dialog.customError({ message: "No settings found, Select manga folder" });
                 promptSetDefaultLocation();
             }
@@ -429,7 +75,7 @@ const App = (): ReactElement => {
                 if (err) {
                     window.logger.error(err);
                     window.dialog.nodeError(err);
-                    setUnzipping(false);
+                    dispatch(setUnzipping(false));
                     callback(false);
                     return;
                 }
@@ -439,14 +85,14 @@ const App = (): ReactElement => {
                         message: "Folder is empty.",
                         detail: link,
                     });
-                    setUnzipping(false);
+                    dispatch(setUnzipping(false));
                     callback(false);
                     return;
                 }
-                setUnzipping(false);
+                dispatch(setUnzipping(false));
                 if (sendImgs) {
-                    setLoadingManga(true);
-                    setLoadingMangaPercent(0);
+                    dispatch(setLoadingManga(true));
+                    dispatch(setLoadingMangaPercent(0));
                 }
                 const imgs = files.filter((e) => {
                     return window.supportedFormats.includes(window.path.extname(e).toLowerCase());
@@ -469,7 +115,7 @@ const App = (): ReactElement => {
                         message: "Folder doesn't contain any supported image format.",
                         log: false,
                     });
-                    setLoadingManga(false);
+                    dispatch(setLoadingManga(true));
                     callback(false);
                     return;
                 }
@@ -486,7 +132,7 @@ const App = (): ReactElement => {
         if ([".zip", ".cbz"].includes(window.path.extname(link))) {
             let tempExtractPath = window.path.join(
                 window.electron.app.getPath("temp"),
-                `mangareader-tempImages-${linkSplitted[linkSplitted.length - 1]}-${window.app.randomString(10)}`
+                `yomikiru-tempImages-${linkSplitted[linkSplitted.length - 1]}-${window.app.randomString(10)}`
             );
             if (window.fs.existsSync(tempExtractPath)) {
                 tempExtractPath += "-1";
@@ -498,10 +144,10 @@ const App = (): ReactElement => {
                     recursive: true,
                 });
             window.app.deleteDirOnClose = tempExtractPath;
-            setUnzipping(true);
+            dispatch(setUnzipping(true));
             window.crossZip.unzip(link, tempExtractPath, (err) => {
                 if (err) {
-                    setUnzipping(false);
+                    dispatch(setUnzipping(false));
 
                     return window.dialog.customError({
                         message: "Error while extracting.",
@@ -528,51 +174,52 @@ const App = (): ReactElement => {
                         link,
                         images: imgs,
                     };
-                    setLinkInReader({ link, page: page || 1 });
+                    dispatch(setLinkInReader({ link, page: page || 1 }));
                 }
             },
             true
         );
     };
-    const updateLastHistoryPageNumber = () => {
-        if (history.length > 0)
-            setHistory((init) => {
-                if (
-                    (init.length > 0 && init[0] && init[0].link && init[0].link === linkInReader.link) ||
-                    linkInReader.link === ""
-                ) {
-                    init[0].page = window.app.currentPageNumber;
-                    return [...init];
-                }
-                return init;
-            });
-    };
+    // const updateLastHistoryPageNumber = () => {
+    //     if (history.length > 0)
+    //         setHistory((init) => {
+    //             if (
+    //                 (init.length > 0 && init[0] && init[0].link && init[0].link === linkInReader.link) ||
+    //                 linkInReader.link === ""
+    //             ) {
+    //                 init[0].page = window.app.currentPageNumber;
+    //                 return [...init];
+    //             }
+    //             return init;
+    //         });
+    // };
     const closeReader = () => {
-        updateLastHistoryPageNumber();
-        setReaderOpen(false);
-        setLinkInReader({ link: "", page: 1 });
-        setLoadingManga(false);
-        setLoadingMangaPercent(0);
-        setMangaInReader(null);
+        dispatch(updateLastHistoryPage({ linkInReader: linkInReader.link }));
+        dispatch(setReaderOpen(false));
+        dispatch(setLinkInReader({ link: "", page: 1 }));
+        dispatch(setLoadingManga(false));
+        dispatch(setLoadingMangaPercent(0));
+        dispatch(setMangaInReader(null));
 
         document.body.classList.remove("zenMode");
         if (document.fullscreenElement) document.exitFullscreen();
     };
-    useEffect(() => {
-        window.app.isReaderOpen = isReaderOpen;
-    }, [isReaderOpen]);
+
+    // todo: check
     const addNewBookmark = (newBk: ChapterItem) => {
         if (newBk) {
             // replace same link with updated pagenumber
             const existingBookmark = bookmarks.findIndex((e) => e.link === newBk.link);
-            if (-1 < existingBookmark) {
+            if (existingBookmark > -1) {
                 if (bookmarks[existingBookmark].page === newBk.page)
                     return window.dialog.warn({
                         title: "Bookmark Already Exist",
                         message: "Bookmark Already Exist",
                     });
             }
-            setBookmarks((init) => [newBk, ...init]);
+
+            dispatch(addBookmark(newBk));
+            // setBookmarks((init) => [newBk, ...init]);
         }
     };
     const promptSetDefaultLocation = (): void => {
@@ -582,10 +229,13 @@ const App = (): ReactElement => {
         if (!result) return;
         let path = "";
         if (result) path = window.path.normalize(result[0] + "\\");
-        setAppSettings((init) => {
-            init.baseDir = path;
-            return { ...init };
-        });
+        // todo: make better
+        dispatch(
+            setAppSettings((init) => {
+                init.baseDir = path;
+                return { ...init };
+            })
+        );
     };
     const openInNewWindow = (link: string) => {
         checkValidFolder(
@@ -635,103 +285,23 @@ const App = (): ReactElement => {
         };
     }, []);
 
-    useEffect(() => {
-        if (firstRendered) {
-            window.fs.writeFile(bookmarksPath, JSON.stringify(bookmarks), (err) => {
-                if (err) {
-                    window.logger.error(err);
-                    window.dialog.nodeError(err);
-                }
-            });
-        }
-    }, [bookmarks]);
-    useEffect(() => {
-        if (firstRendered) {
-            window.fs.writeFile(historyPath, JSON.stringify(history), (err) => {
-                if (err) {
-                    window.logger.error(err);
-                    window.dialog.nodeError(err);
-                }
-            });
-        }
-    }, [history]);
-    useEffect(() => {
-        if (firstRendered) {
-            window.fs.writeFile(shortcutsPath, JSON.stringify(shortcuts), (err) => {
-                if (err) {
-                    window.logger.error(err);
-                    window.dialog.nodeError(err);
-                }
-            });
-        }
-    }, [shortcuts]);
-    useEffect(() => {
-        if (firstRendered) {
-            setAppSettings((init) => {
-                init.theme = theme;
-                return { ...init };
-            });
-        }
-    }, [theme]);
-    useEffect(() => {
-        if (firstRendered) {
-            window.fs.writeFile(themesPath, JSON.stringify(allThemes), (err) => {
-                if (err) {
-                    window.logger.error(err);
-                    window.dialog.nodeError(err);
-                }
-            });
-        }
-    }, [allThemes]);
-    useEffect(() => {
-        if (firstRendered) {
-            window.fs.writeFile(settingsPath, JSON.stringify(appSettings), (err) => {
-                if (err) {
-                    window.logger.error(err);
-                    window.dialog.nodeError(err);
-                }
-            });
-        }
-    }, [appSettings]);
+    // todo: join theme inside appsetting
+    // useEffect(() => {
+    //     if (firstRendered) {
+    //         setAppSettings((init) => {
+    //             init.theme = theme;
+    //             return { ...init };
+    //         });
+    //     }
+    // }, [theme]);
+
     return (
         <AppContext.Provider
             value={{
-                bookmarks,
-                setBookmarks,
-                history,
-                setHistory,
-                shortcuts,
-                setShortcuts,
                 pageNumberInputRef,
-                isSettingOpen,
-                setSettingOpen,
-                appSettings,
-                setAppSettings,
-                isReaderOpen,
-                setReaderOpen,
                 openInReader,
-                isLoadingManga,
-                setLoadingManga,
-                unzipping,
-                setUnzipping,
-                linkInReader,
-                setLinkInReader,
-                mangaInReader,
-                setMangaInReader,
-                addNewBookmark,
-                loadingMangaPercent,
-                setLoadingMangaPercent,
-                pageNumChangeDisabled,
-                setPageNumChangeDisabled,
-                prevNextChapter,
-                setPrevNextChapter,
                 closeReader,
-                updateLastHistoryPageNumber,
                 openInNewWindow,
-                theme,
-                setTheme,
-                allThemes,
-                setAllThemes,
                 checkValidFolder,
                 promptSetDefaultLocation,
             }}

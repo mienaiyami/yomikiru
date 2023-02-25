@@ -9,9 +9,14 @@ import {
 import { faBookmark as farBookmark } from "@fortawesome/free-regular-svg-icons";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { useContext, useEffect, useLayoutEffect, useRef, useState } from "react";
-import { AppContext } from "../App";
 import { MainContext } from "./Main";
 import ReaderSideListItem from "./ReaderSideListItem";
+import { useAppDispatch, useAppSelector } from "../store/hooks";
+import { setLinkInReader } from "../store/linkInReader";
+import { updateLastHistoryPage } from "../store/history";
+import { addBookmark, updateBookmark, removeBookmark } from "../store/bookmarks";
+import { setAppSettings } from "../store/appSettings";
+import { setPrevNextChapter } from "../store/prevNextChapter";
 
 const ReaderSideList = ({
     openNextChapterRef,
@@ -34,19 +39,13 @@ const ReaderSideList = ({
     setSideListWidth: React.Dispatch<React.SetStateAction<number>>;
     makeScrollPos: () => void;
 }) => {
-    const {
-        mangaInReader,
-        history,
-        setAppSettings,
-        appSettings,
-        prevNextChapter,
-        setPrevNextChapter,
-        setBookmarks,
-        addNewBookmark,
-        linkInReader,
-        setLinkInReader,
-        updateLastHistoryPageNumber,
-    } = useContext(AppContext);
+    const mangaInReader = useAppSelector((store) => store.mangaInReader);
+    const history = useAppSelector((store) => store.history);
+    const appSettings = useAppSelector((store) => store.appSettings);
+    const prevNextChapter = useAppSelector((store) => store.prevNextChapter);
+    const linkInReader = useAppSelector((store) => store.linkInReader);
+    const dispatch = useAppDispatch();
+
     const { isContextMenuOpen } = useContext(MainContext);
     const sideListRef = useRef<HTMLDivElement>(null);
     const [chapterData, setChapterData] = useState<{ name: string; pages: number }[]>([]);
@@ -54,7 +53,7 @@ const ReaderSideList = ({
     const [isListOpen, setListOpen] = useState(false);
     const [preventListClose, setpreventListClose] = useState(false);
     const prevMangaRef = useRef<string>("");
-    const [historySimple, sethistorySimple] = useState<string[]>([]);
+    const [historySimple, setHistorySimple] = useState<string[]>([]);
     const [draggingResizer, setDraggingResizer] = useState(false);
 
     //TODO: useless rn
@@ -66,7 +65,7 @@ const ReaderSideList = ({
     useEffect(() => {
         if (mangaInReader) {
             const historyItem = history.find((e) => e.mangaLink === window.path.dirname(mangaInReader.link));
-            if (historyItem) sethistorySimple(historyItem.chaptersRead);
+            if (historyItem) setHistorySimple(historyItem.chaptersRead);
         }
     }, [history]);
     useLayoutEffect(() => {
@@ -82,7 +81,7 @@ const ReaderSideList = ({
             const nextIndex = listDataName.indexOf(mangaInReader.chapterName) + 1;
             const prevCh = prevIndex < 0 ? "~" : dir + chapterData[prevIndex].name;
             const nextCh = nextIndex >= chapterData.length ? "~" : dir + chapterData[nextIndex].name;
-            setPrevNextChapter({ prev: prevCh, next: nextCh });
+            dispatch(setPrevNextChapter({ prev: prevCh, next: nextCh }));
         }
     };
     useEffect(() => {
@@ -298,19 +297,21 @@ const ReaderSideList = ({
                         // tabIndex={-1}
                         data-tooltip="Sort"
                         onClick={() =>
-                            setAppSettings((init) => {
-                                switch (init.locationListSortType) {
-                                    case "normal":
-                                        init.locationListSortType = "inverse";
-                                        break;
-                                    case "inverse":
-                                        init.locationListSortType = "normal";
-                                        break;
-                                    default:
-                                        break;
-                                }
-                                return { ...init };
-                            })
+                            dispatch(
+                                setAppSettings((init) => {
+                                    switch (init.locationListSortType) {
+                                        case "normal":
+                                            init.locationListSortType = "inverse";
+                                            break;
+                                        case "inverse":
+                                            init.locationListSortType = "normal";
+                                            break;
+                                        default:
+                                            break;
+                                    }
+                                    return { ...init };
+                                })
+                            )
                         }
                     >
                         <FontAwesomeIcon icon={faSort} />
@@ -323,8 +324,8 @@ const ReaderSideList = ({
                         tooltip="Open Previous"
                         disabled={prevNextChapter.prev === "~"}
                         clickAction={() => {
-                            updateLastHistoryPageNumber();
-                            setLinkInReader({ link: prevNextChapter.prev, page: 1 });
+                            dispatch(updateLastHistoryPage({ linkInReader: linkInReader.link }));
+                            dispatch(setLinkInReader({ link: prevNextChapter.prev, page: 1 }));
                         }}
                     >
                         <FontAwesomeIcon icon={faArrowLeft} />
@@ -347,22 +348,24 @@ const ReaderSideList = ({
                                     })
                                     .then(({ response }) => {
                                         if (response === 1) {
-                                            setBookmarks((init) => [
-                                                ...init.filter((e) => e.link !== linkInReader.link),
-                                            ]);
+                                            dispatch(removeBookmark(linkInReader.link));
                                             setBookmarked(false);
                                         }
                                         if (response === 2) {
-                                            setBookmarks((init) => {
-                                                init.find((e) => e.link === linkInReader.link)!.page =
-                                                    window.app.currentPageNumber;
-                                                return [...init];
-                                            });
+                                            dispatch(
+                                                updateBookmark({
+                                                    link: linkInReader.link,
+                                                    page: window.app.currentPageNumber,
+                                                })
+                                            );
                                         }
                                     });
                             }
                             if (mangaInReader) {
-                                addNewBookmark({ ...mangaInReader, page: window.app.currentPageNumber || 0 });
+                                // todo: was addnewBookmark before
+                                dispatch(
+                                    addBookmark({ ...mangaInReader, page: window.app.currentPageNumber || 0 })
+                                );
                                 setBookmarked(true);
                             }
                         }}
@@ -375,8 +378,8 @@ const ReaderSideList = ({
                         tooltip="Open Next"
                         disabled={prevNextChapter.next === "~"}
                         clickAction={() => {
-                            updateLastHistoryPageNumber();
-                            setLinkInReader({ link: prevNextChapter.next, page: 1 });
+                            dispatch(updateLastHistoryPage({ linkInReader: linkInReader.link }));
+                            dispatch(setLinkInReader({ link: prevNextChapter.next, page: 1 }));
                         }}
                     >
                         <FontAwesomeIcon icon={faArrowRight} />

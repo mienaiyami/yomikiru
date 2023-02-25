@@ -1,8 +1,9 @@
-import { ReactElement, useContext } from "react";
-import { AppContext } from "../App";
+import { useAppSelector } from "../store/hooks";
 
-const LoadingScreen = (): ReactElement => {
-    const { isLoadingManga, loadingMangaPercent, unzipping } = useContext(AppContext);
+const LoadingScreen = () => {
+    const isLoadingManga = useAppSelector((store) => store.isLoadingManga);
+    const loadingMangaPercent = useAppSelector((store) => store.loadingMangaPercent);
+    const unzipping = useAppSelector((store) => store.unzipping);
     return (
         <div id="loadingScreen" style={{ display: isLoadingManga || unzipping ? "grid" : "none" }}>
             {/* <div className="name">
