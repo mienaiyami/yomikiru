@@ -10,7 +10,7 @@ import { useAppDispatch, useAppSelector } from "../store/hooks";
 import { setShortcuts } from "../store/shortcuts";
 import { setOpenSetting } from "../store/isSettingOpen";
 import { addBookmark, removeAllBookmarks } from "../store/bookmarks";
-import { setAppSettings } from "../store/appSettings";
+import { setAppSettings, setReaderSettings } from "../store/appSettings";
 
 const Settings = (): ReactElement => {
     const { promptSetDefaultLocation } = useContext(AppContext);
@@ -494,10 +494,7 @@ const Settings = (): ReactElement => {
                                         checked={appSettings.updateCheckerEnabled}
                                         onChange={(e) => {
                                             dispatch(
-                                                setAppSettings((init) => {
-                                                    init.updateCheckerEnabled = e.currentTarget.checked;
-                                                    return { ...init };
-                                                })
+                                                setAppSettings({ updateCheckerEnabled: e.currentTarget.checked })
                                             );
                                         }}
                                     />
@@ -525,10 +522,7 @@ const Settings = (): ReactElement => {
                                         checked={appSettings.askBeforeClosing}
                                         onChange={(e) => {
                                             dispatch(
-                                                setAppSettings((init) => {
-                                                    init.askBeforeClosing = e.currentTarget.checked;
-                                                    return { ...init };
-                                                })
+                                                setAppSettings({ askBeforeClosing: e.currentTarget.checked })
                                             );
                                         }}
                                     />
@@ -539,12 +533,7 @@ const Settings = (): ReactElement => {
                                         type="checkbox"
                                         checked={appSettings.skipMinorUpdate}
                                         onChange={(e) => {
-                                            dispatch(
-                                                setAppSettings((init) => {
-                                                    init.skipMinorUpdate = e.currentTarget.checked;
-                                                    return { ...init };
-                                                })
-                                            );
+                                            dispatch(setAppSettings({ skipMinorUpdate: e.currentTarget.checked }));
                                         }}
                                     />
                                     <p>Skip minor updates.</p>
@@ -555,10 +544,7 @@ const Settings = (): ReactElement => {
                                         checked={appSettings.openDirectlyFromManga}
                                         onChange={(e) => {
                                             dispatch(
-                                                setAppSettings((init) => {
-                                                    init.openDirectlyFromManga = e.currentTarget.checked;
-                                                    return { ...init };
-                                                })
+                                                setAppSettings({ openDirectlyFromManga: e.currentTarget.checked })
                                             );
                                         }}
                                     />
@@ -577,10 +563,8 @@ const Settings = (): ReactElement => {
                                         checked={appSettings.readerSettings.disableChapterTransitionScreen}
                                         onChange={(e) => {
                                             dispatch(
-                                                setAppSettings((init) => {
-                                                    init.readerSettings.disableChapterTransitionScreen =
-                                                        e.currentTarget.checked;
-                                                    return { ...init };
+                                                setReaderSettings({
+                                                    disableChapterTransitionScreen: e.currentTarget.checked,
                                                 })
                                             );
                                         }}
@@ -596,10 +580,7 @@ const Settings = (): ReactElement => {
                                         checked={appSettings.useCanvasBasedReader}
                                         onChange={(e) => {
                                             dispatch(
-                                                setAppSettings((init) => {
-                                                    init.useCanvasBasedReader = e.currentTarget.checked;
-                                                    return { ...init };
-                                                })
+                                                setAppSettings({ useCanvasBasedReader: e.currentTarget.checked })
                                             );
                                         }}
                                     />

@@ -44,7 +44,8 @@ const App = (): ReactElement => {
     const pageNumberInputRef: React.RefObject<HTMLInputElement> = createRef();
 
     const dispatch = useAppDispatch();
-    dispatch(setTheme({ theme: "theme3", allThemes: useAppSelector((store) => store.allThemes) }));
+
+    dispatch(setTheme({ theme: "theme2", allThemes: useAppSelector((store) => store.allThemes) }));
     useEffect(() => {
         if (firstRendered) {
             if (appSettings.baseDir === "") {
@@ -230,12 +231,7 @@ const App = (): ReactElement => {
         let path = "";
         if (result) path = window.path.normalize(result[0] + "\\");
         // todo: make better
-        dispatch(
-            setAppSettings((init) => {
-                init.baseDir = path;
-                return { ...init };
-            })
-        );
+        dispatch(setAppSettings({ baseDir: path }));
     };
     const openInNewWindow = (link: string) => {
         checkValidFolder(
@@ -290,7 +286,7 @@ const App = (): ReactElement => {
     //     if (firstRendered) {
     //         setAppSettings((init) => {
     //             init.theme = theme;
-    //             return { ...init };
+    // return { ...init };
     //         });
     //     }
     // }, [theme]);

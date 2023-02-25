@@ -6,7 +6,7 @@ import ReaderSettings from "./ReaderSettings";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faQuestionCircle } from "@fortawesome/free-regular-svg-icons";
 import { useAppDispatch, useAppSelector } from "../store/hooks";
-import { setAppSettings } from "../store/appSettings";
+import { setAppSettings, setReaderSettings } from "../store/appSettings";
 import { setMangaInReader } from "../store/mangaInReader";
 import { setReaderOpen } from "../store/isReaderOpen";
 import { setLoadingMangaPercent } from "../store/loadingMangaPercent";
@@ -285,111 +285,73 @@ const Reader = () => {
                         case shortcutkey.showHidePageNumberInZen?.key1:
                         case shortcutkey.showHidePageNumberInZen?.key2:
                             dispatch(
-                                setAppSettings((init) => {
-                                    init.readerSettings.showPageNumberInZenMode =
-                                        !init.readerSettings.showPageNumberInZenMode;
-                                    return { ...init };
+                                setReaderSettings({
+                                    showPageNumberInZenMode: !appSettings.readerSettings.showPageNumberInZenMode,
                                 })
                             );
                             break;
                         case shortcutkey.cycleFitOptions?.key1:
                         case shortcutkey.cycleFitOptions?.key2:
                             dispatch(
-                                setAppSettings((init) => {
-                                    // todo: display current mode in middle of screen and fade
-                                    init.readerSettings.fitOption += 1;
-                                    if (init.readerSettings.fitOption === 4) init.readerSettings.fitOption = 0;
-                                    return { ...init };
+                                setReaderSettings({
+                                    fitOption: (appSettings.readerSettings.fitOption + 1 === 4
+                                        ? 0
+                                        : appSettings.readerSettings.fitOption + 1) as 0 | 2 | 1 | 3 | undefined,
                                 })
                             );
+                            // todo: display current mode in middle of screen and fade
+
+                            // dispatch(
+                            //     setAppSettings((init) => {
+                            //         init.readerSettings.fitOption += 1;
+                            //         if (init.readerSettings.fitOption === 4) init.readerSettings.fitOption = 0;
+                            //         return { ...init };
+                            //     })
+                            // );
                             break;
                         case shortcutkey.selectReaderMode0?.key1:
                         case shortcutkey.selectReaderMode0?.key2:
-                            dispatch(
-                                setAppSettings((init) => {
-                                    init.readerSettings.readerTypeSelected = 0;
-                                    return { ...init };
-                                })
-                            );
+                            dispatch(setReaderSettings({ readerTypeSelected: 0 }));
                             break;
                         case shortcutkey.selectReaderMode1?.key1:
                         case shortcutkey.selectReaderMode1?.key2:
-                            dispatch(
-                                setAppSettings((init) => {
-                                    init.readerSettings.readerTypeSelected = 1;
-                                    return { ...init };
-                                })
-                            );
+                            dispatch(setReaderSettings({ readerTypeSelected: 1 }));
                             break;
                         case shortcutkey.selectPagePerRow1?.key1:
                         case shortcutkey.selectPagePerRow1?.key2:
                             if (appSettings.readerSettings.pagesPerRowSelected !== 0) {
-                                dispatch(
-                                    setAppSettings((init) => {
-                                        init.readerSettings.pagesPerRowSelected = 0;
+                                const pagesPerRowSelected = 0;
+                                let readerWidth = appSettings.readerSettings.readerWidth / 2;
 
-                                        init.readerSettings.readerWidth /= 2;
-                                        if (
-                                            init.readerSettings.readerWidth >
-                                            (appSettings.readerSettings.widthClamped ? 100 : 500)
-                                        )
-                                            init.readerSettings.readerWidth = appSettings.readerSettings
-                                                .widthClamped
-                                                ? 100
-                                                : 500;
-                                        if (init.readerSettings.readerWidth < 1)
-                                            init.readerSettings.readerWidth = 1;
-
-                                        return { ...init };
-                                    })
-                                );
+                                if (readerWidth > (appSettings.readerSettings.widthClamped ? 100 : 500))
+                                    readerWidth = appSettings.readerSettings.widthClamped ? 100 : 500;
+                                if (readerWidth < 1) readerWidth = 1;
+                                dispatch(setReaderSettings({ pagesPerRowSelected, readerWidth }));
                             }
                             break;
                         case shortcutkey.selectPagePerRow2?.key1:
                         case shortcutkey.selectPagePerRow2?.key2:
-                            dispatch(
-                                setAppSettings((init) => {
-                                    if (init.readerSettings.pagesPerRowSelected === 0) {
-                                        init.readerSettings.readerWidth *= 2;
-                                        if (
-                                            init.readerSettings.readerWidth >
-                                            (appSettings.readerSettings.widthClamped ? 100 : 500)
-                                        )
-                                            init.readerSettings.readerWidth = appSettings.readerSettings
-                                                .widthClamped
-                                                ? 100
-                                                : 500;
-                                        if (init.readerSettings.readerWidth < 1)
-                                            init.readerSettings.readerWidth = 1;
-                                    }
+                            if (appSettings.readerSettings.pagesPerRowSelected === 0) {
+                                const pagesPerRowSelected = 1;
+                                let readerWidth = appSettings.readerSettings.readerWidth * 2;
 
-                                    init.readerSettings.pagesPerRowSelected = 1;
-                                    return { ...init };
-                                })
-                            );
+                                if (readerWidth > (appSettings.readerSettings.widthClamped ? 100 : 500))
+                                    readerWidth = appSettings.readerSettings.widthClamped ? 100 : 500;
+                                if (readerWidth < 1) readerWidth = 1;
+                                dispatch(setReaderSettings({ pagesPerRowSelected, readerWidth }));
+                            }
                             break;
                         case shortcutkey.selectPagePerRow2odd?.key1:
                         case shortcutkey.selectPagePerRow2odd?.key2:
-                            dispatch(
-                                setAppSettings((init) => {
-                                    if (init.readerSettings.pagesPerRowSelected === 0) {
-                                        init.readerSettings.readerWidth *= 2;
-                                        if (
-                                            init.readerSettings.readerWidth >
-                                            (appSettings.readerSettings.widthClamped ? 100 : 500)
-                                        )
-                                            init.readerSettings.readerWidth = appSettings.readerSettings
-                                                .widthClamped
-                                                ? 100
-                                                : 500;
-                                        if (init.readerSettings.readerWidth < 1)
-                                            init.readerSettings.readerWidth = 1;
-                                    }
+                            if (appSettings.readerSettings.pagesPerRowSelected === 0) {
+                                const pagesPerRowSelected = 2;
+                                let readerWidth = appSettings.readerSettings.readerWidth * 2;
 
-                                    init.readerSettings.pagesPerRowSelected = 2;
-                                    return { ...init };
-                                })
-                            );
+                                if (readerWidth > (appSettings.readerSettings.widthClamped ? 100 : 500))
+                                    readerWidth = appSettings.readerSettings.widthClamped ? 100 : 500;
+                                if (readerWidth < 1) readerWidth = 1;
+                                dispatch(setReaderSettings({ pagesPerRowSelected, readerWidth }));
+                            }
                             break;
                         default:
                             break;
@@ -703,12 +665,7 @@ const Reader = () => {
         if (isSideListPinned) {
             readerRef.current?.scrollTo(0, scrollPosPercent * readerRef.current.scrollHeight);
         }
-        dispatch(
-            setAppSettings((init) => {
-                init.readerSettings.sideListWidth = sideListWidth;
-                return { ...init };
-            })
-        );
+        dispatch(setReaderSettings({ sideListWidth }));
     }, [sideListWidth]);
     useLayoutEffect(() => {
         changePageNumber();

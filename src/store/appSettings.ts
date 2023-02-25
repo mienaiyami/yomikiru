@@ -1,5 +1,13 @@
 import { createSlice, PayloadAction } from "@reduxjs/toolkit";
-import { defaultSettings, makeSettingsJson, isSettingsValid, settingsPath, saveJSONfile } from "../MainImports";
+import { UnionToIntersection } from "@reduxjs/toolkit/dist/tsHelpers";
+import {
+    defaultSettings,
+    makeSettingsJson,
+    isSettingsValid,
+    settingsPath,
+    saveJSONfile,
+    settingValidatorData,
+} from "../MainImports";
 
 // const bookmarkDataInit: ChapterItem[] = [];
 // const historyDataInit: HistoryItem[] = [];
@@ -22,19 +30,59 @@ if (!isValidRes.isValid) {
     }
 }
 
-const settings: appsettings = JSON.parse(window.fs.readFileSync(settingsPath, "utf-8"));
+const settings: AppSettings = JSON.parse(window.fs.readFileSync(settingsPath, "utf-8"));
+
+type AppSettingsOptional = {
+    [K in keyof AppSettings]?: AppSettings[K];
+};
+type ReaderSettingsOptional = {
+    [K in keyof AppSettings["readerSettings"]]?: AppSettings["readerSettings"][K];
+};
+
+// type AppSettingsToggleable = {
+//     [K in keyof AppSettings as AppSettings[K] extends boolean | IsUnion<AppSettings[K]> ? K : never]?: boolean;
+// };
+// type AppSettingsToggleableKeys = keyof AppSettingsToggleable;
+// type ReaderSettingsToggleable = {
+//     [K in keyof AppSettings["readerSettings"] as AppSettings["readerSettings"][K] extends (boolean |string[] |number[])
+//         ? K
+//         : never]: boolean;
+// };
+// type ReaderSettingsToggleableKeys = keyof ReaderSettingsToggleable;
 
 export const appSettings = createSlice({
     name: "appSettings",
     initialState: settings,
     reducers: {
-        setAppSettings: (state, action: PayloadAction<(state: appsettings) => appsettings>) => {
-            //! remove "return from this"
-            // todo: maybe dont need `state =`
-            state = action.payload(state);
-            saveJSONfile(settingsPath, state);
-            return state;
+        setAppSettings: (state, action: PayloadAction<AppSettingsOptional>) => {
+            const newSettings: AppSettings = { ...state, ...action.payload };
+            saveJSONfile(settingsPath, newSettings);
+            return newSettings;
         },
+        setReaderSettings: (state, action: PayloadAction<ReaderSettingsOptional>) => {
+            const newSettings: AppSettings = {
+                ...state,
+                readerSettings: {
+                    ...state.readerSettings,
+                    ...action.payload,
+                },
+            };
+            saveJSONfile(settingsPath, newSettings);
+            return newSettings;
+        },
+
+        // toggleInMain: (state, action: PayloadAction<AppSettingsToggleableKeys[]>) => {
+        //     const newSetting = { ...state };
+        //     action.payload.forEach((e) => {
+        //         if(typeof newSetting[e]==="boolean")
+        //         newSetting[e] = !newSetting[e];
+        //         else {
+        //             const index = settingValidatorData[e]// as string[]|number[]).findIndex(newSetting[e]!);
+
+        //         }
+        //     });
+        //     return newSetting;
+        // },
         makeNewSettings: (state) => {
             makeSettingsJson();
             state = defaultSettings;
@@ -43,5 +91,5 @@ export const appSettings = createSlice({
     },
 });
 
-export const { setAppSettings, makeNewSettings } = appSettings.actions;
+export const { setAppSettings, makeNewSettings, setReaderSettings } = appSettings.actions;
 export default appSettings.reducer;

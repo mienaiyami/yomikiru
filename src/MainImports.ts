@@ -295,7 +295,7 @@ declare global {
         item?: ListItemE;
     }
 
-    type appsettings = DeepArrayToUnion<typeof settingValidatorData>;
+    type AppSettings = DeepArrayToUnion<typeof settingValidatorData>;
 }
 
 window.path = path;
@@ -517,7 +517,7 @@ const historyPath = window.path.join(userDataURL, "history.json");
 const themesPath = window.path.join(userDataURL, "themes.json");
 const shortcutsPath = window.path.join(userDataURL, "shortcuts.json");
 
-const defaultSettings: appsettings = {
+const defaultSettings: AppSettings = {
     theme: "theme2",
     bookmarksPath,
     historyPath,

@@ -298,18 +298,9 @@ const ReaderSideList = ({
                         data-tooltip="Sort"
                         onClick={() =>
                             dispatch(
-                                setAppSettings((init) => {
-                                    switch (init.locationListSortType) {
-                                        case "normal":
-                                            init.locationListSortType = "inverse";
-                                            break;
-                                        case "inverse":
-                                            init.locationListSortType = "normal";
-                                            break;
-                                        default:
-                                            break;
-                                    }
-                                    return { ...init };
+                                setAppSettings({
+                                    locationListSortType:
+                                        appSettings.locationListSortType === "inverse" ? "normal" : "inverse",
                                 })
                             )
                         }

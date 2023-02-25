@@ -328,10 +328,13 @@ const Main = (): ReactElement => {
                     <div
                         className="divider"
                         onClick={() =>
+                            // am i fr doing this
                             dispatch(
-                                setAppSettings((state) => {
-                                    state.showTabs.bookmark = !state.showTabs.bookmark;
-                                    return { ...init };
+                                setAppSettings({
+                                    showTabs: {
+                                        bookmark: !appSettings.showTabs.bookmark,
+                                        history: appSettings.showTabs.history,
+                                    },
                                 })
                             )
                         }
@@ -345,9 +348,11 @@ const Main = (): ReactElement => {
                         className="divider"
                         onClick={() =>
                             dispatch(
-                                setAppSettings((state) => {
-                                    state.showTabs.history = !state.showTabs.history;
-                                    return { ...init };
+                                setAppSettings({
+                                    showTabs: {
+                                        bookmark: appSettings.showTabs.bookmark,
+                                        history: !appSettings.showTabs.history,
+                                    },
                                 })
                             )
                         }
