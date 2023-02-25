@@ -1,9 +1,9 @@
 import "./MainImports";
 import { createContext, createRef, ReactElement, useEffect, useState } from "react";
 import { useAppDispatch, useAppSelector } from "./store/hooks";
-import { setAppSettings } from "./store/appSettings";
 import Main from "./Components/Main";
 import TopBar from "./Components/TopBar";
+import { setAppSettings } from "./store/appSettings";
 import { setUnzipping } from "./store/unzipping";
 import { setLoadingManga } from "./store/isLoadingManga";
 import { setLoadingMangaPercent } from "./store/loadingMangaPercent";
@@ -12,7 +12,7 @@ import { updateLastHistoryPage } from "./store/history";
 import { setReaderOpen } from "./store/isReaderOpen";
 import { setMangaInReader } from "./store/mangaInReader";
 import { addBookmark } from "./store/bookmarks";
-import { setTheme } from "./store/theme";
+import { setTheme } from "./store/themes";
 
 // window.logger.log("New window opening...");
 
@@ -36,22 +36,24 @@ interface IAppContext {
 
 export const AppContext = createContext<IAppContext>(null!);
 const App = (): ReactElement => {
-    const [firstRendered, setFirstRendered] = useState(false);
     const appSettings = useAppSelector((state) => state.appSettings);
     const isReaderOpen = useAppSelector((state) => state.isReaderOpen);
     const linkInReader = useAppSelector((state) => state.linkInReader);
     const bookmarks = useAppSelector((state) => state.bookmarks);
+
     const pageNumberInputRef: React.RefObject<HTMLInputElement> = createRef();
+    const [firstRendered, setFirstRendered] = useState(false);
 
     const dispatch = useAppDispatch();
 
-    dispatch(setTheme({ theme: "theme2", allThemes: useAppSelector((store) => store.allThemes) }));
     useEffect(() => {
         if (firstRendered) {
             if (appSettings.baseDir === "") {
                 window.dialog.customError({ message: "No settings found, Select manga folder" });
                 promptSetDefaultLocation();
             }
+        } else {
+            dispatch(setTheme("theme2"));
         }
     }, [firstRendered]);
     /**

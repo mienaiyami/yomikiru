@@ -4,8 +4,7 @@ import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { ReactElement, useContext, useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
 import { faEdit, faLink, faPlus, faSync, faTimes, faTrash, faUnlink } from "@fortawesome/free-solid-svg-icons";
 import themesRaw from "../themeInit.json";
-import { newTheme, updateTheme, deleteTheme } from "../store/allThemes";
-import { setTheme } from "../store/theme";
+import { newTheme, updateTheme, deleteTheme, setTheme } from "../store/themes";
 import { useAppDispatch, useAppSelector } from "../store/hooks";
 import { setShortcuts } from "../store/shortcuts";
 import { setOpenSetting } from "../store/isSettingOpen";
@@ -15,8 +14,8 @@ import { setAppSettings, setReaderSettings } from "../store/appSettings";
 const Settings = (): ReactElement => {
     const { promptSetDefaultLocation } = useContext(AppContext);
     const appSettings = useAppSelector((store) => store.appSettings);
-    const theme = useAppSelector((store) => store.theme);
-    const allThemes = useAppSelector((store) => store.allThemes);
+    const theme = useAppSelector((store) => store.theme.name);
+    const allThemes = useAppSelector((store) => store.theme.allData);
     const shortcuts = useAppSelector((store) => store.shortcuts);
     const bookmarks = useAppSelector((store) => store.bookmarks);
     const isSettingOpen = useAppSelector((store) => store.isSettingOpen);
@@ -63,7 +62,7 @@ const Settings = (): ReactElement => {
             (e) => (e as HTMLElement).innerText as ThemeDataMain
         );
         themeNameInputRef.current!.value = window.app.randomString(6);
-        const newThemeData = window.themeProps;
+        const newThemeData = { ...window.themeProps };
         [...themeMakerRef.current!.getElementsByClassName("newThemeMakerRow")].forEach((e, i) => {
             if (e.getElementsByTagName("label")[0].classList.contains("selected")) {
                 newThemeData[props[i]] = (

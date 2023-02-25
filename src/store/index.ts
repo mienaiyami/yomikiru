@@ -1,5 +1,4 @@
 import { configureStore } from "@reduxjs/toolkit";
-import allThemesReducer from "./allThemes";
 import appSettingsReducer from "./appSettings";
 import bookmarksReducer from "./bookmarks";
 import historyReducer from "./history";
@@ -12,15 +11,14 @@ import mangaInReaderReducer from "./mangaInReader";
 import pageNumChangeDisabledReducer from "./pageNumChangeDisabled";
 import prevNextChapterReducer from "./prevNextChapter";
 import shortcutsReducer from "./shortcuts";
-import themeReducer from "./theme";
+import themesReducer from "./themes";
 import unzippingReducer from "./unzipping";
 
 const store = configureStore({
     reducer: {
         appSettings: appSettingsReducer,
+        theme: themesReducer,
         bookmarks: bookmarksReducer,
-        allThemes: allThemesReducer,
-        theme: themeReducer,
         isSettingOpen: isSettingOpenReducer,
         isReaderOpen: isReaderOpenReducer,
         isLoadingManga: isLoadingMangaReducer,
