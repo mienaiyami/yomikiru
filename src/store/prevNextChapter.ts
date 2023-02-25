@@ -10,8 +10,7 @@ const prevNextChapter = createSlice({
     initialState,
     reducers: {
         setPrevNextChapter: (state, action: PayloadAction<{ prev: string; next: string }>) => {
-            state = action.payload;
-            return state;
+            return action.payload;
         },
     },
 });

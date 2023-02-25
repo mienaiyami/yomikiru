@@ -7,8 +7,7 @@ const unzipping = createSlice({
     initialState,
     reducers: {
         setUnzipping: (state, action: PayloadAction<boolean>) => {
-            state = action.payload;
-            return state;
+            return action.payload;
         },
     },
 });

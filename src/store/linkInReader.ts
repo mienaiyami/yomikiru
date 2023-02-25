@@ -10,8 +10,7 @@ const linkInReader = createSlice({
     initialState,
     reducers: {
         setLinkInReader: (state, action: PayloadAction<{ link: string; page: number }>) => {
-            state = action.payload;
-            return state;
+            return action.payload;
         },
     },
 });

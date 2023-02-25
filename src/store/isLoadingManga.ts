@@ -7,8 +7,7 @@ const isLoadingManga = createSlice({
     initialState,
     reducers: {
         setLoadingManga: (state, action: PayloadAction<boolean>) => {
-            state = action.payload;
-            return state;
+            return action.payload;
         },
     },
 });

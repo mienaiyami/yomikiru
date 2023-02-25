@@ -49,20 +49,22 @@ const bookmarks = createSlice({
         },
 
         updateBookmark: (state, action: PayloadAction<{ link: string; page: number }>) => {
-            state.find((e) => e.link === action.payload.link)!.page = action.payload.page;
-            saveJSONfile(bookmarksPath, state);
+            const index = state.findIndex((e) => e.link === action.payload.link);
+            if (index > -1) {
+                state[index].page = action.payload.page;
+                saveJSONfile(bookmarksPath, state);
+            }
             return state;
         },
         // action.payload : link of chapter
         removeBookmark: (state, action: PayloadAction<string>) => {
-            state = state.filter((e) => e.link !== action.payload);
-            saveJSONfile(bookmarksPath, state);
-            return state;
+            const newState = state.filter((e) => e.link !== action.payload);
+            saveJSONfile(bookmarksPath, newState);
+            return newState;
         },
-        removeAllBookmarks: (state) => {
-            state = [];
-            saveJSONfile(bookmarksPath, state);
-            return state;
+        removeAllBookmarks: () => {
+            saveJSONfile(bookmarksPath, []);
+            return [];
         },
     },
 });

@@ -40,6 +40,7 @@ const App = (): ReactElement => {
     const isReaderOpen = useAppSelector((state) => state.isReaderOpen);
     const linkInReader = useAppSelector((state) => state.linkInReader);
     const bookmarks = useAppSelector((state) => state.bookmarks);
+    const theme = useAppSelector((state) => state.theme.name);
 
     const pageNumberInputRef: React.RefObject<HTMLInputElement> = createRef();
     const [firstRendered, setFirstRendered] = useState(false);
@@ -53,7 +54,7 @@ const App = (): ReactElement => {
                 promptSetDefaultLocation();
             }
         } else {
-            dispatch(setTheme("theme2"));
+            dispatch(setTheme(theme));
         }
     }, [firstRendered]);
     /**

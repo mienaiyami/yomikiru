@@ -7,12 +7,10 @@ const isSettingOpen = createSlice({
     initialState,
     reducers: {
         setOpenSetting: (state, action: PayloadAction<boolean>) => {
-            state = action.payload;
-            return state;
+            return action.payload;
         },
         toggleOpenSetting: (state) => {
-            state = !state;
-            return state;
+            return !state;
         },
     },
 });

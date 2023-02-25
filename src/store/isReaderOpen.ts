@@ -8,9 +8,8 @@ const isReaderOpen = createSlice({
     initialState,
     reducers: {
         setReaderOpen: (state, action: PayloadAction<boolean>) => {
-            state = action.payload;
             window.app.isReaderOpen = action.payload;
-            return state;
+            return action.payload;
         },
     },
 });

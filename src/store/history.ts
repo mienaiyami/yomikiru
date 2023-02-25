@@ -48,6 +48,7 @@ const history = createSlice({
                 mangaLink: window.path.dirname(link),
                 chaptersRead: Array.from(chaptersRead),
             });
+            saveJSONfile(historyPath, state);
         },
         // todo: getlink from state directly;
         updateLastHistoryPage: (state, action: PayloadAction<{ linkInReader: string }>) => {
@@ -62,11 +63,11 @@ const history = createSlice({
         },
         removeHistory: (state, action: PayloadAction<number>) => {
             state.splice(action.payload, 1);
+            saveJSONfile(historyPath, state);
         },
         deleteAllHistory: (state) => {
-            state = [];
-            saveJSONfile(historyPath, state);
-            return state;
+            saveJSONfile(historyPath, []);
+            return [];
         },
     },
 });

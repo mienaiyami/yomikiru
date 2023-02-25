@@ -41,18 +41,19 @@ const shortcuts = createSlice({
     name: "shortcuts",
     initialState,
     reducers: {
-        setShortcuts: (
-            state,
-            action: PayloadAction<((state: ShortcutSchema[]) => ShortcutSchema[]) | ShortcutSchema[]>
-        ) => {
+        setShortcuts: (state, action: PayloadAction<{ index: number; which: "key1" | "key2"; key: string }>) => {
             if (action.payload instanceof Array) state = action.payload;
-            else state = action.payload(state);
+            const { index, key, which } = action.payload;
+            state[index][which] = key;
             saveJSONfile(shortcutsPath, state);
-            return state;
+        },
+        resetShortcuts: () => {
+            saveJSONfile(shortcutsPath, window.shortcutsFunctions);
+            return window.shortcutsFunctions;
         },
     },
 });
 
-export const { setShortcuts } = shortcuts.actions;
+export const { setShortcuts, resetShortcuts } = shortcuts.actions;
 
 export default shortcuts.reducer;

@@ -7,8 +7,7 @@ const pageNumChangeDisabled = createSlice({
     initialState,
     reducers: {
         setPageNumChangeDisabled: (state, action: PayloadAction<boolean>) => {
-            state = action.payload;
-            return state;
+            return action.payload;
         },
     },
 });

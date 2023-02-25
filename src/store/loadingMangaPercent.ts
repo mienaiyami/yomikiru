@@ -5,8 +5,7 @@ const loadingMangaPercent = createSlice({
     initialState: 100,
     reducers: {
         setLoadingMangaPercent: (state, action: PayloadAction<number>) => {
-            state = action.payload > 100 ? 100 : action.payload;
-            return state;
+            return action.payload > 100 ? 100 : action.payload;
         },
     },
 });

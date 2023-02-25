@@ -6,7 +6,7 @@ import { faEdit, faLink, faPlus, faSync, faTimes, faTrash, faUnlink } from "@for
 import themesRaw from "../themeInit.json";
 import { newTheme, updateTheme, deleteTheme, setTheme } from "../store/themes";
 import { useAppDispatch, useAppSelector } from "../store/hooks";
-import { setShortcuts } from "../store/shortcuts";
+import { resetShortcuts, setShortcuts } from "../store/shortcuts";
 import { setOpenSetting } from "../store/isSettingOpen";
 import { addBookmark, removeAllBookmarks } from "../store/bookmarks";
 import { setAppSettings, setReaderSettings } from "../store/appSettings";
@@ -44,7 +44,7 @@ const Settings = (): ReactElement => {
         if (themeNameInputRef.current!.value === "") name = window.app.randomString(6);
         if (saveAndReplace) name = theme;
         else name = themeNameInputRef.current!.value;
-        if (themesRaw.map((e) => e.name).includes(name)) {
+        if (themesRaw.allData.map((e) => e.name).includes(name)) {
             window.dialog.customError({
                 title: "Error",
                 message: `Unable to edit default themes, save as new instead.`,
@@ -109,12 +109,7 @@ const Settings = (): ReactElement => {
                 settingContRef.current?.focus();
                 if (e.key === "Backspace") {
                     window.logger.log(`Deleting shortcut ${shortcuts[i].command}.${which}`);
-                    dispatch(
-                        setShortcuts((init) => {
-                            init[i][which] = "";
-                            return [...init];
-                        })
-                    );
+                    dispatch(setShortcuts({ index: i, key: "", which }));
                     return;
                 }
                 const dupIndex = shortcuts.findIndex((elem) => elem.key1 === e.key || elem.key2 === e.key);
@@ -126,12 +121,7 @@ const Settings = (): ReactElement => {
                     return;
                 }
                 window.logger.log(`Setting shortcut ${shortcuts[i].command}.${which} to "${e.key}"`);
-                dispatch(
-                    setShortcuts((init) => {
-                        init[i][which] = e.key;
-                        return [...init];
-                    })
-                );
+                dispatch(setShortcuts({ index: i, key: e.key, which }));
             }}
             readOnly
             spellCheck={false}
@@ -417,7 +407,7 @@ const Settings = (): ReactElement => {
                                     <div className="themeButtons" key={e.name}>
                                         <button
                                             className={theme === e.name ? "selected" : ""}
-                                            onClick={() => setTheme(e.name)}
+                                            onClick={() => dispatch(setTheme(e.name))}
                                         >
                                             {e.name}
                                         </button>
@@ -796,7 +786,7 @@ const Settings = (): ReactElement => {
                                 })
                                 .then((res) => {
                                     if (res.response === 0) {
-                                        dispatch(setShortcuts(window.shortcutsFunctions));
+                                        dispatch(resetShortcuts());
                                     }
                                 });
                         }}

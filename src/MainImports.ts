@@ -30,7 +30,6 @@ type DeepArrayToUnion<T> = T extends T
     : never;
 
 export const settingValidatorData = {
-    theme: "",
     bookmarksPath: "",
     historyPath: "",
     baseDir: "",
@@ -98,7 +97,7 @@ export const settingValidatorData = {
 } as const;
 
 // to add new theme property, add it to each theme in ./themeInit.json
-const themeProps = themeJSON[0].main;
+const themeProps = themeJSON.allData[0].main;
 declare global {
     interface Window {
         electron: {
@@ -518,7 +517,6 @@ const themesPath = window.path.join(userDataURL, "themes.json");
 const shortcutsPath = window.path.join(userDataURL, "shortcuts.json");
 
 const defaultSettings: AppSettings = {
-    theme: "theme2",
     bookmarksPath,
     historyPath,
     baseDir: window.electron.app.getPath("home"),
