@@ -49,6 +49,7 @@ const Reader = () => {
     const [currentPageNumber, setCurrentPageNumber] = useState(1);
     const [currentImageRow, setCurrentImageRow] = useState(1);
     const [chapterChangerDisplay, setChapterChangerDisplay] = useState(false);
+    const [wasMaximized, setWasMaximized] = useState(false);
 
     const readerSettingExtender = useRef<HTMLButtonElement>(null);
     const sizePlusRef = useRef<HTMLButtonElement>(null);
@@ -137,13 +138,19 @@ const Reader = () => {
         window.dispatchEvent(pageChangeEvent);
     }, [currentPageNumber]);
     useEffect(() => {
-        // scrollToPage(currentPageNumber, "auto");
+        if ((zenMode && !window.electron.getCurrentWindow().isMaximized()) || (!zenMode && !wasMaximized)) {
+            setTimeout(() => {
+                scrollToPage(currentPageNumber, "auto");
+            }, 100);
+        }
         if (zenMode) {
             setSideListPinned(false);
+            setWasMaximized(window.electron.getCurrentWindow().isMaximized());
             document.body.classList.add("zenMode");
             document.body.requestFullscreen();
         } else {
             document.body.classList.remove("zenMode");
+            setWasMaximized(false);
             if (document.fullscreenElement) document.exitFullscreen();
         }
     }, [zenMode]);
