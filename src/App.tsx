@@ -119,7 +119,7 @@ const App = (): ReactElement => {
                         message: "Folder doesn't contain any supported image format.",
                         log: false,
                     });
-                    dispatch(setLoadingManga(true));
+                    dispatch(setLoadingManga(false));
                     callback(false);
                     return;
                 }
