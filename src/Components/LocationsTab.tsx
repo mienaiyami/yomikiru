@@ -6,6 +6,8 @@ import { setAppSettings } from "../store/appSettings";
 import { useAppDispatch, useAppSelector } from "../store/hooks";
 import LocationListItem from "./LocationListItem";
 
+type LocationData = { name: string; link: string };
+
 const LocationsTab = forwardRef(
     (
         {
@@ -22,7 +24,7 @@ const LocationsTab = forwardRef(
         const appSettings = useAppSelector((store) => store.appSettings);
         const dispatch = useAppDispatch();
 
-        const [locations, setLocations] = useState<string[]>([]);
+        const [locations, setLocations] = useState<LocationData[]>([]);
         const [isLoadingFile, setIsLoadingFile] = useState(true);
         const [filter, setFilter] = useState<string>("");
         const [imageCount, setImageCount] = useState(0);
@@ -46,20 +48,23 @@ const LocationsTab = forwardRef(
                         files.filter((e) => window.supportedFormats.includes(window.path.extname(e).toLowerCase()))
                             .length
                     );
-                    const dirNames: string[] = files
-                        .reduce((arr: string[], cur) => {
+                    const dirNames = files
+                        .reduce((arr: LocationData[], cur) => {
                             if (window.fs.existsSync(window.path.join(link, cur))) {
                                 if (
                                     window.fs.lstatSync(window.path.join(link, cur)).isDirectory() ||
                                     [".zip", ".cbz"].includes(window.path.extname(cur))
                                 ) {
-                                    arr.push(window.app.replaceExtension(cur));
+                                    arr.push({
+                                        name: window.app.replaceExtension(cur),
+                                        link: window.path.join(link, cur),
+                                    });
                                 }
                             }
                             return arr;
                             //  return (window.fs.lstatSync(window.path.join(link, e)) || false).isDirectory()
                         }, [])
-                        .sort(window.app.betterSortOrder);
+                        .sort((a, b) => window.app.betterSortOrder(a.name, b.name));
                     if (inputRef.current) {
                         inputRef.current.value = "";
                     }
@@ -71,19 +76,19 @@ const LocationsTab = forwardRef(
         useEffect(() => {
             displayList();
         }, [currentLink]);
-        const List = (locations: string[], filter: string) => {
+        const List = (locations: LocationData[], filter: string) => {
             return locations.map((e) => {
-                if (new RegExp(filter, "ig") && new RegExp(filter, "ig").test(e))
+                if (new RegExp(filter, "ig") && new RegExp(filter, "ig").test(e.name))
                     return (
                         <LocationListItem
-                            name={e}
-                            link={window.path.join(currentLink, e)}
+                            name={e.name}
+                            link={e.link}
                             inHistory={
                                 history
                                     .find((e) => e.mangaLink.toLowerCase() === currentLink.toLowerCase())
-                                    ?.chaptersRead.includes(e) ?? false
+                                    ?.chaptersRead.includes(e.link.split("\\").pop() || "") ?? false
                             }
-                            key={e}
+                            key={e.link}
                             setCurrentLink={setCurrentLink}
                         />
                     );
@@ -158,7 +163,7 @@ const LocationsTab = forwardRef(
                                 if (val[val.length - 1] === "\\")
                                     if (
                                         locations.find(
-                                            (e) => e.toUpperCase() === val.replaceAll("\\", "").toUpperCase()
+                                            (e) => e.name.toUpperCase() === val.replaceAll("\\", "").toUpperCase()
                                         )
                                     )
                                         return setCurrentLink(
@@ -167,7 +172,7 @@ const LocationsTab = forwardRef(
                                                     "\\" +
                                                     locations.find(
                                                         (e) =>
-                                                            e.toUpperCase() ===
+                                                            e.name.toUpperCase() ===
                                                             val.replaceAll("\\", "").toUpperCase()
                                                     ) +
                                                     "\\"
