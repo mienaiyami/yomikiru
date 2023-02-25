@@ -66,10 +66,13 @@ const BookmarkHistoryListItem = (props: ListItemE) => {
                     });
                 }}
             >
-                <span className="text">
-                    {(props.mangaName.length > 15 ? props.mangaName.substring(0, 15) + "..." : props.mangaName) +
-                        " | " +
-                        props.chapterName}
+                <span className="double">
+                    <span className="text">{props.mangaName}</span>
+                    <span className="text chapter">
+                        <span className="text">{props.chapterName}</span>
+                        &nbsp;&nbsp;&nbsp;
+                        <span className="page"> (Page: {(props.page || 1).toString().padStart(3, "")})</span>
+                    </span>
                 </span>
             </a>
             {/* <div className="infoWrapper">
