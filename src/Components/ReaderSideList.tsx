@@ -18,6 +18,8 @@ import { addBookmark, updateBookmark, removeBookmark } from "../store/bookmarks"
 import { setAppSettings } from "../store/appSettings";
 import { setPrevNextChapter } from "../store/prevNextChapter";
 
+type ChapterData = { name: string; pages: number; link: string };
+
 const ReaderSideList = ({
     openNextChapterRef,
     openPrevChapterRef,
@@ -48,7 +50,7 @@ const ReaderSideList = ({
 
     const { isContextMenuOpen } = useContext(MainContext);
     const sideListRef = useRef<HTMLDivElement>(null);
-    const [chapterData, setChapterData] = useState<{ name: string; pages: number }[]>([]);
+    const [chapterData, setChapterData] = useState<ChapterData[]>([]);
     const [filter, setFilter] = useState<string>("");
     const [isListOpen, setListOpen] = useState(false);
     const [preventListClose, setpreventListClose] = useState(false);
@@ -96,11 +98,11 @@ const ReaderSideList = ({
                     window.dialog.nodeError(err);
                     return;
                 }
-                const listData: { name: string; pages: number }[] = [];
+                const listData: ChapterData[] = [];
                 let validFile = 0;
                 let responseCompleted = 0;
                 files.forEach((e) => {
-                    const path = dir + "\\" + e;
+                    const path = window.path.join(dir, e);
                     if (window.fs.lstatSync(path).isDirectory()) {
                         validFile++;
                         window.fs.promises
@@ -111,7 +113,11 @@ const ReaderSideList = ({
                                     window.supportedFormats.includes(window.path.extname(e).toLowerCase())
                                 );
                                 if (data.length > 0) {
-                                    listData.push({ name: window.app.replaceExtension(e), pages: data.length });
+                                    listData.push({
+                                        name: window.app.replaceExtension(e),
+                                        pages: data.length,
+                                        link: path,
+                                    });
                                 }
                                 if (responseCompleted >= validFile) {
                                     setChapterData(
@@ -132,7 +138,11 @@ const ReaderSideList = ({
                         validFile++;
                         setTimeout(() => {
                             responseCompleted++;
-                            listData.push({ name: window.app.replaceExtension(e), pages: 0 });
+                            listData.push({
+                                name: window.app.replaceExtension(e),
+                                pages: 0,
+                                link: path,
+                            });
                             if (responseCompleted >= validFile) {
                                 setChapterData(
                                     listData.sort((a, b) => window.app.betterSortOrder(a.name, b.name))
@@ -154,11 +164,10 @@ const ReaderSideList = ({
             makeChapterList();
         }
     }, [mangaInReader]);
-    const List = (chapterData: { name: string; pages: number }[], filter: string) => {
+    const List = (chapterData: ChapterData[], filter: string) => {
         return chapterData.map((e) => {
             if (mangaInReader && new RegExp(filter, "ig").test(e.name)) {
-                const link = mangaInReader.link.replace(mangaInReader.chapterName, e.name);
-                const current = mangaInReader?.chapterName === e.name;
+                const current = mangaInReader?.link === e.link;
                 return (
                     <ReaderSideListItem
                         name={e.name}
@@ -168,7 +177,7 @@ const ReaderSideList = ({
                         current={current}
                         ref={current ? currentLinkInListRef : null}
                         realRef={current ? currentLinkInListRef : null}
-                        link={link}
+                        link={e.link}
                     />
                 );
             }
