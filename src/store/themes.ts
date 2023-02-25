@@ -12,11 +12,11 @@ const setBodyTheme = ({ allData, name }: Themes) => {
             }
             document.body.style.cssText = themeStr || "";
             document.body.setAttribute("data-theme", name);
-            // window.electron.getCurrentWindow().setTitleBarOverlay({
-            //     color: window.getComputedStyle(document.querySelector("body #topBar")!).backgroundColor,
-            //     symbolColor: window.getComputedStyle(document.querySelector("body #topBar .homeBtns button")!)
-            //         .color,
-            // });
+            window.electron.getCurrentWindow().setTitleBarOverlay({
+                color: window.getComputedStyle(document.querySelector("body #topBar")!).backgroundColor,
+                symbolColor: window.getComputedStyle(document.querySelector("body #topBar .homeBtns button")!)
+                    .color,
+            });
         } else {
             window.dialog.customError({
                 title: "Error",
@@ -108,26 +108,24 @@ if (window.fs.existsSync(themesPath)) {
     window.fs.writeFileSync(themesPath, JSON.stringify(themeInit, null, "\t"));
 }
 
-// todoL replace with real theme state;
-if (!initialState.allData.map((e) => e.name).includes("theme2")) {
+if (!initialState.allData.map((e) => e.name).includes(initialState.name)) {
     window.dialog
         .warn({
             title: "Error",
-            message: `Theme "${"theme2"}" does not exist. Try fixing or deleting theme.json and settings.json in "userdata" folder.(at "%appdata%/Yomikiru/" or in main folder on Portable version)`,
+            message: `Theme "${initialState.name}" does not exist. Try fixing or deleting theme.json and settings.json in "userdata" folder.(at "%appdata%/Yomikiru/" or in main folder on Portable version)`,
             noOption: false,
             defaultId: 0,
             buttons: ["Ok", "Temporary fix", "Open Location"],
         })
         .then((res) => {
-            // todo:
-            // if (res.response === 1) {
-            //     settings.theme = initialState[0].name;
-            //     window.fs.writeFileSync(settingsPath, JSON.stringify(settings));
-            //     window.location.reload();
-            // }
-            // if (res.response === 2) {
-            //     window.electron.shell.showItemInFolder(themesPath);
-            // }
+            if (res.response === 1) {
+                initialState.name = "theme2";
+                window.fs.writeFileSync(themesPath, JSON.stringify(initialState, null, "\t"));
+                window.location.reload();
+            }
+            if (res.response === 2) {
+                window.electron.shell.showItemInFolder(themesPath);
+            }
         });
 }
 

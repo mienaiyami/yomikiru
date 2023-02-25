@@ -337,29 +337,31 @@ const Reader = () => {
                             }
                             break;
                         case shortcutkey.selectPagePerRow2?.key1:
-                        case shortcutkey.selectPagePerRow2?.key2:
+                        case shortcutkey.selectPagePerRow2?.key2: {
+                            const pagesPerRowSelected = 1;
+                            let readerWidth = appSettings.readerSettings.readerWidth;
                             if (appSettings.readerSettings.pagesPerRowSelected === 0) {
-                                const pagesPerRowSelected = 1;
-                                let readerWidth = appSettings.readerSettings.readerWidth * 2;
-
+                                readerWidth *= 2;
                                 if (readerWidth > (appSettings.readerSettings.widthClamped ? 100 : 500))
                                     readerWidth = appSettings.readerSettings.widthClamped ? 100 : 500;
                                 if (readerWidth < 1) readerWidth = 1;
-                                dispatch(setReaderSettings({ pagesPerRowSelected, readerWidth }));
                             }
+                            dispatch(setReaderSettings({ pagesPerRowSelected, readerWidth }));
                             break;
+                        }
                         case shortcutkey.selectPagePerRow2odd?.key1:
-                        case shortcutkey.selectPagePerRow2odd?.key2:
+                        case shortcutkey.selectPagePerRow2odd?.key2: {
+                            const pagesPerRowSelected = 2;
+                            let readerWidth = appSettings.readerSettings.readerWidth;
                             if (appSettings.readerSettings.pagesPerRowSelected === 0) {
-                                const pagesPerRowSelected = 2;
-                                let readerWidth = appSettings.readerSettings.readerWidth * 2;
-
+                                readerWidth *= 2;
                                 if (readerWidth > (appSettings.readerSettings.widthClamped ? 100 : 500))
                                     readerWidth = appSettings.readerSettings.widthClamped ? 100 : 500;
                                 if (readerWidth < 1) readerWidth = 1;
-                                dispatch(setReaderSettings({ pagesPerRowSelected, readerWidth }));
                             }
+                            dispatch(setReaderSettings({ pagesPerRowSelected, readerWidth }));
                             break;
+                        }
                         default:
                             break;
                     }
