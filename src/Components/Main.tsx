@@ -1,5 +1,5 @@
 /* eslint-disable @typescript-eslint/no-non-null-assertion */
-import { ReactElement, useLayoutEffect, useRef, useState } from "react";
+import { ReactElement, useLayoutEffect, useState } from "react";
 import { setAppSettings } from "../store/appSettings";
 import { setContextMenu } from "../store/contextMenu";
 import { useAppDispatch, useAppSelector } from "../store/hooks";
@@ -16,8 +16,6 @@ const Main = (): ReactElement => {
     const isReaderOpen = useAppSelector((store) => store.isReaderOpen);
     const linkInReader = useAppSelector((store) => store.linkInReader);
     const dispatch = useAppDispatch();
-    // todo: maybe move to child?
-    const [currentLink, setCurrentLink] = useState(appSettings.baseDir);
     // const [bookmarkTabDisplay, setBookmarkTabDisplay] = useState(true);
     // const [historyTabDisplay, setHistoryTabDisplay] = useState(true);
     // const bookmarkTabRef = useRef<HTMLDivElement>(null);
@@ -38,7 +36,6 @@ const Main = (): ReactElement => {
             window.removeEventListener("wheel", ff);
         };
     }, []);
-    useLayoutEffect(() => setCurrentLink(appSettings.baseDir), [appSettings.baseDir]);
 
     //! did i really wasted time on this
     //
@@ -308,9 +305,7 @@ const Main = (): ReactElement => {
                 }}
             >
                 <LocationsTab
-                    currentLink={currentLink}
-                    setCurrentLink={setCurrentLink}
-                    // ref={locationTabRef}
+                // ref={locationTabRef}
                 />
                 <div
                     className="divider"
