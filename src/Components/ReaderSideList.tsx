@@ -58,8 +58,6 @@ const ReaderSideList = ({
     const [historySimple, setHistorySimple] = useState<string[]>([]);
     const [draggingResizer, setDraggingResizer] = useState(false);
 
-    //TODO: useless rn, usecallback ref to focus
-    const currentLinkInListRef = useRef<HTMLAnchorElement>(null);
     useEffect(() => {
         if (!contextMenu && !isSideListPinned) return setListOpen(false);
         setpreventListClose(true);
@@ -175,8 +173,6 @@ const ReaderSideList = ({
                         key={e.name}
                         pages={e.pages}
                         current={current}
-                        ref={current ? currentLinkInListRef : null}
-                        realRef={current ? currentLinkInListRef : null}
                         link={e.link}
                     />
                 );
@@ -358,7 +354,7 @@ const ReaderSideList = ({
                                     });
                             }
                             if (mangaInReader) {
-                                // todo: was addnewBookmark before
+                                // was addnewBookmark before
                                 dispatch(
                                     addBookmark({ ...mangaInReader, page: window.app.currentPageNumber || 0 })
                                 );

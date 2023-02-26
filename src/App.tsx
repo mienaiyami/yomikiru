@@ -209,24 +209,6 @@ const App = (): ReactElement => {
         if (document.fullscreenElement) document.exitFullscreen();
     };
 
-    // todo: check
-    const addNewBookmark = (newBk: ChapterItem) => {
-        // todo: move to setbookmark
-        if (newBk) {
-            // replace same link with updated pagenumber
-            const existingBookmark = bookmarks.findIndex((e) => e.link === newBk.link);
-            if (existingBookmark > -1) {
-                if (bookmarks[existingBookmark].page === newBk.page)
-                    return window.dialog.warn({
-                        title: "Bookmark Already Exist",
-                        message: "Bookmark Already Exist",
-                    });
-            }
-
-            dispatch(addBookmark(newBk));
-            // setBookmarks((init) => [newBk, ...init]);
-        }
-    };
     const promptSetDefaultLocation = (): void => {
         const result = window.electron.dialog.showOpenDialogSync(window.electron.getCurrentWindow(), {
             properties: ["openFile", "openDirectory"],

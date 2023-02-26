@@ -1,44 +1,35 @@
-//!! check if it really need forward ref
-import { forwardRef, useContext, useEffect } from "react";
+import { useContext, memo } from "react";
 import { AppContext } from "../App";
 import { setContextMenu } from "../store/contextMenu";
 import { useAppDispatch } from "../store/hooks";
 
-const ReaderSideListItem = forwardRef(
-    (
-        {
-            name,
-            pages,
-            link,
-            alreadyRead,
-            current,
-            realRef,
-        }: {
-            name: string;
-            pages: number;
-            link: string;
-            alreadyRead: boolean;
-            current: boolean;
-            realRef?: React.RefObject<HTMLAnchorElement> | null;
-        },
-        ref: React.ForwardedRef<HTMLAnchorElement>
-    ) => {
+const ReaderSideListItem = memo(
+    ({
+        name,
+        pages,
+        link,
+        alreadyRead,
+        current,
+    }: {
+        name: string;
+        pages: number;
+        link: string;
+        alreadyRead: boolean;
+        current: boolean;
+    }) => {
         const { openInReader } = useContext(AppContext);
 
         const dispatch = useAppDispatch();
 
-        useEffect(() => {
-            if (current) {
-                realRef?.current?.scrollIntoView();
-            }
-        }, [realRef]);
         return (
             <li className={(alreadyRead ? "alreadyRead" : "") + " " + (current ? "current" : "")}>
                 <a
                     className="a-context"
                     onClick={() => openInReader(link)}
                     title={name}
-                    ref={ref}
+                    ref={(node) => {
+                        if (current && node !== null) node.scrollIntoView();
+                    }}
                     onContextMenu={(e) => {
                         dispatch(
                             setContextMenu({

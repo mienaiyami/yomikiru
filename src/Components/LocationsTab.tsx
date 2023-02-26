@@ -158,7 +158,7 @@ const LocationsTab = (): ReactElement => {
                                 );
                                 if (index >= 0) {
                                     return setCurrentLink(window.path.normalize(locations[index].link));
-                                    // todo : need or not?
+                                    // need or not?
                                     // return setCurrentLink(window.path.normalize(locations[index].link + "\\"));
                                 } else val = val.replaceAll("\\", "");
                             }
