@@ -19,25 +19,43 @@ const LocationListItem = ({
     const { openInReader } = useContext(AppContext);
     const { showContextMenu } = useContext(MainContext);
     const appSettings = useAppSelector((store) => store.appSettings);
+
+    const onClickHandle = () => {
+        if (!window.fs.existsSync(link)) {
+            window.dialog.customError({ message: "Directory/File doesn't exist." });
+            return;
+        }
+        if (
+            appSettings.openDirectlyFromManga &&
+            window.path.normalize(window.path.resolve(link + "../../../") + "\\") === appSettings.baseDir
+        ) {
+            openInReader(link);
+        } else if ([".zip", ".cbz"].includes(window.path.extname(name))) {
+            openInReader(link);
+        } else setCurrentLink(link);
+    };
+
     return (
         <li className={inHistory ? "alreadyRead" : ""}>
             <a
                 className="a-context"
                 title={name}
-                onClick={() => {
-                    if (!window.fs.existsSync(link)) {
-                        window.dialog.customError({ message: "Directory/File doesn't exist." });
-                        return;
-                    }
-                    if (
-                        appSettings.openDirectlyFromManga &&
-                        window.path.normalize(window.path.resolve(link + "../../../") + "\\") ===
-                            appSettings.baseDir
-                    ) {
-                        openInReader(link);
-                    } else if ([".zip", ".cbz"].includes(window.path.extname(name))) {
-                        openInReader(link);
-                    } else setCurrentLink(link);
+                onClick={(e) => {
+                    if (appSettings.openOnDblClick) {
+                        const elem = e.currentTarget;
+                        if (!elem.getAttribute("data-dblClick")) {
+                            elem.setAttribute("data-dblClick", "true");
+                            setTimeout(() => {
+                                if (elem.getAttribute("data-dblClick") === "true") {
+                                    elem.removeAttribute("data-dblClick");
+                                    onClickHandle();
+                                }
+                            }, 250);
+                        } else {
+                            elem.removeAttribute("data-dblClick");
+                            openInReader(link);
+                        }
+                    } else onClickHandle();
                 }}
                 onContextMenu={(e) => {
                     showContextMenu({

@@ -29,6 +29,7 @@ type DeepArrayToUnion<T> = T extends T
       }
     : never;
 
+// todo: use this as default settings by taking index 0 as default for arrays
 export const settingValidatorData = {
     bookmarksPath: "",
     historyPath: "",
@@ -49,6 +50,7 @@ export const settingValidatorData = {
         history: true,
     },
     useCanvasBasedReader: false,
+    openOnDblClick: true,
     // disableCachingCanvas: false,
     readerSettings: {
         readerWidth: 0,
@@ -530,6 +532,7 @@ const defaultSettings: AppSettings = {
         history: true,
     },
     useCanvasBasedReader: false,
+    openOnDblClick: true,
     // disableCachingCanvas: false,
     readerSettings: {
         readerWidth: 60,
@@ -565,13 +568,13 @@ const makeSettingsJson = (locations?: string[]) => {
             const l: string[] = e.split(".");
             // eslint-disable-next-line @typescript-eslint/ban-ts-comment
             //@ts-ignore
-            if (l.length === 1) settingsDataSaved[l[0]] = settingsDataNew[l[0]];
+            if (l.length === 1) settingsDataSaved[l[0]] = defaultSettings[l[0]];
             // eslint-disable-next-line @typescript-eslint/ban-ts-comment
             //@ts-ignore
-            if (l.length === 2) settingsDataSaved[l[0]][l[1]] = settingsDataNew[l[0]][l[1]];
+            if (l.length === 2) settingsDataSaved[l[0]][l[1]] = defaultSettings[l[0]][l[1]];
             // eslint-disable-next-line @typescript-eslint/ban-ts-comment
             //@ts-ignore
-            if (l.length === 3) settingsDataSaved[l[0]][l[1]][l[2]] = settingsDataNew[l[0]][l[1]][l[2]];
+            if (l.length === 3) settingsDataSaved[l[0]][l[1]][l[2]] = defaultSettings[l[0]][l[1]][l[2]];
         });
         window.fs.writeFileSync(settingsPath, JSON.stringify(settingsDataSaved, null, "\t"));
     } else window.fs.writeFileSync(settingsPath, JSON.stringify(defaultSettings, null, "\t"));

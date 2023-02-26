@@ -505,6 +505,26 @@ const Settings = (): ReactElement => {
                         <tr className="settingItem">
                             <td className="name">Other Settings</td>
                             <td className="current list">
+                                <label className={appSettings.skipMinorUpdate ? "selected" : ""}>
+                                    <input
+                                        type="checkbox"
+                                        checked={appSettings.skipMinorUpdate}
+                                        onChange={(e) => {
+                                            dispatch(setAppSettings({ skipMinorUpdate: e.currentTarget.checked }));
+                                        }}
+                                    />
+                                    <p>Skip minor updates.</p>
+                                </label>
+                                <label className={appSettings.openOnDblClick ? "selected" : ""}>
+                                    <input
+                                        type="checkbox"
+                                        checked={appSettings.openOnDblClick}
+                                        onChange={(e) => {
+                                            dispatch(setAppSettings({ openOnDblClick: e.currentTarget.checked }));
+                                        }}
+                                    />
+                                    <p>Open in Reader on double-click.</p>
+                                </label>
                                 <label className={appSettings.askBeforeClosing ? "selected" : ""}>
                                     <input
                                         type="checkbox"
@@ -516,16 +536,6 @@ const Settings = (): ReactElement => {
                                         }}
                                     />
                                     <p>Ask before closing window? (Needs Restart).</p>
-                                </label>
-                                <label className={appSettings.skipMinorUpdate ? "selected" : ""}>
-                                    <input
-                                        type="checkbox"
-                                        checked={appSettings.skipMinorUpdate}
-                                        onChange={(e) => {
-                                            dispatch(setAppSettings({ skipMinorUpdate: e.currentTarget.checked }));
-                                        }}
-                                    />
-                                    <p>Skip minor updates.</p>
                                 </label>
                                 <label className={appSettings.openDirectlyFromManga ? "selected" : ""}>
                                     <input
@@ -702,9 +712,12 @@ const Settings = (): ReactElement => {
                         </tr>
                     </tbody>
                 </table>
-                <h1>Features</h1>
+                <h1>Usage & Features</h1>
                 <div className="content features">
                     <ul>
+                        <li>
+                            In location tab, click item to see its content or double-click to open it in reader.
+                        </li>
                         <li>
                             Collapse/Un-collapse Bookmarks, History page tabs by clicking on the Dividers beside
                             them in home screen.

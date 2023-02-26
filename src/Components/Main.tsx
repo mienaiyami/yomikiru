@@ -10,6 +10,8 @@ import LocationsTab from "./LocationsTab";
 import Reader from "./Reader";
 import Settings from "./Settings";
 
+// todo: move contextmenu to store; check for memo-able stuff; check unnecessary useEffect/useLayoutEffect;
+
 interface IMainContext {
     showContextMenu: (data: IContextMenuData) => void;
     isContextMenuOpen: boolean;
