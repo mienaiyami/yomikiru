@@ -1,7 +1,8 @@
 //!! check if it really need forward ref
 import { forwardRef, useContext, useEffect } from "react";
 import { AppContext } from "../App";
-import { MainContext } from "./Main";
+import { setContextMenu } from "../store/contextMenu";
+import { useAppDispatch } from "../store/hooks";
 
 const ReaderSideListItem = forwardRef(
     (
@@ -23,7 +24,9 @@ const ReaderSideListItem = forwardRef(
         ref: React.ForwardedRef<HTMLAnchorElement>
     ) => {
         const { openInReader } = useContext(AppContext);
-        const { showContextMenu } = useContext(MainContext);
+
+        const dispatch = useAppDispatch();
+
         useEffect(() => {
             if (current) {
                 realRef?.current?.scrollIntoView();
@@ -37,11 +40,18 @@ const ReaderSideListItem = forwardRef(
                     title={name}
                     ref={ref}
                     onContextMenu={(e) => {
-                        showContextMenu({
-                            e: e.nativeEvent,
-                            isFile: true,
-                            link: link,
-                        });
+                        dispatch(
+                            setContextMenu({
+                                clickX: e.clientX,
+                                clickY: e.clientY,
+                                hasLink: {
+                                    link,
+                                    simple: {
+                                        isImage: false,
+                                    },
+                                },
+                            })
+                        );
                     }}
                 >
                     <span className="text">{name}</span>

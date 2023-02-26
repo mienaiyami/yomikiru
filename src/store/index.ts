@@ -1,6 +1,7 @@
 import { configureStore } from "@reduxjs/toolkit";
 import appSettingsReducer from "./appSettings";
 import bookmarksReducer from "./bookmarks";
+import contextMenuReducer from "./contextMenu";
 import historyReducer from "./history";
 import isLoadingMangaReducer from "./isLoadingManga";
 import isReaderOpenReducer from "./isReaderOpen";
@@ -30,6 +31,7 @@ const store = configureStore({
         mangaInReader: mangaInReaderReducer,
         history: historyReducer,
         shortcuts: shortcutsReducer,
+        contextMenu: contextMenuReducer,
     },
 });
 

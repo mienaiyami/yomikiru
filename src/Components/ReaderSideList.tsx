@@ -8,8 +8,7 @@ import {
 } from "@fortawesome/free-solid-svg-icons";
 import { faBookmark as farBookmark } from "@fortawesome/free-regular-svg-icons";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import { useContext, useEffect, useLayoutEffect, useRef, useState } from "react";
-import { MainContext } from "./Main";
+import { useEffect, useLayoutEffect, useRef, useState } from "react";
 import ReaderSideListItem from "./ReaderSideListItem";
 import { useAppDispatch, useAppSelector } from "../store/hooks";
 import { setLinkInReader } from "../store/linkInReader";
@@ -46,9 +45,10 @@ const ReaderSideList = ({
     const appSettings = useAppSelector((store) => store.appSettings);
     const prevNextChapter = useAppSelector((store) => store.prevNextChapter);
     const linkInReader = useAppSelector((store) => store.linkInReader);
+    const contextMenu = useAppSelector((store) => store.contextMenu);
+
     const dispatch = useAppDispatch();
 
-    const { isContextMenuOpen } = useContext(MainContext);
     const sideListRef = useRef<HTMLDivElement>(null);
     const [chapterData, setChapterData] = useState<ChapterData[]>([]);
     const [filter, setFilter] = useState<string>("");
@@ -61,9 +61,9 @@ const ReaderSideList = ({
     //TODO: useless rn
     const currentLinkInListRef = useRef<HTMLAnchorElement>(null);
     useEffect(() => {
-        if (!isContextMenuOpen && !isSideListPinned) return setListOpen(false);
+        if (!contextMenu && !isSideListPinned) return setListOpen(false);
         setpreventListClose(true);
-    }, [isContextMenuOpen]);
+    }, [contextMenu]);
     useEffect(() => {
         if (mangaInReader) {
             const historyItem = history.find((e) => e.mangaLink === window.path.dirname(mangaInReader.link));
@@ -221,11 +221,7 @@ const ReaderSideList = ({
             }}
             onMouseLeave={(e) => {
                 if (!isSideListPinned) {
-                    if (
-                        preventListClose &&
-                        !isContextMenuOpen &&
-                        !e.currentTarget.contains(document.activeElement)
-                    )
+                    if (preventListClose && !contextMenu && !e.currentTarget.contains(document.activeElement))
                         setListOpen(false);
                     setpreventListClose(false);
                 }

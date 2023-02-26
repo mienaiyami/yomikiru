@@ -28,10 +28,14 @@ const TopBar = (): ReactElement => {
         document.title = window.electron.app.name;
     };
     useLayoutEffect(() => {
-        window.addEventListener("pageNumberChange", () => {
+        const ff = () => {
             (document.querySelector("#NavigateToPageInput") as HTMLInputElement).value =
                 window.app.currentPageNumber.toString();
-        });
+        };
+        window.addEventListener("pageNumberChange", ff);
+        return () => {
+            window.removeEventListener("pageNumberChange", ff);
+        };
     }, []);
     useEffect(() => {
         setTitleWithSize();

@@ -1,18 +1,18 @@
 import { useContext, useEffect, useLayoutEffect, useRef, useState } from "react";
 import { AppContext } from "../App";
 import ReaderSideList from "./ReaderSideList";
-import { MainContext } from "./Main";
 import ReaderSettings from "./ReaderSettings";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faQuestionCircle } from "@fortawesome/free-regular-svg-icons";
 import { useAppDispatch, useAppSelector } from "../store/hooks";
-import { setAppSettings, setReaderSettings } from "../store/appSettings";
+import { setReaderSettings } from "../store/appSettings";
 import { setMangaInReader } from "../store/mangaInReader";
 import { setReaderOpen } from "../store/isReaderOpen";
 import { setLoadingMangaPercent } from "../store/loadingMangaPercent";
 import { setLoadingManga } from "../store/isLoadingManga";
 import { setLinkInReader } from "../store/linkInReader";
 import { newHistory } from "../store/history";
+import { setContextMenu } from "../store/contextMenu";
 
 const Reader = () => {
     const { pageNumberInputRef, checkValidFolder } = useContext(AppContext);
@@ -29,7 +29,6 @@ const Reader = () => {
 
     const dispatch = useAppDispatch();
 
-    const { showContextMenu } = useContext(MainContext);
     const [images, setImages] = useState<string[]>([]);
     const [imageWidthContainer, setImageWidthContainer] = useState<
         { index: number; isWide: boolean; img: HTMLCanvasElement | HTMLImageElement }[]
@@ -189,7 +188,6 @@ const Reader = () => {
                 }
             }
         };
-        window.addEventListener("wheel", wheelFunction);
 
         const shortcutkey: { [e in ShortcutCommands]?: { key1: string; key2: string } } = {};
         shortcuts.forEach((e) => {
@@ -368,6 +366,7 @@ const Reader = () => {
                 }
             }
         };
+        window.addEventListener("wheel", wheelFunction);
         window.addEventListener("keydown", registerShortcuts);
         window.addEventListener("keyup", () => {
             window.app.keydown = false;
@@ -499,11 +498,23 @@ const Reader = () => {
                 canvas.setAttribute("data-pagenumber", JSON.stringify(i + 1));
                 canvas.classList.add("readerImg");
                 canvas.oncontextmenu = (ev) => {
-                    showContextMenu({
-                        isImg: true,
-                        e: ev,
-                        link: e,
-                    });
+                    dispatch(
+                        setContextMenu({
+                            clickX: ev.clientX,
+                            clickY: ev.clientY,
+                            hasLink: {
+                                link: e,
+                                simple: {
+                                    isImage: true,
+                                },
+                            },
+                        })
+                    );
+                    // showContextMenu({
+                    //     isImg: true,
+                    //     e: ev,
+                    //     link: e,
+                    // });
                 };
                 const ctx = canvas.getContext("2d");
 
@@ -540,11 +551,23 @@ const Reader = () => {
                 img.setAttribute("data-pagenumber", JSON.stringify(i + 1));
                 img.classList.add("readerImg");
                 img.oncontextmenu = (ev) => {
-                    showContextMenu({
-                        isImg: true,
-                        e: ev,
-                        link: e,
-                    });
+                    dispatch(
+                        setContextMenu({
+                            clickX: ev.clientX,
+                            clickY: ev.clientY,
+                            hasLink: {
+                                link: e,
+                                simple: {
+                                    isImage: true,
+                                },
+                            },
+                        })
+                    );
+                    // showContextMenu({
+                    //     isImg: true,
+                    //     e: ev,
+                    //     link: e,
+                    // });
                 };
                 img.onload = () => {
                     // img.decode().catch((e) => console.error(e));

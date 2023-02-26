@@ -2,8 +2,8 @@ import { faAngleRight } from "@fortawesome/free-solid-svg-icons";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { ReactElement, useContext } from "react";
 import { AppContext } from "../App";
-import { useAppSelector } from "../store/hooks";
-import { MainContext } from "./Main";
+import { setContextMenu } from "../store/contextMenu";
+import { useAppDispatch, useAppSelector } from "../store/hooks";
 
 const LocationListItem = ({
     name,
@@ -17,8 +17,9 @@ const LocationListItem = ({
     inHistory?: boolean;
 }): ReactElement => {
     const { openInReader } = useContext(AppContext);
-    const { showContextMenu } = useContext(MainContext);
     const appSettings = useAppSelector((store) => store.appSettings);
+
+    const dispatch = useAppDispatch();
 
     const onClickHandle = () => {
         if (!window.fs.existsSync(link)) {
@@ -58,11 +59,23 @@ const LocationListItem = ({
                     } else onClickHandle();
                 }}
                 onContextMenu={(e) => {
-                    showContextMenu({
-                        e: e.nativeEvent,
-                        isFile: true,
-                        link: link,
-                    });
+                    dispatch(
+                        setContextMenu({
+                            clickX: e.clientX,
+                            clickY: e.clientY,
+                            hasLink: {
+                                link,
+                                simple: {
+                                    isImage: false,
+                                },
+                            },
+                        })
+                    );
+                    // showContextMenu({
+                    //     e: e.nativeEvent,
+                    //     isFile: true,
+                    //     link: link,
+                    // });
                 }}
                 tabIndex={-1}
             >

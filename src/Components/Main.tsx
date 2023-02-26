@@ -1,6 +1,7 @@
 /* eslint-disable @typescript-eslint/no-non-null-assertion */
-import { createContext, ReactElement, useLayoutEffect, useRef, useState } from "react";
+import { ReactElement, useLayoutEffect, useRef, useState } from "react";
 import { setAppSettings } from "../store/appSettings";
+import { setContextMenu } from "../store/contextMenu";
 import { useAppDispatch, useAppSelector } from "../store/hooks";
 import BookmarkTab from "./BookmarkTab";
 import ContextMenu from "./ContextMenu";
@@ -10,47 +11,32 @@ import LocationsTab from "./LocationsTab";
 import Reader from "./Reader";
 import Settings from "./Settings";
 
-// todo: move contextmenu to store; check for memo-able stuff; check unnecessary useEffect/useLayoutEffect;
-
-interface IMainContext {
-    showContextMenu: (data: IContextMenuData) => void;
-    isContextMenuOpen: boolean;
-}
-export const MainContext = createContext<IMainContext>(null!);
-
 const Main = (): ReactElement => {
     const appSettings = useAppSelector((store) => store.appSettings);
     const isReaderOpen = useAppSelector((store) => store.isReaderOpen);
     const linkInReader = useAppSelector((store) => store.linkInReader);
     const dispatch = useAppDispatch();
+    // todo: maybe move to child?
     const [currentLink, setCurrentLink] = useState(appSettings.baseDir);
     // const [bookmarkTabDisplay, setBookmarkTabDisplay] = useState(true);
     // const [historyTabDisplay, setHistoryTabDisplay] = useState(true);
-    const [isContextMenuOpen, setContextMenuOpen] = useState(false);
-    const contextMenuRef = useRef<HTMLDivElement>(null);
-    const [contextMenuData, setContextMenuData] = useState<IContextMenuData | null>(null);
     // const bookmarkTabRef = useRef<HTMLDivElement>(null);
     // const historyTabRef = useRef<HTMLDivElement>(null);
     // const locationTabRef = useRef<HTMLDivElement>(null);
     // const tabContRef = useRef<HTMLDivElement>(null);
     // const [gridTemplate, setGridTemplate] = useState<string>("");
     // const [dividerWidth, setDividerWidth] = useState<number>(0);
-    const showContextMenu = (data: IContextMenuData) => {
-        setContextMenuData(data);
-        setContextMenuOpen(true);
-    };
-    const closeContextMenu = () => {
-        setContextMenuData(null);
-        setContextMenuOpen(false);
-    };
     useLayoutEffect(() => {
-        document.addEventListener("wheel", () => closeContextMenu());
-
+        const ff = () => dispatch(setContextMenu(null));
+        window.addEventListener("wheel", ff);
         // if (tabContRef.current) {
         //     setDividerWidth(
         //         parseInt(window.getComputedStyle(tabContRef.current).getPropertyValue("--divider-width"))
         //     );
         // }
+        return () => {
+            window.removeEventListener("wheel", ff);
+        };
     }, []);
     useLayoutEffect(() => setCurrentLink(appSettings.baseDir), [appSettings.baseDir]);
 
@@ -304,84 +290,71 @@ const Main = (): ReactElement => {
     //     }
     // };
     return (
-        <MainContext.Provider value={{ showContextMenu, isContextMenuOpen }}>
-            <div id="app">
+        <div id="app">
+            <div
+                className="tabCont"
+                // ref={tabContRef}
+                style={{
+                    display: isReaderOpen ? "none" : "grid",
+                    // just why
+                    gridTemplateColumns:
+                        appSettings.showTabs.bookmark && appSettings.showTabs.history
+                            ? "calc(calc(100vw - calc(var(--divider-width) * 2)) / 3) var(--divider-width) calc(calc(100vw - calc(var(--divider-width) * 2)) / 3) var(--divider-width) calc(calc(100vw - calc(var(--divider-width) * 2)) / 3)"
+                            : !appSettings.showTabs.bookmark && appSettings.showTabs.history
+                            ? "calc(calc(100vw - calc(var(--divider-width) * 2)) / 2) var(--divider-width) var(--divider-width) calc(calc(100vw - calc(var(--divider-width) * 2)) / 2)"
+                            : appSettings.showTabs.bookmark && !appSettings.showTabs.history
+                            ? "calc(calc(100vw - calc(var(--divider-width) * 2)) / 2) var(--divider-width) calc(calc(100vw - calc(var(--divider-width) * 2)) / 2) var(--divider-width)"
+                            : "calc(calc(100vw - calc(var(--divider-width) * 2))) var(--divider-width) var(--divider-width)",
+                }}
+            >
+                <LocationsTab
+                    currentLink={currentLink}
+                    setCurrentLink={setCurrentLink}
+                    // ref={locationTabRef}
+                />
                 <div
-                    className="tabCont"
-                    // ref={tabContRef}
-                    style={{
-                        display: isReaderOpen ? "none" : "grid",
-                        // just why
-                        gridTemplateColumns:
-                            appSettings.showTabs.bookmark && appSettings.showTabs.history
-                                ? "calc(calc(100vw - calc(var(--divider-width) * 2)) / 3) var(--divider-width) calc(calc(100vw - calc(var(--divider-width) * 2)) / 3) var(--divider-width) calc(calc(100vw - calc(var(--divider-width) * 2)) / 3)"
-                                : !appSettings.showTabs.bookmark && appSettings.showTabs.history
-                                ? "calc(calc(100vw - calc(var(--divider-width) * 2)) / 2) var(--divider-width) var(--divider-width) calc(calc(100vw - calc(var(--divider-width) * 2)) / 2)"
-                                : appSettings.showTabs.bookmark && !appSettings.showTabs.history
-                                ? "calc(calc(100vw - calc(var(--divider-width) * 2)) / 2) var(--divider-width) calc(calc(100vw - calc(var(--divider-width) * 2)) / 2) var(--divider-width)"
-                                : "calc(calc(100vw - calc(var(--divider-width) * 2))) var(--divider-width) var(--divider-width)",
-                    }}
+                    className="divider"
+                    onClick={() =>
+                        // am i fr doing this
+                        dispatch(
+                            setAppSettings({
+                                showTabs: {
+                                    bookmark: !appSettings.showTabs.bookmark,
+                                    history: appSettings.showTabs.history,
+                                },
+                            })
+                        )
+                    }
                 >
-                    <LocationsTab
-                        currentLink={currentLink}
-                        setCurrentLink={setCurrentLink}
-                        // ref={locationTabRef}
-                    />
-                    <div
-                        className="divider"
-                        onClick={() =>
-                            // am i fr doing this
-                            dispatch(
-                                setAppSettings({
-                                    showTabs: {
-                                        bookmark: !appSettings.showTabs.bookmark,
-                                        history: appSettings.showTabs.history,
-                                    },
-                                })
-                            )
-                        }
-                    >
-                        <div className="bar"></div>
-                    </div>
-                    <BookmarkTab
-                    //  ref={bookmarkTabRef}
-                    />
-                    <div
-                        className="divider"
-                        onClick={() =>
-                            dispatch(
-                                setAppSettings({
-                                    showTabs: {
-                                        bookmark: appSettings.showTabs.bookmark,
-                                        history: !appSettings.showTabs.history,
-                                    },
-                                })
-                            )
-                        }
-                    >
-                        <div className="bar"></div>
-                    </div>
-                    <HistoryTab
-                    // ref={historyTabRef}
-                    />
+                    <div className="bar"></div>
                 </div>
-                <Settings />
-                <LoadingScreen />
-                {isContextMenuOpen ? (
-                    contextMenuData ? (
-                        <ContextMenu
-                            {...contextMenuData}
-                            closeContextMenu={closeContextMenu}
-                            realRef={contextMenuRef}
-                            ref={contextMenuRef}
-                        />
-                    ) : null
-                ) : (
-                    ""
-                )}
-                {linkInReader.link !== "" ? <Reader /> : ""}
+                <BookmarkTab
+                //  ref={bookmarkTabRef}
+                />
+                <div
+                    className="divider"
+                    onClick={() =>
+                        dispatch(
+                            setAppSettings({
+                                showTabs: {
+                                    bookmark: appSettings.showTabs.bookmark,
+                                    history: !appSettings.showTabs.history,
+                                },
+                            })
+                        )
+                    }
+                >
+                    <div className="bar"></div>
+                </div>
+                <HistoryTab
+                // ref={historyTabRef}
+                />
             </div>
-        </MainContext.Provider>
+            <Settings />
+            <LoadingScreen />
+            <ContextMenu />
+            {linkInReader.link !== "" ? <Reader /> : ""}
+        </div>
     );
 };
 

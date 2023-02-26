@@ -1,10 +1,11 @@
 import { useContext } from "react";
 import { AppContext } from "../App";
-import { MainContext } from "./Main";
+import { setContextMenu } from "../store/contextMenu";
+import { useAppDispatch } from "../store/hooks";
 
 const BookmarkHistoryListItem = (props: ListItemE) => {
     const { openInReader } = useContext(AppContext);
-    const { showContextMenu } = useContext(MainContext);
+    const dispatch = useAppDispatch();
     // const [pos, setPos] = useState({ x: 0, y: 0 });
     // const infoRef = useRef<HTMLDivElement>(null);
     // const InfoOnHover = () => {
@@ -56,14 +57,27 @@ const BookmarkHistoryListItem = (props: ListItemE) => {
                 className="a-context"
                 onClick={() => openInReader(props.link, props.page)}
                 onContextMenu={(e) => {
-                    showContextMenu({
-                        isBookmark: props.isBookmark || false,
-                        isHistory: props.isHistory || false,
-                        link: props.link,
-                        item: props,
-                        isFile: false,
-                        e: e.nativeEvent,
-                    });
+                    dispatch(
+                        setContextMenu({
+                            clickX: e.clientX,
+                            clickY: e.clientY,
+                            hasLink: {
+                                link: props.link,
+                                chapterItem: {
+                                    item: props,
+                                    isBookmark: props.isBookmark || false,
+                                },
+                            },
+                        })
+                    );
+                    // showContextMenu({
+                    //     isBookmark: props.isBookmark || false,
+                    //     isHistory: props.isHistory || false,
+                    //     link: props.link,
+                    //     item: props,
+                    //     isFile: false,
+                    //     e: e.nativeEvent,
+                    // });
                 }}
             >
                 <span className="double">

@@ -287,13 +287,18 @@ declare global {
         key2: string;
     }
     interface IContextMenuData {
-        isBookmark?: boolean;
-        isHistory?: boolean;
-        isFile?: boolean;
-        isImg?: boolean;
-        link: string;
-        e: MouseEvent;
-        item?: ListItemE;
+        clickX: number;
+        clickY: number;
+        hasLink?: {
+            link: string;
+            chapterItem?: {
+                item: ListItemE;
+                isBookmark?: boolean;
+            };
+            simple?: {
+                isImage?: boolean;
+            };
+        };
     }
 
     type AppSettings = DeepArrayToUnion<typeof settingValidatorData>;

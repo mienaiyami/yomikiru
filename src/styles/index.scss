@@ -815,7 +815,7 @@ body {
 
                     .settingItem {
                         display: flex;
-                        gap: 5px;
+                        gap: 10px;
                         // grid-template-columns: 30% 70%;
                         align-items: center;
                         padding: 10px 0;
@@ -831,7 +831,7 @@ body {
                             flex-wrap: wrap;
                             width: 70%;
 
-                            gap: 10px;
+                            gap: 5px;
                             justify-content: stretch;
 
                             &.list {
