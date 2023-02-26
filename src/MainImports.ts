@@ -31,8 +31,6 @@ type DeepArrayToUnion<T> = T extends T
 
 // todo: use this as default settings by taking index 0 as default for arrays
 export const settingValidatorData = {
-    bookmarksPath: "",
-    historyPath: "",
     baseDir: "",
     locationListSortType: ["normal", "inverse"],
     /**
@@ -524,8 +522,6 @@ const themesPath = window.path.join(userDataURL, "themes.json");
 const shortcutsPath = window.path.join(userDataURL, "shortcuts.json");
 
 const defaultSettings: AppSettings = {
-    bookmarksPath,
-    historyPath,
     baseDir: window.electron.app.getPath("home"),
     locationListSortType: "normal",
     updateCheckerEnabled: true,

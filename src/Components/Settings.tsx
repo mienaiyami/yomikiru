@@ -9,7 +9,7 @@ import { useAppDispatch, useAppSelector } from "../store/hooks";
 import { resetShortcuts, setShortcuts } from "../store/shortcuts";
 import { setOpenSetting } from "../store/isSettingOpen";
 import { addBookmark, removeAllBookmarks } from "../store/bookmarks";
-import { setAppSettings, setReaderSettings } from "../store/appSettings";
+import { makeNewSettings, setAppSettings, setReaderSettings } from "../store/appSettings";
 
 const Settings = (): ReactElement => {
     const { promptSetDefaultLocation } = useContext(AppContext);
@@ -612,6 +612,37 @@ const Settings = (): ReactElement => {
                                     }}
                                 >
                                     Reset all themes
+                                </button>
+                                <button
+                                    onClick={() => {
+                                        window.dialog
+                                            .warn({
+                                                title: "Reset Settings",
+                                                message:
+                                                    "This will reset all Settings (themes not included). Continue?",
+                                                noOption: false,
+                                            })
+                                            .then(({ response }) => {
+                                                if (response == undefined) return;
+                                                if (response === 1) return;
+                                                if (response === 0) {
+                                                    window.dialog
+                                                        .warn({
+                                                            title: "Reset Settings",
+                                                            noOption: false,
+                                                            message:
+                                                                "Are you really sure you want to reset settings?\nThis process is irreversible.",
+                                                        })
+                                                        .then((res) => {
+                                                            if (res.response === 1) return;
+                                                            dispatch(makeNewSettings());
+                                                            dispatch(resetShortcuts());
+                                                        });
+                                                }
+                                            });
+                                    }}
+                                >
+                                    Reset all Settings
                                 </button>
                                 {/* <label className={appSettings.disableCachingCanvas ? "selected" : ""}>
                                         <input
