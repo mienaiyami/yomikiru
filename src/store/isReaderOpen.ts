@@ -1,6 +1,5 @@
 import { createSlice, PayloadAction } from "@reduxjs/toolkit";
 
-// todo: do i need object for this?
 const initialState = false;
 
 const isReaderOpen = createSlice({

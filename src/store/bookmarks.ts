@@ -27,25 +27,29 @@ const bookmarks = createSlice({
     reducers: {
         addBookmark: (state, action: PayloadAction<ChapterItem | ChapterItem[]>) => {
             if (action.payload instanceof Array) {
+                const newBks = action.payload.reverse();
+                newBks.forEach((newBk) => {
+                    const existingBookmark = state.findIndex((e) => e.link === newBk.link);
+                    if (existingBookmark > -1) state.splice(existingBookmark, 1);
+                    state.unshift(newBk);
+                });
                 state.unshift(...action.payload);
             } else {
-                state.unshift(action.payload);
+                const newBk = action.payload;
+                const existingBookmark = state.findIndex((e) => e.link === newBk.link);
+                if (existingBookmark > -1) {
+                    // if (state[existingBookmark].page === newBk.page){
+                    //     window.dialog.warn({
+                    //         title: "Bookmark Already Exist",
+                    //         message: "Bookmark Already Exist",
+                    //     });
+                    // }
+                    // else
+                    state.splice(existingBookmark, 1);
+                }
+                state.unshift(newBk);
             }
             saveJSONfile(bookmarksPath, state);
-            return state;
-
-            // if (newBk) {
-            //     // replace same link with updated pagenumber
-            //     const existingBookmark = bookmarks.findIndex((e) => e.link === newBk.link);
-            //     if (-1 < existingBookmark) {
-            //         if (bookmarks[existingBookmark].page === newBk.page)
-            //             return window.dialog.warn({
-            //                 title: "Bookmark Already Exist",
-            //                 message: "Bookmark Already Exist",
-            //             });
-            //     }
-            //     setBookmarks((init) => [newBk, ...init]);
-            // }
         },
 
         updateBookmark: (state, action: PayloadAction<{ link: string; page: number }>) => {

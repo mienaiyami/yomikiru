@@ -58,7 +58,7 @@ const ReaderSideList = ({
     const [historySimple, setHistorySimple] = useState<string[]>([]);
     const [draggingResizer, setDraggingResizer] = useState(false);
 
-    //TODO: useless rn
+    //TODO: useless rn, usecallback ref to focus
     const currentLinkInListRef = useRef<HTMLAnchorElement>(null);
     useEffect(() => {
         if (!contextMenu && !isSideListPinned) return setListOpen(false);

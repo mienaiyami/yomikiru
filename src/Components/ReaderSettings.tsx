@@ -106,7 +106,7 @@ const ReaderSettings = ({
                             ref={sizeMinusRef}
                             onClick={() => {
                                 makeScrollPos();
-                                //todo :was 20 before
+                                // was 20 before
                                 const steps = appSettings.readerSettings.readerWidth <= 40 ? 5 : 10;
                                 const readerWidth =
                                     appSettings.readerSettings.readerWidth - steps > maxWidth

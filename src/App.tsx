@@ -211,6 +211,7 @@ const App = (): ReactElement => {
 
     // todo: check
     const addNewBookmark = (newBk: ChapterItem) => {
+        // todo: move to setbookmark
         if (newBk) {
             // replace same link with updated pagenumber
             const existingBookmark = bookmarks.findIndex((e) => e.link === newBk.link);
@@ -233,7 +234,6 @@ const App = (): ReactElement => {
         if (!result) return;
         let path = "";
         if (result) path = window.path.normalize(result[0] + "\\");
-        // todo: make better
         dispatch(setAppSettings({ baseDir: path }));
     };
     const openInNewWindow = (link: string) => {
@@ -283,16 +283,6 @@ const App = (): ReactElement => {
             removeEventListener("keydown", eventsOnStart);
         };
     }, []);
-
-    // todo: join theme inside appsetting
-    // useEffect(() => {
-    //     if (firstRendered) {
-    //         setAppSettings((init) => {
-    //             init.theme = theme;
-    // return { ...init };
-    //         });
-    //     }
-    // }, [theme]);
 
     return (
         <AppContext.Provider

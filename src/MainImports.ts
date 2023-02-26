@@ -666,7 +666,6 @@ const isSettingsValid = (): { isValid: boolean; location: string[] } => {
     return output;
 };
 
-// todo: remove useless
 export {
     settingsPath,
     bookmarksPath,
