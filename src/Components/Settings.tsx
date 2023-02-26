@@ -4,7 +4,7 @@ import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { ReactElement, useContext, useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
 import { faEdit, faLink, faPlus, faSync, faTimes, faTrash, faUnlink } from "@fortawesome/free-solid-svg-icons";
 import themesRaw from "../themeInit.json";
-import { newTheme, updateTheme, deleteTheme, setTheme } from "../store/themes";
+import { newTheme, updateTheme, deleteTheme, setTheme, resetAllTheme } from "../store/themes";
 import { useAppDispatch, useAppSelector } from "../store/hooks";
 import { resetShortcuts, setShortcuts } from "../store/shortcuts";
 import { setOpenSetting } from "../store/isSettingOpen";
@@ -419,6 +419,13 @@ const Settings = (): ReactElement => {
                                                     });
                                                     return;
                                                 }
+                                                if (themesRaw.allData.map((q) => q.name).includes(e.name)) {
+                                                    window.dialog.customError({
+                                                        title: "Error",
+                                                        message: `Unable to delete default themes.`,
+                                                    });
+                                                    return;
+                                                }
                                                 window.dialog
                                                     .confirm({
                                                         message: `Delete theme "${e.name}"`,
@@ -590,6 +597,23 @@ const Settings = (): ReactElement => {
                                         a low value.(BETA)
                                     </p>
                                 </label>
+                                <button
+                                    onClick={() => {
+                                        window.dialog
+                                            .warn({
+                                                title: "Reset themes",
+                                                message: "This will delete all themes. Continue?",
+                                                noOption: false,
+                                            })
+                                            .then(({ response }) => {
+                                                if (response == undefined) return;
+                                                if (response === 1) return;
+                                                if (response === 0) dispatch(resetAllTheme());
+                                            });
+                                    }}
+                                >
+                                    Reset all themes
+                                </button>
                                 {/* <label className={appSettings.disableCachingCanvas ? "selected" : ""}>
                                         <input
                                             type="checkbox"

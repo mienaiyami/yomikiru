@@ -129,19 +129,22 @@ if (!initialState.allData.map((e) => e.name).includes(initialState.name)) {
         });
 }
 
+const saveJSONandApply = (state: Themes) => {
+    setBodyTheme(state);
+    saveJSONfile(themesPath, state);
+};
+
 const themes = createSlice({
     name: "allThemes",
     initialState,
     reducers: {
         setTheme: (state, action: PayloadAction<string>) => {
             const newStore: Themes = { ...state, name: action.payload };
-            setBodyTheme(newStore);
-            saveJSONfile(themesPath, newStore);
+            saveJSONandApply(newStore);
             return newStore;
         },
         newTheme: (state, action: PayloadAction<ThemeData>) => {
             state.allData.push(action.payload);
-            saveJSONfile(themesPath, state);
         },
         updateTheme: (
             state,
@@ -149,15 +152,19 @@ const themes = createSlice({
         ) => {
             state.allData[state.allData.findIndex((e) => e.name === action.payload.themeName)].main =
                 action.payload.newThemeData;
-            saveJSONfile(themesPath, state);
+            saveJSONandApply(state);
         },
         deleteTheme: (state, action: PayloadAction<number>) => {
             state.allData.splice(action.payload, 1);
             saveJSONfile(themesPath, state);
         },
+        resetAllTheme: () => {
+            saveJSONandApply(themeInit);
+            return themeInit;
+        },
     },
 });
 
-export const { newTheme, updateTheme, deleteTheme, setTheme } = themes.actions;
+export const { newTheme, updateTheme, deleteTheme, setTheme, resetAllTheme } = themes.actions;
 
 export default themes.reducer;
