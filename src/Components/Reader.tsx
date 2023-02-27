@@ -681,6 +681,7 @@ const Reader = () => {
         imgContRef.current?.scrollTo(0, scrollPosPercent * imgContRef.current.scrollHeight);
     }, [appSettings.readerSettings.readerWidth, isSideListPinned]);
     useEffect(() => {
+        window.app.linkInReader = linkInReader;
         if (linkInReader && linkInReader.link !== "") {
             if (mangaInReader && mangaInReader.link === linkInReader.link) return;
             checkForImgsAndLoad(linkInReader);

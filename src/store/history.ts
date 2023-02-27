@@ -3,29 +3,35 @@ import { historyPath, saveJSONfile } from "../MainImports";
 
 const initialState: HistoryItem[] = [];
 
-if (window.fs.existsSync(historyPath)) {
-    const raw = window.fs.readFileSync(historyPath, "utf8");
-    if (raw) {
-        try {
-            const data = JSON.parse(raw);
-            if (data[0] && !data[0].chaptersRead) throw new Error("History format changed.");
-            initialState.push(...data);
-        } catch (err) {
-            if ((err as Error).message === "History format changed.")
-                window.dialog.customError({
-                    message: "History format changed.\nSorry for the inconvenience.",
-                });
-            else
-                window.dialog.customError({
-                    message: "Unable to parse " + historyPath + "\nMaking new history.json...",
-                });
-            window.logger.error(err);
-            window.fs.writeFileSync(historyPath, "[]");
-        }
+const readHistory = (): HistoryItem[] => {
+    if (window.fs.existsSync(historyPath)) {
+        const raw = window.fs.readFileSync(historyPath, "utf8");
+        if (raw) {
+            try {
+                const data = JSON.parse(raw);
+                if (data[0] && !data[0].chaptersRead) throw new Error("History format changed.");
+                return data;
+            } catch (err) {
+                if ((err as Error).message === "History format changed.")
+                    window.dialog.customError({
+                        message: "History format changed.\nSorry for the inconvenience.",
+                    });
+                else
+                    window.dialog.customError({
+                        message: "Unable to parse " + historyPath + "\nMaking new history.json...",
+                    });
+                window.logger.error(err);
+                return [];
+            }
+        } else return [];
+    } else {
+        return [];
     }
-} else {
-    window.fs.writeFileSync(historyPath, "[]");
-}
+};
+
+const historyData = readHistory();
+if (historyData.length === 0) window.fs.writeFileSync(historyPath, "[]");
+initialState.push(...historyData);
 
 const history = createSlice({
     name: "history",
@@ -51,27 +57,49 @@ const history = createSlice({
             saveJSONfile(historyPath, state);
         },
         // todo: getlink from state directly;
-        updateLastHistoryPage: (state, action: PayloadAction<{ linkInReader: string }>) => {
-            if (
-                (state.length > 0 && state[0] && state[0].link && state[0].link === action.payload.linkInReader) ||
-                action.payload.linkInReader === ""
-            ) {
-                state[0].page = window.app.currentPageNumber;
-                saveJSONfile(historyPath, state);
+        // todo: fix; when called in App.tsx linkInReader is initialVlue even if changed
+        // updateLastHistoryPage: (state, action: PayloadAction<{ linkInReader: string }>) => {
+        //     const index = state.findIndex((e) => e.link === action.payload.linkInReader);
+        //     // todo : removed ` || action.payload.linkInReader === ""`; check consequences
+        //     // not working on closing window
+        //     // use sth like window.lastMangaOpened;
+        //     window.logger.log("asking to save ", action.payload);
+        //     if (index > -1) {
+        //         console.log(`Updating ${state[index].mangaName} to page ${window.app.currentPageNumber}`);
+        //         state[index].page = window.app.currentPageNumber;
+        //         saveJSONfile(historyPath, state);
+        //     }
+        // },
+        updateLastHistoryPage: (state) => {
+            const stateDup = [...state];
+            const link = window.app.linkInReader.link;
+            const index = stateDup.findIndex((e) => e.link === link);
+            // not working on closing window
+            // use sth like window.lastMangaOpened;
+            // window.logger.log("asking to save ", link);
+            if (index > -1) {
+                // console.log(`Updating ${stateDup[index].mangaName} to page ${window.app.currentPageNumber}`);
+                stateDup[index].page = window.app.currentPageNumber;
+                saveJSONfile(historyPath, stateDup);
             }
-            return state;
+        },
+        refreshHistory: () => {
+            let newState = readHistory();
+            if (newState.length === 0) newState = readHistory();
+            return newState;
         },
         removeHistory: (state, action: PayloadAction<number>) => {
             state.splice(action.payload, 1);
             saveJSONfile(historyPath, state);
         },
-        deleteAllHistory: (state) => {
+        deleteAllHistory: () => {
             saveJSONfile(historyPath, []);
             return [];
         },
     },
 });
 
-export const { newHistory, updateLastHistoryPage, deleteAllHistory, removeHistory } = history.actions;
+export const { newHistory, updateLastHistoryPage, deleteAllHistory, removeHistory, refreshHistory } =
+    history.actions;
 
 export default history.reducer;

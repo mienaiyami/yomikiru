@@ -1,6 +1,7 @@
 import { app, dialog, getCurrentWindow, clipboard, nativeImage, shell } from "@electron/remote";
 import { ipcRenderer, webFrame } from "electron";
 import crossZip from "cross-zip";
+import chokidar from "chokidar";
 import log from "electron-log";
 log.transports.file.resolvePath = () => path.join(app.getPath("userData"), "logs/renderer.log");
 /*//! i know its dangerous but its offline app and i was unable to get BrowserWindow to work
@@ -114,6 +115,10 @@ declare global {
          * Library to un-archive zip or cbz.
          */
         crossZip: typeof crossZip;
+        /**
+         * watch for change in file/dir.
+         */
+        chokidar: typeof chokidar;
         logger: typeof log;
         /**
          * Supported image formats.
@@ -138,6 +143,16 @@ declare global {
             currentPageNumber: number;
             scrollToPage: (pageNumber: number, behavior?: ScrollBehavior, callback?: () => void) => void;
             keyRepeated: boolean;
+
+            // todo: fix
+            /**
+             * why did i add this? bcoz fking linkInReader state is showing initial only in App.tsx
+             */
+            linkInReader: {
+                link: string;
+                page: number;
+            };
+
             // to remove later
             keydown: boolean;
         };
@@ -436,6 +451,7 @@ window.shortcutsFunctions = [
 ];
 window.logger = log;
 window.crossZip = crossZip;
+window.chokidar = chokidar;
 const collator = Intl.Collator(undefined, { numeric: true, sensitivity: "base" });
 window.app.betterSortOrder = collator.compare;
 window.app.replaceExtension = (str) => {
@@ -443,6 +459,10 @@ window.app.replaceExtension = (str) => {
 };
 window.app.deleteDirOnClose = "";
 window.app.currentPageNumber = 1;
+window.app.linkInReader = {
+    link: "",
+    page: 1,
+};
 window.app.randomString = (length: number) => {
     let result = "";
     const characters = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789";

@@ -8,11 +8,12 @@ import { setUnzipping } from "./store/unzipping";
 import { setLoadingManga } from "./store/isLoadingManga";
 import { setLoadingMangaPercent } from "./store/loadingMangaPercent";
 import { setLinkInReader } from "./store/linkInReader";
-import { updateLastHistoryPage } from "./store/history";
+import { refreshHistory, updateLastHistoryPage } from "./store/history";
 import { setReaderOpen } from "./store/isReaderOpen";
 import { setMangaInReader } from "./store/mangaInReader";
-import { addBookmark } from "./store/bookmarks";
+import { refreshBookmark } from "./store/bookmarks";
 import { setTheme } from "./store/themes";
+import { bookmarksPath, historyPath } from "./MainImports";
 
 // window.logger.log("New window opening...");
 
@@ -38,8 +39,7 @@ export const AppContext = createContext<IAppContext>(null!);
 const App = (): ReactElement => {
     const appSettings = useAppSelector((state) => state.appSettings);
     const isReaderOpen = useAppSelector((state) => state.isReaderOpen);
-    const linkInReader = useAppSelector((state) => state.linkInReader);
-    const bookmarks = useAppSelector((state) => state.bookmarks);
+    const linkInReader = useAppSelector((store) => store.linkInReader);
     const theme = useAppSelector((state) => state.theme.name);
 
     const pageNumberInputRef: React.RefObject<HTMLInputElement> = createRef();
@@ -198,7 +198,8 @@ const App = (): ReactElement => {
     //         });
     // };
     const closeReader = () => {
-        dispatch(updateLastHistoryPage({ linkInReader: linkInReader.link }));
+        // console.log(linkInReader, window.app.linkInReader);
+        dispatch(updateLastHistoryPage());
         dispatch(setReaderOpen(false));
         dispatch(setLinkInReader({ link: "", page: 1 }));
         dispatch(setLoadingManga(false));
@@ -250,6 +251,7 @@ const App = (): ReactElement => {
         });
         window.electron.ipcRenderer.on("recordPageNumber", () => {
             if (isReaderOpen) closeReader();
+            else if (window.app.linkInReader.link !== "") dispatch(updateLastHistoryPage());
         });
         window.app.titleBarHeight = parseFloat(
             window.getComputedStyle(document.body).getPropertyValue("--titleBar-height")
@@ -260,9 +262,22 @@ const App = (): ReactElement => {
                 window.location.reload();
             }
         };
+
+        // watching for file changes;
+        const watcher = window.chokidar.watch([historyPath, bookmarksPath]);
+        watcher.on("change", (path) => {
+            if (path === historyPath) dispatch(refreshHistory());
+            if (path === bookmarksPath) dispatch(refreshBookmark());
+        });
+
         window.addEventListener("keydown", eventsOnStart);
         return () => {
             removeEventListener("keydown", eventsOnStart);
+            watcher.removeAllListeners();
+            window.electron.ipcRenderer.removeAllListeners("loadMangaFromLink");
+            window.electron.ipcRenderer.removeAllListeners("setWindowIndex");
+            window.electron.ipcRenderer.removeAllListeners("canCheckForUpdate");
+            window.electron.ipcRenderer.removeAllListeners("recordPageNumber");
         };
     }, []);
 

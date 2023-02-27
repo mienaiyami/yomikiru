@@ -3,23 +3,29 @@ import { bookmarksPath, saveJSONfile } from "../MainImports";
 
 const initialState: ChapterItem[] = [];
 
-if (window.fs.existsSync(bookmarksPath)) {
-    const raw = window.fs.readFileSync(bookmarksPath, "utf8");
-    if (raw) {
-        try {
-            const data = JSON.parse(raw);
-            initialState.push(...data);
-        } catch (err) {
-            window.dialog.customError({
-                message: "Unable to parse " + bookmarksPath + "\nMaking new bookmarks.json.",
-            });
-            window.logger.error(err);
-            window.fs.writeFileSync(bookmarksPath, "[]");
-        }
+const readBookmark = (): ChapterItem[] => {
+    if (window.fs.existsSync(bookmarksPath)) {
+        const raw = window.fs.readFileSync(bookmarksPath, "utf8");
+        if (raw) {
+            try {
+                const data = JSON.parse(raw);
+                return data;
+            } catch (err) {
+                window.dialog.customError({
+                    message: "Unable to parse " + bookmarksPath + "\nMaking new bookmarks.json.",
+                });
+                window.logger.error(err);
+                return [];
+            }
+        } else return [];
+    } else {
+        return [];
     }
-} else {
-    window.fs.writeFileSync(bookmarksPath, "[]");
-}
+};
+
+const bookmarkData = readBookmark();
+if (bookmarkData.length === 0) window.fs.writeFileSync(bookmarksPath, "[]");
+initialState.push(...bookmarkData);
 
 const bookmarks = createSlice({
     name: "bookmarks",
@@ -60,6 +66,9 @@ const bookmarks = createSlice({
             }
             return state;
         },
+        refreshBookmark: () => {
+            return readBookmark();
+        },
         // action.payload : link of chapter
         removeBookmark: (state, action: PayloadAction<string>) => {
             const newState = state.filter((e) => e.link !== action.payload);
@@ -73,6 +82,7 @@ const bookmarks = createSlice({
     },
 });
 
-export const { addBookmark, removeAllBookmarks, removeBookmark, updateBookmark } = bookmarks.actions;
+export const { addBookmark, removeAllBookmarks, removeBookmark, updateBookmark, refreshBookmark } =
+    bookmarks.actions;
 
 export default bookmarks.reducer;

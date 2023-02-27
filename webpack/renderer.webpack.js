@@ -1,3 +1,11 @@
+const { IgnorePlugin } = require('webpack');
+
+const optionalPlugins = [];
+if (process.platform !== "darwin") {
+  optionalPlugins.push(new IgnorePlugin({ resourceRegExp: /^fsevents$/ }));
+}
+
+
 module.exports = {
     resolve: {
         extensions: [".ts", ".tsx", ".js"],
@@ -8,6 +16,7 @@ module.exports = {
     externals: {
         electron: 'commonjs2 electron',
     },
-    target: 'electron-renderer'
+    target: 'electron-renderer',
+    plugins:[...optionalPlugins]
     // target: "web",
 };

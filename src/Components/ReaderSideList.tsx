@@ -316,7 +316,10 @@ const ReaderSideList = ({
                         tooltip="Open Previous"
                         disabled={prevNextChapter.prev === "~"}
                         clickAction={() => {
-                            dispatch(updateLastHistoryPage({ linkInReader: linkInReader.link }));
+                            // todo: removing updateHistory page on chapter change in same manga
+                            // dispatch(updateLastHistoryPage({ linkInReader: linkInReader.link }));
+
+                            // todo : do i need this?
                             dispatch(setLinkInReader({ link: prevNextChapter.prev, page: 1 }));
                         }}
                     >
@@ -370,7 +373,7 @@ const ReaderSideList = ({
                         tooltip="Open Next"
                         disabled={prevNextChapter.next === "~"}
                         clickAction={() => {
-                            dispatch(updateLastHistoryPage({ linkInReader: linkInReader.link }));
+                            // dispatch(updateLastHistoryPage({ linkInReader: linkInReader.link }));
                             dispatch(setLinkInReader({ link: prevNextChapter.next, page: 1 }));
                         }}
                     >

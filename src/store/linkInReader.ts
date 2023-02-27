@@ -2,15 +2,15 @@ import { createSlice, PayloadAction } from "@reduxjs/toolkit";
 
 const initialState = {
     link: window.loadManga || "",
-    page: 1,
+    page: 5,
 };
 
 const linkInReader = createSlice({
     name: "linkInReader",
     initialState,
     reducers: {
-        setLinkInReader: (state, action: PayloadAction<{ link: string; page: number }>) => {
-            return action.payload;
+        setLinkInReader: (state, action: PayloadAction<typeof initialState>) => {
+            return { ...action.payload };
         },
     },
 });
