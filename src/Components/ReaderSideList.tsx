@@ -389,7 +389,8 @@ const ReaderSideList = ({
                     <b className="prop">Manga</b> {mangaInReader?.mangaName}
                 </div>
                 <div>
-                    <b className="prop">Chapter</b> {window.app.replaceExtension(mangaInReader?.chapterName || "")}
+                    <b className="prop">Chapter</b>{" "}
+                    {window.app.replaceExtension(mangaInReader?.chapterName || "", "")}
                 </div>
             </div>
             <div className="location-cont">

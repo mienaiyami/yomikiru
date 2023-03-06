@@ -134,7 +134,7 @@ declare global {
             /**
              * returns string where .cbz and .zip are replace with " - CBZ file" and " - ZIP file"
              */
-            replaceExtension: (str: string) => string;
+            replaceExtension: (str: string, replaceWith?: string) => string;
             deleteDirOnClose: string;
             titleBarHeight: number;
             isReaderOpen: boolean;
@@ -455,8 +455,10 @@ window.crossZip = crossZip;
 window.chokidar = chokidar;
 const collator = Intl.Collator(undefined, { numeric: true, sensitivity: "base" });
 window.app.betterSortOrder = collator.compare;
-window.app.replaceExtension = (str) => {
-    return str.replace(/\.zip/gi, " [ZIP file]").replace(/\.cbz/gi, " [CBZ file]");
+window.app.replaceExtension = (str, replaceWith = "~") => {
+    return str
+        .replace(/\.zip/gi, replaceWith === "~" ? " [ZIP file]" : replaceWith)
+        .replace(/\.cbz/gi, replaceWith === "~" ? " [CBZ file]" : replaceWith);
 };
 window.app.deleteDirOnClose = "";
 window.app.currentPageNumber = 1;

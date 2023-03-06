@@ -16,7 +16,7 @@ const TopBar = (): ReactElement => {
     const setTitleWithSize = () => {
         if (mangaInReader) {
             let mangaName = mangaInReader.mangaName;
-            let chapterName = mangaInReader.chapterName;
+            let chapterName = window.app.replaceExtension(mangaInReader.chapterName, "");
             if (mangaName.length > 13) mangaName = mangaName.substring(0, 20) + "...";
             if (chapterName.length > 83) chapterName = chapterName.substring(0, 80) + "...";
             const title = mangaName + " | " + chapterName;
