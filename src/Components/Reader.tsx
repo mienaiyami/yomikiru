@@ -482,7 +482,9 @@ const Reader = () => {
             pages: imgs.length,
         };
         dispatch(setMangaInReader(mangaOpened));
-        dispatch(newHistory({ mangaOpened, page: linkInReader.page }));
+        dispatch(
+            newHistory({ mangaOpened, page: linkInReader.page, recordChapter: appSettings.recordChapterRead })
+        );
         setImagesLength(imgs.length);
         setImages(imgs);
         dispatch(setReaderOpen(true));

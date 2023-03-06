@@ -543,6 +543,21 @@ const Settings = (): ReactElement => {
                                     />
                                     <p>Ask before closing window? (Needs Restart).</p>
                                 </label>
+                                <label className={appSettings.recordChapterRead ? "selected" : ""}>
+                                    <input
+                                        type="checkbox"
+                                        checked={appSettings.recordChapterRead}
+                                        onChange={(e) => {
+                                            dispatch(
+                                                setAppSettings({ recordChapterRead: e.currentTarget.checked })
+                                            );
+                                        }}
+                                    />
+                                    <p>
+                                        Record chapter read. If chapter is already read, it will appear with
+                                        different color in reader-side-list and home.
+                                    </p>
+                                </label>
                                 <label className={appSettings.openDirectlyFromManga ? "selected" : ""}>
                                     <input
                                         type="checkbox"

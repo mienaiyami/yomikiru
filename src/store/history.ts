@@ -37,14 +37,17 @@ const history = createSlice({
     name: "history",
     initialState,
     reducers: {
-        newHistory: (state, action: PayloadAction<{ mangaOpened: ListItem; page: number }>) => {
-            const { mangaOpened, page } = action.payload;
+        newHistory: (
+            state,
+            action: PayloadAction<{ mangaOpened: ListItem; page: number; recordChapter: boolean }>
+        ) => {
+            const { mangaOpened, page, recordChapter } = action.payload;
             const link = mangaOpened.link;
             let index = -1;
             if (state.length > 0) index = state.findIndex((e) => e.mangaLink === window.path.dirname(link));
             let chaptersRead = new Set<string>();
             if (index > -1) {
-                chaptersRead = new Set(state[index].chaptersRead);
+                chaptersRead = new Set(recordChapter ? state[index].chaptersRead : []);
                 state.splice(index, 1);
             }
             chaptersRead.add(mangaOpened.chapterName);

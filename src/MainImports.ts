@@ -51,6 +51,7 @@ export const settingValidatorData = {
     useCanvasBasedReader: false,
     openOnDblClick: true,
     // disableCachingCanvas: false,
+    recordChapterRead: true,
     readerSettings: {
         readerWidth: 0,
         variableImageSize: false,
@@ -555,6 +556,7 @@ const defaultSettings: AppSettings = {
     useCanvasBasedReader: false,
     openOnDblClick: true,
     // disableCachingCanvas: false,
+    recordChapterRead: true,
     readerSettings: {
         readerWidth: 60,
         variableImageSize: true,
