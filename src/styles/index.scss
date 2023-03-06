@@ -123,6 +123,10 @@ body {
 
     input[type="checkbox"]{
         accent-color: var(--icon-color);
+        opacity: 0.3;
+        &:checked{
+            opacity: 1;
+        }
     }
 
     user-select: none;
