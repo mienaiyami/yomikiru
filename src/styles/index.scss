@@ -121,6 +121,10 @@ body {
         background: var(--body-bg);
     }
 
+    input[type="checkbox"]{
+        accent-color: var(--icon-color);
+    }
+
     user-select: none;
     overflow: hidden;
 
@@ -1140,10 +1144,11 @@ body {
                 top: 40%;
                 left: 50%;
                 transform: translate(-50%,-50%);
-                z-index: 10000;
+                z-index: 100;
                 padding: 10px 20px;
                 border-radius: 10px;
                 pointer-events: none;
+                box-shadow: var(--font-color) 0 0 0 1px;
 
                 transition: 0s opacity;
                 opacity: 1;
