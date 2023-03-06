@@ -76,11 +76,10 @@ const ReaderSideList = ({
     const changePrevNext = () => {
         if (mangaInReader) {
             const listDataName = chapterData.map((e) => e.name);
-            const dir = mangaInReader.link.replace(mangaInReader.chapterName, "");
-            const prevIndex = listDataName.indexOf(mangaInReader.chapterName) - 1;
-            const nextIndex = listDataName.indexOf(mangaInReader.chapterName) + 1;
-            const prevCh = prevIndex < 0 ? "~" : dir + chapterData[prevIndex].name;
-            const nextCh = nextIndex >= chapterData.length ? "~" : dir + chapterData[nextIndex].name;
+            const prevIndex = listDataName.indexOf(window.app.replaceExtension(mangaInReader.chapterName)) - 1;
+            const nextIndex = listDataName.indexOf(window.app.replaceExtension(mangaInReader.chapterName)) + 1;
+            const prevCh = prevIndex < 0 ? "~" : chapterData[prevIndex].link;
+            const nextCh = nextIndex >= chapterData.length ? "~" : chapterData[nextIndex].link;
             dispatch(setPrevNextChapter({ prev: prevCh, next: nextCh }));
         }
     };
@@ -318,7 +317,6 @@ const ReaderSideList = ({
                         clickAction={() => {
                             // todo: removing updateHistory page on chapter change in same manga
                             // dispatch(updateLastHistoryPage({ linkInReader: linkInReader.link }));
-
                             // todo : do i need this?
                             dispatch(setLinkInReader({ link: prevNextChapter.prev, page: 1 }));
                         }}
@@ -386,7 +384,7 @@ const ReaderSideList = ({
                     <b className="prop">Manga</b> {mangaInReader?.mangaName}
                 </div>
                 <div>
-                    <b className="prop">Chapter</b> {mangaInReader?.chapterName}
+                    <b className="prop">Chapter</b> {window.app.replaceExtension(mangaInReader?.chapterName || "")}
                 </div>
             </div>
             <div className="location-cont">

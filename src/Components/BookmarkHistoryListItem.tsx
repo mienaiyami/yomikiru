@@ -54,7 +54,7 @@ const BookmarkHistoryListItem = (props: ListItemE) => {
             // }}
         >
             <a
-                className="a-context"
+                className="a-context big"
                 onClick={() => openInReader(props.link, props.page)}
                 onContextMenu={(e) => {
                     dispatch(
@@ -85,7 +85,10 @@ const BookmarkHistoryListItem = (props: ListItemE) => {
                     <span className="text chapter">
                         <span className="text">{props.chapterName}</span>
                         &nbsp;&nbsp;&nbsp;
-                        <span className="page"> (Page: {(props.page || 1).toString().padStart(3, "")})</span>
+                        <span className="page">
+                            {" "}
+                            (Page: <span className="num">{(props.page || 1).toString()})</span>
+                        </span>
                     </span>
                 </span>
             </a>

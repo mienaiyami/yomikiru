@@ -775,11 +775,13 @@ const Reader = () => {
                         Previous
                         <FontAwesomeIcon icon={faQuestionCircle} />:
                     </span>
-                    <span className="b">{prevNextChapter.prev.split("\\").pop()}</span>
+                    <span className="b">
+                        {window.app.replaceExtension(prevNextChapter.prev.split("\\").pop() || "")}
+                    </span>
                 </div>
                 <div className="c">
                     <span className="a">Current :</span>
-                    <span className="b">{mangaInReader?.chapterName || ""}</span>
+                    <span className="b">{window.app.replaceExtension(mangaInReader?.chapterName || "")}</span>
                 </div>
                 <div
                     className="b"
@@ -805,7 +807,9 @@ const Reader = () => {
                         Next
                         <FontAwesomeIcon icon={faQuestionCircle} />:
                     </span>
-                    <span className="b">{prevNextChapter.next.split("\\").pop()}</span>
+                    <span className="b">
+                        {window.app.replaceExtension(prevNextChapter.next.split("\\").pop() || "")}
+                    </span>
                 </div>
             </div>
         </div>
