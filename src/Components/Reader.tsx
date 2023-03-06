@@ -740,7 +740,7 @@ const Reader = () => {
                 e.classList.remove("faded");
                 timeOutId = setTimeout(() => {
                     e.classList.add("faded");
-                }, 1000);
+                }, 500);
             }
         }
         return () => {

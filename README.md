@@ -8,21 +8,21 @@ Offline Manga/Manhwa Reader (not a downloader) built with react and typescript. 
 ## Features
 
 - Lightweight, take low cpu and ram when running.
+- Supports most image formats (`".jpg", ".jpeg", ".png", ".webp", ".svg", ".apng", ".gif", ".avif"`) and archive (`.zip, .cbz`)
 - Create multiple instances.
-- Multiple shortcuts to move between pages, chapter, find page, etc.
-- Customizable shortcuts.
+- Multiple useful and customizable shortcuts.
 - Multiple themes to choose from.
-- Customizable themes, make your own theme with just few clicks.
-- Reading modes - vertical scrolling, page by page.
+- Customizable themes.
+- Multiple Reading modes - Vertical Scroll, Left to Right, Right to left.
 - Bookmark chapters.
 - Keep history.
 - Portable version available.
-- Zen mode - read manga/manhwa without any UI in full screen.
-- Open manga/manhwa directly from you file explorer.
+- Zen mode - read without any UI in full screen.
+- Open directly from file explorer.
 
 ## Screenshots
 
-https://user-images.githubusercontent.com/84740082/160238433-6d5afb62-0992-4183-9374-74e33e3021ce.mp4
+<!-- https://user-images.githubusercontent.com/84740082/160238433-6d5afb62-0992-4183-9374-74e33e3021ce.mp4 -->
 
 ![demo](github%20assets/1.png)
 ![demo](github%20assets/2.png)
