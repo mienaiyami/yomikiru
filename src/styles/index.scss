@@ -485,11 +485,11 @@ body {
                                     display: flex;
                                     .page{
                                         margin-left:auto;
-                                        text-align: end;
                                         white-space: nowrap;
                                         display: flex;
+                                        gap: 5px;
                                         .num{
-                                            min-width: 2.5em;
+                                            min-width: 2.2em;
                                         }
                                     }
                                 }

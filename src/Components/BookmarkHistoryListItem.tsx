@@ -87,7 +87,7 @@ const BookmarkHistoryListItem = (props: ListItemE) => {
                         &nbsp;&nbsp;&nbsp;
                         <span className="page">
                             {" "}
-                            (Page: <span className="num">{(props.page || 1).toString()})</span>
+                            Page <span className="num">{(props.page || 1).toString()}</span>
                         </span>
                     </span>
                 </span>
