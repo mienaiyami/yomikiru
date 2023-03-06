@@ -9,19 +9,21 @@ import {
 } from "@fortawesome/free-solid-svg-icons";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { useEffect, useState } from "react";
-import { setAppSettings, setReaderSettings } from "../store/appSettings";
+import { setReaderSettings } from "../store/appSettings";
 import { useAppDispatch, useAppSelector } from "../store/hooks";
 
 const ReaderSettings = ({
     makeScrollPos,
     readerRef,
     readerSettingExtender,
+    setshortcutText,
     sizePlusRef,
     sizeMinusRef,
 }: {
     makeScrollPos: () => void;
     readerRef: React.RefObject<HTMLDivElement>;
     readerSettingExtender: React.RefObject<HTMLButtonElement>;
+    setshortcutText: React.Dispatch<React.SetStateAction<string>>;
     sizePlusRef: React.RefObject<HTMLButtonElement>;
     sizeMinusRef: React.RefObject<HTMLButtonElement>;
 }) => {
@@ -79,12 +81,13 @@ const ReaderSettings = ({
                 <div className="settingItem">
                     <div className="name">Size</div>
                     <div className="options">
-                        <label>
+                        <label className={appSettings.readerSettings.fitOption !== 0 ? "disabled" : ""}>
                             <input
                                 type="number"
                                 value={appSettings.readerSettings.readerWidth}
                                 min={1}
                                 max={maxWidth}
+                                disabled={appSettings.readerSettings.fitOption !== 0}
                                 onKeyDown={(e) => {
                                     if (e.key !== "Escape") {
                                         e.stopPropagation();
@@ -104,7 +107,8 @@ const ReaderSettings = ({
                         </label>
                         <button
                             ref={sizeMinusRef}
-                            onClick={() => {
+                            disabled={appSettings.readerSettings.fitOption !== 0}
+                            onClick={(e) => {
                                 makeScrollPos();
                                 // was 20 before
                                 const steps = appSettings.readerSettings.readerWidth <= 40 ? 5 : 10;
@@ -114,7 +118,8 @@ const ReaderSettings = ({
                                         : appSettings.readerSettings.readerWidth - steps < 1
                                         ? 1
                                         : appSettings.readerSettings.readerWidth - steps;
-
+                                if (document.activeElement !== e.currentTarget)
+                                    setshortcutText("-" + readerWidth + "%");
                                 dispatch(setReaderSettings({ readerWidth }));
                                 // e.currentTarget.dispatchEvent(new MouseEvent(type:"")))
                             }}
@@ -123,7 +128,8 @@ const ReaderSettings = ({
                         </button>
                         <button
                             ref={sizePlusRef}
-                            onClick={() => {
+                            disabled={appSettings.readerSettings.fitOption !== 0}
+                            onClick={(e) => {
                                 makeScrollPos();
                                 const steps = appSettings.readerSettings.readerWidth <= 20 ? 5 : 10;
                                 const readerWidth =
@@ -133,6 +139,8 @@ const ReaderSettings = ({
                                         ? 1
                                         : appSettings.readerSettings.readerWidth + steps;
 
+                                if (document.activeElement !== e.currentTarget)
+                                    setshortcutText("+" + readerWidth + "%");
                                 dispatch(setReaderSettings({ readerWidth }));
                             }}
                         >

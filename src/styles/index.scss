@@ -1132,6 +1132,28 @@ body {
                 }
             }
 
+            .shortcutClicked{
+                position: fixed;
+                display: flex;
+                background-color: var(--body-bg);
+                font-size: 3em;;
+                top: 40%;
+                left: 50%;
+                transform: translate(-50%,-50%);
+                z-index: 10000;
+                padding: 10px 20px;
+                border-radius: 10px;
+                pointer-events: none;
+
+                transition: 0s opacity;
+                opacity: 1;
+                &.faded{
+                    opacity: 0;
+                    transition: 0.5s opacity;
+                }
+            }
+
+
             .currentMangaList {
                 background: var(--sideList-bg);
                 height: var(--body-height);

@@ -23,6 +23,7 @@ const ReaderSideList = ({
     openNextChapterRef,
     openPrevChapterRef,
     addToBookmarkRef,
+    setshortcutText,
     isBookmarked,
     setBookmarked,
     isSideListPinned,
@@ -35,6 +36,7 @@ const ReaderSideList = ({
     addToBookmarkRef: React.RefObject<HTMLButtonElement>;
     isBookmarked: boolean;
     setBookmarked: React.Dispatch<React.SetStateAction<boolean>>;
+    setshortcutText: React.Dispatch<React.SetStateAction<string>>;
     isSideListPinned: boolean;
     setSideListPinned: React.Dispatch<React.SetStateAction<boolean>>;
     setSideListWidth: React.Dispatch<React.SetStateAction<number>>;
@@ -342,9 +344,11 @@ const ReaderSideList = ({
                                     .then(({ response }) => {
                                         if (response === 1) {
                                             dispatch(removeBookmark(linkInReader.link));
+                                            setshortcutText("Bookmark Removed");
                                             setBookmarked(false);
                                         }
                                         if (response === 2) {
+                                            setshortcutText("Bookmark Updated");
                                             dispatch(
                                                 updateBookmark({
                                                     link: linkInReader.link,
@@ -359,6 +363,7 @@ const ReaderSideList = ({
                                 dispatch(
                                     addBookmark({ ...mangaInReader, page: window.app.currentPageNumber || 0 })
                                 );
+                                setshortcutText("Bookmark Added");
                                 setBookmarked(true);
                             }
                         }}

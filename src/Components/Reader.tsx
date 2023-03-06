@@ -49,6 +49,8 @@ const Reader = () => {
     const [currentImageRow, setCurrentImageRow] = useState(1);
     const [chapterChangerDisplay, setChapterChangerDisplay] = useState(false);
     const [wasMaximized, setWasMaximized] = useState(false);
+    // display this text then shortcuts clicked
+    const [shortcutText, setshortcutText] = useState("");
 
     const readerSettingExtender = useRef<HTMLButtonElement>(null);
     const sizePlusRef = useRef<HTMLButtonElement>(null);
@@ -61,6 +63,7 @@ const Reader = () => {
     const addToBookmarkRef = useRef<HTMLButtonElement>(null);
     const readerRef = useRef<HTMLDivElement>(null);
     const imgContRef = useRef<HTMLDivElement>(null);
+    const shortcutTextRef = useRef<HTMLDivElement>(null);
 
     const scrollReader = (intensity: number) => {
         if (readerRef.current) {
@@ -289,6 +292,10 @@ const Reader = () => {
                             break;
                         case shortcutkey.showHidePageNumberInZen?.key1:
                         case shortcutkey.showHidePageNumberInZen?.key2:
+                            setshortcutText(
+                                (!appSettings.readerSettings.showPageNumberInZenMode ? "Show" : "Hide") +
+                                    " page-number in Zen Mode"
+                            );
                             dispatch(
                                 setReaderSettings({
                                     showPageNumberInZenMode: !appSettings.readerSettings.showPageNumberInZenMode,
@@ -296,12 +303,19 @@ const Reader = () => {
                             );
                             break;
                         case shortcutkey.cycleFitOptions?.key1:
-                        case shortcutkey.cycleFitOptions?.key2:
+                        case shortcutkey.cycleFitOptions?.key2: {
+                            const fitOption = (
+                                appSettings.readerSettings.fitOption + 1 === 4
+                                    ? 0
+                                    : appSettings.readerSettings.fitOption + 1
+                            ) as 0 | 2 | 1 | 3 | undefined;
+                            if (fitOption === 0) setshortcutText("Free");
+                            if (fitOption === 1) setshortcutText("Fit Vertically");
+                            if (fitOption === 2) setshortcutText("Fit Horizontally");
+                            if (fitOption === 3) setshortcutText("1:1");
                             dispatch(
                                 setReaderSettings({
-                                    fitOption: (appSettings.readerSettings.fitOption + 1 === 4
-                                        ? 0
-                                        : appSettings.readerSettings.fitOption + 1) as 0 | 2 | 1 | 3 | undefined,
+                                    fitOption,
                                 })
                             );
                             // todo: display current mode in middle of screen and fade
@@ -314,13 +328,21 @@ const Reader = () => {
                             //     })
                             // );
                             break;
+                        }
                         case shortcutkey.selectReaderMode0?.key1:
                         case shortcutkey.selectReaderMode0?.key2:
+                            setshortcutText("Reading Mode - Vertical Scroll");
                             dispatch(setReaderSettings({ readerTypeSelected: 0 }));
                             break;
                         case shortcutkey.selectReaderMode1?.key1:
                         case shortcutkey.selectReaderMode1?.key2:
+                            setshortcutText("Reading Mode - Left to Right");
                             dispatch(setReaderSettings({ readerTypeSelected: 1 }));
+                            break;
+                        case shortcutkey.selectReaderMode2?.key1:
+                        case shortcutkey.selectReaderMode2?.key2:
+                            setshortcutText("Reading Mode - Right to Left");
+                            dispatch(setReaderSettings({ readerTypeSelected: 2 }));
                             break;
                         case shortcutkey.selectPagePerRow1?.key1:
                         case shortcutkey.selectPagePerRow1?.key2:
@@ -331,6 +353,7 @@ const Reader = () => {
                                 if (readerWidth > (appSettings.readerSettings.widthClamped ? 100 : 500))
                                     readerWidth = appSettings.readerSettings.widthClamped ? 100 : 500;
                                 if (readerWidth < 1) readerWidth = 1;
+                                setshortcutText("Page per Row - 1");
                                 dispatch(setReaderSettings({ pagesPerRowSelected, readerWidth }));
                             }
                             break;
@@ -344,6 +367,7 @@ const Reader = () => {
                                     readerWidth = appSettings.readerSettings.widthClamped ? 100 : 500;
                                 if (readerWidth < 1) readerWidth = 1;
                             }
+                            setshortcutText("Page per Row - 2");
                             dispatch(setReaderSettings({ pagesPerRowSelected, readerWidth }));
                             break;
                         }
@@ -357,6 +381,7 @@ const Reader = () => {
                                     readerWidth = appSettings.readerSettings.widthClamped ? 100 : 500;
                                 if (readerWidth < 1) readerWidth = 1;
                             }
+                            setshortcutText("Page per Row - 2odd");
                             dispatch(setReaderSettings({ pagesPerRowSelected, readerWidth }));
                             break;
                         }
@@ -705,6 +730,25 @@ const Reader = () => {
     useLayoutEffect(() => {
         changePageNumber();
     }, [currentImageRow]);
+
+    useEffect(() => {
+        let timeOutId: NodeJS.Timeout;
+        const e = shortcutTextRef.current;
+        if (shortcutText !== "") {
+            if (e) {
+                e.innerText = shortcutText;
+                e.classList.remove("faded");
+                timeOutId = setTimeout(() => {
+                    e.classList.add("faded");
+                }, 1000);
+            }
+        }
+        return () => {
+            clearTimeout(timeOutId);
+            e?.classList.add("faded");
+        };
+    }, [shortcutText]);
+
     const ChapterChanger = () => (
         <div
             className="chapterChangerScreen"
@@ -838,11 +882,13 @@ const Reader = () => {
                 readerSettingExtender={readerSettingExtender}
                 sizePlusRef={sizePlusRef}
                 sizeMinusRef={sizeMinusRef}
+                setshortcutText={setshortcutText}
             />
             <ReaderSideList
                 openNextChapterRef={openNextChapterRef}
                 openPrevChapterRef={openPrevChapterRef}
                 addToBookmarkRef={addToBookmarkRef}
+                setshortcutText={setshortcutText}
                 isBookmarked={isBookmarked}
                 setBookmarked={setBookmarked}
                 isSideListPinned={isSideListPinned}
@@ -869,6 +915,11 @@ const Reader = () => {
                 {currentPageNumber}/{mangaInReader?.pages}
             </div>
             <ChapterChanger />
+
+            <div className="shortcutClicked faded" ref={shortcutTextRef}>
+                {shortcutText}
+            </div>
+
             <section
                 ref={imgContRef}
                 className={
