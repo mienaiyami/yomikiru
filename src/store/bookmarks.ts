@@ -15,16 +15,18 @@ const readBookmark = (): ChapterItem[] => {
                     message: "Unable to parse " + bookmarksPath + "\nMaking new bookmarks.json.",
                 });
                 window.logger.error(err);
+                window.fs.writeFileSync(bookmarksPath, "[]");
                 return [];
             }
         } else return [];
     } else {
+        window.fs.writeFileSync(bookmarksPath, "[]");
         return [];
     }
 };
 
 const bookmarkData = readBookmark();
-if (bookmarkData.length === 0) window.fs.writeFileSync(bookmarksPath, "[]");
+// if (bookmarkData.length === 0) window.fs.writeFileSync(bookmarksPath, "[]");
 initialState.push(...bookmarkData);
 
 const bookmarks = createSlice({

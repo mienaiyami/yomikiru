@@ -527,12 +527,13 @@ window.dialog = {
  * async file save
  */
 const saveJSONfile = (path: string, data: any) => {
-    window.fs.writeFile(path, JSON.stringify(data, null, "\t"), (err) => {
-        if (err) {
-            window.logger.error(err);
-            window.dialog.nodeError(err);
-        }
-    });
+    if (JSON.stringify(data, null, "\t"))
+        window.fs.writeFile(path, JSON.stringify(data, null, "\t"), (err) => {
+            if (err) {
+                window.logger.error(err);
+                window.dialog.nodeError(err);
+            }
+        });
 };
 
 const userDataURL = window.electron.app.getPath("userData");

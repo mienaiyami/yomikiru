@@ -21,16 +21,18 @@ const readHistory = (): HistoryItem[] => {
                         message: "Unable to parse " + historyPath + "\nMaking new history.json...",
                     });
                 window.logger.error(err);
+                window.fs.writeFileSync(historyPath, "[]");
                 return [];
             }
         } else return [];
     } else {
+        window.fs.writeFileSync(historyPath, "[]");
         return [];
     }
 };
 
 const historyData = readHistory();
-if (historyData.length === 0) window.fs.writeFileSync(historyPath, "[]");
+// if (historyData.length === 0) window.fs.writeFileSync(historyPath, "[]");
 initialState.push(...historyData);
 
 const history = createSlice({
