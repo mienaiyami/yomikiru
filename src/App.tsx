@@ -216,7 +216,7 @@ const App = (): ReactElement => {
         });
         if (!result) return;
         let path = "";
-        if (result) path = window.path.normalize(result[0] + "\\");
+        if (result) path = window.path.normalize(result[0] + window.path.sep);
         dispatch(setAppSettings({ baseDir: path }));
     };
     const openInNewWindow = (link: string) => {

@@ -28,7 +28,8 @@ const LocationListItem = ({
         }
         if (
             appSettings.openDirectlyFromManga &&
-            window.path.normalize(window.path.resolve(link + "../../../") + "\\") === appSettings.baseDir
+            window.path.normalize(window.path.resolve(link + "../../../") + window.path.sep) ===
+                appSettings.baseDir
         ) {
             openInReader(link);
         } else if ([".zip", ".cbz"].includes(window.path.extname(name))) {

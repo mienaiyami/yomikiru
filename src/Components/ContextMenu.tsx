@@ -83,7 +83,13 @@ const ContextMenu = () => {
                     <li
                         role="menuitem"
                         onMouseUp={() => {
-                            window.electron.shell.showItemInFolder(contextData?.hasLink?.link || "");
+                            if (process.platform === "win32")
+                                window.electron.shell.showItemInFolder(contextData?.hasLink?.link || "");
+                            else if (process.platform === "linux")
+                                window.electron.ipcRenderer.send(
+                                    "showInExplorer",
+                                    contextData?.hasLink?.link || ""
+                                );
                         }}
                     >
                         Show in File Explorer

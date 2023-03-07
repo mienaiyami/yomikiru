@@ -486,7 +486,7 @@ const Reader = () => {
     };
     const loadImgs = (link: string, imgs: string[]) => {
         link = window.path.normalize(link);
-        if (link[link.length - 1] === "\\") link = link.substring(0, link.length - 1);
+        if (link[link.length - 1] === window.path.sep) link = link.substring(0, link.length - 1);
         setImages([]);
         setWideImageContMap([]);
         setCurrentPageNumber(1);
@@ -621,7 +621,7 @@ const Reader = () => {
                     setImageWidthContainer((init) => [...init, { img, index: i, isWide: false }]);
                 };
             }
-            img.src = e;
+            img.src = "file://" + e;
         });
     }, [images]);
     useEffect(() => {
@@ -822,7 +822,7 @@ const Reader = () => {
                         <FontAwesomeIcon icon={faQuestionCircle} />:
                     </span>
                     <span className="b">
-                        {window.app.replaceExtension(prevNextChapter.prev.split("\\").pop() || "")}
+                        {window.app.replaceExtension(prevNextChapter.prev.split(window.path.sep).pop() || "")}
                     </span>
                 </div>
                 <div className="c">
@@ -854,7 +854,7 @@ const Reader = () => {
                         <FontAwesomeIcon icon={faQuestionCircle} />:
                     </span>
                     <span className="b">
-                        {window.app.replaceExtension(prevNextChapter.next.split("\\").pop() || "")}
+                        {window.app.replaceExtension(prevNextChapter.next.split(window.path.sep).pop() || "")}
                     </span>
                 </div>
             </div>

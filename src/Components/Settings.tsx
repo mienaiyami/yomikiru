@@ -161,10 +161,12 @@ const Settings = (): ReactElement => {
                 //             ? "0" + Math.ceil(opacity * 2.55).toString(16)
                 //             : Math.ceil(opacity * 2.55).toString(16))
                 // );
-                if (prop === "--icon-color")
-                    window.electron.getCurrentWindow().setTitleBarOverlay({ symbolColor: rawColor });
-                if (prop === "--topBar-color")
-                    window.electron.getCurrentWindow().setTitleBarOverlay({ color: rawColor });
+                if (process.platform === "win32") {
+                    if (prop === "--icon-color")
+                        window.electron.getCurrentWindow().setTitleBarOverlay({ symbolColor: rawColor });
+                    if (prop === "--topBar-color")
+                        window.electron.getCurrentWindow().setTitleBarOverlay({ color: rawColor });
+                }
                 document.body.style.setProperty(
                     prop,
                     rawColor.substring(0, 7) +
@@ -458,28 +460,34 @@ const Settings = (): ReactElement => {
                                 </button>
                             </td>
                         </tr>
-                        <tr className="settingItem">
-                            <td className="name">File Explorer Option </td>
-                            <td className="current">
-                                <button
-                                    onClick={() => window.electron.ipcRenderer.send("addOptionToExplorerMenu")}
-                                >
-                                    Add
-                                </button>
-                                <button
-                                    onClick={() => window.electron.ipcRenderer.send("deleteOptionInExplorerMenu")}
-                                >
-                                    Remove
-                                </button>
-                                <button
-                                    onClick={() =>
-                                        window.electron.ipcRenderer.send("deleteOldOptionInExplorerMenu")
-                                    }
-                                >
-                                    Remove(Old version)
-                                </button>
-                            </td>
-                        </tr>
+                        {process.platform === "win32" ? (
+                            <tr className="settingItem">
+                                <td className="name">File Explorer Option </td>
+                                <td className="current">
+                                    <button
+                                        onClick={() => window.electron.ipcRenderer.send("addOptionToExplorerMenu")}
+                                    >
+                                        Add
+                                    </button>
+                                    <button
+                                        onClick={() =>
+                                            window.electron.ipcRenderer.send("deleteOptionInExplorerMenu")
+                                        }
+                                    >
+                                        Remove
+                                    </button>
+                                    <button
+                                        onClick={() =>
+                                            window.electron.ipcRenderer.send("deleteOldOptionInExplorerMenu")
+                                        }
+                                    >
+                                        Remove(Old version)
+                                    </button>
+                                </td>
+                            </tr>
+                        ) : (
+                            ""
+                        )}
                         <tr className="settingItem">
                             <td className="name">Check for Update</td>
                             <td className="current">
@@ -757,14 +765,16 @@ const Settings = (): ReactElement => {
                             <td className="name">Logs</td>
                             <td className="current">
                                 <button
-                                    onClick={() =>
-                                        window.electron.shell.showItemInFolder(
-                                            window.path.join(
-                                                window.electron.app.getPath("userData"),
-                                                "logs/main.log"
-                                            )
-                                        )
-                                    }
+                                    onClick={() => {
+                                        const filePath = window.path.join(
+                                            window.electron.app.getPath("userData"),
+                                            "logs/main.log"
+                                        );
+                                        if (process.platform === "win32")
+                                            window.electron.shell.showItemInFolder(filePath);
+                                        else if (process.platform === "linux")
+                                            window.electron.ipcRenderer.send("showInExplorer", filePath);
+                                    }}
                                 >
                                     Open Logs
                                 </button>
@@ -828,25 +838,30 @@ const Settings = (): ReactElement => {
                             Open chapter in reader directly if chapter is a sub-folder of sub-folder of{" "}
                             <code>Default Location</code>.
                             <br />
-                            Example: If the default location is set to <code>D:\manga</code> and there is a folder
-                            called <code>One Piece</code> within it, any sub-folder located directly under{" "}
-                            <code>One Piece</code> will open automatically by clicking its link in the home
-                            location list. This feature can be enabled in the settings.
+                            Example: If the default location is set to{" "}
+                            {process.platform === "win32" ? <code>D:\manga</code> : <code>/home/manga</code>} and
+                            there is a folder called <code>One Piece</code> within it, any sub-folder located
+                            directly under <code>One Piece</code> will open automatically by clicking its link in
+                            the home location list. This feature can be enabled in the settings.
                         </li>
                         <li>
                             Home screen search:
                             <ul>
                                 <li>Paste link to set browser pasted link directly.</li>
                                 <li>
-                                    Type <code>..\</code> to go up directory.
+                                    Type <code>..{window.path.sep}</code> to go up directory.
                                 </li>
+                                {process.platform === "win32" ? (
+                                    <li>
+                                        Type let <code>D:\</code> to go to <code>D drive</code>.
+                                    </li>
+                                ) : (
+                                    ""
+                                )}
                                 <li>
-                                    Type let <code>D:\</code> to go to <code>D drive</code>.
-                                </li>
-                                <li>
-                                    Type name ending with <code>\</code> to open it in search. e.g. When there is a
-                                    directory named <code>One piece</code> in current list, type{" "}
-                                    <code>One Piece\</code> to open that as new list.
+                                    Type name ending with <code>{window.path.sep}</code> to open it in search. e.g.
+                                    When there is a directory named <code>One piece</code> in current list, type{" "}
+                                    <code>One Piece{window.path.sep}</code> to open that as new list.
                                 </li>
                             </ul>
                         </li>

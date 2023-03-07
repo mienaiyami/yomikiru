@@ -79,7 +79,7 @@ const LocationsTab = (): ReactElement => {
                         inHistory={
                             history
                                 .find((e) => e.mangaLink.toLowerCase() === currentLink.toLowerCase())
-                                ?.chaptersRead.includes(e.link.split("\\").pop() || "") ?? false
+                                ?.chaptersRead.includes(e.link.split(window.path.sep).pop() || "") ?? false
                         }
                         key={e.link}
                         setCurrentLink={setCurrentLink}
@@ -147,20 +147,23 @@ const LocationsTab = (): ReactElement => {
                         onChange={(e) => {
                             let val = e.target.value;
                             val = val.replaceAll('"', "");
-                            if (/.:\\.*/.test(val)) {
-                                setCurrentLink(window.path.normalize(val + "\\"));
-                                return;
-                            }
-                            if (val === "..\\") return setCurrentLink(window.path.resolve(currentLink, "..\\"));
-                            if (val[val.length - 1] === "\\") {
+                            if (process.platform === "win32")
+                                if (/.:\\.*/.test(val)) {
+                                    setCurrentLink(window.path.normalize(val + window.path.sep));
+                                    return;
+                                }
+                            if (val === ".." + window.path.sep)
+                                return setCurrentLink(window.path.resolve(currentLink, "../"));
+                            if (val[val.length - 1] === window.path.sep) {
                                 const index = locations.findIndex(
-                                    (e) => e.name.toUpperCase() === val.replaceAll("\\", "").toUpperCase()
+                                    (e) =>
+                                        e.name.toUpperCase() === val.replaceAll(window.path.sep, "").toUpperCase()
                                 );
                                 if (index >= 0) {
                                     return setCurrentLink(window.path.normalize(locations[index].link));
                                     // need or not?
-                                    // return setCurrentLink(window.path.normalize(locations[index].link + "\\"));
-                                } else val = val.replaceAll("\\", "");
+                                    // return setCurrentLink(window.path.normalize(locations[index].link + window.path.sep));
+                                } else val = val.replaceAll(window.path.sep, "");
                             }
 
                             val = val.replaceAll("[", "\\[");
@@ -171,8 +174,8 @@ const LocationsTab = (): ReactElement => {
                             val = val.replaceAll("+", "\\+");
                             let filter = "";
                             for (let i = 0; i < val.length; i++) {
-                                if (val[i] === "\\") {
-                                    filter += "\\";
+                                if (val[i] === window.path.sep) {
+                                    filter += window.path.sep;
                                     continue;
                                 }
                                 filter += val[i] + ".*";

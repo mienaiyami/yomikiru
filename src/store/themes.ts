@@ -12,11 +12,12 @@ const setBodyTheme = ({ allData, name }: Themes) => {
             }
             document.body.style.cssText = themeStr || "";
             document.body.setAttribute("data-theme", name);
-            window.electron.getCurrentWindow().setTitleBarOverlay({
-                color: window.getComputedStyle(document.querySelector("body #topBar")!).backgroundColor,
-                symbolColor: window.getComputedStyle(document.querySelector("body #topBar .homeBtns button")!)
-                    .color,
-            });
+            if (process.platform === "win32")
+                window.electron.getCurrentWindow().setTitleBarOverlay({
+                    color: window.getComputedStyle(document.querySelector("body #topBar")!).backgroundColor,
+                    symbolColor: window.getComputedStyle(document.querySelector("body #topBar .homeBtns button")!)
+                        .color,
+                });
         } else {
             window.dialog.customError({
                 title: "Error",
@@ -124,7 +125,9 @@ if (!initialState.allData.map((e) => e.name).includes(initialState.name)) {
                 window.location.reload();
             }
             if (res.response === 2) {
-                window.electron.shell.showItemInFolder(themesPath);
+                if (process.platform === "win32") window.electron.shell.showItemInFolder(themesPath);
+                else if (process.platform === "linux")
+                    window.electron.ipcRenderer.send("showInExplorer", themesPath);
             }
         });
 }

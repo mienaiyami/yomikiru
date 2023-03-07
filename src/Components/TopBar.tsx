@@ -1,6 +1,13 @@
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { ReactElement, useContext, useEffect, useLayoutEffect, useState } from "react";
-import { faHome, faCog } from "@fortawesome/free-solid-svg-icons";
+import {
+    faHome,
+    faCog,
+    faMinus,
+    faWindowRestore,
+    faWindowMaximize,
+    faTimes,
+} from "@fortawesome/free-solid-svg-icons";
 import { AppContext } from "../App";
 import { useAppDispatch, useAppSelector } from "../store/hooks";
 import { toggleOpenSetting } from "../store/isSettingOpen";
@@ -10,6 +17,7 @@ const TopBar = (): ReactElement => {
     const [title, setTitle] = useState<string>("Yomikiru");
     const { pageNumberInputRef, closeReader } = useContext(AppContext);
     const mangaInReader = useAppSelector((store) => store.mangaInReader);
+    const [isMaximized, setMaximized] = useState(window.electron.getCurrentWindow().isMaximized ?? true);
     const isReaderOpen = useAppSelector((store) => store.isReaderOpen);
     const dispatch = useAppDispatch();
 
@@ -27,7 +35,17 @@ const TopBar = (): ReactElement => {
         setTitle(window.electron.app.name.concat(window.electron.app.isPackaged ? "" : " - dev"));
         document.title = window.electron.app.name;
     };
+    const attachEventListener = () => {
+        setMaximized(window.electron.getCurrentWindow().isMaximized);
+        window.electron.getCurrentWindow()?.on("maximize", () => setMaximized(true));
+        window.electron.getCurrentWindow()?.on("unmaximize", () => setMaximized(false));
+    };
+    const removeEventListener = () => {
+        window.electron.getCurrentWindow()?.removeAllListeners("maximize");
+        window.electron.getCurrentWindow()?.removeAllListeners("unmaximize");
+    };
     useLayoutEffect(() => {
+        attachEventListener();
         const ff = () => {
             (document.querySelector("#NavigateToPageInput") as HTMLInputElement).value =
                 window.app.currentPageNumber.toString();
@@ -35,6 +53,7 @@ const TopBar = (): ReactElement => {
         window.addEventListener("pageNumberChange", ff);
         return () => {
             window.removeEventListener("pageNumberChange", ff);
+            removeEventListener();
         };
     }, []);
     useEffect(() => {
@@ -140,6 +159,42 @@ const TopBar = (): ReactElement => {
                     />
                     <span className="totalPage">/{mangaInReader?.pages || 0}</span>
                 </label>
+                {process.platform !== "win32" ? (
+                    <>
+                        <button
+                            tabIndex={-1}
+                            id="minimizeBtn"
+                            title="Minimize"
+                            onFocus={(e) => e.currentTarget.blur()}
+                            onClick={() => window.electron.getCurrentWindow().minimize()}
+                        >
+                            <FontAwesomeIcon icon={faMinus} />
+                        </button>
+                        <button
+                            tabIndex={-1}
+                            id="maximizeRestoreBtn"
+                            onFocus={(e) => e.currentTarget.blur()}
+                            title={isMaximized ? "Restore" : "Maximize"}
+                            onClick={() => {
+                                if (isMaximized) return window.electron.getCurrentWindow().restore();
+                                window.electron.getCurrentWindow().maximize();
+                            }}
+                        >
+                            <FontAwesomeIcon icon={isMaximized ? faWindowRestore : faWindowMaximize} />
+                        </button>
+                        <button
+                            tabIndex={-1}
+                            id="closeBtn"
+                            title="Close"
+                            onFocus={(e) => e.currentTarget.blur()}
+                            onClick={() => window.electron.getCurrentWindow().close()}
+                        >
+                            <FontAwesomeIcon icon={faTimes} />
+                        </button>
+                    </>
+                ) : (
+                    ""
+                )}
             </div>
         </div>
     );

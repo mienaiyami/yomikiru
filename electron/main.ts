@@ -7,7 +7,7 @@ import { homedir, tmpdir } from "os";
 import * as remote from "@electron/remote/main";
 remote.initialize();
 declare const HOME_WEBPACK_ENTRY: string;
-import { spawn, spawnSync } from "child_process";
+import { exec, spawn, spawnSync } from "child_process";
 import log from "electron-log";
 
 if (require("electron-squirrel-startup")) app.quit();
@@ -273,7 +273,7 @@ const createWindow = (link?: string) => {
         frame: false,
         backgroundColor: "#000000",
         show: false,
-        titleBarStyle: "hidden",
+        titleBarStyle: process.platform === "win32" ? "hidden" : "default",
         titleBarOverlay: {
             color: "#2e2e2e",
             symbolColor: "#ff6d4b",
@@ -332,29 +332,62 @@ if (app.isPackaged) {
     });
 }
 // taskbar right click option
-app.setUserTasks([
-    {
-        program: process.execPath,
-        arguments: "--new-window",
-        iconPath: process.execPath,
-        iconIndex: 0,
-        title: "New Window",
-        description: "Create a new window",
-    },
-]);
+if (process.platform === "win32")
+    app.setUserTasks([
+        {
+            program: process.execPath,
+            arguments: "--new-window",
+            iconPath: process.execPath,
+            iconIndex: 0,
+            title: "New Window",
+            description: "Create a new window",
+        },
+    ]);
 const registerListener = () => {
     ipcMain.on("openLinkInNewWindow", (e, link) => {
         createWindow(link);
     });
-    ipcMain.on("addOptionToExplorerMenu", () => {
-        addOptionToExplorerMenu();
-    });
-    ipcMain.on("deleteOptionInExplorerMenu", () => {
-        deleteOptionInExplorerMenu();
-    });
-    ipcMain.on("deleteOldOptionInExplorerMenu", () => {
-        deleteOldOptionInExplorerMenu();
-    });
+    if (process.platform === "win32") {
+        ipcMain.on("addOptionToExplorerMenu", () => {
+            addOptionToExplorerMenu();
+        });
+        ipcMain.on("deleteOptionInExplorerMenu", () => {
+            deleteOptionInExplorerMenu();
+        });
+        ipcMain.on("deleteOldOptionInExplorerMenu", () => {
+            deleteOldOptionInExplorerMenu();
+        });
+    }
+    if (process.platform === "linux") {
+        ipcMain.on("showInExplorer", (e, filePath) => {
+            if (!fs.lstatSync(filePath).isDirectory()) filePath = path.dirname(filePath);
+            if (fs.existsSync(filePath))
+                exec(`xdg-open "${filePath}"`, (err, stdout, stderr) => {
+                    if (err) {
+                        if (err.message.includes("xdg-open: not found")) {
+                            dialog.showMessageBoxSync(
+                                (BrowserWindow.fromWebContents(e.sender) || BrowserWindow.fromId(0))!,
+                                {
+                                    message:
+                                        "xdg-open: not found.\nRun 'sudo apt install xdg-utils' to use this command.",
+                                    title: "Yomikiru",
+                                    type: "error",
+                                }
+                            );
+                        } else
+                            dialog.showMessageBoxSync(
+                                (BrowserWindow.fromWebContents(e.sender) || BrowserWindow.fromId(0))!,
+                                {
+                                    message: err.message,
+                                    title: "Yomikiru",
+                                    type: "error",
+                                }
+                            );
+                    }
+                });
+        });
+    }
+
     ipcMain.on("canCheckForUpdate_response", (e, res, windowId, skipMinor) => {
         if (res) checkForUpdate(windowId, skipMinor);
     });
