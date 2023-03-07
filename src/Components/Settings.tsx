@@ -460,7 +460,7 @@ const Settings = (): ReactElement => {
                                 </button>
                             </td>
                         </tr>
-                        {process.platform === "win32" ? (
+                        {process.platform === "win32" && (
                             <tr className="settingItem">
                                 <td className="name">File Explorer Option </td>
                                 <td className="current">
@@ -485,8 +485,6 @@ const Settings = (): ReactElement => {
                                     </button>
                                 </td>
                             </tr>
-                        ) : (
-                            ""
                         )}
                         <tr className="settingItem">
                             <td className="name">Check for Update</td>

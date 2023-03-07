@@ -149,51 +149,55 @@ const downloadUpdates = (latestVersion: string, windowId: number) => {
             showProgressBar: true,
         });
     };
-    if (IS_PORTABLE) {
-        const dl = downloadLink + latestVersion + "/" + `Manga.Reader-win32-${latestVersion}-Portable.zip`;
-        const extractPath = path.join(tempPath, "updates");
-        if (!fs.existsSync(extractPath)) fs.mkdirSync(extractPath);
 
-        downloadFile(dl, (file) => {
-            logger.log(`${file.filename} downloaded.`);
-            crossZip.unzip(file.path, extractPath, (err) => {
-                if (err) return logger.error(err);
-                logger.log(`Successfully extracted at "${extractPath}"`);
-                const appPath = path.join(app.getAppPath(), "../../");
-                const appDirName = path.join(app.getPath("exe"), "../");
+    if (process.platform === "win32")
+        if (IS_PORTABLE) {
+            const dl = downloadLink + latestVersion + "/" + `Yomikiru-win32-${latestVersion}-Portable.zip`;
+            const extractPath = path.join(tempPath, "updates");
+            if (!fs.existsSync(extractPath)) fs.mkdirSync(extractPath);
+
+            downloadFile(dl, (file) => {
+                logger.log(`${file.filename} downloaded.`);
+                crossZip.unzip(file.path, extractPath, (err) => {
+                    if (err) return logger.error(err);
+                    logger.log(`Successfully extracted at "${extractPath}"`);
+                    const appPath = path.join(app.getAppPath(), "../../");
+                    const appDirName = path.join(app.getPath("exe"), "../");
+                    app.on("before-quit", () => {
+                        logger.log("Installing updates...");
+                        logger.log(`Moving files to "${appPath}"`);
+                        spawn(
+                            "start",
+                            [
+                                `powershell.exe Start-Sleep -Seconds 5.0 ; Remove-Item -Recurse -Force '${appDirName}\\*' -Exclude ${fileToKeep.join(
+                                    ","
+                                )} ; Write-Output 'Moving extracted files...' ; Move-Item -Path '${extractPath}\\*' -Destination '${appDirName}' ; ` +
+                                    `Write-Output 'Launching app' ; ;  explorer '${app.getPath("exe")}' ; ; `,
+                            ],
+                            { shell: true }
+                        ).on("exit", process.exit);
+                        logger.log("Quitting app...");
+                    });
+                    logger.log("Preparing to install updates...");
+                    promptInstall();
+                });
+            });
+        } else {
+            const dl = downloadLink + latestVersion + "/" + `Yomikiru-${latestVersion}-Setup.exe`;
+            downloadFile(dl, (file) => {
+                logger.log(`${file.filename} downloaded.`);
                 app.on("before-quit", () => {
                     logger.log("Installing updates...");
-                    logger.log(`Moving files to "${appPath}"`);
-                    spawn(
-                        "start",
-                        [
-                            `powershell.exe Start-Sleep -Seconds 5.0 ; Remove-Item -Recurse -Force '${appDirName}\\*' -Exclude ${fileToKeep.join(
-                                ","
-                            )} ; Write-Output 'Moving extracted files...' ; Move-Item -Path '${extractPath}\\*' -Destination '${appDirName}' ; ` +
-                                `Write-Output 'Launching app' ; ;  explorer '${app.getPath("exe")}' ; ; `,
-                        ],
-                        { shell: true }
-                    ).on("exit", process.exit);
+                    spawn("start", [`powershell.exe Start-Sleep -Seconds 5.0 ; Start-Process '${file.path}'`], {
+                        shell: true,
+                    }).on("exit", process.exit);
                     logger.log("Quitting app...");
                 });
                 logger.log("Preparing to install updates...");
                 promptInstall();
             });
-        });
-    } else {
-        const dl = downloadLink + latestVersion + "/" + `Manga.Reader-${latestVersion}-Setup.exe`;
-        downloadFile(dl, (file) => {
-            logger.log(`${file.filename} downloaded.`);
-            app.on("before-quit", () => {
-                logger.log("Installing updates...");
-                spawn("start", [`powershell.exe Start-Sleep -Seconds 5.0 ; Start-Process '${file.path}'`], {
-                    shell: true,
-                }).on("exit", process.exit);
-                logger.log("Quitting app...");
-            });
-            logger.log("Preparing to install updates...");
-            promptInstall();
-        });
+        }
+    else if (process.platform === "linux") {
     }
 };
 export default checkForUpdate;
