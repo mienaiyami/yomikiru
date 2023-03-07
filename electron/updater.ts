@@ -1,7 +1,7 @@
 import fs from "fs";
 import path from "path";
 import IS_PORTABLE from "./IS_PORTABLE";
-import { spawn, spawnSync } from "child_process";
+import { exec, spawn, spawnSync } from "child_process";
 import { app, BrowserWindow, dialog } from "electron";
 import fetch from "electron-fetch";
 import crossZip from "cross-zip";
@@ -112,7 +112,7 @@ const checkForUpdate = async (windowId: number, skipMinor = false, promptAfterCh
  * @param windowId id of window in which message box should be shown
  */
 const downloadUpdates = (latestVersion: string, windowId: number) => {
-    const tempPath = path.join(app.getPath("temp"), "manga reader updates " + new Date().toDateString());
+    const tempPath = path.join(app.getPath("temp"), "yomikiru updates " + new Date().toDateString());
     if (fs.existsSync(tempPath)) spawnSync("powershell.exe", [`rm "${tempPath}" -r -force`]);
     fs.mkdirSync(tempPath);
     const promptInstall = () => {
@@ -198,6 +198,48 @@ const downloadUpdates = (latestVersion: string, windowId: number) => {
             });
         }
     else if (process.platform === "linux") {
+        const dl = downloadLink + latestVersion + "/" + `Yomikiru-${latestVersion}-amd64.deb`;
+        downloadFile(dl, (file) => {
+            logger.log(`${file.filename} downloaded.`);
+            const script = `
+#!/bin/bash
+
+sudo dpkg -i "${file.path}"
+            `;
+            fs.writeFileSync(path.join(tempPath, "install.sh"), script);
+            dialog
+                .showMessageBox(BrowserWindow.fromId(windowId ?? 1)!, {
+                    type: "info",
+                    title: "Updates downloaded",
+                    message:
+                        'Updates downloaded.\nTo install updates, run "promptInstall.sh" in following directory.\n\n"' +
+                        tempPath +
+                        '"',
+                    buttons: ["Open Directory"],
+                    cancelId: 1,
+                })
+                .then((res) => {
+                    if (res.response === 0) {
+                        exec(`xdg-open "${tempPath}"`, (err) => {
+                            if (err) {
+                                if (err.message.includes("xdg-open: not found")) {
+                                    dialog.showMessageBoxSync(BrowserWindow.fromId(windowId ?? 1)!, {
+                                        message:
+                                            "xdg-open: not found.\nRun 'sudo apt install xdg-utils' to use this command.",
+                                        title: "Yomikiru",
+                                        type: "error",
+                                    });
+                                } else
+                                    dialog.showMessageBoxSync(BrowserWindow.fromId(windowId ?? 1)!, {
+                                        message: err.message,
+                                        title: "Yomikiru",
+                                        type: "error",
+                                    });
+                            }
+                        });
+                    }
+                });
+        });
     }
 };
 export default checkForUpdate;

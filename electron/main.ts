@@ -366,7 +366,7 @@ const registerListener = () => {
                     if (err) {
                         if (err.message.includes("xdg-open: not found")) {
                             dialog.showMessageBoxSync(
-                                (BrowserWindow.fromWebContents(e.sender) || BrowserWindow.fromId(0))!,
+                                (BrowserWindow.fromWebContents(e.sender) || BrowserWindow.fromId(1))!,
                                 {
                                     message:
                                         "xdg-open: not found.\nRun 'sudo apt install xdg-utils' to use this command.",
@@ -376,7 +376,7 @@ const registerListener = () => {
                             );
                         } else
                             dialog.showMessageBoxSync(
-                                (BrowserWindow.fromWebContents(e.sender) || BrowserWindow.fromId(0))!,
+                                (BrowserWindow.fromWebContents(e.sender) || BrowserWindow.fromId(1))!,
                                 {
                                     message: err.message,
                                     title: "Yomikiru",

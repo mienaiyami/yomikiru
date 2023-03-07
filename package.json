@@ -14,9 +14,10 @@
         "lint": "eslint && tsc --noemit",
         "package": "electron-forge package",
         "make": "electron-forge make --arch=ia32",
-        "makeExe": "electron-forge make --arch=ia32",
-        "makeZip": "electron-forge make --targets=@electron-forge/maker-zip --arch=ia32",
-        "makeAll": "npm run makeExe && npm run makeZip",
+        "make:exe": "electron-forge make --arch=ia32",
+        "make:zip": "electron-forge make --targets=@electron-forge/maker-zip --arch=ia32",
+        "make:deb": "electron-forge make --targets=@electron-forge/maker-deb",
+        "make:all": "npm run makeExe && npm run makeZip",
         "release": "node makeAll.js"
     },
     "license": "MIT",

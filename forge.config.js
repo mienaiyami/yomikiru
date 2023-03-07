@@ -25,6 +25,17 @@ module.exports = {
                 // setupExe: `${packageJSON.name}_${packageJSON.version}_windows-setup.exe`,
             },
         },
+        {
+            name: '@electron-forge/maker-deb',
+            config: {
+              options: {
+                maintainer: 'mienaiyami',
+                homepage: 'https://github.com/mienaiyami/yomikiru',
+                bin:"./Yomikiru",
+                depends:["unzip","xdg-utils"]
+              }
+            }
+        }
         // {
         //     name: "@electron-forge/maker-zip",
         //     dir: `${packageJSON.name}_${packageJSON.version}_windows-portable`,
