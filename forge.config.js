@@ -19,6 +19,7 @@ module.exports = {
     }, ],
     makers: [{
             name: "@electron-forge/maker-squirrel",
+            platforms: ['win32'],
             config: {
                 // name: "Yomikiru",
                 // exe: "Yomikiru.exe",
@@ -27,6 +28,7 @@ module.exports = {
         },
         {
             name: '@electron-forge/maker-deb',
+            platforms: ['linux'],
             config: {
               options: {
                 maintainer: 'mienaiyami',
@@ -35,10 +37,10 @@ module.exports = {
                 depends:["unzip","xdg-utils"]
               }
             }
-        }
-        // {
-        //     name: "@electron-forge/maker-zip",
-        //     dir: `${packageJSON.name}_${packageJSON.version}_windows-portable`,
-        // },
+        },
+        {
+            name: "@electron-forge/maker-zip",
+            platforms: ['win32'],
+        },
     ],
 };
