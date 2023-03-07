@@ -61,6 +61,8 @@ const pushRelease = () => {
         .replaceAll("$$EXE_NAME_1$$", `Yomikiru--${pkgJSON.version}--Setup.exe`)
         .replaceAll("$$ZIP_NAME$$", `Yomikiru-win32-${pkgJSON.version}-Portable.zip`)
         .replaceAll("$$ZIP_NAME_1$$", `Yomikiru--win32--${pkgJSON.version}--Portable.zip`)
+        .replaceAll("$$DEB_NAME$$", `Yomikiru-${pkgJSON.version}-amd64.deb`)
+        .replaceAll("$$DEB_NAME_1$$", `Yomikiru--${pkgJSON.version}--amd64.deb`)
     if (fs.existsSync("./changelogTemp.md"))
         fs.rmSync("./changelogTemp.md");
     fs.writeFileSync("./changelogTemp.md", changelog)
@@ -71,7 +73,7 @@ const pushRelease = () => {
         // `--notes ""` +
         // "-d " +
         `./out/full/Manga.Reader-${pkgJSON.version}-Setup.exe ./out/full/Manga.Reader-win32-${pkgJSON.version}-Portable.zip `+
-        `./out/full/Yomikiru-${pkgJSON.version}-Setup.exe ./out/full/Yomikiru-win32-${pkgJSON.version}-Portable.zip `
+        `./out/full/Yomikiru-${pkgJSON.version}-Setup.exe ./out/full/Yomikiru-win32-${pkgJSON.version}-Portable.zip ./out/full/Yomikiru-${pkgJSON.version}-amd64.deb `
         )
     const a = printProcessing("Pushing build to gh release ")
     const ghSpawn = exec(pushCommand);
@@ -100,9 +102,9 @@ const makeExe = () => {
     const isPortable = false;
     export default isPortable;
     `)
-    const a = printProcessing('making exe ')
+    const a = printProcessing('making .exe ')
     // console.log(`./out/make/squirrel.windows/ia32/Yomikiru-${pkgJSON.version} Setup.exe`)
-    const yarnSpawn = exec("yarn makeExe")
+    const yarnSpawn = exec("yarn make:exe")
     // yarnSpawn.stdout.on('data', (data) => {
     //     process.stdout.write(data)
     // });
@@ -120,22 +122,49 @@ const makeExe = () => {
                 `./out/full/Yomikiru-${pkgJSON.version}-Setup.exe`, (err) => {
                     if (err) return console.error(err)
                     console.log("\x1b[92mmoved successfully. \x1b[0m")
-                    makeZip()
+                    makeDeb()
                 })
         } else {
             console.log("\x1b[91m.exe not found\x1b[0m")
         }
     });
-
 }
+const makeDeb = () => {
+    const a = printProcessing('making .deb ')
+    // console.log(`./out/make/squirrel.windows/ia32/Yomikiru-${pkgJSON.version} Setup.exe`)
+    const yarnSpawn = exec("yarn make:deb")
+    // yarnSpawn.stdout.on('data', (data) => {
+    //     process.stdout.write(data)
+    // });
+    yarnSpawn.stderr.on('data', (data) => {
+        process.stdout.write(`\x1b[91m${data}\x1b[0m`)
+    });
+    yarnSpawn.on('close', (code) => {
+        clearInterval(a)
+        console.log(`spawn yarn child process exited with code ${code}.`);
+        if (fs.existsSync(`./out/make/deb/x64/yomikiru_${pkgJSON.version}_amd64.deb`)) {
+            console.log("\x1b[92m.deb create successfully \x1b[0m")
+            console.log("moving .deb ...")
+            fs.rename(`./out/make/deb/x64/yomikiru_${pkgJSON.version}_amd64.deb`,
+                `./out/full/Yomikiru-${pkgJSON.version}-amd64.deb`, (err) => {
+                    if (err) return console.error(err)
+                    console.log("\x1b[92mmoved successfully. \x1b[0m")
+                    makeZip()
+                })
+        } else {
+            console.log("\x1b[91m.deb not found\x1b[0m")
+        }
+    });
+}
+
 const makeZip = () => {
     fs.writeFileSync("./electron/IS_PORTABLE.ts", `
     const isPortable = true;
     export default isPortable;
     `)
-    const a = printProcessing("making zip ")
+    const a = printProcessing("making .zip ")
     // console.log(`./out/make/zip/win32/ia32/Manga.Reader-win32-${pkgJSON.version}-Portable.zip`)
-    const yarnSpawn = exec("yarn makeZip")
+    const yarnSpawn = exec("yarn make:zip")
     // yarnSpawn.stdout.on('data', (data) => {
     //     process.stdout.write(data)
     // });
@@ -164,7 +193,6 @@ const makeZip = () => {
             console.log("\x1b[91m.zip not found\x1b[0m")
         }
     });
-
 }
 
 rl.question("\x1b[91mMake sure to edit and commit package.json and changelog.md before starting.\x1b[0m", () => {

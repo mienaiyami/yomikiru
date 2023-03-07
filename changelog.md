@@ -4,6 +4,8 @@
 
 [![Download Portable](https://img.shields.io/badge/Windows%20Portable%20(zip)-$$ZIP_NAME_1$$-brightgreen?logo=windows&logoColor=blue)](https://github.com/mienaiyami/yomikiru/releases/download/v$$TAG$$/$$ZIP_NAME$$)
 
+[![Download Linux (Debian)](https://img.shields.io/badge/Linux%20(Debian)-$$DEB_NAME_1$$-brightgreen?logo=debian&logoColor=red)](https://github.com/mienaiyami/yomikiru/releases/download/v$$TAG$$/$$DEB_NAME$$)
+
 ---
 ## Note
 
