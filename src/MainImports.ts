@@ -135,6 +135,9 @@ declare global {
              * returns string where .cbz and .zip are replace with " - CBZ file" and " - ZIP file"
              */
             replaceExtension: (str: string, replaceWith?: string) => string;
+            /**
+             * temp dir to be removed after closing chapter which was extracted
+             */
             deleteDirOnClose: string;
             titleBarHeight: number;
             isReaderOpen: boolean;

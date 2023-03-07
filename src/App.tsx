@@ -152,7 +152,11 @@ const App = (): ReactElement => {
             window.crossZip.unzip(link, tempExtractPath, (err) => {
                 if (err) {
                     dispatch(setUnzipping(false));
-
+                    if (err.message.includes("spawn unzip ENOENT"))
+                        return window.dialog.customError({
+                            message: "Error while extracting.",
+                            detail: '"unzip" not found. Please install by using\n"sudo apt install unzip"',
+                        });
                     return window.dialog.customError({
                         message: "Error while extracting.",
                         detail: err.message,
