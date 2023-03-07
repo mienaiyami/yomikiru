@@ -1,11 +1,11 @@
 {
     "name": "yomikiru",
     "productName": "Yomikiru",
-    "version": "2.8.1",
+    "version": "2.8.2",
     "description": "App to read manga on desktop",
     "main": ".webpack/main",
     "author": {
-        "name": "mienaiyami <https://github.com/mienaiyami>"
+        "name": "mienaiyami <https://github.com/mienaiyami/yomikiru>"
     },
     "scripts": {
         "start": "electron-forge start",

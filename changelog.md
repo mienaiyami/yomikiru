@@ -12,7 +12,9 @@
 - App name will be changing to "Yomikiru". Support for app with name as "Manga Reader" will end in April 2024.
 - **Change in App state management system, some issues expected, please report.**
 
-## Added
+___
+
+<!-- ## Added
 
 - #74.
 - Show shortcut used.
@@ -25,14 +27,17 @@
 ## Fixed
 
 - #76.
-- Chapter transition screen not visible on first/last chapter (in "Left to right" and "right to left" reading mode).
+- Chapter transition screen not visible on first/last chapter (in "Left to right" and "right to left" reading mode). -->
+
+### Working Linux (Debian) release.
 
 ---
 
 #### Todo
 
-- Adjust app for debian.
+- ~~Adjust app for debian.~~
 - Write tests.
 - Add ability to change image quality in canvas mode for less RAM usage and performance.
+- Better theme system.
 
 ---
