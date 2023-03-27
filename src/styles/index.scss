@@ -485,9 +485,16 @@ body {
                 overflow-y: scroll;
                 overflow-x: visible;
 
+                p{
+                    top: 0;
+                    position: sticky;
+                    background-color: var(--body-bg-color);
+                    z-index: 100;
+                }
                 ol {
                     position: relative;
                     counter-reset: countList;
+                    z-index: 99;
 
                     li {
                         position: relative;
@@ -708,7 +715,7 @@ body {
                     height: 100%;
                     width: 6.9px;
                     min-width: 6.9px;
-                    background-color: var(--btn-color);
+                    background-color: var(--divider-color);
                 }
             }
         }
@@ -1333,7 +1340,6 @@ body {
                 .location-cont {
                     margin-top: 5px;
                     padding: 0;
-
                     a {
                         --grid-template: 2.1em;
                     }
