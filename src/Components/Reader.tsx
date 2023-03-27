@@ -819,7 +819,7 @@ const Reader = () => {
                         }
                     >
                         Previous
-                        <FontAwesomeIcon icon={faQuestionCircle} />:
+                        {/* <FontAwesomeIcon icon={faQuestionCircle} />: */}
                     </span>
                     <span className="b">
                         {window.app.replaceExtension(prevNextChapter.prev.split(window.path.sep).pop() || "")}
@@ -851,7 +851,7 @@ const Reader = () => {
                         }
                     >
                         Next
-                        <FontAwesomeIcon icon={faQuestionCircle} />:
+                        {/* <FontAwesomeIcon icon={faQuestionCircle} />: */}
                     </span>
                     <span className="b">
                         {window.app.replaceExtension(prevNextChapter.next.split(window.path.sep).pop() || "")}
