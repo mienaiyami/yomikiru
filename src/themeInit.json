@@ -4,97 +4,127 @@
         {
             "name": "theme1",
             "main": {
-                "--body-bg": "#262626",
+                "--body-bg-color": "#262626",
+                "--sideList-bg-color": "var(--topBar-color)",
+
                 "--icon-color": "#fff8f0",
                 "--font-color": "#fff8f0",
-                "--font-select-color": "#fff8f0",
-                "--font-select-bg": "#000000",
-                "--color-primary": "#262626",
-                "--color-secondary": "#8f8f8f",
-                "--color-tertiary": "#1f1f1f",
+                "--font-select-color": "#000c29",
+                "--font-select-bg-color": "#5c5c5c",
+                "--btn-color": "#363636",
+                "--btn-color-hover": "#6b6b6b",
+                "--btn-color-focus": "#6b6b6b",
+                "--btn-shadow-focus": "#0000000",
+                "--text-input-bg": "#383838",
+                "--text-input-bg-focus": "#383838",
+
                 "--topBar-color": "#1f1f1f",
-                "--topBar-btn-hover-color": "#5c5c5c",
-                "--input-bg": "#383838",
-                "--btn-color1": "#363636",
-                "--btn-color2": "#6b6b6b",
+                "--topBar-btn-hover": "#5c5c5c",
                 "--listItem-bg-color": "#00000000",
-                "--listItem-hover-color": "#5c5c5c",
-                "--listItem-alreadyRead-color": "#494c5a",
-                "--listItem-current": "#30425a",
-                "--toolbar-btn-bg": "#1f1f1f",
-                "--toolbar-btn-hover": "#6b6b6b",
+                "--listItem-bg-color-hover": "#5c5c5c",
+                "--listItem-bg-color-read": "#494c5a",
+                "--listItem-bg-color-current": "#30425a",
+                "--readerSettings-bg": "var(--body-bg-color)",
+                "--readerSettings-toggleBtn-bg-color": "#262626",
+                "--readerSettings-toggleBtn-bg-color-hover": "#26262650",
+
                 "--scrollbar-track-color": "#00000000",
                 "--scrollbar-thumb-color": "#545454",
                 "--scrollbar-thumb-color-hover": "#878787",
+
+                "--code-bg-color": "var(--btn-color-hover)",
+                "--code-shadow-color": "var(--btn-color)",
+
                 "--divider-color": "#6b6b6b",
-                "--context-menu-text": "var(--font-color)",
-                "--context-menu-bg": "var(--color-tertiary)",
-                "--sideList-bg": "var(--body-bg)",
-                "--zenModePageIndicator-bg": "var(--body-bg)"
+
+                "--contextMenu-bg-color": "var(--body-bg-color)",
+                "--contentMenu-item-color": "#00000000",
+                "--contentMenu-item-bg-color-hover": "var(--btn-color-hover)",
+                "--zenModePage-bg": "var(--body-bg-color)"
             }
         },
         {
             "name": "theme2",
             "main": {
-                "--body-bg": "#000000",
+                "--body-bg-color": "#000000",
+                "--sideList-bg-color": "var(--topBar-color)",
+
                 "--icon-color": "#fff8f0",
                 "--font-color": "#fff8f0",
                 "--font-select-color": "#fff8f0",
-                "--font-select-bg": "#000000",
-                "--color-primary": "#111e4b",
-                "--color-secondary": "#8f8f8f",
-                "--color-tertiary": "#000000",
+                "--font-select-bg-color": "#000000",
+                "--btn-color": "#3b3a3e",
+                "--btn-color-hover": "#62636e",
+                "--btn-color-focus": "#62636e",
+                "--btn-shadow-focus": "#0000000",
+                "--text-input-bg": "#3b3a3e",
+                "--text-input-bg-focus": "#62636e",
+
                 "--topBar-color": "#17171c",
-                "--topBar-btn-hover-color": "#62636e",
-                "--input-bg": "#3b3a3e",
-                "--btn-color1": "#3b3a3e",
-                "--btn-color2": "#62636e",
+                "--topBar-btn-hover": "#62636e",
                 "--listItem-bg-color": "#00000000",
-                "--listItem-hover-color": "#55535b",
-                "--listItem-alreadyRead-color": "#37343f",
-                "--listItem-current": "#585a70",
-                "--toolbar-btn-bg": "var(--topBar-color)",
-                "--toolbar-btn-hover": "var(--topBar-hover-color)",
+                "--listItem-bg-color-hover": "#55535b",
+                "--listItem-bg-color-read": "#37343f",
+                "--listItem-bg-color-current": "#585a70",
+                "--readerSettings-bg": "var(--body-bg-color)",
+                "--readerSettings-toggleBtn-bg-color": "var(--body-bg-color)",
+                "--readerSettings-toggleBtn-bg-color-hover": "#62636e",
+
                 "--scrollbar-track-color": "#00000000",
                 "--scrollbar-thumb-color": "#545454",
                 "--scrollbar-thumb-color-hover": "#878787",
+
+                "--code-bg-color": "var(--btn-color-hover)",
+                "--code-shadow-color": "var(--btn-color)",
+
                 "--divider-color": "#3b3a3e",
-                "--context-menu-text": "var(--font-color)",
-                "--context-menu-bg": "var(--color-tertiary)",
-                "--sideList-bg": "var(--body-bg)",
-                "--zenModePageIndicator-bg": "var(--body-bg)"
+
+                "--contextMenu-bg-color": "var(--body-bg-color)",
+                "--contentMenu-item-color": "#00000000",
+                "--contentMenu-item-bg-color-hover": "var(--btn-color-hover)",
+                "--zenModePage-bg": "var(--body-bg-color)"
             }
         },
         {
             "name": "theme3",
             "main": {
-                "--body-bg": "#ffffff",
+                "--body-bg-color": "#ffffff",
+                "--sideList-bg-color": "var(--topBar-color)",
+
                 "--icon-color": "#000c29",
                 "--font-color": "#000c29",
                 "--font-select-color": "#000c29",
-                "--font-select-bg": "#fff8f0",
-                "--color-primary": "#487fff",
-                "--color-secondary": "#1f62ff",
-                "--color-tertiary": "#93b4ff",
+                "--font-select-bg-color": "#fff8f0",
+                "--btn-color": "#b6ccfe",
+                "--btn-color-hover": "#709bff",
+                "--btn-color-focus": "#709bff",
+                "--btn-shadow-focus": "#709bff",
+                "--text-input-bg": "#b6ccfe",
+                "--text-input-bg-focus": "#709bff",
+
                 "--topBar-color": "#e0e0e0",
-                "--topBar-btn-hover-color": "#b6ccfe",
-                "--input-bg": "#b6ccfe",
-                "--btn-color1": "#b6ccfe",
-                "--btn-color2": "#709bff",
+                "--topBar-btn-hover": "#b6ccfe",
                 "--listItem-bg-color": "#00000000",
-                "--listItem-hover-color": "#b6ccfe",
-                "--listItem-alreadyRead-color": "#d0dcff",
-                "--listItem-current": "#709bff",
-                "--toolbar-btn-bg": "var(--topBar-color)",
-                "--toolbar-btn-hover": "var(--topBar-hover-color)",
+                "--listItem-bg-color-hover": "#b6ccfe",
+                "--listItem-bg-color-read": "#d0dcff",
+                "--listItem-bg-color-current": "#709bff",
+                "--readerSettings-bg": "var(--body-bg-color)",
+                "--readerSettings-toggleBtn-bg-color": "var(--body-bg-color)",
+                "--readerSettings-toggleBtn-bg-color-hover": "#709bff",
+
                 "--scrollbar-track-color": "#b6ccfe00",
                 "--scrollbar-thumb-color": "#b6ccfe",
                 "--scrollbar-thumb-color-hover": "#709bff",
+
+                "--code-bg-color": "var(--btn-color-hover)",
+                "--code-shadow-color": "var(--btn-color)",
+
                 "--divider-color": "#b6ccfe",
-                "--context-menu-text": "var(--font-color)",
-                "--context-menu-bg": "var(--color-tertiary)",
-                "--sideList-bg": "var(--body-bg)",
-                "--zenModePageIndicator-bg": "var(--body-bg)"
+
+                "--contextMenu-bg-color": "var(--body-bg-color)",
+                "--contentMenu-item-color": "#00000000",
+                "--contentMenu-item-bg-color-hover": "var(--btn-color-hover)",
+                "--zenModePage-bg": "var(--body-bg-color)"
             }
         }
     ]

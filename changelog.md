@@ -12,7 +12,7 @@
 - App name will be changing to "Yomikiru". Support for app with name as "Manga Reader" will end in April 2024.
 - **Change in App state management system, some issues expected, please report.**
 
-Linux distribution currently not available as direct download but can be build easily by following this [Build for linux(debian) guide](https://github.com/mienaiyami/yomikiru/docs/build_for_linux.md).
+Linux distribution currently not available as direct download but can be build easily by following this [Build for linux(debian) guide](https://github.com/mienaiyami/yomikiru/blob/master/docs/build_for_linux.md).
 
 ---
 

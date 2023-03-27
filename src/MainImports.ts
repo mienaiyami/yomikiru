@@ -324,7 +324,39 @@ declare global {
 window.path = path;
 window.fs = fs;
 window.supportedFormats = [".jpg", ".jpeg", ".png", ".webp", ".svg", ".apng", ".gif", ".avif"];
-window.themeProps = themeProps;
+window.themeProps = {
+    "--body-bg-color": "Body BG Color",
+    "--sideList-bg-color": "SideList BG Color",
+    "--icon-color": "Icon Color",
+    "--font-color": "Text Color",
+    "--font-select-color": "Selected Text Color",
+    "--font-select-bg-color": "Selected Text BG Color",
+    "--btn-color": "Button Color",
+    "--btn-color-hover": "Button Hover Color",
+    "--btn-color-focus": "Button Focus Color",
+    "--btn-shadow-focus": "Button Focus Shadow Color",
+    "--text-input-bg": "Text Input BG Color",
+    "--text-input-bg-focus": "Text Input BG Color Focused",
+    "--topBar-color": "TopBar BG Color",
+    "--topBar-btn-hover": "TopBar Button Color Hovered",
+    "--listItem-bg-color": "ListItem BG Color",
+    "--listItem-bg-color-hover": "ListItem BG Color Hovered",
+    "--listItem-bg-color-read": "ListItem BG Color AlreadyRead",
+    "--listItem-bg-color-current": "ListItem BG Color",
+    "--readerSettings-bg": "Reader Settings BG",
+    "--readerSettings-toggleBtn-bg-color": "Reader Setting Toggle Button Color",
+    "--readerSettings-toggleBtn-bg-color-hover": "Reader Setting Toggle Button Color Hovered",
+    "--scrollbar-track-color": "ScrollBar Track Color",
+    "--scrollbar-thumb-color": "ScrollBar Thumb Color",
+    "--scrollbar-thumb-color-hover": "ScrollBar Thumb Color Hovered",
+    "--code-bg-color": "Code BG Color",
+    "--code-shadow-color": "Code Shadow Color",
+    "--divider-color": "Divider Color",
+    "--contextMenu-bg-color": "ContextMenu BG",
+    "--contentMenu-item-color": "ContextMenu Item BG",
+    "--contentMenu-item-bg-color-hover": "ContextMenu Item BG Hovered",
+    "--zenModePage-bg": "ZenMode Page Indicator BG",
+};
 window.shortcutsFunctions = [
     {
         command: "navToPage",

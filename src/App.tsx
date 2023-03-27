@@ -265,13 +265,25 @@ const App = (): ReactElement => {
                 if (window.app.isReaderOpen) return closeReader();
                 window.location.reload();
             }
+            if (process.platform === "win32") {
+                console.log(40 * window.devicePixelRatio);
+                if (e.ctrlKey && (e.key === "=" || e.key === "-"))
+                    setTimeout(() => {
+                        window.electron.getCurrentWindow().setTitleBarOverlay({
+                            height: Math.floor(40 * window.devicePixelRatio),
+                        });
+                    }, 1000);
+            }
         };
 
         // watching for file changes;
         const watcher = window.chokidar.watch([historyPath, bookmarksPath]);
         watcher.on("change", (path) => {
-            if (path === historyPath) dispatch(refreshHistory());
-            if (path === bookmarksPath) dispatch(refreshBookmark());
+            // todo: make it to ignore first call if another called within 2sec
+            setTimeout(() => {
+                if (path === historyPath) dispatch(refreshHistory());
+                if (path === bookmarksPath) dispatch(refreshBookmark());
+            }, 1500);
         });
 
         window.addEventListener("keydown", eventsOnStart);

@@ -37,35 +37,79 @@
     background: var(--font-select-color);
     color: var(--font-select-bg);
 }
+.refrenceVariable{
+    --body-bg-color:#ffffff;
+    --sideList-bg-color:var(--topBar-color);
+
+    --icon-color:#000c29;
+    --font-color:#000c29;
+    --font-select-color:#000c29;
+    --font-select-bg-color:#fff8f0;
+    --btn-color:#fff;
+    --btn-color-hover:#fff;
+    --btn-color-focus:#fff;
+    --btn-shadow-focus:#000;
+    --text-input-bg:#fff;
+    --text-input-bg-focus:#fff;
+
+    --topBar-color:#fff;
+    //not focusable
+    --topBar-btn-hover:#fff;
+    --listItem-bg-color:#fff;
+    --listItem-bg-color-hover:#fff;
+    --listItem-bg-color-read:#fff;
+    --listItem-bg-color-current:#fff;
+    --readerSettings-bg:#fff;
+    --readerSettings-toggleBtn-bg-color:#fff;
+    --readerSettings-toggleBtn-bg-color-hover:#fff;
+
+    --scrollbar-track-color:#fff;
+    --scrollbar-thumb-color:#fff;
+    --scrollbar-thumb-color-hover:#fff;
+
+    --code-bg-color:#fff;
+    --code-shadow-color:var(--btn-color);
+
+    --divider-color:#fff;
+
+    --contextMenu-bg-color:#fff;
+    --contentMenu-item-color:#fff;
+    --contentMenu-item-bg-color-hover:#fff;
+    --zenModePage-bg:#fff;
+}
 
 .refrenceVariable {
-    --body-bg: #ffffff;
-    --sideList-bg: var(--body-bg);
-    --icon-color: #000c29;
-    --font-color: #000c29;
-    --font-select-color: #000c29;
-    --font-select-bg: #fff8f0;
-    --color-primary: #487fff;
-    --color-secondary: #1f62ff;
-    --color-tertiary: #93b4ff;
-    --topBar-color: #e0e0e0;
-    --topBar-btn-hover-color: #709bff;
-    --input-bg: #b6ccfe;
-    --btn-color1: #b6ccfe;
-    --btn-color2: #709bff;
-    --listItem-bg-color: #00000000;
-    --listItem-hover-color: #b6ccfe;
-    --listItem-alreadyRead-color: #93b4ff;
-    --listItem-current: #709bff;
-    --toolbar-btn-bg: #b6ccfe;
-    --toolbar-btn-hover: #487fff;
-    --scrollbar-track-color: #b6ccfe00;
-    --scrollbar-thumb-color: #b6ccfe;
-    --scrollbar-thumb-color-hover: #709bff;
-    --divider-color: #b6ccfe;
-    --context-menu-text: var(--font-color);
-    --context-menu-bg: var(--color-tertiary);
-    --zenModePageIndicator-bg: var(var(--body-bg));
+    // --body-bg: #ffffff;
+    // --sideList-bg: var(--body-bg);
+    // --icon-color: #000c29;
+    // --font-color: #000c29;
+    // --font-select-color: #000c29;
+    // --font-select-bg: #fff8f0;
+    
+    // --color-primary: #487fff;
+    // --color-secondary: #1f62ff;
+    // --color-tertiary: #93b4ff;
+
+    // --topBar-color: #e0e0e0;
+    // --topBar-btn-hover-color: #709bff;
+    // --input-bg: #b6ccfe;
+    // --btn-color1: #b6ccfe;
+
+    // --btn-color2: #709bff;
+
+    // --listItem-bg-color: #00000000;
+    // --listItem-hover-color: #b6ccfe;
+    // --listItem-alreadyRead-color: #93b4ff;
+    // --listItem-current: #709bff;
+    // --toolbar-btn-bg: #b6ccfe;
+    // --toolbar-btn-hover: #487fff;
+    // --scrollbar-track-color: #b6ccfe00;
+    // --scrollbar-thumb-color: #b6ccfe;
+    // --scrollbar-thumb-color-hover: #709bff;
+    // --divider-color: #b6ccfe;
+    // --context-menu-text: var(--font-color);
+    // --context-menu-bg: var(--color-tertiary);
+    // --zenModePageIndicator-bg: var(var(--body-bg));
 }
 
 body.zenMode {
@@ -115,10 +159,10 @@ body {
     width: 100vw;
     height: 100vh;
     color: var(--font-color);
-    background: var(--body-bg);
+    background: var(--body-bg-color);
 
     &::backdrop {
-        background: var(--body-bg);
+        background: var(--body-bg-color);
     }
 
     input[type="checkbox"]{
@@ -141,7 +185,7 @@ body {
 
         &:focus {
             outline: none;
-            box-shadow: var(--color-secondary) 0 0 0px 1px;
+            box-shadow: var(--btn-color-focus) 0 0 0px 1px;
         }
     }
 
@@ -151,8 +195,8 @@ body {
 
     code {
         display: inline;
-        background-color: var(--btn-color2);
-        box-shadow: 0 0 2px 1px var(--btn-color1);
+        background-color: var(--code-bg-color);
+        box-shadow: 0 0 2px 1px var(--code-shadow-color);
         padding: 2px 4px;
         border-radius: 4px;
         white-space: nowrap;
@@ -251,7 +295,7 @@ body {
 
                 &:hover,
                 &:active {
-                    background: var(--topBar-btn-hover-color);
+                    background: var(--topBar-btn-hover);
                 }
             }
         }
@@ -340,7 +384,7 @@ body {
 
                     &:focus,
                     &:active {
-                        background: var(--topBar-btn-hover-color);
+                        background: var(--topBar-btn-hover);
                         outline: none;
                     }
                 }
@@ -361,7 +405,7 @@ body {
 
                 &:hover,
                 &:active {
-                    background: var(--topBar-btn-hover-color);
+                    background: var(--topBar-btn-hover);
                 }
             }
         }
@@ -381,12 +425,16 @@ body {
         height: calc(100% - var(--titleBar-height));
 
         button {
-            background: var(--btn-color1);
+            background: var(--btn-color);
 
             &:hover,
             &:active {
-                background: var(--btn-color2);
+                background: var(--btn-color-hover);
                 outline: none;
+            }
+            &:active,&:focus {
+                background: var(--btn-color-focus);
+                outline: 1px transparent;
             }
 
             color: var(--icon-color);
@@ -408,7 +456,7 @@ body {
 
         input[type="text"],
         input[type="number"] {
-            background: var(--input-bg);
+            background: var(--text-input-bg);
             overflow: scroll;
             cursor: text;
             color: var(--font-color);
@@ -421,7 +469,7 @@ body {
             padding: 10px;
 
             &:focus {
-                box-shadow: var(--color-secondary) 0 0 0px 1px;
+                box-shadow: var(--text-input-bg-focus) 0 0 0px 1px;
             }
         }
 
@@ -452,7 +500,7 @@ body {
 
                         &:hover,
                         &:active {
-                            background-color: var(--listItem-hover-color);
+                            background-color: var(--listItem-bg-color-hover);
                         }
 
                         a {
@@ -526,22 +574,25 @@ body {
                             &:hover,
                             &:active,
                             &:focus {
-                                background: var(--btn-color2);
+                                background: var(--btn-color-focus);
+                            }
+                            &:hover {
+                                background: var(--btn-color-hover);
                             }
                         }
                     }
 
                     .alreadyRead {
-                        background: var(--listItem-alreadyRead-color);
+                        background: var(--listItem-bg-color-read);
 
                         &:hover,
                         &:active {
-                            background-color: var(--listItem-hover-color);
+                            background-color: var(--listItem-bg-color-hover);
                         }
                     }
 
                     .current {
-                        background: var(--listItem-current);
+                        background: var(--listItem-bg-color-current);
                     }
                 }
             }
@@ -614,7 +665,8 @@ body {
                 // flex-grow: 0;
                 // flex-shrink: 0;
                 flex-direction: column;
-                background-color: var(--body-bg);
+                //!
+                // background-color: var(--body-bg-color);
                 padding: 20px 10px;
 
                 h2 {
@@ -643,7 +695,7 @@ body {
 
                 &:hover {
                     .bar {
-                        background-color: var(--btn-color2);
+                        background-color: var(--btn-color-hover);
                     }
                 }
 
@@ -651,7 +703,7 @@ body {
                     height: 100%;
                     width: 6.9px;
                     min-width: 6.9px;
-                    background-color: var(--btn-color1);
+                    background-color: var(--btn-color);
                 }
             }
         }
@@ -660,8 +712,8 @@ body {
             position: absolute;
             top: 0;
             left: 0;
-            background: var(--context-menu-bg);
-            color: var(--context-menu-text);
+            background: var(--contextMenu-bg-color);
+            color: var(--contentMenu-item-color);
             box-sizing: border-box;
             padding: 10px 0px;
             border-radius: 5px;
@@ -681,9 +733,11 @@ body {
                     padding: 10px 10px;
                     cursor: default;
 
-                    &:hover,
+                    &:hover{
+                        background: var(--btn-color-hover);
+                    }
                     &:active {
-                        background: var(--btn-color2);
+                        background: var(--btn-color-focus);
                     }
                 }
             }
@@ -727,7 +781,7 @@ body {
 
             .cont {
                 position: relative;
-                background: var(--body-bg);
+                background: var(--body-bg-color);
                 border-radius: 10px;
                 transition: .3s cubic-bezier(0, 1.15, 1, 1) transform;
                 width: calc(max(700px, 60%));
@@ -742,7 +796,7 @@ body {
                 }
 
                 >h1 {
-                    border-bottom: 2px solid var(--color-secondary);
+                    border-bottom: 2px solid var(--divider-color);
                     padding: 10px;
                     position: sticky;
                     top: 0;
@@ -801,7 +855,7 @@ body {
                             }
 
                             input {
-                                background-color: var(--input-bg);
+                                background-color: var(--text-input-bg);
                                 border: none;
                                 flex: 1;
                                 font-size: 15px;
@@ -814,7 +868,7 @@ body {
                                 display: flex;
                                 align-items: center;
                                 cursor: pointer;
-                                background-color: var(--input-bg);
+                                background-color: var(--text-input-bg);
                                 padding: 10px 10px;
                                 gap: 10px;
                                 border-radius: 3px;
@@ -842,7 +896,7 @@ body {
                             }
 
                             .selected {
-                                background-color: var(--btn-color2);
+                                background-color: var(--btn-color-focus);
                             }
                         }
 
@@ -943,7 +997,7 @@ body {
                         }
 
                         .resetBtn {
-                            background-color: var(--input-bg);
+                            background-color: var(--text-input-bg);
                             padding: 10px;
                             font-size: 15px;
                             align-items: center;
@@ -953,7 +1007,7 @@ body {
 
                         label {
                             cursor: pointer;
-                            background-color: var(--input-bg);
+                            background-color: var(--text-input-bg);
                             padding: 10px;
                             font-size: 15px;
                             align-items: center;
@@ -964,7 +1018,7 @@ body {
                             }
 
                             &.selected {
-                                background-color: var(--btn-color2);
+                                background-color: var(--btn-color-focus);
                             }
                         }
                     }
@@ -989,7 +1043,7 @@ body {
             left: 0;
             top: 0;
             z-index: 100000;
-            background: var(--body-bg);
+            background: var(--body-bg-color);
             display: grid;
             place-content: center;
             display: none;
@@ -1029,13 +1083,14 @@ body {
                 padding: 3px;
                 box-sizing: border-box;
                 height: 30px;
+                //!
                 border: 1px solid var(--color-secondary);
 
                 .loadingbar {
                     position: relative;
                     width: 0;
                     height: 100%;
-                    background-color: var(--btn-color2);
+                    background-color: var(--btn-color-focus);
                 }
             }
         }
@@ -1080,7 +1135,7 @@ body {
                 font-size: 30px;
                 color: var(--font-color);
                 border-top-left-radius: 10px;
-                background-color: var(--zenModePageIndicator-bg);
+                background-color: var(--zenModePage-bg);
             }
 
             .chapterChangerScreen {
@@ -1195,7 +1250,7 @@ body {
                     transform: translate(100%, -50%);
 
                     &:hover {
-                        background-color: var(--btn-color2);
+                        background-color: var(--btn-color-hover);
                     }
                 }
 
@@ -1209,7 +1264,7 @@ body {
                     height: 100%;
 
                     &:hover {
-                        background-color: var(--btn-color2);
+                        background-color: var(--btn-color-hover);
                     }
                 }
 
@@ -1220,7 +1275,7 @@ body {
                 .in-reader {
                     font-size: 20px;
                     user-select: text;
-                    border: solid var(--btn-color2);
+                    border: solid var(--btn-color-hover);
                     border-width: 4px 0;
                     margin-top: 7px;
                     margin-bottom: 5px;
@@ -1301,7 +1356,7 @@ body {
                 --extender-size: 60px;
                 position: absolute;
                 color: var(--icon-color);
-                background-color: var(--body-bg);
+                background-color: var(--body-bg-color);
                 right: 10px;
                 top: 0;
                 z-index: 100;
@@ -1345,12 +1400,15 @@ body {
                     border-radius: 0 0 0 20px;
                     font-size: 20px;
                     opacity: 0.5;
-                    background: var(--sideList-bg);
+                    background: var(--sideList-bg-color);
 
-                    &:hover,
                     &:active,
                     &:focus {
-                        background: var(--btn-color2);
+                        background: var(--btn-color-focus);
+                        opacity: 1;
+                    }
+                    &:hover{
+                        background: var(--btn-color-hover);
                         opacity: 1;
                     }
 
@@ -1389,7 +1447,7 @@ body {
                             gap: 5px;
 
                             .optionSelected {
-                                background-color: var(--btn-color2);
+                                background-color: var(--btn-color-focus);
                             }
                             .row{
                                 display: flex;
@@ -1418,7 +1476,7 @@ body {
                             label {
                                 display: flex;
                                 cursor: pointer;
-                                background-color: var(--input-bg);
+                                background-color: var(--text-input-bg);
                                 padding: 5px;
                                 gap: 5px;
                                 font-size: 20px;

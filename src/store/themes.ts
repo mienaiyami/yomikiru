@@ -17,6 +17,7 @@ const setBodyTheme = ({ allData, name }: Themes) => {
                     color: window.getComputedStyle(document.querySelector("body #topBar")!).backgroundColor,
                     symbolColor: window.getComputedStyle(document.querySelector("body #topBar .homeBtns button")!)
                         .color,
+                    height: Math.floor(40 * window.devicePixelRatio),
                 });
         } else {
             window.dialog.customError({
@@ -46,6 +47,9 @@ if (window.fs.existsSync(themesPath)) {
     if (raw) {
         try {
             let data = JSON.parse(raw);
+            if (data.allData[0].main["--body-bg"]) {
+                throw new Error("newTheme");
+            }
             // validate theme data
             let changed = false;
             if (data instanceof Array || !Object.prototype.hasOwnProperty.call(data, "name")) {
@@ -88,10 +92,15 @@ if (window.fs.existsSync(themesPath)) {
             }
             initialState.name = data.name;
             initialState.allData = data.allData;
-        } catch (err) {
-            window.dialog.customError({
-                message: "Unable to parse " + themesPath + "\nMaking new themes.json..." + "\n" + err,
-            });
+        } catch (err: any) {
+            if (err.message === "newTheme")
+                window.dialog.customError({
+                    message: "Theme system changed, old themes will be deleted. Sorry for your inconvenience.",
+                });
+            else
+                window.dialog.customError({
+                    message: "Unable to parse " + themesPath + "\nMaking new themes.json..." + "\n" + err,
+                });
             window.logger.error(err);
             initialState.name = themeInit.name;
             initialState.allData = themeInit.allData;
