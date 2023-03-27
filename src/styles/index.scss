@@ -23,6 +23,7 @@
 ::-webkit-scrollbar-thumb {
     min-height: 70px;
     background: var(--scrollbar-thumb-color);
+
 }
 
 ::-webkit-scrollbar-corner {
@@ -35,7 +36,7 @@
 
 ::selection {
     background: var(--font-select-color);
-    color: var(--font-select-bg);
+    color: var(--font-select-color);
 }
 .refrenceVariable{
     --body-bg-color:#ffffff;
@@ -181,6 +182,7 @@ body {
 
         &:disabled {
             pointer-events: none;
+            opacity: 0.5;
         }
 
         &:focus {
@@ -472,6 +474,7 @@ body {
 
             &:focus {
                 box-shadow: var(--text-input-bg-focus) 0 0 0px 1px;
+                // background-color: var(--text-input-bg-focus);
             }
         }
 
@@ -878,6 +881,12 @@ body {
                                 p {
                                     font-size: 15px;
                                 }
+                                &:hover{
+                                    background-color: var(--text-input-bg-focus);
+                                }
+                                &:focus,&:active{
+                                    box-shadow:var(--btn-color-focus) 0 0 0px 1px; ;
+                                }
                             }
 
                             p {
@@ -1005,6 +1014,13 @@ body {
                             align-items: center;
                             border-radius: 3px;
                             overflow: initial;
+                            
+                            &:hover{
+                                background-color: var(--text-input-bg-focus);
+                            }
+                            &:focus,&:active{
+                                box-shadow:var(--btn-color-focus) 0 0 0px 1px; ;
+                            }
                         }
 
                         label {
@@ -1019,6 +1035,12 @@ body {
                                 display: none;
                             }
 
+                            &:hover{
+                                background-color: var(--text-input-bg-focus);
+                            }
+                            &:focus,&:active{
+                                box-shadow:var(--btn-color-focus) 0 0 0px 1px; ;
+                            }
                             &.selected {
                                 background-color: var(--btn-color-focus);
                             }
@@ -1086,7 +1108,7 @@ body {
                 box-sizing: border-box;
                 height: 30px;
                 //!
-                border: 1px solid var(--color-secondary);
+                border: 1px solid var(--btn-color-focus);
 
                 .loadingbar {
                     position: relative;
@@ -1221,7 +1243,7 @@ body {
 
 
             .currentMangaList {
-                background: var(--sideList-bg);
+                background: var(--sideList-bg-color);
                 height: var(--body-height);
                 width: var(--mangaListWidth);
                 min-width: 196px;
@@ -1243,7 +1265,7 @@ body {
                     cursor: pointer;
                     right: 0;
                     top: 50%;
-                    background-color: var(--sideList-bg);
+                    background-color: var(--sideList-bg-color);
                     height: 100px;
                     border-radius: 0 5px 5px 0;
                     width: 20px;
@@ -1488,6 +1510,13 @@ body {
 
                                 p {
                                     font-size: 15px;
+                                }
+                                
+                                &:hover{
+                                    background-color: var(--text-input-bg-focus);
+                                }
+                                &:focus,&:active{
+                                    box-shadow:var(--btn-color-focus) 0 0 0px 1px; ;
                                 }
                                 &.disabled{
                                     opacity: 0.5;

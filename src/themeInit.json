@@ -5,7 +5,7 @@
             "name": "theme1",
             "main": {
                 "--body-bg-color": "#262626",
-                "--sideList-bg-color": "var(--topBar-color)",
+                "--sideList-bg-color": "var(--body-bg-color)",
 
                 "--icon-color": "#fff8f0",
                 "--font-color": "#fff8f0",
@@ -47,12 +47,12 @@
             "name": "theme2",
             "main": {
                 "--body-bg-color": "#000000",
-                "--sideList-bg-color": "var(--topBar-color)",
+                "--sideList-bg-color": "var(--body-bg-color)",
 
                 "--icon-color": "#fff8f0",
                 "--font-color": "#fff8f0",
-                "--font-select-color": "#fff8f0",
-                "--font-select-bg-color": "#000000",
+                "--font-select-color": "#000000",
+                "--font-select-bg-color": "#fff8f0",
                 "--btn-color": "#3b3a3e",
                 "--btn-color-hover": "#62636e",
                 "--btn-color-focus": "#62636e",
@@ -93,8 +93,8 @@
 
                 "--icon-color": "#000c29",
                 "--font-color": "#000c29",
-                "--font-select-color": "#000c29",
-                "--font-select-bg-color": "#fff8f0",
+                "--font-select-color": "#fff8f0",
+                "--font-select-bg-color": "#000c29",
                 "--btn-color": "#b6ccfe",
                 "--btn-color-hover": "#709bff",
                 "--btn-color-focus": "#709bff",

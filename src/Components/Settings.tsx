@@ -238,7 +238,8 @@ const Settings = (): ReactElement => {
                                         if (e.target.value === "") {
                                             e.target.value = "0";
                                         }
-                                        const value = e.target.valueAsNumber ?? 100;
+                                        let value = e.target.valueAsNumber ?? 100;
+                                        if (value > 100) value = 100;
                                         return value;
                                     });
                                 }}
@@ -1026,7 +1027,9 @@ const Settings = (): ReactElement => {
                             </tr>
                             {Object.entries(allThemes.find((e) => e.name === theme)!.main).map((e) => (
                                 <tr key={e[0]} className="newThemeMakerRow">
-                                    <td className="newThemeMakerProp">{e[0]}</td>
+                                    <td className="newThemeMakerProp">
+                                        {window.themeProps[e[0] as keyof typeof window.themeProps]}
+                                    </td>
                                     {/* <td>{e[1]}</td> */}
                                     <ThemeElement color={e[1]} prop={e[0] as ThemeDataMain} />
                                 </tr>

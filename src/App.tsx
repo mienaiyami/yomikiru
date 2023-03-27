@@ -266,7 +266,6 @@ const App = (): ReactElement => {
                 window.location.reload();
             }
             if (process.platform === "win32") {
-                console.log(40 * window.devicePixelRatio);
                 if (e.ctrlKey && (e.key === "=" || e.key === "-" || e.key === "0"))
                     setTimeout(() => {
                         window.electron.getCurrentWindow().setTitleBarOverlay({
