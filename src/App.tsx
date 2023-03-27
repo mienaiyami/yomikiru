@@ -267,12 +267,16 @@ const App = (): ReactElement => {
             }
             if (process.platform === "win32") {
                 console.log(40 * window.devicePixelRatio);
-                if (e.ctrlKey && (e.key === "=" || e.key === "-"))
+                if (e.ctrlKey && (e.key === "=" || e.key === "-" || e.key === "0"))
                     setTimeout(() => {
                         window.electron.getCurrentWindow().setTitleBarOverlay({
                             height: Math.floor(40 * window.devicePixelRatio),
                         });
-                    }, 1000);
+                        // page nav/ window btn cont width
+                        (document.querySelector(".windowBtnCont") as HTMLDivElement).style.right = `${
+                            138 * (1 / window.devicePixelRatio)
+                        }px`;
+                    }, 600);
             }
         };
 

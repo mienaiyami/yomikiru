@@ -12,13 +12,18 @@ const setBodyTheme = ({ allData, name }: Themes) => {
             }
             document.body.style.cssText = themeStr || "";
             document.body.setAttribute("data-theme", name);
-            if (process.platform === "win32")
+            if (process.platform === "win32") {
                 window.electron.getCurrentWindow().setTitleBarOverlay({
                     color: window.getComputedStyle(document.querySelector("body #topBar")!).backgroundColor,
                     symbolColor: window.getComputedStyle(document.querySelector("body #topBar .homeBtns button")!)
                         .color,
                     height: Math.floor(40 * window.devicePixelRatio),
                 });
+
+                (document.querySelector(".windowBtnCont") as HTMLDivElement).style.right = `${
+                    138 * (1 / window.devicePixelRatio)
+                }px`;
+            }
         } else {
             window.dialog.customError({
                 title: "Error",

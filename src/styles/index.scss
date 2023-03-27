@@ -330,9 +330,10 @@ body {
         .windowBtnCont {
             -webkit-app-region: no-drag;
             position: absolute;
-            width: calc(var(--button-width) * 2 + 138px);
+            // width: calc(var(--button-width) * 2 + 138px);
+
             top: 0;
-            right: 0;
+            right: 138px;
             z-index: 3000;
             display: flex;
             flex-direction: row;
@@ -344,6 +345,7 @@ body {
                 display: flex;
                 flex-direction: row;
                 align-items: center;
+                justify-content: flex-end;
                 height: 100%;
                 visibility: hidden;
                 width: calc(var(--button-width) * 2);
@@ -369,7 +371,7 @@ body {
                     box-sizing: border-box;
                     font-family: Roboto;
                     cursor: text;
-                    background: var(--input-bg);
+                    background: var(--text-input-bg);
                     border: none;
                     // padding: 10px;
                     height: 100%;
@@ -384,7 +386,7 @@ body {
 
                     &:focus,
                     &:active {
-                        background: var(--topBar-btn-hover);
+                        background: var(--text-input-bg-focus);
                         outline: none;
                     }
                 }
