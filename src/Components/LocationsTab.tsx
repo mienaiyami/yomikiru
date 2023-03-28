@@ -69,6 +69,11 @@ const LocationsTab = (): ReactElement => {
     useEffect(() => {
         displayList();
     }, [currentLink]);
+    useEffect(() => {
+        if (inputRef.current) {
+            inputRef.current.focus();
+        }
+    }, [inputRef]);
     const List = (locations: LocationData[], filter: string) => {
         return locations.map((e) => {
             if (new RegExp(filter, "ig") && new RegExp(filter, "ig").test(e.name))

@@ -818,8 +818,7 @@ const Reader = () => {
                             ` or click left side of screen`
                         }
                     >
-                        Previous
-                        {/* <FontAwesomeIcon icon={faQuestionCircle} />: */}
+                        Previous :{/* <FontAwesomeIcon icon={faQuestionCircle} />: */}
                     </span>
                     <span className="b">
                         {window.app.replaceExtension(prevNextChapter.prev.split(window.path.sep).pop() || "")}
@@ -850,8 +849,7 @@ const Reader = () => {
                             ` or click right side of screen`
                         }
                     >
-                        Next
-                        {/* <FontAwesomeIcon icon={faQuestionCircle} />: */}
+                        Next :{/* <FontAwesomeIcon icon={faQuestionCircle} />: */}
                     </span>
                     <span className="b">
                         {window.app.replaceExtension(prevNextChapter.next.split(window.path.sep).pop() || "")}
