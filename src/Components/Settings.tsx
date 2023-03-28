@@ -10,6 +10,7 @@ import { resetShortcuts, setShortcuts } from "../store/shortcuts";
 import { setOpenSetting } from "../store/isSettingOpen";
 import { addBookmark, removeAllBookmarks } from "../store/bookmarks";
 import { makeNewSettings, setAppSettings, setReaderSettings } from "../store/appSettings";
+import { windowsStore } from "process";
 
 const Settings = (): ReactElement => {
     const { promptSetDefaultLocation } = useContext(AppContext);
@@ -59,14 +60,14 @@ const Settings = (): ReactElement => {
             return;
         }
         const props: ThemeDataMain[] = [...themeMakerRef.current!.getElementsByClassName("newThemeMakerProp")].map(
-            (e) => (e as HTMLElement).innerText as ThemeDataMain
+            (e) => (e as HTMLElement).getAttribute("data-prop") as ThemeDataMain
         );
         themeNameInputRef.current!.value = window.app.randomString(6);
         const newThemeData = { ...window.themeProps };
         [...themeMakerRef.current!.getElementsByClassName("newThemeMakerRow")].forEach((e, i) => {
             if (e.getElementsByTagName("label")[0].classList.contains("selected")) {
                 newThemeData[props[i]] = (
-                    e.getElementsByClassName("newThemeMakerColorOrVar")[0] as HTMLInputElement
+                    e.getElementsByClassName("newThemeMakerVar")[0] as HTMLInputElement
                 ).value;
             } else {
                 newThemeData[props[i]] = (
@@ -176,7 +177,17 @@ const Settings = (): ReactElement => {
                 );
             }
         }, [rawColor, opacity]);
-        // todo : make similar system for rawColorWhole
+        useLayoutEffect(() => {
+            if (firstRendered) {
+                if (process.platform === "win32") {
+                    if (prop === "--icon-color")
+                        window.electron.getCurrentWindow().setTitleBarOverlay({ symbolColor: rawColor });
+                    if (prop === "--topBar-color")
+                        window.electron.getCurrentWindow().setTitleBarOverlay({ color: rawColor });
+                }
+                document.body.style.setProperty(prop, rawColorWhole);
+            }
+        }, [rawColorWhole]);
         return (
             <>
                 <td>
@@ -203,16 +214,19 @@ const Settings = (): ReactElement => {
                 </td>
                 <td>
                     {checked ? (
-                        <input
-                            type="text"
+                        <select
                             value={rawColorWhole}
-                            list="cssColorVariableList"
-                            spellCheck={false}
-                            className="newThemeMakerColorOrVar"
+                            className="newThemeMakerVar"
                             onChange={(e) => {
-                                setRawColorWhole(e.target.value);
+                                setRawColorWhole(e.currentTarget.value);
                             }}
-                        />
+                        >
+                            {Object.entries(window.themeProps).map((e) => (
+                                <option key={e[0]} value={`var(${e[0]})`}>
+                                    {e[1]}
+                                </option>
+                            ))}
+                        </select>
                     ) : (
                         <>
                             <input
@@ -998,7 +1012,7 @@ const Settings = (): ReactElement => {
                     </button>
                 </h1>
                 <div className="themeMaker" ref={themeMakerRef}>
-                    <datalist id="cssColorVariableList">
+                    {/* <datalist id="cssColorVariableList">
                         {Object.keys(
                             allThemes.find((e) => {
                                 return e.name === theme;
@@ -1006,7 +1020,7 @@ const Settings = (): ReactElement => {
                         ).map((e) => (
                             <option key={e} value={`var(${e})`}>{`var(${e})`}</option>
                         ))}
-                    </datalist>
+                    </datalist> */}
                     <ul>
                         <li>
                             To use previously defined color, click on link button then type it like this,{" "}
@@ -1017,6 +1031,7 @@ const Settings = (): ReactElement => {
                             If you want to edit existing theme, click on theme then click on plus icon then change
                             theme according to your liking.
                         </li>
+                        <li>Some changes require refresh.</li>
                     </ul>
                     <table>
                         <tbody>
@@ -1027,7 +1042,7 @@ const Settings = (): ReactElement => {
                             </tr>
                             {Object.entries(allThemes.find((e) => e.name === theme)!.main).map((e) => (
                                 <tr key={e[0]} className="newThemeMakerRow">
-                                    <td className="newThemeMakerProp">
+                                    <td className="newThemeMakerProp" data-prop={e[0]}>
                                         {window.themeProps[e[0] as keyof typeof window.themeProps]}
                                     </td>
                                     {/* <td>{e[1]}</td> */}
