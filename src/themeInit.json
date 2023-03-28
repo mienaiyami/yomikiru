@@ -38,7 +38,7 @@
                 "--divider-color": "#6b6b6b",
 
                 "--contextMenu-bg-color": "var(--body-bg-color)",
-                "--contentMenu-item-color": "#00000000",
+                "--contentMenu-item-color": "var(--font-color)",
                 "--contentMenu-item-bg-color-hover": "var(--btn-color-hover)",
                 "--zenModePage-bg": "var(--body-bg-color)"
             }
@@ -80,7 +80,7 @@
                 "--divider-color": "#3b3a3e",
 
                 "--contextMenu-bg-color": "var(--body-bg-color)",
-                "--contentMenu-item-color": "#00000000",
+                "--contentMenu-item-color": "var(--font-color)",
                 "--contentMenu-item-bg-color-hover": "var(--btn-color-hover)",
                 "--zenModePage-bg": "var(--body-bg-color)"
             }
@@ -122,7 +122,7 @@
                 "--divider-color": "#b6ccfe",
 
                 "--contextMenu-bg-color": "var(--body-bg-color)",
-                "--contentMenu-item-color": "#00000000",
+                "--contentMenu-item-color": "var(--font-color)",
                 "--contentMenu-item-bg-color-hover": "var(--btn-color-hover)",
                 "--zenModePage-bg": "var(--body-bg-color)"
             }

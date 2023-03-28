@@ -459,7 +459,7 @@ body {
                 outline: 1px transparent;
             }
 
-            color: var(--icon-color);
+            color: var(--font-color);
             font-family: "Roboto";
             font-size: 20px;
             cursor: pointer;
@@ -491,7 +491,7 @@ body {
             padding: 10px;
 
             &:focus {
-                box-shadow: var(--text-input-bg-focus) 0 0 0px 1px;
+                box-shadow: var(--text-input-bg-focus) 0 0 0px 2px;
                 // background-color: var(--text-input-bg-focus);
             }
         }
@@ -744,6 +744,8 @@ body {
             left: 0;
             background: var(--contextMenu-bg-color);
             color: var(--contentMenu-item-color);
+            box-shadow: var(--btn-color-focus) 0 0 5px 1px;
+            // border: 1px solid var(--btn-color-focus);
             box-sizing: border-box;
             padding: 10px 0px;
             border-radius: 5px;
