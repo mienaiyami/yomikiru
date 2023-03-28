@@ -163,6 +163,10 @@ body {
         background: var(--body-bg-color);
     }
 
+    label:has(input:focus){
+        box-shadow: var(--btn-color-focus) 0 0 0px 2px;
+    }
+
     input[type="checkbox"] {
         accent-color: var(--icon-color);
         opacity: 0.3;
@@ -184,7 +188,7 @@ body {
 
         &:focus {
             outline: none;
-            box-shadow: var(--btn-color-focus) 0 0 0px 1px;
+            box-shadow: var(--btn-color-focus) 0 0 0px 2px;
         }
     }
 
@@ -201,7 +205,7 @@ body {
         user-select: none;
         &:focus,&:active {
             outline: none;
-            box-shadow: var(--btn-color-focus) 0 0 0px 1px;
+            box-shadow: var(--btn-color-focus) 0 0 0px 2px;
         }
 
     }
@@ -906,7 +910,7 @@ body {
                                 }
                                 &:focus,
                                 &:active {
-                                    box-shadow: var(--btn-color-focus) 0 0 0px 1px;
+                                    box-shadow: var(--btn-color-focus) 0 0 0px 2px;
                                 }
                             }
 
@@ -1042,7 +1046,7 @@ body {
                             }
                             &:focus,
                             &:active {
-                                box-shadow: var(--btn-color-focus) 0 0 0px 1px;
+                                box-shadow: var(--btn-color-focus) 0 0 0px 2px;
                             }
                         }
 
@@ -1063,7 +1067,7 @@ body {
                             }
                             &:focus,
                             &:active {
-                                box-shadow: var(--btn-color-focus) 0 0 0px 1px;
+                                box-shadow: var(--btn-color-focus) 0 0 0px 2px;
                             }
                             &.selected {
                                 background-color: var(--btn-color-focus);
@@ -1537,7 +1541,7 @@ body {
                                 }
                                 &:focus,
                                 &:active {
-                                    box-shadow: var(--btn-color-focus) 0 0 0px 1px;
+                                    box-shadow: var(--btn-color-focus) 0 0 0px 2px;
                                 }
                                 &.disabled {
                                     opacity: 0.5;
