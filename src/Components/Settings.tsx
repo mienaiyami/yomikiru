@@ -40,6 +40,31 @@ const Settings = (): ReactElement => {
     }, [isSettingOpen]);
 
     const reservedKeys = ["h", "Control", "Tab", "Shift", "Alt", "Escape"];
+    const applyThemeTemp = () => {
+        const props: ThemeDataMain[] = [...themeMakerRef.current!.getElementsByClassName("newThemeMakerProp")].map(
+            (e) => (e as HTMLElement).getAttribute("data-prop") as ThemeDataMain
+        );
+        let vars = "";
+        [...themeMakerRef.current!.getElementsByClassName("newThemeMakerRow")].forEach((e, i) => {
+            if (e.getElementsByTagName("label")[0].classList.contains("selected")) {
+                vars += `${props[i]}:${
+                    (e.getElementsByClassName("newThemeMakerVar")[0] as HTMLInputElement).value
+                };`;
+            } else {
+                vars += `${props[i]}:${
+                    (e.getElementsByClassName("newThemeMakerColorFull")[0] as HTMLInputElement).value
+                };`;
+            }
+        });
+        document.body.setAttribute("style", vars);
+        if (process.platform === "win32")
+            window.electron.getCurrentWindow().setTitleBarOverlay({
+                color: window.getComputedStyle(document.querySelector("body #topBar")!).backgroundColor,
+                symbolColor: window.getComputedStyle(document.querySelector("body #topBar .homeBtns button")!)
+                    .color,
+                height: Math.floor(40 * window.devicePixelRatio),
+            });
+    };
     const saveTheme = (saveAndReplace = false) => {
         let name = "";
         if (themeNameInputRef.current!.value === "") name = window.app.randomString(6);
@@ -162,31 +187,33 @@ const Settings = (): ReactElement => {
                 //             ? "0" + Math.ceil(opacity * 2.55).toString(16)
                 //             : Math.ceil(opacity * 2.55).toString(16))
                 // );
-                if (process.platform === "win32") {
-                    if (prop === "--icon-color")
-                        window.electron.getCurrentWindow().setTitleBarOverlay({ symbolColor: rawColor });
-                    if (prop === "--topBar-color")
-                        window.electron.getCurrentWindow().setTitleBarOverlay({ color: rawColor });
-                }
-                document.body.style.setProperty(
-                    prop,
-                    rawColor.substring(0, 7) +
-                        (Math.ceil(opacity * 2.55).toString(16).length < 2
-                            ? "0" + Math.ceil(opacity * 2.55).toString(16)
-                            : Math.ceil(opacity * 2.55).toString(16))
-                );
+                // if (process.platform === "win32") {
+                //     if (prop === "--icon-color")
+                //         window.electron.getCurrentWindow().setTitleBarOverlay({ symbolColor: rawColor });
+                //     if (prop === "--topBar-color")
+                //         window.electron.getCurrentWindow().setTitleBarOverlay({ color: rawColor });
+                // }
+                applyThemeTemp();
+                // document.body.style.setProperty(
+                //     prop,
+                //     rawColor.substring(0, 7) +
+                //         (Math.ceil(opacity * 2.55).toString(16).length < 2
+                //             ? "0" + Math.ceil(opacity * 2.55).toString(16)
+                //             : Math.ceil(opacity * 2.55).toString(16))
+                // );
             }
         }, [rawColor, opacity]);
         useLayoutEffect(() => {
             if (firstRendered) {
-                if (process.platform === "win32") {
-                    //! fix - change theme without saving
-                    if (prop === "--icon-color")
-                        window.electron.getCurrentWindow().setTitleBarOverlay({ symbolColor: rawColor });
-                    if (prop === "--topBar-color")
-                        window.electron.getCurrentWindow().setTitleBarOverlay({ color: rawColor });
-                }
-                document.body.style.setProperty(prop, rawColorWhole);
+                // if (process.platform === "win32") {
+                //     //! fix - change theme without saving
+                //     if (prop === "--icon-color")
+                //         window.electron.getCurrentWindow().setTitleBarOverlay({ symbolColor: rawColor });
+                //     if (prop === "--topBar-color")
+                //         window.electron.getCurrentWindow().setTitleBarOverlay({ color: rawColor });
+                // }
+                // document.body.style.setProperty(prop, rawColorWhole);
+                applyThemeTemp();
             }
         }, [rawColorWhole]);
         return (
