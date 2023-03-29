@@ -179,7 +179,7 @@ body {
     overflow: hidden;
 
     .icon {
-        color: var(--icon-color);
+        color: var(--icon-color) !important;
     }
 
     button {

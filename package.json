@@ -1,8 +1,8 @@
 {
     "name": "yomikiru",
     "productName": "Yomikiru",
-    "version": "2.9.0",
-    "description": "App to read manga on desktop",
+    "version": "2.9.1",
+    "description": "App to read manga/comic offline on desktop",
     "main": ".webpack/main",
     "author": {
         "name": "mienaiyami <https://github.com/mienaiyami/yomikiru>"
