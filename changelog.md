@@ -18,14 +18,11 @@ Linux distribution currently not available as direct download but can be build e
 
 <!-- ## Added -->
 
-## Changed
-
-- Apply theme without need for refresh.
-- UI Enhancements.
+<!-- ## Changed -->
 
 ## Fixed
 
-- #82 and UI Fixes.
+- #80 and other Fixes.
 
 ---
 
