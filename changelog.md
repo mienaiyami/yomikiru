@@ -10,7 +10,7 @@
 ## Note
 
 - App name will be changing to "Yomikiru". Support for app with name as "Manga Reader" will end in April 2024.
-- **Change in App state management system, some issues expected, please report.**
+- **Change in App theme system so some issues expected, please report.**
 
 Linux distribution currently not available as direct download but can be build easily by following this [Build for linux(debian) guide](https://github.com/mienaiyami/yomikiru/blob/master/docs/build_for_linux.md).
 
@@ -18,25 +18,24 @@ Linux distribution currently not available as direct download but can be build e
 
 ## Added
 
-- #74.
-- Show shortcut used.
-- Apply theme to checkboxes.
+- New theme system;
 
 ## Changed
 
-- UI Enhancements.
+- UI Enhancements : remove zip/cbz from title name.
+- Removed "?" from Next/Prev on chapter changer screen.
 
 ## Fixed
 
-- #76.
-- Chapter transition screen not visible on first/last chapter (in "Left to right" and "right to left" reading mode).
+- #75.
+- System buttons don't scale with ctrl +- zoom.
 
 ---
 
 #### Todo
 
+- Epub support.
 - Write tests.
 - Add ability to change image quality in canvas mode for less RAM usage and performance.
-- Better theme system.
 
 ---

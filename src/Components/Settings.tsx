@@ -180,6 +180,7 @@ const Settings = (): ReactElement => {
         useLayoutEffect(() => {
             if (firstRendered) {
                 if (process.platform === "win32") {
+                    //! fix - change theme without saving
                     if (prop === "--icon-color")
                         window.electron.getCurrentWindow().setTitleBarOverlay({ symbolColor: rawColor });
                     if (prop === "--topBar-color")
