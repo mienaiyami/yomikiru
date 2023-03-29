@@ -163,7 +163,7 @@ body {
         background: var(--body-bg-color);
     }
 
-    label:has(input:focus){
+    label:has(input:focus) {
         box-shadow: var(--btn-color-focus) 0 0 0px 2px;
     }
 
@@ -192,7 +192,7 @@ body {
         }
     }
 
-    select  {
+    select {
         width: 100%;
         height: 100%;
         background: var(--text-input-bg);
@@ -203,11 +203,11 @@ body {
         border-radius: 3px;
         cursor: default;
         user-select: none;
-        &:focus,&:active {
+        &:focus,
+        &:active {
             outline: none;
             box-shadow: var(--btn-color-focus) 0 0 0px 2px;
         }
-
     }
     svg {
         color: var(--icon-color);
@@ -1405,7 +1405,7 @@ body {
                 // --btn-size: 70px;
                 --extender-size: 60px;
                 position: absolute;
-                color: var(--icon-color);
+                color: var(--font-color);
                 background-color: var(--body-bg-color);
                 right: 10px;
                 top: 0;
@@ -1495,6 +1495,10 @@ body {
                             flex-direction: row;
                             flex-wrap: wrap;
                             gap: 5px;
+
+                            .icon {
+                                color: var(--icon-color);
+                            }
 
                             .optionSelected {
                                 background-color: var(--btn-color-focus);

@@ -342,7 +342,7 @@ window.themeProps = {
     "--listItem-bg-color": "ListItem BG Color",
     "--listItem-bg-color-hover": "ListItem BG Color Hovered",
     "--listItem-bg-color-read": "ListItem BG Color AlreadyRead",
-    "--listItem-bg-color-current": "ListItem BG Color",
+    "--listItem-bg-color-current": "ListItem BG Color (Current in SideList)",
     "--readerSettings-bg": "Reader Settings BG",
     "--readerSettings-toggleBtn-bg-color": "Reader Setting Toggle Button Color",
     "--readerSettings-toggleBtn-bg-color-hover": "Reader Setting Toggle Button Color Hovered",

@@ -196,7 +196,9 @@ const ReaderSettings = ({
                                 <FontAwesomeIcon icon={faArrowsAltH} />
                             </button>
                             <button
-                                className={appSettings.readerSettings.fitOption === 3 ? "optionSelected " : " "}
+                                className={
+                                    (appSettings.readerSettings.fitOption === 3 ? "optionSelected " : " ") + "icon"
+                                }
                                 onClick={() => {
                                     dispatch(
                                         setReaderSettings({

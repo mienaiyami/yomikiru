@@ -32,7 +32,7 @@ const LocationListItem = ({
                 appSettings.baseDir
         ) {
             openInReader(link);
-        } else if ([".zip", ".cbz"].includes(window.path.extname(name))) {
+        } else if (name.includes("[ZIP file]") || name.includes("[CBZ file]")) {
             openInReader(link);
         } else setCurrentLink(link);
     };
