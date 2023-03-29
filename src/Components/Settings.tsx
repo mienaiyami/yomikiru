@@ -202,29 +202,30 @@ const Settings = (): ReactElement => {
                 //             : Math.ceil(opacity * 2.55).toString(16))
                 // );
             }
-        }, [rawColor, opacity]);
-        useLayoutEffect(() => {
-            if (firstRendered) {
-                // if (process.platform === "win32") {
-                //     //! fix - change theme without saving
-                //     if (prop === "--icon-color")
-                //         window.electron.getCurrentWindow().setTitleBarOverlay({ symbolColor: rawColor });
-                //     if (prop === "--topBar-color")
-                //         window.electron.getCurrentWindow().setTitleBarOverlay({ color: rawColor });
-                // }
-                // document.body.style.setProperty(prop, rawColorWhole);
-                applyThemeTemp();
-            }
-        }, [rawColorWhole]);
+        }, [rawColor, opacity, rawColorWhole]);
+        // useLayoutEffect(() => {
+        //     if (firstRendered) {
+        //         // if (process.platform === "win32") {
+        //         //     //! fix - change theme without saving
+        //         //     if (prop === "--icon-color")
+        //         //         window.electron.getCurrentWindow().setTitleBarOverlay({ symbolColor: rawColor });
+        //         //     if (prop === "--topBar-color")
+        //         //         window.electron.getCurrentWindow().setTitleBarOverlay({ color: rawColor });
+        //         // }
+        //         // document.body.style.setProperty(prop, rawColorWhole);
+        //         applyThemeTemp();
+        //     }
+        // }, [rawColorWhole]);
         return (
             <>
                 <td>
                     <button
                         className="resetBtn"
                         onClick={() => {
-                            setRawColor(color);
-                            setOpacity(color.length > 7 ? parseInt(color.substring(7), 16) / 2.55 : 100);
+                            setChecked(color.substring(0, 4) === "var(" ? true : false);
                             setRawColorWhole(color);
+                            setRawColor(color.substring(0, 7));
+                            setOpacity(color.length > 7 ? parseInt(color.substring(7), 16) / 2.55 : 100);
                         }}
                         title="Reset"
                     >
@@ -499,7 +500,8 @@ const Settings = (): ReactElement => {
                                         });
                                     }}
                                 >
-                                    <FontAwesomeIcon icon={faPlus} /> / <FontAwesomeIcon icon={faEdit} />
+                                    <FontAwesomeIcon icon={faPlus} /> <span className="icon">/</span>{" "}
+                                    <FontAwesomeIcon icon={faEdit} />
                                 </button>
                             </td>
                         </tr>

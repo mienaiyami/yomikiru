@@ -178,6 +178,10 @@ body {
     user-select: none;
     overflow: hidden;
 
+    .icon {
+        color: var(--icon-color);
+    }
+
     button {
         font-family: inherit;
 
@@ -1495,10 +1499,6 @@ body {
                             flex-direction: row;
                             flex-wrap: wrap;
                             gap: 5px;
-
-                            .icon {
-                                color: var(--icon-color);
-                            }
 
                             .optionSelected {
                                 background-color: var(--btn-color-focus);
