@@ -13,16 +13,19 @@ const setBodyTheme = ({ allData, name }: Themes) => {
             document.body.style.cssText = themeStr || "";
             document.body.setAttribute("data-theme", name);
             if (process.platform === "win32") {
-                window.electron.getCurrentWindow().setTitleBarOverlay({
-                    color: window.getComputedStyle(document.querySelector("body #topBar")!).backgroundColor,
-                    symbolColor: window.getComputedStyle(document.querySelector("body #topBar .homeBtns button")!)
-                        .color,
-                    height: Math.floor(40 * window.electron.webFrame.getZoomFactor()),
-                });
+                setTimeout(() => {
+                    window.electron.getCurrentWindow().setTitleBarOverlay({
+                        color: window.getComputedStyle(document.querySelector("body #topBar")!).backgroundColor,
+                        symbolColor: window.getComputedStyle(
+                            document.querySelector("body #topBar .homeBtns button")!
+                        ).color,
+                        height: Math.floor(40 * window.electron.webFrame.getZoomFactor()),
+                    });
 
-                (document.querySelector(".windowBtnCont") as HTMLDivElement).style.right = `${
-                    140 * (1 / window.electron.webFrame.getZoomFactor())
-                }px`;
+                    (document.querySelector(".windowBtnCont") as HTMLDivElement).style.right = `${
+                        140 * (1 / window.electron.webFrame.getZoomFactor())
+                    }px`;
+                }, 1000);
             }
         } else {
             window.dialog.customError({
