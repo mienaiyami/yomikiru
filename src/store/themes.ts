@@ -17,11 +17,11 @@ const setBodyTheme = ({ allData, name }: Themes) => {
                     color: window.getComputedStyle(document.querySelector("body #topBar")!).backgroundColor,
                     symbolColor: window.getComputedStyle(document.querySelector("body #topBar .homeBtns button")!)
                         .color,
-                    height: Math.floor(40 * window.devicePixelRatio),
+                    height: Math.floor(40 * window.electron.webFrame.getZoomFactor()),
                 });
 
                 (document.querySelector(".windowBtnCont") as HTMLDivElement).style.right = `${
-                    138 * (1 / window.devicePixelRatio)
+                    140 * (1 / window.electron.webFrame.getZoomFactor())
                 }px`;
             }
         } else {

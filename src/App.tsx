@@ -265,17 +265,17 @@ const App = (): ReactElement => {
                 if (window.app.isReaderOpen) return closeReader();
                 window.location.reload();
             }
-            if (process.platform === "win32") {
-                if (e.ctrlKey && (e.key === "=" || e.key === "-" || e.key === "0"))
-                    setTimeout(() => {
-                        window.electron.getCurrentWindow().setTitleBarOverlay({
-                            height: Math.floor(40 * window.devicePixelRatio),
-                        });
-                        // page nav/ window btn cont width
-                        (document.querySelector(".windowBtnCont") as HTMLDivElement).style.right = `${
-                            138 * (1 / window.devicePixelRatio)
-                        }px`;
-                    }, 600);
+            // if (process.platform === "win32")
+            if (e.ctrlKey && (e.key === "=" || e.key === "-" || e.key === "0")) {
+                setTimeout(() => {
+                    window.electron.getCurrentWindow().setTitleBarOverlay({
+                        height: Math.floor(40 * window.electron.webFrame.getZoomFactor()),
+                    });
+                    // page nav/ window btn cont width
+                    (document.querySelector(".windowBtnCont") as HTMLDivElement).style.right = `${
+                        140 * (1 / window.electron.webFrame.getZoomFactor())
+                    }px`;
+                }, 1000);
             }
         };
 
