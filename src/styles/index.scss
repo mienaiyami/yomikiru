@@ -1290,6 +1290,7 @@ body {
                 box-sizing: border-box;
                 transform: translateX(-99%);
                 transition: 0.2s transform;
+                overflow: hidden;
 
                 .indicator {
                     position: absolute;
@@ -1335,6 +1336,7 @@ body {
                     margin-top: 7px;
                     margin-bottom: 5px;
                     padding: 5px;
+                    padding-right: 10px;
                     display: flex;
                     flex-direction: column;
                     // display: grid;
@@ -1345,18 +1347,24 @@ body {
                     cursor: text;
                     font-weight: 300;
                     font-size: 16px;
+                    > div {
+                        display: grid;
+                        grid-template-columns: 5rem 1rem auto;
+                        > span {
+                            word-break: break-word;
+                        }
+                        .bold {
+                            font-size: 20px;
+                            font-weight: 700;
+                            display: inline-block;
+                            position: relative;
+                            // width: 85px;
 
-                    .prop {
-                        font-size: 20px;
-                        font-weight: 700;
-                        display: inline-block;
-                        position: relative;
-                        width: 85px;
-
-                        &::after {
-                            content: ":";
-                            position: absolute;
-                            right: 3px;
+                            // &::after {
+                            //     content: ":";
+                            //     position: absolute;
+                            //     right: 3px;
+                            // }
                         }
                     }
                 }
