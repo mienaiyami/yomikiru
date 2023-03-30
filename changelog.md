@@ -22,7 +22,7 @@ Linux distribution currently not available as direct download but can be build e
 
 ## Fixed
 
-- #80 and other Fixes.
+- #86, #87 and other Fixes.
 
 ---
 

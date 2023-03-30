@@ -1,7 +1,7 @@
 {
     "name": "yomikiru",
     "productName": "Yomikiru",
-    "version": "2.9.2",
+    "version": "2.9.3",
     "description": "App to read manga/comic offline on desktop",
     "main": ".webpack/main",
     "author": {

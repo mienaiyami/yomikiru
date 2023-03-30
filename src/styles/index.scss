@@ -581,6 +581,8 @@ body {
                                 overflow: hidden;
                                 text-overflow: ellipsis;
                                 display: -webkit-box;
+
+                                word-break: break-all;
                                 -webkit-line-clamp: 1;
                                 /* number of lines to show */
                                 -webkit-box-orient: vertical;
