@@ -1351,6 +1351,7 @@ body {
                     > div {
                         display: grid;
                         grid-template-columns: 5rem 1rem auto;
+                        align-items: center;
                         > span {
                             word-break: break-word;
                         }
