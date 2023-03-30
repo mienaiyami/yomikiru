@@ -1,6 +1,7 @@
 import { createSlice, PayloadAction } from "@reduxjs/toolkit";
 
-const initialState = {
+const initialState: typeof window.app.linkInReader = {
+    type: "image",
     link: window.loadManga || "",
     page: 5,
 };

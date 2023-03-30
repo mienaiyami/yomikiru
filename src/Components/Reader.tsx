@@ -479,7 +479,7 @@ const Reader = () => {
                     setCurrentPageNumber(readerStuff.page || 1);
                     return loadImgs(readerStuff.link, imgs);
                 }
-                dispatch(setLinkInReader({ link: mangaInReader?.link || "", page: 1 }));
+                dispatch(setLinkInReader({ type: "image", link: mangaInReader?.link || "", page: 1 }));
             },
             true
         );
@@ -862,7 +862,7 @@ const Reader = () => {
         <div
             ref={readerRef}
             id="reader"
-            className={isSideListPinned ? "sideListPinned" : ""}
+            className={isSideListPinned ? "sideListPinned " : "" + "reader "}
             style={{
                 gridTemplateColumns: sideListWidth + "px auto",
 

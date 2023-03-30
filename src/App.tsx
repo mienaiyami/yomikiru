@@ -133,7 +133,7 @@ const App = (): ReactElement => {
                 callback(true);
             });
         const linkSplitted = link.split(window.path.sep);
-        if ([".zip", ".cbz"].includes(window.path.extname(link))) {
+        if ([".zip", ".cbz"].includes(window.path.extname(link).toLowerCase())) {
             let tempExtractPath = window.path.join(
                 window.electron.app.getPath("temp"),
                 `yomikiru-tempImages-${linkSplitted[linkSplitted.length - 1]}-${window.app.randomString(10)}`
@@ -174,19 +174,28 @@ const App = (): ReactElement => {
     const openInReader = (link: string, page?: number) => {
         link = window.path.normalize(link);
         if (link === linkInReader.link) return;
-        checkValidFolder(
-            link,
-            (isValid, imgs) => {
-                if (isValid && imgs) {
-                    window.cachedImageList = {
-                        link,
-                        images: imgs,
-                    };
-                    dispatch(setLinkInReader({ link, page: page || 1 }));
-                }
-            },
-            true
-        );
+        if (link.toLowerCase().includes(".epub")) {
+            dispatch(
+                setLinkInReader({
+                    type: "book",
+                    link: link,
+                    page: 1,
+                })
+            );
+        } else
+            checkValidFolder(
+                link,
+                (isValid, imgs) => {
+                    if (isValid && imgs) {
+                        window.cachedImageList = {
+                            link,
+                            images: imgs,
+                        };
+                        dispatch(setLinkInReader({ type: "image", link, page: page || 1 }));
+                    }
+                },
+                true
+            );
     };
     // const updateLastHistoryPageNumber = () => {
     //     if (history.length > 0)
@@ -205,7 +214,7 @@ const App = (): ReactElement => {
         // console.log(linkInReader, window.app.linkInReader);
         dispatch(updateLastHistoryPage());
         dispatch(setReaderOpen(false));
-        dispatch(setLinkInReader({ link: "", page: 1 }));
+        dispatch(setLinkInReader({ type: "", link: "", page: 1 }));
         dispatch(setLoadingManga(false));
         dispatch(setLoadingMangaPercent(0));
         dispatch(setMangaInReader(null));

@@ -2,6 +2,7 @@ import { app, dialog, getCurrentWindow, clipboard, nativeImage, shell } from "@e
 import { ipcRenderer, webFrame } from "electron";
 import crossZip from "cross-zip";
 import chokidar from "chokidar";
+// import ePub from "epubjs";
 import log from "electron-log";
 log.transports.file.resolvePath = () => path.join(app.getPath("userData"), "logs/renderer.log");
 /*//! i know its dangerous but its offline app and i was unable to get BrowserWindow to work
@@ -125,6 +126,7 @@ declare global {
          * Supported image formats.
          */
         supportedFormats: string[];
+        // epub: typeof ePub;
         path: typeof path;
         fs: typeof fs;
         themeProps: { [e in ThemeDataMain]: string };
@@ -153,6 +155,7 @@ declare global {
              * why did i add this? bcoz fking linkInReader state is showing initial only in App.tsx
              */
             linkInReader: {
+                type: "image" | "book" | "";
                 link: string;
                 page: number;
             };
@@ -488,6 +491,7 @@ window.shortcutsFunctions = [
 window.logger = log;
 window.crossZip = crossZip;
 window.chokidar = chokidar;
+// window.epub = ePub;
 const collator = Intl.Collator(undefined, { numeric: true, sensitivity: "base" });
 window.app.betterSortOrder = collator.compare;
 window.app.replaceExtension = (str, replaceWith = "~") => {
@@ -498,6 +502,7 @@ window.app.replaceExtension = (str, replaceWith = "~") => {
 window.app.deleteDirOnClose = "";
 window.app.currentPageNumber = 1;
 window.app.linkInReader = {
+    type: "",
     link: "",
     page: 1,
 };

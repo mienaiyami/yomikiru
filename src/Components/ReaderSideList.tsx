@@ -133,7 +133,7 @@ const ReaderSideList = ({
                                     );
                                 }
                             });
-                    } else if ([".zip", ".cbz"].includes(window.path.extname(path))) {
+                    } else if ([".zip", ".cbz"].includes(window.path.extname(path).toLowerCase())) {
                         validFile++;
                         setTimeout(() => {
                             responseCompleted++;
@@ -320,7 +320,7 @@ const ReaderSideList = ({
                             // todo: removing updateHistory page on chapter change in same manga
                             // dispatch(updateLastHistoryPage({ linkInReader: linkInReader.link }));
                             // todo : do i need this?
-                            dispatch(setLinkInReader({ link: prevNextChapter.prev, page: 1 }));
+                            dispatch(setLinkInReader({ type: "image", link: prevNextChapter.prev, page: 1 }));
                         }}
                     >
                         <FontAwesomeIcon icon={faArrowLeft} />
@@ -377,7 +377,7 @@ const ReaderSideList = ({
                         disabled={prevNextChapter.next === "~"}
                         clickAction={() => {
                             // dispatch(updateLastHistoryPage({ linkInReader: linkInReader.link }));
-                            dispatch(setLinkInReader({ link: prevNextChapter.next, page: 1 }));
+                            dispatch(setLinkInReader({ type: "image", link: prevNextChapter.next, page: 1 }));
                         }}
                     >
                         <FontAwesomeIcon icon={faArrowRight} />
