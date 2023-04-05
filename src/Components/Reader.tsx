@@ -621,7 +621,7 @@ const Reader = () => {
                     setImageWidthContainer((init) => [...init, { img, index: i, isWide: false }]);
                 };
             }
-            img.src = "file://" + e;
+            img.src = "file://" + e.replaceAll("#", "%23");
         });
     }, [images]);
     useEffect(() => {

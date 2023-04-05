@@ -1351,9 +1351,12 @@ body {
                     > div {
                         display: grid;
                         grid-template-columns: 5rem 1rem auto;
-                        align-items: center;
+                        align-items: baseline;
                         > span {
                             word-break: break-word;
+                            &:not(.bold) {
+                                padding-top: 0.3rem;
+                            }
                         }
                         .bold {
                             font-size: 20px;

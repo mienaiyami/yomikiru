@@ -659,7 +659,7 @@ const Settings = (): ReactElement => {
                                         Make scrolling smooth and prevent stuttering when reading high res images.
                                         <br />
                                         Drawbacks include high RAM usage and less crispy images when size is set to
-                                        a low value.(BETA)
+                                        a low value.<code>BETA</code>
                                     </p>
                                 </label>
                                 <button

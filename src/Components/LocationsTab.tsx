@@ -141,7 +141,7 @@ const LocationsTab = (): ReactElement => {
                         data-tooltip="Type to Search"
                         // tabIndex={-1}
                         onKeyDown={(e) => {
-                            e.stopPropagation();
+                            if (!e.ctrlKey) e.stopPropagation();
                             // if (/\[|\]|\(|\)|\*|\+|\?/gi.test(e.key)) {
                             //     e.preventDefault();
                             // }
