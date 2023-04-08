@@ -789,7 +789,7 @@ body {
             left: 0;
             z-index: 1000;
             display: grid;
-            background: #0004;
+            // background: #0004;
             place-items: center;
             // transition: 0.3s all;
 
@@ -814,6 +814,8 @@ body {
                 position: absolute;
                 width: 100%;
                 height: 100%;
+                opacity: 0.75;
+                background-color: var(--body-bg-color);
             }
 
             .cont {
@@ -825,6 +827,7 @@ body {
                 height: 90%;
                 transform: scale(0);
                 box-shadow: rgba(0, 0, 0, 0.3) 0px 0px 19px 25px;
+                // box-shadow: var(--btn-color) 0 0 10px 10px;
                 overflow: auto;
 
                 &.noScroll {
