@@ -1694,12 +1694,14 @@ body {
                     // make var
                     // margin: 0 200px;
                     padding: 0 600px;
-                    line-height: 1.2em;
-                    font-size: 1.2em;
+                    // line-height: 1.2em;
+                    // font-size: 1.2em;
                     margin: 20px 0;
+                    // *:not(style, p, p *, h1, h2) {
+                    //     display: flex;
+                    //     flex-direction: column;
+                    // }
                     * {
-                        display: flex;
-                        flex-direction: column;
                         user-select: text !important;
                     }
                     section {
@@ -1713,29 +1715,23 @@ body {
                             text-decoration-style: solid;
                         }
                     }
-                    p,
-                    p * {
-                        display: initial;
-                    }
-
-                    h1,
-                    h2 {
-                        display: block;
-                        margin: 10px 0;
-                    }
-                    p {
-                        margin: 5px 0;
-                    }
+                    // h1,
+                    // h2 {
+                    //     margin: 10px 0;
+                    // }
+                    // p {
+                    //     margin: 5px 0;
+                    // }
                     a {
                         cursor: pointer;
-                        flex-direction: row;
+                        // flex-direction: row;
                     }
                     img {
                         // MAKE VAR
-                        max-width: 60%;
-                        margin: 20px 0;
-                        align-self: center;
-                        justify-self: center;
+                        // max-width: 60%;
+                        // margin: 20px 0;
+                        // align-self: center;
+                        // justify-self: center;
                     }
                 }
             }

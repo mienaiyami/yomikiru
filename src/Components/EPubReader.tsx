@@ -1,4 +1,5 @@
 import { useContext, useEffect, useLayoutEffect, useRef, useState } from "react";
+import css, { Rule as CSSRule } from "css";
 import { AppContext } from "../App";
 import { useAppDispatch, useAppSelector } from "../store/hooks";
 import { setReaderSettings } from "../store/appSettings";
@@ -42,12 +43,55 @@ const EPubReader = () => {
      * string of id
      */
     const [displayOrder, setDisplayOrder] = useState<string[]>([]);
+    /**
+     * url of stylesheets
+     */
+    const [epubStylesheets, setEpubStylesheets] = useState<string[]>([]);
 
     const ImagePart = ({ src }: { src: ReaderImageSrc }) => {
         return (
             <div className="cont imgCont">
                 <img src={src} alt="Image" />
             </div>
+        );
+    };
+
+    const StyleSheets = ({ sheets }: { sheets: string[] }) => {
+        return (
+            <div
+                className="stylesheets"
+                ref={(node) => {
+                    if (node) {
+                        sheets.forEach((url) => {
+                            const stylesheet = document.createElement("style");
+                            let txt = window.fs.readFileSync(url, "utf-8");
+                            // console.log(txt, url, epubStylesheets);
+                            const matches = Array.from(txt.matchAll(/url\((.*?)\);/gi));
+                            matches.forEach((e) => {
+                                // for font
+                                const url_old = e[1].slice(1, -1);
+                                txt = txt.replaceAll(
+                                    url_old,
+                                    "file://" +
+                                        window.path.join(window.path.dirname(url), url_old).replaceAll("\\", "/")
+                                );
+                                // to make sure styles dont apply outside
+                                const ast = css.parse(txt);
+                                ast.stylesheet?.rules.forEach((e) => {
+                                    if (e.type === "rule") {
+                                        (e as CSSRule).selectors = (e as CSSRule).selectors?.map((e) =>
+                                            e.includes("section.main") ? e : "section.main " + e
+                                        );
+                                    }
+                                });
+                                txt = css.stringify(ast);
+                            });
+                            stylesheet.innerHTML = txt;
+                            node.appendChild(stylesheet);
+                        });
+                    }
+                }}
+            ></div>
         );
     };
 
@@ -62,18 +106,7 @@ const EPubReader = () => {
                             node.removeChild(node.childNodes[0]);
                         }
                         node.id = "epub-" + xhtml.body.id;
-                        // node.setAttribute("data-link-id", url);
-                        // xhtml.querySelectorAll('[rel="stylesheet"').forEach((e) => {
-                        //     const href = e.getAttribute("href") || "$$";
-                        //     if (!loadedStylesheets.includes(href)) {
-                        //         const stylesheet = document.createElement("style");
-                        //         const txt = window.fs.readFileSync(href, "utf-8");
-                        //         console.log(txt, href, loadedStylesheets);
-                        //         stylesheet.innerHTML = txt;
-                        //         node.appendChild(stylesheet);
-                        //         // setLoadedStylesheets((init) => [...init, href]);
-                        //     }
-                        // });
+                        node.setAttribute("data-link-id", url);
                         xhtml.body.childNodes.forEach((childNode) => {
                             node.appendChild(childNode.cloneNode(true));
                         });
@@ -166,13 +199,14 @@ const EPubReader = () => {
                 const manifestData = CONTENT_OPF.querySelectorAll("manifest > item");
                 if (manifestData.length > 0) {
                     const tempDisplayData: DisplayData[] = [];
+                    const tempStylesheets: string[] = [];
                     manifestData.forEach((e) => {
                         const mediaType = e.getAttribute("media-type");
                         if (mediaType === "application/xhtml+xml") {
                             const href = e.getAttribute("href");
                             if (href) {
                                 const filePath = window.path.join(window.path.dirname(CONTENT_PATH), href);
-                                const txt = window.fs.readFileSync(filePath, "utf-8");
+                                const txt = window.fs.readFileSync(decodeURIComponent(filePath), "utf-8");
                                 const xhtml = parser.parseFromString(txt, "application/xhtml+xml");
                                 xhtml.querySelectorAll("[src]").forEach((e) => {
                                     const src_old = e.getAttribute("src") || "";
@@ -183,16 +217,18 @@ const EPubReader = () => {
                                 });
                                 // console.log(xhtml.querySelectorAll("[href]"));
                                 xhtml.querySelectorAll("[href]").forEach((e) => {
-                                    const href_old = e.getAttribute("href") || "$$";
-                                    if (!href_old.startsWith("http")) {
-                                        // (e as HTMLLinkElement).href = (e as HTMLLinkElement).href.split("#").splice(-1)[0];
-                                        e.setAttribute(
-                                            "data-href",
-                                            window.path.join(window.path.dirname(filePath), href_old)
-                                        );
-                                        e.removeAttribute("href");
-                                    }
+                                    const href_old = e.getAttribute("href");
+                                    if (href_old)
+                                        if (!href_old.startsWith("http")) {
+                                            // (e as HTMLLinkElement).href = (e as HTMLLinkElement).href.split("#").splice(-1)[0];
+                                            e.setAttribute(
+                                                "data-href",
+                                                window.path.join(window.path.dirname(filePath), href_old)
+                                            );
+                                            e.removeAttribute("href");
+                                        }
                                 });
+
                                 xhtml.querySelectorAll("[id]").forEach((e) => e.removeAttribute("id"));
                                 xhtml.body.id = e.getAttribute("id") || "";
                                 tempDisplayData.push({
@@ -218,6 +254,13 @@ const EPubReader = () => {
                                 });
                             }
                         }
+                        if (mediaType === "text/css") {
+                            const href_old = e.getAttribute("href");
+                            if (href_old) {
+                                const href = window.path.join(window.path.dirname(CONTENT_PATH), href_old);
+                                tempStylesheets.push(href);
+                            }
+                        }
                     });
                     const spineData = CONTENT_OPF.querySelectorAll("spine > itemref");
                     if (spineData.length > 0) {
@@ -226,6 +269,7 @@ const EPubReader = () => {
                             tempIDREf.push(e.getAttribute("idref") || "no-idref-found-" + i);
                         });
                         setDisplayData(tempDisplayData);
+                        setEpubStylesheets(tempStylesheets);
                         setDisplayOrder(tempIDREf);
                     }
                 }
@@ -250,6 +294,7 @@ const EPubReader = () => {
             tabIndex={-1}
         >
             <section className="main">
+                <StyleSheets sheets={epubStylesheets} />
                 {displayOrder.map((e, i) => (
                     <PartCont data={displayData.find((a) => a.id === e) || e} key={"key-" + i} />
                 ))}
