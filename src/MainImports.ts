@@ -121,6 +121,10 @@ declare global {
          * watch for change in file/dir.
          */
         chokidar: typeof chokidar;
+        /**
+         * take string and make it safe for file system
+         */
+        makeFileSafe: (string: string) => string;
         logger: typeof log;
         /**
          * Supported image formats.
@@ -134,9 +138,13 @@ declare global {
         app: {
             betterSortOrder: (x: string, y: string) => number;
             /**
-             * returns string where .cbz and .zip are replace with " - CBZ file" and " - ZIP file"
+             * returns string where .cbz and .zip are replace with " - CBZ file" and " - ZIP file" etc.
              */
             replaceExtension: (str: string, replaceWith?: string) => string;
+            /**
+             * check if url is zip,cbz,epub or any supported extension.
+             */
+            isSupportedFormat: (str: string) => boolean;
             /**
              * temp dir to be removed after closing chapter which was extracted
              */
@@ -491,14 +499,21 @@ window.shortcutsFunctions = [
 window.logger = log;
 window.crossZip = crossZip;
 window.chokidar = chokidar;
+window.makeFileSafe = (string: string): string => {
+    return string.replace(/(:|\\|\/|\||<|>|\*|\?)/g, "");
+};
+
 // window.epub = ePub;
 const collator = Intl.Collator(undefined, { numeric: true, sensitivity: "base" });
 window.app.betterSortOrder = collator.compare;
 window.app.replaceExtension = (str, replaceWith = "~") => {
     return str
-        .replace(/\.zip/gi, replaceWith === "~" ? " [ZIP file]" : replaceWith)
-        .replace(/\.cbz/gi, replaceWith === "~" ? " [CBZ file]" : replaceWith);
+        .replace(/\.zip/gi, replaceWith === "~" ? " [zip file]" : replaceWith)
+        .replace(/\.cbz/gi, replaceWith === "~" ? " [CBZ file]" : replaceWith)
+        .replace(/\.epub/gi, replaceWith === "~" ? " [EPub file]" : replaceWith);
 };
+window.app.isSupportedFormat = (str: string) =>
+    str.includes("[zip file]") || str.includes("[CBZ file]") || str.includes("[EPub file]");
 window.app.deleteDirOnClose = "";
 window.app.currentPageNumber = 1;
 window.app.linkInReader = {

@@ -1678,5 +1678,67 @@ body {
                 }
             }
         }
+        #EPubReader {
+            section.main {
+                width: 100%;
+                display: flex;
+                position: relative;
+                flex-direction: column;
+                align-items: center;
+                > .cont {
+                    display: flex;
+                    flex-direction: column;
+                    justify-content: center;
+                    width: 100%;
+                    transform: translate3d(0, 0, 0);
+                    // make var
+                    // margin: 0 200px;
+                    padding: 0 600px;
+                    line-height: 1.2em;
+                    font-size: 1.2em;
+                    margin: 20px 0;
+                    * {
+                        display: flex;
+                        flex-direction: column;
+                        user-select: text !important;
+                    }
+                    section {
+                        width: 100%;
+                    }
+                    a {
+                        text-decoration-line: underline;
+                        text-decoration-style: dotted;
+                        // text-decoration-thickness: from-font;
+                        &:hover {
+                            text-decoration-style: solid;
+                        }
+                    }
+                    p,
+                    p * {
+                        display: initial;
+                    }
+
+                    h1,
+                    h2 {
+                        display: block;
+                        margin: 10px 0;
+                    }
+                    p {
+                        margin: 5px 0;
+                    }
+                    a {
+                        cursor: pointer;
+                        flex-direction: row;
+                    }
+                    img {
+                        // MAKE VAR
+                        max-width: 60%;
+                        margin: 20px 0;
+                        align-self: center;
+                        justify-self: center;
+                    }
+                }
+            }
+        }
     }
 }
