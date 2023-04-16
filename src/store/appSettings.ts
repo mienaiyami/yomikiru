@@ -38,6 +38,9 @@ type AppSettingsOptional = {
 type ReaderSettingsOptional = {
     [K in keyof AppSettings["readerSettings"]]?: AppSettings["readerSettings"][K];
 };
+type EPUBReaderSettingsOptional = {
+    [K in keyof AppSettings["epubReaderSettings"]]?: AppSettings["epubReaderSettings"][K];
+};
 
 // type AppSettingsToggleable = {
 //     [K in keyof AppSettings as AppSettings[K] extends boolean | IsUnion<AppSettings[K]> ? K : never]?: boolean;
@@ -70,6 +73,17 @@ export const appSettings = createSlice({
             saveJSONfile(settingsPath, newSettings);
             return newSettings;
         },
+        setEpubReaderSettings: (state, action: PayloadAction<EPUBReaderSettingsOptional>) => {
+            const newSettings: AppSettings = {
+                ...state,
+                epubReaderSettings: {
+                    ...state.epubReaderSettings,
+                    ...action.payload,
+                },
+            };
+            saveJSONfile(settingsPath, newSettings);
+            return newSettings;
+        },
 
         // toggleInMain: (state, action: PayloadAction<AppSettingsToggleableKeys[]>) => {
         //     const newSetting = { ...state };
@@ -91,5 +105,5 @@ export const appSettings = createSlice({
     },
 });
 
-export const { setAppSettings, makeNewSettings, setReaderSettings } = appSettings.actions;
+export const { setAppSettings, makeNewSettings, setReaderSettings, setEpubReaderSettings } = appSettings.actions;
 export default appSettings.reducer;

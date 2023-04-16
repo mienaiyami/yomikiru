@@ -118,7 +118,7 @@ body.zenMode {
     }
 
     #app #reader .currentMangaList,
-    #readerSettings,
+    .readerSettings,
     #topBar {
         display: none;
     }
@@ -372,7 +372,6 @@ body {
                 height: 100%;
                 visibility: hidden;
                 width: calc(var(--button-width) * 2);
-
                 &::before {
                     top: 100%;
                     left: 50%;
@@ -1415,7 +1414,7 @@ body {
                 }
             }
 
-            #readerSettings {
+            .readerSettings {
                 // --btn-size: 70px;
                 --extender-size: 60px;
                 position: absolute;
@@ -1685,6 +1684,22 @@ body {
                 position: relative;
                 flex-direction: column;
                 align-items: center;
+                --hyphenation: none;
+                --width: 50%;
+                --line-height: "normal";
+                --word-spacing: "normal";
+                --paragraph-gap: 1.6em 0;
+                --font-family: "inherit";
+                &.forceFont {
+                    > .cont * {
+                        font-family: var(--font-family) !important;
+                    }
+                }
+                &.forceParaGap {
+                    > .cont p {
+                        margin: var(--paragraph-gap) !important;
+                    }
+                }
                 > .cont {
                     display: flex;
                     flex-direction: column;
@@ -1693,7 +1708,8 @@ body {
                     transform: translate3d(0, 0, 0);
                     // make var
                     // margin: 0 200px;
-                    padding: 0 600px;
+                    // padding: 0 600px;
+                    width: var(--width);
                     // line-height: 1.2em;
                     // font-size: 1.2em;
                     margin: 20px 0;
@@ -1703,36 +1719,42 @@ body {
                     // }
                     * {
                         user-select: text !important;
+                        line-height: var(--line-height);
+                        word-spacing: var(--word-spacing);
                     }
-                    section {
-                        width: 100%;
-                    }
+                    // section {
+                    //     width: 100%;
+                    // }
                     a {
                         text-decoration-line: underline;
                         text-decoration-style: dotted;
                         // text-decoration-thickness: from-font;
+                        cursor: pointer;
+                        // flex-direction: row;
+                        color: inherit;
                         &:hover {
                             text-decoration-style: solid;
                         }
+                    }
+                    a[href]::before {
+                        content: "[external] ";
                     }
                     // h1,
                     // h2 {
                     //     margin: 10px 0;
                     // }
-                    // p {
-                    //     margin: 5px 0;
+                    p {
+                        // margin: 5px 0;
+                        // hyphens: var(--hyphenation) !important;
+                        hyphens: auto !important;
+                    }
+                    // img {
+                    // MAKE VAR
+                    // max-width: 60%;
+                    // margin: 20px 0;
+                    // align-self: center;
+                    // justify-self: center;
                     // }
-                    a {
-                        cursor: pointer;
-                        // flex-direction: row;
-                    }
-                    img {
-                        // MAKE VAR
-                        // max-width: 60%;
-                        // margin: 20px 0;
-                        // align-self: center;
-                        // justify-self: center;
-                    }
                 }
             }
         }

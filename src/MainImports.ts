@@ -54,6 +54,9 @@ export const settingValidatorData = {
     // disableCachingCanvas: false,
     recordChapterRead: true,
     readerSettings: {
+        /**
+         * width of reader in percent
+         */
         readerWidth: 0,
         variableImageSize: false,
         /**
@@ -73,6 +76,7 @@ export const settingValidatorData = {
         widthClamped: true,
         gapSize: 0,
         showPageNumberInZenMode: false,
+        //! rename accordingly
         scrollSpeed: 0,
         largeScrollMultiplier: 0,
         /**
@@ -96,6 +100,33 @@ export const settingValidatorData = {
         maxHeightWidthSelector: ["none", "width", "height"],
         maxWidth: 500,
         maxHeight: 500,
+    },
+    epubReaderSettings: {
+        /**
+         * width of reader in percent
+         */
+        readerWidth: 50,
+        /**
+         * font size in px.
+         */
+        fontSize: 16,
+        useDefault_fontFamily: true,
+        fontFamily: "Roboto",
+        useDefault_lineSpacing: true,
+        /**
+         * line height in em
+         */
+        lineSpacing: 1.4,
+        useDefault_paragraphSpacing: true,
+        /**
+         * gap in em
+         */
+        paragraphSpacing: 2,
+        useDefault_wordSpacing: true,
+        wordSpacing: 1,
+        hyphenation: false,
+        scrollSpeedA: 0,
+        scrollSpeedB: 0,
     },
 } as const;
 
@@ -634,6 +665,21 @@ const defaultSettings: AppSettings = {
         maxHeightWidthSelector: "none",
         maxHeight: 500,
         maxWidth: 500,
+    },
+    epubReaderSettings: {
+        readerWidth: 50,
+        fontSize: 16,
+        useDefault_fontFamily: true,
+        fontFamily: "Roboto",
+        useDefault_lineSpacing: true,
+        lineSpacing: 1.4,
+        useDefault_paragraphSpacing: true,
+        paragraphSpacing: 2,
+        useDefault_wordSpacing: true,
+        wordSpacing: 0,
+        hyphenation: false,
+        scrollSpeedA: 5,
+        scrollSpeedB: 15,
     },
 };
 

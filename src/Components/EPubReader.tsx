@@ -10,6 +10,7 @@ import { setLoadingManga } from "../store/isLoadingManga";
 import { setLinkInReader } from "../store/linkInReader";
 import { newHistory } from "../store/history";
 import { setContextMenu } from "../store/contextMenu";
+import EPUBReaderSettings from "./EPubReaderSettings";
 
 type ReaderImageSrc = string;
 type ReaderHTML = Document;
@@ -47,6 +48,12 @@ const EPubReader = () => {
      * url of stylesheets
      */
     const [epubStylesheets, setEpubStylesheets] = useState<string[]>([]);
+    const [scrollPosPercent, setScrollPosPercent] = useState(0);
+    const [isSideListPinned, setSideListPinned] = useState(false);
+
+    const readerRef = useRef<HTMLDivElement>(null);
+    const mainRef = useRef<HTMLSelectElement>(null);
+    const readerSettingExtender = useRef<HTMLButtonElement>(null);
 
     const ImagePart = ({ src }: { src: ReaderImageSrc }) => {
         return (
@@ -75,17 +82,17 @@ const EPubReader = () => {
                                     "file://" +
                                         window.path.join(window.path.dirname(url), url_old).replaceAll("\\", "/")
                                 );
-                                // to make sure styles dont apply outside
-                                const ast = css.parse(txt);
-                                ast.stylesheet?.rules.forEach((e) => {
-                                    if (e.type === "rule") {
-                                        (e as CSSRule).selectors = (e as CSSRule).selectors?.map((e) =>
-                                            e.includes("section.main") ? e : "section.main " + e
-                                        );
-                                    }
-                                });
-                                txt = css.stringify(ast);
                             });
+                            // to make sure styles dont apply outside
+                            const ast = css.parse(txt);
+                            ast.stylesheet?.rules.forEach((e) => {
+                                if (e.type === "rule") {
+                                    (e as CSSRule).selectors = (e as CSSRule).selectors?.map((e) =>
+                                        e.includes("section.main") ? e : "#EPubReader section.main " + e
+                                    );
+                                }
+                            });
+                            txt = css.stringify(ast);
                             stylesheet.innerHTML = txt;
                             node.appendChild(stylesheet);
                         });
@@ -156,7 +163,6 @@ const EPubReader = () => {
     };
 
     const loadEPub = (link: string) => {
-        console.log("loadEpub");
         link = window.path.normalize(link);
         const linkSplitted = link.split(window.path.sep).filter((e) => e !== "");
         const extractPath = window.path.join(
@@ -271,21 +277,49 @@ const EPubReader = () => {
                         setDisplayData(tempDisplayData);
                         setEpubStylesheets(tempStylesheets);
                         setDisplayOrder(tempIDREf);
+
+                        dispatch(setReaderOpen(true));
                     }
                 }
             }
         });
     };
 
+    const makeScrollPos = () => {
+        // if (isSideListPinned && mainRef.current)
+        //     return setScrollPosPercent(mainRef.current.scrollTop / mainRef.current.scrollHeight);
+        if (readerRef.current) setScrollPosPercent(readerRef.current.scrollTop / readerRef.current.scrollHeight);
+    };
+
+    useLayoutEffect(() => {
+        readerRef.current?.scrollTo(0, scrollPosPercent * readerRef.current.scrollHeight);
+        // mainRef.current?.scrollTo(0, scrollPosPercent * mainRef.current.scrollHeight);
+        console.log(
+            scrollPosPercent,
+            readerRef.current.scrollHeight,
+            scrollPosPercent * readerRef.current.scrollHeight
+        );
+    }, [
+        appSettings.epubReaderSettings.readerWidth,
+        appSettings.epubReaderSettings.fontSize,
+        appSettings.epubReaderSettings.fontFamily,
+        appSettings.epubReaderSettings.lineSpacing,
+        appSettings.epubReaderSettings.paragraphSpacing,
+        appSettings.epubReaderSettings.wordSpacing,
+        appSettings.epubReaderSettings.useDefault_fontFamily,
+        appSettings.epubReaderSettings.useDefault_lineSpacing,
+        appSettings.epubReaderSettings.useDefault_paragraphSpacing,
+        appSettings.epubReaderSettings.useDefault_wordSpacing,
+        isSideListPinned,
+    ]);
+
     useLayoutEffect(() => {
         loadEPub(linkInReader.link);
     }, [linkInReader]);
 
-    useEffect(() => {
-        dispatch(setReaderOpen(true));
-    }, []);
     return (
         <div
+            ref={readerRef}
             id="EPubReader"
             className="reader"
             style={{
@@ -293,7 +327,38 @@ const EPubReader = () => {
             }}
             tabIndex={-1}
         >
-            <section className="main">
+            <EPUBReaderSettings
+                readerRef={readerRef}
+                makeScrollPos={makeScrollPos}
+                readerSettingExtender={readerSettingExtender}
+                // sizePlusRef={sizePlusRef}
+                // sizeMinusRef={sizeMinusRef}
+                // setshortcutText={setshortcutText}
+            />
+            <section
+                className={
+                    "main " +
+                    (appSettings.epubReaderSettings.useDefault_fontFamily ? "" : "forceFont ") +
+                    (appSettings.epubReaderSettings.useDefault_paragraphSpacing ? "" : "forceParaGap ")
+                }
+                ref={mainRef}
+                style={{
+                    fontSize: appSettings.epubReaderSettings.fontSize + "px",
+                    "--font-family": appSettings.epubReaderSettings.useDefault_fontFamily
+                        ? "inherit"
+                        : appSettings.epubReaderSettings.fontFamily,
+                    "--line-height": appSettings.epubReaderSettings.useDefault_lineSpacing
+                        ? "normal"
+                        : appSettings.epubReaderSettings.lineSpacing + "em",
+                    "--word-spacing": appSettings.epubReaderSettings.useDefault_wordSpacing
+                        ? "normal"
+                        : appSettings.epubReaderSettings.wordSpacing + "em",
+                    "--paragraph-gap": appSettings.epubReaderSettings.useDefault_paragraphSpacing
+                        ? "auto"
+                        : appSettings.epubReaderSettings.paragraphSpacing / 2 + "em 0",
+                    "--width": appSettings.epubReaderSettings.readerWidth + "%",
+                }}
+            >
                 <StyleSheets sheets={epubStylesheets} />
                 {displayOrder.map((e, i) => (
                     <PartCont data={displayData.find((a) => a.id === e) || e} key={"key-" + i} />
