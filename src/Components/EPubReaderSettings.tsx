@@ -1,28 +1,41 @@
 import { faBars, faMinus, faPlus, faTimes } from "@fortawesome/free-solid-svg-icons";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import { useEffect, useState } from "react";
+import { useEffect, useLayoutEffect, useState } from "react";
 import { setEpubReaderSettings } from "../store/appSettings";
 import { useAppDispatch, useAppSelector } from "../store/hooks";
+import { getFonts } from "font-list";
 
 const EPUBReaderSettings = ({
     makeScrollPos,
     readerRef,
     readerSettingExtender,
-}: // setshortcutText,
-// sizePlusRef,
-// sizeMinusRef,
-{
+    // setshortcutText,
+    sizePlusRef,
+    sizeMinusRef,
+}: {
     makeScrollPos: () => void;
     readerRef: React.RefObject<HTMLDivElement>;
     readerSettingExtender: React.RefObject<HTMLButtonElement>;
     // setshortcutText: React.Dispatch<React.SetStateAction<string>>;
-    // sizePlusRef: React.RefObject<HTMLButtonElement>;
-    // sizeMinusRef: React.RefObject<HTMLButtonElement>;
+    sizePlusRef: React.RefObject<HTMLButtonElement>;
+    sizeMinusRef: React.RefObject<HTMLButtonElement>;
 }) => {
     const appSettings = useAppSelector((store) => store.appSettings);
     const dispatch = useAppDispatch();
 
     const [isReaderSettingsOpen, setReaderSettingOpen] = useState(false);
+    const [fontList, setFontList] = useState<string[]>([]);
+
+    useLayoutEffect(() => {
+        getFonts()
+            .then((e) => {
+                setFontList(e);
+            })
+            .catch((e) => {
+                console.error("unable to get font list: ", e);
+            });
+    }, []);
+
     const maxWidth = 100;
     useEffect(() => {
         if (isReaderSettingsOpen) {
@@ -88,7 +101,7 @@ const EPUBReaderSettings = ({
                             %
                         </label>
                         <button
-                            // ref={sizeMinusRef}
+                            ref={sizeMinusRef}
                             onClick={(e) => {
                                 makeScrollPos();
                                 // was 20 before
@@ -108,7 +121,7 @@ const EPUBReaderSettings = ({
                             <FontAwesomeIcon icon={faMinus} />
                         </button>
                         <button
-                            // ref={sizePlusRef}
+                            ref={sizePlusRef}
                             onClick={(e) => {
                                 makeScrollPos();
                                 const steps = appSettings.epubReaderSettings.readerWidth <= 40 ? 5 : 10;
@@ -131,9 +144,8 @@ const EPUBReaderSettings = ({
                 <div className="settingItem">
                     <div className="name">Font</div>
                     <div className="options">
-                        <div className="col">
+                        <div className="row">
                             <label>
-                                <p>Font size&nbsp;:</p>
                                 <input
                                     type="number"
                                     value={appSettings.epubReaderSettings.fontSize}
@@ -154,6 +166,52 @@ const EPUBReaderSettings = ({
                                 />
                                 px
                             </label>
+                            <button
+                                onClick={(e) => {
+                                    makeScrollPos();
+                                    let newSize = appSettings.epubReaderSettings.fontSize - 2;
+
+                                    newSize = newSize < 1 ? 1 : newSize;
+                                    dispatch(setEpubReaderSettings({ fontSize: newSize }));
+                                }}
+                            >
+                                <FontAwesomeIcon icon={faMinus} />
+                            </button>
+                            <button
+                                onClick={(e) => {
+                                    makeScrollPos();
+                                    let newSize = appSettings.epubReaderSettings.fontSize + 2;
+
+                                    newSize = newSize > 100 ? 100 : newSize;
+                                    dispatch(setEpubReaderSettings({ fontSize: newSize }));
+                                }}
+                            >
+                                <FontAwesomeIcon icon={faPlus} />
+                            </button>
+                        </div>
+                        <div className="col">
+                            {/* <label>
+                                <p>Font size&nbsp;:</p>
+                                <input
+                                    type="number"
+                                    value={appSettings.epubReaderSettings.fontSize}
+                                    min={1}
+                                    max={100}
+                                    onKeyDown={(e) => {
+                                        if (e.key !== "Escape") {
+                                            e.stopPropagation();
+                                        }
+                                    }}
+                                    onChange={(e) => {
+                                        makeScrollPos();
+                                        let value = e.target.valueAsNumber;
+                                        if (!value) value = 0;
+                                        value = value >= 100 ? 100 : value;
+                                        dispatch(setEpubReaderSettings({ fontSize: value }));
+                                    }}
+                                />
+                                px
+                            </label> */}
                             <label
                                 className={
                                     !appSettings.epubReaderSettings.useDefault_fontFamily ? "optionSelected " : ""
@@ -171,10 +229,33 @@ const EPUBReaderSettings = ({
                                         );
                                     }}
                                 />
-                                <p>Use custom font.</p>
+                                <p>Custom Font Family (experimental)</p>
                             </label>
-                            {/* //! add font selector */}
-
+                            {/* //todo : make any font selector */}
+                            <label
+                                className={appSettings.epubReaderSettings.useDefault_fontFamily ? "disabled " : ""}
+                            >
+                                <select
+                                    disabled={appSettings.epubReaderSettings.useDefault_fontFamily}
+                                    value={appSettings.epubReaderSettings.fontFamily}
+                                    onChange={(e) => {
+                                        const val = e.currentTarget.value;
+                                        // console.log(val);
+                                        dispatch(
+                                            setEpubReaderSettings({
+                                                fontFamily: val,
+                                            })
+                                        );
+                                    }}
+                                >
+                                    <option value="Roboto">Roboto</option>
+                                    {fontList.map((e) => (
+                                        <option value={e} key={e}>
+                                            {e}
+                                        </option>
+                                    ))}
+                                </select>
+                            </label>
                             <label
                                 className={
                                     !appSettings.epubReaderSettings.useDefault_lineSpacing ? "optionSelected " : ""

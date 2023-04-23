@@ -54,6 +54,31 @@ const EPubReader = () => {
     const readerRef = useRef<HTMLDivElement>(null);
     const mainRef = useRef<HTMLSelectElement>(null);
     const readerSettingExtender = useRef<HTMLButtonElement>(null);
+    const sizePlusRef = useRef<HTMLButtonElement>(null);
+    const sizeMinusRef = useRef<HTMLButtonElement>(null);
+
+    const scrollReader = (intensity: number) => {
+        if (readerRef.current) {
+            let startTime: number, prevTime: number;
+            const anim = (timeStamp: number) => {
+                if (startTime === undefined) startTime = timeStamp;
+                const elapsed = timeStamp - startTime;
+                if (prevTime !== timeStamp && readerRef.current) {
+                    if (isSideListPinned && mainRef.current) {
+                        mainRef.current.scrollBy(0, intensity);
+                    } else {
+                        readerRef.current.scrollBy(0, intensity);
+                    }
+                }
+                if (elapsed < window.app.clickDelay) {
+                    prevTime = timeStamp;
+                    window.requestAnimationFrame(anim);
+                }
+            };
+            window.requestAnimationFrame(anim);
+            return;
+        }
+    };
 
     const ImagePart = ({ src }: { src: ReaderImageSrc }) => {
         return (
@@ -108,10 +133,10 @@ const EPubReader = () => {
                 className="cont htmlCont"
                 ref={(node) => {
                     if (node) {
-                        //! temp, use memo or smoething
-                        while (node.hasChildNodes()) {
-                            node.removeChild(node.childNodes[0]);
-                        }
+                        // // ! temp, use memo or smoething
+                        // while (node.hasChildNodes()) {
+                        //     node.removeChild(node.childNodes[0]);
+                        // }
                         node.id = "epub-" + xhtml.body.id;
                         node.setAttribute("data-link-id", url);
                         xhtml.body.childNodes.forEach((childNode) => {
@@ -292,13 +317,99 @@ const EPubReader = () => {
     };
 
     useLayoutEffect(() => {
+        window.app.clickDelay = 100;
+        const wheelFunction = (e: WheelEvent) => {
+            if (e.ctrlKey) {
+                if (e.deltaY < 0) {
+                    sizePlusRef.current?.click();
+                    return;
+                }
+                if (e.deltaY > 0) {
+                    sizeMinusRef.current?.click();
+                    return;
+                }
+            }
+        };
+
+        const shortcutkey: { [e in ShortcutCommands]?: { key1: string; key2: string } } = {};
+        shortcuts.forEach((e) => {
+            shortcutkey[e.command] = { key1: e.key1, key2: e.key2 };
+        });
+        const registerShortcuts = (e: KeyboardEvent) => {
+            // /&& document.activeElement!.tagName === "BODY"
+            window.app.keyRepeated = e.repeat;
+            if (window.app.isReaderOpen && !isLoadingManga && !e.ctrlKey) {
+                switch (e.key) {
+                    case shortcutkey.readerSettings?.key1:
+                    case shortcutkey.readerSettings?.key2:
+                        readerSettingExtender.current?.click();
+                        readerSettingExtender.current?.focus();
+                        break;
+                    case shortcutkey.sizePlus?.key1:
+                    case shortcutkey.sizePlus?.key2:
+                        sizePlusRef.current?.click();
+                        break;
+                    case shortcutkey.sizeMinus?.key1:
+                    case shortcutkey.sizeMinus?.key2:
+                        sizeMinusRef.current?.click();
+                        break;
+                    default:
+                        break;
+                }
+
+                if (document.activeElement!.tagName === "BODY" || document.activeElement === readerRef.current) {
+                    window.app.keydown = true;
+                    if (
+                        e.shiftKey &&
+                        (e.key === shortcutkey.largeScroll?.key1 || e.key === shortcutkey.largeScroll?.key2)
+                    ) {
+                        e.preventDefault();
+                        scrollReader(0 - appSettings.readerSettings.largeScrollMultiplier);
+                        return;
+                    }
+
+                    switch (e.key) {
+                        case shortcutkey.largeScroll?.key1:
+                        case shortcutkey.largeScroll?.key2:
+                            e.preventDefault();
+                            scrollReader(appSettings.readerSettings.largeScrollMultiplier);
+                            break;
+                        case shortcutkey.scrollDown?.key1:
+                        case shortcutkey.scrollDown?.key2:
+                            scrollReader(appSettings.readerSettings.scrollSpeed);
+                            break;
+                        case shortcutkey.scrollUp?.key1:
+                        case shortcutkey.scrollUp?.key2:
+                            scrollReader(0 - appSettings.readerSettings.scrollSpeed);
+                            break;
+                    }
+                }
+            }
+        };
+
+        window.addEventListener("wheel", wheelFunction);
+        window.addEventListener("keydown", registerShortcuts);
+        window.addEventListener("keyup", () => {
+            window.app.keydown = false;
+        });
+        return () => {
+            window.removeEventListener("wheel", wheelFunction);
+            window.removeEventListener("keydown", registerShortcuts);
+            window.removeEventListener("keyup", () => {
+                window.app.keydown = false;
+            });
+        };
+    }, [appSettings, isLoadingManga, shortcuts]);
+
+    useLayoutEffect(() => {
         readerRef.current?.scrollTo(0, scrollPosPercent * readerRef.current.scrollHeight);
         // mainRef.current?.scrollTo(0, scrollPosPercent * mainRef.current.scrollHeight);
-        console.log(
-            scrollPosPercent,
-            readerRef.current.scrollHeight,
-            scrollPosPercent * readerRef.current.scrollHeight
-        );
+        //todo: need fixing
+        // console.log(
+        //     scrollPosPercent,
+        //     readerRef.current.scrollHeight,
+        //     scrollPosPercent * readerRef.current.scrollHeight
+        // );
     }, [
         appSettings.epubReaderSettings.readerWidth,
         appSettings.epubReaderSettings.fontSize,
@@ -331,8 +442,8 @@ const EPubReader = () => {
                 readerRef={readerRef}
                 makeScrollPos={makeScrollPos}
                 readerSettingExtender={readerSettingExtender}
-                // sizePlusRef={sizePlusRef}
-                // sizeMinusRef={sizeMinusRef}
+                sizePlusRef={sizePlusRef}
+                sizeMinusRef={sizeMinusRef}
                 // setshortcutText={setshortcutText}
             />
             <section

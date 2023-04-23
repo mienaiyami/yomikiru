@@ -181,7 +181,6 @@ body {
     .icon {
         color: var(--icon-color) !important;
     }
-
     button {
         font-family: inherit;
 
@@ -207,10 +206,16 @@ body {
         border-radius: 3px;
         cursor: default;
         user-select: none;
+
+        font-family: inherit;
         &:focus,
         &:active {
             outline: none;
             box-shadow: var(--btn-color-focus) 0 0 0px 2px;
+        }
+        &:disabled {
+            pointer-events: none;
+            opacity: 0.5;
         }
     }
     svg {
