@@ -23,7 +23,7 @@ const InputRange = ({
 }) => {
     if (labeled)
         return (
-            <label className={disabled ? "disabled " : "" + className}>
+            <label className={(disabled ? "disabled " : "") + className}>
                 {labelText && <p>{labelText}</p>}
                 <input
                     type="range"

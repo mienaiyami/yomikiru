@@ -1517,10 +1517,24 @@ body {
 
                         .name {
                             font-size: 20px;
+                            &::before{
+                                content: "▼";
+                                display: inline-block;
+                                transform: rotate(-90deg);
+    
+                            }
+                            &.expanded{
+                                &~.options{
+                                    display: flex;
+                                }
+                                &::before{
+                                    transform: rotate(0);
+                                }
+                            }
                         }
 
                         .options {
-                            display: flex;
+                            display: none;
                             flex-direction: row;
                             flex-wrap: wrap;
                             gap: 5px;

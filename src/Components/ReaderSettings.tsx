@@ -80,8 +80,24 @@ const ReaderSettings = ({
                 <FontAwesomeIcon icon={isReaderSettingsOpen ? faTimes : faBars} />
             </button>
             <div className="main">
-                <div className="settingItem">
-                    <div className="name">Size</div>
+                <div className={"settingItem "}>
+                    <div
+                        className={
+                            "name " + (appSettings.readerSettings.settingsCollapsed.size ? "expanded " : "")
+                        }
+                        onClick={() => {
+                            dispatch(
+                                setReaderSettings({
+                                    settingsCollapsed: {
+                                        ...appSettings.readerSettings.settingsCollapsed,
+                                        size: !appSettings.readerSettings.settingsCollapsed.size,
+                                    },
+                                })
+                            );
+                        }}
+                    >
+                        Size
+                    </div>
                     <div className="options">
                         <label className={appSettings.readerSettings.fitOption !== 0 ? "disabled" : ""}>
                             <input
@@ -158,8 +174,24 @@ const ReaderSettings = ({
                         </label>
                     </div>
                 </div>
-                <div className="settingItem">
-                    <div className="name">Fit options</div>
+                <div className={"settingItem "}>
+                    <div
+                        className={
+                            "name " + (appSettings.readerSettings.settingsCollapsed.fitOption ? "expanded " : "")
+                        }
+                        onClick={() => {
+                            dispatch(
+                                setReaderSettings({
+                                    settingsCollapsed: {
+                                        ...appSettings.readerSettings.settingsCollapsed,
+                                        fitOption: !appSettings.readerSettings.settingsCollapsed.fitOption,
+                                    },
+                                })
+                            );
+                        }}
+                    >
+                        Fit options
+                    </div>
                     <div className="options">
                         <div className="row">
                             <button
@@ -300,8 +332,24 @@ const ReaderSettings = ({
                         </div>
                     </div>
                 </div>
-                <div className="settingItem">
-                    <div className="name">Reading mode</div>
+                <div className={"settingItem "}>
+                    <div
+                        className={
+                            "name " + (appSettings.readerSettings.settingsCollapsed.readingMode ? "expanded " : "")
+                        }
+                        onClick={() => {
+                            dispatch(
+                                setReaderSettings({
+                                    settingsCollapsed: {
+                                        ...appSettings.readerSettings.settingsCollapsed,
+                                        readingMode: !appSettings.readerSettings.settingsCollapsed.readingMode,
+                                    },
+                                })
+                            );
+                        }}
+                    >
+                        Reading mode
+                    </div>
                     <div className="options">
                         <button
                             className={appSettings.readerSettings.readerTypeSelected === 0 ? "optionSelected" : ""}
@@ -323,8 +371,24 @@ const ReaderSettings = ({
                         </button>
                     </div>
                 </div>
-                <div className="settingItem">
-                    <div className="name">Pages per Row</div>
+                <div className={"settingItem "}>
+                    <div
+                        className={
+                            "name " + (appSettings.readerSettings.settingsCollapsed.pagePerRow ? "expanded " : "")
+                        }
+                        onClick={() => {
+                            dispatch(
+                                setReaderSettings({
+                                    settingsCollapsed: {
+                                        ...appSettings.readerSettings.settingsCollapsed,
+                                        pagePerRow: !appSettings.readerSettings.settingsCollapsed.pagePerRow,
+                                    },
+                                })
+                            );
+                        }}
+                    >
+                        Pages per Row
+                    </div>
                     <div className="options">
                         <button
                             className={
@@ -381,8 +445,24 @@ const ReaderSettings = ({
                         </button>
                     </div>
                 </div>
-                <div className="settingItem">
-                    <div className="name">Reading side</div>
+                <div className={"settingItem "}>
+                    <div
+                        className={
+                            "name " + (appSettings.readerSettings.settingsCollapsed.readingSide ? "expanded " : "")
+                        }
+                        onClick={() => {
+                            dispatch(
+                                setReaderSettings({
+                                    settingsCollapsed: {
+                                        ...appSettings.readerSettings.settingsCollapsed,
+                                        readingSide: !appSettings.readerSettings.settingsCollapsed.readingSide,
+                                    },
+                                })
+                            );
+                        }}
+                    >
+                        Reading side
+                    </div>
                     <div className="options">
                         <button
                             className={appSettings.readerSettings.readingSide === 0 ? "optionSelected" : ""}
@@ -404,8 +484,24 @@ const ReaderSettings = ({
                         </button>
                     </div>
                 </div>
-                <div className="settingItem">
-                    <div className="name">Scroll Speed(with keys)</div>
+                <div className={"settingItem "}>
+                    <div
+                        className={
+                            "name " + (appSettings.readerSettings.settingsCollapsed.scrollSpeed ? "expanded " : "")
+                        }
+                        onClick={() => {
+                            dispatch(
+                                setReaderSettings({
+                                    settingsCollapsed: {
+                                        ...appSettings.readerSettings.settingsCollapsed,
+                                        scrollSpeed: !appSettings.readerSettings.settingsCollapsed.scrollSpeed,
+                                    },
+                                })
+                            );
+                        }}
+                    >
+                        Scroll Speed(with keys)
+                    </div>
                     <div className="options">
                         <label>
                             Scroll&nbsp;A&nbsp;:
@@ -441,8 +537,26 @@ const ReaderSettings = ({
                         </label>
                     </div>
                 </div>
-                <div className="settingItem">
-                    <div className="name">Custom Color Filter</div>
+                <div className={"settingItem "}>
+                    <div
+                        className={
+                            "name " +
+                            (appSettings.readerSettings.settingsCollapsed.customColorFilter ? "expanded " : "")
+                        }
+                        onClick={() => {
+                            dispatch(
+                                setReaderSettings({
+                                    settingsCollapsed: {
+                                        ...appSettings.readerSettings.settingsCollapsed,
+                                        customColorFilter:
+                                            !appSettings.readerSettings.settingsCollapsed.customColorFilter,
+                                    },
+                                })
+                            );
+                        }}
+                    >
+                        Custom Color Filter
+                    </div>
                     <div className="options col">
                         <label
                             className={
@@ -606,8 +720,24 @@ const ReaderSettings = ({
                         />
                     </div>
                 </div>
-                <div className="settingItem">
-                    <div className="name">Other settings</div>
+                <div className={"settingItem "}>
+                    <div
+                        className={
+                            "name " + (appSettings.readerSettings.settingsCollapsed.others ? "expanded " : "")
+                        }
+                        onClick={() => {
+                            dispatch(
+                                setReaderSettings({
+                                    settingsCollapsed: {
+                                        ...appSettings.readerSettings.settingsCollapsed,
+                                        others: !appSettings.readerSettings.settingsCollapsed.others,
+                                    },
+                                })
+                            );
+                        }}
+                    >
+                        Other settings
+                    </div>
                     <div className="options col">
                         <label
                             className={

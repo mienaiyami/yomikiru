@@ -23,7 +23,7 @@ export const InputSelect = ({
 }) => {
     if (labeled)
         return (
-            <label className={disabled ? "disabled " : "" + className}>
+            <label className={(disabled ? "disabled " : "") + className}>
                 {labelText && <p>{labelText}</p>}
                 <select disabled={disabled} value={value} onChange={onChange}>
                     {children}

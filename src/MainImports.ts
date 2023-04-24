@@ -137,6 +137,16 @@ export const settingValidatorData = {
              */
             value: 0,
         },
+        settingsCollapsed: {
+            size: false,
+            fitOption: false,
+            readingMode: false,
+            pagePerRow: false,
+            readingSide: false,
+            scrollSpeed: true,
+            customColorFilter: true,
+            others: false,
+        },
     },
     epubReaderSettings: {
         /**
@@ -713,6 +723,16 @@ const defaultSettings: AppSettings = {
         forceLowBrightness: {
             enabled: false,
             value: 0.5,
+        },
+        settingsCollapsed: {
+            size: false,
+            fitOption: false,
+            readingMode: false,
+            pagePerRow: false,
+            readingSide: false,
+            scrollSpeed: true,
+            customColorFilter: true,
+            others: false,
         },
     },
     epubReaderSettings: {
