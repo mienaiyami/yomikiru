@@ -2,7 +2,6 @@ import { app, dialog, getCurrentWindow, clipboard, nativeImage, shell } from "@e
 import { ipcRenderer, webFrame } from "electron";
 import crossZip from "cross-zip";
 import chokidar from "chokidar";
-// import ePub from "epubjs";
 import log from "electron-log";
 log.transports.file.resolvePath = () => path.join(app.getPath("userData"), "logs/renderer.log");
 /*//! i know its dangerous but its offline app and i was unable to get BrowserWindow to work
@@ -100,6 +99,44 @@ export const settingValidatorData = {
         maxHeightWidthSelector: ["none", "width", "height"],
         maxWidth: 500,
         maxHeight: 500,
+        customColorFilter: {
+            enabled: false,
+            /**
+             * red 0-255
+             */
+            r: 0,
+            g: 0,
+            b: 0,
+            /**
+             * alpha 0-1
+             */
+            a: 1,
+            blendMode: [
+                "color",
+                "color-burn",
+                "color-dodge",
+                "darken",
+                "difference",
+                "exclusion",
+                "hard-light",
+                "hue",
+                "lighten",
+                "luminosity",
+                "multiply",
+                "normal",
+                "overlay",
+                "saturation",
+                "screen",
+                "soft-light",
+            ],
+        },
+        forceLowBrightness: {
+            enabled: false,
+            /**
+             * opacity 0-1 of overlying black div
+             */
+            value: 0,
+        },
     },
     epubReaderSettings: {
         /**
@@ -665,6 +702,18 @@ const defaultSettings: AppSettings = {
         maxHeightWidthSelector: "none",
         maxHeight: 500,
         maxWidth: 500,
+        customColorFilter: {
+            enabled: false,
+            r: 0,
+            g: 0,
+            b: 0,
+            a: 1,
+            blendMode: "normal",
+        },
+        forceLowBrightness: {
+            enabled: false,
+            value: 0.5,
+        },
     },
     epubReaderSettings: {
         readerWidth: 50,
@@ -723,7 +772,8 @@ const isSettingsValid = (): { isValid: boolean; location: string[] } => {
         JSON.parse(window.fs.readFileSync(settingsPath, "utf-8"));
     } catch (err) {
         window.logger.error(err);
-        makeSettingsJson();
+        window.logger.log(window.fs.readFileSync(settingsPath, "utf-8"));
+        // makeSettingsJson();
         return { isValid: false, location: [] };
     }
     const settings = JSON.parse(window.fs.readFileSync(settingsPath, "utf-8"));

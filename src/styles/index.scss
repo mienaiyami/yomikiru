@@ -174,7 +174,9 @@ body {
             opacity: 1;
         }
     }
-
+    input[type="range"]{
+        accent-color: var(--icon-color);
+    }
     user-select: none;
     overflow: hidden;
 
@@ -1440,9 +1442,9 @@ body {
                 border-radius: 0 0 0 10px;
                 width: 300px;
 
-                ::-webkit-scrollbar {
-                    display: none;
-                }
+                // ::-webkit-scrollbar {
+                //     display: none;
+                // }
 
                 // height: 240px;
                 // transition: 0.5s width, 0.5s height;
@@ -1577,6 +1579,10 @@ body {
                                     pointer-events: none;
                                 }
                             }
+                            .colorRange{
+                                display: grid;
+                                grid-template-columns: 1rem auto 2rem;
+                            }
                         }
                     }
                 }
@@ -1595,6 +1601,18 @@ body {
                 // overflow: auto;
                 --varWidth: 100%;
                 --gapSize: 10px;
+
+                --blend-bg:rgba(0,0,0,0);
+                --blend-mode:normal;
+                &.customColorFilter{
+                    background-color: var(--blend-bg);
+                    .row{
+                    background-color: var(--blend-bg);
+                    img{
+                            mix-blend-mode: var(--blend-mode);
+                        }
+                    }
+                }
 
                 &.readerMode1n2 {
                     justify-content: center;

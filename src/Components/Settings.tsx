@@ -11,6 +11,7 @@ import { setOpenSetting } from "../store/isSettingOpen";
 import { addBookmark, removeAllBookmarks } from "../store/bookmarks";
 import { makeNewSettings, setAppSettings, setReaderSettings } from "../store/appSettings";
 import { windowsStore } from "process";
+import { InputSelect } from "./Element/InputSelect";
 
 const Settings = (): ReactElement => {
     const { promptSetDefaultLocation } = useContext(AppContext);
@@ -243,7 +244,7 @@ const Settings = (): ReactElement => {
                 </td>
                 <td>
                     {checked ? (
-                        <select
+                        <InputSelect
                             value={rawColorWhole}
                             className="newThemeMakerVar"
                             onChange={(e) => {
@@ -255,7 +256,7 @@ const Settings = (): ReactElement => {
                                     {e[1]}
                                 </option>
                             ))}
-                        </select>
+                        </InputSelect>
                     ) : (
                         <>
                             <input

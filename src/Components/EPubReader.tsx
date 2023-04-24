@@ -2,7 +2,6 @@ import { useContext, useEffect, useLayoutEffect, useRef, useState } from "react"
 import css, { Rule as CSSRule } from "css";
 import { AppContext } from "../App";
 import { useAppDispatch, useAppSelector } from "../store/hooks";
-import { setReaderSettings } from "../store/appSettings";
 import { setMangaInReader } from "../store/mangaInReader";
 import { setReaderOpen } from "../store/isReaderOpen";
 import { setLoadingMangaPercent } from "../store/loadingMangaPercent";
@@ -412,8 +411,8 @@ const EPubReader = () => {
         // );
     }, [
         appSettings.epubReaderSettings.readerWidth,
-        appSettings.epubReaderSettings.fontSize,
-        appSettings.epubReaderSettings.fontFamily,
+        // appSettings.epubReaderSettings.fontSize,
+        // appSettings.epubReaderSettings.fontFamily,
         appSettings.epubReaderSettings.lineSpacing,
         appSettings.epubReaderSettings.paragraphSpacing,
         appSettings.epubReaderSettings.wordSpacing,

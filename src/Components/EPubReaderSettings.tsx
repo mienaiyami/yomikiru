@@ -4,6 +4,7 @@ import { useEffect, useLayoutEffect, useState } from "react";
 import { setEpubReaderSettings } from "../store/appSettings";
 import { useAppDispatch, useAppSelector } from "../store/hooks";
 import { getFonts } from "font-list";
+import { InputSelect } from "./Element/InputSelect";
 
 const EPUBReaderSettings = ({
     makeScrollPos,
@@ -157,7 +158,7 @@ const EPUBReaderSettings = ({
                                         }
                                     }}
                                     onChange={(e) => {
-                                        makeScrollPos();
+                                        // makeScrollPos();
                                         let value = e.target.valueAsNumber;
                                         if (!value) value = 0;
                                         value = value >= 100 ? 100 : value;
@@ -247,15 +248,28 @@ const EPUBReaderSettings = ({
                                             })
                                         );
                                     }}
-                                >
-                                    <option value="Roboto">Roboto</option>
-                                    {fontList.map((e) => (
-                                        <option value={e} key={e}>
-                                            {e}
-                                        </option>
-                                    ))}
-                                </select>
+                                ></select>
                             </label>
+                            <InputSelect
+                                labeled={true}
+                                disabled={appSettings.epubReaderSettings.useDefault_fontFamily}
+                                value={appSettings.epubReaderSettings.fontFamily}
+                                onChange={(e) => {
+                                    const val = e.currentTarget.value;
+                                    dispatch(
+                                        setEpubReaderSettings({
+                                            fontFamily: val,
+                                        })
+                                    );
+                                }}
+                            >
+                                <option value="Roboto">Roboto</option>
+                                {fontList.map((e) => (
+                                    <option value={e} key={e}>
+                                        {e}
+                                    </option>
+                                ))}
+                            </InputSelect>
                             <label
                                 className={
                                     !appSettings.epubReaderSettings.useDefault_lineSpacing ? "optionSelected " : ""

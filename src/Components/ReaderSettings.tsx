@@ -11,6 +11,9 @@ import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { useEffect, useState } from "react";
 import { setReaderSettings } from "../store/appSettings";
 import { useAppDispatch, useAppSelector } from "../store/hooks";
+import InputRange from "./Element/InputRange";
+import { InputSelect } from "./Element/InputSelect";
+import { settingValidatorData } from "../MainImports";
 
 const ReaderSettings = ({
     makeScrollPos,
@@ -436,6 +439,128 @@ const ReaderSettings = ({
                             />
                             px
                         </label>
+                    </div>
+                </div>
+                <div className="settingItem">
+                    <div className="name">Custom Color Filter</div>
+                    <div className="options col">
+                        <label
+                            className={
+                                appSettings.readerSettings.customColorFilter.enabled ? "optionSelected " : ""
+                            }
+                        >
+                            <input
+                                type="checkbox"
+                                checked={appSettings.readerSettings.customColorFilter.enabled}
+                                onChange={(e) => {
+                                    dispatch(
+                                        setReaderSettings({
+                                            customColorFilter: {
+                                                ...appSettings.readerSettings.customColorFilter,
+                                                enabled: e.currentTarget.checked,
+                                            },
+                                        })
+                                    );
+                                }}
+                            />
+                            <p>Use Custom Color Filter</p>
+                        </label>
+
+                        <InputRange
+                            className={"colorRange"}
+                            min={0}
+                            max={255}
+                            value={appSettings.readerSettings.customColorFilter.r}
+                            disabled={!appSettings.readerSettings.customColorFilter.enabled}
+                            labeled={true}
+                            labelText="R:"
+                            onChange={(e) => {
+                                dispatch(
+                                    setReaderSettings({
+                                        customColorFilter: {
+                                            ...appSettings.readerSettings.customColorFilter,
+                                            r: e.currentTarget.valueAsNumber,
+                                        },
+                                    })
+                                );
+                            }}
+                        />
+                        <InputRange
+                            className={"colorRange"}
+                            min={0}
+                            max={255}
+                            value={appSettings.readerSettings.customColorFilter.g}
+                            disabled={!appSettings.readerSettings.customColorFilter.enabled}
+                            labeled={true}
+                            labelText="G:"
+                            onChange={(e) => {
+                                dispatch(
+                                    setReaderSettings({
+                                        customColorFilter: {
+                                            ...appSettings.readerSettings.customColorFilter,
+                                            g: e.currentTarget.valueAsNumber,
+                                        },
+                                    })
+                                );
+                            }}
+                        />
+                        <InputRange
+                            className={"colorRange"}
+                            min={0}
+                            max={255}
+                            value={appSettings.readerSettings.customColorFilter.b}
+                            disabled={!appSettings.readerSettings.customColorFilter.enabled}
+                            labeled={true}
+                            labelText="B:"
+                            onChange={(e) => {
+                                dispatch(
+                                    setReaderSettings({
+                                        customColorFilter: {
+                                            ...appSettings.readerSettings.customColorFilter,
+                                            b: e.currentTarget.valueAsNumber,
+                                        },
+                                    })
+                                );
+                            }}
+                        />
+                        <InputRange
+                            className={"colorRange"}
+                            min={0}
+                            max={1}
+                            step={0.1}
+                            value={appSettings.readerSettings.customColorFilter.a}
+                            disabled={!appSettings.readerSettings.customColorFilter.enabled}
+                            labeled={true}
+                            labelText="A:"
+                            onChange={(e) => {
+                                dispatch(
+                                    setReaderSettings({
+                                        customColorFilter: {
+                                            ...appSettings.readerSettings.customColorFilter,
+                                            a: e.currentTarget.valueAsNumber,
+                                        },
+                                    })
+                                );
+                            }}
+                        />
+                        <InputSelect
+                            disabled={!appSettings.readerSettings.customColorFilter.enabled}
+                            value={appSettings.readerSettings.customColorFilter.blendMode}
+                            labeled={true}
+                            labelText="Blend&nbsp;Mode:"
+                            onChange={(e) => {
+                                dispatch(
+                                    setReaderSettings({
+                                        customColorFilter: {
+                                            ...appSettings.readerSettings.customColorFilter,
+                                            blendMode: e.currentTarget
+                                                .value as AppSettings["readerSettings"]["customColorFilter"]["blendMode"],
+                                        },
+                                    })
+                                );
+                            }}
+                            options={[...settingValidatorData.readerSettings.customColorFilter.blendMode]}
+                        />
                     </div>
                 </div>
                 <div className="settingItem">

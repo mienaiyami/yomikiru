@@ -961,11 +961,12 @@ const Reader = () => {
                 ref={imgContRef}
                 className={
                     "imgCont " +
-                        (appSettings.readerSettings.gapBetweenRows ? "gap " : "") +
-                        ([1, 2].includes(appSettings.readerSettings.readerTypeSelected) ? "readerMode1n2 " : "") +
-                        ["", "fitVertically", "fitHorizontally", "original"].at(
-                            appSettings.readerSettings.fitOption
-                        ) ?? ""
+                    (appSettings.readerSettings.gapBetweenRows ? "gap " : "") +
+                    ([1, 2].includes(appSettings.readerSettings.readerTypeSelected) ? "readerMode1n2 " : "") +
+                    (["", "fitVertically", "fitHorizontally", "original"].at(
+                        appSettings.readerSettings.fitOption
+                    ) ?? "") +
+                    (appSettings.readerSettings.customColorFilter.enabled ? "customColorFilter " : "")
                 }
                 style={{
                     "--varWidth": appSettings.readerSettings.readerWidth + "%",
@@ -974,6 +975,8 @@ const Reader = () => {
                         !chapterChangerDisplay || appSettings.readerSettings.readerTypeSelected === 0
                             ? "flex"
                             : "none",
+                    "--blend-bg": `rgba(${appSettings.readerSettings.customColorFilter.r},${appSettings.readerSettings.customColorFilter.g},${appSettings.readerSettings.customColorFilter.b},${appSettings.readerSettings.customColorFilter.a})`,
+                    "--blend-mode": appSettings.readerSettings.customColorFilter.blendMode,
                 }}
                 onScroll={() => {
                     if (appSettings.readerSettings.readerTypeSelected === 0 && isSideListPinned)
