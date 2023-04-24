@@ -539,12 +539,12 @@ const collator = Intl.Collator(undefined, { numeric: true, sensitivity: "base" }
 window.app.betterSortOrder = collator.compare;
 window.app.replaceExtension = (str, replaceWith = "~") => {
     return str
-        .replace(/\.zip/gi, replaceWith === "~" ? " [zip file]" : replaceWith)
-        .replace(/\.cbz/gi, replaceWith === "~" ? " [CBZ file]" : replaceWith)
-        .replace(/\.epub/gi, replaceWith === "~" ? " [EPub file]" : replaceWith);
+        .replace(/\.zip/gi, replaceWith === "~" ? " $ZIP" : replaceWith)
+        .replace(/\.cbz/gi, replaceWith === "~" ? " $CBZ" : replaceWith)
+        .replace(/\.epub/gi, replaceWith === "~" ? " $EPUB" : replaceWith);
 };
 window.app.isSupportedFormat = (str: string) =>
-    str.includes("[zip file]") || str.includes("[CBZ file]") || str.includes("[EPub file]");
+    str.includes("$ZIP") || str.includes("$CBZ") || str.includes("$EPUB");
 window.app.deleteDirOnClose = "";
 window.app.currentPageNumber = 1;
 window.app.linkInReader = {

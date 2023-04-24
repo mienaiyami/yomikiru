@@ -235,6 +235,8 @@ body {
         white-space: nowrap;
         font-family: ui-monospace, SFMono-Regular, SF Mono, Menlo, Consolas, Liberation Mono, monospace;
         font-size: 90%;
+        align-self: center;
+        cursor: inherit;
     }
 
     --titleBar-height: 40px;

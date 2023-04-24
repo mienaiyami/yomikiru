@@ -60,6 +60,7 @@ const LocationsTab = (): ReactElement => {
                 if (inputRef.current) {
                     inputRef.current.value = "";
                 }
+                console.log(dirNames);
                 setIsLoadingFile(false);
                 setLocations(dirNames);
             });

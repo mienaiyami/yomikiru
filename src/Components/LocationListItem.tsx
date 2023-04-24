@@ -36,7 +36,6 @@ const LocationListItem = ({
             openInReader(link);
         } else setCurrentLink(link);
     };
-
     return (
         <li className={inHistory ? "alreadyRead" : ""}>
             <a
@@ -80,8 +79,9 @@ const LocationListItem = ({
                 }}
                 tabIndex={-1}
             >
-                <span className="text">{name}</span>
+                <span className="text">{name.split(" $")[0]}</span>
             </a>
+            {window.app.isSupportedFormat(name) && <code className="nonFolder">{name.split(" $")[1]}</code>}
             <button
                 title="Open In Reader"
                 className="open-in-reader-btn"
