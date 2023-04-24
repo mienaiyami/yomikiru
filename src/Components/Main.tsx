@@ -5,6 +5,7 @@ import { setContextMenu } from "../store/contextMenu";
 import { useAppDispatch, useAppSelector } from "../store/hooks";
 import BookmarkTab from "./BookmarkTab";
 import ContextMenu from "./ContextMenu";
+import EPubReader from "./EPubReader";
 import HistoryTab from "./HistoryTab";
 import LoadingScreen from "./LoadingScreen";
 import LocationsTab from "./LocationsTab";
@@ -288,6 +289,7 @@ const Main = (): ReactElement => {
     // };
     return (
         <div id="app">
+            <div id="app2"></div>
             <div
                 className="tabCont"
                 // ref={tabContRef}
@@ -348,7 +350,8 @@ const Main = (): ReactElement => {
             <Settings />
             <LoadingScreen />
             <ContextMenu />
-            {linkInReader.link !== "" ? <Reader /> : ""}
+            {linkInReader.type === "image" && linkInReader.link !== "" ? <Reader /> : ""}
+            {linkInReader.type === "book" && linkInReader.link !== "" ? <EPubReader /> : ""}
         </div>
     );
 };

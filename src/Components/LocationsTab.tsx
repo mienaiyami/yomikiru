@@ -45,7 +45,7 @@ const LocationsTab = (): ReactElement => {
                         if (window.fs.existsSync(window.path.join(link, cur))) {
                             if (
                                 window.fs.lstatSync(window.path.join(link, cur)).isDirectory() ||
-                                [".zip", ".cbz"].includes(window.path.extname(cur))
+                                [".zip", ".cbz", ".epub"].includes(window.path.extname(cur).toLowerCase())
                             ) {
                                 arr.push({
                                     name: window.app.replaceExtension(cur),
@@ -60,6 +60,7 @@ const LocationsTab = (): ReactElement => {
                 if (inputRef.current) {
                     inputRef.current.value = "";
                 }
+                console.log(dirNames);
                 setIsLoadingFile(false);
                 setLocations(dirNames);
             });

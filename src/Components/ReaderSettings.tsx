@@ -56,7 +56,7 @@ const ReaderSettings = ({
     return (
         <div
             id="readerSettings"
-            className={isReaderSettingsOpen ? "" : "closed"}
+            className={"readerSettings " + (isReaderSettingsOpen ? "" : "closed")}
             onKeyDown={(e) => {
                 if (e.key === "Escape" || e.key === "q") {
                     e.stopPropagation();
@@ -65,7 +65,6 @@ const ReaderSettings = ({
                 }
             }}
         >
-            <h2></h2>
             <button
                 className="menuExtender"
                 ref={readerSettingExtender}
@@ -131,7 +130,7 @@ const ReaderSettings = ({
                             disabled={appSettings.readerSettings.fitOption !== 0}
                             onClick={(e) => {
                                 makeScrollPos();
-                                const steps = appSettings.readerSettings.readerWidth <= 20 ? 5 : 10;
+                                const steps = appSettings.readerSettings.readerWidth <= 40 ? 5 : 10;
                                 const readerWidth =
                                     appSettings.readerSettings.readerWidth + steps > maxWidth
                                         ? maxWidth
@@ -410,11 +409,11 @@ const ReaderSettings = ({
                             <input
                                 type="number"
                                 min={1}
-                                max={100}
+                                max={500}
                                 value={appSettings.readerSettings.scrollSpeed}
                                 onChange={(e) => {
                                     let value = e.currentTarget.valueAsNumber;
-                                    if (value > 100) value = 100;
+                                    if (value > 500) value = 500;
                                     if (value < 1) value = 1;
                                     dispatch(setReaderSettings({ scrollSpeed: value }));
                                 }}
@@ -426,11 +425,11 @@ const ReaderSettings = ({
                             <input
                                 type="number"
                                 min={1}
-                                max={100}
+                                max={500}
                                 value={appSettings.readerSettings.largeScrollMultiplier}
                                 onChange={(e) => {
                                     let value = e.currentTarget.valueAsNumber;
-                                    if (value > 100) value = 100;
+                                    if (value > 500) value = 500;
                                     if (value < 1) value = 1;
                                     dispatch(setReaderSettings({ largeScrollMultiplier: value }));
                                 }}

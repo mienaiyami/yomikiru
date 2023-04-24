@@ -2,6 +2,7 @@ import { app, dialog, getCurrentWindow, clipboard, nativeImage, shell } from "@e
 import { ipcRenderer, webFrame } from "electron";
 import crossZip from "cross-zip";
 import chokidar from "chokidar";
+// import ePub from "epubjs";
 import log from "electron-log";
 log.transports.file.resolvePath = () => path.join(app.getPath("userData"), "logs/renderer.log");
 /*//! i know its dangerous but its offline app and i was unable to get BrowserWindow to work
@@ -53,6 +54,9 @@ export const settingValidatorData = {
     // disableCachingCanvas: false,
     recordChapterRead: true,
     readerSettings: {
+        /**
+         * width of reader in percent
+         */
         readerWidth: 0,
         variableImageSize: false,
         /**
@@ -72,6 +76,7 @@ export const settingValidatorData = {
         widthClamped: true,
         gapSize: 0,
         showPageNumberInZenMode: false,
+        //! rename accordingly
         scrollSpeed: 0,
         largeScrollMultiplier: 0,
         /**
@@ -95,6 +100,33 @@ export const settingValidatorData = {
         maxHeightWidthSelector: ["none", "width", "height"],
         maxWidth: 500,
         maxHeight: 500,
+    },
+    epubReaderSettings: {
+        /**
+         * width of reader in percent
+         */
+        readerWidth: 50,
+        /**
+         * font size in px.
+         */
+        fontSize: 16,
+        useDefault_fontFamily: true,
+        fontFamily: "Roboto",
+        useDefault_lineSpacing: true,
+        /**
+         * line height in em
+         */
+        lineSpacing: 1.4,
+        useDefault_paragraphSpacing: true,
+        /**
+         * gap in em
+         */
+        paragraphSpacing: 2,
+        useDefault_wordSpacing: true,
+        wordSpacing: 1,
+        hyphenation: false,
+        scrollSpeedA: 0,
+        scrollSpeedB: 0,
     },
 } as const;
 
@@ -120,11 +152,16 @@ declare global {
          * watch for change in file/dir.
          */
         chokidar: typeof chokidar;
+        /**
+         * take string and make it safe for file system
+         */
+        makeFileSafe: (string: string) => string;
         logger: typeof log;
         /**
          * Supported image formats.
          */
         supportedFormats: string[];
+        // epub: typeof ePub;
         path: typeof path;
         fs: typeof fs;
         themeProps: { [e in ThemeDataMain]: string };
@@ -132,9 +169,13 @@ declare global {
         app: {
             betterSortOrder: (x: string, y: string) => number;
             /**
-             * returns string where .cbz and .zip are replace with " - CBZ file" and " - ZIP file"
+             * returns string where .cbz and .zip are replace with " - CBZ file" and " - ZIP file" etc.
              */
             replaceExtension: (str: string, replaceWith?: string) => string;
+            /**
+             * check if url is zip,cbz,epub or any supported extension.
+             */
+            isSupportedFormat: (str: string) => boolean;
             /**
              * temp dir to be removed after closing chapter which was extracted
              */
@@ -153,6 +194,7 @@ declare global {
              * why did i add this? bcoz fking linkInReader state is showing initial only in App.tsx
              */
             linkInReader: {
+                type: "image" | "book" | "";
                 link: string;
                 page: number;
             };
@@ -488,16 +530,25 @@ window.shortcutsFunctions = [
 window.logger = log;
 window.crossZip = crossZip;
 window.chokidar = chokidar;
+window.makeFileSafe = (string: string): string => {
+    return string.replace(/(:|\\|\/|\||<|>|\*|\?)/g, "");
+};
+
+// window.epub = ePub;
 const collator = Intl.Collator(undefined, { numeric: true, sensitivity: "base" });
 window.app.betterSortOrder = collator.compare;
 window.app.replaceExtension = (str, replaceWith = "~") => {
     return str
-        .replace(/\.zip/gi, replaceWith === "~" ? " [ZIP file]" : replaceWith)
-        .replace(/\.cbz/gi, replaceWith === "~" ? " [CBZ file]" : replaceWith);
+        .replace(/\.zip/gi, replaceWith === "~" ? " $ZIP" : replaceWith)
+        .replace(/\.cbz/gi, replaceWith === "~" ? " $CBZ" : replaceWith)
+        .replace(/\.epub/gi, replaceWith === "~" ? " $EPUB" : replaceWith);
 };
+window.app.isSupportedFormat = (str: string) =>
+    str.includes("$ZIP") || str.includes("$CBZ") || str.includes("$EPUB");
 window.app.deleteDirOnClose = "";
 window.app.currentPageNumber = 1;
 window.app.linkInReader = {
+    type: "",
     link: "",
     page: 1,
 };
@@ -614,6 +665,21 @@ const defaultSettings: AppSettings = {
         maxHeightWidthSelector: "none",
         maxHeight: 500,
         maxWidth: 500,
+    },
+    epubReaderSettings: {
+        readerWidth: 50,
+        fontSize: 16,
+        useDefault_fontFamily: true,
+        fontFamily: "Roboto",
+        useDefault_lineSpacing: true,
+        lineSpacing: 1.4,
+        useDefault_paragraphSpacing: true,
+        paragraphSpacing: 2,
+        useDefault_wordSpacing: true,
+        wordSpacing: 0,
+        hyphenation: false,
+        scrollSpeedA: 5,
+        scrollSpeedB: 15,
     },
 };
 

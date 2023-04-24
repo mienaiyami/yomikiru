@@ -479,7 +479,7 @@ const Reader = () => {
                     setCurrentPageNumber(readerStuff.page || 1);
                     return loadImgs(readerStuff.link, imgs);
                 }
-                dispatch(setLinkInReader({ link: mangaInReader?.link || "", page: 1 }));
+                dispatch(setLinkInReader({ type: "image", link: mangaInReader?.link || "", page: 1 }));
             },
             true
         );
@@ -821,12 +821,36 @@ const Reader = () => {
                         Previous :{/* <FontAwesomeIcon icon={faQuestionCircle} />: */}
                     </span>
                     <span className="b">
-                        {window.app.replaceExtension(prevNextChapter.prev.split(window.path.sep).pop() || "")}
+                        {
+                            window.app
+                                .replaceExtension(prevNextChapter.prev.split(window.path.sep).pop() || "")
+                                .split(" $")[0]
+                        }
+                        {window.app.isSupportedFormat(
+                            window.app.replaceExtension(prevNextChapter.prev.split(window.path.sep).pop() || "")
+                        ) && (
+                            <code>
+                                {
+                                    window.app
+                                        .replaceExtension(prevNextChapter.prev.split(window.path.sep).pop() || "")
+                                        .split(" $")[1]
+                                }
+                            </code>
+                        )}
                     </span>
                 </div>
                 <div className="c">
                     <span className="a">Current :</span>
-                    <span className="b">{window.app.replaceExtension(mangaInReader?.chapterName || "")}</span>
+                    <span className="b">
+                        {window.app.replaceExtension(mangaInReader?.chapterName || "").split(" $")[0]}
+                        {window.app.isSupportedFormat(
+                            window.app.replaceExtension(mangaInReader?.chapterName || "")
+                        ) && (
+                            <code>
+                                {window.app.replaceExtension(mangaInReader?.chapterName || "").split(" $")[1]}
+                            </code>
+                        )}
+                    </span>
                 </div>
                 <div
                     className="b"
@@ -852,7 +876,22 @@ const Reader = () => {
                         Next :{/* <FontAwesomeIcon icon={faQuestionCircle} />: */}
                     </span>
                     <span className="b">
-                        {window.app.replaceExtension(prevNextChapter.next.split(window.path.sep).pop() || "")}
+                        {
+                            window.app
+                                .replaceExtension(prevNextChapter.next.split(window.path.sep).pop() || "")
+                                .split(" $")[0]
+                        }
+                        {window.app.isSupportedFormat(
+                            window.app.replaceExtension(prevNextChapter.next.split(window.path.sep).pop() || "")
+                        ) && (
+                            <code>
+                                {
+                                    window.app
+                                        .replaceExtension(prevNextChapter.next.split(window.path.sep).pop() || "")
+                                        .split(" $")[1]
+                                }
+                            </code>
+                        )}
                     </span>
                 </div>
             </div>
@@ -862,7 +901,7 @@ const Reader = () => {
         <div
             ref={readerRef}
             id="reader"
-            className={isSideListPinned ? "sideListPinned" : ""}
+            className={isSideListPinned ? "sideListPinned " : "" + "reader "}
             style={{
                 gridTemplateColumns: sideListWidth + "px auto",
 
