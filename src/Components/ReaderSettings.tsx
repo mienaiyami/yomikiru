@@ -561,6 +561,49 @@ const ReaderSettings = ({
                             }}
                             options={[...settingValidatorData.readerSettings.customColorFilter.blendMode]}
                         />
+
+                        <label
+                            className={
+                                appSettings.readerSettings.forceLowBrightness.enabled ? "optionSelected " : ""
+                            }
+                        >
+                            <input
+                                type="checkbox"
+                                checked={appSettings.readerSettings.forceLowBrightness.enabled}
+                                onChange={(e) => {
+                                    dispatch(
+                                        setReaderSettings({
+                                            forceLowBrightness: {
+                                                ...appSettings.readerSettings.forceLowBrightness,
+                                                enabled: e.currentTarget.checked,
+                                            },
+                                        })
+                                    );
+                                }}
+                            />
+                            <p>Force Low brightness</p>
+                        </label>
+
+                        <InputRange
+                            className={"colorRange"}
+                            min={0}
+                            max={0.9}
+                            step={0.05}
+                            value={appSettings.readerSettings.forceLowBrightness.value}
+                            disabled={!appSettings.readerSettings.forceLowBrightness.enabled}
+                            labeled={true}
+                            labelText=" "
+                            onChange={(e) => {
+                                dispatch(
+                                    setReaderSettings({
+                                        forceLowBrightness: {
+                                            ...appSettings.readerSettings.forceLowBrightness,
+                                            value: e.currentTarget.valueAsNumber,
+                                        },
+                                    })
+                                );
+                            }}
+                        />
                     </div>
                 </div>
                 <div className="settingItem">

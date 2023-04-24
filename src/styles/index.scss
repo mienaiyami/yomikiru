@@ -1587,7 +1587,18 @@ body {
                     }
                 }
             }
+            .forcedLowBrightness{
+                --neg-brightness:0.5;
+                pointer-events: none;
+                z-index: 1000001;
+                position: fixed;
+                top: -40px;
+                width: 100%;
+                height: calc(100% + 40px);
+                background-color: #000;
+                opacity:var(--neg-brightness);
 
+            }
             .imgCont {
                 width: 100%;
                 display: flex;

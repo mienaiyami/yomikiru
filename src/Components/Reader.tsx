@@ -956,7 +956,12 @@ const Reader = () => {
             <div className="shortcutClicked faded" ref={shortcutTextRef}>
                 {shortcutText}
             </div>
-
+            {appSettings.readerSettings.forceLowBrightness.enabled && (
+                <div
+                    className="forcedLowBrightness"
+                    style={{ "--neg-brightness": appSettings.readerSettings.forceLowBrightness.value }}
+                ></div>
+            )}
             <section
                 ref={imgContRef}
                 className={
