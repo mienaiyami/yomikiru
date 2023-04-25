@@ -1,11 +1,12 @@
 {
     "name": "yomikiru",
     "productName": "Yomikiru",
-    "version": "2.9.3",
-    "description": "App to read manga/comic offline on desktop",
+    "version": "2.10.0",
+    "description": "App to read manga/comic/epub offline on desktop",
     "main": ".webpack/main",
     "author": {
-        "name": "mienaiyami <https://github.com/mienaiyami/yomikiru>"
+        "name": "mienaiyami",
+        "url": "https://github.com/mienaiyami/yomikiru"
     },
     "scripts": {
         "start": "electron-forge start",

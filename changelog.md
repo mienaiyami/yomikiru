@@ -9,26 +9,31 @@
 ---
 ## Note
 
-- App name will be changing to "Yomikiru". Support for app with name as "Manga Reader" will end in April 2024.
-- **Change in App theme system so some issues are expected, please report.**
+- **Epub reader available (experimental)**
 
 Linux distribution currently not available as direct download but can be build easily by following this [Build for linux(debian) guide](https://github.com/mienaiyami/yomikiru/blob/master/docs/build_for_linux.md).
 
 ---
 
-<!-- ## Added -->
+## Added
+
+- EPub reader (experimental) #78.
+- Custom color filter in reader settings, #93.
+- Force low brightness option, #93.
+- Option to disable list numbering(#95) and page number on home page(#94),
 
 <!-- ## Changed -->
 
+
 ## Fixed
 
-- #86, #87 and other Fixes.
+- #96 and other fixes.
 
 ---
 
 #### Todo
 
-- Epub support.
+- Improve Epub reader.
 - Write tests.
 - Add ability to change image quality in canvas mode for less RAM usage and performance.
 
