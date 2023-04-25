@@ -14,6 +14,9 @@ import { useAppDispatch, useAppSelector } from "../store/hooks";
 import InputRange from "./Element/InputRange";
 import { InputSelect } from "./Element/InputSelect";
 import { settingValidatorData } from "../MainImports";
+import InputNumber from "./Element/InputNumber";
+import InputCheckbox from "./Element/InputCheckbox";
+import InputCheckboxNumber from "./Element/InputCheckboxNumber";
 
 const ReaderSettings = ({
     makeScrollPos,
@@ -99,30 +102,23 @@ const ReaderSettings = ({
                         Size
                     </div>
                     <div className="options">
-                        <label className={appSettings.readerSettings.fitOption !== 0 ? "disabled" : ""}>
-                            <input
-                                type="number"
-                                value={appSettings.readerSettings.readerWidth}
-                                min={1}
-                                max={maxWidth}
-                                disabled={appSettings.readerSettings.fitOption !== 0}
-                                onKeyDown={(e) => {
-                                    if (e.key !== "Escape") {
-                                        e.stopPropagation();
-                                    }
-                                }}
-                                onChange={(e) => {
-                                    makeScrollPos();
+                        <InputNumber
+                            value={appSettings.readerSettings.readerWidth}
+                            min={1}
+                            max={maxWidth}
+                            onChange={(e) => {
+                                makeScrollPos();
 
-                                    let value = e.target.valueAsNumber;
-                                    if (!value) value = 0;
-                                    value = value >= maxWidth ? maxWidth : value;
+                                let value = e.target.valueAsNumber;
+                                if (!value) value = 0;
+                                value = value >= maxWidth ? maxWidth : value;
 
-                                    dispatch(setReaderSettings({ readerWidth: value }));
-                                }}
-                            />
-                            %
-                        </label>
+                                dispatch(setReaderSettings({ readerWidth: value }));
+                            }}
+                            labeled={true}
+                            disabled={appSettings.readerSettings.fitOption !== 0}
+                            labelAfter="%"
+                        />
                         <button
                             ref={sizeMinusRef}
                             disabled={appSettings.readerSettings.fitOption !== 0}
@@ -164,14 +160,11 @@ const ReaderSettings = ({
                         >
                             <FontAwesomeIcon icon={faPlus} />
                         </button>
-                        <label className={appSettings.readerSettings.widthClamped ? "optionSelected " : " "}>
-                            <input
-                                type="checkbox"
-                                checked={appSettings.readerSettings.widthClamped}
-                                onChange={(e) => dispatch(setReaderSettings({ widthClamped: e.target.checked }))}
-                            />
-                            Clamp
-                        </label>
+                        <InputCheckbox
+                            checked={appSettings.readerSettings.widthClamped}
+                            onChange={(e) => dispatch(setReaderSettings({ widthClamped: e.target.checked }))}
+                            labelAfter="Clamp"
+                        />
                     </div>
                 </div>
                 <div className={"settingItem "}>
@@ -247,88 +240,62 @@ const ReaderSettings = ({
                             </button>
                         </div>
                         <div className="col">
-                            <label
-                                className={
-                                    (appSettings.readerSettings.maxHeightWidthSelector === "width"
-                                        ? "optionSelected "
-                                        : "") +
-                                    (appSettings.readerSettings.widthClamped ||
+                            <InputCheckboxNumber
+                                checked={appSettings.readerSettings.maxHeightWidthSelector === "width"}
+                                onChangeCheck={() => {
+                                    dispatch(
+                                        setReaderSettings({
+                                            maxHeightWidthSelector:
+                                                appSettings.readerSettings.maxHeightWidthSelector !== "width"
+                                                    ? "width"
+                                                    : "none",
+                                        })
+                                    );
+                                }}
+                                min={0}
+                                max={5000}
+                                value={appSettings.readerSettings.maxWidth}
+                                disabled={
+                                    appSettings.readerSettings.widthClamped ||
                                     appSettings.readerSettings.fitOption !== 0
-                                        ? "disabled "
-                                        : "")
                                 }
-                            >
-                                <input
-                                    type="checkbox"
-                                    checked={appSettings.readerSettings.maxHeightWidthSelector === "width"}
-                                    onChange={() => {
-                                        dispatch(
-                                            setReaderSettings({
-                                                maxHeightWidthSelector:
-                                                    appSettings.readerSettings.maxHeightWidthSelector !== "width"
-                                                        ? "width"
-                                                        : "none",
-                                            })
-                                        );
-                                    }}
-                                />
-                                <p>Max Image Width&nbsp;&nbsp;:</p>
-                                <input
-                                    type="number"
-                                    min={0}
-                                    max={5000}
-                                    value={appSettings.readerSettings.maxWidth}
-                                    disabled={appSettings.readerSettings.maxHeightWidthSelector !== "width"}
-                                    onChange={(e) => {
-                                        let value = e.currentTarget.valueAsNumber;
-                                        if (value > 5000) value = 5000;
-                                        if (value < 0) value = 0;
-                                        dispatch(setReaderSettings({ maxWidth: value }));
-                                    }}
-                                />
-                                px
-                            </label>
-                            <label
-                                className={
-                                    (appSettings.readerSettings.maxHeightWidthSelector === "height"
-                                        ? "optionSelected "
-                                        : "") +
-                                    (appSettings.readerSettings.widthClamped ||
+                                onChangeNum={(e) => {
+                                    let value = e.currentTarget.valueAsNumber;
+                                    if (value > 5000) value = 5000;
+                                    if (value < 0) value = 0;
+                                    dispatch(setReaderSettings({ maxWidth: value }));
+                                }}
+                                paraBefore="Max Image Width&nbsp;&nbsp;:"
+                                labelAfter="px"
+                            />
+                            <InputCheckboxNumber
+                                checked={appSettings.readerSettings.maxHeightWidthSelector === "height"}
+                                onChangeCheck={() => {
+                                    dispatch(
+                                        setReaderSettings({
+                                            maxHeightWidthSelector:
+                                                appSettings.readerSettings.maxHeightWidthSelector !== "height"
+                                                    ? "height"
+                                                    : "none",
+                                        })
+                                    );
+                                }}
+                                min={0}
+                                max={5000}
+                                value={appSettings.readerSettings.maxHeight}
+                                disabled={
+                                    appSettings.readerSettings.widthClamped ||
                                     appSettings.readerSettings.fitOption !== 0
-                                        ? "disabled "
-                                        : "")
                                 }
-                            >
-                                <input
-                                    type="checkbox"
-                                    checked={appSettings.readerSettings.maxHeightWidthSelector === "height"}
-                                    onChange={() => {
-                                        dispatch(
-                                            setReaderSettings({
-                                                maxHeightWidthSelector:
-                                                    appSettings.readerSettings.maxHeightWidthSelector !== "height"
-                                                        ? "height"
-                                                        : "none",
-                                            })
-                                        );
-                                    }}
-                                />
-                                <p>Max Image Height&nbsp;:</p>
-                                <input
-                                    type="number"
-                                    min={0}
-                                    max={5000}
-                                    value={appSettings.readerSettings.maxHeight}
-                                    disabled={appSettings.readerSettings.maxHeightWidthSelector !== "height"}
-                                    onChange={(e) => {
-                                        let value = e.currentTarget.valueAsNumber;
-                                        if (value > 5000) value = 5000;
-                                        if (value < 0) value = 0;
-                                        dispatch(setReaderSettings({ maxHeight: value }));
-                                    }}
-                                />
-                                px
-                            </label>
+                                onChangeNum={(e) => {
+                                    let value = e.currentTarget.valueAsNumber;
+                                    if (value > 5000) value = 5000;
+                                    if (value < 0) value = 0;
+                                    dispatch(setReaderSettings({ maxHeight: value }));
+                                }}
+                                paraBefore="Max Image Height&nbsp;:"
+                                labelAfter="px"
+                            />
                         </div>
                     </div>
                 </div>
@@ -503,38 +470,34 @@ const ReaderSettings = ({
                         Scroll Speed(with keys)
                     </div>
                     <div className="options">
-                        <label>
-                            Scroll&nbsp;A&nbsp;:
-                            <input
-                                type="number"
-                                min={1}
-                                max={500}
-                                value={appSettings.readerSettings.scrollSpeed}
-                                onChange={(e) => {
-                                    let value = e.currentTarget.valueAsNumber;
-                                    if (value > 500) value = 500;
-                                    if (value < 1) value = 1;
-                                    dispatch(setReaderSettings({ scrollSpeed: value }));
-                                }}
-                            />
-                            px
-                        </label>
-                        <label>
-                            Scroll&nbsp;B&nbsp;:
-                            <input
-                                type="number"
-                                min={1}
-                                max={500}
-                                value={appSettings.readerSettings.largeScrollMultiplier}
-                                onChange={(e) => {
-                                    let value = e.currentTarget.valueAsNumber;
-                                    if (value > 500) value = 500;
-                                    if (value < 1) value = 1;
-                                    dispatch(setReaderSettings({ largeScrollMultiplier: value }));
-                                }}
-                            />
-                            px
-                        </label>
+                        <InputNumber
+                            min={1}
+                            max={500}
+                            value={appSettings.readerSettings.scrollSpeed}
+                            onChange={(e) => {
+                                let value = e.currentTarget.valueAsNumber;
+                                if (value > 500) value = 500;
+                                if (value < 1) value = 1;
+                                dispatch(setReaderSettings({ scrollSpeed: value }));
+                            }}
+                            labeled
+                            labelBefore="Scroll&nbsp;A&nbsp;:"
+                            labelAfter="px"
+                        />
+                        <InputNumber
+                            min={1}
+                            max={500}
+                            value={appSettings.readerSettings.largeScrollMultiplier}
+                            onChange={(e) => {
+                                let value = e.currentTarget.valueAsNumber;
+                                if (value > 500) value = 500;
+                                if (value < 1) value = 1;
+                                dispatch(setReaderSettings({ largeScrollMultiplier: value }));
+                            }}
+                            labeled
+                            labelBefore="Scroll&nbsp;B&nbsp;:"
+                            labelAfter="px"
+                        />
                     </div>
                 </div>
                 <div className={"settingItem "}>
@@ -558,28 +521,20 @@ const ReaderSettings = ({
                         Custom Color Filter
                     </div>
                     <div className="options col">
-                        <label
-                            className={
-                                appSettings.readerSettings.customColorFilter.enabled ? "optionSelected " : ""
-                            }
-                        >
-                            <input
-                                type="checkbox"
-                                checked={appSettings.readerSettings.customColorFilter.enabled}
-                                onChange={(e) => {
-                                    dispatch(
-                                        setReaderSettings({
-                                            customColorFilter: {
-                                                ...appSettings.readerSettings.customColorFilter,
-                                                enabled: e.currentTarget.checked,
-                                            },
-                                        })
-                                    );
-                                }}
-                            />
-                            <p>Use Custom Color Filter</p>
-                        </label>
-
+                        <InputCheckbox
+                            checked={appSettings.readerSettings.customColorFilter.enabled}
+                            onChange={(e) => {
+                                dispatch(
+                                    setReaderSettings({
+                                        customColorFilter: {
+                                            ...appSettings.readerSettings.customColorFilter,
+                                            enabled: e.currentTarget.checked,
+                                        },
+                                    })
+                                );
+                            }}
+                            paraAfter="Use Custom Color Filter"
+                        />
                         <InputRange
                             className={"colorRange"}
                             min={0}
@@ -675,29 +630,20 @@ const ReaderSettings = ({
                             }}
                             options={[...settingValidatorData.readerSettings.customColorFilter.blendMode]}
                         />
-
-                        <label
-                            className={
-                                appSettings.readerSettings.forceLowBrightness.enabled ? "optionSelected " : ""
-                            }
-                        >
-                            <input
-                                type="checkbox"
-                                checked={appSettings.readerSettings.forceLowBrightness.enabled}
-                                onChange={(e) => {
-                                    dispatch(
-                                        setReaderSettings({
-                                            forceLowBrightness: {
-                                                ...appSettings.readerSettings.forceLowBrightness,
-                                                enabled: e.currentTarget.checked,
-                                            },
-                                        })
-                                    );
-                                }}
-                            />
-                            <p>Force Low brightness</p>
-                        </label>
-
+                        <InputCheckbox
+                            checked={appSettings.readerSettings.forceLowBrightness.enabled}
+                            onChange={(e) => {
+                                dispatch(
+                                    setReaderSettings({
+                                        forceLowBrightness: {
+                                            ...appSettings.readerSettings.forceLowBrightness,
+                                            enabled: e.currentTarget.checked,
+                                        },
+                                    })
+                                );
+                            }}
+                            paraAfter="Force Low brightness"
+                        />
                         <InputRange
                             className={"colorRange"}
                             min={0}
@@ -738,65 +684,39 @@ const ReaderSettings = ({
                     >
                         Other settings
                     </div>
+
                     <div className="options col">
-                        <label
-                            className={
-                                (appSettings.readerSettings.variableImageSize ? "optionSelected " : "") +
-                                (appSettings.readerSettings.pagesPerRowSelected !== 0 ? "disabled" : "")
-                            }
-                        >
-                            <input
-                                type="checkbox"
-                                disabled={appSettings.readerSettings.pagesPerRowSelected !== 0}
-                                checked={appSettings.readerSettings.variableImageSize}
-                                onChange={(e) => {
-                                    dispatch(setReaderSettings({ variableImageSize: e.currentTarget.checked }));
-                                }}
-                            />
-                            <p>Double size for double spread pages.</p>
-                        </label>
-                        <label
-                            className={
-                                (appSettings.readerSettings.gapBetweenRows ? "optionSelected " : "") +
-                                (appSettings.readerSettings.readerTypeSelected !== 0 ? "disabled " : "")
-                            }
-                        >
-                            <input
-                                type="checkbox"
-                                disabled={appSettings.readerSettings.readerTypeSelected !== 0}
-                                checked={appSettings.readerSettings.gapBetweenRows}
-                                onChange={(e) => {
-                                    dispatch(setReaderSettings({ gapBetweenRows: e.currentTarget.checked }));
-                                }}
-                            />
-                            <p>Gap between rows&nbsp;: </p>
-                            <input
-                                type="number"
-                                value={appSettings.readerSettings.gapSize}
-                                disabled={!appSettings.readerSettings.gapBetweenRows}
-                                min={0}
-                                onChange={(e) => {
-                                    let value = e.target.valueAsNumber;
-                                    if (!value) value = 0;
-                                    dispatch(setReaderSettings({ gapSize: value }));
-                                }}
-                            />
-                            px
-                        </label>
-                        <label
-                            className={appSettings.readerSettings.showPageNumberInZenMode ? "optionSelected" : ""}
-                        >
-                            <input
-                                type="checkbox"
-                                checked={appSettings.readerSettings.showPageNumberInZenMode}
-                                onChange={(e) => {
-                                    dispatch(
-                                        setReaderSettings({ showPageNumberInZenMode: e.currentTarget.checked })
-                                    );
-                                }}
-                            />
-                            <p>Show Page Number in Zen Mode.</p>
-                        </label>
+                        <InputCheckbox
+                            disabled={appSettings.readerSettings.pagesPerRowSelected !== 0}
+                            checked={appSettings.readerSettings.variableImageSize}
+                            onChange={(e) => {
+                                dispatch(setReaderSettings({ variableImageSize: e.currentTarget.checked }));
+                            }}
+                            paraAfter="Double size for double spread pages."
+                        />
+                        <InputCheckboxNumber
+                            disabled={appSettings.readerSettings.readerTypeSelected !== 0}
+                            checked={appSettings.readerSettings.gapBetweenRows}
+                            onChangeCheck={(e) => {
+                                dispatch(setReaderSettings({ gapBetweenRows: e.currentTarget.checked }));
+                            }}
+                            value={appSettings.readerSettings.gapSize}
+                            min={0}
+                            onChangeNum={(e) => {
+                                let value = e.target.valueAsNumber;
+                                if (!value) value = 0;
+                                dispatch(setReaderSettings({ gapSize: value }));
+                            }}
+                            paraBefore="Gap between rows&nbsp;:"
+                            labelAfter="px"
+                        />
+                        <InputCheckbox
+                            checked={appSettings.readerSettings.showPageNumberInZenMode}
+                            onChange={(e) => {
+                                dispatch(setReaderSettings({ showPageNumberInZenMode: e.currentTarget.checked }));
+                            }}
+                            paraAfter="Show Page Number in Zen Mode."
+                        />
                     </div>
                 </div>
             </div>
