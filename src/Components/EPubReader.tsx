@@ -195,7 +195,10 @@ const EPubReader = () => {
         );
         console.log("extracting ", link, " at ", extractPath);
         window.crossZip.unzip(link, extractPath, (err) => {
+            dispatch(setLoadingMangaPercent(50));
             if (err) {
+                dispatch(setLoadingManga(false));
+                dispatch(setLoadingMangaPercent(0));
                 // dispatch(setUnzipping(false));
                 if (err.message.includes("spawn unzip ENOENT"))
                     return window.dialog.customError({
@@ -301,6 +304,9 @@ const EPubReader = () => {
                         setDisplayData(tempDisplayData);
                         setEpubStylesheets(tempStylesheets);
                         setDisplayOrder(tempIDREf);
+
+                        dispatch(setLoadingMangaPercent(100));
+                        dispatch(setLoadingManga(false));
 
                         dispatch(setReaderOpen(true));
                     }

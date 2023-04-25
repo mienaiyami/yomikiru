@@ -5,6 +5,9 @@ import { setEpubReaderSettings } from "../store/appSettings";
 import { useAppDispatch, useAppSelector } from "../store/hooks";
 import { getFonts } from "font-list";
 import { InputSelect } from "./Element/InputSelect";
+import InputNumber from "./Element/InputNumber";
+import InputCheckboxNumber from "./Element/InputCheckboxNumber";
+import InputCheckbox from "./Element/InputCheckbox";
 
 const EPUBReaderSettings = ({
     makeScrollPos,
@@ -77,30 +80,23 @@ const EPUBReaderSettings = ({
             </button>
             <div className="main">
                 <div className="settingItem">
-                    <div className="name">Size</div>
+                    <div className={"name " + "expanded"}>Size</div>
                     <div className="options">
-                        <label>
-                            <input
-                                type="number"
-                                value={appSettings.epubReaderSettings.readerWidth}
-                                min={1}
-                                max={maxWidth}
-                                onKeyDown={(e) => {
-                                    if (e.key !== "Escape") {
-                                        e.stopPropagation();
-                                    }
-                                }}
-                                onChange={(e) => {
-                                    makeScrollPos();
-                                    let value = e.target.valueAsNumber;
-                                    if (!value) value = 0;
-                                    value = value >= maxWidth ? maxWidth : value;
+                        <InputNumber
+                            value={appSettings.epubReaderSettings.readerWidth}
+                            min={1}
+                            max={maxWidth}
+                            onChange={(e) => {
+                                makeScrollPos();
+                                let value = e.target.valueAsNumber;
+                                if (!value) value = 0;
+                                value = value >= maxWidth ? maxWidth : value;
 
-                                    dispatch(setEpubReaderSettings({ readerWidth: value }));
-                                }}
-                            />
-                            %
-                        </label>
+                                dispatch(setEpubReaderSettings({ readerWidth: value }));
+                            }}
+                            labeled={true}
+                            labelAfter="%"
+                        />
                         <button
                             ref={sizeMinusRef}
                             onClick={(e) => {
@@ -143,30 +139,23 @@ const EPUBReaderSettings = ({
                     </div>
                 </div>
                 <div className="settingItem">
-                    <div className="name">Font</div>
+                    <div className={"name " + "expanded"}>Font</div>
                     <div className="options">
                         <div className="row">
-                            <label>
-                                <input
-                                    type="number"
-                                    value={appSettings.epubReaderSettings.fontSize}
-                                    min={1}
-                                    max={100}
-                                    onKeyDown={(e) => {
-                                        if (e.key !== "Escape") {
-                                            e.stopPropagation();
-                                        }
-                                    }}
-                                    onChange={(e) => {
-                                        // makeScrollPos();
-                                        let value = e.target.valueAsNumber;
-                                        if (!value) value = 0;
-                                        value = value >= 100 ? 100 : value;
-                                        dispatch(setEpubReaderSettings({ fontSize: value }));
-                                    }}
-                                />
-                                px
-                            </label>
+                            <InputNumber
+                                value={appSettings.epubReaderSettings.fontSize}
+                                min={1}
+                                max={100}
+                                onChange={(e) => {
+                                    // makeScrollPos();
+                                    let value = e.target.valueAsNumber;
+                                    if (!value) value = 0;
+                                    value = value >= 100 ? 100 : value;
+                                    dispatch(setEpubReaderSettings({ fontSize: value }));
+                                }}
+                                labeled={true}
+                                labelAfter="px"
+                            />
                             <button
                                 onClick={(e) => {
                                     makeScrollPos();
@@ -213,43 +202,19 @@ const EPUBReaderSettings = ({
                                 />
                                 px
                             </label> */}
-                            <label
-                                className={
-                                    !appSettings.epubReaderSettings.useDefault_fontFamily ? "optionSelected " : ""
-                                }
-                            >
-                                <input
-                                    type="checkbox"
-                                    checked={!appSettings.epubReaderSettings.useDefault_fontFamily}
-                                    onChange={(e) => {
-                                        makeScrollPos();
-                                        dispatch(
-                                            setEpubReaderSettings({
-                                                useDefault_fontFamily: !e.currentTarget.checked,
-                                            })
-                                        );
-                                    }}
-                                />
-                                <p>Custom Font Family (experimental)</p>
-                            </label>
+                            <InputCheckbox
+                                checked={!appSettings.epubReaderSettings.useDefault_fontFamily}
+                                onChange={(e) => {
+                                    makeScrollPos();
+                                    dispatch(
+                                        setEpubReaderSettings({
+                                            useDefault_fontFamily: !e.currentTarget.checked,
+                                        })
+                                    );
+                                }}
+                                paraAfter="Custom Font Family"
+                            />
                             {/* //todo : make any font selector */}
-                            <label
-                                className={appSettings.epubReaderSettings.useDefault_fontFamily ? "disabled " : ""}
-                            >
-                                <select
-                                    disabled={appSettings.epubReaderSettings.useDefault_fontFamily}
-                                    value={appSettings.epubReaderSettings.fontFamily}
-                                    onChange={(e) => {
-                                        const val = e.currentTarget.value;
-                                        // console.log(val);
-                                        dispatch(
-                                            setEpubReaderSettings({
-                                                fontFamily: val,
-                                            })
-                                        );
-                                    }}
-                                ></select>
-                            </label>
                             <InputSelect
                                 labeled={true}
                                 disabled={appSettings.epubReaderSettings.useDefault_fontFamily}
@@ -265,132 +230,95 @@ const EPUBReaderSettings = ({
                             >
                                 <option value="Roboto">Roboto</option>
                                 {fontList.map((e) => (
-                                    <option value={e} key={e}>
+                                    <option value={e} key={e} style={{ fontFamily: e }}>
                                         {e}
                                     </option>
                                 ))}
                             </InputSelect>
-                            <label
-                                className={
-                                    !appSettings.epubReaderSettings.useDefault_lineSpacing ? "optionSelected " : ""
-                                }
-                            >
-                                <input
-                                    type="checkbox"
-                                    checked={!appSettings.epubReaderSettings.useDefault_lineSpacing}
-                                    onChange={(e) => {
-                                        makeScrollPos();
-                                        dispatch(
-                                            setEpubReaderSettings({
-                                                useDefault_lineSpacing: !e.currentTarget.checked,
-                                            })
-                                        );
-                                    }}
-                                />
-                                <p>Line Spacing&nbsp;:</p>
-                                <input
-                                    type="number"
-                                    step={0.1}
-                                    min={0.1}
-                                    max={20}
-                                    value={appSettings.epubReaderSettings.lineSpacing}
-                                    onChange={(e) => {
-                                        makeScrollPos();
-                                        let value = e.currentTarget.valueAsNumber;
-                                        if (value > 20) value = 20;
-                                        if (value < 0.1) value = 0.1;
-                                        dispatch(setEpubReaderSettings({ lineSpacing: value }));
-                                    }}
-                                />
-                                em
-                            </label>
-                            <label
-                                className={
-                                    !appSettings.epubReaderSettings.useDefault_paragraphSpacing
-                                        ? "optionSelected "
-                                        : ""
-                                }
-                            >
-                                <input
-                                    type="checkbox"
-                                    checked={!appSettings.epubReaderSettings.useDefault_paragraphSpacing}
-                                    onChange={(e) => {
-                                        makeScrollPos();
-                                        dispatch(
-                                            setEpubReaderSettings({
-                                                useDefault_paragraphSpacing: !e.currentTarget.checked,
-                                            })
-                                        );
-                                    }}
-                                />
-                                <p>Paragraph Spacing&nbsp;:</p>
-                                <input
-                                    type="number"
-                                    step={0.1}
-                                    min={0.1}
-                                    max={100}
-                                    value={appSettings.epubReaderSettings.paragraphSpacing}
-                                    onChange={(e) => {
-                                        makeScrollPos();
-                                        let value = e.currentTarget.valueAsNumber;
-                                        if (value > 100) value = 100;
-                                        if (value < 0.1) value = 0.1;
-                                        dispatch(setEpubReaderSettings({ paragraphSpacing: value }));
-                                    }}
-                                />
-                                em
-                            </label>
-
-                            <label
-                                className={
-                                    !appSettings.epubReaderSettings.useDefault_wordSpacing ? "optionSelected " : ""
-                                }
-                            >
-                                <input
-                                    type="checkbox"
-                                    checked={!appSettings.epubReaderSettings.useDefault_wordSpacing}
-                                    onChange={(e) => {
-                                        makeScrollPos();
-                                        dispatch(
-                                            setEpubReaderSettings({
-                                                useDefault_wordSpacing: !e.currentTarget.checked,
-                                            })
-                                        );
-                                    }}
-                                />
-                                <p>Word Spacing&nbsp;:</p>
-                                <input
-                                    type="number"
-                                    step={0.1}
-                                    min={0.1}
-                                    max={20}
-                                    value={appSettings.epubReaderSettings.wordSpacing}
-                                    disabled={!appSettings.epubReaderSettings.useDefault_wordSpacing}
-                                    onChange={(e) => {
-                                        makeScrollPos();
-                                        let value = e.currentTarget.valueAsNumber;
-                                        if (value > 20) value = 20;
-                                        if (value < 0.1) value = 0.1;
-                                        dispatch(setEpubReaderSettings({ wordSpacing: value }));
-                                    }}
-                                />
-                                em
-                            </label>
-                            <label className={appSettings.epubReaderSettings.hyphenation ? "optionSelected " : ""}>
-                                <input
-                                    type="checkbox"
-                                    checked={appSettings.epubReaderSettings.hyphenation}
-                                    onChange={(e) => {
-                                        dispatch(setEpubReaderSettings({ hyphenation: e.currentTarget.checked }));
-                                    }}
-                                />
-                                <p>Hyphenation.</p>
-                            </label>
+                            <InputCheckboxNumber
+                                checked={!appSettings.epubReaderSettings.useDefault_lineSpacing}
+                                onChangeCheck={(e) => {
+                                    makeScrollPos();
+                                    dispatch(
+                                        setEpubReaderSettings({
+                                            useDefault_lineSpacing: !e.currentTarget.checked,
+                                        })
+                                    );
+                                }}
+                                step={0.1}
+                                min={0.1}
+                                max={20}
+                                value={appSettings.epubReaderSettings.lineSpacing}
+                                onChangeNum={(e) => {
+                                    makeScrollPos();
+                                    let value = e.currentTarget.valueAsNumber;
+                                    if (value > 20) value = 20;
+                                    if (value < 0.1) value = 0.1;
+                                    dispatch(setEpubReaderSettings({ lineSpacing: value }));
+                                }}
+                                paraBefore="Line Spacing&nbsp;:"
+                                labelAfter="em"
+                            />
+                            <InputCheckboxNumber
+                                checked={!appSettings.epubReaderSettings.useDefault_paragraphSpacing}
+                                onChangeCheck={(e) => {
+                                    makeScrollPos();
+                                    dispatch(
+                                        setEpubReaderSettings({
+                                            useDefault_paragraphSpacing: !e.currentTarget.checked,
+                                        })
+                                    );
+                                }}
+                                step={0.1}
+                                min={0.1}
+                                max={20}
+                                value={appSettings.epubReaderSettings.paragraphSpacing}
+                                onChangeNum={(e) => {
+                                    makeScrollPos();
+                                    let value = e.currentTarget.valueAsNumber;
+                                    if (value > 20) value = 20;
+                                    if (value < 0.1) value = 0.1;
+                                    dispatch(setEpubReaderSettings({ paragraphSpacing: value }));
+                                }}
+                                paraBefore="Paragraph Spacing&nbsp;:"
+                                labelAfter="em"
+                            />
+                            <InputCheckboxNumber
+                                checked={!appSettings.epubReaderSettings.useDefault_wordSpacing}
+                                onChangeCheck={(e) => {
+                                    makeScrollPos();
+                                    dispatch(
+                                        setEpubReaderSettings({
+                                            useDefault_wordSpacing: !e.currentTarget.checked,
+                                        })
+                                    );
+                                }}
+                                step={0.1}
+                                min={0.1}
+                                max={20}
+                                value={appSettings.epubReaderSettings.wordSpacing}
+                                onChangeNum={(e) => {
+                                    makeScrollPos();
+                                    let value = e.currentTarget.valueAsNumber;
+                                    if (value > 20) value = 20;
+                                    if (value < 0.1) value = 0.1;
+                                    dispatch(setEpubReaderSettings({ wordSpacing: value }));
+                                }}
+                                paraBefore="Word Spacing&nbsp;:"
+                                labelAfter="em"
+                            />
+                            <InputCheckbox
+                                checked={appSettings.epubReaderSettings.hyphenation}
+                                onChange={(e) => {
+                                    dispatch(setEpubReaderSettings({ hyphenation: e.currentTarget.checked }));
+                                }}
+                                paraAfter="Hyphenation."
+                            />
                         </div>
                     </div>
                 </div>
                 <div className="settingItem">
-                    <div className="name">Reading mode</div>
+                    <div className={"name " + "expanded"}>Reading mode</div>
                     <div className="options">
                         {/* <button
                             className={appSettings.epubReaderSettings.readerTypeSelected === 0 ? "optionSelected" : ""}
@@ -414,7 +342,7 @@ const EPUBReaderSettings = ({
                     </div>
                 </div>
                 <div className="settingItem">
-                    <div className="name">Pages per Row</div>
+                    <div className={"name " + "expanded"}>Pages per Row</div>
                     <div className="options">
                         {/* <button
                             className={
@@ -473,7 +401,7 @@ const EPUBReaderSettings = ({
                     </div>
                 </div>
                 <div className="settingItem">
-                    <div className="name">Reading side</div>
+                    <div className={"name " + "expanded"}>Reading side</div>
                     <div className="options">
                         {/* <button
                             className={appSettings.epubReaderSettings.readingSide === 0 ? "optionSelected" : ""}
@@ -497,40 +425,36 @@ const EPUBReaderSettings = ({
                     </div>
                 </div>
                 <div className="settingItem">
-                    <div className="name">Scroll Speed(with keys)</div>
+                    <div className={"name " + "expanded"}>Scroll Speed(with keys)</div>
                     <div className="options">
-                        <label>
-                            Scroll&nbsp;A&nbsp;:
-                            <input
-                                type="number"
-                                min={1}
-                                max={500}
-                                value={appSettings.epubReaderSettings.scrollSpeedA}
-                                onChange={(e) => {
-                                    let value = e.currentTarget.valueAsNumber;
-                                    if (value > 500) value = 500;
-                                    if (value < 1) value = 1;
-                                    dispatch(setEpubReaderSettings({ scrollSpeedA: value }));
-                                }}
-                            />
-                            px
-                        </label>
-                        <label>
-                            Scroll&nbsp;B&nbsp;:
-                            <input
-                                type="number"
-                                min={1}
-                                max={500}
-                                value={appSettings.epubReaderSettings.scrollSpeedB}
-                                onChange={(e) => {
-                                    let value = e.currentTarget.valueAsNumber;
-                                    if (value > 500) value = 500;
-                                    if (value < 1) value = 1;
-                                    dispatch(setEpubReaderSettings({ scrollSpeedB: value }));
-                                }}
-                            />
-                            px
-                        </label>
+                        <InputNumber
+                            value={appSettings.epubReaderSettings.scrollSpeedA}
+                            min={1}
+                            max={500}
+                            onChange={(e) => {
+                                let value = e.currentTarget.valueAsNumber;
+                                if (value > 500) value = 500;
+                                if (value < 1) value = 1;
+                                dispatch(setEpubReaderSettings({ scrollSpeedA: value }));
+                            }}
+                            labeled={true}
+                            labelBefore=" Scroll&nbsp;A&nbsp;:"
+                            labelAfter="px"
+                        />
+                        <InputNumber
+                            value={appSettings.epubReaderSettings.scrollSpeedB}
+                            min={1}
+                            max={500}
+                            onChange={(e) => {
+                                let value = e.currentTarget.valueAsNumber;
+                                if (value > 500) value = 500;
+                                if (value < 1) value = 1;
+                                dispatch(setEpubReaderSettings({ scrollSpeedB: value }));
+                            }}
+                            labeled={true}
+                            labelBefore=" Scroll&nbsp;B&nbsp;:"
+                            labelAfter="px"
+                        />
                     </div>
                 </div>
             </div>
