@@ -53,6 +53,7 @@ export const settingValidatorData = {
     // disableCachingCanvas: false,
     recordChapterRead: true,
     showPageNumOnHome: true,
+    disableListNumbering: false,
     readerSettings: {
         /**
          * width of reader in percent
@@ -695,6 +696,7 @@ const defaultSettings: AppSettings = {
     // disableCachingCanvas: false,
     recordChapterRead: true,
     showPageNumOnHome: true,
+    disableListNumbering: false,
     readerSettings: {
         readerWidth: 60,
         variableImageSize: true,

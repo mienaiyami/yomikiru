@@ -456,7 +456,18 @@ body {
         left: 0;
         width: 100%;
         height: calc(100% - var(--titleBar-height));
-
+        &.noListNumbering {
+            .listCont {
+                .location-cont {
+                    ol li a {
+                        grid-template-columns: auto var(--grid-template);
+                        &::before {
+                            display: none;
+                        }
+                    }
+                }
+            }
+        }
         button {
             background: var(--btn-color);
 

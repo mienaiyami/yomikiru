@@ -659,6 +659,18 @@ const Settings = (): ReactElement => {
                                     />
                                     <p>Show page number on in bookmark/history tab on home page.</p>
                                 </label>
+                                <label className={appSettings.disableListNumbering ? "selected" : ""}>
+                                    <input
+                                        type="checkbox"
+                                        checked={appSettings.disableListNumbering}
+                                        onChange={(e) => {
+                                            dispatch(
+                                                setAppSettings({ disableListNumbering: e.currentTarget.checked })
+                                            );
+                                        }}
+                                    />
+                                    <p>Disable location list numbering.</p>
+                                </label>
                                 <label className={appSettings.useCanvasBasedReader ? "selected" : ""}>
                                     <input
                                         type="checkbox"

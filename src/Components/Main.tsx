@@ -288,7 +288,7 @@ const Main = (): ReactElement => {
     //     }
     // };
     return (
-        <div id="app">
+        <div id="app" className={appSettings.disableListNumbering ? "noListNumbering " : ""}>
             <div
                 className="tabCont"
                 // ref={tabContRef}
