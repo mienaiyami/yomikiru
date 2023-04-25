@@ -646,6 +646,19 @@ const Settings = (): ReactElement => {
                                         <code>vertical scroll</code> Reading mode.
                                     </p>
                                 </label>
+
+                                <label className={appSettings.showPageNumOnHome ? "selected" : ""}>
+                                    <input
+                                        type="checkbox"
+                                        checked={appSettings.showPageNumOnHome}
+                                        onChange={(e) => {
+                                            dispatch(
+                                                setAppSettings({ showPageNumOnHome: e.currentTarget.checked })
+                                            );
+                                        }}
+                                    />
+                                    <p>Show page number on in bookmark/history tab on home page.</p>
+                                </label>
                                 <label className={appSettings.useCanvasBasedReader ? "selected" : ""}>
                                     <input
                                         type="checkbox"

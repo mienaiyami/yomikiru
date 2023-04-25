@@ -174,7 +174,7 @@ body {
             opacity: 1;
         }
     }
-    input[type="range"]{
+    input[type="range"] {
         accent-color: var(--icon-color);
     }
     user-select: none;
@@ -576,7 +576,7 @@ body {
                                     .page {
                                         margin-left: auto;
                                         white-space: nowrap;
-                                        display: flex;
+                                        display: var(--show-page-num-on-home);
                                         gap: 5px;
                                         .num {
                                             min-width: 2.2em;
@@ -697,6 +697,8 @@ body {
             width: 100%;
             height: 100%;
             // padding: 5px 20px;
+
+            --show-page-num-on-home: flex;
 
             .contTab {
                 width: 100%;
@@ -1517,17 +1519,16 @@ body {
 
                         .name {
                             font-size: 20px;
-                            &::before{
+                            &::before {
                                 content: "▼";
                                 display: inline-block;
                                 transform: rotate(-90deg);
-    
                             }
-                            &.expanded{
-                                &~.options{
+                            &.expanded {
+                                & ~ .options {
                                     display: flex;
                                 }
-                                &::before{
+                                &::before {
                                     transform: rotate(0);
                                 }
                             }
@@ -1593,7 +1594,7 @@ body {
                                     pointer-events: none;
                                 }
                             }
-                            .colorRange{
+                            .colorRange {
                                 display: grid;
                                 grid-template-columns: 1rem auto 2rem;
                             }
@@ -1601,8 +1602,8 @@ body {
                     }
                 }
             }
-            .forcedLowBrightness{
-                --neg-brightness:0.5;
+            .forcedLowBrightness {
+                --neg-brightness: 0.5;
                 pointer-events: none;
                 z-index: 1000001;
                 position: fixed;
@@ -1610,8 +1611,7 @@ body {
                 width: 100%;
                 height: calc(100% + 40px);
                 background-color: #000;
-                opacity:var(--neg-brightness);
-
+                opacity: var(--neg-brightness);
             }
             .imgCont {
                 width: 100%;
@@ -1627,13 +1627,13 @@ body {
                 --varWidth: 100%;
                 --gapSize: 10px;
 
-                --blend-bg:rgba(0,0,0,0);
-                --blend-mode:normal;
-                &.customColorFilter{
+                --blend-bg: rgba(0, 0, 0, 0);
+                --blend-mode: normal;
+                &.customColorFilter {
                     background-color: var(--blend-bg);
-                    .row{
-                    background-color: var(--blend-bg);
-                    img{
+                    .row {
+                        background-color: var(--blend-bg);
+                        img {
                             mix-blend-mode: var(--blend-mode);
                         }
                     }

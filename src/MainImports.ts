@@ -52,6 +52,7 @@ export const settingValidatorData = {
     openOnDblClick: true,
     // disableCachingCanvas: false,
     recordChapterRead: true,
+    showPageNumOnHome: true,
     readerSettings: {
         /**
          * width of reader in percent
@@ -693,6 +694,7 @@ const defaultSettings: AppSettings = {
     openOnDblClick: true,
     // disableCachingCanvas: false,
     recordChapterRead: true,
+    showPageNumOnHome: true,
     readerSettings: {
         readerWidth: 60,
         variableImageSize: true,
