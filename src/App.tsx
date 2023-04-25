@@ -74,7 +74,7 @@ const App = (): ReactElement => {
     ): void => {
         // ! changing imgs from name to link of image
         // let linkMain = link;
-        const tempFn = (link: string, last = false) =>
+        const tempFn = (link: string, goInAndRetry = 0) =>
             window.fs.readdir(link, (err, files) => {
                 if (err) {
                     window.logger.error(err);
@@ -103,14 +103,14 @@ const App = (): ReactElement => {
                 });
                 if (imgs.length <= 0) {
                     if (
-                        !last &&
+                        goInAndRetry > 0 &&
                         files.length <= 1 &&
                         window.fs.lstatSync(window.path.join(link, files[0])).isDirectory()
                     ) {
                         tempFn(
                             // linkSplitted[linkSplitted.length - 1].replace(/(\.zip|\.cbz)/gi, "")
                             window.path.join(link, files[0]),
-                            true
+                            goInAndRetry - 1
                         );
                         return;
                     }
@@ -163,7 +163,7 @@ const App = (): ReactElement => {
                         log: false,
                     });
                 }
-                tempFn(tempExtractPath);
+                tempFn(tempExtractPath, 1);
             });
         } else tempFn(link);
     };
