@@ -69,9 +69,9 @@ const pushRelease = () => {
         " -F changelogTemp.md " +
         // `--notes ""` +
         // "-d " +
-        `./out/full/Manga.Reader-${pkgJSON.version}-Setup.exe ./out/full/Manga.Reader-win32-${pkgJSON.version}-Portable.zip ` +
+        // `./out/full/Manga.Reader-${pkgJSON.version}-Setup.exe ./out/full/Manga.Reader-win32-${pkgJSON.version}-Portable.zip ` +
         `./out/full/Yomikiru-${pkgJSON.version}-Setup.exe ./out/full/Yomikiru-win32-${pkgJSON.version}-Portable.zip `;
-        // `./out/full/Yomikiru-${pkgJSON.version}-amd64.deb `
+    // `./out/full/Yomikiru-${pkgJSON.version}-amd64.deb `
     const a = printProcessing("Pushing build to gh release ");
     const ghSpawn = exec(pushCommand);
     ghSpawn.stderr.on("data", (data) => {
