@@ -901,7 +901,7 @@ const Reader = () => {
         <div
             ref={readerRef}
             id="reader"
-            className={isSideListPinned ? "sideListPinned " : "" + "reader "}
+            className={(isSideListPinned ? "sideListPinned " : "") + "reader "}
             style={{
                 gridTemplateColumns: sideListWidth + "px auto",
 

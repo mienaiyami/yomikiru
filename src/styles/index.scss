@@ -1534,6 +1534,7 @@ body {
                                 content: "▼";
                                 display: inline-block;
                                 transform: rotate(-90deg);
+                                margin-right: 5px;
                             }
                             &.expanded {
                                 & ~ .options {
