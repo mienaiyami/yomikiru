@@ -211,7 +211,7 @@ const ReaderSideList = ({
     }, [draggingResizer]);
     return (
         <div
-            className={`currentMangaList listCont ${isListOpen ? "open" : ""}`}
+            className={`readerSideList listCont ${isListOpen ? "open" : ""}`}
             onMouseEnter={() => {
                 setpreventListClose(true);
                 if (!isListOpen) setListOpen(true);
@@ -326,7 +326,7 @@ const ReaderSideList = ({
                         <FontAwesomeIcon icon={faArrowLeft} />
                     </Button>
                     <Button
-                        className="ctrl-menu-item"
+                        className="ctrl-menu-item bookmarkBtn"
                         tooltip="Bookmark"
                         btnRef={addToBookmarkRef}
                         clickAction={() => {

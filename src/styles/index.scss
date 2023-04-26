@@ -117,7 +117,7 @@ body.zenMode {
         display: none;
     }
 
-    #app #reader .currentMangaList,
+    #app #reader .readerSideList,
     .readerSettings,
     #topBar {
         display: none;
@@ -1187,12 +1187,14 @@ body {
             overflow-x: hidden;
             overflow: auto;
             // --mangaListWidth: clamp(400px, 40%, 500px);
-            --mangaListWidth: 450px;
+            --sideListWidth: 450px;
 
             &.sideListPinned {
-                overflow: hidden;
+                &#reader {
+                    overflow: hidden;
+                }
 
-                .currentMangaList {
+                .readerSideList {
                     position: sticky;
                     max-width: none;
                     min-width: none;
@@ -1300,10 +1302,10 @@ body {
                 }
             }
 
-            .currentMangaList {
+            .readerSideList {
                 background: var(--sideList-bg-color);
                 height: var(--body-height);
-                width: var(--mangaListWidth);
+                width: var(--sideListWidth);
                 min-width: 196px;
                 max-width: 90%;
                 z-index: 100;
@@ -1436,7 +1438,7 @@ body {
                             }
                         }
 
-                        button:nth-child(2) {
+                        button.bookmarkBtn {
                             width: auto;
                         }
                     }

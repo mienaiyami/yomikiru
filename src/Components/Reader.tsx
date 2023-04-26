@@ -725,6 +725,9 @@ const Reader = () => {
         if (isSideListPinned) {
             readerRef.current?.scrollTo(0, scrollPosPercent * readerRef.current.scrollHeight);
         }
+        /**
+         * todo: do only when mouse up
+         */
         dispatch(setReaderSettings({ sideListWidth }));
     }, [sideListWidth]);
     useLayoutEffect(() => {
@@ -906,7 +909,7 @@ const Reader = () => {
                 gridTemplateColumns: sideListWidth + "px auto",
 
                 display: isReaderOpen ? (isSideListPinned ? "grid" : "block") : "none",
-                "--mangaListWidth": sideListWidth + "px",
+                "--sideListWidth": sideListWidth + "px",
             }}
             onScroll={() => {
                 if (appSettings.readerSettings.readerTypeSelected === 0 && !isSideListPinned) changePageNumber();

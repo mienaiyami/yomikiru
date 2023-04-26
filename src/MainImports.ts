@@ -349,6 +349,21 @@ declare global {
         isBookmark: boolean;
         isHistory: boolean;
     }
+    interface BookItem {
+        title: string;
+        author: string;
+        link: string;
+        data?: string;
+        chapter?: string;
+    }
+    interface TOCData {
+        title: string;
+        author: string;
+        nav: {
+            src: string;
+            name: string;
+        }[];
+    }
     /**
      * Available shortcut commands.
      * to add keyboard shortcuts, add ShortcutSchema to `window.shortcutsFunctions`

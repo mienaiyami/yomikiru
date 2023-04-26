@@ -1,4 +1,4 @@
-import { useContext, useEffect, useLayoutEffect, useRef, useState } from "react";
+import React, { useContext, useEffect, useLayoutEffect, useRef, useState } from "react";
 import css, { Rule as CSSRule } from "css";
 import { AppContext } from "../App";
 import { useAppDispatch, useAppSelector } from "../store/hooks";
@@ -10,6 +10,8 @@ import { setLinkInReader } from "../store/linkInReader";
 import { newHistory } from "../store/history";
 import { setContextMenu } from "../store/contextMenu";
 import EPUBReaderSettings from "./EPubReaderSettings";
+import EPubReaderSideList from "./EPubReaderSideList";
+import { setReaderSettings } from "../store/appSettings";
 
 type ReaderImageSrc = string;
 type ReaderHTML = Document;
@@ -23,6 +25,7 @@ interface DisplayData {
     url: string;
     content: ReaderHTML | ReaderImageSrc;
 }
+
 const EPubReader = () => {
     const { pageNumberInputRef, checkValidFolder } = useContext(AppContext);
 
@@ -52,12 +55,16 @@ const EPubReader = () => {
      */
     const [elemBeforeChange, setElemBeforeChange] = useState("");
     const [isSideListPinned, setSideListPinned] = useState(false);
+    const [tocData, settocData] = useState<TOCData>();
+    const [sideListWidth, setSideListWidth] = useState(appSettings.readerSettings.sideListWidth || 450);
 
     const readerRef = useRef<HTMLDivElement>(null);
     const mainRef = useRef<HTMLSelectElement>(null);
     const readerSettingExtender = useRef<HTMLButtonElement>(null);
     const sizePlusRef = useRef<HTMLButtonElement>(null);
     const sizeMinusRef = useRef<HTMLButtonElement>(null);
+    const openPrevChapterRef = useRef<HTMLButtonElement>(null);
+    const openNextChapterRef = useRef<HTMLButtonElement>(null);
 
     const scrollReader = (intensity: number) => {
         if (readerRef.current) {
@@ -79,6 +86,23 @@ const EPubReader = () => {
             };
             window.requestAnimationFrame(anim);
             return;
+        }
+    };
+    /**
+     * scroll to internal links or open extrrnal link
+     * * data-href - scroll to internal
+     * * href      - open external
+     */
+    const epubLinkClick = (ev: MouseEvent | React.MouseEvent<HTMLAnchorElement, MouseEvent>) => {
+        ev.preventDefault();
+        const data_href = (ev.currentTarget as Element).getAttribute("data-href");
+        if (data_href) {
+            const idFromURL = displayData.find((a) => a.url === data_href)?.id;
+            if (idFromURL) document.getElementById("epub-" + idFromURL)?.scrollIntoView();
+        } else {
+            if ((ev.currentTarget as HTMLAnchorElement).href) {
+                window.electron.shell.openExternal((ev.currentTarget as HTMLAnchorElement).href);
+            }
         }
     };
 
@@ -145,18 +169,7 @@ const EPubReader = () => {
                             node.appendChild(childNode.cloneNode(true));
                         });
                         node.querySelectorAll("a").forEach((e) => {
-                            e.addEventListener("click", (ev) => {
-                                ev.preventDefault();
-                                const data_href = e.getAttribute("data-href");
-                                if (data_href) {
-                                    const idFromURL = displayData.find((a) => a.url === data_href)?.id;
-                                    if (idFromURL) document.getElementById("epub-" + idFromURL)?.scrollIntoView();
-                                } else {
-                                    if (e.href) {
-                                        window.electron.shell.openExternal(e.href);
-                                    }
-                                }
-                            });
+                            e.addEventListener("click", epubLinkClick);
                         });
                         node.querySelectorAll("img").forEach((e) => {
                             e.oncontextmenu = (ev) => {
@@ -281,12 +294,12 @@ const EPubReader = () => {
                                 e.getAttribute("href") || ""
                             );
                             if (href) {
-                                const filePath = window.path.join(window.path.dirname(CONTENT_PATH), href);
+                                // const filePath = window.path.join(window.path.dirname(CONTENT_PATH), href);
                                 tempDisplayData.push({
                                     type: "image",
                                     content: href,
                                     id: e.getAttribute("id") || "",
-                                    url: filePath,
+                                    url: href,
                                 });
                             }
                         }
@@ -295,6 +308,34 @@ const EPubReader = () => {
                             if (href_old) {
                                 const href = window.path.join(window.path.dirname(CONTENT_PATH), href_old);
                                 tempStylesheets.push(href);
+                            }
+                        }
+                        if (mediaType === "application/x-dtbncx+xml") {
+                            const href = window.path.join(
+                                window.path.dirname(CONTENT_PATH),
+                                e.getAttribute("href") || ""
+                            );
+                            if (href) {
+                                window.fs.readFile(href, "utf8", (err, data) => {
+                                    if (err) return console.error(err);
+                                    const tocXML = parser.parseFromString(data, "application/xml");
+                                    const tempTOCData: TOCData = {
+                                        title: tocXML.querySelector("docTitle text")?.textContent || "~",
+                                        author: tocXML.querySelector("docAuthor text")?.textContent || "~",
+                                        nav: [],
+                                    };
+                                    tocXML.querySelectorAll("navMap navPoint").forEach((e) => {
+                                        tempTOCData.nav.push({
+                                            name: e.querySelector("navLabel text")?.textContent || "~",
+                                            src: window.path.join(
+                                                window.path.dirname(href),
+                                                e.querySelector("content")?.getAttribute("src") || ""
+                                            ),
+                                        });
+                                    });
+                                    console.log({ tempTOCData });
+                                    settocData(tempTOCData);
+                                });
                             }
                         }
                     });
@@ -331,6 +372,21 @@ const EPubReader = () => {
             setElemBeforeChange(fff);
         }
     };
+
+    useLayoutEffect(() => {
+        if (isSideListPinned) {
+            // readerRef.current?.scrollTo(0, scrollPosPercent * readerRef.current.scrollHeight);
+            if (elemBeforeChange)
+                document.querySelector(elemBeforeChange)?.scrollIntoView({
+                    behavior: "auto",
+                    block: "start",
+                });
+        }
+        /**
+         * todo: do only when mouse up
+         */
+        dispatch(setReaderSettings({ sideListWidth }));
+    }, [sideListWidth]);
 
     useLayoutEffect(() => {
         window.app.clickDelay = 100;
@@ -445,9 +501,11 @@ const EPubReader = () => {
         <div
             ref={readerRef}
             id="EPubReader"
-            className="reader"
+            className={(isSideListPinned ? "sideListPinned " : "") + "reader"}
             style={{
-                display: isReaderOpen ? "block" : "block",
+                gridTemplateColumns: sideListWidth + "px auto",
+                display: isReaderOpen ? (isSideListPinned ? "grid" : "block") : "none",
+                "--sideListWidth": sideListWidth + "px",
             }}
             tabIndex={-1}
         >
@@ -459,6 +517,23 @@ const EPubReader = () => {
                 sizeMinusRef={sizeMinusRef}
                 // setshortcutText={setshortcutText}
             />
+
+            {tocData && (
+                <EPubReaderSideList
+                    tocData={tocData}
+                    epubLinkClick={epubLinkClick}
+                    openNextChapterRef={openNextChapterRef}
+                    openPrevChapterRef={openPrevChapterRef}
+                    // addToBookmarkRef={addToBookmarkRef}
+                    // setshortcutText={setshortcutText}
+                    // isBookmarked={isBookmarked}
+                    // setBookmarked={setBookmarked}
+                    isSideListPinned={isSideListPinned}
+                    setSideListPinned={setSideListPinned}
+                    setSideListWidth={setSideListWidth}
+                    makeScrollPos={makeScrollPos}
+                />
+            )}
             <section
                 className={
                     "main " +
