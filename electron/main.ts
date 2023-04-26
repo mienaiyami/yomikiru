@@ -82,31 +82,31 @@ const addOptionToExplorerMenu = () => {
         if (error) log.error(error);
     });
 };
-// registry, remove option "open in reader" in explorer context menu
-const deleteOldOptionInExplorerMenu = () => {
-    const regDelete = `Windows Registry Editor Version 5.00
+const addOptionToExplorerMenu_epub = () => {
+    app;
+    const appPath = IS_PORTABLE
+        ? app.getPath("exe").replace(/\\/g, "\\\\")
+        : path.join(app.getPath("exe"), `../../${app.name}.exe`).replace(/\\/g, "\\\\");
+    const regInit = `Windows Registry Editor Version 5.00
     
-    [-HKEY_CURRENT_USER\\Software\\Classes\\directory\\shell\\MangaReader]
-    
-    [-HKEY_CLASSES_ROOT\\.cbz\\shell\\MangaReader]
+    [HKEY_CLASSES_ROOT\\.epub\\shell\\Yomikiru]
+    @="Open in Yomikiru"
+    "Icon"="${appPath}"
 
-    [-HKEY_CLASSES_ROOT\\MangaReader]
-
-    [HKEY_CLASSES_ROOT\\.zip\\OpenWithProgids]
-    "MangaReader"=-
+    [HKEY_CLASSES_ROOT\\.epub\\shell\\Yomikiru\\command]
+    @="\\"${appPath}\\" \\"%V\\""
     `;
-    fs.writeFileSync(path.join(app.getPath("temp"), "deleteOpenWithMangaReader.reg"), regDelete);
+
+    const tempPath = app.getPath("temp");
+    fs.writeFileSync(path.join(tempPath, "createOpenWithYomikiru-epub.reg"), regInit);
+
     const op = {
-        name: "MangaReader",
+        name: "Yomikiru",
         icns: app.getPath("exe"),
     };
-    sudo.exec(
-        "regedit.exe /S " + path.join(app.getPath("temp"), "deleteOpenWithMangaReader.reg"),
-        op,
-        function (error) {
-            if (error) log.error(error);
-        }
-    );
+    sudo.exec("regedit.exe /S " + path.join(tempPath, "createOpenWithYomikiru-epub.reg"), op, function (error) {
+        if (error) log.error(error);
+    });
 };
 const deleteOptionInExplorerMenu = () => {
     const regDelete = `Windows Registry Editor Version 5.00
@@ -127,6 +127,25 @@ const deleteOptionInExplorerMenu = () => {
     };
     sudo.exec(
         "regedit.exe /S " + path.join(app.getPath("temp"), "deleteOpenWithYomikiru.reg"),
+        op,
+        function (error) {
+            if (error) log.error(error);
+        }
+    );
+};
+const deleteOptionInExplorerMenu_epub = () => {
+    const regDelete = `Windows Registry Editor Version 5.00
+    
+    [-HKEY_CLASSES_ROOT\\.epub\\shell\\Yomikiru]
+
+    `;
+    fs.writeFileSync(path.join(app.getPath("temp"), "deleteOpenWithYomikiru-epub.reg"), regDelete);
+    const op = {
+        name: "Yomikiru",
+        icns: app.getPath("exe"),
+    };
+    sudo.exec(
+        "regedit.exe /S " + path.join(app.getPath("temp"), "deleteOpenWithYomikiru-epub.reg"),
         op,
         function (error) {
             if (error) log.error(error);
@@ -185,8 +204,8 @@ const handleSquirrelEvent = () => {
                 fs.unlinkSync(
                     path.resolve(homedir(), "AppData/Roaming/Microsoft/Windows/Start Menu/Programs/Yomikiru.lnk")
                 );
-            deleteOldOptionInExplorerMenu();
             deleteOptionInExplorerMenu();
+            deleteOptionInExplorerMenu_epub();
             if (fs.existsSync(path.resolve(homedir(), "Desktop/Yomikiru.lnk")))
                 fs.unlinkSync(path.resolve(homedir(), "Desktop/Yomikiru.lnk"));
             const uninstallFull = `
@@ -354,8 +373,11 @@ const registerListener = () => {
         ipcMain.on("deleteOptionInExplorerMenu", () => {
             deleteOptionInExplorerMenu();
         });
-        ipcMain.on("deleteOldOptionInExplorerMenu", () => {
-            deleteOldOptionInExplorerMenu();
+        ipcMain.on("addOptionToExplorerMenu:epub", () => {
+            addOptionToExplorerMenu_epub();
+        });
+        ipcMain.on("deleteOptionInExplorerMenu:epub", () => {
+            deleteOptionInExplorerMenu_epub();
         });
     }
     if (process.platform === "linux") {

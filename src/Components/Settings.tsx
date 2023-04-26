@@ -522,12 +522,20 @@ const Settings = (): ReactElement => {
                                     >
                                         Remove
                                     </button>
+
                                     <button
                                         onClick={() =>
-                                            window.electron.ipcRenderer.send("deleteOldOptionInExplorerMenu")
+                                            window.electron.ipcRenderer.send("addOptionToExplorerMenu:epub")
                                         }
                                     >
-                                        Remove(Old version)
+                                        Add(EPub)
+                                    </button>
+                                    <button
+                                        onClick={() =>
+                                            window.electron.ipcRenderer.send("deleteOptionInExplorerMenu:epub")
+                                        }
+                                    >
+                                        Remove(EPub)
                                     </button>
                                 </td>
                             </tr>
