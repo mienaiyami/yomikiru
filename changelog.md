@@ -17,17 +17,15 @@ Linux distribution currently not available as direct download but can be build e
 
 ## Added
 
-- EPub reader (experimental) #78.
-- Custom color filter in reader settings, #93.
-- Force low brightness option, #93.
-- Option to disable list numbering(#95) and page number on home page(#94),
+- EPUB: Auto scroll to old position after setting changes.
+- Option to open epub from file explorer.
 
 <!-- ## Changed -->
 
 
 ## Fixed
 
-- #96 and other fixes.
+- #98.
 
 ---
 
