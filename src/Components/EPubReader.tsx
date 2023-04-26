@@ -324,7 +324,7 @@ const EPubReader = () => {
         while (y < window.innerHeight / 2) {
             elem = document.elementFromPoint(window.innerWidth / 2, y);
             if (elem) if (elem.tagName !== "SECTION") break;
-            y += 50;
+            y += 10;
         }
         if (elem) {
             const fff = window.getCSSPath(elem);

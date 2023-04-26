@@ -63,7 +63,7 @@ const Settings = (): ReactElement => {
                 color: window.getComputedStyle(document.querySelector("body #topBar")!).backgroundColor,
                 symbolColor: window.getComputedStyle(document.querySelector("body #topBar .homeBtns button")!)
                     .color,
-                height: Math.floor(40 * window.devicePixelRatio),
+                height: Math.floor(40 * window.electron.webFrame.getZoomFactor()),
             });
     };
     const saveTheme = (saveAndReplace = false) => {

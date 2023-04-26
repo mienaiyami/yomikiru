@@ -86,7 +86,7 @@ const ReaderSettings = ({
                 <div className={"settingItem "}>
                     <div
                         className={
-                            "name " + (appSettings.readerSettings.settingsCollapsed.size ? "expanded " : "")
+                            "name " + (!appSettings.readerSettings.settingsCollapsed.size ? "expanded " : "")
                         }
                         onClick={() => {
                             dispatch(
@@ -170,7 +170,7 @@ const ReaderSettings = ({
                 <div className={"settingItem "}>
                     <div
                         className={
-                            "name " + (appSettings.readerSettings.settingsCollapsed.fitOption ? "expanded " : "")
+                            "name " + (!appSettings.readerSettings.settingsCollapsed.fitOption ? "expanded " : "")
                         }
                         onClick={() => {
                             dispatch(
@@ -302,7 +302,8 @@ const ReaderSettings = ({
                 <div className={"settingItem "}>
                     <div
                         className={
-                            "name " + (appSettings.readerSettings.settingsCollapsed.readingMode ? "expanded " : "")
+                            "name " +
+                            (!appSettings.readerSettings.settingsCollapsed.readingMode ? "expanded " : "")
                         }
                         onClick={() => {
                             dispatch(
@@ -341,7 +342,7 @@ const ReaderSettings = ({
                 <div className={"settingItem "}>
                     <div
                         className={
-                            "name " + (appSettings.readerSettings.settingsCollapsed.pagePerRow ? "expanded " : "")
+                            "name " + (!appSettings.readerSettings.settingsCollapsed.pagePerRow ? "expanded " : "")
                         }
                         onClick={() => {
                             dispatch(
@@ -415,7 +416,8 @@ const ReaderSettings = ({
                 <div className={"settingItem "}>
                     <div
                         className={
-                            "name " + (appSettings.readerSettings.settingsCollapsed.readingSide ? "expanded " : "")
+                            "name " +
+                            (!appSettings.readerSettings.settingsCollapsed.readingSide ? "expanded " : "")
                         }
                         onClick={() => {
                             dispatch(
@@ -454,7 +456,8 @@ const ReaderSettings = ({
                 <div className={"settingItem "}>
                     <div
                         className={
-                            "name " + (appSettings.readerSettings.settingsCollapsed.scrollSpeed ? "expanded " : "")
+                            "name " +
+                            (!appSettings.readerSettings.settingsCollapsed.scrollSpeed ? "expanded " : "")
                         }
                         onClick={() => {
                             dispatch(
@@ -504,7 +507,7 @@ const ReaderSettings = ({
                     <div
                         className={
                             "name " +
-                            (appSettings.readerSettings.settingsCollapsed.customColorFilter ? "expanded " : "")
+                            (!appSettings.readerSettings.settingsCollapsed.customColorFilter ? "expanded " : "")
                         }
                         onClick={() => {
                             dispatch(
@@ -669,7 +672,7 @@ const ReaderSettings = ({
                 <div className={"settingItem "}>
                     <div
                         className={
-                            "name " + (appSettings.readerSettings.settingsCollapsed.others ? "expanded " : "")
+                            "name " + (!appSettings.readerSettings.settingsCollapsed.others ? "expanded " : "")
                         }
                         onClick={() => {
                             dispatch(
