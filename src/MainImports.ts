@@ -210,7 +210,7 @@ declare global {
          * Supported image formats.
          */
         supportedFormats: string[];
-        // epub: typeof ePub;
+        getCSSPath: (elem: Element) => string;
         path: typeof path;
         fs: typeof fs;
         themeProps: { [e in ThemeDataMain]: string };
@@ -583,7 +583,31 @@ window.makeFileSafe = (string: string): string => {
     return string.replace(/(:|\\|\/|\||<|>|\*|\?)/g, "");
 };
 
-// window.epub = ePub;
+window.getCSSPath = (el) => {
+    if (!(el instanceof Element)) return "";
+    const path = [];
+    let elem = el;
+    while (elem.nodeType === Node.ELEMENT_NODE) {
+        let selector = elem.nodeName.toLowerCase();
+        if (elem.id) {
+            selector += "#" + elem.id.trim();
+            path.unshift(selector);
+            break;
+        } else {
+            let sib = elem,
+                nth = 1;
+            while (sib.previousElementSibling) {
+                sib = sib.previousElementSibling;
+                if (sib.nodeName.toLowerCase() === selector) nth++;
+            }
+            if (nth !== 1) selector += ":nth-of-type(" + nth + ")";
+        }
+        path.unshift(selector);
+        elem = elem.parentNode as Element;
+    }
+    return path.join(" > ");
+};
+
 const collator = Intl.Collator(undefined, { numeric: true, sensitivity: "base" });
 window.app.betterSortOrder = collator.compare;
 window.app.replaceExtension = (str, replaceWith = "~") => {

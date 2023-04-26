@@ -47,7 +47,10 @@ const EPubReader = () => {
      * url of stylesheets
      */
     const [epubStylesheets, setEpubStylesheets] = useState<string[]>([]);
-    const [scrollPosPercent, setScrollPosPercent] = useState(0);
+    /**
+     *  css selector of element which was on top of view before changing size,etc.
+     */
+    const [elemBeforeChange, setElemBeforeChange] = useState("");
     const [isSideListPinned, setSideListPinned] = useState(false);
 
     const readerRef = useRef<HTMLDivElement>(null);
@@ -316,9 +319,17 @@ const EPubReader = () => {
     };
 
     const makeScrollPos = () => {
-        // if (isSideListPinned && mainRef.current)
-        //     return setScrollPosPercent(mainRef.current.scrollTop / mainRef.current.scrollHeight);
-        if (readerRef.current) setScrollPosPercent(readerRef.current.scrollTop / readerRef.current.scrollHeight);
+        let y = 50;
+        let elem: Element | null = null;
+        while (y < window.innerHeight / 2) {
+            elem = document.elementFromPoint(window.innerWidth / 2, y);
+            if (elem) if (elem.tagName !== "SECTION") break;
+            y += 50;
+        }
+        if (elem) {
+            const fff = window.getCSSPath(elem);
+            setElemBeforeChange(fff);
+        }
     };
 
     useLayoutEffect(() => {
@@ -407,18 +418,15 @@ const EPubReader = () => {
     }, [appSettings, isLoadingManga, shortcuts]);
 
     useLayoutEffect(() => {
-        readerRef.current?.scrollTo(0, scrollPosPercent * readerRef.current.scrollHeight);
-        // mainRef.current?.scrollTo(0, scrollPosPercent * mainRef.current.scrollHeight);
-        //todo: need fixing
-        // console.log(
-        //     scrollPosPercent,
-        //     readerRef.current.scrollHeight,
-        //     scrollPosPercent * readerRef.current.scrollHeight
-        // );
+        if (elemBeforeChange)
+            document.querySelector(elemBeforeChange)?.scrollIntoView({
+                behavior: "auto",
+                block: "start",
+            });
     }, [
         appSettings.epubReaderSettings.readerWidth,
-        // appSettings.epubReaderSettings.fontSize,
-        // appSettings.epubReaderSettings.fontFamily,
+        appSettings.epubReaderSettings.fontSize,
+        appSettings.epubReaderSettings.fontFamily,
         appSettings.epubReaderSettings.lineSpacing,
         appSettings.epubReaderSettings.paragraphSpacing,
         appSettings.epubReaderSettings.wordSpacing,

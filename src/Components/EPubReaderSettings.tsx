@@ -147,7 +147,7 @@ const EPUBReaderSettings = ({
                                 min={1}
                                 max={100}
                                 onChange={(e) => {
-                                    // makeScrollPos();
+                                    makeScrollPos();
                                     let value = e.target.valueAsNumber;
                                     if (!value) value = 0;
                                     value = value >= 100 ? 100 : value;
@@ -220,6 +220,7 @@ const EPUBReaderSettings = ({
                                 disabled={appSettings.epubReaderSettings.useDefault_fontFamily}
                                 value={appSettings.epubReaderSettings.fontFamily}
                                 onChange={(e) => {
+                                    makeScrollPos();
                                     const val = e.currentTarget.value;
                                     dispatch(
                                         setEpubReaderSettings({
