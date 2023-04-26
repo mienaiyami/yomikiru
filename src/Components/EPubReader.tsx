@@ -27,8 +27,6 @@ interface DisplayData {
 }
 
 const EPubReader = () => {
-    const { pageNumberInputRef, checkValidFolder } = useContext(AppContext);
-
     const appSettings = useAppSelector((store) => store.appSettings);
     const shortcuts = useAppSelector((store) => store.shortcuts);
     const isReaderOpen = useAppSelector((store) => store.isReaderOpen);
@@ -288,21 +286,21 @@ const EPubReader = () => {
                                 });
                             }
                         }
-                        if (mediaType?.startsWith("image/")) {
-                            const href = window.path.join(
-                                window.path.dirname(CONTENT_PATH),
-                                e.getAttribute("href") || ""
-                            );
-                            if (href) {
-                                // const filePath = window.path.join(window.path.dirname(CONTENT_PATH), href);
-                                tempDisplayData.push({
-                                    type: "image",
-                                    content: href,
-                                    id: e.getAttribute("id") || "",
-                                    url: href,
-                                });
-                            }
-                        }
+                        // if (mediaType?.startsWith("image/")) {
+                        //     const href = window.path.join(
+                        //         window.path.dirname(CONTENT_PATH),
+                        //         e.getAttribute("href") || ""
+                        //     );
+                        //     if (href) {
+                        //         // const filePath = window.path.join(window.path.dirname(CONTENT_PATH), href);
+                        //         tempDisplayData.push({
+                        //             type: "image",
+                        //             content: href,
+                        //             id: e.getAttribute("id") || "",
+                        //             url: href,
+                        //         });
+                        //     }
+                        // }
                         if (mediaType === "text/css") {
                             const href_old = e.getAttribute("href");
                             if (href_old) {
@@ -319,21 +317,39 @@ const EPubReader = () => {
                                 window.fs.readFile(href, "utf8", (err, data) => {
                                     if (err) return console.error(err);
                                     const tocXML = parser.parseFromString(data, "application/xml");
+                                    const depth_original = parseInt(
+                                        tocXML.querySelector('meta[name="dtb:depth"]')?.getAttribute("content") ||
+                                            "1"
+                                    );
                                     const tempTOCData: TOCData = {
                                         title: tocXML.querySelector("docTitle text")?.textContent || "~",
                                         author: tocXML.querySelector("docAuthor text")?.textContent || "~",
+                                        depth: depth_original,
                                         nav: [],
                                     };
-                                    tocXML.querySelectorAll("navMap navPoint").forEach((e) => {
-                                        tempTOCData.nav.push({
-                                            name: e.querySelector("navLabel text")?.textContent || "~",
-                                            src: window.path.join(
-                                                window.path.dirname(href),
-                                                e.querySelector("content")?.getAttribute("src") || ""
-                                            ),
+                                    const getData = (selector: string, depth: number) => {
+                                        const navData: TOCData["nav"][] = [];
+                                        const elems = tocXML.querySelectorAll(selector);
+                                        elems.forEach((e, i) => {
+                                            tempTOCData.nav.push({
+                                                name: e.querySelector("navLabel text")?.textContent || "~",
+                                                src: window.path.join(
+                                                    window.path.dirname(href),
+                                                    // dunno why but some toc.ncx have src like "Text/Text/0202_Chapter_202_-_Seems_Like_Never_Coming_Back.xhtml"
+                                                    e
+                                                        .querySelector("content")
+                                                        ?.getAttribute("src")
+                                                        ?.replace("Text/Text/", "Text/") || ""
+                                                ),
+                                                depth: depth,
+                                            });
+                                            if (depth > 1) {
+                                                getData(selector + `:nth-of-type(${i + 1}) > navPoint`, depth - 1);
+                                            }
                                         });
-                                    });
-                                    console.log({ tempTOCData });
+                                    };
+                                    getData("navMap > navPoint", depth_original);
+                                    console.log(tempTOCData);
                                     settocData(tempTOCData);
                                 });
                             }

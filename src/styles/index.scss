@@ -541,10 +541,10 @@ body {
                         position: relative;
                         display: flex;
                         width: 100%;
-                        max-height: 30px;
-                        &:has(a > span.double) {
-                            max-height: 60px;
-                        }
+                        // max-height: 30px;
+                        // &:has(a > span.double) {
+                        //     max-height: 60px;
+                        // }
                         align-items: stretch;
                         border-radius: 2px;
                         background: var(--listItem-bg-color);
@@ -1749,6 +1749,17 @@ body {
             }
         }
         #EPubReader {
+            .readerSideList {
+                .location-cont {
+                    li {
+                        a {
+                            --grid-template: 0;
+                            --depth: 0;
+                            font-size: calc(1rem + calc(calc(var(--depth) / 3) * 1rem));
+                        }
+                    }
+                }
+            }
             section.main {
                 width: 100%;
                 display: flex;

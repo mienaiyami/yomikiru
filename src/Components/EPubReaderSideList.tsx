@@ -134,7 +134,7 @@ const EPubReaderSideList = ({
     }, [draggingResizer]);
     return (
         <div
-            className={`readerSideList epubTOC listCont ${isListOpen ? "open" : ""}`}
+            className={`readerSideList listCont ${isListOpen ? "open" : ""}`}
             onMouseEnter={() => {
                 setpreventListClose(true);
                 if (!isListOpen) setListOpen(true);
@@ -280,7 +280,7 @@ const EPubReaderSideList = ({
                     {tocData.nav.map((e) => (
                         <li
                             // className={(current ? "current" : "")}
-                            key={e.src}
+                            key={e.name}
                         >
                             <a
                                 className="a-context"
@@ -288,13 +288,16 @@ const EPubReaderSideList = ({
                                     epubLinkClick(ev);
                                     sideListRef.current?.blur();
                                 }}
+                                style={{ "--depth": e.depth - 1 }}
                                 data-href={e.src}
                                 title={e.name}
                                 // ref={(node) => {
                                 //     if (current && node !== null) node.scrollIntoView();
                                 // }}
                             >
-                                <span className="text">{e.name}</span>
+                                <span className="text">
+                                    {"\u00A0".repeat((tocData.depth - e.depth) * 5) + e.name}
+                                </span>
                             </a>
                         </li>
                     ))}

@@ -359,9 +359,13 @@ declare global {
     interface TOCData {
         title: string;
         author: string;
+        /**real depth */
+        depth: number;
         nav: {
             src: string;
             name: string;
+            /**depth level of current nav */
+            depth: number;
         }[];
     }
     /**
