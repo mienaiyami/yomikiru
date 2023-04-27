@@ -29,5 +29,5 @@ Offline Manga/Manhwa/EPub Reader (not a downloader). Manga Reader for people who
 ![demo](github%20assets/4.png)
 ![demo](github%20assets/5.png)
 ![demo](github%20assets/6.png)
-#### Experimental epub reader
 ![demo](github%20assets/7.png)
+![demo](github%20assets/8.png)

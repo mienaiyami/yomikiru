@@ -9,7 +9,7 @@
 ---
 ## Note
 
-- **Epub reader available (experimental)**
+**Epub reader available**
 
 Linux distribution currently not available as direct download but can be build easily by following this [Build for linux(debian) guide](https://github.com/mienaiyami/yomikiru/blob/master/docs/build_for_linux.md).
 
@@ -17,21 +17,25 @@ Linux distribution currently not available as direct download but can be build e
 
 ## Added
 
-- EPUB: Auto scroll to old position after setting changes.
-- Option to open epub from file explorer.
+- EPUB:
+  - Sidelist+TOC.
+  - Find in page.
+  - Option to load only one chapter at a time to prevent high ram usage(enable from settings).
 
-<!-- ## Changed -->
+## Changed
+
+- EPUB: Optimized rendering.
 
 
 ## Fixed
 
-- #98.
+- #101, #99.
 
 ---
 
 #### Todo
 
-- Improve Epub reader.
+- EPUB: History+Bookmark.
 - Write tests.
 - Add ability to change image quality in canvas mode for less RAM usage and performance.
 
