@@ -1,4 +1,4 @@
-import React, { useContext, useEffect, useLayoutEffect, useRef, useState } from "react";
+import React, { useContext, useEffect, useLayoutEffect, useRef, useState, memo, useCallback } from "react";
 import css, { Rule as CSSRule } from "css";
 import { AppContext } from "../App";
 import { useAppDispatch, useAppSelector } from "../store/hooks";
@@ -8,23 +8,157 @@ import { setLoadingMangaPercent } from "../store/loadingMangaPercent";
 import { setLoadingManga } from "../store/isLoadingManga";
 import { setLinkInReader } from "../store/linkInReader";
 import { newHistory } from "../store/history";
-import { setContextMenu } from "../store/contextMenu";
+import contextMenu, { setContextMenu } from "../store/contextMenu";
 import EPUBReaderSettings from "./EPubReaderSettings";
 import EPubReaderSideList from "./EPubReaderSideList";
 import { setReaderSettings } from "../store/appSettings";
 
-type ReaderImageSrc = string;
-type ReaderHTML = Document;
+// type ReaderImageSrc = string;
+// type ReaderHTML = Document;
 
+// interface DisplayData {
+//     type: "image" | "html";
+//     /**
+//      * id from content.opf
+//      */
+//     id: string;
+//     url: string;
+//     content: ReaderHTML | ReaderImageSrc;
+// }
 interface DisplayData {
-    type: "image" | "html";
     /**
      * id from content.opf
      */
     id: string;
     url: string;
-    content: ReaderHTML | ReaderImageSrc;
+    content: Document;
 }
+// const ImagePart = ({ src }: { src: ReaderImageSrc }) => {
+//     return (
+//         <div className="cont imgCont">
+//             <img src={src} alt="Image" />
+//         </div>
+//     );
+// };
+
+const StyleSheets = memo(
+    ({ sheets }: { sheets: string[] }) => {
+        return (
+            <div
+                className="stylesheets"
+                ref={(node) => {
+                    if (node) {
+                        sheets.forEach((url) => {
+                            const stylesheet = document.createElement("style");
+                            let txt = window.fs.readFileSync(url, "utf-8");
+                            // console.log(txt, url, epubStylesheets);
+                            const matches = Array.from(txt.matchAll(/url\((.*?)\);/gi));
+                            console.log("stylesdddd");
+                            matches.forEach((e) => {
+                                // for font
+                                const url_old = e[1].slice(1, -1);
+                                txt = txt.replaceAll(
+                                    url_old,
+                                    "file://" +
+                                        window.path.join(window.path.dirname(url), url_old).replaceAll("\\", "/")
+                                );
+                            });
+                            // to make sure styles dont apply outside
+                            const ast = css.parse(txt);
+                            ast.stylesheet?.rules.forEach((e) => {
+                                if (e.type === "rule") {
+                                    (e as CSSRule).selectors = (e as CSSRule).selectors?.map((e) =>
+                                        e.includes("section.main") ? e : "#EPubReader section.main " + e
+                                    );
+                                }
+                            });
+                            txt = css.stringify(ast);
+                            stylesheet.innerHTML = txt;
+                            node.appendChild(stylesheet);
+                        });
+                    }
+                }}
+            ></div>
+        );
+    },
+    (prev, next) => prev.sheets.length === next.sheets.length
+);
+
+const HTMLPart = memo(
+    ({
+        displayOrder,
+        displayData,
+        epubLinkClick,
+    }: {
+        displayOrder: string[];
+        displayData: DisplayData[];
+        epubLinkClick: (ev: MouseEvent | React.MouseEvent<HTMLAnchorElement, MouseEvent>) => void;
+    }) => {
+        const dispatch = useAppDispatch();
+        const onContextMenu = (ev: MouseEvent) => {
+            dispatch(
+                setContextMenu({
+                    clickX: ev.clientX,
+                    clickY: ev.clientY,
+                    hasLink: {
+                        link: (ev.currentTarget as Element).getAttribute("src") || "",
+                        simple: {
+                            isImage: true,
+                        },
+                    },
+                })
+            );
+        };
+
+        return (
+            <>
+                {displayOrder.map((e, i) => (
+                    <div
+                        className="cont htmlCont"
+                        ref={(node) => {
+                            if (node) {
+                                const xhtml = displayData.find((a) => a.id === e)!.content;
+                                const url = displayData.find((a) => a.id === e)!.url;
+                                // // ! temp, use memo or smoething
+                                // while (node.hasChildNodes()) {
+                                //     node.removeChild(node.childNodes[0]);
+                                // }
+                                console.log("rendered");
+                                node.id = "epub-" + xhtml.body.id;
+                                node.setAttribute("data-link-id", url);
+                                xhtml.body.childNodes.forEach((childNode) => {
+                                    node.appendChild(childNode.cloneNode(true));
+                                });
+                                node.querySelectorAll("a").forEach((e) => {
+                                    e.addEventListener("click", epubLinkClick);
+                                });
+                                node.querySelectorAll("img").forEach((e) => {
+                                    e.oncontextmenu = onContextMenu;
+                                });
+                            }
+                        }}
+                        key={"key-" + i}
+                    ></div>
+                ))}
+            </>
+        );
+    },
+    (prev, next) => {
+        const displayData = prev.displayData.length === next.displayData.length;
+        const displayOrder = prev.displayOrder.length === next.displayOrder.length;
+        return displayData && displayOrder;
+    }
+);
+
+// const PartCont = memo(({ data }: { data: DisplayData | string }) => {
+//     console.log("rendereddddd");
+//     if (typeof data === "string") return <p className="error">{data}</p>;
+//     return data.type === "html" ? (
+//         <HTMLPart xhtml={data.content as ReaderHTML} url={data.url} />
+//     ) : (
+//         <ImagePart src={data.content as ReaderImageSrc} />
+//     );
+// });
 
 const EPubReader = () => {
     const appSettings = useAppSelector((store) => store.appSettings);
@@ -64,6 +198,13 @@ const EPubReader = () => {
     const openPrevChapterRef = useRef<HTMLButtonElement>(null);
     const openNextChapterRef = useRef<HTMLButtonElement>(null);
 
+    /**previous find in page resulting p */
+    const findInPageRefs = useRef<{
+        prevResult: HTMLParagraphElement;
+        prevStr: string;
+    } | null>(null);
+    const [findInPageIndex, setFindInPageIndex] = useState(0);
+
     const scrollReader = (intensity: number) => {
         if (readerRef.current) {
             let startTime: number, prevTime: number;
@@ -91,114 +232,21 @@ const EPubReader = () => {
      * * data-href - scroll to internal
      * * href      - open external
      */
-    const epubLinkClick = (ev: MouseEvent | React.MouseEvent<HTMLAnchorElement, MouseEvent>) => {
-        ev.preventDefault();
-        const data_href = (ev.currentTarget as Element).getAttribute("data-href");
-        if (data_href) {
-            const idFromURL = displayData.find((a) => a.url === data_href)?.id;
-            if (idFromURL) document.getElementById("epub-" + idFromURL)?.scrollIntoView();
-        } else {
-            if ((ev.currentTarget as HTMLAnchorElement).href) {
-                window.electron.shell.openExternal((ev.currentTarget as HTMLAnchorElement).href);
+    const epubLinkClick = useCallback(
+        (ev: MouseEvent | React.MouseEvent<HTMLAnchorElement, MouseEvent>) => {
+            ev.preventDefault();
+            const data_href = (ev.currentTarget as Element).getAttribute("data-href");
+            if (data_href) {
+                const idFromURL = displayData.find((a) => a.url === data_href)?.id;
+                if (idFromURL) document.getElementById("epub-" + idFromURL)?.scrollIntoView();
+            } else {
+                if ((ev.currentTarget as HTMLAnchorElement).href) {
+                    window.electron.shell.openExternal((ev.currentTarget as HTMLAnchorElement).href);
+                }
             }
-        }
-    };
-
-    const ImagePart = ({ src }: { src: ReaderImageSrc }) => {
-        return (
-            <div className="cont imgCont">
-                <img src={src} alt="Image" />
-            </div>
-        );
-    };
-
-    const StyleSheets = ({ sheets }: { sheets: string[] }) => {
-        return (
-            <div
-                className="stylesheets"
-                ref={(node) => {
-                    if (node) {
-                        sheets.forEach((url) => {
-                            const stylesheet = document.createElement("style");
-                            let txt = window.fs.readFileSync(url, "utf-8");
-                            // console.log(txt, url, epubStylesheets);
-                            const matches = Array.from(txt.matchAll(/url\((.*?)\);/gi));
-                            matches.forEach((e) => {
-                                // for font
-                                const url_old = e[1].slice(1, -1);
-                                txt = txt.replaceAll(
-                                    url_old,
-                                    "file://" +
-                                        window.path.join(window.path.dirname(url), url_old).replaceAll("\\", "/")
-                                );
-                            });
-                            // to make sure styles dont apply outside
-                            const ast = css.parse(txt);
-                            ast.stylesheet?.rules.forEach((e) => {
-                                if (e.type === "rule") {
-                                    (e as CSSRule).selectors = (e as CSSRule).selectors?.map((e) =>
-                                        e.includes("section.main") ? e : "#EPubReader section.main " + e
-                                    );
-                                }
-                            });
-                            txt = css.stringify(ast);
-                            stylesheet.innerHTML = txt;
-                            node.appendChild(stylesheet);
-                        });
-                    }
-                }}
-            ></div>
-        );
-    };
-
-    const HTMLPart = ({ xhtml, url }: { xhtml: ReaderHTML; url: string }) => {
-        return (
-            <div
-                className="cont htmlCont"
-                ref={(node) => {
-                    if (node) {
-                        // // ! temp, use memo or smoething
-                        // while (node.hasChildNodes()) {
-                        //     node.removeChild(node.childNodes[0]);
-                        // }
-                        node.id = "epub-" + xhtml.body.id;
-                        node.setAttribute("data-link-id", url);
-                        xhtml.body.childNodes.forEach((childNode) => {
-                            node.appendChild(childNode.cloneNode(true));
-                        });
-                        node.querySelectorAll("a").forEach((e) => {
-                            e.addEventListener("click", epubLinkClick);
-                        });
-                        node.querySelectorAll("img").forEach((e) => {
-                            e.oncontextmenu = (ev) => {
-                                dispatch(
-                                    setContextMenu({
-                                        clickX: ev.clientX,
-                                        clickY: ev.clientY,
-                                        hasLink: {
-                                            link: e.getAttribute("src") || "",
-                                            simple: {
-                                                isImage: true,
-                                            },
-                                        },
-                                    })
-                                );
-                            };
-                        });
-                    }
-                }}
-            ></div>
-        );
-    };
-
-    const PartCont = ({ data }: { data: DisplayData | string }) => {
-        if (typeof data === "string") return <p className="error">{data}</p>;
-        return data.type === "html" ? (
-            <HTMLPart xhtml={data.content as ReaderHTML} url={data.url} />
-        ) : (
-            <ImagePart src={data.content as ReaderImageSrc} />
-        );
-    };
+        },
+        [displayData]
+    );
 
     const loadEPub = (link: string) => {
         link = window.path.normalize(link);
@@ -279,7 +327,7 @@ const EPubReader = () => {
                                 xhtml.querySelectorAll("[id]").forEach((e) => e.removeAttribute("id"));
                                 xhtml.body.id = e.getAttribute("id") || "";
                                 tempDisplayData.push({
-                                    type: "html",
+                                    // type: "html",
                                     content: xhtml,
                                     id: e.getAttribute("id") || "",
                                     url: filePath,
@@ -349,7 +397,6 @@ const EPubReader = () => {
                                         });
                                     };
                                     getData("navMap > navPoint", depth_original);
-                                    console.log(tempTOCData);
                                     settocData(tempTOCData);
                                 });
                             }
@@ -386,6 +433,41 @@ const EPubReader = () => {
         if (elem) {
             const fff = window.getCSSPath(elem);
             setElemBeforeChange(fff);
+        }
+    };
+
+    const findInPage = (str: string, forward = true) => {
+        if (str === "") {
+            if (findInPageRefs.current) {
+                findInPageRefs.current.prevResult.classList.remove("findInPage");
+                findInPageRefs.current = null;
+            }
+            return;
+        }
+        str = str.toLowerCase();
+        let index = findInPageIndex + (forward ? 0 : -2);
+        if (findInPageRefs.current && findInPageRefs.current.prevStr !== str) index = 0;
+        if (mainRef.current) {
+            const paras = [...mainRef.current.querySelectorAll("p")].filter((e) =>
+                e.textContent?.toLowerCase().includes(str)
+            );
+            if (index < 0) index = paras.length - 1;
+            if (index >= paras.length) index = 0;
+            const para = paras[index];
+            findInPageRefs.current?.prevResult.classList.remove("findInPage");
+            para.classList.add("findInPage");
+            para.scrollIntoView({
+                behavior: "auto",
+                block: "start",
+            });
+            findInPageRefs.current = {
+                prevResult: para,
+                prevStr: str,
+            };
+            // index+=forward ? 1 : 0;
+            // if (index === paras.length - 1) setFindInPageIndex(0);
+            // else
+            setFindInPageIndex(index + 1);
         }
     };
 
@@ -548,6 +630,7 @@ const EPubReader = () => {
                     setSideListPinned={setSideListPinned}
                     setSideListWidth={setSideListWidth}
                     makeScrollPos={makeScrollPos}
+                    findInPage={findInPage}
                 />
             )}
             <section
@@ -575,9 +658,7 @@ const EPubReader = () => {
                 }}
             >
                 <StyleSheets sheets={epubStylesheets} />
-                {displayOrder.map((e, i) => (
-                    <PartCont data={displayData.find((a) => a.id === e) || e} key={"key-" + i} />
-                ))}
+                <HTMLPart displayOrder={displayOrder} displayData={displayData} epubLinkClick={epubLinkClick} />
             </section>
         </div>
     );

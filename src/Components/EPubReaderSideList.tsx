@@ -5,6 +5,8 @@ import {
     faArrowRight,
     faBookmark,
     faThumbtack,
+    faArrowUp,
+    faArrowDown,
 } from "@fortawesome/free-solid-svg-icons";
 // import { faBookmark as farBookmark } from "@fortawesome/free-regular-svg-icons";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
@@ -24,6 +26,7 @@ const EPubReaderSideList = ({
     // setshortcutText,
     // isBookmarked,
     // setBookmarked,
+    findInPage,
     epubLinkClick,
     isSideListPinned,
     setSideListPinned,
@@ -41,6 +44,7 @@ const EPubReaderSideList = ({
     isSideListPinned: boolean;
     setSideListPinned: React.Dispatch<React.SetStateAction<boolean>>;
     setSideListWidth: React.Dispatch<React.SetStateAction<number>>;
+    findInPage: (str: string, forward?: boolean) => void;
     makeScrollPos: () => void;
 }) => {
     const mangaInReader = useAppSelector((store) => store.mangaInReader);
@@ -53,8 +57,7 @@ const EPubReaderSideList = ({
     const dispatch = useAppDispatch();
 
     const sideListRef = useRef<HTMLDivElement>(null);
-    // const [chapterData, setChapterData] = useState<ChapterData[]>([]);
-    // const [filter, setFilter] = useState<string>("");
+    const [findInPageStr, setFindInPageStr] = useState<string>("");
     const [isListOpen, setListOpen] = useState(false);
     const [preventListClose, setpreventListClose] = useState(false);
     // const prevMangaRef = useRef<string>("");
@@ -184,6 +187,48 @@ const EPubReaderSideList = ({
                 onMouseUp={handleResizerMouseUp}
             ></div>
             <div className="tools">
+                <div className="row1">
+                    <input
+                        type="text"
+                        name=""
+                        spellCheck={false}
+                        placeholder="Find In Page"
+                        // tabIndex={-1}
+                        onChange={(e) => {
+                            // if (e.currentTarget.value === "")
+                            setFindInPageStr(e.currentTarget.value);
+                        }}
+                        onKeyDown={(e) => {
+                            e.stopPropagation();
+                            if (e.key === "Escape") {
+                                e.currentTarget.blur();
+                            }
+                            if (e.key === "Enter") {
+                                if (e.shiftKey) {
+                                    findInPage(findInPageStr, false);
+                                } else findInPage(findInPageStr);
+                            }
+                        }}
+                    />
+                    <button
+                        // tabIndex={-1}
+                        data-tooltip="Previous"
+                        onClick={() => {
+                            findInPage(findInPageStr, false);
+                        }}
+                    >
+                        <FontAwesomeIcon icon={faArrowUp} />
+                    </button>
+                    <button
+                        // tabIndex={-1}
+                        data-tooltip="Next"
+                        onClick={() => {
+                            findInPage(findInPageStr);
+                        }}
+                    >
+                        <FontAwesomeIcon icon={faArrowDown} />
+                    </button>
+                </div>
                 <div className="row2">
                     <Button_A
                         className="ctrl-menu-item"

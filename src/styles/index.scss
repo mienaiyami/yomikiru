@@ -1753,9 +1753,13 @@ body {
                 .location-cont {
                     li {
                         a {
-                            --grid-template: 0;
                             --depth: 0;
+                            grid-template-columns: auto;
                             font-size: calc(1rem + calc(calc(var(--depth) / 3) * 1rem));
+
+                            &::before {
+                                display: none;
+                            }
                         }
                     }
                 }
@@ -1832,6 +1836,10 @@ body {
                         // margin: 5px 0;
                         // hyphens: var(--hyphenation) !important;
                         hyphens: auto !important;
+                        &.findInPage {
+                            box-shadow: var(--font-color) 0 0 0 2px;
+                            scroll-margin-top: 30px;
+                        }
                     }
                     // img {
                     // MAKE VAR
