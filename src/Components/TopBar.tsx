@@ -17,6 +17,7 @@ const TopBar = (): ReactElement => {
     const [title, setTitle] = useState<string>("Yomikiru");
     const { pageNumberInputRef, closeReader } = useContext(AppContext);
     const mangaInReader = useAppSelector((store) => store.mangaInReader);
+    const bookInReader = useAppSelector((store) => store.bookInReader);
     const [isMaximized, setMaximized] = useState(window.electron.getCurrentWindow().isMaximized ?? true);
     const isReaderOpen = useAppSelector((store) => store.isReaderOpen);
     const dispatch = useAppDispatch();
@@ -29,6 +30,13 @@ const TopBar = (): ReactElement => {
             if (chapterName.length > 83) chapterName = chapterName.substring(0, 80) + "...";
             const title = mangaName + " | " + chapterName;
             setTitle(chapterName.concat(window.electron.app.isPackaged ? "" : " - dev"));
+            document.title = title;
+            return;
+        } else if (bookInReader) {
+            let bookTitle = bookInReader.title;
+            if (bookTitle.length > 83) bookTitle = bookTitle.substring(0, 80) + "...";
+            const title = bookTitle;
+            setTitle(bookTitle.concat(window.electron.app.isPackaged ? "" : " - dev"));
             document.title = title;
             return;
         }
@@ -58,7 +66,7 @@ const TopBar = (): ReactElement => {
     }, []);
     useEffect(() => {
         setTitleWithSize();
-    }, [mangaInReader]);
+    }, [mangaInReader, bookInReader]);
 
     return (
         <div id="topBar">
@@ -96,7 +104,7 @@ const TopBar = (): ReactElement => {
                     id="pageNumbers"
                     htmlFor="NavigateToPageInput"
                     data-tooltip="Navigate To Page Number"
-                    style={{ visibility: isReaderOpen ? "visible" : "hidden" }}
+                    style={{ visibility: isReaderOpen && mangaInReader ? "visible" : "hidden" }}
                 >
                     <input
                         type="number"

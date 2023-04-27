@@ -78,8 +78,8 @@ export const settingValidatorData = {
         gapSize: 0,
         showPageNumberInZenMode: false,
         //! rename accordingly
-        scrollSpeed: 0,
-        largeScrollMultiplier: 0,
+        scrollSpeedA: 0,
+        scrollSpeedB: 0,
         /**
          * reading direction in two pages per row
          * * `0` - ltr
@@ -151,6 +151,8 @@ export const settingValidatorData = {
         },
     },
     epubReaderSettings: {
+        /**load and show only one chapter at a time from TOC */
+        loadOneChapter: false,
         /**
          * width of reader in percent
          */
@@ -750,8 +752,8 @@ const defaultSettings: AppSettings = {
         widthClamped: true,
         gapSize: 10,
         showPageNumberInZenMode: true,
-        scrollSpeed: 5,
-        largeScrollMultiplier: 15,
+        scrollSpeedA: 5,
+        scrollSpeedB: 15,
         readingSide: 1,
         // fitVertically: false,
         fitOption: 0,
@@ -783,6 +785,7 @@ const defaultSettings: AppSettings = {
         },
     },
     epubReaderSettings: {
+        loadOneChapter: false,
         readerWidth: 50,
         fontSize: 16,
         useDefault_fontFamily: true,

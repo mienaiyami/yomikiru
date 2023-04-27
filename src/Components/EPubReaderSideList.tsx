@@ -12,16 +12,14 @@ import {
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { useEffect, useLayoutEffect, useRef, useState } from "react";
 import { useAppDispatch, useAppSelector } from "../store/hooks";
-import { setLinkInReader } from "../store/linkInReader";
-// import { updateLastHistoryPage } from "../store/history";
-// import { addBookmark, updateBookmark, removeBookmark } from "../store/bookmarks";
-// import { setAppSettings } from "../store/appSettings";
 import { setPrevNextChapter } from "../store/prevNextChapter";
 
 const EPubReaderSideList = ({
     tocData,
     openNextChapterRef,
     openPrevChapterRef,
+    currentChapterURL,
+    setCurrentChapterURL,
     // addToBookmarkRef,
     // setshortcutText,
     // isBookmarked,
@@ -36,6 +34,12 @@ const EPubReaderSideList = ({
     tocData: TOCData;
     openNextChapterRef: React.RefObject<HTMLButtonElement>;
     openPrevChapterRef: React.RefObject<HTMLButtonElement>;
+    /**
+     * `~` if appSettings.epubReaderSettings.loadOneChapter is `false`
+     */
+    currentChapterURL: string;
+    setCurrentChapterURL: React.Dispatch<React.SetStateAction<string>>;
+
     epubLinkClick: (ev: MouseEvent | React.MouseEvent<HTMLAnchorElement, MouseEvent>) => void;
     // addToBookmarkRef: React.RefObject<HTMLButtonElement>;
     // isBookmarked: boolean;
@@ -47,11 +51,10 @@ const EPubReaderSideList = ({
     findInPage: (str: string, forward?: boolean) => void;
     makeScrollPos: () => void;
 }) => {
-    const mangaInReader = useAppSelector((store) => store.mangaInReader);
+    const bookInReader = useAppSelector((store) => store.bookInReader);
     // const history = useAppSelector((store) => store.history);
-    // const appSettings = useAppSelector((store) => store.appSettings);
+    const appSettings = useAppSelector((store) => store.appSettings);
     const prevNextChapter = useAppSelector((store) => store.prevNextChapter);
-    const linkInReader = useAppSelector((store) => store.linkInReader);
     // const contextMenu = useAppSelector((store) => store.contextMenu);
 
     const dispatch = useAppDispatch();
@@ -80,20 +83,21 @@ const EPubReaderSideList = ({
         }
     }, [isSideListPinned]);
 
-    // const changePrevNext = () => {
-    //     if (mangaInReader) {
-    //         const listDataName = chapterData.map((e) => e.name);
-    //         const prevIndex = listDataName.indexOf(window.app.replaceExtension(mangaInReader.chapterName)) - 1;
-    //         const nextIndex = listDataName.indexOf(window.app.replaceExtension(mangaInReader.chapterName)) + 1;
-    //         const prevCh = prevIndex < 0 ? "~" : chapterData[prevIndex].link;
-    //         const nextCh = nextIndex >= chapterData.length ? "~" : chapterData[nextIndex].link;
-    //         dispatch(setPrevNextChapter({ prev: prevCh, next: nextCh }));
-    //     }
-    // };
+    const changePrevNext = () => {
+        if (bookInReader) {
+            const listData = tocData.nav.filter((e) => e.depth === 1).map((e) => e.src);
+            const nextIndex = listData.indexOf(currentChapterURL) + 1;
+            const prevIndex = listData.indexOf(currentChapterURL) - 1;
+            const prevCh = prevIndex < 0 ? "~" : listData[prevIndex];
+            const nextCh = nextIndex >= listData.length ? "~" : listData[nextIndex];
+            dispatch(setPrevNextChapter({ prev: prevCh, next: nextCh }));
+        }
+    };
 
-    // useEffect(() => {
-    //     if (chapterData.length >= 0) changePrevNext();
-    // }, [chapterData]);
+    useEffect(() => {
+        if (appSettings.epubReaderSettings.loadOneChapter) changePrevNext();
+        else dispatch(setPrevNextChapter({ prev: "~", next: "~" }));
+    }, [tocData, currentChapterURL]);
 
     // useEffect(() => {
     //     if (mangaInReader) {
@@ -105,6 +109,10 @@ const EPubReaderSideList = ({
     //         makeChapterList();
     //     }
     // }, [mangaInReader]);
+
+    // useEffect(() => {
+    //     console.log(prevNextChapter, currentChapterURL);
+    // }, [prevNextChapter]);
 
     const handleResizerDrag = (e: MouseEvent) => {
         if (draggingResizer) {
@@ -209,6 +217,9 @@ const EPubReaderSideList = ({
                                 } else findInPage(findInPageStr);
                             }
                         }}
+                        onBlur={(e) => {
+                            if (e.currentTarget.value === "") findInPage("");
+                        }}
                     />
                     <button
                         // tabIndex={-1}
@@ -236,10 +247,14 @@ const EPubReaderSideList = ({
                         tooltip="Open Previous"
                         disabled={prevNextChapter.prev === "~"}
                         clickAction={() => {
-                            // todo: removing updateHistory page on chapter change in same manga
-                            // dispatch(updateLastHistoryPage({ linkInReader: linkInReader.link }));
-                            // todo : do i need this?
-                            dispatch(setLinkInReader({ type: "image", link: prevNextChapter.prev, page: 1 }));
+                            if (sideListRef.current) {
+                                sideListRef.current.querySelectorAll('a[data-depth="1"').forEach((e) => {
+                                    if (e.getAttribute("data-href") === prevNextChapter.prev)
+                                        (e as HTMLAnchorElement).click();
+                                });
+                            }
+
+                            // dispatch(setLinkInReader({ type: "image", link: prevNextChapter.prev, page: 1 }));
                         }}
                     >
                         <FontAwesomeIcon icon={faArrowLeft} />
@@ -295,8 +310,19 @@ const EPubReaderSideList = ({
                         tooltip="Open Next"
                         disabled={prevNextChapter.next === "~"}
                         clickAction={() => {
+                            if (sideListRef.current) {
+                                sideListRef.current.querySelectorAll('a[data-depth="1"').forEach((e) => {
+                                    if (e.getAttribute("data-href") === prevNextChapter.next)
+                                        (e as HTMLAnchorElement).click();
+                                    // (
+                                    //     sideListRef.current.querySelector(
+                                    //         `a[data-href="${prevNextChapter.next}"`
+                                    //     ) as HTMLAnchorElement
+                                    // ).click();
+                                });
+                            }
                             // dispatch(updateLastHistoryPage({ linkInReader: linkInReader.link }));
-                            dispatch(setLinkInReader({ type: "image", link: prevNextChapter.next, page: 1 }));
+                            // dispatch(setLinkInReader({ type: "image", link: prevNextChapter.next, page: 1 }));
                         }}
                     >
                         <FontAwesomeIcon icon={faArrowRight} />
@@ -314,27 +340,27 @@ const EPubReaderSideList = ({
                     <span className="bold"> : </span>
                     <span>{tocData.author}</span>
                 </div>
-                <div>
-                    <span className="bold">Chapter</span>
-                    <span className="bold"> : </span>
-                    <span>{"~"}</span>
-                </div>
+                {appSettings.epubReaderSettings.loadOneChapter && (
+                    <div>
+                        <span className="bold">Chapter</span>
+                        <span className="bold"> : </span>
+                        <span>{tocData.nav.find((e) => e.src === currentChapterURL)?.name || "~"}</span>
+                    </div>
+                )}
             </div>
             <div className="location-cont">
                 <ol>
                     {tocData.nav.map((e) => (
-                        <li
-                            // className={(current ? "current" : "")}
-                            key={e.name}
-                        >
+                        <li className={e.src === currentChapterURL ? "current " : ""} key={e.name}>
                             <a
-                                className="a-context"
                                 onClick={(ev) => {
                                     epubLinkClick(ev);
                                     sideListRef.current?.blur();
+                                    setCurrentChapterURL(ev.currentTarget.getAttribute("data-href") || "~");
                                 }}
                                 style={{ "--depth": e.depth - 1 }}
                                 data-href={e.src}
+                                data-depth={e.depth}
                                 title={e.name}
                                 // ref={(node) => {
                                 //     if (current && node !== null) node.scrollIntoView();

@@ -476,12 +476,12 @@ const ReaderSettings = ({
                         <InputNumber
                             min={1}
                             max={500}
-                            value={appSettings.readerSettings.scrollSpeed}
+                            value={appSettings.readerSettings.scrollSpeedA}
                             onChange={(e) => {
                                 let value = e.currentTarget.valueAsNumber;
                                 if (value > 500) value = 500;
                                 if (value < 1) value = 1;
-                                dispatch(setReaderSettings({ scrollSpeed: value }));
+                                dispatch(setReaderSettings({ scrollSpeedA: value }));
                             }}
                             labeled
                             labelBefore="Scroll&nbsp;A&nbsp;:"
@@ -490,12 +490,12 @@ const ReaderSettings = ({
                         <InputNumber
                             min={1}
                             max={500}
-                            value={appSettings.readerSettings.largeScrollMultiplier}
+                            value={appSettings.readerSettings.scrollSpeedB}
                             onChange={(e) => {
                                 let value = e.currentTarget.valueAsNumber;
                                 if (value > 500) value = 500;
                                 if (value < 1) value = 1;
-                                dispatch(setReaderSettings({ largeScrollMultiplier: value }));
+                                dispatch(setReaderSettings({ scrollSpeedB: value }));
                             }}
                             labeled
                             labelBefore="Scroll&nbsp;B&nbsp;:"

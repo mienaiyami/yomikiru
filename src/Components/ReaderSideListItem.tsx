@@ -24,7 +24,6 @@ const ReaderSideListItem = memo(
         return (
             <li className={(alreadyRead ? "alreadyRead" : "") + " " + (current ? "current" : "")}>
                 <a
-                    className="a-context"
                     onClick={() => openInReader(link)}
                     title={name}
                     ref={(node) => {

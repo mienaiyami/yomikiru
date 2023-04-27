@@ -9,7 +9,7 @@ import { useAppDispatch, useAppSelector } from "../store/hooks";
 import { resetShortcuts, setShortcuts } from "../store/shortcuts";
 import { setOpenSetting } from "../store/isSettingOpen";
 import { addBookmark, removeAllBookmarks } from "../store/bookmarks";
-import { makeNewSettings, setAppSettings, setReaderSettings } from "../store/appSettings";
+import { makeNewSettings, setAppSettings, setEpubReaderSettings, setReaderSettings } from "../store/appSettings";
 import { windowsStore } from "process";
 import { InputSelect } from "./Element/InputSelect";
 
@@ -692,8 +692,24 @@ const Settings = (): ReactElement => {
                                     <p>
                                         Make scrolling smooth and prevent stuttering when reading high res images.
                                         <br />
-                                        Drawbacks include high RAM usage and less crispy images when size is set to
-                                        a low value.<code>BETA</code>
+                                        Drawbacks : high RAM usage and less crispy images when size is set to a low
+                                        value.<code>BETA</code>
+                                    </p>
+                                </label>
+                                <label className={appSettings.epubReaderSettings.loadOneChapter ? "selected" : ""}>
+                                    <input
+                                        type="checkbox"
+                                        checked={appSettings.epubReaderSettings.loadOneChapter}
+                                        onChange={(e) => {
+                                            dispatch(
+                                                setEpubReaderSettings({ loadOneChapter: e.currentTarget.checked })
+                                            );
+                                        }}
+                                    />
+                                    <p>
+                                        Load and show one chapter at a time(from TOC).
+                                        <br />
+                                        Drawback : Content outside of TOC will not be accessible
                                     </p>
                                 </label>
                                 <button

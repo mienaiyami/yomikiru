@@ -175,8 +175,10 @@ const App = (): ReactElement => {
         link = window.path.normalize(link);
         if (link === linkInReader.link) return;
         if (link.toLowerCase().includes(".epub")) {
-            dispatch(setLoadingManga(true));
-            dispatch(setLoadingMangaPercent(0));
+            dispatch(setUnzipping(true));
+
+            // dispatch(setLoadingManga(true));
+            // dispatch(setLoadingMangaPercent(0));
 
             dispatch(
                 setLinkInReader({

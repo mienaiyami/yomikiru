@@ -247,14 +247,14 @@ const Reader = () => {
                         (e.key === shortcutkey.largeScroll?.key1 || e.key === shortcutkey.largeScroll?.key2)
                     ) {
                         e.preventDefault();
-                        scrollReader(0 - appSettings.readerSettings.largeScrollMultiplier);
+                        scrollReader(0 - appSettings.readerSettings.scrollSpeedB);
                         return;
                     }
                     switch (e.key) {
                         case shortcutkey.largeScroll?.key1:
                         case shortcutkey.largeScroll?.key2:
                             e.preventDefault();
-                            scrollReader(appSettings.readerSettings.largeScrollMultiplier);
+                            scrollReader(appSettings.readerSettings.scrollSpeedB);
                             break;
                         case shortcutkey.nextPage?.key1:
                         case shortcutkey.nextPage?.key2: {
@@ -271,7 +271,7 @@ const Reader = () => {
                         }
                         case shortcutkey.scrollDown?.key1:
                         case shortcutkey.scrollDown?.key2:
-                            scrollReader(appSettings.readerSettings.scrollSpeed);
+                            scrollReader(appSettings.readerSettings.scrollSpeedA);
                             break;
                         case shortcutkey.prevPage?.key1:
                         case shortcutkey.prevPage?.key2: {
@@ -288,7 +288,7 @@ const Reader = () => {
                         }
                         case shortcutkey.scrollUp?.key1:
                         case shortcutkey.scrollUp?.key2:
-                            scrollReader(0 - appSettings.readerSettings.scrollSpeed);
+                            scrollReader(0 - appSettings.readerSettings.scrollSpeedA);
                             break;
                         case shortcutkey.showHidePageNumberInZen?.key1:
                         case shortcutkey.showHidePageNumberInZen?.key2:

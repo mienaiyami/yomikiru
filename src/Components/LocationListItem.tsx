@@ -39,7 +39,6 @@ const LocationListItem = ({
     return (
         <li className={inHistory ? "alreadyRead" : ""}>
             <a
-                className="a-context"
                 title={name}
                 onClick={(e) => {
                     if (appSettings.openOnDblClick) {

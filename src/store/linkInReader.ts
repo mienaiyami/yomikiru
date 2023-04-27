@@ -3,7 +3,7 @@ import { createSlice, PayloadAction } from "@reduxjs/toolkit";
 const initialState: typeof window.app.linkInReader = {
     type: "image",
     link: window.loadManga || "",
-    page: 5,
+    page: 0,
 };
 
 const linkInReader = createSlice({

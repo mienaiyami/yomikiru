@@ -54,7 +54,7 @@ const BookmarkHistoryListItem = (props: ListItemE) => {
             // }}
         >
             <a
-                className="a-context big"
+                className="big"
                 onClick={() => openInReader(props.link, props.page)}
                 onContextMenu={(e) => {
                     dispatch(

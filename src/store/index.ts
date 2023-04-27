@@ -14,6 +14,7 @@ import prevNextChapterReducer from "./prevNextChapter";
 import shortcutsReducer from "./shortcuts";
 import themesReducer from "./themes";
 import unzippingReducer from "./unzipping";
+import bookInReaderReducer from "./bookInReader";
 
 const store = configureStore({
     reducer: {
@@ -32,6 +33,7 @@ const store = configureStore({
         history: historyReducer,
         shortcuts: shortcutsReducer,
         contextMenu: contextMenuReducer,
+        bookInReader: bookInReaderReducer,
     },
 });
 
