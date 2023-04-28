@@ -734,7 +734,7 @@ const EPubReader = () => {
         <div
             ref={readerRef}
             id="EPubReader"
-            className={(isSideListPinned ? "sideListPinned " : "") + "reader"}
+            className={(isSideListPinned ? "sideListPinned " : "") + "reader "}
             style={{
                 gridTemplateColumns: sideListWidth + "px auto",
                 display: isReaderOpen ? (isSideListPinned ? "grid" : "block") : "none",
@@ -774,7 +774,8 @@ const EPubReader = () => {
                 className={
                     "main " +
                     (appSettings.epubReaderSettings.useDefault_fontFamily ? "" : "forceFont ") +
-                    (appSettings.epubReaderSettings.useDefault_paragraphSpacing ? "" : "forceParaGap ")
+                    (appSettings.epubReaderSettings.useDefault_paragraphSpacing ? "" : "forceParaGap ") +
+                    (appSettings.epubReaderSettings.hyphenation ? "hyphen " : "")
                 }
                 ref={mainRef}
                 style={{
