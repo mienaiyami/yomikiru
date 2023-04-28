@@ -538,7 +538,7 @@ body {
                 p {
                     top: 0;
                     position: sticky;
-                    background-color: var(--body-bg-color);
+                    // background-color: var(--body-bg-color);
                     z-index: 100;
                 }
                 ol {
@@ -1117,6 +1117,11 @@ body {
                             }
                             &.selected {
                                 background-color: var(--btn-color-focus);
+                            }
+                            &.opacityRange {
+                                display: grid;
+                                grid-template-columns: auto 2rem;
+                                gap: 5px;
                             }
                         }
                     }

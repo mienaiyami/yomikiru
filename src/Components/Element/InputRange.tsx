@@ -10,6 +10,7 @@ const InputRange = ({
     onChange,
     className = "",
     disabled = false,
+    title,
 }: {
     labeled?: boolean;
     labelText?: string;
@@ -19,11 +20,12 @@ const InputRange = ({
     disabled?: boolean;
     value: number;
     className?: string;
+    title?: string;
     onChange: React.ChangeEventHandler<HTMLInputElement>;
 }) => {
     if (labeled)
         return (
-            <label className={(disabled ? "disabled " : "") + className}>
+            <label className={(disabled ? "disabled " : "") + className} title={title}>
                 {labelText && <p>{labelText}</p>}
                 <input
                     type="range"
@@ -47,6 +49,7 @@ const InputRange = ({
             max={max}
             step={step}
             value={value}
+            title={title}
         />
     );
 };

@@ -12,6 +12,7 @@ import { addBookmark, removeAllBookmarks } from "../store/bookmarks";
 import { makeNewSettings, setAppSettings, setEpubReaderSettings, setReaderSettings } from "../store/appSettings";
 import { windowsStore } from "process";
 import { InputSelect } from "./Element/InputSelect";
+import InputRange from "./Element/InputRange";
 
 const Settings = (): ReactElement => {
     const { promptSetDefaultLocation } = useContext(AppContext);
@@ -270,13 +271,31 @@ const Settings = (): ReactElement => {
                                 }}
                                 title="Color"
                             />
-                            <input
+                            {/* <input
                                 type="number"
                                 min={0}
                                 max={100}
                                 value={Math.ceil(opacity) ?? 100}
                                 title="Opacity"
                                 // className="newThemeMakerOpacity"
+                                onChange={(e) => {
+                                    setOpacity(() => {
+                                        if (e.target.value === "") {
+                                            e.target.value = "0";
+                                        }
+                                        let value = e.target.valueAsNumber ?? 100;
+                                        if (value > 100) value = 100;
+                                        return value;
+                                    });
+                                }}
+                            /> */}
+                            <InputRange
+                                min={0}
+                                max={100}
+                                value={Math.ceil(opacity) ?? 100}
+                                title="Opacity"
+                                className="opacityRange"
+                                labeled
                                 onChange={(e) => {
                                     setOpacity(() => {
                                         if (e.target.value === "") {

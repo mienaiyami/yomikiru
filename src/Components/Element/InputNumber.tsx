@@ -13,6 +13,7 @@ const InputNumber = ({
     labeled = false,
     className = "",
     disabled = false,
+    title,
 }: {
     labeled?: boolean;
     labelAfter?: string;
@@ -25,11 +26,12 @@ const InputNumber = ({
     value: number;
     onChange: React.ChangeEventHandler<HTMLInputElement>;
     className?: string;
+    title?: string;
     disabled?: boolean;
 }) => {
     if (labeled) {
         return (
-            <label className={(disabled ? "disabled " : "") + className}>
+            <label className={(disabled ? "disabled " : "") + className} title={title}>
                 {labelBefore}
                 {paraBefore && <p>{paraBefore}</p>}
                 <input
@@ -66,6 +68,7 @@ const InputNumber = ({
                     }
                 }}
                 onChange={onChange}
+                title={title}
             />
         );
 };
