@@ -19,10 +19,12 @@ Linux distribution currently not available as direct download but can be build e
 
 - EPUB:
   - Zen mode.
+  - Fix wrong depth in epub file.
 
 ## Changed
 
 - UI Enhancements, Slider for theme opacity in theme maker.
+- Removed dependency on epub TOC depth.
 
 
 ## Fixed

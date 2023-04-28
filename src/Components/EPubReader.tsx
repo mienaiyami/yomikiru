@@ -165,7 +165,7 @@ const HTMLPart = memo(
             linksInBetween.push(...displayDataWithOrder.slice(startIndex, lastIndex));
             // console.log(linksInBetween, tocData);
         }
-        if (!tocData) return <p>Error</p>;
+        if (!tocData) return <p>Error/Loading</p>;
         return (
             <>
                 {(loadOneChapter ? linksInBetween : displayDataWithOrder).map((e, i) => (
@@ -439,11 +439,15 @@ const EPubReader = () => {
 
                                     /**idk y some epub had depth=2 but only had one navPoint, so making this */
                                     let changedDepth = false;
-
+                                    /** some have useless depth making errors later  */
+                                    let depth_real = depth_original;
                                     const getData = (selector: string, depth: number) => {
                                         const elems = tocXML.querySelectorAll(selector);
                                         if (elems.length <= 0) return;
-                                        if (depth !== depth_original) changedDepth = true;
+                                        if (depth < depth_real) {
+                                            changedDepth = true;
+                                            depth_real = depth;
+                                        }
                                         elems.forEach((e, i) => {
                                             tempTOCData.nav.push({
                                                 name: e.querySelector("navLabel text")?.textContent || "~",
@@ -471,10 +475,12 @@ const EPubReader = () => {
                                             data: new Date().toLocaleString("en-UK", { hour12: true }),
                                         })
                                     );
-                                    if (!changedDepth)
-                                        tempTOCData.nav = tempTOCData.nav.map((e) => {
-                                            return { ...e, depth: 1 };
-                                        });
+                                    // console.log(depth_real, depth_original, depth_original - depth_real + 1);
+                                    // if (!changedDepth)
+                                    tempTOCData.depth = depth_original - depth_real + 1;
+                                    tempTOCData.nav = tempTOCData.nav.map((e) => {
+                                        return { ...e, depth: e.depth - depth_real + 1 };
+                                    });
                                     // // first with lowest depth
                                     // setCurrentChapterURL(tempTOCData.nav.find((e) => e.depth === 1)!.src);
                                     setCurrentChapterURL(tempTOCData.nav[0].src);
