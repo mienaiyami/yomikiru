@@ -18,18 +18,16 @@ Linux distribution currently not available as direct download but can be build e
 ## Added
 
 - EPUB:
-  - Sidelist+TOC.
-  - Find in page.
-  - Option to load only one chapter at a time to prevent high ram usage(enable from settings).
+  - Zen mode.
 
 ## Changed
 
-- EPUB: Optimized rendering.
+- UI Enhancements, Slider for theme opacity in theme maker.
 
 
 ## Fixed
 
-- #101, #99.
+- #103, #105
 
 ---
 

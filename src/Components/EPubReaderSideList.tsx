@@ -85,11 +85,14 @@ const EPubReaderSideList = ({
 
     const changePrevNext = () => {
         if (bookInReader) {
-            const listData = tocData.nav.filter((e) => e.depth === 1).map((e) => e.src);
-            const nextIndex = listData.indexOf(currentChapterURL) + 1;
-            const prevIndex = listData.indexOf(currentChapterURL) - 1;
+            const listData = tocData.nav.map((e) => e.src);
+            let nextIndex = listData.indexOf(currentChapterURL) + 1;
+            if (nextIndex < listData.length && listData[nextIndex] === currentChapterURL) nextIndex += 1;
+            let prevIndex = listData.indexOf(currentChapterURL) - 1;
+            if (prevIndex > 0 && listData[prevIndex] === currentChapterURL) prevIndex -= 1;
             const prevCh = prevIndex < 0 ? "~" : listData[prevIndex];
             const nextCh = nextIndex >= listData.length ? "~" : listData[nextIndex];
+            // console.log({ prev: prevCh, next: nextCh });
             dispatch(setPrevNextChapter({ prev: prevCh, next: nextCh }));
         }
     };
@@ -248,7 +251,7 @@ const EPubReaderSideList = ({
                         disabled={prevNextChapter.prev === "~"}
                         clickAction={() => {
                             if (sideListRef.current) {
-                                sideListRef.current.querySelectorAll('a[data-depth="1"').forEach((e) => {
+                                sideListRef.current.querySelectorAll("a").forEach((e) => {
                                     if (e.getAttribute("data-href") === prevNextChapter.prev)
                                         (e as HTMLAnchorElement).click();
                                 });
@@ -311,7 +314,9 @@ const EPubReaderSideList = ({
                         disabled={prevNextChapter.next === "~"}
                         clickAction={() => {
                             if (sideListRef.current) {
-                                sideListRef.current.querySelectorAll('a[data-depth="1"').forEach((e) => {
+                                // [data-depth="1"
+                                sideListRef.current.querySelectorAll("a").forEach((e) => {
+                                    // console.log({ a: e.getAttribute("data-href"), b: prevNextChapter.next });
                                     if (e.getAttribute("data-href") === prevNextChapter.next)
                                         (e as HTMLAnchorElement).click();
                                     // (
