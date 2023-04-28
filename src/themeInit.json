@@ -5,7 +5,7 @@
             "name": "theme1",
             "main": {
                 "--body-bg-color": "#262626",
-                "--sideList-bg-color": "var(--body-bg-color)",
+                "--sideList-bg-color": "var(--topBar-color)",
 
                 "--icon-color": "#fff8f0",
                 "--font-color": "#fff8f0",
@@ -47,7 +47,7 @@
             "name": "theme2",
             "main": {
                 "--body-bg-color": "#000000",
-                "--sideList-bg-color": "var(--body-bg-color)",
+                "--sideList-bg-color": "var(--topBar-color)",
 
                 "--icon-color": "#fff8f0",
                 "--font-color": "#fff8f0",

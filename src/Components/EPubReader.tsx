@@ -256,6 +256,8 @@ const EPubReader = () => {
     const [tocData, settocData] = useState<TOCData | null>(null);
     const [currentChapterURL, setCurrentChapterURL] = useState("~");
     const [sideListWidth, setSideListWidth] = useState(appSettings.readerSettings.sideListWidth || 450);
+    const [zenMode, setZenMode] = useState(false);
+    const [wasMaximized, setWasMaximized] = useState(false);
 
     const readerRef = useRef<HTMLDivElement>(null);
     const mainRef = useRef<HTMLSelectElement>(null);
@@ -561,6 +563,28 @@ const EPubReader = () => {
         }
     };
 
+    useEffect(() => {
+        if ((zenMode && !window.electron.getCurrentWindow().isMaximized()) || (!zenMode && !wasMaximized)) {
+            setTimeout(() => {
+                if (elemBeforeChange)
+                    document.querySelector(elemBeforeChange)?.scrollIntoView({
+                        behavior: "auto",
+                        block: "start",
+                    });
+            }, 100);
+        }
+        if (zenMode) {
+            setSideListPinned(false);
+            setWasMaximized(window.electron.getCurrentWindow().isMaximized());
+            document.body.classList.add("zenMode");
+            document.body.requestFullscreen();
+        } else {
+            document.body.classList.remove("zenMode");
+            setWasMaximized(false);
+            if (document.fullscreenElement) document.exitFullscreen();
+        }
+    }, [zenMode]);
+
     useLayoutEffect(() => {
         if (isSideListPinned) {
             // readerRef.current?.scrollTo(0, scrollPosPercent * readerRef.current.scrollHeight);
@@ -604,6 +628,15 @@ const EPubReader = () => {
                     case shortcutkey.readerSettings?.key2:
                         readerSettingExtender.current?.click();
                         readerSettingExtender.current?.focus();
+                        break;
+                    case shortcutkey.toggleZenMode?.key1:
+                    case shortcutkey.toggleZenMode?.key2:
+                        makeScrollPos();
+                        setZenMode((prev) => !prev);
+                        break;
+                    case "Escape":
+                        makeScrollPos();
+                        setZenMode(false);
                         break;
                     case shortcutkey.nextChapter?.key1:
                     case shortcutkey.nextChapter?.key2:

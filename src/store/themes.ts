@@ -55,11 +55,13 @@ if (window.fs.existsSync(themesPath)) {
     if (raw) {
         try {
             let data = JSON.parse(raw);
+            // todo remove in later version
             if (data.allData[0].main["--body-bg"]) {
                 throw new Error("newTheme");
             }
             // validate theme data
             let changed = false;
+            // todo remove in later version
             if (data instanceof Array || !Object.prototype.hasOwnProperty.call(data, "name")) {
                 data = {
                     name: "theme2",
@@ -89,6 +91,14 @@ if (window.fs.existsSync(themesPath)) {
                             e.main[prop as ThemeDataMain] = "#ff0000";
                         }
                     }
+                    /**check and fix change in theme value */
+                    themeInit.allData.forEach((e) => {
+                        const dataTheme = (data as Themes).allData.find((a) => a.name === e.name);
+                        if (dataTheme)
+                            Object.entries(e.main).forEach(([key, value]) => {
+                                dataTheme.main[key as keyof ThemeData["main"]] = value;
+                            });
+                    });
                 });
                 if (rewriteNeeded) window.fs.writeFileSync(themesPath, JSON.stringify(data, null, "\t"));
             }

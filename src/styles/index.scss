@@ -130,7 +130,15 @@ body.zenMode {
     #app {
         top: 0;
         height: 100%;
-
+        #EPubReader {
+            .readerSideList {
+                height: 100vh;
+                .indicator,
+                .reSizer {
+                    display: none;
+                }
+            }
+        }
         #reader {
             .imgCont {
                 &.fitVertically .row .readerImg {
