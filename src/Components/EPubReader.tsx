@@ -163,7 +163,6 @@ const HTMLPart = memo(
             let lastIndex = displayDataWithOrder.findIndex((e) => e.url === tocData.nav[afterCurrentIndex]?.src);
             if (lastIndex < 0) lastIndex = Number.MAX_SAFE_INTEGER;
             linksInBetween.push(...displayDataWithOrder.slice(startIndex, lastIndex));
-            console.log(linksInBetween, tocData);
             // console.log(linksInBetween, tocData);
         }
         if (!tocData) return <p>Error</p>;
@@ -436,13 +435,13 @@ const EPubReader = () => {
                                         nav: [],
                                     };
 
-                                    /**idk y some epub had depth=2 but only had one navPoint, so making this */
-                                    let changedDepth = false;
+                                    // /**idk y some epub had depth=2 but only had one navPoint, so making this */
+                                    // let changedDepth = false;
 
                                     const getData = (selector: string, depth: number) => {
                                         const elems = tocXML.querySelectorAll(selector);
                                         if (elems.length <= 0) return;
-                                        if (depth !== depth_original) changedDepth = true;
+                                        // if (depth !== depth_original) changedDepth = true;
                                         elems.forEach((e, i) => {
                                             tempTOCData.nav.push({
                                                 name: e.querySelector("navLabel text")?.textContent || "~",
@@ -470,12 +469,13 @@ const EPubReader = () => {
                                             data: new Date().toLocaleString("en-UK", { hour12: true }),
                                         })
                                     );
-                                    if (!changedDepth)
-                                        tempTOCData.nav = tempTOCData.nav.map((e) => {
-                                            return { ...e, depth: 1 };
-                                        });
-                                    // first with lowest depth
-                                    setCurrentChapterURL(tempTOCData.nav.find((e) => e.depth === 1)!.src);
+                                    // if (!changedDepth)
+                                    //     tempTOCData.nav = tempTOCData.nav.map((e) => {
+                                    //         return { ...e, depth: 1 };
+                                    //     });
+                                    // // first with lowest depth
+                                    // setCurrentChapterURL(tempTOCData.nav.find((e) => e.depth === 1)!.src);
+                                    setCurrentChapterURL(tempTOCData.nav[0].src);
                                     settocData(tempTOCData);
                                 });
                             }
