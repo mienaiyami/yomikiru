@@ -239,6 +239,7 @@ body {
         font-size: 90%;
         align-self: center;
         cursor: inherit;
+        width: fit-content;
     }
 
     --titleBar-height: 40px;
@@ -555,11 +556,16 @@ body {
                         &:active {
                             background-color: var(--listItem-bg-color-hover);
                         }
-
+                        code.nonFolder {
+                            margin-left: auto;
+                        }
                         a {
                             cursor: pointer;
                             display: grid;
                             --grid-template: 0;
+                            &:has(code.nonFolder) {
+                                --grid-template: auto;
+                            }
                             gap: 5px;
                             grid-template-columns: 2.1em auto var(--grid-template);
                             // display: flex;
@@ -618,7 +624,7 @@ body {
                             margin: 0;
                             cursor: pointer;
                             user-select: none;
-                            padding: 5px 15px;
+                            padding: 5px 20px;
                             box-sizing: border-box;
                             align-self: stretch;
                             border: none;
@@ -1405,7 +1411,7 @@ body {
                     margin-top: 5px;
                     padding: 0;
                     a {
-                        --grid-template: 2.1em;
+                        --grid-template: 2.3em;
                     }
                 }
 

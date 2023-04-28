@@ -79,8 +79,8 @@ const LocationListItem = ({
                 tabIndex={-1}
             >
                 <span className="text">{name.split(" $")[0]}</span>
+                {window.app.isSupportedFormat(name) && <code className="nonFolder">{name.split(" $")[1]}</code>}
             </a>
-            {window.app.isSupportedFormat(name) && <code className="nonFolder">{name.split(" $")[1]}</code>}
             <button
                 title="Open In Reader"
                 className="open-in-reader-btn"
