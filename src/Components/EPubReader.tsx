@@ -106,7 +106,12 @@ function parseEPubHTMLX(filePath: string, parser: DOMParser) {
         if (href_old)
             if (!href_old.startsWith("http")) {
                 // (e as HTMLLinkElement).href = (e as HTMLLinkElement).href.split("#").splice(-1)[0];
-                e.setAttribute("data-href", window.path.join(window.path.dirname(filePath), href_old));
+                e.setAttribute(
+                    "data-href",
+                    href_old[0] === "#"
+                        ? filePath + href_old
+                        : window.path.join(window.path.dirname(filePath), href_old)
+                );
                 e.removeAttribute("href");
             }
     });
