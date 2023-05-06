@@ -136,6 +136,19 @@ const EPUBReaderSettings = ({
                         >
                             <FontAwesomeIcon icon={faPlus} />
                         </button>
+
+                        <InputCheckbox
+                            checked={appSettings.epubReaderSettings.limitImgHeight}
+                            onChange={(e) => {
+                                makeScrollPos();
+                                dispatch(
+                                    setEpubReaderSettings({
+                                        limitImgHeight: e.currentTarget.checked,
+                                    })
+                                );
+                            }}
+                            paraAfter="Limit Image height to viewport"
+                        />
                     </div>
                 </div>
                 <div className="settingItem">
@@ -214,7 +227,6 @@ const EPUBReaderSettings = ({
                                 }}
                                 paraAfter="Custom Font Family"
                             />
-                            {/* //todo : make any font selector */}
                             <InputSelect
                                 labeled={true}
                                 disabled={appSettings.epubReaderSettings.useDefault_fontFamily}

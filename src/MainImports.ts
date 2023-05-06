@@ -178,6 +178,10 @@ export const settingValidatorData = {
         hyphenation: false,
         scrollSpeedA: 0,
         scrollSpeedB: 0,
+        /**
+         * limit image height to 100%
+         */
+        limitImgHeight: true,
     },
 } as const;
 
@@ -799,6 +803,7 @@ const defaultSettings: AppSettings = {
         hyphenation: false,
         scrollSpeedA: 5,
         scrollSpeedB: 15,
+        limitImgHeight: true,
     },
 };
 

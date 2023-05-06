@@ -781,7 +781,8 @@ const EPubReader = () => {
                     "main " +
                     (appSettings.epubReaderSettings.useDefault_fontFamily ? "" : "forceFont ") +
                     (appSettings.epubReaderSettings.useDefault_paragraphSpacing ? "" : "forceParaGap ") +
-                    (appSettings.epubReaderSettings.hyphenation ? "hyphen " : "")
+                    (appSettings.epubReaderSettings.hyphenation ? "hyphen " : "") +
+                    (appSettings.epubReaderSettings.limitImgHeight ? "limitImgHeight " : "")
                 }
                 ref={mainRef}
                 style={{

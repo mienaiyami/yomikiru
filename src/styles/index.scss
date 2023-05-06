@@ -138,6 +138,13 @@ body.zenMode {
                     display: none;
                 }
             }
+            section.main {
+                &.limitImgHeight {
+                    > .cont img {
+                        max-height: 90vh;
+                    }
+                }
+            }
         }
         #reader {
             .imgCont {
@@ -1812,6 +1819,11 @@ body {
                         margin: var(--paragraph-gap) !important;
                     }
                 }
+                &.limitImgHeight {
+                    > .cont img {
+                        max-height: calc(90vh - var(--titleBar-height));
+                    }
+                }
                 > .cont {
                     display: flex;
                     flex-direction: column;
@@ -1832,6 +1844,7 @@ body {
                     //     display: flex;
                     //     flex-direction: column;
                     // }
+
                     * {
                         user-select: text !important;
                         line-height: var(--line-height);
