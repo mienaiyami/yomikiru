@@ -112,6 +112,12 @@
     // --zenModePageIndicator-bg: var(var(--body-bg));
 }
 
+// here to prevent precedence, style from <style>
+#EPubReader hr {
+    margin: 1.5em 0;
+    width: 100%;
+}
+
 body.zenMode {
     ::-webkit-scrollbar {
         display: none;
@@ -1871,10 +1877,6 @@ body {
                     // h2 {
                     //     margin: 10px 0;
                     // }
-                    hr {
-                        margin: 1.5em 0;
-                        width: 100%;
-                    }
                     p {
                         // margin: 5px 0;
                         // hyphens: var(--hyphenation) !important;

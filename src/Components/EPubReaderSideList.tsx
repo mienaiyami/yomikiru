@@ -340,11 +340,11 @@ const EPubReaderSideList = ({
                     <span className="bold"> : </span>
                     <span>{tocData.title}</span>
                 </div>
-                <div>
+                {/* <div>
                     <span className="bold">Author</span>
                     <span className="bold"> : </span>
                     <span>{tocData.author}</span>
-                </div>
+                </div> */}
                 {appSettings.epubReaderSettings.loadOneChapter && (
                     <div>
                         <span className="bold">Chapter</span>

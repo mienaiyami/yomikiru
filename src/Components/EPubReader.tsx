@@ -374,6 +374,11 @@ const EPubReader = () => {
                 if (manifestData.length > 0) {
                     const tempDisplayData: DisplayData[] = [];
                     const tempStylesheets: string[] = [];
+                    // console.log(CONTENT_OPF);
+                    const authorName = CONTENT_OPF.getElementsByTagName("dc:creator")[0]?.textContent || "~";
+                    const bookName = CONTENT_OPF.getElementsByTagName("dc:title")[0]?.textContent || "~";
+                    // const authorName = CONTENT_OPF.querySelector("dc:creator")?.textContent || "~";
+                    // const bookName = CONTENT_OPF.querySelector("dc:title")?.textContent || "~";
                     manifestData.forEach((manifest) => {
                         const mediaType = manifest.getAttribute("media-type");
                         if (mediaType === "application/xhtml+xml") {
@@ -431,8 +436,10 @@ const EPubReader = () => {
                                             "1"
                                     );
                                     const tempTOCData: TOCData = {
-                                        title: tocXML.querySelector("docTitle text")?.textContent || "~",
-                                        author: tocXML.querySelector("docAuthor text")?.textContent || "~",
+                                        title: bookName,
+                                        // title: tocXML.querySelector("docTitle text")?.textContent || "~",
+                                        author: authorName,
+                                        // author: tocXML.querySelector("docAuthor text")?.textContent || "~",
                                         depth: depth_original,
                                         nav: [],
                                     };
