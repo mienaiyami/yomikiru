@@ -1,13 +1,13 @@
 # Yomikiru
 
-Offline Manga/Manhwa/EPub Reader (not a downloader). Manga Reader for people who prefer to download manga/manhwa(from services like hakuneko/tachidesk) then read offline.
+Offline Manga/Manhwa/Comic/EPub Reader (not a downloader). Reading app for people who prefer to download manga/manhwa(from services like hakuneko/tachidesk) then read offline.
 
 [![Github Latest Release](https://img.shields.io/github/v/tag/mienaiyami/yomikiru?label=release&style=flat-square&logo=github)](https://github.com/mienaiyami/yomikiru/releases/latest) |
 [![Github All Releases](https://img.shields.io/github/downloads/mienaiyami/yomikiru/total.svg?style=flat-square&logo=github)](https://github.com/mienaiyami/yomikiru/releases)
 
-## Features
+## Features(not limited to)
 
-- **New EPub reader(experimental).**
+- **EPub reader**
 - Lightweight, take low cpu and ram when running.
 - Supports most image formats (`".jpg", ".jpeg", ".png", ".webp", ".svg", ".apng", ".gif", ".avif"`) and archive (`.zip, .cbz`)
 - Create multiple instances.

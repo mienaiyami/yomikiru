@@ -9,33 +9,32 @@
 ---
 ## Note
 
-**Epub reader available**
-
 Linux distribution currently not available as direct download but can be build easily by following this [Build for linux(debian) guide](https://github.com/mienaiyami/yomikiru/blob/master/docs/build_for_linux.md).
 
 ---
 
 ## Added
 
-- EPUB:
-  - Zen mode.
-  - Fix wrong depth in epub file.
+- EPub:
+  - margin+width default for &lt;HR&gt;
+  - limit img height to viewport option.
+  - option to disable to paragraph indent.
+  - added support for URL with `#` / fragment.
 
 ## Changed
 
-- UI Enhancements, Slider for theme opacity in theme maker.
-- Removed dependency on epub TOC depth.
+- UI Enhancements.
+- Changed lower limit of some epub settings to `0` from `0.1` .
 
 
 ## Fixed
 
-- #103, #105
+- fixed #107,#111,#112,#113,#114,#115,#118,#121,#122,#123.
 
 ---
 
 #### Todo
 
-- EPUB: History+Bookmark.
 - Write tests.
 - Add ability to change image quality in canvas mode for less RAM usage and performance.
 
