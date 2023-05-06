@@ -259,17 +259,17 @@ const EPUBReaderSettings = ({
                                     );
                                 }}
                                 step={0.1}
-                                min={0.1}
+                                min={0}
                                 max={20}
                                 value={appSettings.epubReaderSettings.lineSpacing}
                                 onChangeNum={(e) => {
                                     makeScrollPos();
                                     let value = e.currentTarget.valueAsNumber;
                                     if (value > 20) value = 20;
-                                    if (value < 0.1) value = 0.1;
+                                    if (value < 0) value = 0;
                                     dispatch(setEpubReaderSettings({ lineSpacing: value }));
                                 }}
-                                paraBefore="Line Spacing&nbsp;:"
+                                paraBefore="Line Height&nbsp;:"
                                 labelAfter="em"
                             />
                             <InputCheckboxNumber
@@ -283,14 +283,14 @@ const EPUBReaderSettings = ({
                                     );
                                 }}
                                 step={0.1}
-                                min={0.1}
+                                min={0}
                                 max={20}
                                 value={appSettings.epubReaderSettings.paragraphSpacing}
                                 onChangeNum={(e) => {
                                     makeScrollPos();
                                     let value = e.currentTarget.valueAsNumber;
                                     if (value > 20) value = 20;
-                                    if (value < 0.1) value = 0.1;
+                                    if (value < 0) value = 0;
                                     dispatch(setEpubReaderSettings({ paragraphSpacing: value }));
                                 }}
                                 paraBefore="Paragraph Spacing&nbsp;:"
@@ -307,14 +307,14 @@ const EPUBReaderSettings = ({
                                     );
                                 }}
                                 step={0.1}
-                                min={0.1}
+                                min={0}
                                 max={20}
                                 value={appSettings.epubReaderSettings.wordSpacing}
                                 onChangeNum={(e) => {
                                     makeScrollPos();
                                     let value = e.currentTarget.valueAsNumber;
                                     if (value > 20) value = 20;
-                                    if (value < 0.1) value = 0.1;
+                                    if (value < 0) value = 0;
                                     dispatch(setEpubReaderSettings({ wordSpacing: value }));
                                 }}
                                 paraBefore="Word Spacing&nbsp;:"
