@@ -160,7 +160,7 @@ const EPUBReaderSettings = ({
                                 min={1}
                                 max={100}
                                 onChange={(e) => {
-                                    makeScrollPos();
+                                    // makeScrollPos();
                                     let value = e.target.valueAsNumber;
                                     if (!value) value = 0;
                                     value = value >= 100 ? 100 : value;
@@ -171,7 +171,7 @@ const EPUBReaderSettings = ({
                             />
                             <button
                                 onClick={(e) => {
-                                    makeScrollPos();
+                                    // makeScrollPos();
                                     let newSize = appSettings.epubReaderSettings.fontSize - 2;
 
                                     newSize = newSize < 1 ? 1 : newSize;
@@ -182,7 +182,7 @@ const EPUBReaderSettings = ({
                             </button>
                             <button
                                 onClick={(e) => {
-                                    makeScrollPos();
+                                    // makeScrollPos();
                                     let newSize = appSettings.epubReaderSettings.fontSize + 2;
 
                                     newSize = newSize > 100 ? 100 : newSize;

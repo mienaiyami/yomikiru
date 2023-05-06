@@ -727,16 +727,17 @@ const EPubReader = () => {
             });
     }, [
         appSettings.epubReaderSettings.readerWidth,
-        appSettings.epubReaderSettings.fontSize,
-        appSettings.epubReaderSettings.fontFamily,
-        appSettings.epubReaderSettings.lineSpacing,
-        appSettings.epubReaderSettings.paragraphSpacing,
-        appSettings.epubReaderSettings.wordSpacing,
-        appSettings.epubReaderSettings.useDefault_fontFamily,
-        appSettings.epubReaderSettings.useDefault_lineSpacing,
-        appSettings.epubReaderSettings.useDefault_paragraphSpacing,
-        appSettings.epubReaderSettings.useDefault_wordSpacing,
         isSideListPinned,
+        //! these were not needed caused bad auto scroll
+        // appSettings.epubReaderSettings.fontSize,
+        // appSettings.epubReaderSettings.fontFamily,
+        // appSettings.epubReaderSettings.lineSpacing,
+        // appSettings.epubReaderSettings.paragraphSpacing,
+        // appSettings.epubReaderSettings.wordSpacing,
+        // appSettings.epubReaderSettings.useDefault_fontFamily,
+        // appSettings.epubReaderSettings.useDefault_lineSpacing,
+        // appSettings.epubReaderSettings.useDefault_paragraphSpacing,
+        // appSettings.epubReaderSettings.useDefault_wordSpacing,
     ]);
 
     useLayoutEffect(() => {
