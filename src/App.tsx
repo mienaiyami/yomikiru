@@ -14,6 +14,7 @@ import { setMangaInReader } from "./store/mangaInReader";
 import { refreshBookmark } from "./store/bookmarks";
 import { setTheme } from "./store/themes";
 import { bookmarksPath, historyPath } from "./MainImports";
+import { setBookInReader } from "./store/bookInReader";
 
 // window.logger.log("New window opening...");
 
@@ -223,6 +224,7 @@ const App = (): ReactElement => {
         dispatch(setLoadingManga(false));
         dispatch(setLoadingMangaPercent(0));
         dispatch(setMangaInReader(null));
+        dispatch(setBookInReader(null));
 
         document.body.classList.remove("zenMode");
         if (document.fullscreenElement) document.exitFullscreen();
