@@ -167,17 +167,24 @@ const HTMLPart = memo(
         );
         if (loadOneChapter && tocData) {
             /**in TOC */
-            let afterCurrentIndex = tocData.nav.findIndex((e) => e.src === currentChapterURL) + 1;
+            let afterCurrentIndex =
+                tocData.nav.findLastIndex((e) => e.src.split("#")[0] === currentChapterURL.split("#")[0]) + 1;
             /**in displayData */
             const startIndex =
-                afterCurrentIndex === 1 ? 0 : displayDataWithOrder.findIndex((e) => e.url === currentChapterURL);
+                afterCurrentIndex === 1
+                    ? 0
+                    : displayDataWithOrder.findIndex(
+                          (e) => e.url.split("#")[0] === currentChapterURL.split("#")[0]
+                      );
             // need to be below
             if (tocData.nav[afterCurrentIndex]?.src === currentChapterURL) afterCurrentIndex++;
             /**till next item from TOC */
-            let lastIndex = displayDataWithOrder.findIndex((e) => e.url === tocData.nav[afterCurrentIndex]?.src);
+            let lastIndex = displayDataWithOrder.findLastIndex(
+                (e) => e.url.split("#")[0] === tocData.nav[afterCurrentIndex]?.src.split("#")[0]
+            );
             if (lastIndex < 0) lastIndex = Number.MAX_SAFE_INTEGER;
             linksInBetween.push(...displayDataWithOrder.slice(startIndex, lastIndex));
-            // console.log(linksInBetween, tocData);
+            // console.log(currentChapterURL, afterCurrentIndex, startIndex, tocData.nav, linksInBetween);
         }
         if (!tocData) return <p>Error/Loading</p>;
         return (
@@ -209,8 +216,18 @@ const HTMLPart = memo(
                                 node.querySelectorAll("img").forEach((e) => {
                                     e.oncontextmenu = onContextMenu;
                                 });
-                                if (url.includes("#") && currentChapterURL === url)
-                                    node.querySelector("#" + url.split("#")[1])!.scrollIntoView();
+                                if (
+                                    tocData.nav[0].src !== currentChapterURL &&
+                                    currentChapterURL.includes("#") &&
+                                    currentChapterURL.includes(url)
+                                ) {
+                                    setTimeout(() => {
+                                        const el = node.querySelector(
+                                            `[data-id="${currentChapterURL.split("#")[1]}"]`
+                                        );
+                                        if (el) el.scrollIntoView();
+                                    }, 100);
+                                }
                             }
                         }}
                         key={"key-" + i}
@@ -342,10 +359,6 @@ const EPubReader = () => {
                     if (data_href.includes("#")) {
                         const idHash = data_href.split("#")[1];
                         const idFromURL = displayData.find((a) => a.url === data_href.split("#")[0])?.id;
-                        console.log(
-                            "aaaa",
-                            document.querySelector("#epub-" + idFromURL + ` [data-id="${idHash}"]`)
-                        );
                         if (idFromURL)
                             document
                                 .querySelector("#epub-" + idFromURL + ` [data-id="${idHash}"]`)
@@ -568,7 +581,6 @@ const EPubReader = () => {
         const sectionMain = document.querySelector("#EPubReader > section");
         while (y < window.innerHeight / 2) {
             elem = document.elementFromPoint(window.innerWidth / 3, y);
-            console.log(elem);
             if (elem) if (elem !== sectionMain && elem.parentElement !== sectionMain) break;
             y += 10;
         }
