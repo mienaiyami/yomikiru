@@ -527,9 +527,11 @@ const EPubReader = () => {
     const makeScrollPos = () => {
         let y = 50;
         let elem: Element | null = null;
+        const sectionMain = document.querySelector("#EPubReader > section");
         while (y < window.innerHeight / 2) {
-            elem = document.elementFromPoint(window.innerWidth / 2, y);
-            if (elem) if (elem.tagName !== "SECTION") break;
+            elem = document.elementFromPoint(window.innerWidth / 3, y);
+            console.log(elem);
+            if (elem) if (elem !== sectionMain && elem.parentElement !== sectionMain) break;
             y += 10;
         }
         if (elem) {
