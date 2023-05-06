@@ -321,11 +321,18 @@ const EPUBReaderSettings = ({
                                 labelAfter="em"
                             />
                             <InputCheckbox
+                                checked={appSettings.epubReaderSettings.noIndent}
+                                onChange={(e) => {
+                                    dispatch(setEpubReaderSettings({ noIndent: e.currentTarget.checked }));
+                                }}
+                                paraAfter="No Indent"
+                            />
+                            <InputCheckbox
                                 checked={appSettings.epubReaderSettings.hyphenation}
                                 onChange={(e) => {
                                     dispatch(setEpubReaderSettings({ hyphenation: e.currentTarget.checked }));
                                 }}
-                                paraAfter="Hyphenation."
+                                paraAfter="Hyphenation"
                             />
                         </div>
                     </div>

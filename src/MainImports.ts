@@ -182,6 +182,7 @@ export const settingValidatorData = {
          * limit image height to 100%
          */
         limitImgHeight: true,
+        noIndent: false,
     },
 } as const;
 
@@ -804,6 +805,7 @@ const defaultSettings: AppSettings = {
         scrollSpeedA: 5,
         scrollSpeedB: 15,
         limitImgHeight: true,
+        noIndent: false,
     },
 };
 

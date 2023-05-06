@@ -1823,6 +1823,11 @@ body {
                         max-height: calc(90vh - var(--titleBar-height));
                     }
                 }
+                &.noIndent {
+                    > .cont p {
+                        text-indent: 0;
+                    }
+                }
                 > .cont {
                     display: flex;
                     flex-direction: column;
