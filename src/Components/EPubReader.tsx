@@ -682,7 +682,7 @@ const EPubReader = () => {
                         (e.key === shortcutkey.largeScroll?.key1 || e.key === shortcutkey.largeScroll?.key2)
                     ) {
                         e.preventDefault();
-                        scrollReader(0 - appSettings.readerSettings.scrollSpeedB);
+                        scrollReader(0 - appSettings.epubReaderSettings.scrollSpeedB);
                         return;
                     }
 
@@ -690,15 +690,15 @@ const EPubReader = () => {
                         case shortcutkey.largeScroll?.key1:
                         case shortcutkey.largeScroll?.key2:
                             e.preventDefault();
-                            scrollReader(appSettings.readerSettings.scrollSpeedB);
+                            scrollReader(appSettings.epubReaderSettings.scrollSpeedB);
                             break;
                         case shortcutkey.scrollDown?.key1:
                         case shortcutkey.scrollDown?.key2:
-                            scrollReader(appSettings.readerSettings.scrollSpeedA);
+                            scrollReader(appSettings.epubReaderSettings.scrollSpeedA);
                             break;
                         case shortcutkey.scrollUp?.key1:
                         case shortcutkey.scrollUp?.key2:
-                            scrollReader(0 - appSettings.readerSettings.scrollSpeedA);
+                            scrollReader(0 - appSettings.epubReaderSettings.scrollSpeedA);
                             break;
                     }
                 }
