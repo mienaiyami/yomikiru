@@ -110,8 +110,22 @@ function parseEPubHTMLX(filePath: string, parser: DOMParser) {
                 e.removeAttribute("href");
             }
     });
+    // for svg image
+    xhtml.querySelectorAll("svg image").forEach((e) => {
+        const href_old = e.getAttribute("xlink:href");
+        if (href_old)
+            if (!href_old.startsWith("http")) {
+                // (e as HTMLLinkElement).href = (e as HTMLLinkElement).href.split("#").splice(-1)[0];
+                e.setAttribute("src", window.path.join(window.path.dirname(filePath), href_old));
+                e.setAttribute("xlink:href", window.path.join(window.path.dirname(filePath), href_old));
+                // e.removeAttribute("xlink:href");
+            }
+    });
 
-    xhtml.querySelectorAll("[id]").forEach((e) => e.removeAttribute("id"));
+    xhtml.querySelectorAll("[id]").forEach((e) => {
+        e.setAttribute("data-id", e.id);
+        e.removeAttribute("id");
+    });
     return xhtml;
 }
 
@@ -195,6 +209,8 @@ const HTMLPart = memo(
                                 node.querySelectorAll("img").forEach((e) => {
                                     e.oncontextmenu = onContextMenu;
                                 });
+                                if (url.includes("#") && currentChapterURL === url)
+                                    node.querySelector("#" + url.split("#")[1])!.scrollIntoView();
                             }
                         }}
                         key={"key-" + i}
@@ -311,11 +327,33 @@ const EPubReader = () => {
             const data_href = (ev.currentTarget as Element).getAttribute("data-href");
             if (data_href) {
                 if (appSettings.epubReaderSettings.loadOneChapter) {
-                    const linkExist = displayData.find((a) => a.url === data_href);
-                    if (linkExist) setCurrentChapterURL(data_href);
+                    if (data_href.includes("#")) {
+                        const idHash = data_href.split("#")[1];
+                        const idFromURL = displayData.find((a) => a.url === data_href.split("#")[0])?.id;
+                        if (idFromURL)
+                            document
+                                .querySelector("#epub-" + idFromURL + ` [data-id="${idHash}"]`)
+                                ?.scrollIntoView();
+                    } else {
+                        const linkExist = displayData.find((a) => a.url === data_href);
+                        if (linkExist) setCurrentChapterURL(data_href);
+                    }
                 } else {
-                    const idFromURL = displayData.find((a) => a.url === data_href)?.id;
-                    if (idFromURL) document.getElementById("epub-" + idFromURL)?.scrollIntoView();
+                    if (data_href.includes("#")) {
+                        const idHash = data_href.split("#")[1];
+                        const idFromURL = displayData.find((a) => a.url === data_href.split("#")[0])?.id;
+                        console.log(
+                            "aaaa",
+                            document.querySelector("#epub-" + idFromURL + ` [data-id="${idHash}"]`)
+                        );
+                        if (idFromURL)
+                            document
+                                .querySelector("#epub-" + idFromURL + ` [data-id="${idHash}"]`)
+                                ?.scrollIntoView();
+                    } else {
+                        const idFromURL = displayData.find((a) => a.url === data_href)?.id;
+                        if (idFromURL) document.querySelector("#epub-" + idFromURL)?.scrollIntoView();
+                    }
                 }
             } else {
                 if ((ev.currentTarget as HTMLAnchorElement).href) {

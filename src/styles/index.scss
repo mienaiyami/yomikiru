@@ -1819,8 +1819,11 @@ body {
                     }
                 }
                 &.limitImgHeight {
-                    > .cont img {
-                        max-height: calc(90vh - var(--titleBar-height));
+                    > .cont {
+                        img,
+                        svg:has(image) {
+                            max-height: calc(90vh - var(--titleBar-height));
+                        }
                     }
                 }
                 &.noIndent {
