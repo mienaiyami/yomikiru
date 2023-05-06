@@ -187,6 +187,10 @@ body {
         &:checked {
             opacity: 1;
         }
+        &:focus,
+        &:active {
+            outline: none;
+        }
     }
     input[type="range"] {
         accent-color: var(--icon-color);
@@ -222,7 +226,7 @@ body {
         border-radius: 3px;
         cursor: default;
         user-select: none;
-
+        cursor: pointer;
         font-family: inherit;
         &:focus,
         &:active {
@@ -533,7 +537,6 @@ body {
                 // background-color: var(--text-input-bg-focus);
             }
         }
-
         .listCont {
             .location-cont {
                 position: relative;
@@ -544,7 +547,7 @@ body {
                 p {
                     top: 0;
                     position: sticky;
-                    // background-color: var(--body-bg-color);
+                    background-color: var(--body-bg-color);
                     z-index: 100;
                 }
                 ol {
@@ -961,6 +964,8 @@ body {
                                     background-color: var(--text-input-bg-focus);
                                 }
                                 &:focus,
+                                &:has(:focus),
+                                &:has(:active),
                                 &:active {
                                     box-shadow: var(--btn-color-focus) 0 0 0px 2px;
                                 }
