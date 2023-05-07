@@ -16,6 +16,11 @@ module.exports = {
                             js: "./src/index.tsx",
                             name: "home",
                         },
+                        {
+                            html: "./public/download-progress.html",
+                            js: "./public/download-progress.js",
+                            name: "download_progress",
+                        },
                     ],
                 },
             },

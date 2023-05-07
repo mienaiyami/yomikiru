@@ -7,6 +7,9 @@ import fetch from "electron-fetch";
 import crossZip from "cross-zip";
 import logger from "electron-log";
 import { download, File } from "electron-dl";
+
+declare const DOWNLOAD_PROGRESS_WEBPACK_ENTRY: string;
+
 /**
  * prevent deletion of these files in "Portable" version of app on installing new update.
  * add new settings/store file to this.
@@ -112,10 +115,33 @@ const checkForUpdate = async (windowId: number, skipMinor = false, promptAfterCh
  * @param windowId id of window in which message box should be shown
  */
 const downloadUpdates = (latestVersion: string, windowId: number) => {
+    const newWindow = new BrowserWindow({
+        width: 500,
+        height: 150,
+        resizable: false,
+        backgroundColor: "#272727",
+        closable: false,
+        webPreferences: {
+            nodeIntegration: true,
+            contextIsolation: false,
+            // enableRemoteModule: true,
+            webSecurity: app.isPackaged,
+            safeDialogs: true,
+        },
+        maximizable: false,
+    });
+    newWindow.loadURL(DOWNLOAD_PROGRESS_WEBPACK_ENTRY);
+    newWindow.setMenuBarVisibility(false);
+    newWindow.webContents.once("dom-ready", () => {
+        newWindow.webContents.send("version", latestVersion);
+    });
+
     const tempPath = path.join(app.getPath("temp"), "yomikiru updates " + new Date().toDateString());
     if (fs.existsSync(tempPath)) spawnSync("powershell.exe", [`rm "${tempPath}" -r -force`]);
     fs.mkdirSync(tempPath);
     const promptInstall = () => {
+        newWindow.closable = true;
+        newWindow.close();
         dialog
             .showMessageBox(BrowserWindow.fromId(windowId ?? 1)!, {
                 type: "info",
@@ -130,7 +156,7 @@ const downloadUpdates = (latestVersion: string, windowId: number) => {
                 }
             });
     };
-    const downloadFile = (dl: string, callback: (file: File) => void) => {
+    const downloadFile = (dl: string, webContents: Electron.WebContents, callback: (file: File) => void) => {
         download(BrowserWindow.fromId(windowId ?? 1)!, dl, {
             directory: tempPath,
             onStarted: () => {
@@ -146,7 +172,10 @@ const downloadUpdates = (latestVersion: string, windowId: number) => {
             },
             errorMessage: "Download error while downloading updates.",
             onCompleted: (file) => callback(file),
-            showProgressBar: true,
+            onProgress: (progress) => {
+                webContents.send("progress", progress);
+            },
+            // showProgressBar: true,
         });
     };
 
@@ -156,7 +185,7 @@ const downloadUpdates = (latestVersion: string, windowId: number) => {
             const extractPath = path.join(tempPath, "updates");
             if (!fs.existsSync(extractPath)) fs.mkdirSync(extractPath);
 
-            downloadFile(dl, (file) => {
+            downloadFile(dl, newWindow.webContents, (file) => {
                 logger.log(`${file.filename} downloaded.`);
                 crossZip.unzip(file.path, extractPath, (err) => {
                     if (err) return logger.error(err);
@@ -184,7 +213,7 @@ const downloadUpdates = (latestVersion: string, windowId: number) => {
             });
         } else {
             const dl = downloadLink + latestVersion + "/" + `Yomikiru-${latestVersion}-Setup.exe`;
-            downloadFile(dl, (file) => {
+            downloadFile(dl, newWindow.webContents, (file) => {
                 logger.log(`${file.filename} downloaded.`);
                 app.on("before-quit", () => {
                     logger.log("Installing updates...");
@@ -199,7 +228,7 @@ const downloadUpdates = (latestVersion: string, windowId: number) => {
         }
     else if (process.platform === "linux") {
         const dl = downloadLink + latestVersion + "/" + `Yomikiru-${latestVersion}-amd64.deb`;
-        downloadFile(dl, (file) => {
+        downloadFile(dl, newWindow.webContents, (file) => {
             logger.log(`${file.filename} downloaded.`);
             const script = `
 #!/bin/bash
