@@ -585,17 +585,24 @@ const EPubReader = () => {
     };
 
     const makeScrollPos = () => {
-        let y = 50;
-        let elem: Element | null = null;
-        const sectionMain = document.querySelector("#EPubReader > section");
-        while (y < window.innerHeight / 2) {
-            elem = document.elementFromPoint(window.innerWidth / 3, y);
-            if (elem) if (elem !== sectionMain && elem.parentElement !== sectionMain) break;
-            y += 10;
-        }
-        if (elem) {
-            const fff = window.getCSSPath(elem);
-            setElemBeforeChange(fff);
+        if (mainRef.current) {
+            let y = 50;
+            let x = mainRef.current.offsetLeft + mainRef.current.offsetWidth / 3;
+            let elem: Element | null = null;
+            const sectionMain = document.querySelector("#EPubReader > section");
+            while (x < mainRef.current.offsetLeft + mainRef.current.offsetWidth / 1.3) {
+                if (y > window.innerHeight / 2) {
+                    y = 50;
+                    x += 20;
+                }
+                elem = document.elementFromPoint(x, y);
+                if (elem) if (elem !== sectionMain && elem.parentElement !== sectionMain) break;
+                y += 10;
+            }
+            if (elem) {
+                const fff = window.getCSSPath(elem);
+                setElemBeforeChange(fff);
+            }
         }
     };
 
@@ -671,6 +678,7 @@ const EPubReader = () => {
         /**
          * todo: do only when mouse up
          */
+
         dispatch(setReaderSettings({ sideListWidth }));
     }, [sideListWidth]);
 
