@@ -186,7 +186,7 @@ export const settingValidatorData = {
         // all color valeus are hex
         useDefault_fontColor: true,
         fontColor: "none",
-        useDefault_linkColor: true,
+        useDefault_linkColor: false,
         linkColor: "none",
         useDefault_backgroundColor: true,
         backgroundColor: "none",
@@ -828,7 +828,7 @@ const defaultSettings: AppSettings = {
 
         useDefault_fontColor: true,
         fontColor: "none",
-        useDefault_linkColor: true,
+        useDefault_linkColor: false,
         linkColor: "#0073ff",
         useDefault_backgroundColor: true,
         backgroundColor: "none",

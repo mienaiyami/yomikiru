@@ -16,20 +16,20 @@ Linux distribution currently not available as direct download but can be build e
 ## Added
 
 - EPub:
-  - margin+width default for &lt;HR&gt;
-  - limit img height to viewport option.
-  - option to disable to paragraph indent.
-  - added support for URL with `#` / fragment.
+  - Custom text, link, background color from reader settings.
+  - Option to invert and blend image.
+  - Collapse-able Tabs in reader settings.
+- Download Progress window.
 
 ## Changed
 
 - UI Enhancements.
-- Changed lower limit of some epub settings to `0` from `0.1` .
+- Disable reader shortcuts when settings is open.
 
 
 ## Fixed
 
-- fixed #107,#111,#112,#113,#114,#115,#118,#121,#122,#123.
+- fixed #125,123,#117,#126.
 
 ---
 
