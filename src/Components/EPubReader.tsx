@@ -271,6 +271,7 @@ const EPubReader = () => {
     const linkInReader = useAppSelector((store) => store.linkInReader);
     // const bookInReader = useAppSelector((store) => store.bookInReader);
     const isLoadingManga = useAppSelector((store) => store.isLoadingManga);
+    const isSettingOpen = useAppSelector((store) => store.isSettingOpen);
     // const bookmarks = useAppSelector((store) => store.bookmarks);
     // const pageNumChangeDisabled = useAppSelector((store) => store.pageNumChangeDisabled);
     // const prevNextChapter = useAppSelector((store) => store.prevNextChapter);
@@ -296,6 +297,8 @@ const EPubReader = () => {
     const [sideListWidth, setSideListWidth] = useState(appSettings.readerSettings.sideListWidth || 450);
     const [zenMode, setZenMode] = useState(false);
     const [wasMaximized, setWasMaximized] = useState(false);
+    // display this text then shortcuts clicked
+    const [shortcutText, setshortcutText] = useState("");
 
     const readerRef = useRef<HTMLDivElement>(null);
     const mainRef = useRef<HTMLSelectElement>(null);
@@ -304,6 +307,7 @@ const EPubReader = () => {
     const sizeMinusRef = useRef<HTMLButtonElement>(null);
     const openPrevChapterRef = useRef<HTMLButtonElement>(null);
     const openNextChapterRef = useRef<HTMLButtonElement>(null);
+    const shortcutTextRef = useRef<HTMLDivElement>(null);
 
     useLayoutEffect(() => {
         if (appSettings.epubReaderSettings.loadOneChapter && readerRef.current) readerRef.current.scrollTop = 0;
@@ -692,7 +696,7 @@ const EPubReader = () => {
         const registerShortcuts = (e: KeyboardEvent) => {
             // /&& document.activeElement!.tagName === "BODY"
             window.app.keyRepeated = e.repeat;
-            if (window.app.isReaderOpen && !isLoadingManga && !e.ctrlKey) {
+            if (!isSettingOpen && window.app.isReaderOpen && !isLoadingManga && !e.ctrlKey) {
                 switch (e.key) {
                     case shortcutkey.readerSettings?.key1:
                     case shortcutkey.readerSettings?.key2:
@@ -774,7 +778,7 @@ const EPubReader = () => {
                 window.app.keydown = false;
             });
         };
-    }, [appSettings, isLoadingManga, shortcuts]);
+    }, [isSideListPinned, appSettings, isLoadingManga, shortcuts, isSettingOpen]);
 
     useLayoutEffect(() => {
         if (elemBeforeChange)
@@ -796,6 +800,24 @@ const EPubReader = () => {
         // appSettings.epubReaderSettings.useDefault_paragraphSpacing,
         // appSettings.epubReaderSettings.useDefault_wordSpacing,
     ]);
+
+    useEffect(() => {
+        let timeOutId: NodeJS.Timeout;
+        const e = shortcutTextRef.current;
+        if (shortcutText !== "") {
+            if (e) {
+                e.innerText = shortcutText;
+                e.classList.remove("faded");
+                timeOutId = setTimeout(() => {
+                    e.classList.add("faded");
+                }, 500);
+            }
+        }
+        return () => {
+            clearTimeout(timeOutId);
+            e?.classList.add("faded");
+        };
+    }, [shortcutText]);
 
     useLayoutEffect(() => {
         loadEPub(linkInReader.link);
@@ -819,7 +841,7 @@ const EPubReader = () => {
                 readerSettingExtender={readerSettingExtender}
                 sizePlusRef={sizePlusRef}
                 sizeMinusRef={sizeMinusRef}
-                // setshortcutText={setshortcutText}
+                setshortcutText={setshortcutText}
             />
 
             {tocData && (
@@ -841,6 +863,10 @@ const EPubReader = () => {
                     findInPage={findInPage}
                 />
             )}
+
+            <div className="shortcutClicked faded" ref={shortcutTextRef}>
+                {shortcutText}
+            </div>
             <section
                 className={
                     "main " +

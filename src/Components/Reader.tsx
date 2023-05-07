@@ -23,6 +23,7 @@ const Reader = () => {
     const linkInReader = useAppSelector((store) => store.linkInReader);
     const mangaInReader = useAppSelector((store) => store.mangaInReader);
     const isLoadingManga = useAppSelector((store) => store.isLoadingManga);
+    const isSettingOpen = useAppSelector((store) => store.isSettingOpen);
     const bookmarks = useAppSelector((store) => store.bookmarks);
     const pageNumChangeDisabled = useAppSelector((store) => store.pageNumChangeDisabled);
     const prevNextChapter = useAppSelector((store) => store.prevNextChapter);
@@ -199,7 +200,7 @@ const Reader = () => {
         const registerShortcuts = (e: KeyboardEvent) => {
             // /&& document.activeElement!.tagName === "BODY"
             window.app.keyRepeated = e.repeat;
-            if (window.app.isReaderOpen && !isLoadingManga && !e.ctrlKey) {
+            if (!isSettingOpen && window.app.isReaderOpen && !isLoadingManga && !e.ctrlKey) {
                 switch (e.key) {
                     case shortcutkey.navToPage?.key1:
                     case shortcutkey.navToPage?.key2:
@@ -403,7 +404,7 @@ const Reader = () => {
                 window.app.keydown = false;
             });
         };
-    }, [isSideListPinned, appSettings, shortcuts, isLoadingManga]);
+    }, [isSideListPinned, appSettings, shortcuts, isLoadingManga, isSettingOpen]);
     const makeScrollPos = () => {
         if (isSideListPinned && imgContRef.current)
             return setScrollPosPercent(imgContRef.current.scrollTop / imgContRef.current.scrollHeight);

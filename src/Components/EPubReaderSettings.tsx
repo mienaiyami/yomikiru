@@ -13,14 +13,14 @@ const EPUBReaderSettings = ({
     makeScrollPos,
     readerRef,
     readerSettingExtender,
-    // setshortcutText,
+    setshortcutText,
     sizePlusRef,
     sizeMinusRef,
 }: {
     makeScrollPos: () => void;
     readerRef: React.RefObject<HTMLDivElement>;
     readerSettingExtender: React.RefObject<HTMLButtonElement>;
-    // setshortcutText: React.Dispatch<React.SetStateAction<string>>;
+    setshortcutText: React.Dispatch<React.SetStateAction<string>>;
     sizePlusRef: React.RefObject<HTMLButtonElement>;
     sizeMinusRef: React.RefObject<HTMLButtonElement>;
 }) => {
@@ -109,8 +109,8 @@ const EPUBReaderSettings = ({
                                         : appSettings.epubReaderSettings.readerWidth - steps < 1
                                         ? 1
                                         : appSettings.epubReaderSettings.readerWidth - steps;
-                                // if (document.activeElement !== e.currentTarget)
-                                //     setshortcutText("-" + readerWidth + "%");
+                                if (document.activeElement !== e.currentTarget)
+                                    setshortcutText("-" + readerWidth + "%");
                                 dispatch(setEpubReaderSettings({ readerWidth }));
                                 // e.currentTarget.dispatchEvent(new MouseEvent(type:"")))
                             }}
@@ -129,8 +129,8 @@ const EPUBReaderSettings = ({
                                         ? 1
                                         : appSettings.epubReaderSettings.readerWidth + steps;
 
-                                // if (document.activeElement !== e.currentTarget)
-                                //     setshortcutText("+" + readerWidth + "%");
+                                if (document.activeElement !== e.currentTarget)
+                                    setshortcutText("+" + readerWidth + "%");
                                 dispatch(setEpubReaderSettings({ readerWidth }));
                             }}
                         >
@@ -337,10 +337,10 @@ const EPUBReaderSettings = ({
                         </div>
                     </div>
                 </div>
-                <div className="settingItem">
+                {/* <div className="settingItem">
                     <div className={"name " + "expanded"}>Reading mode</div>
                     <div className="options">
-                        {/* <button
+                        <button
                             className={appSettings.epubReaderSettings.readerTypeSelected === 0 ? "optionSelected" : ""}
                             onClick={() => dispatch(setEpubReaderSettings({ readerTypeSelected: 0 }))}
                         >
@@ -357,14 +357,14 @@ const EPUBReaderSettings = ({
                             onClick={() => dispatch(setEpubReaderSettings({ readerTypeSelected: 2 }))}
                         >
                             Right to Left
-                        </button> */}
+                        </button>
                         <p>Coming Soon.</p>
                     </div>
                 </div>
                 <div className="settingItem">
                     <div className={"name " + "expanded"}>Pages per Row</div>
                     <div className="options">
-                        {/* <button
+                        <button
                             className={
                                 appSettings.epubReaderSettings.pagesPerRowSelected === 0 ? "optionSelected" : ""
                             }
@@ -416,14 +416,14 @@ const EPUBReaderSettings = ({
                             }}
                         >
                             2 odd
-                        </button> */}
+                        </button>
                         <p>Coming Soon.</p>
                     </div>
                 </div>
                 <div className="settingItem">
                     <div className={"name " + "expanded"}>Reading side</div>
                     <div className="options">
-                        {/* <button
+                        <button
                             className={appSettings.epubReaderSettings.readingSide === 0 ? "optionSelected" : ""}
                             disabled={appSettings.epubReaderSettings.pagesPerRowSelected === 0}
                             onClick={() => {
@@ -440,10 +440,10 @@ const EPUBReaderSettings = ({
                             }}
                         >
                             RTL
-                        </button> */}
+                        </button>
                         <p>Coming Soon.</p>
                     </div>
-                </div>
+                </div> */}
                 <div className="settingItem">
                     <div className={"name " + "expanded"}>Scroll Speed(with keys)</div>
                     <div className="options">
