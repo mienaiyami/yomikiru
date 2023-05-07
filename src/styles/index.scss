@@ -1347,7 +1347,7 @@ body {
                 padding: 10px;
                 padding-top: 5px;
                 box-sizing: border-box;
-                transform: translateX(-99%);
+                transform: translateX(calc(-100% + 10px));
                 transition: 0.2s transform;
 
                 .indicator {

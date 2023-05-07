@@ -194,6 +194,13 @@ export const settingValidatorData = {
          * invert and blend-difference
          */
         invertImageColor: false,
+
+        settingsCollapsed: {
+            size: false,
+            font: false,
+            styles: true,
+            scrollSpeed: true,
+        },
     },
 } as const;
 
@@ -741,6 +748,7 @@ const historyPath = window.path.join(userDataURL, "history.json");
 const themesPath = window.path.join(userDataURL, "themes.json");
 const shortcutsPath = window.path.join(userDataURL, "shortcuts.json");
 
+// todo: try taking automatically from settingValidator
 const defaultSettings: AppSettings = {
     baseDir: window.electron.app.getPath("home"),
     locationListSortType: "normal",
@@ -826,6 +834,13 @@ const defaultSettings: AppSettings = {
         backgroundColor: "none",
 
         invertImageColor: false,
+
+        settingsCollapsed: {
+            size: false,
+            font: false,
+            styles: true,
+            scrollSpeed: true,
+        },
     },
 };
 

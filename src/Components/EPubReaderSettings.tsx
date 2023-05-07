@@ -85,7 +85,23 @@ const EPUBReaderSettings = ({
             </button>
             <div className="main">
                 <div className="settingItem">
-                    <div className={"name " + "expanded"}>Size</div>
+                    <div
+                        className={
+                            "name " + (!appSettings.epubReaderSettings.settingsCollapsed.size ? "expanded " : "")
+                        }
+                        onClick={() => {
+                            dispatch(
+                                setEpubReaderSettings({
+                                    settingsCollapsed: {
+                                        ...appSettings.epubReaderSettings.settingsCollapsed,
+                                        size: !appSettings.epubReaderSettings.settingsCollapsed.size,
+                                    },
+                                })
+                            );
+                        }}
+                    >
+                        Size
+                    </div>
                     <div className="options">
                         <InputNumber
                             value={appSettings.epubReaderSettings.readerWidth}
@@ -157,7 +173,23 @@ const EPUBReaderSettings = ({
                     </div>
                 </div>
                 <div className="settingItem">
-                    <div className={"name " + "expanded"}>Font</div>
+                    <div
+                        className={
+                            "name " + (!appSettings.epubReaderSettings.settingsCollapsed.font ? "expanded " : "")
+                        }
+                        onClick={() => {
+                            dispatch(
+                                setEpubReaderSettings({
+                                    settingsCollapsed: {
+                                        ...appSettings.epubReaderSettings.settingsCollapsed,
+                                        font: !appSettings.epubReaderSettings.settingsCollapsed.font,
+                                    },
+                                })
+                            );
+                        }}
+                    >
+                        Font
+                    </div>
                     <div className="options">
                         <div className="row">
                             <InputNumber
@@ -438,7 +470,23 @@ const EPUBReaderSettings = ({
                 </div> */}
 
                 <div className="settingItem">
-                    <div className={"name " + "expanded"}>Styles</div>
+                    <div
+                        className={
+                            "name " + (!appSettings.epubReaderSettings.settingsCollapsed.styles ? "expanded " : "")
+                        }
+                        onClick={() => {
+                            dispatch(
+                                setEpubReaderSettings({
+                                    settingsCollapsed: {
+                                        ...appSettings.epubReaderSettings.settingsCollapsed,
+                                        styles: !appSettings.epubReaderSettings.settingsCollapsed.styles,
+                                    },
+                                })
+                            );
+                        }}
+                    >
+                        Styles
+                    </div>
                     <div className="options col">
                         <InputCheckboxColor
                             checked={!appSettings.epubReaderSettings.useDefault_fontColor}
@@ -520,7 +568,24 @@ const EPUBReaderSettings = ({
                     </div>
                 </div>
                 <div className="settingItem">
-                    <div className={"name " + "expanded"}>Scroll Speed(with keys)</div>
+                    <div
+                        className={
+                            "name " +
+                            (!appSettings.epubReaderSettings.settingsCollapsed.scrollSpeed ? "expanded " : "")
+                        }
+                        onClick={() => {
+                            dispatch(
+                                setEpubReaderSettings({
+                                    settingsCollapsed: {
+                                        ...appSettings.epubReaderSettings.settingsCollapsed,
+                                        scrollSpeed: !appSettings.epubReaderSettings.settingsCollapsed.scrollSpeed,
+                                    },
+                                })
+                            );
+                        }}
+                    >
+                        Scroll Speed(with keys)
+                    </div>
                     <div className="options">
                         <InputNumber
                             value={appSettings.epubReaderSettings.scrollSpeedA}
