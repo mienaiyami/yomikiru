@@ -9,6 +9,7 @@ const InputCheckbox = ({
     checked,
     className = "",
     disabled = false,
+    title,
 }: {
     labelAfter?: string;
     // labelBefore?: string;
@@ -18,9 +19,13 @@ const InputCheckbox = ({
     onChange: React.ChangeEventHandler<HTMLInputElement>;
     className?: string;
     disabled?: boolean;
+    title?: string;
 }) => {
     return (
-        <label className={(disabled ? "disabled " : "") + (checked ? "optionSelected " : "") + className}>
+        <label
+            title={title}
+            className={(disabled ? "disabled " : "") + (checked ? "optionSelected " : "") + className}
+        >
             {/* {labelBefore}
             {paraBefore && <p>{paraBefore}</p>} */}
             <input type="checkbox" checked={checked} onChange={onChange} />

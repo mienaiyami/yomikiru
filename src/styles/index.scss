@@ -1805,6 +1805,11 @@ body {
                 --word-spacing: "normal";
                 --paragraph-gap: 1.6em 0;
                 --font-family: "inherit";
+                --epub-font-color: none;
+                --epub-link-color: none;
+                --epub-background-color: var(--body-bg-color);
+                background-color: var(--epub-background-color);
+                color: var(--epub-font-color);
                 &.hyphen {
                     p {
                         hyphens: auto !important;
@@ -1836,6 +1841,15 @@ body {
                         text-indent: 0;
                     }
                 }
+                &.blendImage {
+                    > .cont {
+                        img,
+                        svg:has(image) {
+                            filter: invert(1);
+                            mix-blend-mode: difference;
+                        }
+                    }
+                }
                 > .cont {
                     display: flex;
                     flex-direction: column;
@@ -1846,6 +1860,8 @@ body {
                     // margin: 0 200px;
                     // padding: 0 600px;
                     width: var(--width);
+
+                    background-color: var(--epub-background-color);
 
                     // scroll-margin-top: 40px;
 
@@ -1866,18 +1882,37 @@ body {
                     //     width: 100%;
                     // }
                     a {
-                        text-decoration-line: underline;
-                        text-decoration-style: dotted;
+                        // text-decoration-line: underline;
+                        // text-decoration-style: dotted;
                         // text-decoration-thickness: from-font;
                         cursor: pointer;
                         // flex-direction: row;
-                        color: inherit;
+                        color: var(--epub-link-color);
                         &:hover {
+                            text-decoration-line: underline;
                             text-decoration-style: solid;
                         }
                     }
                     a[href]::before {
-                        content: "[external] ";
+                        content: "";
+                        width: 1rem;
+                        height: 1rem;
+                        display: inline-block;
+                        background: currentColor;
+                        -webkit-mask: url("./external.svg") no-repeat 50% 50%;
+                        -webkit-mask-size: cover;
+                        mask: url("./external.svg") no-repeat 50% 50%;
+                        mask-size: cover;
+                        margin: 0 2px;
+                        vertical-align: middle;
+                        // width: 11px;
+                        // height: 11px;
+                        // background-position: center;
+                        // background-repeat: no-repeat;
+                        // background-size: contain;
+                        // display: inline-block;
+
+                        // background-image: url("");
                     }
                     // h1,
                     // h2 {

@@ -882,7 +882,8 @@ const EPubReader = () => {
                     (appSettings.epubReaderSettings.useDefault_paragraphSpacing ? "" : "forceParaGap ") +
                     (appSettings.epubReaderSettings.hyphenation ? "hyphen " : "") +
                     (appSettings.epubReaderSettings.limitImgHeight ? "limitImgHeight " : "") +
-                    (appSettings.epubReaderSettings.noIndent ? "noIndent " : "")
+                    (appSettings.epubReaderSettings.noIndent ? "noIndent " : "") +
+                    (appSettings.epubReaderSettings.invertImageColor ? "blendImage " : "")
                 }
                 ref={mainRef}
                 style={{
@@ -900,6 +901,15 @@ const EPubReader = () => {
                         ? "auto"
                         : appSettings.epubReaderSettings.paragraphSpacing / 2 + "em 0",
                     "--width": appSettings.epubReaderSettings.readerWidth + "%",
+                    "--epub-font-color": appSettings.epubReaderSettings.useDefault_fontColor
+                        ? "none"
+                        : appSettings.epubReaderSettings.fontColor,
+                    "--epub-link-color": appSettings.epubReaderSettings.useDefault_linkColor
+                        ? "none"
+                        : appSettings.epubReaderSettings.linkColor,
+                    "--epub-background-color": appSettings.epubReaderSettings.useDefault_backgroundColor
+                        ? "var(--body-bg-color)"
+                        : appSettings.epubReaderSettings.backgroundColor,
                 }}
                 onClick={(e) => {
                     if (readerRef.current && appSettings.epubReaderSettings.loadOneChapter) {

@@ -183,6 +183,17 @@ export const settingValidatorData = {
          */
         limitImgHeight: true,
         noIndent: false,
+        // all color valeus are hex
+        useDefault_fontColor: true,
+        fontColor: "none",
+        useDefault_linkColor: true,
+        linkColor: "none",
+        useDefault_backgroundColor: true,
+        backgroundColor: "none",
+        /**
+         * invert and blend-difference
+         */
+        invertImageColor: false,
     },
 } as const;
 
@@ -806,6 +817,15 @@ const defaultSettings: AppSettings = {
         scrollSpeedB: 15,
         limitImgHeight: true,
         noIndent: false,
+
+        useDefault_fontColor: true,
+        fontColor: "none",
+        useDefault_linkColor: true,
+        linkColor: "#0073ff",
+        useDefault_backgroundColor: true,
+        backgroundColor: "none",
+
+        invertImageColor: false,
     },
 };
 

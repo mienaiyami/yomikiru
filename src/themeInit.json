@@ -16,7 +16,7 @@
                 "--btn-color-focus": "#6b6b6b",
                 "--btn-shadow-focus": "#0000000",
                 "--text-input-bg": "#383838",
-                "--text-input-bg-focus": "#383838",
+                "--text-input-bg-focus": "#6b6b6b",
 
                 "--topBar-color": "#1f1f1f",
                 "--topBar-btn-hover": "#5c5c5c",

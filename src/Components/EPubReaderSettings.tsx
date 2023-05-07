@@ -8,6 +8,7 @@ import { InputSelect } from "./Element/InputSelect";
 import InputNumber from "./Element/InputNumber";
 import InputCheckboxNumber from "./Element/InputCheckboxNumber";
 import InputCheckbox from "./Element/InputCheckbox";
+import InputCheckboxColor from "./Element/InputCheckboxColor";
 
 const EPUBReaderSettings = ({
     makeScrollPos,
@@ -29,6 +30,10 @@ const EPUBReaderSettings = ({
 
     const [isReaderSettingsOpen, setReaderSettingOpen] = useState(false);
     const [fontList, setFontList] = useState<string[]>([]);
+
+    const [fontColor, setFontColor] = useState(appSettings.epubReaderSettings.fontColor);
+    const [linkColor, setLinkColor] = useState(appSettings.epubReaderSettings.linkColor);
+    const [backgroundColor, setBackgroundColor] = useState(appSettings.epubReaderSettings.backgroundColor);
 
     useLayoutEffect(() => {
         getFonts()
@@ -241,7 +246,8 @@ const EPUBReaderSettings = ({
                                     );
                                 }}
                             >
-                                <option value="Roboto">Roboto</option>
+                                <option value="Roboto"> ★ Roboto</option>
+                                <option value="Cambria"> ★ Cambria</option>
                                 {fontList.map((e) => (
                                     <option value={e} key={e} style={{ fontFamily: e }}>
                                         {e}
@@ -319,20 +325,6 @@ const EPUBReaderSettings = ({
                                 }}
                                 paraBefore="Word Spacing&nbsp;:"
                                 labelAfter="em"
-                            />
-                            <InputCheckbox
-                                checked={appSettings.epubReaderSettings.noIndent}
-                                onChange={(e) => {
-                                    dispatch(setEpubReaderSettings({ noIndent: e.currentTarget.checked }));
-                                }}
-                                paraAfter="No Indent"
-                            />
-                            <InputCheckbox
-                                checked={appSettings.epubReaderSettings.hyphenation}
-                                onChange={(e) => {
-                                    dispatch(setEpubReaderSettings({ hyphenation: e.currentTarget.checked }));
-                                }}
-                                paraAfter="Hyphenation"
                             />
                         </div>
                     </div>
@@ -444,6 +436,89 @@ const EPUBReaderSettings = ({
                         <p>Coming Soon.</p>
                     </div>
                 </div> */}
+
+                <div className="settingItem">
+                    <div className={"name " + "expanded"}>Styles</div>
+                    <div className="options col">
+                        <InputCheckboxColor
+                            checked={!appSettings.epubReaderSettings.useDefault_fontColor}
+                            onChangeCheck={(e) => {
+                                dispatch(
+                                    setEpubReaderSettings({
+                                        useDefault_fontColor: !e.currentTarget.checked,
+                                    })
+                                );
+                            }}
+                            value={fontColor}
+                            onChangeColor={(e) => {
+                                const value = e.currentTarget.value;
+                                setFontColor(value);
+                            }}
+                            paraBefore="Font Color&nbsp;:"
+                        />
+                        <InputCheckboxColor
+                            checked={!appSettings.epubReaderSettings.useDefault_linkColor}
+                            onChangeCheck={(e) => {
+                                dispatch(
+                                    setEpubReaderSettings({
+                                        useDefault_linkColor: !e.currentTarget.checked,
+                                    })
+                                );
+                            }}
+                            value={linkColor}
+                            onChangeColor={(e) => {
+                                const value = e.currentTarget.value;
+                                setLinkColor(value);
+                            }}
+                            paraBefore="Link Color&nbsp;:"
+                        />
+                        <InputCheckboxColor
+                            checked={!appSettings.epubReaderSettings.useDefault_backgroundColor}
+                            onChangeCheck={(e) => {
+                                dispatch(
+                                    setEpubReaderSettings({
+                                        useDefault_backgroundColor: !e.currentTarget.checked,
+                                    })
+                                );
+                            }}
+                            value={backgroundColor}
+                            onChangeColor={(e) => {
+                                const value = e.currentTarget.value;
+                                setBackgroundColor(value);
+                            }}
+                            paraBefore="Background Color&nbsp;:"
+                        />
+                        <button
+                            onClick={() => {
+                                dispatch(setEpubReaderSettings({ fontColor, linkColor, backgroundColor }));
+                            }}
+                        >
+                            Save and apply color settings above.
+                        </button>
+                        <InputCheckbox
+                            checked={appSettings.epubReaderSettings.invertImageColor}
+                            onChange={(e) => {
+                                dispatch(setEpubReaderSettings({ invertImageColor: e.currentTarget.checked }));
+                            }}
+                            title="To blend chapter separating image better"
+                            paraAfter="Invert and Blend Image Color"
+                        />
+                        <InputCheckbox
+                            checked={appSettings.epubReaderSettings.noIndent}
+                            onChange={(e) => {
+                                dispatch(setEpubReaderSettings({ noIndent: e.currentTarget.checked }));
+                            }}
+                            paraAfter="No Indent"
+                        />
+                        <InputCheckbox
+                            checked={appSettings.epubReaderSettings.hyphenation}
+                            onChange={(e) => {
+                                dispatch(setEpubReaderSettings({ hyphenation: e.currentTarget.checked }));
+                            }}
+                            paraAfter="Hyphenation"
+                        />
+                    </div>
+                </div>
                 <div className="settingItem">
                     <div className={"name " + "expanded"}>Scroll Speed(with keys)</div>
                     <div className="options">
