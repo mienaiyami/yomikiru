@@ -1487,9 +1487,9 @@ body {
                 border-radius: 0 0 0 10px;
                 width: 300px;
 
-                // ::-webkit-scrollbar {
-                //     display: none;
-                // }
+                ::-webkit-scrollbar {
+                    display: none;
+                }
 
                 // height: 240px;
                 // transition: 0.5s width, 0.5s height;
