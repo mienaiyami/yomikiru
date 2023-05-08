@@ -470,7 +470,7 @@ const ReaderSettings = ({
                             );
                         }}
                     >
-                        Scroll Speed(with keys)
+                        Scroll Speed (with keys)
                     </div>
                     <div className="options">
                         <InputNumber

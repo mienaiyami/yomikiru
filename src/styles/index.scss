@@ -479,6 +479,7 @@ body {
             .listCont {
                 .location-cont {
                     ol li a {
+                        padding-left: 10px;
                         grid-template-columns: auto var(--grid-template);
                         &::before {
                             display: none;
@@ -543,13 +544,6 @@ body {
                 height: 100%;
                 overflow-y: scroll;
                 overflow-x: visible;
-
-                p {
-                    top: 0;
-                    position: sticky;
-                    background-color: var(--body-bg-color);
-                    z-index: 100;
-                }
                 ol {
                     position: relative;
                     counter-reset: countList;
@@ -679,7 +673,7 @@ body {
                 display: flex;
                 flex-direction: column;
                 gap: 5px;
-                margin-bottom: 5px;
+                // margin-bottom: 5px;
                 --button-width1: 45px;
 
                 .currentPath {
@@ -687,20 +681,39 @@ body {
                     display: flex;
                     gap: 10px;
                     align-items: center;
-                    border-bottom: 5px solid var(--divider-color);
-                    padding-bottom: 5px;
+                    // padding: 0 10px;
+                    // border-bottom: 5px solid var(--divider-color);
+                    // padding-bottom: 5px;
 
                     button {
                         padding: 5px;
                         min-width: calc(var(--button-width) * 2 + 5px);
                     }
                 }
+                .imageCount {
+                    // padding-bottom: 5px;
+                    display: flex;
+                    align-items: center;
+                    padding: 5px 10px;
 
+                    border: 5px solid var(--divider-color);
+                    border-left: 0;
+                    border-right: 0;
+                    // padding-bottom: calc(2px + 5px;
+                }
+                // .divider {
+                //     width: 100%;
+                //     // height: 5px;
+                //     background-color: var(--divider-color);
+                //     margin: 2.5px 0;
+                //     flex: 0 0 4.9px;
+                // }
                 .row1 {
                     gap: 6px;
                     display: flex;
                     flex-direction: row;
                     height: 44px;
+                    // padding: 0 10px;
                 }
 
                 button {

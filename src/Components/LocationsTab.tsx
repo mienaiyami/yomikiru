@@ -189,28 +189,27 @@ const LocationsTab = (): ReactElement => {
                         }}
                     />
                 </div>
-                <span className="currentPath">
+                <div className="currentPath">
                     <button onClick={() => openInReader(currentLink)}>Open</button>
                     {currentLink}
-                </span>
+                </div>
+                {/* <span className="divider"></span> */}
+                <div className="imageCount">
+                    <p>This folder contains {imageCount} images.</p>
+                </div>
+                {/* <span className="divider"></span> */}
             </div>
             <div className="location-cont">
                 {isLoadingFile ? (
                     <p>Loading...</p>
                 ) : locations.length === 0 ? (
-                    <>
-                        <p>This folder contains {imageCount} images.</p>
-                        <p>No Directories</p>
-                    </>
+                    <p>No Directories</p>
                 ) : (
-                    <>
-                        <p>This folder contains {imageCount} images.</p>
-                        <ol>
-                            {appSettings.locationListSortType === "inverse"
-                                ? List([...locations].reverse(), filter)
-                                : List(locations, filter)}
-                        </ol>
-                    </>
+                    <ol>
+                        {appSettings.locationListSortType === "inverse"
+                            ? List([...locations].reverse(), filter)
+                            : List(locations, filter)}
+                    </ol>
                 )}
             </div>
         </div>

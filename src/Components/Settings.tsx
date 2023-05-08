@@ -547,14 +547,14 @@ const Settings = (): ReactElement => {
                                             window.electron.ipcRenderer.send("addOptionToExplorerMenu:epub")
                                         }
                                     >
-                                        Add(EPub)
+                                        Add (EPub)
                                     </button>
                                     <button
                                         onClick={() =>
                                             window.electron.ipcRenderer.send("deleteOptionInExplorerMenu:epub")
                                         }
                                     >
-                                        Remove(EPub)
+                                        Remove (EPub)
                                     </button>
                                 </td>
                             </tr>
@@ -726,7 +726,7 @@ const Settings = (): ReactElement => {
                                         }}
                                     />
                                     <p>
-                                        Load and show one chapter at a time(from TOC).
+                                        Load and show one chapter at a time (from TOC).
                                         <br />
                                         Drawback : Content outside of TOC will not be accessible
                                     </p>
@@ -936,7 +936,7 @@ const Settings = (): ReactElement => {
                             <ul>
                                 <li>
                                     Right Click on folder or .cbz/.zip &nbsp;&nbsp;&#8594;&nbsp;&nbsp; Show more
-                                    options(win11) &nbsp;&nbsp;&#8594;&nbsp;&nbsp; Open in Yomikiru.
+                                    options (win11) &nbsp;&nbsp;&#8594;&nbsp;&nbsp; Open in Yomikiru.
                                 </li>
                                 <li>
                                     Note that this only opens the chapter containing images, not the Manga Folder.
