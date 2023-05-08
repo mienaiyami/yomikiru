@@ -129,7 +129,7 @@ body.zenMode {
         display: none;
     }
 
-    #app #reader .zenModePageNumber.show {
+    #app .reader .zenModePageNumber.show {
         display: block;
     }
 
@@ -391,15 +391,15 @@ body {
             height: 100%;
             align-items: center;
 
-            #pageNumbers {
+            .pageNumber {
                 position: relative;
                 display: flex;
                 flex-direction: row;
                 align-items: center;
                 justify-content: flex-end;
                 height: 100%;
-                visibility: hidden;
-                width: calc(var(--button-width) * 2);
+                // visibility: hidden;
+                // width: calc(var(--button-width) * 2);
                 &::before {
                     top: 100%;
                     left: 50%;
@@ -413,7 +413,7 @@ body {
                     // width: calc(var(--button-width) * 1);
                 }
 
-                #NavigateToPageInput {
+                .pageNumberInput {
                     z-index: inherit;
                     width: calc(var(--button-width) * 1);
                     text-align: right;

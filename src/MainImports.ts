@@ -190,6 +190,8 @@ export const settingValidatorData = {
         linkColor: "none",
         useDefault_backgroundColor: true,
         backgroundColor: "none",
+        useDefault_progressBackgroundColor: true,
+        progressBackgroundColor: "none",
         /**
          * invert and blend-difference
          */
@@ -201,6 +203,7 @@ export const settingValidatorData = {
             styles: true,
             scrollSpeed: true,
         },
+        showProgressInZenMode: true,
     },
 } as const;
 
@@ -260,7 +263,11 @@ declare global {
             clickDelay: number;
             lastClick: number;
             currentPageNumber: number;
-            scrollToPage: (pageNumber: number, behavior?: ScrollBehavior, callback?: () => void) => void;
+            scrollToPage: (
+                pageNumber_or_percent: number,
+                behavior?: ScrollBehavior,
+                callback?: () => void
+            ) => void;
             keyRepeated: boolean;
 
             // todo: fix
@@ -827,11 +834,13 @@ const defaultSettings: AppSettings = {
         noIndent: false,
 
         useDefault_fontColor: true,
-        fontColor: "none",
+        fontColor: "#ffffff",
         useDefault_linkColor: false,
         linkColor: "#0073ff",
         useDefault_backgroundColor: true,
-        backgroundColor: "none",
+        backgroundColor: "#000000",
+        useDefault_progressBackgroundColor: true,
+        progressBackgroundColor: "#000000",
 
         invertImageColor: false,
 
@@ -841,6 +850,7 @@ const defaultSettings: AppSettings = {
             styles: true,
             scrollSpeed: true,
         },
+        showProgressInZenMode: true,
     },
 };
 

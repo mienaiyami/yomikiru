@@ -165,6 +165,7 @@ const HTMLPart = memo(
                 })
             );
         };
+
         const linksInBetween: DisplayData[] = [];
         const displayDataWithOrder = useMemo(
             () => displayOrder.map((e) => displayData.find((a) => a.id === e)!),
@@ -265,6 +266,8 @@ const HTMLPart = memo(
 // });
 
 const EPubReader = () => {
+    const { bookProgressRef } = useContext(AppContext);
+
     const appSettings = useAppSelector((store) => store.appSettings);
     const shortcuts = useAppSelector((store) => store.shortcuts);
     const isReaderOpen = useAppSelector((store) => store.isReaderOpen);
@@ -299,6 +302,8 @@ const EPubReader = () => {
     const [wasMaximized, setWasMaximized] = useState(false);
     // display this text then shortcuts clicked
     const [shortcutText, setshortcutText] = useState("");
+    // [0-100]
+    const [bookProgress, setBookProgress] = useState(0);
 
     const readerRef = useRef<HTMLDivElement>(null);
     const mainRef = useRef<HTMLSelectElement>(null);
@@ -644,6 +649,24 @@ const EPubReader = () => {
         }
     };
 
+    const updateProgress = () => {
+        let progress = 0;
+        if (readerRef.current)
+            progress = Math.round(
+                (readerRef.current.scrollTop / (readerRef.current.scrollHeight - readerRef.current.offsetHeight)) *
+                    100
+            );
+        if (bookProgressRef.current) bookProgressRef.current.value = progress.toString();
+        setBookProgress(progress);
+    };
+    const scrollToPage = (percent: number, behavior: ScrollBehavior = "smooth", callback?: () => void) => {
+        const reader = document.querySelector("#EPubReader") as HTMLDivElement;
+        if (reader) {
+            reader.scrollTo(0, (percent / 100) * (reader.scrollHeight - reader.offsetHeight));
+            if (callback) callback();
+        }
+    };
+    window.app.scrollToPage = scrollToPage;
     useEffect(() => {
         if ((zenMode && !window.electron.getCurrentWindow().isMaximized()) || (!zenMode && !wasMaximized)) {
             setTimeout(() => {
@@ -841,6 +864,7 @@ const EPubReader = () => {
                 display: isReaderOpen ? (isSideListPinned ? "grid" : "block") : "none",
                 "--sideListWidth": sideListWidth + "px",
             }}
+            onScroll={updateProgress}
             tabIndex={-1}
         >
             <EPUBReaderSettings
@@ -872,6 +896,21 @@ const EPubReader = () => {
                 />
             )}
 
+            <div
+                className={
+                    "zenModePageNumber " + (appSettings.epubReaderSettings.showProgressInZenMode ? "show" : "")
+                }
+                style={{
+                    backgroundColor: appSettings.epubReaderSettings.useDefault_progressBackgroundColor
+                        ? "var(--body-bg-color)"
+                        : appSettings.epubReaderSettings.progressBackgroundColor,
+                    color: appSettings.epubReaderSettings.useDefault_fontColor
+                        ? "currentColor"
+                        : appSettings.epubReaderSettings.fontColor,
+                }}
+            >
+                {bookProgress}%
+            </div>
             <div className="shortcutClicked faded" ref={shortcutTextRef}>
                 {shortcutText}
             </div>

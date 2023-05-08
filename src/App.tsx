@@ -23,6 +23,7 @@ import { setBookInReader } from "./store/bookInReader";
 
 interface IAppContext {
     pageNumberInputRef: React.RefObject<HTMLInputElement>;
+    bookProgressRef: React.RefObject<HTMLInputElement>;
     openInReader: (link: string, page?: number) => void;
     // addNewBookmark: (newBk: ChapterItem) => Promise<Electron.MessageBoxReturnValue> | undefined;
     closeReader: () => void;
@@ -44,6 +45,7 @@ const App = (): ReactElement => {
     const theme = useAppSelector((state) => state.theme.name);
 
     const pageNumberInputRef: React.RefObject<HTMLInputElement> = createRef();
+    const bookProgressRef: React.RefObject<HTMLInputElement> = createRef();
     const [firstRendered, setFirstRendered] = useState(false);
 
     const dispatch = useAppDispatch();
@@ -320,6 +322,7 @@ const App = (): ReactElement => {
         <AppContext.Provider
             value={{
                 pageNumberInputRef,
+                bookProgressRef,
                 openInReader,
                 closeReader,
                 openInNewWindow,

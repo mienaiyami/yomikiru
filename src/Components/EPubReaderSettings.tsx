@@ -34,6 +34,9 @@ const EPUBReaderSettings = ({
     const [fontColor, setFontColor] = useState(appSettings.epubReaderSettings.fontColor);
     const [linkColor, setLinkColor] = useState(appSettings.epubReaderSettings.linkColor);
     const [backgroundColor, setBackgroundColor] = useState(appSettings.epubReaderSettings.backgroundColor);
+    const [progressBackgroundColor, setProgressBackgroundColor] = useState(
+        appSettings.epubReaderSettings.progressBackgroundColor
+    );
 
     useLayoutEffect(() => {
         getFonts()
@@ -536,9 +539,32 @@ const EPUBReaderSettings = ({
                             }}
                             paraBefore="Background Color&nbsp;:"
                         />
+                        <InputCheckboxColor
+                            checked={!appSettings.epubReaderSettings.useDefault_progressBackgroundColor}
+                            onChangeCheck={(e) => {
+                                dispatch(
+                                    setEpubReaderSettings({
+                                        useDefault_progressBackgroundColor: !e.currentTarget.checked,
+                                    })
+                                );
+                            }}
+                            value={progressBackgroundColor}
+                            onChangeColor={(e) => {
+                                const value = e.currentTarget.value;
+                                setProgressBackgroundColor(value);
+                            }}
+                            paraBefore="Progress Background Color&nbsp;:"
+                        />
                         <button
                             onClick={() => {
-                                dispatch(setEpubReaderSettings({ fontColor, linkColor, backgroundColor }));
+                                dispatch(
+                                    setEpubReaderSettings({
+                                        fontColor,
+                                        linkColor,
+                                        backgroundColor,
+                                        progressBackgroundColor,
+                                    })
+                                );
                             }}
                         >
                             Save and apply color settings above.
@@ -550,6 +576,15 @@ const EPUBReaderSettings = ({
                             }}
                             title="To blend chapter separating image better"
                             paraAfter="Invert and Blend Image Color"
+                        />
+                        <InputCheckbox
+                            checked={appSettings.epubReaderSettings.showProgressInZenMode}
+                            onChange={(e) => {
+                                dispatch(
+                                    setEpubReaderSettings({ showProgressInZenMode: e.currentTarget.checked })
+                                );
+                            }}
+                            paraAfter="Show progress in Zen mode"
                         />
                         <InputCheckbox
                             checked={appSettings.epubReaderSettings.noIndent}

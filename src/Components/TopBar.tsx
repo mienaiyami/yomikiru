@@ -15,7 +15,7 @@ import { setPageNumChangeDisabled } from "../store/pageNumChangeDisabled";
 
 const TopBar = (): ReactElement => {
     const [title, setTitle] = useState<string>("Yomikiru");
-    const { pageNumberInputRef, closeReader } = useContext(AppContext);
+    const { pageNumberInputRef, bookProgressRef, closeReader } = useContext(AppContext);
     const mangaInReader = useAppSelector((store) => store.mangaInReader);
     const bookInReader = useAppSelector((store) => store.bookInReader);
     const [isMaximized, setMaximized] = useState(window.electron.getCurrentWindow().isMaximized ?? true);
@@ -101,14 +101,15 @@ const TopBar = (): ReactElement => {
             </div>
             <div className="windowBtnCont">
                 <label
-                    id="pageNumbers"
+                    className="pageNumber"
                     htmlFor="NavigateToPageInput"
                     data-tooltip="Navigate To Page Number"
-                    style={{ visibility: isReaderOpen && mangaInReader ? "visible" : "hidden" }}
+                    style={{ display: isReaderOpen && mangaInReader ? "flex" : "none" }}
                 >
                     <input
                         type="number"
                         id="NavigateToPageInput"
+                        className="pageNumberInput"
                         defaultValue={1}
                         placeholder="Page Num."
                         ref={pageNumberInputRef}
@@ -167,6 +168,50 @@ const TopBar = (): ReactElement => {
                         tabIndex={-1}
                     />
                     <span className="totalPage">/{mangaInReader?.pages || 0}</span>
+                </label>
+
+                <label style={{ display: isReaderOpen && bookInReader ? "flex" : "none" }} className="pageNumber">
+                    <input
+                        className="pageNumberInput"
+                        ref={bookProgressRef}
+                        type="number"
+                        defaultValue={0}
+                        min={0}
+                        max={100}
+                        onFocus={(e) => {
+                            e.currentTarget.select();
+                        }}
+                        onKeyDown={(e) => {
+                            e.stopPropagation();
+                            if (
+                                !(
+                                    /[0-9]/gi.test(e.key) ||
+                                    e.key === "Backspace" ||
+                                    e.key == "Enter" ||
+                                    e.key == "Escape"
+                                )
+                            )
+                                e.preventDefault();
+                        }}
+                        onKeyUp={(e) => {
+                            if (e.key == "Enter" || e.key == "Escape") {
+                                e.currentTarget.blur();
+                            }
+                            if (/[0-9]/gi.test(e.key) || e.key === "Backspace") {
+                                let percent = parseInt(e.currentTarget.value);
+                                if (percent > 100) percent = 100;
+                                if (bookProgressRef.current && bookProgressRef.current) {
+                                    bookProgressRef.current.value = percent.toString();
+                                }
+                                // if (!percent) return;
+                                window.app.scrollToPage(percent, "auto");
+                                return;
+                            }
+                            e.preventDefault();
+                        }}
+                        tabIndex={-1}
+                    />
+                    <span className="totalPage">%</span>
                 </label>
                 {process.platform !== "win32" ? (
                     <>
