@@ -1122,9 +1122,8 @@ const Settings = (): ReactElement => {
                     </datalist> */}
                     <ul>
                         <li>
-                            To use previously defined color, click on link button then type it like this,{" "}
-                            <code>var(--body-bg)</code> in input box. Or you can type also hex color in it as well{" "}
-                            <code>#RRGGBBAA</code>.
+                            To use previously defined color, click on link button and select property frm dropdown
+                            options.
                         </li>
                         <li>
                             If you want to edit existing theme, click on theme then click on plus icon then change

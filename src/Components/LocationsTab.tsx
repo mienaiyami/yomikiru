@@ -190,13 +190,19 @@ const LocationsTab = (): ReactElement => {
                     />
                 </div>
                 <div className="currentPath">
-                    <button onClick={() => openInReader(currentLink)}>Open</button>
+                    <button
+                        data-tooltip={`This folder contains ${imageCount} images`}
+                        disabled={imageCount <= 0}
+                        onClick={() => openInReader(currentLink)}
+                    >
+                        Open
+                    </button>
                     {currentLink}
                 </div>
                 {/* <span className="divider"></span> */}
-                <div className="imageCount">
+                {/* <div className="imageCount">
                     <p>This folder contains {imageCount} images.</p>
-                </div>
+                </div> */}
                 {/* <span className="divider"></span> */}
             </div>
             <div className="location-cont">
