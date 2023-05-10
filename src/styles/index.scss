@@ -911,6 +911,7 @@ body {
                     display: flex;
                     align-items: center;
                     gap: 10px;
+                    z-index: 100;
 
                     input {
                         width: auto;
@@ -931,6 +932,80 @@ body {
                     font-size: 1.4em;
                     width: 100%;
 
+                    .current {
+                        display: flex;
+                        flex-wrap: wrap;
+                        width: 70%;
+                        &.fullWidth {
+                            width: 100%;
+                        }
+                        gap: 5px;
+                        justify-content: stretch;
+
+                        &.list {
+                            flex-direction: column;
+                            align-items: flex-start;
+                        }
+
+                        span {
+                            user-select: text;
+                        }
+
+                        input {
+                            background-color: var(--text-input-bg);
+                            border: none;
+                            flex: 1;
+                            font-size: 15px;
+                            color: var(--font-color);
+                            height: 100%;
+                            border-radius: 3px;
+                            z-index: 1;
+                        }
+
+                        label {
+                            display: flex;
+                            align-items: center;
+                            cursor: pointer;
+                            background-color: var(--text-input-bg);
+                            padding: 10px 10px;
+                            gap: 10px;
+                            border-radius: 3px;
+
+                            p {
+                                font-size: 15px;
+                            }
+                            &:hover {
+                                background-color: var(--text-input-bg-focus);
+                            }
+                            &:focus,
+                            &:has(:focus),
+                            &:has(:active),
+                            &:active {
+                                box-shadow: var(--btn-color-focus) 0 0 0px 2px;
+                            }
+                        }
+
+                        p {
+                            font-size: 12px;
+                            width: 100%;
+
+                            .copy {
+                                user-select: all;
+                            }
+                        }
+
+                        button {
+                            font-size: 15px;
+                        }
+
+                        .enabled {
+                            background-color: #f003;
+                        }
+
+                        .selected {
+                            background-color: var(--btn-color-focus);
+                        }
+                    }
                     .settingItem {
                         display: flex;
                         gap: 10px;
@@ -942,78 +1017,6 @@ body {
 
                         .name {
                             width: 30%;
-                        }
-
-                        .current {
-                            display: flex;
-                            flex-wrap: wrap;
-                            width: 70%;
-
-                            gap: 5px;
-                            justify-content: stretch;
-
-                            &.list {
-                                flex-direction: column;
-                                align-items: flex-start;
-                            }
-
-                            span {
-                                user-select: text;
-                            }
-
-                            input {
-                                background-color: var(--text-input-bg);
-                                border: none;
-                                flex: 1;
-                                font-size: 15px;
-                                color: var(--font-color);
-                                height: 100%;
-                                border-radius: 3px;
-                            }
-
-                            label {
-                                display: flex;
-                                align-items: center;
-                                cursor: pointer;
-                                background-color: var(--text-input-bg);
-                                padding: 10px 10px;
-                                gap: 10px;
-                                border-radius: 3px;
-
-                                p {
-                                    font-size: 15px;
-                                }
-                                &:hover {
-                                    background-color: var(--text-input-bg-focus);
-                                }
-                                &:focus,
-                                &:has(:focus),
-                                &:has(:active),
-                                &:active {
-                                    box-shadow: var(--btn-color-focus) 0 0 0px 2px;
-                                }
-                            }
-
-                            p {
-                                font-size: 12px;
-                                width: 100%;
-
-                                .copy {
-                                    user-select: all;
-                                }
-                            }
-
-                            button {
-                                font-size: 15px;
-                            }
-
-                            .enabled {
-                                background-color: #f003;
-                            }
-
-                            .selected {
-                                background-color: var(--btn-color-focus);
-                            }
                         }
 
                         &.themeSelector {

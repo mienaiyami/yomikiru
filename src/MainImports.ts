@@ -54,6 +54,10 @@ export const settingValidatorData = {
     recordChapterRead: true,
     showPageNumOnHome: true,
     disableListNumbering: false,
+    /**
+     * show search input for history and bookmark
+     */
+    showSearch: false,
     readerSettings: {
         /**
          * width of reader in percent
@@ -773,6 +777,7 @@ const defaultSettings: AppSettings = {
     recordChapterRead: true,
     showPageNumOnHome: true,
     disableListNumbering: false,
+    showSearch: false,
     readerSettings: {
         readerWidth: 60,
         variableImageSize: true,

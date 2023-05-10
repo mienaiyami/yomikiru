@@ -587,199 +587,207 @@ const Settings = (): ReactElement => {
                                 </button>
                             </td>
                         </tr>
-                        <tr className="settingItem">
+                        {/* <tr className="settingItem">
                             <td className="name">Other Settings</td>
-                            <td className="current list">
-                                <label className={appSettings.skipMinorUpdate ? "selected" : ""}>
-                                    <input
-                                        type="checkbox"
-                                        checked={appSettings.skipMinorUpdate}
-                                        onChange={(e) => {
-                                            dispatch(setAppSettings({ skipMinorUpdate: e.currentTarget.checked }));
-                                        }}
-                                    />
-                                    <p>Skip minor updates.</p>
-                                </label>
-                                <label className={appSettings.openOnDblClick ? "selected" : ""}>
-                                    <input
-                                        type="checkbox"
-                                        checked={appSettings.openOnDblClick}
-                                        onChange={(e) => {
-                                            dispatch(setAppSettings({ openOnDblClick: e.currentTarget.checked }));
-                                        }}
-                                    />
-                                    <p>Open in Reader on double-click.</p>
-                                </label>
-                                <label className={appSettings.askBeforeClosing ? "selected" : ""}>
-                                    <input
-                                        type="checkbox"
-                                        checked={appSettings.askBeforeClosing}
-                                        onChange={(e) => {
-                                            dispatch(
-                                                setAppSettings({ askBeforeClosing: e.currentTarget.checked })
-                                            );
-                                        }}
-                                    />
-                                    <p>Ask before closing window? (Needs Restart).</p>
-                                </label>
-                                <label className={appSettings.recordChapterRead ? "selected" : ""}>
-                                    <input
-                                        type="checkbox"
-                                        checked={appSettings.recordChapterRead}
-                                        onChange={(e) => {
-                                            dispatch(
-                                                setAppSettings({ recordChapterRead: e.currentTarget.checked })
-                                            );
-                                        }}
-                                    />
-                                    <p>
-                                        Record chapter read. If chapter is already read, it will appear with
-                                        different color in reader-side-list and home.
-                                    </p>
-                                </label>
-                                <label className={appSettings.openDirectlyFromManga ? "selected" : ""}>
-                                    <input
-                                        type="checkbox"
-                                        checked={appSettings.openDirectlyFromManga}
-                                        onChange={(e) => {
-                                            dispatch(
-                                                setAppSettings({ openDirectlyFromManga: e.currentTarget.checked })
-                                            );
-                                        }}
-                                    />
-                                    <p>
-                                        Open chapter directly by clicking name instead of arrow in reader if
-                                        chapter folder is in manga folder inside <code>default location</code>.
-                                    </p>
-                                </label>
-                                <label
-                                    className={
-                                        appSettings.readerSettings.disableChapterTransitionScreen ? "selected" : ""
-                                    }
-                                >
-                                    <input
-                                        type="checkbox"
-                                        checked={appSettings.readerSettings.disableChapterTransitionScreen}
-                                        onChange={(e) => {
-                                            dispatch(
-                                                setReaderSettings({
-                                                    disableChapterTransitionScreen: e.currentTarget.checked,
+                        </tr> */}
+                        {/* <div className="settingItem version">
+                                <div className="name">Others:</div>
+                                <div className="current">
+                                    <label>
+                                        <input type="checkbox" />
+                                        <p>Show Loading Screen</p>
+                                    </label>
+                                </div>
+                            </div> */}
+                    </tbody>
+                </table>
+                <h1>Other Settings</h1>
+                <div className="content">
+                    <div className="current fullWidth list">
+                        <label className={appSettings.skipMinorUpdate ? "selected" : ""}>
+                            <input
+                                type="checkbox"
+                                checked={appSettings.skipMinorUpdate}
+                                onChange={(e) => {
+                                    dispatch(setAppSettings({ skipMinorUpdate: e.currentTarget.checked }));
+                                }}
+                            />
+                            <p>Skip minor updates.</p>
+                        </label>
+                        <label className={appSettings.openOnDblClick ? "selected" : ""}>
+                            <input
+                                type="checkbox"
+                                checked={appSettings.openOnDblClick}
+                                onChange={(e) => {
+                                    dispatch(setAppSettings({ openOnDblClick: e.currentTarget.checked }));
+                                }}
+                            />
+                            <p>Open in Reader on double-click.</p>
+                        </label>
+                        <label className={appSettings.askBeforeClosing ? "selected" : ""}>
+                            <input
+                                type="checkbox"
+                                checked={appSettings.askBeforeClosing}
+                                onChange={(e) => {
+                                    dispatch(setAppSettings({ askBeforeClosing: e.currentTarget.checked }));
+                                }}
+                            />
+                            <p>
+                                Ask before closing window? <code>Needs App Restart</code>.
+                            </p>
+                        </label>
+                        <label className={appSettings.recordChapterRead ? "selected" : ""}>
+                            <input
+                                type="checkbox"
+                                checked={appSettings.recordChapterRead}
+                                onChange={(e) => {
+                                    dispatch(setAppSettings({ recordChapterRead: e.currentTarget.checked }));
+                                }}
+                            />
+                            <p>
+                                Record chapter read. If chapter is already read, it will appear with different
+                                color in reader-side-list and home.
+                            </p>
+                        </label>
+                        <label className={appSettings.openDirectlyFromManga ? "selected" : ""}>
+                            <input
+                                type="checkbox"
+                                checked={appSettings.openDirectlyFromManga}
+                                onChange={(e) => {
+                                    dispatch(setAppSettings({ openDirectlyFromManga: e.currentTarget.checked }));
+                                }}
+                            />
+                            <p>
+                                Open chapter directly by clicking name instead of arrow in reader if chapter folder
+                                is in manga folder inside <code>default location</code>.
+                            </p>
+                        </label>
+                        <label
+                            className={appSettings.readerSettings.disableChapterTransitionScreen ? "selected" : ""}
+                        >
+                            <input
+                                type="checkbox"
+                                checked={appSettings.readerSettings.disableChapterTransitionScreen}
+                                onChange={(e) => {
+                                    dispatch(
+                                        setReaderSettings({
+                                            disableChapterTransitionScreen: e.currentTarget.checked,
+                                        })
+                                    );
+                                }}
+                            />
+                            <p>
+                                Disable the screen that appears at start and end of chapters only in{" "}
+                                <code>vertical scroll</code> Reading mode.
+                            </p>
+                        </label>
+                        <label className={appSettings.showPageNumOnHome ? "selected" : ""}>
+                            <input
+                                type="checkbox"
+                                checked={appSettings.showPageNumOnHome}
+                                onChange={(e) => {
+                                    dispatch(setAppSettings({ showPageNumOnHome: e.currentTarget.checked }));
+                                }}
+                            />
+                            <p>Show page number on in bookmark/history tab on home page.</p>
+                        </label>
+                        <label className={appSettings.disableListNumbering ? "selected" : ""}>
+                            <input
+                                type="checkbox"
+                                checked={appSettings.disableListNumbering}
+                                onChange={(e) => {
+                                    dispatch(setAppSettings({ disableListNumbering: e.currentTarget.checked }));
+                                }}
+                            />
+                            <p>Disable location list numbering.</p>
+                        </label>{" "}
+                        <label className={appSettings.showSearch ? "selected" : ""}>
+                            <input
+                                type="checkbox"
+                                checked={appSettings.showSearch}
+                                onChange={(e) => {
+                                    dispatch(setAppSettings({ showSearch: e.currentTarget.checked }));
+                                }}
+                            />
+                            <p>Show search input for bookmark/history tab.</p>
+                        </label>
+                        <label className={appSettings.useCanvasBasedReader ? "selected" : ""}>
+                            <input
+                                type="checkbox"
+                                checked={appSettings.useCanvasBasedReader}
+                                onChange={(e) => {
+                                    dispatch(setAppSettings({ useCanvasBasedReader: e.currentTarget.checked }));
+                                }}
+                            />
+                            <p>
+                                Make scrolling smooth and prevent stuttering when reading high res images.
+                                <br />
+                                Drawbacks : high RAM usage and less crispy images when size is set to a low value.
+                                <code>BETA</code>
+                            </p>
+                        </label>
+                        <label className={appSettings.epubReaderSettings.loadOneChapter ? "selected" : ""}>
+                            <input
+                                type="checkbox"
+                                checked={appSettings.epubReaderSettings.loadOneChapter}
+                                onChange={(e) => {
+                                    dispatch(setEpubReaderSettings({ loadOneChapter: e.currentTarget.checked }));
+                                }}
+                            />
+                            <p>
+                                Load and show one chapter at a time (from TOC).
+                                <br />
+                                Drawback : Content outside of TOC will not be accessible
+                            </p>
+                        </label>
+                        <button
+                            onClick={() => {
+                                window.dialog
+                                    .warn({
+                                        title: "Reset themes",
+                                        message: "This will delete all themes. Continue?",
+                                        noOption: false,
+                                    })
+                                    .then(({ response }) => {
+                                        if (response == undefined) return;
+                                        if (response === 1) return;
+                                        if (response === 0) dispatch(resetAllTheme());
+                                    });
+                            }}
+                        >
+                            Reset all themes
+                        </button>
+                        <button
+                            onClick={() => {
+                                window.dialog
+                                    .warn({
+                                        title: "Reset Settings",
+                                        message: "This will reset all Settings (themes not included). Continue?",
+                                        noOption: false,
+                                    })
+                                    .then(({ response }) => {
+                                        if (response == undefined) return;
+                                        if (response === 1) return;
+                                        if (response === 0) {
+                                            window.dialog
+                                                .warn({
+                                                    title: "Reset Settings",
+                                                    noOption: false,
+                                                    message:
+                                                        "Are you really sure you want to reset settings?\nThis process is irreversible.",
                                                 })
-                                            );
-                                        }}
-                                    />
-                                    <p>
-                                        Disable the screen that appears at start and end of chapters only in{" "}
-                                        <code>vertical scroll</code> Reading mode.
-                                    </p>
-                                </label>
-
-                                <label className={appSettings.showPageNumOnHome ? "selected" : ""}>
-                                    <input
-                                        type="checkbox"
-                                        checked={appSettings.showPageNumOnHome}
-                                        onChange={(e) => {
-                                            dispatch(
-                                                setAppSettings({ showPageNumOnHome: e.currentTarget.checked })
-                                            );
-                                        }}
-                                    />
-                                    <p>Show page number on in bookmark/history tab on home page.</p>
-                                </label>
-                                <label className={appSettings.disableListNumbering ? "selected" : ""}>
-                                    <input
-                                        type="checkbox"
-                                        checked={appSettings.disableListNumbering}
-                                        onChange={(e) => {
-                                            dispatch(
-                                                setAppSettings({ disableListNumbering: e.currentTarget.checked })
-                                            );
-                                        }}
-                                    />
-                                    <p>Disable location list numbering.</p>
-                                </label>
-                                <label className={appSettings.useCanvasBasedReader ? "selected" : ""}>
-                                    <input
-                                        type="checkbox"
-                                        checked={appSettings.useCanvasBasedReader}
-                                        onChange={(e) => {
-                                            dispatch(
-                                                setAppSettings({ useCanvasBasedReader: e.currentTarget.checked })
-                                            );
-                                        }}
-                                    />
-                                    <p>
-                                        Make scrolling smooth and prevent stuttering when reading high res images.
-                                        <br />
-                                        Drawbacks : high RAM usage and less crispy images when size is set to a low
-                                        value.<code>BETA</code>
-                                    </p>
-                                </label>
-                                <label className={appSettings.epubReaderSettings.loadOneChapter ? "selected" : ""}>
-                                    <input
-                                        type="checkbox"
-                                        checked={appSettings.epubReaderSettings.loadOneChapter}
-                                        onChange={(e) => {
-                                            dispatch(
-                                                setEpubReaderSettings({ loadOneChapter: e.currentTarget.checked })
-                                            );
-                                        }}
-                                    />
-                                    <p>
-                                        Load and show one chapter at a time (from TOC).
-                                        <br />
-                                        Drawback : Content outside of TOC will not be accessible
-                                    </p>
-                                </label>
-                                <button
-                                    onClick={() => {
-                                        window.dialog
-                                            .warn({
-                                                title: "Reset themes",
-                                                message: "This will delete all themes. Continue?",
-                                                noOption: false,
-                                            })
-                                            .then(({ response }) => {
-                                                if (response == undefined) return;
-                                                if (response === 1) return;
-                                                if (response === 0) dispatch(resetAllTheme());
-                                            });
-                                    }}
-                                >
-                                    Reset all themes
-                                </button>
-                                <button
-                                    onClick={() => {
-                                        window.dialog
-                                            .warn({
-                                                title: "Reset Settings",
-                                                message:
-                                                    "This will reset all Settings (themes not included). Continue?",
-                                                noOption: false,
-                                            })
-                                            .then(({ response }) => {
-                                                if (response == undefined) return;
-                                                if (response === 1) return;
-                                                if (response === 0) {
-                                                    window.dialog
-                                                        .warn({
-                                                            title: "Reset Settings",
-                                                            noOption: false,
-                                                            message:
-                                                                "Are you really sure you want to reset settings?\nThis process is irreversible.",
-                                                        })
-                                                        .then((res) => {
-                                                            if (res.response === 1) return;
-                                                            dispatch(makeNewSettings());
-                                                            dispatch(resetShortcuts());
-                                                        });
-                                                }
-                                            });
-                                    }}
-                                >
-                                    Reset all Settings
-                                </button>
-                                {/* <label className={appSettings.disableCachingCanvas ? "selected" : ""}>
+                                                .then((res) => {
+                                                    if (res.response === 1) return;
+                                                    dispatch(makeNewSettings());
+                                                    dispatch(resetShortcuts());
+                                                });
+                                        }
+                                    });
+                            }}
+                        >
+                            Reset all Settings
+                        </button>
+                        {/* <label className={appSettings.disableCachingCanvas ? "selected" : ""}>
                                         <input
                                             type="checkbox"
                                             disabled={!appSettings.useCanvasBasedReader}
@@ -798,19 +806,8 @@ const Settings = (): ReactElement => {
                                             <code>Page per Row</code>.
                                         </p>
                                     </label> */}
-                            </td>
-                        </tr>
-                        {/* <div className="settingItem version">
-                                <div className="name">Others:</div>
-                                <div className="current">
-                                    <label>
-                                        <input type="checkbox" />
-                                        <p>Show Loading Screen</p>
-                                    </label>
-                                </div>
-                            </div> */}
-                    </tbody>
-                </table>
+                    </div>
+                </div>
                 <h1>About</h1>
                 <table className="content">
                     <tbody>

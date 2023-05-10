@@ -23,32 +23,34 @@ const BookmarkTab = () => {
             id="bookmarksTab"
         >
             <h2>Bookmarks</h2>
-            <div className="tools">
-                <input
-                    type="text"
-                    name=""
-                    spellCheck={false}
-                    placeholder="Type to Search"
-                    // tabIndex={-1}
-                    onChange={(e) => {
-                        const val = e.target.value;
-                        let filter = "";
-                        for (let i = 0; i < val.length; i++) {
-                            filter += val[i] + ".*";
-                        }
-                        setFilter(filter);
-                    }}
-                    onKeyDown={(e) => {
-                        e.stopPropagation();
-                        if (/\[|\]|\(|\)|\*|\+|\?/gi.test(e.key)) {
-                            e.preventDefault();
-                        }
-                        if (e.key === "Escape") {
-                            e.currentTarget.blur();
-                        }
-                    }}
-                />
-            </div>
+            {appSettings.showSearch && (
+                <div className="tools">
+                    <input
+                        type="text"
+                        name=""
+                        spellCheck={false}
+                        placeholder="Type to Search"
+                        // tabIndex={-1}
+                        onChange={(e) => {
+                            const val = e.target.value;
+                            let filter = "";
+                            for (let i = 0; i < val.length; i++) {
+                                filter += val[i] + ".*";
+                            }
+                            setFilter(filter);
+                        }}
+                        onKeyDown={(e) => {
+                            e.stopPropagation();
+                            if (/\[|\]|\(|\)|\*|\+|\?/gi.test(e.key)) {
+                                e.preventDefault();
+                            }
+                            if (e.key === "Escape") {
+                                e.currentTarget.blur();
+                            }
+                        }}
+                    />
+                </div>
+            )}
             <div className="location-cont">
                 {bookmarks.length === 0 ? <p>No Bookmarks...</p> : <ol>{List(bookmarks, filter)}</ol>}
             </div>
