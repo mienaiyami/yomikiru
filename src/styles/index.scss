@@ -542,8 +542,9 @@ body {
             .location-cont {
                 position: relative;
                 height: 100%;
-                overflow-y: scroll;
-                overflow-x: visible;
+                // overflow-y: scroll;
+                // overflow-x: visible;
+                overflow-y: auto;
                 ol {
                     position: relative;
                     counter-reset: countList;
@@ -676,6 +677,7 @@ body {
                 // margin-bottom: 5px;
                 --button-width1: 45px;
 
+                margin-bottom: 10px;
                 .currentPath {
                     user-select: text;
                     display: flex;
@@ -684,7 +686,6 @@ body {
                     // padding: 0 10px;
                     border-bottom: 5px solid var(--divider-color);
                     padding-bottom: 10px;
-                    margin-bottom: 10px;
 
                     button {
                         padding: 5px;
