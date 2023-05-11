@@ -193,6 +193,8 @@ const HTMLPart = memo(
             );
             if (lastIndex < 0) lastIndex = Number.MAX_SAFE_INTEGER;
             linksInBetween.push(...displayDataWithOrder.slice(startIndex, lastIndex));
+            console.log(currentChapterURL);
+            console.log(tocData.nav.map((e) => e.src.split("\\").pop()));
             // console.log(currentChapterURL, afterCurrentIndex, startIndex, tocData.nav, linksInBetween);
         }
         if (!tocData) return <p>Error/Loading</p>;
@@ -380,10 +382,15 @@ const EPubReader = () => {
                     if (data_href.includes("#")) {
                         const idHash = data_href.split("#")[1];
                         const idFromURL = displayData.find((a) => a.url === data_href.split("#")[0])?.id;
-                        if (idFromURL)
-                            document
-                                .querySelector("#epub-" + idFromURL + ` [data-id="${idHash}"]`)
-                                ?.scrollIntoView();
+                        if (idFromURL) {
+                            if (data_href.split("#")[0] === currentChapterURL.split("#")[0])
+                                document
+                                    .querySelector("#epub-" + idFromURL + ` [data-id="${idHash}"]`)
+                                    ?.scrollIntoView();
+                            else {
+                                setCurrentChapterURL(data_href);
+                            }
+                        }
                     } else {
                         const linkExist = displayData.find((a) => a.url === data_href);
                         if (linkExist) setCurrentChapterURL(data_href);
