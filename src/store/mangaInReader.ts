@@ -1,12 +1,12 @@
 import { createSlice, PayloadAction } from "@reduxjs/toolkit";
 
-const initialState = null as ListItem | null;
+const initialState = null as MangaItem | null;
 
 const mangaInReader = createSlice({
     name: "mangaInReader",
     initialState,
     reducers: {
-        setMangaInReader: (state, action: PayloadAction<ListItem | null>) => {
+        setMangaInReader: (state, action: PayloadAction<MangaItem | null>) => {
             return action.payload;
         },
     },

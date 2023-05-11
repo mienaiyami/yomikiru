@@ -13,9 +13,15 @@ const HistoryTab = () => {
     const [filter, setFilter] = useState<string>("");
     const List = (historyData: HistoryItem[], filter: string) => {
         return historyData.map((e, i) => {
-            if (new RegExp(filter, "ig").test(e.mangaName)) {
+            if (new RegExp(filter, "ig").test(e.type === "book" ? e.data.title : e.data.mangaName)) {
                 return (
-                    <BookmarkHistoryListItem isBookmark={false} isHistory={true} index={i} {...e} key={e.date} />
+                    <BookmarkHistoryListItem
+                        isBookmark={false}
+                        isHistory={true}
+                        index={i}
+                        {...e}
+                        key={e.data.date}
+                    />
                 );
             }
         });

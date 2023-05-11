@@ -362,36 +362,57 @@ declare global {
             [e in ThemeDataMain]: string;
         };
     }
-    interface ListItem {
+    interface MangaItem {
         mangaName: string;
         chapterName: string;
         date?: string;
         link: string;
         pages: number;
     }
-    interface ChapterItem extends ListItem {
+    interface ChapterItem extends MangaItem {
         page: number;
     }
-    interface HistoryItem extends ChapterItem {
-        /**
-         * Set of chapter names already read under same manga.
-         */
-        chaptersRead: string[];
-        // chaptersRead:Set<string>;
-        mangaLink: string;
-    }
-    interface ListItemE extends ChapterItem {
+    type MangaHistoryItem = {
+        type: "image";
+        data: {
+            /**
+             * Set of chapter names already read under same manga.
+             */
+            chaptersRead: string[];
+            mangaLink: string;
+        } & ChapterItem;
+    };
+    type BookHistoryItem = {
+        type: "book";
+        data: {
+            /**
+             * css query string of element to focus on load
+             */
+            elementQueryString: string;
+        } & BookItem;
+    };
+    type HistoryItem = MangaHistoryItem | BookHistoryItem;
+    type ListItemE = Manga_BookItem & {
         index: number;
         isBookmark: boolean;
         isHistory: boolean;
-    }
+    };
     interface BookItem {
         title: string;
         author: string;
         link: string;
-        data?: string;
+        date?: string;
         chapter?: string;
     }
+    type Manga_BookItem =
+        | {
+              type: "image";
+              data: ChapterItem;
+          }
+        | {
+              type: "book";
+              data: BookItem;
+          };
     interface TOCData {
         title: string;
         author: string;
@@ -739,17 +760,17 @@ window.dialog = {
             defaultId,
         }),
 };
-/**
- * async file save
- */
-const saveJSONfile = (path: string, data: any) => {
-    if (JSON.stringify(data, null, "\t"))
-        window.fs.writeFile(path, JSON.stringify(data, null, "\t"), (err) => {
-            if (err) {
-                window.logger.error(err);
-                window.dialog.nodeError(err);
-            }
-        });
+const saveJSONfile = (path: string, data: any, sync = false) => {
+    if (JSON.stringify(data, null, "\t")) {
+        if (sync) window.fs.writeFileSync(path, JSON.stringify(data, null, "\t"));
+        else
+            window.fs.writeFile(path, JSON.stringify(data, null, "\t"), (err) => {
+                if (err) {
+                    window.logger.error(err);
+                    window.dialog.nodeError(err);
+                }
+            });
+    }
 };
 
 const userDataURL = window.electron.app.getPath("userData");

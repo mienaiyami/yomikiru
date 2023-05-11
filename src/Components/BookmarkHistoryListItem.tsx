@@ -37,11 +37,15 @@ const BookmarkHistoryListItem = (props: ListItemE) => {
     return (
         <li
             title={
-                `Manga   : ${props.mangaName}\n` +
-                `Chapter : ${props.chapterName}\n` +
-                `Pages    : ${props.pages}\n` +
-                `Page      : ${props.page || 1}\n` +
-                `Date      : ${props.date}`
+                props.type === "book"
+                    ? `Title     : ${props.data.title}\n` +
+                      `Chapter : ${props.data.chapter || "~"}\n` +
+                      `Date      : ${props.data.date}`
+                    : `Manga   : ${props.data.mangaName}\n` +
+                      `Chapter : ${props.data.chapterName}\n` +
+                      `Pages    : ${props.data.pages}\n` +
+                      `Page      : ${props.data.page || 1}\n` +
+                      `Date      : ${props.data.date}`
             }
             // onMouseOver={(e) => {
             //     let y = e.currentTarget.getBoundingClientRect().top;
@@ -55,14 +59,14 @@ const BookmarkHistoryListItem = (props: ListItemE) => {
         >
             <a
                 className="big"
-                onClick={() => openInReader(props.link, props.page)}
+                onClick={() => openInReader(props.data.link, props.type === "image" ? props.data.page : 0)}
                 onContextMenu={(e) => {
                     dispatch(
                         setContextMenu({
                             clickX: e.clientX,
                             clickY: e.clientY,
                             hasLink: {
-                                link: props.link,
+                                link: props.data.link,
                                 chapterItem: {
                                     item: props,
                                     isBookmark: props.isBookmark || false,
@@ -80,17 +84,33 @@ const BookmarkHistoryListItem = (props: ListItemE) => {
                     // });
                 }}
             >
-                <span className="double">
-                    <span className="text">{props.mangaName}</span>
-                    <span className="text chapter">
-                        <span className="text">{props.chapterName}</span>
-                        &nbsp;&nbsp;&nbsp;
-                        <span className="page">
-                            {" "}
-                            Page <span className="num">{(props.page || 1).toString()}</span>
+                {props.type === "book" ? (
+                    <span className="double">
+                        <span className="text">{props.data.title}</span>
+                        <span className="text chapter">
+                            <span className="text">{props.data.chapter || "~"}</span>
+                            &nbsp;&nbsp;&nbsp;
+                            <span className="page">
+                                {" "}
+                                {/* EPUB
+                                <span className="num"></span> */}
+                                <code className="nonFolder">EPUB</code>
+                            </span>
                         </span>
                     </span>
-                </span>
+                ) : (
+                    <span className="double">
+                        <span className="text">{props.data.mangaName}</span>
+                        <span className="text chapter">
+                            <span className="text">{props.data.chapterName}</span>
+                            &nbsp;&nbsp;&nbsp;
+                            <span className="page">
+                                {" "}
+                                Page <span className="num">{(props.data.page || 1).toString()}</span>
+                            </span>
+                        </span>
+                    </span>
+                )}
             </a>
             {/* <div className="infoWrapper">
                 <InfoOnHover />

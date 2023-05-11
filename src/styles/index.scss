@@ -575,7 +575,7 @@ body {
                             cursor: pointer;
                             display: grid;
                             --grid-template: 0;
-                            &:has(code.nonFolder) {
+                            &:has(> code.nonFolder) {
                                 --grid-template: auto;
                             }
                             gap: 5px;
@@ -600,8 +600,17 @@ body {
                                 flex-direction: column;
                                 gap: 5px;
                                 .chapter {
-                                    opacity: 0.7;
                                     display: flex;
+                                    .text,
+                                    .page {
+                                        opacity: 0.7;
+                                    }
+                                    .page:has(code.nonFolder) {
+                                        .nonFolder {
+                                            margin-right: 2.2em;
+                                        }
+                                        opacity: 1;
+                                    }
                                     .page {
                                         margin-left: auto;
                                         white-space: nowrap;
@@ -890,7 +899,7 @@ body {
                 background: var(--body-bg-color);
                 border-radius: 10px;
                 transition: 0.3s cubic-bezier(0, 1.15, 1, 1) transform;
-                width: calc(max(700px, 60%));
+                width: min(900px, 80%);
                 height: 90%;
                 transform: scale(0);
                 box-shadow: rgba(0, 0, 0, 0.3) 0px 0px 19px 25px;

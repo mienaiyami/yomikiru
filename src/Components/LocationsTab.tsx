@@ -82,9 +82,17 @@ const LocationsTab = (): ReactElement => {
                         name={e.name}
                         link={e.link}
                         inHistory={
-                            history
-                                .find((e) => e.mangaLink.toLowerCase() === currentLink.toLowerCase())
-                                ?.chaptersRead.includes(e.link.split(window.path.sep).pop() || "") ?? false
+                            (window.fs.lstatSync(e.link).isFile() && window.path.extname(e.link).toLowerCase()) ===
+                            ".epub"
+                                ? false
+                                : (
+                                      history.find(
+                                          (e) =>
+                                              e.type === "image" &&
+                                              (e as MangaHistoryItem).data.mangaLink.toLowerCase() ===
+                                                  currentLink.toLowerCase()
+                                      ) as MangaHistoryItem
+                                  )?.data.chaptersRead.includes(e.link.split(window.path.sep).pop() || "") ?? false
                         }
                         key={e.link}
                         setCurrentLink={setCurrentLink}

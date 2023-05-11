@@ -497,10 +497,10 @@ const Reader = () => {
         setImageWidthContainer([]);
         setImageElementsIndex([]);
         setImageRowCount(0);
-        setBookmarked(bookmarks.map((e) => e.link).includes(link));
+        setBookmarked(bookmarks.map((e) => e.data.link).includes(link));
         setChapterChangerDisplay(false);
         const linksplitted = link.split(window.path.sep).filter((e) => e !== "");
-        const mangaOpened: ListItem = {
+        const mangaOpened: MangaItem = {
             mangaName: linksplitted[linksplitted.length - 2],
             chapterName: linksplitted[linksplitted.length - 1],
             link,
@@ -509,7 +509,10 @@ const Reader = () => {
         };
         dispatch(setMangaInReader(mangaOpened));
         dispatch(
-            newHistory({ mangaOpened, page: linkInReader.page, recordChapter: appSettings.recordChapterRead })
+            newHistory({
+                type: "image",
+                data: { mangaOpened, page: linkInReader.page, recordChapter: appSettings.recordChapterRead },
+            })
         );
         setImagesLength(imgs.length);
         setImages(imgs);

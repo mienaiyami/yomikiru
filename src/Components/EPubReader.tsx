@@ -539,12 +539,20 @@ const EPubReader = () => {
                                         });
                                     };
                                     getData("navMap > navPoint", depth_original);
+                                    const bookOpened: BookItem = {
+                                        author: tempTOCData.author,
+                                        link,
+                                        title: tempTOCData.title,
+                                        date: new Date().toLocaleString("en-UK", { hour12: true }),
+                                    };
+                                    dispatch(setBookInReader(bookOpened));
                                     dispatch(
-                                        setBookInReader({
-                                            author: tempTOCData.author,
-                                            link,
-                                            title: tempTOCData.title,
-                                            data: new Date().toLocaleString("en-UK", { hour12: true }),
+                                        newHistory({
+                                            type: "book",
+                                            data: {
+                                                bookOpened,
+                                                elementQueryString: "section.main > div:nth-child(1)",
+                                            },
                                         })
                                     );
                                     // console.log(depth_real, depth_original, depth_original - depth_real + 1);

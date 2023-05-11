@@ -66,8 +66,10 @@ const ReaderSideList = ({
     }, [contextMenu]);
     useEffect(() => {
         if (mangaInReader) {
-            const historyItem = history.find((e) => e.mangaLink === window.path.dirname(mangaInReader.link));
-            if (historyItem) setHistorySimple(historyItem.chaptersRead);
+            const historyItem = history.find(
+                (e) => (e as MangaHistoryItem).data.mangaLink === window.path.dirname(mangaInReader.link)
+            );
+            if (historyItem) setHistorySimple((historyItem as MangaHistoryItem).data.chaptersRead);
         }
     }, [history]);
     useLayoutEffect(() => {
@@ -361,7 +363,10 @@ const ReaderSideList = ({
                             if (mangaInReader) {
                                 // was addnewBookmark before
                                 dispatch(
-                                    addBookmark({ ...mangaInReader, page: window.app.currentPageNumber || 0 })
+                                    addBookmark({
+                                        type: "image",
+                                        data: { ...mangaInReader, page: window.app.currentPageNumber || 0 },
+                                    })
                                 );
                                 setshortcutText("Bookmark Added");
                                 setBookmarked(true);

@@ -7,11 +7,17 @@ const BookmarkTab = () => {
     const appSettings = useAppSelector((store) => store.appSettings);
 
     const [filter, setFilter] = useState<string>("");
-    const List = (bookmarkData: ChapterItem[], filter: string) => {
+    const List = (bookmarkData: Manga_BookItem[], filter: string) => {
         return bookmarkData.map((e, i) => {
-            if (new RegExp(filter, "ig").test(e.mangaName)) {
+            if (new RegExp(filter, "ig").test(e.type === "book" ? e.data.title : e.data.mangaName)) {
                 return (
-                    <BookmarkHistoryListItem isHistory={false} isBookmark={true} index={i} {...e} key={e.link} />
+                    <BookmarkHistoryListItem
+                        isHistory={false}
+                        isBookmark={true}
+                        index={i}
+                        {...e}
+                        key={e.data.link}
+                    />
                 );
             }
         });
