@@ -480,7 +480,9 @@ const Reader = () => {
                     setCurrentPageNumber(readerStuff.page || 1);
                     return loadImgs(readerStuff.link, imgs);
                 }
-                dispatch(setLinkInReader({ type: "image", link: mangaInReader?.link || "", page: 1 }));
+                dispatch(
+                    setLinkInReader({ type: "image", link: mangaInReader?.link || "", page: 1, chapter: "" })
+                );
             },
             true
         );
@@ -511,7 +513,11 @@ const Reader = () => {
         dispatch(
             newHistory({
                 type: "image",
-                data: { mangaOpened, page: linkInReader.page, recordChapter: appSettings.recordChapterRead },
+                data: {
+                    mangaOpened,
+                    page: linkInReader.page,
+                    recordChapter: appSettings.recordChapterRead,
+                },
             })
         );
         setImagesLength(imgs.length);

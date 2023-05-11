@@ -267,6 +267,13 @@ declare global {
             clickDelay: number;
             lastClick: number;
             currentPageNumber: number;
+            /**
+             * used in epub reader only
+             */
+            epubHistorySaveData: {
+                chapter: string;
+                queryString: string;
+            } | null;
             scrollToPage: (
                 pageNumber_or_percent: number,
                 behavior?: ScrollBehavior,
@@ -282,6 +289,7 @@ declare global {
                 type: "image" | "book" | "";
                 link: string;
                 page: number;
+                chapter: string;
             };
 
             // to remove later
@@ -404,6 +412,12 @@ declare global {
         date?: string;
         chapter?: string;
     }
+    type BookBookmarkItem = BookItem & {
+        /**
+         * css query string of element to focus on load
+         */
+        elementQueryString: string;
+    };
     type Manga_BookItem =
         | {
               type: "image";
@@ -411,7 +425,7 @@ declare global {
           }
         | {
               type: "book";
-              data: BookItem;
+              data: BookBookmarkItem;
           };
     interface TOCData {
         title: string;
@@ -696,10 +710,12 @@ window.app.isSupportedFormat = (str: string) =>
     str.includes("$ZIP") || str.includes("$CBZ") || str.includes("$EPUB");
 window.app.deleteDirOnClose = "";
 window.app.currentPageNumber = 1;
+window.app.epubHistorySaveData = null;
 window.app.linkInReader = {
     type: "",
     link: "",
     page: 1,
+    chapter: "",
 };
 window.app.randomString = (length: number) => {
     let result = "";
@@ -842,7 +858,7 @@ const defaultSettings: AppSettings = {
         },
     },
     epubReaderSettings: {
-        loadOneChapter: false,
+        loadOneChapter: true,
         readerWidth: 50,
         fontSize: 16,
         useDefault_fontFamily: true,

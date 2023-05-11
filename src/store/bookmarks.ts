@@ -62,6 +62,7 @@ const bookmarks = createSlice({
                 state.unshift(...action.payload);
             } else {
                 const newBk = action.payload;
+                
                 const existingBookmark = state.findIndex((e) => e.data.link === newBk.data.link);
                 if (existingBookmark > -1) {
                     // if (state[existingBookmark].page === newBk.page){
@@ -85,10 +86,21 @@ const bookmarks = createSlice({
                     window.fs.lstatSync(action.payload.link).isFile() &&
                     window.path.extname(action.payload.link).toLowerCase() === ".epub"
                 ) {
-                    console.error("Bookmarking epub not yet supported");
+                    console.error("Use `updateEPUBBookmark`");
                 } else {
                     (state[index].data as ChapterItem).page = action.payload.page;
                 }
+                saveJSONfile(bookmarksPath, state);
+            }
+            return state;
+        },
+        updateEPUBBookmark: (state, action: PayloadAction<{ link: string }>) => {
+            const index = state.findIndex((e) => e.data.link === action.payload.link);
+            console.log(window.app.epubHistorySaveData);
+            if (index > -1 && window.app.epubHistorySaveData) {
+                (state[index].data as BookBookmarkItem).chapter = window.app.epubHistorySaveData.chapter;
+                (state[index].data as BookBookmarkItem).elementQueryString =
+                    window.app.epubHistorySaveData.queryString;
                 saveJSONfile(bookmarksPath, state);
             }
             return state;
@@ -109,7 +121,13 @@ const bookmarks = createSlice({
     },
 });
 
-export const { addBookmark, removeAllBookmarks, removeBookmark, updateBookmark, refreshBookmark } =
-    bookmarks.actions;
+export const {
+    addBookmark,
+    removeAllBookmarks,
+    removeBookmark,
+    updateEPUBBookmark,
+    updateBookmark,
+    refreshBookmark,
+} = bookmarks.actions;
 
 export default bookmarks.reducer;

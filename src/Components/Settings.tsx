@@ -403,14 +403,14 @@ const Settings = (): ReactElement => {
                                             }
                                         );
                                         if (opt == undefined) return;
-                                        const data: ChapterItem[] = JSON.parse(
+                                        const data: Manga_BookItem[] = JSON.parse(
                                             window.fs.readFileSync(opt[0], "utf8")
                                         );
-                                        const dataToAdd: ChapterItem[] = [];
+                                        const dataToAdd: Manga_BookItem[] = [];
                                         let similarFound = 0;
                                         data.forEach((item) => {
                                             if (("mangaName" && "link" && "chapterName") in item) {
-                                                if (!bookmarks.map((e) => e.link).includes(item.link)) {
+                                                if (!bookmarks.map((e) => e.data.link).includes(item.data.link)) {
                                                     dataToAdd.push(item);
                                                 } else {
                                                     similarFound++;
@@ -885,7 +885,7 @@ const Settings = (): ReactElement => {
                                             window.electron.ipcRenderer.send("showInExplorer", filePath);
                                     }}
                                 >
-                                    Open Logs
+                                    Show Logs
                                 </button>
                                 <button
                                     onClick={() =>

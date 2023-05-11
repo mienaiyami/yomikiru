@@ -4,6 +4,7 @@ const initialState: typeof window.app.linkInReader = {
     type: "image",
     link: window.loadManga || "",
     page: 0,
+    chapter: "",
 };
 
 const linkInReader = createSlice({

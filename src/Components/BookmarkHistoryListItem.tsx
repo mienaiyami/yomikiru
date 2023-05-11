@@ -59,7 +59,12 @@ const BookmarkHistoryListItem = (props: ListItemE) => {
         >
             <a
                 className="big"
-                onClick={() => openInReader(props.data.link, props.type === "image" ? props.data.page : 0)}
+                onClick={() =>
+                    openInReader(
+                        props.data.link,
+                        props.type === "image" ? props.data.page : props.data.chapter || ""
+                    )
+                }
                 onContextMenu={(e) => {
                     dispatch(
                         setContextMenu({

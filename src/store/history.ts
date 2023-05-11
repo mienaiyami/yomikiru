@@ -133,19 +133,36 @@ const history = createSlice({
         //         saveJSONfile(historyPath, state);
         //     }
         // },
-        updateLastHistoryPage: (state) => {
+
+        /**
+         * only for manga/image reader
+         */
+        updateCurrentHistoryPage: (state) => {
             const stateDup = [...state];
             const link = window.app.linkInReader.link;
-            // todo:
-            // const index = stateDup.findIndex((e) => e.link === link);
-            // // not working on closing window
-            // // use sth like window.lastMangaOpened;
-            // // window.logger.log("asking to save ", link);
-            // if (index > -1) {
-            //     // console.log(`Updating ${stateDup[index].mangaName} to page ${window.app.currentPageNumber}`);
-            //     stateDup[index].page = window.app.currentPageNumber;
-            //     saveJSONfile(historyPath, stateDup);
-            // }
+            const index = stateDup.findIndex((e) => e.data.link === link);
+            // not working on closing window
+            // use sth like window.lastMangaOpened;
+            // window.logger.log("asking to save ", link);
+            if (index > -1) {
+                // console.log(`Updating ${stateDup[index].mangaName} to page ${window.app.currentPageNumber}`);
+                (stateDup[index] as MangaHistoryItem).data.page = window.app.currentPageNumber;
+                saveJSONfile(historyPath, stateDup);
+            }
+        },
+        /**
+         * only for epub reader
+         */
+        updateCurrentBookHistory: (state) => {
+            const stateDup = [...state];
+            const link = window.app.linkInReader.link;
+            const index = stateDup.findIndex((e) => e.data.link === link);
+            if (index > -1 && window.app.epubHistorySaveData) {
+                (stateDup[index] as BookHistoryItem).data.chapter = window.app.epubHistorySaveData.chapter;
+                // (stateDup[index] as BookHistoryItem).data.elementQueryString =
+                //     window.app.epubHistorySaveData.queryString;
+                saveJSONfile(historyPath, stateDup);
+            }
         },
         refreshHistory: () => {
             let newState = readHistory();
@@ -163,7 +180,13 @@ const history = createSlice({
     },
 });
 
-export const { newHistory, updateLastHistoryPage, deleteAllHistory, removeHistory, refreshHistory } =
-    history.actions;
+export const {
+    newHistory,
+    updateCurrentHistoryPage,
+    updateCurrentBookHistory,
+    deleteAllHistory,
+    removeHistory,
+    refreshHistory,
+} = history.actions;
 
 export default history.reducer;

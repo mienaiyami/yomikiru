@@ -1,6 +1,4 @@
 import {
-    faSort,
-    faSyncAlt,
     faArrowLeft,
     faArrowRight,
     faBookmark,
@@ -8,11 +6,12 @@ import {
     faArrowUp,
     faArrowDown,
 } from "@fortawesome/free-solid-svg-icons";
-// import { faBookmark as farBookmark } from "@fortawesome/free-regular-svg-icons";
+import { faBookmark as farBookmark } from "@fortawesome/free-regular-svg-icons";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { useEffect, useLayoutEffect, useRef, useState } from "react";
 import { useAppDispatch, useAppSelector } from "../store/hooks";
 import { setPrevNextChapter } from "../store/prevNextChapter";
+import { addBookmark, updateEPUBBookmark, removeBookmark } from "../store/bookmarks";
 
 const EPubReaderSideList = ({
     tocData,
@@ -20,10 +19,10 @@ const EPubReaderSideList = ({
     openPrevChapterRef,
     currentChapterURL,
     setCurrentChapterURL,
-    // addToBookmarkRef,
-    // setshortcutText,
-    // isBookmarked,
-    // setBookmarked,
+    addToBookmarkRef,
+    setshortcutText,
+    isBookmarked,
+    setBookmarked,
     findInPage,
     epubLinkClick,
     isSideListPinned,
@@ -41,19 +40,20 @@ const EPubReaderSideList = ({
     setCurrentChapterURL: React.Dispatch<React.SetStateAction<string>>;
 
     epubLinkClick: (ev: MouseEvent | React.MouseEvent<HTMLAnchorElement, MouseEvent>) => void;
-    // addToBookmarkRef: React.RefObject<HTMLButtonElement>;
-    // isBookmarked: boolean;
-    // setBookmarked: React.Dispatch<React.SetStateAction<boolean>>;
-    // setshortcutText: React.Dispatch<React.SetStateAction<string>>;
+    addToBookmarkRef: React.RefObject<HTMLButtonElement>;
+    isBookmarked: boolean;
+    setBookmarked: React.Dispatch<React.SetStateAction<boolean>>;
+    setshortcutText: React.Dispatch<React.SetStateAction<string>>;
     isSideListPinned: boolean;
     setSideListPinned: React.Dispatch<React.SetStateAction<boolean>>;
     setSideListWidth: React.Dispatch<React.SetStateAction<number>>;
     findInPage: (str: string, forward?: boolean) => void;
-    makeScrollPos: () => void;
+    makeScrollPos: (callback?: ((queryString?: string) => any) | undefined) => void;
 }) => {
     const bookInReader = useAppSelector((store) => store.bookInReader);
     // const history = useAppSelector((store) => store.history);
     const appSettings = useAppSelector((store) => store.appSettings);
+    const linkInReader = useAppSelector((store) => store.linkInReader);
     const prevNextChapter = useAppSelector((store) => store.prevNextChapter);
     // const contextMenu = useAppSelector((store) => store.contextMenu);
 
@@ -262,7 +262,7 @@ const EPubReaderSideList = ({
                     >
                         <FontAwesomeIcon icon={faArrowLeft} />
                     </Button_A>
-                    {/* <Button
+                    <Button_A
                         className="ctrl-menu-item"
                         tooltip="Bookmark"
                         btnRef={addToBookmarkRef}
@@ -285,28 +285,38 @@ const EPubReaderSideList = ({
                                             setBookmarked(false);
                                         }
                                         if (response === 2) {
-                                            setshortcutText("Bookmark Updated");
-                                            dispatch(
-                                                updateBookmark({
-                                                    link: linkInReader.link,
-                                                    page: window.app.currentPageNumber,
-                                                })
-                                            );
+                                            makeScrollPos(() => {
+                                                setshortcutText("Bookmark Updated");
+                                                dispatch(
+                                                    updateEPUBBookmark({
+                                                        link: linkInReader.link,
+                                                    })
+                                                );
+                                            });
                                         }
                                     });
                             }
-                            if (mangaInReader) {
-                                // was addnewBookmark before
-                                dispatch(
-                                    addBookmark({ ...mangaInReader, page: window.app.currentPageNumber || 0 })
-                                );
-                                setshortcutText("Bookmark Added");
-                                setBookmarked(true);
+                            if (bookInReader) {
+                                makeScrollPos(() => {
+                                    if (window.app.epubHistorySaveData)
+                                        dispatch(
+                                            addBookmark({
+                                                type: "book",
+                                                data: {
+                                                    ...bookInReader,
+                                                    chapter: window.app.epubHistorySaveData.chapter,
+                                                    elementQueryString: window.app.epubHistorySaveData.queryString,
+                                                },
+                                            })
+                                        );
+                                    setshortcutText("Bookmark Added");
+                                    setBookmarked(true);
+                                });
                             }
                         }}
                     >
                         <FontAwesomeIcon icon={isBookmarked ? faBookmark : farBookmark} />
-                    </Button> */}
+                    </Button_A>
                     <Button_A
                         className="ctrl-menu-item"
                         btnRef={openNextChapterRef}

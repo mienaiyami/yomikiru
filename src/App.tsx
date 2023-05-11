@@ -8,7 +8,7 @@ import { setUnzipping } from "./store/unzipping";
 import { setLoadingManga } from "./store/isLoadingManga";
 import { setLoadingMangaPercent } from "./store/loadingMangaPercent";
 import { setLinkInReader } from "./store/linkInReader";
-import { refreshHistory, updateLastHistoryPage } from "./store/history";
+import { refreshHistory, updateCurrentHistoryPage, updateCurrentBookHistory } from "./store/history";
 import { setReaderOpen } from "./store/isReaderOpen";
 import { setMangaInReader } from "./store/mangaInReader";
 import { refreshBookmark } from "./store/bookmarks";
@@ -24,7 +24,7 @@ import { setBookInReader } from "./store/bookInReader";
 interface IAppContext {
     pageNumberInputRef: React.RefObject<HTMLInputElement>;
     bookProgressRef: React.RefObject<HTMLInputElement>;
-    openInReader: (link: string, page?: number) => void;
+    openInReader: (link: string, page_or_chapterName?: number | string) => void;
     // addNewBookmark: (newBk: ChapterItem) => Promise<Electron.MessageBoxReturnValue> | undefined;
     closeReader: () => void;
     // updateLastHistoryPageNumber: () => void;
@@ -42,6 +42,8 @@ const App = (): ReactElement => {
     const appSettings = useAppSelector((state) => state.appSettings);
     const isReaderOpen = useAppSelector((state) => state.isReaderOpen);
     const linkInReader = useAppSelector((store) => store.linkInReader);
+    const mangaInReader = useAppSelector((store) => store.mangaInReader);
+    const bookInReader = useAppSelector((store) => store.bookInReader);
     const theme = useAppSelector((state) => state.theme.name);
 
     const pageNumberInputRef: React.RefObject<HTMLInputElement> = createRef();
@@ -173,8 +175,9 @@ const App = (): ReactElement => {
     /**
      * Check if folder have images then open those images in reader.
      * @param link link of folder containing images to be opened in reader.
+     * @param page_or_chapterName pagenumber in case of manga and chapter name in case of epub
      */
-    const openInReader = (link: string, page?: number) => {
+    const openInReader = (link: string, page_or_chapterName?: number | string) => {
         link = window.path.normalize(link);
         if (link === linkInReader.link) return;
         if (link.toLowerCase().includes(".epub")) {
@@ -187,7 +190,8 @@ const App = (): ReactElement => {
                 setLinkInReader({
                     type: "book",
                     link: link,
-                    page: 1,
+                    page: 0,
+                    chapter: page_or_chapterName as string,
                 })
             );
         } else
@@ -199,7 +203,14 @@ const App = (): ReactElement => {
                             link,
                             images: imgs,
                         };
-                        dispatch(setLinkInReader({ type: "image", link, page: page || 1 }));
+                        dispatch(
+                            setLinkInReader({
+                                type: "image",
+                                link,
+                                page: (page_or_chapterName as number) || 1,
+                                chapter: "",
+                            })
+                        );
                     }
                 },
                 true
@@ -220,9 +231,10 @@ const App = (): ReactElement => {
     // };
     const closeReader = () => {
         // console.log(linkInReader, window.app.linkInReader);
-        dispatch(updateLastHistoryPage());
+        if (mangaInReader) dispatch(updateCurrentHistoryPage());
+        // if (bookInReader) dispatch(updateCurrentBookHistory());
         dispatch(setReaderOpen(false));
-        dispatch(setLinkInReader({ type: "", link: "", page: 1 }));
+        dispatch(setLinkInReader({ type: "", link: "", page: 1, chapter: "" }));
         dispatch(setLoadingManga(false));
         dispatch(setLoadingMangaPercent(0));
         dispatch(setMangaInReader(null));
@@ -273,7 +285,7 @@ const App = (): ReactElement => {
         });
         window.electron.ipcRenderer.on("recordPageNumber", () => {
             if (isReaderOpen) closeReader();
-            else if (window.app.linkInReader.link !== "") dispatch(updateLastHistoryPage());
+            else if (window.app.linkInReader.link !== "") dispatch(updateCurrentHistoryPage());
         });
         window.app.titleBarHeight = parseFloat(
             window.getComputedStyle(document.body).getPropertyValue("--titleBar-height")

@@ -15,7 +15,7 @@ import { setReaderOpen } from "../store/isReaderOpen";
 // import { setLoadingMangaPercent } from "../store/loadingMangaPercent";
 // import { setLoadingManga } from "../store/isLoadingManga";
 import { setLinkInReader } from "../store/linkInReader";
-import { newHistory } from "../store/history";
+import { newHistory, updateCurrentBookHistory } from "../store/history";
 import contextMenu, { setContextMenu } from "../store/contextMenu";
 import EPUBReaderSettings from "./EPubReaderSettings";
 import EPubReaderSideList from "./EPubReaderSideList";
@@ -275,7 +275,7 @@ const EPubReader = () => {
     // const bookInReader = useAppSelector((store) => store.bookInReader);
     const isLoadingManga = useAppSelector((store) => store.isLoadingManga);
     const isSettingOpen = useAppSelector((store) => store.isSettingOpen);
-    // const bookmarks = useAppSelector((store) => store.bookmarks);
+    const bookmarks = useAppSelector((store) => store.bookmarks);
     // const pageNumChangeDisabled = useAppSelector((store) => store.pageNumChangeDisabled);
     // const prevNextChapter = useAppSelector((store) => store.prevNextChapter);
 
@@ -299,6 +299,7 @@ const EPubReader = () => {
     const [currentChapterURL, setCurrentChapterURL] = useState("~");
     const [sideListWidth, setSideListWidth] = useState(appSettings.readerSettings.sideListWidth || 450);
     const [zenMode, setZenMode] = useState(false);
+    const [isBookmarked, setBookmarked] = useState(false);
     const [wasMaximized, setWasMaximized] = useState(false);
     // display this text then shortcuts clicked
     const [shortcutText, setshortcutText] = useState("");
@@ -313,9 +314,16 @@ const EPubReader = () => {
     const openPrevChapterRef = useRef<HTMLButtonElement>(null);
     const openNextChapterRef = useRef<HTMLButtonElement>(null);
     const shortcutTextRef = useRef<HTMLDivElement>(null);
+    const addToBookmarkRef = useRef<HTMLButtonElement>(null);
 
     useLayoutEffect(() => {
         if (appSettings.epubReaderSettings.loadOneChapter && readerRef.current) readerRef.current.scrollTop = 0;
+        if (tocData)
+            window.app.epubHistorySaveData = {
+                chapter: tocData.nav.find((e) => e.src === currentChapterURL)?.name || "~",
+                queryString: "",
+            };
+        dispatch(updateCurrentBookHistory());
     }, [currentChapterURL]);
 
     /**previous find in page resulting p */
@@ -393,6 +401,7 @@ const EPubReader = () => {
 
     const loadEPub = (link: string) => {
         link = window.path.normalize(link);
+        setBookmarked(bookmarks.map((e) => e.data.link).includes(link));
         const linkSplitted = link.split(window.path.sep).filter((e) => e !== "");
         const extractPath = window.path.join(
             window.electron.app.getPath("temp"),
@@ -539,22 +548,6 @@ const EPubReader = () => {
                                         });
                                     };
                                     getData("navMap > navPoint", depth_original);
-                                    const bookOpened: BookItem = {
-                                        author: tempTOCData.author,
-                                        link,
-                                        title: tempTOCData.title,
-                                        date: new Date().toLocaleString("en-UK", { hour12: true }),
-                                    };
-                                    dispatch(setBookInReader(bookOpened));
-                                    dispatch(
-                                        newHistory({
-                                            type: "book",
-                                            data: {
-                                                bookOpened,
-                                                elementQueryString: "section.main > div:nth-child(1)",
-                                            },
-                                        })
-                                    );
                                     // console.log(depth_real, depth_original, depth_original - depth_real + 1);
                                     // if (!changedDepth)
                                     tempTOCData.depth = depth_original - depth_real + 1;
@@ -563,7 +556,27 @@ const EPubReader = () => {
                                     });
                                     // // first with lowest depth
                                     // setCurrentChapterURL(tempTOCData.nav.find((e) => e.depth === 1)!.src);
-                                    setCurrentChapterURL(tempTOCData.nav[0].src);
+                                    let currentChapterURL =
+                                        tempTOCData.nav.find((e) => e.name === linkInReader.chapter)?.src || "";
+                                    if (!currentChapterURL) currentChapterURL = tempTOCData.nav[0].src;
+                                    const bookOpened: BookItem = {
+                                        author: tempTOCData.author,
+                                        link,
+                                        title: tempTOCData.title,
+                                        date: new Date().toLocaleString("en-UK", { hour12: true }),
+                                        chapter: tempTOCData.nav[0].name,
+                                    };
+                                    dispatch(setBookInReader(bookOpened));
+                                    dispatch(
+                                        newHistory({
+                                            type: "book",
+                                            data: {
+                                                bookOpened,
+                                                elementQueryString: "",
+                                            },
+                                        })
+                                    );
+                                    setCurrentChapterURL(currentChapterURL);
                                     settocData(tempTOCData);
                                 });
                             }
@@ -597,7 +610,7 @@ const EPubReader = () => {
         });
     };
 
-    const makeScrollPos = () => {
+    const makeScrollPos = (callback?: (queryString?: string) => any) => {
         if (mainRef.current) {
             let y = 50;
             let x = mainRef.current.offsetLeft + mainRef.current.offsetWidth / 3;
@@ -614,6 +627,12 @@ const EPubReader = () => {
             }
             if (elem) {
                 const fff = window.getCSSPath(elem);
+                if (tocData)
+                    window.app.epubHistorySaveData = {
+                        chapter: tocData.nav.find((e) => e.src === currentChapterURL)?.name || "",
+                        queryString: fff,
+                    };
+                if (callback) callback(fff);
                 setElemBeforeChange(fff);
             }
         }
@@ -763,6 +782,10 @@ const EPubReader = () => {
                     case shortcutkey.prevPage?.key2:
                         if (!e.repeat) openPrevChapterRef.current?.click();
                         break;
+                    case shortcutkey.bookmark?.key1:
+                    case shortcutkey.bookmark?.key2:
+                        if (!e.repeat) addToBookmarkRef.current?.click();
+                        break;
                     case shortcutkey.sizePlus?.key1:
                     case shortcutkey.sizePlus?.key2:
                         sizePlusRef.current?.click();
@@ -859,6 +882,7 @@ const EPubReader = () => {
     }, [shortcutText]);
 
     useLayoutEffect(() => {
+        window.app.linkInReader = linkInReader;
         loadEPub(linkInReader.link);
     }, [linkInReader]);
 
@@ -892,10 +916,10 @@ const EPubReader = () => {
                     openPrevChapterRef={openPrevChapterRef}
                     currentChapterURL={currentChapterURL}
                     setCurrentChapterURL={setCurrentChapterURL}
-                    // addToBookmarkRef={addToBookmarkRef}
-                    // setshortcutText={setshortcutText}
-                    // isBookmarked={isBookmarked}
-                    // setBookmarked={setBookmarked}
+                    addToBookmarkRef={addToBookmarkRef}
+                    setshortcutText={setshortcutText}
+                    isBookmarked={isBookmarked}
+                    setBookmarked={setBookmarked}
                     isSideListPinned={isSideListPinned}
                     setSideListPinned={setSideListPinned}
                     setSideListWidth={setSideListWidth}

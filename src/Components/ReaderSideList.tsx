@@ -12,7 +12,7 @@ import { useEffect, useLayoutEffect, useRef, useState } from "react";
 import ReaderSideListItem from "./ReaderSideListItem";
 import { useAppDispatch, useAppSelector } from "../store/hooks";
 import { setLinkInReader } from "../store/linkInReader";
-import { updateLastHistoryPage } from "../store/history";
+import { updateCurrentHistoryPage } from "../store/history";
 import { addBookmark, updateBookmark, removeBookmark } from "../store/bookmarks";
 import { setAppSettings } from "../store/appSettings";
 import { setPrevNextChapter } from "../store/prevNextChapter";
@@ -322,7 +322,14 @@ const ReaderSideList = ({
                             // todo: removing updateHistory page on chapter change in same manga
                             // dispatch(updateLastHistoryPage({ linkInReader: linkInReader.link }));
                             // todo : do i need this?
-                            dispatch(setLinkInReader({ type: "image", link: prevNextChapter.prev, page: 1 }));
+                            dispatch(
+                                setLinkInReader({
+                                    type: "image",
+                                    link: prevNextChapter.prev,
+                                    page: 1,
+                                    chapter: "",
+                                })
+                            );
                         }}
                     >
                         <FontAwesomeIcon icon={faArrowLeft} />
@@ -382,7 +389,14 @@ const ReaderSideList = ({
                         disabled={prevNextChapter.next === "~"}
                         clickAction={() => {
                             // dispatch(updateLastHistoryPage({ linkInReader: linkInReader.link }));
-                            dispatch(setLinkInReader({ type: "image", link: prevNextChapter.next, page: 1 }));
+                            dispatch(
+                                setLinkInReader({
+                                    type: "image",
+                                    link: prevNextChapter.next,
+                                    page: 1,
+                                    chapter: "",
+                                })
+                            );
                         }}
                     >
                         <FontAwesomeIcon icon={faArrowRight} />

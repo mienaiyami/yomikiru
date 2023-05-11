@@ -129,16 +129,36 @@ const ContextMenu = () => {
                     <li
                         role="menuitem"
                         onMouseUp={() => {
-                            if (contextData?.hasLink?.chapterItem?.item) {
-                                const newItem: ChapterItem = {
-                                    mangaName: contextData?.hasLink?.chapterItem?.item?.mangaName,
-                                    chapterName: contextData?.hasLink?.chapterItem?.item?.chapterName,
-                                    pages: contextData?.hasLink?.chapterItem?.item?.pages,
-                                    page: contextData?.hasLink?.chapterItem?.item?.page,
-                                    link: contextData?.hasLink?.link || "",
-                                    date: new Date().toLocaleString("en-UK", { hour12: true }),
-                                };
-                                dispatch(addBookmark(newItem));
+                            const item = contextData?.hasLink?.chapterItem?.item;
+                            if (item) {
+                                if (item.type === "image") {
+                                    const newItem: Manga_BookItem = {
+                                        type: "image",
+                                        data: {
+                                            mangaName: item.data.mangaName,
+                                            chapterName: item.data.chapterName,
+                                            pages: item.data.pages,
+                                            page: item.data.page,
+                                            link: contextData?.hasLink?.link || "",
+                                            date: new Date().toLocaleString("en-UK", { hour12: true }),
+                                        },
+                                    };
+                                    dispatch(addBookmark(newItem));
+                                }
+                                if (item.type === "book") {
+                                    const newItem: Manga_BookItem = {
+                                        type: "book",
+                                        data: {
+                                            author: item.data.author,
+                                            link: item.data.link,
+                                            title: item.data.title,
+                                            chapter: item.data.chapter || "",
+                                            elementQueryString: item.data.elementQueryString || "",
+                                            date: new Date().toLocaleString("en-UK", { hour12: true }),
+                                        },
+                                    };
+                                    dispatch(addBookmark(newItem));
+                                }
                             }
                         }}
                     >
