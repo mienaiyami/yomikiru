@@ -193,8 +193,8 @@ const HTMLPart = memo(
             );
             if (lastIndex < 0) lastIndex = Number.MAX_SAFE_INTEGER;
             linksInBetween.push(...displayDataWithOrder.slice(startIndex, lastIndex));
-            console.log(currentChapterURL);
-            console.log(tocData.nav.map((e) => e.src.split("\\").pop()));
+            // console.log(currentChapterURL);
+            // console.log(tocData.nav.map((e) => e.src.split("\\").pop()));
             // console.log(currentChapterURL, afterCurrentIndex, startIndex, tocData.nav, linksInBetween);
         }
         if (!tocData) return <p>Error/Loading</p>;

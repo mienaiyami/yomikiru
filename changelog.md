@@ -16,20 +16,20 @@ Linux distribution currently not available as direct download but can be build e
 ## Added
 
 - EPub:
-  - Custom text, link, background color from reader settings.
-  - Option to invert and blend image.
-  - Collapse-able Tabs in reader settings.
-- Download Progress window.
+  - progress percent and control.
+  - history and bookmark support (use bookmark for more accuracy).
+- search input for bookmarks and history (enable from settings -> other settings).
 
 ## Changed
 
-- UI Enhancements.
-- Disable reader shortcuts when settings is open.
+- UI Enhancements
+  - Moved Image count to open button on locations tabs.
+  - misc.
 
 
-## Fixed
+<!-- ## Fixed
 
-- fixed #125,123,#117,#126.
+- fixed #125,123,#117,#126. -->
 
 ---
 
