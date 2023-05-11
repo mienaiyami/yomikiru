@@ -24,7 +24,7 @@ import { setBookInReader } from "./store/bookInReader";
 interface IAppContext {
     pageNumberInputRef: React.RefObject<HTMLInputElement>;
     bookProgressRef: React.RefObject<HTMLInputElement>;
-    openInReader: (link: string, page_or_chapterName?: number | string) => void;
+    openInReader: (link: string, page_or_chapterName?: number | string, elementQueryString?: string) => void;
     // addNewBookmark: (newBk: ChapterItem) => Promise<Electron.MessageBoxReturnValue> | undefined;
     closeReader: () => void;
     // updateLastHistoryPageNumber: () => void;
@@ -177,7 +177,7 @@ const App = (): ReactElement => {
      * @param link link of folder containing images to be opened in reader.
      * @param page_or_chapterName pagenumber in case of manga and chapter name in case of epub
      */
-    const openInReader = (link: string, page_or_chapterName?: number | string) => {
+    const openInReader = (link: string, page_or_chapterName?: number | string, elementQueryString?: string) => {
         link = window.path.normalize(link);
         if (link === linkInReader.link) return;
         if (link.toLowerCase().includes(".epub")) {
@@ -192,6 +192,7 @@ const App = (): ReactElement => {
                     link: link,
                     page: 0,
                     chapter: page_or_chapterName as string,
+                    queryStr: elementQueryString,
                 })
             );
         } else

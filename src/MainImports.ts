@@ -282,6 +282,7 @@ declare global {
             keyRepeated: boolean;
 
             // todo: fix
+            // todo: make better way to do this
             /**
              * why did i add this? bcoz fking linkInReader state is showing initial only in App.tsx
              */
@@ -290,6 +291,10 @@ declare global {
                 link: string;
                 page: number;
                 chapter: string;
+                /**
+                 * elem query string for epub auto scroll
+                 */
+                queryStr?: string;
             };
 
             // to remove later

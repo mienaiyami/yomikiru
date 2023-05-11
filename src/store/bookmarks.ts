@@ -62,7 +62,7 @@ const bookmarks = createSlice({
                 state.unshift(...action.payload);
             } else {
                 const newBk = action.payload;
-                
+
                 const existingBookmark = state.findIndex((e) => e.data.link === newBk.data.link);
                 if (existingBookmark > -1) {
                     // if (state[existingBookmark].page === newBk.page){
@@ -96,7 +96,6 @@ const bookmarks = createSlice({
         },
         updateEPUBBookmark: (state, action: PayloadAction<{ link: string }>) => {
             const index = state.findIndex((e) => e.data.link === action.payload.link);
-            console.log(window.app.epubHistorySaveData);
             if (index > -1 && window.app.epubHistorySaveData) {
                 (state[index].data as BookBookmarkItem).chapter = window.app.epubHistorySaveData.chapter;
                 (state[index].data as BookBookmarkItem).elementQueryString =

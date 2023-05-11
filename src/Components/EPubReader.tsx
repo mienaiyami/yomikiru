@@ -142,15 +142,18 @@ const HTMLPart = memo(
         currentChapterURL,
         loadOneChapter,
         tocData,
+        bookmarkedElem,
     }: {
         displayOrder: string[];
         displayData: DisplayData[];
         loadOneChapter: boolean;
         currentChapterURL: string;
         tocData: TOCData | null;
+        bookmarkedElem: string;
         epubLinkClick: (ev: MouseEvent | React.MouseEvent<HTMLAnchorElement, MouseEvent>) => void;
     }) => {
         const dispatch = useAppDispatch();
+        const [rendered, setRendered] = useState(false);
         const onContextMenu = (ev: MouseEvent) => {
             dispatch(
                 setContextMenu({
@@ -222,7 +225,12 @@ const HTMLPart = memo(
                                 node.querySelectorAll("img").forEach((e) => {
                                     e.oncontextmenu = onContextMenu;
                                 });
-                                if (
+                                if (!rendered && bookmarkedElem) {
+                                    setTimeout(() => {
+                                        const elem = node.querySelector(bookmarkedElem);
+                                        if (elem) elem.scrollIntoView();
+                                    }, 200);
+                                } else if (
                                     tocData.nav[0].src !== currentChapterURL &&
                                     currentChapterURL.includes("#") &&
                                     currentChapterURL.includes(url)
@@ -234,6 +242,7 @@ const HTMLPart = memo(
                                         if (el) el.scrollIntoView();
                                     }, 100);
                                 }
+                                setRendered(true);
                             }
                         }}
                         key={"key-" + i}
@@ -305,6 +314,8 @@ const EPubReader = () => {
     const [shortcutText, setshortcutText] = useState("");
     // [0-100]
     const [bookProgress, setBookProgress] = useState(0);
+    // to auto scroll on opening bookmark
+    const [bookmarkedElem, setBookmarkedElem] = useState("");
 
     const readerRef = useRef<HTMLDivElement>(null);
     const mainRef = useRef<HTMLSelectElement>(null);
@@ -558,6 +569,7 @@ const EPubReader = () => {
                                     // setCurrentChapterURL(tempTOCData.nav.find((e) => e.depth === 1)!.src);
                                     let currentChapterURL =
                                         tempTOCData.nav.find((e) => e.name === linkInReader.chapter)?.src || "";
+                                    if (linkInReader.queryStr) setBookmarkedElem(linkInReader.queryStr);
                                     if (!currentChapterURL) currentChapterURL = tempTOCData.nav[0].src;
                                     const bookOpened: BookItem = {
                                         author: tempTOCData.author,
@@ -1006,6 +1018,7 @@ const EPubReader = () => {
                     displayData={displayData}
                     epubLinkClick={epubLinkClick}
                     tocData={tocData || null}
+                    bookmarkedElem={bookmarkedElem}
                 />
             </section>
         </div>
