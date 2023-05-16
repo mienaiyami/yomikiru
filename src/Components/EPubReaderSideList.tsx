@@ -273,7 +273,7 @@ const EPubReaderSideList = ({
                                         title: "Warning",
                                         message:
                                             "Remove - Remove Bookmark\n" +
-                                            "Replace - Replace existing bookmark with current page number",
+                                            "Replace - Replace existing bookmark with current location",
                                         noOption: false,
                                         buttons: ["Cancel", "Remove", "Replace"],
                                         defaultId: 0,

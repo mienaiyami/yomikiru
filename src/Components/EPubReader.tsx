@@ -426,6 +426,8 @@ const EPubReader = () => {
             `yomikiru-temp-EPub-${linkSplitted[linkSplitted.length - 1]}-${window.crypto.randomUUID()}`
         );
         console.log("extracting ", link, " at ", extractPath);
+        console.time("unzipping");
+        console.timeLog("unzipping");
         window.crossZip.unzip(link, extractPath, (err) => {
             // dispatch(setLoadingMangaPercent(50));
             if (err) {
@@ -444,7 +446,8 @@ const EPubReader = () => {
                     log: false,
                 });
             }
-            console.log("done extraxting epub file.");
+            console.log("done extracting epub file.");
+            console.timeLog("unzipping");
             const parser = new DOMParser();
             const META_INF_TEXT = window.fs.readFileSync(
                 window.path.join(extractPath, "META-INF/container.xml"),
@@ -623,6 +626,7 @@ const EPubReader = () => {
                         // dispatch(setLoadingManga(false));
 
                         dispatch(setReaderOpen(true));
+                        console.timeEnd("unzipping");
                     }
                 }
             }

@@ -5,3 +5,4 @@ packages
 out
 .vscode
 yarn-error.log
+yarn.lock

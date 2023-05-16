@@ -1,12 +1,12 @@
 import { app, dialog, getCurrentWindow, clipboard, nativeImage, shell } from "@electron/remote";
 import { ipcRenderer, webFrame } from "electron";
+/*//! i know its dangerous but its offline app and i was unable to get BrowserWindow to work
+  //! in renderer with contextBridge from preload
+ */
 import crossZip from "cross-zip";
 import chokidar from "chokidar";
 import log from "electron-log";
 log.transports.file.resolvePath = () => path.join(app.getPath("userData"), "logs/renderer.log");
-/*//! i know its dangerous but its offline app and i was unable to get BrowserWindow to work
-  //! in renderer with contextBridge from preload
- */
 import path from "path";
 import fs from "fs";
 import themeJSON from "./themeInit.json";

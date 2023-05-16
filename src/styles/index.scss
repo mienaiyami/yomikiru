@@ -195,6 +195,44 @@ body {
     input[type="range"] {
         accent-color: var(--icon-color);
     }
+
+    input[type="text"],
+    input[type="number"] {
+        background: var(--text-input-bg);
+        overflow: scroll;
+        cursor: text;
+        color: var(--font-color);
+        font-family: "roboto";
+        outline: none;
+        border-radius: 3px;
+        width: 100%;
+        border: none;
+        font-size: 20px;
+        padding: 10px;
+
+        &:focus {
+            box-shadow: var(--text-input-bg-focus) 0 0 0px 2px;
+            // background-color: var(--text-input-bg-focus);
+        }
+    }
+    input[type="color"] {
+        appearance: none;
+        border: none;
+        border-radius: 6px;
+
+        &:disabled {
+            filter: opacity(0.3) sepia(1);
+        }
+
+        &::-webkit-color-swatch-wrapper {
+            padding: 0;
+        }
+
+        &::-webkit-color-swatch {
+            border: 2px solid var(--text-input-bg);
+            border-radius: 5px;
+        }
+    }
     user-select: none;
     overflow: hidden;
 
@@ -519,25 +557,6 @@ body {
             }
         }
 
-        input[type="text"],
-        input[type="number"] {
-            background: var(--text-input-bg);
-            overflow: scroll;
-            cursor: text;
-            color: var(--font-color);
-            font-family: "roboto";
-            outline: none;
-            border-radius: 3px;
-            width: 100%;
-            border: none;
-            font-size: 20px;
-            padding: 10px;
-
-            &:focus {
-                box-shadow: var(--text-input-bg-focus) 0 0 0px 2px;
-                // background-color: var(--text-input-bg-focus);
-            }
-        }
         .listCont {
             .location-cont {
                 position: relative;
@@ -1077,6 +1096,16 @@ body {
 
                     tr {
                         box-shadow: inset 0 0 0px 1px var(--divider-color);
+                        &:first-child {
+                            border-radius: 8px 8px 0 0;
+                            box-shadow: inset 0 0 0px 1px var(--divider-color),
+                                inset 0 1px 0px 1px var(--divider-color);
+                        }
+                        &:last-child {
+                            border-radius: 0 0 8px 8px;
+                            box-shadow: inset 0 0 0px 1px var(--divider-color),
+                                inset 0 -1px 0px 1px var(--divider-color);
+                        }
                         // td:first-child {
                         //     text-align: end;
                         // }
@@ -1111,18 +1140,8 @@ body {
                         }
 
                         input[type="color"] {
-                            appearance: none;
-                            border: none;
                             width: 100%;
                             height: 100%;
-
-                            &::-webkit-color-swatch-wrapper {
-                                padding: 0;
-                            }
-
-                            ::-webkit-color-swatch {
-                                border: none;
-                            }
                         }
 
                         .resetBtn {
