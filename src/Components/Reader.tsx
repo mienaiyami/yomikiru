@@ -1,4 +1,4 @@
-import { useContext, useEffect, useLayoutEffect, useRef, useState } from "react";
+import { useCallback, useContext, useEffect, useLayoutEffect, useRef, useState } from "react";
 import { AppContext } from "../App";
 import ReaderSideList from "./ReaderSideList";
 import ReaderSettings from "./ReaderSettings";
@@ -405,11 +405,11 @@ const Reader = () => {
             });
         };
     }, [isSideListPinned, appSettings, shortcuts, isLoadingManga, isSettingOpen]);
-    const makeScrollPos = () => {
+    const makeScrollPos = useCallback(() => {
         if (isSideListPinned && imgContRef.current)
             return setScrollPosPercent(imgContRef.current.scrollTop / imgContRef.current.scrollHeight);
         if (readerRef.current) setScrollPosPercent(readerRef.current.scrollTop / readerRef.current.scrollHeight);
-    };
+    }, [isSideListPinned, imgContRef.current, readerRef.current]);
     const changePageNumber = () => {
         if (!pageNumChangeDisabled) {
             const elem = document.elementFromPoint(
@@ -957,13 +957,11 @@ const Reader = () => {
                     Nav to page number
                 </button>
             </div>
-            <div
-                className={
-                    "zenModePageNumber " + (appSettings.readerSettings.showPageNumberInZenMode ? "show" : "")
-                }
-            >
-                {currentPageNumber}/{mangaInReader?.pages}
-            </div>
+            {appSettings.readerSettings.showPageNumberInZenMode && (
+                <div className={"zenModePageNumber " + "show"}>
+                    {currentPageNumber}/{mangaInReader?.pages}
+                </div>
+            )}
             <ChapterChanger />
 
             <div className="shortcutClicked faded" ref={shortcutTextRef}>

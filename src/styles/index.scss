@@ -218,7 +218,7 @@ body {
     input[type="color"] {
         appearance: none;
         border: none;
-        border-radius: 6px;
+        border-radius: 4px;
 
         &:disabled {
             filter: opacity(0.3) sepia(1);
@@ -229,8 +229,8 @@ body {
         }
 
         &::-webkit-color-swatch {
-            border: 2px solid var(--text-input-bg);
-            border-radius: 5px;
+            border: 1px solid var(--text-input-bg);
+            border-radius: 3px;
         }
     }
     user-select: none;
@@ -353,6 +353,10 @@ body {
             font-size: 18px;
         }
 
+        input {
+            border-radius: 0;
+            padding: 0;
+        }
         .homeBtns {
             position: absolute;
             left: 0;
@@ -1087,6 +1091,7 @@ body {
                         width: 50%;
                         padding: 10px 10px;
                         display: inline-flex;
+                        align-items: center;
                         gap: 10px;
 
                         input {

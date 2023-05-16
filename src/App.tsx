@@ -141,7 +141,7 @@ const App = (): ReactElement => {
         if ([".zip", ".cbz"].includes(window.path.extname(link).toLowerCase())) {
             let tempExtractPath = window.path.join(
                 window.electron.app.getPath("temp"),
-                `yomikiru-tempImages-${linkSplitted[linkSplitted.length - 1]}-${window.app.randomString(10)}`
+                `yomikiru-temp-Images-${linkSplitted[linkSplitted.length - 1]}-${window.app.randomString(10)}`
             );
             if (window.fs.existsSync(tempExtractPath)) {
                 tempExtractPath += "-1";

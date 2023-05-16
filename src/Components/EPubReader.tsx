@@ -168,7 +168,6 @@ const HTMLPart = memo(
                 })
             );
         };
-
         const linksInBetween: DisplayData[] = [];
         const displayDataWithOrder = useMemo(
             () => displayOrder.map((e) => displayData.find((a) => a.id === e)!),
@@ -633,71 +632,77 @@ const EPubReader = () => {
         });
     };
 
-    const makeScrollPos = (callback?: (queryString?: string) => any) => {
-        if (mainRef.current) {
-            let y = 50;
-            let x = mainRef.current.offsetLeft + mainRef.current.offsetWidth / 3;
-            let elem: Element | null = null;
-            const sectionMain = document.querySelector("#EPubReader > section");
-            while (x < mainRef.current.offsetLeft + mainRef.current.offsetWidth / 1.3) {
-                if (y > window.innerHeight / 2) {
-                    y = 50;
-                    x += 20;
+    const makeScrollPos = useCallback(
+        (callback?: (queryString?: string) => any) => {
+            if (mainRef.current) {
+                let y = 50;
+                let x = mainRef.current.offsetLeft + mainRef.current.offsetWidth / 3;
+                let elem: Element | null = null;
+                const sectionMain = document.querySelector("#EPubReader > section");
+                while (x < mainRef.current.offsetLeft + mainRef.current.offsetWidth / 1.3) {
+                    if (y > window.innerHeight / 2) {
+                        y = 50;
+                        x += 20;
+                    }
+                    elem = document.elementFromPoint(x, y);
+                    if (elem) if (elem !== sectionMain && elem.parentElement !== sectionMain) break;
+                    y += 10;
                 }
-                elem = document.elementFromPoint(x, y);
-                if (elem) if (elem !== sectionMain && elem.parentElement !== sectionMain) break;
-                y += 10;
+                if (elem) {
+                    const fff = window.getCSSPath(elem);
+                    if (tocData)
+                        window.app.epubHistorySaveData = {
+                            chapter: tocData.nav.find((e) => e.src === currentChapterURL)?.name || "",
+                            queryString: fff,
+                        };
+                    if (callback) callback(fff);
+                    setElemBeforeChange(fff);
+                }
             }
-            if (elem) {
-                const fff = window.getCSSPath(elem);
-                if (tocData)
-                    window.app.epubHistorySaveData = {
-                        chapter: tocData.nav.find((e) => e.src === currentChapterURL)?.name || "",
-                        queryString: fff,
-                    };
-                if (callback) callback(fff);
-                setElemBeforeChange(fff);
-            }
-        }
-    };
+        },
+        [mainRef.current]
+    );
 
-    const findInPage = (str: string, forward = true) => {
-        if (str === "") {
-            if (findInPageRefs.current) {
-                findInPageRefs.current.prevResult?.classList.remove("findInPage");
+    const findInPage = useCallback(
+        (str: string, forward = true) => {
+            if (str === "") {
+                if (findInPageRefs.current) {
+                    findInPageRefs.current.prevResult?.classList.remove("findInPage");
+                }
+                findInPageRefs.current = null;
+                setFindInPageIndex(0);
+                return;
             }
-            findInPageRefs.current = null;
-            setFindInPageIndex(0);
-            return;
-        }
-        str = str.toLowerCase();
-        let index = findInPageIndex + (forward ? 0 : -2);
-        if (findInPageRefs.current && findInPageRefs.current.prevStr !== str) index = 0;
-        if (mainRef.current) {
-            const paras = [...mainRef.current.querySelectorAll("p")].filter((e) =>
-                e.textContent?.toLowerCase().includes(str)
-            );
-            if (index < 0) index = paras.length - 1;
-            if (index >= paras.length) index = 0;
-            const para = paras[index];
-            if (para) {
-                findInPageRefs.current?.prevResult?.classList.remove("findInPage");
-                para.classList.add("findInPage");
-                para.scrollIntoView({
-                    behavior: "auto",
-                    block: "start",
-                });
-                findInPageRefs.current = {
-                    prevResult: para,
-                    prevStr: str,
-                };
-                // index+=forward ? 1 : 0;
-                // if (index === paras.length - 1) setFindInPageIndex(0);
-                // else
-                setFindInPageIndex(index + 1);
+            str = str.toLowerCase();
+            let index = findInPageIndex + (forward ? 0 : -2);
+            if (findInPageRefs.current && findInPageRefs.current.prevStr !== str) index = 0;
+            if (mainRef.current) {
+                const paras = [...mainRef.current.querySelectorAll("p")].filter((e) =>
+                    e.textContent?.toLowerCase().includes(str)
+                );
+                if (index < 0) index = paras.length - 1;
+                if (index >= paras.length) index = 0;
+                const para = paras[index];
+                if (para) {
+                    findInPageRefs.current?.prevResult?.classList.remove("findInPage");
+                    para.classList.add("findInPage");
+                    para.scrollIntoView({
+                        behavior: "auto",
+                        block: "start",
+                    });
+                    findInPageRefs.current = {
+                        prevResult: para,
+                        prevStr: str,
+                    };
+                    // index+=forward ? 1 : 0;
+                    // if (index === paras.length - 1) setFindInPageIndex(0);
+                    // else
+                    setFindInPageIndex(index + 1);
+                }
             }
-        }
-    };
+        },
+        [findInPageRefs.current, mainRef.current, findInPageIndex]
+    );
 
     const updateProgress = () => {
         let progress = 0;
@@ -950,22 +955,21 @@ const EPubReader = () => {
                     findInPage={findInPage}
                 />
             )}
-
-            <div
-                className={
-                    "zenModePageNumber " + (appSettings.epubReaderSettings.showProgressInZenMode ? "show" : "")
-                }
-                style={{
-                    backgroundColor: appSettings.epubReaderSettings.useDefault_progressBackgroundColor
-                        ? "var(--body-bg-color)"
-                        : appSettings.epubReaderSettings.progressBackgroundColor,
-                    color: appSettings.epubReaderSettings.useDefault_fontColor
-                        ? "currentColor"
-                        : appSettings.epubReaderSettings.fontColor,
-                }}
-            >
-                {bookProgress}%
-            </div>
+            {appSettings.epubReaderSettings.showProgressInZenMode && (
+                <div
+                    className={"zenModePageNumber " + " show"}
+                    style={{
+                        backgroundColor: appSettings.epubReaderSettings.useDefault_progressBackgroundColor
+                            ? "var(--body-bg-color)"
+                            : appSettings.epubReaderSettings.progressBackgroundColor,
+                        color: appSettings.epubReaderSettings.useDefault_fontColor
+                            ? "currentColor"
+                            : appSettings.epubReaderSettings.fontColor,
+                    }}
+                >
+                    {bookProgress}%
+                </div>
+            )}
             <div className="shortcutClicked faded" ref={shortcutTextRef}>
                 {shortcutText}
             </div>
