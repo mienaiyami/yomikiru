@@ -180,6 +180,7 @@ const App = (): ReactElement => {
      */
     const openInReader = (link: string, page_or_chapterName?: number | string, elementQueryString?: string) => {
         link = window.path.normalize(link);
+        window.electron.webFrame.clearCache();
         if (link === linkInReader.link) return;
         if (link.toLowerCase().includes(".epub")) {
             dispatch(setUnzipping(true));
@@ -249,6 +250,9 @@ const App = (): ReactElement => {
 
         document.body.classList.remove("zenMode");
         if (document.fullscreenElement) document.exitFullscreen();
+        setTimeout(() => {
+            window.electron.webFrame.clearCache();
+        }, 1500);
     };
 
     const openInNewWindow = (link: string) => {

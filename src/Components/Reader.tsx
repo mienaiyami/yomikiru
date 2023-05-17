@@ -500,6 +500,8 @@ const Reader = () => {
         setImageWidthContainer([]);
         setImageElementsIndex([]);
         setImageRowCount(0);
+        setImageDecodeQueue([]);
+        setCurrentlyDecoding(false);
         setBookmarked(bookmarks.map((e) => e.data.link).includes(link));
         setChapterChangerDisplay(false);
         const linksplitted = link.split(window.path.sep).filter((e) => e !== "");
@@ -526,7 +528,7 @@ const Reader = () => {
         dispatch(setReaderOpen(true));
     };
     useLayoutEffect(() => {
-        window.electron.webFrame.clearCache();
+        // window.electron.webFrame.clearCache();
         images.forEach((e, i) => {
             const img = document.createElement("img");
 
