@@ -640,18 +640,20 @@ body {
                                     }
                                     .page:has(code.nonFolder) {
                                         .nonFolder {
-                                            margin-right: 2.6em;
+                                            // margin-right: 2.6em;
+                                            margin-right: 0.6em;
                                         }
                                         opacity: 1;
                                     }
                                     .page {
-                                        margin-left: auto;
+                                        // margin-left: auto;
                                         white-space: nowrap;
-                                        display: var(--show-page-num-on-home);
+                                        display: flex;
+                                        // display: var(--show-page-num-on-home);
                                         gap: 5px;
-                                        .num {
-                                            min-width: 2.2em;
-                                        }
+                                        // .num {
+                                        //     min-width: 2.2em;
+                                        // }
                                     }
                                 }
                             }
@@ -797,7 +799,7 @@ body {
             height: 100%;
             // padding: 5px 20px;
 
-            --show-page-num-on-home: flex;
+            // --show-page-num-on-home: flex;
 
             .contTab {
                 width: 100%;

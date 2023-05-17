@@ -303,7 +303,7 @@ const Main = (): ReactElement => {
                             : appSettings.showTabs.bookmark && !appSettings.showTabs.history
                             ? "calc(calc(100vw - calc(var(--divider-width) * 2)) / 2) var(--divider-width) calc(calc(100vw - calc(var(--divider-width) * 2)) / 2) var(--divider-width)"
                             : "calc(calc(100vw - calc(var(--divider-width) * 2))) var(--divider-width) var(--divider-width)",
-                    "--show-page-num-on-home": appSettings.showPageNumOnHome ? "flex" : "none",
+                    // "--show-page-num-on-home": appSettings.showPageNumOnHome ? "flex" : "none",
                 }}
             >
                 <LocationsTab

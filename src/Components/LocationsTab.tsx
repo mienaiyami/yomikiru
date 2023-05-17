@@ -48,7 +48,10 @@ const LocationsTab = (): ReactElement => {
                 );
                 const dirNames = files
                     .reduce((arr: LocationData[], cur) => {
-                        if (window.fs.existsSync(window.path.join(link, cur))) {
+                        if (
+                            window.fs.existsSync(window.path.join(link, cur)) &&
+                            window.path.extname(cur).toLowerCase() !== ".sys"
+                        ) {
                             if (
                                 window.fs.lstatSync(window.path.join(link, cur)).isDirectory() ||
                                 [".zip", ".cbz", ".epub"].includes(window.path.extname(cur).toLowerCase())

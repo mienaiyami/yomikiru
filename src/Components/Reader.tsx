@@ -202,6 +202,7 @@ const Reader = () => {
         const registerShortcuts = (e: KeyboardEvent) => {
             // /&& document.activeElement!.tagName === "BODY"
             window.app.keyRepeated = e.repeat;
+            if (e.key === " ") e.preventDefault();
             if (!isSettingOpen && window.app.isReaderOpen && !e.repeat && !isLoadingManga && !e.ctrlKey) {
                 switch (e.key) {
                     case shortcutkey.navToPage?.key1:
@@ -249,14 +250,12 @@ const Reader = () => {
                         e.shiftKey &&
                         (e.key === shortcutkey.largeScroll?.key1 || e.key === shortcutkey.largeScroll?.key2)
                     ) {
-                        e.preventDefault();
                         scrollReader(0 - appSettings.readerSettings.scrollSpeedB);
                         return;
                     }
                     switch (e.key) {
                         case shortcutkey.largeScroll?.key1:
                         case shortcutkey.largeScroll?.key2:
-                            e.preventDefault();
                             scrollReader(appSettings.readerSettings.scrollSpeedB);
 
                             break;

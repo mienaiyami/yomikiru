@@ -52,7 +52,7 @@ export const settingValidatorData = {
     openOnDblClick: true,
     // disableCachingCanvas: false,
     recordChapterRead: true,
-    showPageNumOnHome: true,
+    // showPageNumOnHome: true,
     disableListNumbering: false,
     /**
      * show search input for history and bookmark
@@ -776,6 +776,7 @@ window.dialog = {
             message: message,
             detail: detail,
             buttons: noOption ? [] : buttons,
+
             defaultId,
         });
     },
@@ -849,7 +850,7 @@ const defaultSettings: AppSettings = {
     openOnDblClick: true,
     // disableCachingCanvas: false,
     recordChapterRead: true,
-    showPageNumOnHome: true,
+    // showPageNumOnHome: true,
     disableListNumbering: false,
     showSearch: false,
     readerSettings: {

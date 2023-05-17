@@ -433,7 +433,7 @@ const Settings = (): ReactElement => {
                                         window.dialog
                                             .warn({
                                                 title: "Delete BookMarks",
-                                                message: "are you sure you want to remove bookmark?",
+                                                message: "Are you sure you want to clear bookmarks?",
                                                 noOption: false,
                                             })
                                             .then(({ response }) => {
@@ -442,10 +442,10 @@ const Settings = (): ReactElement => {
                                                 if (response === 0) {
                                                     window.dialog
                                                         .warn({
-                                                            title: "Delete BookMarks",
+                                                            title: "Delete Bookmarks",
                                                             noOption: false,
                                                             message:
-                                                                "are you really sure you want to remove bookmark?\nThis process is irreversible.",
+                                                                "Are you really sure you want to clear bookmarks?\nThis process is irreversible.",
                                                         })
                                                         .then((res) => {
                                                             if (res.response === 1) return;
@@ -681,7 +681,7 @@ const Settings = (): ReactElement => {
                                 <code>vertical scroll</code> Reading mode.
                             </p>
                         </label>
-                        <label className={appSettings.showPageNumOnHome ? "selected" : ""}>
+                        {/* <label className={appSettings.showPageNumOnHome ? "selected" : ""}>
                             <input
                                 type="checkbox"
                                 checked={appSettings.showPageNumOnHome}
@@ -690,7 +690,7 @@ const Settings = (): ReactElement => {
                                 }}
                             />
                             <p>Show page number on in bookmark/history tab on home page.</p>
-                        </label>
+                        </label> */}
                         <label className={appSettings.disableListNumbering ? "selected" : ""}>
                             <input
                                 type="checkbox"
@@ -745,17 +745,48 @@ const Settings = (): ReactElement => {
                                 window.dialog
                                     .warn({
                                         title: "Reset themes",
-                                        message: "This will delete all themes. Continue?",
+                                        message: "This will delete all Themes. Continue?",
                                         noOption: false,
                                     })
                                     .then(({ response }) => {
                                         if (response == undefined) return;
                                         if (response === 1) return;
-                                        if (response === 0) dispatch(resetAllTheme());
+                                        if (response === 0) {
+                                            window.dialog
+                                                .warn({
+                                                    title: "Reset Settings",
+                                                    noOption: false,
+                                                    message:
+                                                        "Are you really sure you want to delete all Themes?\nThis process is irreversible.",
+                                                })
+                                                .then((res) => {
+                                                    if (res.response === 1) return;
+                                                    dispatch(resetAllTheme());
+                                                });
+                                        }
                                     });
                             }}
                         >
                             Reset all themes
+                        </button>
+                        <button
+                            onClick={() => {
+                                window.dialog
+                                    .confirm({
+                                        title: "Confirm",
+                                        message: "Reset Shortcuts to default?",
+                                        noOption: false,
+                                    })
+                                    .then((res) => {
+                                        if (res.response === 0) {
+                                            dispatch(resetShortcuts());
+                                        }
+                                    });
+                            }}
+                            // title="Reset"
+                        >
+                            {/* <FontAwesomeIcon icon={faSync} /> */}
+                            Reset Shortcuts
                         </button>
                         <button
                             onClick={() => {
@@ -980,27 +1011,7 @@ const Settings = (): ReactElement => {
                         </li>
                     </ul>
                 </div>
-                <h1>
-                    Shortcut Keys{" "}
-                    <button
-                        onClick={() => {
-                            window.dialog
-                                .confirm({
-                                    title: "Confirm",
-                                    message: "Reset Shortcuts to default?",
-                                    noOption: false,
-                                })
-                                .then((res) => {
-                                    if (res.response === 0) {
-                                        dispatch(resetShortcuts());
-                                    }
-                                });
-                        }}
-                        title="Reset"
-                    >
-                        <FontAwesomeIcon icon={faSync} />
-                    </button>
-                </h1>
+                <h1>Shortcut Keys</h1>
                 <div className="shortcutKey">
                     <ul>
                         <li>

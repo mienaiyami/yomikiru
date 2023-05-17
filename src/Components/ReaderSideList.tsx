@@ -104,53 +104,54 @@ const ReaderSideList = memo(
                     let responseCompleted = 0;
                     files.forEach((e) => {
                         const path = window.path.join(dir, e);
-                        if (window.fs.lstatSync(path).isDirectory()) {
-                            validFile++;
-                            window.fs.promises
-                                .readdir(path)
-                                .then((data) => {
+                        if (window.path.extname(e).toLowerCase() !== ".sys")
+                            if (window.fs.lstatSync(path).isDirectory()) {
+                                validFile++;
+                                window.fs.promises
+                                    .readdir(path)
+                                    .then((data) => {
+                                        responseCompleted++;
+                                        data = data.filter((e) =>
+                                            window.supportedFormats.includes(window.path.extname(e).toLowerCase())
+                                        );
+                                        if (data.length > 0) {
+                                            listData.push({
+                                                name: window.app.replaceExtension(e),
+                                                pages: data.length,
+                                                link: path,
+                                            });
+                                        }
+                                        if (responseCompleted >= validFile) {
+                                            setChapterData(
+                                                listData.sort((a, b) => window.app.betterSortOrder(a.name, b.name))
+                                            );
+                                        }
+                                    })
+                                    .catch((err) => {
+                                        window.logger.error(err);
+                                        responseCompleted++;
+                                        if (responseCompleted >= validFile) {
+                                            setChapterData(
+                                                listData.sort((a, b) => window.app.betterSortOrder(a.name, b.name))
+                                            );
+                                        }
+                                    });
+                            } else if ([".zip", ".cbz"].includes(window.path.extname(path).toLowerCase())) {
+                                validFile++;
+                                setTimeout(() => {
                                     responseCompleted++;
-                                    data = data.filter((e) =>
-                                        window.supportedFormats.includes(window.path.extname(e).toLowerCase())
-                                    );
-                                    if (data.length > 0) {
-                                        listData.push({
-                                            name: window.app.replaceExtension(e),
-                                            pages: data.length,
-                                            link: path,
-                                        });
-                                    }
+                                    listData.push({
+                                        name: window.app.replaceExtension(e),
+                                        pages: 0,
+                                        link: path,
+                                    });
                                     if (responseCompleted >= validFile) {
                                         setChapterData(
                                             listData.sort((a, b) => window.app.betterSortOrder(a.name, b.name))
                                         );
                                     }
-                                })
-                                .catch((err) => {
-                                    window.logger.error(err);
-                                    responseCompleted++;
-                                    if (responseCompleted >= validFile) {
-                                        setChapterData(
-                                            listData.sort((a, b) => window.app.betterSortOrder(a.name, b.name))
-                                        );
-                                    }
-                                });
-                        } else if ([".zip", ".cbz"].includes(window.path.extname(path).toLowerCase())) {
-                            validFile++;
-                            setTimeout(() => {
-                                responseCompleted++;
-                                listData.push({
-                                    name: window.app.replaceExtension(e),
-                                    pages: 0,
-                                    link: path,
-                                });
-                                if (responseCompleted >= validFile) {
-                                    setChapterData(
-                                        listData.sort((a, b) => window.app.betterSortOrder(a.name, b.name))
-                                    );
-                                }
-                            }, 1000);
-                        }
+                                }, 1000);
+                            }
                     });
                 });
             }

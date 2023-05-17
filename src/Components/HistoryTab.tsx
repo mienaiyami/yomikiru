@@ -40,7 +40,7 @@ const HistoryTab = () => {
                         window.dialog
                             .warn({
                                 title: "Warning",
-                                message: "Are you sure you want to clear history",
+                                message: "Are you sure you want to clear history?",
                                 noOption: false,
                             })
                             .then((res) => {

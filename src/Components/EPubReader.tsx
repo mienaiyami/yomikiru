@@ -371,8 +371,8 @@ const EPubReader = () => {
     };
     /**
      * scroll to internal links or open extrrnal link
-     * * data-href - scroll to internal
-     * * href      - open external
+     * * `data-href` - scroll to internal
+     * * `href     `      - open external
      */
     const epubLinkClick = useCallback(
         (ev: MouseEvent | React.MouseEvent<HTMLAnchorElement, MouseEvent>) => {
@@ -790,6 +790,7 @@ const EPubReader = () => {
         const registerShortcuts = (e: KeyboardEvent) => {
             // /&& document.activeElement!.tagName === "BODY"
             window.app.keyRepeated = e.repeat;
+            if (e.key === " ") e.preventDefault();
             if (!isSettingOpen && window.app.isReaderOpen && !e.repeat && !isLoadingManga && !e.ctrlKey) {
                 switch (e.key) {
                     case shortcutkey.readerSettings?.key1:
