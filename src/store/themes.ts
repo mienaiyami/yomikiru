@@ -1,4 +1,4 @@
-import { createSlice, PayloadAction } from "@reduxjs/toolkit";
+import { createSlice, current, isDraft, PayloadAction } from "@reduxjs/toolkit";
 import themeInit from "../themeInit.json";
 import { saveJSONfile, themesPath } from "../MainImports";
 
@@ -170,7 +170,7 @@ const themes = createSlice({
     reducers: {
         setTheme: (state, action: PayloadAction<string>) => {
             const newStore: Themes = { ...state, name: action.payload };
-            saveJSONandApply(newStore);
+            saveJSONandApply({ name: newStore.name, allData: current(newStore.allData) });
             return newStore;
         },
         newTheme: (state, action: PayloadAction<ThemeData>) => {
@@ -182,11 +182,11 @@ const themes = createSlice({
         ) => {
             state.allData[state.allData.findIndex((e) => e.name === action.payload.themeName)].main =
                 action.payload.newThemeData;
-            saveJSONandApply(state);
+            saveJSONandApply(current(state));
         },
         deleteTheme: (state, action: PayloadAction<number>) => {
             state.allData.splice(action.payload, 1);
-            saveJSONfile(themesPath, state);
+            saveJSONfile(themesPath, current(state));
         },
         resetAllTheme: () => {
             saveJSONandApply(themeInit);

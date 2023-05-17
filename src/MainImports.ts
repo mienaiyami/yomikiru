@@ -81,7 +81,6 @@ export const settingValidatorData = {
         widthClamped: true,
         gapSize: 0,
         showPageNumberInZenMode: false,
-        //! rename accordingly
         scrollSpeedA: 0,
         scrollSpeedB: 0,
         /**
@@ -208,6 +207,13 @@ export const settingValidatorData = {
             scrollSpeed: true,
         },
         showProgressInZenMode: true,
+        forceLowBrightness: {
+            enabled: false,
+            /**
+             * opacity 0-1 of overlying black div
+             */
+            value: 0,
+        },
     },
 } as const;
 
@@ -247,6 +253,7 @@ declare global {
         fs: typeof fs;
         themeProps: { [e in ThemeDataMain]: string };
         shortcutsFunctions: ShortcutSchema[];
+        fileSaveTimeOut: Map<string, NodeJS.Timeout | null>;
         app: {
             betterSortOrder: (x: string, y: string) => number;
             /**
@@ -722,6 +729,7 @@ window.app.linkInReader = {
     page: 1,
     chapter: "",
 };
+window.fileSaveTimeOut = new Map();
 window.app.randomString = (length: number) => {
     let result = "";
     const characters = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789";
@@ -782,16 +790,40 @@ window.dialog = {
         }),
 };
 const saveJSONfile = (path: string, data: any, sync = false) => {
-    if (JSON.stringify(data, null, "\t")) {
-        if (sync) window.fs.writeFileSync(path, JSON.stringify(data, null, "\t"));
-        else
-            window.fs.writeFile(path, JSON.stringify(data, null, "\t"), (err) => {
-                if (err) {
-                    window.logger.error(err);
-                    window.dialog.nodeError(err);
-                }
-            });
+    console.log("Saving file ", window.fileSaveTimeOut, path);
+    const checkOld = window.fileSaveTimeOut.get(path);
+    if (checkOld) {
+        console.log("saving in progress");
+        clearTimeout(checkOld);
     }
+    window.fileSaveTimeOut.set(
+        path,
+        setTimeout(() => {
+            const saveString = JSON.stringify(data, null, "\t");
+            if (saveString) {
+                try {
+                    JSON.parse(saveString);
+                    console.log("Saving " + path);
+                    if (sync) {
+                        window.fs.writeFileSync(path, JSON.stringify(data, null, "\t"));
+                        window.fileSaveTimeOut.delete(path);
+                    } else
+                        window.fs.writeFile(path, JSON.stringify(data, null, "\t"), (err) => {
+                            if (err) {
+                                window.logger.error(err);
+                                window.dialog.nodeError(err);
+                            }
+                            window.fileSaveTimeOut.delete(path);
+                        });
+                } catch (err) {
+                    window.logger.error(err);
+                    setTimeout(() => {
+                        saveJSONfile(path, data, sync);
+                    }, 1000);
+                }
+            }
+        }, 2000)
+    );
 };
 
 const userDataURL = window.electron.app.getPath("userData");
@@ -898,6 +930,10 @@ const defaultSettings: AppSettings = {
             scrollSpeed: true,
         },
         showProgressInZenMode: true,
+        forceLowBrightness: {
+            enabled: false,
+            value: 0,
+        },
     },
 };
 

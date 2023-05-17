@@ -1,4 +1,4 @@
-import { createSlice, PayloadAction } from "@reduxjs/toolkit";
+import { createSlice, current, PayloadAction } from "@reduxjs/toolkit";
 import { bookmarksPath, saveJSONfile } from "../MainImports";
 
 const initialState: Manga_BookItem[] = [];
@@ -76,7 +76,7 @@ const bookmarks = createSlice({
                 }
                 state.unshift(newBk);
             }
-            saveJSONfile(bookmarksPath, state);
+            saveJSONfile(bookmarksPath, current(state));
         },
 
         updateBookmark: (state, action: PayloadAction<{ link: string; page: number }>) => {
@@ -90,7 +90,7 @@ const bookmarks = createSlice({
                 } else {
                     (state[index].data as ChapterItem).page = action.payload.page;
                 }
-                saveJSONfile(bookmarksPath, state);
+                saveJSONfile(bookmarksPath, current(state));
             }
             return state;
         },
@@ -100,7 +100,7 @@ const bookmarks = createSlice({
                 (state[index].data as BookBookmarkItem).chapter = window.app.epubHistorySaveData.chapter;
                 (state[index].data as BookBookmarkItem).elementQueryString =
                     window.app.epubHistorySaveData.queryString;
-                saveJSONfile(bookmarksPath, state);
+                saveJSONfile(bookmarksPath, current(state));
             }
             return state;
         },

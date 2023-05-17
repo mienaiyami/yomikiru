@@ -973,6 +973,12 @@ const EPubReader = () => {
             <div className="shortcutClicked faded" ref={shortcutTextRef}>
                 {shortcutText}
             </div>
+            {appSettings.epubReaderSettings.forceLowBrightness.enabled && (
+                <div
+                    className="forcedLowBrightness"
+                    style={{ "--neg-brightness": appSettings.epubReaderSettings.forceLowBrightness.value }}
+                ></div>
+            )}
             <section
                 className={
                     "main " +

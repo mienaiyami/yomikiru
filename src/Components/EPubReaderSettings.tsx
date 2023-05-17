@@ -9,6 +9,7 @@ import InputNumber from "./Element/InputNumber";
 import InputCheckboxNumber from "./Element/InputCheckboxNumber";
 import InputCheckbox from "./Element/InputCheckbox";
 import InputCheckboxColor from "./Element/InputCheckboxColor";
+import InputRange from "./Element/InputRange";
 
 const EPUBReaderSettings = memo(
     ({
@@ -591,6 +592,40 @@ const EPUBReaderSettings = memo(
                             >
                                 Save and apply color settings above.
                             </button>
+                            <InputCheckbox
+                                checked={appSettings.epubReaderSettings.forceLowBrightness.enabled}
+                                onChange={(e) => {
+                                    dispatch(
+                                        setEpubReaderSettings({
+                                            forceLowBrightness: {
+                                                ...appSettings.epubReaderSettings.forceLowBrightness,
+                                                enabled: e.currentTarget.checked,
+                                            },
+                                        })
+                                    );
+                                }}
+                                paraAfter="Force Low brightness"
+                            />
+                            <InputRange
+                                className={"colorRange"}
+                                min={0}
+                                max={0.9}
+                                step={0.05}
+                                value={appSettings.epubReaderSettings.forceLowBrightness.value}
+                                disabled={!appSettings.epubReaderSettings.forceLowBrightness.enabled}
+                                labeled={true}
+                                labelText=" "
+                                onChange={(e) => {
+                                    dispatch(
+                                        setEpubReaderSettings({
+                                            forceLowBrightness: {
+                                                ...appSettings.epubReaderSettings.forceLowBrightness,
+                                                value: e.currentTarget.valueAsNumber,
+                                            },
+                                        })
+                                    );
+                                }}
+                            />
                             <InputCheckbox
                                 checked={appSettings.epubReaderSettings.invertImageColor}
                                 onChange={(e) => {

@@ -1,4 +1,4 @@
-import { createSlice, PayloadAction } from "@reduxjs/toolkit";
+import { createSlice, current, original, PayloadAction } from "@reduxjs/toolkit";
 import { historyPath, saveJSONfile } from "../MainImports";
 
 const initialState: HistoryItem[] = [];
@@ -77,22 +77,23 @@ const history = createSlice({
     reducers: {
         newHistory: (state, action: PayloadAction<NewHistoryData>) => {
             const { type, data } = action.payload;
+            const stateDup: HistoryItem[] = JSON.parse(JSON.stringify(state));
             if (type === "image") {
                 const link = data.mangaOpened.link;
                 let index = -1;
-                if (state.length > 0)
-                    index = state.findIndex(
+                if (stateDup.length > 0)
+                    index = stateDup.findIndex(
                         (e) => (e as MangaHistoryItem).data.mangaLink === window.path.dirname(link)
                     );
                 let chaptersRead = new Set<string>();
                 if (index > -1) {
                     chaptersRead = new Set(
-                        data.recordChapter ? (state[index] as MangaHistoryItem).data.chaptersRead : []
+                        data.recordChapter ? (stateDup[index] as MangaHistoryItem).data.chaptersRead : []
                     );
-                    state.splice(index, 1);
+                    stateDup.splice(index, 1);
                 }
                 chaptersRead.add(data.mangaOpened.chapterName);
-                state.unshift({
+                stateDup.unshift({
                     type: "image",
                     data: {
                         ...data.mangaOpened,
@@ -105,11 +106,12 @@ const history = createSlice({
             if (type === "book") {
                 const link = data.bookOpened.link;
                 let index = -1;
-                if (state.length > 0) index = state.findIndex((e) => (e as BookHistoryItem).data.link === link);
+                if (stateDup.length > 0)
+                    index = stateDup.findIndex((e) => (e as BookHistoryItem).data.link === link);
                 if (index > -1) {
-                    state.splice(index, 1);
+                    stateDup.splice(index, 1);
                 }
-                state.unshift({
+                stateDup.unshift({
                     type: "book",
                     data: {
                         ...data.bookOpened,
@@ -117,7 +119,7 @@ const history = createSlice({
                     },
                 });
             }
-            saveJSONfile(historyPath, state);
+            saveJSONfile(historyPath, stateDup);
         },
         // todo: getlink from state directly;
         // todo: fix; when called in App.tsx linkInReader is initialVlue even if changed
@@ -138,12 +140,13 @@ const history = createSlice({
          * only for manga/image reader
          */
         updateCurrentHistoryPage: (state) => {
-            const stateDup = [...state];
+            const stateDup: HistoryItem[] = JSON.parse(JSON.stringify(state));
             const link = window.app.linkInReader.link;
             const index = stateDup.findIndex((e) => e.data.link === link);
             // not working on closing window
             // use sth like window.lastMangaOpened;
             // window.logger.log("asking to save ", link);
+            console.log(window.app.currentPageNumber, index);
             if (index > -1) {
                 // console.log(`Updating ${stateDup[index].mangaName} to page ${window.app.currentPageNumber}`);
                 (stateDup[index] as MangaHistoryItem).data.page = window.app.currentPageNumber;
@@ -154,7 +157,8 @@ const history = createSlice({
          * only for epub reader
          */
         updateCurrentBookHistory: (state) => {
-            const stateDup = [...state];
+            const stateDup: HistoryItem[] = JSON.parse(JSON.stringify(state));
+            console.log(stateDup);
             const link = window.app.linkInReader.link;
             const index = stateDup.findIndex((e) => e.data.link === link);
             if (index > -1 && window.app.epubHistorySaveData) {
@@ -171,7 +175,7 @@ const history = createSlice({
         },
         removeHistory: (state, action: PayloadAction<number>) => {
             state.splice(action.payload, 1);
-            saveJSONfile(historyPath, state);
+            saveJSONfile(historyPath, current(state));
         },
         deleteAllHistory: () => {
             saveJSONfile(historyPath, []);

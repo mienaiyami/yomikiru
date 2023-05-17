@@ -1,4 +1,4 @@
-import { createSlice, PayloadAction } from "@reduxjs/toolkit";
+import { createSlice, current, isDraft, PayloadAction } from "@reduxjs/toolkit";
 import { UnionToIntersection } from "@reduxjs/toolkit/dist/tsHelpers";
 import {
     defaultSettings,
@@ -59,7 +59,7 @@ export const appSettings = createSlice({
     reducers: {
         setAppSettings: (state, action: PayloadAction<AppSettingsOptional>) => {
             const newSettings: AppSettings = { ...state, ...action.payload };
-            saveJSONfile(settingsPath, newSettings);
+            saveJSONfile(settingsPath, JSON.parse(JSON.stringify(newSettings)));
             return newSettings;
         },
         setReaderSettings: (state, action: PayloadAction<ReaderSettingsOptional>) => {
@@ -70,7 +70,7 @@ export const appSettings = createSlice({
                     ...action.payload,
                 },
             };
-            saveJSONfile(settingsPath, newSettings);
+            saveJSONfile(settingsPath, JSON.parse(JSON.stringify(newSettings)));
             return newSettings;
         },
         setEpubReaderSettings: (state, action: PayloadAction<EPUBReaderSettingsOptional>) => {
@@ -81,7 +81,7 @@ export const appSettings = createSlice({
                     ...action.payload,
                 },
             };
-            saveJSONfile(settingsPath, newSettings);
+            saveJSONfile(settingsPath, JSON.parse(JSON.stringify(newSettings)));
             return newSettings;
         },
 

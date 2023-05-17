@@ -6,7 +6,6 @@
             "main": {
                 "--body-bg-color": "#262626",
                 "--sideList-bg-color": "var(--topBar-color)",
-
                 "--icon-color": "#fff8f0",
                 "--font-color": "#fff8f0",
                 "--font-select-color": "#000c29",
@@ -17,7 +16,6 @@
                 "--btn-shadow-focus": "#0000000",
                 "--text-input-bg": "#383838",
                 "--text-input-bg-focus": "#6b6b6b",
-
                 "--topBar-color": "#1f1f1f",
                 "--topBar-btn-hover": "#5c5c5c",
                 "--listItem-bg-color": "#00000000",
@@ -27,16 +25,12 @@
                 "--readerSettings-bg": "var(--body-bg-color)",
                 "--readerSettings-toggleBtn-bg-color": "#262626",
                 "--readerSettings-toggleBtn-bg-color-hover": "#26262650",
-
                 "--scrollbar-track-color": "#00000000",
                 "--scrollbar-thumb-color": "#545454",
                 "--scrollbar-thumb-color-hover": "#878787",
-
                 "--code-bg-color": "var(--btn-color-hover)",
                 "--code-shadow-color": "var(--btn-color)",
-
                 "--divider-color": "#6b6b6b",
-
                 "--contextMenu-bg-color": "var(--body-bg-color)",
                 "--contentMenu-item-color": "var(--font-color)",
                 "--contentMenu-item-bg-color-hover": "var(--btn-color-hover)",
@@ -48,7 +42,6 @@
             "main": {
                 "--body-bg-color": "#000000",
                 "--sideList-bg-color": "var(--topBar-color)",
-
                 "--icon-color": "#fff8f0",
                 "--font-color": "#fff8f0",
                 "--font-select-color": "#000000",
@@ -59,7 +52,6 @@
                 "--btn-shadow-focus": "#0000000",
                 "--text-input-bg": "#3b3a3e",
                 "--text-input-bg-focus": "#62636e",
-
                 "--topBar-color": "#17171c",
                 "--topBar-btn-hover": "#62636e",
                 "--listItem-bg-color": "#00000000",
@@ -69,16 +61,12 @@
                 "--readerSettings-bg": "var(--body-bg-color)",
                 "--readerSettings-toggleBtn-bg-color": "var(--body-bg-color)",
                 "--readerSettings-toggleBtn-bg-color-hover": "#62636e",
-
                 "--scrollbar-track-color": "#00000000",
                 "--scrollbar-thumb-color": "#545454",
                 "--scrollbar-thumb-color-hover": "#878787",
-
                 "--code-bg-color": "var(--btn-color-hover)",
                 "--code-shadow-color": "var(--btn-color)",
-
                 "--divider-color": "#3b3a3e",
-
                 "--contextMenu-bg-color": "var(--body-bg-color)",
                 "--contentMenu-item-color": "var(--font-color)",
                 "--contentMenu-item-bg-color-hover": "var(--btn-color-hover)",
@@ -90,7 +78,6 @@
             "main": {
                 "--body-bg-color": "#ffffff",
                 "--sideList-bg-color": "var(--topBar-color)",
-
                 "--icon-color": "#000c29",
                 "--font-color": "#000c29",
                 "--font-select-color": "#fff8f0",
@@ -101,7 +88,6 @@
                 "--btn-shadow-focus": "#709bff",
                 "--text-input-bg": "#b6ccfe",
                 "--text-input-bg-focus": "#709bff",
-
                 "--topBar-color": "#e0e0e0",
                 "--topBar-btn-hover": "#b6ccfe",
                 "--listItem-bg-color": "#00000000",
@@ -111,16 +97,12 @@
                 "--readerSettings-bg": "var(--body-bg-color)",
                 "--readerSettings-toggleBtn-bg-color": "var(--body-bg-color)",
                 "--readerSettings-toggleBtn-bg-color-hover": "#709bff",
-
                 "--scrollbar-track-color": "#b6ccfe00",
                 "--scrollbar-thumb-color": "#b6ccfe",
                 "--scrollbar-thumb-color-hover": "#709bff",
-
                 "--code-bg-color": "var(--btn-color-hover)",
                 "--code-shadow-color": "var(--btn-color)",
-
                 "--divider-color": "#b6ccfe",
-
                 "--contextMenu-bg-color": "var(--body-bg-color)",
                 "--contentMenu-item-color": "var(--font-color)",
                 "--contentMenu-item-bg-color-hover": "var(--btn-color-hover)",
