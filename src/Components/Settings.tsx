@@ -1038,6 +1038,12 @@ const Settings = (): ReactElement => {
                                 </td>
                             </tr>
                             <tr>
+                                <td>Close Window</td>
+                                <td>
+                                    <code>ctrl</code>+<code>w</code>
+                                </td>
+                            </tr>
+                            <tr>
                                 <td>Reader width</td>
                                 <td>
                                     <code>ctrl</code>+<code>scroll</code>
@@ -1050,15 +1056,9 @@ const Settings = (): ReactElement => {
                                 </td>
                             </tr>
                             <tr>
-                                <td>Reload</td>
+                                <td>Reload UI</td>
                                 <td>
                                     <code>ctrl</code>+<code>r</code>
-                                </td>
-                            </tr>
-                            <tr>
-                                <td>Dev Tool</td>
-                                <td>
-                                    <code>ctrl</code>+<code>shift</code>+<code>i</code>
                                 </td>
                             </tr>
                             <tr>
@@ -1077,6 +1077,12 @@ const Settings = (): ReactElement => {
                                 <td>UI Scale Reset</td>
                                 <td>
                                     <code>ctrl</code> + <code>0</code>
+                                </td>
+                            </tr>
+                            <tr>
+                                <td>Dev Tool</td>
+                                <td>
+                                    <code>ctrl</code>+<code>shift</code>+<code>i</code>
                                 </td>
                             </tr>
                         </tbody>

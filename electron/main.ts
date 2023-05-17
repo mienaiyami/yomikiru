@@ -496,6 +496,11 @@ app.on("ready", () => {
                     accelerator: process.platform === "darwin" ? "Cmd+N" : "Ctrl+N",
                     click: () => createWindow(),
                 },
+                {
+                    label: "Close",
+                    accelerator: process.platform === "darwin" ? "Cmd+W" : "Ctrl+W",
+                    click: (_, window) => window?.close(),
+                },
             ],
         },
     ];
