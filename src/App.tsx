@@ -138,6 +138,12 @@ const App = (): ReactElement => {
                 callback(true);
             });
         const linkSplitted = link.split(window.path.sep);
+
+        if (window.fs.existsSync(window.app.deleteDirOnClose))
+            window.fs.rmSync(window.app.deleteDirOnClose, {
+                recursive: true,
+            });
+
         if ([".zip", ".cbz"].includes(window.path.extname(link).toLowerCase())) {
             let tempExtractPath = window.path.join(
                 window.electron.app.getPath("temp"),
@@ -148,10 +154,6 @@ const App = (): ReactElement => {
             }
             // window.fs.mkdirSync(tempExtractPath);
             console.log(`Extracting "${link}" to "${tempExtractPath}"`);
-            if (window.fs.existsSync(window.app.deleteDirOnClose))
-                window.fs.rmSync(window.app.deleteDirOnClose, {
-                    recursive: true,
-                });
             window.app.deleteDirOnClose = tempExtractPath;
             dispatch(setUnzipping(true));
             window.crossZip.unzip(link, tempExtractPath, (err) => {
@@ -240,6 +242,11 @@ const App = (): ReactElement => {
         dispatch(setLoadingMangaPercent(0));
         dispatch(setMangaInReader(null));
         dispatch(setBookInReader(null));
+
+        if (window.fs.existsSync(window.app.deleteDirOnClose))
+            window.fs.rmSync(window.app.deleteDirOnClose, {
+                recursive: true,
+            });
 
         document.body.classList.remove("zenMode");
         if (document.fullscreenElement) document.exitFullscreen();

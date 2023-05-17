@@ -790,10 +790,10 @@ window.dialog = {
         }),
 };
 const saveJSONfile = (path: string, data: any, sync = false) => {
-    console.log("Saving file ", window.fileSaveTimeOut, path);
+    // console.log("Saving file ", window.fileSaveTimeOut, path);
     const checkOld = window.fileSaveTimeOut.get(path);
     if (checkOld) {
-        console.log("saving in progress");
+        // console.log("saving in progress");
         clearTimeout(checkOld);
     }
     window.fileSaveTimeOut.set(
@@ -803,7 +803,7 @@ const saveJSONfile = (path: string, data: any, sync = false) => {
             if (saveString) {
                 try {
                     JSON.parse(saveString);
-                    console.log("Saving " + path);
+                    // console.log("Saving " + path);
                     if (sync) {
                         window.fs.writeFileSync(path, JSON.stringify(data, null, "\t"));
                         window.fileSaveTimeOut.delete(path);
@@ -816,7 +816,7 @@ const saveJSONfile = (path: string, data: any, sync = false) => {
                             window.fileSaveTimeOut.delete(path);
                         });
                 } catch (err) {
-                    window.logger.error(err);
+                    window.logger.error(err, "Retrying");
                     setTimeout(() => {
                         saveJSONfile(path, data, sync);
                     }, 1000);

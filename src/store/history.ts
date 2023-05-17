@@ -146,7 +146,6 @@ const history = createSlice({
             // not working on closing window
             // use sth like window.lastMangaOpened;
             // window.logger.log("asking to save ", link);
-            console.log(window.app.currentPageNumber, index);
             if (index > -1) {
                 // console.log(`Updating ${stateDup[index].mangaName} to page ${window.app.currentPageNumber}`);
                 (stateDup[index] as MangaHistoryItem).data.page = window.app.currentPageNumber;
@@ -158,7 +157,6 @@ const history = createSlice({
          */
         updateCurrentBookHistory: (state) => {
             const stateDup: HistoryItem[] = JSON.parse(JSON.stringify(state));
-            console.log(stateDup);
             const link = window.app.linkInReader.link;
             const index = stateDup.findIndex((e) => e.data.link === link);
             if (index > -1 && window.app.epubHistorySaveData) {

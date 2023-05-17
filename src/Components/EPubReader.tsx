@@ -417,6 +417,11 @@ const EPubReader = () => {
     );
 
     const loadEPub = (link: string) => {
+        if (window.fs.existsSync(window.app.deleteDirOnClose))
+            window.fs.rmSync(window.app.deleteDirOnClose, {
+                recursive: true,
+            });
+
         link = window.path.normalize(link);
         setBookmarked(bookmarks.map((e) => e.data.link).includes(link));
         const linkSplitted = link.split(window.path.sep).filter((e) => e !== "");
@@ -424,6 +429,7 @@ const EPubReader = () => {
             window.electron.app.getPath("temp"),
             `yomikiru-temp-EPub-${linkSplitted[linkSplitted.length - 1]}-${window.crypto.randomUUID()}`
         );
+        window.app.deleteDirOnClose = extractPath;
         console.log("extracting ", link, " at ", extractPath);
         console.time("unzipping");
         console.timeLog("unzipping");
