@@ -33,6 +33,7 @@ type DeepArrayToUnion<T> = T extends T
 // todo: use this as default settings by taking index 0 as default for arrays
 export const settingValidatorData = {
     baseDir: "",
+    customStylesheet: "",
     locationListSortType: ["normal", "inverse"],
     /**
      * Check for new update on start of app.
@@ -834,9 +835,24 @@ const historyPath = window.path.join(userDataURL, "history.json");
 const themesPath = window.path.join(userDataURL, "themes.json");
 const shortcutsPath = window.path.join(userDataURL, "shortcuts.json");
 
+export const promptSelectDir = (
+    cb: (path: string) => void,
+    asFile = false,
+    filters?: Electron.FileFilter[]
+): void => {
+    const result = window.electron.dialog.showOpenDialogSync(window.electron.getCurrentWindow(), {
+        properties: asFile ? ["openFile"] : ["openDirectory", "openFile"],
+        filters,
+    });
+    if (!result) return;
+    const path = asFile ? result[0] : window.path.normalize(result[0] + window.path.sep);
+    cb && cb(path);
+};
+
 // todo: try taking automatically from settingValidator
 const defaultSettings: AppSettings = {
     baseDir: window.electron.app.getPath("home"),
+    customStylesheet: "",
     locationListSortType: "normal",
     updateCheckerEnabled: true,
     askBeforeClosing: false,

@@ -5,11 +5,12 @@ import { AppContext } from "../App";
 import { setAppSettings } from "../store/appSettings";
 import { useAppDispatch, useAppSelector } from "../store/hooks";
 import LocationListItem from "./LocationListItem";
+import { promptSelectDir } from "../MainImports";
 
 type LocationData = { name: string; link: string };
 
 const LocationsTab = (): ReactElement => {
-    const { openInReader, promptSetDefaultLocation } = useContext(AppContext);
+    const { openInReader } = useContext(AppContext);
     const history = useAppSelector((store) => store.history);
     const appSettings = useAppSelector((store) => store.appSettings);
     const dispatch = useAppDispatch();
@@ -26,7 +27,7 @@ const LocationsTab = (): ReactElement => {
         if (!window.fs.existsSync(link)) {
             if (!window.fs.existsSync(appSettings.baseDir)) {
                 window.dialog.customError({ message: "Default Location doesn't exist." });
-                promptSetDefaultLocation();
+                promptSelectDir((path) => dispatch(setAppSettings({ baseDir: path })));
                 return;
             }
             window.dialog.customError({ message: "Directory/File doesn't exist." });

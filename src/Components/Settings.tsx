@@ -10,12 +10,11 @@ import { resetShortcuts, setShortcuts } from "../store/shortcuts";
 import { setOpenSetting } from "../store/isSettingOpen";
 import { addBookmark, removeAllBookmarks } from "../store/bookmarks";
 import { makeNewSettings, setAppSettings, setEpubReaderSettings, setReaderSettings } from "../store/appSettings";
-import { windowsStore } from "process";
 import { InputSelect } from "./Element/InputSelect";
 import InputRange from "./Element/InputRange";
+import { promptSelectDir } from "../MainImports";
 
 const Settings = (): ReactElement => {
-    const { promptSetDefaultLocation } = useContext(AppContext);
     const appSettings = useAppSelector((store) => store.appSettings);
     const theme = useAppSelector((store) => store.theme.name);
     const allThemes = useAppSelector((store) => store.theme.allData);
@@ -352,10 +351,57 @@ const Settings = (): ReactElement => {
                                 <button
                                     // onFocus={(e) => e.currentTarget.blur()}
                                     onClick={() => {
-                                        promptSetDefaultLocation();
+                                        promptSelectDir((path) => dispatch(setAppSettings({ baseDir: path })));
                                     }}
                                 >
                                     Change Default
+                                </button>
+                            </td>
+                        </tr>
+                        <tr className="settingItem">
+                            <td className="name">Custom Stylesheet</td>
+                            <td className="current">
+                                <input
+                                    type="text"
+                                    placeholder="Do not move css file in app's folder"
+                                    value={appSettings.customStylesheet}
+                                    readOnly
+                                />
+                                <button
+                                    // onFocus={(e) => e.currentTarget.blur()}
+                                    onClick={(e) => {
+                                        promptSelectDir(
+                                            (path) => {
+                                                dispatch(setAppSettings({ customStylesheet: path }));
+                                                const target = e.currentTarget;
+                                                target.innerText = "Refresh to apply";
+                                                setTimeout(() => {
+                                                    target.innerText = "Select";
+                                                }, 4000);
+                                            },
+                                            true,
+                                            [
+                                                {
+                                                    extensions: ["css"],
+                                                    name: "Cascading Style Sheets",
+                                                },
+                                            ]
+                                        );
+                                    }}
+                                >
+                                    Select
+                                </button>
+                                <button
+                                    onClick={(e) => {
+                                        dispatch(setAppSettings({ customStylesheet: "" }));
+                                        const target = e.currentTarget;
+                                        target.innerText = "Refresh to apply";
+                                        setTimeout(() => {
+                                            target.innerText = "Clear";
+                                        }, 4000);
+                                    }}
+                                >
+                                    Clear
                                 </button>
                             </td>
                         </tr>

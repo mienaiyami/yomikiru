@@ -13,7 +13,7 @@ import { setReaderOpen } from "./store/isReaderOpen";
 import { setMangaInReader } from "./store/mangaInReader";
 import { refreshBookmark } from "./store/bookmarks";
 import { setTheme } from "./store/themes";
-import { bookmarksPath, historyPath } from "./MainImports";
+import { bookmarksPath, historyPath, promptSelectDir } from "./MainImports";
 import { setBookInReader } from "./store/bookInReader";
 
 // window.logger.log("New window opening...");
@@ -34,7 +34,6 @@ interface IAppContext {
         callback: (isValid?: boolean, imgs?: string[]) => void,
         sendImgs?: boolean
     ) => void;
-    promptSetDefaultLocation: () => void;
 }
 
 export const AppContext = createContext<IAppContext>(null!);
@@ -43,7 +42,7 @@ const App = (): ReactElement => {
     const isReaderOpen = useAppSelector((state) => state.isReaderOpen);
     const linkInReader = useAppSelector((store) => store.linkInReader);
     const mangaInReader = useAppSelector((store) => store.mangaInReader);
-    const bookInReader = useAppSelector((store) => store.bookInReader);
+    // const bookInReader = useAppSelector((store) => store.bookInReader);
     const theme = useAppSelector((state) => state.theme.name);
 
     const pageNumberInputRef: React.RefObject<HTMLInputElement> = createRef();
@@ -56,7 +55,7 @@ const App = (): ReactElement => {
         if (firstRendered) {
             if (appSettings.baseDir === "") {
                 window.dialog.customError({ message: "No settings found, Select manga folder" });
-                promptSetDefaultLocation();
+                promptSelectDir((path) => dispatch(setAppSettings({ baseDir: path })));
             }
         } else {
             dispatch(setTheme(theme));
@@ -252,15 +251,6 @@ const App = (): ReactElement => {
         if (document.fullscreenElement) document.exitFullscreen();
     };
 
-    const promptSetDefaultLocation = (): void => {
-        const result = window.electron.dialog.showOpenDialogSync(window.electron.getCurrentWindow(), {
-            properties: ["openFile", "openDirectory"],
-        });
-        if (!result) return;
-        let path = "";
-        if (result) path = window.path.normalize(result[0] + window.path.sep);
-        dispatch(setAppSettings({ baseDir: path }));
-    };
     const openInNewWindow = (link: string) => {
         checkValidFolder(
             link,
@@ -328,6 +318,24 @@ const App = (): ReactElement => {
         });
 
         window.addEventListener("keydown", eventsOnStart);
+
+        // loading custom stylesheet
+        if (appSettings.customStylesheet) {
+            if (
+                window.fs.existsSync(appSettings.customStylesheet) &&
+                window.path.extname(appSettings.customStylesheet).toLowerCase() === ".css"
+            ) {
+                if (!document.head.querySelector("#customStylesheet")) {
+                    window.logger.log("Loading custom stylesheet from ", appSettings.customStylesheet);
+                    const stylesheet = document.createElement("link");
+                    stylesheet.rel = "stylesheet";
+                    stylesheet.href = appSettings.customStylesheet;
+                    stylesheet.id = "customStylesheet";
+                    document.head.appendChild(stylesheet);
+                }
+            }
+        }
+
         return () => {
             removeEventListener("keydown", eventsOnStart);
             watcher.removeAllListeners();
@@ -347,7 +355,6 @@ const App = (): ReactElement => {
                 closeReader,
                 openInNewWindow,
                 checkValidFolder,
-                promptSetDefaultLocation,
             }}
         >
             <TopBar />
