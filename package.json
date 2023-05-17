@@ -1,8 +1,8 @@
 {
     "name": "yomikiru",
     "productName": "Yomikiru",
-    "version": "2.11.1",
-    "description": "App to read manga/comic/epub offline on desktop",
+    "version": "2.11.2",
+    "description": "App to read manga / comic / epub offline on desktop",
     "main": ".webpack/main",
     "author": {
         "name": "mienaiyami",

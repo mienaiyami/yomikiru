@@ -15,21 +15,21 @@ Linux distribution currently not available as direct download but can be build e
 
 ## Added
 
-- EPub:
-  - progress percent and control.
-  - history and bookmark support (use bookmark for more accuracy).
-- search input for bookmarks and history (enable from settings -> other settings).
+- Tab (keyboard) navigation for "reader settings's tabs".
+- New scrolling system (with keys).
+- Custom stylesheet.
+- New shortcut: `ctrl+w` to close window.
+- EPUB : Force low brightness.
 
 ## Changed
 
-- UI Enhancements
-  - Moved Image count to open button on locations tabs.
-  - misc.
+- UI Enhancements.
+- Save data files with a time gap after changing app data.
 
 
-<!-- ## Fixed
+## Fixed
 
-- fixed #125,123,#117,#126. -->
+- fixed #131,#136,#137,
 
 ---
 
