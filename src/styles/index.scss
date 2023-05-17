@@ -1631,11 +1631,15 @@ body {
 
                         .name {
                             font-size: 20px;
+                            border-radius: 3px;
                             &::before {
                                 content: "▼";
                                 display: inline-block;
                                 transform: rotate(-90deg);
                                 margin-right: 5px;
+                            }
+                            &:focus-visible {
+                                box-shadow: var(--btn-color-focus) 0 0 0px 2px;
                             }
                             &.expanded {
                                 & ~ .options {

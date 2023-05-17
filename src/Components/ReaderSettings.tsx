@@ -89,6 +89,10 @@ const ReaderSettings = memo(
                             className={
                                 "name " + (!appSettings.readerSettings.settingsCollapsed.size ? "expanded " : "")
                             }
+                            tabIndex={0}
+                            onKeyDown={(e) => {
+                                if (e.key === " " || e.key === "Enter") e.currentTarget.click();
+                            }}
                             onClick={() => {
                                 dispatch(
                                     setReaderSettings({
@@ -174,6 +178,10 @@ const ReaderSettings = memo(
                                 "name " +
                                 (!appSettings.readerSettings.settingsCollapsed.fitOption ? "expanded " : "")
                             }
+                            tabIndex={0}
+                            onKeyDown={(e) => {
+                                if (e.key === " " || e.key === "Enter") e.currentTarget.click();
+                            }}
                             onClick={() => {
                                 dispatch(
                                     setReaderSettings({
@@ -314,6 +322,10 @@ const ReaderSettings = memo(
                                 "name " +
                                 (!appSettings.readerSettings.settingsCollapsed.readingMode ? "expanded " : "")
                             }
+                            tabIndex={0}
+                            onKeyDown={(e) => {
+                                if (e.key === " " || e.key === "Enter") e.currentTarget.click();
+                            }}
                             onClick={() => {
                                 dispatch(
                                     setReaderSettings({
@@ -360,6 +372,10 @@ const ReaderSettings = memo(
                                 "name " +
                                 (!appSettings.readerSettings.settingsCollapsed.pagePerRow ? "expanded " : "")
                             }
+                            tabIndex={0}
+                            onKeyDown={(e) => {
+                                if (e.key === " " || e.key === "Enter") e.currentTarget.click();
+                            }}
                             onClick={() => {
                                 dispatch(
                                     setReaderSettings({
@@ -435,6 +451,10 @@ const ReaderSettings = memo(
                                 "name " +
                                 (!appSettings.readerSettings.settingsCollapsed.readingSide ? "expanded " : "")
                             }
+                            tabIndex={0}
+                            onKeyDown={(e) => {
+                                if (e.key === " " || e.key === "Enter") e.currentTarget.click();
+                            }}
                             onClick={() => {
                                 dispatch(
                                     setReaderSettings({
@@ -475,6 +495,10 @@ const ReaderSettings = memo(
                                 "name " +
                                 (!appSettings.readerSettings.settingsCollapsed.scrollSpeed ? "expanded " : "")
                             }
+                            tabIndex={0}
+                            onKeyDown={(e) => {
+                                if (e.key === " " || e.key === "Enter") e.currentTarget.click();
+                            }}
                             onClick={() => {
                                 dispatch(
                                     setReaderSettings({
@@ -527,6 +551,10 @@ const ReaderSettings = memo(
                                     ? "expanded "
                                     : "")
                             }
+                            tabIndex={0}
+                            onKeyDown={(e) => {
+                                if (e.key === " " || e.key === "Enter") e.currentTarget.click();
+                            }}
                             onClick={() => {
                                 dispatch(
                                     setReaderSettings({
@@ -692,6 +720,10 @@ const ReaderSettings = memo(
                             className={
                                 "name " + (!appSettings.readerSettings.settingsCollapsed.others ? "expanded " : "")
                             }
+                            tabIndex={0}
+                            onKeyDown={(e) => {
+                                if (e.key === " " || e.key === "Enter") e.currentTarget.click();
+                            }}
                             onClick={() => {
                                 dispatch(
                                     setReaderSettings({

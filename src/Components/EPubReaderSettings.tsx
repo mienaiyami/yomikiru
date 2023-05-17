@@ -113,6 +113,10 @@ const EPUBReaderSettings = memo(
                                 "name " +
                                 (!appSettings.epubReaderSettings.settingsCollapsed.size ? "expanded " : "")
                             }
+                            tabIndex={0}
+                            onKeyDown={(e) => {
+                                if (e.key === " " || e.key === "Enter") e.currentTarget.click();
+                            }}
                             onClick={() => {
                                 dispatch(
                                     setEpubReaderSettings({
@@ -202,6 +206,10 @@ const EPUBReaderSettings = memo(
                                 "name " +
                                 (!appSettings.epubReaderSettings.settingsCollapsed.font ? "expanded " : "")
                             }
+                            tabIndex={0}
+                            onKeyDown={(e) => {
+                                if (e.key === " " || e.key === "Enter") e.currentTarget.click();
+                            }}
                             onClick={() => {
                                 dispatch(
                                     setEpubReaderSettings({
@@ -500,6 +508,10 @@ const EPUBReaderSettings = memo(
                                 "name " +
                                 (!appSettings.epubReaderSettings.settingsCollapsed.styles ? "expanded " : "")
                             }
+                            tabIndex={0}
+                            onKeyDown={(e) => {
+                                if (e.key === " " || e.key === "Enter") e.currentTarget.click();
+                            }}
                             onClick={() => {
                                 dispatch(
                                     setEpubReaderSettings({
@@ -665,6 +677,10 @@ const EPUBReaderSettings = memo(
                                 "name " +
                                 (!appSettings.epubReaderSettings.settingsCollapsed.scrollSpeed ? "expanded " : "")
                             }
+                            tabIndex={0}
+                            onKeyDown={(e) => {
+                                if (e.key === " " || e.key === "Enter") e.currentTarget.click();
+                            }}
                             onClick={() => {
                                 dispatch(
                                     setEpubReaderSettings({
