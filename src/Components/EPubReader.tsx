@@ -347,10 +347,11 @@ const EPubReader = () => {
 
     const scrollReader = (intensity: number) => {
         if (readerRef.current) {
-            let startTime: number, prevTime: number;
+            // let startTime: number
+            let prevTime: number;
             const anim = (timeStamp: number) => {
-                if (startTime === undefined) startTime = timeStamp;
-                const elapsed = timeStamp - startTime;
+                // if (startTime === undefined) startTime = timeStamp;
+                // const elapsed = timeStamp - startTime;
                 if (prevTime !== timeStamp && readerRef.current) {
                     if (isSideListPinned && mainRef.current) {
                         mainRef.current.scrollBy(0, intensity);
@@ -358,7 +359,8 @@ const EPubReader = () => {
                         readerRef.current.scrollBy(0, intensity);
                     }
                 }
-                if (elapsed < window.app.clickDelay) {
+                // if (elapsed < window.app.clickDelay) {
+                if (window.app.keydown) {
                     prevTime = timeStamp;
                     window.requestAnimationFrame(anim);
                 }
@@ -788,7 +790,7 @@ const EPubReader = () => {
         const registerShortcuts = (e: KeyboardEvent) => {
             // /&& document.activeElement!.tagName === "BODY"
             window.app.keyRepeated = e.repeat;
-            if (!isSettingOpen && window.app.isReaderOpen && !isLoadingManga && !e.ctrlKey) {
+            if (!isSettingOpen && window.app.isReaderOpen && !e.repeat && !isLoadingManga && !e.ctrlKey) {
                 switch (e.key) {
                     case shortcutkey.readerSettings?.key1:
                     case shortcutkey.readerSettings?.key2:

@@ -68,10 +68,11 @@ const Reader = () => {
 
     const scrollReader = (intensity: number) => {
         if (readerRef.current) {
-            let startTime: number, prevTime: number;
+            // let startTime: number
+            let prevTime: number;
             const anim = (timeStamp: number) => {
-                if (startTime === undefined) startTime = timeStamp;
-                const elapsed = timeStamp - startTime;
+                // if (startTime === undefined) startTime = timeStamp;
+                // const elapsed = timeStamp - startTime;
                 if (prevTime !== timeStamp && readerRef.current) {
                     if (isSideListPinned && imgContRef.current) {
                         imgContRef.current.scrollBy(0, intensity);
@@ -79,7 +80,8 @@ const Reader = () => {
                         readerRef.current.scrollBy(0, intensity);
                     }
                 }
-                if (elapsed < window.app.clickDelay) {
+                // if (elapsed < window.app.clickDelay) {
+                if (window.app.keydown) {
                     prevTime = timeStamp;
                     window.requestAnimationFrame(anim);
                 }
@@ -200,7 +202,7 @@ const Reader = () => {
         const registerShortcuts = (e: KeyboardEvent) => {
             // /&& document.activeElement!.tagName === "BODY"
             window.app.keyRepeated = e.repeat;
-            if (!isSettingOpen && window.app.isReaderOpen && !isLoadingManga && !e.ctrlKey) {
+            if (!isSettingOpen && window.app.isReaderOpen && !e.repeat && !isLoadingManga && !e.ctrlKey) {
                 switch (e.key) {
                     case shortcutkey.navToPage?.key1:
                     case shortcutkey.navToPage?.key2:
@@ -220,15 +222,15 @@ const Reader = () => {
                         break;
                     case shortcutkey.nextChapter?.key1:
                     case shortcutkey.nextChapter?.key2:
-                        if (!e.repeat) openNextChapterRef.current?.click();
+                        openNextChapterRef.current?.click();
                         break;
                     case shortcutkey.prevChapter?.key1:
                     case shortcutkey.prevChapter?.key2:
-                        if (!e.repeat) openPrevChapterRef.current?.click();
+                        openPrevChapterRef.current?.click();
                         break;
                     case shortcutkey.bookmark?.key1:
                     case shortcutkey.bookmark?.key2:
-                        if (!e.repeat) addToBookmarkRef.current?.click();
+                        addToBookmarkRef.current?.click();
                         break;
                     case shortcutkey.sizePlus?.key1:
                     case shortcutkey.sizePlus?.key2:
@@ -256,6 +258,7 @@ const Reader = () => {
                         case shortcutkey.largeScroll?.key2:
                             e.preventDefault();
                             scrollReader(appSettings.readerSettings.scrollSpeedB);
+
                             break;
                         case shortcutkey.nextPage?.key1:
                         case shortcutkey.nextPage?.key2: {
@@ -394,15 +397,14 @@ const Reader = () => {
         };
         window.addEventListener("wheel", wheelFunction);
         window.addEventListener("keydown", registerShortcuts);
-        window.addEventListener("keyup", () => {
+        const onKeyUp = () => {
             window.app.keydown = false;
-        });
+        };
+        window.addEventListener("keyup", onKeyUp);
         return () => {
             window.removeEventListener("wheel", wheelFunction);
             window.removeEventListener("keydown", registerShortcuts);
-            window.removeEventListener("keyup", () => {
-                window.app.keydown = false;
-            });
+            window.removeEventListener("keyup", onKeyUp);
         };
     }, [isSideListPinned, appSettings, shortcuts, isLoadingManga, isSettingOpen]);
     const makeScrollPos = useCallback(() => {
