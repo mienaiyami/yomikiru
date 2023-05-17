@@ -9,7 +9,7 @@ import LocationListItem from "./LocationListItem";
 type LocationData = { name: string; link: string };
 
 const LocationsTab = (): ReactElement => {
-    const { openInReader } = useContext(AppContext);
+    const { openInReader, promptSetDefaultLocation } = useContext(AppContext);
     const history = useAppSelector((store) => store.history);
     const appSettings = useAppSelector((store) => store.appSettings);
     const dispatch = useAppDispatch();
@@ -24,7 +24,13 @@ const LocationsTab = (): ReactElement => {
     const displayList = (link = currentLink): void => {
         setFilter("");
         if (!window.fs.existsSync(link)) {
+            if (!window.fs.existsSync(appSettings.baseDir)) {
+                window.dialog.customError({ message: "Default Location doesn't exist." });
+                promptSetDefaultLocation();
+                return;
+            }
             window.dialog.customError({ message: "Directory/File doesn't exist." });
+            setCurrentLink(appSettings.baseDir);
             return;
         }
 
@@ -60,13 +66,13 @@ const LocationsTab = (): ReactElement => {
                 if (inputRef.current) {
                     inputRef.current.value = "";
                 }
-                setIsLoadingFile(false);
                 setLocations(dirNames);
+                setIsLoadingFile(false);
             });
         }
     };
     useLayoutEffect(() => setCurrentLink(appSettings.baseDir), [appSettings.baseDir]);
-    useEffect(() => {
+    useLayoutEffect(() => {
         displayList();
     }, [currentLink]);
     useEffect(() => {
