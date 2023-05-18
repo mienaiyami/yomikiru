@@ -20,7 +20,8 @@ if (IS_PORTABLE) {
 }
 
 // disabling hardware acceleration because it causes reader to stutter when scrolling
-app.disableHardwareAcceleration();
+// 18/05/23 - decided to not use it anymore as it make scrolling laggy
+// app.disableHardwareAcceleration();
 
 // change path in `settings.tsx as well if changing log path
 log.transports.file.resolvePath = () => path.join(app.getPath("userData"), "logs/main.log");

@@ -546,11 +546,11 @@ body {
             &:hover,
             &:active {
                 background: var(--btn-color-hover);
-                outline: none;
+                outline: hidden;
             }
             &:active,
             &:focus {
-                background: var(--btn-color-focus);
+                // background: var(--btn-color-focus);
                 outline: 1px transparent;
             }
 
