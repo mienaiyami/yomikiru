@@ -45,7 +45,7 @@ const shortcuts = createSlice({
             if (action.payload instanceof Array) state = action.payload;
             const { index, key, which } = action.payload;
             state[index][which] = key;
-            saveJSONfile(shortcutsPath, state);
+            saveJSONfile(shortcutsPath, JSON.parse(JSON.stringify(state)));
         },
         resetShortcuts: () => {
             saveJSONfile(shortcutsPath, window.shortcutsFunctions);
