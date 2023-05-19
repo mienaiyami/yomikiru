@@ -731,7 +731,6 @@ const EPubReader = () => {
     };
     window.app.scrollToPage = scrollToPage;
     useEffect(() => {
-        console.log(zenMode);
         if ((zenMode && !window.electron.getCurrentWindow().isMaximized()) || (!zenMode && !wasMaximized)) {
             setTimeout(() => {
                 if (elemBeforeChange)
