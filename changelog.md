@@ -21,6 +21,7 @@ Linux distribution currently not available as direct download but can be build e
 
 - UI Enhancements.
 - Open prev/next page on scroll in reader modes "left to right, right to left" when image height is smaller than window.
+- re-enabling hardware acceleration as stutter no longer present, #6.
 
 
 ## Fixed
