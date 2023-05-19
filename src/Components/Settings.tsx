@@ -746,7 +746,7 @@ const Settings = (): ReactElement => {
                                 }}
                             />
                             <p>Disable location list numbering.</p>
-                        </label>{" "}
+                        </label>
                         <label className={appSettings.showSearch ? "selected" : ""}>
                             <input
                                 type="checkbox"
@@ -756,6 +756,18 @@ const Settings = (): ReactElement => {
                                 }}
                             />
                             <p>Show search input for bookmark/history tab.</p>
+                        </label>
+                        <label className={appSettings.openInZenMode ? "selected" : ""}>
+                            <input
+                                type="checkbox"
+                                checked={appSettings.openInZenMode}
+                                onChange={(e) => {
+                                    dispatch(setAppSettings({ openInZenMode: e.currentTarget.checked }));
+                                }}
+                            />
+                            <p>
+                                Open in <code>Zen Mode</code> by default.
+                            </p>
                         </label>
                         <label className={appSettings.useCanvasBasedReader ? "selected" : ""}>
                             <input

@@ -44,7 +44,7 @@ const Reader = () => {
     const [sideListWidth, setSideListWidth] = useState(appSettings.readerSettings.sideListWidth || 450);
     const [isBookmarked, setBookmarked] = useState(false);
     const [scrollPosPercent, setScrollPosPercent] = useState(0);
-    const [zenMode, setZenMode] = useState(false);
+    const [zenMode, setZenMode] = useState(appSettings.openInZenMode || false);
     // used to be in app.tsx then sent to topBar.tsx by context provider but caused performance issue, now using window.currentPageNumber
     const [currentPageNumber, setCurrentPageNumber] = useState(1);
     const [currentImageRow, setCurrentImageRow] = useState(1);

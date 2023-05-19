@@ -308,7 +308,7 @@ const EPubReader = () => {
     const [tocData, settocData] = useState<TOCData | null>(null);
     const [currentChapterURL, setCurrentChapterURL] = useState("~");
     const [sideListWidth, setSideListWidth] = useState(appSettings.readerSettings.sideListWidth || 450);
-    const [zenMode, setZenMode] = useState(false);
+    const [zenMode, setZenMode] = useState(appSettings.openInZenMode || false);
     const [isBookmarked, setBookmarked] = useState(false);
     const [wasMaximized, setWasMaximized] = useState(false);
     // display this text then shortcuts clicked
@@ -731,6 +731,7 @@ const EPubReader = () => {
     };
     window.app.scrollToPage = scrollToPage;
     useEffect(() => {
+        console.log(zenMode);
         if ((zenMode && !window.electron.getCurrentWindow().isMaximized()) || (!zenMode && !wasMaximized)) {
             setTimeout(() => {
                 if (elemBeforeChange)

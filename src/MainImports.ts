@@ -59,6 +59,8 @@ export const settingValidatorData = {
      * show search input for history and bookmark
      */
     showSearch: false,
+
+    openInZenMode: false,
     readerSettings: {
         /**
          * width of reader in percent
@@ -869,6 +871,7 @@ const defaultSettings: AppSettings = {
     // showPageNumOnHome: true,
     disableListNumbering: false,
     showSearch: false,
+    openInZenMode: false,
     readerSettings: {
         readerWidth: 60,
         variableImageSize: true,
