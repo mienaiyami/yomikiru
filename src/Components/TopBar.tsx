@@ -28,14 +28,14 @@ const TopBar = (): ReactElement => {
             let chapterName = window.app.replaceExtension(mangaInReader.chapterName, "");
             if (mangaName.length > 13) mangaName = mangaName.substring(0, 20) + "...";
             if (chapterName.length > 83) chapterName = chapterName.substring(0, 80) + "...";
-            const title = mangaName + " | " + chapterName;
+            const title = mangaName + " | " + chapterName + " - " + window.electron.app.getName();
             setTitle(chapterName.concat(window.electron.app.isPackaged ? "" : " - dev"));
             document.title = title;
             return;
         } else if (bookInReader) {
             let bookTitle = bookInReader.title;
             if (bookTitle.length > 83) bookTitle = bookTitle.substring(0, 80) + "...";
-            const title = bookTitle;
+            const title = bookTitle + " - " + window.electron.app.getName();
             setTitle(bookTitle.concat(window.electron.app.isPackaged ? "" : " - dev"));
             document.title = title;
             return;
