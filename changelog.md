@@ -15,21 +15,17 @@ Linux distribution currently not available as direct download but can be build e
 
 ## Added
 
-- Tab (keyboard) navigation for "reader settings's tabs".
-- New scrolling system (with keys).
-- Custom stylesheet.
-- New shortcut: `ctrl+w` to close window.
-- EPUB : Force low brightness.
+- Option to open reader directly in zen mode (access from app settings).
 
 ## Changed
 
 - UI Enhancements.
-- Save data files with a time gap after changing app data.
+- Open prev/next page on scroll in reader modes "left to right, right to left" when image height is smaller than window.
 
 
 ## Fixed
 
-- fixed #131,#136,#137,
+- fixed #143, #140.
 
 ---
 
