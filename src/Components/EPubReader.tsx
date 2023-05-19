@@ -791,7 +791,7 @@ const EPubReader = () => {
         const registerShortcuts = (e: KeyboardEvent) => {
             // /&& document.activeElement!.tagName === "BODY"
             window.app.keyRepeated = e.repeat;
-            if (e.key === " ") e.preventDefault();
+            if ([" ", "ArrowUp", "ArrowDown"].includes(e.key)) e.preventDefault();
             if (!isSettingOpen && window.app.isReaderOpen && !e.repeat && !isLoadingManga && !e.ctrlKey) {
                 switch (e.key) {
                     case shortcutkey.readerSettings?.key1:
