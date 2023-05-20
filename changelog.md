@@ -16,17 +16,21 @@ Linux distribution currently not available as direct download but can be build e
 ## Added
 
 - Option to open reader directly in zen mode (access from app settings).
+- #159.
 
 ## Changed
 
 - UI Enhancements.
-- Open prev/next page on scroll in reader modes "left to right, right to left" when image height is smaller than window.
-- re-enabling hardware acceleration as stutter no longer present, #6.
+- Added delay on page number input before starting scroll (can be bypassed by clicking enter).
+- Removed sync/blocking removing of temp file on clicking home.
+- #152
 
 
 ## Fixed
 
-- fixed #143, #140.
+- fixed #145,#147,#155.
+- epub history not going to top after updating.
+- checkboxes focusable through tab even if disabled.
 
 ---
 

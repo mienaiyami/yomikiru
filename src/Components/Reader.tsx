@@ -921,7 +921,11 @@ const Reader = () => {
         <div
             ref={readerRef}
             id="reader"
-            className={(isSideListPinned ? "sideListPinned " : "") + "reader "}
+            className={
+                (isSideListPinned ? "sideListPinned " : "") +
+                "reader " +
+                (zenMode && appSettings.hideCursorInZenMode ? "noCursor " : "")
+            }
             style={{
                 gridTemplateColumns: sideListWidth + "px auto",
 

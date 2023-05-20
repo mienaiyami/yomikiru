@@ -769,6 +769,18 @@ const Settings = (): ReactElement => {
                                 Open in <code>Zen Mode</code> by default.
                             </p>
                         </label>
+                        <label className={appSettings.hideCursorInZenMode ? "selected" : ""}>
+                            <input
+                                type="checkbox"
+                                checked={appSettings.hideCursorInZenMode}
+                                onChange={(e) => {
+                                    dispatch(setAppSettings({ hideCursorInZenMode: e.currentTarget.checked }));
+                                }}
+                            />
+                            <p>
+                                Hide cursor in <code>Zen Mode</code>.
+                            </p>
+                        </label>
                         <label className={appSettings.useCanvasBasedReader ? "selected" : ""}>
                             <input
                                 type="checkbox"

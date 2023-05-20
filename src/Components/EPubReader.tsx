@@ -935,7 +935,11 @@ const EPubReader = () => {
         <div
             ref={readerRef}
             id="EPubReader"
-            className={(isSideListPinned ? "sideListPinned " : "") + "reader "}
+            className={
+                (isSideListPinned ? "sideListPinned " : "") +
+                "reader " +
+                (zenMode && appSettings.hideCursorInZenMode ? "noCursor " : "")
+            }
             style={{
                 gridTemplateColumns: sideListWidth + "px auto",
                 display: isReaderOpen ? (isSideListPinned ? "grid" : "block") : "none",

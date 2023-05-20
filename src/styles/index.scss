@@ -1290,6 +1290,10 @@ body {
             // --mangaListWidth: clamp(400px, 40%, 500px);
             --sideListWidth: 450px;
 
+            &.noCursor {
+                cursor: none;
+            }
+
             &.sideListPinned {
                 &#reader {
                     overflow: hidden;

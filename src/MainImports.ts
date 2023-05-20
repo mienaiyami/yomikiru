@@ -61,6 +61,7 @@ export const settingValidatorData = {
     showSearch: false,
 
     openInZenMode: false,
+    hideCursorInZenMode: false,
     readerSettings: {
         /**
          * width of reader in percent
@@ -875,6 +876,7 @@ const defaultSettings: AppSettings = {
     disableListNumbering: false,
     showSearch: false,
     openInZenMode: false,
+    hideCursorInZenMode: false,
     readerSettings: {
         readerWidth: 60,
         variableImageSize: true,
