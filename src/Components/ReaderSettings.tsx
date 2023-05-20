@@ -169,6 +169,7 @@ const ReaderSettings = memo(
                                 checked={appSettings.readerSettings.widthClamped}
                                 onChange={(e) => dispatch(setReaderSettings({ widthClamped: e.target.checked }))}
                                 labelAfter="Clamp"
+                                title="Clamp width of images to screen"
                             />
                         </div>
                     </div>

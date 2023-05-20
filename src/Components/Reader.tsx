@@ -153,6 +153,9 @@ const Reader = () => {
             setWasMaximized(window.electron.getCurrentWindow().isMaximized());
             document.body.classList.add("zenMode");
             document.body.requestFullscreen();
+            setTimeout(() => {
+                if (!document.fullscreenElement) document.body.requestFullscreen();
+            }, 500);
         } else {
             document.body.classList.remove("zenMode");
             setWasMaximized(false);
@@ -494,6 +497,7 @@ const Reader = () => {
         setImages([]);
         setWideImageContMap([]);
         setCurrentPageNumber(1);
+        if (pageNumberInputRef.current) pageNumberInputRef.current.value = "1";
         setCurrentImageRow(1);
         setImagesLength(0);
         setImagesLoaded(0);
