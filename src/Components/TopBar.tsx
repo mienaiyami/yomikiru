@@ -20,6 +20,9 @@ const TopBar = (): ReactElement => {
     const bookInReader = useAppSelector((store) => store.bookInReader);
     const [isMaximized, setMaximized] = useState(window.electron.getCurrentWindow().isMaximized ?? true);
     const isReaderOpen = useAppSelector((store) => store.isReaderOpen);
+
+    const [pageScrollTimeoutID, setTimeoutID] = useState<NodeJS.Timeout | null>(null);
+
     const dispatch = useAppDispatch();
 
     const setTitleWithSize = () => {
@@ -123,6 +126,7 @@ const TopBar = (): ReactElement => {
                         }}
                         onKeyDown={(e) => {
                             e.stopPropagation();
+                            if (pageScrollTimeoutID) clearTimeout(pageScrollTimeoutID);
                             if (
                                 !(
                                     /[0-9]/gi.test(e.key) ||
@@ -134,6 +138,7 @@ const TopBar = (): ReactElement => {
                                 e.preventDefault();
                         }}
                         onKeyUp={(e) => {
+                            if (pageScrollTimeoutID) clearTimeout(pageScrollTimeoutID);
                             if (e.key == "Enter" || e.key == "Escape") {
                                 e.currentTarget.blur();
                             }
@@ -159,8 +164,12 @@ const TopBar = (): ReactElement => {
                                     pageNumberInputRef.current.value = pagenumber.toString();
                                 }
                                 if (!pagenumber) return;
-                                dispatch(setPageNumChangeDisabled(true));
-                                window.app.scrollToPage(pagenumber);
+                                setTimeoutID(
+                                    setTimeout(() => {
+                                        dispatch(setPageNumChangeDisabled(true));
+                                        window.app.scrollToPage(pagenumber);
+                                    }, 1000)
+                                );
                                 return;
                             }
                             e.preventDefault();
