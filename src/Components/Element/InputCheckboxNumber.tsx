@@ -31,7 +31,7 @@ const InputCheckboxNumber = ({
 }) => {
     return (
         <label className={(disabled ? "disabled " : "") + (checked ? "optionSelected " : "") + className}>
-            <input type="checkbox" checked={checked} onChange={onChangeCheck} />
+            <input type="checkbox" checked={checked} disabled={disabled} onChange={onChangeCheck} />
             {labelBefore}
             {paraBefore && <p>{paraBefore}</p>}
             <input
