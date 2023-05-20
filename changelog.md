@@ -15,8 +15,7 @@ Linux distribution currently not available as direct download but can be build e
 
 ## Added
 
-- Option to open reader directly in zen mode (access from app settings).
-- #159.
+- #159, Hide cursor in zen mode (access from app settings).
 
 ## Changed
 
