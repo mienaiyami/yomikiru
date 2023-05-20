@@ -420,9 +420,15 @@ const EPubReader = () => {
 
     const loadEPub = (link: string) => {
         if (window.fs.existsSync(window.app.deleteDirOnClose))
-            window.fs.rmSync(window.app.deleteDirOnClose, {
-                recursive: true,
-            });
+            window.fs.rm(
+                window.app.deleteDirOnClose,
+                {
+                    recursive: true,
+                },
+                (err) => {
+                    if (err) window.logger.error(err);
+                }
+            );
 
         link = window.path.normalize(link);
         setBookmarked(bookmarks.map((e) => e.data.link).includes(link));

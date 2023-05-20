@@ -6,7 +6,7 @@ import TopBar from "./Components/TopBar";
 import { setAppSettings } from "./store/appSettings";
 import { setUnzipping } from "./store/unzipping";
 import { setLoadingManga } from "./store/isLoadingManga";
-import { setLoadingMangaPercent } from "./store/loadingMangaPercent";
+import loadingMangaPercent, { setLoadingMangaPercent } from "./store/loadingMangaPercent";
 import { setLinkInReader } from "./store/linkInReader";
 import { refreshHistory, updateCurrentHistoryPage, updateCurrentBookHistory } from "./store/history";
 import { setReaderOpen } from "./store/isReaderOpen";
@@ -139,9 +139,15 @@ const App = (): ReactElement => {
         const linkSplitted = link.split(window.path.sep);
 
         if (window.fs.existsSync(window.app.deleteDirOnClose))
-            window.fs.rmSync(window.app.deleteDirOnClose, {
-                recursive: true,
-            });
+            window.fs.rm(
+                window.app.deleteDirOnClose,
+                {
+                    recursive: true,
+                },
+                (err) => {
+                    if (err) window.logger.error(err);
+                }
+            );
 
         if ([".zip", ".cbz"].includes(window.path.extname(link).toLowerCase())) {
             let tempExtractPath = window.path.join(
@@ -244,9 +250,15 @@ const App = (): ReactElement => {
         dispatch(setBookInReader(null));
 
         if (window.fs.existsSync(window.app.deleteDirOnClose))
-            window.fs.rmSync(window.app.deleteDirOnClose, {
-                recursive: true,
-            });
+            window.fs.rm(
+                window.app.deleteDirOnClose,
+                {
+                    recursive: true,
+                },
+                (err) => {
+                    if (err) window.logger.error(err);
+                }
+            );
 
         document.body.classList.remove("zenMode");
         if (document.fullscreenElement) document.exitFullscreen();
