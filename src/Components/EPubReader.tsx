@@ -593,7 +593,9 @@ const EPubReader = () => {
                                         link,
                                         title: tempTOCData.title,
                                         date: new Date().toLocaleString("en-UK", { hour12: true }),
-                                        chapter: tempTOCData.nav[0].name,
+                                        chapter:
+                                            tempTOCData.nav.find((e) => e.src === currentChapterURL)?.name ??
+                                            tempTOCData.nav[0].name,
                                     };
                                     dispatch(setBookInReader(bookOpened));
                                     dispatch(
