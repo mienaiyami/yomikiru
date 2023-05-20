@@ -287,7 +287,7 @@ const App = (): ReactElement => {
         });
         window.electron.ipcRenderer.on("recordPageNumber", () => {
             if (isReaderOpen) closeReader();
-            else if (window.app.linkInReader.link !== "") dispatch(updateCurrentHistoryPage());
+            else if (window.app.linkInReader.link !== "") dispatch(updateCurrentHistoryPage(true));
         });
         window.app.titleBarHeight = parseFloat(
             window.getComputedStyle(document.body).getPropertyValue("--titleBar-height")

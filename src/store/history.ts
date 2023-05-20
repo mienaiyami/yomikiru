@@ -139,7 +139,7 @@ const history = createSlice({
         /**
          * only for manga/image reader
          */
-        updateCurrentHistoryPage: (state) => {
+        updateCurrentHistoryPage: (state, action: PayloadAction<boolean | undefined>) => {
             const stateDup: HistoryItem[] = JSON.parse(JSON.stringify(state));
             const link = window.app.linkInReader.link;
             const index = stateDup.findIndex((e) => e.data.link === link);
@@ -149,7 +149,7 @@ const history = createSlice({
             if (index > -1) {
                 // console.log(`Updating ${stateDup[index].mangaName} to page ${window.app.currentPageNumber}`);
                 (stateDup[index] as MangaHistoryItem).data.page = window.app.currentPageNumber;
-                saveJSONfile(historyPath, stateDup);
+                saveJSONfile(historyPath, stateDup, action?.payload || false);
             }
         },
         /**

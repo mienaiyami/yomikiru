@@ -802,31 +802,34 @@ const saveJSONfile = (path: string, data: any, sync = false) => {
     }
     window.fileSaveTimeOut.set(
         path,
-        setTimeout(() => {
-            const saveString = JSON.stringify(data, null, "\t");
-            if (saveString) {
-                try {
-                    JSON.parse(saveString);
-                    // console.log("Saving " + path);
-                    if (sync) {
-                        window.fs.writeFileSync(path, JSON.stringify(data, null, "\t"));
-                        window.fileSaveTimeOut.delete(path);
-                    } else
-                        window.fs.writeFile(path, JSON.stringify(data, null, "\t"), (err) => {
-                            if (err) {
-                                window.logger.error(err);
-                                window.dialog.nodeError(err);
-                            }
+        setTimeout(
+            () => {
+                const saveString = JSON.stringify(data, null, "\t");
+                if (saveString) {
+                    try {
+                        JSON.parse(saveString);
+                        // console.log("Saving " + path);
+                        if (sync) {
+                            window.fs.writeFileSync(path, JSON.stringify(data, null, "\t"));
                             window.fileSaveTimeOut.delete(path);
-                        });
-                } catch (err) {
-                    window.logger.error(err, "Retrying");
-                    setTimeout(() => {
-                        saveJSONfile(path, data, sync);
-                    }, 1000);
+                        } else
+                            window.fs.writeFile(path, JSON.stringify(data, null, "\t"), (err) => {
+                                if (err) {
+                                    window.logger.error(err);
+                                    window.dialog.nodeError(err);
+                                }
+                                window.fileSaveTimeOut.delete(path);
+                            });
+                    } catch (err) {
+                        window.logger.error(err, "Retrying");
+                        setTimeout(() => {
+                            saveJSONfile(path, data, sync);
+                        }, 1000);
+                    }
                 }
-            }
-        }, 2000)
+            },
+            sync ? 0 : 2000
+        )
     );
 };
 
