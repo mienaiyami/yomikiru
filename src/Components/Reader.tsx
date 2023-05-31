@@ -740,10 +740,12 @@ const Reader = () => {
         if (isSideListPinned) {
             readerRef.current?.scrollTo(0, scrollPosPercent * readerRef.current.scrollHeight);
         }
-        /**
-         * todo: do only when mouse up
-         */
-        dispatch(setReaderSettings({ sideListWidth }));
+        const timeOutId = setTimeout(() => {
+            dispatch(setReaderSettings({ sideListWidth }));
+        }, 500);
+        return () => {
+            clearTimeout(timeOutId);
+        };
     }, [sideListWidth]);
     useLayoutEffect(() => {
         changePageNumber();

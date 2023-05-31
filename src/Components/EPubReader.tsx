@@ -781,11 +781,12 @@ const EPubReader = () => {
                     block: "start",
                 });
         }
-        /**
-         * todo: do only when mouse up
-         */
-
-        dispatch(setReaderSettings({ sideListWidth }));
+        const timeOutId = setTimeout(() => {
+            dispatch(setReaderSettings({ sideListWidth }));
+        }, 500);
+        return () => {
+            clearTimeout(timeOutId);
+        };
     }, [sideListWidth]);
 
     useLayoutEffect(() => {
