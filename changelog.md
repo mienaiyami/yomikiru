@@ -28,7 +28,7 @@ Linux distribution currently not available as direct download but can be build e
 ## Fixed
 
 - Multiple scrolling issues in LTR/RTL mode with vertically fit enabled.
-- #147,
+- System buttons showing when opening file from file explorer with zen mode. #147.
 
 ---
 
