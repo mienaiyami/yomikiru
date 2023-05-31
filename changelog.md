@@ -15,21 +15,20 @@ Linux distribution currently not available as direct download but can be build e
 
 ## Added
 
-- #159, Hide cursor in zen mode (access from app settings).
+- Option to disable Hardware Acceleration.
 
 ## Changed
 
 - UI Enhancements.
-- Added delay on page number input before starting scroll (can be bypassed by clicking enter).
-- Removed sync/blocking removing of temp file on clicking home.
-- #152
+- Switched from web based fullscreen to electron fullscreen.
+- Smoother sidelist width change.
+- In "Open chapter directly under base directory...", allowed to update list instead of "no image" error.
 
 
 ## Fixed
 
-- fixed #145,#147,#155.
-- epub history not going to top after updating.
-- checkboxes focusable through tab even if disabled.
+- Multiple scrolling issues in LTR/RTL mode with vertically fit enabled.
+- #147,
 
 ---
 
