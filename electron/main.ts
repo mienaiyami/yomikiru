@@ -19,9 +19,10 @@ if (IS_PORTABLE) {
     app.setPath("userData", folderPath);
 }
 
-// disabling hardware acceleration because it causes reader to stutter when scrolling
-// 18/05/23 - decided to not use it anymore as it make scrolling laggy
-// app.disableHardwareAcceleration();
+//// disabling hardware acceleration because it causes reader to stutter when scrolling
+////18/05/23 - decided to not use it anymore as it make scrolling laggy
+if (fs.existsSync(path.join(app.getPath("userData"), "DISABLE_HARDWARE_ACCELERATION")))
+    app.disableHardwareAcceleration();
 
 // change path in `settings.tsx as well if changing log path
 log.transports.file.resolvePath = () => path.join(app.getPath("userData"), "logs/main.log");

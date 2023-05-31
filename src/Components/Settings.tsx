@@ -22,6 +22,13 @@ const Settings = (): ReactElement => {
     const bookmarks = useAppSelector((store) => store.bookmarks);
     const isSettingOpen = useAppSelector((store) => store.isSettingOpen);
 
+    //  hardware acceleration
+    const [HAValue, setHAValue] = useState(
+        window.fs.existsSync(
+            window.path.join(window.electron.app.getPath("userData"), "DISABLE_HARDWARE_ACCELERATION")
+        ) || false
+    );
+
     const dispatch = useAppDispatch();
 
     const settingContRef = useRef<HTMLDivElement>(null);
@@ -808,6 +815,27 @@ const Settings = (): ReactElement => {
                                 Load and show one chapter at a time (from TOC).
                                 <br />
                                 Drawback : Content outside of TOC will not be accessible
+                            </p>
+                        </label>
+                        <label className={HAValue ? "selected" : ""}>
+                            <input
+                                type="checkbox"
+                                checked={HAValue}
+                                onChange={(e) => {
+                                    const fileName = window.path.join(
+                                        window.electron.app.getPath("userData"),
+                                        "DISABLE_HARDWARE_ACCELERATION"
+                                    );
+                                    if (e.currentTarget.checked) {
+                                        window.fs.writeFileSync(fileName, " ");
+                                    } else {
+                                        if (window.fs.existsSync(fileName)) window.fs.rmSync(fileName);
+                                    }
+                                    setHAValue((init) => !init);
+                                }}
+                            />
+                            <p>
+                                Disable Hardware Acceleration. <code>Need App Restart</code>
                             </p>
                         </label>
                         <button
