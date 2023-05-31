@@ -25,7 +25,7 @@ const InputRange = ({
 }) => {
     if (labeled)
         return (
-            <label className={(disabled ? "disabled " : "") + className} title={title}>
+            <label className={(disabled ? "disabled " : "") + (labelText && "labeled ") + className} title={title}>
                 {labelText && <p>{labelText}</p>}
                 <input
                     type="range"

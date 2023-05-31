@@ -626,7 +626,7 @@ const EPUBReaderSettings = memo(
                                 value={appSettings.epubReaderSettings.forceLowBrightness.value}
                                 disabled={!appSettings.epubReaderSettings.forceLowBrightness.enabled}
                                 labeled={true}
-                                labelText=" "
+                                labelText=""
                                 onChange={(e) => {
                                     dispatch(
                                         setEpubReaderSettings({

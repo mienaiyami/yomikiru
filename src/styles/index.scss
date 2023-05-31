@@ -1729,7 +1729,10 @@ body {
                             }
                             .colorRange {
                                 display: grid;
-                                grid-template-columns: 1rem auto 2rem;
+                                grid-template-columns: auto 2rem;
+                                &.labeled {
+                                    grid-template-columns: 1rem auto 2rem;
+                                }
                             }
                         }
                     }

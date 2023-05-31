@@ -702,7 +702,7 @@ const ReaderSettings = memo(
                                 value={appSettings.readerSettings.forceLowBrightness.value}
                                 disabled={!appSettings.readerSettings.forceLowBrightness.enabled}
                                 labeled={true}
-                                labelText=" "
+                                labelText=""
                                 onChange={(e) => {
                                     dispatch(
                                         setReaderSettings({
