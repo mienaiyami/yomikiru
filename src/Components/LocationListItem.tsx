@@ -16,12 +16,12 @@ const LocationListItem = ({
     setCurrentLink: React.Dispatch<React.SetStateAction<string>>;
     inHistory?: boolean;
 }): ReactElement => {
-    const { openInReader } = useContext(AppContext);
+    const { openInReader, checkValidFolder } = useContext(AppContext);
     const appSettings = useAppSelector((store) => store.appSettings);
 
     const dispatch = useAppDispatch();
 
-    const onClickHandle = () => {
+    const onClickHandle = (a = true) => {
         if (!window.fs.existsSync(link)) {
             window.dialog.customError({ message: "Directory/File doesn't exist." });
             return;
@@ -31,10 +31,15 @@ const LocationListItem = ({
             window.path.normalize(window.path.resolve(link + "../../../") + window.path.sep) ===
                 appSettings.baseDir
         ) {
+            checkValidFolder(link, (isValid) => {
+                if (isValid) return openInReader(link);
+            });
+        }
+        if (window.app.isSupportedFormat(name)) {
             openInReader(link);
-        } else if (window.app.isSupportedFormat(name)) {
-            openInReader(link);
-        } else setCurrentLink(link);
+        } else {
+            if (a) setCurrentLink(link);
+        }
     };
     return (
         <li className={inHistory ? "alreadyRead" : ""}>
