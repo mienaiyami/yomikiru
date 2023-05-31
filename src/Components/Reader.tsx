@@ -1006,16 +1006,17 @@ const Reader = () => {
                     "--blend-mode": appSettings.readerSettings.customColorFilter.blendMode,
                 }}
                 onWheel={(e) => {
+                    if (e.ctrlKey) return;
                     if ([1, 2].includes(appSettings.readerSettings.readerTypeSelected))
                         if (isSideListPinned && imgContRef.current)
                             if (imgContRef.current.offsetHeight === imgContRef.current.scrollHeight) {
-                                if (e.nativeEvent.deltaY > 0) openNextPage();
-                                if (e.nativeEvent.deltaY < 0) openPrevPage();
+                                if (e.nativeEvent.deltaY > 0 && currentImageRow !== imageRowCount) openNextPage();
+                                if (e.nativeEvent.deltaY < 0 && currentImageRow !== 1) openPrevPage();
                             }
                     if (!isSideListPinned && readerRef.current)
                         if (readerRef.current.offsetHeight === readerRef.current.scrollHeight) {
-                            if (e.nativeEvent.deltaY > 0) openNextPage();
-                            if (e.nativeEvent.deltaY < 0) openPrevPage();
+                            if (e.nativeEvent.deltaY > 0 && currentImageRow !== imageRowCount) openNextPage();
+                            if (e.nativeEvent.deltaY < 0 && currentImageRow !== 1) openPrevPage();
                         }
                 }}
                 onScroll={() => {
