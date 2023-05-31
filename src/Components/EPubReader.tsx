@@ -94,44 +94,55 @@ const StyleSheets = memo(
 );
 
 function parseEPubHTMLX(filePath: string, parser: DOMParser) {
-    const txt = window.fs.readFileSync(decodeURIComponent(filePath), "utf-8");
-    const xhtml = parser.parseFromString(txt, "application/xhtml+xml");
-    xhtml.querySelectorAll("[src]").forEach((e) => {
-        const src_old = e.getAttribute("src") || "";
-        e.setAttribute("src", window.path.join(window.path.dirname(filePath), src_old));
-    });
-    // console.log(xhtml.querySelectorAll("[href]"));
-    xhtml.querySelectorAll("[href]").forEach((e) => {
-        const href_old = e.getAttribute("href");
-        if (href_old)
-            if (!href_old.startsWith("http")) {
-                // (e as HTMLLinkElement).href = (e as HTMLLinkElement).href.split("#").splice(-1)[0];
-                e.setAttribute(
-                    "data-href",
-                    href_old[0] === "#"
-                        ? filePath + href_old
-                        : window.path.join(window.path.dirname(filePath), href_old)
-                );
-                e.removeAttribute("href");
-            }
-    });
-    // for svg image
-    xhtml.querySelectorAll("svg image").forEach((e) => {
-        const href_old = e.getAttribute("xlink:href");
-        if (href_old)
-            if (!href_old.startsWith("http")) {
-                // (e as HTMLLinkElement).href = (e as HTMLLinkElement).href.split("#").splice(-1)[0];
-                e.setAttribute("src", window.path.join(window.path.dirname(filePath), href_old));
-                e.setAttribute("xlink:href", window.path.join(window.path.dirname(filePath), href_old));
-                // e.removeAttribute("xlink:href");
-            }
-    });
+    try {
+        const txt = window.fs.readFileSync(decodeURIComponent(filePath), "utf-8");
+        const xhtml = parser.parseFromString(txt, "application/xhtml+xml");
+        xhtml.querySelectorAll("[src]").forEach((e) => {
+            const src_old = e.getAttribute("src") || "";
+            e.setAttribute("src", window.path.join(window.path.dirname(filePath), src_old));
+        });
+        // console.log(xhtml.querySelectorAll("[href]"));
+        xhtml.querySelectorAll("[href]").forEach((e) => {
+            const href_old = e.getAttribute("href");
+            if (href_old)
+                if (!href_old.startsWith("http")) {
+                    // (e as HTMLLinkElement).href = (e as HTMLLinkElement).href.split("#").splice(-1)[0];
+                    e.setAttribute(
+                        "data-href",
+                        href_old[0] === "#"
+                            ? filePath + href_old
+                            : window.path.join(window.path.dirname(filePath), href_old)
+                    );
+                    e.removeAttribute("href");
+                }
+        });
+        // for svg image
+        xhtml.querySelectorAll("svg image").forEach((e) => {
+            const href_old = e.getAttribute("xlink:href");
+            if (href_old)
+                if (!href_old.startsWith("http")) {
+                    // (e as HTMLLinkElement).href = (e as HTMLLinkElement).href.split("#").splice(-1)[0];
+                    e.setAttribute("src", window.path.join(window.path.dirname(filePath), href_old));
+                    e.setAttribute("xlink:href", window.path.join(window.path.dirname(filePath), href_old));
+                    // e.removeAttribute("xlink:href");
+                }
+        });
 
-    xhtml.querySelectorAll("[id]").forEach((e) => {
-        e.setAttribute("data-id", e.id);
-        e.removeAttribute("id");
-    });
-    return xhtml;
+        xhtml.querySelectorAll("[id]").forEach((e) => {
+            e.setAttribute("data-id", e.id);
+            e.removeAttribute("id");
+        });
+
+        return xhtml;
+    } catch (err) {
+        window.logger.error("EPUBReader::", err);
+        const doc = document.implementation.createHTMLDocument("Error");
+        const p = doc.createElement("p");
+        p.innerHTML =
+            "An error occurred while loading epub file / temporary file have been deleted. Please refresh.";
+        doc.body.appendChild(p);
+        return doc;
+    }
 }
 
 const HTMLPart = memo(

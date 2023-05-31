@@ -59,13 +59,19 @@ const BookmarkHistoryListItem = (props: ListItemE) => {
         >
             <a
                 className="big"
-                onClick={() =>
+                onClick={() => {
+                    if (!window.fs.existsSync(props.data.link)) {
+                        window.dialog.customError({
+                            message: "This file does not exist anymore.",
+                        });
+                        return;
+                    }
                     openInReader(
                         props.data.link,
                         props.type === "image" ? props.data.page : props.data.chapter || "",
                         props.type === "book" ? props.data.elementQueryString : ""
-                    )
-                }
+                    );
+                }}
                 onContextMenu={(e) => {
                     dispatch(
                         setContextMenu({

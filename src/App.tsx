@@ -305,8 +305,14 @@ const App = (): ReactElement => {
         window.app.titleBarHeight = parseFloat(
             window.getComputedStyle(document.body).getPropertyValue("--titleBar-height")
         );
+        // here bcoz reload doesnt make window exit fullscreen
+        if (window.electron.getCurrentWindow().isFullScreen())
+            window.electron.getCurrentWindow().setFullScreen(false);
         const eventsOnStart = (e: KeyboardEvent) => {
             if (e.key === "h") {
+                if (window.electron.getCurrentWindow().isFullScreen())
+                    window.electron.getCurrentWindow().setFullScreen(false);
+
                 if (window.app.isReaderOpen) return closeReader();
                 window.location.reload();
             }
