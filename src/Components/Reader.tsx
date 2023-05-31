@@ -152,14 +152,12 @@ const Reader = () => {
             setSideListPinned(false);
             setWasMaximized(window.electron.getCurrentWindow().isMaximized());
             document.body.classList.add("zenMode");
-            document.body.requestFullscreen();
-            setTimeout(() => {
-                if (!document.fullscreenElement) document.body.requestFullscreen();
-            }, 500);
+            window.electron.getCurrentWindow().setFullScreen(true);
         } else {
             document.body.classList.remove("zenMode");
             setWasMaximized(false);
-            if (document.fullscreenElement) document.exitFullscreen();
+            if (window.electron.getCurrentWindow().isFullScreen())
+                window.electron.getCurrentWindow().setFullScreen(false);
         }
     }, [zenMode]);
     /**

@@ -261,7 +261,8 @@ const App = (): ReactElement => {
             );
 
         document.body.classList.remove("zenMode");
-        if (document.fullscreenElement) document.exitFullscreen();
+        if (window.electron.getCurrentWindow().isFullScreen())
+            window.electron.getCurrentWindow().setFullScreen(false);
         setTimeout(() => {
             window.electron.webFrame.clearCache();
         }, 1500);
