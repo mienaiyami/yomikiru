@@ -222,7 +222,7 @@ body {
         appearance: none;
         border-radius: 4px;
         cursor: pointer;
-
+        border: none;
         // border: 1px solid var(--text-input-bg);
         background-color: var(--text-input-bg);
         &:disabled {

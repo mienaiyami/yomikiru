@@ -391,6 +391,21 @@ const EPUBReaderSettings = memo(
                                     paraBefore="Word Spacing&nbsp;:"
                                     labelAfter="em"
                                 />
+
+                                <InputCheckbox
+                                    checked={appSettings.epubReaderSettings.noIndent}
+                                    onChange={(e) => {
+                                        dispatch(setEpubReaderSettings({ noIndent: e.currentTarget.checked }));
+                                    }}
+                                    paraAfter="No Indent"
+                                />
+                                {/* <InputCheckbox
+                                    checked={appSettings.epubReaderSettings.hyphenation}
+                                    onChange={(e) => {
+                                        dispatch(setEpubReaderSettings({ hyphenation: e.currentTarget.checked }));
+                                    }}
+                                    paraAfter="Hyphenation"
+                                /> */}
                             </div>
                         </div>
                     </div>
@@ -523,7 +538,7 @@ const EPUBReaderSettings = memo(
                                 );
                             }}
                         >
-                            Styles
+                            Styles and Others
                         </div>
                         <div className="options col">
                             <InputCheckboxColor
@@ -654,20 +669,6 @@ const EPUBReaderSettings = memo(
                                     );
                                 }}
                                 paraAfter="Show progress in Zen mode"
-                            />
-                            <InputCheckbox
-                                checked={appSettings.epubReaderSettings.noIndent}
-                                onChange={(e) => {
-                                    dispatch(setEpubReaderSettings({ noIndent: e.currentTarget.checked }));
-                                }}
-                                paraAfter="No Indent"
-                            />
-                            <InputCheckbox
-                                checked={appSettings.epubReaderSettings.hyphenation}
-                                onChange={(e) => {
-                                    dispatch(setEpubReaderSettings({ hyphenation: e.currentTarget.checked }));
-                                }}
-                                paraAfter="Hyphenation"
                             />
                         </div>
                     </div>
