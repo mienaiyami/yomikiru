@@ -222,16 +222,25 @@ body {
         appearance: none;
         border-radius: 4px;
         cursor: pointer;
-        border: 1px solid var(--text-input-bg);
+
+        // border: 1px solid var(--text-input-bg);
+        background-color: var(--text-input-bg);
         &:disabled {
             filter: opacity(0.3) sepia(1);
             cursor: not-allowed;
         }
+        &:hover {
+            background-color: var(--text-input-bg-focus);
 
+            &::-webkit-color-swatch-wrapper {
+                background-color: var(--text-input-bg-focus);
+            }
+        }
         &::-webkit-color-swatch-wrapper {
-            padding: 0;
+            padding: 3px;
             border-radius: 3px;
             border: none;
+            background-color: var(--text-input-bg);
         }
 
         &::-webkit-color-swatch {
