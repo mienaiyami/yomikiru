@@ -320,14 +320,53 @@ const EPUBReaderSettings = memo(
                                         );
                                     }}
                                 >
-                                    <option value="Roboto"> ★ Roboto</option>
-                                    <option value="Cambria"> ★ Cambria</option>
+                                    {appSettings.epubReaderSettings.quickFontFamily.map((e) => (
+                                        <option key={e} value={e} style={{ fontFamily: e }}>
+                                            ★ {e}
+                                        </option>
+                                    ))}
+                                    {/* <option value="Roboto"> ★ Roboto</option>
+                                    <option value="Cambria"> ★ Cambria</option> */}
                                     {fontList.map((e) => (
                                         <option value={e} key={e} style={{ fontFamily: e }}>
                                             {e}
                                         </option>
                                     ))}
                                 </InputSelect>
+                                <button
+                                    disabled={appSettings.epubReaderSettings.useDefault_fontFamily}
+                                    onClick={() => {
+                                        if (
+                                            appSettings.epubReaderSettings.quickFontFamily.includes(
+                                                appSettings.epubReaderSettings.fontFamily
+                                            )
+                                        ) {
+                                            dispatch(
+                                                setEpubReaderSettings({
+                                                    quickFontFamily:
+                                                        appSettings.epubReaderSettings.quickFontFamily.filter(
+                                                            (e) => e !== appSettings.epubReaderSettings.fontFamily
+                                                        ),
+                                                })
+                                            );
+                                        } else {
+                                            dispatch(
+                                                setEpubReaderSettings({
+                                                    quickFontFamily: [
+                                                        ...appSettings.epubReaderSettings.quickFontFamily,
+                                                        appSettings.epubReaderSettings.fontFamily,
+                                                    ],
+                                                })
+                                            );
+                                        }
+                                    }}
+                                >
+                                    {appSettings.epubReaderSettings.quickFontFamily.includes(
+                                        appSettings.epubReaderSettings.fontFamily
+                                    )
+                                        ? "Remove Star"
+                                        : "Star Font Family"}
+                                </button>
                                 <InputCheckboxNumber
                                     checked={!appSettings.epubReaderSettings.useDefault_lineSpacing}
                                     onChangeCheck={(e) => {

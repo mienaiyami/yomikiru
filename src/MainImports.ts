@@ -24,7 +24,10 @@ type WidenPrimitive<T> =
 
 type DeepArrayToUnion<T> = T extends T
     ? {
-          -readonly [K in keyof T]: T[K] extends readonly unknown[]
+          //! any[] as temp for now
+          -readonly [K in keyof T]: T[K] extends readonly []
+              ? any[]
+              : T[K] extends readonly unknown[]
               ? DeepArrayToUnion<T[K][number]>
               : DeepArrayToUnion<WidenPrimitive<T[K]>>;
       }
@@ -218,6 +221,7 @@ export const settingValidatorData = {
              */
             value: 0,
         },
+        quickFontFamily: [],
     },
 } as const;
 
@@ -974,6 +978,7 @@ const defaultSettings: AppSettings = {
             enabled: false,
             value: 0,
         },
+        quickFontFamily: ["Roboto", "Cambria"],
     },
 };
 
@@ -1069,6 +1074,13 @@ const isSettingsValid = (): { isValid: boolean; location: string[] } => {
                     return;
                 }
                 if (value2 instanceof Array) {
+                    if (value2.length === 0) {
+                        if (!(settings[key][key2] instanceof Array)) {
+                            output.isValid = false;
+                            output.location.push(`${key}.${key2}`);
+                        }
+                        return;
+                    }
                     // eslint-disable-next-line @typescript-eslint/ban-ts-comment
                     //@ts-ignore
                     if (!value2.includes(settings[key][key2])) {
