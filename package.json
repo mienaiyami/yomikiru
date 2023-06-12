@@ -68,7 +68,7 @@
         "babel-loader": "8.2.2",
         "cross-env": "7.0.3",
         "css-loader": "^6.4.0",
-        "electron": "22.0.0",
+        "electron": "25.1.0",
         "eslint": "7.29.0",
         "eslint-plugin-import": "2.23.4",
         "eslint-plugin-node": "11.1.0",
