@@ -19,6 +19,8 @@ const EPUBReaderSettings = memo(
         setshortcutText,
         sizePlusRef,
         sizeMinusRef,
+        fontSizePlusRef,
+        fontSizeMinusRef,
     }: {
         makeScrollPos: () => void;
         readerRef: React.RefObject<HTMLDivElement>;
@@ -26,6 +28,8 @@ const EPUBReaderSettings = memo(
         setshortcutText: React.Dispatch<React.SetStateAction<string>>;
         sizePlusRef: React.RefObject<HTMLButtonElement>;
         sizeMinusRef: React.RefObject<HTMLButtonElement>;
+        fontSizePlusRef: React.RefObject<HTMLButtonElement>;
+        fontSizeMinusRef: React.RefObject<HTMLButtonElement>;
     }) => {
         const appSettings = useAppSelector((store) => store.appSettings);
         const dispatch = useAppDispatch();
@@ -234,28 +238,33 @@ const EPUBReaderSettings = memo(
                                         let value = e.target.valueAsNumber;
                                         if (!value) value = 0;
                                         value = value >= 100 ? 100 : value;
-                                        dispatch(setEpubReaderSettings({ fontSize: value }));
+                                        if (document.activeElement !== e.currentTarget)
+                                            dispatch(setEpubReaderSettings({ fontSize: value }));
                                     }}
                                     labeled={true}
                                     labelAfter="px"
                                 />
                                 <button
+                                    ref={fontSizeMinusRef}
                                     onClick={(e) => {
                                         // makeScrollPos();
                                         let newSize = appSettings.epubReaderSettings.fontSize - 2;
 
                                         newSize = newSize < 1 ? 1 : newSize;
+                                        setshortcutText(newSize + "px");
                                         dispatch(setEpubReaderSettings({ fontSize: newSize }));
                                     }}
                                 >
                                     <FontAwesomeIcon icon={faMinus} />
                                 </button>
                                 <button
+                                    ref={fontSizePlusRef}
                                     onClick={(e) => {
                                         // makeScrollPos();
                                         let newSize = appSettings.epubReaderSettings.fontSize + 2;
 
                                         newSize = newSize > 100 ? 100 : newSize;
+                                        setshortcutText(newSize + "px");
                                         dispatch(setEpubReaderSettings({ fontSize: newSize }));
                                     }}
                                 >

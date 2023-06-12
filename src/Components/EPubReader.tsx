@@ -334,6 +334,8 @@ const EPubReader = () => {
     const readerSettingExtender = useRef<HTMLButtonElement>(null);
     const sizePlusRef = useRef<HTMLButtonElement>(null);
     const sizeMinusRef = useRef<HTMLButtonElement>(null);
+    const fontSizePlusRef = useRef<HTMLButtonElement>(null);
+    const fontSizeMinusRef = useRef<HTMLButtonElement>(null);
     const openPrevChapterRef = useRef<HTMLButtonElement>(null);
     const openNextChapterRef = useRef<HTMLButtonElement>(null);
     const shortcutTextRef = useRef<HTMLDivElement>(null);
@@ -852,6 +854,14 @@ const EPubReader = () => {
                     case shortcutkey.sizeMinus?.key2:
                         sizeMinusRef.current?.click();
                         break;
+                    case shortcutkey.fontSizePlus?.key1:
+                    case shortcutkey.fontSizePlus?.key2:
+                        fontSizePlusRef.current?.click();
+                        break;
+                    case shortcutkey.fontSizeMinus?.key1:
+                    case shortcutkey.fontSizeMinus?.key2:
+                        fontSizeMinusRef.current?.click();
+                        break;
                     default:
                         break;
                 }
@@ -968,6 +978,8 @@ const EPubReader = () => {
                 sizePlusRef={sizePlusRef}
                 sizeMinusRef={sizeMinusRef}
                 setshortcutText={setshortcutText}
+                fontSizePlusRef={fontSizePlusRef}
+                fontSizeMinusRef={fontSizeMinusRef}
             />
 
             {tocData && (

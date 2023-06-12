@@ -481,7 +481,9 @@ declare global {
         | "selectReaderMode2"
         | "selectPagePerRow1"
         | "selectPagePerRow2"
-        | "selectPagePerRow2odd";
+        | "selectPagePerRow2odd"
+        | "fontSizePlus"
+        | "fontSizeMinus";
     interface ShortcutSchema {
         /**
          * name of command
@@ -679,6 +681,19 @@ window.shortcutsFunctions = [
         command: "selectPagePerRow2odd",
         name: "Select Page Per Row - 2odd",
         key1: "3",
+        key2: "",
+    },
+
+    {
+        command: "fontSizePlus",
+        name: "Increase font size (epub)",
+        key1: "",
+        key2: "",
+    },
+    {
+        command: "fontSizeMinus",
+        name: "Decrease font size (epub)",
+        key1: "",
         key2: "",
     },
 ];
