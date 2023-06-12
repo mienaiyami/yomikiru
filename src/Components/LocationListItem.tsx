@@ -26,20 +26,24 @@ const LocationListItem = ({
             window.dialog.customError({ message: "Directory/File doesn't exist." });
             return;
         }
+        if (window.app.isSupportedFormat(name)) {
+            openInReader(link);
+            return;
+        }
         if (
             appSettings.openDirectlyFromManga &&
             window.path.normalize(window.path.resolve(link + "../../../") + window.path.sep) ===
                 appSettings.baseDir
         ) {
             checkValidFolder(link, (isValid) => {
-                if (isValid) return openInReader(link);
+                if (isValid) {
+                    // had to do this coz below code always set it
+                    if (a) setCurrentLink(window.path.dirname(link));
+                    openInReader(link);
+                }
             });
         }
-        if (window.app.isSupportedFormat(name)) {
-            openInReader(link);
-        } else {
-            if (a) setCurrentLink(link);
-        }
+        if (a) setCurrentLink(link);
     };
     return (
         <li className={inHistory ? "alreadyRead" : ""}>
