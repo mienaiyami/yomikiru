@@ -27,6 +27,9 @@ const Main = (): ReactElement => {
     // const [dividerWidth, setDividerWidth] = useState<number>(0);
     useLayoutEffect(() => {
         const ff = () => dispatch(setContextMenu(null));
+        // onDragOver={() => false}
+        // onDragLeave={() => false}
+        // onDragEnd={() => false}
         window.addEventListener("wheel", ff);
         // if (tabContRef.current) {
         //     setDividerWidth(

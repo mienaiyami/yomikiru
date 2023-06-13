@@ -1068,7 +1068,11 @@ const EPubReader = () => {
                 onClick={(e) => {
                     if (readerRef.current && appSettings.epubReaderSettings.loadOneChapter) {
                         if (
-                            readerRef.current.scrollTop + window.innerHeight >= readerRef.current.scrollHeight ||
+                            Math.ceil(
+                                readerRef.current.scrollTop +
+                                    window.innerHeight +
+                                    (1 + Math.abs(1 - window.electron.webFrame.getZoomFactor()))
+                            ) >= readerRef.current.scrollHeight ||
                             readerRef.current.scrollTop < window.innerHeight / 4
                         ) {
                             let clickPos = (e.clientX / e.currentTarget.offsetWidth) * 100;

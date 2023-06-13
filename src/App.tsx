@@ -359,13 +359,38 @@ const App = (): ReactElement => {
             }
         }
 
+        const dropFile = (e: DragEvent) => {
+            e.preventDefault();
+            if (e.dataTransfer) {
+                const data = e.dataTransfer.files;
+                if (data.length > 0) {
+                    if (data.length > 1)
+                        window.dialog.customError({
+                            message: "More than one file/folder dropped. Only first will be loaded.",
+                        });
+                    if (window.fs.lstatSync(data[0].path).isDirectory()) openInReader(data[0].path);
+                    else if (
+                        [".zip", ".7z", ".cbz", ".epub"].includes(window.path.extname(data[0].path.toLowerCase()))
+                    )
+                        openInReader(data[0].path);
+                    else if (window.supportedFormats.includes(window.path.extname(data[0].path.toLowerCase())))
+                        openInReader(window.path.dirname(data[0].path));
+                }
+            }
+        };
+        const ee = (e: DragEvent) => e.preventDefault();
+        document.addEventListener("dragover", ee);
+        document.addEventListener("drop", dropFile);
+
         return () => {
-            removeEventListener("keydown", eventsOnStart);
+            window.removeEventListener("keydown", eventsOnStart);
             watcher.removeAllListeners();
             window.electron.ipcRenderer.removeAllListeners("loadMangaFromLink");
             window.electron.ipcRenderer.removeAllListeners("setWindowIndex");
             window.electron.ipcRenderer.removeAllListeners("canCheckForUpdate");
             window.electron.ipcRenderer.removeAllListeners("recordPageNumber");
+            document.removeEventListener("drop", dropFile);
+            document.removeEventListener("dragover", ee);
         };
     }, []);
 

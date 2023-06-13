@@ -1034,15 +1034,23 @@ const Settings = (): ReactElement => {
                 <div className="content features">
                     <ul>
                         <li>
+                            It is recommended to set <code>Default Location</code> to the folder where you usually
+                            store manga.
+                        </li>
+                        <li>
+                            Drag and Drop support.
+                            <ul>
+                                <li>Dropping a folder will open the reader with that folders content.</li>
+                                <li>Dropping a supported image file will open its parent folder in the reader</li>
+                                <li>Dropping archive or epub file will open them in the reader</li>
+                            </ul>
+                        </li>
+                        <li>
                             In location tab, click item to see its content or double-click to open it in reader.
                         </li>
                         <li>
                             Collapse/Un-collapse Bookmarks, History page tabs by clicking on the Dividers beside
                             them in home screen.
-                        </li>
-                        <li>
-                            You don't need to type the whole word in search. (e.g. For <code>One Piece</code> type{" "}
-                            <code>op</code>).
                         </li>
                         <li>
                             When using the <code>vertical Scroll</code> mode, you can change chapters on the first
@@ -1086,7 +1094,11 @@ const Settings = (): ReactElement => {
                         <li>
                             Home screen search:
                             <ul>
-                                <li>Paste link to set browser pasted link directly.</li>
+                                <li>
+                                    You don't need to type the whole word in search. (e.g. For{" "}
+                                    <code>One Piece</code> type <code>op</code>).
+                                </li>
+                                <li>Paste link to set browse pasted link in Locations tab.</li>
                                 <li>
                                     Type <code>..{window.path.sep}</code> to go up directory.
                                 </li>
