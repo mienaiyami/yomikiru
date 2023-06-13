@@ -71,6 +71,9 @@ const addOptionToExplorerMenu = () => {
 
     [HKEY_CLASSES_ROOT\\.zip\\OpenWithProgids]
     "Yomikiru"=""
+
+    [HKEY_CLASSES_ROOT\\.7z\\OpenWithProgids]
+    "Yomikiru"=""
     `;
 
     const tempPath = app.getPath("temp");
@@ -120,6 +123,9 @@ const deleteOptionInExplorerMenu = () => {
     [-HKEY_CLASSES_ROOT\\Yomikiru]
 
     [HKEY_CLASSES_ROOT\\.zip\\OpenWithProgids]
+    "Yomikiru"=-
+
+    [HKEY_CLASSES_ROOT\\.7z\\OpenWithProgids]
     "Yomikiru"=-
     `;
     fs.writeFileSync(path.join(app.getPath("temp"), "deleteOpenWithYomikiru.reg"), regDelete);

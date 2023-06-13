@@ -732,7 +732,7 @@ const EPUBReaderSettings = memo(
                                 onChange={(e) => {
                                     dispatch(setEpubReaderSettings({ invertImageColor: e.currentTarget.checked }));
                                 }}
-                                title="To blend chapter separating image better"
+                                title="To blend decoration images better"
                                 paraAfter="Invert and Blend Image Color"
                             />
                             <InputCheckbox

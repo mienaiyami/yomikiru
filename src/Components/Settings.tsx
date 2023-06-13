@@ -1062,8 +1062,8 @@ const Settings = (): ReactElement => {
                             <code>File Explorer Option</code>.
                             <ul>
                                 <li>
-                                    Right Click on folder or .cbz/.zip &nbsp;&nbsp;&#8594;&nbsp;&nbsp; Show more
-                                    options (win11) &nbsp;&nbsp;&#8594;&nbsp;&nbsp; Open in Yomikiru.
+                                    Right Click on folder or .cbz/.7z/.zip &nbsp;&nbsp;&#8594;&nbsp;&nbsp; Show
+                                    more options (win11) &nbsp;&nbsp;&#8594;&nbsp;&nbsp; Open in Yomikiru.
                                 </li>
                                 <li>
                                     Note that this only opens the chapter containing images, not the Manga Folder.

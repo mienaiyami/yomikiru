@@ -149,7 +149,7 @@ const App = (): ReactElement => {
                 }
             );
 
-        if ([".zip", ".cbz"].includes(window.path.extname(link).toLowerCase())) {
+        if ([".zip", ".cbz", ".7z"].includes(window.path.extname(link).toLowerCase())) {
             let tempExtractPath = window.path.join(
                 window.electron.app.getPath("temp"),
                 `yomikiru-temp-Images-${linkSplitted[linkSplitted.length - 1]}-${window.app.randomString(10)}`

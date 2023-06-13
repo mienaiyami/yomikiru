@@ -162,7 +162,7 @@ export const settingValidatorData = {
     },
     epubReaderSettings: {
         /**load and show only one chapter at a time from TOC */
-        loadOneChapter: false,
+        loadOneChapter: true,
         /**
          * width of reader in percent
          */
@@ -741,10 +741,11 @@ window.app.replaceExtension = (str, replaceWith = "~") => {
     return str
         .replace(/\.zip/gi, replaceWith === "~" ? " $ZIP" : replaceWith)
         .replace(/\.cbz/gi, replaceWith === "~" ? " $CBZ" : replaceWith)
-        .replace(/\.epub/gi, replaceWith === "~" ? " $EPUB" : replaceWith);
+        .replace(/\.epub/gi, replaceWith === "~" ? " $EPUB" : replaceWith)
+        .replace(/\.7z/gi, replaceWith === "~" ? " $7Z" : replaceWith);
 };
 window.app.isSupportedFormat = (str: string) =>
-    str.includes("$ZIP") || str.includes("$CBZ") || str.includes("$EPUB");
+    str.includes("$ZIP") || str.includes("$CBZ") || str.includes("$7Z") || str.includes("$EPUB");
 window.app.deleteDirOnClose = "";
 window.app.currentPageNumber = 1;
 window.app.epubHistorySaveData = null;
