@@ -225,7 +225,7 @@ const EPUBReaderSettings = memo(
                                 );
                             }}
                         >
-                            Font
+                            Font & Layout
                         </div>
                         <div className="options">
                             <div className="row">
@@ -367,6 +367,33 @@ const EPUBReaderSettings = memo(
                                         ? "Remove Star"
                                         : "Star Font Family"}
                                 </button>
+                                <InputCheckbox
+                                    checked={!appSettings.epubReaderSettings.useDefault_fontWeight}
+                                    onChange={(e) => {
+                                        dispatch(
+                                            setEpubReaderSettings({
+                                                useDefault_fontWeight: !e.currentTarget.checked,
+                                            })
+                                        );
+                                    }}
+                                    paraAfter="Font Weight (if supported for font)"
+                                />
+                                <InputRange
+                                    value={appSettings.epubReaderSettings.fontWeight}
+                                    disabled={appSettings.epubReaderSettings.useDefault_fontWeight}
+                                    min={100}
+                                    max={900}
+                                    step={100}
+                                    labeled
+                                    labelText=""
+                                    onChange={(e) => {
+                                        dispatch(
+                                            setEpubReaderSettings({
+                                                fontWeight: e.currentTarget.valueAsNumber,
+                                            })
+                                        );
+                                    }}
+                                />
                                 <InputCheckboxNumber
                                     checked={!appSettings.epubReaderSettings.useDefault_lineSpacing}
                                     onChangeCheck={(e) => {
@@ -586,7 +613,7 @@ const EPUBReaderSettings = memo(
                                 );
                             }}
                         >
-                            Styles and Others
+                            Styles & Others
                         </div>
                         <div className="options col">
                             <InputCheckboxColor
@@ -689,7 +716,6 @@ const EPUBReaderSettings = memo(
                                 value={appSettings.epubReaderSettings.forceLowBrightness.value}
                                 disabled={!appSettings.epubReaderSettings.forceLowBrightness.enabled}
                                 labeled={true}
-                                labelText=""
                                 onChange={(e) => {
                                     dispatch(
                                         setEpubReaderSettings({

@@ -712,7 +712,8 @@ const Settings = (): ReactElement => {
                             />
                             <p>
                                 Open chapter directly by clicking name instead of arrow in reader if chapter folder
-                                is in manga folder inside <code>default location</code>.
+                                is in manga folder inside <code>default location</code> (See Usage and Feature for
+                                more info).
                             </p>
                         </label>
                         <label

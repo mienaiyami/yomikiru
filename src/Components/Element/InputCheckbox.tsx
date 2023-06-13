@@ -21,6 +21,7 @@ const InputCheckbox = ({
     disabled?: boolean;
     title?: string;
 }) => {
+    if (!labelAfter && !paraAfter) console.error("Element must have either label or para.");
     return (
         <label
             title={title}

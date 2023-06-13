@@ -1714,6 +1714,10 @@ body {
                                     font-size: 15px;
                                 }
 
+                                input[type="range"] {
+                                    width: 100%;
+                                }
+
                                 &:hover {
                                     background-color: var(--text-input-bg-focus);
                                 }
@@ -1730,6 +1734,10 @@ body {
                             .colorRange {
                                 display: grid;
                                 grid-template-columns: auto 2rem;
+
+                                input[type="range"] {
+                                    width: auto;
+                                }
                                 &.labeled {
                                     grid-template-columns: 1rem auto 2rem;
                                 }
@@ -1893,10 +1901,11 @@ body {
                 flex-direction: column;
                 align-items: center;
                 --width: 50%;
-                --line-height: "normal";
-                --word-spacing: "normal";
+                --line-height: normal;
+                --word-spacing: normal;
                 --paragraph-gap: 1.6em 0;
-                --font-family: "inherit";
+                --font-family: inherit;
+                --font-weight: inherit;
                 --epub-font-color: none;
                 --epub-link-color: none;
                 --epub-background-color: var(--body-bg-color);
@@ -1913,6 +1922,11 @@ body {
                 &.forceFont {
                     > .cont * {
                         font-family: var(--font-family) !important;
+                    }
+                }
+                &.forceFontWeight {
+                    > .cont * {
+                        font-weight: var(--font-weight) !important;
                     }
                 }
                 &.forceParaGap {

@@ -1029,6 +1029,7 @@ const EPubReader = () => {
                 className={
                     "main " +
                     (appSettings.epubReaderSettings.useDefault_fontFamily ? "" : "forceFont ") +
+                    (appSettings.epubReaderSettings.useDefault_fontWeight ? "" : "forceFontWeight ") +
                     (appSettings.epubReaderSettings.useDefault_paragraphSpacing ? "" : "forceParaGap ") +
                     (appSettings.epubReaderSettings.hyphenation ? "hyphen " : "") +
                     (appSettings.epubReaderSettings.limitImgHeight ? "limitImgHeight " : "") +
@@ -1041,6 +1042,9 @@ const EPubReader = () => {
                     "--font-family": appSettings.epubReaderSettings.useDefault_fontFamily
                         ? "inherit"
                         : appSettings.epubReaderSettings.fontFamily,
+                    "--font-weight": appSettings.epubReaderSettings.useDefault_fontWeight
+                        ? "inherit"
+                        : appSettings.epubReaderSettings.fontWeight,
                     "--line-height": appSettings.epubReaderSettings.useDefault_lineSpacing
                         ? "normal"
                         : appSettings.epubReaderSettings.lineSpacing + "em",
