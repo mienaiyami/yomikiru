@@ -384,9 +384,9 @@ const EPubReaderSideList = memo(
                                     data-href={e.src}
                                     data-depth={e.depth}
                                     title={e.name}
-                                    // ref={(node) => {
-                                    //     if (current && node !== null) node.scrollIntoView();
-                                    // }}
+                                    ref={(node) => {
+                                        if (node !== null && e.src === currentChapterURL) node.scrollIntoView();
+                                    }}
                                 >
                                     <span className="text">
                                         {"\u00A0".repeat((tocData.depth - e.depth) * 5) + e.name}
