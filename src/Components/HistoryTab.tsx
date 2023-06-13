@@ -13,7 +13,18 @@ const HistoryTab = () => {
     const [filter, setFilter] = useState<string>("");
     const List = (historyData: HistoryItem[], filter: string) => {
         return historyData.map((e, i) => {
-            if (new RegExp(filter, "ig").test(e.type === "book" ? e.data.title : e.data.mangaName)) {
+            if (
+                new RegExp(filter, "ig").test(
+                    (e.type === "image"
+                        ? window.fs.existsSync(e.data.link) && window.fs.lstatSync(e.data.link).isDirectory()
+                            ? window.path.dirname(e.data.link)
+                            : e.data.link
+                        : e.data.link
+                    )
+                        .split(window.path.sep)
+                        .at(-1) || ""
+                )
+            ) {
                 return (
                     <BookmarkHistoryListItem
                         isBookmark={false}
@@ -34,7 +45,7 @@ const HistoryTab = () => {
         >
             <h2>
                 Continue Reading
-                <button
+                {/* <button
                     // onFocus={(e) => e.currentTarget.blur()}
                     onClick={() => {
                         window.dialog
@@ -51,7 +62,7 @@ const HistoryTab = () => {
                     data-tooltip="Clear All"
                 >
                     <FontAwesomeIcon icon={faTrash} />
-                </button>
+                </button> */}
             </h2>
 
             {appSettings.showSearch && (

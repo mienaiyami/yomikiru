@@ -13,6 +13,7 @@ import { makeNewSettings, setAppSettings, setEpubReaderSettings, setReaderSettin
 import { InputSelect } from "./Element/InputSelect";
 import InputRange from "./Element/InputRange";
 import { promptSelectDir } from "../MainImports";
+import { deleteAllHistory } from "../store/history";
 
 const Settings = (): ReactElement => {
     const appSettings = useAppSelector((store) => store.appSettings);
@@ -871,6 +872,21 @@ const Settings = (): ReactElement => {
                         <button
                             onClick={() => {
                                 window.dialog
+                                    .warn({
+                                        title: "Warning",
+                                        message: "Are you sure you want to clear history?",
+                                        noOption: false,
+                                    })
+                                    .then((res) => {
+                                        if (res && res.response === 0) dispatch(deleteAllHistory());
+                                    });
+                            }}
+                        >
+                            Clear all History
+                        </button>
+                        <button
+                            onClick={() => {
+                                window.dialog
                                     .confirm({
                                         title: "Confirm",
                                         message: "Reset Shortcuts to default?",
@@ -882,9 +898,7 @@ const Settings = (): ReactElement => {
                                         }
                                     });
                             }}
-                            // title="Reset"
                         >
-                            {/* <FontAwesomeIcon icon={faSync} /> */}
                             Reset Shortcuts
                         </button>
                         <button

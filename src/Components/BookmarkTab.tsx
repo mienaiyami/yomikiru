@@ -9,7 +9,18 @@ const BookmarkTab = () => {
     const [filter, setFilter] = useState<string>("");
     const List = (bookmarkData: Manga_BookItem[], filter: string) => {
         return bookmarkData.map((e, i) => {
-            if (new RegExp(filter, "ig").test(e.type === "book" ? e.data.title : e.data.mangaName)) {
+            if (
+                new RegExp(filter, "ig").test(
+                    (e.type === "image"
+                        ? window.fs.existsSync(e.data.link) && window.fs.lstatSync(e.data.link).isDirectory()
+                            ? window.path.dirname(e.data.link)
+                            : e.data.link
+                        : e.data.link
+                    )
+                        .split(window.path.sep)
+                        .at(-1) || ""
+                )
+            ) {
                 return (
                     <BookmarkHistoryListItem
                         isHistory={false}
