@@ -1,6 +1,6 @@
 import fs from "fs";
 import path from "path";
-import IS_PORTABLE from "./IS_PORTABLE";
+// import IS_PORTABLE from "./IS_PORTABLE";
 import { exec, spawn, spawnSync } from "child_process";
 import { app, BrowserWindow, dialog } from "electron";
 import fetch from "electron-fetch";
@@ -9,6 +9,8 @@ import logger from "electron-log";
 import { download, File } from "electron-dl";
 
 declare const DOWNLOAD_PROGRESS_WEBPACK_ENTRY: string;
+
+const IS_PORTABLE = !app.getAppPath().includes(path.dirname(app.getPath("appData")));
 
 /**
  * prevent deletion of these files in "Portable" version of app on installing new update.
