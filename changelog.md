@@ -1,40 +1,24 @@
-## Downloads
-
-[![Download setup](https://img.shields.io/badge/Windows%20Setup%20(exe)-$$EXE_NAME_1$$-brightgreen?logo=windows&logoColor=blue)](https://github.com/mienaiyami/yomikiru/releases/download/v$$TAG$$/$$EXE_NAME$$)
-
-[![Download Portable](https://img.shields.io/badge/Windows%20Portable%20(zip)-$$ZIP_NAME_1$$-brightgreen?logo=windows&logoColor=blue)](https://github.com/mienaiyami/yomikiru/releases/download/v$$TAG$$/$$ZIP_NAME$$)
-
-<!-- [![Download Linux (Debian)](https://img.shields.io/badge/Linux%20(Debian)-$$DEB_NAME_1$$-brightgreen?logo=debian&logoColor=red)](https://github.com/mienaiyami/yomikiru/releases/download/v$$TAG$$/$$DEB_NAME$$) -->
-
----
-## Note
-
-Linux distribution currently not available as direct download but can be build easily by following this [Build for linux(debian) guide](https://github.com/mienaiyami/yomikiru/blob/master/docs/build_for_linux.md).
-
----
-
 ## Added
 
-- Option to disable Hardware Acceleration.
+- Automated release for windows and linux(debian).
+- EPUB:
+  - Shortcut keys for font size (epub), #172.
+  - Quick access font family, #175.
+  - Custom font weight.
+- Better search for bookmark/history tabs.
+- 7zip(.7z)  support, #171.
+- Drag and Drop (file and folder) support, #171.
 
 ## Changed
 
 - UI Enhancements.
-- Switched from web based fullscreen to electron fullscreen.
-- Smoother sidelist width change.
-- In "Open chapter directly under base directory...", allowed to update list instead of "no image" error.
-
+- Updated electron/chromium version.
+- Clear history moved to settings.
 
 ## Fixed
 
-- Multiple scrolling issues in LTR/RTL mode with vertically fit enabled.
-- System buttons showing when opening file from file explorer with zen mode. #147.
-
----
-
-#### Todo
-
-- Write tests.
-- Add ability to change image quality in canvas mode for less RAM usage and performance.
+- Location tab's url changed after opening manga with "Open without button..." enabled.
+- Clicking on sides does not change chapter in epub at 100% on small screens, #174.
+- Epub sidelist not focusing to current chapter, #177.
 
 ---

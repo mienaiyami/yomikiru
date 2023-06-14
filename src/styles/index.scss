@@ -118,6 +118,12 @@
     width: 100%;
 }
 
+body.notWindows {
+    #topBar .windowBtnCont {
+        right: 0;
+    }
+}
+
 body.zenMode {
     ::-webkit-scrollbar {
         display: none;

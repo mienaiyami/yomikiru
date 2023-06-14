@@ -11,7 +11,6 @@ import { exec, spawn, spawnSync } from "child_process";
 import log from "electron-log";
 
 const IS_PORTABLE = !app.getAppPath().includes(path.dirname(app.getPath("appData")));
-log.log({ IS_PORTABLE });
 
 if (require("electron-squirrel-startup")) app.quit();
 if (IS_PORTABLE) {

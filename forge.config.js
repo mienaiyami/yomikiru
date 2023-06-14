@@ -1,3 +1,7 @@
+/* eslint-disable @typescript-eslint/no-var-requires */
+const fs = require("fs");
+const path = require("path");
+
 module.exports = {
     packagerConfig: {
         name: "Yomikiru",
@@ -53,4 +57,50 @@ module.exports = {
             platforms: ["win32"],
         },
     ],
+    hooks: {
+        postMake: (config, makeResults) => {
+            // fs.writeFileSync("./test.json", JSON.stringify(makeResults, null, "\t"));
+            if (!fs.existsSync("./out/full")) fs.mkdirSync("./out/full");
+            let downloadBtns = `## Downloads\n\n`;
+            // makeResults.forEach((result) => {
+            // result.artifacts.forEach((e) => {
+            // if (path.extname(e) === ".zip") {
+            if (
+                fs.existsSync(
+                    `./out/make/zip/win32/ia32/Yomikiru-win32-ia32-${makeResults[0].packageJSON.version}.zip`
+                )
+            )
+                fs.renameSync(
+                    `./out/make/zip/win32/ia32/Yomikiru-win32-ia32-${makeResults[0].packageJSON.version}.zip`,
+                    `./out/full/Yomikiru-win32-v${makeResults[0].packageJSON.version}-Portable.zip`
+                );
+            downloadBtns += `[![Download Portable](https://img.shields.io/badge/Windows%20Portable%20(zip)-Yomikiru--win32--v${makeResults[0].packageJSON.version}--Portable.zip-brightgreen?logo=windows&logoColor=blue)](https://github.com/mienaiyami/yomikiru/releases/download/v${makeResults[0].packageJSON.version}/Yomikiru-win32-v${makeResults[0].packageJSON.version}-Portable.zip)\n`;
+            // }
+            // if (path.extname(e) === ".exe") {
+            if (
+                fs.existsSync(
+                    `./out/make/squirrel.windows/ia32/Yomikiru-${makeResults[0].packageJSON.version} Setup.exe`
+                )
+            )
+                fs.renameSync(
+                    `./out/make/squirrel.windows/ia32/Yomikiru-${makeResults[0].packageJSON.version} Setup.exe`,
+                    `./out/full/Yomikiru-v${makeResults[0].packageJSON.version}-Setup.exe`
+                );
+            downloadBtns += `[![Download setup](https://img.shields.io/badge/Windows%20Setup%20(exe)-Yomikiru--v${makeResults[0].packageJSON.version}--Setup.exe-brightgreen?logo=windows&logoColor=blue)](https://github.com/mienaiyami/yomikiru/releases/download/v${makeResults[0].packageJSON.version}/Yomikiru-v${makeResults[0].packageJSON.version}-Setup.exe)\n`;
+            // }
+            // if (path.extname(e) === ".deb") {
+            if (fs.existsSync(`./out/make/deb/x64/yomikiru_${makeResults[0].packageJSON.version}_amd64.deb`))
+                fs.renameSync(
+                    `./out/make/deb/x64/yomikiru_${makeResults[0].packageJSON.version}_amd64.deb`,
+                    `./out/full/Yomikiru-v${makeResults[0].packageJSON.version}-amd64.deb`
+                );
+            downloadBtns += `[![Download Linux (Debian)](https://img.shields.io/badge/Linux%20(Debian)-Yomikiru--v${makeResults[0].packageJSON.version}--amd64.deb-brightgreen?logo=debian&logoColor=red)](https://github.com/mienaiyami/yomikiru/releases/download/v${makeResults[0].packageJSON.version}/Yomikiru-v${makeResults[0].packageJSON.version}-amd64.deb)\n\n`;
+            downloadBtns += "---\n\n";
+            // }
+            // });
+            // });
+            const base = fs.readFileSync("./changelog.md", "utf-8");
+            fs.writeFileSync("./changelog-temp.md", downloadBtns + base, "utf-8");
+        },
+    },
 };
