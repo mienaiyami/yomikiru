@@ -1,3 +1,7 @@
+## Note
+
+**Due to some limitations, existing users (v2.11.5 and below) might need to manually update the app.**
+
 ## Added
 
 - Automated release for windows and linux(debian).

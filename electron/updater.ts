@@ -183,7 +183,7 @@ const downloadUpdates = (latestVersion: string, windowId: number) => {
 
     if (process.platform === "win32")
         if (IS_PORTABLE) {
-            const dl = downloadLink + latestVersion + "/" + `Yomikiru-win32-${latestVersion}-Portable.zip`;
+            const dl = downloadLink + latestVersion + "/" + `Yomikiru-win32-v${latestVersion}-Portable.zip`;
             const extractPath = path.join(tempPath, "updates");
             if (!fs.existsSync(extractPath)) fs.mkdirSync(extractPath);
 
@@ -214,7 +214,7 @@ const downloadUpdates = (latestVersion: string, windowId: number) => {
                 });
             });
         } else {
-            const dl = downloadLink + latestVersion + "/" + `Yomikiru-${latestVersion}-Setup.exe`;
+            const dl = downloadLink + latestVersion + "/" + `Yomikiru-v${latestVersion}-Setup.exe`;
             downloadFile(dl, newWindow.webContents, (file) => {
                 logger.log(`${file.filename} downloaded.`);
                 app.on("before-quit", () => {
@@ -229,7 +229,7 @@ const downloadUpdates = (latestVersion: string, windowId: number) => {
             });
         }
     else if (process.platform === "linux") {
-        const dl = downloadLink + latestVersion + "/" + `Yomikiru-${latestVersion}-amd64.deb`;
+        const dl = downloadLink + latestVersion + "/" + `Yomikiru-v${latestVersion}-amd64.deb`;
         downloadFile(dl, newWindow.webContents, (file) => {
             logger.log(`${file.filename} downloaded.`);
             const script = `
