@@ -10,7 +10,8 @@ declare const HOME_WEBPACK_ENTRY: string;
 import { exec, spawn, spawnSync } from "child_process";
 import log from "electron-log";
 
-const IS_PORTABLE = !app.getAppPath().includes(path.dirname(app.getPath("appData")));
+const IS_PORTABLE =
+    process.platform === "win32" && !app.getAppPath().includes(path.dirname(app.getPath("appData")));
 
 if (require("electron-squirrel-startup")) app.quit();
 if (IS_PORTABLE) {
@@ -164,7 +165,7 @@ const deleteOptionInExplorerMenu_epub = () => {
 };
 
 const handleSquirrelEvent = () => {
-    if (process.argv.length === 1) {
+    if (process.argv.length === 1 || process.platform !== "win32") {
         return false;
     }
     const appFolder = path.resolve(process.execPath, "..");
