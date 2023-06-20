@@ -367,7 +367,7 @@ const App = (): ReactElement => {
                     if (window.app.linkInReader && window.app.linkInReader.link === data[0].path) return;
                     if (data.length > 1)
                         window.dialog.customError({
-                            message: "More than one file/folder dropped. Only first will be loaded.",
+                            message: "More than one file/folder dropped. Only first in list will be loaded.",
                         });
                     if (window.fs.lstatSync(data[0].path).isDirectory()) {
                         closeReader();
