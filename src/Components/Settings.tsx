@@ -371,7 +371,7 @@ const Settings = (): ReactElement => {
                             <td className="current">
                                 <input
                                     type="text"
-                                    placeholder="Do not move css file in app's folder"
+                                    placeholder="NOTE: Do not move .css file in app's folder"
                                     value={appSettings.customStylesheet}
                                     readOnly
                                 />
@@ -840,97 +840,101 @@ const Settings = (): ReactElement => {
                                 Disable Hardware Acceleration. <code>Need App Restart</code>
                             </p>
                         </label>
-                        <button
-                            onClick={() => {
-                                window.dialog
-                                    .warn({
-                                        title: "Reset themes",
-                                        message: "This will delete all Themes. Continue?",
-                                        noOption: false,
-                                    })
-                                    .then(({ response }) => {
-                                        if (response == undefined) return;
-                                        if (response === 1) return;
-                                        if (response === 0) {
-                                            window.dialog
-                                                .warn({
-                                                    title: "Reset Settings",
-                                                    noOption: false,
-                                                    message:
-                                                        "Are you really sure you want to delete all Themes?\nThis process is irreversible.",
-                                                })
-                                                .then((res) => {
-                                                    if (res.response === 1) return;
-                                                    dispatch(resetAllTheme());
-                                                });
-                                        }
-                                    });
-                            }}
-                        >
-                            Reset all themes
-                        </button>
-                        <button
-                            onClick={() => {
-                                window.dialog
-                                    .warn({
-                                        title: "Warning",
-                                        message: "Are you sure you want to clear history?",
-                                        noOption: false,
-                                    })
-                                    .then((res) => {
-                                        if (res && res.response === 0) dispatch(deleteAllHistory());
-                                    });
-                            }}
-                        >
-                            Clear all History
-                        </button>
-                        <button
-                            onClick={() => {
-                                window.dialog
-                                    .confirm({
-                                        title: "Confirm",
-                                        message: "Reset Shortcuts to default?",
-                                        noOption: false,
-                                    })
-                                    .then((res) => {
-                                        if (res.response === 0) {
-                                            dispatch(resetShortcuts());
-                                        }
-                                    });
-                            }}
-                        >
-                            Reset Shortcuts
-                        </button>
-                        <button
-                            onClick={() => {
-                                window.dialog
-                                    .warn({
-                                        title: "Reset Settings",
-                                        message: "This will reset all Settings (themes not included). Continue?",
-                                        noOption: false,
-                                    })
-                                    .then(({ response }) => {
-                                        if (response == undefined) return;
-                                        if (response === 1) return;
-                                        if (response === 0) {
-                                            window.dialog
-                                                .warn({
-                                                    title: "Reset Settings",
-                                                    noOption: false,
-                                                    message:
-                                                        "Are you really sure you want to reset settings?\nThis process is irreversible.",
-                                                })
-                                                .then((res) => {
-                                                    if (res.response === 1) return;
-                                                    dispatch(makeNewSettings());
-                                                    dispatch(resetShortcuts());
-                                                });
-                                        }
-                                    });
-                            }}
-                        >
-                            Reset all Settings
-                        </button>
+                        <hr />
+                        <div className="row" style={{ gap: "10px" }}>
+                            <button
+                                onClick={() => {
+                                    window.dialog
+                                        .warn({
+                                            title: "Warning",
+                                            message: "Are you sure you want to clear history?",
+                                            noOption: false,
+                                        })
+                                        .then((res) => {
+                                            if (res && res.response === 0) dispatch(deleteAllHistory());
+                                        });
+                                }}
+                            >
+                                Clear History
+                            </button>
+                            <button
+                                onClick={() => {
+                                    window.dialog
+                                        .warn({
+                                            title: "Reset themes",
+                                            message: "This will delete all Themes. Continue?",
+                                            noOption: false,
+                                        })
+                                        .then(({ response }) => {
+                                            if (response == undefined) return;
+                                            if (response === 1) return;
+                                            if (response === 0) {
+                                                window.dialog
+                                                    .warn({
+                                                        title: "Reset Settings",
+                                                        noOption: false,
+                                                        message:
+                                                            "Are you really sure you want to delete all Themes?\nThis process is irreversible.",
+                                                    })
+                                                    .then((res) => {
+                                                        if (res.response === 1) return;
+                                                        dispatch(resetAllTheme());
+                                                    });
+                                            }
+                                        });
+                                }}
+                            >
+                                Reset Themes
+                            </button>
+                            <button
+                                onClick={() => {
+                                    window.dialog
+                                        .confirm({
+                                            title: "Confirm",
+                                            message: "Reset Shortcuts to default?",
+                                            noOption: false,
+                                        })
+                                        .then((res) => {
+                                            if (res.response === 0) {
+                                                dispatch(resetShortcuts());
+                                            }
+                                        });
+                                }}
+                            >
+                                Reset Shortcuts
+                            </button>
+                            <button
+                                onClick={() => {
+                                    window.dialog
+                                        .warn({
+                                            title: "Reset Settings",
+                                            message:
+                                                "This will reset all Settings (themes not included). Continue?",
+                                            noOption: false,
+                                        })
+                                        .then(({ response }) => {
+                                            if (response == undefined) return;
+                                            if (response === 1) return;
+                                            if (response === 0) {
+                                                window.dialog
+                                                    .warn({
+                                                        title: "Reset Settings",
+                                                        noOption: false,
+                                                        message:
+                                                            "Are you really sure you want to reset settings?\nThis process is irreversible.",
+                                                    })
+                                                    .then((res) => {
+                                                        if (res.response === 1) return;
+                                                        dispatch(makeNewSettings());
+                                                        dispatch(resetShortcuts());
+                                                    });
+                                            }
+                                        });
+                                }}
+                            >
+                                Reset Settings
+                            </button>
+                        </div>
                         {/* <label className={appSettings.disableCachingCanvas ? "selected" : ""}>
                                         <input
                                             type="checkbox"

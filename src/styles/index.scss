@@ -183,6 +183,13 @@ body {
         background: var(--body-bg-color);
     }
 
+    hr {
+        width: 100%;
+        background-color: var(--divider-color);
+        border: none;
+        height: 2px;
+        margin: 5px 0;
+    }
     label:has(input:focus) {
         box-shadow: var(--btn-color-focus) 0 0 0px 2px;
     }
@@ -943,7 +950,10 @@ body {
                 opacity: 0.75;
                 background-color: var(--body-bg-color);
             }
-
+            .row {
+                display: flex;
+                flex-direction: row;
+            }
             .cont {
                 position: relative;
                 background: var(--body-bg-color);
@@ -1150,7 +1160,7 @@ body {
 
                     td,
                     th {
-                        user-select: text;
+                        // user-select: text;
                         display: inline-flex;
                         align-items: center;
                         height: 55px;
