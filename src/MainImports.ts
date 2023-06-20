@@ -932,10 +932,10 @@ const defaultSettings: AppSettings = {
         },
         settingsCollapsed: {
             size: false,
-            fitOption: false,
+            fitOption: true,
             readingMode: false,
-            pagePerRow: false,
-            readingSide: false,
+            pagePerRow: true,
+            readingSide: true,
             scrollSpeed: true,
             customColorFilter: true,
             others: false,

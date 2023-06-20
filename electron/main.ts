@@ -2,16 +2,13 @@
 import { app, session, BrowserWindow, Menu, shell, ipcMain, MenuItemConstructorOptions, dialog } from "electron";
 import path from "path";
 import fs from "fs";
-// import IS_PORTABLE from "./IS_PORTABLE";
+import IS_PORTABLE from "./IS_PORTABLE";
 import { homedir, tmpdir } from "os";
 import * as remote from "@electron/remote/main";
 remote.initialize();
 declare const HOME_WEBPACK_ENTRY: string;
 import { exec, spawn, spawnSync } from "child_process";
 import log from "electron-log";
-
-const IS_PORTABLE =
-    process.platform === "win32" && !app.getAppPath().includes(path.dirname(app.getPath("appData")));
 
 if (require("electron-squirrel-startup")) app.quit();
 if (IS_PORTABLE) {

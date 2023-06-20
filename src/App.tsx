@@ -364,17 +364,23 @@ const App = (): ReactElement => {
             if (e.dataTransfer) {
                 const data = e.dataTransfer.files;
                 if (data.length > 0) {
+                    if (window.app.linkInReader && window.app.linkInReader.link === data[0].path) return;
                     if (data.length > 1)
                         window.dialog.customError({
                             message: "More than one file/folder dropped. Only first will be loaded.",
                         });
-                    if (window.fs.lstatSync(data[0].path).isDirectory()) openInReader(data[0].path);
-                    else if (
-                        [".zip", ".7z", ".cbz", ".epub"].includes(window.path.extname(data[0].path.toLowerCase()))
-                    )
+                    if (window.fs.lstatSync(data[0].path).isDirectory()) {
+                        closeReader();
                         openInReader(data[0].path);
-                    else if (window.supportedFormats.includes(window.path.extname(data[0].path.toLowerCase())))
+                    } else if (
+                        [".zip", ".7z", ".cbz", ".epub"].includes(window.path.extname(data[0].path.toLowerCase()))
+                    ) {
+                        closeReader();
+                        openInReader(data[0].path);
+                    } else if (window.supportedFormats.includes(window.path.extname(data[0].path.toLowerCase()))) {
+                        closeReader();
                         openInReader(window.path.dirname(data[0].path));
+                    }
                 }
             }
         };
