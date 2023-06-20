@@ -990,7 +990,7 @@ const Reader = () => {
                     "imgCont " +
                     (appSettings.readerSettings.gapBetweenRows ? "gap " : "") +
                     ([1, 2].includes(appSettings.readerSettings.readerTypeSelected) ? "readerMode1n2 " : "") +
-                    (["", "fitVertically", "fitHorizontally", "original"].at(
+                    (["", "fitVertically ", "fitHorizontally ", "original "].at(
                         appSettings.readerSettings.fitOption
                     ) ?? "") +
                     (appSettings.readerSettings.customColorFilter.enabled ? "customColorFilter " : "")
