@@ -35,6 +35,11 @@ const InputRange = ({
                     max={max}
                     step={step}
                     value={value}
+                    onKeyDown={(e) => {
+                        if (e.key !== "Escape") {
+                            e.stopPropagation();
+                        }
+                    }}
                 />
                 <p>{value}</p>
             </label>
@@ -50,6 +55,11 @@ const InputRange = ({
             step={step}
             value={value}
             title={title}
+            onKeyDown={(e) => {
+                if (e.key !== "Escape") {
+                    e.stopPropagation();
+                }
+            }}
         />
     );
 };

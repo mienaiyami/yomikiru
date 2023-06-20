@@ -25,7 +25,16 @@ export const InputSelect = ({
         return (
             <label className={(disabled ? "disabled " : "") + className}>
                 {labelText && <p>{labelText}</p>}
-                <select disabled={disabled} value={value} onChange={onChange}>
+                <select
+                    disabled={disabled}
+                    value={value}
+                    onChange={onChange}
+                    onKeyDown={(e) => {
+                        if (e.key !== "Escape") {
+                            e.stopPropagation();
+                        }
+                    }}
+                >
                     {children}
                     {options.map((e) => (
                         <option value={e} key={e}>
@@ -36,7 +45,17 @@ export const InputSelect = ({
             </label>
         );
     return (
-        <select className={className} disabled={disabled} value={value} onChange={onChange}>
+        <select
+            className={className}
+            disabled={disabled}
+            value={value}
+            onChange={onChange}
+            onKeyDown={(e) => {
+                if (e.key !== "Escape") {
+                    e.stopPropagation();
+                }
+            }}
+        >
             {children}
             {options.map((e) => (
                 <option value={e} key={e}>
