@@ -644,8 +644,6 @@ const Settings = (): ReactElement => {
                                             window.fs.readFileSync(opt[0], "utf8")
                                         );
                                         const dataToAdd: ThemeData[] = [];
-                                        //todo: check if in righgt format, if is like themes.json or just allData
-                                        // commit msg: fixed bookmark impot issue +...
                                         let importedCount = 0;
                                         const existingThemeNames = allThemes.map((e) => e.name);
                                         if (!(data instanceof Array)) {
