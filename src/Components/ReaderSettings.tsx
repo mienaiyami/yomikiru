@@ -680,6 +680,18 @@ const ReaderSettings = memo(
                                 }}
                                 options={[...settingValidatorData.readerSettings.customColorFilter.blendMode]}
                             />
+
+                            <InputCheckbox
+                                checked={appSettings.readerSettings.invertImage}
+                                onChange={(e) => {
+                                    dispatch(
+                                        setReaderSettings({
+                                            invertImage: e.currentTarget.checked,
+                                        })
+                                    );
+                                }}
+                                paraAfter="Invert Image"
+                            />
                             <InputCheckbox
                                 checked={appSettings.readerSettings.forceLowBrightness.enabled}
                                 onChange={(e) => {
@@ -693,17 +705,6 @@ const ReaderSettings = memo(
                                     );
                                 }}
                                 paraAfter="Force Low brightness"
-                            />
-                            <InputCheckbox
-                                checked={appSettings.readerSettings.invertImage}
-                                onChange={(e) => {
-                                    dispatch(
-                                        setReaderSettings({
-                                            invertImage: e.currentTarget.checked,
-                                        })
-                                    );
-                                }}
-                                paraAfter="Invert Image"
                             />
                             <InputRange
                                 className={"colorRange"}
