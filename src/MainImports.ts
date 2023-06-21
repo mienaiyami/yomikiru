@@ -944,7 +944,7 @@ const defaultSettings: AppSettings = {
         maxHeight: 500,
         maxWidth: 500,
         invertImage: false,
-        pdfScale: 1,
+        pdfScale: 1.5,
         customColorFilter: {
             enabled: false,
             r: 0,

@@ -197,7 +197,9 @@ const App = (): ReactElement => {
                     let count = 0;
                     for (let i = 1; i <= pdf.numPages; i++) {
                         pdf.getPage(i).then((page) => {
-                            const viewport = page.getViewport({ scale: 1.5 });
+                            const viewport = page.getViewport({
+                                scale: appSettings.readerSettings.pdfScale || 1.5,
+                            });
                             const canvas = document.createElement("canvas");
                             canvas.width = viewport.width;
                             canvas.height = viewport.height;
@@ -310,7 +312,8 @@ const App = (): ReactElement => {
             window.electron.getCurrentWindow().setFullScreen(false);
         setTimeout(() => {
             window.electron.webFrame.clearCache();
-        }, 1500);
+            window.electron.webFrame.clearCache();
+        }, 1000);
     };
 
     const openInNewWindow = (link: string) => {
