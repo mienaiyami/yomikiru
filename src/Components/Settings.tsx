@@ -845,12 +845,12 @@ const Settings = (): ReactElement => {
                         <InputNumber
                             value={appSettings.readerSettings.pdfScale}
                             min={0.1}
-                            max={10}
+                            max={5}
                             step={0.1}
                             onChange={(e) => {
                                 let value = e.target.valueAsNumber;
                                 if (!value) value = 0;
-                                value = value >= 10 ? 10 : value;
+                                value = value >= 5 ? 5 : value;
                                 value = value <= 0.1 ? 0.1 : value;
 
                                 dispatch(setReaderSettings({ pdfScale: value }));

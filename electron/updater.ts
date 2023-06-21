@@ -23,6 +23,7 @@ const fileToKeep = [
     "logs",
     "main.log",
     "renderer.log",
+    "DISABLE_HARDWARE_ACCELERATION",
 ];
 
 const downloadLink = "https://github.com/mienaiyami/yomikiru/releases/download/v";
@@ -32,10 +33,14 @@ const downloadLink = "https://github.com/mienaiyami/yomikiru/releases/download/v
  * @param promptAfterCheck (false by default) Show message box if current version is same as latest version.
  */
 const checkForUpdate = async (windowId: number, skipMinor = false, promptAfterCheck = false) => {
-    const rawdata = await fetch("https://raw.githubusercontent.com/mienaiyami/yomikiru/master/package.json").then(
-        (data) => data.json()
+    const rawdata = await fetch("https://api.github.com/repos/mienaiyami/yomikiru/releases").then((data) =>
+        data.json()
     );
-    const latestVersion: number[] = await rawdata.version.split(".").map((e: string) => parseInt(e));
+    const latestVersion: number[] = await rawdata
+        .find((e: any) => e.tag_name.charAt(0) === "v")
+        .tag_name.substr(1)
+        .split(".")
+        .map((e: string) => parseInt(e));
     logger.log("checking for update...");
     const currentAppVersion = app
         .getVersion()
@@ -170,12 +175,17 @@ const downloadUpdates = (latestVersion: string, windowId: number) => {
             onCancel: () => {
                 logger.log("Download canceled.");
             },
-            errorMessage: "Download error while downloading updates.",
             onCompleted: (file) => callback(file),
             onProgress: (progress) => {
                 webContents.send("progress", progress);
             },
             // showProgressBar: true,
+        }).catch((reason) => {
+            dialog.showMessageBox(BrowserWindow.fromId(windowId ?? 1)!, {
+                type: "error",
+                title: "Error while downloading",
+                message: reason + "\n\nPlease check the homepage if persist.",
+            });
         });
     };
 
