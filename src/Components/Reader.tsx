@@ -993,7 +993,8 @@ const Reader = () => {
                     (["", "fitVertically ", "fitHorizontally ", "original "].at(
                         appSettings.readerSettings.fitOption
                     ) ?? "") +
-                    (appSettings.readerSettings.customColorFilter.enabled ? "customColorFilter " : "")
+                    (appSettings.readerSettings.customColorFilter.enabled ? "customColorFilter " : "") +
+                    (appSettings.readerSettings.invertImage ? "invertImage " : "")
                 }
                 style={{
                     "--varWidth": appSettings.readerSettings.readerWidth + "%",

@@ -694,6 +694,17 @@ const ReaderSettings = memo(
                                 }}
                                 paraAfter="Force Low brightness"
                             />
+                            <InputCheckbox
+                                checked={appSettings.readerSettings.invertImage}
+                                onChange={(e) => {
+                                    dispatch(
+                                        setReaderSettings({
+                                            invertImage: e.currentTarget.checked,
+                                        })
+                                    );
+                                }}
+                                paraAfter="Invert Image"
+                            />
                             <InputRange
                                 className={"colorRange"}
                                 min={0}

@@ -14,6 +14,7 @@ import { InputSelect } from "./Element/InputSelect";
 import InputRange from "./Element/InputRange";
 import { promptSelectDir } from "../MainImports";
 import { deleteAllHistory } from "../store/history";
+import InputNumber from "./Element/InputNumber";
 
 const Settings = (): ReactElement => {
     const appSettings = useAppSelector((store) => store.appSettings);
@@ -840,6 +841,23 @@ const Settings = (): ReactElement => {
                                 Disable Hardware Acceleration. <code>Need App Restart</code>
                             </p>
                         </label>
+
+                        <InputNumber
+                            value={appSettings.readerSettings.pdfScale}
+                            min={0.1}
+                            max={4}
+                            step={0.1}
+                            onChange={(e) => {
+                                let value = e.target.valueAsNumber;
+                                if (!value) value = 0;
+                                value = value >= 4 ? 4 : value;
+                                value = value <= 0.1 ? 0.1 : value;
+
+                                dispatch(setReaderSettings({ pdfScale: value }));
+                            }}
+                            labeled
+                            paraBefore="PDF Scale (&nbsp;&#8593;&nbsp;value = &nbsp;&#8593;&nbsp;quality ):"
+                        />
                         <hr />
                         <div className="row" style={{ gap: "10px" }}>
                             <button

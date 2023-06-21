@@ -120,6 +120,11 @@ export const settingValidatorData = {
         maxHeightWidthSelector: ["none", "width", "height"],
         maxWidth: 500,
         maxHeight: 500,
+        /**
+         * to be used in `page.getViewport({ scale: | })`
+         * higher scale = higher quality
+         */
+        pdfScale: 1,
         customColorFilter: {
             enabled: false,
             /**
@@ -151,6 +156,7 @@ export const settingValidatorData = {
                 "soft-light",
             ],
         },
+        invertImage: false,
         forceLowBrightness: {
             enabled: false,
             /**
@@ -937,6 +943,8 @@ const defaultSettings: AppSettings = {
         maxHeightWidthSelector: "none",
         maxHeight: 500,
         maxWidth: 500,
+        invertImage: false,
+        pdfScale: 1,
         customColorFilter: {
             enabled: false,
             r: 0,
