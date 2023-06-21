@@ -161,8 +161,8 @@ const history = createSlice({
             const index = stateDup.findIndex((e) => e.data.link === link);
             if (index > -1 && window.app.epubHistorySaveData) {
                 (stateDup[index] as BookHistoryItem).data.chapter = window.app.epubHistorySaveData.chapter;
-                // (stateDup[index] as BookHistoryItem).data.elementQueryString =
-                //     window.app.epubHistorySaveData.queryString;
+                (stateDup[index] as BookHistoryItem).data.elementQueryString =
+                    window.app.epubHistorySaveData.queryString;
                 saveJSONfile(historyPath, stateDup);
             }
         },

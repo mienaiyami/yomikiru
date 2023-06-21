@@ -937,7 +937,6 @@ const defaultSettings: AppSettings = {
         scrollSpeedA: 5,
         scrollSpeedB: 15,
         readingSide: 1,
-        // fitVertically: false,
         fitOption: 0,
         disableChapterTransitionScreen: false,
         maxHeightWidthSelector: "none",

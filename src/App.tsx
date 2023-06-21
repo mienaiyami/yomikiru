@@ -42,7 +42,7 @@ const App = (): ReactElement => {
     const isReaderOpen = useAppSelector((state) => state.isReaderOpen);
     const linkInReader = useAppSelector((store) => store.linkInReader);
     const mangaInReader = useAppSelector((store) => store.mangaInReader);
-    // const bookInReader = useAppSelector((store) => store.bookInReader);
+    const bookInReader = useAppSelector((store) => store.bookInReader);
     const theme = useAppSelector((state) => state.theme.name);
 
     const pageNumberInputRef: React.RefObject<HTMLInputElement> = createRef();
@@ -285,10 +285,13 @@ const App = (): ReactElement => {
     //             return init;
     //         });
     // };
+
     const closeReader = () => {
         // console.log(linkInReader, window.app.linkInReader);
+        // console.log(window.app.linkInReader);
         if (mangaInReader) dispatch(updateCurrentHistoryPage());
-        // if (bookInReader) dispatch(updateCurrentBookHistory());
+        if (window.app.linkInReader && window.app.linkInReader.type === "book")
+            dispatch(updateCurrentBookHistory());
         dispatch(setReaderOpen(false));
         dispatch(setLinkInReader({ type: "", link: "", page: 1, chapter: "" }));
         dispatch(setLoadingManga(false));

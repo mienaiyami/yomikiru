@@ -626,8 +626,8 @@ const EPubReader = () => {
                                             },
                                         })
                                     );
-                                    setCurrentChapterURL(currentChapterURL);
                                     settocData(tempTOCData);
+                                    setCurrentChapterURL(currentChapterURL);
                                 });
                             }
                         }
@@ -674,7 +674,7 @@ const EPubReader = () => {
                         x += 20;
                     }
                     elem = document.elementFromPoint(x, y);
-                    if (elem) if (elem !== sectionMain && elem.parentElement !== sectionMain) break;
+                    if (elem) if (elem.tagName !== "SECTION" && elem.parentElement !== sectionMain) break;
                     y += 10;
                 }
                 if (elem) {
@@ -689,7 +689,7 @@ const EPubReader = () => {
                 }
             }
         },
-        [mainRef.current]
+        [mainRef.current, tocData, currentChapterURL]
     );
 
     const findInPage = useCallback(
@@ -742,6 +742,7 @@ const EPubReader = () => {
             );
         if (bookProgressRef.current) bookProgressRef.current.value = progress.toString();
         setBookProgress(progress);
+        makeScrollPos();
     };
     const scrollToPage = (percent: number, behavior: ScrollBehavior = "smooth", callback?: () => void) => {
         const reader = document.querySelector("#EPubReader") as HTMLDivElement;
