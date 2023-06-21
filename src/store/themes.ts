@@ -43,8 +43,6 @@ const setBodyTheme = ({ allData, name }: Themes) => {
     }
 };
 
-type Themes = { name: string; allData: ThemeData[] };
-
 const initialState: Themes = {
     name: "theme2",
     allData: [],
@@ -174,7 +172,26 @@ const themes = createSlice({
             return newStore;
         },
         newTheme: (state, action: PayloadAction<ThemeData>) => {
-            state.allData.push(action.payload);
+            if (state.allData.map((e) => e.name).includes(action.payload.name)) {
+                window.logger.error(
+                    "Tried to add new theme but theme name already exist. Name:",
+                    action.payload.name
+                );
+            } else state.allData.push(action.payload);
+        },
+        addThemes: (state, action: PayloadAction<ThemeData[]>) => {
+            if (action.payload instanceof Array) {
+                action.payload.forEach((theme) => {
+                    if (("main" && "name") in theme) {
+                        if (state.allData.map((e) => e.name).includes(theme.name)) {
+                            window.logger.error(
+                                "Tried to add new theme but theme name already exist. Name:",
+                                theme.name
+                            );
+                        } else state.allData.push(theme);
+                    }
+                });
+            }
         },
         updateTheme: (
             state,
@@ -195,6 +212,6 @@ const themes = createSlice({
     },
 });
 
-export const { newTheme, updateTheme, deleteTheme, setTheme, resetAllTheme } = themes.actions;
+export const { newTheme, updateTheme, deleteTheme, setTheme, resetAllTheme, addThemes } = themes.actions;
 
 export default themes.reducer;

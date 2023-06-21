@@ -90,15 +90,17 @@ const LocationListItem = ({
                 <span className="text">{name.split(" $")[0]}</span>
                 {window.app.isSupportedFormat(name) && <code className="nonFolder">{name.split(" $")[1]}</code>}
             </a>
-            <button
-                title="Open In Reader"
-                className="open-in-reader-btn"
-                // onFocus={(e) => e.currentTarget.blur()}
-                onClick={() => openInReader(link)}
-                // onclick="makeImg($(this).siblings('a').attr('data-link'))"
-            >
-                <FontAwesomeIcon icon={faAngleRight} />
-            </button>
+            {!window.app.isSupportedFormat(name) && (
+                <button
+                    title="Open In Reader"
+                    className="open-in-reader-btn"
+                    // onFocus={(e) => e.currentTarget.blur()}
+                    onClick={() => openInReader(link)}
+                    // onclick="makeImg($(this).siblings('a').attr('data-link'))"
+                >
+                    <FontAwesomeIcon icon={faAngleRight} />
+                </button>
+            )}
         </li>
     );
 };

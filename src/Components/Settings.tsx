@@ -4,7 +4,7 @@ import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { ReactElement, useContext, useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
 import { faEdit, faLink, faPlus, faSync, faTimes, faTrash, faUnlink } from "@fortawesome/free-solid-svg-icons";
 import themesRaw from "../themeInit.json";
-import { newTheme, updateTheme, deleteTheme, setTheme, resetAllTheme } from "../store/themes";
+import { newTheme, updateTheme, deleteTheme, setTheme, resetAllTheme, addThemes } from "../store/themes";
 import { useAppDispatch, useAppSelector } from "../store/hooks";
 import { resetShortcuts, setShortcuts } from "../store/shortcuts";
 import { setOpenSetting } from "../store/isSettingOpen";
@@ -420,11 +420,18 @@ const Settings = (): ReactElement => {
                                 <button
                                     // onFocus={(e) => e.currentTarget.blur()}
                                     onClick={() => {
+                                        if (bookmarks.length === 0) {
+                                            window.dialog.customError({
+                                                message: "No bookmarks detected.",
+                                                log: false,
+                                            });
+                                            return;
+                                        }
                                         const opt = window.electron.dialog.showSaveDialogSync(
                                             window.electron.getCurrentWindow(),
                                             {
                                                 title: "Export Bookmarks",
-                                                defaultPath: "bookmarks.json",
+                                                defaultPath: "yomikiru-bookmarks.json",
                                                 filters: [
                                                     {
                                                         name: "json",
@@ -463,10 +470,20 @@ const Settings = (): ReactElement => {
                                         );
                                         const dataToAdd: Manga_BookItem[] = [];
                                         let similarFound = 0;
+                                        let importedCount = 0;
+                                        if (!(data instanceof Array)) {
+                                            window.dialog.customError({
+                                                message:
+                                                    "Data is not in correct format. To make sure it is correct, compare it with existing bookmark.json and fix.",
+                                                log: false,
+                                            });
+                                            return;
+                                        }
                                         data.forEach((item) => {
-                                            if (("mangaName" && "link" && "chapterName") in item) {
+                                            if ("type" in item && "data" in item) {
                                                 if (!bookmarks.map((e) => e.data.link).includes(item.data.link)) {
                                                     dataToAdd.push(item);
+                                                    importedCount++;
                                                 } else {
                                                     similarFound++;
                                                 }
@@ -477,6 +494,11 @@ const Settings = (): ReactElement => {
                                                 title: "warning",
                                                 message: "Found " + similarFound + " with same link",
                                             });
+                                        window.dialog.confirm({
+                                            title: "Imported",
+                                            message: "Imported " + importedCount + " bookmarks.",
+                                            noOption: true,
+                                        });
                                         dispatch(addBookmark(dataToAdd));
                                     }}
                                 >
@@ -577,6 +599,176 @@ const Settings = (): ReactElement => {
                                 >
                                     <FontAwesomeIcon icon={faPlus} /> <span className="icon">/</span>{" "}
                                     <FontAwesomeIcon icon={faEdit} />
+                                </button>
+                                <hr />
+                                <button
+                                    onClick={() => {
+                                        const opt = window.electron.dialog.showSaveDialogSync(
+                                            window.electron.getCurrentWindow(),
+                                            {
+                                                title: "Export Themes",
+                                                defaultPath: "yomikiru-themes.json",
+                                                filters: [
+                                                    {
+                                                        name: "json",
+                                                        extensions: ["json"],
+                                                    },
+                                                ],
+                                            }
+                                        );
+                                        if (opt == undefined) return;
+                                        const themeForExport = allThemes.filter(
+                                            (e) => !themesRaw.allData.map((e) => e.name).includes(e.name)
+                                        );
+                                        window.fs.writeFileSync(opt, JSON.stringify(themeForExport, null, "\t"));
+                                    }}
+                                >
+                                    Export
+                                </button>
+                                <button
+                                    onClick={() => {
+                                        const opt = window.electron.dialog.showOpenDialogSync(
+                                            window.electron.getCurrentWindow(),
+                                            {
+                                                properties: ["openFile"],
+                                                filters: [
+                                                    {
+                                                        name: "Json",
+                                                        extensions: ["json"],
+                                                    },
+                                                ],
+                                            }
+                                        );
+                                        if (opt == undefined) return;
+                                        const data: ThemeData[] | Themes = JSON.parse(
+                                            window.fs.readFileSync(opt[0], "utf8")
+                                        );
+                                        const dataToAdd: ThemeData[] = [];
+                                        //todo: check if in righgt format, if is like themes.json or just allData
+                                        // commit msg: fixed bookmark impot issue +...
+                                        let importedCount = 0;
+                                        const existingThemeNames = allThemes.map((e) => e.name);
+                                        if (!(data instanceof Array)) {
+                                            if ("name" in data && "allData" in data) {
+                                                data.allData.forEach((e, i) => {
+                                                    if ("name" in e && "main" in e) {
+                                                        if (
+                                                            existingThemeNames.includes(e.name) ||
+                                                            dataToAdd.map((a) => a.name).includes(e.name)
+                                                        ) {
+                                                            window.dialog.warn({
+                                                                message:
+                                                                    "Same theme name detected. Wont be imported.\nName: " +
+                                                                    e.name,
+                                                            });
+                                                        } else {
+                                                            dataToAdd.push(e);
+                                                            importedCount++;
+                                                        }
+                                                    } else
+                                                        window.logger.warn(
+                                                            "IMPORTING THEMES: Invalid data at index",
+                                                            i
+                                                        );
+                                                });
+                                            } else {
+                                                window.dialog.customError({
+                                                    message: "Data is not in correct format.",
+                                                    log: false,
+                                                });
+                                                return;
+                                            }
+                                        } else
+                                            data.forEach((e, i) => {
+                                                if ("name" in e && "main" in e) {
+                                                    if (
+                                                        existingThemeNames.includes(e.name) ||
+                                                        dataToAdd.map((a) => a.name).includes(e.name)
+                                                    ) {
+                                                        window.dialog.warn({
+                                                            message:
+                                                                "Same theme name detected. Wont be imported.\nName: " +
+                                                                e.name,
+                                                        });
+                                                    } else {
+                                                        dataToAdd.push(e);
+                                                        importedCount++;
+                                                    }
+                                                } else
+                                                    window.logger.warn(
+                                                        "IMPORTING THEMES: Invalid data at index",
+                                                        i
+                                                    );
+                                            });
+                                        window.dialog.confirm({
+                                            title: "Imported",
+                                            message: "Imported " + importedCount + " themes.",
+                                            noOption: true,
+                                        });
+                                        dispatch(addThemes(dataToAdd));
+                                    }}
+                                >
+                                    Import
+                                </button>
+                                <button
+                                    onClick={() => {
+                                        const theme = window.electron.clipboard.readText("clipboard");
+                                        if (theme) {
+                                            try {
+                                                const themeJSON = JSON.parse(theme);
+                                                if (themeJSON) {
+                                                    if ("name" in themeJSON && "main" in themeJSON) {
+                                                        if (
+                                                            allThemes.map((e) => e.name).includes(themeJSON.name)
+                                                        ) {
+                                                            window.dialog.warn({
+                                                                message:
+                                                                    "Same theme name detected. Wont be imported.\nName: " +
+                                                                    themeJSON.name,
+                                                            });
+                                                        } else {
+                                                            dispatch(newTheme(themeJSON));
+                                                        }
+                                                    } else
+                                                        window.dialog.customError({
+                                                            title: "Failed",
+                                                            message: `Invalid theme data. Please note that data must be similar to the result of "Copy Current Theme to Clipboard"`,
+                                                        });
+                                                }
+                                            } catch (reason) {
+                                                window.dialog.customError({
+                                                    title: "Failed",
+                                                    message: `Invalid theme data. Please note that data much be similar to the result of "Copy Current Theme to Clipboard"`,
+                                                });
+                                            }
+                                        }
+                                    }}
+                                >
+                                    Save Theme from Clipboard
+                                </button>
+                                <button
+                                    onClick={(e) => {
+                                        const currentTheme = allThemes.find((e) => e.name === theme);
+                                        if (currentTheme) {
+                                            try {
+                                                window.electron.clipboard.writeText(
+                                                    JSON.stringify(currentTheme, null, "\t")
+                                                );
+                                                const target = e.currentTarget;
+                                                const oldText = target.innerText;
+                                                target.innerText = "Copied!";
+                                                setTimeout(() => {
+                                                    target.innerText = oldText;
+                                                }, 3000);
+                                            } catch (reason) {
+                                                window.dialog.customError({
+                                                    message: "Failed to copy theme: " + reason,
+                                                });
+                                            }
+                                        }
+                                    }}
+                                >
+                                    Copy Current Theme to Clipboard
                                 </button>
                             </td>
                         </tr>

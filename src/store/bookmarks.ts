@@ -59,7 +59,7 @@ const bookmarks = createSlice({
                     if (existingBookmark > -1) state.splice(existingBookmark, 1);
                     state.unshift(newBk);
                 });
-                state.unshift(...action.payload);
+                // state.unshift(...action.payload);
             } else {
                 const newBk = action.payload;
 

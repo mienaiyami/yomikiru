@@ -401,6 +401,8 @@ declare global {
             }) => Promise<Electron.MessageBoxReturnValue>;
         };
     }
+
+    type Themes = { name: string; allData: ThemeData[] };
     /**
      * css variable names of theme
      */
