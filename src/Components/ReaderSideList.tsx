@@ -136,7 +136,9 @@ const ReaderSideList = memo(
                                             );
                                         }
                                     });
-                            } else if ([".zip", ".cbz", ".7z"].includes(window.path.extname(path).toLowerCase())) {
+                            } else if (
+                                [".zip", ".cbz", ".7z", ".pdf"].includes(window.path.extname(path).toLowerCase())
+                            ) {
                                 validFile++;
                                 setTimeout(() => {
                                     responseCompleted++;

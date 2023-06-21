@@ -303,7 +303,7 @@ const createWindow = (link?: string) => {
         titleBarStyle: process.platform === "win32" ? "hidden" : "default",
         titleBarOverlay: {
             color: "#2e2e2e",
-            symbolColor: "#ff6d4b",
+            symbolColor: "#ffffff",
             height: 40,
         },
         webPreferences: {

@@ -4,8 +4,16 @@
         <meta charset="UTF-8" />
         <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
         <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-        <!-- <meta http-equiv="Content-Security-Policy"
-        content="default-src *;img-src * 'self' data: https:; script-src 'self' 'unsafe-inline' 'unsafe-eval' *; style-src  'self' 'unsafe-inline' *"> -->
+        <!-- <meta
+            http-equiv="Content-Security-Policy"
+            content="
+              default-src  'unsafe-eval' 'unsafe-inline' ;
+              img-src * 'self' data: https: ;
+              script-src 'self' 'unsafe-inline' 'unsafe-eval' *;
+              style-src 'self' 'unsafe-inline' *; 
+              connect-src 'unsafe-eval' * ;"
+        /> -->
+
         <title>Yomikiru</title>
         <!-- <script src="http://localhost:8097"></script> -->
         <script>
@@ -25,6 +33,14 @@
             //     }
             // });
         </script>
+        <!-- <script src="pdf.min.js"></script>
+        <script>
+            (function () {
+                pdfjsLib.GlobalWorkerOptions.workerSrc = "pdf.worker.min.js";
+            })();
+        </script> -->
+        <!-- <script src="pdf.min.js"></script> -->
+        <!-- <script src="https://cdn.jsdelivr.net/npm/pdfjs-dist@3.7.107/build/pdf.min.js"></script> -->
     </head>
 
     <body>

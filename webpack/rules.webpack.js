@@ -28,5 +28,18 @@ module.exports = [
         test: /\.(woff(2)?|ttf|eot|svg)(\?v=\d+\.\d+\.\d+)?$/,
         type: "asset/resource",
     },
-    
+    // {
+    //     test: /\.worker\.js$/i,
+    //     loader: "worker-loader",
+    //     options: {
+    //         filename: "[name].js",
+    //     },
+    // },
+    {
+        test: /pdf\.worker\.js/,
+        loader: "file-loader",
+        options: {
+            name: "[name].[ext]",
+        },
+    },
 ];

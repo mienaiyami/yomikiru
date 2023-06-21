@@ -5,6 +5,15 @@ import { ipcRenderer, webFrame } from "electron";
  */
 import crossZip from "cross-zip";
 import chokidar from "chokidar";
+import * as pdfjsLib from "pdfjs-dist/legacy/build/pdf.js";
+// eslint-disable-next-line @typescript-eslint/ban-ts-comment
+//@ts-ignore
+import worker from "pdfjs-dist/build/pdf.worker.js";
+pdfjsLib.GlobalWorkerOptions.workerSrc = worker;
+// const worker = new Worker();
+// import * as pdfjsLib from "pdfjs-dist";
+// pdfjsLib.GlobalWorkerOptions.workerSrc = "./pdf.worker.js";
+
 import log from "electron-log";
 log.transports.file.resolvePath = () => path.join(app.getPath("userData"), "logs/renderer.log");
 import path from "path";
@@ -245,6 +254,10 @@ declare global {
          * Library to un-archive zip or cbz.
          */
         crossZip: typeof crossZip;
+        /**
+         * to convert pdf to img.
+         */
+        pdfjsLib: typeof pdfjsLib;
         /**
          * watch for change in file/dir.
          */
@@ -705,6 +718,7 @@ window.shortcutsFunctions = [
 ];
 window.logger = log;
 window.crossZip = crossZip;
+window.pdfjsLib = pdfjsLib;
 window.chokidar = chokidar;
 window.makeFileSafe = (string: string): string => {
     return string.replace(/(:|\\|\/|\||<|>|\*|\?)/g, "");
@@ -742,10 +756,15 @@ window.app.replaceExtension = (str, replaceWith = "~") => {
         .replace(/\.zip/gi, replaceWith === "~" ? " $ZIP" : replaceWith)
         .replace(/\.cbz/gi, replaceWith === "~" ? " $CBZ" : replaceWith)
         .replace(/\.epub/gi, replaceWith === "~" ? " $EPUB" : replaceWith)
-        .replace(/\.7z/gi, replaceWith === "~" ? " $7Z" : replaceWith);
+        .replace(/\.7z/gi, replaceWith === "~" ? " $7Z" : replaceWith)
+        .replace(/\.pdf/gi, replaceWith === "~" ? " $PDF" : replaceWith);
 };
 window.app.isSupportedFormat = (str: string) =>
-    str.includes("$ZIP") || str.includes("$CBZ") || str.includes("$7Z") || str.includes("$EPUB");
+    str.includes("$ZIP") ||
+    str.includes("$CBZ") ||
+    str.includes("$7Z") ||
+    str.includes("$EPUB") ||
+    str.includes("$PDF");
 window.app.deleteDirOnClose = "";
 window.app.currentPageNumber = 1;
 window.app.epubHistorySaveData = null;

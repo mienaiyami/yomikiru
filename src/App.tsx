@@ -177,6 +177,51 @@ const App = (): ReactElement => {
                 }
                 tempFn(tempExtractPath, 1);
             });
+        } else if (window.path.extname(link).toLowerCase() === ".pdf") {
+            let tempExtractPath = window.path.join(
+                window.electron.app.getPath("temp"),
+                `yomikiru-temp-Images-${linkSplitted[linkSplitted.length - 1]}-${window.app.randomString(10)}`
+            );
+            if (window.fs.existsSync(tempExtractPath)) {
+                tempExtractPath += "-1";
+            }
+            window.fs.mkdirSync(tempExtractPath);
+            console.log(`Rendering "${link}" at "${tempExtractPath}"`);
+            window.app.deleteDirOnClose = tempExtractPath;
+            dispatch(setUnzipping(true));
+            // pdf to img starts here
+
+            const doc = window.pdfjsLib
+                .getDocument(link)
+                .promise.then((pdf) => {
+                    let count = 0;
+                    for (let i = 1; i <= pdf.numPages; i++) {
+                        pdf.getPage(i).then((page) => {
+                            const viewport = page.getViewport({ scale: 1.5 });
+                            const canvas = document.createElement("canvas");
+                            canvas.width = viewport.width;
+                            canvas.height = viewport.height;
+                            const context = canvas.getContext("2d");
+                            if (context)
+                                page.render({ canvasContext: context, viewport: viewport }).promise.then(() => {
+                                    const image = canvas.toDataURL("image/png");
+                                    window.fs.writeFileSync(
+                                        window.path.join(tempExtractPath, "./" + i + ".png"),
+                                        image.replace(/^data:image\/png;base64,/, ""),
+                                        "base64"
+                                    );
+                                    count++;
+                                    console.log("Made image", i + ".png");
+                                    page.cleanup();
+                                    if (count === pdf.numPages) tempFn(tempExtractPath, 1);
+                                });
+                        });
+                    }
+                })
+                .catch((reason) => {
+                    dispatch(setUnzipping(false));
+                    console.error("PDF Reading Error:", reason);
+                });
         } else tempFn(link);
     };
     /**
@@ -373,7 +418,9 @@ const App = (): ReactElement => {
                         closeReader();
                         openInReader(data[0].path);
                     } else if (
-                        [".zip", ".7z", ".cbz", ".epub"].includes(window.path.extname(data[0].path.toLowerCase()))
+                        [".zip", ".7z", ".cbz", ".epub", ".pdf"].includes(
+                            window.path.extname(data[0].path.toLowerCase())
+                        )
                     ) {
                         closeReader();
                         openInReader(data[0].path);

@@ -10,7 +10,7 @@ const LoadingScreen = () => {
                 ({mangaInReader?.pages}) {mangaInReader?.mangaName} - {mangaInReader?.chapterName}
             </div> */}
             {unzipping ? (
-                <div className="unzipping">Unzipping and Loading</div>
+                <div className="unzipping">Extracting and Loading</div>
             ) : (
                 <div className="loadingBarCont">
                     <div

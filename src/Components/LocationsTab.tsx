@@ -55,7 +55,9 @@ const LocationsTab = (): ReactElement => {
                         ) {
                             if (
                                 window.fs.lstatSync(window.path.join(link, cur)).isDirectory() ||
-                                [".zip", ".cbz", ".7z", ".epub"].includes(window.path.extname(cur).toLowerCase())
+                                [".zip", ".cbz", ".7z", ".epub", ".pdf"].includes(
+                                    window.path.extname(cur).toLowerCase()
+                                )
                             ) {
                                 arr.push({
                                     name: window.app.replaceExtension(cur),

@@ -38,6 +38,7 @@
         "electron-log": "^4.4.8",
         "electron-squirrel-startup": "^1.0.0",
         "font-list": "^1.4.5",
+        "pdfjs-dist": "^2.10.377",
         "react": "17.0.2",
         "react-dom": "17.0.2",
         "react-hot-loader": "^4.13.0",
@@ -60,6 +61,7 @@
         "@types/css": "^0.0.33",
         "@types/electron-devtools-installer": "2.2.2",
         "@types/node": "^18.11.18",
+        "@types/pdfjs-dist": "^2.10.378",
         "@types/react": "18.0.26",
         "@types/react-dom": "18.0.10",
         "@typescript-eslint/eslint-plugin": "^5.0.0",
@@ -80,7 +82,8 @@
         "typescript": "^4.9.4",
         "url-loader": "^4.1.1",
         "wait-on": "5.3.0",
-        "webpack": "^5.58.2"
+        "webpack": "^5.58.2",
+        "worker-loader": "^3.0.8"
     },
     "config": {
         "forge": "forge.config.js"
