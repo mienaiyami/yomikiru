@@ -155,7 +155,7 @@ const history = createSlice({
         /**
          * only for epub reader
          */
-        updateCurrentBookHistory: (state) => {
+        updateCurrentBookHistory: (state, action: PayloadAction<boolean | undefined>) => {
             const stateDup: HistoryItem[] = JSON.parse(JSON.stringify(state));
             const link = window.app.linkInReader.link;
             const index = stateDup.findIndex((e) => e.data.link === link);
@@ -163,7 +163,7 @@ const history = createSlice({
                 (stateDup[index] as BookHistoryItem).data.chapter = window.app.epubHistorySaveData.chapter;
                 (stateDup[index] as BookHistoryItem).data.elementQueryString =
                     window.app.epubHistorySaveData.queryString;
-                saveJSONfile(historyPath, stateDup);
+                saveJSONfile(historyPath, stateDup, action?.payload || false);
             }
         },
         refreshHistory: () => {
