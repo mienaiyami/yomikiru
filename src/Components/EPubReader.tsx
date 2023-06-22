@@ -366,11 +366,11 @@ const EPubReader = () => {
                 // if (startTime === undefined) startTime = timeStamp;
                 // const elapsed = timeStamp - startTime;
                 if (prevTime !== timeStamp && readerRef.current) {
-                    if (isSideListPinned && mainRef.current) {
-                        mainRef.current.scrollBy(0, intensity);
-                    } else {
-                        readerRef.current.scrollBy(0, intensity);
-                    }
+                    // if (isSideListPinned && mainRef.current) {
+                    //     mainRef.current.scrollBy(0, intensity);
+                    // } else {
+                    readerRef.current.scrollBy(0, intensity);
+                    // }
                 }
                 // if (elapsed < window.app.clickDelay) {
                 if (window.app.keydown) {
@@ -866,7 +866,6 @@ const EPubReader = () => {
                     default:
                         break;
                 }
-
                 if (document.activeElement!.tagName === "BODY" || document.activeElement === readerRef.current) {
                     window.app.keydown = true;
                     if (
@@ -897,17 +896,16 @@ const EPubReader = () => {
             }
         };
 
+        const aaa = () => {
+            window.app.keydown = false;
+        };
         window.addEventListener("wheel", wheelFunction);
         window.addEventListener("keydown", registerShortcuts);
-        window.addEventListener("keyup", () => {
-            window.app.keydown = false;
-        });
+        window.addEventListener("keyup", aaa);
         return () => {
             window.removeEventListener("wheel", wheelFunction);
             window.removeEventListener("keydown", registerShortcuts);
-            window.removeEventListener("keyup", () => {
-                window.app.keydown = false;
-            });
+            window.removeEventListener("keyup", aaa);
         };
     }, [isSideListPinned, appSettings, isLoadingManga, shortcuts, isSettingOpen]);
 
