@@ -1296,9 +1296,8 @@ const Settings = (): ReactElement => {
                             <code>File Explorer Option</code>.
                             <ul>
                                 <li>
-                                    Right Click on folder or .cbz/.7z/.zip/.pdf/.epub
-                                    &nbsp;&nbsp;&#8594;&nbsp;&nbsp; Show more options (win11)
-                                    &nbsp;&nbsp;&#8594;&nbsp;&nbsp; Open in Yomikiru.
+                                    Right Click on folder or .cbz/.7z/.zip/.epub &nbsp;&nbsp;&#8594;&nbsp;&nbsp;
+                                    Show more options (win11) &nbsp;&nbsp;&#8594;&nbsp;&nbsp; Open in Yomikiru.
                                 </li>
                                 <li>
                                     Note that this only opens the chapter containing images, not the Manga Folder.
@@ -1307,6 +1306,15 @@ const Settings = (): ReactElement => {
                         </li>
                         <li>
                             Zen Mode (Full Screen Mode): Hides UI, Only shows images and page number if enabled.{" "}
+                        </li>
+                        <li>
+                            Copy theme using "Copy Current Theme to Clipboard" under theme and share it easily. To
+                            install theme, just copy from anywhere and "Save Theme from Clipboard".
+                        </li>
+                        <li>
+                            PDF Scale: Set the quality of the images. Higher number means higher quality but also
+                            high initial cpu and storage usage.{" "}
+                            <b>Do not use high scale with pdf which have high page count.</b>
                         </li>
                         <li>
                             Open chapter in reader directly if chapter is a sub-folder of sub-folder of{" "}

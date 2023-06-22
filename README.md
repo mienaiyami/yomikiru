@@ -21,7 +21,7 @@ Offline Manga/Manhwa/Comic/EPub Reader (not a downloader/host).
 - Multiple useful and customizable shortcuts.
 - Scroll with keys and two available custom scrolling speed.
 - Multiple themes to choose from.
-- Customizable themes.
+- Customizable themes, easy to share themes.
 - Multiple Reading modes - Vertical Scroll, Left to Right, Right to left.
 - Bookmark chapters with page number.
 - Keep history with page number.
