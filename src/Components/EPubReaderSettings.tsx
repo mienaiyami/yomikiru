@@ -238,8 +238,9 @@ const EPUBReaderSettings = memo(
                                         let value = e.target.valueAsNumber;
                                         if (!value) value = 0;
                                         value = value >= 100 ? 100 : value;
-                                        if (document.activeElement !== e.currentTarget)
-                                            dispatch(setEpubReaderSettings({ fontSize: value }));
+                                        // todo: why did i add this?
+                                        // if (document.activeElement !== e.currentTarget)
+                                        dispatch(setEpubReaderSettings({ fontSize: value }));
                                     }}
                                     labeled={true}
                                     labelAfter="px"
