@@ -972,9 +972,9 @@ body {
                     overflow: hidden;
                     padding-right: 10px;
                 }
-
                 > h1 {
-                    border-bottom: 2px solid var(--divider-color);
+                    // border-bottom: 2px solid var(--divider-color);
+                    box-shadow: inset 0 -2px 0 0 var(--divider-color);
                     padding: 10px;
                     position: sticky;
                     top: 0;
@@ -983,7 +983,17 @@ body {
                     align-items: center;
                     gap: 10px;
                     z-index: 100;
-
+                    $nums: 2, 3, 4, 5, 6, 7, 8;
+                    @each $nth in $nums {
+                        &:nth-of-type(#{$nth}) {
+                            top: ($nth - 1) * 38px;
+                        }
+                    }
+                    transition: 0.05s font-size;
+                    &.smol {
+                        font-size: 1em;
+                        cursor: pointer;
+                    }
                     input {
                         width: auto;
                     }
@@ -1124,7 +1134,7 @@ body {
                     padding: 20px;
                 }
 
-                table:not(.content) {
+                table:not(:has(.settingItem)) {
                     border-spacing: 0;
                     width: 100%;
 
