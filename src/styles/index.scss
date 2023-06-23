@@ -280,7 +280,7 @@ body {
 
         &:focus {
             outline: none;
-            box-shadow: var(--btn-color-focus) 0 0 0px 2px;
+            box-shadow: var(--btn-shadow-focus) 0 0 0px 2px;
         }
     }
 
@@ -565,10 +565,11 @@ body {
         button {
             background: var(--btn-color);
 
-            &:hover,
-            &:active {
+            &:hover {
                 background: var(--btn-color-hover);
-                outline: hidden;
+            }
+            &:active {
+                background-color: var(--btn-color-focus);
             }
             &:active,
             &:focus {
@@ -1039,7 +1040,7 @@ body {
                             display: flex;
                             align-items: center;
                             cursor: pointer;
-                            background-color: var(--text-input-bg);
+                            background-color: var(--btn-color);
                             padding: 10px 10px;
                             gap: 10px;
                             border-radius: 3px;
@@ -1048,7 +1049,7 @@ body {
                                 font-size: 15px;
                             }
                             &:hover {
-                                background-color: var(--text-input-bg-focus);
+                                background-color: var(--btn-color-hover);
                             }
                             &:focus,
                             &:has(:focus),

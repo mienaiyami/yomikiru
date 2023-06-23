@@ -336,9 +336,9 @@ const Settings = (): ReactElement => {
             >
                 <h1>
                     Settings
-                    <button onClick={() => dispatch(setOpenSetting(false))} className="closeBtn">
+                    {/* <button onClick={() => dispatch(setOpenSetting(false))} className="closeBtn">
                         <FontAwesomeIcon icon={faTimes} />
-                    </button>
+                    </button> */}
                 </h1>
                 <table className="content">
                     <tbody>
@@ -743,7 +743,8 @@ const Settings = (): ReactElement => {
                                                 );
                                                 const target = e.currentTarget;
                                                 const oldText = target.innerText;
-                                                target.innerText = "Copied!";
+                                                target.innerText =
+                                                    "\u00a0".repeat(23) + "Copied!" + "\u00a0".repeat(23);
                                                 setTimeout(() => {
                                                     target.innerText = oldText;
                                                 }, 3000);
@@ -806,7 +807,7 @@ const Settings = (): ReactElement => {
                                             );
                                         }}
                                     />
-                                    <p>Check on Startup</p>
+                                    <p>Check on App Startup</p>
                                 </label>
                                 <button
                                     onClick={() => {
@@ -817,7 +818,7 @@ const Settings = (): ReactElement => {
                                         );
                                     }}
                                 >
-                                    Check for Update
+                                    Check for Update Now
                                 </button>
                             </td>
                         </tr>
@@ -835,7 +836,6 @@ const Settings = (): ReactElement => {
                             </div> */}
                     </tbody>
                 </table>
-                <h1>Other Settings</h1>
                 <div className="content">
                     <div className="current fullWidth list">
                         <label className={appSettings.skipMinorUpdate ? "selected" : ""}>
@@ -1037,7 +1037,7 @@ const Settings = (): ReactElement => {
                             labeled
                             paraBefore="PDF Scale (&nbsp;&#8593;&nbsp;value = &nbsp;&#8593;&nbsp;quality ):"
                         />
-                        <hr />
+                        <hr style={{ margin: "20px 0" }} />
                         <div className="row" style={{ gap: "10px" }}>
                             <button
                                 onClick={() => {
@@ -1174,6 +1174,15 @@ const Settings = (): ReactElement => {
                                 >
                                     <FontAwesomeIcon icon={faGithub} /> Home Page
                                 </button>
+                                <button
+                                    onClick={() =>
+                                        window.electron.shell.openExternal(
+                                            "https://github.com/mienaiyami/yomikiru/discussions/categories/announcements"
+                                        )
+                                    }
+                                >
+                                    <FontAwesomeIcon icon={faGithub} /> Check Announcements
+                                </button>
                             </td>
                         </tr>
                         <tr className="settingItem">
@@ -1192,7 +1201,7 @@ const Settings = (): ReactElement => {
                                 <button
                                     onClick={(e) => {
                                         const target = e.currentTarget;
-                                        target.innerText = "Copied!";
+                                        target.innerText = "\u00a0".repeat(16) + "Copied!" + "\u00a0".repeat(16);
                                         window.electron.clipboard.writeText("mienaiyami0@gmail.com");
                                         setTimeout(() => {
                                             target.innerText = "mienaiyami0@gmail.com";
@@ -1204,14 +1213,14 @@ const Settings = (): ReactElement => {
                             </td>
                         </tr>
                         <tr className="settingItem">
-                            <td className="name">Author</td>
+                            <td className="name">Developer</td>
                             <td className="current">
                                 <button
                                     onClick={() =>
                                         window.electron.shell.openExternal("https://github.com/mienaiyami/")
                                     }
                                 >
-                                    <FontAwesomeIcon icon={faGithub} /> MienaiYami
+                                    <FontAwesomeIcon icon={faGithub} /> mienaiyami
                                 </button>
                             </td>
                         </tr>
@@ -1230,7 +1239,7 @@ const Settings = (): ReactElement => {
                                             window.electron.ipcRenderer.send("showInExplorer", filePath);
                                     }}
                                 >
-                                    Show Logs
+                                    Show Local Logs
                                 </button>
                                 <button
                                     onClick={() =>
@@ -1302,7 +1311,7 @@ const Settings = (): ReactElement => {
                         </li>
                         <li>
                             PDF Scale: Set the quality of the images. Higher number means higher quality but also
-                            high initial cpu and storage usage.{" "}
+                            high initial cpu and storage usage. <br />
                             <b>Do not use high scale with pdf which have high page count.</b>
                         </li>
                         <li>
