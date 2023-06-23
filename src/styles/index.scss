@@ -983,17 +983,17 @@ body {
                     align-items: center;
                     gap: 10px;
                     z-index: 100;
-                    $nums: 2, 3, 4, 5, 6, 7, 8;
-                    @each $nth in $nums {
-                        &:nth-of-type(#{$nth}) {
-                            top: ($nth - 1) * 38px;
-                        }
-                    }
-                    transition: 0.05s font-size;
-                    &.smol {
-                        font-size: 1em;
-                        cursor: pointer;
-                    }
+                    // $nums: 2, 3, 4, 5, 6, 7, 8;
+                    // @each $nth in $nums {
+                    //     &:nth-of-type(#{$nth}) {
+                    //         top: ($nth - 1) * 38px;
+                    //     }
+                    // }
+                    // transition: 0.05s font-size;
+                    // &.smol {
+                    //     font-size: 1em;
+                    //     cursor: pointer;
+                    // }
                     input {
                         width: auto;
                     }

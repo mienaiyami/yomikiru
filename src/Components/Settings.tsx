@@ -339,21 +339,21 @@ const Settings = (): ReactElement => {
                 }}
                 tabIndex={-1}
                 ref={settingContRef}
-                onScroll={(e) => {
-                    e.currentTarget.querySelectorAll(":scope > h1").forEach((h1) => {
-                        // console.log(
-                        //     h1.getBoundingClientRect().bottom,
-                        //     h1.nextElementSibling?.getBoundingClientRect().bottom
-                        // );
-                        if (h1.nextElementSibling)
-                            if (
-                                h1.getBoundingClientRect().bottom >
-                                h1.nextElementSibling?.getBoundingClientRect().bottom
-                            )
-                                h1.classList.add("smol");
-                            else h1.classList.remove("smol");
-                    });
-                }}
+                // onScroll={(e) => {
+                //     e.currentTarget.querySelectorAll(":scope > h1").forEach((h1) => {
+                //         // console.log(
+                //         //     h1.getBoundingClientRect().bottom,
+                //         //     h1.nextElementSibling?.getBoundingClientRect().bottom
+                //         // );
+                //         if (h1.nextElementSibling)
+                //             if (
+                //                 h1.getBoundingClientRect().bottom >
+                //                 h1.nextElementSibling?.getBoundingClientRect().bottom
+                //             )
+                //                 h1.classList.add("smol");
+                //             else h1.classList.remove("smol");
+                //     });
+                // }}
             >
                 <h1>
                     Settings
