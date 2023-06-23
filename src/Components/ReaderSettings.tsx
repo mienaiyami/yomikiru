@@ -118,8 +118,9 @@ const ReaderSettings = memo(
                                     if (!value) value = 0;
                                     value = value >= maxWidth ? maxWidth : value;
 
-                                    dispatch(setReaderSettings({ readerWidth: value }));
+                                    return value;
                                 }}
+                                timeout={[1000, (value) => dispatch(setReaderSettings({ readerWidth: value }))]}
                                 labeled={true}
                                 disabled={appSettings.readerSettings.fitOption !== 0}
                                 labelAfter="%"
@@ -281,8 +282,9 @@ const ReaderSettings = memo(
                                         let value = e.currentTarget.valueAsNumber;
                                         if (value > 5000) value = 5000;
                                         if (value < 0) value = 0;
-                                        dispatch(setReaderSettings({ maxWidth: value }));
+                                        return value;
                                     }}
+                                    timeout={[1000, (value) => dispatch(setReaderSettings({ maxWidth: value }))]}
                                     paraBefore="Max Image Width&nbsp;&nbsp;:"
                                     labelAfter="px"
                                 />
@@ -309,8 +311,9 @@ const ReaderSettings = memo(
                                         let value = e.currentTarget.valueAsNumber;
                                         if (value > 5000) value = 5000;
                                         if (value < 0) value = 0;
-                                        dispatch(setReaderSettings({ maxHeight: value }));
+                                        return value;
                                     }}
+                                    timeout={[1000, (value) => dispatch(setReaderSettings({ maxHeight: value }))]}
                                     paraBefore="Max Image Height&nbsp;:"
                                     labelAfter="px"
                                 />
@@ -522,8 +525,9 @@ const ReaderSettings = memo(
                                     let value = e.currentTarget.valueAsNumber;
                                     if (value > 500) value = 500;
                                     if (value < 1) value = 1;
-                                    dispatch(setReaderSettings({ scrollSpeedA: value }));
+                                    return value;
                                 }}
+                                timeout={[1000, (value) => dispatch(setReaderSettings({ scrollSpeedA: value }))]}
                                 labeled
                                 labelBefore="Scroll&nbsp;A&nbsp;:"
                                 labelAfter="px"
@@ -536,8 +540,9 @@ const ReaderSettings = memo(
                                     let value = e.currentTarget.valueAsNumber;
                                     if (value > 500) value = 500;
                                     if (value < 1) value = 1;
-                                    dispatch(setReaderSettings({ scrollSpeedB: value }));
+                                    return value;
                                 }}
+                                timeout={[1000, (value) => dispatch(setReaderSettings({ scrollSpeedB: value }))]}
                                 labeled
                                 labelBefore="Scroll&nbsp;B&nbsp;:"
                                 labelAfter="px"
@@ -771,8 +776,9 @@ const ReaderSettings = memo(
                                 onChangeNum={(e) => {
                                     let value = e.target.valueAsNumber;
                                     if (!value) value = 0;
-                                    dispatch(setReaderSettings({ gapSize: value }));
+                                    return value;
                                 }}
+                                timeout={[1000, (value) => dispatch(setReaderSettings({ gapSize: value }))]}
                                 paraBefore="Gap between rows&nbsp;:"
                                 labelAfter="px"
                             />

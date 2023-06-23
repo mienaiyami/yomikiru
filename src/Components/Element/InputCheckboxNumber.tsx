@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useState, useLayoutEffect } from "react";
 
 const InputCheckboxNumber = ({
     onChangeNum,
@@ -14,6 +14,7 @@ const InputCheckboxNumber = ({
     step = 1,
     className = "",
     disabled = false,
+    timeout,
 }: {
     labelAfter?: string;
     labelBefore?: string;
@@ -26,9 +27,29 @@ const InputCheckboxNumber = ({
     checked: boolean;
     onChangeCheck: React.ChangeEventHandler<HTMLInputElement>;
     onChangeNum: React.ChangeEventHandler<HTMLInputElement>;
+    /**
+     * `[time_in_ms, fn_on_timeout]`
+     * `fn_on_timeout` is called after time had passed after `onChangeNum` and active element is event target
+     */
+    timeout?: [number, (value: number) => void];
     className?: string;
     disabled?: boolean;
 }) => {
+    const [valueProxy, setValueProxy] = useState(value);
+    useLayoutEffect(() => {
+        let timeoutid: NodeJS.Timeout;
+        if (timeout) {
+            timeoutid = setTimeout(() => {
+                timeout[1](valueProxy);
+            }, timeout[0]);
+        }
+        return () => {
+            clearTimeout(timeoutid);
+        };
+    }, [valueProxy]);
+    useLayoutEffect(() => {
+        setValueProxy(value);
+    }, [value]);
     return (
         <label className={(disabled ? "disabled " : "") + (checked ? "optionSelected " : "") + className}>
             <input type="checkbox" checked={checked} disabled={disabled} onChange={onChangeCheck} />
@@ -37,7 +58,7 @@ const InputCheckboxNumber = ({
             <input
                 type="number"
                 disabled={disabled || !checked}
-                value={value}
+                value={valueProxy}
                 min={min}
                 max={max}
                 step={step}
@@ -46,7 +67,14 @@ const InputCheckboxNumber = ({
                         e.stopPropagation();
                     }
                 }}
-                onChange={onChangeNum}
+                onChange={(e) => {
+                    const aaa = onChangeNum(e);
+                    if (timeout) {
+                        if (aaa === undefined)
+                            return console.error("InputCheckboxNumber:onChangeNum function must return.");
+                        setValueProxy(aaa);
+                    }
+                }}
             />
             {paraAfter && <p>{paraAfter}</p>}
             {labelAfter}

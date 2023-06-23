@@ -144,9 +144,12 @@ const EPUBReaderSettings = memo(
                                     let value = e.target.valueAsNumber;
                                     if (!value) value = 0;
                                     value = value >= maxWidth ? maxWidth : value;
-
-                                    dispatch(setEpubReaderSettings({ readerWidth: value }));
+                                    return value;
                                 }}
+                                timeout={[
+                                    1000,
+                                    (value) => dispatch(setEpubReaderSettings({ readerWidth: value })),
+                                ]}
                                 labeled={true}
                                 labelAfter="%"
                             />
@@ -238,8 +241,12 @@ const EPUBReaderSettings = memo(
                                         let value = e.target.valueAsNumber;
                                         if (!value) value = 0;
                                         value = value >= 100 ? 100 : value;
-                                        dispatch(setEpubReaderSettings({ fontSize: value }));
+                                        return value;
                                     }}
+                                    timeout={[
+                                        1000,
+                                        (value) => dispatch(setEpubReaderSettings({ fontSize: value })),
+                                    ]}
                                     labeled={true}
                                     labelAfter="px"
                                 />
@@ -414,8 +421,12 @@ const EPUBReaderSettings = memo(
                                         let value = e.currentTarget.valueAsNumber;
                                         if (value > 20) value = 20;
                                         if (value < 0) value = 0;
-                                        dispatch(setEpubReaderSettings({ lineSpacing: value }));
+                                        return value;
                                     }}
+                                    timeout={[
+                                        1000,
+                                        (value) => dispatch(setEpubReaderSettings({ lineSpacing: value })),
+                                    ]}
                                     paraBefore="Line Height&nbsp;:"
                                     labelAfter="em"
                                 />
@@ -438,8 +449,12 @@ const EPUBReaderSettings = memo(
                                         let value = e.currentTarget.valueAsNumber;
                                         if (value > 20) value = 20;
                                         if (value < 0) value = 0;
-                                        dispatch(setEpubReaderSettings({ paragraphSpacing: value }));
+                                        return value;
                                     }}
+                                    timeout={[
+                                        1000,
+                                        (value) => dispatch(setEpubReaderSettings({ paragraphSpacing: value })),
+                                    ]}
                                     paraBefore="Paragraph Spacing&nbsp;:"
                                     labelAfter="em"
                                 />
@@ -462,8 +477,12 @@ const EPUBReaderSettings = memo(
                                         let value = e.currentTarget.valueAsNumber;
                                         if (value > 20) value = 20;
                                         if (value < 0) value = 0;
-                                        dispatch(setEpubReaderSettings({ wordSpacing: value }));
+                                        return value;
                                     }}
+                                    timeout={[
+                                        1000,
+                                        (value) => dispatch(setEpubReaderSettings({ wordSpacing: value })),
+                                    ]}
                                     paraBefore="Word Spacing&nbsp;:"
                                     labelAfter="em"
                                 />
@@ -780,8 +799,12 @@ const EPUBReaderSettings = memo(
                                     let value = e.currentTarget.valueAsNumber;
                                     if (value > 500) value = 500;
                                     if (value < 1) value = 1;
-                                    dispatch(setEpubReaderSettings({ scrollSpeedA: value }));
+                                    return value;
                                 }}
+                                timeout={[
+                                    1000,
+                                    (value) => dispatch(setEpubReaderSettings({ scrollSpeedA: value })),
+                                ]}
                                 labeled={true}
                                 labelBefore=" Scroll&nbsp;A&nbsp;:"
                                 labelAfter="px"
@@ -794,8 +817,12 @@ const EPUBReaderSettings = memo(
                                     let value = e.currentTarget.valueAsNumber;
                                     if (value > 500) value = 500;
                                     if (value < 1) value = 1;
-                                    dispatch(setEpubReaderSettings({ scrollSpeedB: value }));
+                                    return value;
                                 }}
+                                timeout={[
+                                    1000,
+                                    (value) => dispatch(setEpubReaderSettings({ scrollSpeedB: value })),
+                                ]}
                                 labeled={true}
                                 labelBefore=" Scroll&nbsp;B&nbsp;:"
                                 labelAfter="px"
