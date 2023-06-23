@@ -394,13 +394,15 @@ const EPUBReaderSettings = memo(
                                     step={100}
                                     labeled
                                     labelText=""
-                                    onChange={(e) => {
-                                        dispatch(
-                                            setEpubReaderSettings({
-                                                fontWeight: e.currentTarget.valueAsNumber,
-                                            })
-                                        );
-                                    }}
+                                    timeout={[
+                                        350,
+                                        (value) =>
+                                            dispatch(
+                                                setEpubReaderSettings({
+                                                    fontWeight: value,
+                                                })
+                                            ),
+                                    ]}
                                 />
                                 <InputCheckboxNumber
                                     checked={!appSettings.epubReaderSettings.useDefault_lineSpacing}
@@ -736,16 +738,18 @@ const EPUBReaderSettings = memo(
                                 value={appSettings.epubReaderSettings.forceLowBrightness.value}
                                 disabled={!appSettings.epubReaderSettings.forceLowBrightness.enabled}
                                 labeled={true}
-                                onChange={(e) => {
-                                    dispatch(
-                                        setEpubReaderSettings({
-                                            forceLowBrightness: {
-                                                ...appSettings.epubReaderSettings.forceLowBrightness,
-                                                value: e.currentTarget.valueAsNumber,
-                                            },
-                                        })
-                                    );
-                                }}
+                                timeout={[
+                                    350,
+                                    (value) =>
+                                        dispatch(
+                                            setEpubReaderSettings({
+                                                forceLowBrightness: {
+                                                    ...appSettings.epubReaderSettings.forceLowBrightness,
+                                                    value,
+                                                },
+                                            })
+                                        ),
+                                ]}
                             />
                             <InputCheckbox
                                 checked={appSettings.epubReaderSettings.invertImageColor}

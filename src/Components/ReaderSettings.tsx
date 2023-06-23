@@ -598,16 +598,18 @@ const ReaderSettings = memo(
                                 disabled={!appSettings.readerSettings.customColorFilter.enabled}
                                 labeled={true}
                                 labelText="R:"
-                                onChange={(e) => {
-                                    dispatch(
-                                        setReaderSettings({
-                                            customColorFilter: {
-                                                ...appSettings.readerSettings.customColorFilter,
-                                                r: e.currentTarget.valueAsNumber,
-                                            },
-                                        })
-                                    );
-                                }}
+                                timeout={[
+                                    350,
+                                    (value) =>
+                                        dispatch(
+                                            setReaderSettings({
+                                                customColorFilter: {
+                                                    ...appSettings.readerSettings.customColorFilter,
+                                                    r: value,
+                                                },
+                                            })
+                                        ),
+                                ]}
                             />
                             <InputRange
                                 className={"colorRange"}
@@ -617,16 +619,18 @@ const ReaderSettings = memo(
                                 disabled={!appSettings.readerSettings.customColorFilter.enabled}
                                 labeled={true}
                                 labelText="G:"
-                                onChange={(e) => {
-                                    dispatch(
-                                        setReaderSettings({
-                                            customColorFilter: {
-                                                ...appSettings.readerSettings.customColorFilter,
-                                                g: e.currentTarget.valueAsNumber,
-                                            },
-                                        })
-                                    );
-                                }}
+                                timeout={[
+                                    350,
+                                    (value) =>
+                                        dispatch(
+                                            setReaderSettings({
+                                                customColorFilter: {
+                                                    ...appSettings.readerSettings.customColorFilter,
+                                                    g: value,
+                                                },
+                                            })
+                                        ),
+                                ]}
                             />
                             <InputRange
                                 className={"colorRange"}
@@ -636,16 +640,18 @@ const ReaderSettings = memo(
                                 disabled={!appSettings.readerSettings.customColorFilter.enabled}
                                 labeled={true}
                                 labelText="B:"
-                                onChange={(e) => {
-                                    dispatch(
-                                        setReaderSettings({
-                                            customColorFilter: {
-                                                ...appSettings.readerSettings.customColorFilter,
-                                                b: e.currentTarget.valueAsNumber,
-                                            },
-                                        })
-                                    );
-                                }}
+                                timeout={[
+                                    350,
+                                    (value) =>
+                                        dispatch(
+                                            setReaderSettings({
+                                                customColorFilter: {
+                                                    ...appSettings.readerSettings.customColorFilter,
+                                                    b: value,
+                                                },
+                                            })
+                                        ),
+                                ]}
                             />
                             <InputRange
                                 className={"colorRange"}
@@ -656,16 +662,18 @@ const ReaderSettings = memo(
                                 disabled={!appSettings.readerSettings.customColorFilter.enabled}
                                 labeled={true}
                                 labelText="A:"
-                                onChange={(e) => {
-                                    dispatch(
-                                        setReaderSettings({
-                                            customColorFilter: {
-                                                ...appSettings.readerSettings.customColorFilter,
-                                                a: e.currentTarget.valueAsNumber,
-                                            },
-                                        })
-                                    );
-                                }}
+                                timeout={[
+                                    350,
+                                    (value) =>
+                                        dispatch(
+                                            setReaderSettings({
+                                                customColorFilter: {
+                                                    ...appSettings.readerSettings.customColorFilter,
+                                                    a: value,
+                                                },
+                                            })
+                                        ),
+                                ]}
                             />
                             <InputSelect
                                 disabled={!appSettings.readerSettings.customColorFilter.enabled}
@@ -720,16 +728,18 @@ const ReaderSettings = memo(
                                 disabled={!appSettings.readerSettings.forceLowBrightness.enabled}
                                 labeled={true}
                                 labelText=""
-                                onChange={(e) => {
-                                    dispatch(
-                                        setReaderSettings({
-                                            forceLowBrightness: {
-                                                ...appSettings.readerSettings.forceLowBrightness,
-                                                value: e.currentTarget.valueAsNumber,
-                                            },
-                                        })
-                                    );
-                                }}
+                                timeout={[
+                                    350,
+                                    (value) =>
+                                        dispatch(
+                                            setReaderSettings({
+                                                forceLowBrightness: {
+                                                    ...appSettings.readerSettings.forceLowBrightness,
+                                                    value,
+                                                },
+                                            })
+                                        ),
+                                ]}
                             />
                         </div>
                     </div>
