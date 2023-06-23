@@ -70,7 +70,9 @@ type NewHistoryData =
               elementQueryString: string;
           };
       };
-
+/**
+ * ! im not returning state as it auto refresh on saveJSONfile
+ */
 const history = createSlice({
     name: "history",
     initialState,
@@ -160,9 +162,12 @@ const history = createSlice({
             const link = window.app.linkInReader.link;
             const index = stateDup.findIndex((e) => e.data.link === link);
             if (index > -1 && window.app.epubHistorySaveData) {
-                (stateDup[index] as BookHistoryItem).data.chapter = window.app.epubHistorySaveData.chapter;
-                (stateDup[index] as BookHistoryItem).data.elementQueryString =
-                    window.app.epubHistorySaveData.queryString;
+                const oldData = stateDup[index];
+                stateDup.splice(index, 1);
+                (oldData as BookHistoryItem).data.chapter = window.app.epubHistorySaveData.chapter;
+                (oldData as BookHistoryItem).data.elementQueryString = window.app.epubHistorySaveData.queryString;
+                (oldData as BookHistoryItem).data.date = new Date().toLocaleString("en-UK", { hour12: true });
+                stateDup.unshift(oldData);
                 saveJSONfile(historyPath, stateDup, action?.payload || false);
             }
         },
@@ -171,6 +176,9 @@ const history = createSlice({
             if (newState.length === 0) newState = readHistory();
             return newState;
         },
+        /**
+         * take index in history.json as param
+         */
         removeHistory: (state, action: PayloadAction<number>) => {
             state.splice(action.payload, 1);
             saveJSONfile(historyPath, current(state));
