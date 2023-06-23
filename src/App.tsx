@@ -418,6 +418,7 @@ const App = (): ReactElement => {
             if (e.dataTransfer) {
                 const data = e.dataTransfer.files;
                 if (data.length > 0) {
+                    if (!window.fs.existsSync(data[0].path)) return;
                     if (window.app.linkInReader && window.app.linkInReader.link === data[0].path) return;
                     if (data.length > 1)
                         window.dialog.customError({
