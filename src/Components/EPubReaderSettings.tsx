@@ -238,8 +238,6 @@ const EPUBReaderSettings = memo(
                                         let value = e.target.valueAsNumber;
                                         if (!value) value = 0;
                                         value = value >= 100 ? 100 : value;
-                                        // todo: why did i add this?
-                                        // if (document.activeElement !== e.currentTarget)
                                         dispatch(setEpubReaderSettings({ fontSize: value }));
                                     }}
                                     labeled={true}
@@ -249,10 +247,11 @@ const EPUBReaderSettings = memo(
                                     ref={fontSizeMinusRef}
                                     onClick={(e) => {
                                         // makeScrollPos();
-                                        let newSize = appSettings.epubReaderSettings.fontSize - 2;
+                                        let newSize = appSettings.epubReaderSettings.fontSize - 1;
 
                                         newSize = newSize < 1 ? 1 : newSize;
-                                        setshortcutText(newSize + "px");
+                                        if (document.activeElement !== e.currentTarget)
+                                            setshortcutText(newSize + "px");
                                         dispatch(setEpubReaderSettings({ fontSize: newSize }));
                                     }}
                                 >
@@ -262,10 +261,11 @@ const EPUBReaderSettings = memo(
                                     ref={fontSizePlusRef}
                                     onClick={(e) => {
                                         // makeScrollPos();
-                                        let newSize = appSettings.epubReaderSettings.fontSize + 2;
+                                        let newSize = appSettings.epubReaderSettings.fontSize + 1;
 
                                         newSize = newSize > 100 ? 100 : newSize;
-                                        setshortcutText(newSize + "px");
+                                        if (document.activeElement !== e.currentTarget)
+                                            setshortcutText(newSize + "px");
                                         dispatch(setEpubReaderSettings({ fontSize: newSize }));
                                     }}
                                 >
