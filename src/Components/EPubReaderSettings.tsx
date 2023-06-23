@@ -37,13 +37,6 @@ const EPUBReaderSettings = memo(
         const [isReaderSettingsOpen, setReaderSettingOpen] = useState(false);
         const [fontList, setFontList] = useState<string[]>([]);
 
-        const [fontColor, setFontColor] = useState(appSettings.epubReaderSettings.fontColor);
-        const [linkColor, setLinkColor] = useState(appSettings.epubReaderSettings.linkColor);
-        const [backgroundColor, setBackgroundColor] = useState(appSettings.epubReaderSettings.backgroundColor);
-        const [progressBackgroundColor, setProgressBackgroundColor] = useState(
-            appSettings.epubReaderSettings.progressBackgroundColor
-        );
-
         // useLayoutEffect(() => {
         // console.log("cccc");
         // }, [
@@ -647,11 +640,16 @@ const EPUBReaderSettings = memo(
                                         })
                                     );
                                 }}
-                                value={fontColor}
-                                onChangeColor={(e) => {
-                                    const value = e.currentTarget.value;
-                                    setFontColor(value);
-                                }}
+                                value={appSettings.epubReaderSettings.fontColor}
+                                timeout={[
+                                    500,
+                                    (value) =>
+                                        dispatch(
+                                            setEpubReaderSettings({
+                                                fontColor: value,
+                                            })
+                                        ),
+                                ]}
                                 paraBefore="Font Color&nbsp;:"
                             />
                             <InputCheckboxColor
@@ -663,11 +661,16 @@ const EPUBReaderSettings = memo(
                                         })
                                     );
                                 }}
-                                value={linkColor}
-                                onChangeColor={(e) => {
-                                    const value = e.currentTarget.value;
-                                    setLinkColor(value);
-                                }}
+                                value={appSettings.epubReaderSettings.linkColor}
+                                timeout={[
+                                    500,
+                                    (value) =>
+                                        dispatch(
+                                            setEpubReaderSettings({
+                                                linkColor: value,
+                                            })
+                                        ),
+                                ]}
                                 paraBefore="Link Color&nbsp;:"
                             />
                             <InputCheckboxColor
@@ -679,11 +682,16 @@ const EPUBReaderSettings = memo(
                                         })
                                     );
                                 }}
-                                value={backgroundColor}
-                                onChangeColor={(e) => {
-                                    const value = e.currentTarget.value;
-                                    setBackgroundColor(value);
-                                }}
+                                value={appSettings.epubReaderSettings.backgroundColor}
+                                timeout={[
+                                    500,
+                                    (value) =>
+                                        dispatch(
+                                            setEpubReaderSettings({
+                                                backgroundColor: value,
+                                            })
+                                        ),
+                                ]}
                                 paraBefore="Background Color&nbsp;:"
                             />
                             <InputCheckboxColor
@@ -695,27 +703,18 @@ const EPUBReaderSettings = memo(
                                         })
                                     );
                                 }}
-                                value={progressBackgroundColor}
-                                onChangeColor={(e) => {
-                                    const value = e.currentTarget.value;
-                                    setProgressBackgroundColor(value);
-                                }}
+                                value={appSettings.epubReaderSettings.progressBackgroundColor}
+                                timeout={[
+                                    500,
+                                    (value) =>
+                                        dispatch(
+                                            setEpubReaderSettings({
+                                                progressBackgroundColor: value,
+                                            })
+                                        ),
+                                ]}
                                 paraBefore="Progress Background Color&nbsp;:"
                             />
-                            <button
-                                onClick={() => {
-                                    dispatch(
-                                        setEpubReaderSettings({
-                                            fontColor,
-                                            linkColor,
-                                            backgroundColor,
-                                            progressBackgroundColor,
-                                        })
-                                    );
-                                }}
-                            >
-                                Save and apply color settings above.
-                            </button>
                             <InputCheckbox
                                 checked={appSettings.epubReaderSettings.forceLowBrightness.enabled}
                                 onChange={(e) => {

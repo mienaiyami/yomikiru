@@ -15,6 +15,7 @@ import InputRange from "./Element/InputRange";
 import { promptSelectDir } from "../MainImports";
 import { deleteAllHistory } from "../store/history";
 import InputNumber from "./Element/InputNumber";
+import InputColor from "./Element/InputColor";
 
 const Settings = (): ReactElement => {
     const appSettings = useAppSelector((store) => store.appSettings);
@@ -268,15 +269,12 @@ const Settings = (): ReactElement => {
                         </InputSelect>
                     ) : (
                         <>
-                            <input
-                                type="color"
+                            <InputColor
                                 value={rawColor || "#000000"}
-                                // className="newThemeMakerColor"
-                                onChange={(e) => {
-                                    setRawColor(
-                                        e.target.value === "" ? "#000000" : e.target.value.substring(0, 7)
-                                    );
-                                }}
+                                timeout={[
+                                    500,
+                                    (value) => setRawColor(value === "" ? "#000000" : value.substring(0, 7)),
+                                ]}
                                 title="Color"
                             />
                             {/* <input
