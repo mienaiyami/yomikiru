@@ -304,16 +304,7 @@ const Settings = (): ReactElement => {
                                 title="Opacity"
                                 className="opacityRange"
                                 labeled
-                                onChange={(e) => {
-                                    setOpacity(() => {
-                                        if (e.target.value === "") {
-                                            e.target.value = "0";
-                                        }
-                                        let value = e.target.valueAsNumber ?? 100;
-                                        if (value > 100) value = 100;
-                                        return value;
-                                    });
-                                }}
+                                timeout={[200, (value) => setOpacity(value)]}
                             />
                             <input
                                 type="text"
