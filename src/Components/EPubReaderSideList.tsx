@@ -371,34 +371,59 @@ const EPubReaderSideList = memo(
                     )}
                 </div>
                 <div className="location-cont">
-                    <ol>
-                        {tocData.nav.map((e) => (
-                            <li className={e.src === currentChapterURL ? "current " : ""} key={e.name}>
-                                <a
-                                    onClick={(ev) => {
-                                        epubLinkClick(ev);
-                                        sideListRef.current?.blur();
-                                        setCurrentChapterURL(ev.currentTarget.getAttribute("data-href") || "~");
-                                    }}
-                                    style={{ "--depth": e.depth - 1 }}
-                                    data-href={e.src}
-                                    data-depth={e.depth}
-                                    title={e.name}
-                                    ref={(node) => {
-                                        if (node !== null && e.src === currentChapterURL) node.scrollIntoView();
-                                    }}
-                                >
-                                    <span className="text">
-                                        {"\u00A0".repeat((tocData.depth - e.depth) * 5) + e.name}
-                                    </span>
-                                </a>
-                            </li>
-                        ))}
-                    </ol>
+                    <List
+                        tocData={tocData}
+                        currentChapterURL={currentChapterURL}
+                        epubLinkClick={epubLinkClick}
+                        sideListRef={sideListRef}
+                        setCurrentChapterURL={setCurrentChapterURL}
+                    />
                 </div>
             </div>
         );
     }
+);
+
+const List = memo(
+    ({
+        tocData,
+        currentChapterURL,
+        epubLinkClick,
+        sideListRef,
+        setCurrentChapterURL,
+    }: {
+        tocData: TOCData;
+        currentChapterURL: string;
+        epubLinkClick: (ev: MouseEvent | React.MouseEvent<HTMLAnchorElement, MouseEvent>) => void;
+        sideListRef: React.RefObject<HTMLDivElement>;
+        setCurrentChapterURL: React.Dispatch<React.SetStateAction<string>>;
+    }) => {
+        return (
+            <ol>
+                {tocData.nav.map((e) => (
+                    <li className={e.src === currentChapterURL ? "current " : ""} key={e.name}>
+                        <a
+                            onClick={(ev) => {
+                                epubLinkClick(ev);
+                                sideListRef.current?.blur();
+                                setCurrentChapterURL(ev.currentTarget.getAttribute("data-href") || "~");
+                            }}
+                            style={{ "--depth": e.depth - 1 }}
+                            data-href={e.src}
+                            data-depth={e.depth}
+                            title={e.name}
+                            ref={(node) => {
+                                if (node !== null && e.src === currentChapterURL) node.scrollIntoView();
+                            }}
+                        >
+                            <span className="text">{"\u00A0".repeat((tocData.depth - e.depth) * 5) + e.name}</span>
+                        </a>
+                    </li>
+                ))}
+            </ol>
+        );
+    },
+    (prev, next) => prev.currentChapterURL === next.currentChapterURL
 );
 
 const Button_A = (props: any) => {
