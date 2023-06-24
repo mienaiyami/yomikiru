@@ -204,62 +204,10 @@ const Reader = () => {
             // /&& document.activeElement!.tagName === "BODY"
             window.app.keyRepeated = e.repeat;
             if ([" ", "ArrowUp", "ArrowDown"].includes(e.key)) e.preventDefault();
-            if (!isSettingOpen && window.app.isReaderOpen && !e.repeat && !isLoadingManga && !e.ctrlKey) {
-                switch (e.key) {
-                    case shortcutkey.navToPage?.key1:
-                    case shortcutkey.navToPage?.key2:
-                        navToPageButtonRef.current?.click();
-                        break;
-                    case shortcutkey.toggleZenMode?.key1:
-                    case shortcutkey.toggleZenMode?.key2:
-                        setZenMode((prev) => !prev);
-                        break;
-                    case "Escape":
-                        setZenMode(false);
-                        break;
-                    case shortcutkey.readerSettings?.key1:
-                    case shortcutkey.readerSettings?.key2:
-                        readerSettingExtender.current?.click();
-                        readerSettingExtender.current?.focus();
-                        break;
-                    case shortcutkey.nextChapter?.key1:
-                    case shortcutkey.nextChapter?.key2:
-                        openNextChapterRef.current?.click();
-                        break;
-                    case shortcutkey.prevChapter?.key1:
-                    case shortcutkey.prevChapter?.key2:
-                        openPrevChapterRef.current?.click();
-                        break;
-                    case shortcutkey.bookmark?.key1:
-                    case shortcutkey.bookmark?.key2:
-                        addToBookmarkRef.current?.click();
-                        break;
-                    case shortcutkey.sizePlus?.key1:
-                    case shortcutkey.sizePlus?.key2:
-                        sizePlusRef.current?.click();
-                        break;
-                    case shortcutkey.sizeMinus?.key1:
-                    case shortcutkey.sizeMinus?.key2:
-                        sizeMinusRef.current?.click();
-                        break;
-                    default:
-                        break;
-                }
-                if (document.activeElement!.tagName === "BODY" || document.activeElement === readerRef.current) {
-                    window.app.keydown = true;
-                    if (
-                        e.shiftKey &&
-                        (e.key === shortcutkey.largeScroll?.key1 || e.key === shortcutkey.largeScroll?.key2)
-                    ) {
-                        scrollReader(0 - appSettings.readerSettings.scrollSpeedB);
-                        return;
-                    }
-                    switch (e.key) {
-                        case shortcutkey.largeScroll?.key1:
-                        case shortcutkey.largeScroll?.key2:
-                            scrollReader(appSettings.readerSettings.scrollSpeedB);
 
-                            break;
+            if (!isSettingOpen && window.app.isReaderOpen && !isLoadingManga && !e.ctrlKey) {
+                if (document.activeElement!.tagName === "BODY" || document.activeElement === readerRef.current)
+                    switch (e.key) {
                         case shortcutkey.nextPage?.key1:
                         case shortcutkey.nextPage?.key2: {
                             const abc = prevNextDeciderLogic();
@@ -273,10 +221,7 @@ const Reader = () => {
                             }
                             break;
                         }
-                        case shortcutkey.scrollDown?.key1:
-                        case shortcutkey.scrollDown?.key2:
-                            scrollReader(appSettings.readerSettings.scrollSpeedA);
-                            break;
+
                         case shortcutkey.prevPage?.key1:
                         case shortcutkey.prevPage?.key2: {
                             const abc = prevNextDeciderLogic();
@@ -290,107 +235,173 @@ const Reader = () => {
                             }
                             break;
                         }
-                        case shortcutkey.scrollUp?.key1:
-                        case shortcutkey.scrollUp?.key2:
-                            scrollReader(0 - appSettings.readerSettings.scrollSpeedA);
+                    }
+                if (!e.repeat) {
+                    switch (e.key) {
+                        case shortcutkey.navToPage?.key1:
+                        case shortcutkey.navToPage?.key2:
+                            navToPageButtonRef.current?.click();
                             break;
-                        case shortcutkey.showHidePageNumberInZen?.key1:
-                        case shortcutkey.showHidePageNumberInZen?.key2:
-                            setshortcutText(
-                                (!appSettings.readerSettings.showPageNumberInZenMode ? "Show" : "Hide") +
-                                    " page-number in Zen Mode"
-                            );
-                            dispatch(
-                                setReaderSettings({
-                                    showPageNumberInZenMode: !appSettings.readerSettings.showPageNumberInZenMode,
-                                })
-                            );
+                        case shortcutkey.toggleZenMode?.key1:
+                        case shortcutkey.toggleZenMode?.key2:
+                            setZenMode((prev) => !prev);
                             break;
-                        case shortcutkey.cycleFitOptions?.key1:
-                        case shortcutkey.cycleFitOptions?.key2: {
-                            const fitOption = (
-                                appSettings.readerSettings.fitOption + 1 === 4
-                                    ? 0
-                                    : appSettings.readerSettings.fitOption + 1
-                            ) as 0 | 2 | 1 | 3 | undefined;
-                            if (fitOption === 0) setshortcutText("Free");
-                            if (fitOption === 1) setshortcutText("Fit Vertically");
-                            if (fitOption === 2) setshortcutText("Fit Horizontally");
-                            if (fitOption === 3) setshortcutText("1:1");
-                            dispatch(
-                                setReaderSettings({
-                                    fitOption,
-                                })
-                            );
-                            // todo: display current mode in middle of screen and fade
-
-                            // dispatch(
-                            //     setAppSettings((init) => {
-                            //         init.readerSettings.fitOption += 1;
-                            //         if (init.readerSettings.fitOption === 4) init.readerSettings.fitOption = 0;
-                            //         return { ...init };
-                            //     })
-                            // );
+                        case "Escape":
+                            setZenMode(false);
                             break;
-                        }
-                        case shortcutkey.selectReaderMode0?.key1:
-                        case shortcutkey.selectReaderMode0?.key2:
-                            setshortcutText("Reading Mode - Vertical Scroll");
-                            dispatch(setReaderSettings({ readerTypeSelected: 0 }));
+                        case shortcutkey.readerSettings?.key1:
+                        case shortcutkey.readerSettings?.key2:
+                            readerSettingExtender.current?.click();
+                            readerSettingExtender.current?.focus();
                             break;
-                        case shortcutkey.selectReaderMode1?.key1:
-                        case shortcutkey.selectReaderMode1?.key2:
-                            setshortcutText("Reading Mode - Left to Right");
-                            dispatch(setReaderSettings({ readerTypeSelected: 1 }));
+                        case shortcutkey.nextChapter?.key1:
+                        case shortcutkey.nextChapter?.key2:
+                            openNextChapterRef.current?.click();
                             break;
-                        case shortcutkey.selectReaderMode2?.key1:
-                        case shortcutkey.selectReaderMode2?.key2:
-                            setshortcutText("Reading Mode - Right to Left");
-                            dispatch(setReaderSettings({ readerTypeSelected: 2 }));
+                        case shortcutkey.prevChapter?.key1:
+                        case shortcutkey.prevChapter?.key2:
+                            openPrevChapterRef.current?.click();
                             break;
-                        case shortcutkey.selectPagePerRow1?.key1:
-                        case shortcutkey.selectPagePerRow1?.key2:
-                            if (appSettings.readerSettings.pagesPerRowSelected !== 0) {
-                                const pagesPerRowSelected = 0;
-                                let readerWidth = appSettings.readerSettings.readerWidth / 2;
-
-                                if (readerWidth > (appSettings.readerSettings.widthClamped ? 100 : 500))
-                                    readerWidth = appSettings.readerSettings.widthClamped ? 100 : 500;
-                                if (readerWidth < 1) readerWidth = 1;
-                                setshortcutText("Page per Row - 1");
-                                dispatch(setReaderSettings({ pagesPerRowSelected, readerWidth }));
-                            }
+                        case shortcutkey.bookmark?.key1:
+                        case shortcutkey.bookmark?.key2:
+                            addToBookmarkRef.current?.click();
                             break;
-                        case shortcutkey.selectPagePerRow2?.key1:
-                        case shortcutkey.selectPagePerRow2?.key2: {
-                            const pagesPerRowSelected = 1;
-                            let readerWidth = appSettings.readerSettings.readerWidth;
-                            if (appSettings.readerSettings.pagesPerRowSelected === 0) {
-                                readerWidth *= 2;
-                                if (readerWidth > (appSettings.readerSettings.widthClamped ? 100 : 500))
-                                    readerWidth = appSettings.readerSettings.widthClamped ? 100 : 500;
-                                if (readerWidth < 1) readerWidth = 1;
-                            }
-                            setshortcutText("Page per Row - 2");
-                            dispatch(setReaderSettings({ pagesPerRowSelected, readerWidth }));
+                        case shortcutkey.sizePlus?.key1:
+                        case shortcutkey.sizePlus?.key2:
+                            sizePlusRef.current?.click();
                             break;
-                        }
-                        case shortcutkey.selectPagePerRow2odd?.key1:
-                        case shortcutkey.selectPagePerRow2odd?.key2: {
-                            const pagesPerRowSelected = 2;
-                            let readerWidth = appSettings.readerSettings.readerWidth;
-                            if (appSettings.readerSettings.pagesPerRowSelected === 0) {
-                                readerWidth *= 2;
-                                if (readerWidth > (appSettings.readerSettings.widthClamped ? 100 : 500))
-                                    readerWidth = appSettings.readerSettings.widthClamped ? 100 : 500;
-                                if (readerWidth < 1) readerWidth = 1;
-                            }
-                            setshortcutText("Page per Row - 2odd");
-                            dispatch(setReaderSettings({ pagesPerRowSelected, readerWidth }));
+                        case shortcutkey.sizeMinus?.key1:
+                        case shortcutkey.sizeMinus?.key2:
+                            sizeMinusRef.current?.click();
                             break;
-                        }
                         default:
                             break;
+                    }
+                    if (
+                        document.activeElement!.tagName === "BODY" ||
+                        document.activeElement === readerRef.current
+                    ) {
+                        window.app.keydown = true;
+                        if (
+                            e.shiftKey &&
+                            (e.key === shortcutkey.largeScroll?.key1 || e.key === shortcutkey.largeScroll?.key2)
+                        ) {
+                            scrollReader(0 - appSettings.readerSettings.scrollSpeedB);
+                            return;
+                        }
+                        switch (e.key) {
+                            case shortcutkey.largeScroll?.key1:
+                            case shortcutkey.largeScroll?.key2:
+                                scrollReader(appSettings.readerSettings.scrollSpeedB);
+
+                                break;
+                            case shortcutkey.scrollDown?.key1:
+                            case shortcutkey.scrollDown?.key2:
+                                scrollReader(appSettings.readerSettings.scrollSpeedA);
+                                break;
+                            case shortcutkey.scrollUp?.key1:
+                            case shortcutkey.scrollUp?.key2:
+                                scrollReader(0 - appSettings.readerSettings.scrollSpeedA);
+                                break;
+                            case shortcutkey.showHidePageNumberInZen?.key1:
+                            case shortcutkey.showHidePageNumberInZen?.key2:
+                                setshortcutText(
+                                    (!appSettings.readerSettings.showPageNumberInZenMode ? "Show" : "Hide") +
+                                        " page-number in Zen Mode"
+                                );
+                                dispatch(
+                                    setReaderSettings({
+                                        showPageNumberInZenMode:
+                                            !appSettings.readerSettings.showPageNumberInZenMode,
+                                    })
+                                );
+                                break;
+                            case shortcutkey.cycleFitOptions?.key1:
+                            case shortcutkey.cycleFitOptions?.key2: {
+                                const fitOption = (
+                                    appSettings.readerSettings.fitOption + 1 === 4
+                                        ? 0
+                                        : appSettings.readerSettings.fitOption + 1
+                                ) as 0 | 2 | 1 | 3 | undefined;
+                                if (fitOption === 0) setshortcutText("Free");
+                                if (fitOption === 1) setshortcutText("Fit Vertically");
+                                if (fitOption === 2) setshortcutText("Fit Horizontally");
+                                if (fitOption === 3) setshortcutText("1:1");
+                                dispatch(
+                                    setReaderSettings({
+                                        fitOption,
+                                    })
+                                );
+                                // todo: display current mode in middle of screen and fade
+
+                                // dispatch(
+                                //     setAppSettings((init) => {
+                                //         init.readerSettings.fitOption += 1;
+                                //         if (init.readerSettings.fitOption === 4) init.readerSettings.fitOption = 0;
+                                //         return { ...init };
+                                //     })
+                                // );
+                                break;
+                            }
+                            case shortcutkey.selectReaderMode0?.key1:
+                            case shortcutkey.selectReaderMode0?.key2:
+                                setshortcutText("Reading Mode - Vertical Scroll");
+                                dispatch(setReaderSettings({ readerTypeSelected: 0 }));
+                                break;
+                            case shortcutkey.selectReaderMode1?.key1:
+                            case shortcutkey.selectReaderMode1?.key2:
+                                setshortcutText("Reading Mode - Left to Right");
+                                dispatch(setReaderSettings({ readerTypeSelected: 1 }));
+                                break;
+                            case shortcutkey.selectReaderMode2?.key1:
+                            case shortcutkey.selectReaderMode2?.key2:
+                                setshortcutText("Reading Mode - Right to Left");
+                                dispatch(setReaderSettings({ readerTypeSelected: 2 }));
+                                break;
+                            case shortcutkey.selectPagePerRow1?.key1:
+                            case shortcutkey.selectPagePerRow1?.key2:
+                                if (appSettings.readerSettings.pagesPerRowSelected !== 0) {
+                                    const pagesPerRowSelected = 0;
+                                    let readerWidth = appSettings.readerSettings.readerWidth / 2;
+
+                                    if (readerWidth > (appSettings.readerSettings.widthClamped ? 100 : 500))
+                                        readerWidth = appSettings.readerSettings.widthClamped ? 100 : 500;
+                                    if (readerWidth < 1) readerWidth = 1;
+                                    setshortcutText("Page per Row - 1");
+                                    dispatch(setReaderSettings({ pagesPerRowSelected, readerWidth }));
+                                }
+                                break;
+                            case shortcutkey.selectPagePerRow2?.key1:
+                            case shortcutkey.selectPagePerRow2?.key2: {
+                                const pagesPerRowSelected = 1;
+                                let readerWidth = appSettings.readerSettings.readerWidth;
+                                if (appSettings.readerSettings.pagesPerRowSelected === 0) {
+                                    readerWidth *= 2;
+                                    if (readerWidth > (appSettings.readerSettings.widthClamped ? 100 : 500))
+                                        readerWidth = appSettings.readerSettings.widthClamped ? 100 : 500;
+                                    if (readerWidth < 1) readerWidth = 1;
+                                }
+                                setshortcutText("Page per Row - 2");
+                                dispatch(setReaderSettings({ pagesPerRowSelected, readerWidth }));
+                                break;
+                            }
+                            case shortcutkey.selectPagePerRow2odd?.key1:
+                            case shortcutkey.selectPagePerRow2odd?.key2: {
+                                const pagesPerRowSelected = 2;
+                                let readerWidth = appSettings.readerSettings.readerWidth;
+                                if (appSettings.readerSettings.pagesPerRowSelected === 0) {
+                                    readerWidth *= 2;
+                                    if (readerWidth > (appSettings.readerSettings.widthClamped ? 100 : 500))
+                                        readerWidth = appSettings.readerSettings.widthClamped ? 100 : 500;
+                                    if (readerWidth < 1) readerWidth = 1;
+                                }
+                                setshortcutText("Page per Row - 2odd");
+                                dispatch(setReaderSettings({ pagesPerRowSelected, readerWidth }));
+                                break;
+                            }
+                            default:
+                                break;
+                        }
                     }
                 }
             }
