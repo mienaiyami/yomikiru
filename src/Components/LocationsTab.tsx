@@ -174,7 +174,10 @@ const LocationsTab = (): ReactElement => {
                             val = val.replaceAll('"', "");
                             if (process.platform === "win32")
                                 if (/.:\\.*/.test(val)) {
-                                    setCurrentLink(window.path.normalize(val + window.path.sep));
+                                    const aa = window.path.normalize(val);
+                                    if (window.fs.existsSync(aa) && window.fs.lstatSync(aa).isFile())
+                                        return openInReader(aa);
+                                    setCurrentLink(aa);
                                     return;
                                 }
                             if (val === ".." + window.path.sep)
@@ -185,7 +188,11 @@ const LocationsTab = (): ReactElement => {
                                         e.name.toUpperCase() === val.replaceAll(window.path.sep, "").toUpperCase()
                                 );
                                 if (index >= 0) {
-                                    return setCurrentLink(window.path.normalize(locations[index].link));
+                                    console.log("aaaa");
+                                    const aa = window.path.normalize(locations[index].link);
+                                    if (window.fs.existsSync(aa) && window.fs.lstatSync(aa).isFile())
+                                        return openInReader(aa);
+                                    return setCurrentLink(aa);
                                     // need or not?
                                     // return setCurrentLink(window.path.normalize(locations[index].link + window.path.sep));
                                 } else val = val.replaceAll(window.path.sep, "");

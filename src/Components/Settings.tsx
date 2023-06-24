@@ -949,8 +949,8 @@ const Settings = (): ReactElement => {
                                     }}
                                 />
                                 <p>
-                                    Disable the screen that appears at start and end of chapters only in{" "}
-                                    <code>vertical scroll</code> Reading mode.
+                                    Disable the chapter transition screen (only in
+                                    <code>vertical scroll</code> Reading mode).
                                 </p>
                             </label>
                             {/* <label className={appSettings.showPageNumOnHome ? "selected" : ""}>
@@ -1077,6 +1077,7 @@ const Settings = (): ReactElement => {
                                     dispatch(setReaderSettings({ pdfScale: value }));
                                 }}
                                 labeled
+                                title="Check Usage & Feature for more info"
                                 paraBefore="PDF Scale (&nbsp;&#8593;&nbsp;value = &nbsp;&#8593;&nbsp;quality ):"
                             />
                             <hr style={{ margin: "20px 0" }} />
