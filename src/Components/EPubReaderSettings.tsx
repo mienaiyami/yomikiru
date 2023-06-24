@@ -230,7 +230,7 @@ const EPUBReaderSettings = memo(
                                     min={1}
                                     max={100}
                                     onChange={(e) => {
-                                        // makeScrollPos();
+                                        makeScrollPos();
                                         let value = e.target.valueAsNumber;
                                         if (!value) value = 0;
                                         value = value >= 100 ? 100 : value;
@@ -246,7 +246,7 @@ const EPUBReaderSettings = memo(
                                 <button
                                     ref={fontSizeMinusRef}
                                     onClick={(e) => {
-                                        // makeScrollPos();
+                                        makeScrollPos();
                                         let newSize = appSettings.epubReaderSettings.fontSize - 1;
 
                                         newSize = newSize < 1 ? 1 : newSize;
@@ -260,7 +260,7 @@ const EPUBReaderSettings = memo(
                                 <button
                                     ref={fontSizePlusRef}
                                     onClick={(e) => {
-                                        // makeScrollPos();
+                                        makeScrollPos();
                                         let newSize = appSettings.epubReaderSettings.fontSize + 1;
 
                                         newSize = newSize > 100 ? 100 : newSize;

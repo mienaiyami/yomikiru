@@ -918,8 +918,8 @@ const EPubReader = () => {
     }, [
         appSettings.epubReaderSettings.readerWidth,
         isSideListPinned,
+        appSettings.epubReaderSettings.fontSize,
         //! these were not needed caused bad auto scroll
-        // appSettings.epubReaderSettings.fontSize,
         // appSettings.epubReaderSettings.fontFamily,
         // appSettings.epubReaderSettings.lineSpacing,
         // appSettings.epubReaderSettings.paragraphSpacing,
