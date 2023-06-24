@@ -917,6 +917,58 @@ body {
                 }
             }
         }
+        #anilistLogin {
+            width: 100%;
+            height: 100%;
+            position: absolute;
+            top: 0;
+            left: 0;
+            z-index: 10000;
+            display: grid;
+            place-items: center;
+            .clickClose {
+                position: absolute;
+                width: 100%;
+                height: 100%;
+                opacity: 0.75;
+                background-color: var(--body-bg-color);
+            }
+            .row {
+                display: flex;
+                flex-direction: row;
+            }
+            .cont {
+                position: relative;
+                background: var(--body-bg-color);
+                border-radius: 10px;
+                transition: 0.3s cubic-bezier(0, 1.15, 1, 1) transform;
+                width: min(500px, 60%);
+                // height: 30%;
+                box-shadow: rgba(0, 0, 0, 0.3) 0px 0px 19px 25px;
+                // box-shadow: var(--btn-color) 0 0 10px 10px;
+                overflow: auto;
+                display: flex;
+                flex-direction: column;
+                gap: 10px;
+                h1 {
+                    box-shadow: inset 0 -2px 0 0 var(--divider-color);
+                    padding: 10px;
+                    margin-bottom: 20px;
+                }
+                p {
+                    padding: 0 20px;
+                }
+                .btns {
+                    display: flex;
+                    flex-direction: column;
+                    gap: 10px;
+                    padding: 20px;
+                    input {
+                        text-align: center;
+                    }
+                }
+            }
+        }
 
         #settings {
             width: 100%;
@@ -1014,7 +1066,9 @@ body {
                     padding: 20px;
                     font-size: 1.4em;
                     width: 100%;
-
+                    .otherSettings {
+                        padding-top: 10px;
+                    }
                     .current {
                         display: flex;
                         flex-wrap: wrap;

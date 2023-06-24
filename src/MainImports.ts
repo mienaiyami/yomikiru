@@ -19,6 +19,7 @@ log.transports.file.resolvePath = () => path.join(app.getPath("userData"), "logs
 import path from "path";
 import fs from "fs";
 import themeJSON from "./themeInit.json";
+import AniList from "./Components/anilist/request";
 declare module "react" {
     interface CSSProperties {
         [key: `--${string}`]: string | number;
@@ -283,6 +284,10 @@ declare global {
         themeProps: { [e in ThemeDataMain]: string };
         shortcutsFunctions: ShortcutSchema[];
         fileSaveTimeOut: Map<string, NodeJS.Timeout | null>;
+        /**
+         * Anilist
+         */
+        al: AniList;
         app: {
             betterSortOrder: (x: string, y: string) => number;
             /**
@@ -903,6 +908,11 @@ export const promptSelectDir = (
     const path = asFile ? result[0] : window.path.normalize(result[0] + window.path.sep);
     cb && cb(path);
 };
+
+// for first launch
+if (localStorage.getItem("anilist_token") === null) localStorage.setItem("anilist_token", "");
+
+window.al = new AniList(localStorage.getItem("anilist_token") || "");
 
 // todo: try taking automatically from settingValidator
 const defaultSettings: AppSettings = {

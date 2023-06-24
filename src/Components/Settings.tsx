@@ -16,6 +16,8 @@ import { promptSelectDir } from "../MainImports";
 import { deleteAllHistory } from "../store/history";
 import InputNumber from "./Element/InputNumber";
 import InputColor from "./Element/InputColor";
+import { setAnilistToken } from "../store/anilistToken";
+import { setAniLoginOpen } from "../store/isAniLoginOpen";
 
 const Settings = (): ReactElement => {
     const appSettings = useAppSelector((store) => store.appSettings);
@@ -24,6 +26,9 @@ const Settings = (): ReactElement => {
     const shortcuts = useAppSelector((store) => store.shortcuts);
     const bookmarks = useAppSelector((store) => store.bookmarks);
     const isSettingOpen = useAppSelector((store) => store.isSettingOpen);
+    const anilistToken = useAppSelector((store) => store.anilistToken);
+
+    const [anilistUsername, setAnilistUsername] = useState("Error");
 
     //  hardware acceleration
     const [HAValue, setHAValue] = useState(
@@ -50,11 +55,12 @@ const Settings = (): ReactElement => {
         }
     }, [isSettingOpen]);
 
-    // useLayoutEffect(()=>{
-    //     const observer = new IntersectionObserver((entries,observer)=>{},{
-    //         root:
-    //     })
-    // },[])
+    useEffect(() => {
+        if (anilistToken)
+            window.al.getUserName().then((name) => {
+                if (name) setAnilistUsername(name);
+            });
+    }, [anilistToken]);
 
     const reservedKeys = ["h", "Control", "Tab", "Shift", "Alt", "Escape"];
     const applyThemeTemp = () => {
@@ -855,6 +861,29 @@ const Settings = (): ReactElement => {
                                     </button>
                                 </td>
                             </tr>
+                            <tr className="settingItem">
+                                <td className="name">AniList</td>
+                                <td className="current">
+                                    <button
+                                        disabled={anilistToken ? true : false}
+                                        onClick={() => {
+                                            dispatch(setAniLoginOpen(true));
+                                        }}
+                                    >
+                                        {!anilistToken ? "Login with AniList" : `Logged in as ${anilistUsername}`}
+                                    </button>
+                                    {anilistToken && (
+                                        <button
+                                            onClick={() => {
+                                                dispatch(setAnilistToken(""));
+                                            }}
+                                        >
+                                            Logout
+                                        </button>
+                                    )}
+                                </td>
+                            </tr>
+
                             {/* <tr className="settingItem">
                                     <td className="name">Other Settings</td>
                                 </tr> */}
@@ -869,7 +898,7 @@ const Settings = (): ReactElement => {
                                     </div> */}
                         </tbody>
                     </table>
-                    <div>
+                    <div className="otherSettings">
                         <div className="current fullWidth list">
                             <label className={appSettings.skipMinorUpdate ? "selected" : ""}>
                                 <input

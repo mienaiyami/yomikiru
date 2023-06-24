@@ -11,12 +11,17 @@ import LoadingScreen from "./LoadingScreen";
 import LocationsTab from "./LocationsTab";
 import Reader from "./Reader";
 import Settings from "./Settings";
+import AniLogin from "./anilist/AniLogin";
 
 const Main = (): ReactElement => {
     const appSettings = useAppSelector((store) => store.appSettings);
     const isReaderOpen = useAppSelector((store) => store.isReaderOpen);
     const linkInReader = useAppSelector((store) => store.linkInReader);
+    const anilistToken = useAppSelector((store) => store.anilistToken);
+    const isAniLoginOpen = useAppSelector((store) => store.isAniLoginOpen);
+
     const dispatch = useAppDispatch();
+
     // const [bookmarkTabDisplay, setBookmarkTabDisplay] = useState(true);
     // const [historyTabDisplay, setHistoryTabDisplay] = useState(true);
     // const bookmarkTabRef = useRef<HTMLDivElement>(null);
@@ -353,6 +358,7 @@ const Main = (): ReactElement => {
             <Settings />
             <LoadingScreen />
             <ContextMenu />
+            {!anilistToken && isAniLoginOpen && <AniLogin />}
             {linkInReader.type === "image" && linkInReader.link !== "" ? <Reader /> : ""}
             {linkInReader.type === "book" && linkInReader.link !== "" ? <EPubReader /> : ""}
         </div>

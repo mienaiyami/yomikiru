@@ -9,10 +9,11 @@ body:
 
 - type: dropdown
   attributes:
-    label: Setup or portable version of the app?
+    label: Type of installation
     options:
-      - Setup
-      - Portable
+      - Setup (.exe)
+      - Portable (.zip)
+      - Linux (.deb)
   validations:
     required: true
 

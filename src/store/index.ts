@@ -15,6 +15,8 @@ import shortcutsReducer from "./shortcuts";
 import themesReducer from "./themes";
 import unzippingReducer from "./unzipping";
 import bookInReaderReducer from "./bookInReader";
+import anilistTokenReducer from "./anilistToken";
+import isAniLoginOpenReducer from "./isAniLoginOpen";
 
 const store = configureStore({
     reducer: {
@@ -34,6 +36,8 @@ const store = configureStore({
         shortcuts: shortcutsReducer,
         contextMenu: contextMenuReducer,
         bookInReader: bookInReaderReducer,
+        anilistToken: anilistTokenReducer,
+        isAniLoginOpen: isAniLoginOpenReducer,
     },
 });
 
