@@ -118,6 +118,7 @@ export default class AniList {
                     title{
                       english
                       romaji
+                      native
                     }
                     startDate{
                         year
@@ -142,6 +143,7 @@ export default class AniList {
                 title: {
                     english: string;
                     romaji: string;
+                    native: string;
                 };
                 startDate: {
                     year: number;

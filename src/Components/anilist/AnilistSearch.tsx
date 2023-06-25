@@ -30,6 +30,7 @@ const AnilistSearch = () => {
     const ResultListItem = ({
         english,
         romaji,
+        native,
         cover,
         startDate,
         id,
@@ -37,6 +38,7 @@ const AnilistSearch = () => {
     }: {
         english: string;
         romaji: string;
+        native: string;
         cover: string;
         startDate: string;
         id: number;
@@ -62,8 +64,9 @@ const AnilistSearch = () => {
                         {/* <img src={cover} alt="cover" draggable={false} /> */}
                     </div>
                     <div className="col">
-                        <span>{english || romaji}</span>
-                        <span>{romaji || english}</span>
+                        <span>{english || romaji || native}</span>
+                        <span>{romaji || "~"}</span>
+                        <span>{native || "~"}</span>
                         <div className="row">
                             <span className="row">
                                 <span>Started</span>
@@ -120,6 +123,7 @@ const AnilistSearch = () => {
                                 <ResultListItem
                                     english={e.title.english}
                                     romaji={e.title.romaji}
+                                    native={e.title.native}
                                     id={e.id}
                                     cover={e.coverImage.medium}
                                     status={e.status}

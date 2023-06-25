@@ -15,6 +15,9 @@ import { refreshBookmark } from "./store/bookmarks";
 import { setTheme } from "./store/themes";
 import { bookmarksPath, historyPath, promptSelectDir } from "./MainImports";
 import { setBookInReader } from "./store/bookInReader";
+import { setAniEditOpen } from "./store/isAniEditOpen";
+import { setAniLoginOpen } from "./store/isAniLoginOpen";
+import { setAniSearchOpen } from "./store/isAniSearchOpen";
 
 // window.logger.log("New window opening...");
 
@@ -295,6 +298,9 @@ const App = (): ReactElement => {
         dispatch(setReaderOpen(false));
         dispatch(setLinkInReader({ type: "", link: "", page: 1, chapter: "" }));
         dispatch(setLoadingManga(false));
+        dispatch(setAniEditOpen(false));
+        dispatch(setAniLoginOpen(false));
+        dispatch(setAniSearchOpen(false));
         dispatch(setLoadingMangaPercent(0));
         dispatch(setMangaInReader(null));
         dispatch(setBookInReader(null));

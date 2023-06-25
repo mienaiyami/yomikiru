@@ -279,7 +279,12 @@ body {
         }
         &::-webkit-outer-spin-button,
         &::-webkit-inner-spin-button {
-            scale: 1.4;
+            /* scale: 1.4; */
+            position: absolute;
+            height: 100%;
+            top: 0;
+            scale: 1.5;
+            right: 4px;
         }
         &.noSpin {
             &::-webkit-outer-spin-button,
@@ -312,6 +317,7 @@ body {
         }
         &::-webkit-calendar-picker-indicator {
             cursor: pointer;
+            scale: 1.5;
         }
     }
 
@@ -1652,9 +1658,10 @@ body {
                         display: grid;
                         grid-template-columns: 20% 80%;
                         // box-shadow: inset 0 -2px 0 0 var(--divider-color);
-                        padding: 20px 0;
+                        padding: 10px 0;
                         height: 100%;
-                        background-size: 140% auto;
+                        // background-size: 110% auto;
+                        background-size: cover;
                         background-position: 50% 0%;
                         background-repeat: no-repeat;
                         .cover {
@@ -1666,6 +1673,8 @@ body {
                             display: grid;
                             place-items: center;
                             img {
+                                height: 100%;
+                                box-shadow: var(--body-bg-color) 0px 3px 15px -3px;
                                 border-radius: 6px;
                             }
                         }
@@ -1727,6 +1736,10 @@ body {
                                 padding: 0;
                                 gap: 5px;
                                 align-content: start;
+                                select,
+                                input {
+                                    text-align: center;
+                                }
                             }
                         }
                     }
@@ -1777,9 +1790,7 @@ body {
                         gap: 6px;
                         padding: 10px;
                         box-shadow: inset 0 -2px 0 0 var(--divider-color);
-                        button {
-                            width: var(--button-width);
-                        }
+                        font-size: 1.2em;
                     }
                     .results {
                         height: 70vh;
@@ -1835,12 +1846,15 @@ body {
                                             max-width: 100%;
                                             font-size: 1.2em;
                                         }
+                                        > :nth-child(2),
                                         > :nth-child(2) {
                                             opacity: 0.7;
                                             font-size: 1em;
                                         }
                                         > div {
                                             gap: 10px;
+
+                                            font-size: 0.9em;
                                             span {
                                                 align-items: center;
                                                 :nth-child(1) {

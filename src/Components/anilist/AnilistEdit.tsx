@@ -103,7 +103,13 @@ const AnilistEdit = () => {
                                     Start Date
                                     <input
                                         type="date"
-                                        value={`${anilistCurrentManga.startedAt.year}-${anilistCurrentManga.startedAt.month}-${anilistCurrentManga.startedAt.day}`}
+                                        value={`${
+                                            anilistCurrentManga.startedAt.year
+                                        }-${anilistCurrentManga.startedAt.month
+                                            ?.toString()
+                                            .padStart(2, "0")}-${anilistCurrentManga.startedAt.day
+                                            ?.toString()
+                                            .padStart(2, "0")}`}
                                     />
                                 </label>
                             </div>
@@ -112,7 +118,13 @@ const AnilistEdit = () => {
                                     Finish Date
                                     <input
                                         type="date"
-                                        value={`${anilistCurrentManga.completedAt.year}-${anilistCurrentManga.completedAt.month}-${anilistCurrentManga.completedAt.day}`}
+                                        value={`${
+                                            anilistCurrentManga.completedAt.year
+                                        }-${anilistCurrentManga.completedAt.month
+                                            ?.toString()
+                                            .padStart(2, "0")}-${anilistCurrentManga.completedAt.day
+                                            ?.toString()
+                                            .padStart(2, "0")}`}
                                     />
                                 </label>
                             </div>
