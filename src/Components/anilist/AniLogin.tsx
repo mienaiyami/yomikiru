@@ -50,7 +50,14 @@ const AniLogin = () => {
                     )}
                     {proceeded && (
                         <>
-                            <input placeholder="Paste your token here" type="text" ref={inputRef} />
+                            <input
+                                placeholder="Paste your token here"
+                                type="text"
+                                ref={inputRef}
+                                onKeyDown={(e) => {
+                                    e.stopPropagation();
+                                }}
+                            />
                             <button
                                 className="submit"
                                 onClick={(e) => {

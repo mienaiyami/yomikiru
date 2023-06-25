@@ -3,7 +3,10 @@ import React, { ReactNode } from "react";
 export const InputSelect = ({
     onChange,
     value,
-    labelText = "",
+    labelAfter,
+    labelBefore,
+    paraAfter,
+    paraBefore,
     labeled = false,
     className = "",
     children,
@@ -11,7 +14,10 @@ export const InputSelect = ({
     disabled = false,
 }: {
     labeled?: boolean;
-    labelText?: string;
+    labelAfter?: string;
+    labelBefore?: string;
+    paraAfter?: string;
+    paraBefore?: string;
     value: string;
     onChange: React.ChangeEventHandler<HTMLSelectElement>;
     className?: string;
@@ -24,7 +30,8 @@ export const InputSelect = ({
     if (labeled)
         return (
             <label className={(disabled ? "disabled " : "") + className}>
-                {labelText && <p>{labelText}</p>}
+                {labelBefore}
+                {paraBefore && <p>{paraBefore}</p>}
                 <select
                     disabled={disabled}
                     value={value}
@@ -42,6 +49,8 @@ export const InputSelect = ({
                         </option>
                     ))}
                 </select>
+                {paraAfter && <p>{paraAfter}</p>}
+                {labelAfter}
             </label>
         );
     return (

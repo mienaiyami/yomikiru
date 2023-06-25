@@ -224,7 +224,7 @@ const LocationsTab = (): ReactElement => {
                     >
                         Open
                     </button>
-                    {currentLink}
+                    <span>{currentLink}</span>
                 </div>
                 {/* <span className="divider"></span> */}
                 {/* <div className="imageCount">

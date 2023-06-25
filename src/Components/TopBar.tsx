@@ -104,7 +104,7 @@ const TopBar = (): ReactElement => {
             </div>
             <div className="windowBtnCont">
                 <label
-                    className="pageNumber"
+                    className="pageNumber noBG"
                     htmlFor="NavigateToPageInput"
                     data-tooltip="Navigate To Page Number"
                     style={{ display: isReaderOpen && mangaInReader ? "flex" : "none" }}

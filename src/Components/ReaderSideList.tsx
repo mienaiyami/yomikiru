@@ -16,6 +16,7 @@ import { updateCurrentHistoryPage } from "../store/history";
 import { addBookmark, updateBookmark, removeBookmark } from "../store/bookmarks";
 import { setAppSettings } from "../store/appSettings";
 import { setPrevNextChapter } from "../store/prevNextChapter";
+import AnilistBar from "./anilist/AnilistBar";
 
 type ChapterData = { name: string; pages: number; link: string };
 
@@ -49,6 +50,7 @@ const ReaderSideList = memo(
         const prevNextChapter = useAppSelector((store) => store.prevNextChapter);
         const linkInReader = useAppSelector((store) => store.linkInReader);
         const contextMenu = useAppSelector((store) => store.contextMenu);
+        const anilistToken = useAppSelector((store) => store.anilistToken);
         const dispatch = useAppDispatch();
 
         const sideListRef = useRef<HTMLDivElement>(null);
@@ -418,6 +420,7 @@ const ReaderSideList = memo(
                         <span>{window.app.replaceExtension(mangaInReader?.chapterName || "", "")}</span>
                     </div>
                 </div>
+                {anilistToken && <AnilistBar />}
                 <div className="location-cont">
                     {chapterData.length <= 0 ? (
                         <p>Loading...</p>

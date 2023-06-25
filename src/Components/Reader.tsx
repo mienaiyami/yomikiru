@@ -13,6 +13,8 @@ import { setLoadingManga } from "../store/isLoadingManga";
 import { setLinkInReader } from "../store/linkInReader";
 import { newHistory } from "../store/history";
 import { setContextMenu } from "../store/contextMenu";
+import AnilistSearch from "./anilist/AnilistSearch";
+import AnilistEdit from "./anilist/AnilistEdit";
 
 const Reader = () => {
     const { pageNumberInputRef, checkValidFolder } = useContext(AppContext);
@@ -27,6 +29,8 @@ const Reader = () => {
     const bookmarks = useAppSelector((store) => store.bookmarks);
     const pageNumChangeDisabled = useAppSelector((store) => store.pageNumChangeDisabled);
     const prevNextChapter = useAppSelector((store) => store.prevNextChapter);
+    const isAniSearchOpen = useAppSelector((store) => store.isAniSearchOpen);
+    const isAniEditOpen = useAppSelector((store) => store.isAniEditOpen);
 
     const dispatch = useAppDispatch();
 
@@ -203,9 +207,8 @@ const Reader = () => {
         const registerShortcuts = (e: KeyboardEvent) => {
             // /&& document.activeElement!.tagName === "BODY"
             window.app.keyRepeated = e.repeat;
-            if ([" ", "ArrowUp", "ArrowDown"].includes(e.key)) e.preventDefault();
-
             if (!isSettingOpen && window.app.isReaderOpen && !isLoadingManga && !e.ctrlKey) {
+                if ([" ", "ArrowUp", "ArrowDown"].includes(e.key)) e.preventDefault();
                 if (document.activeElement!.tagName === "BODY" || document.activeElement === readerRef.current)
                     switch (e.key) {
                         case shortcutkey.nextPage?.key1:
@@ -935,7 +938,9 @@ const Reader = () => {
             className={
                 (isSideListPinned ? "sideListPinned " : "") +
                 "reader " +
-                (zenMode && appSettings.hideCursorInZenMode ? "noCursor " : "")
+                (zenMode && appSettings.hideCursorInZenMode ? "noCursor " : "") +
+                ((readerRef.current?.offsetHeight || 0) >= (imgContRef.current?.scrollHeight || 0) &&
+                    "noOverflow ")
             }
             style={{
                 gridTemplateColumns: sideListWidth + "px auto",
@@ -968,6 +973,9 @@ const Reader = () => {
                 setSideListWidth={setSideListWidth}
                 makeScrollPos={makeScrollPos}
             />
+
+            {isAniSearchOpen && <AnilistSearch />}
+            {isAniEditOpen && <AnilistEdit />}
             <div className="hiddenPageMover" style={{ display: "none" }}>
                 <button ref={openPrevPageRef} onClick={openPrevPage}>
                     Prev

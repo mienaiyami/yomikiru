@@ -319,6 +319,9 @@ const Settings = (): ReactElement => {
                             <input
                                 type="text"
                                 className="newThemeMakerColorFull"
+                                onKeyDown={(e) => {
+                                    e.stopPropagation();
+                                }}
                                 value={
                                     rawColor.substring(0, 7) +
                                     (Math.ceil(opacity * 2.55).toString(16).length < 2

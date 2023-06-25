@@ -407,6 +407,40 @@ declare global {
         };
     }
 
+    interface AniListTrackItem {
+        localURL: string;
+        anilistMediaId: number;
+    }
+    type AniListTrackStore = AniListTrackItem[];
+    interface AniListMangaData {
+        status: "CURRENT" | "PLANNING" | "COMPLETED" | "DROPPED" | "PAUSED" | "REPEATING";
+        progress: number;
+        score: number;
+        repeat: number;
+        startedAt: {
+            year: number | null;
+            month: number | null;
+            day: number | null;
+        };
+        completedAt: {
+            year: number | null;
+            month: number | null;
+            day: number | null;
+        };
+        media: {
+            title: {
+                english: string;
+                romaji: string;
+                native: string;
+            };
+            coverImage: {
+                medium: string;
+            };
+            bannerImage: string;
+            siteUrl: string;
+        };
+    }
+
     type Themes = { name: string; allData: ThemeData[] };
     /**
      * css variable names of theme
@@ -557,7 +591,7 @@ window.fs = fs;
 window.supportedFormats = [".jpg", ".jpeg", ".png", ".webp", ".svg", ".apng", ".gif", ".avif"];
 window.themeProps = {
     "--body-bg-color": "Body BG Color",
-    "--sideList-bg-color": "SideList BG Color",
+    "--topBar-color": "TopBar BG Color",
     "--icon-color": "Icon Color",
     "--font-color": "Text Color",
     "--font-select-color": "Selected Text Color",
@@ -566,10 +600,9 @@ window.themeProps = {
     "--btn-color-hover": "Button Hover Color",
     "--btn-color-focus": "Button Focus Color",
     "--btn-shadow-focus": "Button Focus Shadow Color",
-    "--text-input-bg": "Text Input BG Color",
-    "--text-input-bg-focus": "Text Input BG Color Focused",
-    "--topBar-color": "TopBar BG Color",
     "--topBar-btn-hover": "TopBar Button Color Hovered",
+    "--text-input-bg": "Input BG Color",
+    "--text-input-bg-focus": "Input BG Color Focused",
     "--listItem-bg-color": "ListItem BG Color",
     "--listItem-bg-color-hover": "ListItem BG Color Hovered",
     "--listItem-bg-color-read": "ListItem BG Color AlreadyRead",
@@ -577,6 +610,8 @@ window.themeProps = {
     "--readerSettings-bg": "Reader Settings BG",
     "--readerSettings-toggleBtn-bg-color": "Reader Setting Toggle Button Color",
     "--readerSettings-toggleBtn-bg-color-hover": "Reader Setting Toggle Button Color Hovered",
+    "--sideList-bg-color": "Reader Side-List BG Color",
+    "--reader-sidelist-divider-color": "Reader Side-List Divider Color",
     "--scrollbar-track-color": "ScrollBar Track Color",
     "--scrollbar-thumb-color": "ScrollBar Thumb Color",
     "--scrollbar-thumb-color-hover": "ScrollBar Thumb Color Hovered",
@@ -586,7 +621,7 @@ window.themeProps = {
     "--contextMenu-bg-color": "ContextMenu BG",
     "--contentMenu-item-color": "ContextMenu Item BG",
     "--contentMenu-item-bg-color-hover": "ContextMenu Item BG Hovered",
-    "--zenModePage-bg": "ZenMode Page Indicator BG",
+    "--zenModePage-bg": "ZenMode Page Indicator BG (Manga Reader only)",
 };
 window.shortcutsFunctions = [
     {
@@ -911,7 +946,7 @@ export const promptSelectDir = (
 
 // for first launch
 if (localStorage.getItem("anilist_token") === null) localStorage.setItem("anilist_token", "");
-
+if (localStorage.getItem("anilist_tracking") === null) localStorage.setItem("anilist_tracking", "[]");
 window.al = new AniList(localStorage.getItem("anilist_token") || "");
 
 // todo: try taking automatically from settingValidator

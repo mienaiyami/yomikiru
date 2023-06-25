@@ -17,6 +17,10 @@ import unzippingReducer from "./unzipping";
 import bookInReaderReducer from "./bookInReader";
 import anilistTokenReducer from "./anilistToken";
 import isAniLoginOpenReducer from "./isAniLoginOpen";
+import anilistTrackingReducer from "./anilistTracking";
+import isAniSearchOpenReducer from "./isAniSearchOpen";
+import anilistCurrentMangaReducer from "./anilistCurrentManga";
+import isAniEditOpenReducer from "./isAniEditOpen";
 
 const store = configureStore({
     reducer: {
@@ -38,6 +42,10 @@ const store = configureStore({
         bookInReader: bookInReaderReducer,
         anilistToken: anilistTokenReducer,
         isAniLoginOpen: isAniLoginOpenReducer,
+        anilistTracking: anilistTrackingReducer,
+        isAniSearchOpen: isAniSearchOpenReducer,
+        anilistCurrentManga: anilistCurrentMangaReducer,
+        isAniEditOpen: isAniEditOpenReducer,
     },
 });
 
