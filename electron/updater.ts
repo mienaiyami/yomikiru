@@ -143,7 +143,8 @@ const downloadUpdates = (latestVersion: string, windowId: number) => {
 
     const window = BrowserWindow.fromId(windowId ?? 1)!;
     const tempPath = path.join(app.getPath("temp"), "yomikiru updates " + new Date().toDateString());
-    if (fs.existsSync(tempPath)) spawnSync("powershell.exe", [`rm "${tempPath}" -r -force`]);
+    if (fs.existsSync(tempPath)) fs.rmSync(tempPath, { recursive: true, force: true });
+    // spawnSync("powershell.exe", [`rm "${tempPath}" -r -force`]);
     fs.mkdirSync(tempPath);
     const promptInstall = () => {
         newWindow.close();
@@ -251,7 +252,7 @@ sudo dpkg -i "${file.path}"
                     type: "info",
                     title: "Updates downloaded",
                     message:
-                        'Updates downloaded.\nTo install updates, run "promptInstall.sh" in following directory.\n\n"' +
+                        'Updates downloaded.\nCurrently auto update not available for linux.\nTo install updates, run "install.sh" with permission to execute in following directory. Or install .deb normally.\n\n"' +
                         tempPath +
                         '"',
                     buttons: ["Open Directory"],
