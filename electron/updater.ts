@@ -54,6 +54,7 @@ const checkForUpdate = async (windowId: number, skipMinor = false, promptAfterCh
             return;
         }
     }
+    const window = BrowserWindow.fromId(windowId ?? 1)!;
     if (
         latestVersion[0] > currentAppVersion[0] ||
         (latestVersion[0] === currentAppVersion[0] && latestVersion[1] > currentAppVersion[1]) ||
@@ -62,7 +63,7 @@ const checkForUpdate = async (windowId: number, skipMinor = false, promptAfterCh
             latestVersion[2] > currentAppVersion[2])
     ) {
         dialog
-            .showMessageBox(BrowserWindow.fromId(windowId ?? 1)!, {
+            .showMessageBox(window, {
                 type: "info",
                 title: "New Version Available",
                 message:
@@ -106,7 +107,7 @@ const checkForUpdate = async (windowId: number, skipMinor = false, promptAfterCh
     }
     logger.log("Running latest version.");
     if (promptAfterCheck) {
-        dialog.showMessageBox(BrowserWindow.fromId(windowId ?? 1)!, {
+        dialog.showMessageBox(window, {
             type: "info",
             title: "Yomikiru",
             message: "Running latest version",
@@ -125,7 +126,6 @@ const downloadUpdates = (latestVersion: string, windowId: number) => {
         height: 150,
         resizable: false,
         backgroundColor: "#272727",
-        closable: false,
         webPreferences: {
             nodeIntegration: true,
             contextIsolation: false,
@@ -141,14 +141,14 @@ const downloadUpdates = (latestVersion: string, windowId: number) => {
         newWindow.webContents.send("version", latestVersion);
     });
 
+    const window = BrowserWindow.fromId(windowId ?? 1)!;
     const tempPath = path.join(app.getPath("temp"), "yomikiru updates " + new Date().toDateString());
     if (fs.existsSync(tempPath)) spawnSync("powershell.exe", [`rm "${tempPath}" -r -force`]);
     fs.mkdirSync(tempPath);
     const promptInstall = () => {
-        newWindow.closable = true;
         newWindow.close();
         dialog
-            .showMessageBox(BrowserWindow.fromId(windowId ?? 1)!, {
+            .showMessageBox(window, {
                 type: "info",
                 title: "Updates downloaded",
                 message: "Updates downloaded.",
@@ -162,12 +162,12 @@ const downloadUpdates = (latestVersion: string, windowId: number) => {
             });
     };
     const downloadFile = (dl: string, webContents: Electron.WebContents, callback: (file: File) => void) => {
-        download(BrowserWindow.fromId(windowId ?? 1)!, dl, {
+        download(window, dl, {
             directory: tempPath,
             onStarted: () => {
                 logger.log("Downloading updates...");
                 logger.log(dl, `"${tempPath}"`);
-                // dialog.showMessageBox(BrowserWindow.fromId(windowId ?? 1)!, {
+                // dialog.showMessageBox(window, {
                 //     message: "Download Started",
                 //     type: "info",
                 // });
@@ -181,7 +181,7 @@ const downloadUpdates = (latestVersion: string, windowId: number) => {
             },
             // showProgressBar: true,
         }).catch((reason) => {
-            dialog.showMessageBox(BrowserWindow.fromId(windowId ?? 1)!, {
+            dialog.showMessageBox(window, {
                 type: "error",
                 title: "Error while downloading",
                 message: reason + "\n\nPlease check the homepage if persist.",
@@ -247,7 +247,7 @@ sudo dpkg -i "${file.path}"
             `;
             fs.writeFileSync(path.join(tempPath, "install.sh"), script);
             dialog
-                .showMessageBox(BrowserWindow.fromId(windowId ?? 1)!, {
+                .showMessageBox(window, {
                     type: "info",
                     title: "Updates downloaded",
                     message:
@@ -262,14 +262,14 @@ sudo dpkg -i "${file.path}"
                         exec(`xdg-open "${tempPath}"`, (err) => {
                             if (err) {
                                 if (err.message.includes("xdg-open: not found")) {
-                                    dialog.showMessageBoxSync(BrowserWindow.fromId(windowId ?? 1)!, {
+                                    dialog.showMessageBoxSync(window, {
                                         message:
                                             "xdg-open: not found.\nRun 'sudo apt install xdg-utils' to use this command.",
                                         title: "Yomikiru",
                                         type: "error",
                                     });
                                 } else
-                                    dialog.showMessageBoxSync(BrowserWindow.fromId(windowId ?? 1)!, {
+                                    dialog.showMessageBoxSync(window, {
                                         message: err.message,
                                         title: "Yomikiru",
                                         type: "error",

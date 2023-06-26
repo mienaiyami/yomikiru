@@ -72,6 +72,9 @@ const addOptionToExplorerMenu = () => {
     [HKEY_CLASSES_ROOT\\.zip\\OpenWithProgids]
     "Yomikiru"=""
 
+    [HKEY_CLASSES_ROOT\\.pdf\\OpenWithProgids]
+    "Yomikiru"=""
+
     [HKEY_CLASSES_ROOT\\.7z\\OpenWithProgids]
     "Yomikiru"=""
     `;
@@ -123,6 +126,9 @@ const deleteOptionInExplorerMenu = () => {
     [-HKEY_CLASSES_ROOT\\Yomikiru]
 
     [HKEY_CLASSES_ROOT\\.zip\\OpenWithProgids]
+    "Yomikiru"=-
+
+    [HKEY_CLASSES_ROOT\\.pdf\\OpenWithProgids]
     "Yomikiru"=-
 
     [HKEY_CLASSES_ROOT\\.7z\\OpenWithProgids]
@@ -337,6 +343,9 @@ const createWindow = (link?: string) => {
     });
     newWindow.on("close", () => {
         newWindow.webContents.send("recordPageNumber");
+        windowsCont[currentWindowIndex] = null;
+        console.log(windowsCont.filter((e) => e !== null));
+        if (windowsCont.filter((e) => e !== null).length === 0) app.quit();
     });
 };
 if (app.isPackaged) {
