@@ -797,6 +797,15 @@ const Settings = (): ReactElement => {
                                     >
                                         Copy Current Theme to Clipboard
                                     </button>
+                                    <button
+                                        onClick={() =>
+                                            window.electron.shell.openExternal(
+                                                "https://github.com/mienaiyami/yomikiru/discussions/191"
+                                            )
+                                        }
+                                    >
+                                        Get more Themes
+                                    </button>
                                 </td>
                             </tr>
                             {process.platform === "win32" && (
@@ -1346,40 +1355,109 @@ const Settings = (): ReactElement => {
                             </ul>
                         </li>
                         <li>
-                            In location tab, click item to see its content or double-click to open it in reader.
+                            <b>Home Location tab :</b>
+                            <ul>
+                                <li>
+                                    In location tab, click item to see its content or double-click (if enabled in
+                                    settings above) to open it in reader.
+                                </li>
+                                <li>
+                                    Open chapter in reader directly if chapter is a sub-folder of sub-folder of{" "}
+                                    <code>Default Location</code>.
+                                    <br />
+                                    Example: If the default location is set to{" "}
+                                    {process.platform === "win32" ? (
+                                        <code>D:\manga</code>
+                                    ) : (
+                                        <code>/home/manga</code>
+                                    )}{" "}
+                                    and there is a folder called <code>One Piece</code> within it, any sub-folder
+                                    located directly under <code>One Piece</code> will open automatically by
+                                    clicking its link in the home location list. This feature can be enabled in the
+                                    settings.
+                                </li>
+                            </ul>
+                            <li>
+                                <b>Home screen search:</b>
+                                <ul>
+                                    <li>
+                                        You don't need to type the whole word in search. (e.g. For{" "}
+                                        <code>One Piece</code> type <code>op</code>).
+                                    </li>
+                                    <li>
+                                        Paste link to set browse pasted link in Locations tab. Or page link of a
+                                        supported file to open it in reader directly.
+                                    </li>
+                                    <li>
+                                        Type <code>..{window.path.sep}</code> to go up directory.
+                                    </li>
+                                    {process.platform === "win32" ? (
+                                        <li>
+                                            Type let <code>D:\</code> to go to <code>D drive</code>.
+                                        </li>
+                                    ) : (
+                                        ""
+                                    )}
+                                    <li>
+                                        Type name ending with <code>{window.path.sep}</code> to open it in search.
+                                        e.g. When there is a directory named <code>One piece</code> in current
+                                        list, type <code>One Piece{window.path.sep}</code> to open that as new
+                                        list.
+                                    </li>
+                                </ul>
+                            </li>
                         </li>
                         <li>
                             Collapse/Un-collapse Bookmarks, History page tabs by clicking on the Dividers beside
                             them in home screen.
                         </li>
                         <li>
-                            When using the <code>vertical Scroll</code> mode, you can change chapters on the first
-                            or last page by clicking on either side of the screen. No response in center 20% of
-                            screen.
+                            <b>Reader :</b>
                             <ul>
-                                <li>Left &nbsp;&nbsp;= Previous Chapter</li>
-                                <li>Right = Next Chapter</li>
+                                <li>
+                                    When using the <code>vertical Scroll</code> mode, you can change chapters on
+                                    the first or last page by clicking on either side of the screen. No response in
+                                    center 20% of screen.
+                                    <ul>
+                                        <li>Left &nbsp;&nbsp;= Previous Chapter</li>
+                                        <li>Right = Next Chapter</li>
+                                        <li>
+                                            Limit width of images in reader. To use <code>Max Image Width</code>{" "}
+                                            feature, disable <code>Size Clamp</code>.
+                                        </li>
+                                        <li>
+                                            To scroll using mouse in "Left to Right" and "Right to Left" reading
+                                            mode, you can use <code>Fit Vertically</code> option or make size such
+                                            that there is no scrollbar.
+                                        </li>
+                                    </ul>
+                                </li>
+                                <li>
+                                    Access the side list by moving the mouse to left side of the screen. You can
+                                    pin and resize the side list.
+                                </li>
+
+                                <li>
+                                    Zen Mode (Full Screen Mode): Hides UI, Only shows images and page number if
+                                    enabled. Can be enabled using the shortcut key defined,{" "}
+                                    <code>{shortcuts.find((e) => e.command === "toggleZenMode")?.key1}</code> or{" "}
+                                    <code>{shortcuts.find((e) => e.command === "toggleZenMode")?.key2}</code>.
+                                </li>
                             </ul>
-                        </li>
-                        <li>
-                            Access the side list by moving the mouse to left side of the screen. You can pin and
-                            resize the side list.
                         </li>
                         <li>
                             Open chapter directly from the file explorer after enabling{" "}
                             <code>File Explorer Option</code>.
                             <ul>
                                 <li>
-                                    Right Click on folder or .cbz/.7z/.zip/.epub &nbsp;&nbsp;&#8594;&nbsp;&nbsp;
-                                    Show more options (win11) &nbsp;&nbsp;&#8594;&nbsp;&nbsp; Open in Yomikiru.
+                                    Right Click on folder or .cbz/.7z/.zip/.pdf/.epub
+                                    &nbsp;&nbsp;&#8594;&nbsp;&nbsp; Show more options (win11)
+                                    &nbsp;&nbsp;&#8594;&nbsp;&nbsp; Open in Yomikiru.
                                 </li>
                                 <li>
                                     Note that this only opens the chapter containing images, not the Manga Folder.
                                 </li>
                             </ul>
-                        </li>
-                        <li>
-                            Zen Mode (Full Screen Mode): Hides UI, Only shows images and page number if enabled.{" "}
                         </li>
                         <li>
                             Copy theme using "Copy Current Theme to Clipboard" under theme and share it easily. To
@@ -1391,43 +1469,29 @@ const Settings = (): ReactElement => {
                             <b>Do not use high scale with pdf which have high page count.</b>
                         </li>
                         <li>
-                            Open chapter in reader directly if chapter is a sub-folder of sub-folder of{" "}
-                            <code>Default Location</code>.
-                            <br />
-                            Example: If the default location is set to{" "}
-                            {process.platform === "win32" ? <code>D:\manga</code> : <code>/home/manga</code>} and
-                            there is a folder called <code>One Piece</code> within it, any sub-folder located
-                            directly under <code>One Piece</code> will open automatically by clicking its link in
-                            the home location list. This feature can be enabled in the settings.
-                        </li>
-                        <li>
-                            Home screen search:
+                            <b>AniList Tracking : </b>
                             <ul>
                                 <li>
-                                    You don't need to type the whole word in search. (e.g. For{" "}
-                                    <code>One Piece</code> type <code>op</code>).
+                                    After logging in successfully you can enable tracking by opening a manga and
+                                    checking side-list (moving mouse to left most part of app).
                                 </li>
-                                <li>Paste link to set browse pasted link in Locations tab.</li>
                                 <li>
-                                    Type <code>..{window.path.sep}</code> to go up directory.
+                                    Tracker are managed according to the folder of manga. If manga folder is
+                                    moved/renamed/deleted local tracker will be remove and user will need to add
+                                    tracker again.
                                 </li>
-                                {process.platform === "win32" ? (
-                                    <li>
-                                        Type let <code>D:\</code> to go to <code>D drive</code>.
-                                    </li>
-                                ) : (
-                                    ""
-                                )}
                                 <li>
-                                    Type name ending with <code>{window.path.sep}</code> to open it in search. e.g.
-                                    When there is a directory named <code>One piece</code> in current list, type{" "}
-                                    <code>One Piece{window.path.sep}</code> to open that as new list.
+                                    Currently you need to manually update the progress entry but auto updating of
+                                    tracker will be supported soon.
                                 </li>
                             </ul>
                         </li>
                         <li>
-                            Limit width of images in reader. To use <code>Max Image Width</code> feature, disable{" "}
-                            <code>Size Clamp</code>.
+                            If you know how to write <code>.css</code>, you can customize style of app, more than
+                            just theme color that is enabled by "Theme Maker, by making your custom{" "}
+                            <code>.css</code> file and adding it as <code>Custom Stylesheet</code>.
+                            <br />
+                            You can use developer/inspect tool to check the element and existing styles.
                         </li>
                     </ul>
                 </div>

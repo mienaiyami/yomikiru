@@ -35,6 +35,8 @@ const AniLogin = () => {
                     Click "Proceed" to start authorization process. You will be redirected to your default browser.
                     After authorization, anilist will give you a token, copy and paste that below to complete
                     linking.
+                    <br />
+                    Check Usage & Features in settings for more info or ask on the github page.
                 </p>
                 <div className="btns">
                     {!proceeded && (

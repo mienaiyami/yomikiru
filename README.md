@@ -1,6 +1,8 @@
 # Yomikiru
 
-Offline Manga/Manhwa/Comic/EPub Reader (not a downloader/host). 
+Manga/Manhwa/Comic/EPub Reader (not a downloader/host).
+It is a offline app to read locally stored manga or epub with great reading experience.
+> App provides "AniList tracking" which uses internet only if enabled.
 
 [![Github Latest Release](https://img.shields.io/github/v/tag/mienaiyami/yomikiru?label=release&style=flat-square&logo=github)](https://github.com/mienaiyami/yomikiru/releases/latest) |
 [![Github All Releases](https://img.shields.io/github/downloads/mienaiyami/yomikiru/total.svg?style=flat-square&logo=github)](https://github.com/mienaiyami/yomikiru/releases)
@@ -17,6 +19,7 @@ Offline Manga/Manhwa/Comic/EPub Reader (not a downloader/host).
 
 - Lightweight, take low cpu and ram when running.
 - Supports most image formats (`".jpg", ".jpeg", ".png", ".webp", ".svg", ".apng", ".gif", ".avif"`) and archive (`.zip, .cbz`,`.7z`) and `.pdf`  (only as images, non clickable). `.rar` won't be supported. **It is recommended to use folder as chapters instead of archives like `.zip`, `.cbz`.**
+- Anilist support.
 - Create multiple instances of reader.
 - Multiple useful and customizable shortcuts.
 - Scroll with keys and two available custom scrolling speed.

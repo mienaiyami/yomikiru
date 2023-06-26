@@ -1,22 +1,20 @@
 ## Note
 
-**Due to release changes (auto release), existing users (v2.11.5 and below) might need to manually update the app.**
+**Due to release changes, existing users (v2.11.5 and below) might need to manually update the app.**
 
 ## Added
 
-- Input smoothening/delay for number,range/slider, color inputs.
+- AniList Tracking now available. Enable from setting.
+- Open supported file in reader on pasting link in location tab search input.
 
 ## Changed
 
 - UI Enhancements.
-- Epub font size "+", "-" buttons add/sub "1" instead of "2".
-- Epub history moves to top after updating chapter.
+- Epub: Auto focus after font size change.
+- Page mover keys now works when press hold.
 
 ## Fixed
 
-- Epub font size input uneditable, #187.
-- Scroll with keys not working in epub when sidelist pinned.
-- Epub history not updating on app close.
-- Epub sidelist pinned and autofocus issues, #186.
+- Download window not closing if app is closed mid download.
 
 ---
