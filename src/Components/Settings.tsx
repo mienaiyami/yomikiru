@@ -981,7 +981,7 @@ const Settings = (): ReactElement => {
                                     }}
                                 />
                                 <p>
-                                    Disable the chapter transition screen (only in
+                                    Disable the chapter transition (start/end) screen (only in
                                     <code>vertical scroll</code> Reading mode).
                                 </p>
                             </label>

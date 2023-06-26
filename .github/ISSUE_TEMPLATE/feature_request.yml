@@ -5,6 +5,10 @@ labels:
 body:
 - type: markdown
   attributes:
+    value: Please make sure to [search for existing issues](https://github.com/mienaiyami/yomikiru/issues?q=) before filing a new one!
+
+- type: markdown
+  attributes:
     value: Please limit one request per issue.
 - type: textarea
   attributes: 

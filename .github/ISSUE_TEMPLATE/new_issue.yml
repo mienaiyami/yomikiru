@@ -1,6 +1,10 @@
 name: Blank Issue
 description: New blank issue
 body:
+- type: markdown
+  attributes:
+    value: Please make sure to [search for existing issues](https://github.com/mienaiyami/yomikiru/issues?q=) before filing a new one!
+
 - type: textarea
   attributes:
     label: Issue

@@ -1147,11 +1147,11 @@ body {
                     //     cursor: pointer;
                     // }
                     input {
-                        font-size: 0.7em;
+                        font-size: 0.57em;
                         width: auto;
                     }
                     button {
-                        font-size: 0.7em;
+                        font-size: 0.57em;
                     }
 
                     // .closeBtn {
@@ -1983,10 +1983,10 @@ body {
                         display: flex;
                         flex-direction: row;
                         gap: 6px;
-                        :nth-child(n) {
+                        > :nth-child(n) {
                             width: 30%;
                         }
-                        :nth-child(2n) {
+                        > :nth-child(2n) {
                             width: 20%;
                         }
                         > input {

@@ -49,7 +49,7 @@
                 "--font-select-bg-color": "#fff8f0",
                 "--btn-color": "#3b3a3e",
                 "--btn-color-hover": "#62636e",
-                "--btn-color-focus": "#43444c",
+                "--btn-color-focus": "#6c6e7a",
                 "--btn-shadow-focus": "var(--btn-color-focus)",
                 "--text-input-bg": "#3b3a3e",
                 "--text-input-bg-focus": "#62636e",

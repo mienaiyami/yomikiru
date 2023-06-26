@@ -344,7 +344,6 @@ const createWindow = (link?: string) => {
     newWindow.on("close", () => {
         newWindow.webContents.send("recordPageNumber");
         windowsCont[currentWindowIndex] = null;
-        console.log(windowsCont.filter((e) => e !== null));
         if (windowsCont.filter((e) => e !== null).length === 0) app.quit();
     });
 };

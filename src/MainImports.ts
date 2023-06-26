@@ -969,7 +969,7 @@ const defaultSettings: AppSettings = {
     // disableCachingCanvas: false,
     recordChapterRead: true,
     // showPageNumOnHome: true,
-    disableListNumbering: false,
+    disableListNumbering: true,
     showSearch: false,
     openInZenMode: false,
     hideCursorInZenMode: false,
