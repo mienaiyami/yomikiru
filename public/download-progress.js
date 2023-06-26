@@ -2,6 +2,8 @@ import { ipcRenderer } from "electron";
 const version = document.querySelector(".main .head span");
 const text = document.querySelector(".main .progressText");
 const progressElem = document.querySelector(".main .progressVisual .progress");
+import "../src/styles/download.scss";
+
 ipcRenderer.on("version", (e, ver) => {
     version.innerText = ver;
     document.title = "Downloading Yomikiru " + ver;

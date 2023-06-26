@@ -64,9 +64,9 @@ const AnilistSearch = () => {
                         {/* <img src={cover} alt="cover" draggable={false} /> */}
                     </div>
                     <div className="col">
-                        <span>{english || romaji || native}</span>
-                        <span>{romaji || "~"}</span>
-                        <span>{native || "~"}</span>
+                        <span title={english || romaji || native}>{english || romaji || native}</span>
+                        <span title={romaji || "~"}>{romaji || "~"}</span>
+                        <span title={native || "~"}>{native || "~"}</span>
                         <div className="row">
                             <span className="row">
                                 <span>Started</span>

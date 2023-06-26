@@ -163,6 +163,7 @@ export default class AniList {
                         month
                         day
                     }
+                    format
                     coverImage{
                         medium
                     }
@@ -176,7 +177,7 @@ export default class AniList {
         });
         const data = await this.fetch(query, variables);
         if (data)
-            return data.Page.media as {
+            return data.Page.media.filter((e: any) => e.format !== "NOVEL") as {
                 id: number;
                 title: {
                     english: string;
