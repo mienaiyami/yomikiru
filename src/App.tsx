@@ -18,6 +18,7 @@ import { setBookInReader } from "./store/bookInReader";
 import { setAniEditOpen } from "./store/isAniEditOpen";
 import { setAniLoginOpen } from "./store/isAniLoginOpen";
 import { setAniSearchOpen } from "./store/isAniSearchOpen";
+import { setAnilistCurrentManga } from "./store/anilistCurrentManga";
 
 // window.logger.log("New window opening...");
 
@@ -298,6 +299,7 @@ const App = (): ReactElement => {
         dispatch(setReaderOpen(false));
         dispatch(setLinkInReader({ type: "", link: "", page: 1, chapter: "" }));
         dispatch(setLoadingManga(false));
+        dispatch(setAnilistCurrentManga(null));
         dispatch(setAniEditOpen(false));
         dispatch(setAniLoginOpen(false));
         dispatch(setAniSearchOpen(false));

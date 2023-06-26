@@ -413,6 +413,8 @@ declare global {
     }
     type AniListTrackStore = AniListTrackItem[];
     interface AniListMangaData {
+        id: number;
+        mediaId: number;
         status: "CURRENT" | "PLANNING" | "COMPLETED" | "DROPPED" | "PAUSED" | "REPEATING";
         progress: number;
         score: number;

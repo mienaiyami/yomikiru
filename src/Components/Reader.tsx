@@ -939,8 +939,9 @@ const Reader = () => {
                 (isSideListPinned ? "sideListPinned " : "") +
                 "reader " +
                 (zenMode && appSettings.hideCursorInZenMode ? "noCursor " : "") +
-                ((readerRef.current?.offsetHeight || 0) >= (imgContRef.current?.scrollHeight || 0) &&
-                    "noOverflow ")
+                ((readerRef.current?.offsetHeight || 0) >= (imgContRef.current?.scrollHeight || 0)
+                    ? "noOverflow "
+                    : "")
             }
             style={{
                 gridTemplateColumns: sideListWidth + "px auto",

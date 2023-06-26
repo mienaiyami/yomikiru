@@ -1,6 +1,41 @@
 export default class AniList {
     #token = "";
     displayAdultContent = false;
+    #currentMangaListId = null as null | number;
+    #mutation = `
+    mutation($mediaId: Int, $id: Int,$status:MediaListStatus, $score:Float, $progress:Int, $repeat:Int, $startedAt: FuzzyDateInput, $completedAt:FuzzyDateInput ){
+      SaveMediaListEntry(mediaId:$mediaId, id:$id,status:$status, score:$score,  progress:$progress,  repeat:$repeat,  startedAt:$startedAt,   completedAt:$completedAt,  ){
+        id
+        mediaId
+        status
+        progress
+        score
+        repeat
+        startedAt{
+            year
+            month
+            day
+        }
+        completedAt{
+            year
+            month
+            day
+        }
+        media{
+          title{
+            english
+            romaji
+            native
+          }
+          coverImage{
+            medium
+          }
+          bannerImage
+          siteUrl
+        }
+      }
+    }
+    `;
 
     constructor(token: string) {
         this.#token = token;
@@ -15,6 +50,9 @@ export default class AniList {
     }
     setToken(token: string) {
         this.#token = token;
+    }
+    setCurrentMangaListId(id: null | number) {
+        this.#currentMangaListId = id;
     }
     async checkToken(token: string) {
         const query = `
@@ -158,41 +196,30 @@ export default class AniList {
         return [];
     }
     async getMangaData(mediaId: number) {
-        const query = `
-        mutation($mediaId: Int){
-          SaveMediaListEntry(mediaId:$mediaId){
-            status
-            progress
-            score
-            repeat
-            startedAt{
-                year
-                month
-                day
-            }
-            completedAt{
-                year
-                month
-                day
-            }
-            media{
-              title{
-                english
-                romaji
-                native
-              }
-              coverImage{
-                medium
-              }
-              bannerImage
-              siteUrl
-            }
-          }
-        }
-        `;
         const variables = this.getVariables({ mediaId });
-        const data = await this.fetch(query, variables);
-        console.log(data);
+        const data = await this.fetch(this.#mutation, variables);
+        if (data) {
+            return data.SaveMediaListEntry as AniListMangaData;
+        }
+    }
+    async setCurrentMangaData(newData: Omit<AniListMangaData, "id" | "mediaId" | "media">) {
+        if (!this.#currentMangaListId) {
+            window.logger.error("AniList::setCurrentMangaStatus: currentMangaListId not defined.");
+            return;
+        }
+        const variables = this.getVariables({ id: this.#currentMangaListId, ...newData });
+        const data = await this.fetch(this.#mutation, variables);
+        if (data) {
+            return data.SaveMediaListEntry as AniListMangaData;
+        }
+    }
+    async setCurrentMangaProgress(progress: AniListMangaData["progress"]) {
+        if (!this.#currentMangaListId) {
+            window.logger.error("AniList::setCurrentMangaProgress: currentMangaListId not defined.");
+            return;
+        }
+        const variables = this.getVariables({ id: this.#currentMangaListId, progress });
+        const data = await this.fetch(this.#mutation, variables);
         if (data) {
             return data.SaveMediaListEntry as AniListMangaData;
         }

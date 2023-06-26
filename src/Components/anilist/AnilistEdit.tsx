@@ -1,18 +1,28 @@
-import React, { useEffect, useRef, useState } from "react";
+import React, { useEffect, useLayoutEffect, useRef, useState } from "react";
 import { useAppDispatch, useAppSelector } from "../../store/hooks";
 import { setAniEditOpen } from "../../store/isAniEditOpen";
 import { InputSelect } from "../Element/InputSelect";
 import InputNumber from "../Element/InputNumber";
+import { removeAnilistTracker } from "../../store/anilistTracking";
+import { setAnilistCurrentManga } from "../../store/anilistCurrentManga";
+import { target } from "../../../webpack/renderer.webpack";
 const AnilistEdit = () => {
     const dispatch = useAppDispatch();
     const contRef = useRef<HTMLDivElement>(null);
     const anilistCurrentManga = useAppSelector((store) => store.anilistCurrentManga);
+    const mangaInReader = useAppSelector((store) => store.mangaInReader);
+
+    const [tempData, setTempData] = useState(anilistCurrentManga);
 
     useEffect(() => {
         setTimeout(() => {
             if (contRef.current) contRef.current.focus();
         }, 500);
     }, []);
+
+    useLayoutEffect(() => {
+        setTempData(anilistCurrentManga);
+    }, [anilistCurrentManga]);
 
     return (
         <div id="anilistEdit">
@@ -25,36 +35,32 @@ const AnilistEdit = () => {
                 tabIndex={-1}
                 ref={contRef}
             >
-                {anilistCurrentManga && (
+                {tempData && (
                     <>
                         <div
                             className="info"
                             style={{
-                                backgroundImage: `linear-gradient(0,var(--body-bg-color), transparent) , url('${anilistCurrentManga?.media.bannerImage}')`,
+                                backgroundImage: `linear-gradient(0,var(--body-bg-color), transparent) , url('${tempData?.media.bannerImage}')`,
                             }}
                         >
                             <div className="cover">
-                                <img
-                                    src={anilistCurrentManga.media.coverImage.medium}
-                                    alt="Cover"
-                                    draggable={false}
-                                />
+                                <img src={tempData.media.coverImage.medium} alt="Cover" draggable={false} />
                             </div>
                             <div className="col">
                                 <span>
-                                    {anilistCurrentManga.media.title.english ||
-                                        anilistCurrentManga.media.title.romaji ||
-                                        anilistCurrentManga.media.title.native}
+                                    {tempData.media.title.english ||
+                                        tempData.media.title.romaji ||
+                                        tempData.media.title.native}
                                 </span>
-                                <span>{anilistCurrentManga.media.title.romaji || "~"}</span>
-                                <span>{anilistCurrentManga.media.title.native || "~"}</span>
+                                <span>{tempData.media.title.romaji || "~"}</span>
+                                <span>{tempData.media.title.native || "~"}</span>
                                 <span>
                                     <a
                                         onClick={() => {
-                                            window.electron.shell.openExternal(anilistCurrentManga.media.siteUrl);
+                                            window.electron.shell.openExternal(tempData.media.siteUrl);
                                         }}
                                     >
-                                        {anilistCurrentManga.media.siteUrl}
+                                        {tempData.media.siteUrl}
                                     </a>
                                 </span>
                             </div>
@@ -72,7 +78,14 @@ const AnilistEdit = () => {
                                         "PAUSED",
                                         "REPEATING",
                                     ]}
-                                    value={anilistCurrentManga.status}
+                                    value={tempData.status}
+                                    onChange={(e) => {
+                                        const value = e.currentTarget.value as AniListMangaData["status"];
+                                        setTempData((init) => {
+                                            if (init) return { ...init, status: value };
+                                            return null;
+                                        });
+                                    }}
                                     labeled
                                     labelBefore="Status"
                                     className="noBG"
@@ -80,22 +93,66 @@ const AnilistEdit = () => {
                             </div>
                             <div>
                                 <InputNumber
-                                    value={anilistCurrentManga.progress}
+                                    value={tempData.progress}
                                     labeled
                                     labelBefore="Progress"
                                     className="noBG"
+                                    min={0}
+                                    max={20000}
+                                    onChange={(e) => {
+                                        let value = e.currentTarget.valueAsNumber;
+                                        if (!value) value = 0;
+                                        if (value < 0) value = 0;
+                                        if (value > 20000) value = 20000;
+                                        setTempData((init) => {
+                                            if (init) return { ...init, progress: value };
+                                            return null;
+                                        });
+                                    }}
                                 />
                             </div>
                             <div>
                                 <InputNumber
-                                    value={anilistCurrentManga.score}
+                                    value={tempData.score}
                                     labeled
                                     labelBefore="Score"
                                     className="noBG"
+                                    min={0}
+                                    max={10}
+                                    step={0.5}
+                                    onChange={(e) => {
+                                        let value = e.currentTarget.valueAsNumber;
+                                        if (!value) value = 0;
+                                        if (value < 0) value = 0;
+                                        if (value > 10) value = 10;
+                                        setTempData((init) => {
+                                            if (init) return { ...init, score: value };
+                                            return null;
+                                        });
+                                    }}
                                 />
                             </div>
                             <div>
-                                <button>Save</button>
+                                <button
+                                    onClick={(e) => {
+                                        const target = e.currentTarget;
+                                        const oldText = target.innerText;
+                                        target.innerText = "Saving...";
+                                        window.al.setCurrentMangaData(tempData).then((e) => {
+                                            if (e) {
+                                                dispatch(setAnilistCurrentManga(e));
+                                                target.innerText = "Saved!";
+                                            } else {
+                                                target.innerText = "Failed!";
+                                            }
+                                            setTimeout(() => {
+                                                target.innerText = oldText;
+                                            }, 1500);
+                                        });
+                                    }}
+                                >
+                                    Save
+                                </button>
                             </div>
 
                             <div>
@@ -103,13 +160,31 @@ const AnilistEdit = () => {
                                     Start Date
                                     <input
                                         type="date"
-                                        value={`${
-                                            anilistCurrentManga.startedAt.year
-                                        }-${anilistCurrentManga.startedAt.month
-                                            ?.toString()
-                                            .padStart(2, "0")}-${anilistCurrentManga.startedAt.day
-                                            ?.toString()
-                                            .padStart(2, "0")}`}
+                                        value={
+                                            !tempData.startedAt.year
+                                                ? ""
+                                                : `${tempData.startedAt.year}-${tempData.startedAt.month
+                                                      ?.toString()
+                                                      .padStart(2, "0")}-${tempData.startedAt.day
+                                                      ?.toString()
+                                                      .padStart(2, "0")}`
+                                        }
+                                        min="1997-01-01"
+                                        onChange={(e) => {
+                                            const value = e.currentTarget.valueAsDate;
+                                            setTempData((init) => {
+                                                if (init)
+                                                    return {
+                                                        ...init,
+                                                        startedAt: {
+                                                            year: value?.getFullYear() ?? null,
+                                                            month: value?.getMonth() ?? null,
+                                                            day: value?.getDate() ?? null,
+                                                        },
+                                                    };
+                                                return null;
+                                            });
+                                        }}
                                     />
                                 </label>
                             </div>
@@ -118,26 +193,63 @@ const AnilistEdit = () => {
                                     Finish Date
                                     <input
                                         type="date"
-                                        value={`${
-                                            anilistCurrentManga.completedAt.year
-                                        }-${anilistCurrentManga.completedAt.month
-                                            ?.toString()
-                                            .padStart(2, "0")}-${anilistCurrentManga.completedAt.day
-                                            ?.toString()
-                                            .padStart(2, "0")}`}
+                                        value={
+                                            !tempData.completedAt.year
+                                                ? ""
+                                                : `${tempData.completedAt.year}-${tempData.completedAt.month
+                                                      ?.toString()
+                                                      .padStart(2, "0")}-${tempData.completedAt.day
+                                                      ?.toString()
+                                                      .padStart(2, "0")}`
+                                        }
+                                        min="1997-01-01"
+                                        onChange={(e) => {
+                                            const value = e.currentTarget.valueAsDate;
+                                            setTempData((init) => {
+                                                if (init)
+                                                    return {
+                                                        ...init,
+                                                        completedAt: {
+                                                            year: value?.getFullYear() ?? null,
+                                                            month: value?.getMonth() ?? null,
+                                                            day: value?.getDate() ?? null,
+                                                        },
+                                                    };
+                                                return null;
+                                            });
+                                        }}
                                     />
                                 </label>
                             </div>
                             <div>
                                 <InputNumber
-                                    value={anilistCurrentManga.repeat}
+                                    value={tempData.repeat}
                                     labeled
                                     labelBefore="Repeat"
                                     className="noBG"
+                                    min={0}
+                                    max={1000}
+                                    onChange={(e) => {
+                                        let value = e.currentTarget.valueAsNumber;
+                                        if (!value) value = 0;
+                                        if (value < 0) value = 0;
+                                        if (value > 1000) value = 1000;
+                                        setTempData((init) => {
+                                            if (init) return { ...init, repeat: value };
+                                            return null;
+                                        });
+                                    }}
                                 />
                             </div>
                             <div>
-                                <button>Untrack</button>
+                                <button
+                                    onClick={() =>
+                                        mangaInReader &&
+                                        dispatch(removeAnilistTracker(window.path.dirname(mangaInReader.link)))
+                                    }
+                                >
+                                    Untrack
+                                </button>
                             </div>
                         </div>
                     </>

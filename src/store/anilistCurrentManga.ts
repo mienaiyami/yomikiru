@@ -7,6 +7,8 @@ const anilistCurrentManga = createSlice({
     initialState,
     reducers: {
         setAnilistCurrentManga: (state, action: PayloadAction<AniListMangaData | null>) => {
+            if (action.payload) window.al.setCurrentMangaListId(action.payload.id);
+            else window.al.setCurrentMangaListId(null);
             return action.payload;
         },
     },

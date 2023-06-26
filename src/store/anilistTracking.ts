@@ -42,10 +42,14 @@ const anilistTracking = createSlice({
                 });
             }
         },
-        removeAnilistTracker: (state, action: PayloadAction<AniListTrackItem>) => {
+        /**
+         *
+         * @param action localURL of manga
+         */
+        removeAnilistTracker: (state, action: PayloadAction<string>) => {
             try {
-                if ("localURL" in action.payload) {
-                    const stateDup = state.filter((e) => e.localURL !== action.payload.localURL);
+                if (action.payload) {
+                    const stateDup = state.filter((e) => e.localURL !== action.payload);
                     const str = JSON.stringify(stateDup);
                     localStorage.setItem("anilist_tracking", str);
                     return stateDup;
