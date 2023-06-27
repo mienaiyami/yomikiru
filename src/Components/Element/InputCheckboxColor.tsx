@@ -46,6 +46,9 @@ const InputCheckboxColor = ({
     }, [value]);
     return (
         <label className={(disabled ? "disabled " : "") + (checked ? "optionSelected " : "") + className}>
+            <span className={`toggle-area ${checked ? "on" : "off"} `}>
+                <span className={`toggle-state`}></span>
+            </span>
             <input type="checkbox" checked={checked} disabled={disabled} onChange={onChangeCheck} />
             {labelBefore}
             {paraBefore && <p>{paraBefore}</p>}

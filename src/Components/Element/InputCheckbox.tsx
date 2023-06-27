@@ -29,8 +29,11 @@ const InputCheckbox = ({
         >
             {/* {labelBefore}
             {paraBefore && <p>{paraBefore}</p>} */}
+            <span className={`toggle-area ${checked ? "on" : "off"} `}>
+                <span className={`toggle-state`}></span>
+            </span>
             <input type="checkbox" checked={checked} onChange={onChange} />
-            {paraAfter && <p>{paraAfter}</p>}
+            {paraAfter && <p dangerouslySetInnerHTML={{ __html: paraAfter }}></p>}
             {labelAfter}
         </label>
     );

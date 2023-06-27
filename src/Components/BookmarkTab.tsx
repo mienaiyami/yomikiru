@@ -36,8 +36,7 @@ const BookmarkTab = () => {
 
     return (
         <div
-            className="contTab listCont"
-            style={{ display: appSettings.showTabs.bookmark ? "flex" : "none" }}
+            className={"contTab listCont " + (!appSettings.showTabs.bookmark ? "collapsed " : "")}
             id="bookmarksTab"
         >
             <h2>Bookmarks</h2>

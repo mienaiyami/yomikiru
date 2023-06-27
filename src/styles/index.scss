@@ -235,6 +235,44 @@ body {
                 box-shadow: none;
             }
         }
+        &:has(span.toggle-area) {
+            input[type="checkbox"] {
+                display: none;
+            }
+            .toggle-area {
+                --width: 1.7em;
+                --padding: 0.1em;
+                width: var(--width);
+                height: 0.9em;
+                padding: var(--padding);
+                flex-shrink: 0;
+                border-radius: 10000px;
+                box-shadow: 0 0 2px 0 var(--font-color);
+                transition: 0.1s ease-in-out background-color;
+                .toggle-state {
+                    --toggle-width: 0.7em;
+                    height: var(--toggle-width);
+                    aspect-ratio: 1;
+                    display: block;
+                    background-color: var(--font-color);
+                    opacity: 0.5;
+                    border-radius: 10000px;
+                    position: relative;
+                    left: 0;
+                    top: 50%;
+                    transform: translate(0, -50%);
+                    transition: 0.1s ease-in-out left, 0.1s ease-in-out opacity, 0.1s ease-in-out background-color;
+                }
+                &.on {
+                    background-color: var(--font-color);
+                    .toggle-state {
+                        opacity: 1;
+                        left: calc(calc(var(--width) - calc(var(--padding) * 2)) - var(--toggle-width));
+                        background-color: var(--btn-color-focus);
+                    }
+                }
+            }
+        }
     }
 
     input[type="checkbox"] {
@@ -915,9 +953,10 @@ body {
         .tabCont {
             // display: flex;
             flex-direction: row;
-            display: grid;
+            // display: grid;
             --divider-width: 25px;
-            grid-template-columns: auto var(--divider-width) auto var(--divider-width) auto;
+            // grid-template-columns: auto var(--divider-width) auto var(--divider-width) auto;
+            display: flex;
             position: relative;
             width: 100%;
             height: 100%;
@@ -939,6 +978,8 @@ body {
                 //!
                 // background-color: var(--body-bg-color);
                 padding: 20px 10px;
+                flex: 1;
+                // transition: 0.1s ease-in-out flex;
 
                 h2 {
                     margin-bottom: 10px;
@@ -953,6 +994,10 @@ body {
                         margin: 0;
                         margin-left: 5px;
                     }
+                }
+                &.collapsed {
+                    flex: 0;
+                    padding: 0;
                 }
             }
 
@@ -1244,7 +1289,8 @@ body {
                             background-color: #f003;
                         }
 
-                        .selected {
+                        .selected,
+                        .optionSelected {
                             background-color: var(--btn-color-focus);
                         }
                     }
@@ -1698,6 +1744,7 @@ body {
                                 cursor: default;
                                 opacity: 0.7;
                                 font-size: 1em;
+                                text-shadow: 0 0 5px var(--body-bg-color);
                             }
                             > :nth-child(1) {
                                 opacity: 1;

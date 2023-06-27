@@ -38,11 +38,7 @@ const HistoryTab = () => {
         });
     };
     return (
-        <div
-            className="contTab listCont"
-            style={{ display: appSettings.showTabs.history ? "flex" : "none" }}
-            id="historyTab"
-        >
+        <div className={"contTab listCont " + (!appSettings.showTabs.history ? "collapsed " : "")} id="historyTab">
             <h2>
                 Continue Reading
                 {/* <button

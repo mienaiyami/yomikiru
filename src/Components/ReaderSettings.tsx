@@ -790,7 +790,7 @@ const ReaderSettings = memo(
                                 }}
                                 timeout={[1000, (value) => dispatch(setReaderSettings({ gapSize: value }))]}
                                 paraBefore="Gap between rows&nbsp;:"
-                                labelAfter="px"
+                                paraAfter="px"
                             />
                             <InputCheckbox
                                 checked={appSettings.readerSettings.showPageNumberInZenMode}

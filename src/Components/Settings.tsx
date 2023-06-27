@@ -18,6 +18,7 @@ import InputNumber from "./Element/InputNumber";
 import InputColor from "./Element/InputColor";
 import { setAnilistToken } from "../store/anilistToken";
 import { setAniLoginOpen } from "../store/isAniLoginOpen";
+import InputCheckbox from "./Element/InputCheckbox";
 
 const Settings = (): ReactElement => {
     const appSettings = useAppSelector((store) => store.appSettings);
@@ -846,20 +847,17 @@ const Settings = (): ReactElement => {
                             <tr className="settingItem">
                                 <td className="name">Check for Update</td>
                                 <td className="current">
-                                    <label className={appSettings.updateCheckerEnabled ? "selected" : ""}>
-                                        <input
-                                            type="checkbox"
-                                            checked={appSettings.updateCheckerEnabled}
-                                            onChange={(e) => {
-                                                dispatch(
-                                                    setAppSettings({
-                                                        updateCheckerEnabled: e.currentTarget.checked,
-                                                    })
-                                                );
-                                            }}
-                                        />
-                                        <p>Check on App Startup</p>
-                                    </label>
+                                    <InputCheckbox
+                                        paraAfter="Check on App Startup"
+                                        checked={appSettings.updateCheckerEnabled}
+                                        onChange={(e) => {
+                                            dispatch(
+                                                setAppSettings({
+                                                    updateCheckerEnabled: e.currentTarget.checked,
+                                                })
+                                            );
+                                        }}
+                                    />
                                     <button
                                         onClick={() => {
                                             window.electron.ipcRenderer.send(
@@ -912,199 +910,121 @@ const Settings = (): ReactElement => {
                     </table>
                     <div className="otherSettings">
                         <div className="current fullWidth list">
-                            <label className={appSettings.skipMinorUpdate ? "selected" : ""}>
-                                <input
-                                    type="checkbox"
-                                    checked={appSettings.skipMinorUpdate}
-                                    onChange={(e) => {
-                                        dispatch(setAppSettings({ skipMinorUpdate: e.currentTarget.checked }));
-                                    }}
-                                />
-                                <p>Skip minor updates.</p>
-                            </label>
-                            <label className={appSettings.openOnDblClick ? "selected" : ""}>
-                                <input
-                                    type="checkbox"
-                                    checked={appSettings.openOnDblClick}
-                                    onChange={(e) => {
-                                        dispatch(setAppSettings({ openOnDblClick: e.currentTarget.checked }));
-                                    }}
-                                />
-                                <p>Open in Reader on double-click.</p>
-                            </label>
-                            <label className={appSettings.askBeforeClosing ? "selected" : ""}>
-                                <input
-                                    type="checkbox"
-                                    checked={appSettings.askBeforeClosing}
-                                    onChange={(e) => {
-                                        dispatch(setAppSettings({ askBeforeClosing: e.currentTarget.checked }));
-                                    }}
-                                />
-                                <p>
-                                    Ask before closing window? <code>Needs App Restart</code>.
-                                </p>
-                            </label>
-                            <label className={appSettings.recordChapterRead ? "selected" : ""}>
-                                <input
-                                    type="checkbox"
-                                    checked={appSettings.recordChapterRead}
-                                    onChange={(e) => {
-                                        dispatch(setAppSettings({ recordChapterRead: e.currentTarget.checked }));
-                                    }}
-                                />
-                                <p>
-                                    Record chapter read. If chapter is already read, it will appear with different
-                                    color in reader-side-list and home.
-                                </p>
-                            </label>
-                            <label className={appSettings.openDirectlyFromManga ? "selected" : ""}>
-                                <input
-                                    type="checkbox"
-                                    checked={appSettings.openDirectlyFromManga}
-                                    onChange={(e) => {
-                                        dispatch(
-                                            setAppSettings({ openDirectlyFromManga: e.currentTarget.checked })
-                                        );
-                                    }}
-                                />
-                                <p>
-                                    Open chapter directly by clicking name instead of arrow in reader if chapter
-                                    folder is in manga folder inside <code>default location</code> (See Usage and
-                                    Feature for more info).
-                                </p>
-                            </label>
-                            <label
-                                className={
-                                    appSettings.readerSettings.disableChapterTransitionScreen ? "selected" : ""
-                                }
-                            >
-                                <input
-                                    type="checkbox"
-                                    checked={appSettings.readerSettings.disableChapterTransitionScreen}
-                                    onChange={(e) => {
-                                        dispatch(
-                                            setReaderSettings({
-                                                disableChapterTransitionScreen: e.currentTarget.checked,
-                                            })
-                                        );
-                                    }}
-                                />
-                                <p>
-                                    Disable the chapter transition (start/end) screen (only in
-                                    <code>vertical scroll</code> Reading mode).
-                                </p>
-                            </label>
-                            {/* <label className={appSettings.showPageNumOnHome ? "selected" : ""}>
-                                    <input
-                                        type="checkbox"
-                                        checked={appSettings.showPageNumOnHome}
-                                        onChange={(e) => {
-                                            dispatch(setAppSettings({ showPageNumOnHome: e.currentTarget.checked }));
-                                        }}
-                                    />
-                                    <p>Show page number on in bookmark/history tab on home page.</p>
-                                </label> */}
-                            <label className={appSettings.disableListNumbering ? "selected" : ""}>
-                                <input
-                                    type="checkbox"
-                                    checked={appSettings.disableListNumbering}
-                                    onChange={(e) => {
-                                        dispatch(
-                                            setAppSettings({ disableListNumbering: e.currentTarget.checked })
-                                        );
-                                    }}
-                                />
-                                <p>Disable location list numbering.</p>
-                            </label>
-                            <label className={appSettings.showSearch ? "selected" : ""}>
-                                <input
-                                    type="checkbox"
-                                    checked={appSettings.showSearch}
-                                    onChange={(e) => {
-                                        dispatch(setAppSettings({ showSearch: e.currentTarget.checked }));
-                                    }}
-                                />
-                                <p>Show search input for bookmark/history tab.</p>
-                            </label>
-                            <label className={appSettings.openInZenMode ? "selected" : ""}>
-                                <input
-                                    type="checkbox"
-                                    checked={appSettings.openInZenMode}
-                                    onChange={(e) => {
-                                        dispatch(setAppSettings({ openInZenMode: e.currentTarget.checked }));
-                                    }}
-                                />
-                                <p>
-                                    Open in <code>Zen Mode</code> by default.
-                                </p>
-                            </label>
-                            <label className={appSettings.hideCursorInZenMode ? "selected" : ""}>
-                                <input
-                                    type="checkbox"
-                                    checked={appSettings.hideCursorInZenMode}
-                                    onChange={(e) => {
-                                        dispatch(setAppSettings({ hideCursorInZenMode: e.currentTarget.checked }));
-                                    }}
-                                />
-                                <p>
-                                    Hide cursor in <code>Zen Mode</code>.
-                                </p>
-                            </label>
-                            <label className={appSettings.useCanvasBasedReader ? "selected" : ""}>
-                                <input
-                                    type="checkbox"
-                                    checked={appSettings.useCanvasBasedReader}
-                                    onChange={(e) => {
-                                        dispatch(
-                                            setAppSettings({ useCanvasBasedReader: e.currentTarget.checked })
-                                        );
-                                    }}
-                                />
-                                <p>
-                                    Make scrolling smooth and prevent stuttering when reading high res images.
-                                    <br />
-                                    Drawbacks : high RAM usage and less crispy images when size is set to a low
-                                    value.
-                                    <code>BETA</code>
-                                </p>
-                            </label>
-                            <label className={appSettings.epubReaderSettings.loadOneChapter ? "selected" : ""}>
-                                <input
-                                    type="checkbox"
-                                    checked={appSettings.epubReaderSettings.loadOneChapter}
-                                    onChange={(e) => {
-                                        dispatch(
-                                            setEpubReaderSettings({ loadOneChapter: e.currentTarget.checked })
-                                        );
-                                    }}
-                                />
-                                <p>
-                                    Load and show one chapter at a time (from TOC).
-                                    <br />
-                                    Drawback : Content outside of TOC will not be accessible
-                                </p>
-                            </label>
-                            <label className={HAValue ? "selected" : ""}>
-                                <input
-                                    type="checkbox"
-                                    checked={HAValue}
-                                    onChange={(e) => {
-                                        const fileName = window.path.join(
-                                            window.electron.app.getPath("userData"),
-                                            "DISABLE_HARDWARE_ACCELERATION"
-                                        );
-                                        if (e.currentTarget.checked) {
-                                            window.fs.writeFileSync(fileName, " ");
-                                        } else {
-                                            if (window.fs.existsSync(fileName)) window.fs.rmSync(fileName);
-                                        }
-                                        setHAValue((init) => !init);
-                                    }}
-                                />
-                                <p>
-                                    Disable Hardware Acceleration. <code>Need App Restart</code>
-                                </p>
-                            </label>
+                            <InputCheckbox
+                                checked={appSettings.skipMinorUpdate}
+                                onChange={(e) => {
+                                    dispatch(setAppSettings({ skipMinorUpdate: e.currentTarget.checked }));
+                                }}
+                                paraAfter="Skip minor updates."
+                            />
+                            <InputCheckbox
+                                checked={appSettings.openOnDblClick}
+                                onChange={(e) => {
+                                    dispatch(setAppSettings({ openOnDblClick: e.currentTarget.checked }));
+                                }}
+                                paraAfter="Open in Reader on double-click."
+                            />
+                            <InputCheckbox
+                                checked={appSettings.askBeforeClosing}
+                                onChange={(e) => {
+                                    dispatch(setAppSettings({ askBeforeClosing: e.currentTarget.checked }));
+                                }}
+                                paraAfter="Ask before closing window? <code>Needs App Restart</code>."
+                            />
+                            <InputCheckbox
+                                checked={appSettings.recordChapterRead}
+                                onChange={(e) => {
+                                    dispatch(setAppSettings({ recordChapterRead: e.currentTarget.checked }));
+                                }}
+                                paraAfter="Record chapter read. If chapter is already read, it will appear with different
+                                color in reader-side-list and home."
+                            />
+                            <InputCheckbox
+                                checked={appSettings.openDirectlyFromManga}
+                                onChange={(e) => {
+                                    dispatch(setAppSettings({ openDirectlyFromManga: e.currentTarget.checked }));
+                                }}
+                                paraAfter="Open chapter directly by clicking name instead of arrow in reader if chapter
+                                folder is in manga folder inside <code>default location</code> (See Usage and
+                                Feature for more info)."
+                            />
+                            <InputCheckbox
+                                checked={appSettings.readerSettings.disableChapterTransitionScreen}
+                                onChange={(e) => {
+                                    dispatch(
+                                        setReaderSettings({
+                                            disableChapterTransitionScreen: e.currentTarget.checked,
+                                        })
+                                    );
+                                }}
+                                paraAfter="Disable the chapter transition (start/end) screen (only in
+                                    <code>vertical scroll</code> Reading mode)."
+                            />
+                            <InputCheckbox
+                                checked={appSettings.disableListNumbering}
+                                onChange={(e) => {
+                                    dispatch(setAppSettings({ disableListNumbering: e.currentTarget.checked }));
+                                }}
+                                paraAfter="Disable location list numbering."
+                            />
+                            <InputCheckbox
+                                checked={appSettings.showSearch}
+                                onChange={(e) => {
+                                    dispatch(setAppSettings({ showSearch: e.currentTarget.checked }));
+                                }}
+                                paraAfter="Show search input for bookmark/history tab."
+                            />
+                            <InputCheckbox
+                                checked={appSettings.openInZenMode}
+                                onChange={(e) => {
+                                    dispatch(setAppSettings({ openInZenMode: e.currentTarget.checked }));
+                                }}
+                                paraAfter="Open in <code>Zen Mode</code> by default."
+                            />
+                            <InputCheckbox
+                                checked={appSettings.hideCursorInZenMode}
+                                onChange={(e) => {
+                                    dispatch(setAppSettings({ hideCursorInZenMode: e.currentTarget.checked }));
+                                }}
+                                paraAfter="Hide cursor in <code>Zen Mode</code>."
+                            />
+                            <InputCheckbox
+                                checked={appSettings.useCanvasBasedReader}
+                                onChange={(e) => {
+                                    dispatch(setAppSettings({ useCanvasBasedReader: e.currentTarget.checked }));
+                                }}
+                                paraAfter="Make scrolling smooth and prevent stuttering when reading high res images.
+                                <br />
+                                Drawbacks : high RAM usage and less crispy images when size is set to a low
+                                value.
+                                <code>BETA</code>"
+                            />
+                            <InputCheckbox
+                                checked={appSettings.epubReaderSettings.loadOneChapter}
+                                onChange={(e) => {
+                                    dispatch(setEpubReaderSettings({ loadOneChapter: e.currentTarget.checked }));
+                                }}
+                                paraAfter="
+                                Load and show one chapter at a time (from TOC).
+                                <br />
+                                Drawback : Content outside of TOC will not be accessible."
+                            />
+                            <InputCheckbox
+                                checked={HAValue}
+                                onChange={(e) => {
+                                    const fileName = window.path.join(
+                                        window.electron.app.getPath("userData"),
+                                        "DISABLE_HARDWARE_ACCELERATION"
+                                    );
+                                    if (e.currentTarget.checked) {
+                                        window.fs.writeFileSync(fileName, " ");
+                                    } else {
+                                        if (window.fs.existsSync(fileName)) window.fs.rmSync(fileName);
+                                    }
+                                    setHAValue((init) => !init);
+                                }}
+                                paraAfter="Disable Hardware Acceleration. <code>Need App Restart</code>"
+                            />
                             <InputNumber
                                 value={appSettings.readerSettings.pdfScale}
                                 min={0.1}
@@ -1376,36 +1296,37 @@ const Settings = (): ReactElement => {
                                     clicking its link in the home location list. This feature can be enabled in the
                                     settings.
                                 </li>
-                            </ul>
-                            <li>
-                                <b>Home screen search:</b>
-                                <ul>
-                                    <li>
-                                        You don't need to type the whole word in search. (e.g. For{" "}
-                                        <code>One Piece</code> type <code>op</code>).
-                                    </li>
-                                    <li>
-                                        Paste link to set browse pasted link in Locations tab. Or page link of a
-                                        supported file to open it in reader directly.
-                                    </li>
-                                    <li>
-                                        Type <code>..{window.path.sep}</code> to go up directory.
-                                    </li>
-                                    {process.platform === "win32" ? (
+
+                                <li>
+                                    <b>Search:</b>
+                                    <ul>
                                         <li>
-                                            Type let <code>D:\</code> to go to <code>D drive</code>.
+                                            You don't need to type the whole word in search. (e.g. For{" "}
+                                            <code>One Piece</code> type <code>op</code>).
                                         </li>
-                                    ) : (
-                                        ""
-                                    )}
-                                    <li>
-                                        Type name ending with <code>{window.path.sep}</code> to open it in search.
-                                        e.g. When there is a directory named <code>One piece</code> in current
-                                        list, type <code>One Piece{window.path.sep}</code> to open that as new
-                                        list.
-                                    </li>
-                                </ul>
-                            </li>
+                                        <li>
+                                            Paste link to set browse pasted link in Locations tab. Or page link of
+                                            a supported file to open it in reader directly.
+                                        </li>
+                                        <li>
+                                            Type <code>..{window.path.sep}</code> to go up directory.
+                                        </li>
+                                        {process.platform === "win32" ? (
+                                            <li>
+                                                Type let <code>D:\</code> to go to <code>D drive</code>.
+                                            </li>
+                                        ) : (
+                                            ""
+                                        )}
+                                        <li>
+                                            Type name ending with <code>{window.path.sep}</code> to open it in
+                                            search. e.g. When there is a directory named <code>One piece</code> in
+                                            current list, type <code>One Piece{window.path.sep}</code> to open that
+                                            as new list.
+                                        </li>
+                                    </ul>
+                                </li>
+                            </ul>
                         </li>
                         <li>
                             Collapse/Un-collapse Bookmarks, History page tabs by clicking on the Dividers beside

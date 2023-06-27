@@ -301,16 +301,16 @@ const Main = (): ReactElement => {
                 className="tabCont"
                 // ref={tabContRef}
                 style={{
-                    display: isReaderOpen ? "none" : "grid",
+                    display: isReaderOpen ? "none" : "flex",
                     // just why
-                    gridTemplateColumns:
-                        appSettings.showTabs.bookmark && appSettings.showTabs.history
-                            ? "calc(calc(100vw - calc(var(--divider-width) * 2)) / 3) var(--divider-width) calc(calc(100vw - calc(var(--divider-width) * 2)) / 3) var(--divider-width) calc(calc(100vw - calc(var(--divider-width) * 2)) / 3)"
-                            : !appSettings.showTabs.bookmark && appSettings.showTabs.history
-                            ? "calc(calc(100vw - calc(var(--divider-width) * 2)) / 2) var(--divider-width) var(--divider-width) calc(calc(100vw - calc(var(--divider-width) * 2)) / 2)"
-                            : appSettings.showTabs.bookmark && !appSettings.showTabs.history
-                            ? "calc(calc(100vw - calc(var(--divider-width) * 2)) / 2) var(--divider-width) calc(calc(100vw - calc(var(--divider-width) * 2)) / 2) var(--divider-width)"
-                            : "calc(calc(100vw - calc(var(--divider-width) * 2))) var(--divider-width) var(--divider-width)",
+                    // gridTemplateColumns:
+                    //     appSettings.showTabs.bookmark && appSettings.showTabs.history
+                    //         ? "calc(calc(100vw - calc(var(--divider-width) * 2)) / 3) var(--divider-width) calc(calc(100vw - calc(var(--divider-width) * 2)) / 3) var(--divider-width) calc(calc(100vw - calc(var(--divider-width) * 2)) / 3)"
+                    //         : !appSettings.showTabs.bookmark && appSettings.showTabs.history
+                    //         ? "calc(calc(100vw - calc(var(--divider-width) * 2)) / 2) var(--divider-width) var(--divider-width) calc(calc(100vw - calc(var(--divider-width) * 2)) / 2)"
+                    //         : appSettings.showTabs.bookmark && !appSettings.showTabs.history
+                    //         ? "calc(calc(100vw - calc(var(--divider-width) * 2)) / 2) var(--divider-width) calc(calc(100vw - calc(var(--divider-width) * 2)) / 2) var(--divider-width)"
+                    //         : "calc(calc(100vw - calc(var(--divider-width) * 2))) var(--divider-width) var(--divider-width)",
                     // "--show-page-num-on-home": appSettings.showPageNumOnHome ? "flex" : "none",
                 }}
             >
