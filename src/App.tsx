@@ -465,10 +465,10 @@ const App = (): ReactElement => {
         };
     }, []);
 
-    useLayoutEffect(() => {
-        if (appSettings.reducedMotion) document.body.classList.add("reducedMotion");
-        else document.body.classList.remove("reducedMotion");
-    }, [appSettings.reducedMotion]);
+    // useLayoutEffect(() => {
+    //     if (appSettings.reducedMotion) document.body.classList.add("reducedMotion");
+    //     else document.body.classList.remove("reducedMotion");
+    // }, [appSettings.reducedMotion]);
 
     return (
         <AppContext.Provider

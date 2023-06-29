@@ -1008,16 +1008,14 @@ const Settings = (): ReactElement => {
                                 </div>
                                 <div className="toggleItem">
                                     <InputCheckbox
-                                        checked={appSettings.reducedMotion}
+                                        checked={!appSettings.hideOpenArrow}
                                         className="noBG"
                                         onChange={(e) => {
-                                            dispatch(setAppSettings({ reducedMotion: e.currentTarget.checked }));
+                                            dispatch(setAppSettings({ hideOpenArrow: !e.currentTarget.checked }));
                                         }}
-                                        labelAfter="Enable Reduced Motion"
+                                        labelAfter="Open In Reader Arrow / Button"
                                     />
-                                    <div className="desc">
-                                        Motions like transitions and animations will be reduced or removed totally.
-                                    </div>
+                                    <div className="desc">Show the button beside items in home location list.</div>
                                 </div>
                                 <div className="toggleItem">
                                     <InputCheckbox

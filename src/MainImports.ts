@@ -75,7 +75,7 @@ export const settingValidatorData = {
 
     openInZenMode: false,
     hideCursorInZenMode: false,
-    reducedMotion: false,
+    hideOpenArrow: false,
     readerSettings: {
         /**
          * width of reader in percent
@@ -975,7 +975,7 @@ const defaultSettings: AppSettings = {
     showSearch: false,
     openInZenMode: false,
     hideCursorInZenMode: false,
-    reducedMotion: false,
+    hideOpenArrow: false,
     readerSettings: {
         readerWidth: 60,
         variableImageSize: true,
