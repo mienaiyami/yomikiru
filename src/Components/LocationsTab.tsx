@@ -44,15 +44,24 @@ const LocationsTab = (): ReactElement => {
                     return;
                 }
                 setImageCount(
-                    files.filter((e) => window.supportedFormats.includes(window.path.extname(e).toLowerCase()))
-                        .length
+                    files.filter((e) => {
+                        let aa = true;
+                        try {
+                            window.fs.lstatSync(window.path.join(link, e));
+                        } catch (err) {
+                            aa = false;
+                        }
+                        return (
+                            aa &&
+                            window.path.extname(e).toLowerCase() !== ".sys" &&
+                            window.fs.lstatSync(window.path.join(link, e)).isFile() &&
+                            window.supportedFormats.includes(window.path.extname(e).toLowerCase())
+                        );
+                    }).length
                 );
                 const dirNames = files
                     .reduce((arr: LocationData[], cur) => {
-                        if (
-                            window.fs.existsSync(window.path.join(link, cur)) &&
-                            window.path.extname(cur).toLowerCase() !== ".sys"
-                        ) {
+                        if (window.fs.existsSync(window.path.join(link, cur))) {
                             if (
                                 window.fs.lstatSync(window.path.join(link, cur)).isDirectory() ||
                                 [".zip", ".cbz", ".7z", ".epub", ".pdf"].includes(
@@ -60,7 +69,9 @@ const LocationsTab = (): ReactElement => {
                                 )
                             ) {
                                 arr.push({
-                                    name: window.app.replaceExtension(cur),
+                                    name: window.fs.lstatSync(window.path.join(link, cur)).isFile()
+                                        ? window.app.replaceExtension(cur)
+                                        : cur,
                                     link: window.path.join(link, cur),
                                 });
                             }
