@@ -1,5 +1,5 @@
 import "./MainImports";
-import { createContext, createRef, ReactElement, useEffect, useState } from "react";
+import { createContext, createRef, ReactElement, useEffect, useLayoutEffect, useState } from "react";
 import { useAppDispatch, useAppSelector } from "./store/hooks";
 import Main from "./Components/Main";
 import TopBar from "./Components/TopBar";
@@ -464,6 +464,11 @@ const App = (): ReactElement => {
             document.removeEventListener("dragover", ee);
         };
     }, []);
+
+    useLayoutEffect(() => {
+        if (appSettings.reducedMotion) document.body.classList.add("reducedMotion");
+        else document.body.classList.remove("reducedMotion");
+    }, [appSettings.reducedMotion]);
 
     return (
         <AppContext.Provider

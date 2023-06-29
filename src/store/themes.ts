@@ -70,6 +70,7 @@ if (window.fs.existsSync(themesPath)) {
             }
             if (typeof data.allData[0].main === "string" || !Array.isArray(data.allData))
                 throw { message: "Theme variable does not exist on theme.main" };
+            const addedProp = new Set<string>();
             for (const prop in window.themeProps) {
                 let rewriteNeeded = false;
                 (data as Themes).allData.forEach((e) => {
@@ -84,6 +85,7 @@ if (window.fs.existsSync(themesPath)) {
                             window.logger.log(
                                 `"${prop}" does not exist on theme - "${e.name}", adding it with value "#ff0000".`
                             );
+                            addedProp.add('\t"' + window.themeProps[prop as ThemeDataMain] + '"');
                             rewriteNeeded = true;
                             changed = true;
                             e.main[prop as ThemeDataMain] = "#ff0000";
@@ -103,7 +105,9 @@ if (window.fs.existsSync(themesPath)) {
             if (changed) {
                 window.dialog.warn({
                     message:
-                        'Some properties were missing in themes. Added new as "Red" color, change accordingly or re-edit default themes.\nCheck log file for exact names.',
+                        'Some properties were missing in themes. Added new as "Red" color, change accordingly or re-edit default themes.' +
+                        "\nNew Properties:\n" +
+                        [...addedProp.values()].join("\n"),
                 });
             }
             initialState.name = data.name;
@@ -135,26 +139,13 @@ if (window.fs.existsSync(themesPath)) {
 }
 
 if (!initialState.allData.map((e) => e.name).includes(initialState.name)) {
-    window.dialog
-        .warn({
-            title: "Error",
-            message: `Theme "${initialState.name}" does not exist. Try fixing or deleting theme.json and settings.json in "userdata" folder.(at "%appdata%/Yomikiru/" or in main folder on Portable version)`,
-            noOption: false,
-            defaultId: 0,
-            buttons: ["Ok", "Temporary fix", "Open Location"],
-        })
-        .then((res) => {
-            if (res.response === 1) {
-                initialState.name = "theme2";
-                window.fs.writeFileSync(themesPath, JSON.stringify(initialState, null, "\t"));
-                window.location.reload();
-            }
-            if (res.response === 2) {
-                if (process.platform === "win32") window.electron.shell.showItemInFolder(themesPath);
-                else if (process.platform === "linux")
-                    window.electron.ipcRenderer.send("showInExplorer", themesPath);
-            }
-        });
+    window.dialog.customError({
+        title: "Error",
+        message: `Theme "${initialState.name}" does not exist. Switching to default theme.`,
+    });
+    initialState.name = "theme2";
+    window.fs.writeFileSync(themesPath, JSON.stringify(initialState, null, "\t"));
+    window.location.reload();
 }
 
 const saveJSONandApply = (state: Themes) => {
@@ -201,8 +192,14 @@ const themes = createSlice({
                 action.payload.newThemeData;
             saveJSONandApply(current(state));
         },
-        deleteTheme: (state, action: PayloadAction<number>) => {
-            state.allData.splice(action.payload, 1);
+        deleteTheme: (state, action: PayloadAction<number | string>) => {
+            let index = -1;
+
+            if (typeof action.payload === "number") index = action.payload;
+            if (typeof action.payload === "string")
+                index = state.allData.findIndex((e) => e.name === action.payload);
+            state.allData.splice(index, 1);
+
             saveJSONfile(themesPath, current(state));
         },
         resetAllTheme: () => {

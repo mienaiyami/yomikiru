@@ -1,13 +1,13 @@
 import { faMinus, faPlus, faWrench } from "@fortawesome/free-solid-svg-icons";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import React, { useLayoutEffect, useState } from "react";
+import React, { useLayoutEffect, useState, memo } from "react";
 import InputNumber from "../Element/InputNumber";
 import { useAppDispatch, useAppSelector } from "../../store/hooks";
 import { setAniSearchOpen } from "../../store/isAniSearchOpen";
 import { setAnilistCurrentManga } from "../../store/anilistCurrentManga";
 import { setAniEditOpen } from "../../store/isAniEditOpen";
 
-const AnilistBar = () => {
+const AnilistBar = memo(() => {
     const anilistTracking = useAppSelector((store) => store.anilistTracking);
     const mangaInReader = useAppSelector((store) => store.mangaInReader);
     const anilistCurrentManga = useAppSelector((store) => store.anilistCurrentManga);
@@ -96,6 +96,6 @@ const AnilistBar = () => {
             )}
         </div>
     );
-};
+});
 
 export default AnilistBar;

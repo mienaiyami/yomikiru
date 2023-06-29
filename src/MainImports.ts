@@ -75,6 +75,7 @@ export const settingValidatorData = {
 
     openInZenMode: false,
     hideCursorInZenMode: false,
+    reducedMotion: false,
     readerSettings: {
         /**
          * width of reader in percent
@@ -596,6 +597,7 @@ window.themeProps = {
     "--topBar-color": "TopBar BG Color",
     "--icon-color": "Icon Color",
     "--font-color": "Text Color",
+    "--font-color-secondary": "Text Color Secondary",
     "--font-select-color": "Selected Text Color",
     "--font-select-bg-color": "Selected Text BG Color",
     "--btn-color": "Button Color",
@@ -973,6 +975,7 @@ const defaultSettings: AppSettings = {
     showSearch: false,
     openInZenMode: false,
     hideCursorInZenMode: false,
+    reducedMotion: false,
     readerSettings: {
         readerWidth: 60,
         variableImageSize: true,
