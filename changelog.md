@@ -4,17 +4,16 @@
 
 ## Added
 
-- AniList Tracking now available. Enable from setting.
-- Open supported file in reader on pasting link in location tab search input.
+- EPUB : Collapsible tiles for side list. #190
 
 ## Changed
 
 - UI Enhancements.
-- Epub: Auto focus after font size change.
-- Page mover keys now works when press hold.
+- Replaced checkboxes with toggles.
+- Better Settings.
 
 ## Fixed
 
-- Download window not closing if app is closed mid download.
+- Unable to open folders ending with supported extension names.
 
 ---

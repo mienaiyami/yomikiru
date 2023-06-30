@@ -53,6 +53,19 @@ export const InputSelect = ({
                 {labelAfter}
             </label>
         );
+    // if (!children)
+    //     return (
+    //         <>
+    //             <button className="selectBtn">{value}</button>
+    //             <div className="selectOptions">
+    //                 {options.map((e) => (
+    //                     <div className="selectOptionItem" key={e}>
+    //                         {e}
+    //                     </div>
+    //                 ))}
+    //             </div>
+    //         </>
+    //     );
     return (
         <select
             className={className}

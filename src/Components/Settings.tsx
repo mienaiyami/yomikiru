@@ -1482,9 +1482,9 @@ const Settings = (): ReactElement => {
                                         }}
                                     >
                                         Copy theme using "Copy Current Theme to Clipboard" under theme
-                                    </a>{" "}
-                                    and share it easily. To install theme , just copy from anywhere and "Save Theme
-                                    from Clipboard".
+                                    </a>
+                                    , it will be copied as text and you can share it anywhere. To install the
+                                    theme, copy whole text you received and click on "Save Theme from Clipboard".
                                 </li>
                                 <li>
                                     <a
