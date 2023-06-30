@@ -439,7 +439,7 @@ const List = memo(
             src: string;
             index?: number;
         }) => {
-            const show = listShow[index] || true;
+            const show = index < 0 ? true : listShow[index];
             return (
                 <li
                     className={`${src === currentChapterURL ? "current" : ""} ${depth === 2 ? "collapse" : ""} ${
