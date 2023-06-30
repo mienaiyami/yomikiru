@@ -425,6 +425,9 @@ const List = memo(
             console.log(listShow);
         }, [listShow]);
         // console.log(tocData.depth, temp);
+
+        //! i have literally no idea wtf i was doing here
+
         const ListItem = ({
             name,
             depth,
@@ -436,7 +439,7 @@ const List = memo(
             src: string;
             index?: number;
         }) => {
-            const show = listShow[index];
+            const show = listShow[index] || true;
             return (
                 <li
                     className={`${src === currentChapterURL ? "current" : ""} ${depth === 2 ? "collapse" : ""} ${

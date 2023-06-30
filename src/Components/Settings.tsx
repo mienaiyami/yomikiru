@@ -98,7 +98,7 @@ const Settings = (): ReactElement => {
         if (themesRaw.allData.map((e) => e.name).includes(name)) {
             window.dialog.customError({
                 title: "Error",
-                message: `Unable to edit default themes, save as new instead.`,
+                message: `Can't edit default themes, save as new instead.`,
             });
             return;
         }
@@ -450,7 +450,7 @@ const Settings = (): ReactElement => {
                                             if (themesRaw.allData.map((q) => q.name).includes(theme)) {
                                                 window.dialog.customError({
                                                     title: "Error",
-                                                    message: `Unable to delete default themes.`,
+                                                    message: `Can't delete default themes.`,
                                                 });
                                                 return;
                                             }
