@@ -490,73 +490,8 @@ const Settings = (): ReactElement => {
                                     </button>
                                 </div>
                                 <hr className="mini" />
-                                <div className="main col">
-                                    <div className="row">
-                                        <button
-                                            onClick={() => {
-                                                const theme = window.electron.clipboard.readText("clipboard");
-                                                if (theme) {
-                                                    try {
-                                                        const themeJSON = JSON.parse(theme);
-                                                        if (themeJSON) {
-                                                            if ("name" in themeJSON && "main" in themeJSON) {
-                                                                if (
-                                                                    allThemes
-                                                                        .map((e) => e.name)
-                                                                        .includes(themeJSON.name)
-                                                                ) {
-                                                                    window.dialog.warn({
-                                                                        message:
-                                                                            "Same theme name detected. Wont be imported.\nName: " +
-                                                                            themeJSON.name,
-                                                                    });
-                                                                } else {
-                                                                    dispatch(newTheme(themeJSON));
-                                                                }
-                                                            } else
-                                                                window.dialog.customError({
-                                                                    title: "Failed",
-                                                                    message: `Invalid theme data. Please note that data must be similar to the result of "Copy Current Theme to Clipboard"`,
-                                                                });
-                                                        }
-                                                    } catch (reason) {
-                                                        window.dialog.customError({
-                                                            title: "Failed",
-                                                            message: `Invalid theme data. Please note that data much be similar to the result of "Copy Current Theme to Clipboard"`,
-                                                        });
-                                                    }
-                                                }
-                                            }}
-                                        >
-                                            Save Theme from Clipboard
-                                        </button>
-                                        <button
-                                            onClick={(e) => {
-                                                const currentTheme = allThemes.find((e) => e.name === theme);
-                                                if (currentTheme) {
-                                                    try {
-                                                        window.electron.clipboard.writeText(
-                                                            JSON.stringify(currentTheme, null, "\t")
-                                                        );
-                                                        const target = e.currentTarget;
-                                                        const oldText = target.innerText;
-                                                        target.innerText =
-                                                            "\u00a0".repeat(23) + "Copied!" + "\u00a0".repeat(23);
-                                                        setTimeout(() => {
-                                                            target.innerText = oldText;
-                                                        }, 3000);
-                                                    } catch (reason) {
-                                                        window.dialog.customError({
-                                                            message: "Failed to copy theme: " + reason,
-                                                        });
-                                                    }
-                                                }
-                                            }}
-                                        >
-                                            Copy Current Theme to Clipboard
-                                        </button>
-                                    </div>
-                                    <div className="row">
+                                <div className=" col">
+                                    <div className="main row">
                                         <button
                                             onClick={() => {
                                                 const opt = window.electron.dialog.showSaveDialogSync(
@@ -675,6 +610,87 @@ const Settings = (): ReactElement => {
                                             }
                                         >
                                             Get more Themes
+                                        </button>
+                                    </div>
+                                    <div className="desc">
+                                        Share your custom theme easily.{" "}
+                                        <a
+                                            onClick={() => {
+                                                document
+                                                    .querySelector("#settings-usage-copyTheme")
+                                                    ?.scrollIntoView({
+                                                        block: "start",
+                                                        behavior: "smooth",
+                                                    });
+                                            }}
+                                            id="settings-copyTheme"
+                                        >
+                                            More Info.
+                                        </a>
+                                    </div>
+                                    <div className="main row">
+                                        <button
+                                            onClick={() => {
+                                                const theme = window.electron.clipboard.readText("clipboard");
+                                                if (theme) {
+                                                    try {
+                                                        const themeJSON = JSON.parse(theme);
+                                                        if (themeJSON) {
+                                                            if ("name" in themeJSON && "main" in themeJSON) {
+                                                                if (
+                                                                    allThemes
+                                                                        .map((e) => e.name)
+                                                                        .includes(themeJSON.name)
+                                                                ) {
+                                                                    window.dialog.warn({
+                                                                        message:
+                                                                            "Same theme name detected. Wont be imported.\nName: " +
+                                                                            themeJSON.name,
+                                                                    });
+                                                                } else {
+                                                                    dispatch(newTheme(themeJSON));
+                                                                }
+                                                            } else
+                                                                window.dialog.customError({
+                                                                    title: "Failed",
+                                                                    message: `Invalid theme data. Please note that data must be similar to the result of "Copy Current Theme to Clipboard"`,
+                                                                });
+                                                        }
+                                                    } catch (reason) {
+                                                        window.dialog.customError({
+                                                            title: "Failed",
+                                                            message: `Invalid theme data. Please note that data much be similar to the result of "Copy Current Theme to Clipboard"`,
+                                                        });
+                                                    }
+                                                }
+                                            }}
+                                        >
+                                            Save Theme from Clipboard
+                                        </button>
+                                        <button
+                                            onClick={(e) => {
+                                                const currentTheme = allThemes.find((e) => e.name === theme);
+                                                if (currentTheme) {
+                                                    try {
+                                                        window.electron.clipboard.writeText(
+                                                            JSON.stringify(currentTheme, null, "\t")
+                                                        );
+                                                        const target = e.currentTarget;
+                                                        const oldText = target.innerText;
+                                                        target.innerText =
+                                                            "\u00a0".repeat(23) + "Copied!" + "\u00a0".repeat(23);
+                                                        setTimeout(() => {
+                                                            target.innerText = oldText;
+                                                        }, 3000);
+                                                    } catch (reason) {
+                                                        window.dialog.customError({
+                                                            message: "Failed to copy theme: " + reason,
+                                                        });
+                                                    }
+                                                }
+                                            }}
+                                        >
+                                            Copy Current Theme to Clipboard
                                         </button>
                                     </div>
                                 </div>
@@ -1456,16 +1472,16 @@ const Settings = (): ReactElement => {
                                     </ul>
                                 </li>
                                 <li>
-                                    Copy theme using "Copy Current Theme to Clipboard" under{" "}
                                     <a
+                                        id="settings-usage-copyTheme"
                                         onClick={() => {
-                                            document.querySelector("#settings-theme")?.scrollIntoView({
+                                            document.querySelector("#settings-copyTheme")?.scrollIntoView({
                                                 block: "start",
                                                 behavior: "smooth",
                                             });
                                         }}
                                     >
-                                        theme
+                                        Copy theme using "Copy Current Theme to Clipboard" under theme
                                     </a>{" "}
                                     and share it easily. To install theme , just copy from anywhere and "Save Theme
                                     from Clipboard".
