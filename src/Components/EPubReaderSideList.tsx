@@ -465,7 +465,8 @@ const List = memo(
                         data-depth={depth}
                         title={name}
                         ref={(node) => {
-                            if (node !== null && src === currentChapterURL) node.scrollIntoView();
+                            if (node !== null && src === currentChapterURL)
+                                node.scrollIntoView({ block: "nearest" });
                         }}
                     >
                         <span className="text">{"\u00A0".repeat((tocData.depth - depth) * 5) + name}</span>

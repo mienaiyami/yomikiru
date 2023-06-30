@@ -240,7 +240,7 @@ const HTMLPart = memo(
                                 if (!rendered && bookmarkedElem) {
                                     setTimeout(() => {
                                         const elem = node.querySelector(bookmarkedElem);
-                                        if (elem) elem.scrollIntoView();
+                                        if (elem) elem.scrollIntoView({ block: "start" });
                                     }, 200);
                                 } else if (
                                     tocData.nav[0].src !== currentChapterURL &&
@@ -251,7 +251,7 @@ const HTMLPart = memo(
                                         const el = node.querySelector(
                                             `[data-id="${currentChapterURL.split("#")[1]}"]`
                                         );
-                                        if (el) el.scrollIntoView();
+                                        if (el) el.scrollIntoView({ block: "start" });
                                     }, 100);
                                 }
                                 setRendered(true);
@@ -400,7 +400,7 @@ const EPubReader = () => {
                             if (data_href.split("#")[0] === currentChapterURL.split("#")[0])
                                 document
                                     .querySelector("#epub-" + idFromURL + ` [data-id="${idHash}"]`)
-                                    ?.scrollIntoView();
+                                    ?.scrollIntoView({ block: "nearest" });
                             else {
                                 setCurrentChapterURL(data_href);
                             }
@@ -416,10 +416,11 @@ const EPubReader = () => {
                         if (idFromURL)
                             document
                                 .querySelector("#epub-" + idFromURL + ` [data-id="${idHash}"]`)
-                                ?.scrollIntoView();
+                                ?.scrollIntoView({ block: "nearest" });
                     } else {
                         const idFromURL = displayData.find((a) => a.url === data_href)?.id;
-                        if (idFromURL) document.querySelector("#epub-" + idFromURL)?.scrollIntoView();
+                        if (idFromURL)
+                            document.querySelector("#epub-" + idFromURL)?.scrollIntoView({ block: "nearest" });
                     }
                 }
             } else {

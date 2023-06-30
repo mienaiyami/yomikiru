@@ -27,7 +27,7 @@ const ReaderSideListItem = memo(
                     onClick={() => openInReader(link)}
                     title={name}
                     ref={(node) => {
-                        if (current && node !== null) node.scrollIntoView();
+                        if (current && node !== null) node.scrollIntoView({ block: "nearest" });
                     }}
                     onContextMenu={(e) => {
                         dispatch(

@@ -440,12 +440,6 @@ const Settings = (): ReactElement => {
                                     <button
                                         onClick={() => {
                                             setCurrentTab(TAB_INFO.makeTheme[0]);
-                                            setTimeout(() => {
-                                                themeMakerRef.current?.scrollIntoView({
-                                                    behavior: "smooth",
-                                                    block: "start",
-                                                });
-                                            }, 100);
                                         }}
                                     >
                                         <FontAwesomeIcon icon={faPlus} /> <span className="icon">/</span>{" "}
