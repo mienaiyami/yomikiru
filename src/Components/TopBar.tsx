@@ -179,9 +179,12 @@ const TopBar = (): ReactElement => {
                     <span className="totalPage">/{mangaInReader?.pages || 0}</span>
                 </label>
 
-                <label style={{ display: isReaderOpen && bookInReader ? "flex" : "none" }} className="pageNumber">
+                <label
+                    style={{ display: isReaderOpen && bookInReader ? "flex" : "none" }}
+                    className="pageNumber noBG"
+                >
                     <input
-                        className="pageNumberInput noBG"
+                        className="pageNumberInput"
                         ref={bookProgressRef}
                         type="number"
                         defaultValue={0}

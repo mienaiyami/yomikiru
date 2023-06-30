@@ -8,7 +8,7 @@ import {
 } from "@fortawesome/free-solid-svg-icons";
 import { faBookmark as farBookmark } from "@fortawesome/free-regular-svg-icons";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import { memo, useEffect, useLayoutEffect, useRef, useState } from "react";
+import React, { memo, useEffect, useLayoutEffect, useRef, useState, useMemo } from "react";
 import { useAppDispatch, useAppSelector } from "../store/hooks";
 import { setPrevNextChapter } from "../store/prevNextChapter";
 import { addBookmark, updateEPUBBookmark, removeBookmark } from "../store/bookmarks";
@@ -398,27 +398,99 @@ const List = memo(
         sideListRef: React.RefObject<HTMLDivElement>;
         setCurrentChapterURL: React.Dispatch<React.SetStateAction<string>>;
     }) => {
+        const temp_ListShow: boolean[] = [];
+        const temp = useMemo(
+            () =>
+                tocData.nav.reduce((acc, cur) => {
+                    const len = acc.length;
+                    if (tocData.depth === 2) {
+                        if (cur.depth === 2) {
+                            acc.push({ parent: cur, child: [] });
+                            temp_ListShow.push(false);
+                        }
+                        if (cur.depth === 1) acc[len - 1].child.push(cur);
+                        if (cur.src === currentChapterURL) temp_ListShow[acc.length - 1] = true;
+                        console.log("a", temp_ListShow);
+                    }
+                    return acc;
+                }, [] as { parent: TOCData["nav"][0]; child: TOCData["nav"] }[]),
+            [currentChapterURL]
+        );
+
+        const [listShow, setListShow] = useState(temp_ListShow);
+        useLayoutEffect(() => {
+            setListShow(temp_ListShow);
+        }, [currentChapterURL]);
+        useLayoutEffect(() => {
+            console.log(listShow);
+        }, [listShow]);
+        // console.log(tocData.depth, temp);
+        const ListItem = ({
+            name,
+            depth,
+            src,
+            index = -1,
+        }: {
+            name: string;
+            depth: number;
+            src: string;
+            index?: number;
+        }) => {
+            const show = listShow[index];
+            return (
+                <li
+                    className={`${src === currentChapterURL ? "current" : ""} ${depth === 2 ? "collapse" : ""} ${
+                        !show ? "collapsed" : ""
+                    }`}
+                    style={{ "--depth": depth - 1 }}
+                    onClick={() => {
+                        if (depth === 2) {
+                            setListShow((init) => {
+                                const dup = [...init];
+                                dup[index] = !dup[index];
+                                return dup;
+                            });
+                        }
+                    }}
+                >
+                    {/* {depth===2&& <span className={`toggleCollapse ${!show?"collapsed ":""}`}>▼</span> } */}
+                    <a
+                        onClick={(ev) => {
+                            ev.stopPropagation();
+                            epubLinkClick(ev);
+                            sideListRef.current?.blur();
+                            setCurrentChapterURL(ev.currentTarget.getAttribute("data-href") || "~");
+                        }}
+                        data-href={src}
+                        data-depth={depth}
+                        title={name}
+                        ref={(node) => {
+                            if (node !== null && src === currentChapterURL) node.scrollIntoView();
+                        }}
+                    >
+                        <span className="text">{"\u00A0".repeat((tocData.depth - depth) * 5) + name}</span>
+                    </a>
+                </li>
+            );
+        };
+        if (tocData.depth === 2 && temp.length > 0) {
+            return (
+                <ol>
+                    {temp.map((e, i) => (
+                        <React.Fragment key={e.parent.name}>
+                            <ListItem {...e.parent} key={e.parent.name} index={i} />
+                            {e.child.map((c) => (
+                                <ListItem {...c} key={c.name} index={i} />
+                            ))}
+                        </React.Fragment>
+                    ))}
+                </ol>
+            );
+        }
         return (
             <ol>
                 {tocData.nav.map((e) => (
-                    <li className={e.src === currentChapterURL ? "current " : ""} key={e.name}>
-                        <a
-                            onClick={(ev) => {
-                                epubLinkClick(ev);
-                                sideListRef.current?.blur();
-                                setCurrentChapterURL(ev.currentTarget.getAttribute("data-href") || "~");
-                            }}
-                            style={{ "--depth": e.depth - 1 }}
-                            data-href={e.src}
-                            data-depth={e.depth}
-                            title={e.name}
-                            ref={(node) => {
-                                if (node !== null && e.src === currentChapterURL) node.scrollIntoView();
-                            }}
-                        >
-                            <span className="text">{"\u00A0".repeat((tocData.depth - e.depth) * 5) + e.name}</span>
-                        </a>
-                    </li>
+                    <ListItem {...e} key={e.name} />
                 ))}
             </ol>
         );

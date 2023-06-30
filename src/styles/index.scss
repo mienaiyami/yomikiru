@@ -713,7 +713,7 @@ body {
     }
 
     #app {
-        position: relative;
+        position: absolute;
         top: var(--titleBar-height);
         left: 0;
         width: 100%;
@@ -2512,13 +2512,34 @@ body {
             .readerSideList {
                 .location-cont {
                     li {
+                        --depth: 0;
+                        font-size: calc(1rem + calc(calc(var(--depth) / 3) * 1em));
                         a {
-                            --depth: 0;
                             grid-template-columns: auto;
-                            font-size: calc(1rem + calc(calc(var(--depth) / 3) * 1rem));
 
                             &::before {
                                 display: none;
+                            }
+                        }
+                        &.collapsed {
+                            display: none;
+                        }
+                        &.collapse {
+                            &::before {
+                                content: "▼";
+                                display: inline-block;
+                                transform: rotate(0);
+                                height: 100%;
+                                aspect-ratio: 1;
+                                margin-top: 0.2em;
+                            }
+                            &.collapsed {
+                                display: flex;
+                                align-items: center;
+                                &::before {
+                                    transform: rotate(-90deg);
+                                    margin-top: 0;
+                                }
                             }
                         }
                     }
