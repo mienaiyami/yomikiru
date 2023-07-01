@@ -1364,9 +1364,9 @@ body {
                                 align-items: flex-start;
                             }
                             hr.mini {
-                                width: 50%;
+                                // width: 100%;
                                 height: 1px;
-                                margin: 0.5em 0;
+                                margin: 0.5em 1em;
                             }
                             .toggleItem {
                                 margin: 0.5em 1em;
@@ -1431,6 +1431,8 @@ body {
                                     button:nth-child(1) {
                                         border-top-right-radius: 0;
                                         border-bottom-right-radius: 0;
+                                        width: 7em;
+                                        text-overflow: ellipsis;
                                     }
 
                                     button:nth-child(2) {

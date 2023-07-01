@@ -442,6 +442,7 @@ const Settings = (): ReactElement => {
                                             <button
                                                 className={theme === e.name ? "selected" : ""}
                                                 onClick={() => dispatch(setTheme(e.name))}
+                                                title={e.name}
                                             >
                                                 {e.name}
                                             </button>
@@ -533,7 +534,7 @@ const Settings = (): ReactElement => {
                                         <FontAwesomeIcon icon={faTrash} />
                                     </button> */}
                                 </div>
-                                <hr />
+                                <hr className="mini" />
                                 <div className=" col">
                                     <div className="main row">
                                         <button
