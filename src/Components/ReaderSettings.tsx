@@ -705,42 +705,6 @@ const ReaderSettings = memo(
                                 }}
                                 paraAfter="Invert Image"
                             />
-                            <InputCheckbox
-                                checked={appSettings.readerSettings.forceLowBrightness.enabled}
-                                onChange={(e) => {
-                                    dispatch(
-                                        setReaderSettings({
-                                            forceLowBrightness: {
-                                                ...appSettings.readerSettings.forceLowBrightness,
-                                                enabled: e.currentTarget.checked,
-                                            },
-                                        })
-                                    );
-                                }}
-                                paraAfter="Force Low brightness"
-                            />
-                            <InputRange
-                                className={"colorRange"}
-                                min={0}
-                                max={0.9}
-                                step={0.05}
-                                value={appSettings.readerSettings.forceLowBrightness.value}
-                                disabled={!appSettings.readerSettings.forceLowBrightness.enabled}
-                                labeled={true}
-                                labelText=""
-                                timeout={[
-                                    350,
-                                    (value) =>
-                                        dispatch(
-                                            setReaderSettings({
-                                                forceLowBrightness: {
-                                                    ...appSettings.readerSettings.forceLowBrightness,
-                                                    value,
-                                                },
-                                            })
-                                        ),
-                                ]}
-                            />
                         </div>
                     </div>
                     <div className={"settingItem "}>
@@ -800,6 +764,42 @@ const ReaderSettings = memo(
                                     );
                                 }}
                                 paraAfter="Show Page Number in Zen Mode."
+                            />
+                            <InputCheckbox
+                                checked={appSettings.readerSettings.forceLowBrightness.enabled}
+                                onChange={(e) => {
+                                    dispatch(
+                                        setReaderSettings({
+                                            forceLowBrightness: {
+                                                ...appSettings.readerSettings.forceLowBrightness,
+                                                enabled: e.currentTarget.checked,
+                                            },
+                                        })
+                                    );
+                                }}
+                                paraAfter="Force Low brightness"
+                            />
+                            <InputRange
+                                className={"colorRange"}
+                                min={0}
+                                max={0.9}
+                                step={0.05}
+                                value={appSettings.readerSettings.forceLowBrightness.value}
+                                disabled={!appSettings.readerSettings.forceLowBrightness.enabled}
+                                labeled={true}
+                                labelText=""
+                                timeout={[
+                                    350,
+                                    (value) =>
+                                        dispatch(
+                                            setReaderSettings({
+                                                forceLowBrightness: {
+                                                    ...appSettings.readerSettings.forceLowBrightness,
+                                                    value,
+                                                },
+                                            })
+                                        ),
+                                ]}
                             />
                         </div>
                     </div>

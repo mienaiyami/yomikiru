@@ -1516,7 +1516,7 @@ body {
                             }
 
                             .resetBtn {
-                                background-color: var(--text-input-bg);
+                                background-color: var(--btn-color);
                                 padding: 10px;
                                 font-size: 15px;
                                 align-items: center;
@@ -1524,17 +1524,18 @@ body {
                                 overflow: initial;
 
                                 &:hover {
-                                    background-color: var(--text-input-bg-focus);
+                                    background-color: var(--btn-color-hover);
                                 }
                                 &:focus,
                                 &:active {
-                                    box-shadow: var(--btn-color-focus) 0 0 0px 2px;
+                                    background-color: var(--btn-color-focus);
+                                    box-shadow: var(--btn-shadow-focus) 0 0 0px 2px;
                                 }
                             }
 
                             label {
                                 cursor: pointer;
-                                background-color: var(--text-input-bg);
+                                background-color: var(--btn-color);
                                 padding: 10px;
                                 font-size: 15px;
                                 align-items: center;
@@ -1545,19 +1546,22 @@ body {
                                 }
 
                                 &:hover {
-                                    background-color: var(--text-input-bg-focus);
+                                    background-color: var(--btn-color-hover);
                                 }
                                 &:focus,
                                 &:active {
-                                    box-shadow: var(--btn-color-focus) 0 0 0px 2px;
+                                    background-color: var(--btn-color-focus);
+                                    box-shadow: var(--btn-shadow-focus) 0 0 0px 2px;
                                 }
                                 &.selected {
                                     background-color: var(--btn-color-focus);
                                 }
                                 &.opacityRange {
                                     display: grid;
-                                    grid-template-columns: auto 2em;
+                                    grid-template-columns: auto 1.3em;
                                     gap: 5px;
+                                    font-size: 1.3em;
+                                    justify-items: center;
                                 }
                             }
                         }
@@ -2382,10 +2386,11 @@ body {
                             .colorRange {
                                 display: grid;
                                 grid-template-columns: auto 2rem;
+                                justify-items: center;
 
-                                input[type="range"] {
-                                    width: auto;
-                                }
+                                // input[type="range"] {
+                                //     width: auto;
+                                // }
                                 &.labeled {
                                     grid-template-columns: 1rem auto 2rem;
                                 }
