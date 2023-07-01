@@ -46,7 +46,7 @@
                 "--sideList-bg-color": "var(--topBar-color)",
                 "--icon-color": "#fff8f0",
                 "--font-color": "#fff8f0",
-                "--font-color-secondary": "#b2ada7",
+                "--font-color-secondary": "#888581",
                 "--font-select-color": "#000000",
                 "--font-select-bg-color": "#fff8f0",
                 "--btn-color": "#3b3a3e",

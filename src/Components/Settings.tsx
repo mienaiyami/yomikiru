@@ -356,7 +356,7 @@ const Settings = (): ReactElement => {
     const TAB_INFO = {
         settings: [0, "Settings"],
         shortcutKeys: [1, "Shortcut Keys"],
-        makeTheme: [2, "Make Theme"],
+        makeTheme: [2, "Theme Maker"],
         about: [3, "About"],
     } as const;
 
@@ -411,10 +411,10 @@ const Settings = (): ReactElement => {
                         <div className="content2">
                             <div className="settingItem2">
                                 <h3>Default Location</h3>
-                                <div className="desc">
+                                {/* <div className="desc">
                                     Default location of home screen Locations tab. Set this to folder where you
                                     store your manga.
-                                </div>
+                                </div> */}
                                 <div className="main row">
                                     <input type="text" value={appSettings.baseDir} readOnly />
                                     <button
@@ -430,13 +430,57 @@ const Settings = (): ReactElement => {
                             <div className="settingItem2" id="settings-theme">
                                 <h3>Theme</h3>
                                 <div className="main row">
-                                    <InputSelect
+                                    {/* <InputSelect
                                         options={allThemes.map((e) => e.name)}
                                         value={theme}
                                         onChange={(e) => {
                                             dispatch(setTheme(e.currentTarget.value));
                                         }}
-                                    />
+                                    /> */}
+                                    {allThemes.map((e, i) => (
+                                        <div className="themeButtons" key={e.name}>
+                                            <button
+                                                className={theme === e.name ? "selected" : ""}
+                                                onClick={() => dispatch(setTheme(e.name))}
+                                            >
+                                                {e.name}
+                                            </button>
+                                            <button
+                                                onClick={() => {
+                                                    if (e.name === theme) {
+                                                        window.dialog.warn({
+                                                            message:
+                                                                "Choose other theme before deleting this one.",
+                                                        });
+                                                        return;
+                                                    }
+                                                    if (themesRaw.allData.map((q) => q.name).includes(e.name)) {
+                                                        window.dialog.customError({
+                                                            title: "Error",
+                                                            message: `Unable to delete default themes.`,
+                                                        });
+                                                        return;
+                                                    }
+                                                    window.dialog
+                                                        .confirm({
+                                                            message: `Delete theme "${e.name}"`,
+                                                            noOption: false,
+                                                        })
+                                                        .then((res) => {
+                                                            if (res.response === 0) {
+                                                                dispatch(deleteTheme(i));
+                                                                // setAllThemes((init) => {
+                                                                //     init.splice(i, 1);
+                                                                //     return [...init];
+                                                                // });
+                                                            }
+                                                        });
+                                                }}
+                                            >
+                                                <FontAwesomeIcon icon={faTrash} />
+                                            </button>
+                                        </div>
+                                    ))}
                                     <button
                                         onClick={() => {
                                             setCurrentTab(TAB_INFO.makeTheme[0]);
@@ -445,7 +489,7 @@ const Settings = (): ReactElement => {
                                         <FontAwesomeIcon icon={faPlus} /> <span className="icon">/</span>{" "}
                                         <FontAwesomeIcon icon={faEdit} />
                                     </button>
-                                    <button
+                                    {/* <button
                                         onClick={() => {
                                             if (themesRaw.allData.map((q) => q.name).includes(theme)) {
                                                 window.dialog.customError({
@@ -454,20 +498,20 @@ const Settings = (): ReactElement => {
                                                 });
                                                 return;
                                             }
-                                            // if (e.name === theme) {
-                                            //     window.dialog.warn({
-                                            //         message:
-                                            //             "Choose other theme before deleting this one.",
-                                            //     });
-                                            //     return;
-                                            // }
-                                            // if (themesRaw.allData.map((q) => q.name).includes(e.name)) {
-                                            //     window.dialog.customError({
-                                            //         title: "Error",
-                                            //         message: `Unable to delete default themes.`,
-                                            //     });
-                                            //     return;
-                                            // }
+                                            if (e.name === theme) {
+                                                window.dialog.warn({
+                                                    message:
+                                                        "Choose other theme before deleting this one.",
+                                                });
+                                                return;
+                                            }
+                                            if (themesRaw.allData.map((q) => q.name).includes(e.name)) {
+                                                window.dialog.customError({
+                                                    title: "Error",
+                                                    message: `Unable to delete default themes.`,
+                                                });
+                                                return;
+                                            }
                                             window.dialog
                                                 .confirm({
                                                     message: `Delete theme "${theme}"`,
@@ -487,9 +531,9 @@ const Settings = (): ReactElement => {
                                         }}
                                     >
                                         <FontAwesomeIcon icon={faTrash} />
-                                    </button>
+                                    </button> */}
                                 </div>
-                                <hr className="mini" />
+                                <hr />
                                 <div className=" col">
                                     <div className="main row">
                                         <button
@@ -970,10 +1014,11 @@ const Settings = (): ReactElement => {
                                                 (path) => {
                                                     dispatch(setAppSettings({ customStylesheet: path }));
                                                     const target = e.currentTarget;
-                                                    target.innerText = "Refresh to apply";
+                                                    target.innerText = "Applying...";
                                                     setTimeout(() => {
-                                                        target.innerText = "Select";
-                                                    }, 4000);
+                                                        window.location.reload();
+                                                        // target.innerText = "Select";
+                                                    }, 3000);
                                                 },
                                                 true,
                                                 [
@@ -991,10 +1036,11 @@ const Settings = (): ReactElement => {
                                         onClick={(e) => {
                                             dispatch(setAppSettings({ customStylesheet: "" }));
                                             const target = e.currentTarget;
-                                            target.innerText = "Refresh to apply";
+                                            target.innerText = "Applying...";
                                             setTimeout(() => {
-                                                target.innerText = "Clear";
-                                            }, 4000);
+                                                window.location.reload();
+                                                // target.innerText = "Clear";
+                                            }, 3000);
                                         }}
                                     >
                                         Clear
@@ -1709,7 +1755,7 @@ const Settings = (): ReactElement => {
                                 <div className="main col">
                                     <InputCheckbox
                                         className="noBG"
-                                        paraAfter="Check for pdates on app startup"
+                                        paraAfter="Check for updates on app startup"
                                         checked={appSettings.updateCheckerEnabled}
                                         onChange={(e) => {
                                             dispatch(
