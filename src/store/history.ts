@@ -17,7 +17,7 @@ const updateHistory = (data: any): HistoryItem[] => {
                 data: e,
             });
     });
-    saveJSONfile(historyPath, newHistory, true);
+    saveJSONfile(historyPath, newHistory);
     return newHistory;
 };
 
@@ -141,7 +141,7 @@ const history = createSlice({
         /**
          * only for manga/image reader
          */
-        updateCurrentHistoryPage: (state, action: PayloadAction<boolean | undefined>) => {
+        updateCurrentHistoryPage: (state) => {
             const stateDup: HistoryItem[] = JSON.parse(JSON.stringify(state));
             const link = window.app.linkInReader.link;
             const index = stateDup.findIndex((e) => e.data.link === link);
@@ -151,13 +151,13 @@ const history = createSlice({
             if (index > -1) {
                 // console.log(`Updating ${stateDup[index].mangaName} to page ${window.app.currentPageNumber}`);
                 (stateDup[index] as MangaHistoryItem).data.page = window.app.currentPageNumber;
-                saveJSONfile(historyPath, stateDup, action?.payload || false);
+                saveJSONfile(historyPath, stateDup);
             }
         },
         /**
          * only for epub reader
          */
-        updateCurrentBookHistory: (state, action: PayloadAction<boolean | undefined>) => {
+        updateCurrentBookHistory: (state) => {
             const stateDup: HistoryItem[] = JSON.parse(JSON.stringify(state));
             const link = window.app.linkInReader.link;
             const index = stateDup.findIndex((e) => e.data.link === link);
@@ -168,10 +168,11 @@ const history = createSlice({
                 (oldData as BookHistoryItem).data.elementQueryString = window.app.epubHistorySaveData.queryString;
                 (oldData as BookHistoryItem).data.date = new Date().toLocaleString("en-UK", { hour12: true });
                 stateDup.unshift(oldData);
-                saveJSONfile(historyPath, stateDup, action?.payload || false);
+                saveJSONfile(historyPath, stateDup);
             }
         },
         refreshHistory: () => {
+            window.logger.log("refreshing history");
             let newState = readHistory();
             if (newState.length === 0) newState = readHistory();
             return newState;

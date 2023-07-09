@@ -253,35 +253,31 @@ if (handleSquirrelEvent()) {
     app.quit();
 }
 
-// if (!IS_PORTABLE) {
-//     if (!fs.existsSync(path.join(app.getPath("userData"), "settings.json"))) {
-//         const oldAppPath = path.join(app.getPath("userData"), "../Manga Reader/");
-//         if (fs.existsSync(oldAppPath)) {
-//             log.log("Old app found, coping settings files.");
-//             const filesToCopy = [
-//                 "bookmarks.json",
-//                 "history.json",
-//                 "settings.json",
-//                 "themes.json",
-//                 "shortcuts.json",
-//                 "logs/main.log",
-//                 "logs/renderer.log",
-//             ];
-//             filesToCopy.forEach((e) => {
-//                 if (fs.existsSync(path.join(oldAppPath, e))) {
-//                     fs.copyFileSync(path.join(oldAppPath, e), path.join(app.getPath("userData"), e));
-//                     log.log(`${e} copied from ${path.join(oldAppPath, e)}`);
-//                 } else {
-//                     log.log(`${e} not found in ${oldAppPath}`);
-//                 }
-//             });
-//             log.log("Uninstalling old app...");
-//             const oldUpdaterPath = path.join(app.getPath("userData"), "../../local/mangareader/Update.exe");
-//             spawnSync(oldUpdaterPath, ["--uninstall"]);
-//             log.log("Uninstall complete.");
-//         }
-//     }
-// }
+const saveJSONfile = (path: string, data: any, sync = true) => {
+    // const saveString = JSON.stringify(data, null, "\t");
+    // if (saveString) {
+    // log.log("starting save :\t", path);
+    try {
+        // JSON.parse(data);
+        // console.log("Saving " + path);
+        if (sync) {
+            fs.writeFileSync(path, data);
+            // log.log("done save :\t", path);
+        } else
+            fs.writeFile(path, data, (err) => {
+                if (err) {
+                    log.error(err);
+                    // dialog.nodeError(err);
+                }
+            });
+    } catch (err) {
+        log.error("ERROR::saveJSONfile:electron:", err, "Retrying...");
+        setTimeout(() => {
+            saveJSONfile(path, data, sync);
+        }, 1000);
+    }
+    // }
+};
 
 // when manga reader opened from context menu "open with manga reader"
 let openFolderOnLaunch = "";
@@ -456,6 +452,9 @@ const registerListener = () => {
             }
             windowsCont[currentWindowIndex] = null;
         });
+    });
+    ipcMain.on("saveFile", (e, path: string, data: string) => {
+        saveJSONfile(path, data);
     });
 };
 app.on("ready", () => {

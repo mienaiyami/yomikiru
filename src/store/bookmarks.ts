@@ -16,7 +16,7 @@ const updateBookmarks = (data: any): Manga_BookItem[] => {
                 data: e,
             });
     });
-    saveJSONfile(bookmarksPath, newBk, true);
+    saveJSONfile(bookmarksPath, newBk);
     return newBk;
 };
 
