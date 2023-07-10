@@ -20,7 +20,7 @@ import contextMenu, { setContextMenu } from "../store/contextMenu";
 import EPUBReaderSettings from "./EPubReaderSettings";
 import EPubReaderSideList from "./EPubReaderSideList";
 import { setReaderSettings } from "../store/appSettings";
-import { setBookInReader } from "../store/bookInReader";
+import bookInReader, { setBookInReader } from "../store/bookInReader";
 import { setUnzipping } from "../store/unzipping";
 
 // type ReaderImageSrc = string;
@@ -314,7 +314,7 @@ const EPubReader = () => {
     /**
      *  css selector of element which was on top of view before changing size,etc.
      */
-    const [elemBeforeChange, setElemBeforeChange] = useState("");
+    const [elemBeforeChange, setElemBeforeChange] = useState(linkInReader.queryStr || "");
     const [isSideListPinned, setSideListPinned] = useState(false);
     const [tocData, settocData] = useState<TOCData | null>(null);
     const [currentChapterURL, setCurrentChapterURL] = useState("~");
@@ -342,12 +342,25 @@ const EPubReader = () => {
     const addToBookmarkRef = useRef<HTMLButtonElement>(null);
 
     useLayoutEffect(() => {
+        window.app.linkInReader = linkInReader;
+        loadEPub(linkInReader.link);
+    }, [linkInReader]);
+
+    useLayoutEffect(() => {
         if (appSettings.epubReaderSettings.loadOneChapter && readerRef.current) readerRef.current.scrollTop = 0;
+        window.app.epubHistorySaveData = {
+            chapter: "~",
+            queryString: "",
+        };
         if (tocData)
-            window.app.epubHistorySaveData = {
-                chapter: tocData.nav.find((e) => e.src === currentChapterURL)?.name || "~",
-                queryString: "",
-            };
+            window.app.epubHistorySaveData.chapter =
+                tocData.nav.find((e) => e.src === currentChapterURL)?.name || "~";
+        if (
+            window.app.epubHistorySaveData.chapter === "~" ||
+            window.app.epubHistorySaveData.chapter === linkInReader.chapter
+        )
+            window.app.epubHistorySaveData.queryString = linkInReader.queryStr || "";
+
         dispatch(updateCurrentBookHistory());
     }, [currentChapterURL]);
 
@@ -623,7 +636,7 @@ const EPubReader = () => {
                                             type: "book",
                                             data: {
                                                 bookOpened,
-                                                elementQueryString: "",
+                                                elementQueryString: elemBeforeChange || "",
                                             },
                                         })
                                     );
@@ -678,13 +691,16 @@ const EPubReader = () => {
                     if (elem) if (elem.tagName !== "SECTION" && elem.parentElement !== sectionMain) break;
                     y += 10;
                 }
+
                 if (elem) {
                     const fff = window.getCSSPath(elem);
+                    window.app.epubHistorySaveData = {
+                        chapter: "~",
+                        queryString: fff,
+                    };
                     if (tocData)
-                        window.app.epubHistorySaveData = {
-                            chapter: tocData.nav.find((e) => e.src === currentChapterURL)?.name || "",
-                            queryString: fff,
-                        };
+                        window.app.epubHistorySaveData.chapter =
+                            tocData.nav.find((e) => e.src === currentChapterURL)?.name || "~";
                     if (callback) callback(fff);
                     setElemBeforeChange(fff);
                 }
@@ -949,11 +965,6 @@ const EPubReader = () => {
             e?.classList.add("faded");
         };
     }, [shortcutText]);
-
-    useLayoutEffect(() => {
-        window.app.linkInReader = linkInReader;
-        loadEPub(linkInReader.link);
-    }, [linkInReader]);
 
     return (
         <div
