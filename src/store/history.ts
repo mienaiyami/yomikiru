@@ -172,7 +172,6 @@ const history = createSlice({
             }
         },
         refreshHistory: () => {
-            window.logger.log("refreshing history");
             let newState = readHistory();
             if (newState.length === 0) newState = readHistory();
             return newState;

@@ -63,6 +63,7 @@ export const appSettings = createSlice({
             return newSettings;
         },
         setReaderSettings: (state, action: PayloadAction<ReaderSettingsOptional>) => {
+            console.log(action.payload);
             const newSettings: AppSettings = {
                 ...state,
                 readerSettings: {

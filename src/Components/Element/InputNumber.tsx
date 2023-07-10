@@ -41,8 +41,7 @@ const InputNumber = ({
         let timeoutid: NodeJS.Timeout;
         if (timeout) {
             timeoutid = setTimeout(() => {
-                // if (lastEvent)
-                timeout[1](valueProxy);
+                if (value !== valueProxy) timeout[1](valueProxy);
             }, timeout[0]);
         }
         return () => {

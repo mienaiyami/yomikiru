@@ -421,9 +421,9 @@ const List = memo(
         useLayoutEffect(() => {
             setListShow(temp_ListShow);
         }, [currentChapterURL]);
-        useLayoutEffect(() => {
-            console.log(listShow);
-        }, [listShow]);
+        // useLayoutEffect(() => {
+        //     console.log(listShow);
+        // }, [listShow]);
         // console.log(tocData.depth, temp);
 
         //! i have literally no idea wtf i was doing here

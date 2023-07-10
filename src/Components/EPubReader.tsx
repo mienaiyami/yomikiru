@@ -786,7 +786,8 @@ const EPubReader = () => {
                 });
         }
         const timeOutId = setTimeout(() => {
-            dispatch(setReaderSettings({ sideListWidth }));
+            if (sideListWidth !== appSettings?.readerSettings?.sideListWidth)
+                dispatch(setReaderSettings({ sideListWidth }));
         }, 500);
         return () => {
             clearTimeout(timeOutId);

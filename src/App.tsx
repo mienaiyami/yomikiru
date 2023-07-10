@@ -360,8 +360,8 @@ const App = (): ReactElement => {
         window.electron.ipcRenderer.on("recordPageNumber", () => {
             if (isReaderOpen) closeReader();
             else if (window.app.linkInReader.link !== "") {
-                if (window.app.linkInReader.type === "image") dispatch(updateCurrentHistoryPage(true));
-                else dispatch(updateCurrentBookHistory(true));
+                if (window.app.linkInReader.type === "image") dispatch(updateCurrentHistoryPage());
+                else dispatch(updateCurrentBookHistory());
             }
         });
         window.app.titleBarHeight = parseFloat(

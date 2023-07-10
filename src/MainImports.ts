@@ -1009,7 +1009,7 @@ const defaultSettings: AppSettings = {
             g: 0,
             b: 0,
             a: 1,
-            blendMode: "normal",
+            blendMode: "screen",
         },
         forceLowBrightness: {
             enabled: false,

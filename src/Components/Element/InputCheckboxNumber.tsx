@@ -40,7 +40,7 @@ const InputCheckboxNumber = ({
         let timeoutid: NodeJS.Timeout;
         if (timeout) {
             timeoutid = setTimeout(() => {
-                timeout[1](valueProxy);
+                if (value !== valueProxy) timeout[1](valueProxy);
             }, timeout[0]);
         }
         return () => {
