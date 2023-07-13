@@ -410,7 +410,6 @@ const List = memo(
                         }
                         if (cur.depth === 1) acc[len - 1].child.push(cur);
                         if (cur.src === currentChapterURL) temp_ListShow[acc.length - 1] = true;
-                        console.log("a", temp_ListShow);
                     }
                     return acc;
                 }, [] as { parent: TOCData["nav"][0]; child: TOCData["nav"] }[]),
@@ -469,7 +468,7 @@ const List = memo(
                         title={name}
                         ref={(node) => {
                             if (node !== null && src === currentChapterURL)
-                                node.scrollIntoView({ block: "nearest" });
+                                node.scrollIntoView({ block: "start" });
                         }}
                     >
                         <span className="text">{"\u00A0".repeat((tocData.depth - depth) * 5) + name}</span>

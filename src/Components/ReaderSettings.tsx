@@ -608,7 +608,6 @@ const ReaderSettings = memo(
                                         500,
                                         (value) => {
                                             const rgb = window.color.hex_to_RGBA(value);
-                                            console.log(rgb, value);
                                             if (rgb) {
                                                 dispatch(
                                                     setReaderSettings({

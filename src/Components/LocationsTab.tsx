@@ -199,7 +199,6 @@ const LocationsTab = (): ReactElement => {
                                         e.name.toUpperCase() === val.replaceAll(window.path.sep, "").toUpperCase()
                                 );
                                 if (index >= 0) {
-                                    console.log("aaaa");
                                     const aa = window.path.normalize(locations[index].link);
                                     if (window.fs.existsSync(aa) && window.fs.lstatSync(aa).isFile())
                                         return openInReader(aa);

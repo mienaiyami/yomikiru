@@ -38,14 +38,16 @@ const BookmarkHistoryListItem = (props: ListItemE) => {
         <li
             title={
                 props.type === "book"
-                    ? `Title     : ${props.data.title}\n` +
+                    ? `Title       : ${props.data.title}\n` +
                       `Chapter : ${props.data.chapter || "~"}\n` +
-                      `Date      : ${props.data.date}`
+                      `Date      : ${props.data.date}\n` +
+                      `Path      : ${props.data.link}`
                     : `Manga   : ${props.data.mangaName}\n` +
                       `Chapter : ${props.data.chapterName}\n` +
                       `Pages    : ${props.data.pages}\n` +
                       `Page      : ${props.data.page || 1}\n` +
-                      `Date      : ${props.data.date}`
+                      `Date      : ${props.data.date}\n` +
+                      `Path      : ${props.data.link}`
             }
             // onMouseOver={(e) => {
             //     let y = e.currentTarget.getBoundingClientRect().top;
