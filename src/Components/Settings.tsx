@@ -1185,6 +1185,24 @@ const Settings = (): ReactElement => {
                                 </div>
                                 <div className="toggleItem">
                                     <InputCheckbox
+                                        checked={appSettings.showMoreDataOnItemHover}
+                                        className="noBG"
+                                        onChange={(e) => {
+                                            dispatch(
+                                                setAppSettings({
+                                                    showMoreDataOnItemHover: e.currentTarget.checked,
+                                                })
+                                            );
+                                        }}
+                                        labelAfter="More Info on Bookmark / History Hover"
+                                    />
+                                    <div className="desc">
+                                        Show more info such as "date", "total pages", "last page number", "path"
+                                        when mouse over items in bookmark / history tab.
+                                    </div>
+                                </div>
+                                <div className="toggleItem">
+                                    <InputCheckbox
                                         checked={appSettings.useCanvasBasedReader}
                                         className="noBG"
                                         onChange={(e) => {

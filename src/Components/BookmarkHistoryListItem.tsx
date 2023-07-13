@@ -1,10 +1,11 @@
 import { useContext } from "react";
 import { AppContext } from "../App";
 import { setContextMenu } from "../store/contextMenu";
-import { useAppDispatch } from "../store/hooks";
+import { useAppDispatch, useAppSelector } from "../store/hooks";
 
 const BookmarkHistoryListItem = (props: ListItemE) => {
     const { openInReader } = useContext(AppContext);
+    const appSettings = useAppSelector((store) => store.appSettings);
     const dispatch = useAppDispatch();
     // const [pos, setPos] = useState({ x: 0, y: 0 });
     // const infoRef = useRef<HTMLDivElement>(null);
@@ -34,21 +35,22 @@ const BookmarkHistoryListItem = (props: ListItemE) => {
     //         </div>
     //     );
     // };
+    const title =
+        props.type === "book"
+            ? `Title       : ${props.data.title}\n` +
+              `Chapter : ${props.data.chapter || "~"}\n` +
+              `Date      : ${props.data.date}\n` +
+              `Path      : ${props.data.link}`
+            : `Manga   : ${props.data.mangaName}\n` +
+              `Chapter : ${props.data.chapterName}\n` +
+              `Pages    : ${props.data.pages}\n` +
+              `Page      : ${props.data.page || 1}\n` +
+              `Date      : ${props.data.date}\n` +
+              `Path      : ${props.data.link}`;
+
     return (
         <li
-            title={
-                props.type === "book"
-                    ? `Title       : ${props.data.title}\n` +
-                      `Chapter : ${props.data.chapter || "~"}\n` +
-                      `Date      : ${props.data.date}\n` +
-                      `Path      : ${props.data.link}`
-                    : `Manga   : ${props.data.mangaName}\n` +
-                      `Chapter : ${props.data.chapterName}\n` +
-                      `Pages    : ${props.data.pages}\n` +
-                      `Page      : ${props.data.page || 1}\n` +
-                      `Date      : ${props.data.date}\n` +
-                      `Path      : ${props.data.link}`
-            }
+            {...(appSettings.showMoreDataOnItemHover ? { title } : {})}
             // onMouseOver={(e) => {
             //     let y = e.currentTarget.getBoundingClientRect().top;
             //     // console.log(e.currentTarget.getBoundingClientRect().top);
