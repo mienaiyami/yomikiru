@@ -81,40 +81,6 @@
     --zenModePage-bg: #fff;
 }
 
-.refrenceVariable {
-    // --body-bg: #ffffff;
-    // --sideList-bg: var(--body-bg);
-    // --icon-color: #000c29;
-    // --font-color: #000c29;
-    // --font-select-color: #000c29;
-    // --font-select-bg: #fff8f0;
-
-    // --color-primary: #487fff;
-    // --color-secondary: #1f62ff;
-    // --color-tertiary: #93b4ff;
-
-    // --topBar-color: #e0e0e0;
-    // --topBar-btn-hover-color: #709bff;
-    // --input-bg: #b6ccfe;
-    // --btn-color1: #b6ccfe;
-
-    // --btn-color2: #709bff;
-
-    // --listItem-bg-color: #00000000;
-    // --listItem-hover-color: #b6ccfe;
-    // --listItem-alreadyRead-color: #93b4ff;
-    // --listItem-current: #709bff;
-    // --toolbar-btn-bg: #b6ccfe;
-    // --toolbar-btn-hover: #487fff;
-    // --scrollbar-track-color: #b6ccfe00;
-    // --scrollbar-thumb-color: #b6ccfe;
-    // --scrollbar-thumb-color-hover: #709bff;
-    // --divider-color: #b6ccfe;
-    // --context-menu-text: var(--font-color);
-    // --context-menu-bg: var(--color-tertiary);
-    // --zenModePageIndicator-bg: var(var(--body-bg));
-}
-
 // here to prevent precedence, style from <style>
 #EPubReader hr {
     margin: 1.5em 0;
@@ -131,11 +97,12 @@ body.zenMode {
     ::-webkit-scrollbar {
         display: none;
     }
-
-    #app .reader .readerSideList,
     .readerSettings,
     #topBar {
         display: none;
+    }
+    .readerSideList {
+        visibility: hidden;
     }
 
     #app .reader .zenModePageNumber.show {
