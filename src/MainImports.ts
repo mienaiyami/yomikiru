@@ -3,7 +3,6 @@ import { ipcRenderer, webFrame } from "electron";
 /*//! i know its dangerous but its offline app and i was unable to get BrowserWindow to work
   //! in renderer with contextBridge from preload
  */
-import crossZip from "cross-zip";
 import chokidar from "chokidar";
 import * as pdfjsLib from "pdfjs-dist/legacy/build/pdf.js";
 // eslint-disable-next-line @typescript-eslint/ban-ts-comment
@@ -262,10 +261,6 @@ declare global {
             nativeImage: typeof nativeImage;
             webFrame: typeof webFrame;
         };
-        /**
-         * Library to un-archive zip or cbz.
-         */
-        crossZip: typeof crossZip;
         /**
          * to convert pdf to img.
          */
@@ -794,7 +789,6 @@ window.shortcutsFunctions = [
     },
 ];
 window.logger = log;
-window.crossZip = crossZip;
 window.pdfjsLib = pdfjsLib;
 window.chokidar = chokidar;
 window.makeFileSafe = (string: string): string => {
@@ -960,6 +954,11 @@ window.dialog = {
             defaultId,
         }),
 };
+
+export const unzip = (link: string, extractPath: string) => {
+    return window.electron.ipcRenderer.invoke("unzip", link, extractPath);
+};
+
 const saveJSONfile = (path: string, data: any) => {
     // console.log("Saving file ", window.fileSaveTimeOut, path);
     const str = JSON.stringify(data, null, "\t");

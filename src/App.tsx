@@ -13,7 +13,7 @@ import { setReaderOpen } from "./store/isReaderOpen";
 import { setMangaInReader } from "./store/mangaInReader";
 import { refreshBookmark } from "./store/bookmarks";
 import { setTheme } from "./store/themes";
-import { bookmarksPath, historyPath, promptSelectDir } from "./MainImports";
+import { bookmarksPath, historyPath, promptSelectDir, unzip } from "./MainImports";
 import { setBookInReader } from "./store/bookInReader";
 import { setAniEditOpen } from "./store/isAniEditOpen";
 import { setAniLoginOpen } from "./store/isAniLoginOpen";
@@ -165,8 +165,12 @@ const App = (): ReactElement => {
             console.log(`Extracting "${link}" to "${tempExtractPath}"`);
             window.app.deleteDirOnClose = tempExtractPath;
             dispatch(setUnzipping(true));
-            window.crossZip.unzip(link, tempExtractPath, (err) => {
-                if (err) {
+
+            unzip(link, tempExtractPath)
+                .then((res) => {
+                    if (res) tempFn(tempExtractPath, 1);
+                })
+                .catch((err) => {
                     dispatch(setUnzipping(false));
                     if (err.message.includes("spawn unzip ENOENT"))
                         return window.dialog.customError({
@@ -178,9 +182,23 @@ const App = (): ReactElement => {
                         detail: err.message,
                         log: false,
                     });
-                }
-                tempFn(tempExtractPath, 1);
-            });
+                });
+            // window.crossZip.unzip(link, tempExtractPath, (err) => {
+            //     if (err) {
+            //         dispatch(setUnzipping(false));
+            //         if (err.message.includes("spawn unzip ENOENT"))
+            //             return window.dialog.customError({
+            //                 message: "Error while extracting.",
+            //                 detail: '"unzip" not found. Please install by using\n"sudo apt install unzip"',
+            //             });
+            //         return window.dialog.customError({
+            //             message: "Error while extracting.",
+            //             detail: err.message,
+            //             log: false,
+            //         });
+            //     }
+            //     tempFn(tempExtractPath, 1);
+            // });
         } else if (window.path.extname(link).toLowerCase() === ".pdf") {
             let tempExtractPath = window.path.join(
                 window.electron.app.getPath("temp"),

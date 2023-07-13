@@ -8,6 +8,7 @@ import * as remote from "@electron/remote/main";
 remote.initialize();
 declare const HOME_WEBPACK_ENTRY: string;
 import { exec, spawn, spawnSync } from "child_process";
+import crossZip from "cross-zip";
 import log from "electron-log";
 
 if (require("electron-squirrel-startup")) app.quit();
@@ -455,6 +456,18 @@ const registerListener = () => {
     });
     ipcMain.on("saveFile", (e, path: string, data: string) => {
         saveJSONfile(path, data);
+    });
+
+    ipcMain.handle("unzip", (e, link: string, extractPath: string) => {
+        return new Promise((res, rej) => {
+            if (link && extractPath) {
+                console.log("starting extract", link);
+                crossZip.unzip(link, extractPath, (err) => {
+                    if (err) rej(err);
+                    else res({ link, extractPath });
+                });
+            } else rej("ELECTRON:UNZIP: Invalid link or extractPath.");
+        });
     });
 };
 app.on("ready", () => {

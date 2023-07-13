@@ -22,6 +22,7 @@ import EPubReaderSideList from "./EPubReaderSideList";
 import { setReaderSettings } from "../store/appSettings";
 import bookInReader, { setBookInReader } from "../store/bookInReader";
 import { setUnzipping } from "../store/unzipping";
+import { unzip } from "../MainImports";
 
 // type ReaderImageSrc = string;
 // type ReaderHTML = Document;
@@ -468,211 +469,222 @@ const EPubReader = () => {
         console.log("extracting ", link, " at ", extractPath);
         console.time("unzipping");
         console.timeLog("unzipping");
-        window.crossZip.unzip(link, extractPath, (err) => {
-            // dispatch(setLoadingMangaPercent(50));
-            if (err) {
-                dispatch(setUnzipping(false));
-                // dispatch(setLoadingManga(false));
-                // dispatch(setLoadingMangaPercent(0));
-                // dispatch(setUnzipping(false));
-                if (err.message.includes("spawn unzip ENOENT"))
-                    return window.dialog.customError({
-                        message: "Error while extracting.",
-                        detail: '"unzip" not found. Please install by using\n"sudo apt install unzip"',
-                    });
-                return window.dialog.customError({
-                    message: "Error while extracting.",
-                    detail: err.message,
-                    log: false,
-                });
-            }
-            console.log("done extracting epub file.");
-            console.timeLog("unzipping");
-            const parser = new DOMParser();
-            const META_INF_TEXT = window.fs.readFileSync(
-                window.path.join(extractPath, "META-INF/container.xml"),
-                "utf-8"
-            );
-            const META_INF = parser.parseFromString(META_INF_TEXT, "text/xml");
-            const CONTENT_PATH = window.path.join(
-                extractPath,
-                META_INF.querySelector("rootfile")?.getAttribute("full-path") || ""
-            );
-            if (
-                CONTENT_PATH &&
-                window.fs.existsSync(CONTENT_PATH) &&
-                !window.fs.lstatSync(CONTENT_PATH).isDirectory()
-            ) {
-                const CONTENT_OPF_TEXT = window.fs.readFileSync(CONTENT_PATH, "utf-8");
-                const CONTENT_OPF = parser.parseFromString(CONTENT_OPF_TEXT, "text/xml");
-                const manifestData = CONTENT_OPF.querySelectorAll("manifest > item");
-                if (manifestData.length > 0) {
-                    const tempDisplayData: DisplayData[] = [];
-                    const tempStylesheets: string[] = [];
-                    // console.log(CONTENT_OPF);
-                    const authorName = CONTENT_OPF.getElementsByTagName("dc:creator")[0]?.textContent || "~";
-                    const bookName = CONTENT_OPF.getElementsByTagName("dc:title")[0]?.textContent || "~";
-                    // const authorName = CONTENT_OPF.querySelector("dc:creator")?.textContent || "~";
-                    // const bookName = CONTENT_OPF.querySelector("dc:title")?.textContent || "~";
-                    manifestData.forEach((manifest) => {
-                        const mediaType = manifest.getAttribute("media-type");
-                        if (mediaType === "application/xhtml+xml") {
-                            const href = manifest.getAttribute("href");
-                            if (href) {
-                                const filePath = window.path.join(window.path.dirname(CONTENT_PATH), href);
-                                if (!appSettings.epubReaderSettings.loadOneChapter) {
-                                    const xhtml = parseEPubHTMLX(filePath, parser);
-                                    tempDisplayData.push({
-                                        // type: "html",
-                                        content: xhtml,
-                                        id: manifest.getAttribute("id") || "",
-                                        url: filePath,
-                                    });
-                                } else
-                                    tempDisplayData.push({
-                                        id: manifest.getAttribute("id") || "",
-                                        url: filePath,
-                                    });
-                            }
-                        }
-                        // if (mediaType?.startsWith("image/")) {
-                        //     const href = window.path.join(
-                        //         window.path.dirname(CONTENT_PATH),
-                        //         e.getAttribute("href") || ""
-                        //     );
-                        //     if (href) {
-                        //         // const filePath = window.path.join(window.path.dirname(CONTENT_PATH), href);
-                        //         tempDisplayData.push({
-                        //             type: "image",
-                        //             content: href,
-                        //             id: e.getAttribute("id") || "",
-                        //             url: href,
-                        //         });
-                        //     }
-                        // }
-                        if (mediaType === "text/css") {
-                            const href_old = manifest.getAttribute("href");
-                            if (href_old) {
-                                const href = window.path.join(window.path.dirname(CONTENT_PATH), href_old);
-                                tempStylesheets.push(href);
-                            }
-                        }
-                        if (mediaType === "application/x-dtbncx+xml") {
-                            const href = window.path.join(
-                                window.path.dirname(CONTENT_PATH),
-                                manifest.getAttribute("href") || ""
-                            );
-                            if (href) {
-                                window.fs.readFile(href, "utf8", (err, data) => {
-                                    if (err) return console.error(err);
-                                    const tocXML = parser.parseFromString(data, "application/xml");
-                                    const depth_original = parseInt(
-                                        tocXML.querySelector('meta[name="dtb:depth"]')?.getAttribute("content") ||
-                                            "1"
-                                    );
-                                    const tempTOCData: TOCData = {
-                                        title: bookName,
-                                        // title: tocXML.querySelector("docTitle text")?.textContent || "~",
-                                        author: authorName,
-                                        // author: tocXML.querySelector("docAuthor text")?.textContent || "~",
-                                        depth: depth_original,
-                                        nav: [],
-                                    };
-
-                                    /**idk y some epub had depth=2 but only had one navPoint, so making this */
-                                    let changedDepth = false;
-                                    /** some have useless depth making errors later  */
-                                    let depth_real = depth_original;
-                                    const getData = (selector: string, depth: number) => {
-                                        const elems = tocXML.querySelectorAll(selector);
-                                        if (elems.length <= 0) return;
-                                        if (depth < depth_real) {
-                                            changedDepth = true;
-                                            depth_real = depth;
-                                        }
-                                        elems.forEach((e, i) => {
-                                            tempTOCData.nav.push({
-                                                name: e.querySelector("navLabel text")?.textContent || "~",
-                                                src: window.path.join(
-                                                    window.path.dirname(href),
-                                                    // dunno why but some toc.ncx have src like "Text/Text/0202_Chapter_202_-_Seems_Like_Never_Coming_Back.xhtml"
-                                                    e
-                                                        .querySelector("content")
-                                                        ?.getAttribute("src")
-                                                        ?.replace("Text/Text/", "Text/") || ""
-                                                ),
-                                                depth: depth,
+        // window.electron.ipcRenderer.invoke("unzip",{link,extractPath}).then()
+        unzip(link, extractPath)
+            .then((e) => {
+                if (e) {
+                    console.log("done extracting epub file.");
+                    console.timeLog("unzipping");
+                    const parser = new DOMParser();
+                    const META_INF_TEXT = window.fs.readFileSync(
+                        window.path.join(extractPath, "META-INF/container.xml"),
+                        "utf-8"
+                    );
+                    const META_INF = parser.parseFromString(META_INF_TEXT, "text/xml");
+                    const CONTENT_PATH = window.path.join(
+                        extractPath,
+                        META_INF.querySelector("rootfile")?.getAttribute("full-path") || ""
+                    );
+                    if (
+                        CONTENT_PATH &&
+                        window.fs.existsSync(CONTENT_PATH) &&
+                        !window.fs.lstatSync(CONTENT_PATH).isDirectory()
+                    ) {
+                        const CONTENT_OPF_TEXT = window.fs.readFileSync(CONTENT_PATH, "utf-8");
+                        const CONTENT_OPF = parser.parseFromString(CONTENT_OPF_TEXT, "text/xml");
+                        const manifestData = CONTENT_OPF.querySelectorAll("manifest > item");
+                        if (manifestData.length > 0) {
+                            const tempDisplayData: DisplayData[] = [];
+                            const tempStylesheets: string[] = [];
+                            // console.log(CONTENT_OPF);
+                            const authorName =
+                                CONTENT_OPF.getElementsByTagName("dc:creator")[0]?.textContent || "~";
+                            const bookName = CONTENT_OPF.getElementsByTagName("dc:title")[0]?.textContent || "~";
+                            // const authorName = CONTENT_OPF.querySelector("dc:creator")?.textContent || "~";
+                            // const bookName = CONTENT_OPF.querySelector("dc:title")?.textContent || "~";
+                            manifestData.forEach((manifest) => {
+                                const mediaType = manifest.getAttribute("media-type");
+                                if (mediaType === "application/xhtml+xml") {
+                                    const href = manifest.getAttribute("href");
+                                    if (href) {
+                                        const filePath = window.path.join(window.path.dirname(CONTENT_PATH), href);
+                                        if (!appSettings.epubReaderSettings.loadOneChapter) {
+                                            const xhtml = parseEPubHTMLX(filePath, parser);
+                                            tempDisplayData.push({
+                                                // type: "html",
+                                                content: xhtml,
+                                                id: manifest.getAttribute("id") || "",
+                                                url: filePath,
                                             });
-                                            if (depth > 1) {
-                                                getData(selector + `:nth-of-type(${i + 1}) > navPoint`, depth - 1);
-                                            }
-                                        });
-                                    };
-                                    getData("navMap > navPoint", depth_original);
-                                    // console.log(depth_real, depth_original, depth_original - depth_real + 1);
-                                    // if (!changedDepth)
-                                    tempTOCData.depth = depth_original - depth_real + 1;
-                                    tempTOCData.nav = tempTOCData.nav.map((e) => {
-                                        return { ...e, depth: e.depth - depth_real + 1 };
-                                    });
-                                    // // first with lowest depth
-                                    // setCurrentChapterURL(tempTOCData.nav.find((e) => e.depth === 1)!.src);
-                                    let currentChapterURL =
-                                        tempTOCData.nav.find((e) => e.name === linkInReader.chapter)?.src || "";
-                                    if (linkInReader.queryStr) setBookmarkedElem(linkInReader.queryStr);
-                                    if (!currentChapterURL) currentChapterURL = tempTOCData.nav[0].src;
-                                    const bookOpened: BookItem = {
-                                        author: tempTOCData.author,
-                                        link,
-                                        title: tempTOCData.title,
-                                        date: new Date().toLocaleString("en-UK", { hour12: true }),
-                                        chapter:
-                                            tempTOCData.nav.find((e) => e.src === currentChapterURL)?.name ??
-                                            tempTOCData.nav[0].name,
-                                    };
-                                    dispatch(setBookInReader(bookOpened));
-                                    dispatch(
-                                        newHistory({
-                                            type: "book",
-                                            data: {
-                                                bookOpened,
-                                                elementQueryString: elemBeforeChange || "",
-                                            },
-                                        })
+                                        } else
+                                            tempDisplayData.push({
+                                                id: manifest.getAttribute("id") || "",
+                                                url: filePath,
+                                            });
+                                    }
+                                }
+                                // if (mediaType?.startsWith("image/")) {
+                                //     const href = window.path.join(
+                                //         window.path.dirname(CONTENT_PATH),
+                                //         e.getAttribute("href") || ""
+                                //     );
+                                //     if (href) {
+                                //         // const filePath = window.path.join(window.path.dirname(CONTENT_PATH), href);
+                                //         tempDisplayData.push({
+                                //             type: "image",
+                                //             content: href,
+                                //             id: e.getAttribute("id") || "",
+                                //             url: href,
+                                //         });
+                                //     }
+                                // }
+                                if (mediaType === "text/css") {
+                                    const href_old = manifest.getAttribute("href");
+                                    if (href_old) {
+                                        const href = window.path.join(window.path.dirname(CONTENT_PATH), href_old);
+                                        tempStylesheets.push(href);
+                                    }
+                                }
+                                if (mediaType === "application/x-dtbncx+xml") {
+                                    const href = window.path.join(
+                                        window.path.dirname(CONTENT_PATH),
+                                        manifest.getAttribute("href") || ""
                                     );
-                                    settocData(tempTOCData);
-                                    setCurrentChapterURL(currentChapterURL);
+                                    if (href) {
+                                        window.fs.readFile(href, "utf8", (err, data) => {
+                                            if (err) return console.error(err);
+                                            const tocXML = parser.parseFromString(data, "application/xml");
+                                            const depth_original = parseInt(
+                                                tocXML
+                                                    .querySelector('meta[name="dtb:depth"]')
+                                                    ?.getAttribute("content") || "1"
+                                            );
+                                            const tempTOCData: TOCData = {
+                                                title: bookName,
+                                                // title: tocXML.querySelector("docTitle text")?.textContent || "~",
+                                                author: authorName,
+                                                // author: tocXML.querySelector("docAuthor text")?.textContent || "~",
+                                                depth: depth_original,
+                                                nav: [],
+                                            };
+
+                                            /**idk y some epub had depth=2 but only had one navPoint, so making this */
+                                            let changedDepth = false;
+                                            /** some have useless depth making errors later  */
+                                            let depth_real = depth_original;
+                                            const getData = (selector: string, depth: number) => {
+                                                const elems = tocXML.querySelectorAll(selector);
+                                                if (elems.length <= 0) return;
+                                                if (depth < depth_real) {
+                                                    changedDepth = true;
+                                                    depth_real = depth;
+                                                }
+                                                elems.forEach((e, i) => {
+                                                    tempTOCData.nav.push({
+                                                        name: e.querySelector("navLabel text")?.textContent || "~",
+                                                        src: window.path.join(
+                                                            window.path.dirname(href),
+                                                            // dunno why but some toc.ncx have src like "Text/Text/0202_Chapter_202_-_Seems_Like_Never_Coming_Back.xhtml"
+                                                            e
+                                                                .querySelector("content")
+                                                                ?.getAttribute("src")
+                                                                ?.replace("Text/Text/", "Text/") || ""
+                                                        ),
+                                                        depth: depth,
+                                                    });
+                                                    if (depth > 1) {
+                                                        getData(
+                                                            selector + `:nth-of-type(${i + 1}) > navPoint`,
+                                                            depth - 1
+                                                        );
+                                                    }
+                                                });
+                                            };
+                                            getData("navMap > navPoint", depth_original);
+                                            // console.log(depth_real, depth_original, depth_original - depth_real + 1);
+                                            // if (!changedDepth)
+                                            tempTOCData.depth = depth_original - depth_real + 1;
+                                            tempTOCData.nav = tempTOCData.nav.map((e) => {
+                                                return { ...e, depth: e.depth - depth_real + 1 };
+                                            });
+                                            // // first with lowest depth
+                                            // setCurrentChapterURL(tempTOCData.nav.find((e) => e.depth === 1)!.src);
+                                            let currentChapterURL =
+                                                tempTOCData.nav.find((e) => e.name === linkInReader.chapter)
+                                                    ?.src || "";
+                                            if (linkInReader.queryStr) setBookmarkedElem(linkInReader.queryStr);
+                                            if (!currentChapterURL) currentChapterURL = tempTOCData.nav[0].src;
+                                            const bookOpened: BookItem = {
+                                                author: tempTOCData.author,
+                                                link,
+                                                title: tempTOCData.title,
+                                                date: new Date().toLocaleString("en-UK", { hour12: true }),
+                                                chapter:
+                                                    tempTOCData.nav.find((e) => e.src === currentChapterURL)
+                                                        ?.name ?? tempTOCData.nav[0].name,
+                                            };
+                                            dispatch(setBookInReader(bookOpened));
+                                            dispatch(
+                                                newHistory({
+                                                    type: "book",
+                                                    data: {
+                                                        bookOpened,
+                                                        elementQueryString: elemBeforeChange || "",
+                                                    },
+                                                })
+                                            );
+                                            settocData(tempTOCData);
+                                            setCurrentChapterURL(currentChapterURL);
+                                        });
+                                    }
+                                }
+                            });
+                            const spineData = CONTENT_OPF.querySelectorAll("spine > itemref");
+                            if (spineData.length > 0) {
+                                const tempIDREf: string[] = [];
+                                spineData.forEach((e, i) => {
+                                    tempIDREf.push(e.getAttribute("idref") || "no-idref-found-" + i);
                                 });
+                                if (tempIDREf.length > 200 && !appSettings.epubReaderSettings.loadOneChapter)
+                                    window.dialog.warn({
+                                        message: "Too many chapters detected",
+                                        noOption: true,
+                                        detail: "It might cause instability and high RAM usage. It is recommended to enable option to load and show only chapter at a time from Settings → Other Settings.",
+                                    });
+                                setDisplayData(tempDisplayData);
+                                setEpubStylesheets(tempStylesheets);
+                                setDisplayOrder(tempIDREf);
+
+                                dispatch(setUnzipping(false));
+
+                                // dispatch(setLoadingMangaPercent(100));
+                                // dispatch(setLoadingManga(false));
+
+                                dispatch(setReaderOpen(true));
+                                console.timeEnd("unzipping");
                             }
                         }
-                    });
-                    const spineData = CONTENT_OPF.querySelectorAll("spine > itemref");
-                    if (spineData.length > 0) {
-                        const tempIDREf: string[] = [];
-                        spineData.forEach((e, i) => {
-                            tempIDREf.push(e.getAttribute("idref") || "no-idref-found-" + i);
-                        });
-                        if (tempIDREf.length > 200 && !appSettings.epubReaderSettings.loadOneChapter)
-                            window.dialog.warn({
-                                message: "Too many chapters detected",
-                                noOption: true,
-                                detail: "It might cause instability and high RAM usage. It is recommended to enable option to load and show only chapter at a time from Settings → Other Settings.",
-                            });
-                        setDisplayData(tempDisplayData);
-                        setEpubStylesheets(tempStylesheets);
-                        setDisplayOrder(tempIDREf);
-
-                        dispatch(setUnzipping(false));
-
-                        // dispatch(setLoadingMangaPercent(100));
-                        // dispatch(setLoadingManga(false));
-
-                        dispatch(setReaderOpen(true));
-                        console.timeEnd("unzipping");
                     }
                 }
-            }
-        });
+            })
+            .catch((err) => {
+                if (err) {
+                    dispatch(setUnzipping(false));
+                    // dispatch(setLoadingManga(false));
+                    // dispatch(setLoadingMangaPercent(0));
+                    // dispatch(setUnzipping(false));
+                    if (err.message.includes("spawn unzip ENOENT"))
+                        return window.dialog.customError({
+                            message: "Error while extracting.",
+                            detail: '"unzip" not found. Please install by using\n"sudo apt install unzip"',
+                        });
+                    return window.dialog.customError({
+                        message: "Error while extracting.",
+                        detail: err.message,
+                        log: false,
+                    });
+                }
+            });
     };
 
     const makeScrollPos = useCallback(
