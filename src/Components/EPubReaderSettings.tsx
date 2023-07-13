@@ -185,19 +185,20 @@ const EPUBReaderSettings = memo(
                             >
                                 <FontAwesomeIcon icon={faPlus} />
                             </button>
-
-                            <InputCheckbox
-                                checked={appSettings.epubReaderSettings.limitImgHeight}
-                                onChange={(e) => {
-                                    makeScrollPos();
-                                    dispatch(
-                                        setEpubReaderSettings({
-                                            limitImgHeight: e.currentTarget.checked,
-                                        })
-                                    );
-                                }}
-                                paraAfter="Limit Image height to viewport"
-                            />
+                            <div className="col">
+                                <InputCheckbox
+                                    checked={appSettings.epubReaderSettings.limitImgHeight}
+                                    onChange={(e) => {
+                                        makeScrollPos();
+                                        dispatch(
+                                            setEpubReaderSettings({
+                                                limitImgHeight: e.currentTarget.checked,
+                                            })
+                                        );
+                                    }}
+                                    paraAfter="Limit Image height to viewport"
+                                />
+                            </div>
                         </div>
                     </div>
                     <div className="settingItem">

@@ -284,11 +284,32 @@ declare global {
         fs: typeof fs;
         themeProps: { [e in ThemeDataMain]: string };
         shortcutsFunctions: ShortcutSchema[];
-        fileSaveTimeOut: Map<string, NodeJS.Timeout | null>;
+        // fileSaveTimeOut: Map<string, NodeJS.Timeout | null>;
         /**
          * Anilist
          */
         al: AniList;
+        color: {
+            RGBA_to_hex: (RGB: { r: number; g: number; b: number; a?: number }) => string | undefined;
+            hex_to_RGBA: (hex: string) =>
+                | {
+                      /**
+                       * [0-255] int
+                       */
+                      r: number;
+                      /**
+                       * [0-255] int
+                       */
+                      g: number;
+                      /**
+                       * [0-255] int
+                       */ b: number;
+                      /**
+                       * [0-1] float
+                       */ a: number;
+                  }
+                | undefined;
+        };
         app: {
             betterSortOrder: (x: string, y: string) => number;
             /**
@@ -826,7 +847,7 @@ window.app.linkInReader = {
     page: 1,
     chapter: "",
 };
-window.fileSaveTimeOut = new Map();
+// window.fileSaveTimeOut = new Map();
 window.app.randomString = (length: number) => {
     let result = "";
     const characters = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789";
@@ -835,7 +856,55 @@ window.app.randomString = (length: number) => {
     }
     return result;
 };
-
+window.color = {
+    hex_to_RGBA(hex) {
+        if (hex && typeof hex === "string" && hex.charAt(0) === "#") {
+            const colorRaw = hex.replace("#", "");
+            const colorRGBA = {
+                r: 0,
+                g: 0,
+                b: 0,
+                a: 1,
+            };
+            if (colorRaw.length === 3) {
+                colorRGBA.r = parseInt(colorRaw.charAt(0).repeat(2), 16);
+                colorRGBA.g = parseInt(colorRaw.charAt(1).repeat(2), 16);
+                colorRGBA.b = parseInt(colorRaw.charAt(2).repeat(2), 16);
+            }
+            if (colorRaw.length === 4) {
+                colorRGBA.r = parseInt(colorRaw.charAt(0).repeat(2), 16);
+                colorRGBA.g = parseInt(colorRaw.charAt(1).repeat(2), 16);
+                colorRGBA.b = parseInt(colorRaw.charAt(2).repeat(2), 16);
+                colorRGBA.a = parseFloat((parseInt(colorRaw.charAt(2).repeat(2), 16) / 255).toFixed(3));
+            }
+            if (colorRaw.length === 6) {
+                colorRGBA.r = parseInt(colorRaw.substring(0, 2), 16);
+                colorRGBA.g = parseInt(colorRaw.substring(2, 4), 16);
+                colorRGBA.b = parseInt(colorRaw.substring(4, 6), 16);
+            }
+            if (colorRaw.length === 8) {
+                colorRGBA.r = parseInt(colorRaw.substring(0, 2), 16);
+                colorRGBA.g = parseInt(colorRaw.substring(2, 4), 16);
+                colorRGBA.b = parseInt(colorRaw.substring(4, 6), 16);
+                colorRGBA.a = parseFloat((parseInt(colorRaw.substring(6, 8), 16) / 255).toFixed(3));
+            }
+            return colorRGBA;
+        }
+    },
+    RGBA_to_hex(RGB) {
+        if (RGB) {
+            let hex = "#";
+            hex += RGB.r.toString(16).padStart(2, "0");
+            hex += RGB.g.toString(16).padStart(2, "0");
+            hex += RGB.b.toString(16).padStart(2, "0");
+            if (RGB.a)
+                hex += Math.round(RGB.a * 255)
+                    .toString(16)
+                    .padStart(2, "0");
+            return hex;
+        }
+    },
+};
 window.electron = {
     app,
     dialog,

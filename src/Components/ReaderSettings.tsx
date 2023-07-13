@@ -17,6 +17,7 @@ import { settingValidatorData } from "../MainImports";
 import InputNumber from "./Element/InputNumber";
 import InputCheckbox from "./Element/InputCheckbox";
 import InputCheckboxNumber from "./Element/InputCheckboxNumber";
+import InputColor from "./Element/InputColor";
 
 const ReaderSettings = memo(
     ({
@@ -166,12 +167,15 @@ const ReaderSettings = memo(
                             >
                                 <FontAwesomeIcon icon={faPlus} />
                             </button>
-                            <InputCheckbox
-                                checked={appSettings.readerSettings.widthClamped}
-                                onChange={(e) => dispatch(setReaderSettings({ widthClamped: e.target.checked }))}
-                                labelAfter="Clamp"
-                                title="Clamp width of images to screen"
-                            />
+                            <div className="col">
+                                <InputCheckbox
+                                    checked={appSettings.readerSettings.widthClamped}
+                                    onChange={(e) =>
+                                        dispatch(setReaderSettings({ widthClamped: e.target.checked }))
+                                    }
+                                    paraAfter="Clamp size to window width"
+                                />
+                            </div>
                         </div>
                     </div>
                     <div className={"settingItem "}>
@@ -590,91 +594,125 @@ const ReaderSettings = memo(
                                 }}
                                 paraAfter="Use Custom Color Filter"
                             />
-                            <InputRange
-                                className={"colorRange"}
-                                min={0}
-                                max={255}
-                                value={appSettings.readerSettings.customColorFilter.r}
-                                disabled={!appSettings.readerSettings.customColorFilter.enabled}
-                                labeled={true}
-                                labelText="R:"
-                                timeout={[
-                                    350,
-                                    (value) =>
-                                        dispatch(
-                                            setReaderSettings({
-                                                customColorFilter: {
-                                                    ...appSettings.readerSettings.customColorFilter,
-                                                    r: value,
-                                                },
-                                            })
-                                        ),
-                                ]}
-                            />
-                            <InputRange
-                                className={"colorRange"}
-                                min={0}
-                                max={255}
-                                value={appSettings.readerSettings.customColorFilter.g}
-                                disabled={!appSettings.readerSettings.customColorFilter.enabled}
-                                labeled={true}
-                                labelText="G:"
-                                timeout={[
-                                    350,
-                                    (value) =>
-                                        dispatch(
-                                            setReaderSettings({
-                                                customColorFilter: {
-                                                    ...appSettings.readerSettings.customColorFilter,
-                                                    g: value,
-                                                },
-                                            })
-                                        ),
-                                ]}
-                            />
-                            <InputRange
-                                className={"colorRange"}
-                                min={0}
-                                max={255}
-                                value={appSettings.readerSettings.customColorFilter.b}
-                                disabled={!appSettings.readerSettings.customColorFilter.enabled}
-                                labeled={true}
-                                labelText="B:"
-                                timeout={[
-                                    350,
-                                    (value) =>
-                                        dispatch(
-                                            setReaderSettings({
-                                                customColorFilter: {
-                                                    ...appSettings.readerSettings.customColorFilter,
-                                                    b: value,
-                                                },
-                                            })
-                                        ),
-                                ]}
-                            />
-                            <InputRange
-                                className={"colorRange"}
-                                min={0}
-                                max={1}
-                                step={0.1}
-                                value={appSettings.readerSettings.customColorFilter.a}
-                                disabled={!appSettings.readerSettings.customColorFilter.enabled}
-                                labeled={true}
-                                labelText="A:"
-                                timeout={[
-                                    350,
-                                    (value) =>
-                                        dispatch(
-                                            setReaderSettings({
-                                                customColorFilter: {
-                                                    ...appSettings.readerSettings.customColorFilter,
-                                                    a: value,
-                                                },
-                                            })
-                                        ),
-                                ]}
-                            />
+                            <div className="colorFilterInputs">
+                                <InputColor
+                                    value={
+                                        window.color.RGBA_to_hex({
+                                            r: appSettings.readerSettings.customColorFilter.r,
+                                            g: appSettings.readerSettings.customColorFilter.g,
+                                            b: appSettings.readerSettings.customColorFilter.b,
+                                        }) || "#ffffff"
+                                    }
+                                    disabled={!appSettings.readerSettings.customColorFilter.enabled}
+                                    timeout={[
+                                        500,
+                                        (value) => {
+                                            const rgb = window.color.hex_to_RGBA(value);
+                                            console.log(rgb, value);
+                                            if (rgb) {
+                                                dispatch(
+                                                    setReaderSettings({
+                                                        customColorFilter: {
+                                                            ...appSettings.readerSettings.customColorFilter,
+                                                            r: rgb.r,
+                                                            g: rgb.g,
+                                                            b: rgb.b,
+                                                        },
+                                                    })
+                                                );
+                                            }
+                                        },
+                                    ]}
+                                    // labeled
+                                    // labelBefore="Color: "
+                                />
+                                {/* <InputRange
+                                    className={"colorRange"}
+                                    min={0}
+                                    max={255}
+                                    value={appSettings.readerSettings.customColorFilter.r}
+                                    disabled={!appSettings.readerSettings.customColorFilter.enabled}
+                                    labeled={true}
+                                    labelText="R:"
+                                    timeout={[
+                                        350,
+                                        (value) =>
+                                            dispatch(
+                                                setReaderSettings({
+                                                    customColorFilter: {
+                                                        ...appSettings.readerSettings.customColorFilter,
+                                                        r: value,
+                                                    },
+                                                })
+                                            ),
+                                    ]}
+                                />
+                                <InputRange
+                                    className={"colorRange"}
+                                    min={0}
+                                    max={255}
+                                    value={appSettings.readerSettings.customColorFilter.g}
+                                    disabled={!appSettings.readerSettings.customColorFilter.enabled}
+                                    labeled={true}
+                                    labelText="G:"
+                                    timeout={[
+                                        350,
+                                        (value) =>
+                                            dispatch(
+                                                setReaderSettings({
+                                                    customColorFilter: {
+                                                        ...appSettings.readerSettings.customColorFilter,
+                                                        g: value,
+                                                    },
+                                                })
+                                            ),
+                                    ]}
+                                />
+                                <InputRange
+                                    className={"colorRange"}
+                                    min={0}
+                                    max={255}
+                                    value={appSettings.readerSettings.customColorFilter.b}
+                                    disabled={!appSettings.readerSettings.customColorFilter.enabled}
+                                    labeled={true}
+                                    labelText="B:"
+                                    timeout={[
+                                        350,
+                                        (value) =>
+                                            dispatch(
+                                                setReaderSettings({
+                                                    customColorFilter: {
+                                                        ...appSettings.readerSettings.customColorFilter,
+                                                        b: value,
+                                                    },
+                                                })
+                                            ),
+                                    ]}
+                                /> */}
+                                <InputRange
+                                    className={"colorRange"}
+                                    min={0}
+                                    max={1}
+                                    step={0.1}
+                                    value={appSettings.readerSettings.customColorFilter.a}
+                                    disabled={!appSettings.readerSettings.customColorFilter.enabled}
+                                    labeled={true}
+                                    title="Alpha"
+                                    // labelText="A:"
+                                    timeout={[
+                                        350,
+                                        (value) =>
+                                            dispatch(
+                                                setReaderSettings({
+                                                    customColorFilter: {
+                                                        ...appSettings.readerSettings.customColorFilter,
+                                                        a: value,
+                                                    },
+                                                })
+                                            ),
+                                    ]}
+                                />
+                            </div>
                             <InputSelect
                                 disabled={!appSettings.readerSettings.customColorFilter.enabled}
                                 value={appSettings.readerSettings.customColorFilter.blendMode}
@@ -763,7 +801,7 @@ const ReaderSettings = memo(
                                         setReaderSettings({ showPageNumberInZenMode: e.currentTarget.checked })
                                     );
                                 }}
-                                paraAfter="Show Page Number in Zen Mode."
+                                paraAfter="Show Page Number in Zen Mode"
                             />
                             <InputCheckbox
                                 checked={appSettings.readerSettings.forceLowBrightness.enabled}

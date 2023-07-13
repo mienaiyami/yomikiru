@@ -249,6 +249,7 @@ body {
                 display: none;
             }
             .toggle-area {
+                // margin-left: auto;
                 user-select: none;
                 --width: 1.7em;
                 --padding: 0.1em;
@@ -402,7 +403,7 @@ body {
         background-color: var(--text-input-bg);
         color-scheme: light dark;
         &:disabled {
-            filter: opacity(0.3) sepia(1);
+            filter: opacity(0.3);
             cursor: not-allowed;
         }
         &:hover {
@@ -2373,6 +2374,7 @@ body {
                             .col {
                                 display: flex;
                                 flex-direction: column;
+                                width: 100%;
                                 gap: 5px;
                             }
                             &.col {
@@ -2419,6 +2421,16 @@ body {
                                     opacity: 0.5;
                                     pointer-events: none;
                                     cursor: not-allowed;
+                                }
+                            }
+                            .colorFilterInputs {
+                                display: grid;
+                                grid-template-columns: 30% auto;
+                                width: 100%;
+                                gap: 5px;
+                                input[type="color"] {
+                                    width: auto;
+                                    height: auto;
                                 }
                             }
                             .colorRange {
