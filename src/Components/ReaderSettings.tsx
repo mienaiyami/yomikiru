@@ -290,7 +290,7 @@ const ReaderSettings = memo(
                                     }}
                                     timeout={[1000, (value) => dispatch(setReaderSettings({ maxWidth: value }))]}
                                     paraBefore="Max Image Width&nbsp;&nbsp;:"
-                                    labelAfter="px"
+                                    paraAfter="px"
                                 />
                                 <InputCheckboxNumber
                                     checked={appSettings.readerSettings.maxHeightWidthSelector === "height"}
@@ -319,7 +319,7 @@ const ReaderSettings = memo(
                                     }}
                                     timeout={[1000, (value) => dispatch(setReaderSettings({ maxHeight: value }))]}
                                     paraBefore="Max Image Height&nbsp;:"
-                                    labelAfter="px"
+                                    paraAfter="px"
                                 />
                             </div>
                         </div>
@@ -577,7 +577,7 @@ const ReaderSettings = memo(
                                 );
                             }}
                         >
-                            Custom Color Filter
+                            Color Filters
                         </div>
                         <div className="options col">
                             <InputCheckbox

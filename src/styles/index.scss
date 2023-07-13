@@ -404,7 +404,8 @@ body {
         color-scheme: light dark;
         &:disabled {
             filter: opacity(0.3);
-            cursor: not-allowed;
+            // cursor: not-allowed;
+            pointer-events: none;
         }
         &:hover {
             background-color: var(--text-input-bg-focus);
@@ -1390,6 +1391,11 @@ body {
                                     padding: 0;
                                     padding-bottom: 1em;
                                 }
+                            }
+                            hr.mini {
+                                // width: 100%;
+                                height: 1px;
+                                margin: 0.5em 0;
                             }
                             .main {
                                 display: flex;

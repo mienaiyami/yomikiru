@@ -291,24 +291,6 @@ const Settings = (): ReactElement => {
                                 ]}
                                 title="Color"
                             />
-                            {/* <input
-                                type="number"
-                                min={0}
-                                max={100}
-                                value={Math.ceil(opacity) ?? 100}
-                                title="Opacity"
-                                // className="newThemeMakerOpacity"
-                                onChange={(e) => {
-                                    setOpacity(() => {
-                                        if (e.target.value === "") {
-                                            e.target.value = "0";
-                                        }
-                                        let value = e.target.valueAsNumber ?? 100;
-                                        if (value > 100) value = 100;
-                                        return value;
-                                    });
-                                }}
-                            /> */}
                             <InputRange
                                 min={0}
                                 max={100}
@@ -326,9 +308,9 @@ const Settings = (): ReactElement => {
                                 }}
                                 value={
                                     rawColor.substring(0, 7) +
-                                    (Math.ceil(opacity * 2.55).toString(16).length < 2
-                                        ? "0" + Math.ceil(opacity * 2.55).toString(16)
-                                        : Math.ceil(opacity * 2.55).toString(16))
+                                    Math.round(opacity * 2.55)
+                                        .toString(16)
+                                        .padStart(2, "0")
                                 }
                                 style={{ display: "none" }}
                                 readOnly
@@ -1082,7 +1064,8 @@ const Settings = (): ReactElement => {
                                         labelAfter="Confirm Close Window"
                                     />
                                     <div className="desc">
-                                        Ask for conformation before closing a window. <code>Need App Restart</code>
+                                        Ask for conformation before closing a window.{" "}
+                                        <code>App Restart Needed</code>
                                     </div>
                                 </div>
                                 <div className="toggleItem">
@@ -1257,7 +1240,7 @@ const Settings = (): ReactElement => {
                                     />
                                     <div className="desc">
                                         Use GPU to accelerate rendering. Prevents reader stuttering.{" "}
-                                        <code>Need App Restart</code>
+                                        <code>App Restart Needed</code>
                                     </div>
                                 </div>
                             </div>
@@ -1796,7 +1779,7 @@ const Settings = (): ReactElement => {
                             </div>
                             <div className="settingItem2">
                                 <h3>Others</h3>
-                                <div className="desc"></div>
+                                {/* <div className="desc"></div> */}
                                 <div className="main col">
                                     <button
                                         onClick={() =>
@@ -1814,7 +1797,7 @@ const Settings = (): ReactElement => {
                                             )
                                         }
                                     >
-                                        <FontAwesomeIcon icon={faGithub} /> Check Announcements
+                                        <FontAwesomeIcon icon={faGithub} /> Announcements
                                     </button>
                                     <button
                                         // onFocus={(e) => e.currentTarget.blur()}
@@ -1824,9 +1807,10 @@ const Settings = (): ReactElement => {
                                             )
                                         }
                                     >
-                                        <FontAwesomeIcon icon={faGithub} /> Submit Issue, Feature, Enhancement
-                                        Request
+                                        <FontAwesomeIcon icon={faGithub} /> Submit Issue, Feature Request, Ask
+                                        Question
                                     </button>
+                                    <hr className="mini" />
                                     <button
                                         onClick={(e) => {
                                             const target = e.currentTarget;
