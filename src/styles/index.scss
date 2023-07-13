@@ -938,7 +938,6 @@ body {
 
                 margin-bottom: 10px;
                 .currentPath {
-                    user-select: text;
                     display: flex;
                     gap: 10px;
                     align-items: center;
@@ -947,6 +946,7 @@ body {
                     padding-bottom: 10px;
                     span {
                         font-size: 0.8em;
+                        user-select: text;
                     }
                     button {
                         padding: 5px;
@@ -1425,20 +1425,36 @@ body {
                                 .themeButtons {
                                     display: flex;
                                     align-items: center;
-                                    .selected {
-                                        background-color: var(--btn-color-focus);
+                                    text-overflow: ellipsis;
+                                    button {
+                                        width: 10em;
+                                        &.selected {
+                                            background-color: var(--btn-color-focus);
+                                        }
                                     }
-                                    button:nth-child(1) {
-                                        border-top-right-radius: 0;
-                                        border-bottom-right-radius: 0;
-                                        width: 7em;
-                                        text-overflow: ellipsis;
-                                    }
+                                    // button:nth-child(1) {
+                                    //     border-top-right-radius: 0;
+                                    //     border-bottom-right-radius: 0;
+                                    //     width: 7em;
+                                    //     text-overflow: ellipsis;
+                                    //     &.selected {
+                                    //         background-color: var(--btn-color-focus);
+                                    //     }
+                                    //     &.default,
+                                    //     &.selected {
+                                    //         border-radius: 3px;
+                                    //         width: 10.5em;
+                                    //         & ~ button {
+                                    //             display: none;
+                                    //         }
+                                    //     }
+                                    // }
 
-                                    button:nth-child(2) {
-                                        border-top-left-radius: 0;
-                                        border-bottom-left-radius: 0;
-                                    }
+                                    // button:nth-child(2) {
+                                    //     border-top-left-radius: 0;
+                                    //     border-bottom-left-radius: 0;
+                                    //     width: 3.5em;
+                                    // }
                                 }
                             }
                             &.dangerZone {
@@ -1464,6 +1480,7 @@ body {
                     .features {
                         font-size: 1em;
                         padding: 20px;
+                        user-select: text;
                         * {
                             scroll-margin-top: 4em;
                         }
