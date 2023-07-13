@@ -1824,13 +1824,13 @@ const Settings = (): ReactElement => {
                                         // onFocus={(e) => e.currentTarget.blur()}
                                         onClick={() =>
                                             window.electron.shell.openExternal(
-                                                "https://github.com/mienaiyami/yomikiru/issues/new/choose"
+                                                "https://github.com/mienaiyami/yomikiru/issues"
                                             )
                                         }
                                     >
                                         <FontAwesomeIcon icon={faGithub} /> Submit Issue / Feature Request
                                     </button>
-                                    {/* <button
+                                    <button
                                         onClick={(e) => {
                                             const target = e.currentTarget;
                                             target.innerText =
@@ -1842,7 +1842,7 @@ const Settings = (): ReactElement => {
                                         }}
                                     >
                                         mienaiyami0@gmail.com
-                                    </button> */}
+                                    </button>
                                     <button
                                         onClick={() => {
                                             const filePath = window.path.join(
