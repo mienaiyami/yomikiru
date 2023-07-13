@@ -1399,8 +1399,8 @@ body {
                                 .themeButtons {
                                     display: flex;
                                     align-items: center;
-                                    text-overflow: ellipsis;
                                     button {
+                                        text-overflow: ellipsis;
                                         width: 10em;
                                         &.selected {
                                             background-color: var(--btn-color-focus);

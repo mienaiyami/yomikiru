@@ -1045,6 +1045,24 @@ const Reader = () => {
                     if (appSettings.readerSettings.readerTypeSelected === 0 && isSideListPinned)
                         changePageNumber();
                 }}
+                onDoubleClick={(e) => {
+                    // const abc = prevNextDeciderLogic();
+                    // if (abc === 1) {
+                    //     const clickPos = ((e.clientX - sideListWidth) / e.currentTarget.offsetWidth) * 100;
+                    //     if (clickPos > 40 && clickPos < 60) setZenMode((prev) => !prev);
+                    // } else if (abc === 2) {
+                    //     const clickPos = (e.clientX / e.currentTarget.offsetWidth) * 100;
+                    //     if (clickPos > 40 && clickPos < 60) setZenMode((prev) => !prev);
+                    // } else if (abc === 3) {
+                    //     const clickPos =
+                    //         ((e.clientX - (isSideListPinned ? sideListWidth : 0)) / e.currentTarget.offsetWidth) *
+                    //         100;
+                    //     if (clickPos > 40 && clickPos < 60) setZenMode((prev) => !prev);
+                    // }
+                    const clickPos =
+                        ((e.clientX - (isSideListPinned ? sideListWidth : 0)) / e.currentTarget.offsetWidth) * 100;
+                    if (clickPos > 40 && clickPos < 60) setZenMode((prev) => !prev);
+                }}
                 onClick={(e) => {
                     // && (e.target as HTMLElement).tagName === "IMG"
                     const abc = prevNextDeciderLogic();
