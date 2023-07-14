@@ -287,8 +287,13 @@ body {
     }
     input[type="range"] {
         accent-color: var(--icon-color);
-
         color-scheme: light dark;
+        &::-webkit-slider-thumb {
+            margin-top: -5.5px;
+        }
+        &::-webkit-slider-runnable-track {
+            height: 4px;
+        }
     }
 
     input[type="text"],
@@ -1570,9 +1575,9 @@ body {
                                 }
                                 &.opacityRange {
                                     display: grid;
-                                    grid-template-columns: auto 1.3em;
+                                    grid-template-columns: auto 1em;
                                     gap: 5px;
-                                    font-size: 1.3em;
+                                    // font-size: 1.3em;
                                     justify-items: center;
                                 }
                             }
