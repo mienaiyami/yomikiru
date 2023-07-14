@@ -25,6 +25,11 @@ if (IS_PORTABLE) {
 ////18/05/23 - decided to not use it anymore as it make scrolling laggy
 if (fs.existsSync(path.join(app.getPath("userData"), "DISABLE_HARDWARE_ACCELERATION")))
     app.disableHardwareAcceleration();
+if (fs.existsSync(path.join(app.getPath("userData"), "TEMP_PATH"))) {
+    const tempPath = fs.readFileSync(path.join(app.getPath("userData"), "TEMP_PATH"), "utf-8");
+    if (fs.existsSync(tempPath)) app.setPath("temp", tempPath);
+    else fs.rmSync(tempPath);
+}
 
 // change path in `settings.tsx as well if changing log path
 log.transports.file.resolvePath = () => path.join(app.getPath("userData"), "logs/main.log");
@@ -394,6 +399,12 @@ const registerListener = () => {
             deleteOptionInExplorerMenu_epub();
         });
     }
+    ipcMain.handle("changeTempPath", (e, newPath: string) => {
+        app.setPath("temp", newPath);
+        const lockFile = path.join(app.getPath("userData"), "TEMP_PATH");
+        if (newPath === process.env.TEMP && fs.existsSync(lockFile)) fs.rmSync(lockFile);
+        fs.writeFileSync(lockFile, newPath);
+    });
     if (process.platform === "linux") {
         ipcMain.on("showInExplorer", (e, filePath) => {
             if (!fs.lstatSync(filePath).isDirectory()) filePath = path.dirname(filePath);

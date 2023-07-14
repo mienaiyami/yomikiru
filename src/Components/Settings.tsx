@@ -32,6 +32,7 @@ const Settings = (): ReactElement => {
     const [currentTab, setCurrentTab] = useState(0);
 
     const [anilistUsername, setAnilistUsername] = useState("Error");
+    const [tempFolder, setTempFolder] = useState(window.electron.app.getPath("temp"));
 
     //  disabled hardware acceleration
     const [HAValue, setHAValue] = useState(
@@ -57,6 +58,19 @@ const Settings = (): ReactElement => {
             }, 300);
         }
     }, [isSettingOpen]);
+
+    useEffect(() => {
+        if (tempFolder !== window.electron.app.getPath("temp"))
+            try {
+                if (window.fs.existsSync(tempFolder)) {
+                    window.electron.ipcRenderer.invoke("changeTempPath", tempFolder).then(() => {
+                        window.logger.log("Temp path changed to", tempFolder);
+                    });
+                } else throw new Error("Folder does not exist : " + tempFolder);
+            } catch (reason) {
+                window.logger.error("Unable to change temp path.", reason);
+            }
+    }, [tempFolder]);
 
     useEffect(() => {
         if (anilistToken)
@@ -1028,6 +1042,56 @@ const Settings = (): ReactElement => {
                                     </button>
                                 </div>
                             </div>
+                            <div className="settingItem2">
+                                <h3>Custom Temp Folder</h3>
+                                <div className="desc">
+                                    Folder where app will extract archives or epub or render pdf. It can have big
+                                    effect on extracting speed depending on type of drive (ssd, faster drives) or
+                                    storage left (10GB+ recommended).
+                                    <br /> Defaults to temp folder provided by OS.
+                                </div>
+                                <div className="main row">
+                                    <input
+                                        type="text"
+                                        placeholder="No path Selected"
+                                        value={tempFolder}
+                                        readOnly
+                                    />
+                                    <button
+                                        // onFocus={(e) => e.currentTarget.blur()}
+                                        onClick={(e) => {
+                                            promptSelectDir((path) => {
+                                                setTempFolder(path);
+                                                // const target = e.currentTarget;
+                                                // target.innerText = "Applying...";
+                                                // setTimeout(() => {
+                                                //     window.location.reload();
+                                                //     // target.innerText = "Select";
+                                                // }, 3000);
+                                            });
+                                        }}
+                                    >
+                                        Select
+                                    </button>
+                                    <button
+                                        onClick={(e) => {
+                                            if (process.env.TEMP) setTempFolder(process.env.TEMP);
+                                            else
+                                                window.dialog.customError({
+                                                    message: "Unable to get default temp path.",
+                                                });
+                                            // const target = e.currentTarget;
+                                            // target.innerText = "Applying...";
+                                            // setTimeout(() => {
+                                            //     window.location.reload();
+                                            //     // target.innerText = "Clear";
+                                            // }, 3000);
+                                        }}
+                                    >
+                                        Default
+                                    </button>
+                                </div>
+                            </div>
                             <div className="settingItem2 otherSettings">
                                 <h3>Other Settings</h3>
                                 <div className="toggleItem">
@@ -1505,6 +1569,7 @@ const Settings = (): ReactElement => {
                                             </code>
                                             .
                                         </li>
+                                        <li>Double click in center 20% of window to toggle zen mode.</li>
                                     </ul>
                                 </li>
                                 <li>
