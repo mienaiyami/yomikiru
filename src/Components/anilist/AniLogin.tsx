@@ -19,8 +19,24 @@ const AniLogin = () => {
         }
     }, [isAniLoginOpen]);
 
+    useEffect(() => {
+        setTimeout(() => {
+            if (contRef.current) contRef.current.setAttribute("data-state", "open");
+        }, 100);
+    }, []);
+
     return (
-        <div id="anilistLogin">
+        <div
+            id="anilistLogin"
+            data-state="closed"
+            ref={(node) => {
+                if (node) {
+                    setTimeout(() => {
+                        if (node) node.setAttribute("data-state", "open");
+                    }, 100);
+                }
+            }}
+        >
             <div className="clickClose" onClick={() => dispatch(setAniLoginOpen(false))}></div>
             <div
                 className="cont"

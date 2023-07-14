@@ -27,6 +27,12 @@ const AnilistSearch = () => {
         });
     }, [search]);
 
+    // useEffect(() => {
+    //     setTimeout(() => {
+    //         if (contRef.current) contRef.current.setAttribute("data-state", "open");
+    //     }, 100);
+    // }, []);
+
     const ResultListItem = ({
         english,
         romaji,
@@ -84,7 +90,17 @@ const AnilistSearch = () => {
     };
 
     return (
-        <div id="anilistSearch">
+        <div
+            id="anilistSearch"
+            data-state="closed"
+            ref={(node) => {
+                if (node) {
+                    setTimeout(() => {
+                        if (node) node.setAttribute("data-state", "open");
+                    }, 100);
+                }
+            }}
+        >
             <div className="clickClose" onClick={() => dispatch(setAniSearchOpen(false))}></div>
             <div
                 className="cont"

@@ -25,7 +25,17 @@ const AnilistEdit = () => {
     }, [anilistCurrentManga]);
 
     return (
-        <div id="anilistEdit">
+        <div
+            id="anilistEdit"
+            data-state="closed"
+            ref={(node) => {
+                if (node) {
+                    setTimeout(() => {
+                        if (node) node.setAttribute("data-state", "open");
+                    }, 100);
+                }
+            }}
+        >
             <div className="clickClose" onClick={() => dispatch(setAniEditOpen(false))}></div>
             <div
                 className="cont"

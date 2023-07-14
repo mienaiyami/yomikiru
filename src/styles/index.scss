@@ -290,10 +290,10 @@ body {
         accent-color: var(--icon-color);
         color-scheme: light dark;
         &::-webkit-slider-thumb {
-            margin-top: -5.5px;
+            margin-top: -4.5px;
         }
         &::-webkit-slider-runnable-track {
-            height: 4px;
+            height: 6px;
         }
     }
 
@@ -758,7 +758,21 @@ body {
                 cursor: pointer;
             }
         }
-
+        @mixin contFadeScaleIn($elem) {
+            &[data-state="open"] {
+                visibility: visible;
+                #{$elem} {
+                    transform: scale(1);
+                }
+            }
+            &[data-state="closed"] {
+                visibility: hidden;
+                #{$elem} {
+                    transform: scale(1.1);
+                    transition: 0.1s cubic-bezier(1, 0, 1, 1) transform;
+                }
+            }
+        }
         .listCont {
             .location-cont {
                 position: relative;
@@ -1099,6 +1113,8 @@ body {
             z-index: 10000;
             display: grid;
             place-items: center;
+
+            @include contFadeScaleIn(".cont");
             .clickClose {
                 position: absolute;
                 width: 100%;
@@ -1155,22 +1171,23 @@ body {
             place-items: center;
             // transition: 0.3s all;
 
-            &[data-state="open"] {
-                visibility: visible;
+            @include contFadeScaleIn(".overflowWrap");
+            // &[data-state="open"] {
+            //     visibility: visible;
 
-                .overflowWrap {
-                    transform: scale(1);
-                }
-            }
+            //     .overflowWrap {
+            //         transform: scale(1);
+            //     }
+            // }
 
-            &[data-state="closed"] {
-                visibility: hidden;
+            // &[data-state="closed"] {
+            //     visibility: hidden;
 
-                .overflowWrap {
-                    transform: scale(1.1);
-                    transition: 0.1s cubic-bezier(1, 0, 1, 1) transform;
-                }
-            }
+            //     .overflowWrap {
+            //         transform: scale(1.1);
+            //         transition: 0.1s cubic-bezier(1, 0, 1, 1) transform;
+            //     }
+            // }
 
             .clickClose {
                 position: absolute;
@@ -1797,6 +1814,8 @@ body {
                 z-index: 102;
                 display: grid;
                 place-items: center;
+
+                @include contFadeScaleIn(".cont");
                 .clickClose {
                     position: absolute;
                     width: 100%;
@@ -1934,6 +1953,21 @@ body {
                 z-index: 101;
                 display: grid;
                 place-items: center;
+
+                @include contFadeScaleIn(".cont");
+                // &[data-state="open"] {
+                //     visibility: visible;
+                //     .cont {
+                //         transform: scale(1);
+                //     }
+                // }
+                // &[data-state="closed"] {
+                //     visibility: hidden;
+                //     .cont {
+                //         transform: scale(1.1);
+                //         transition: 0.1s cubic-bezier(1, 0, 1, 1) transform;
+                //     }
+                // }
                 .clickClose {
                     position: absolute;
                     width: 100%;
