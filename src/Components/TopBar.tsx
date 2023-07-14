@@ -37,9 +37,17 @@ const TopBar = (): ReactElement => {
             return;
         } else if (bookInReader) {
             let bookTitle = bookInReader.title;
+            let chapterName = "";
+            if (bookInReader.chapter && bookInReader.chapter !== "~") {
+                chapterName = window.app.replaceExtension(bookInReader.chapter, "");
+                if (chapterName.length > 83) chapterName = chapterName.substring(0, 80) + "...";
+            }
             if (bookTitle.length > 83) bookTitle = bookTitle.substring(0, 80) + "...";
-            const title = bookTitle + " - " + window.electron.app.getName();
-            setTitle(bookTitle.concat(window.electron.app.isPackaged ? "" : " - dev"));
+            const title =
+                bookTitle + (chapterName ? " | " + chapterName : "") + " - " + window.electron.app.getName();
+            setTitle(
+                (chapterName ? chapterName : bookTitle).concat(window.electron.app.isPackaged ? "" : " - dev")
+            );
             document.title = title;
             return;
         }
