@@ -275,11 +275,13 @@ const Settings = (): ReactElement => {
                                 setRawColorWhole(e.currentTarget.value);
                             }}
                         >
-                            {Object.entries(window.themeProps).map((e) => (
-                                <option key={e[0]} value={`var(${e[0]})`}>
-                                    {e[1]}
-                                </option>
-                            ))}
+                            {Object.entries(window.themeProps)
+                                .filter((e) => e[0] !== prop)
+                                .map((e) => (
+                                    <option key={e[0]} value={`var(${e[0]})`}>
+                                        {e[1]}
+                                    </option>
+                                ))}
                         </InputSelect>
                     ) : (
                         <>
