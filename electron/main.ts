@@ -8,6 +8,7 @@ import * as remote from "@electron/remote/main";
 remote.initialize();
 declare const HOME_WEBPACK_ENTRY: string;
 import { exec, spawn, spawnSync } from "child_process";
+// import pdfjsLib from "pdfjs-dist/webpack";
 import crossZip from "cross-zip";
 import log from "electron-log";
 
@@ -472,7 +473,7 @@ const registerListener = () => {
     //     console.log("aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa");
     // });
     // ! getting  node-gyp failed to rebuild '..\node_modules\canvas' and i tried everything
-    // ipcMain.handle("unzip", (e, link: string, extractPath: string, scale: number) => {
+    // ipcMain.handle("renderPDF", (e, link: string, extractPath: string, scale: number) => {
     //     return new Promise((res, rej) => {
     //         if (link && extractPath && scale) {
     //             console.log("starting extract", link);
@@ -483,37 +484,50 @@ const registerListener = () => {
     //                 })
     //                 .then((pdf) => {
     //                     if (pdf) {
-    //                         let count = 0;
+    //                         // let count = 0;
     //                         for (let i = 1; i <= pdf.numPages; i++) {
     //                             pdf.getPage(i).then((page) => {
     //                                 const viewport = page.getViewport({
     //                                     scale: scale || 1.5,
     //                                 });
-    //                                 const canvas = Canvas.createCanvas(viewport.width, viewport.height);
-    //                                 const context = canvas.getContext("2d");
-    //                                 if (context)
-    //                                     page.render({ canvasContext: context, viewport: viewport }).promise.then(
-    //                                         () => {
-    //                                             const image = canvas.toBuffer();
-    //                                             // const image = canvas.toDataURL("image/png");
-    //                                             // window.fs.writeFileSync(
-    //                                             //     window.path.join(extractPath, "./" + i + ".png"),
-    //                                             //     image.replace(/^data:image\/png;base64,/, ""),
-    //                                             //     "base64"
-    //                                             // );
-    //                                             window.fs.writeFileSync(
-    //                                                 window.path.join(extractPath, "./" + i + ".png"),
-    //                                                 image
-    //                                             );
-    //                                             count++;
-    //                                             e.sender.executeJavaScript(
-    //                                                 ` console.log("Made image", ${i} + ".png")`
-    //                                             );
-    //                                             // console.log("Made image", i + ".png");
-    //                                             page.cleanup();
-    //                                             if (count === pdf.numPages) res({ status: "ok" });
-    //                                         }
-    //                                     );
+    //                                 e.sender
+    //                                     .executeJavaScript(
+    //                                         `
+    //                                  canvas = document.createElement("canvas");
+    //                                 canvas.width = ${viewport.width};
+    //                                 canvas.height = ${viewport.height};
+    //                                 context = canvas.getContext("2d");
+    //                                 `
+    //                                     )
+    //                                     .then((context) => {
+    //                                         console.log("asdasdasdasd");
+    //                                         console.log(context);
+    //                                     });
+    //                                 // const canvas = Canvas.createCanvas(viewport.width, viewport.height);
+    //                                 // const context = canvas.getContext("2d");
+    //                                 // if (context)
+    //                                 //     page.render({ canvasContext: context, viewport: viewport }).promise.then(
+    //                                 //         () => {
+    //                                 //             const image = canvas.toBuffer();
+    //                                 //             // const image = canvas.toDataURL("image/png");
+    //                                 //             // window.fs.writeFileSync(
+    //                                 //             //     window.path.join(extractPath, "./" + i + ".png"),
+    //                                 //             //     image.replace(/^data:image\/png;base64,/, ""),
+    //                                 //             //     "base64"
+    //                                 //             // );
+    //                                 //             window.fs.writeFileSync(
+    //                                 //                 window.path.join(extractPath, "./" + i + ".png"),
+    //                                 //                 image
+    //                                 //             );
+    //                                 //             count++;
+    //                                 //             e.sender.executeJavaScript(
+    //                                 //                 ` console.log("Made image", ${i} + ".png")`
+    //                                 //             );
+    //                                 //             // console.log("Made image", i + ".png");
+    //                                 //             page.cleanup();
+    //                                 //             if (count === pdf.numPages) res({ status: "ok" });
+    //                                 //         }
+    //                                 //     );
     //                             });
     //                         }
     //                     }

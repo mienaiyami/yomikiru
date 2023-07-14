@@ -214,6 +214,9 @@ const App = (): ReactElement => {
 
             // pdf to img starts here
 
+            // link =
+            //     "http://localhost:48641/stuff/mangas/ln/Eminence%20in%20Shadow/The%20Eminence%20in%20Shadow,%20Vol.%201.pdf";
+
             // renderPDF(link, tempExtractPath, appSettings.readerSettings.pdfScale)
             //     .catch((reason) => {
             //         dispatch(setUnzipping(false));
@@ -222,8 +225,6 @@ const App = (): ReactElement => {
             //     .then((e) => {
             //         if (e) tempFn(tempExtractPath, 1);
             //     });
-            // link =
-            //     "http://localhost:48641/stuff/mangas/ln/Eminence%20in%20Shadow/The%20Eminence%20in%20Shadow,%20Vol.%201.pdf";
             const doc = window.pdfjsLib
                 .getDocument(link)
                 .promise.then((pdf) => {
@@ -237,20 +238,53 @@ const App = (): ReactElement => {
                             canvas.width = viewport.width;
                             canvas.height = viewport.height;
                             const context = canvas.getContext("2d");
-                            // console.log("starting", i);
-                            if (context)
-                                page.render({ canvasContext: context, viewport: viewport }).promise.then(() => {
+                            console.log("starting", i);
+                            if (context) {
+                                // (async function fun() {
+                                //     await page.render({ canvasContext: context, viewport: viewport }).promise;
+                                //     const image = canvas.toDataURL("image/png");
+                                //     window.fs.writeFile(
+                                //         window.path.join(tempExtractPath, "./" + i + ".png"),
+                                //         image.replace(/^data:image\/png;base64,/, ""),
+                                //         "base64",
+                                //         (err) => {
+                                //             count++;
+                                //             console.log("Made image", i + ".png");
+                                //             page.cleanup();
+                                //             if (count === pdf.numPages) tempFn(tempExtractPath, 1);
+                                //         }
+                                //     );
+                                // })();
+                                const abc = page.render({ canvasContext: context, viewport: viewport });
+                                abc.promise.then(() => {
                                     const image = canvas.toDataURL("image/png");
-                                    window.fs.writeFileSync(
+                                    window.fs.writeFile(
                                         window.path.join(tempExtractPath, "./" + i + ".png"),
                                         image.replace(/^data:image\/png;base64,/, ""),
-                                        "base64"
+                                        "base64",
+                                        (err) => {
+                                            if (err) {
+                                                console.error(err);
+                                            } else console.log("Made image", i + ".png");
+                                            count++;
+                                            page.cleanup();
+                                            if (count === pdf.numPages) tempFn(tempExtractPath, 1);
+                                        }
                                     );
-                                    count++;
-                                    // console.log("Made image", i + ".png");
-                                    page.cleanup();
-                                    if (count === pdf.numPages) tempFn(tempExtractPath, 1);
                                 });
+                                // page.render({ canvasContext: context, viewport: viewport }).promise.then(() => {
+                                //     const image = canvas.toDataURL("image/png");
+                                //     window.fs.writeFileSync(
+                                //         window.path.join(tempExtractPath, "./" + i + ".png"),
+                                //         image.replace(/^data:image\/png;base64,/, ""),
+                                //         "base64"
+                                //     );
+                                //     count++;
+                                //     console.log("Made image", i + ".png");
+                                //     page.cleanup();
+                                //     if (count === pdf.numPages) tempFn(tempExtractPath, 1);
+                                // });
+                            }
                         });
                     }
                 })
