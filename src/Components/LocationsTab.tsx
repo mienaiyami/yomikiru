@@ -105,8 +105,9 @@ const LocationsTab = (): ReactElement => {
                         name={e.name}
                         link={e.link}
                         inHistory={
-                            (window.fs.lstatSync(e.link).isFile() && window.path.extname(e.link).toLowerCase()) ===
-                            ".epub"
+                            (window.fs.existsSync(e.link) &&
+                                window.fs.lstatSync(e.link).isFile() &&
+                                window.path.extname(e.link).toLowerCase()) === ".epub"
                                 ? false
                                 : (
                                       history.find(

@@ -106,7 +106,13 @@ const ReaderSideList = memo(
                     let responseCompleted = 0;
                     files.forEach((e) => {
                         const path = window.path.join(dir, e);
-                        if (window.path.extname(e).toLowerCase() !== ".sys")
+                        let aa = true;
+                        try {
+                            window.fs.lstatSync(path);
+                        } catch (err) {
+                            aa = false;
+                        }
+                        if (aa && window.path.extname(e).toLowerCase() !== ".sys")
                             if (window.fs.lstatSync(path).isDirectory()) {
                                 validFile++;
                                 window.fs.promises
