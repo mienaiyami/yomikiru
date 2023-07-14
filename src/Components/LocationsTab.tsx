@@ -229,7 +229,7 @@ const LocationsTab = (): ReactElement => {
                 </div>
                 <div className="currentPath">
                     <button
-                        data-tooltip={`This folder contains ${imageCount} images`}
+                        data-tooltip={`${imageCount} Images`}
                         disabled={imageCount <= 0}
                         onClick={() => openInReader(currentLink)}
                     >
@@ -239,7 +239,7 @@ const LocationsTab = (): ReactElement => {
                 </div>
                 {/* <span className="divider"></span> */}
                 {/* <div className="imageCount">
-                    <p>This folder contains {imageCount} images.</p>
+                    <p>This folder contains {imageCount} Images.</p>
                 </div> */}
                 {/* <span className="divider"></span> */}
             </div>
@@ -247,7 +247,7 @@ const LocationsTab = (): ReactElement => {
                 {isLoadingFile ? (
                     <p>Loading...</p>
                 ) : locations.length === 0 ? (
-                    <p>No Directories</p>
+                    <p>0 Folders, {imageCount} Images</p>
                 ) : (
                     <ol>
                         {appSettings.locationListSortType === "inverse"
