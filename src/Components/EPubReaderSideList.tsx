@@ -91,9 +91,9 @@ const EPubReaderSideList = memo(
         const changePrevNext = () => {
             if (bookInReader) {
                 const listData = tocData.nav.map((e) => e.src);
-                let nextIndex = listData.indexOf(currentChapterURL) + 1;
+                let nextIndex = (listData.findIndex((e) => e.includes(currentChapterURL)) || 0) + 1;
                 if (nextIndex < listData.length && listData[nextIndex] === currentChapterURL) nextIndex += 1;
-                let prevIndex = listData.indexOf(currentChapterURL) - 1;
+                let prevIndex = (listData.findIndex((e) => e.includes(currentChapterURL)) || 0) - 1;
                 if (prevIndex > 0 && listData[prevIndex] === currentChapterURL) prevIndex -= 1;
                 const prevCh = prevIndex < 0 ? "~" : listData[prevIndex];
                 const nextCh = nextIndex >= listData.length ? "~" : listData[nextIndex];
@@ -366,7 +366,7 @@ const EPubReaderSideList = memo(
                         <div>
                             <span className="bold">Chapter</span>
                             <span className="bold"> : </span>
-                            <span>{tocData.nav.find((e) => e.src === currentChapterURL)?.name || "~"}</span>
+                            <span>{tocData.nav.find((e) => e.src.includes(currentChapterURL))?.name || "~"}</span>
                         </div>
                     )}
                 </div>
@@ -409,7 +409,7 @@ const List = memo(
                             temp_ListShow.push(false);
                         }
                         if (cur.depth === 1) acc[len - 1].child.push(cur);
-                        if (cur.src === currentChapterURL) temp_ListShow[acc.length - 1] = true;
+                        if (cur.src.includes(currentChapterURL)) temp_ListShow[acc.length - 1] = true;
                     }
                     return acc;
                 }, [] as { parent: TOCData["nav"][0]; child: TOCData["nav"] }[]),
@@ -441,9 +441,9 @@ const List = memo(
             const show = index < 0 ? true : listShow[index];
             return (
                 <li
-                    className={`${src === currentChapterURL ? "current" : ""} ${depth === 2 ? "collapse" : ""} ${
-                        !show ? "collapsed" : ""
-                    }`}
+                    className={`${src.includes(currentChapterURL) ? "current" : ""} ${
+                        depth === 2 ? "collapse" : ""
+                    } ${!show ? "collapsed" : ""}`}
                     style={{ "--depth": depth - 1 }}
                     onClick={() => {
                         if (depth === 2) {
@@ -467,7 +467,7 @@ const List = memo(
                         data-depth={depth}
                         title={name}
                         ref={(node) => {
-                            if (node !== null && src === currentChapterURL)
+                            if (node !== null && src.includes(currentChapterURL))
                                 node.scrollIntoView({ block: "start" });
                         }}
                     >

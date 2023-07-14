@@ -197,7 +197,7 @@ const HTMLPart = memo(
                           (e) => e.url.split("#")[0] === currentChapterURL.split("#")[0]
                       );
             // need to be below
-            if (tocData.nav[afterCurrentIndex]?.src === currentChapterURL) afterCurrentIndex++;
+            if (tocData.nav[afterCurrentIndex]?.src.includes(currentChapterURL)) afterCurrentIndex++;
             /**till next item from TOC */
             let lastIndex = displayDataWithOrder.findLastIndex(
                 (e) => e.url.split("#")[0] === tocData.nav[afterCurrentIndex]?.src.split("#")[0]
@@ -355,7 +355,7 @@ const EPubReader = () => {
         };
         if (tocData)
             window.app.epubHistorySaveData.chapter =
-                tocData.nav.find((e) => e.src === currentChapterURL)?.name || "~";
+                tocData.nav.find((e) => e.src.includes(currentChapterURL))?.name || "~";
         if (
             window.app.epubHistorySaveData.chapter === "~" ||
             window.app.epubHistorySaveData.chapter === linkInReader.chapter
@@ -626,7 +626,7 @@ const EPubReader = () => {
                                                 title: tempTOCData.title,
                                                 date: new Date().toLocaleString("en-UK", { hour12: true }),
                                                 chapter:
-                                                    tempTOCData.nav.find((e) => e.src === currentChapterURL)
+                                                    tempTOCData.nav.find((e) => e.src.includes(currentChapterURL))
                                                         ?.name ?? tempTOCData.nav[0].name,
                                             };
                                             dispatch(setBookInReader(bookOpened));
@@ -718,7 +718,7 @@ const EPubReader = () => {
                     };
                     if (tocData)
                         window.app.epubHistorySaveData.chapter =
-                            tocData.nav.find((e) => e.src === currentChapterURL)?.name || "~";
+                            tocData.nav.find((e) => e.src.includes(currentChapterURL))?.name || "~";
                     if (callback) callback(fff);
                     setElemBeforeChange(fff);
                 }
