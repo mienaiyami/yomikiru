@@ -20,6 +20,7 @@ const TopBar = (): ReactElement => {
     const bookInReader = useAppSelector((store) => store.bookInReader);
     const [isMaximized, setMaximized] = useState(window.electron.getCurrentWindow().isMaximized ?? true);
     const isReaderOpen = useAppSelector((store) => store.isReaderOpen);
+    const appSettings = useAppSelector((store) => store.appSettings);
 
     const [pageScrollTimeoutID, setTimeoutID] = useState<NodeJS.Timeout | null>(null);
 
@@ -38,7 +39,11 @@ const TopBar = (): ReactElement => {
         } else if (bookInReader) {
             let bookTitle = bookInReader.title;
             let chapterName = "";
-            if (bookInReader.chapter && bookInReader.chapter !== "~") {
+            if (
+                appSettings.epubReaderSettings.loadOneChapter &&
+                bookInReader.chapter &&
+                bookInReader.chapter !== "~"
+            ) {
                 chapterName = window.app.replaceExtension(bookInReader.chapter, "");
                 if (chapterName.length > 83) chapterName = chapterName.substring(0, 80) + "...";
             }
