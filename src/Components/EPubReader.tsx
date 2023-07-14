@@ -854,11 +854,11 @@ const EPubReader = () => {
                         break;
                     case shortcutkey.toggleZenMode?.key1:
                     case shortcutkey.toggleZenMode?.key2:
-                        makeScrollPos();
+                        // makeScrollPos();
                         setZenMode((prev) => !prev);
                         break;
                     case "Escape":
-                        makeScrollPos();
+                        // makeScrollPos();
                         setZenMode(false);
                         break;
                     case shortcutkey.nextChapter?.key1:
@@ -949,14 +949,14 @@ const EPubReader = () => {
         appSettings.epubReaderSettings.readerWidth,
         isSideListPinned,
         appSettings.epubReaderSettings.fontSize,
+        appSettings.epubReaderSettings.lineSpacing,
+        appSettings.epubReaderSettings.paragraphSpacing,
         //! these were not needed caused bad auto scroll
         // appSettings.epubReaderSettings.fontFamily,
-        // appSettings.epubReaderSettings.lineSpacing,
-        // appSettings.epubReaderSettings.paragraphSpacing,
         // appSettings.epubReaderSettings.wordSpacing,
         // appSettings.epubReaderSettings.useDefault_fontFamily,
-        // appSettings.epubReaderSettings.useDefault_lineSpacing,
-        // appSettings.epubReaderSettings.useDefault_paragraphSpacing,
+        appSettings.epubReaderSettings.useDefault_lineSpacing,
+        appSettings.epubReaderSettings.useDefault_paragraphSpacing,
         // appSettings.epubReaderSettings.useDefault_wordSpacing,
     ]);
 

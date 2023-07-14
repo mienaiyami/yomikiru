@@ -133,7 +133,7 @@ const EPUBReaderSettings = memo(
                                 min={1}
                                 max={maxWidth}
                                 onChange={(e) => {
-                                    makeScrollPos();
+                                    // makeScrollPos();
                                     let value = e.target.valueAsNumber;
                                     if (!value) value = 0;
                                     value = value >= maxWidth ? maxWidth : value;
@@ -149,7 +149,7 @@ const EPUBReaderSettings = memo(
                             <button
                                 ref={sizeMinusRef}
                                 onClick={(e) => {
-                                    makeScrollPos();
+                                    // makeScrollPos();
                                     // was 20 before
                                     const steps = appSettings.epubReaderSettings.readerWidth <= 40 ? 5 : 10;
                                     const readerWidth =
@@ -169,7 +169,7 @@ const EPUBReaderSettings = memo(
                             <button
                                 ref={sizePlusRef}
                                 onClick={(e) => {
-                                    makeScrollPos();
+                                    // makeScrollPos();
                                     const steps = appSettings.epubReaderSettings.readerWidth <= 40 ? 5 : 10;
                                     const readerWidth =
                                         appSettings.epubReaderSettings.readerWidth + steps > maxWidth
@@ -189,7 +189,7 @@ const EPUBReaderSettings = memo(
                                 <InputCheckbox
                                     checked={appSettings.epubReaderSettings.limitImgHeight}
                                     onChange={(e) => {
-                                        makeScrollPos();
+                                        // makeScrollPos();
                                         dispatch(
                                             setEpubReaderSettings({
                                                 limitImgHeight: e.currentTarget.checked,
@@ -231,7 +231,7 @@ const EPUBReaderSettings = memo(
                                     min={1}
                                     max={100}
                                     onChange={(e) => {
-                                        makeScrollPos();
+                                        // makeScrollPos();
                                         let value = e.target.valueAsNumber;
                                         if (!value) value = 0;
                                         value = value >= 100 ? 100 : value;
@@ -247,7 +247,7 @@ const EPUBReaderSettings = memo(
                                 <button
                                     ref={fontSizeMinusRef}
                                     onClick={(e) => {
-                                        makeScrollPos();
+                                        // makeScrollPos();
                                         let newSize = appSettings.epubReaderSettings.fontSize - 1;
 
                                         newSize = newSize < 1 ? 1 : newSize;
@@ -261,7 +261,7 @@ const EPUBReaderSettings = memo(
                                 <button
                                     ref={fontSizePlusRef}
                                     onClick={(e) => {
-                                        makeScrollPos();
+                                        // makeScrollPos();
                                         let newSize = appSettings.epubReaderSettings.fontSize + 1;
 
                                         newSize = newSize > 100 ? 100 : newSize;
@@ -299,7 +299,7 @@ const EPUBReaderSettings = memo(
                                 <InputCheckbox
                                     checked={!appSettings.epubReaderSettings.useDefault_fontFamily}
                                     onChange={(e) => {
-                                        makeScrollPos();
+                                        // makeScrollPos();
                                         dispatch(
                                             setEpubReaderSettings({
                                                 useDefault_fontFamily: !e.currentTarget.checked,
@@ -313,7 +313,7 @@ const EPUBReaderSettings = memo(
                                     disabled={appSettings.epubReaderSettings.useDefault_fontFamily}
                                     value={appSettings.epubReaderSettings.fontFamily}
                                     onChange={(e) => {
-                                        makeScrollPos();
+                                        // makeScrollPos();
                                         const val = e.currentTarget.value;
                                         dispatch(
                                             setEpubReaderSettings({
@@ -401,7 +401,7 @@ const EPUBReaderSettings = memo(
                                 <InputCheckboxNumber
                                     checked={!appSettings.epubReaderSettings.useDefault_lineSpacing}
                                     onChangeCheck={(e) => {
-                                        makeScrollPos();
+                                        // makeScrollPos();
                                         dispatch(
                                             setEpubReaderSettings({
                                                 useDefault_lineSpacing: !e.currentTarget.checked,
@@ -413,7 +413,7 @@ const EPUBReaderSettings = memo(
                                     max={20}
                                     value={appSettings.epubReaderSettings.lineSpacing}
                                     onChangeNum={(e) => {
-                                        makeScrollPos();
+                                        // makeScrollPos();
                                         let value = e.currentTarget.valueAsNumber;
                                         if (value > 20) value = 20;
                                         if (value < 0) value = 0;
@@ -429,7 +429,7 @@ const EPUBReaderSettings = memo(
                                 <InputCheckboxNumber
                                     checked={!appSettings.epubReaderSettings.useDefault_paragraphSpacing}
                                     onChangeCheck={(e) => {
-                                        makeScrollPos();
+                                        // makeScrollPos();
                                         dispatch(
                                             setEpubReaderSettings({
                                                 useDefault_paragraphSpacing: !e.currentTarget.checked,
@@ -441,7 +441,7 @@ const EPUBReaderSettings = memo(
                                     max={20}
                                     value={appSettings.epubReaderSettings.paragraphSpacing}
                                     onChangeNum={(e) => {
-                                        makeScrollPos();
+                                        // makeScrollPos();
                                         let value = e.currentTarget.valueAsNumber;
                                         if (value > 20) value = 20;
                                         if (value < 0) value = 0;
@@ -457,7 +457,7 @@ const EPUBReaderSettings = memo(
                                 <InputCheckboxNumber
                                     checked={!appSettings.epubReaderSettings.useDefault_wordSpacing}
                                     onChangeCheck={(e) => {
-                                        makeScrollPos();
+                                        // makeScrollPos();
                                         dispatch(
                                             setEpubReaderSettings({
                                                 useDefault_wordSpacing: !e.currentTarget.checked,
@@ -469,7 +469,7 @@ const EPUBReaderSettings = memo(
                                     max={20}
                                     value={appSettings.epubReaderSettings.wordSpacing}
                                     onChangeNum={(e) => {
-                                        makeScrollPos();
+                                        // makeScrollPos();
                                         let value = e.currentTarget.valueAsNumber;
                                         if (value > 20) value = 20;
                                         if (value < 0) value = 0;
