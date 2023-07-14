@@ -247,6 +247,7 @@ const AnilistEdit = () => {
                                         mangaInReader &&
                                         dispatch(removeAnilistTracker(window.path.dirname(mangaInReader.link)))
                                     }
+                                    title="This only remove tracking locally. Anilist entry is not deleted."
                                 >
                                     Untrack
                                 </button>
