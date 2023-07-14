@@ -461,7 +461,6 @@ const registerListener = () => {
     ipcMain.handle("unzip", (e, link: string, extractPath: string) => {
         return new Promise((res, rej) => {
             if (link && extractPath) {
-                console.log("starting extract", link);
                 crossZip.unzip(link, extractPath, (err) => {
                     if (err) rej(err);
                     else res({ link, extractPath });
@@ -469,6 +468,59 @@ const registerListener = () => {
             } else rej("ELECTRON:UNZIP: Invalid link or extractPath.");
         });
     });
+    // ipcMain.on("abc", () => {
+    //     console.log("aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa");
+    // });
+    // ! getting  node-gyp failed to rebuild '..\node_modules\canvas' and i tried everything
+    // ipcMain.handle("unzip", (e, link: string, extractPath: string, scale: number) => {
+    //     return new Promise((res, rej) => {
+    //         if (link && extractPath && scale) {
+    //             console.log("starting extract", link);
+    //             pdfjsLib
+    //                 .getDocument(link)
+    //                 .promise.catch((reason) => {
+    //                     rej(reason);
+    //                 })
+    //                 .then((pdf) => {
+    //                     if (pdf) {
+    //                         let count = 0;
+    //                         for (let i = 1; i <= pdf.numPages; i++) {
+    //                             pdf.getPage(i).then((page) => {
+    //                                 const viewport = page.getViewport({
+    //                                     scale: scale || 1.5,
+    //                                 });
+    //                                 const canvas = Canvas.createCanvas(viewport.width, viewport.height);
+    //                                 const context = canvas.getContext("2d");
+    //                                 if (context)
+    //                                     page.render({ canvasContext: context, viewport: viewport }).promise.then(
+    //                                         () => {
+    //                                             const image = canvas.toBuffer();
+    //                                             // const image = canvas.toDataURL("image/png");
+    //                                             // window.fs.writeFileSync(
+    //                                             //     window.path.join(extractPath, "./" + i + ".png"),
+    //                                             //     image.replace(/^data:image\/png;base64,/, ""),
+    //                                             //     "base64"
+    //                                             // );
+    //                                             window.fs.writeFileSync(
+    //                                                 window.path.join(extractPath, "./" + i + ".png"),
+    //                                                 image
+    //                                             );
+    //                                             count++;
+    //                                             e.sender.executeJavaScript(
+    //                                                 ` console.log("Made image", ${i} + ".png")`
+    //                                             );
+    //                                             // console.log("Made image", i + ".png");
+    //                                             page.cleanup();
+    //                                             if (count === pdf.numPages) res({ status: "ok" });
+    //                                         }
+    //                                     );
+    //                             });
+    //                         }
+    //                     }
+    //                 });
+    //         } else rej("ELECTRON:UNZIP: Invalid link or extractPath.");
+    //     });
+    // });
 };
 app.on("ready", () => {
     // if (!app.isPackaged) {

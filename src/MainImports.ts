@@ -958,7 +958,9 @@ window.dialog = {
 export const unzip = (link: string, extractPath: string) => {
     return window.electron.ipcRenderer.invoke("unzip", link, extractPath);
 };
-
+// export const renderPDF = (link: string, extractPath: string, scale: number) => {
+//     return window.electron.ipcRenderer.invoke("renderPDF", link, extractPath, scale);
+// };
 const saveJSONfile = (path: string, data: any) => {
     // console.log("Saving file ", window.fileSaveTimeOut, path);
     const str = JSON.stringify(data, null, "\t");

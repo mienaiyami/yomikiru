@@ -211,8 +211,19 @@ const App = (): ReactElement => {
             console.log(`Rendering "${link}" at "${tempExtractPath}"`);
             window.app.deleteDirOnClose = tempExtractPath;
             dispatch(setUnzipping(true));
+
             // pdf to img starts here
 
+            // renderPDF(link, tempExtractPath, appSettings.readerSettings.pdfScale)
+            //     .catch((reason) => {
+            //         dispatch(setUnzipping(false));
+            //         console.error("PDF Reading Error:", reason);
+            //     })
+            //     .then((e) => {
+            //         if (e) tempFn(tempExtractPath, 1);
+            //     });
+            // link =
+            //     "http://localhost:48641/stuff/mangas/ln/Eminence%20in%20Shadow/The%20Eminence%20in%20Shadow,%20Vol.%201.pdf";
             const doc = window.pdfjsLib
                 .getDocument(link)
                 .promise.then((pdf) => {
@@ -226,6 +237,7 @@ const App = (): ReactElement => {
                             canvas.width = viewport.width;
                             canvas.height = viewport.height;
                             const context = canvas.getContext("2d");
+                            // console.log("starting", i);
                             if (context)
                                 page.render({ canvasContext: context, viewport: viewport }).promise.then(() => {
                                     const image = canvas.toDataURL("image/png");
@@ -235,7 +247,7 @@ const App = (): ReactElement => {
                                         "base64"
                                     );
                                     count++;
-                                    console.log("Made image", i + ".png");
+                                    // console.log("Made image", i + ".png");
                                     page.cleanup();
                                     if (count === pdf.numPages) tempFn(tempExtractPath, 1);
                                 });
@@ -470,6 +482,11 @@ const App = (): ReactElement => {
         const ee = (e: DragEvent) => e.preventDefault();
         document.addEventListener("dragover", ee);
         document.addEventListener("drop", dropFile);
+
+        // setInterval(() => {
+        //     // window.electron.ipcRenderer.send("abc");
+        //     console.log("dddddddddd");
+        // }, 1000);
 
         return () => {
             window.removeEventListener("keydown", eventsOnStart);
