@@ -22,7 +22,7 @@ if (!isValidRes.isValid) {
         });
         makeSettingsJson();
     } else {
-        window.dialog.customError({
+        window.dialog.warn({
             message: `Some settings are invalid or new settings added. Re-writing settings.`,
         });
         window.logger.log(isSettingsValid());

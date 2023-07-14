@@ -79,6 +79,7 @@ export const settingValidatorData = {
      * Show more data in title attr in bookmark/history tab items
      */
     showMoreDataOnItemHover: true,
+    autoRefreshSideList: false,
     readerSettings: {
         /**
          * width of reader in percent
@@ -1058,6 +1059,7 @@ const defaultSettings: AppSettings = {
     hideCursorInZenMode: false,
     hideOpenArrow: false,
     showMoreDataOnItemHover: true,
+    autoRefreshSideList: false,
     readerSettings: {
         readerWidth: 60,
         variableImageSize: true,

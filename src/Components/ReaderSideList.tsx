@@ -166,16 +166,51 @@ const ReaderSideList = memo(
                 });
             }
         };
-        useEffect(() => {
+        // const refreshList = () => {
+        //     console.log("aaa");
+        //     if (mangaInReader) {
+        //         // if (prevMangaRef.current === mangaInReader.mangaName) {
+        //         //     changePrevNext();
+        //         //     return;
+        //         // }
+        //         // prevMangaRef.current = mangaInReader.mangaName;
+        //         makeChapterList();
+        //     }
+        // };
+        useLayoutEffect(() => {
+            // refreshList();
+
+            makeChapterList();
             if (mangaInReader) {
-                if (prevMangaRef.current === mangaInReader.mangaName) {
-                    changePrevNext();
-                    return;
-                }
-                prevMangaRef.current = mangaInReader.mangaName;
-                makeChapterList();
+                // const watcher = window.chokidar.watch(mangaInReader.link.replace(mangaInReader.chapterName, ""), {
+                //     atomic: 1000,
+                //     depth: 0,
+                //     ignoreInitial: true,
+                //     interval: 2000,
+                // });
+                // // watcher.on("raw", (e) => {
+                // //     console.log("raw", e);
+                // //     // refreshList();
+                // // });
+                // watcher.on("all", (e, path) => {
+                //     console.log("all", e, path);
+                // });
+                // // watcher.on("change", (e) => {
+                // //     console.log("change", e);
+                // // });
+                let interval: NodeJS.Timer;
+                if (appSettings.autoRefreshSideList)
+                    interval = setInterval(() => {
+                        // refreshList();
+
+                        makeChapterList();
+                    }, 5000);
+                return () => {
+                    // watcher.removeAllListeners();
+                    clearInterval(interval);
+                };
             }
-        }, [mangaInReader]);
+        }, [mangaInReader, appSettings.autoRefreshSideList]);
         const List = (chapterData: ChapterData[], filter: string) => {
             return chapterData.map((e) => {
                 if (mangaInReader && new RegExp(filter, "ig").test(e.name)) {

@@ -1205,6 +1205,23 @@ const Settings = (): ReactElement => {
                                 </div>
                                 <div className="toggleItem">
                                     <InputCheckbox
+                                        checked={appSettings.autoRefreshSideList}
+                                        className="noBG"
+                                        onChange={(e) => {
+                                            dispatch(
+                                                setAppSettings({
+                                                    autoRefreshSideList: e.currentTarget.checked,
+                                                })
+                                            );
+                                        }}
+                                        labelAfter="Auto Refresh Side-list"
+                                    />
+                                    <div className="desc">
+                                        Automatically refresh reader side list every 5 second.
+                                    </div>
+                                </div>
+                                <div className="toggleItem">
+                                    <InputCheckbox
                                         checked={appSettings.useCanvasBasedReader}
                                         className="noBG"
                                         onChange={(e) => {
