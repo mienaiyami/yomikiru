@@ -20,7 +20,7 @@ import contextMenu, { setContextMenu } from "../store/contextMenu";
 import EPUBReaderSettings from "./EPubReaderSettings";
 import EPubReaderSideList from "./EPubReaderSideList";
 import { setReaderSettings } from "../store/appSettings";
-import bookInReader, { setBookInReader } from "../store/bookInReader";
+import { setBookInReader } from "../store/bookInReader";
 import { setUnzipping } from "../store/unzipping";
 import { unzip } from "../MainImports";
 
@@ -294,7 +294,7 @@ const EPubReader = () => {
     const shortcuts = useAppSelector((store) => store.shortcuts);
     const isReaderOpen = useAppSelector((store) => store.isReaderOpen);
     const linkInReader = useAppSelector((store) => store.linkInReader);
-    // const bookInReader = useAppSelector((store) => store.bookInReader);
+    const bookInReader = useAppSelector((store) => store.bookInReader);
     const isLoadingManga = useAppSelector((store) => store.isLoadingManga);
     const isSettingOpen = useAppSelector((store) => store.isSettingOpen);
     const bookmarks = useAppSelector((store) => store.bookmarks);
@@ -361,7 +361,13 @@ const EPubReader = () => {
             window.app.epubHistorySaveData.chapter === linkInReader.chapter
         )
             window.app.epubHistorySaveData.queryString = linkInReader.queryStr || "";
-
+        if (bookInReader)
+            dispatch(
+                setBookInReader({
+                    ...bookInReader,
+                    chapter: window.app.epubHistorySaveData.chapter as string,
+                })
+            );
         dispatch(updateCurrentBookHistory());
     }, [currentChapterURL]);
 

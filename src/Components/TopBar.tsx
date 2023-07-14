@@ -82,7 +82,7 @@ const TopBar = (): ReactElement => {
     }, []);
     useEffect(() => {
         setTitleWithSize();
-    }, [mangaInReader, bookInReader]);
+    }, [mangaInReader, bookInReader, bookInReader?.chapter]);
 
     return (
         <div id="topBar">
