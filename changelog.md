@@ -11,12 +11,11 @@
 - DEV:
   - BrowserWindow `fromWebContents()` instead of `fromId()` in ipcMain to get window. -->
 
-
+Sorry for multiple updates in this short interval.
 
 ## Fixed
 
 - Issues related to closing window.
-  - history update on last window close when confirm close disabled.
-- Some internal links in epub does not work.
+  - "Confirm close" not working.
 
 ---
