@@ -133,6 +133,7 @@ const downloadUpdates = (latestVersion: string, windowId: number) => {
             webSecurity: app.isPackaged,
             safeDialogs: true,
         },
+        title: `${app.getVersion()} ---> ${latestVersion}`,
         maximizable: false,
     });
     newWindow.loadURL(DOWNLOAD_PROGRESS_WEBPACK_ENTRY);
