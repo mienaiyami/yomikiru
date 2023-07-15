@@ -17,5 +17,6 @@
 
 - Issues related to closing window.
   - history update on last window close when confirm close disabled.
+- Some internal links in epub does not work.
 
 ---
