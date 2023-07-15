@@ -420,14 +420,18 @@ const EPubReader = () => {
                             if (data_href.split("#")[0] === currentChapterURL.split("#")[0])
                                 document
                                     .querySelector("#epub-" + idFromURL + ` [data-id="${idHash}"]`)
-                                    ?.scrollIntoView({ block: "nearest" });
+                                    ?.scrollIntoView({ block: "start" });
                             else {
                                 setCurrentChapterURL(data_href);
                             }
                         }
                     } else {
                         const linkExist = displayData.find((a) => a.url === data_href);
-                        if (linkExist) setCurrentChapterURL(data_href);
+                        if (linkExist) {
+                            const abc = document.querySelector(`#epub-${linkExist.id}`);
+                            if (abc) abc.scrollIntoView({ block: "start" });
+                            else setCurrentChapterURL(data_href);
+                        }
                     }
                 } else {
                     if (data_href.includes("#")) {
@@ -436,11 +440,11 @@ const EPubReader = () => {
                         if (idFromURL)
                             document
                                 .querySelector("#epub-" + idFromURL + ` [data-id="${idHash}"]`)
-                                ?.scrollIntoView({ block: "nearest" });
+                                ?.scrollIntoView({ block: "start" });
                     } else {
                         const idFromURL = displayData.find((a) => a.url === data_href)?.id;
                         if (idFromURL)
-                            document.querySelector("#epub-" + idFromURL)?.scrollIntoView({ block: "nearest" });
+                            document.querySelector("#epub-" + idFromURL)?.scrollIntoView({ block: "start" });
                     }
                 }
             } else {
