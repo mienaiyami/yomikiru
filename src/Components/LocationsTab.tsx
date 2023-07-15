@@ -22,8 +22,8 @@ const LocationsTab = (): ReactElement => {
     const [filter, setFilter] = useState<string>("");
     const [imageCount, setImageCount] = useState(0);
     const inputRef = useRef<HTMLInputElement>(null);
-    const displayList = (link = currentLink): void => {
-        setFilter("");
+    const displayList = (link = currentLink, refresh = false): void => {
+        if (!refresh) setFilter("");
         if (!window.fs.existsSync(link)) {
             if (!window.fs.existsSync(appSettings.baseDir)) {
                 window.dialog.customError({ message: "Default Location doesn't exist." });
@@ -36,7 +36,7 @@ const LocationsTab = (): ReactElement => {
         }
 
         if (window.fs.existsSync(link) && window.fs.lstatSync(link).isDirectory()) {
-            setIsLoadingFile(true);
+            if (!refresh) setIsLoadingFile(true);
             window.fs.readdir(link, (err, files) => {
                 if (err) {
                     window.logger.error(err);
@@ -80,7 +80,7 @@ const LocationsTab = (): ReactElement => {
                         //  return (window.fs.lstatSync(window.path.join(link, e)) || false).isDirectory()
                     }, [])
                     .sort((a, b) => window.app.betterSortOrder(a.name, b.name));
-                if (inputRef.current) {
+                if (inputRef.current && !refresh) {
                     inputRef.current.value = "";
                 }
                 setLocations(dirNames);
@@ -90,7 +90,24 @@ const LocationsTab = (): ReactElement => {
     };
     useLayoutEffect(() => setCurrentLink(appSettings.baseDir), [appSettings.baseDir]);
     useLayoutEffect(() => {
+        const watcher = window.chokidar.watch(currentLink, {
+            depth: 0,
+            ignoreInitial: true,
+        });
         displayList();
+        let timeout: NodeJS.Timeout;
+        const refresh = () => {
+            if (timeout) clearTimeout(timeout);
+            timeout = setTimeout(() => {
+                displayList(currentLink, true);
+            }, 1000);
+        };
+        watcher.on("all", (e) => {
+            refresh();
+        });
+        return () => {
+            watcher.removeAllListeners("all");
+        };
     }, [currentLink]);
     useEffect(() => {
         if (inputRef.current) {
@@ -126,26 +143,10 @@ const LocationsTab = (): ReactElement => {
     };
     return (
         <div className="contTab listCont" id="locationTab">
-            <h2>
-                Location
-                <button
-                    data-tooltip="Sort"
-                    // tabIndex={-1}
-                    onClick={() => {
-                        dispatch(
-                            setAppSettings({
-                                locationListSortType:
-                                    appSettings.locationListSortType === "inverse" ? "normal" : "inverse",
-                            })
-                        );
-                    }}
-                >
-                    <FontAwesomeIcon icon={faSort} />
-                </button>
-            </h2>
+            <h2>Location</h2>
             <div className="tools">
                 <div className="row1">
-                    <button
+                    {/* <button
                         // tabIndex={-1}
                         data-tooltip="Refresh"
                         onClick={() => {
@@ -153,6 +154,20 @@ const LocationsTab = (): ReactElement => {
                         }}
                     >
                         <FontAwesomeIcon icon={faSyncAlt} />
+                    </button> */}
+                    <button
+                        data-tooltip="Sort"
+                        // tabIndex={-1}
+                        onClick={() => {
+                            dispatch(
+                                setAppSettings({
+                                    locationListSortType:
+                                        appSettings.locationListSortType === "inverse" ? "normal" : "inverse",
+                                })
+                            );
+                        }}
+                    >
+                        <FontAwesomeIcon icon={faSort} />
                     </button>
                     <button
                         // tabIndex={-1}
