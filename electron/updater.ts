@@ -14,17 +14,17 @@ declare const DOWNLOAD_PROGRESS_WEBPACK_ENTRY: string;
  * prevent deletion of these files in "Portable" version of app on installing new update.
  * add new settings/store file to this.
  */
-const fileToKeep = [
-    "bookmarks.json",
-    "history.json",
-    "settings.json",
-    "themes.json",
-    "shortcuts.json",
-    "logs",
-    "main.log",
-    "renderer.log",
-    "DISABLE_HARDWARE_ACCELERATION",
-];
+// const fileToKeep = [
+//     "bookmarks.json",
+//     "history.json",
+//     "settings.json",
+//     "themes.json",
+//     "shortcuts.json",
+//     "logs",
+//     "main.log",
+//     "renderer.log",
+//     "DISABLE_HARDWARE_ACCELERATION",
+// ];
 
 const downloadLink = "https://github.com/mienaiyami/yomikiru/releases/download/v";
 /**
@@ -87,6 +87,7 @@ const checkForUpdate = async (windowId: number, skipMinor = false, promptAfterCh
                         minWidth: 940,
                         minHeight: 560,
                         backgroundColor: "#272727",
+                        title: `${app.getVersion()} ---> ${latestVersion}`,
                     });
                     newWindow.loadURL("https://github.com/mienaiyami/yomikiru/releases");
                     newWindow.setMenuBarVisibility(false);
@@ -98,6 +99,7 @@ const checkForUpdate = async (windowId: number, skipMinor = false, promptAfterCh
                         minWidth: 940,
                         minHeight: 560,
                         backgroundColor: "#272727",
+                        title: `${app.getVersion()} ---> ${latestVersion}`,
                     });
                     newWindow.loadURL("https://github.com/mienaiyami/yomikiru/releases");
                     newWindow.setMenuBarVisibility(false);
@@ -133,7 +135,6 @@ const downloadUpdates = (latestVersion: string, windowId: number) => {
             webSecurity: app.isPackaged,
             safeDialogs: true,
         },
-        title: `${app.getVersion()} ---> ${latestVersion}`,
         maximizable: false,
     });
     newWindow.loadURL(DOWNLOAD_PROGRESS_WEBPACK_ENTRY);
@@ -204,18 +205,17 @@ const downloadUpdates = (latestVersion: string, windowId: number) => {
                     logger.log(`Successfully extracted at "${extractPath}"`);
                     const appPath = path.join(app.getAppPath(), "../../");
                     const appDirName = path.join(app.getPath("exe"), "../");
-                    app.on("before-quit", () => {
+                    app.on("quit", () => {
                         logger.log("Installing updates...");
                         logger.log(`Moving files to "${appPath}"`);
                         spawn(
-                            "start",
-                            [
-                                `powershell.exe Start-Sleep -Seconds 5.0 ; Remove-Item -Recurse -Force '${appDirName}\\*' -Exclude ${fileToKeep.join(
-                                    ","
-                                )} ; Write-Output 'Moving extracted files...' ; Move-Item -Path '${extractPath}\\*' -Destination '${appDirName}' ; ` +
-                                    `Write-Output 'Launching app' ; ;  explorer '${app.getPath("exe")}' ; ; `,
-                            ],
-                            { shell: true }
+                            `cmd.exe /c start powershell.exe " Write-Output 'Starting update...' ; Start-Sleep -Seconds 5.0 ;` +
+                                ` Get-ChildItem * -Recurse -Force | Where-Object { $_.FullName -notmatch 'userdata'} | Remove-Item -Force -Recurse ;` +
+                                ` Write-Output 'Moving extracted files...' ; Start-Sleep -Seconds 1.9;  Move-Item -Path '${extractPath}\\*' -Destination '${appDirName}' ; ` +
+                                ` Write-Output 'Updated, launching app.' ; Start-Sleep -Seconds 2.0 ;  explorer '${app.getPath(
+                                    "exe"
+                                )}' ; ; "`,
+                            { shell: true, cwd: appDirName }
                         ).on("exit", process.exit);
                         logger.log("Quitting app...");
                     });
@@ -227,11 +227,14 @@ const downloadUpdates = (latestVersion: string, windowId: number) => {
             const dl = downloadLink + latestVersion + "/" + `Yomikiru-v${latestVersion}-Setup.exe`;
             downloadFile(dl, newWindow.webContents, (file) => {
                 logger.log(`${file.filename} downloaded.`);
-                app.on("before-quit", () => {
+                app.on("quit", () => {
                     logger.log("Installing updates...");
-                    spawn("start", [`powershell.exe Start-Sleep -Seconds 5.0 ; Start-Process '${file.path}'`], {
-                        shell: true,
-                    }).on("exit", process.exit);
+                    spawn(
+                        `cmd.exe /c start powershell.exe "Write-Output 'Starting update...' ; Start-Sleep -Seconds 5.0 ; Start-Process '${file.path}'"`,
+                        {
+                            shell: true,
+                        }
+                    ).on("exit", process.exit);
                     logger.log("Quitting app...");
                 });
                 logger.log("Preparing to install updates...");
