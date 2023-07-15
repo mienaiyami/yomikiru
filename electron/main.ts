@@ -467,7 +467,6 @@ const registerListener = () => {
         const closeEvent = (e: Electron.Event) => {
             e.preventDefault();
             // log.log(currentWindowIndex, { windowsCont });
-            window.webContents.send("recordPageNumber");
             // log.log("sent page save request");
             // window.webContents.executeJavaScript("window.app.deleteDirOnClose").then((link: string) => {
             //     if (link && fs.existsSync(link))
@@ -488,6 +487,7 @@ const registerListener = () => {
             if (res === 0) {
                 return;
             }
+            window.webContents.send("recordPageNumber");
             const dirToDlt = deleteDirsOnClose[currentWindowIndex];
             if (dirToDlt)
                 try {
