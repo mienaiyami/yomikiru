@@ -266,7 +266,7 @@ const saveJSONfile = (path: string, data: any, sync = true) => {
     // log.log("starting save :\t", path);
     try {
         // JSON.parse(data);
-        // console.log("Saving " + path);
+        // log.log("Saving " + path);
         if (sync) {
             fs.writeFileSync(path, data);
             // log.log("done save :\t", path);
@@ -294,6 +294,7 @@ if (app.isPackaged && process.argv[1] && fs.existsSync(process.argv[1])) {
 
 // declare const HOME_PRELOAD_WEBPACK_ENTRY: string;
 const windowsCont: (BrowserWindow | null)[] = [];
+const deleteDirsOnClose: (string | null)[] = [];
 let isFirstWindow = true;
 
 /**
@@ -325,8 +326,8 @@ const createWindow = (link?: string) => {
         },
     });
     // newWindow.webContents.setFrameRate(60);
-    const currentWindowIndex = windowsCont.length;
     windowsCont.push(newWindow);
+    deleteDirsOnClose.push(null);
     newWindow.loadURL(HOME_WEBPACK_ENTRY);
     newWindow.setMenuBarVisibility(false);
     remote.enable(newWindow.webContents);
@@ -334,21 +335,22 @@ const createWindow = (link?: string) => {
         // maximize also unhide window
         newWindow.maximize();
         newWindow.webContents.send("loadMangaFromLink", { link: link || "" });
-        newWindow.webContents.send("setWindowIndex", currentWindowIndex);
         if (isFirstWindow) {
-            newWindow.webContents.send("canCheckForUpdate");
+            newWindow.webContents.send("checkForUpdate:query");
             newWindow.webContents.send("loadMangaFromLink", { link: openFolderOnLaunch });
             isFirstWindow = false;
         }
+        newWindow.webContents.send("askBeforeClose:query");
     });
     newWindow.webContents.setWindowOpenHandler(() => {
         return { action: "deny" };
     });
-    newWindow.on("close", () => {
-        newWindow.webContents.send("recordPageNumber");
-        windowsCont[currentWindowIndex] = null;
-        if (windowsCont.filter((e) => e !== null).length === 0) app.quit();
-    });
+    // // ! try removeing coz theres 2 "close "
+    // newWindow.on("close", () => {
+    //     newWindow.webContents.send("recordPageNumber");
+    //     windowsCont] = null;
+    //     if (windowsCont.filter((e) => e !== null).length === 0) app.quit();
+    // });
 };
 if (app.isPackaged) {
     /**
@@ -435,39 +437,84 @@ const registerListener = () => {
         });
     }
 
-    ipcMain.on("canCheckForUpdate_response", (e, res, windowId, skipMinor) => {
+    ipcMain.on("checkForUpdate:response", (e, res, windowId, skipMinor) => {
         if (res) checkForUpdate(windowId, skipMinor);
     });
     ipcMain.on("checkForUpdate", (e, windowId, promptAfterCheck = false) => {
         checkForUpdate(windowId, false, promptAfterCheck);
     });
-    ipcMain.on("askBeforeClose", (e, windowId, ask = false, currentWindowIndex) => {
-        const window = BrowserWindow.fromId(windowId)!;
-        window.on("close", (e) => {
-            //! not working, check later
-            window.webContents.executeJavaScript("window.app.deleteDirOnClose").then((link: string) => {
-                if (fs.existsSync(link))
-                    fs.rmSync(link, {
-                        recursive: true,
-                    });
-            });
-            if (ask) {
-                const res = dialog.showMessageBoxSync(window, {
+    ipcMain.on("addDirToDlt", (e, dir) => {
+        try {
+            const index = windowsCont.findIndex((a) => a && a.id === BrowserWindow.fromWebContents(e.sender)?.id);
+            if (index > -1) {
+                deleteDirsOnClose[index] = dir;
+                // log.log({ deleteDirsOnClose });
+            }
+        } catch (error) {
+            log.error(error);
+        }
+    });
+    ipcMain.on("askBeforeClose:response", (e, ask = false) => {
+        const currentWindowIndex = windowsCont.findIndex(
+            (a) => a && a.id === BrowserWindow.fromWebContents(e.sender)?.id
+        );
+        const window = BrowserWindow.fromWebContents(e.sender)!;
+        const closeEvent = (e: Electron.Event) => {
+            // log.log(currentWindowIndex, { windowsCont });
+            window.webContents.send("recordPageNumber");
+            // log.log("sent page save request");
+            // window.webContents.executeJavaScript("window.app.deleteDirOnClose").then((link: string) => {
+            //     if (link && fs.existsSync(link))
+            //         fs.rmSync(link, {
+            //             recursive: true,
+            //         });
+            //     log.log("deleted temp dir");
+            //     log.log("got here somehow?");
+            // });
+            let res = 1;
+            if (ask)
+                res = dialog.showMessageBoxSync(window, {
                     message: "Close this window?",
                     title: "Yomikiru",
                     buttons: ["No", "Yes"],
                     type: "question",
                 });
-                if (res === 0) {
-                    e.preventDefault();
-                    return;
-                }
+            if (res === 0) {
+                e.preventDefault();
+                return;
             }
+            const dirToDlt = deleteDirsOnClose[currentWindowIndex];
+            if (dirToDlt)
+                try {
+                    if (fs.existsSync(dirToDlt) && fs.lstatSync(dirToDlt).isDirectory()) {
+                        fs.rmSync(dirToDlt, {
+                            recursive: true,
+                        });
+                        // log.log("deleted temp dir");
+                    }
+                } catch (reason) {
+                    log.error("Could not delete temp files:", reason);
+                }
+        };
+        const onClosed = () => {
+            // ! maybe move to "closed"
+            // log.log("on closed");
             windowsCont[currentWindowIndex] = null;
-        });
+            deleteDirsOnClose[currentWindowIndex] = null;
+            // log.log({ windowsCont });
+            // log.log({ deleteDirsOnClose });
+            if (windowsCont.filter((e) => e !== null).length === 0) app.quit();
+        };
+        // window.off("closed", onClosed);
+        // window.off("close", closeEvent);
+        // log.log("\n\nasdddddddddddddddddddddddddddddddddddddddddddddddddddd\n\n");
+        // log.log("\n\nregistered...\n\n");
+        window.on("closed", onClosed);
+        window.on("close", closeEvent);
     });
     ipcMain.on("saveFile", (e, path: string, data: string) => {
         saveJSONfile(path, data);
+        // log.log("saved file", path);
     });
 
     ipcMain.handle("unzip", (e, link: string, extractPath: string) => {
@@ -615,11 +662,12 @@ app.on("ready", () => {
     createWindow();
 });
 
-app.on("window-all-closed", () => {
-    if (process.platform !== "darwin") {
-        app.quit();
-    }
-});
+// app.on("window-all-closed", () => {
+//     if (process.platform !== "darwin") {
+//         log.log("closed all window");
+//         app.quit();
+//     }
+// });
 app.on("before-quit", () => {
     log.log("Quitting app...");
 });

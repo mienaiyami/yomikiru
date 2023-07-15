@@ -400,26 +400,30 @@ const App = (): ReactElement => {
             false
         );
     };
+
+    useLayoutEffect(() => {
+        window.electron.ipcRenderer.send("addDirToDlt", window.app.deleteDirOnClose);
+        return () => {
+            window.electron.ipcRenderer.removeAllListeners("addDirToDlt");
+        };
+    }, [window.app.deleteDirOnClose]);
+
     useEffect(() => {
         setFirstRendered(true);
         window.electron.ipcRenderer.on("loadMangaFromLink", (e, data) => {
             if (data && typeof data.link === "string" && data.link !== "") openInReader(data.link);
         });
-        window.electron.ipcRenderer.on("setWindowIndex", (e, data) => {
+        window.electron.ipcRenderer.send("askBeforeClose", appSettings.askBeforeClosing);
+        window.electron.ipcRenderer.on("checkForUpdate:query", () => {
             window.electron.ipcRenderer.send(
-                "askBeforeClose",
-                window.electron.getCurrentWindow().id,
-                appSettings.askBeforeClosing,
-                data
-            );
-        });
-        window.electron.ipcRenderer.on("canCheckForUpdate", () => {
-            window.electron.ipcRenderer.send(
-                "canCheckForUpdate_response",
+                "checkForUpdate:response",
                 appSettings.updateCheckerEnabled,
                 window.electron.getCurrentWindow().id,
                 appSettings.skipMinorUpdate
             );
+        });
+        window.electron.ipcRenderer.on("askBeforeClose:query", () => {
+            window.electron.ipcRenderer.send("askBeforeClose:response", appSettings.askBeforeClosing);
         });
         window.electron.ipcRenderer.on("recordPageNumber", () => {
             if (isReaderOpen) closeReader();
@@ -527,7 +531,8 @@ const App = (): ReactElement => {
             watcher.removeAllListeners();
             window.electron.ipcRenderer.removeAllListeners("loadMangaFromLink");
             window.electron.ipcRenderer.removeAllListeners("setWindowIndex");
-            window.electron.ipcRenderer.removeAllListeners("canCheckForUpdate");
+            window.electron.ipcRenderer.removeAllListeners("checkForUpdate:query");
+            window.electron.ipcRenderer.removeAllListeners("askBeforeClose:query");
             window.electron.ipcRenderer.removeAllListeners("recordPageNumber");
             document.removeEventListener("drop", dropFile);
             document.removeEventListener("dragover", ee);
