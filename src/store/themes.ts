@@ -1,4 +1,4 @@
-import { createSlice, current, isDraft, PayloadAction } from "@reduxjs/toolkit";
+import { createSlice, current, PayloadAction } from "@reduxjs/toolkit";
 import themeInit from "../themeInit.json";
 import { saveJSONfile, themesPath } from "../MainImports";
 
@@ -68,6 +68,8 @@ if (window.fs.existsSync(themesPath)) {
                 window.logger.log("Old theme version detected. Converting to new.");
                 window.fs.writeFileSync(themesPath, JSON.stringify(data, null, "\t"));
             }
+
+            // validate theme data
             if (typeof data.allData[0].main === "string" || !Array.isArray(data.allData))
                 throw { message: "Theme variable does not exist on theme.main" };
             const addedProp = new Set<string>();
@@ -101,6 +103,22 @@ if (window.fs.existsSync(themesPath)) {
                     });
                 });
                 if (rewriteNeeded) window.fs.writeFileSync(themesPath, JSON.stringify(data, null, "\t"));
+            }
+            // check if default theme exist
+            // todo: remove in later versions, today 15/07/2023
+            let changed2 = false;
+            [...themeInit.allData].reverse().forEach((e) => {
+                if (!data.allData.map((e: any) => e.name).includes(e.name)) {
+                    window.logger.log(`Added default theme "${e.name}".`);
+                    data.allData.unshift(e);
+                    changed2 = true;
+                }
+            });
+            if (changed2) {
+                window.dialog.warn({
+                    message: "Changes in Default Themes. Old themes still exist but can be deleted.",
+                });
+                window.fs.writeFileSync(themesPath, JSON.stringify(data, null, "\t"));
             }
             if (changed) {
                 window.dialog.warn({

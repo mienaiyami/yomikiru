@@ -493,39 +493,43 @@ const Settings = (): ReactElement => {
                                             <FontAwesomeIcon icon={faPlus} /> <span className="icon">/</span>{" "}
                                             <FontAwesomeIcon icon={faEdit} />
                                         </button>
-                                        <button
-                                            onClick={() => {
-                                                if (themesRaw.allData.map((q) => q.name).includes(theme)) {
-                                                    window.dialog.customError({
-                                                        title: "Error",
-                                                        message: `Can't delete default themes.`,
-                                                    });
-                                                    return;
-                                                }
-                                                window.dialog
-                                                    .confirm({
-                                                        message: `Delete theme "${theme}"`,
-                                                        noOption: false,
-                                                    })
-                                                    .then((res) => {
-                                                        if (res.response === 0) {
-                                                            const themeIndex = allThemes.findIndex(
-                                                                (e) => e.name === theme
-                                                            );
-                                                            if (themeIndex > -1 && allThemes[themeIndex - 1]) {
-                                                                dispatch(setTheme(allThemes[themeIndex - 1].name));
-                                                                dispatch(deleteTheme(themeIndex));
-                                                                // setAllThemes((init) => {
-                                                                //     init.splice(i, 1);
-                                                                //     return [...init];
-                                                                // });
+                                        {!themesRaw.allData.map((q) => q.name).includes(theme) && (
+                                            <button
+                                                onClick={() => {
+                                                    // if (themesRaw.allData.map((q) => q.name).includes(theme)) {
+                                                    //     window.dialog.customError({
+                                                    //         title: "Error",
+                                                    //         message: `Can't delete default themes.`,
+                                                    //     });
+                                                    //     return;
+                                                    // }
+                                                    window.dialog
+                                                        .confirm({
+                                                            message: `Delete theme "${theme}"`,
+                                                            noOption: false,
+                                                        })
+                                                        .then((res) => {
+                                                            if (res.response === 0) {
+                                                                const themeIndex = allThemes.findIndex(
+                                                                    (e) => e.name === theme
+                                                                );
+                                                                if (themeIndex > -1 && allThemes[themeIndex - 1]) {
+                                                                    dispatch(
+                                                                        setTheme(allThemes[themeIndex - 1].name)
+                                                                    );
+                                                                    dispatch(deleteTheme(themeIndex));
+                                                                    // setAllThemes((init) => {
+                                                                    //     init.splice(i, 1);
+                                                                    //     return [...init];
+                                                                    // });
+                                                                }
                                                             }
-                                                        }
-                                                    });
-                                            }}
-                                        >
-                                            <FontAwesomeIcon icon={faTrash} />
-                                        </button>
+                                                        });
+                                                }}
+                                            >
+                                                <FontAwesomeIcon icon={faTrash} />
+                                            </button>
+                                        )}
                                     </div>
                                 </div>
                                 <hr className="mini" />
