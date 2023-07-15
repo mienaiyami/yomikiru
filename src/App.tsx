@@ -226,8 +226,8 @@ const App = (): ReactElement => {
 
                 // pdf to img starts here
 
-                link =
-                    "http://localhost:48641/stuff/mangas/ln/Eminence%20in%20Shadow/The%20Eminence%20in%20Shadow,%20Vol.%201.pdf";
+                // link =
+                //     "http://localhost:48641/stuff/mangas/ln/Eminence%20in%20Shadow/The%20Eminence%20in%20Shadow,%20Vol.%201.pdf";
 
                 // renderPDF(link, tempExtractPath, appSettings.readerSettings.pdfScale)
                 //     .catch((reason) => {
