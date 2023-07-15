@@ -269,7 +269,7 @@ const saveJSONfile = (path: string, data: any, sync = true) => {
         // log.log("Saving " + path);
         if (sync) {
             fs.writeFileSync(path, data);
-            // log.log("done save :\t", path);
+            // log.log("done save :", path);
         } else
             fs.writeFile(path, data, (err) => {
                 if (err) {
@@ -454,12 +454,18 @@ const registerListener = () => {
             log.error(error);
         }
     });
+    ipcMain.on("destroyWindow", (e) => {
+        // log.log("received destroy");
+        const window = BrowserWindow.fromWebContents(e.sender);
+        if (window && !window.isDestroyed()) window.destroy();
+    });
     ipcMain.on("askBeforeClose:response", (e, ask = false) => {
         const currentWindowIndex = windowsCont.findIndex(
             (a) => a && a.id === BrowserWindow.fromWebContents(e.sender)?.id
         );
         const window = BrowserWindow.fromWebContents(e.sender)!;
         const closeEvent = (e: Electron.Event) => {
+            e.preventDefault();
             // log.log(currentWindowIndex, { windowsCont });
             window.webContents.send("recordPageNumber");
             // log.log("sent page save request");
@@ -480,7 +486,6 @@ const registerListener = () => {
                     type: "question",
                 });
             if (res === 0) {
-                e.preventDefault();
                 return;
             }
             const dirToDlt = deleteDirsOnClose[currentWindowIndex];
@@ -513,8 +518,8 @@ const registerListener = () => {
         window.on("close", closeEvent);
     });
     ipcMain.on("saveFile", (e, path: string, data: string) => {
+        // log.log("received file", path);
         saveJSONfile(path, data);
-        // log.log("saved file", path);
     });
 
     ipcMain.handle("unzip", (e, link: string, extractPath: string) => {

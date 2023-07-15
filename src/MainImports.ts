@@ -967,7 +967,7 @@ const saveJSONfile = (path: string, data: any) => {
     const str = JSON.stringify(data, null, "\t");
     if (str)
         try {
-            // window.logger.log("Sent file to save");
+            // window.logger.log("Sent file to save:", path);
             if (JSON.parse(str)) window.electron.ipcRenderer.send("saveFile", path, str);
         } catch (err) {
             console.error("ERROR::saveJSONfile:renderer:", err);

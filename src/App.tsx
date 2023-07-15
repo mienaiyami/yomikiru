@@ -439,11 +439,13 @@ const App = (): ReactElement => {
             window.electron.ipcRenderer.send("askBeforeClose:response", appSettings.askBeforeClosing);
         });
         window.electron.ipcRenderer.on("recordPageNumber", () => {
+            // window.logger.log("received recordPageNumber");
             if (isReaderOpen) closeReader();
             else if (window.app.linkInReader.link !== "") {
                 if (window.app.linkInReader.type === "image") dispatch(updateCurrentHistoryPage());
                 else dispatch(updateCurrentBookHistory());
             }
+            window.electron.ipcRenderer.send("destroyWindow");
         });
         window.app.titleBarHeight = parseFloat(
             window.getComputedStyle(document.body).getPropertyValue("--titleBar-height")
