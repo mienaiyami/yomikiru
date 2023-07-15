@@ -1541,8 +1541,16 @@ const Settings = (): ReactElement => {
                                     <ul>
                                         <li>
                                             When using the "vertical Scroll" mode, you can change chapters on the
-                                            first or last page by clicking on either side of the screen. No
-                                            response in center 20% of screen.
+                                            first or last page by clicking on either side of the screen or by
+                                            clicking "prevPage" (
+                                            <code>{shortcuts.find((e) => e.command === "prevPage")?.key1}</code>
+                                            {" , "}
+                                            <code>{shortcuts.find((e) => e.command === "prevPage")?.key2}</code>)
+                                            or "nextPage" (
+                                            <code>{shortcuts.find((e) => e.command === "nextPage")?.key1}</code>
+                                            {" , "}
+                                            <code>{shortcuts.find((e) => e.command === "nextPage")?.key2}</code> )
+                                            shortcut keys. No response in center 20% of screen.
                                             <ul>
                                                 <li>Left &nbsp;&nbsp;= Previous Chapter</li>
                                                 <li>Right = Next Chapter</li>
@@ -1550,12 +1558,12 @@ const Settings = (): ReactElement => {
                                                     Limit width of images in reader. To use "Max Image Width"
                                                     feature, disable "Size:Clamp".
                                                 </li>
-                                                <li>
-                                                    To scroll using mouse while viewing full page, use "Left to
-                                                    Right" or "Right to Left" reading mode, then "Fit Vertically"
-                                                    option or make image size lower than window height.
-                                                </li>
                                             </ul>
+                                        </li>{" "}
+                                        <li>
+                                            To scroll using mouse while viewing full page, use "Left to Right" or
+                                            "Right to Left" reading mode, then "Fit Vertically" option or make
+                                            image size lower than window height.
                                         </li>
                                         <li>
                                             Access the side list by moving the mouse to left side of the screen.
