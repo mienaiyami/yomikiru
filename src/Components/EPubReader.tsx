@@ -678,31 +678,40 @@ const EPubReader = () => {
         console.log("extracting ", link, " at ", extractPath);
         console.time("unzipping");
         console.timeLog("unzipping");
-        if (window.fs.existsSync(extractPath)) {
-            console.log("Old extract found.");
-            afterUnzip({ status: "ok" });
-        } else {
-            // window.electron.ipcRenderer.invoke("unzip",{link,extractPath}).then()
-            unzip(link, extractPath)
-                .then(afterUnzip)
-                .catch((err) => {
-                    if (err) {
-                        dispatch(setUnzipping(false));
-                        // dispatch(setLoadingManga(false));
-                        // dispatch(setLoadingMangaPercent(0));
-                        // dispatch(setUnzipping(false));
-                        if (err.message.includes("spawn unzip ENOENT"))
+        try {
+            if (
+                appSettings.keepExtractedFiles &&
+                window.fs.existsSync(window.path.join(extractPath, "SOURCE")) &&
+                window.fs.readFileSync(window.path.join(extractPath, "SOURCE"), "utf-8") === link
+            ) {
+                console.log("Found old epub extract.");
+                afterUnzip({ status: "ok" });
+            } else {
+                // window.electron.ipcRenderer.invoke("unzip",{link,extractPath}).then()
+                if (!appSettings.keepExtractedFiles) window.app.deleteDirOnClose = extractPath;
+                unzip(link, extractPath)
+                    .then(afterUnzip)
+                    .catch((err) => {
+                        if (err) {
+                            dispatch(setUnzipping(false));
+                            // dispatch(setLoadingManga(false));
+                            // dispatch(setLoadingMangaPercent(0));
+                            // dispatch(setUnzipping(false));
+                            if (err.message.includes("spawn unzip ENOENT"))
+                                return window.dialog.customError({
+                                    message: "Error while extracting.",
+                                    detail: '"unzip" not found. Please install by using\n"sudo apt install unzip"',
+                                });
                             return window.dialog.customError({
                                 message: "Error while extracting.",
-                                detail: '"unzip" not found. Please install by using\n"sudo apt install unzip"',
+                                detail: err.message,
+                                log: false,
                             });
-                        return window.dialog.customError({
-                            message: "Error while extracting.",
-                            detail: err.message,
-                            log: false,
-                        });
-                    }
-                });
+                        }
+                    });
+            }
+        } catch (err) {
+            window.logger.error("An Error occurred while checking/extracting epub:", err);
         }
     };
 

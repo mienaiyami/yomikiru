@@ -1046,7 +1046,7 @@ const Settings = (): ReactElement => {
                                     </button>
                                 </div>
                             </div>
-                            <div className="settingItem2">
+                            <div className="settingItem2" id="settings-customTempFolder">
                                 <h3>Custom Temp Folder</h3>
                                 <div className="desc">
                                     Folder where app will extract archives or epub or render pdf. It can have big
@@ -1286,6 +1286,40 @@ const Settings = (): ReactElement => {
                                     />
                                     <div className="desc">
                                         Automatically refresh reader side list every 5 second.
+                                    </div>
+                                </div>
+                                <div className="toggleItem">
+                                    <InputCheckbox
+                                        checked={appSettings.keepExtractedFiles}
+                                        className="noBG"
+                                        onChange={(e) => {
+                                            dispatch(
+                                                setAppSettings({
+                                                    keepExtractedFiles: e.currentTarget.checked,
+                                                })
+                                            );
+                                        }}
+                                        labelAfter="Keep Temp Files"
+                                    />
+                                    <div className="desc">
+                                        Keep temporary files, mainly extracted archives, pdf and epub. Skip
+                                        extracting part when opening same title again. <br />
+                                        NOTE: If{" "}
+                                        <a
+                                            onClick={() => {
+                                                document
+                                                    .querySelector("#settings-customTempFolder")
+                                                    ?.scrollIntoView({
+                                                        block: "start",
+                                                        behavior: "smooth",
+                                                    });
+                                            }}
+                                            id="settings-copyTheme"
+                                        >
+                                            temp folder
+                                        </a>{" "}
+                                        is set to default then there is a possibility that your system might delete
+                                        those files after each power on.
                                     </div>
                                 </div>
                                 <div className="toggleItem">

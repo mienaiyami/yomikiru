@@ -110,14 +110,15 @@ const App = (): ReactElement => {
                     return window.supportedFormats.includes(window.path.extname(e).toLowerCase());
                 });
                 if (imgs.length <= 0) {
-                    if (
-                        goInAndRetry > 0 &&
-                        files.length <= 1 &&
-                        window.fs.lstatSync(window.path.join(link, files[0])).isDirectory()
-                    ) {
+                    const dirOnly = files.filter(
+                        (e) =>
+                            window.fs.lstatSync(window.path.join(link, e)).isDirectory() &&
+                            window.fs.readdirSync(window.path.join(link, e)).length > 0
+                    );
+                    if (goInAndRetry > 0 && dirOnly.length > 0) {
                         tempFn(
                             // linkSplitted[linkSplitted.length - 1].replace(/(\.zip|\.cbz)/gi, "")
-                            window.path.join(link, files[0]),
+                            window.path.join(link, dirOnly[0]),
                             goInAndRetry - 1
                         );
                         return;
@@ -154,51 +155,75 @@ const App = (): ReactElement => {
             );
 
         if ([".zip", ".cbz", ".7z"].includes(window.path.extname(link).toLowerCase())) {
-            let tempExtractPath = window.path.join(
+            // const tempExtractPath = window.path.join(
+            //     window.electron.app.getPath("temp"),
+            //     `yomikiru-temp-Images-${linkSplitted[linkSplitted.length - 1]}-${window.app.randomString(10)}`
+            // );
+            const tempExtractPath = window.path.join(
                 window.electron.app.getPath("temp"),
-                `yomikiru-temp-Images-${linkSplitted[linkSplitted.length - 1]}-${window.app.randomString(10)}`
+                `yomikiru-temp-images-${linkSplitted.at(-1)}`
             );
-            if (window.fs.existsSync(tempExtractPath)) {
-                tempExtractPath += "-1";
-            }
+            // if (window.fs.existsSync(tempExtractPath)) {
+            //     tempExtractPath += "-1";
+            // }
             // window.fs.mkdirSync(tempExtractPath);
-            console.log(`Extracting "${link}" to "${tempExtractPath}"`);
-            window.app.deleteDirOnClose = tempExtractPath;
-            dispatch(setUnzipping(true));
 
-            unzip(link, tempExtractPath)
-                .then((res) => {
-                    if (res) tempFn(tempExtractPath, 1);
-                })
-                .catch((err) => {
-                    dispatch(setUnzipping(false));
-                    if (err.message.includes("spawn unzip ENOENT"))
-                        return window.dialog.customError({
-                            message: "Error while extracting.",
-                            detail: '"unzip" not found. Please install by using\n"sudo apt install unzip"',
+            try {
+                if (
+                    appSettings.keepExtractedFiles &&
+                    window.fs.existsSync(window.path.join(tempExtractPath, "SOURCE")) &&
+                    window.fs.readFileSync(window.path.join(tempExtractPath, "SOURCE"), "utf-8") === link
+                ) {
+                    console.log("Found old archive extract.");
+                    tempFn(tempExtractPath, 1);
+                } else {
+                    // moved to ipcHandle:unzip
+                    // if (window.fs.existsSync(tempExtractPath))
+                    //     window.fs.rmSync(tempExtractPath, { recursive: true });
+                    console.log(`Extracting "${link}" to "${tempExtractPath}"`);
+                    // window.app.deleteDirOnClose = tempExtractPath;
+                    if (!appSettings.keepExtractedFiles) window.app.deleteDirOnClose = tempExtractPath;
+                    dispatch(setUnzipping(true));
+
+                    unzip(link, tempExtractPath)
+                        .then((res) => {
+                            if (res) {
+                                tempFn(tempExtractPath, 1);
+                            }
+                        })
+                        .catch((err) => {
+                            dispatch(setUnzipping(false));
+                            if (err.message.includes("spawn unzip ENOENT"))
+                                return window.dialog.customError({
+                                    message: "Error while extracting.",
+                                    detail: '"unzip" not found. Please install by using\n"sudo apt install unzip"',
+                                });
+                            return window.dialog.customError({
+                                message: "Error while extracting.",
+                                detail: err.message,
+                                log: false,
+                            });
                         });
-                    return window.dialog.customError({
-                        message: "Error while extracting.",
-                        detail: err.message,
-                        log: false,
-                    });
-                });
-            // window.crossZip.unzip(link, tempExtractPath, (err) => {
-            //     if (err) {
-            //         dispatch(setUnzipping(false));
-            //         if (err.message.includes("spawn unzip ENOENT"))
-            //             return window.dialog.customError({
-            //                 message: "Error while extracting.",
-            //                 detail: '"unzip" not found. Please install by using\n"sudo apt install unzip"',
-            //             });
-            //         return window.dialog.customError({
-            //             message: "Error while extracting.",
-            //             detail: err.message,
-            //             log: false,
-            //         });
-            //     }
-            //     tempFn(tempExtractPath, 1);
-            // });
+                    // window.crossZip.unzip(link, tempExtractPath, (err) => {
+                    //     if (err) {
+                    //         dispatch(setUnzipping(false));
+                    //         if (err.message.includes("spawn unzip ENOENT"))
+                    //             return window.dialog.customError({
+                    //                 message: "Error while extracting.",
+                    //                 detail: '"unzip" not found. Please install by using\n"sudo apt install unzip"',
+                    //             });
+                    //         return window.dialog.customError({
+                    //             message: "Error while extracting.",
+                    //             detail: err.message,
+                    //             log: false,
+                    //         });
+                    //     }
+                    //     tempFn(tempExtractPath, 1);
+                    // });
+                }
+            } catch (err) {
+                window.logger.error("An Error occurred while checking/extracting archive:", err);
+            }
         } else if (window.path.extname(link).toLowerCase() === ".pdf") {
             // let tempExtractPath = window.path.join(
             //     window.electron.app.getPath("temp"),
@@ -206,104 +231,124 @@ const App = (): ReactElement => {
             // );
             const tempExtractPath = window.path.join(
                 window.electron.app.getPath("temp"),
-                `yomikiru-temp-Images-scale_${appSettings.readerSettings.pdfScale}-${
-                    linkSplitted[linkSplitted.length - 1]
-                }`
+                `yomikiru-temp-images-scale_${appSettings.readerSettings.pdfScale}-${linkSplitted.at(-1)}`
             );
             // if (window.fs.existsSync(tempExtractPath)) {
             //     tempExtractPath += "-1";
             // }
 
-            if (window.fs.existsSync(tempExtractPath) && window.fs.readdirSync(tempExtractPath).length !== 0) {
-                console.log("Found old rendered pdf.");
-                tempFn(tempExtractPath, 1);
-            } else {
-                if (window.fs.existsSync(tempExtractPath)) window.fs.rmSync(tempExtractPath, { recursive: true });
-                window.fs.mkdirSync(tempExtractPath);
-                console.log(`Rendering "${link}" at "${tempExtractPath}"`);
-                // window.app.deleteDirOnClose = tempExtractPath;
-                dispatch(setUnzipping(true));
+            // link =
+            //     "http://localhost:48641/stuff/mangas/ln/Eminence%20in%20Shadow/The%20Eminence%20in%20Shadow,%20Vol.%201.pdf";
 
-                // pdf to img starts here
+            try {
+                // console.log(
+                //     window.fs.existsSync(window.path.join(tempExtractPath, "SOURCE")),
+                //     window.fs.readFileSync(window.path.join(tempExtractPath, "SOURCE"), "utf-8"),
+                //     link
+                // );
+                if (
+                    appSettings.keepExtractedFiles &&
+                    window.fs.existsSync(window.path.join(tempExtractPath, "SOURCE")) &&
+                    window.fs.readFileSync(window.path.join(tempExtractPath, "SOURCE"), "utf-8") === link
+                ) {
+                    console.log("Found old rendered pdf.");
+                    tempFn(tempExtractPath, 1);
+                } else {
+                    if (window.fs.existsSync(tempExtractPath))
+                        window.fs.rmSync(tempExtractPath, { recursive: true });
+                    window.fs.mkdirSync(tempExtractPath);
+                    console.log(`Rendering "${link}" at "${tempExtractPath}"`);
+                    if (!appSettings.keepExtractedFiles) window.app.deleteDirOnClose = tempExtractPath;
+                    dispatch(setUnzipping(true));
 
-                // link =
-                //     "http://localhost:48641/stuff/mangas/ln/Eminence%20in%20Shadow/The%20Eminence%20in%20Shadow,%20Vol.%201.pdf";
+                    // pdf to img starts here
 
-                // renderPDF(link, tempExtractPath, appSettings.readerSettings.pdfScale)
-                //     .catch((reason) => {
-                //         dispatch(setUnzipping(false));
-                //         console.error("PDF Reading Error:", reason);
-                //     })
-                //     .then((e) => {
-                //         if (e) tempFn(tempExtractPath, 1);
-                //     });
-                const doc = window.pdfjsLib
-                    .getDocument(link)
-                    .promise.then((pdf) => {
-                        let count = 0;
-                        for (let i = 1; i <= pdf.numPages; i++) {
-                            pdf.getPage(i).then((page) => {
-                                const viewport = page.getViewport({
-                                    scale: appSettings.readerSettings.pdfScale || 1.5,
-                                });
-                                const canvas = document.createElement("canvas");
-                                canvas.width = viewport.width;
-                                canvas.height = viewport.height;
-                                const context = canvas.getContext("2d");
-                                console.log("starting", i);
-                                if (context) {
-                                    // (async function fun() {
-                                    //     await page.render({ canvasContext: context, viewport: viewport }).promise;
-                                    //     const image = canvas.toDataURL("image/png");
-                                    //     window.fs.writeFile(
-                                    //         window.path.join(tempExtractPath, "./" + i + ".png"),
-                                    //         image.replace(/^data:image\/png;base64,/, ""),
-                                    //         "base64",
-                                    //         (err) => {
-                                    //             count++;
-                                    //             console.log("Made image", i + ".png");
-                                    //             page.cleanup();
-                                    //             if (count === pdf.numPages) tempFn(tempExtractPath, 1);
-                                    //         }
-                                    //     );
-                                    // })();
-                                    const abc = page.render({ canvasContext: context, viewport: viewport });
-                                    abc.promise.then(() => {
-                                        const image = canvas.toDataURL("image/png");
-                                        window.fs.writeFile(
-                                            window.path.join(tempExtractPath, "./" + i + ".png"),
-                                            image.replace(/^data:image\/png;base64,/, ""),
-                                            "base64",
-                                            (err) => {
-                                                if (err) {
-                                                    console.error(err);
-                                                } else console.log("Made image", i + ".png");
-                                                count++;
-                                                page.cleanup();
-                                                if (count === pdf.numPages) tempFn(tempExtractPath, 1);
-                                            }
-                                        );
+                    // renderPDF(link, tempExtractPath, appSettings.readerSettings.pdfScale)
+                    //     .catch((reason) => {
+                    //         dispatch(setUnzipping(false));
+                    //         console.error("PDF Reading Error:", reason);
+                    //     })
+                    //     .then((e) => {
+                    //         if (e) tempFn(tempExtractPath, 1);
+                    //     });
+                    const doc = window.pdfjsLib
+                        .getDocument(link)
+                        .promise.then((pdf) => {
+                            let count = 0;
+                            for (let i = 1; i <= pdf.numPages; i++) {
+                                pdf.getPage(i).then((page) => {
+                                    const viewport = page.getViewport({
+                                        scale: appSettings.readerSettings.pdfScale || 1.5,
                                     });
-                                    // page.render({ canvasContext: context, viewport: viewport }).promise.then(() => {
-                                    //     const image = canvas.toDataURL("image/png");
-                                    //     window.fs.writeFileSync(
-                                    //         window.path.join(tempExtractPath, "./" + i + ".png"),
-                                    //         image.replace(/^data:image\/png;base64,/, ""),
-                                    //         "base64"
-                                    //     );
-                                    //     count++;
-                                    //     console.log("Made image", i + ".png");
-                                    //     page.cleanup();
-                                    //     if (count === pdf.numPages) tempFn(tempExtractPath, 1);
-                                    // });
-                                }
-                            });
-                        }
-                    })
-                    .catch((reason) => {
-                        dispatch(setUnzipping(false));
-                        console.error("PDF Reading Error:", reason);
-                    });
+                                    const canvas = document.createElement("canvas");
+                                    canvas.width = viewport.width;
+                                    canvas.height = viewport.height;
+                                    const context = canvas.getContext("2d");
+                                    console.log("starting", i);
+                                    if (context) {
+                                        // (async function fun() {
+                                        //     await page.render({ canvasContext: context, viewport: viewport }).promise;
+                                        //     const image = canvas.toDataURL("image/png");
+                                        //     window.fs.writeFile(
+                                        //         window.path.join(tempExtractPath, "./" + i + ".png"),
+                                        //         image.replace(/^data:image\/png;base64,/, ""),
+                                        //         "base64",
+                                        //         (err) => {
+                                        //             count++;
+                                        //             console.log("Made image", i + ".png");
+                                        //             page.cleanup();
+                                        //             if (count === pdf.numPages) tempFn(tempExtractPath, 1);
+                                        //         }
+                                        //     );
+                                        // })();
+                                        const abc = page.render({ canvasContext: context, viewport: viewport });
+                                        abc.promise.then(() => {
+                                            const image = canvas.toDataURL("image/png");
+                                            window.fs.writeFile(
+                                                window.path.join(tempExtractPath, "./" + i + ".png"),
+                                                image.replace(/^data:image\/png;base64,/, ""),
+                                                "base64",
+                                                (err) => {
+                                                    if (err) {
+                                                        console.error(err);
+                                                    } else console.log("Made image", i + ".png");
+                                                    count++;
+                                                    page.cleanup();
+                                                    if (count === pdf.numPages) {
+                                                        window.fs.writeFileSync(
+                                                            window.path.join(tempExtractPath, "SOURCE"),
+                                                            link
+                                                        );
+                                                        tempFn(tempExtractPath, 1);
+                                                    }
+                                                }
+                                            );
+                                        });
+                                        // page.render({ canvasContext: context, viewport: viewport }).promise.then(() => {
+                                        //     const image = canvas.toDataURL("image/png");
+                                        //     window.fs.writeFileSync(
+                                        //         window.path.join(tempExtractPath, "./" + i + ".png"),
+                                        //         image.replace(/^data:image\/png;base64,/, ""),
+                                        //         "base64"
+                                        //     );
+                                        //     count++;
+                                        //     console.log("Made image", i + ".png");
+                                        //     page.cleanup();
+                                        //     if (count === pdf.numPages) tempFn(tempExtractPath, 1);
+                                        // });
+                                    }
+                                });
+                            }
+                        })
+                        .catch((reason) => {
+                            dispatch(setUnzipping(false));
+                            if (window.fs.existsSync(tempExtractPath))
+                                window.fs.rmSync(tempExtractPath, { recursive: true });
+                            console.error("PDF Reading Error:", reason);
+                        });
+                }
+            } catch (err) {
+                window.logger.error("An Error occurred while checking/rendering pdf:", err);
             }
         } else tempFn(link);
     };

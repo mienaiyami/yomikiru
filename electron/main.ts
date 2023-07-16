@@ -525,9 +525,13 @@ const registerListener = () => {
     ipcMain.handle("unzip", (e, link: string, extractPath: string) => {
         return new Promise((res, rej) => {
             if (link && extractPath) {
+                if (fs.existsSync(extractPath)) fs.rmSync(extractPath, { recursive: true });
                 crossZip.unzip(link, extractPath, (err) => {
                     if (err) rej(err);
-                    else res({ link, extractPath });
+                    else {
+                        fs.writeFileSync(path.join(extractPath, "SOURCE"), link);
+                        res({ link, extractPath, status: "ok" });
+                    }
                 });
             } else rej("ELECTRON:UNZIP: Invalid link or extractPath.");
         });

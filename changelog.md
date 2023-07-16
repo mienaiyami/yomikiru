@@ -2,20 +2,21 @@
 
 **Due to release changes, existing users (v2.11.5 and below) might need to manually update the app.** -->
 
-<!-- ## Added -->
+## Added
 
-<!-- ## Changed
+- Auto refresh Home Location List.
+- Option to keep extracted/rendered data to open archives, pdf and epub faster.
 
-- **Temporarily epub extract and pdf renders temp files wont be deleted (till next version).**
-- Slight changes in default themes. Hide delete button on default theme.
+## Changed
+
+- Replaced refresh button in location list with sort.
+- Usage & feature text update.
 - DEV:
-  - BrowserWindow `fromWebContents()` instead of `fromId()` in ipcMain to get window. -->
-
-Sorry for multiple updates in this short interval.
+  - For image archives, look for first non-empty subfolder instead of first file when no direct image descendant found.
 
 ## Fixed
 
-- Issues related to closing window.
-  - "Confirm close" not working.
+- PDFs not opening.
+- Anilist data deleting after update in portable version.
 
 ---

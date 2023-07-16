@@ -80,6 +80,7 @@ export const settingValidatorData = {
      */
     showMoreDataOnItemHover: true,
     autoRefreshSideList: false,
+    keepExtractedFiles: false,
     readerSettings: {
         /**
          * width of reader in percent
@@ -1061,6 +1062,7 @@ const defaultSettings: AppSettings = {
     hideOpenArrow: false,
     showMoreDataOnItemHover: true,
     autoRefreshSideList: false,
+    keepExtractedFiles: false,
     readerSettings: {
         readerWidth: 60,
         variableImageSize: true,
