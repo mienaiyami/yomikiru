@@ -18,5 +18,7 @@
 
 - PDFs not opening.
 - Anilist data deleting after update in portable version.
+- Repeated setting file save in epub.
+- Reader Side-List not showing history for archive types.
 
 ---

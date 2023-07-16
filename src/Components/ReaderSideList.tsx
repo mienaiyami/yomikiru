@@ -71,7 +71,12 @@ const ReaderSideList = memo(
                 const historyItem = history.find(
                     (e) => (e as MangaHistoryItem).data.mangaLink === window.path.dirname(mangaInReader.link)
                 );
-                if (historyItem) setHistorySimple((historyItem as MangaHistoryItem).data.chaptersRead);
+                if (historyItem)
+                    setHistorySimple(
+                        (historyItem as MangaHistoryItem).data.chaptersRead.map((e) =>
+                            window.app.replaceExtension(e)
+                        )
+                    );
             }
         }, [history]);
         useLayoutEffect(() => {

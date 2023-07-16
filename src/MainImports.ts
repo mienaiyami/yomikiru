@@ -826,11 +826,11 @@ const collator = Intl.Collator(undefined, { numeric: true, sensitivity: "base" }
 window.app.betterSortOrder = collator.compare;
 window.app.replaceExtension = (str, replaceWith = "~") => {
     return str
-        .replace(/\.zip/gi, replaceWith === "~" ? " $ZIP" : replaceWith)
-        .replace(/\.cbz/gi, replaceWith === "~" ? " $CBZ" : replaceWith)
-        .replace(/\.epub/gi, replaceWith === "~" ? " $EPUB" : replaceWith)
-        .replace(/\.7z/gi, replaceWith === "~" ? " $7Z" : replaceWith)
-        .replace(/\.pdf/gi, replaceWith === "~" ? " $PDF" : replaceWith);
+        .replace(/\.zip$/i, replaceWith === "~" ? " $ZIP" : replaceWith)
+        .replace(/\.cbz$/i, replaceWith === "~" ? " $CBZ" : replaceWith)
+        .replace(/\.epub$/i, replaceWith === "~" ? " $EPUB" : replaceWith)
+        .replace(/\.7z$/i, replaceWith === "~" ? " $7Z" : replaceWith)
+        .replace(/\.pdf$/i, replaceWith === "~" ? " $PDF" : replaceWith);
 };
 window.app.isSupportedFormat = (str: string) =>
     str.includes("$ZIP") ||
