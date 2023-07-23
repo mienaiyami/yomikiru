@@ -72,9 +72,12 @@ const HistoryTab = () => {
                         onChange={(e) => {
                             const val = e.target.value;
                             let filter = "";
-                            for (let i = 0; i < val.length; i++) {
-                                filter += val[i] + ".*";
-                            }
+                            if (val[0] === '"') {
+                                filter = val.replaceAll('"', "");
+                            } else
+                                for (let i = 0; i < val.length; i++) {
+                                    filter += val[i] + ".*";
+                                }
                             setFilter(filter);
                         }}
                         onKeyDown={(e) => {

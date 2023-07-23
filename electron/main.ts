@@ -487,6 +487,7 @@ const registerListener = () => {
             if (res === 0) {
                 return;
             }
+            // it also destroys current window.
             window.webContents.send("recordPageNumber");
             const dirToDlt = deleteDirsOnClose[currentWindowIndex];
             if (dirToDlt)

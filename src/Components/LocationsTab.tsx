@@ -198,7 +198,7 @@ const LocationsTab = (): ReactElement => {
                         }}
                         onChange={(e) => {
                             let val = e.target.value;
-                            val = val.replaceAll('"', "");
+                            // val = val.replaceAll('"', "");
                             if (process.platform === "win32")
                                 if (/.:\\.*/.test(val)) {
                                     const aa = window.path.normalize(val);
@@ -230,14 +230,18 @@ const LocationsTab = (): ReactElement => {
                             val = val.replaceAll(")", "\\)");
                             val = val.replaceAll("*", "\\-");
                             val = val.replaceAll("+", "\\+");
+
                             let filter = "";
-                            for (let i = 0; i < val.length; i++) {
-                                if (val[i] === window.path.sep) {
-                                    filter += window.path.sep;
-                                    continue;
+                            if (val[0] === '"') {
+                                filter = val.replaceAll('"', "");
+                            } else
+                                for (let i = 0; i < val.length; i++) {
+                                    if (val[i] === window.path.sep) {
+                                        filter += window.path.sep;
+                                        continue;
+                                    }
+                                    filter += val[i] + ".*";
                                 }
-                                filter += val[i] + ".*";
-                            }
                             setFilter(filter);
                         }}
                     />

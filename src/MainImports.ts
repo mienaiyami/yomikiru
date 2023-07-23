@@ -2,6 +2,9 @@ import { app, dialog, getCurrentWindow, clipboard, nativeImage, shell } from "@e
 import { ipcRenderer, webFrame } from "electron";
 /*//! i know its dangerous but its offline app and i was unable to get BrowserWindow to work
   //! in renderer with contextBridge from preload
+
+
+  //! nah is it really? idk, since no remote content is loaded other than anilist
  */
 import chokidar from "chokidar";
 import * as pdfjsLib from "pdfjs-dist/legacy/build/pdf.js";
