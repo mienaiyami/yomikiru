@@ -488,7 +488,12 @@ const registerListener = () => {
                 return;
             }
             // it also destroys current window.
+            // window closes before recieving message to save history file, so it is needed
             window.webContents.send("recordPageNumber");
+            //backup in case window is stuck
+            setTimeout(() => {
+                if (window && !window.isDestroyed()) window.destroy();
+            }, 5000);
             const dirToDlt = deleteDirsOnClose[currentWindowIndex];
             if (dirToDlt)
                 try {
