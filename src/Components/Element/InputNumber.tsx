@@ -69,7 +69,9 @@ const InputNumber = ({
                         }
                     }}
                     onChange={(e) => {
+                        if (!e.currentTarget.value) e.currentTarget.value = "0";
                         const aaa = onChange(e);
+                        if (aaa !== undefined) e.currentTarget.value = aaa.toString();
                         if (timeout) {
                             if (aaa === undefined)
                                 return console.error("InputNumber:onChange function must return.");

@@ -1481,6 +1481,40 @@ body {
                         * {
                             scroll-margin-top: 4em;
                         }
+                        ul.fileExample {
+                            ul {
+                                margin: 0;
+                            }
+                            li {
+                                padding: 0;
+                                line-height: 1.2em;
+                                list-style: none;
+                                &::before {
+                                    font-family: ui-monospace, SFMono-Regular, SF Mono, Menlo, Consolas,
+                                        Liberation Mono, monospace;
+                                }
+                            }
+                            > li {
+                                &::before {
+                                    content: "├─ ";
+                                }
+                                > ul > li {
+                                    &::before {
+                                        content: "│\00a0\00a0├─ ";
+                                    }
+                                    > ul > li {
+                                        &::before {
+                                            content: "│\00a0\00a0│\00a0\00a0├─ ";
+                                        }
+                                        > ul > li {
+                                            &::before {
+                                                content: "│\00a0\00a0│\00a0\00a0│\00a0\00a0├─ ";
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                        }
                     }
 
                     table:not(:has(.settingItem)) {

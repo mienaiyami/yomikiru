@@ -26,7 +26,7 @@ const InputCheckboxNumber = ({
     value: number;
     checked: boolean;
     onChangeCheck: React.ChangeEventHandler<HTMLInputElement>;
-    onChangeNum: React.ChangeEventHandler<HTMLInputElement>;
+    onChangeNum: (e: React.ChangeEvent<HTMLInputElement>) => void | number;
     /**
      * `[time_in_ms, fn_on_timeout]`
      * `fn_on_timeout` is called after time had passed after `onChangeNum` and active element is event target
@@ -71,7 +71,9 @@ const InputCheckboxNumber = ({
                     }
                 }}
                 onChange={(e) => {
+                    if (!e.currentTarget.value) e.currentTarget.value = "0";
                     const aaa = onChangeNum(e);
+                    if (aaa !== undefined) e.currentTarget.value = aaa.toString();
                     if (timeout) {
                         if (aaa === undefined)
                             return console.error("InputCheckboxNumber:onChangeNum function must return.");

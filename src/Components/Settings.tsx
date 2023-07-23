@@ -1489,6 +1489,52 @@ const Settings = (): ReactElement => {
                                     store manga.
                                 </li>
                                 <li>
+                                    <b>Recommended File Arrangement:</b> Though you can open manga from anywhere,
+                                    it is recommended to arrange file in way as shown below for better experience
+                                    and features like "reader side-list".
+                                    <ul className="fileExample">
+                                        <li>
+                                            DEFAULT LOCATION\
+                                            <ul>
+                                                <li>
+                                                    One Piece\
+                                                    <ul>
+                                                        <li>
+                                                            Chapter 1\ <code>use "Open" here</code>
+                                                            <ul>
+                                                                <li>001.png</li>
+                                                                <li>002.png</li>
+                                                                <li>003.png</li>
+                                                                <li>004.png</li>
+                                                            </ul>
+                                                        </li>
+                                                        <li>
+                                                            Chapter 2\
+                                                            <ul>
+                                                                <li>001.png</li>
+                                                            </ul>
+                                                        </li>
+                                                        <li>Chapter 3.cbz</li>
+                                                        <li>Chapter 4.pdf</li>
+                                                    </ul>
+                                                </li>
+                                                <li>
+                                                    Bleach\
+                                                    <ul>
+                                                        <li>
+                                                            Chapter 1\ <code>use "Open" here</code>
+                                                            <ul>
+                                                                <li>001.png</li>
+                                                            </ul>
+                                                        </li>
+                                                        <li>Chapter 2.zip</li>
+                                                    </ul>
+                                                </li>
+                                            </ul>
+                                        </li>
+                                    </ul>
+                                </li>
+                                <li>
                                     Drag and Drop support.
                                     <ul>
                                         <li>Dropping a folder will open the reader with that folders content.</li>
@@ -1540,6 +1586,10 @@ const Settings = (): ReactElement => {
                                                 <li>
                                                     You don't need to type the whole word in search. (e.g. For{" "}
                                                     <code>One Piece</code> type <code>op</code>).
+                                                </li>
+                                                <li>
+                                                    For exact search, add <code>"</code> in front of search. (e.g.
+                                                    For <code>One Piece</code> type <code>"one</code>).
                                                 </li>
                                                 <li>
                                                     Paste link to set browse pasted link in Locations tab. Or page
