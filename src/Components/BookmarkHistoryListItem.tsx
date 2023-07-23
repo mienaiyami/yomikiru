@@ -66,7 +66,7 @@ const BookmarkHistoryListItem = (props: ListItemE) => {
                 onClick={() => {
                     if (!window.fs.existsSync(props.data.link)) {
                         window.dialog.customError({
-                            message: "This file does not exist anymore.",
+                            message: "File/folder does not exit.",
                         });
                         return;
                     }
