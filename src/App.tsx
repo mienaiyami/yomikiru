@@ -271,9 +271,21 @@ const App = (): ReactElement => {
                     //     .then((e) => {
                     //         if (e) tempFn(tempExtractPath, 1);
                     //     });
-                    const doc = window.pdfjsLib
-                        .getDocument(link)
-                        .promise.then((pdf) => {
+                    // if (!window.electron.app.isPackaged)
+                    //     link =
+                    //         "http://localhost:20279/stuff/mangas/ln/Eminence%20in%20Shadow/The%20Eminence%20in%20Shadow,%20Vol.%201.pdf";
+                    const doc = window.pdfjsLib.getDocument(link);
+                    doc.onPassword = (cb: any, reason: any) => {
+                        console.log(reason);
+                        if (reason === 1) {
+                            doc.destroy();
+                            window.dialog.customError({
+                                message: "PDF is password protected.",
+                            });
+                        }
+                    };
+                    doc.promise
+                        .then((pdf) => {
                             let count = 0;
                             for (let i = 1; i <= pdf.numPages; i++) {
                                 pdf.getPage(i).then((page) => {
