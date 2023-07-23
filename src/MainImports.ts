@@ -167,6 +167,7 @@ export const settingValidatorData = {
             ],
         },
         invertImage: false,
+        grayscale: false,
         forceLowBrightness: {
             enabled: false,
             /**
@@ -1085,6 +1086,7 @@ const defaultSettings: AppSettings = {
         maxHeight: 500,
         maxWidth: 500,
         invertImage: false,
+        grayscale: false,
         pdfScale: 1.5,
         customColorFilter: {
             enabled: false,

@@ -1015,7 +1015,8 @@ const Reader = () => {
                         appSettings.readerSettings.fitOption
                     ) ?? "") +
                     (appSettings.readerSettings.customColorFilter.enabled ? "customColorFilter " : "") +
-                    (appSettings.readerSettings.invertImage ? "invertImage " : "")
+                    (appSettings.readerSettings.invertImage ? "invertImage " : "") +
+                    (appSettings.readerSettings.grayscale ? "grayscale " : "")
                 }
                 style={{
                     "--varWidth": appSettings.readerSettings.readerWidth + "%",

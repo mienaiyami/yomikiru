@@ -742,6 +742,17 @@ const ReaderSettings = memo(
                                 }}
                                 paraAfter="Invert Image"
                             />
+                            <InputCheckbox
+                                checked={appSettings.readerSettings.grayscale}
+                                onChange={(e) => {
+                                    dispatch(
+                                        setReaderSettings({
+                                            grayscale: e.currentTarget.checked,
+                                        })
+                                    );
+                                }}
+                                paraAfter="Grayscale"
+                            />
                         </div>
                     </div>
                     <div className={"settingItem "}>

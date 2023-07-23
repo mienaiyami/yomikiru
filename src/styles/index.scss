@@ -2558,8 +2558,14 @@ body {
                 &.gap {
                     gap: var(--gapSize);
                 }
+                --invert: 0;
+                --grayscale: 0;
+                filter: invert(var(--invert)) grayscale(var(--grayscale));
                 &.invertImage {
-                    filter: invert(1);
+                    --invert: 1;
+                }
+                &.grayscale {
+                    --grayscale: 1;
                 }
 
                 .row {
