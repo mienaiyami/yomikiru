@@ -233,7 +233,7 @@ const LocationsTab = (): ReactElement => {
 
                             let filter = "";
                             if (val[0] === '"') {
-                                filter = val.replaceAll('"', "");
+                                filter = "^" + val.replaceAll('"', "");
                             } else
                                 for (let i = 0; i < val.length; i++) {
                                     if (val[i] === window.path.sep) {

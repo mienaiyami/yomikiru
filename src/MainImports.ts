@@ -836,11 +836,11 @@ window.app.replaceExtension = (str, replaceWith = "~") => {
         .replace(/\.pdf$/i, replaceWith === "~" ? " $PDF" : replaceWith);
 };
 window.app.isSupportedFormat = (str: string) =>
-    str.includes("$ZIP") ||
-    str.includes("$CBZ") ||
-    str.includes("$7Z") ||
-    str.includes("$EPUB") ||
-    str.includes("$PDF");
+    window.app.replaceExtension(str).includes("$ZIP") ||
+    window.app.replaceExtension(str).includes("$CBZ") ||
+    window.app.replaceExtension(str).includes("$7Z") ||
+    window.app.replaceExtension(str).includes("$EPUB") ||
+    window.app.replaceExtension(str).includes("$PDF");
 window.app.deleteDirOnClose = "";
 window.app.currentPageNumber = 1;
 window.app.epubHistorySaveData = null;

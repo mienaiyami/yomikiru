@@ -1,6 +1,6 @@
-import { faTrash } from "@fortawesome/free-solid-svg-icons";
-import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import { deleteAllHistory } from "../store/history";
+// import { faTrash } from "@fortawesome/free-solid-svg-icons";
+// import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
+// import { deleteAllHistory } from "../store/history";
 import { useAppDispatch, useAppSelector } from "../store/hooks";
 import BookmarkHistoryListItem from "./BookmarkHistoryListItem";
 import { useState } from "react";
@@ -15,14 +15,12 @@ const HistoryTab = () => {
         return historyData.map((e, i) => {
             if (
                 new RegExp(filter, "ig").test(
-                    (e.type === "image"
-                        ? window.fs.existsSync(e.data.link) && window.fs.lstatSync(e.data.link).isDirectory()
-                            ? window.path.dirname(e.data.link)
-                            : e.data.link
-                        : e.data.link
-                    )
-                        .split(window.path.sep)
-                        .at(-1) || ""
+                    e.type === "image"
+                        ? e.data.mangaName +
+                              (window.app.isSupportedFormat(e.data.chapterName)
+                                  ? `.${window.path.extname(e.data.chapterName)}`
+                                  : "")
+                        : e.data.title + ".epub"
                 )
             ) {
                 return (
@@ -73,7 +71,7 @@ const HistoryTab = () => {
                             const val = e.target.value;
                             let filter = "";
                             if (val[0] === '"') {
-                                filter = val.replaceAll('"', "");
+                                filter = "^" + val.replaceAll('"', "");
                             } else
                                 for (let i = 0; i < val.length; i++) {
                                     filter += val[i] + ".*";

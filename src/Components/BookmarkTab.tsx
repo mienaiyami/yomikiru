@@ -11,14 +11,11 @@ const BookmarkTab = () => {
         return bookmarkData.map((e, i) => {
             if (
                 new RegExp(filter, "ig").test(
-                    (e.type === "image"
-                        ? window.fs.existsSync(e.data.link) && window.fs.lstatSync(e.data.link).isDirectory()
-                            ? window.path.dirname(e.data.link)
-                            : e.data.link
-                        : e.data.link
-                    )
-                        .split(window.path.sep)
-                        .at(-1) || ""
+                    e.type === "image"
+                        ? e.data.mangaName + window.app.isSupportedFormat(e.data.chapterName)
+                            ? `.${window.path.extname(e.data.chapterName)}`
+                            : ""
+                        : e.data.title + ".epub"
                 )
             ) {
                 return (
@@ -52,7 +49,7 @@ const BookmarkTab = () => {
                             const val = e.target.value;
                             let filter = "";
                             if (val[0] === '"') {
-                                filter = val.replaceAll('"', "");
+                                filter = "^" + val.replaceAll('"', "");
                             } else
                                 for (let i = 0; i < val.length; i++) {
                                     filter += val[i] + ".*";
