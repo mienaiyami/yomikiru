@@ -14,7 +14,7 @@
         "tslint": "tsc --noemit",
         "lint": "eslint && tsc --noemit",
         "package": "electron-forge package",
-        "make": "electron-forge make --arch=ia32",
+        "make": "electron-forge make --arch=ia32,x64",
         "make:exe": "electron-forge make --targets=@electron-forge/maker-squirrel --arch=ia32",
         "make:zip": "electron-forge make --targets=@electron-forge/maker-zip --arch=ia32",
         "make:deb": "electron-forge make --targets=@electron-forge/maker-deb",

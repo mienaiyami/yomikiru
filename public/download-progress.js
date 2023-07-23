@@ -6,7 +6,7 @@ import "../src/styles/download.scss";
 
 ipcRenderer.on("version", (e, ver) => {
     version.innerText = ver;
-    document.title = "Downloading Yomikiru " + ver;
+    document.title = "Downloading Yomikiru " + ver + (process.arch === "x64" ? " 64-bit" : " 32-bit");
 });
 ipcRenderer.on("progress", (e, progress) => {
     text.innerText = `${(progress.transferredBytes * 0.0000009537).toFixed(1)}MB / ${(

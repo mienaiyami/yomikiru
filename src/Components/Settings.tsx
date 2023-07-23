@@ -1879,7 +1879,11 @@ const Settings = (): ReactElement => {
                         <div className="content2">
                             <div className="settingItem2">
                                 <h3>Version</h3>
-                                <div className="desc">{window.electron.app.getVersion()}</div>
+                                <div className="desc">
+                                    {window.electron.app.getVersion()}
+                                    {" / "}
+                                    {process.arch === "x64" ? "64-bit" : "32-bit"}
+                                </div>
                                 <div className="main col">
                                     <InputCheckbox
                                         className="noBG"

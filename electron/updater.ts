@@ -2,7 +2,7 @@ import fs from "fs";
 import path from "path";
 import IS_PORTABLE from "./IS_PORTABLE";
 import { exec, spawn, spawnSync } from "child_process";
-import { app, BrowserWindow, dialog } from "electron";
+import { app, BrowserWindow, dialog, shell } from "electron";
 import fetch from "electron-fetch";
 import crossZip from "cross-zip";
 import logger from "electron-log";
@@ -79,30 +79,31 @@ const checkForUpdate = async (windowId: number, skipMinor = false, promptAfterCh
                 if (response.response === 0) downloadUpdates(latestVersion.join("."), windowId);
                 if (response.response === 1) {
                     downloadUpdates(latestVersion.join("."), windowId);
-                    // shell.openExternal("https://github.com/mienaiyami/yomikiru/releases");
+                    shell.openExternal("https://github.com/mienaiyami/yomikiru/releases");
 
-                    const newWindow = new BrowserWindow({
-                        width: 1200,
-                        height: 800,
-                        minWidth: 940,
-                        minHeight: 560,
-                        backgroundColor: "#272727",
-                        title: `${app.getVersion()} ---> ${latestVersion}`,
-                    });
-                    newWindow.loadURL("https://github.com/mienaiyami/yomikiru/releases");
-                    newWindow.setMenuBarVisibility(false);
+                    // const newWindow = new BrowserWindow({
+                    //     width: 1200,
+                    //     height: 800,
+                    //     minWidth: 940,
+                    //     minHeight: 560,
+                    //     backgroundColor: "#272727",
+                    //     title: `${app.getVersion()} ---> ${latestVersion}`,
+                    // });
+                    // newWindow.loadURL("https://github.com/mienaiyami/yomikiru/releases");
+                    // newWindow.setMenuBarVisibility(false);
                 }
                 if (response.response === 2) {
-                    const newWindow = new BrowserWindow({
-                        width: 1200,
-                        height: 800,
-                        minWidth: 940,
-                        minHeight: 560,
-                        backgroundColor: "#272727",
-                        title: `${app.getVersion()} ---> ${latestVersion}`,
-                    });
-                    newWindow.loadURL("https://github.com/mienaiyami/yomikiru/releases");
-                    newWindow.setMenuBarVisibility(false);
+                    shell.openExternal("https://github.com/mienaiyami/yomikiru/releases");
+                    // const newWindow = new BrowserWindow({
+                    //     width: 1200,
+                    //     height: 800,
+                    //     minWidth: 940,
+                    //     minHeight: 560,
+                    //     backgroundColor: "#272727",
+                    //     title: `${app.getVersion()} ---> ${latestVersion}`,
+                    // });
+                    // newWindow.loadURL("https://github.com/mienaiyami/yomikiru/releases");
+                    // newWindow.setMenuBarVisibility(false);
                 }
             });
         return;
@@ -194,7 +195,10 @@ const downloadUpdates = (latestVersion: string, windowId: number) => {
 
     if (process.platform === "win32")
         if (IS_PORTABLE) {
-            const dl = downloadLink + latestVersion + "/" + `Yomikiru-win32-v${latestVersion}-Portable.zip`;
+            const dl =
+                process.arch === "ia32"
+                    ? downloadLink + latestVersion + "/" + `Yomikiru-win32-v${latestVersion}-Portable.zip`
+                    : downloadLink + latestVersion + "/" + `Yomikiru-win32-v${latestVersion}-Portable-x64.zip`;
             const extractPath = path.join(tempPath, "updates");
             if (!fs.existsSync(extractPath)) fs.mkdirSync(extractPath);
 
@@ -224,7 +228,10 @@ const downloadUpdates = (latestVersion: string, windowId: number) => {
                 });
             });
         } else {
-            const dl = downloadLink + latestVersion + "/" + `Yomikiru-v${latestVersion}-Setup.exe`;
+            const dl =
+                process.arch === "ia32"
+                    ? downloadLink + latestVersion + "/" + `Yomikiru-v${latestVersion}-Setup.exe`
+                    : downloadLink + latestVersion + "/" + `Yomikiru-v${latestVersion}-Setup-x64.exe`;
             downloadFile(dl, newWindow.webContents, (file) => {
                 logger.log(`${file.filename} downloaded.`);
                 app.on("quit", () => {

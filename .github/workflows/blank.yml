@@ -69,9 +69,9 @@ jobs:
       - name: forge make
         run: yarn make
       
-      - name: Read Changelog
-        id: read_changelog
-        run: echo "{name}={cat ./changelog.md}" >> $GITHUB_OUTPUT
+      # - name: Read Changelog
+      #   id: read_changelog
+      #   run: echo "{name}={cat ./changelog.md}" >> $GITHUB_OUTPUT
 
       # - name: testttttt
       #   run: |
@@ -101,7 +101,9 @@ jobs:
           name: ${{github.ref_name}}
           files: |
             ./out/full/Yomikiru-win32-${{ github.ref_name }}-Portable.zip
+            ./out/full/Yomikiru-win32-${{ github.ref_name }}-Portable-x64.zip
             ./out/full/Yomikiru-${{ github.ref_name }}-Setup.exe
+            ./out/full/Yomikiru-${{ github.ref_name }}-Setup-x64.exe
             ./out/full/Yomikiru-${{ github.ref_name }}-amd64.deb
           # ./out/full/Yomikiru-${{ github.ref_name }}-amd64.deb
 #           body: ${{ steps.read_changelog.outputs.changelog }}
