@@ -26,7 +26,7 @@ jobs:
       - name: testing...
         run: node -v
       - name: Install dependencies
-        run: yarn install --frozen-lockfile --network-timeout 1000000
+        run: yarn ci --network-timeout 1000000
       - name: forge make
         run: yarn make:deb
       
@@ -65,7 +65,7 @@ jobs:
       # - name: testing...
       #   run: node -v
       - name: Install dependencies
-        run: yarn install --frozen-lockfile --network-timeout 1000000
+        run: yarn ci --network-timeout 1000000
       - name: forge make
         run: yarn make
       

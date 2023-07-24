@@ -271,18 +271,15 @@ const App = (): ReactElement => {
                     //     .then((e) => {
                     //         if (e) tempFn(tempExtractPath, 1);
                     //     });
-                    // if (!window.electron.app.isPackaged)
-                    //     link =
-                    //         "http://localhost:20279/stuff/mangas/ln/Eminence%20in%20Shadow/The%20Eminence%20in%20Shadow,%20Vol.%201.pdf";
+                    if (!window.electron.app.isPackaged)
+                        link =
+                            "http://localhost:33167/stuff/mangas/ln/Eminence%20in%20Shadow/The%20Eminence%20in%20Shadow,%20Vol.%201.pdf";
+                    window.pdfjsLib.PromiseCapability;
                     const doc = window.pdfjsLib.getDocument(link);
-                    doc.onPassword = (cb: any, reason: any) => {
-                        console.log(reason);
-                        if (reason === 1) {
-                            doc.destroy();
-                            window.dialog.customError({
-                                message: "PDF is password protected.",
-                            });
-                        }
+                    doc.onPassword = () => {
+                        window.dialog.customError({
+                            message: "PDF is password protected.",
+                        });
                     };
                     doc.promise
                         .then((pdf) => {
@@ -296,8 +293,8 @@ const App = (): ReactElement => {
                                     canvas.width = viewport.width;
                                     canvas.height = viewport.height;
                                     const context = canvas.getContext("2d");
-                                    console.log("starting", i);
                                     if (context) {
+                                        console.log("starting", i);
                                         // (async function fun() {
                                         //     await page.render({ canvasContext: context, viewport: viewport }).promise;
                                         //     const image = canvas.toDataURL("image/png");
@@ -313,7 +310,11 @@ const App = (): ReactElement => {
                                         //         }
                                         //     );
                                         // })();
-                                        const abc = page.render({ canvasContext: context, viewport: viewport });
+                                        const abc = page.render({
+                                            canvasContext: context,
+                                            viewport: viewport,
+                                            intent: "print",
+                                        });
                                         abc.promise.then(() => {
                                             const image = canvas.toDataURL("image/png");
                                             window.fs.writeFile(

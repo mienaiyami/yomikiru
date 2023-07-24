@@ -7,7 +7,8 @@ import { ipcRenderer, webFrame } from "electron";
   //! nah is it really? idk, since no remote content is loaded other than anilist
  */
 import chokidar from "chokidar";
-import * as pdfjsLib from "pdfjs-dist/legacy/build/pdf.js";
+import * as pdfjsLib from "pdfjs-dist/build/pdf.js";
+// import pdfjsLib from "pdfjs-dist";
 // eslint-disable-next-line @typescript-eslint/ban-ts-comment
 //@ts-ignore
 import worker from "pdfjs-dist/build/pdf.worker.js";

@@ -8,7 +8,6 @@ import * as remote from "@electron/remote/main";
 remote.initialize();
 declare const HOME_WEBPACK_ENTRY: string;
 import { exec, spawn, spawnSync } from "child_process";
-// import pdfjsLib from "pdfjs-dist/webpack";
 import crossZip from "cross-zip";
 import log from "electron-log";
 
@@ -542,9 +541,6 @@ const registerListener = () => {
             } else rej("ELECTRON:UNZIP: Invalid link or extractPath.");
         });
     });
-    // ipcMain.on("abc", () => {
-    //     console.log("aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa");
-    // });
     // ! getting  node-gyp failed to rebuild '..\node_modules\canvas' and i tried everything
     // ipcMain.handle("renderPDF", (e, link: string, extractPath: string, scale: number) => {
     //     return new Promise((res, rej) => {
