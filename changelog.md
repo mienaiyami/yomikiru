@@ -4,21 +4,23 @@
 
 ## Added
 
-- Auto refresh Home Location List.
-- Option to keep extracted/rendered data to open archives, pdf and epub faster.
+- **64-bit download option.**
+- Exact search, match exact words if search start with a `"`.
+- Grayscale filter.
 
 ## Changed
 
-- Replaced refresh button in location list with sort.
-- Usage & feature text update.
+- Better search for bookmark/history.
+- Show error dialog for password protected pdf.
+- Force close window if there is no response to backend after 5 sec of clicking close.
+- Changed/added feature text.
 - DEV:
-  - For image archives, look for first non-empty subfolder instead of first file when no direct image descendant found.
+  - Multiple changes in packages and configs, 626677c1ed9ce9ad04f457877691d87611ccabed.
+  - Custom pdfjs-dist to prevent errors.
 
 ## Fixed
 
-- PDFs not opening.
-- Anilist data deleting after update in portable version.
-- Repeated setting file save in epub.
-- Reader Side-List not showing history for archive types.
+- Bookmark/history search does not work for archives (except epub).
+- PDF not rendering when window not visible.
 
 ---

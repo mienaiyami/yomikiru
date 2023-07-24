@@ -271,10 +271,9 @@ const App = (): ReactElement => {
                     //     .then((e) => {
                     //         if (e) tempFn(tempExtractPath, 1);
                     //     });
-                    if (!window.electron.app.isPackaged)
-                        link =
-                            "http://localhost:33167/stuff/mangas/ln/Eminence%20in%20Shadow/The%20Eminence%20in%20Shadow,%20Vol.%201.pdf";
-                    window.pdfjsLib.PromiseCapability;
+                    // if (!window.electron.app.isPackaged)
+                    //     link =
+                    //         "http://localhost:33167/stuff/mangas/ln/Eminence%20in%20Shadow/The%20Eminence%20in%20Shadow,%20Vol.%201.pdf";
                     const doc = window.pdfjsLib.getDocument(link);
                     doc.onPassword = () => {
                         window.dialog.customError({
@@ -294,7 +293,7 @@ const App = (): ReactElement => {
                                     canvas.height = viewport.height;
                                     const context = canvas.getContext("2d");
                                     if (context) {
-                                        console.log("starting", i);
+                                        // console.log("starting", i);
                                         // (async function fun() {
                                         //     await page.render({ canvasContext: context, viewport: viewport }).promise;
                                         //     const image = canvas.toDataURL("image/png");
