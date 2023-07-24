@@ -9,6 +9,8 @@
         "url": "https://github.com/mienaiyami/yomikiru"
     },
     "scripts": {
+        "preci": "rm -rf ./node_modules",
+        "ci": "yarn install --immutable --immutable-cache --check-cache",
         "start": "electron-forge start",
         "eslint": "eslint",
         "tslint": "tsc --noemit",
@@ -38,7 +40,7 @@
         "electron-log": "^4.4.8",
         "electron-squirrel-startup": "^1.0.0",
         "font-list": "^1.4.5",
-        "pdfjs-dist": "^3.8.162",
+        "pdfjs-dist": "https://github.com/mienaiyami/pdfjs-dist",
         "react": "17.0.2",
         "react-dom": "17.0.2",
         "react-hot-loader": "^4.13.0",
