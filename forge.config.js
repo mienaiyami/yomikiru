@@ -59,7 +59,7 @@ module.exports = {
     ],
     hooks: {
         postMake: (config, makeResults) => {
-            fs.writeFileSync("./test.json", JSON.stringify(makeResults, null, "\t"));
+            // fs.writeFileSync("./test.json", JSON.stringify(makeResults, null, "\t"));
             if (!fs.existsSync("./out/full")) fs.mkdirSync("./out/full");
             let downloadBtns = `## Downloads\n\n`;
             // makeResults.forEach((result) => {

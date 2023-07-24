@@ -125,8 +125,8 @@ const checkForUpdate = async (windowId: number, skipMinor = false, promptAfterCh
  */
 const downloadUpdates = (latestVersion: string, windowId: number) => {
     const newWindow = new BrowserWindow({
-        width: 500,
-        height: 150,
+        width: 560,
+        height: 160,
         resizable: false,
         backgroundColor: "#272727",
         webPreferences: {
