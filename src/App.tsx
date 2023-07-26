@@ -478,6 +478,26 @@ const App = (): ReactElement => {
         };
     }, [window.app.deleteDirOnClose]);
 
+    useLayoutEffect(() => {
+        // loading custom stylesheet
+        const elem = document.head.querySelector("#customStylesheet");
+        if (appSettings.customStylesheet && !elem) {
+            if (window.fs.existsSync(appSettings.customStylesheet)) {
+                {
+                    window.logger.log("Loading custom stylesheet from ", appSettings.customStylesheet);
+                    const stylesheet = document.createElement("link");
+                    stylesheet.rel = "stylesheet";
+                    stylesheet.href = appSettings.customStylesheet;
+                    stylesheet.id = "customStylesheet";
+                    document.head.appendChild(stylesheet);
+                }
+            }
+        } else if (elem) {
+            window.logger.log("Removing custom stylesheet.");
+            document.head.removeChild(elem);
+        }
+    }, [appSettings.customStylesheet]);
+
     useEffect(() => {
         setFirstRendered(true);
         window.electron.ipcRenderer.on("loadMangaFromLink", (e, data) => {
@@ -543,23 +563,6 @@ const App = (): ReactElement => {
         });
 
         window.addEventListener("keydown", eventsOnStart);
-
-        // loading custom stylesheet
-        if (appSettings.customStylesheet) {
-            if (
-                window.fs.existsSync(appSettings.customStylesheet) &&
-                window.path.extname(appSettings.customStylesheet).toLowerCase() === ".css"
-            ) {
-                if (!document.head.querySelector("#customStylesheet")) {
-                    window.logger.log("Loading custom stylesheet from ", appSettings.customStylesheet);
-                    const stylesheet = document.createElement("link");
-                    stylesheet.rel = "stylesheet";
-                    stylesheet.href = appSettings.customStylesheet;
-                    stylesheet.id = "customStylesheet";
-                    document.head.appendChild(stylesheet);
-                }
-            }
-        }
 
         const dropFile = (e: DragEvent) => {
             e.preventDefault();

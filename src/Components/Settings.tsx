@@ -1012,12 +1012,12 @@ const Settings = (): ReactElement => {
                                             promptSelectDir(
                                                 (path) => {
                                                     dispatch(setAppSettings({ customStylesheet: path }));
-                                                    const target = e.currentTarget;
-                                                    target.innerText = "Applying...";
-                                                    setTimeout(() => {
-                                                        window.location.reload();
-                                                        // target.innerText = "Select";
-                                                    }, 3000);
+                                                    // const target = e.currentTarget;
+                                                    // target.innerText = "Applying...";
+                                                    // setTimeout(() => {
+                                                    //     // window.location.reload();
+                                                    //     target.innerText = "Select";
+                                                    // }, 1000);
                                                 },
                                                 true,
                                                 [
@@ -1034,12 +1034,12 @@ const Settings = (): ReactElement => {
                                     <button
                                         onClick={(e) => {
                                             dispatch(setAppSettings({ customStylesheet: "" }));
-                                            const target = e.currentTarget;
-                                            target.innerText = "Applying...";
-                                            setTimeout(() => {
-                                                window.location.reload();
-                                                // target.innerText = "Clear";
-                                            }, 3000);
+                                            // const target = e.currentTarget;
+                                            // target.innerText = "Applying...";
+                                            // setTimeout(() => {
+                                            //     // window.location.reload();
+                                            //     target.innerText = "Clear";
+                                            // }, 1000);
                                         }}
                                     >
                                         Clear
