@@ -187,9 +187,9 @@ const AnilistEdit = () => {
                                                     return {
                                                         ...init,
                                                         startedAt: {
-                                                            year: value?.getFullYear() ?? null,
-                                                            month: value?.getMonth() ?? null,
-                                                            day: value?.getDate() ?? null,
+                                                            year: value ? value.getUTCFullYear() : null,
+                                                            month: value ? value.getUTCMonth() + 1 : null,
+                                                            day: value ? value.getUTCDate() : null,
                                                         },
                                                     };
                                                 return null;
@@ -220,9 +220,9 @@ const AnilistEdit = () => {
                                                     return {
                                                         ...init,
                                                         completedAt: {
-                                                            year: value?.getFullYear() ?? null,
-                                                            month: value?.getMonth() ?? null,
-                                                            day: value?.getDate() ?? null,
+                                                            year: value ? value.getUTCFullYear() : null,
+                                                            month: value ? value.getUTCMonth() + 1 : null,
+                                                            day: value ? value.getUTCDate() : null,
                                                         },
                                                     };
                                                 return null;
