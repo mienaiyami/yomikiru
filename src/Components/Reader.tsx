@@ -1060,9 +1060,23 @@ const Reader = () => {
                     //         100;
                     //     if (clickPos > 40 && clickPos < 60) setZenMode((prev) => !prev);
                     // }
-                    const clickPos =
-                        ((e.clientX - (isSideListPinned ? sideListWidth : 0)) / e.currentTarget.offsetWidth) * 100;
-                    if (clickPos > 40 && clickPos < 60) setZenMode((prev) => !prev);
+
+                    const abc = prevNextDeciderLogic();
+                    // first/last page
+                    if (abc || appSettings.readerSettings.readerTypeSelected !== 0) {
+                        const clickPos =
+                            ((e.clientX - (isSideListPinned ? sideListWidth : 0)) / e.currentTarget.offsetWidth) *
+                            100;
+                        if ((abc === 1 || abc === 2) && clickPos > 20 && clickPos < 80)
+                            setZenMode((prev) => !prev);
+                        else if (clickPos > 40 && clickPos < 60) setZenMode((prev) => !prev);
+                    } else {
+                        // const clickPos =
+                        //     ((e.clientX - (isSideListPinned ? sideListWidth : 0)) / e.currentTarget.offsetWidth) *
+                        //     100;
+                        // if (clickPos > 20 && clickPos < 80)
+                        setZenMode((prev) => !prev);
+                    }
                 }}
                 onClick={(e) => {
                     // && (e.target as HTMLElement).tagName === "IMG"

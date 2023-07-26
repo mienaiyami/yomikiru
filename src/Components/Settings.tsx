@@ -1675,7 +1675,14 @@ const Settings = (): ReactElement => {
                                             </code>
                                             .
                                         </li>
-                                        <li>Double click in center 20% of window to toggle zen mode.</li>
+                                        <li>
+                                            Double click to toggle zen mode. Working area by reading mode:
+                                            <ul>
+                                                <li>Vertical Scroll - 100%</li>
+                                                <li>Vertical Scroll (chapter start/end) - center 60%</li>
+                                                <li>LTR and RTL - center 20%</li>
+                                            </ul>
+                                        </li>
                                     </ul>
                                 </li>
                                 <li>
