@@ -1076,17 +1076,13 @@ const Settings = (): ReactElement => {
                                         onClick={(e) => {
                                             promptSelectDir((path) => {
                                                 setTempFolder(path);
-                                                // const target = e.currentTarget;
-                                                // target.innerText = "Applying...";
-                                                // setTimeout(() => {
-                                                //     window.location.reload();
-                                                //     // target.innerText = "Select";
-                                                // }, 3000);
                                             });
                                         }}
                                     >
                                         Select
                                     </button>
+                                </div>
+                                <div className="main row">
                                     <button
                                         onClick={(e) => {
                                             if (process.env.TEMP) setTempFolder(process.env.TEMP);
@@ -1094,15 +1090,35 @@ const Settings = (): ReactElement => {
                                                 window.dialog.customError({
                                                     message: "Unable to get default temp path.",
                                                 });
-                                            // const target = e.currentTarget;
-                                            // target.innerText = "Applying...";
-                                            // setTimeout(() => {
-                                            //     window.location.reload();
-                                            //     // target.innerText = "Clear";
-                                            // }, 3000);
                                         }}
                                     >
-                                        Default
+                                        Use Default
+                                    </button>
+                                    <button
+                                        onClick={(e) => {
+                                            const target = e.currentTarget;
+                                            target.disabled = true;
+                                            setTimeout(() => {
+                                                target.disabled = false;
+                                            }, 6000);
+                                            window.fs.readdir(tempFolder, (err, files) => {
+                                                if (err) return window.logger.error(err);
+                                                files
+                                                    .filter((e) => e.startsWith("yomikiru"))
+                                                    .map((e) => window.path.join(tempFolder, e))
+                                                    .forEach(
+                                                        (e) =>
+                                                            window.fs.existsSync(e) &&
+                                                            window.fs.rm(
+                                                                e,
+                                                                { force: true, recursive: true },
+                                                                (err) => window.logger.error(err)
+                                                            )
+                                                    );
+                                            });
+                                        }}
+                                    >
+                                        Delete all File Cache
                                     </button>
                                 </div>
                             </div>
