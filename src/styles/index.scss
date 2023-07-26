@@ -101,17 +101,18 @@ body.zenMode {
     #topBar {
         display: none;
     }
-    .readerSideList {
-        visibility: hidden;
-    }
-
-    #app .reader .zenModePageNumber.show {
-        display: block;
-    }
-
     #app {
         top: 0;
         height: 100%;
+        .reader {
+            .zenModePageNumber.show {
+                display: block;
+            }
+            .readerSideList {
+                // visibility: hidden;
+                display: none;
+            }
+        }
         #EPubReader {
             section.main {
                 &.limitImgHeight {

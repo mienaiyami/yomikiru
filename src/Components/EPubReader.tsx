@@ -1060,6 +1060,7 @@ const EPubReader = () => {
                     setSideListWidth={setSideListWidth}
                     makeScrollPos={makeScrollPos}
                     findInPage={findInPage}
+                    zenMode={zenMode}
                 />
             )}
             {appSettings.epubReaderSettings.showProgressInZenMode && (

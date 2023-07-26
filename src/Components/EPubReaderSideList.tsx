@@ -30,6 +30,7 @@ const EPubReaderSideList = memo(
         setSideListPinned,
         setSideListWidth,
         makeScrollPos,
+        zenMode,
     }: {
         tocData: TOCData;
         openNextChapterRef: React.RefObject<HTMLButtonElement>;
@@ -50,6 +51,7 @@ const EPubReaderSideList = memo(
         setSideListWidth: React.Dispatch<React.SetStateAction<number>>;
         findInPage: (str: string, forward?: boolean) => void;
         makeScrollPos: (callback?: ((queryString?: string) => any) | undefined) => void;
+        zenMode: boolean;
     }) => {
         const bookInReader = useAppSelector((store) => store.bookInReader);
         // const history = useAppSelector((store) => store.history);
@@ -67,6 +69,13 @@ const EPubReaderSideList = memo(
         // const prevMangaRef = useRef<string>("");
         // const [historySimple, setHistorySimple] = useState<string[]>([]);
         const [draggingResizer, setDraggingResizer] = useState(false);
+        const currentRef = useRef<HTMLAnchorElement | null>(null);
+        useEffect(() => {
+            if (!zenMode && currentRef.current)
+                setTimeout(() => {
+                    currentRef.current?.scrollIntoView({ block: "start" });
+                }, 100);
+        }, [zenMode]);
         // useLayoutEffect(() => {
         // }, [findInPage]);
 
@@ -377,6 +386,7 @@ const EPubReaderSideList = memo(
                         epubLinkClick={epubLinkClick}
                         sideListRef={sideListRef}
                         setCurrentChapterURL={setCurrentChapterURL}
+                        currentRef={currentRef}
                     />
                 </div>
             </div>
@@ -391,12 +401,14 @@ const List = memo(
         epubLinkClick,
         sideListRef,
         setCurrentChapterURL,
+        currentRef,
     }: {
         tocData: TOCData;
         currentChapterURL: string;
         epubLinkClick: (ev: MouseEvent | React.MouseEvent<HTMLAnchorElement, MouseEvent>) => void;
         sideListRef: React.RefObject<HTMLDivElement>;
         setCurrentChapterURL: React.Dispatch<React.SetStateAction<string>>;
+        currentRef: React.MutableRefObject<HTMLAnchorElement | null>;
     }) => {
         const temp_ListShow: boolean[] = [];
         const temp = useMemo(
@@ -467,8 +479,10 @@ const List = memo(
                         data-depth={depth}
                         title={name}
                         ref={(node) => {
-                            if (node !== null && src.includes(currentChapterURL))
-                                node.scrollIntoView({ block: "start" });
+                            if (src.includes(currentChapterURL)) {
+                                currentRef.current = node;
+                                node?.scrollIntoView({ block: "start" });
+                            }
                         }}
                     >
                         <span className="text">{"\u00A0".repeat((tocData.depth - depth) * 5) + name}</span>
