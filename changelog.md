@@ -4,23 +4,21 @@
 
 ## Added
 
-- **64-bit download option.**
-- Exact search, match exact words if search start with a `"`.
-- Grayscale filter.
+- Option to clear temp file cache.
+- Option to show checkboxes instead of toggle in reader settings.
 
 ## Changed
 
-- Better search for bookmark/history.
-- Show error dialog for password protected pdf.
-- Force close window if there is no response to backend after 5 sec of clicking close.
-- Changed/added feature text.
-- DEV:
-  - Multiple changes in packages and configs, 626677c1ed9ce9ad04f457877691d87611ccabed.
-  - Custom pdfjs-dist to prevent errors.
+- Hide refresh button when "auto refresh side-list" enabled.
+- EPUB:
+  - Use default padding and margins for all elements.
+  - Confirm before opening external links.
+  - Don't render side list in zen mode, improve performance but lag when exiting zen mode if very high chapter count.
+- Instantly apply custom stylesheet.
+- Dbl click zen mode changes, check in-app usage for more info.
 
 ## Fixed
 
-- Bookmark/history search does not work for archives (except epub).
-- PDF not rendering when window not visible.
+- Anilist date's month value showing one less.
 
 ---
