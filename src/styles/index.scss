@@ -2763,6 +2763,8 @@ body {
                         user-select: text !important;
                         line-height: var(--line-height);
                         word-spacing: var(--word-spacing);
+                        padding: revert;
+                        margin: revert;
                     }
                     // section {
                     //     width: 100%;
