@@ -991,13 +991,23 @@ const Settings = (): ReactElement => {
                                     />
                                 </div>
                             </div>
-                            <div className="settingItem2">
+                            <div className="settingItem2" id="settings-customStylesheet">
                                 <h3>Custom Stylesheet</h3>
                                 <div className="desc">
                                     You can include your custom css stylesheet to change style of app more than
-                                    what theme can do. To see elements and existing styles you can check dev tool.{" "}
-                                    <br />
-                                    NOTE: Do not move .css file in app's folder
+                                    what theme can do.{" "}
+                                    <a
+                                        onClick={() => {
+                                            document
+                                                .querySelector("#settings-usage-customStylesheet")
+                                                ?.scrollIntoView({
+                                                    block: "start",
+                                                    behavior: "smooth",
+                                                });
+                                        }}
+                                    >
+                                        More Info
+                                    </a>
                                 </div>
                                 <div className="main row">
                                     <input
@@ -1744,12 +1754,25 @@ const Settings = (): ReactElement => {
                                         </li>
                                     </ul>
                                 </li>
-                                <li>
+                                <li id="settings-usage-customStylesheet">
                                     If you know how to write <code>.css</code>, you can customize style of app,
                                     more than just theme color that is enabled by "Theme Maker, by making your
-                                    custom <code>.css</code> file and adding it as <code>Custom Stylesheet</code>.
+                                    custom <code>.css</code> file and adding it as{" "}
+                                    <a
+                                        onClick={() => {
+                                            document.querySelector("#settings-customStylesheet")?.scrollIntoView({
+                                                block: "start",
+                                                behavior: "smooth",
+                                            });
+                                        }}
+                                    >
+                                        Custom Stylesheet
+                                    </a>
+                                    . You can use developer/inspect tool to check the element and existing styles.
                                     <br />
-                                    You can use developer/inspect tool to check the element and existing styles.
+                                    NOTE: Do not move <code> .css </code> file in directly under app's folder. If
+                                    you are using portable version, everything except <code>userdata</code> folder
+                                    will be deleted. You can safely put it inside <code>userdata</code> folder.
                                 </li>
                             </ul>
                         </div>
