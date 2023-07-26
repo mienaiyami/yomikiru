@@ -83,7 +83,11 @@ const EPUBReaderSettings = memo(
         return (
             <div
                 id="epubReaderSettings"
-                className={"readerSettings " + (isReaderSettingsOpen ? "" : "closed")}
+                className={
+                    "readerSettings " +
+                    (isReaderSettingsOpen ? "" : "closed ") +
+                    (appSettings.checkboxReaderSetting ? "checkboxSetting " : "")
+                }
                 onKeyDown={(e) => {
                     if (e.key === "Escape" || e.key === "q") {
                         e.stopPropagation();

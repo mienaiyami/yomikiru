@@ -64,7 +64,11 @@ const ReaderSettings = memo(
         return (
             <div
                 id="readerSettings"
-                className={"readerSettings " + (isReaderSettingsOpen ? "" : "closed")}
+                className={
+                    "readerSettings " +
+                    (isReaderSettingsOpen ? "" : "closed ") +
+                    (appSettings.checkboxReaderSetting ? "checkboxSetting " : "")
+                }
                 onKeyDown={(e) => {
                     if (e.key === "Escape" || e.key === "q") {
                         e.stopPropagation();

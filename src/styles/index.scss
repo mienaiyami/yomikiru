@@ -284,7 +284,7 @@ body {
         &:active {
             outline: none;
         }
-        color-scheme: light dark;
+        color-scheme: light;
     }
     input[type="range"] {
         accent-color: var(--icon-color);
@@ -2320,6 +2320,17 @@ body {
                     // border-radius: 0 0 0 20px;
                     .main {
                         display: none;
+                    }
+                }
+
+                &.checkboxSetting {
+                    label:has(span.toggle-area) {
+                        input[type="checkbox"] {
+                            display: block;
+                        }
+                        .toggle-area {
+                            display: none;
+                        }
                     }
                 }
 

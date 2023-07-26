@@ -1316,6 +1316,21 @@ const Settings = (): ReactElement => {
                                 </div>
                                 <div className="toggleItem">
                                     <InputCheckbox
+                                        checked={appSettings.checkboxReaderSetting}
+                                        className="noBG"
+                                        onChange={(e) => {
+                                            dispatch(
+                                                setAppSettings({
+                                                    checkboxReaderSetting: e.currentTarget.checked,
+                                                })
+                                            );
+                                        }}
+                                        labelAfter="Reader Settings Checkbox"
+                                    />
+                                    <div className="desc">Show checkbox instead of toggle in reader settings.</div>
+                                </div>
+                                <div className="toggleItem">
+                                    <InputCheckbox
                                         checked={appSettings.keepExtractedFiles}
                                         className="noBG"
                                         onChange={(e) => {
