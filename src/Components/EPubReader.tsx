@@ -448,8 +448,17 @@ const EPubReader = () => {
                     }
                 }
             } else {
-                if ((ev.currentTarget as HTMLAnchorElement).href) {
-                    window.electron.shell.openExternal((ev.currentTarget as HTMLAnchorElement).href);
+                const href = (ev.currentTarget as HTMLAnchorElement).href;
+                if (href) {
+                    window.dialog
+                        .warn({
+                            message: "Open external link?",
+                            detail: href,
+                            noOption: false,
+                        })
+                        .then((res) => {
+                            if (res.response === 0) window.electron.shell.openExternal(href);
+                        });
                 }
             }
         },
