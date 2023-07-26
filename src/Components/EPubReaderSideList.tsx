@@ -19,7 +19,7 @@ const EPubReaderSideList = memo(
         openNextChapterRef,
         openPrevChapterRef,
         currentChapterURL,
-        setCurrentChapterURL,
+        // setCurrentChapterURL,
         addToBookmarkRef,
         setshortcutText,
         isBookmarked,
@@ -39,7 +39,7 @@ const EPubReaderSideList = memo(
          * `~` if appSettings.epubReaderSettings.loadOneChapter is `false`
          */
         currentChapterURL: string;
-        setCurrentChapterURL: React.Dispatch<React.SetStateAction<string>>;
+        // setCurrentChapterURL: React.Dispatch<React.SetStateAction<string>>;
 
         epubLinkClick: (ev: MouseEvent | React.MouseEvent<HTMLAnchorElement, MouseEvent>) => void;
         addToBookmarkRef: React.RefObject<HTMLButtonElement>;
@@ -385,7 +385,7 @@ const EPubReaderSideList = memo(
                         currentChapterURL={currentChapterURL}
                         epubLinkClick={epubLinkClick}
                         sideListRef={sideListRef}
-                        setCurrentChapterURL={setCurrentChapterURL}
+                        // setCurrentChapterURL={setCurrentChapterURL}
                         currentRef={currentRef}
                     />
                 </div>
@@ -400,14 +400,14 @@ const List = memo(
         currentChapterURL,
         epubLinkClick,
         sideListRef,
-        setCurrentChapterURL,
+        // setCurrentChapterURL,
         currentRef,
     }: {
         tocData: TOCData;
         currentChapterURL: string;
         epubLinkClick: (ev: MouseEvent | React.MouseEvent<HTMLAnchorElement, MouseEvent>) => void;
         sideListRef: React.RefObject<HTMLDivElement>;
-        setCurrentChapterURL: React.Dispatch<React.SetStateAction<string>>;
+        // setCurrentChapterURL: React.Dispatch<React.SetStateAction<string>>;
         currentRef: React.MutableRefObject<HTMLAnchorElement | null>;
     }) => {
         const temp_ListShow: boolean[] = [];
@@ -473,7 +473,9 @@ const List = memo(
                             ev.stopPropagation();
                             epubLinkClick(ev);
                             sideListRef.current?.blur();
-                            setCurrentChapterURL(ev.currentTarget.getAttribute("data-href") || "~");
+
+                            // why was it here before?
+                            // setCurrentChapterURL(ev.currentTarget.getAttribute("data-href") || "~");
                         }}
                         data-href={src}
                         data-depth={depth}

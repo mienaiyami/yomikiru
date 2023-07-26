@@ -1050,7 +1050,7 @@ const EPubReader = () => {
                     openNextChapterRef={openNextChapterRef}
                     openPrevChapterRef={openPrevChapterRef}
                     currentChapterURL={currentChapterURL}
-                    setCurrentChapterURL={setCurrentChapterURL}
+                    // setCurrentChapterURL={setCurrentChapterURL}
                     addToBookmarkRef={addToBookmarkRef}
                     setshortcutText={setshortcutText}
                     isBookmarked={isBookmarked}
