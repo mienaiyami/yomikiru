@@ -339,15 +339,17 @@ const ReaderSideList = memo(
                                 }
                             }}
                         />
-                        <button
-                            // tabIndex={-1}
-                            data-tooltip="Refresh"
-                            onClick={() => {
-                                makeChapterList();
-                            }}
-                        >
-                            <FontAwesomeIcon icon={faSyncAlt} />
-                        </button>
+                        {!appSettings.autoRefreshSideList && (
+                            <button
+                                // tabIndex={-1}
+                                data-tooltip="Refresh"
+                                onClick={() => {
+                                    makeChapterList();
+                                }}
+                            >
+                                <FontAwesomeIcon icon={faSyncAlt} />
+                            </button>
+                        )}
                         <button
                             // tabIndex={-1}
                             data-tooltip="Sort"
