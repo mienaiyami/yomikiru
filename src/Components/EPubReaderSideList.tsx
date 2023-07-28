@@ -425,13 +425,13 @@ const List = memo(
                     }
                     return acc;
                 }, [] as { parent: TOCData["nav"][0]; child: TOCData["nav"] }[]),
-            [currentChapterURL]
+            [tocData]
         );
 
         const [listShow, setListShow] = useState(temp_ListShow);
-        useLayoutEffect(() => {
-            setListShow(temp_ListShow);
-        }, [currentChapterURL]);
+        // useLayoutEffect(() => {
+        //     setListShow(temp_ListShow);
+        // }, [currentChapterURL]);
         // useLayoutEffect(() => {
         //     console.log(listShow);
         // }, [listShow]);
@@ -483,7 +483,15 @@ const List = memo(
                         ref={(node) => {
                             if (src.includes(currentChapterURL)) {
                                 currentRef.current = node;
-                                node?.scrollIntoView({ block: "start" });
+                                if (node) {
+                                    if (temp.length > 0 && !show)
+                                        setListShow((init) => {
+                                            const aa = Array(init.length).fill(false);
+                                            aa[index] = true;
+                                            return aa;
+                                        });
+                                    node.scrollIntoView({ block: "start" });
+                                }
                             }
                         }}
                     >
