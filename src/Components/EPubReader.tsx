@@ -208,7 +208,7 @@ const HTMLPart = memo(
             // console.log(tocData.nav.map((e) => e.src.split("\\").pop()));
             // console.log(currentChapterURL, afterCurrentIndex, startIndex, tocData.nav, linksInBetween);
         }
-        if (!tocData) return <p>Error/Loading</p>;
+        if (!tocData && loadOneChapter) return <p>Error/Loading</p>;
         return (
             <>
                 {(loadOneChapter ? linksInBetween : displayDataWithOrder).map((e, i) => (
@@ -244,6 +244,7 @@ const HTMLPart = memo(
                                         if (elem) elem.scrollIntoView({ block: "start" });
                                     }, 200);
                                 } else if (
+                                    tocData &&
                                     tocData.nav[0].src !== currentChapterURL &&
                                     currentChapterURL.includes("#") &&
                                     currentChapterURL.includes(url)
@@ -561,6 +562,7 @@ const EPubReader = () => {
                                     tempStylesheets.push(href);
                                 }
                             }
+                            //toc data
                             if (mediaType === "application/x-dtbncx+xml") {
                                 const href = window.path.join(
                                     window.path.dirname(CONTENT_PATH),
