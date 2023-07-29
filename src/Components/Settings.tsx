@@ -359,6 +359,7 @@ const Settings = (): ReactElement => {
         shortcutKeys: [1, "Shortcut Keys"],
         makeTheme: [2, "Theme Maker"],
         about: [3, "About"],
+        extras: [4, "Extras"],
     } as const;
 
     return (
@@ -369,7 +370,7 @@ const Settings = (): ReactElement => {
                     <button
                         tabIndex={-1}
                         onFocus={(e) => e.currentTarget.blur()}
-                        className={`tabBtn ${currentTab === 0 ? "selected " : ""}`}
+                        className={`tabBtn ${currentTab === TAB_INFO.settings[0] ? "selected " : ""}`}
                         onClick={() => setCurrentTab(TAB_INFO.settings[0])}
                     >
                         {TAB_INFO.settings[1]}
@@ -377,7 +378,7 @@ const Settings = (): ReactElement => {
                     <button
                         tabIndex={-1}
                         onFocus={(e) => e.currentTarget.blur()}
-                        className={`tabBtn ${currentTab === 1 ? "selected " : ""}`}
+                        className={`tabBtn ${currentTab === TAB_INFO.shortcutKeys[0] ? "selected " : ""}`}
                         onClick={() => setCurrentTab(TAB_INFO.shortcutKeys[0])}
                     >
                         {TAB_INFO.shortcutKeys[1]}
@@ -385,7 +386,7 @@ const Settings = (): ReactElement => {
                     <button
                         tabIndex={-1}
                         onFocus={(e) => e.currentTarget.blur()}
-                        className={`tabBtn ${currentTab === 2 ? "selected " : ""}`}
+                        className={`tabBtn ${currentTab === TAB_INFO.makeTheme[0] ? "selected " : ""}`}
                         onClick={() => setCurrentTab(TAB_INFO.makeTheme[0])}
                     >
                         {TAB_INFO.makeTheme[1]}
@@ -393,10 +394,18 @@ const Settings = (): ReactElement => {
                     <button
                         tabIndex={-1}
                         onFocus={(e) => e.currentTarget.blur()}
-                        className={`tabBtn ${currentTab === 3 ? "selected " : ""}`}
+                        className={`tabBtn ${currentTab === TAB_INFO.about[0] ? "selected " : ""}`}
                         onClick={() => setCurrentTab(TAB_INFO.about[0])}
                     >
                         {TAB_INFO.about[1]}
+                    </button>
+                    <button
+                        tabIndex={-1}
+                        onFocus={(e) => e.currentTarget.blur()}
+                        className={`tabBtn ${currentTab === TAB_INFO.extras[0] ? "selected " : ""}`}
+                        onClick={() => setCurrentTab(TAB_INFO.extras[0])}
+                    >
+                        {TAB_INFO.extras[1]}
                     </button>
                 </div>
                 <div
@@ -1491,7 +1500,7 @@ const Settings = (): ReactElement => {
                                         <br />
                                         Drawbacks : high RAM usage and less sharp images when size is set to a low
                                         value.
-                                        <code>BETA</code>
+                                        <code>Experimental</code>
                                     </div>
                                 </div>
                                 <div className="toggleItem">
@@ -1634,6 +1643,302 @@ const Settings = (): ReactElement => {
                                 </div>
                             </div>
                         </div>
+                    </div>
+                    <div className={`tab ${currentTab === TAB_INFO.shortcutKeys[0] ? "selected " : ""}`}>
+                        {/* <h1>Shortcut Keys</h1> */}
+                        <div className="shortcutKey">
+                            <ul>
+                                <li>
+                                    <code>Backspace</code> to delete Key.
+                                </li>
+                                <li>
+                                    Reserved Keys :{" "}
+                                    {reservedKeys.map((e) => (
+                                        <span key={e}>
+                                            <code>{e}</code>{" "}
+                                        </span>
+                                    ))}
+                                    .
+                                </li>
+                            </ul>
+                            <table>
+                                <tbody>
+                                    <tr>
+                                        <th>Function</th>
+                                        <th>Key</th>
+                                    </tr>
+                                    {shortcuts.map((e, i) => (
+                                        <tr key={e.command}>
+                                            <td>{e.name}</td>
+                                            <td>
+                                                <ShortcutInput which="key1" i={i} />
+                                                <ShortcutInput which="key2" i={i} />
+                                            </td>
+                                        </tr>
+                                    ))}
+                                    <tr>
+                                        <td>New Window</td>
+                                        <td>
+                                            <code>ctrl</code>+<code>n</code>
+                                        </td>
+                                    </tr>
+                                    <tr>
+                                        <td>Close Window</td>
+                                        <td>
+                                            <code>ctrl</code>+<code>w</code>
+                                        </td>
+                                    </tr>
+                                    <tr>
+                                        <td>Reader width</td>
+                                        <td>
+                                            <code>ctrl</code>+<code>scroll</code>
+                                        </td>
+                                    </tr>
+                                    <tr>
+                                        <td>Home</td>
+                                        <td>
+                                            <code>h</code>
+                                        </td>
+                                    </tr>
+                                    <tr>
+                                        <td>Reload UI</td>
+                                        <td>
+                                            <code>ctrl</code>+<code>r</code>
+                                        </td>
+                                    </tr>
+                                    <tr>
+                                        <td>Reload UI and try to clear cache</td>
+                                        <td>
+                                            <code>ctrl</code>+<code>shift</code>+<code>r</code>
+                                        </td>
+                                    </tr>
+                                    <tr>
+                                        <td>UI Scale Up</td>
+                                        <td>
+                                            <code>ctrl</code> + <code>=</code>
+                                        </td>
+                                    </tr>
+                                    <tr>
+                                        <td>UI Scale Down</td>
+                                        <td>
+                                            <code>ctrl</code> + <code>-</code>
+                                        </td>
+                                    </tr>
+                                    <tr>
+                                        <td>UI Scale Reset</td>
+                                        <td>
+                                            <code>ctrl</code> + <code>0</code>
+                                        </td>
+                                    </tr>
+                                    <tr>
+                                        <td>Dev Tool</td>
+                                        <td>
+                                            <code>ctrl</code>+<code>shift</code>+<code>i</code>
+                                        </td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                    <div className={`tab ${currentTab === TAB_INFO.makeTheme[0] ? "selected " : ""}`}>
+                        <h1>
+                            <span title={theme}>{theme}</span>
+                            <input
+                                type="text"
+                                defaultValue={window.app.randomString(6)}
+                                ref={themeNameInputRef}
+                                onKeyDown={(e) => {
+                                    e.stopPropagation();
+                                }}
+                                maxLength={20}
+                            />
+                            <button
+                                onClick={() => {
+                                    saveTheme();
+                                }}
+                            >
+                                Save as New
+                            </button>
+                            <button
+                                onClick={() => {
+                                    saveTheme(true);
+                                }}
+                            >
+                                Save
+                            </button>
+                        </h1>
+                        <div className="themeMaker" ref={themeMakerRef}>
+                            {/* <datalist id="cssColorVariableList">
+                                {Object.keys(
+                                    allThemes.find((e) => {
+                                        return e.name === theme;
+                                    })!.main
+                                ).map((e) => (
+                                    <option key={e} value={`var(${e})`}>{`var(${e})`}</option>
+                                ))}
+                            </datalist> */}
+                            <ul>
+                                <li>
+                                    To use previously defined color, click on link button and select property frm
+                                    dropdown options.
+                                </li>
+                                <li>
+                                    If you want to edit existing theme, click on theme then click on plus icon then
+                                    change theme according to your liking.
+                                </li>
+                                <li>Some changes require refresh.</li>
+                            </ul>
+                            <table>
+                                <tbody>
+                                    <tr>
+                                        <th>Property</th>
+                                        <th>Reset &nbsp;&nbsp;&nbsp;&nbsp;&nbsp; Link</th>
+                                        <th>Color-Opacity / Variable</th>
+                                    </tr>
+                                    {Object.entries(window.themeProps).map((e) => (
+                                        <tr key={e[0]} className="newThemeMakerRow">
+                                            <td className="newThemeMakerProp" data-prop={e[0]}>
+                                                {e[1]}
+                                            </td>
+                                            {/* <td>{e[1]}</td> */}
+                                            <ThemeElement
+                                                color={
+                                                    allThemes.find((e) => e.name === theme)!.main[
+                                                        e[0] as ThemeDataMain
+                                                    ]
+                                                }
+                                                prop={e[0] as ThemeDataMain}
+                                            />
+                                        </tr>
+                                    ))}
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                    <div className={`tab ${currentTab === TAB_INFO.about[0] ? "selected " : ""}`}>
+                        <div className="content2">
+                            <div className="settingItem2">
+                                <h3>Version</h3>
+                                <div className="desc">
+                                    {window.electron.app.getVersion()}
+                                    {" | "}
+                                    {process.arch === "x64" ? "64-bit" : "32-bit"}
+                                </div>
+                                <div className="main col">
+                                    <InputCheckbox
+                                        className="noBG"
+                                        paraAfter="Check for updates on app startup"
+                                        checked={appSettings.updateCheckerEnabled}
+                                        onChange={(e) => {
+                                            dispatch(
+                                                setAppSettings({
+                                                    updateCheckerEnabled: e.currentTarget.checked,
+                                                })
+                                            );
+                                        }}
+                                    />
+                                    <InputCheckbox
+                                        checked={appSettings.skipMinorUpdate}
+                                        className="noBG"
+                                        onChange={(e) => {
+                                            dispatch(setAppSettings({ skipMinorUpdate: e.currentTarget.checked }));
+                                        }}
+                                        paraAfter="Skip minor updates"
+                                    />
+                                </div>
+                                <div className="main row">
+                                    <button
+                                        onClick={() => {
+                                            window.electron.ipcRenderer.send(
+                                                "checkForUpdate",
+                                                window.electron.getCurrentWindow().id,
+                                                true
+                                            );
+                                        }}
+                                    >
+                                        Check for Update Now
+                                    </button>
+                                    <button
+                                        onClick={() =>
+                                            window.electron.shell.openExternal(
+                                                "https://github.com/mienaiyami/yomikiru/releases"
+                                            )
+                                        }
+                                    >
+                                        Changelogs
+                                    </button>
+                                </div>
+                            </div>
+                            <div className="settingItem2">
+                                <h3>Others</h3>
+                                {/* <div className="desc"></div> */}
+                                <div className="main col">
+                                    <button
+                                        onClick={() =>
+                                            window.electron.shell.openExternal(
+                                                "https://github.com/mienaiyami/yomikiru/"
+                                            )
+                                        }
+                                    >
+                                        <FontAwesomeIcon icon={faGithub} /> Home Page
+                                    </button>
+                                    <button
+                                        onClick={() =>
+                                            window.electron.shell.openExternal(
+                                                "https://github.com/mienaiyami/yomikiru/discussions/categories/announcements"
+                                            )
+                                        }
+                                    >
+                                        <FontAwesomeIcon icon={faGithub} /> Announcements
+                                    </button>
+                                    <button
+                                        // onFocus={(e) => e.currentTarget.blur()}
+                                        onClick={() =>
+                                            window.electron.shell.openExternal(
+                                                "https://github.com/mienaiyami/yomikiru/issues"
+                                            )
+                                        }
+                                    >
+                                        <FontAwesomeIcon icon={faGithub} /> Submit Issue, Feature Request, Ask
+                                        Question
+                                    </button>
+                                </div>
+                                <hr className="mini" />
+                                <div className="main col">
+                                    <button
+                                        onClick={(e) => {
+                                            const target = e.currentTarget;
+                                            target.innerText =
+                                                "\u00a0".repeat(16) + "Copied!" + "\u00a0".repeat(16);
+                                            window.electron.clipboard.writeText("mienaiyami0@gmail.com");
+                                            target.disabled = true;
+                                            setTimeout(() => {
+                                                target.disabled = false;
+                                                target.innerText = "mienaiyami0@gmail.com";
+                                            }, 3000);
+                                        }}
+                                    >
+                                        mienaiyami0@gmail.com
+                                    </button>
+                                    <button
+                                        onClick={() => {
+                                            const filePath = window.path.join(
+                                                window.electron.app.getPath("userData"),
+                                                "logs/main.log"
+                                            );
+                                            if (process.platform === "win32")
+                                                window.electron.shell.showItemInFolder(filePath);
+                                            else if (process.platform === "linux")
+                                                window.electron.ipcRenderer.send("showInExplorer", filePath);
+                                        }}
+                                    >
+                                        Show Local Logs
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div className={`tab ${currentTab === TAB_INFO.extras[0] ? "selected " : ""}`}>
                         <h1>Usage & Features</h1>
                         <div className="content2 features">
                             <ul>
@@ -1925,298 +2230,6 @@ const Settings = (): ReactElement => {
                                     will be deleted. You can safely put it inside <code>userdata</code> folder.
                                 </li>
                             </ul>
-                        </div>
-                    </div>
-                    <div className={`tab ${currentTab === TAB_INFO.shortcutKeys[0] ? "selected " : ""}`}>
-                        {/* <h1>Shortcut Keys</h1> */}
-                        <div className="shortcutKey">
-                            <ul>
-                                <li>
-                                    <code>Backspace</code> to delete Key.
-                                </li>
-                                <li>
-                                    Reserved Keys :{" "}
-                                    {reservedKeys.map((e) => (
-                                        <span key={e}>
-                                            <code>{e}</code>{" "}
-                                        </span>
-                                    ))}
-                                    .
-                                </li>
-                            </ul>
-                            <table>
-                                <tbody>
-                                    <tr>
-                                        <th>Function</th>
-                                        <th>Key</th>
-                                    </tr>
-                                    {shortcuts.map((e, i) => (
-                                        <tr key={e.command}>
-                                            <td>{e.name}</td>
-                                            <td>
-                                                <ShortcutInput which="key1" i={i} />
-                                                <ShortcutInput which="key2" i={i} />
-                                            </td>
-                                        </tr>
-                                    ))}
-                                    <tr>
-                                        <td>New Window</td>
-                                        <td>
-                                            <code>ctrl</code>+<code>n</code>
-                                        </td>
-                                    </tr>
-                                    <tr>
-                                        <td>Close Window</td>
-                                        <td>
-                                            <code>ctrl</code>+<code>w</code>
-                                        </td>
-                                    </tr>
-                                    <tr>
-                                        <td>Reader width</td>
-                                        <td>
-                                            <code>ctrl</code>+<code>scroll</code>
-                                        </td>
-                                    </tr>
-                                    <tr>
-                                        <td>Home</td>
-                                        <td>
-                                            <code>h</code>
-                                        </td>
-                                    </tr>
-                                    <tr>
-                                        <td>Reload UI</td>
-                                        <td>
-                                            <code>ctrl</code>+<code>r</code>
-                                        </td>
-                                    </tr>
-                                    <tr>
-                                        <td>Reload UI and try to clear cache</td>
-                                        <td>
-                                            <code>ctrl</code>+<code>shift</code>+<code>r</code>
-                                        </td>
-                                    </tr>
-                                    <tr>
-                                        <td>UI Scale Up</td>
-                                        <td>
-                                            <code>ctrl</code> + <code>=</code>
-                                        </td>
-                                    </tr>
-                                    <tr>
-                                        <td>UI Scale Down</td>
-                                        <td>
-                                            <code>ctrl</code> + <code>-</code>
-                                        </td>
-                                    </tr>
-                                    <tr>
-                                        <td>UI Scale Reset</td>
-                                        <td>
-                                            <code>ctrl</code> + <code>0</code>
-                                        </td>
-                                    </tr>
-                                    <tr>
-                                        <td>Dev Tool</td>
-                                        <td>
-                                            <code>ctrl</code>+<code>shift</code>+<code>i</code>
-                                        </td>
-                                    </tr>
-                                </tbody>
-                            </table>
-                        </div>
-                    </div>
-                    <div className={`tab ${currentTab === TAB_INFO.makeTheme[0] ? "selected " : ""}`}>
-                        <h1>
-                            <span title={theme}>{theme}</span>
-                            <input
-                                type="text"
-                                defaultValue={window.app.randomString(6)}
-                                ref={themeNameInputRef}
-                                onKeyDown={(e) => {
-                                    e.stopPropagation();
-                                }}
-                                maxLength={20}
-                            />
-                            <button
-                                onClick={() => {
-                                    saveTheme();
-                                }}
-                            >
-                                Save as New
-                            </button>
-                            <button
-                                onClick={() => {
-                                    saveTheme(true);
-                                }}
-                            >
-                                Save
-                            </button>
-                        </h1>
-                        <div className="themeMaker" ref={themeMakerRef}>
-                            {/* <datalist id="cssColorVariableList">
-                                {Object.keys(
-                                    allThemes.find((e) => {
-                                        return e.name === theme;
-                                    })!.main
-                                ).map((e) => (
-                                    <option key={e} value={`var(${e})`}>{`var(${e})`}</option>
-                                ))}
-                            </datalist> */}
-                            <ul>
-                                <li>
-                                    To use previously defined color, click on link button and select property frm
-                                    dropdown options.
-                                </li>
-                                <li>
-                                    If you want to edit existing theme, click on theme then click on plus icon then
-                                    change theme according to your liking.
-                                </li>
-                                <li>Some changes require refresh.</li>
-                            </ul>
-                            <table>
-                                <tbody>
-                                    <tr>
-                                        <th>Property</th>
-                                        <th>Reset &nbsp;&nbsp;&nbsp;&nbsp;&nbsp; Link</th>
-                                        <th>Color-Opacity / Variable</th>
-                                    </tr>
-                                    {Object.entries(window.themeProps).map((e) => (
-                                        <tr key={e[0]} className="newThemeMakerRow">
-                                            <td className="newThemeMakerProp" data-prop={e[0]}>
-                                                {e[1]}
-                                            </td>
-                                            {/* <td>{e[1]}</td> */}
-                                            <ThemeElement
-                                                color={
-                                                    allThemes.find((e) => e.name === theme)!.main[
-                                                        e[0] as ThemeDataMain
-                                                    ]
-                                                }
-                                                prop={e[0] as ThemeDataMain}
-                                            />
-                                        </tr>
-                                    ))}
-                                </tbody>
-                            </table>
-                        </div>
-                    </div>
-                    <div className={`tab ${currentTab === TAB_INFO.about[0] ? "selected " : ""}`}>
-                        <div className="content2">
-                            <div className="settingItem2">
-                                <h3>Version</h3>
-                                <div className="desc">
-                                    {window.electron.app.getVersion()}
-                                    {" / "}
-                                    {process.arch === "x64" ? "64-bit" : "32-bit"}
-                                </div>
-                                <div className="main col">
-                                    <InputCheckbox
-                                        className="noBG"
-                                        paraAfter="Check for updates on app startup"
-                                        checked={appSettings.updateCheckerEnabled}
-                                        onChange={(e) => {
-                                            dispatch(
-                                                setAppSettings({
-                                                    updateCheckerEnabled: e.currentTarget.checked,
-                                                })
-                                            );
-                                        }}
-                                    />
-                                    <InputCheckbox
-                                        checked={appSettings.skipMinorUpdate}
-                                        className="noBG"
-                                        onChange={(e) => {
-                                            dispatch(setAppSettings({ skipMinorUpdate: e.currentTarget.checked }));
-                                        }}
-                                        paraAfter="Skip minor updates"
-                                    />
-                                </div>
-                                <div className="main row">
-                                    <button
-                                        onClick={() => {
-                                            window.electron.ipcRenderer.send(
-                                                "checkForUpdate",
-                                                window.electron.getCurrentWindow().id,
-                                                true
-                                            );
-                                        }}
-                                    >
-                                        Check for Update Now
-                                    </button>
-                                    <button
-                                        onClick={() =>
-                                            window.electron.shell.openExternal(
-                                                "https://github.com/mienaiyami/yomikiru/releases"
-                                            )
-                                        }
-                                    >
-                                        Changelogs
-                                    </button>
-                                </div>
-                            </div>
-                            <div className="settingItem2">
-                                <h3>Others</h3>
-                                {/* <div className="desc"></div> */}
-                                <div className="main col">
-                                    <button
-                                        onClick={() =>
-                                            window.electron.shell.openExternal(
-                                                "https://github.com/mienaiyami/yomikiru/"
-                                            )
-                                        }
-                                    >
-                                        <FontAwesomeIcon icon={faGithub} /> Home Page
-                                    </button>
-                                    <button
-                                        onClick={() =>
-                                            window.electron.shell.openExternal(
-                                                "https://github.com/mienaiyami/yomikiru/discussions/categories/announcements"
-                                            )
-                                        }
-                                    >
-                                        <FontAwesomeIcon icon={faGithub} /> Announcements
-                                    </button>
-                                    <button
-                                        // onFocus={(e) => e.currentTarget.blur()}
-                                        onClick={() =>
-                                            window.electron.shell.openExternal(
-                                                "https://github.com/mienaiyami/yomikiru/issues"
-                                            )
-                                        }
-                                    >
-                                        <FontAwesomeIcon icon={faGithub} /> Submit Issue, Feature Request, Ask
-                                        Question
-                                    </button>
-                                    <hr className="mini" />
-                                    <button
-                                        onClick={(e) => {
-                                            const target = e.currentTarget;
-                                            target.innerText =
-                                                "\u00a0".repeat(16) + "Copied!" + "\u00a0".repeat(16);
-                                            window.electron.clipboard.writeText("mienaiyami0@gmail.com");
-                                            target.disabled = true;
-                                            setTimeout(() => {
-                                                target.disabled = false;
-                                                target.innerText = "mienaiyami0@gmail.com";
-                                            }, 3000);
-                                        }}
-                                    >
-                                        mienaiyami0@gmail.com
-                                    </button>
-                                    <button
-                                        onClick={() => {
-                                            const filePath = window.path.join(
-                                                window.electron.app.getPath("userData"),
-                                                "logs/main.log"
-                                            );
-                                            if (process.platform === "win32")
-                                                window.electron.shell.showItemInFolder(filePath);
-                                            else if (process.platform === "linux")
-                                                window.electron.ipcRenderer.send("showInExplorer", filePath);
-                                        }}
-                                    >
-                                        Show Local Logs
-                                    </button>
-                                </div>
-                            </div>
                         </div>
                     </div>
                 </div>

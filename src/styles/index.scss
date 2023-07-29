@@ -294,7 +294,9 @@ body {
         accent-color: var(--icon-color);
         color-scheme: light dark;
         &::-webkit-slider-thumb {
-            margin-top: -4.5px;
+            // thumb height = 16px
+            // (16-6)/2
+            margin-top: -5px;
         }
         &::-webkit-slider-runnable-track {
             height: 6px;
@@ -463,6 +465,7 @@ body {
         display: inline;
         background-color: var(--code-bg-color);
         box-shadow: 0 0 2px 1px var(--code-shadow-color);
+        text-shadow: 0 0 6px var(--body-bg-color);
         padding: 2px 4px;
         border-radius: 4px;
         white-space: nowrap;
@@ -1208,7 +1211,7 @@ body {
                 position: relative;
                 border-radius: 4px 4px 10px 10px;
                 transition: 0.3s cubic-bezier(0, 1.15, 1, 1) transform;
-                width: min(900px, 80%);
+                width: min(900px, 85%);
                 height: 90%;
                 transform: scale(0);
                 // box-shadow: rgba(0, 0, 0, 0.3) 0px 0px 19px 25px;
@@ -1237,7 +1240,7 @@ body {
                     &:not(:last-child):after {
                         content: "|";
                         position: absolute;
-                        height: 60%;
+                        // height: 60%;
                         width: 0.3em;
                         right: -0.3em;
                         top: 50%;
@@ -1345,7 +1348,7 @@ body {
                             .desc {
                                 width: 100%;
                                 padding: 0.5em 1em;
-                                font-size: 0.8em;
+                                font-size: 0.9em;
                                 color: var(--font-color-secondary);
                             }
                             .row {
@@ -1359,11 +1362,6 @@ body {
                                 gap: 0.4em;
                                 align-items: flex-start;
                             }
-                            hr.mini {
-                                // width: 100%;
-                                height: 1px;
-                                margin: 0.5em 1em;
-                            }
                             .toggleItem {
                                 margin: 0.5em 1em;
                                 box-shadow: inset 0 -1px 0 0 var(--divider-color);
@@ -1372,12 +1370,13 @@ body {
                                 }
                                 padding: 0;
                                 label {
-                                    font-size: 1.2em;
+                                    font-size: 1.3em;
                                     flex-direction: row-reverse;
                                     gap: 1em;
                                     padding: 0.4em 0;
                                     .toggle-area {
                                         margin-left: auto;
+                                        font-size: 1.1em;
                                     }
                                 }
                                 .desc {
@@ -1387,9 +1386,9 @@ body {
                                 }
                             }
                             hr.mini {
-                                // width: 100%;
+                                width: auto;
                                 height: 1px;
-                                margin: 0.5em 0;
+                                margin: 0.5em 1em;
                             }
                             .main {
                                 display: flex;
@@ -1403,6 +1402,7 @@ body {
                                 }
                                 input[type="number"] {
                                     max-width: 10em;
+                                    min-width: 8.8em;
                                 }
                                 select {
                                     width: fit-content;
@@ -1437,29 +1437,6 @@ body {
                                             background-color: var(--btn-color-focus);
                                         }
                                     }
-                                    // button:nth-child(1) {
-                                    //     border-top-right-radius: 0;
-                                    //     border-bottom-right-radius: 0;
-                                    //     width: 7em;
-                                    //     text-overflow: ellipsis;
-                                    //     &.selected {
-                                    //         background-color: var(--btn-color-focus);
-                                    //     }
-                                    //     &.default,
-                                    //     &.selected {
-                                    //         border-radius: 3px;
-                                    //         width: 10.5em;
-                                    //         & ~ button {
-                                    //             display: none;
-                                    //         }
-                                    //     }
-                                    // }
-
-                                    // button:nth-child(2) {
-                                    //     border-top-left-radius: 0;
-                                    //     border-bottom-left-radius: 0;
-                                    //     width: 3.5em;
-                                    // }
                                 }
                             }
                             &.dangerZone {
@@ -1468,7 +1445,7 @@ body {
                                 // border: solid var(--divider-color);
                                 // border-width: 2px;
                                 // border-inline-width: 0;
-                                box-shadow: inset 0 -2px 0 0 var(--divider-color);
+                                // box-shadow: inset 0 -2px 0 0 var(--divider-color);
                             }
                         }
                     }
@@ -2050,7 +2027,7 @@ body {
                     }
                     .results {
                         height: 70vh;
-                        overflow: scroll;
+                        overflow: auto;
                         p {
                             padding: 10px;
                         }

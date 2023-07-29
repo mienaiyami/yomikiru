@@ -436,12 +436,12 @@ declare global {
         };
     }
 
-    interface AniListTrackItem {
+    type AniListTrackItem = {
         localURL: string;
         anilistMediaId: number;
-    }
+    };
     type AniListTrackStore = AniListTrackItem[];
-    interface AniListMangaData {
+    type AniListMangaData = {
         id: number;
         mediaId: number;
         status: "CURRENT" | "PLANNING" | "COMPLETED" | "DROPPED" | "PAUSED" | "REPEATING";
@@ -470,29 +470,29 @@ declare global {
             bannerImage: string;
             siteUrl: string;
         };
-    }
+    };
 
     type Themes = { name: string; allData: ThemeData[] };
     /**
      * css variable names of theme
      */
     type ThemeDataMain = keyof typeof themeProps;
-    interface ThemeData {
+    type ThemeData = {
         name: string;
         main: {
             [e in ThemeDataMain]: string;
         };
-    }
-    interface MangaItem {
+    };
+    type MangaItem = {
         mangaName: string;
         chapterName: string;
         date?: string;
         link: string;
         pages: number;
-    }
-    interface ChapterItem extends MangaItem {
+    };
+    type ChapterItem = MangaItem & {
         page: number;
-    }
+    };
     type MangaHistoryItem = {
         type: "image";
         data: {
@@ -518,13 +518,13 @@ declare global {
         isBookmark: boolean;
         isHistory: boolean;
     };
-    interface BookItem {
+    type BookItem = {
         title: string;
         author: string;
         link: string;
         date?: string;
         chapter?: string;
-    }
+    };
     type BookBookmarkItem = BookItem & {
         /**
          * css query string of element to focus on load
@@ -540,7 +540,7 @@ declare global {
               type: "book";
               data: BookBookmarkItem;
           };
-    interface TOCData {
+    type TOCData = {
         title: string;
         author: string;
         /**real depth */
@@ -551,7 +551,14 @@ declare global {
             /**depth level of current nav */
             depth: number;
         }[];
-    }
+    };
+
+    type ListMenuItem = {
+        label: string;
+        action: () => void;
+        disabled: boolean;
+    };
+
     /**
      * Available shortcut commands.
      * to add keyboard shortcuts, add ShortcutSchema to `window.shortcutsFunctions`

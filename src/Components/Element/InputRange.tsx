@@ -64,6 +64,9 @@ const InputRange = ({
                     min={min}
                     max={max}
                     step={step}
+                    style={{
+                        "--value": ((valueProxy / max) * 100).toFixed() + "%",
+                    }}
                     value={valueProxy}
                     onKeyDown={(e) => {
                         if (e.key !== "Escape") {
@@ -71,6 +74,7 @@ const InputRange = ({
                         }
                     }}
                 />
+                {/* <span className="shaded"></span> */}
                 <p>{valueProxy}</p>
             </label>
         );
