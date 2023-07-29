@@ -1024,18 +1024,96 @@ const historyPath = window.path.join(userDataURL, "history.json");
 const themesPath = window.path.join(userDataURL, "themes.json");
 const shortcutsPath = window.path.join(userDataURL, "shortcuts.json");
 
-export const promptSelectDir = (
-    cb: (path: string) => void,
+export function promptSelectDir(
+    cb: (path: string | string[]) => void,
     asFile = false,
-    filters?: Electron.FileFilter[]
-): void => {
+    filters?: Electron.FileFilter[],
+    multi = false
+): void {
     const result = window.electron.dialog.showOpenDialogSync(window.electron.getCurrentWindow(), {
-        properties: asFile ? ["openFile"] : ["openDirectory", "openFile"],
+        properties: asFile
+            ? multi
+                ? ["openFile", "multiSelections"]
+                : ["openFile"]
+            : ["openDirectory", "openFile"],
         filters,
     });
+
     if (!result) return;
-    const path = asFile ? result[0] : window.path.normalize(result[0] + window.path.sep);
+
+    const path = asFile ? (multi ? result : result[0]) : window.path.normalize(result[0] + window.path.sep);
     cb && cb(path);
+}
+export const renderPDF = (link: string, renderPath: string, scale: number) => {
+    return new Promise(
+        (
+            res: (result: { count: number; success: number; renderPath: string; link: string }) => void,
+            rej: (reason: { message: string; reason?: string }) => void
+        ) => {
+            const doc = window.pdfjsLib.getDocument(link);
+            doc.onPassword = () => {
+                window.dialog.customError({
+                    message: "PDF is password protected.",
+                    log: false,
+                });
+                rej({ message: "PDF is password protected." });
+            };
+            doc.promise
+                .then((pdf) => {
+                    let count = 0;
+                    let success = 0;
+                    for (let i = 1; i <= pdf.numPages; i++) {
+                        pdf.getPage(i).then((page) => {
+                            const viewport = page.getViewport({
+                                scale: scale || 1.5,
+                            });
+                            const canvas = document.createElement("canvas");
+                            canvas.width = viewport.width;
+                            canvas.height = viewport.height;
+                            const context = canvas.getContext("2d");
+                            if (context) {
+                                // console.log("starting", i);
+                                const abc = page.render({
+                                    canvasContext: context,
+                                    viewport: viewport,
+                                    intent: "print",
+                                });
+                                abc.promise.then(() => {
+                                    const image = canvas.toDataURL("image/png");
+                                    window.fs.writeFile(
+                                        window.path.join(renderPath, "./" + i + ".png"),
+                                        image.replace(/^data:image\/png;base64,/, ""),
+                                        "base64",
+                                        (err) => {
+                                            if (err) {
+                                                console.error(err);
+                                            } else {
+                                                // console.log("Made image", i + ".png");
+                                                success++;
+                                            }
+                                            count++;
+                                            page.cleanup();
+                                            if (count === pdf.numPages) {
+                                                window.fs.writeFileSync(
+                                                    window.path.join(renderPath, "SOURCE"),
+                                                    link
+                                                );
+                                                console.log({ count, success, renderPath, link });
+                                                res({ count, success, renderPath, link });
+                                            }
+                                        }
+                                    );
+                                });
+                            }
+                        });
+                    }
+                })
+                .catch((reason) => {
+                    if (window.fs.existsSync(renderPath)) window.fs.rmSync(renderPath, { recursive: true });
+                    rej({ message: "PDF Reading Error", reason });
+                });
+        }
+    );
 };
 
 // for first launch

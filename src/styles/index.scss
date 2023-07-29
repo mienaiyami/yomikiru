@@ -141,6 +141,28 @@ body.zenMode {
     }
 }
 
+@mixin labelNoBG {
+    &.noBG {
+        background: none !important;
+        &:has(input:focus) {
+            box-shadow: none;
+        }
+        &:hover {
+            background: none !important;
+        }
+        &:focus,
+        &:active {
+            box-shadow: none !important;
+        }
+        .toggle-area {
+            &.on {
+                .toggle-state {
+                    background-color: var(--body-bg-color) !important;
+                }
+            }
+        }
+    }
+}
 body {
     font-family: "Roboto", sans-serif;
     // font-family: "Mona Sans", "Mona Sans Fallback", -apple-system, BlinkMacSystemFont, "Segoe UI", Helvetica, Arial,
@@ -192,26 +214,7 @@ body {
             pointer-events: none;
             cursor: not-allowed;
         }
-        &.noBG {
-            background: none !important;
-            &:has(input:focus) {
-                box-shadow: none;
-            }
-            &:hover {
-                background: none !important;
-            }
-            &:focus,
-            &:active {
-                box-shadow: none !important;
-            }
-            .toggle-area {
-                &.on {
-                    .toggle-state {
-                        background-color: var(--body-bg-color) !important;
-                    }
-                }
-            }
-        }
+        @include labelNoBG();
         &:has(span.toggle-area) {
             input[type="checkbox"] {
                 display: none;
@@ -1189,7 +1192,7 @@ body {
             //         transition: 0.1s cubic-bezier(1, 0, 1, 1) transform;
             //     }
             // }
-
+            // todo, can be added to @include contFadeScaleIn ?
             .clickClose {
                 position: absolute;
                 width: 100%;
@@ -1414,7 +1417,11 @@ body {
                                         padding: 5px;
                                     }
                                 }
-                                label {
+                                label:has(input[type="text"], input[type="number"]) {
+                                    // @include labelNoBG();
+                                    padding: 0;
+                                }
+                                label:has(.toggle-area) {
                                     font-size: 1.3em;
                                 }
                                 &:has(.themeButtons) {

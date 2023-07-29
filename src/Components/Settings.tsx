@@ -12,13 +12,16 @@ import { addBookmark, removeAllBookmarks } from "../store/bookmarks";
 import { makeNewSettings, setAppSettings, setEpubReaderSettings, setReaderSettings } from "../store/appSettings";
 import { InputSelect } from "./Element/InputSelect";
 import InputRange from "./Element/InputRange";
-import { promptSelectDir } from "../MainImports";
+import { promptSelectDir, renderPDF } from "../MainImports";
 import { deleteAllHistory } from "../store/history";
 import InputNumber from "./Element/InputNumber";
 import InputColor from "./Element/InputColor";
 import { setAnilistToken } from "../store/anilistToken";
 import { setAniLoginOpen } from "../store/isAniLoginOpen";
 import InputCheckbox from "./Element/InputCheckbox";
+import { setUnzipping } from "../store/unzipping";
+import { setLoadingManga } from "../store/isLoadingManga";
+import { setLoadingMangaPercent } from "../store/loadingMangaPercent";
 
 const Settings = (): ReactElement => {
     const appSettings = useAppSelector((store) => store.appSettings);
@@ -418,7 +421,9 @@ const Settings = (): ReactElement => {
                                     <button
                                         // onFocus={(e) => e.currentTarget.blur()}
                                         onClick={() => {
-                                            promptSelectDir((path) => dispatch(setAppSettings({ baseDir: path })));
+                                            promptSelectDir((path) =>
+                                                dispatch(setAppSettings({ baseDir: path as string }))
+                                            );
                                         }}
                                     >
                                         Change Default
@@ -722,7 +727,9 @@ const Settings = (): ReactElement => {
                                                         const oldText = target.innerText;
                                                         target.innerText =
                                                             "\u00a0".repeat(23) + "Copied!" + "\u00a0".repeat(23);
+                                                        target.disabled = true;
                                                         setTimeout(() => {
+                                                            target.disabled = false;
                                                             target.innerText = oldText;
                                                         }, 3000);
                                                     } catch (reason) {
@@ -961,7 +968,7 @@ const Settings = (): ReactElement => {
                                 </div>
                             </div>
                             <div className="settingItem2" id="settings-pdfScale">
-                                <h3>PDF Scale</h3>
+                                <h3>PDF OPTIONS</h3>
                                 <div className="desc">
                                     Scales PDF render quality. Higher scale results in higher quality.{" "}
                                     <a
@@ -988,7 +995,113 @@ const Settings = (): ReactElement => {
                                             value = value <= 0.1 ? 0.1 : value;
                                             dispatch(setReaderSettings({ pdfScale: value }));
                                         }}
+                                        labeled
+                                        labelBefore="SCALE"
+                                        className="noBG"
                                     />
+                                </div>
+                                <div className="desc">
+                                    Render your pdf into png for faster loading. It is recommended to set{" "}
+                                    <a
+                                        onClick={() => {
+                                            document.querySelector("#settings-customTempFolder")?.scrollIntoView({
+                                                block: "start",
+                                                behavior: "smooth",
+                                            });
+                                        }}
+                                    >
+                                        temp folder
+                                    </a>{" "}
+                                    to something that is not cleaned by your OS. <br />
+                                    <a
+                                        onClick={() => {
+                                            document
+                                                .querySelector("#settings-keepExtractedFiles")
+                                                ?.scrollIntoView({
+                                                    block: "start",
+                                                    behavior: "smooth",
+                                                });
+                                        }}
+                                    >
+                                        Keep Temp Files
+                                    </a>{" "}
+                                    must be enabled to use this.
+                                </div>
+                                <div className="main row">
+                                    <button
+                                        disabled={!appSettings.keepExtractedFiles}
+                                        onClick={() => {
+                                            promptSelectDir(
+                                                (paths) => {
+                                                    (async () => {
+                                                        if (!(paths instanceof Array && paths.length > 0)) return;
+                                                        // dispatch(setUnzipping(true));
+                                                        dispatch(setLoadingManga(true));
+                                                        dispatch(setLoadingMangaPercent(0));
+                                                        for (let i = 0; i < paths.length; i++) {
+                                                            const path = paths[i];
+                                                            const linkSplitted = path.split(window.path.sep);
+                                                            const renderPath = window.path.join(
+                                                                window.electron.app.getPath("temp"),
+                                                                `yomikiru-temp-images-scale_${
+                                                                    appSettings.readerSettings.pdfScale
+                                                                }-${linkSplitted.at(-1)}`
+                                                            );
+                                                            if (window.fs.existsSync(renderPath))
+                                                                window.fs.rmSync(renderPath, { recursive: true });
+                                                            window.fs.mkdirSync(renderPath);
+                                                            console.log(`Rendering "${path}" at "${renderPath}"`);
+                                                            try {
+                                                                await renderPDF(
+                                                                    path,
+                                                                    renderPath,
+                                                                    appSettings.readerSettings.pdfScale
+                                                                );
+                                                                dispatch(
+                                                                    setLoadingMangaPercent(
+                                                                        (i / paths.length) * 100
+                                                                    )
+                                                                );
+                                                            } catch (reason: any) {
+                                                                console.error(reason);
+                                                                if (
+                                                                    reason &&
+                                                                    reason.message &&
+                                                                    !reason.message.includes("password")
+                                                                )
+                                                                    window.dialog.customError({
+                                                                        message: "Error in rendering PDF",
+                                                                        detail: path,
+                                                                        log: false,
+                                                                    });
+                                                                dispatch(
+                                                                    setLoadingMangaPercent(
+                                                                        (i / paths.length) * 100
+                                                                    )
+                                                                );
+                                                            }
+                                                        }
+                                                        // dispatch(setUnzipping(false));
+                                                        window.dialog.confirm({
+                                                            message: "Rendered all PDFs",
+                                                        });
+                                                        dispatch(setLoadingManga(false));
+                                                        dispatch(setLoadingMangaPercent(0));
+                                                    })();
+                                                },
+                                                true,
+                                                [
+                                                    {
+                                                        extensions: ["pdf"],
+                                                        name: "pdf",
+                                                    },
+                                                ],
+                                                true
+                                            );
+                                        }}
+                                    >
+                                        Select PDFs to render
+                                    </button>
                                 </div>
                             </div>
                             <div className="settingItem2" id="settings-customStylesheet">
@@ -1021,7 +1134,7 @@ const Settings = (): ReactElement => {
                                         onClick={(e) => {
                                             promptSelectDir(
                                                 (path) => {
-                                                    dispatch(setAppSettings({ customStylesheet: path }));
+                                                    dispatch(setAppSettings({ customStylesheet: path as string }));
                                                     // const target = e.currentTarget;
                                                     // target.innerText = "Applying...";
                                                     // setTimeout(() => {
@@ -1075,7 +1188,7 @@ const Settings = (): ReactElement => {
                                         // onFocus={(e) => e.currentTarget.blur()}
                                         onClick={(e) => {
                                             promptSelectDir((path) => {
-                                                setTempFolder(path);
+                                                setTempFolder(path as string);
                                             });
                                         }}
                                     >
@@ -1329,7 +1442,7 @@ const Settings = (): ReactElement => {
                                     />
                                     <div className="desc">Show checkbox instead of toggle in reader settings.</div>
                                 </div>
-                                <div className="toggleItem">
+                                <div className="toggleItem" id="settings-keepExtractedFiles">
                                     <InputCheckbox
                                         checked={appSettings.keepExtractedFiles}
                                         className="noBG"
@@ -1355,7 +1468,6 @@ const Settings = (): ReactElement => {
                                                         behavior: "smooth",
                                                     });
                                             }}
-                                            id="settings-copyTheme"
                                         >
                                             temp folder
                                         </a>{" "}
@@ -2080,7 +2192,9 @@ const Settings = (): ReactElement => {
                                             target.innerText =
                                                 "\u00a0".repeat(16) + "Copied!" + "\u00a0".repeat(16);
                                             window.electron.clipboard.writeText("mienaiyami0@gmail.com");
+                                            target.disabled = true;
                                             setTimeout(() => {
+                                                target.disabled = false;
                                                 target.innerText = "mienaiyami0@gmail.com";
                                             }, 3000);
                                         }}

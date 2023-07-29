@@ -13,7 +13,7 @@ import { setReaderOpen } from "./store/isReaderOpen";
 import { setMangaInReader } from "./store/mangaInReader";
 import { refreshBookmark } from "./store/bookmarks";
 import { setTheme } from "./store/themes";
-import { bookmarksPath, historyPath, promptSelectDir, unzip } from "./MainImports";
+import { bookmarksPath, historyPath, promptSelectDir, renderPDF, unzip } from "./MainImports";
 import { setBookInReader } from "./store/bookInReader";
 import { setAniEditOpen } from "./store/isAniEditOpen";
 import { setAniLoginOpen } from "./store/isAniLoginOpen";
@@ -59,7 +59,7 @@ const App = (): ReactElement => {
         if (firstRendered) {
             if (appSettings.baseDir === "") {
                 window.dialog.customError({ message: "No settings found, Select manga folder" });
-                promptSelectDir((path) => dispatch(setAppSettings({ baseDir: path })));
+                promptSelectDir((path) => dispatch(setAppSettings({ baseDir: path as string })));
             }
         } else {
             dispatch(setTheme(theme));
@@ -271,93 +271,101 @@ const App = (): ReactElement => {
                     //     .then((e) => {
                     //         if (e) tempFn(tempExtractPath, 1);
                     //     });
-                    // if (!window.electron.app.isPackaged)
-                    //     link =
-                    //         "http://localhost:33167/stuff/mangas/ln/Eminence%20in%20Shadow/The%20Eminence%20in%20Shadow,%20Vol.%201.pdf";
-                    const doc = window.pdfjsLib.getDocument(link);
-                    doc.onPassword = () => {
-                        window.dialog.customError({
-                            message: "PDF is password protected.",
-                        });
-                    };
-                    doc.promise
-                        .then((pdf) => {
-                            let count = 0;
-                            for (let i = 1; i <= pdf.numPages; i++) {
-                                pdf.getPage(i).then((page) => {
-                                    const viewport = page.getViewport({
-                                        scale: appSettings.readerSettings.pdfScale || 1.5,
-                                    });
-                                    const canvas = document.createElement("canvas");
-                                    canvas.width = viewport.width;
-                                    canvas.height = viewport.height;
-                                    const context = canvas.getContext("2d");
-                                    if (context) {
-                                        // console.log("starting", i);
-                                        // (async function fun() {
-                                        //     await page.render({ canvasContext: context, viewport: viewport }).promise;
-                                        //     const image = canvas.toDataURL("image/png");
-                                        //     window.fs.writeFile(
-                                        //         window.path.join(tempExtractPath, "./" + i + ".png"),
-                                        //         image.replace(/^data:image\/png;base64,/, ""),
-                                        //         "base64",
-                                        //         (err) => {
-                                        //             count++;
-                                        //             console.log("Made image", i + ".png");
-                                        //             page.cleanup();
-                                        //             if (count === pdf.numPages) tempFn(tempExtractPath, 1);
-                                        //         }
-                                        //     );
-                                        // })();
-                                        const abc = page.render({
-                                            canvasContext: context,
-                                            viewport: viewport,
-                                            intent: "print",
-                                        });
-                                        abc.promise.then(() => {
-                                            const image = canvas.toDataURL("image/png");
-                                            window.fs.writeFile(
-                                                window.path.join(tempExtractPath, "./" + i + ".png"),
-                                                image.replace(/^data:image\/png;base64,/, ""),
-                                                "base64",
-                                                (err) => {
-                                                    if (err) {
-                                                        console.error(err);
-                                                    } else console.log("Made image", i + ".png");
-                                                    count++;
-                                                    page.cleanup();
-                                                    if (count === pdf.numPages) {
-                                                        window.fs.writeFileSync(
-                                                            window.path.join(tempExtractPath, "SOURCE"),
-                                                            link
-                                                        );
-                                                        tempFn(tempExtractPath, 1);
-                                                    }
-                                                }
-                                            );
-                                        });
-                                        // page.render({ canvasContext: context, viewport: viewport }).promise.then(() => {
-                                        //     const image = canvas.toDataURL("image/png");
-                                        //     window.fs.writeFileSync(
-                                        //         window.path.join(tempExtractPath, "./" + i + ".png"),
-                                        //         image.replace(/^data:image\/png;base64,/, ""),
-                                        //         "base64"
-                                        //     );
-                                        //     count++;
-                                        //     console.log("Made image", i + ".png");
-                                        //     page.cleanup();
-                                        //     if (count === pdf.numPages) tempFn(tempExtractPath, 1);
-                                        // });
-                                    }
-                                });
-                            }
+                    if (!window.electron.app.isPackaged)
+                        link =
+                            "http://localhost:42136/stuff/mangas/ln/Eminence%20in%20Shadow/The%20Eminence%20in%20Shadow,%20Vol.%201.pdf";
+                    renderPDF(link, tempExtractPath, appSettings.readerSettings.pdfScale)
+                        .then(() => {
+                            tempFn(tempExtractPath, 1);
                         })
-                        .catch((reason) => {
+                        .catch(({ message, reason }) => {
                             dispatch(setUnzipping(false));
-                            if (window.fs.existsSync(tempExtractPath))
-                                window.fs.rmSync(tempExtractPath, { recursive: true });
-                            console.error("PDF Reading Error:", reason);
+                            console.error(message, reason);
                         });
+                    // const doc = window.pdfjsLib.getDocument(link);
+                    // doc.onPassword = () => {
+                    //     window.dialog.customError({
+                    //         message: "PDF is password protected.",
+                    //     });
+                    // };
+                    // doc.promise
+                    //     .then((pdf) => {
+                    //         let count = 0;
+                    //         for (let i = 1; i <= pdf.numPages; i++) {
+                    //             pdf.getPage(i).then((page) => {
+                    //                 const viewport = page.getViewport({
+                    //                     scale: appSettings.readerSettings.pdfScale || 1.5,
+                    //                 });
+                    //                 const canvas = document.createElement("canvas");
+                    //                 canvas.width = viewport.width;
+                    //                 canvas.height = viewport.height;
+                    //                 const context = canvas.getContext("2d");
+                    //                 if (context) {
+                    //                     // console.log("starting", i);
+                    //                     // (async function fun() {
+                    //                     //     await page.render({ canvasContext: context, viewport: viewport }).promise;
+                    //                     //     const image = canvas.toDataURL("image/png");
+                    //                     //     window.fs.writeFile(
+                    //                     //         window.path.join(tempExtractPath, "./" + i + ".png"),
+                    //                     //         image.replace(/^data:image\/png;base64,/, ""),
+                    //                     //         "base64",
+                    //                     //         (err) => {
+                    //                     //             count++;
+                    //                     //             console.log("Made image", i + ".png");
+                    //                     //             page.cleanup();
+                    //                     //             if (count === pdf.numPages) tempFn(tempExtractPath, 1);
+                    //                     //         }
+                    //                     //     );
+                    //                     // })();
+                    //                     const abc = page.render({
+                    //                         canvasContext: context,
+                    //                         viewport: viewport,
+                    //                         intent: "print",
+                    //                     });
+                    //                     abc.promise.then(() => {
+                    //                         const image = canvas.toDataURL("image/png");
+                    //                         window.fs.writeFile(
+                    //                             window.path.join(tempExtractPath, "./" + i + ".png"),
+                    //                             image.replace(/^data:image\/png;base64,/, ""),
+                    //                             "base64",
+                    //                             (err) => {
+                    //                                 if (err) {
+                    //                                     console.error(err);
+                    //                                 } else console.log("Made image", i + ".png");
+                    //                                 count++;
+                    //                                 page.cleanup();
+                    //                                 if (count === pdf.numPages) {
+                    //                                     window.fs.writeFileSync(
+                    //                                         window.path.join(tempExtractPath, "SOURCE"),
+                    //                                         link
+                    //                                     );
+                    //                                     tempFn(tempExtractPath, 1);
+                    //                                 }
+                    //                             }
+                    //                         );
+                    //                     });
+                    //                     // page.render({ canvasContext: context, viewport: viewport }).promise.then(() => {
+                    //                     //     const image = canvas.toDataURL("image/png");
+                    //                     //     window.fs.writeFileSync(
+                    //                     //         window.path.join(tempExtractPath, "./" + i + ".png"),
+                    //                     //         image.replace(/^data:image\/png;base64,/, ""),
+                    //                     //         "base64"
+                    //                     //     );
+                    //                     //     count++;
+                    //                     //     console.log("Made image", i + ".png");
+                    //                     //     page.cleanup();
+                    //                     //     if (count === pdf.numPages) tempFn(tempExtractPath, 1);
+                    //                     // });
+                    //                 }
+                    //             });
+                    //         }
+                    //     })
+                    //     .catch((reason) => {
+                    //         dispatch(setUnzipping(false));
+                    //         if (window.fs.existsSync(tempExtractPath))
+                    //             window.fs.rmSync(tempExtractPath, { recursive: true });
+                    //         console.error("PDF Reading Error:", reason);
+                    //     });
                 }
             } catch (err) {
                 window.logger.error("An Error occurred while checking/rendering pdf:", err);
