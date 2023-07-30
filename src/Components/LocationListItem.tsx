@@ -10,6 +10,7 @@ const LocationListItem = ({
     link,
     inHistory,
     setCurrentLink,
+    focused,
 }: {
     name: string;
     link: string;
@@ -19,10 +20,14 @@ const LocationListItem = ({
      * `[1]` - index of chapter in manga chapter read
      */
     inHistory: [number, number];
+    /**
+     * for keyboard navigation
+     */
+    focused: boolean;
 }): ReactElement => {
     const { openInReader, checkValidFolder, setContextMenuData, contextMenuData } = useContext(AppContext);
     const appSettings = useAppSelector((store) => store.appSettings);
-    const [focused, setFocused] = useState(false);
+    const [contextMenuFocused, setContextMenuFocused] = useState(false);
 
     const onClickHandle = (a = true) => {
         if (!window.fs.existsSync(link)) {
@@ -50,11 +55,19 @@ const LocationListItem = ({
     };
 
     useEffect(() => {
-        if (!contextMenuData) setFocused(false);
+        if (!contextMenuData) setContextMenuFocused(false);
     }, [contextMenuData]);
 
     return (
-        <li className={`${inHistory && inHistory[1] >= 0 ? "alreadyRead" : ""} ${focused ? "focused" : ""}`}>
+        <li
+            className={`${inHistory && inHistory[1] >= 0 ? "alreadyRead" : ""} ${
+                contextMenuFocused ? "focused" : ""
+            }`}
+            data-focused={focused}
+            ref={(node) => {
+                if (node && focused) node.scrollIntoView({ block: "nearest" });
+            }}
+        >
             <a
                 title={name}
                 onClick={(e) => {
@@ -84,7 +97,7 @@ const LocationListItem = ({
                     if (inHistory && inHistory[1] >= 0) {
                         items.push(window.contextMenuTemplate.unreadChapter(...inHistory));
                     }
-                    setFocused(true);
+                    setContextMenuFocused(true);
                     setContextMenuData({
                         clickX: e.clientX,
                         clickY: e.clientY,

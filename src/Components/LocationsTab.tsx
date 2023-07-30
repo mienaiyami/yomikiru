@@ -21,9 +21,16 @@ const LocationsTab = (): ReactElement => {
     const [isLoadingFile, setIsLoadingFile] = useState(true);
     const [filter, setFilter] = useState<string>("");
     const [imageCount, setImageCount] = useState(0);
+
+    const [focused, setFocused] = useState(-1);
     const inputRef = useRef<HTMLInputElement>(null);
+    const locationContRef = useRef<HTMLDivElement>(null);
+
     const displayList = (link = currentLink, refresh = false): void => {
-        if (!refresh) setFilter("");
+        if (!refresh) {
+            setFilter("");
+            setFocused(-1);
+        }
         if (!window.fs.existsSync(link)) {
             if (!window.fs.existsSync(appSettings.baseDir)) {
                 window.dialog.customError({ message: "Default Location doesn't exist." });
@@ -114,8 +121,8 @@ const LocationsTab = (): ReactElement => {
             inputRef.current.focus();
         }
     }, [inputRef]);
-    const List = (locations: LocationData[], filter: string) => {
-        return locations.map((e) => {
+    const realList = (locations: LocationData[], filter: string) => {
+        return locations.reduce((prev, e) => {
             const historyIndex =
                 (window.fs.existsSync(e.link) &&
                     window.fs.lstatSync(e.link).isFile() &&
@@ -132,16 +139,9 @@ const LocationsTab = (): ReactElement => {
                     (a) => a === e.link.split(window.path.sep).pop() || ""
                 );
             if (new RegExp(filter, "ig") && new RegExp(filter, "ig").test(e.name))
-                return (
-                    <LocationListItem
-                        name={e.name}
-                        link={e.link}
-                        inHistory={[historyIndex, historyChapterIndex]}
-                        key={e.link}
-                        setCurrentLink={setCurrentLink}
-                    />
-                );
-        });
+                prev.push([e, historyIndex, historyChapterIndex]);
+            return prev;
+        }, [] as [LocationData, number, number][]);
     };
     return (
         <div className="contTab listCont" id="locationTab">
@@ -197,6 +197,29 @@ const LocationsTab = (): ReactElement => {
                             if (/\*|\?/gi.test(e.key)) {
                                 e.preventDefault();
                             }
+                            switch (e.key) {
+                                case "ArrowDown":
+                                    setFocused((init) => {
+                                        if (init + 1 >= locations.length) return 0;
+                                        return init + 1;
+                                    });
+                                    break;
+                                case "ArrowUp":
+                                    setFocused((init) => {
+                                        if (init - 1 < 0) return locations.length - 1;
+                                        return init - 1;
+                                    });
+                                    break;
+                                case "Enter": {
+                                    const elem = locationContRef.current?.querySelector(
+                                        '[data-focused="true"] a'
+                                    ) as HTMLLIElement | null;
+                                    if (elem) elem.click();
+                                    break;
+                                }
+                                default:
+                                    break;
+                            }
                         }}
                         onChange={(e) => {
                             let val = e.target.value;
@@ -244,6 +267,7 @@ const LocationsTab = (): ReactElement => {
                                     }
                                     filter += val[i] + ".*";
                                 }
+                            setFocused(-1);
                             setFilter(filter);
                         }}
                     />
@@ -264,16 +288,26 @@ const LocationsTab = (): ReactElement => {
                 </div> */}
                 {/* <span className="divider"></span> */}
             </div>
-            <div className="location-cont">
+            <div className="location-cont" ref={locationContRef}>
                 {isLoadingFile ? (
                     <p>Loading...</p>
                 ) : locations.length === 0 ? (
                     <p>0 Folders, {imageCount} Images</p>
                 ) : (
                     <ol>
-                        {appSettings.locationListSortType === "inverse"
-                            ? List([...locations].reverse(), filter)
-                            : List(locations, filter)}
+                        {(appSettings.locationListSortType === "inverse"
+                            ? realList([...locations].reverse(), filter)
+                            : realList(locations, filter)
+                        ).map(([e, historyIndex, historyChapterIndex], i, arr) => (
+                            <LocationListItem
+                                name={e.name}
+                                link={e.link}
+                                focused={focused % arr.length === i}
+                                inHistory={[historyIndex, historyChapterIndex]}
+                                key={e.link}
+                                setCurrentLink={setCurrentLink}
+                            />
+                        ))}
                     </ol>
                 )}
             </div>
