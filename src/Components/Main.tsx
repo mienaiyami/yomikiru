@@ -21,7 +21,7 @@ const Main = (): ReactElement => {
     const anilistToken = useAppSelector((store) => store.anilistToken);
     const isAniLoginOpen = useAppSelector((store) => store.isAniLoginOpen);
 
-    const { setContextMenuData } = useContext(AppContext);
+    const { setContextMenuData, contextMenuData } = useContext(AppContext);
     const dispatch = useAppDispatch();
 
     // const [bookmarkTabDisplay, setBookmarkTabDisplay] = useState(true);
@@ -359,7 +359,7 @@ const Main = (): ReactElement => {
             </div>
             <Settings />
             <LoadingScreen />
-            <ContextMenu />
+            {contextMenuData && <ContextMenu />}
             {!anilistToken && isAniLoginOpen && <AniLogin />}
             {linkInReader.type === "image" && linkInReader.link !== "" ? <Reader /> : ""}
             {linkInReader.type === "book" && linkInReader.link !== "" ? <EPubReader /> : ""}

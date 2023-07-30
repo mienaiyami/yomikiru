@@ -1097,17 +1097,23 @@ body {
 
             ul {
                 list-style: none;
-
                 li {
                     padding: 10px 10px;
                     cursor: default;
-
-                    &:hover {
-                        background: var(--btn-color-hover);
-                    }
-                    &:active {
+                    &[data-focused="true"] {
                         background: var(--btn-color-focus);
                     }
+                    &.disabled {
+                        opacity: 0.5;
+                        pointer-events: none;
+                        cursor: not-allowed;
+                    }
+                    // &:hover {
+                    //     background: var(--btn-color-hover);
+                    // }
+                    // &:active {
+                    //     background: var(--btn-color-focus);
+                    // }
                 }
             }
         }

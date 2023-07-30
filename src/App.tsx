@@ -620,7 +620,7 @@ const App = (): ReactElement => {
             open(url) {
                 return {
                     label: "Open",
-                    disabled: url ? true : false,
+                    disabled: url ? false : true,
                     action() {
                         openInReader(url);
                     },
@@ -629,7 +629,7 @@ const App = (): ReactElement => {
             openInNewWindow(url) {
                 return {
                     label: "Open in new Window",
-                    disabled: url ? true : false,
+                    disabled: url ? false : true,
                     action() {
                         openInNewWindow(url);
                     },
@@ -638,7 +638,7 @@ const App = (): ReactElement => {
             showInExplorer(url) {
                 return {
                     label: "Show in File Explorer",
-                    disabled: url ? true : false,
+                    disabled: url ? false : true,
                     action() {
                         if (process.platform === "win32") window.electron.shell.showItemInFolder(url || "");
                         else if (process.platform === "linux")
@@ -649,7 +649,7 @@ const App = (): ReactElement => {
             copyPath(url) {
                 return {
                     label: "Copy Path",
-                    disabled: url ? true : false,
+                    disabled: url ? false : true,
                     action() {
                         window.electron.clipboard.writeText(url);
                     },
@@ -658,7 +658,7 @@ const App = (): ReactElement => {
             copyImage(url) {
                 return {
                     label: "Copy",
-                    disabled: url ? true : false,
+                    disabled: url ? false : true,
                     action() {
                         window.electron.clipboard.writeImage(window.electron.nativeImage.createFromPath(url));
                     },
@@ -667,7 +667,7 @@ const App = (): ReactElement => {
             removeHistory(index) {
                 return {
                     label: "Remove",
-                    disabled: index >= 0 ? true : false,
+                    disabled: index >= 0 ? false : true,
                     action() {
                         dispatch(removeHistory(index));
                     },
@@ -676,7 +676,7 @@ const App = (): ReactElement => {
             removeBookmark(url) {
                 return {
                     label: "Remove Bookmark",
-                    disabled: url ? true : false,
+                    disabled: url ? false : true,
                     action() {
                         dispatch(removeBookmark(url));
                     },
@@ -685,7 +685,7 @@ const App = (): ReactElement => {
             addToBookmark(data) {
                 return {
                     label: "Add to Bookmarks",
-                    disabled: data ? true : false,
+                    disabled: data ? false : true,
                     action() {
                         if (data.type === "image") {
                             const newItem: Manga_BookItem = {
