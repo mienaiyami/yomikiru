@@ -507,7 +507,6 @@ const registerListener = () => {
                 }
         };
         const onClosed = () => {
-            // ! maybe move to "closed"
             // log.log("on closed");
             windowsCont[currentWindowIndex] = null;
             deleteDirsOnClose[currentWindowIndex] = null;

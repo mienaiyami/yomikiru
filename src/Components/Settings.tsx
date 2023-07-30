@@ -1850,6 +1850,7 @@ const Settings = (): ReactElement => {
                                         onChange={(e) => {
                                             dispatch(setAppSettings({ skipMinorUpdate: e.currentTarget.checked }));
                                         }}
+                                        title="Mostly just frequent updates rather than minor."
                                         paraAfter="Skip minor updates"
                                     />
                                 </div>

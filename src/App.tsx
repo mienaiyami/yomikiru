@@ -269,7 +269,12 @@ const App = (): ReactElement => {
                     window.fs.mkdirSync(tempExtractPath);
                     console.log(`Rendering "${link}" at "${tempExtractPath}"`);
                     if (!appSettings.keepExtractedFiles) window.app.deleteDirOnClose = tempExtractPath;
-                    dispatch(setUnzipping({ state: true, text: "Rendering PDF..." }));
+                    dispatch(
+                        setUnzipping({
+                            state: true,
+                            text: `Rendering "${linkSplitted.at(-1)?.substring(0, 20)}..."`,
+                        })
+                    );
 
                     // pdf to img starts here
 
@@ -283,8 +288,15 @@ const App = (): ReactElement => {
                     //     });
                     // if (!window.electron.app.isPackaged)
                     //     link =
-                    //         "http://localhost:42136/stuff/mangas/ln/Eminence%20in%20Shadow/The%20Eminence%20in%20Shadow,%20Vol.%201.pdf";
-                    renderPDF(link, tempExtractPath, appSettings.readerSettings.pdfScale)
+                    //         "http://localhost:1834/stuff/mangas/ln/Eminence%20in%20Shadow/The%20Eminence%20in%20Shadow,%20Vol.%201.pdf";
+                    renderPDF(link, tempExtractPath, appSettings.readerSettings.pdfScale, (total, done) =>
+                        dispatch(
+                            setUnzipping({
+                                state: true,
+                                text: `[${done}/${total}] Rendering "${linkSplitted.at(-1)?.substring(0, 20)}..."`,
+                            })
+                        )
+                    )
                         .then(() => {
                             tempFn(tempExtractPath, 1);
                         })

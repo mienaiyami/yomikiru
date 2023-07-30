@@ -1054,7 +1054,12 @@ export function promptSelectDir(
     const path = asFile ? (multi ? result : result[0]) : window.path.normalize(result[0] + window.path.sep);
     cb && cb(path);
 }
-export const renderPDF = (link: string, renderPath: string, scale: number) => {
+export const renderPDF = (
+    link: string,
+    renderPath: string,
+    scale: number,
+    onUpdate?: (total: number, done: number) => void
+) => {
     return new Promise(
         (
             res: (result: { count: number; success: number; renderPath: string; link: string }) => void,
@@ -1089,7 +1094,10 @@ export const renderPDF = (link: string, renderPath: string, scale: number) => {
                                     intent: "print",
                                 });
                                 abc.promise.then(() => {
+                                    page.cleanup();
                                     const image = canvas.toDataURL("image/png");
+                                    canvas.width = 0;
+                                    canvas.width = 0;
                                     window.fs.writeFile(
                                         window.path.join(renderPath, "./" + i + ".png"),
                                         image.replace(/^data:image\/png;base64,/, ""),
@@ -1102,7 +1110,7 @@ export const renderPDF = (link: string, renderPath: string, scale: number) => {
                                                 success++;
                                             }
                                             count++;
-                                            page.cleanup();
+                                            onUpdate && onUpdate(pdf.numPages, count);
                                             if (count === pdf.numPages) {
                                                 window.fs.writeFileSync(
                                                     window.path.join(renderPath, "SOURCE"),
