@@ -35,7 +35,7 @@
 }
 
 ::selection {
-    background: var(--font-select-color);
+    background: var(--font-select-bg-color);
     color: var(--font-select-color);
 }
 .refrenceVariable {
@@ -379,7 +379,8 @@ body {
         cursor: pointer;
         border: none;
         // border: 1px solid var(--text-input-bg);
-        background-color: var(--text-input-bg);
+        // background-color: var(--text-input-bg);
+        background-color: var(--btn-color);
         color-scheme: light dark;
         &:disabled {
             filter: opacity(0.3);
@@ -387,17 +388,19 @@ body {
             pointer-events: none;
         }
         &:hover {
-            background-color: var(--text-input-bg-focus);
-
+            // background-color: var(--text-input-bg-focus);
+            background-color: var(--btn-color-hover);
             &::-webkit-color-swatch-wrapper {
-                background-color: var(--text-input-bg-focus);
+                background-color: var(--btn-color-hover);
+                // background-color: var(--text-input-bg-focus);
             }
         }
         &::-webkit-color-swatch-wrapper {
             padding: 3px;
             border-radius: 3px;
             border: none;
-            background-color: var(--text-input-bg);
+            // background-color: var(--text-input-bg);
+            background-color: var(--btn-color);
         }
 
         &::-webkit-color-swatch {
@@ -431,7 +434,8 @@ body {
     select {
         width: 100%;
         height: 100%;
-        background: var(--text-input-bg);
+        // background: var(--text-input-bg);
+        background: var(--btn-color);
         color: var(--font-color);
         font-size: 1em;
         padding: 0.4em;
@@ -2449,7 +2453,8 @@ body {
                             label {
                                 display: flex;
                                 cursor: pointer;
-                                background-color: var(--text-input-bg);
+                                // background-color: var(--text-input-bg);
+                                background-color: var(--btn-color);
                                 padding: 5px;
                                 gap: 5px;
                                 font-size: 1em;
