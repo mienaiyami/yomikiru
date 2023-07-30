@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useRef } from "react";
 import { useAppSelector } from "../store/hooks";
 import BookmarkHistoryListItem from "./BookmarkHistoryListItem";
 
@@ -7,26 +7,21 @@ const BookmarkTab = () => {
     const appSettings = useAppSelector((store) => store.appSettings);
 
     const [filter, setFilter] = useState<string>("");
-    const List = (bookmarkData: Manga_BookItem[], filter: string) => {
-        return bookmarkData.map((e, i) => {
+    const [focused, setFocused] = useState(-1);
+    const locationContRef = useRef<HTMLDivElement>(null);
+    const realList = (bookmarkData: Manga_BookItem[], filter: string) => {
+        return bookmarkData.filter((e) => {
             if (
                 new RegExp(filter, "ig").test(
                     e.type === "image"
-                        ? e.data.mangaName + window.app.isSupportedFormat(e.data.chapterName)
-                            ? `.${window.path.extname(e.data.chapterName)}`
-                            : ""
+                        ? e.data.mangaName +
+                              (window.app.isSupportedFormat(e.data.chapterName)
+                                  ? `.${window.path.extname(e.data.chapterName)}`
+                                  : "")
                         : e.data.title + ".epub"
                 )
             ) {
-                return (
-                    <BookmarkHistoryListItem
-                        isHistory={false}
-                        isBookmark={true}
-                        index={i}
-                        {...e}
-                        key={e.data.link}
-                    />
-                );
+                return true;
             }
         });
     };
@@ -54,7 +49,11 @@ const BookmarkTab = () => {
                                 for (let i = 0; i < val.length; i++) {
                                     filter += val[i] + ".*";
                                 }
+                            setFocused(-1);
                             setFilter(filter);
+                        }}
+                        onBlur={() => {
+                            setFocused(-1);
                         }}
                         onKeyDown={(e) => {
                             e.stopPropagation();
@@ -64,12 +63,50 @@ const BookmarkTab = () => {
                             if (e.key === "Escape") {
                                 e.currentTarget.blur();
                             }
+                            switch (e.key) {
+                                case "ArrowDown":
+                                    setFocused((init) => {
+                                        if (init + 1 >= bookmarks.length) return 0;
+                                        return init + 1;
+                                    });
+                                    break;
+                                case "ArrowUp":
+                                    setFocused((init) => {
+                                        if (init - 1 < 0) return bookmarks.length - 1;
+                                        return init - 1;
+                                    });
+                                    break;
+                                case "Enter": {
+                                    const elem = locationContRef.current?.querySelector(
+                                        '[data-focused="true"] a'
+                                    ) as HTMLLIElement | null;
+                                    if (elem) elem.click();
+                                    break;
+                                }
+                                default:
+                                    break;
+                            }
                         }}
                     />
                 </div>
             )}
-            <div className="location-cont">
-                {bookmarks.length === 0 ? <p>No Bookmarks...</p> : <ol>{List(bookmarks, filter)}</ol>}
+            <div className="location-cont" ref={locationContRef}>
+                {bookmarks.length === 0 ? (
+                    <p>No Bookmarks...</p>
+                ) : (
+                    <ol>
+                        {realList(bookmarks, filter).map((e, i, arr) => (
+                            <BookmarkHistoryListItem
+                                isHistory={false}
+                                isBookmark={true}
+                                focused={focused % arr.length === i}
+                                index={i}
+                                {...e}
+                                key={e.data.link}
+                            />
+                        ))}
+                    </ol>
+                )}
             </div>
         </div>
     );

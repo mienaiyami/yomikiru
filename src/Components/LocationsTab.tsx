@@ -186,8 +186,6 @@ const LocationsTab = (): ReactElement => {
                         id="locationInput"
                         placeholder="Type to Search"
                         spellCheck="false"
-                        title="Type to Search"
-                        data-tooltip="Type to Search"
                         // tabIndex={-1}
                         onKeyDown={(e) => {
                             if (!e.ctrlKey) e.stopPropagation();
@@ -197,6 +195,8 @@ const LocationsTab = (): ReactElement => {
                             if (/\*|\?/gi.test(e.key)) {
                                 e.preventDefault();
                             }
+                            if (e.altKey && e.key === "ArrowUp")
+                                return setCurrentLink((link) => window.path.dirname(link));
                             switch (e.key) {
                                 case "ArrowDown":
                                     setFocused((init) => {
@@ -211,6 +211,8 @@ const LocationsTab = (): ReactElement => {
                                     });
                                     break;
                                 case "Enter": {
+                                    if (locations.length === 0 && imageCount !== 0)
+                                        return openInReader(currentLink);
                                     const elem = locationContRef.current?.querySelector(
                                         '[data-focused="true"] a'
                                     ) as HTMLLIElement | null;
@@ -220,6 +222,9 @@ const LocationsTab = (): ReactElement => {
                                 default:
                                     break;
                             }
+                        }}
+                        onBlur={() => {
+                            setFocused(-1);
                         }}
                         onChange={(e) => {
                             let val = e.target.value;

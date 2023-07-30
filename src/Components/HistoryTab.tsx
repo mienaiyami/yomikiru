@@ -1,18 +1,16 @@
-// import { faTrash } from "@fortawesome/free-solid-svg-icons";
-// import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-// import { deleteAllHistory } from "../store/history";
 import { useAppDispatch, useAppSelector } from "../store/hooks";
 import BookmarkHistoryListItem from "./BookmarkHistoryListItem";
-import { useState } from "react";
+import { useState, useRef } from "react";
 
 const HistoryTab = () => {
     const history = useAppSelector((store) => store.history);
     const appSettings = useAppSelector((store) => store.appSettings);
-    const dispatch = useAppDispatch();
 
     const [filter, setFilter] = useState<string>("");
-    const List = (historyData: HistoryItem[], filter: string) => {
-        return historyData.map((e, i) => {
+    const [focused, setFocused] = useState(-1);
+    const locationContRef = useRef<HTMLDivElement>(null);
+    const realList = (historyData: HistoryItem[], filter: string) => {
+        return historyData.filter((e) => {
             if (
                 new RegExp(filter, "ig").test(
                     e.type === "image"
@@ -23,41 +21,13 @@ const HistoryTab = () => {
                         : e.data.title + ".epub"
                 )
             ) {
-                return (
-                    <BookmarkHistoryListItem
-                        isBookmark={false}
-                        isHistory={true}
-                        index={i}
-                        {...e}
-                        key={e.data.date}
-                    />
-                );
+                return true;
             }
         });
     };
     return (
         <div className={"contTab listCont " + (!appSettings.showTabs.history ? "collapsed " : "")} id="historyTab">
-            <h2>
-                Continue Reading
-                {/* <button
-                    // onFocus={(e) => e.currentTarget.blur()}
-                    onClick={() => {
-                        window.dialog
-                            .warn({
-                                title: "Warning",
-                                message: "Are you sure you want to clear history?",
-                                noOption: false,
-                            })
-                            .then((res) => {
-                                if (res && res.response === 0) dispatch(deleteAllHistory());
-                            });
-                    }}
-                    tabIndex={-1}
-                    data-tooltip="Clear All"
-                >
-                    <FontAwesomeIcon icon={faTrash} />
-                </button> */}
-            </h2>
+            <h2>Continue Reading</h2>
 
             {appSettings.showSearch && (
                 <div className="tools">
@@ -76,7 +46,11 @@ const HistoryTab = () => {
                                 for (let i = 0; i < val.length; i++) {
                                     filter += val[i] + ".*";
                                 }
+                            setFocused(-1);
                             setFilter(filter);
+                        }}
+                        onBlur={() => {
+                            setFocused(-1);
                         }}
                         onKeyDown={(e) => {
                             e.stopPropagation();
@@ -86,12 +60,51 @@ const HistoryTab = () => {
                             if (e.key === "Escape") {
                                 e.currentTarget.blur();
                             }
+                            switch (e.key) {
+                                case "ArrowDown":
+                                    setFocused((init) => {
+                                        if (init + 1 >= history.length) return 0;
+                                        return init + 1;
+                                    });
+                                    break;
+                                case "ArrowUp":
+                                    setFocused((init) => {
+                                        if (init - 1 < 0) return history.length - 1;
+                                        return init - 1;
+                                    });
+                                    break;
+                                case "Enter": {
+                                    const elem = locationContRef.current?.querySelector(
+                                        '[data-focused="true"] a'
+                                    ) as HTMLLIElement | null;
+                                    console.log(elem);
+                                    if (elem) elem.click();
+                                    break;
+                                }
+                                default:
+                                    break;
+                            }
                         }}
                     />
                 </div>
             )}
-            <div className="location-cont">
-                {history.length === 0 ? <p>No History...</p> : <ol>{List(history, filter)}</ol>}
+            <div className="location-cont" ref={locationContRef}>
+                {history.length === 0 ? (
+                    <p>No History...</p>
+                ) : (
+                    <ol>
+                        {realList(history, filter).map((e, i, arr) => (
+                            <BookmarkHistoryListItem
+                                isBookmark={false}
+                                isHistory={true}
+                                index={i}
+                                focused={focused % arr.length === i}
+                                {...e}
+                                key={e.data.date}
+                            />
+                        ))}
+                    </ol>
+                )}
             </div>
         </div>
     );

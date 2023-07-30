@@ -6,9 +6,9 @@ import { useAppDispatch, useAppSelector } from "../store/hooks";
 const BookmarkHistoryListItem = (props: ListItemE) => {
     const { openInReader, setContextMenuData, contextMenuData } = useContext(AppContext);
     const appSettings = useAppSelector((store) => store.appSettings);
-    const [focused, setFocused] = useState(false);
+    const [contextMenuFocused, setContextMenuFocused] = useState(false);
     useEffect(() => {
-        if (!contextMenuData) setFocused(false);
+        if (!contextMenuData) setContextMenuFocused(false);
     }, [contextMenuData]);
     // const dispatch = useAppDispatch();
     // const [pos, setPos] = useState({ x: 0, y: 0 });
@@ -55,7 +55,11 @@ const BookmarkHistoryListItem = (props: ListItemE) => {
     return (
         <li
             {...(appSettings.showMoreDataOnItemHover ? { title } : {})}
-            className={`${focused ? "focused" : ""}`}
+            className={`${contextMenuFocused ? "focused" : ""}`}
+            data-focused={props.focused}
+            ref={(node) => {
+                if (node && props.focused) node.scrollIntoView({ block: "nearest" });
+            }}
             // onMouseOver={(e) => {
             //     let y = e.currentTarget.getBoundingClientRect().top;
             //     // console.log(e.currentTarget.getBoundingClientRect().top);
@@ -91,7 +95,7 @@ const BookmarkHistoryListItem = (props: ListItemE) => {
                     else items.push(window.contextMenuTemplate.addToBookmark(props));
                     if (props.isHistory) items.push(window.contextMenuTemplate.removeHistory(props.index));
 
-                    setFocused(true);
+                    setContextMenuFocused(true);
                     // dispatch(
                     setContextMenuData({
                         clickX: e.clientX,

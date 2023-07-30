@@ -528,6 +528,7 @@ declare global {
         index: number;
         isBookmark: boolean;
         isHistory: boolean;
+        focused: boolean;
     };
     type BookItem = {
         title: string;

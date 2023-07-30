@@ -25,6 +25,7 @@ import { setAniEditOpen } from "./store/isAniEditOpen";
 import { setAniLoginOpen } from "./store/isAniLoginOpen";
 import { setAniSearchOpen } from "./store/isAniSearchOpen";
 import { setAnilistCurrentManga } from "./store/anilistCurrentManga";
+import { toggleOpenSetting } from "./store/isSettingOpen";
 
 // window.logger.log("New window opening...");
 
@@ -555,7 +556,7 @@ const App = (): ReactElement => {
                 if (window.app.isReaderOpen) return closeReader();
                 window.location.reload();
             }
-            // if (process.platform === "win32")
+            if (e.ctrlKey && e.key === "i") dispatch(toggleOpenSetting());
             if (e.ctrlKey && (e.key === "=" || e.key === "-" || e.key === "0")) {
                 setTimeout(() => {
                     window.electron.getCurrentWindow().setTitleBarOverlay({

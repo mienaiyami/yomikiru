@@ -856,7 +856,7 @@ body {
                         height: 100%;
 
                         &[data-focused="true"] {
-                            background: var(--btn-color-focus);
+                            background: var(--listItem-bg-color-hover);
                         }
                         &:hover,
                         &:active {
