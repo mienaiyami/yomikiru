@@ -1045,12 +1045,21 @@ const Settings = (): ReactElement => {
                                                 (paths) => {
                                                     (async () => {
                                                         if (!(paths instanceof Array && paths.length > 0)) return;
-                                                        // dispatch(setUnzipping(true));
-                                                        dispatch(setLoadingManga(true));
-                                                        dispatch(setLoadingMangaPercent(0));
+                                                        // dispatch(setLoadingManga(true));
+                                                        // dispatch(setLoadingMangaPercent(0));
                                                         for (let i = 0; i < paths.length; i++) {
                                                             const path = paths[i];
                                                             const linkSplitted = path.split(window.path.sep);
+                                                            dispatch(
+                                                                setUnzipping({
+                                                                    state: true,
+                                                                    text: `[${i + 1}/${
+                                                                        paths.length
+                                                                    }] Rendering "${linkSplitted
+                                                                        .at(-1)
+                                                                        ?.substring(0, 20)}..."`,
+                                                                })
+                                                            );
                                                             const renderPath = window.path.join(
                                                                 window.electron.app.getPath("temp"),
                                                                 `yomikiru-temp-images-scale_${
@@ -1067,11 +1076,11 @@ const Settings = (): ReactElement => {
                                                                     renderPath,
                                                                     appSettings.readerSettings.pdfScale
                                                                 );
-                                                                dispatch(
-                                                                    setLoadingMangaPercent(
-                                                                        (i / paths.length) * 100
-                                                                    )
-                                                                );
+                                                                // dispatch(
+                                                                //     setLoadingMangaPercent(
+                                                                //         (i / paths.length) * 100
+                                                                //     )
+                                                                // );
                                                             } catch (reason: any) {
                                                                 console.error(reason);
                                                                 if (
@@ -1084,19 +1093,20 @@ const Settings = (): ReactElement => {
                                                                         detail: path,
                                                                         log: false,
                                                                     });
-                                                                dispatch(
-                                                                    setLoadingMangaPercent(
-                                                                        (i / paths.length) * 100
-                                                                    )
-                                                                );
+                                                                // dispatch(
+                                                                //     setLoadingMangaPercent(
+                                                                //         (i / paths.length) * 100
+                                                                //     )
+                                                                // );
                                                             }
                                                         }
                                                         // dispatch(setUnzipping(false));
                                                         window.dialog.confirm({
                                                             message: "Rendered all PDFs",
                                                         });
-                                                        dispatch(setLoadingManga(false));
-                                                        dispatch(setLoadingMangaPercent(0));
+                                                        dispatch(setUnzipping(false));
+                                                        // dispatch(setLoadingManga(false));
+                                                        // dispatch(setLoadingMangaPercent(0));
                                                     })();
                                                 },
                                                 true,

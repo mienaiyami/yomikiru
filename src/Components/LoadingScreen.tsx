@@ -5,12 +5,12 @@ const LoadingScreen = () => {
     const loadingMangaPercent = useAppSelector((store) => store.loadingMangaPercent);
     const unzipping = useAppSelector((store) => store.unzipping);
     return (
-        <div id="loadingScreen" style={{ display: isLoadingManga || unzipping ? "grid" : "none" }}>
+        <div id="loadingScreen" style={{ display: isLoadingManga || unzipping.state ? "grid" : "none" }}>
             {/* <div className="name">
                 ({mangaInReader?.pages}) {mangaInReader?.mangaName} - {mangaInReader?.chapterName}
             </div> */}
-            {unzipping ? (
-                <div className="unzipping">Extracting and Loading</div>
+            {unzipping.state ? (
+                <div className="unzipping">{unzipping.text || "Extracting..."}</div>
             ) : (
                 <div className="loadingBarCont">
                     <div
