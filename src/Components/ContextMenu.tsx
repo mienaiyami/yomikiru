@@ -76,7 +76,7 @@ const ContextMenu = () => {
                             const elem = ref.current?.querySelector(
                                 '[data-focused="true"]'
                             ) as HTMLLIElement | null;
-                            elem?.click();
+                            if (elem && !elem.classList.contains("disabled")) elem.click();
                             break;
                         }
                         default:
@@ -93,6 +93,9 @@ const ContextMenu = () => {
                             data-focused={i === focused}
                             onMouseEnter={() => {
                                 setFocused(i);
+                            }}
+                            onMouseLeave={() => {
+                                setFocused(-1);
                             }}
                             className={`${e.disabled ? "disabled " : ""}`}
                         >
