@@ -1356,6 +1356,9 @@ body {
                                 padding: 0.5em 1em;
                                 font-size: 0.9em;
                                 color: var(--font-color-secondary);
+                                code {
+                                    color: var(--font-color);
+                                }
                             }
                             .row {
                                 flex-direction: row;

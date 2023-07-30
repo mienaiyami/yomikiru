@@ -362,6 +362,27 @@ const Settings = (): ReactElement => {
         extras: [4, "Extras"],
     } as const;
 
+    const scrollIntoView = (elementQuery: string, tab: keyof typeof TAB_INFO) => {
+        setCurrentTab(TAB_INFO[tab][0]);
+        const onTimeout = () => {
+            const elem = document.querySelector(elementQuery) as HTMLElement | null;
+            if (elem) {
+                elem.scrollIntoView({
+                    block: "start",
+                    behavior: "smooth",
+                });
+                const color = elem.style.backgroundColor;
+                elem.style.backgroundColor = "yellow";
+                setTimeout(() => {
+                    if (elem) elem.style.backgroundColor = color;
+                }, 1000);
+            } else console.error(elementQuery, "not found.");
+        };
+        setTimeout(() => {
+            onTimeout();
+        }, 200);
+    };
+
     return (
         <div id="settings" data-state={isSettingOpen ? "open" : "closed"}>
             <div className="clickClose" onClick={() => dispatch(setOpenSetting(false))}></div>
@@ -673,12 +694,7 @@ const Settings = (): ReactElement => {
                                         Share your custom theme easily.{" "}
                                         <a
                                             onClick={() => {
-                                                document
-                                                    .querySelector("#settings-usage-copyTheme")
-                                                    ?.scrollIntoView({
-                                                        block: "start",
-                                                        behavior: "smooth",
-                                                    });
+                                                scrollIntoView("#settings-usage-copyTheme", "extras");
                                             }}
                                             id="settings-copyTheme"
                                         >
@@ -944,10 +960,7 @@ const Settings = (): ReactElement => {
                                     Link Yomikiru to your AniList account.{" "}
                                     <a
                                         onClick={() => {
-                                            document.querySelector("#settings-usage-anilist")?.scrollIntoView({
-                                                block: "start",
-                                                behavior: "smooth",
-                                            });
+                                            scrollIntoView("#settings-usage-anilist", "extras");
                                         }}
                                     >
                                         More Info
@@ -982,10 +995,7 @@ const Settings = (): ReactElement => {
                                     Scales PDF render quality. Higher scale results in higher quality.{" "}
                                     <a
                                         onClick={() => {
-                                            document.querySelector("#settings-usage-pdfScale")?.scrollIntoView({
-                                                block: "start",
-                                                behavior: "smooth",
-                                            });
+                                            scrollIntoView("#settings-usage-pdfScale", "extras");
                                         }}
                                     >
                                         More Info
@@ -1013,10 +1023,7 @@ const Settings = (): ReactElement => {
                                     Render your pdf into png for faster loading. It is recommended to set{" "}
                                     <a
                                         onClick={() => {
-                                            document.querySelector("#settings-customTempFolder")?.scrollIntoView({
-                                                block: "start",
-                                                behavior: "smooth",
-                                            });
+                                            scrollIntoView("#settings-customTempFolder", "settings");
                                         }}
                                     >
                                         temp folder
@@ -1024,12 +1031,7 @@ const Settings = (): ReactElement => {
                                     to something that is not cleaned by your OS. <br />
                                     <a
                                         onClick={() => {
-                                            document
-                                                .querySelector("#settings-keepExtractedFiles")
-                                                ?.scrollIntoView({
-                                                    block: "start",
-                                                    behavior: "smooth",
-                                                });
+                                            scrollIntoView("#settings-keepExtractedFiles", "settings");
                                         }}
                                     >
                                         Keep Temp Files
@@ -1120,12 +1122,7 @@ const Settings = (): ReactElement => {
                                     what theme can do.{" "}
                                     <a
                                         onClick={() => {
-                                            document
-                                                .querySelector("#settings-usage-customStylesheet")
-                                                ?.scrollIntoView({
-                                                    block: "start",
-                                                    behavior: "smooth",
-                                                });
+                                            scrollIntoView("#settings-usage-customStylesheet", "extras");
                                         }}
                                     >
                                         More Info
@@ -1318,12 +1315,7 @@ const Settings = (): ReactElement => {
                                         chapter folder is in manga folder inside default location.{" "}
                                         <a
                                             onClick={() => {
-                                                document
-                                                    .querySelector("#settings-usage-openDirectlyFromManga")
-                                                    ?.scrollIntoView({
-                                                        block: "start",
-                                                        behavior: "smooth",
-                                                    });
+                                                scrollIntoView("#settings-usage-openDirectlyFromManga", "extras");
                                             }}
                                         >
                                             More Info
@@ -1470,12 +1462,7 @@ const Settings = (): ReactElement => {
                                         NOTE: If{" "}
                                         <a
                                             onClick={() => {
-                                                document
-                                                    .querySelector("#settings-customTempFolder")
-                                                    ?.scrollIntoView({
-                                                        block: "start",
-                                                        behavior: "smooth",
-                                                    });
+                                                scrollIntoView("#settings-customTempFolder", "settings");
                                             }}
                                         >
                                             temp folder
@@ -1577,7 +1564,7 @@ const Settings = (): ReactElement => {
                                                     if (response === 0) {
                                                         window.dialog
                                                             .warn({
-                                                                title: "Reset Settings",
+                                                                title: "Reset Themes",
                                                                 noOption: false,
                                                                 message:
                                                                     "Are you really sure you want to delete all Themes?\nThis process is irreversible.",
@@ -1595,8 +1582,8 @@ const Settings = (): ReactElement => {
                                     <button
                                         onClick={() => {
                                             window.dialog
-                                                .confirm({
-                                                    title: "Confirm",
+                                                .warn({
+                                                    title: "Warning",
                                                     message: "Reset Shortcuts to default?",
                                                     noOption: false,
                                                 })
@@ -1614,8 +1601,7 @@ const Settings = (): ReactElement => {
                                             window.dialog
                                                 .warn({
                                                     title: "Reset Settings",
-                                                    message:
-                                                        "This will reset all Settings (themes not included). Continue?",
+                                                    message: "This will reset all Settings. Continue?",
                                                     noOption: false,
                                                 })
                                                 .then(({ response }) => {
@@ -2014,12 +2000,7 @@ const Settings = (): ReactElement => {
                                             <a
                                                 id="settings-usage-openDirectlyFromManga"
                                                 onClick={() => {
-                                                    document
-                                                        .querySelector("#settings-openDirectlyFromManga")
-                                                        ?.scrollIntoView({
-                                                            block: "start",
-                                                            behavior: "smooth",
-                                                        });
+                                                    scrollIntoView("#settings-openDirectlyFromManga", "settings");
                                                 }}
                                             >
                                                 Open chapter in reader directly if chapter is a sub-folder of
@@ -2137,12 +2118,7 @@ const Settings = (): ReactElement => {
                                     Open chapter directly from the file explorer after enabling{" "}
                                     <a
                                         onClick={() => {
-                                            document
-                                                .querySelector("#settings-fileExplorerOption")
-                                                ?.scrollIntoView({
-                                                    block: "start",
-                                                    behavior: "smooth",
-                                                });
+                                            scrollIntoView("#settings-fileExplorerOption", "settings");
                                         }}
                                     >
                                         File Explorer Option
@@ -2164,10 +2140,7 @@ const Settings = (): ReactElement => {
                                     <a
                                         id="settings-usage-copyTheme"
                                         onClick={() => {
-                                            document.querySelector("#settings-copyTheme")?.scrollIntoView({
-                                                block: "start",
-                                                behavior: "smooth",
-                                            });
+                                            scrollIntoView("#settings-copyTheme", "settings");
                                         }}
                                     >
                                         Copy theme using "Copy Current Theme to Clipboard" under theme
@@ -2179,10 +2152,7 @@ const Settings = (): ReactElement => {
                                     <a
                                         id="settings-usage-pdfScale"
                                         onClick={() => {
-                                            document.querySelector("#settings-pdfScale")?.scrollIntoView({
-                                                block: "start",
-                                                behavior: "smooth",
-                                            });
+                                            scrollIntoView("#settings-pdfScale", "settings");
                                         }}
                                     >
                                         <b>PDF Scale:</b>
@@ -2215,10 +2185,7 @@ const Settings = (): ReactElement => {
                                     custom <code>.css</code> file and adding it as{" "}
                                     <a
                                         onClick={() => {
-                                            document.querySelector("#settings-customStylesheet")?.scrollIntoView({
-                                                block: "start",
-                                                behavior: "smooth",
-                                            });
+                                            scrollIntoView("#settings-customStylesheet", "settings");
                                         }}
                                     >
                                         Custom Stylesheet
