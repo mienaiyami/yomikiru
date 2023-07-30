@@ -1662,6 +1662,24 @@ const Settings = (): ReactElement => {
                                         </tr>
                                     ))}
                                     <tr>
+                                        <td>Home</td>
+                                        <td>
+                                            <code>h</code>
+                                        </td>
+                                    </tr>
+                                    <tr>
+                                        <td>Directory Up (search focused)</td>
+                                        <td>
+                                            <code>alt</code>+<code>ArrowUp</code>
+                                        </td>
+                                    </tr>
+                                    <tr>
+                                        <td>Settings</td>
+                                        <td>
+                                            <code>ctrl</code>+<code>i</code>
+                                        </td>
+                                    </tr>
+                                    <tr>
                                         <td>New Window</td>
                                         <td>
                                             <code>ctrl</code>+<code>n</code>
@@ -1677,12 +1695,6 @@ const Settings = (): ReactElement => {
                                         <td>Reader width</td>
                                         <td>
                                             <code>ctrl</code>+<code>scroll</code>
-                                        </td>
-                                    </tr>
-                                    <tr>
-                                        <td>Home</td>
-                                        <td>
-                                            <code>h</code>
                                         </td>
                                     </tr>
                                     <tr>
@@ -1986,6 +1998,25 @@ const Settings = (): ReactElement => {
                                             reader
                                         </li>
                                         <li>Dropping archive or epub file will open them in the reader</li>
+                                    </ul>
+                                </li>
+                                <li>
+                                    Search bar shortcut keys :
+                                    <ul>
+                                        <li>
+                                            With any search bar focused click <code>ArrowUp</code> or{" "}
+                                            <code> ArrowDown</code> to navigate through results.
+                                        </li>
+                                        <li>
+                                            Click <code>Enter</code> to as new search location.
+                                        </li>
+                                        <li>
+                                            Click <code>Enter</code> on empty folder to open in reader.
+                                        </li>
+                                        <li>
+                                            Click <code>alt</code>+<code>ArrowUp</code> to go up a
+                                            directory/folder.
+                                        </li>
                                     </ul>
                                 </li>
                                 <li>
