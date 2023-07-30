@@ -280,9 +280,9 @@ const App = (): ReactElement => {
                     //     .then((e) => {
                     //         if (e) tempFn(tempExtractPath, 1);
                     //     });
-                    if (!window.electron.app.isPackaged)
-                        link =
-                            "http://localhost:42136/stuff/mangas/ln/Eminence%20in%20Shadow/The%20Eminence%20in%20Shadow,%20Vol.%201.pdf";
+                    // if (!window.electron.app.isPackaged)
+                    //     link =
+                    //         "http://localhost:42136/stuff/mangas/ln/Eminence%20in%20Shadow/The%20Eminence%20in%20Shadow,%20Vol.%201.pdf";
                     renderPDF(link, tempExtractPath, appSettings.readerSettings.pdfScale)
                         .then(() => {
                             tempFn(tempExtractPath, 1);
