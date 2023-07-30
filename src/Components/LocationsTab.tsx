@@ -116,25 +116,27 @@ const LocationsTab = (): ReactElement => {
     }, [inputRef]);
     const List = (locations: LocationData[], filter: string) => {
         return locations.map((e) => {
+            const historyIndex =
+                (window.fs.existsSync(e.link) &&
+                    window.fs.lstatSync(e.link).isFile() &&
+                    window.path.extname(e.link).toLowerCase()) === ".epub"
+                    ? -1
+                    : history.findIndex(
+                          (e) =>
+                              e.type === "image" &&
+                              (e as MangaHistoryItem).data.mangaLink.toLowerCase() === currentLink.toLowerCase()
+                      );
+            let historyChapterIndex = -1;
+            if (historyIndex >= 0)
+                historyChapterIndex = (history[historyIndex] as MangaHistoryItem).data.chaptersRead.findIndex(
+                    (a) => a === e.link.split(window.path.sep).pop() || ""
+                );
             if (new RegExp(filter, "ig") && new RegExp(filter, "ig").test(e.name))
                 return (
                     <LocationListItem
                         name={e.name}
                         link={e.link}
-                        inHistory={
-                            (window.fs.existsSync(e.link) &&
-                                window.fs.lstatSync(e.link).isFile() &&
-                                window.path.extname(e.link).toLowerCase()) === ".epub"
-                                ? false
-                                : (
-                                      history.find(
-                                          (e) =>
-                                              e.type === "image" &&
-                                              (e as MangaHistoryItem).data.mangaLink.toLowerCase() ===
-                                                  currentLink.toLowerCase()
-                                      ) as MangaHistoryItem
-                                  )?.data.chaptersRead.includes(e.link.split(window.path.sep).pop() || "") ?? false
-                        }
+                        inHistory={[historyIndex, historyChapterIndex]}
                         key={e.link}
                         setCurrentLink={setCurrentLink}
                     />

@@ -326,6 +326,7 @@ declare global {
             addToBookmark: (data: ListItemE) => MenuListItem;
             removeHistory: (index: number) => MenuListItem;
             removeBookmark: (url: string) => MenuListItem;
+            unreadChapter: (mangaIndex: number, chapterIndex: number) => MenuListItem;
         };
         app: {
             betterSortOrder: (x: string, y: string) => number;

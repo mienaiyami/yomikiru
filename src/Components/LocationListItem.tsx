@@ -14,7 +14,11 @@ const LocationListItem = ({
     name: string;
     link: string;
     setCurrentLink: React.Dispatch<React.SetStateAction<string>>;
-    inHistory?: boolean;
+    /**
+     * `[0]` - index of manga in history
+     * `[1]` - index of chapter in manga chapter read
+     */
+    inHistory: [number, number];
 }): ReactElement => {
     const { openInReader, checkValidFolder, setContextMenuData } = useContext(AppContext);
     const appSettings = useAppSelector((store) => store.appSettings);
@@ -44,7 +48,7 @@ const LocationListItem = ({
         if (a) setCurrentLink(link);
     };
     return (
-        <li className={inHistory ? "alreadyRead" : ""}>
+        <li className={inHistory && inHistory[1] >= 0 ? "alreadyRead" : ""}>
             <a
                 title={name}
                 onClick={(e) => {
@@ -71,6 +75,9 @@ const LocationListItem = ({
                         window.contextMenuTemplate.showInExplorer(link),
                         window.contextMenuTemplate.copyPath(link),
                     ];
+                    if (inHistory && inHistory[1] >= 0) {
+                        items.push(window.contextMenuTemplate.unreadChapter(...inHistory));
+                    }
                     setContextMenuData({
                         clickX: e.clientX,
                         clickY: e.clientY,

@@ -13,6 +13,7 @@ import {
     updateCurrentHistoryPage,
     updateCurrentBookHistory,
     removeHistory,
+    unreadChapter,
 } from "./store/history";
 import { setReaderOpen } from "./store/isReaderOpen";
 import { setMangaInReader } from "./store/mangaInReader";
@@ -715,6 +716,16 @@ const App = (): ReactElement => {
                             };
                             dispatch(addBookmark(newItem));
                         }
+                    },
+                };
+            },
+            unreadChapter(mangaIndex, chapterIndex) {
+                return {
+                    label: "Mark as Unread",
+                    disabled: mangaIndex >= 0 && chapterIndex >= 0 ? false : true,
+                    action() {
+                        if (mangaIndex >= 0 && chapterIndex >= 0)
+                            dispatch(unreadChapter([mangaIndex, chapterIndex]));
                     },
                 };
             },

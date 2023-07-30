@@ -171,6 +171,20 @@ const history = createSlice({
                 saveJSONfile(historyPath, stateDup);
             }
         },
+        unreadChapter: (state, action: PayloadAction<[number, number]>) => {
+            if (action.payload[0] >= 0 && action.payload[1] >= 0) {
+                const stateDup: HistoryItem[] = JSON.parse(JSON.stringify(state));
+                try {
+                    (stateDup[action.payload[0]] as MangaHistoryItem).data.chaptersRead.splice(
+                        action.payload[1],
+                        1
+                    );
+                    saveJSONfile(historyPath, stateDup);
+                } catch (reason) {
+                    window.logger.error("Unable to mark chapter as Unread.", reason);
+                }
+            }
+        },
         refreshHistory: () => {
             let newState = readHistory();
             if (newState.length === 0) newState = readHistory();
@@ -196,6 +210,7 @@ export const {
     updateCurrentBookHistory,
     deleteAllHistory,
     removeHistory,
+    unreadChapter,
     refreshHistory,
 } = history.actions;
 
