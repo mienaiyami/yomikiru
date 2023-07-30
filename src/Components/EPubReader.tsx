@@ -1146,6 +1146,13 @@ const EPubReader = () => {
                         }
                     }
                 }}
+                onDoubleClick={(e) => {
+                    let clickPos = (e.clientX / e.currentTarget.offsetWidth) * 100;
+                    if (isSideListPinned) {
+                        clickPos = ((e.clientX - sideListWidth) / e.currentTarget.offsetWidth) * 100;
+                    }
+                    if (clickPos > 5 && clickPos < 95) setZenMode((init) => !init);
+                }}
             >
                 <StyleSheets sheets={epubStylesheets} />
                 <HTMLPart
