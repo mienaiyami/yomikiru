@@ -1,12 +1,12 @@
 import { useContext } from "react";
 import { AppContext } from "../App";
-import { setContextMenu } from "../store/contextMenu";
+// import { setContextMenu } from "../store/contextMenu";
 import { useAppDispatch, useAppSelector } from "../store/hooks";
 
 const BookmarkHistoryListItem = (props: ListItemE) => {
-    const { openInReader } = useContext(AppContext);
+    const { openInReader, setContextMenuData } = useContext(AppContext);
     const appSettings = useAppSelector((store) => store.appSettings);
-    const dispatch = useAppDispatch();
+    // const dispatch = useAppDispatch();
     // const [pos, setPos] = useState({ x: 0, y: 0 });
     // const infoRef = useRef<HTMLDivElement>(null);
     // const InfoOnHover = () => {
@@ -77,19 +77,22 @@ const BookmarkHistoryListItem = (props: ListItemE) => {
                     );
                 }}
                 onContextMenu={(e) => {
-                    dispatch(
-                        setContextMenu({
-                            clickX: e.clientX,
-                            clickY: e.clientY,
-                            hasLink: {
-                                link: props.data.link,
-                                chapterItem: {
-                                    item: props,
-                                    isBookmark: props.isBookmark || false,
-                                },
-                            },
-                        })
-                    );
+                    const items = [
+                        window.contextMenuTemplate.open(props.data.link),
+                        window.contextMenuTemplate.openInNewWindow(props.data.link),
+                        window.contextMenuTemplate.showInExplorer(props.data.link),
+                    ];
+                    if (props.isBookmark) items.push(window.contextMenuTemplate.removeBookmark(props.data.link));
+                    else items.push(window.contextMenuTemplate.addToBookmark(props));
+                    if (props.isHistory) items.push(window.contextMenuTemplate.removeHistory(props.index));
+
+                    // dispatch(
+                    setContextMenuData({
+                        clickX: e.clientX,
+                        clickY: e.clientY,
+                        items,
+                    });
+                    // );
                     // showContextMenu({
                     //     isBookmark: props.isBookmark || false,
                     //     isHistory: props.isHistory || false,

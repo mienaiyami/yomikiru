@@ -27,7 +27,7 @@ const LocationsTab = (): ReactElement => {
         if (!window.fs.existsSync(link)) {
             if (!window.fs.existsSync(appSettings.baseDir)) {
                 window.dialog.customError({ message: "Default Location doesn't exist." });
-                promptSelectDir((path) => dispatch(setAppSettings({ baseDir: path })));
+                promptSelectDir((path) => dispatch(setAppSettings({ baseDir: path as string })));
                 return;
             }
             window.dialog.customError({ message: "Directory/File doesn't exist." });

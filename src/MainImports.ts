@@ -317,6 +317,16 @@ declare global {
                   }
                 | undefined;
         };
+        contextMenuTemplate: {
+            open: (url: string) => MenuListItem;
+            openInNewWindow: (url: string) => MenuListItem;
+            showInExplorer: (url: string) => MenuListItem;
+            copyPath: (url: string) => MenuListItem;
+            copyImage: (url: string) => MenuListItem;
+            addToBookmark: (data: ListItemE) => MenuListItem;
+            removeHistory: (index: number) => MenuListItem;
+            removeBookmark: (url: string) => MenuListItem;
+        };
         app: {
             betterSortOrder: (x: string, y: string) => number;
             /**
@@ -477,19 +487,19 @@ declare global {
      * css variable names of theme
      */
     type ThemeDataMain = keyof typeof themeProps;
-    type ThemeData = {
+    interface ThemeData {
         name: string;
         main: {
             [e in ThemeDataMain]: string;
         };
-    };
-    type MangaItem = {
+    }
+    interface MangaItem {
         mangaName: string;
         chapterName: string;
         date?: string;
         link: string;
         pages: number;
-    };
+    }
     type ChapterItem = MangaItem & {
         page: number;
     };
@@ -553,7 +563,7 @@ declare global {
         }[];
     };
 
-    type ListMenuItem = {
+    type MenuListItem = {
         label: string;
         action: () => void;
         disabled: boolean;
@@ -609,16 +619,7 @@ declare global {
     interface IContextMenuData {
         clickX: number;
         clickY: number;
-        hasLink?: {
-            link: string;
-            chapterItem?: {
-                item: ListItemE;
-                isBookmark?: boolean;
-            };
-            simple?: {
-                isImage?: boolean;
-            };
-        };
+        items: MenuListItem[];
     }
 
     type AppSettings = DeepArrayToUnion<typeof settingValidatorData>;

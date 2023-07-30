@@ -1,6 +1,6 @@
 import { useContext, memo } from "react";
 import { AppContext } from "../App";
-import { setContextMenu } from "../store/contextMenu";
+// import { setContextMenu } from "../store/contextMenu";
 import { useAppDispatch } from "../store/hooks";
 
 const ReaderSideListItem = memo(
@@ -17,9 +17,7 @@ const ReaderSideListItem = memo(
         alreadyRead: boolean;
         current: boolean;
     }) => {
-        const { openInReader } = useContext(AppContext);
-
-        const dispatch = useAppDispatch();
+        const { openInReader, setContextMenuData } = useContext(AppContext);
 
         return (
             <li className={(alreadyRead ? "alreadyRead" : "") + " " + (current ? "current" : "")}>
@@ -30,18 +28,16 @@ const ReaderSideListItem = memo(
                         if (current && node !== null) node.scrollIntoView({ block: "nearest" });
                     }}
                     onContextMenu={(e) => {
-                        dispatch(
-                            setContextMenu({
-                                clickX: e.clientX,
-                                clickY: e.clientY,
-                                hasLink: {
-                                    link,
-                                    simple: {
-                                        isImage: false,
-                                    },
-                                },
-                            })
-                        );
+                        setContextMenuData({
+                            clickX: e.clientX,
+                            clickY: e.clientY,
+                            items: [
+                                window.contextMenuTemplate.open(link),
+                                window.contextMenuTemplate.openInNewWindow(link),
+                                window.contextMenuTemplate.showInExplorer(link),
+                                window.contextMenuTemplate.copyPath(link),
+                            ],
+                        });
                     }}
                 >
                     <span className="text">{name.split(" $")[0]}</span>

@@ -1,21 +1,22 @@
 import { useContext, useEffect, useRef, useState } from "react";
-import { AppContext } from "../App";
-import { addBookmark, removeBookmark } from "../store/bookmarks";
-import { setContextMenu } from "../store/contextMenu";
-import { removeHistory } from "../store/history";
+// import { AppContext } from "../App";
+// import { addBookmark, removeBookmark } from "../store/bookmarks";
+// import { setContextMenu } from "../store/contextMenu";
+// import { removeHistory } from "../store/history";
 import { useAppDispatch, useAppSelector } from "../store/hooks";
+import { AppContext } from "../App";
 
 const ContextMenu = () => {
     const dispatch = useAppDispatch();
-    const contextData = useAppSelector((store) => store.contextMenu);
-    const { openInReader, openInNewWindow } = useContext(AppContext);
+    // const contextMenuData = useAppSelector((store) => store.contextMenu);
+    const { contextMenuData, setContextMenuData } = useContext(AppContext);
     const [pos, setPos] = useState({ x: 0, y: 0 });
     const ref = useRef<HTMLDivElement>(null);
     useEffect(() => {
-        if (contextData && contextData.hasLink) {
+        if (contextMenuData && contextMenuData.items.length > 0) {
             if (ref.current) {
-                let x = contextData.clickX;
-                let y = contextData.clickY - window.app.titleBarHeight;
+                let x = contextMenuData.clickX;
+                let y = contextMenuData.clickY - window.app.titleBarHeight;
                 if (x >= window.innerWidth - ref.current.offsetWidth - 10) {
                     x -= ref.current.offsetWidth;
                 }
@@ -26,147 +27,45 @@ const ContextMenu = () => {
                 ref.current.focus();
             }
         }
-    }, [contextData]);
+    }, [contextMenuData]);
     // useEffect(() => {
     //     if (visible) props?.realRef.current?.focus();
     // }, [visible]);
 
     return (
-        <div
-            className="contextMenu"
-            tabIndex={-1}
-            onBlur={() => {
-                setTimeout(() => dispatch(setContextMenu(null)), 100);
-            }}
-            onMouseUp={(e) => {
-                e.stopPropagation();
-                e.currentTarget.blur();
-            }}
-            ref={ref}
-            style={{
-                left: pos.x,
-                top: pos.y,
-                visibility: contextData && contextData.hasLink ? "visible" : "hidden",
-            }}
-        >
-            <ul>
-                {contextData?.hasLink?.simple?.isImage ? (
-                    ""
-                ) : (
-                    <li role="menuitem" onMouseUp={() => openInReader(contextData?.hasLink?.link || "")}>
-                        Open
-                    </li>
-                )}
-                {contextData?.hasLink?.simple?.isImage ? (
-                    <li
-                        role="menuitem"
-                        onMouseUp={() => {
-                            const img = window.electron.nativeImage.createFromPath(
-                                contextData?.hasLink?.link || ""
-                            );
-                            if (img) window.electron.clipboard.writeImage(img);
-                        }}
-                    >
-                        Copy
-                    </li>
-                ) : (
-                    ""
-                )}
-                {contextData?.hasLink?.simple?.isImage ? (
-                    ""
-                ) : (
-                    <li role="menuitem" onMouseUp={() => openInNewWindow(contextData?.hasLink?.link || "")}>
-                        Open in new Window
-                    </li>
-                )}
-                {contextData?.hasLink ? (
-                    <li
-                        role="menuitem"
-                        onMouseUp={() => {
-                            if (process.platform === "win32")
-                                window.electron.shell.showItemInFolder(contextData?.hasLink?.link || "");
-                            else if (process.platform === "linux")
-                                window.electron.ipcRenderer.send(
-                                    "showInExplorer",
-                                    contextData?.hasLink?.link || ""
-                                );
-                        }}
-                    >
-                        Show in File Explorer
-                    </li>
-                ) : (
-                    ""
-                )}
-                <li
-                    role="menuitem"
-                    onMouseUp={() => window.electron.clipboard.writeText(contextData?.hasLink?.link || "")}
-                >
-                    Copy Path
-                </li>
-                {!contextData?.hasLink?.simple && !contextData?.hasLink?.chapterItem?.isBookmark ? (
-                    <li
-                        role="menuitem"
-                        onMouseUp={() => {
-                            if (contextData?.hasLink?.chapterItem?.item)
-                                dispatch(removeHistory(contextData?.hasLink?.chapterItem?.item.index));
-                        }}
-                    >
-                        Remove
-                    </li>
-                ) : (
-                    ""
-                )}
-                {contextData?.hasLink?.simple ? (
-                    ""
-                ) : contextData?.hasLink?.chapterItem?.isBookmark ? (
-                    <li
-                        role="menuitem"
-                        onMouseUp={() => dispatch(removeBookmark(contextData?.hasLink?.link || ""))}
-                    >
-                        Remove Bookmark
-                    </li>
-                ) : (
-                    <li
-                        role="menuitem"
-                        onMouseUp={() => {
-                            const item = contextData?.hasLink?.chapterItem?.item;
-                            if (item) {
-                                if (item.type === "image") {
-                                    const newItem: Manga_BookItem = {
-                                        type: "image",
-                                        data: {
-                                            mangaName: item.data.mangaName,
-                                            chapterName: item.data.chapterName,
-                                            pages: item.data.pages,
-                                            page: item.data.page,
-                                            link: contextData?.hasLink?.link || "",
-                                            date: new Date().toLocaleString("en-UK", { hour12: true }),
-                                        },
-                                    };
-                                    dispatch(addBookmark(newItem));
-                                }
-                                if (item.type === "book") {
-                                    const newItem: Manga_BookItem = {
-                                        type: "book",
-                                        data: {
-                                            author: item.data.author,
-                                            link: item.data.link,
-                                            title: item.data.title,
-                                            chapter: item.data.chapter || "",
-                                            elementQueryString: item.data.elementQueryString || "",
-                                            date: new Date().toLocaleString("en-UK", { hour12: true }),
-                                        },
-                                    };
-                                    dispatch(addBookmark(newItem));
-                                }
-                            }
-                        }}
-                    >
-                        Add to Bookmarks
-                    </li>
-                )}
-            </ul>
-        </div>
+        contextMenuData && (
+            <div
+                className="contextMenu"
+                tabIndex={-1}
+                onBlur={() => {
+                    // setTimeout(() => dispatch(setContextMenu(null)), 100);
+                    setContextMenuData(null);
+                }}
+                onMouseUp={(e) => {
+                    e.stopPropagation();
+                    e.currentTarget.blur();
+                }}
+                ref={ref}
+                style={{
+                    left: pos.x,
+                    top: pos.y,
+                    visibility: contextMenuData && contextMenuData.items.length > 0 ? "visible" : "hidden",
+                }}
+            >
+                <ul>
+                    {contextMenuData.items.map((e) => (
+                        <li
+                            role="menuitem"
+                            key={e.label}
+                            onMouseUp={e.action}
+                            className={`${e.disabled ? "disabled " : ""}`}
+                        >
+                            {e.label}
+                        </li>
+                    ))}
+                </ul>
+            </div>
+        )
     );
 };
 

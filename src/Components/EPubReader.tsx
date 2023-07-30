@@ -16,7 +16,7 @@ import { setReaderOpen } from "../store/isReaderOpen";
 // import { setLoadingManga } from "../store/isLoadingManga";
 import { setLinkInReader } from "../store/linkInReader";
 import { newHistory, updateCurrentBookHistory } from "../store/history";
-import contextMenu, { setContextMenu } from "../store/contextMenu";
+// import contextMenu, { setContextMenu } from "../store/contextMenu";
 import EPUBReaderSettings from "./EPubReaderSettings";
 import EPubReaderSideList from "./EPubReaderSideList";
 import { setReaderSettings } from "../store/appSettings";
@@ -164,21 +164,19 @@ const HTMLPart = memo(
         bookmarkedElem: string;
         epubLinkClick: (ev: MouseEvent | React.MouseEvent<HTMLAnchorElement, MouseEvent>) => void;
     }) => {
-        const dispatch = useAppDispatch();
+        const { setContextMenuData } = useContext(AppContext);
         const [rendered, setRendered] = useState(false);
         const onContextMenu = (ev: MouseEvent) => {
-            dispatch(
-                setContextMenu({
-                    clickX: ev.clientX,
-                    clickY: ev.clientY,
-                    hasLink: {
-                        link: (ev.currentTarget as Element).getAttribute("src") || "",
-                        simple: {
-                            isImage: true,
-                        },
-                    },
-                })
-            );
+            const url = (ev.currentTarget as Element).getAttribute("src") || "";
+            setContextMenuData({
+                clickX: ev.clientX,
+                clickY: ev.clientY,
+                items: [
+                    window.contextMenuTemplate.copyImage(url),
+                    window.contextMenuTemplate.showInExplorer(url),
+                    window.contextMenuTemplate.copyPath(url),
+                ],
+            });
         };
         const linksInBetween: DisplayData[] = [];
         const displayDataWithOrder = useMemo(
@@ -188,7 +186,7 @@ const HTMLPart = memo(
         if (loadOneChapter && tocData) {
             /**in TOC */
             let afterCurrentIndex =
-                tocData.nav.findLastIndex((e) => e.src.split("#")[0] === currentChapterURL.split("#")[0]) + 1;
+                tocData.nav.findLastIndex((e: any) => e.src.split("#")[0] === currentChapterURL.split("#")[0]) + 1;
             /**in displayData */
             const startIndex =
                 afterCurrentIndex === 1
@@ -200,7 +198,7 @@ const HTMLPart = memo(
             if (tocData.nav[afterCurrentIndex]?.src.includes(currentChapterURL)) afterCurrentIndex++;
             /**till next item from TOC */
             let lastIndex = displayDataWithOrder.findLastIndex(
-                (e) => e.url.split("#")[0] === tocData.nav[afterCurrentIndex]?.src.split("#")[0]
+                (e: any) => e.url.split("#")[0] === tocData.nav[afterCurrentIndex]?.src.split("#")[0]
             );
             if (lastIndex < 0) lastIndex = Number.MAX_SAFE_INTEGER;
             linksInBetween.push(...displayDataWithOrder.slice(startIndex, lastIndex));

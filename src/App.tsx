@@ -8,10 +8,15 @@ import { setUnzipping } from "./store/unzipping";
 import { setLoadingManga } from "./store/isLoadingManga";
 import loadingMangaPercent, { setLoadingMangaPercent } from "./store/loadingMangaPercent";
 import { setLinkInReader } from "./store/linkInReader";
-import { refreshHistory, updateCurrentHistoryPage, updateCurrentBookHistory } from "./store/history";
+import {
+    refreshHistory,
+    updateCurrentHistoryPage,
+    updateCurrentBookHistory,
+    removeHistory,
+} from "./store/history";
 import { setReaderOpen } from "./store/isReaderOpen";
 import { setMangaInReader } from "./store/mangaInReader";
-import { refreshBookmark } from "./store/bookmarks";
+import { addBookmark, refreshBookmark, removeBookmark } from "./store/bookmarks";
 import { setTheme } from "./store/themes";
 import { bookmarksPath, historyPath, promptSelectDir, renderPDF, unzip } from "./MainImports";
 import { setBookInReader } from "./store/bookInReader";
@@ -33,6 +38,8 @@ interface IAppContext {
     closeReader: () => void;
     // updateLastHistoryPageNumber: () => void;
     openInNewWindow: (link: string) => void;
+    contextMenuData: IContextMenuData | null;
+    setContextMenuData: React.Dispatch<React.SetStateAction<IContextMenuData | null>>;
     checkValidFolder: (
         link: string,
         callback: (isValid?: boolean, imgs?: string[]) => void,
@@ -52,6 +59,7 @@ const App = (): ReactElement => {
     const pageNumberInputRef: React.RefObject<HTMLInputElement> = createRef();
     const bookProgressRef: React.RefObject<HTMLInputElement> = createRef();
     const [firstRendered, setFirstRendered] = useState(false);
+    const [contextMenuData, setContextMenuData] = useState<IContextMenuData | null>(null);
 
     const dispatch = useAppDispatch();
 
@@ -608,6 +616,109 @@ const App = (): ReactElement => {
         //     // window.electron.ipcRenderer.send("abc");
         //     console.log("dddddddddd");
         // }, 1000);
+        window.contextMenuTemplate = {
+            open(url) {
+                return {
+                    label: "Open",
+                    disabled: url ? true : false,
+                    action() {
+                        openInReader(url);
+                    },
+                };
+            },
+            openInNewWindow(url) {
+                return {
+                    label: "Open in new Window",
+                    disabled: url ? true : false,
+                    action() {
+                        openInNewWindow(url);
+                    },
+                };
+            },
+            showInExplorer(url) {
+                return {
+                    label: "Show in File Explorer",
+                    disabled: url ? true : false,
+                    action() {
+                        if (process.platform === "win32") window.electron.shell.showItemInFolder(url || "");
+                        else if (process.platform === "linux")
+                            window.electron.ipcRenderer.send("showInExplorer", url);
+                    },
+                };
+            },
+            copyPath(url) {
+                return {
+                    label: "Copy Path",
+                    disabled: url ? true : false,
+                    action() {
+                        window.electron.clipboard.writeText(url);
+                    },
+                };
+            },
+            copyImage(url) {
+                return {
+                    label: "Copy",
+                    disabled: url ? true : false,
+                    action() {
+                        window.electron.clipboard.writeImage(window.electron.nativeImage.createFromPath(url));
+                    },
+                };
+            },
+            removeHistory(index) {
+                return {
+                    label: "Remove",
+                    disabled: index >= 0 ? true : false,
+                    action() {
+                        dispatch(removeHistory(index));
+                    },
+                };
+            },
+            removeBookmark(url) {
+                return {
+                    label: "Remove Bookmark",
+                    disabled: url ? true : false,
+                    action() {
+                        dispatch(removeBookmark(url));
+                    },
+                };
+            },
+            addToBookmark(data) {
+                return {
+                    label: "Add to Bookmarks",
+                    disabled: data ? true : false,
+                    action() {
+                        if (data.type === "image") {
+                            const newItem: Manga_BookItem = {
+                                type: "image",
+                                data: {
+                                    mangaName: data.data.mangaName,
+                                    chapterName: data.data.chapterName,
+                                    pages: data.data.pages,
+                                    page: data.data.page,
+                                    link: data.data.link,
+                                    date: new Date().toLocaleString("en-UK", { hour12: true }),
+                                },
+                            };
+                            dispatch(addBookmark(newItem));
+                        }
+                        if (data.type === "book") {
+                            const newItem: Manga_BookItem = {
+                                type: "book",
+                                data: {
+                                    author: data.data.author,
+                                    link: data.data.link,
+                                    title: data.data.title,
+                                    chapter: data.data.chapter || "",
+                                    elementQueryString: data.data.elementQueryString || "",
+                                    date: new Date().toLocaleString("en-UK", { hour12: true }),
+                                },
+                            };
+                            dispatch(addBookmark(newItem));
+                        }
+                    },
+                };
+            },
+        };
 
         return () => {
             window.removeEventListener("keydown", eventsOnStart);
@@ -636,6 +747,8 @@ const App = (): ReactElement => {
                 closeReader,
                 openInNewWindow,
                 checkValidFolder,
+                contextMenuData,
+                setContextMenuData,
             }}
         >
             <TopBar />

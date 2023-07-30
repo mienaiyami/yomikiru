@@ -1,7 +1,7 @@
 /* eslint-disable @typescript-eslint/no-non-null-assertion */
-import { ReactElement, useLayoutEffect, useState } from "react";
+import { ReactElement, useLayoutEffect, useContext } from "react";
 import { setAppSettings } from "../store/appSettings";
-import { setContextMenu } from "../store/contextMenu";
+// import { setContextMenu } from "../store/contextMenu";
 import { useAppDispatch, useAppSelector } from "../store/hooks";
 import BookmarkTab from "./BookmarkTab";
 import ContextMenu from "./ContextMenu";
@@ -12,6 +12,7 @@ import LocationsTab from "./LocationsTab";
 import Reader from "./Reader";
 import Settings from "./Settings";
 import AniLogin from "./anilist/AniLogin";
+import { AppContext } from "../App";
 
 const Main = (): ReactElement => {
     const appSettings = useAppSelector((store) => store.appSettings);
@@ -20,6 +21,7 @@ const Main = (): ReactElement => {
     const anilistToken = useAppSelector((store) => store.anilistToken);
     const isAniLoginOpen = useAppSelector((store) => store.isAniLoginOpen);
 
+    const { setContextMenuData } = useContext(AppContext);
     const dispatch = useAppDispatch();
 
     // const [bookmarkTabDisplay, setBookmarkTabDisplay] = useState(true);
@@ -31,7 +33,7 @@ const Main = (): ReactElement => {
     // const [gridTemplate, setGridTemplate] = useState<string>("");
     // const [dividerWidth, setDividerWidth] = useState<number>(0);
     useLayoutEffect(() => {
-        const ff = () => dispatch(setContextMenu(null));
+        const ff = () => setContextMenuData(null);
         // onDragOver={() => false}
         // onDragLeave={() => false}
         // onDragEnd={() => false}

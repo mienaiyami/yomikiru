@@ -2,7 +2,7 @@ import { faAngleRight } from "@fortawesome/free-solid-svg-icons";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { ReactElement, useContext } from "react";
 import { AppContext } from "../App";
-import { setContextMenu } from "../store/contextMenu";
+// import { setContextMenu } from "../store/contextMenu";
 import { useAppDispatch, useAppSelector } from "../store/hooks";
 
 const LocationListItem = ({
@@ -16,10 +16,8 @@ const LocationListItem = ({
     setCurrentLink: React.Dispatch<React.SetStateAction<string>>;
     inHistory?: boolean;
 }): ReactElement => {
-    const { openInReader, checkValidFolder } = useContext(AppContext);
+    const { openInReader, checkValidFolder, setContextMenuData } = useContext(AppContext);
     const appSettings = useAppSelector((store) => store.appSettings);
-
-    const dispatch = useAppDispatch();
 
     const onClickHandle = (a = true) => {
         if (!window.fs.existsSync(link)) {
@@ -67,18 +65,17 @@ const LocationListItem = ({
                     } else onClickHandle();
                 }}
                 onContextMenu={(e) => {
-                    dispatch(
-                        setContextMenu({
-                            clickX: e.clientX,
-                            clickY: e.clientY,
-                            hasLink: {
-                                link,
-                                simple: {
-                                    isImage: false,
-                                },
-                            },
-                        })
-                    );
+                    const items = [
+                        window.contextMenuTemplate.open(link),
+                        window.contextMenuTemplate.openInNewWindow(link),
+                        window.contextMenuTemplate.showInExplorer(link),
+                        window.contextMenuTemplate.copyPath(link),
+                    ];
+                    setContextMenuData({
+                        clickX: e.clientX,
+                        clickY: e.clientY,
+                        items,
+                    });
                     // showContextMenu({
                     //     e: e.nativeEvent,
                     //     isFile: true,

@@ -12,12 +12,12 @@ import { setLoadingMangaPercent } from "../store/loadingMangaPercent";
 import { setLoadingManga } from "../store/isLoadingManga";
 import { setLinkInReader } from "../store/linkInReader";
 import { newHistory } from "../store/history";
-import { setContextMenu } from "../store/contextMenu";
+// import { setContextMenu } from "../store/contextMenu";
 import AnilistSearch from "./anilist/AnilistSearch";
 import AnilistEdit from "./anilist/AnilistEdit";
 
 const Reader = () => {
-    const { pageNumberInputRef, checkValidFolder } = useContext(AppContext);
+    const { pageNumberInputRef, checkValidFolder, setContextMenuData } = useContext(AppContext);
 
     const appSettings = useAppSelector((store) => store.appSettings);
     const shortcuts = useAppSelector((store) => store.shortcuts);
@@ -554,18 +554,15 @@ const Reader = () => {
                 canvas.setAttribute("data-pagenumber", JSON.stringify(i + 1));
                 canvas.classList.add("readerImg");
                 canvas.oncontextmenu = (ev) => {
-                    dispatch(
-                        setContextMenu({
-                            clickX: ev.clientX,
-                            clickY: ev.clientY,
-                            hasLink: {
-                                link: e,
-                                simple: {
-                                    isImage: true,
-                                },
-                            },
-                        })
-                    );
+                    setContextMenuData({
+                        clickX: ev.clientX,
+                        clickY: ev.clientY,
+                        items: [
+                            window.contextMenuTemplate.copyImage(e),
+                            window.contextMenuTemplate.showInExplorer(e),
+                            window.contextMenuTemplate.copyPath(e),
+                        ],
+                    });
                     // showContextMenu({
                     //     isImg: true,
                     //     e: ev,
@@ -607,18 +604,15 @@ const Reader = () => {
                 img.setAttribute("data-pagenumber", JSON.stringify(i + 1));
                 img.classList.add("readerImg");
                 img.oncontextmenu = (ev) => {
-                    dispatch(
-                        setContextMenu({
-                            clickX: ev.clientX,
-                            clickY: ev.clientY,
-                            hasLink: {
-                                link: e,
-                                simple: {
-                                    isImage: true,
-                                },
-                            },
-                        })
-                    );
+                    setContextMenuData({
+                        clickX: ev.clientX,
+                        clickY: ev.clientY,
+                        items: [
+                            window.contextMenuTemplate.copyImage(e),
+                            window.contextMenuTemplate.showInExplorer(e),
+                            window.contextMenuTemplate.copyPath(e),
+                        ],
+                    });
                     // showContextMenu({
                     //     isImg: true,
                     //     e: ev,

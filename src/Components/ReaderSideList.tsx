@@ -8,15 +8,16 @@ import {
 } from "@fortawesome/free-solid-svg-icons";
 import { faBookmark as farBookmark } from "@fortawesome/free-regular-svg-icons";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import { memo, useEffect, useLayoutEffect, useRef, useState } from "react";
+import { memo, useEffect, useLayoutEffect, useRef, useState, useContext } from "react";
 import ReaderSideListItem from "./ReaderSideListItem";
 import { useAppDispatch, useAppSelector } from "../store/hooks";
 import { setLinkInReader } from "../store/linkInReader";
-import { updateCurrentHistoryPage } from "../store/history";
+// import { updateCurrentHistoryPage } from "../store/history";
 import { addBookmark, updateBookmark, removeBookmark } from "../store/bookmarks";
 import { setAppSettings } from "../store/appSettings";
 import { setPrevNextChapter } from "../store/prevNextChapter";
 import AnilistBar from "./anilist/AnilistBar";
+import { AppContext } from "../App";
 
 type ChapterData = { name: string; pages: number; link: string };
 
@@ -44,12 +45,14 @@ const ReaderSideList = memo(
         setSideListWidth: React.Dispatch<React.SetStateAction<number>>;
         makeScrollPos: () => void;
     }) => {
+        const { contextMenuData } = useContext(AppContext);
+
         const mangaInReader = useAppSelector((store) => store.mangaInReader);
         const history = useAppSelector((store) => store.history);
         const appSettings = useAppSelector((store) => store.appSettings);
         const prevNextChapter = useAppSelector((store) => store.prevNextChapter);
         const linkInReader = useAppSelector((store) => store.linkInReader);
-        const contextMenu = useAppSelector((store) => store.contextMenu);
+        // const contextMenu = useAppSelector((store) => store.contextMenu);
         const anilistToken = useAppSelector((store) => store.anilistToken);
         const dispatch = useAppDispatch();
 
@@ -58,14 +61,14 @@ const ReaderSideList = memo(
         const [filter, setFilter] = useState<string>("");
         const [isListOpen, setListOpen] = useState(false);
         const [preventListClose, setpreventListClose] = useState(false);
-        const prevMangaRef = useRef<string>("");
+        // const prevMangaRef = useRef<string>("");
         const [historySimple, setHistorySimple] = useState<string[]>([]);
         const [draggingResizer, setDraggingResizer] = useState(false);
 
         useEffect(() => {
-            if (!contextMenu && !isSideListPinned) return setListOpen(false);
+            if (!contextMenuData && !isSideListPinned) return setListOpen(false);
             setpreventListClose(true);
-        }, [contextMenu]);
+        }, [contextMenuData]);
         useEffect(() => {
             if (mangaInReader) {
                 const historyItem = history.find(
@@ -271,7 +274,11 @@ const ReaderSideList = memo(
                 }}
                 onMouseLeave={(e) => {
                     if (!isSideListPinned) {
-                        if (preventListClose && !contextMenu && !e.currentTarget.contains(document.activeElement))
+                        if (
+                            preventListClose &&
+                            !contextMenuData &&
+                            !e.currentTarget.contains(document.activeElement)
+                        )
                             setListOpen(false);
                         setpreventListClose(false);
                     }
