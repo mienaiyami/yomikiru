@@ -369,7 +369,7 @@ const Settings = (): ReactElement => {
             if (elem) {
                 elem.scrollIntoView({
                     block: "start",
-                    behavior: "smooth",
+                    behavior: "instant",
                 });
                 const color = elem.style.backgroundColor;
                 elem.style.backgroundColor = "yellow";
