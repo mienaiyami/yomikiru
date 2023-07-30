@@ -32,6 +32,15 @@ const ContextMenu = () => {
     //     if (visible) props?.realRef.current?.focus();
     // }, [visible]);
 
+    const onClick = (e: React.MouseEvent<HTMLDivElement, MouseEvent>) => {
+        e.stopPropagation();
+        const target = e.currentTarget;
+        // needed coz menu became null before triggering action
+        setTimeout(() => {
+            target.blur();
+        }, 100);
+    };
+
     return (
         contextMenuData && (
             <div
@@ -41,14 +50,8 @@ const ContextMenu = () => {
                     // setTimeout(() => dispatch(setContextMenu(null)), 100);
                     setContextMenuData(null);
                 }}
-                onClick={(e) => {
-                    e.stopPropagation();
-                    const target = e.currentTarget;
-                    // needed coz menu became null before triggering action
-                    setTimeout(() => {
-                        target.blur();
-                    }, 100);
-                }}
+                onClick={onClick}
+                onContextMenu={onClick}
                 ref={ref}
                 style={{
                     left: pos.x,
@@ -90,6 +93,7 @@ const ContextMenu = () => {
                             role="menuitem"
                             key={e.label}
                             onClick={e.action}
+                            onContextMenu={e.action}
                             data-focused={i === focused}
                             onMouseEnter={() => {
                                 setFocused(i);

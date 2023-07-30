@@ -1,7 +1,7 @@
-import { useContext, memo } from "react";
+import { useContext, memo, useEffect, useState } from "react";
 import { AppContext } from "../App";
 // import { setContextMenu } from "../store/contextMenu";
-import { useAppDispatch } from "../store/hooks";
+// import { useAppDispatch } from "../store/hooks";
 
 const ReaderSideListItem = memo(
     ({
@@ -17,10 +17,18 @@ const ReaderSideListItem = memo(
         alreadyRead: boolean;
         current: boolean;
     }) => {
-        const { openInReader, setContextMenuData } = useContext(AppContext);
+        const { openInReader, setContextMenuData, contextMenuData } = useContext(AppContext);
+        const [focused, setFocused] = useState(false);
+        useEffect(() => {
+            if (!contextMenuData) setFocused(false);
+        }, [contextMenuData]);
 
         return (
-            <li className={(alreadyRead ? "alreadyRead" : "") + " " + (current ? "current" : "")}>
+            <li
+                className={`${alreadyRead ? "alreadyRead" : ""} ${current ? "current" : ""} ${
+                    focused ? "focused" : ""
+                }`}
+            >
                 <a
                     onClick={() => openInReader(link)}
                     title={name}
@@ -28,6 +36,7 @@ const ReaderSideListItem = memo(
                         if (current && node !== null) node.scrollIntoView({ block: "nearest" });
                     }}
                     onContextMenu={(e) => {
+                        setFocused(true);
                         setContextMenuData({
                             clickX: e.clientX,
                             clickY: e.clientY,

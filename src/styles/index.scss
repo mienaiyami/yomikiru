@@ -814,6 +814,9 @@ body {
                             margin-left: auto;
                             margin-right: 5px;
                         }
+                        &.focused {
+                            background-color: var(--listItem-bg-color-hover);
+                        }
                         a {
                             cursor: pointer;
                             display: grid;

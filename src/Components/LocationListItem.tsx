@@ -1,6 +1,6 @@
 import { faAngleRight } from "@fortawesome/free-solid-svg-icons";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import { ReactElement, useContext } from "react";
+import { ReactElement, useContext, useState, useEffect } from "react";
 import { AppContext } from "../App";
 // import { setContextMenu } from "../store/contextMenu";
 import { useAppDispatch, useAppSelector } from "../store/hooks";
@@ -20,8 +20,9 @@ const LocationListItem = ({
      */
     inHistory: [number, number];
 }): ReactElement => {
-    const { openInReader, checkValidFolder, setContextMenuData } = useContext(AppContext);
+    const { openInReader, checkValidFolder, setContextMenuData, contextMenuData } = useContext(AppContext);
     const appSettings = useAppSelector((store) => store.appSettings);
+    const [focused, setFocused] = useState(false);
 
     const onClickHandle = (a = true) => {
         if (!window.fs.existsSync(link)) {
@@ -47,8 +48,13 @@ const LocationListItem = ({
         }
         if (a) setCurrentLink(link);
     };
+
+    useEffect(() => {
+        if (!contextMenuData) setFocused(false);
+    }, [contextMenuData]);
+
     return (
-        <li className={inHistory && inHistory[1] >= 0 ? "alreadyRead" : ""}>
+        <li className={`${inHistory && inHistory[1] >= 0 ? "alreadyRead" : ""} ${focused ? "focused" : ""}`}>
             <a
                 title={name}
                 onClick={(e) => {
@@ -78,6 +84,7 @@ const LocationListItem = ({
                     if (inHistory && inHistory[1] >= 0) {
                         items.push(window.contextMenuTemplate.unreadChapter(...inHistory));
                     }
+                    setFocused(true);
                     setContextMenuData({
                         clickX: e.clientX,
                         clickY: e.clientY,
