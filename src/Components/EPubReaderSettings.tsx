@@ -138,7 +138,7 @@ const EPUBReaderSettings = memo(
                                 max={maxWidth}
                                 onChange={(e) => {
                                     // makeScrollPos();
-                                    let value = e.target.valueAsNumber;
+                                    let value = e.valueAsNumber;
                                     if (!value) value = 0;
                                     value = value >= maxWidth ? maxWidth : value;
                                     return value;
@@ -147,7 +147,6 @@ const EPUBReaderSettings = memo(
                                     1000,
                                     (value) => dispatch(setEpubReaderSettings({ readerWidth: value })),
                                 ]}
-                                labeled={true}
                                 labelAfter="%"
                             />
                             <button
@@ -236,7 +235,7 @@ const EPUBReaderSettings = memo(
                                     max={100}
                                     onChange={(e) => {
                                         // makeScrollPos();
-                                        let value = e.target.valueAsNumber;
+                                        let value = e.valueAsNumber;
                                         if (!value) value = 0;
                                         value = value >= 100 ? 100 : value;
                                         return value;
@@ -245,7 +244,6 @@ const EPUBReaderSettings = memo(
                                         1000,
                                         (value) => dispatch(setEpubReaderSettings({ fontSize: value })),
                                     ]}
-                                    labeled={true}
                                     labelAfter="px"
                                 />
                                 <button
@@ -418,7 +416,7 @@ const EPUBReaderSettings = memo(
                                     value={appSettings.epubReaderSettings.lineSpacing}
                                     onChangeNum={(e) => {
                                         // makeScrollPos();
-                                        let value = e.currentTarget.valueAsNumber;
+                                        let value = e.valueAsNumber;
                                         if (value > 20) value = 20;
                                         if (value < 0) value = 0;
                                         return value;
@@ -446,7 +444,7 @@ const EPUBReaderSettings = memo(
                                     value={appSettings.epubReaderSettings.paragraphSpacing}
                                     onChangeNum={(e) => {
                                         // makeScrollPos();
-                                        let value = e.currentTarget.valueAsNumber;
+                                        let value = e.valueAsNumber;
                                         if (value > 20) value = 20;
                                         if (value < 0) value = 0;
                                         return value;
@@ -474,7 +472,7 @@ const EPUBReaderSettings = memo(
                                     value={appSettings.epubReaderSettings.wordSpacing}
                                     onChangeNum={(e) => {
                                         // makeScrollPos();
-                                        let value = e.currentTarget.valueAsNumber;
+                                        let value = e.valueAsNumber;
                                         if (value > 20) value = 20;
                                         if (value < 0) value = 0;
                                         return value;
@@ -804,7 +802,7 @@ const EPUBReaderSettings = memo(
                                 min={1}
                                 max={500}
                                 onChange={(e) => {
-                                    let value = e.currentTarget.valueAsNumber;
+                                    let value = e.valueAsNumber;
                                     if (value > 500) value = 500;
                                     if (value < 1) value = 1;
                                     return value;
@@ -813,7 +811,6 @@ const EPUBReaderSettings = memo(
                                     1000,
                                     (value) => dispatch(setEpubReaderSettings({ scrollSpeedA: value })),
                                 ]}
-                                labeled={true}
                                 labelBefore=" Scroll&nbsp;A&nbsp;:"
                                 labelAfter="px"
                             />
@@ -822,7 +819,7 @@ const EPUBReaderSettings = memo(
                                 min={1}
                                 max={500}
                                 onChange={(e) => {
-                                    let value = e.currentTarget.valueAsNumber;
+                                    let value = e.valueAsNumber;
                                     if (value > 500) value = 500;
                                     if (value < 1) value = 1;
                                     return value;
@@ -831,7 +828,6 @@ const EPUBReaderSettings = memo(
                                     1000,
                                     (value) => dispatch(setEpubReaderSettings({ scrollSpeedB: value })),
                                 ]}
-                                labeled={true}
                                 labelBefore=" Scroll&nbsp;B&nbsp;:"
                                 labelAfter="px"
                             />

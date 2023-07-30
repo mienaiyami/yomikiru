@@ -104,13 +104,12 @@ const AnilistEdit = () => {
                             <div>
                                 <InputNumber
                                     value={tempData.progress}
-                                    labeled
                                     labelBefore="Progress"
                                     className="noBG"
                                     min={0}
                                     max={20000}
                                     onChange={(e) => {
-                                        let value = e.currentTarget.valueAsNumber;
+                                        let value = e.valueAsNumber;
                                         if (!value) value = 0;
                                         if (value < 0) value = 0;
                                         if (value > 20000) value = 20000;
@@ -124,14 +123,13 @@ const AnilistEdit = () => {
                             <div>
                                 <InputNumber
                                     value={tempData.score}
-                                    labeled
                                     labelBefore="Score"
                                     className="noBG"
                                     min={0}
                                     max={10}
                                     step={0.5}
                                     onChange={(e) => {
-                                        let value = e.currentTarget.valueAsNumber;
+                                        let value = e.valueAsNumber;
                                         if (!value) value = 0;
                                         if (value < 0) value = 0;
                                         if (value > 10) value = 10;
@@ -234,13 +232,12 @@ const AnilistEdit = () => {
                             <div>
                                 <InputNumber
                                     value={tempData.repeat}
-                                    labeled
                                     labelBefore="Repeat"
                                     className="noBG"
                                     min={0}
                                     max={1000}
                                     onChange={(e) => {
-                                        let value = e.currentTarget.valueAsNumber;
+                                        let value = e.valueAsNumber;
                                         if (!value) value = 0;
                                         if (value < 0) value = 0;
                                         if (value > 1000) value = 1000;

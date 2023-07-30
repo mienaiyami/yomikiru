@@ -1,4 +1,6 @@
-import React, { useState, useLayoutEffect } from "react";
+import { faCaretDown, faCaretUp } from "@fortawesome/free-solid-svg-icons";
+import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
+import React, { useState, useLayoutEffect, useRef } from "react";
 
 const InputCheckboxNumber = ({
     onChangeNum,
@@ -13,6 +15,7 @@ const InputCheckboxNumber = ({
     min = "",
     step = 1,
     className = "",
+    noSpin = false,
     disabled = false,
     timeout,
 }: {
@@ -25,8 +28,9 @@ const InputCheckboxNumber = ({
     step?: number;
     value: number;
     checked: boolean;
+    noSpin?: boolean;
     onChangeCheck: React.ChangeEventHandler<HTMLInputElement>;
-    onChangeNum: (e: React.ChangeEvent<HTMLInputElement>) => void | number;
+    onChangeNum: (currentTarget: HTMLInputElement) => void | number;
     /**
      * `[time_in_ms, fn_on_timeout]`
      * `fn_on_timeout` is called after time had passed after `onChangeNum` and active element is event target
@@ -36,6 +40,8 @@ const InputCheckboxNumber = ({
     disabled?: boolean;
 }) => {
     const [valueProxy, setValueProxy] = useState(value);
+    const repeater = useRef<NodeJS.Timer | null>(null);
+    const inputRef = useRef<HTMLInputElement | null>(null);
     useLayoutEffect(() => {
         let timeoutid: NodeJS.Timeout;
         if (timeout) {
@@ -50,6 +56,82 @@ const InputCheckboxNumber = ({
     useLayoutEffect(() => {
         setValueProxy(value);
     }, [value]);
+
+    useLayoutEffect(() => {
+        return () => {
+            stopRepeater();
+        };
+    }, []);
+
+    const changeHandler = (currentTarget: HTMLInputElement) => {
+        if (!currentTarget.value) currentTarget.value = "0";
+        const aaa = onChangeNum(currentTarget);
+        if (aaa !== undefined) currentTarget.value = aaa.toString();
+        if (timeout) {
+            if (aaa === undefined) return console.error("InputCheckboxNumber:onChangeNum function must return.");
+            setValueProxy(aaa);
+        }
+    };
+    const stopRepeater = () => {
+        if (repeater.current) {
+            clearInterval(repeater.current);
+            setTimeout(() => {
+                if (inputRef.current) inputRef.current.focus();
+            }, 200);
+        }
+        repeater.current = null;
+    };
+    const ButtonUp = () => (
+        <button
+            className="spin"
+            onMouseUp={stopRepeater}
+            onMouseLeave={stopRepeater}
+            onMouseOut={stopRepeater}
+            onMouseDown={() => {
+                if (repeater.current) clearInterval(repeater.current);
+                repeater.current = setInterval(() => {
+                    if (inputRef.current) {
+                        const value = inputRef.current.valueAsNumber || parseFloat(min.toString());
+                        if (max && value + step > parseFloat(max.toString()))
+                            inputRef.current.value = max.toString();
+                        inputRef.current.value = parseFloat((value + step).toFixed(3)).toString();
+                        changeHandler(inputRef.current);
+                        // setTimeout(() => {
+                        //     if (inputRef.current) inputRef.current.focus();
+                        // }, 200);
+                    }
+                }, 100);
+            }}
+        >
+            <FontAwesomeIcon icon={faCaretUp} />
+        </button>
+    );
+
+    const ButtonDown = () => (
+        <button
+            className="spin"
+            onMouseUp={stopRepeater}
+            onMouseLeave={stopRepeater}
+            onMouseOut={stopRepeater}
+            onMouseDown={() => {
+                if (repeater.current) clearInterval(repeater.current);
+                repeater.current = setInterval(() => {
+                    if (inputRef.current) {
+                        const value = inputRef.current.valueAsNumber || parseFloat(min.toString());
+                        if (min && value - step < parseFloat(min.toString()))
+                            inputRef.current.value = min.toString();
+                        inputRef.current.value = parseFloat((value - step).toFixed(3)).toString();
+                        changeHandler(inputRef.current);
+                        // setTimeout(() => {
+                        //     if (inputRef.current) inputRef.current.focus();
+                        // }, 200);
+                    }
+                }, 100);
+            }}
+        >
+            <FontAwesomeIcon icon={faCaretDown} />
+        </button>
+    );
     return (
         <label className={(disabled ? "disabled " : "") + (checked ? "optionSelected " : "") + className}>
             <span className={`toggle-area ${checked ? "on" : "off"} `}>
@@ -58,29 +140,27 @@ const InputCheckboxNumber = ({
             <input type="checkbox" checked={checked} disabled={disabled} onChange={onChangeCheck} />
             {labelBefore}
             {paraBefore && <p>{paraBefore}</p>}
-            <input
-                type="number"
-                disabled={disabled || !checked}
-                value={valueProxy}
-                min={min}
-                max={max}
-                step={step}
-                onKeyDown={(e) => {
-                    if (e.key !== "Escape") {
-                        e.stopPropagation();
-                    }
-                }}
-                onChange={(e) => {
-                    if (!e.currentTarget.value) e.currentTarget.value = "0";
-                    const aaa = onChangeNum(e);
-                    if (aaa !== undefined) e.currentTarget.value = aaa.toString();
-                    if (timeout) {
-                        if (aaa === undefined)
-                            return console.error("InputCheckboxNumber:onChangeNum function must return.");
-                        setValueProxy(aaa);
-                    }
-                }}
-            />
+            <span className={"input " + (disabled || !checked ? "disabled " : "")}>
+                <input
+                    type="number"
+                    ref={inputRef}
+                    disabled={disabled || !checked}
+                    value={valueProxy}
+                    min={min}
+                    max={max}
+                    step={step}
+                    onKeyDown={(e) => {
+                        if (e.key !== "Escape") {
+                            e.stopPropagation();
+                        }
+                    }}
+                    onChange={(e) => {
+                        changeHandler(e.currentTarget);
+                    }}
+                />
+                {!noSpin && <ButtonUp />}
+                {!noSpin && <ButtonDown />}
+            </span>
             {paraAfter && <p>{paraAfter}</p>}
             {labelAfter}
         </label>

@@ -302,7 +302,48 @@ body {
             height: 6px;
         }
     }
-
+    .input:not(#dummy#dummy):has(input[type="number"], .spin) {
+        position: relative;
+        overflow: hidden;
+        border-radius: 4px;
+        // width: 100%;
+        height: 100%;
+        input {
+        }
+        &:hover {
+            .spin {
+                visibility: visible;
+            }
+        }
+        &.disabled {
+            .spin {
+                display: none;
+            }
+        }
+        .spin {
+            position: absolute;
+            visibility: hidden;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 0;
+            right: 0;
+            height: 50%;
+            width: 1.5em;
+            border-radius: 0;
+            top: 0;
+            // for consistency
+            font-size: 1.2rem;
+            min-width: auto;
+            &:nth-of-type(2) {
+                top: 50%;
+            }
+            &:focus,
+            &:active {
+                box-shadow: none;
+            }
+        }
+    }
     input[type="text"],
     input[type="number"] {
         background: var(--text-input-bg);
@@ -327,24 +368,28 @@ body {
         }
         &::-webkit-outer-spin-button,
         &::-webkit-inner-spin-button {
-            /* scale: 1.4; */
-            position: absolute;
-            height: 100%;
-            top: 0;
-            scale: 1.5;
-            right: 4px;
+            //removing coz have custom now
+            appearance: none;
+            margin: 0;
+
+            // /* scale: 1.4; */
+            // position: absolute;
+            // height: 100%;
+            // top: 0;
+            // scale: 1.5;
+            // right: 4px;
         }
         &::placeholder {
             color: currentColor;
             opacity: 0.4;
         }
-        &.noSpin {
-            &::-webkit-outer-spin-button,
-            &::-webkit-inner-spin-button {
-                -webkit-appearance: none;
-                margin: 0;
-            }
-        }
+        // &.noSpin {
+        //     &::-webkit-outer-spin-button,
+        //     &::-webkit-inner-spin-button {
+        //         -webkit-appearance: none;
+        //         margin: 0;
+        //     }
+        // }
     }
     input[type="date"] {
         background: var(--text-input-bg);
@@ -1974,6 +2019,9 @@ body {
                                 input {
                                     text-align: center;
                                 }
+                                .input {
+                                    width: 100%;
+                                }
                             }
                         }
                     }
@@ -2239,7 +2287,7 @@ body {
                         > :nth-child(2n) {
                             width: 20%;
                         }
-                        > input {
+                        > .input input {
                             text-align: center;
                         }
                     }

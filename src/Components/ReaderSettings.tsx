@@ -119,14 +119,13 @@ const ReaderSettings = memo(
                                 onChange={(e) => {
                                     makeScrollPos();
 
-                                    let value = e.target.valueAsNumber;
+                                    let value = e.valueAsNumber;
                                     if (!value) value = 0;
                                     value = value >= maxWidth ? maxWidth : value;
 
                                     return value;
                                 }}
                                 timeout={[1000, (value) => dispatch(setReaderSettings({ readerWidth: value }))]}
-                                labeled={true}
                                 disabled={appSettings.readerSettings.fitOption !== 0}
                                 labelAfter="%"
                             />
@@ -287,7 +286,7 @@ const ReaderSettings = memo(
                                         appSettings.readerSettings.fitOption !== 0
                                     }
                                     onChangeNum={(e) => {
-                                        let value = e.currentTarget.valueAsNumber;
+                                        let value = e.valueAsNumber;
                                         if (value > 5000) value = 5000;
                                         if (value < 0) value = 0;
                                         return value;
@@ -316,7 +315,7 @@ const ReaderSettings = memo(
                                         appSettings.readerSettings.fitOption !== 0
                                     }
                                     onChangeNum={(e) => {
-                                        let value = e.currentTarget.valueAsNumber;
+                                        let value = e.valueAsNumber;
                                         if (value > 5000) value = 5000;
                                         if (value < 0) value = 0;
                                         return value;
@@ -530,13 +529,12 @@ const ReaderSettings = memo(
                                 max={500}
                                 value={appSettings.readerSettings.scrollSpeedA}
                                 onChange={(e) => {
-                                    let value = e.currentTarget.valueAsNumber;
+                                    let value = e.valueAsNumber;
                                     if (value > 500) value = 500;
                                     if (value < 1) value = 1;
                                     return value;
                                 }}
                                 timeout={[1000, (value) => dispatch(setReaderSettings({ scrollSpeedA: value }))]}
-                                labeled
                                 labelBefore="Scroll&nbsp;A&nbsp;:"
                                 labelAfter="px"
                             />
@@ -545,13 +543,12 @@ const ReaderSettings = memo(
                                 max={500}
                                 value={appSettings.readerSettings.scrollSpeedB}
                                 onChange={(e) => {
-                                    let value = e.currentTarget.valueAsNumber;
+                                    let value = e.valueAsNumber;
                                     if (value > 500) value = 500;
                                     if (value < 1) value = 1;
                                     return value;
                                 }}
                                 timeout={[1000, (value) => dispatch(setReaderSettings({ scrollSpeedB: value }))]}
-                                labeled
                                 labelBefore="Scroll&nbsp;B&nbsp;:"
                                 labelAfter="px"
                             />
@@ -800,7 +797,7 @@ const ReaderSettings = memo(
                                 value={appSettings.readerSettings.gapSize}
                                 min={0}
                                 onChangeNum={(e) => {
-                                    let value = e.target.valueAsNumber;
+                                    let value = e.valueAsNumber;
                                     if (!value) value = 0;
                                     return value;
                                 }}

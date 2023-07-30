@@ -1,4 +1,6 @@
-import React, { useState, useLayoutEffect } from "react";
+import { faCaretDown, faCaretUp } from "@fortawesome/free-solid-svg-icons";
+import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
+import React, { useState, useLayoutEffect, useRef } from "react";
 
 const InputNumber = ({
     onChange,
@@ -10,9 +12,9 @@ const InputNumber = ({
     max = "",
     min = "",
     step = 1,
-    labeled = false,
     className = "",
     disabled = false,
+    noSpin = false,
     title,
     timeout,
 }: {
@@ -25,7 +27,8 @@ const InputNumber = ({
     max?: number | string;
     step?: number;
     value: number;
-    onChange: (e: React.ChangeEvent<HTMLInputElement>) => void | number;
+    noSpin?: boolean;
+    onChange: (currentTarget: HTMLInputElement) => void | number;
     /**
      * `[time_in_ms, fn_on_timeout]`
      * `fn_on_timeout` is called after time had passed after `onChange` and active element is event target
@@ -36,7 +39,9 @@ const InputNumber = ({
     disabled?: boolean;
 }) => {
     const [valueProxy, setValueProxy] = useState(value);
+    const repeater = useRef<NodeJS.Timer | null>(null);
     // const [lastEvent, setLastEvent] = useState<React.ChangeEvent<HTMLInputElement> | null>(null);
+    const inputRef = useRef<HTMLInputElement | null>(null);
     useLayoutEffect(() => {
         let timeoutid: NodeJS.Timeout;
         if (timeout) {
@@ -49,15 +54,122 @@ const InputNumber = ({
         };
     }, [valueProxy]);
     useLayoutEffect(() => {
+        // stopRepeater();
         setValueProxy(value);
     }, [value]);
-    if (labeled) {
+
+    useLayoutEffect(() => {
+        return () => {
+            stopRepeater();
+        };
+    }, []);
+
+    const changeHandler = (currentTarget: HTMLInputElement) => {
+        if (!currentTarget.value) currentTarget.value = "0";
+        const aaa = onChange(currentTarget);
+        if (aaa !== undefined) currentTarget.value = aaa.toString();
+        if (timeout) {
+            if (aaa === undefined) return console.error("InputNumber:onChange function must return.");
+            setValueProxy(aaa);
+        }
+    };
+    const stopRepeater = () => {
+        if (repeater.current) {
+            clearInterval(repeater.current);
+            setTimeout(() => {
+                if (inputRef.current) inputRef.current.focus();
+            }, 200);
+        }
+        repeater.current = null;
+    };
+    const ButtonUp = () => (
+        <button
+            className="spin"
+            onMouseUp={stopRepeater}
+            onMouseLeave={stopRepeater}
+            onMouseOut={stopRepeater}
+            onMouseDown={() => {
+                if (repeater.current) clearInterval(repeater.current);
+                repeater.current = setInterval(() => {
+                    if (inputRef.current) {
+                        const value = inputRef.current.valueAsNumber || parseFloat(min.toString());
+                        if (max && value + step > parseFloat(max.toString()))
+                            inputRef.current.value = max.toString();
+                        inputRef.current.value = parseFloat((value + step).toFixed(3)).toString();
+                        changeHandler(inputRef.current);
+                        // setTimeout(() => {
+                        //     if (inputRef.current) inputRef.current.focus();
+                        // }, 200);
+                    }
+                }, 100);
+            }}
+        >
+            <FontAwesomeIcon icon={faCaretUp} />
+        </button>
+    );
+
+    const ButtonDown = () => (
+        <button
+            className="spin"
+            onMouseUp={stopRepeater}
+            onMouseLeave={stopRepeater}
+            onMouseOut={stopRepeater}
+            onMouseDown={() => {
+                if (repeater.current) clearInterval(repeater.current);
+                repeater.current = setInterval(() => {
+                    if (inputRef.current) {
+                        const value = inputRef.current.valueAsNumber || parseFloat(min.toString());
+                        if (min && value - step < parseFloat(min.toString()))
+                            inputRef.current.value = min.toString();
+                        inputRef.current.value = parseFloat((value - step).toFixed(3)).toString();
+                        changeHandler(inputRef.current);
+                        // setTimeout(() => {
+                        //     if (inputRef.current) inputRef.current.focus();
+                        // }, 200);
+                    }
+                }, 100);
+            }}
+        >
+            <FontAwesomeIcon icon={faCaretDown} />
+        </button>
+    );
+
+    if (labelAfter || labelBefore || paraAfter || paraBefore) {
         return (
             <label className={(disabled ? "disabled " : "") + className} title={title}>
                 {labelBefore}
-                {paraBefore && <p>{paraBefore}</p>}
+                {paraBefore && <p>{paraBefore}</p>}{" "}
+                <span className={"input " + (disabled ? "disabled " : "")}>
+                    <input
+                        type="number"
+                        ref={inputRef}
+                        disabled={disabled}
+                        value={valueProxy}
+                        min={min}
+                        max={max}
+                        step={step}
+                        onKeyDown={(e) => {
+                            if (e.key !== "Escape") {
+                                e.stopPropagation();
+                            }
+                        }}
+                        onChange={(e) => {
+                            changeHandler(e.currentTarget);
+                        }}
+                    />
+                    {!noSpin && <ButtonUp />}
+                    {!noSpin && <ButtonDown />}
+                </span>
+                {paraAfter && <p>{paraAfter}</p>}
+                {labelAfter}
+            </label>
+        );
+    } else
+        return (
+            <span className={"input " + (disabled ? "disabled " : "")}>
                 <input
                     type="number"
+                    ref={inputRef}
                     disabled={disabled}
                     value={valueProxy}
                     min={min}
@@ -69,44 +181,13 @@ const InputNumber = ({
                         }
                     }}
                     onChange={(e) => {
-                        if (!e.currentTarget.value) e.currentTarget.value = "0";
-                        const aaa = onChange(e);
-                        if (aaa !== undefined) e.currentTarget.value = aaa.toString();
-                        if (timeout) {
-                            if (aaa === undefined)
-                                return console.error("InputNumber:onChange function must return.");
-                            setValueProxy(aaa);
-                        }
+                        changeHandler(e.currentTarget);
                     }}
+                    title={title}
                 />
-                {paraAfter && <p>{paraAfter}</p>}
-                {labelAfter}
-            </label>
-        );
-    } else
-        return (
-            <input
-                type="number"
-                className={className}
-                disabled={disabled}
-                value={valueProxy}
-                min={min}
-                max={max}
-                step={step}
-                onKeyDown={(e) => {
-                    if (e.key !== "Escape") {
-                        e.stopPropagation();
-                    }
-                }}
-                onChange={(e) => {
-                    const aaa = onChange(e);
-                    if (timeout) {
-                        if (aaa === undefined) return console.error("InputNumber:onChange function must return.");
-                        setValueProxy(aaa);
-                    }
-                }}
-                title={title}
-            />
+                {!noSpin && <ButtonUp />}
+                {!noSpin && <ButtonDown />}
+            </span>
         );
 };
 

@@ -65,9 +65,9 @@ const AnilistBar = memo(() => {
                 </button>
                 <InputNumber
                     value={progress}
-                    className="noSpin"
+                    noSpin
                     onChange={(e) => {
-                        let value = parseInt(e.currentTarget.value);
+                        let value = parseInt(e.value);
                         if (!value || value < 0) value = 0;
                         setProgress(value);
                     }}
