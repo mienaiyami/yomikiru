@@ -62,7 +62,9 @@ const ReaderSideList = memo(
         const [isListOpen, setListOpen] = useState(false);
         const [preventListClose, setpreventListClose] = useState(false);
         // const prevMangaRef = useRef<string>("");
-        const [historySimple, setHistorySimple] = useState<string[]>([]);
+
+        // number is index of manga in history
+        const [historySimple, setHistorySimple] = useState<[number, string[]]>([-1, []]);
         const [draggingResizer, setDraggingResizer] = useState(false);
 
         const [focused, setFocused] = useState(-1);
@@ -74,15 +76,16 @@ const ReaderSideList = memo(
         }, [contextMenuData]);
         useEffect(() => {
             if (mangaInReader) {
-                const historyItem = history.find(
+                const historyIndex = history.findIndex(
                     (e) => (e as MangaHistoryItem).data.mangaLink === window.path.dirname(mangaInReader.link)
                 );
-                if (historyItem)
-                    setHistorySimple(
-                        (historyItem as MangaHistoryItem).data.chaptersRead.map((e) =>
+                if (history[historyIndex])
+                    setHistorySimple([
+                        historyIndex,
+                        (history[historyIndex] as MangaHistoryItem).data.chaptersRead.map((e) =>
                             window.app.replaceExtension(e)
-                        )
-                    );
+                        ),
+                    ]);
             }
         }, [history]);
         useLayoutEffect(() => {
@@ -482,7 +485,7 @@ const ReaderSideList = memo(
                             ).map((e, i, arr) => (
                                 <ReaderSideListItem
                                     name={e.name}
-                                    alreadyRead={historySimple.includes(e.name)}
+                                    inHistory={[historySimple[0], historySimple[1].findIndex((a) => a === e.name)]}
                                     focused={focused % arr.length === i}
                                     key={e.name}
                                     pages={e.pages}

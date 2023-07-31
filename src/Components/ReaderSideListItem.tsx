@@ -8,14 +8,18 @@ const ReaderSideListItem = memo(
         name,
         pages,
         link,
-        alreadyRead,
+        inHistory,
         current,
         focused,
     }: {
         name: string;
         pages: number;
         link: string;
-        alreadyRead: boolean;
+        /**
+         * `[0]` - index of manga in history
+         * `[1]` - index of chapter in manga chapter read
+         */
+        inHistory: [number, number];
         current: boolean;
         focused: boolean;
     }) => {
@@ -27,8 +31,8 @@ const ReaderSideListItem = memo(
 
         return (
             <li
-                className={`${alreadyRead ? "alreadyRead" : ""} ${current ? "current" : ""} ${
-                    focused ? "focused" : ""
+                className={`${inHistory && inHistory[1] >= 0 ? "alreadyRead" : ""} ${current ? "current" : ""} ${
+                    contextMenuFocused ? "focused" : ""
                 }`}
                 data-focused={focused}
                 ref={(node) => {
@@ -42,16 +46,20 @@ const ReaderSideListItem = memo(
                         if (current && node !== null) node.scrollIntoView({ block: "nearest" });
                     }}
                     onContextMenu={(e) => {
+                        const items = [
+                            window.contextMenuTemplate.open(link),
+                            window.contextMenuTemplate.openInNewWindow(link),
+                            window.contextMenuTemplate.showInExplorer(link),
+                            window.contextMenuTemplate.copyPath(link),
+                        ];
+                        if (inHistory && inHistory[1] >= 0) {
+                            items.push(window.contextMenuTemplate.unreadChapter(...inHistory));
+                        }
                         setContextMenuFocused(true);
                         setContextMenuData({
                             clickX: e.clientX,
                             clickY: e.clientY,
-                            items: [
-                                window.contextMenuTemplate.open(link),
-                                window.contextMenuTemplate.openInNewWindow(link),
-                                window.contextMenuTemplate.showInExplorer(link),
-                                window.contextMenuTemplate.copyPath(link),
-                            ],
+                            items,
                         });
                     }}
                 >
