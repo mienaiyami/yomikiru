@@ -1050,8 +1050,9 @@ export function promptSelectDir(
     });
 
     if (!result) return;
-
-    const path = asFile ? (multi ? result : result[0]) : window.path.normalize(result[0] + window.path.sep);
+    // todo, why need window.path.sep
+    // const path = asFile ? (multi ? result : result[0]) : window.path.normalize(result[0] + window.path.sep);
+    const path = asFile ? (multi ? result : result[0]) : window.path.normalize(result[0]);
     cb && cb(path);
 }
 export const renderPDF = (

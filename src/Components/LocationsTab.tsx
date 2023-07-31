@@ -15,7 +15,7 @@ const LocationsTab = (): ReactElement => {
     const appSettings = useAppSelector((store) => store.appSettings);
     const dispatch = useAppDispatch();
 
-    const [currentLink, setCurrentLink] = useState(appSettings.baseDir);
+    const [currentLink, setCurrentLink] = useState(window.path.resolve(appSettings.baseDir));
 
     const [locations, setLocations] = useState<LocationData[]>([]);
     const [isLoadingFile, setIsLoadingFile] = useState(true);
@@ -38,7 +38,7 @@ const LocationsTab = (): ReactElement => {
                 return;
             }
             window.dialog.customError({ message: "Directory/File doesn't exist." });
-            setCurrentLink(appSettings.baseDir);
+            setCurrentLink(window.path.resolve(appSettings.baseDir));
             return;
         }
 
@@ -95,7 +95,9 @@ const LocationsTab = (): ReactElement => {
             });
         }
     };
-    useLayoutEffect(() => setCurrentLink(appSettings.baseDir), [appSettings.baseDir]);
+    useLayoutEffect(() => {
+        if (currentLink !== appSettings.baseDir) setCurrentLink(window.path.resolve(appSettings.baseDir));
+    }, [appSettings.baseDir]);
     useLayoutEffect(() => {
         const watcher = window.chokidar.watch(currentLink, {
             depth: 0,
@@ -122,6 +124,8 @@ const LocationsTab = (): ReactElement => {
         }
     }, [inputRef]);
     const realList = (locations: LocationData[], filter: string) => {
+        // todo, move historyIndex outside or use like readerSideList
+        console.log(history);
         return locations.reduce((prev, e) => {
             const historyIndex =
                 (window.fs.existsSync(e.link) &&
@@ -134,6 +138,7 @@ const LocationsTab = (): ReactElement => {
                               (e as MangaHistoryItem).data.mangaLink.toLowerCase() === currentLink.toLowerCase()
                       );
             let historyChapterIndex = -1;
+            console.log(historyIndex);
             if (historyIndex >= 0)
                 historyChapterIndex = (history[historyIndex] as MangaHistoryItem).data.chaptersRead.findIndex(
                     (a) => a === e.link.split(window.path.sep).pop() || ""
