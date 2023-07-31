@@ -125,7 +125,6 @@ const LocationsTab = (): ReactElement => {
     }, [inputRef]);
     const realList = (locations: LocationData[], filter: string) => {
         // todo, move historyIndex outside or use like readerSideList
-        console.log(history);
         return locations.reduce((prev, e) => {
             const historyIndex =
                 (window.fs.existsSync(e.link) &&
@@ -138,7 +137,6 @@ const LocationsTab = (): ReactElement => {
                               (e as MangaHistoryItem).data.mangaLink.toLowerCase() === currentLink.toLowerCase()
                       );
             let historyChapterIndex = -1;
-            console.log(historyIndex);
             if (historyIndex >= 0)
                 historyChapterIndex = (history[historyIndex] as MangaHistoryItem).data.chaptersRead.findIndex(
                     (a) => a === e.link.split(window.path.sep).pop() || ""
