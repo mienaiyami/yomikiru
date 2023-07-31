@@ -408,13 +408,16 @@ const App = (): ReactElement => {
     };
 
     const openInNewWindow = (link: string) => {
-        checkValidFolder(
-            link,
-            (isValid) => {
-                if (isValid) window.electron.ipcRenderer.send("openLinkInNewWindow", link);
-            },
-            false
-        );
+        if (link.toLowerCase().includes(".epub") && window.fs.existsSync(link))
+            window.electron.ipcRenderer.send("openLinkInNewWindow", link);
+        else
+            checkValidFolder(
+                link,
+                (isValid) => {
+                    if (isValid) window.electron.ipcRenderer.send("openLinkInNewWindow", link);
+                },
+                false
+            );
     };
 
     useLayoutEffect(() => {
