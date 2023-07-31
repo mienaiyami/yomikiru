@@ -10,17 +10,19 @@ const ReaderSideListItem = memo(
         link,
         alreadyRead,
         current,
+        focused,
     }: {
         name: string;
         pages: number;
         link: string;
         alreadyRead: boolean;
         current: boolean;
+        focused: boolean;
     }) => {
         const { openInReader, setContextMenuData, contextMenuData } = useContext(AppContext);
-        const [focused, setFocused] = useState(false);
+        const [contextMenuFocused, setContextMenuFocused] = useState(false);
         useEffect(() => {
-            if (!contextMenuData) setFocused(false);
+            if (!contextMenuData) setContextMenuFocused(false);
         }, [contextMenuData]);
 
         return (
@@ -28,6 +30,10 @@ const ReaderSideListItem = memo(
                 className={`${alreadyRead ? "alreadyRead" : ""} ${current ? "current" : ""} ${
                     focused ? "focused" : ""
                 }`}
+                data-focused={focused}
+                ref={(node) => {
+                    if (node && focused) node.scrollIntoView({ block: "nearest" });
+                }}
             >
                 <a
                     onClick={() => openInReader(link)}
@@ -36,7 +42,7 @@ const ReaderSideListItem = memo(
                         if (current && node !== null) node.scrollIntoView({ block: "nearest" });
                     }}
                     onContextMenu={(e) => {
-                        setFocused(true);
+                        setContextMenuFocused(true);
                         setContextMenuData({
                             clickX: e.clientX,
                             clickY: e.clientY,

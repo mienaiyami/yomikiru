@@ -65,6 +65,9 @@ const ReaderSideList = memo(
         const [historySimple, setHistorySimple] = useState<string[]>([]);
         const [draggingResizer, setDraggingResizer] = useState(false);
 
+        const [focused, setFocused] = useState(-1);
+        const locationContRef = useRef<HTMLDivElement>(null);
+
         useEffect(() => {
             if (!contextMenuData && !isSideListPinned) return setListOpen(false);
             setpreventListClose(true);
@@ -101,6 +104,7 @@ const ReaderSideList = memo(
             if (chapterData.length >= 0) changePrevNext();
         }, [chapterData]);
         const makeChapterList = async () => {
+            // setFocused(-1);
             if (mangaInReader) {
                 const dir = mangaInReader.link.replace(mangaInReader.chapterName, "");
                 window.fs.readdir(dir, (err, files) => {
@@ -174,38 +178,11 @@ const ReaderSideList = memo(
                 });
             }
         };
-        // const refreshList = () => {
-        //     console.log("aaa");
-        //     if (mangaInReader) {
-        //         // if (prevMangaRef.current === mangaInReader.mangaName) {
-        //         //     changePrevNext();
-        //         //     return;
-        //         // }
-        //         // prevMangaRef.current = mangaInReader.mangaName;
-        //         makeChapterList();
-        //     }
-        // };
         useLayoutEffect(() => {
             // refreshList();
 
             makeChapterList();
             if (mangaInReader) {
-                // const watcher = window.chokidar.watch(mangaInReader.link.replace(mangaInReader.chapterName, ""), {
-                //     atomic: 1000,
-                //     depth: 0,
-                //     ignoreInitial: true,
-                //     interval: 2000,
-                // });
-                // // watcher.on("raw", (e) => {
-                // //     console.log("raw", e);
-                // //     // refreshList();
-                // // });
-                // watcher.on("all", (e, path) => {
-                //     console.log("all", e, path);
-                // });
-                // // watcher.on("change", (e) => {
-                // //     console.log("change", e);
-                // // });
                 let interval: NodeJS.Timer;
                 if (appSettings.autoRefreshSideList)
                     interval = setInterval(() => {
@@ -219,20 +196,10 @@ const ReaderSideList = memo(
                 };
             }
         }, [mangaInReader, appSettings.autoRefreshSideList]);
-        const List = (chapterData: ChapterData[], filter: string) => {
-            return chapterData.map((e) => {
+        const realList = (chapterData: ChapterData[], filter: string) => {
+            return chapterData.filter((e) => {
                 if (mangaInReader && new RegExp(filter, "ig").test(e.name)) {
-                    const current = mangaInReader?.link === e.link;
-                    return (
-                        <ReaderSideListItem
-                            name={e.name}
-                            alreadyRead={historySimple.includes(e.name)}
-                            key={e.name}
-                            pages={e.pages}
-                            current={current}
-                            link={e.link}
-                        />
-                    );
+                    return true;
                 }
             });
         };
@@ -334,7 +301,11 @@ const ReaderSideList = memo(
                                 for (let i = 0; i < val.length; i++) {
                                     filter += val[i] + ".*";
                                 }
+                                setFocused(-1);
                                 setFilter(filter);
+                            }}
+                            onBlur={() => {
+                                setFocused(-1);
                             }}
                             onKeyDown={(e) => {
                                 e.stopPropagation();
@@ -343,6 +314,30 @@ const ReaderSideList = memo(
                                 }
                                 if (e.key === "Escape") {
                                     e.currentTarget.blur();
+                                }
+                                switch (e.key) {
+                                    case "ArrowDown":
+                                        setFocused((init) => {
+                                            if (init + 1 >= chapterData.length) return 0;
+                                            return init + 1;
+                                        });
+                                        break;
+                                    case "ArrowUp":
+                                        setFocused((init) => {
+                                            if (init - 1 < 0) return chapterData.length - 1;
+                                            return init - 1;
+                                        });
+                                        break;
+                                    case "Enter": {
+                                        const elem = locationContRef.current?.querySelector(
+                                            '[data-focused="true"] a'
+                                        ) as HTMLLIElement | null;
+                                        console.log(elem);
+                                        if (elem) elem.click();
+                                        break;
+                                    }
+                                    default:
+                                        break;
                                 }
                             }}
                         />
@@ -476,14 +471,25 @@ const ReaderSideList = memo(
                     </div>
                 </div>
                 {anilistToken && <AnilistBar />}
-                <div className="location-cont">
+                <div className="location-cont" ref={locationContRef}>
                     {chapterData.length <= 0 ? (
                         <p>Loading...</p>
                     ) : (
                         <ol>
-                            {appSettings.locationListSortType === "inverse"
-                                ? List([...chapterData], filter).reverse()
-                                : List(chapterData, filter)}
+                            {(appSettings.locationListSortType === "inverse"
+                                ? realList([...chapterData], filter).reverse()
+                                : realList(chapterData, filter)
+                            ).map((e, i, arr) => (
+                                <ReaderSideListItem
+                                    name={e.name}
+                                    alreadyRead={historySimple.includes(e.name)}
+                                    focused={focused % arr.length === i}
+                                    key={e.name}
+                                    pages={e.pages}
+                                    current={mangaInReader?.link === e.link}
+                                    link={e.link}
+                                />
+                            ))}
                         </ol>
                     )}
                 </div>
