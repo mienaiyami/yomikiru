@@ -554,10 +554,25 @@ const Reader = () => {
                 canvas.setAttribute("data-pagenumber", JSON.stringify(i + 1));
                 canvas.classList.add("readerImg");
                 canvas.oncontextmenu = (ev) => {
+                    ev.stopPropagation();
                     setContextMenuData({
                         clickX: ev.clientX,
                         clickY: ev.clientY,
                         items: [
+                            {
+                                label: "Toggle Zen Mode",
+                                disabled: false,
+                                action() {
+                                    setZenMode((init) => !init);
+                                },
+                            },
+                            {
+                                label: "Bookmark",
+                                disabled: false,
+                                action() {
+                                    addToBookmarkRef.current?.click();
+                                },
+                            },
                             window.contextMenuTemplate.copyImage(e),
                             window.contextMenuTemplate.showInExplorer(e),
                             window.contextMenuTemplate.copyPath(e),
@@ -604,10 +619,25 @@ const Reader = () => {
                 img.setAttribute("data-pagenumber", JSON.stringify(i + 1));
                 img.classList.add("readerImg");
                 img.oncontextmenu = (ev) => {
+                    ev.stopPropagation();
                     setContextMenuData({
                         clickX: ev.clientX,
                         clickY: ev.clientY,
                         items: [
+                            {
+                                label: "Toggle Zen Mode",
+                                disabled: false,
+                                action() {
+                                    setZenMode((init) => !init);
+                                },
+                            },
+                            {
+                                label: "Bookmark",
+                                disabled: false,
+                                action() {
+                                    addToBookmarkRef.current?.click();
+                                },
+                            },
                             window.contextMenuTemplate.copyImage(e),
                             window.contextMenuTemplate.showInExplorer(e),
                             window.contextMenuTemplate.copyPath(e),
@@ -1039,6 +1069,33 @@ const Reader = () => {
                 onScroll={() => {
                     if (appSettings.readerSettings.readerTypeSelected === 0 && isSideListPinned)
                         changePageNumber();
+                }}
+                onContextMenu={(e) => {
+                    e.stopPropagation();
+                    const items = [
+                        {
+                            label: "Toggle Zen Mode",
+                            disabled: false,
+                            action() {
+                                setZenMode((init) => !init);
+                            },
+                        },
+                        {
+                            label: "Bookmark",
+                            disabled: false,
+                            action() {
+                                addToBookmarkRef.current?.click();
+                            },
+                        },
+                        window.contextMenuTemplate.openInNewWindow(linkInReader.link),
+                        window.contextMenuTemplate.showInExplorer(linkInReader.link),
+                        window.contextMenuTemplate.copyPath(linkInReader.link),
+                    ];
+                    setContextMenuData({
+                        clickX: e.clientX,
+                        clickY: e.clientY,
+                        items,
+                    });
                 }}
                 onDoubleClick={(e) => {
                     const abc = prevNextDeciderLogic();

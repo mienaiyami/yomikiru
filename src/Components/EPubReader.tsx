@@ -167,6 +167,7 @@ const HTMLPart = memo(
         const { setContextMenuData } = useContext(AppContext);
         const [rendered, setRendered] = useState(false);
         const onContextMenu = (ev: MouseEvent) => {
+            ev.stopPropagation();
             const url = (ev.currentTarget as Element).getAttribute("src") || "";
             setContextMenuData({
                 clickX: ev.clientX,
@@ -287,7 +288,7 @@ const HTMLPart = memo(
 // });
 
 const EPubReader = () => {
-    const { bookProgressRef } = useContext(AppContext);
+    const { bookProgressRef, setContextMenuData } = useContext(AppContext);
 
     const appSettings = useAppSelector((store) => store.appSettings);
     const shortcuts = useAppSelector((store) => store.shortcuts);
@@ -1126,6 +1127,33 @@ const EPubReader = () => {
                     "--epub-background-color": appSettings.epubReaderSettings.useDefault_backgroundColor
                         ? "var(--body-bg-color)"
                         : appSettings.epubReaderSettings.backgroundColor,
+                }}
+                onContextMenu={(e) => {
+                    e.stopPropagation();
+                    const items = [
+                        {
+                            label: "Toggle Zen Mode",
+                            disabled: false,
+                            action() {
+                                setZenMode((init) => !init);
+                            },
+                        },
+                        {
+                            label: "Bookmark",
+                            disabled: false,
+                            action() {
+                                addToBookmarkRef.current?.click();
+                            },
+                        },
+                        window.contextMenuTemplate.openInNewWindow(linkInReader.link),
+                        window.contextMenuTemplate.showInExplorer(linkInReader.link),
+                        window.contextMenuTemplate.copyPath(linkInReader.link),
+                    ];
+                    setContextMenuData({
+                        clickX: e.clientX,
+                        clickY: e.clientY,
+                        items,
+                    });
                 }}
                 onClick={(e) => {
                     if (readerRef.current && appSettings.epubReaderSettings.loadOneChapter) {
