@@ -1226,24 +1226,46 @@ const Settings = (): ReactElement => {
                                         onClick={(e) => {
                                             const target = e.currentTarget;
                                             target.disabled = true;
-                                            setTimeout(() => {
-                                                target.disabled = false;
-                                            }, 6000);
-                                            window.fs.readdir(tempFolder, (err, files) => {
-                                                if (err) return window.logger.error(err);
-                                                files
-                                                    .filter((e) => e.startsWith("yomikiru"))
-                                                    .map((e) => window.path.join(tempFolder, e))
-                                                    .forEach(
-                                                        (e) =>
-                                                            window.fs.existsSync(e) &&
-                                                            window.fs.rm(
-                                                                e,
-                                                                { force: true, recursive: true },
-                                                                (err) => window.logger.error(err)
-                                                            )
-                                                    );
-                                            });
+                                            window.electron.dialog
+                                                .showMessageBox(window.electron.getCurrentWindow(), {
+                                                    message: "Clear all extracted/rendered files?",
+                                                    checkboxLabel: "Also clear app's cache.",
+                                                    buttons: ["Yes", "No"],
+                                                    cancelId: 1,
+                                                    defaultId: 1,
+                                                    type: "question",
+                                                })
+                                                .then((res) => {
+                                                    setTimeout(() => {
+                                                        target.disabled = false;
+                                                    }, 6000);
+                                                    if (res.response === 0) {
+                                                        if (res.checkboxChecked) {
+                                                            window.electron
+                                                                .getCurrentWindow()
+                                                                .webContents.session.clearCache();
+                                                            window.electron
+                                                                .getCurrentWindow()
+                                                                .webContents.session.clearCodeCaches({ urls: [] });
+                                                        }
+                                                        window.fs.readdir(tempFolder, (err, files) => {
+                                                            if (err) return window.logger.error(err);
+                                                            files
+                                                                .filter((e) => e.startsWith("yomikiru"))
+                                                                .map((e) => window.path.join(tempFolder, e))
+                                                                .forEach(
+                                                                    (e) =>
+                                                                        window.fs.existsSync(e) &&
+                                                                        window.fs.rm(
+                                                                            e,
+                                                                            { force: true, recursive: true },
+                                                                            (err) =>
+                                                                                err && window.logger.error(err)
+                                                                        )
+                                                                );
+                                                        });
+                                                    }
+                                                });
                                         }}
                                     >
                                         Delete all File Cache
