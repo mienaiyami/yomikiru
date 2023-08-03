@@ -12,13 +12,13 @@ const AnilistSearch = () => {
     const [searchTimeout, setSearchTimeout] = useState<NodeJS.Timeout | null>(null);
 
     // const contRef = useRef<HTMLDivElement>(null);
-    const inputRef = useRef<HTMLInputElement>(null);
+    // const inputRef = useRef<HTMLInputElement>(null);
     const dispatch = useAppDispatch();
     useEffect(() => {
-        if (inputRef.current) {
-            inputRef.current.focus();
-            inputRef.current.value = mangaInReader?.mangaName || "";
-        }
+        // if (inputRef.current) {
+        //     // inputRef.current.focus();
+        //     inputRef.current.value = mangaInReader?.mangaName || "";
+        // }
         setSearch(mangaInReader?.mangaName || "");
     }, []);
     useEffect(() => {
@@ -118,7 +118,10 @@ const AnilistSearch = () => {
                         onKeyDown={(e) => {
                             e.stopPropagation();
                         }}
-                        ref={inputRef}
+                        ref={(node) => {
+                            if (node) node.focus();
+                        }}
+                        defaultValue={mangaInReader?.mangaName || ""}
                         onChange={(e) => {
                             if (searchTimeout) clearTimeout(searchTimeout);
                             const value = e.currentTarget.value;
