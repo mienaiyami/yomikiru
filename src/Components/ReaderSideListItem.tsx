@@ -54,12 +54,23 @@ const ReaderSideListItem = memo(
                         const items = [
                             window.contextMenu.template.open(link),
                             window.contextMenu.template.openInNewWindow(link),
-                            window.contextMenu.template.showInExplorer(link),
-                            window.contextMenu.template.copyPath(link),
                         ];
-                        if (inHistory && inHistory[1] >= 0) {
+                        if (inHistory[1] >= 0) {
                             items.push(window.contextMenu.template.unreadChapter(...inHistory));
+                        } else {
+                            items.push(
+                                window.contextMenu.template.readChapter(inHistory[0], name.replace(" $", "."))
+                            );
                         }
+                        if (e.currentTarget.parentElement && e.currentTarget.parentElement.parentElement) {
+                            const chapters = [
+                                ...e.currentTarget.parentElement.parentElement.querySelectorAll("a"),
+                            ].map((e) => e.title.replace(" $", "."));
+                            items.push(window.contextMenu.template.readAllChapter(inHistory[0], chapters));
+                        }
+                        items.push(window.contextMenu.template.unreadAllChapter(inHistory[0]));
+                        items.push(window.contextMenu.template.showInExplorer(link));
+                        items.push(window.contextMenu.template.copyPath(link));
                         setContextMenuFocused(true);
                         setContextMenuData({
                             clickX: e.clientX,

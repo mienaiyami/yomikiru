@@ -171,10 +171,37 @@ const history = createSlice({
                 saveJSONfile(historyPath, stateDup);
             }
         },
+        readChapter: (state, action: PayloadAction<{ mangaIndex: number; chapters: string[] }>) => {
+            const { mangaIndex, chapters } = action.payload;
+            if (mangaIndex >= 0 && chapters.length > 0) {
+                try {
+                    const stateDup: HistoryItem[] = JSON.parse(JSON.stringify(state));
+                    const chaptersRead = (stateDup[mangaIndex] as MangaHistoryItem).data.chaptersRead;
+                    chaptersRead.push(...chapters);
+                    (stateDup[mangaIndex] as MangaHistoryItem).data.chaptersRead = Array.from(
+                        new Set(chaptersRead)
+                    );
+                    saveJSONfile(historyPath, stateDup);
+                } catch (reason) {
+                    window.logger.error("Unable to mark chapter as read.", reason);
+                }
+            }
+        },
+        unreadAllChapter: (state, action: PayloadAction<number>) => {
+            if (action.payload >= 0) {
+                try {
+                    const stateDup: HistoryItem[] = JSON.parse(JSON.stringify(state));
+                    (stateDup[action.payload] as MangaHistoryItem).data.chaptersRead = [];
+                    saveJSONfile(historyPath, stateDup);
+                } catch (reason) {
+                    window.logger.error("Unable to mark chapter as Unread.", reason);
+                }
+            }
+        },
         unreadChapter: (state, action: PayloadAction<[number, number]>) => {
             if (action.payload[0] >= 0 && action.payload[1] >= 0) {
-                const stateDup: HistoryItem[] = JSON.parse(JSON.stringify(state));
                 try {
+                    const stateDup: HistoryItem[] = JSON.parse(JSON.stringify(state));
                     (stateDup[action.payload[0]] as MangaHistoryItem).data.chaptersRead.splice(
                         action.payload[1],
                         1
@@ -212,6 +239,8 @@ export const {
     removeHistory,
     unreadChapter,
     refreshHistory,
+    readChapter,
+    unreadAllChapter,
 } = history.actions;
 
 export default history.reducer;

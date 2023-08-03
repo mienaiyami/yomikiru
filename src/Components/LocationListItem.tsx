@@ -90,12 +90,13 @@ const LocationListItem = ({
                     const items = [
                         window.contextMenu.template.open(link),
                         window.contextMenu.template.openInNewWindow(link),
-                        window.contextMenu.template.showInExplorer(link),
-                        window.contextMenu.template.copyPath(link),
                     ];
                     if (inHistory && inHistory[1] >= 0) {
                         items.push(window.contextMenu.template.unreadChapter(...inHistory));
                     }
+                    if (inHistory[0] >= 0) items.push(window.contextMenu.template.unreadAllChapter(inHistory[0]));
+                    items.push(window.contextMenu.template.showInExplorer(link));
+                    items.push(window.contextMenu.template.copyPath(link));
                     setContextMenuFocused(true);
                     setContextMenuData({
                         clickX: e.clientX,

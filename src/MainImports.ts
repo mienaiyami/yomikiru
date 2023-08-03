@@ -333,6 +333,9 @@ declare global {
                 removeHistory: (url: string) => MenuListItem;
                 removeBookmark: (url: string) => MenuListItem;
                 unreadChapter: (mangaIndex: number, chapterIndex: number) => MenuListItem;
+                unreadAllChapter: (mangaIndex: number) => MenuListItem;
+                readChapter: (mangaIndex: number, chapters: string) => MenuListItem;
+                readAllChapter: (mangaIndex: number, chapters: string[]) => MenuListItem;
             };
         };
         app: {

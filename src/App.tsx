@@ -14,6 +14,8 @@ import {
     updateCurrentBookHistory,
     removeHistory,
     unreadChapter,
+    readChapter,
+    unreadAllChapter,
 } from "./store/history";
 import { setReaderOpen } from "./store/isReaderOpen";
 import { setMangaInReader } from "./store/mangaInReader";
@@ -590,7 +592,7 @@ const App = (): ReactElement => {
             },
             copyImage(url) {
                 return {
-                    label: "Copy",
+                    label: "Copy Image",
                     disabled: url ? false : true,
                     action() {
                         window.electron.clipboard.writeImage(window.electron.nativeImage.createFromPath(url));
@@ -658,6 +660,40 @@ const App = (): ReactElement => {
                     action() {
                         if (mangaIndex >= 0 && chapterIndex >= 0)
                             dispatch(unreadChapter([mangaIndex, chapterIndex]));
+                    },
+                };
+            },
+            readChapter(mangaIndex, chapter) {
+                return {
+                    label: "Mark as Read",
+                    disabled: mangaIndex >= 0 && chapter ? false : true,
+                    action() {
+                        if (mangaIndex >= 0 && chapter) dispatch(readChapter({ mangaIndex, chapters: [chapter] }));
+                    },
+                };
+            },
+            readAllChapter(mangaIndex, chapters) {
+                return {
+                    label: "Mark All as Read",
+                    disabled: mangaIndex >= 0 && chapters.length > 0 ? false : true,
+                    action() {
+                        if (mangaIndex >= 0 && chapters.length > 0)
+                            dispatch(readChapter({ mangaIndex, chapters }));
+                    },
+                };
+            },
+            unreadAllChapter(mangaIndex) {
+                return {
+                    label: "Mark All as Unread",
+                    disabled: mangaIndex >= 0 ? false : true,
+                    action() {
+                        if (mangaIndex >= 0)
+                            window.dialog
+                                .confirm({
+                                    message: "Mark All Chapters as Unread?",
+                                    noOption: false,
+                                })
+                                .then((res) => res.response === 0 && dispatch(unreadAllChapter(mangaIndex)));
                     },
                 };
             },
