@@ -882,83 +882,100 @@ const EPubReader = () => {
         const registerShortcuts = (e: KeyboardEvent) => {
             // /&& document.activeElement!.tagName === "BODY"
             window.app.keyRepeated = e.repeat;
-            if ([" ", "ArrowUp", "ArrowDown"].includes(e.key)) e.preventDefault();
-            if (!isSettingOpen && window.app.isReaderOpen && !e.repeat && !isLoadingManga && !e.ctrlKey) {
-                switch (e.key) {
-                    case shortcutkey.readerSettings?.key1:
-                    case shortcutkey.readerSettings?.key2:
-                        readerSettingExtender.current?.click();
-                        readerSettingExtender.current?.focus();
-                        break;
-                    case shortcutkey.toggleZenMode?.key1:
-                    case shortcutkey.toggleZenMode?.key2:
-                        // makeScrollPos();
-                        setZenMode((prev) => !prev);
-                        break;
-                    case "Escape":
-                        // makeScrollPos();
-                        setZenMode(false);
-                        break;
-                    case shortcutkey.nextChapter?.key1:
-                    case shortcutkey.nextChapter?.key2:
-                    case shortcutkey.nextPage?.key1:
-                    case shortcutkey.nextPage?.key2:
-                        if (!e.repeat) openNextChapterRef.current?.click();
-                        break;
-                    case shortcutkey.prevChapter?.key1:
-                    case shortcutkey.prevChapter?.key2:
-                    case shortcutkey.prevPage?.key1:
-                    case shortcutkey.prevPage?.key2:
-                        if (!e.repeat) openPrevChapterRef.current?.click();
-                        break;
-                    case shortcutkey.bookmark?.key1:
-                    case shortcutkey.bookmark?.key2:
-                        if (!e.repeat) addToBookmarkRef.current?.click();
-                        break;
-                    case shortcutkey.sizePlus?.key1:
-                    case shortcutkey.sizePlus?.key2:
-                        sizePlusRef.current?.click();
-                        break;
-                    case shortcutkey.sizeMinus?.key1:
-                    case shortcutkey.sizeMinus?.key2:
-                        sizeMinusRef.current?.click();
-                        break;
-                    case shortcutkey.fontSizePlus?.key1:
-                    case shortcutkey.fontSizePlus?.key2:
-                        fontSizePlusRef.current?.click();
-                        break;
-                    case shortcutkey.fontSizeMinus?.key1:
-                    case shortcutkey.fontSizeMinus?.key2:
-                        fontSizeMinusRef.current?.click();
-                        break;
-                    default:
-                        break;
-                }
-                if (document.activeElement!.tagName === "BODY" || document.activeElement === readerRef.current) {
-                    window.app.keydown = true;
-                    if (
-                        e.shiftKey &&
-                        (e.key === shortcutkey.largeScroll?.key1 || e.key === shortcutkey.largeScroll?.key2)
-                    ) {
-                        e.preventDefault();
-                        scrollReader(0 - appSettings.epubReaderSettings.scrollSpeedB);
-                        return;
-                    }
-
+            if ((e.ctrlKey && e.key === "/") || (e.shiftKey && e.key === "F10") || e.key === "ContextMenu") {
+                e.stopPropagation();
+                e.preventDefault();
+                if (mainRef.current)
+                    mainRef.current.dispatchEvent(
+                        window.contextMenu.fakeEvent(
+                            { posX: window.innerWidth / 2, posY: window.innerHeight / 2 },
+                            readerRef.current
+                        )
+                    );
+                return;
+            }
+            if (!isSettingOpen && window.app.isReaderOpen && !isLoadingManga && !e.ctrlKey) {
+                if ([" ", "ArrowUp", "ArrowDown"].includes(e.key)) e.preventDefault();
+                if (!e.repeat) {
                     switch (e.key) {
-                        case shortcutkey.largeScroll?.key1:
-                        case shortcutkey.largeScroll?.key2:
+                        case shortcutkey.readerSettings?.key1:
+                        case shortcutkey.readerSettings?.key2:
+                            readerSettingExtender.current?.click();
+                            readerSettingExtender.current?.focus();
+                            break;
+                        case shortcutkey.toggleZenMode?.key1:
+                        case shortcutkey.toggleZenMode?.key2:
+                            // makeScrollPos();
+                            setZenMode((prev) => !prev);
+                            break;
+                        case "Escape":
+                            // makeScrollPos();
+                            setZenMode(false);
+                            break;
+                        case shortcutkey.nextChapter?.key1:
+                        case shortcutkey.nextChapter?.key2:
+                        case shortcutkey.nextPage?.key1:
+                        case shortcutkey.nextPage?.key2:
+                            if (!e.repeat) openNextChapterRef.current?.click();
+                            break;
+                        case shortcutkey.prevChapter?.key1:
+                        case shortcutkey.prevChapter?.key2:
+                        case shortcutkey.prevPage?.key1:
+                        case shortcutkey.prevPage?.key2:
+                            if (!e.repeat) openPrevChapterRef.current?.click();
+                            break;
+                        case shortcutkey.bookmark?.key1:
+                        case shortcutkey.bookmark?.key2:
+                            if (!e.repeat) addToBookmarkRef.current?.click();
+                            break;
+                        case shortcutkey.sizePlus?.key1:
+                        case shortcutkey.sizePlus?.key2:
+                            sizePlusRef.current?.click();
+                            break;
+                        case shortcutkey.sizeMinus?.key1:
+                        case shortcutkey.sizeMinus?.key2:
+                            sizeMinusRef.current?.click();
+                            break;
+                        case shortcutkey.fontSizePlus?.key1:
+                        case shortcutkey.fontSizePlus?.key2:
+                            fontSizePlusRef.current?.click();
+                            break;
+                        case shortcutkey.fontSizeMinus?.key1:
+                        case shortcutkey.fontSizeMinus?.key2:
+                            fontSizeMinusRef.current?.click();
+                            break;
+                        default:
+                            break;
+                    }
+                    if (
+                        document.activeElement!.tagName === "BODY" ||
+                        document.activeElement === readerRef.current
+                    ) {
+                        window.app.keydown = true;
+                        if (
+                            e.shiftKey &&
+                            (e.key === shortcutkey.largeScroll?.key1 || e.key === shortcutkey.largeScroll?.key2)
+                        ) {
                             e.preventDefault();
-                            scrollReader(appSettings.epubReaderSettings.scrollSpeedB);
-                            break;
-                        case shortcutkey.scrollDown?.key1:
-                        case shortcutkey.scrollDown?.key2:
-                            scrollReader(appSettings.epubReaderSettings.scrollSpeedA);
-                            break;
-                        case shortcutkey.scrollUp?.key1:
-                        case shortcutkey.scrollUp?.key2:
-                            scrollReader(0 - appSettings.epubReaderSettings.scrollSpeedA);
-                            break;
+                            scrollReader(0 - appSettings.epubReaderSettings.scrollSpeedB);
+                            return;
+                        }
+
+                        switch (e.key) {
+                            case shortcutkey.largeScroll?.key1:
+                            case shortcutkey.largeScroll?.key2:
+                                e.preventDefault();
+                                scrollReader(appSettings.epubReaderSettings.scrollSpeedB);
+                                break;
+                            case shortcutkey.scrollDown?.key1:
+                            case shortcutkey.scrollDown?.key2:
+                                scrollReader(appSettings.epubReaderSettings.scrollSpeedA);
+                                break;
+                            case shortcutkey.scrollUp?.key1:
+                            case shortcutkey.scrollUp?.key2:
+                                scrollReader(0 - appSettings.epubReaderSettings.scrollSpeedA);
+                                break;
+                        }
                     }
                 }
             }

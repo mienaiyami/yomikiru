@@ -49,8 +49,8 @@ const ContextMenu = () => {
                 tabIndex={-1}
                 onBlur={() => {
                     // setTimeout(() => dispatch(setContextMenu(null)), 100);
-                    setContextMenuData(null);
                     (contextMenuData.focusBackElem as HTMLElement | null)?.focus();
+                    setContextMenuData(null);
                 }}
                 onClick={onClick}
                 onContextMenu={onClick}
@@ -61,6 +61,15 @@ const ContextMenu = () => {
                     visibility: contextMenuData && contextMenuData.items.length > 0 ? "visible" : "hidden",
                 }}
                 onKeyDown={(e) => {
+                    e.stopPropagation();
+                    if (
+                        (e.ctrlKey && e.key === "/") ||
+                        (e.shiftKey && e.key === "F10") ||
+                        e.key === "ContextMenu"
+                    ) {
+                        e.currentTarget.blur();
+                        return;
+                    }
                     switch (e.key) {
                         case "Escape":
                             e.currentTarget.blur();

@@ -318,7 +318,10 @@ declare global {
                 | undefined;
         };
         contextMenu: {
-            fakeEvent: (elem: HTMLElement, focusBackElem: HTMLElement | null) => MouseEvent;
+            fakeEvent: (
+                elem: HTMLElement | { posX: number; posY: number },
+                focusBackElem?: HTMLElement | null
+            ) => MouseEvent;
             template: {
                 open: (url: string) => MenuListItem;
                 openInNewWindow: (url: string) => MenuListItem;
@@ -871,16 +874,28 @@ window.app.linkInReader = {
 //@ts-ignore
 window.contextMenu = {
     fakeEvent(elem, focusBackElem) {
-        return new MouseEvent("contextmenu", {
-            bubbles: true,
-            cancelable: false,
-            view: window,
-            button: 2,
-            buttons: 0,
-            clientX: elem.getBoundingClientRect().width + elem.getBoundingClientRect().x - 10,
-            clientY: elem.getBoundingClientRect().height / 2 + elem.getBoundingClientRect().y,
-            relatedTarget: focusBackElem,
-        });
+        if (elem instanceof HTMLElement)
+            return new MouseEvent("contextmenu", {
+                bubbles: true,
+                cancelable: false,
+                view: window,
+                button: 2,
+                buttons: 0,
+                clientX: elem.getBoundingClientRect().width + elem.getBoundingClientRect().x - 10,
+                clientY: elem.getBoundingClientRect().height / 2 + elem.getBoundingClientRect().y,
+                relatedTarget: focusBackElem,
+            });
+        else
+            return new MouseEvent("contextmenu", {
+                bubbles: true,
+                cancelable: false,
+                view: window,
+                button: 2,
+                buttons: 0,
+                clientX: elem.posX,
+                clientY: elem.posY,
+                relatedTarget: focusBackElem,
+            });
     },
 };
 // window.fileSaveTimeOut = new Map();

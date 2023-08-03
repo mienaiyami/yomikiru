@@ -147,6 +147,9 @@ const Reader = () => {
         window.dispatchEvent(pageChangeEvent);
     }, [currentPageNumber]);
     useEffect(() => {
+        readerRef.current?.focus();
+    }, [isReaderOpen]);
+    useEffect(() => {
         if ((zenMode && !window.electron.getCurrentWindow().isMaximized()) || (!zenMode && !wasMaximized)) {
             setTimeout(() => {
                 scrollToPage(currentPageNumber, "auto");
@@ -207,6 +210,19 @@ const Reader = () => {
         const registerShortcuts = (e: KeyboardEvent) => {
             // /&& document.activeElement!.tagName === "BODY"
             window.app.keyRepeated = e.repeat;
+
+            if ((e.ctrlKey && e.key === "/") || (e.shiftKey && e.key === "F10") || e.key === "ContextMenu") {
+                e.stopPropagation();
+                e.preventDefault();
+                if (imgContRef.current)
+                    imgContRef.current.dispatchEvent(
+                        window.contextMenu.fakeEvent(
+                            { posX: window.innerWidth / 2, posY: window.innerHeight / 2 },
+                            readerRef.current
+                        )
+                    );
+                return;
+            }
             if (!isSettingOpen && window.app.isReaderOpen && !isLoadingManga && !e.ctrlKey) {
                 if ([" ", "ArrowUp", "ArrowDown"].includes(e.key)) e.preventDefault();
                 if (document.activeElement!.tagName === "BODY" || document.activeElement === readerRef.current)

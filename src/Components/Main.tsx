@@ -33,7 +33,11 @@ const Main = (): ReactElement => {
     // const [gridTemplate, setGridTemplate] = useState<string>("");
     // const [dividerWidth, setDividerWidth] = useState<number>(0);
     useLayoutEffect(() => {
-        const ff = () => setContextMenuData(null);
+        const ff = () => {
+            console.log(contextMenuData?.focusBackElem);
+            (contextMenuData?.focusBackElem as HTMLElement | null)?.focus();
+            setContextMenuData(null);
+        };
         // onDragOver={() => false}
         // onDragLeave={() => false}
         // onDragEnd={() => false}
@@ -46,7 +50,7 @@ const Main = (): ReactElement => {
         return () => {
             window.removeEventListener("wheel", ff);
         };
-    }, []);
+    }, [contextMenuData]);
 
     //! did i really wasted time on this
     //
