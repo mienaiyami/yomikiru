@@ -104,6 +104,9 @@ body.zenMode {
     #app {
         top: 0;
         height: 100%;
+        .contextMenu {
+            translate: 0 0;
+        }
         .reader {
             .zenModePageNumber.show {
                 display: block;
@@ -1136,11 +1139,12 @@ body {
             left: 0;
             background: var(--contextMenu-bg-color);
             color: var(--contentMenu-item-color);
-            box-shadow: var(--btn-color-focus) 0 0 5px 1px;
+            box-shadow: var(--btn-color-focus) 0 0 0 1px;
             // border: 1px solid var(--btn-color-focus);
             box-sizing: border-box;
-            padding: 10px 0px;
-            border-radius: 5px;
+            padding: 4px;
+            border-radius: 4px;
+            translate: 0 calc(-1 * var(--titleBar-height));
             min-width: 240px;
             z-index: 10000;
             user-select: none;
@@ -1153,8 +1157,9 @@ body {
             ul {
                 list-style: none;
                 li {
-                    padding: 10px 10px;
+                    padding: 10px;
                     cursor: default;
+                    border-radius: 2px;
                     &[data-focused="true"] {
                         background: var(--btn-color-focus);
                     }
@@ -1876,10 +1881,9 @@ body {
                 transform: translate(-50%, -50%);
                 z-index: 100;
                 padding: 10px 20px;
-                border-radius: 10px;
+                border-radius: 5px;
                 pointer-events: none;
-                box-shadow: var(--font-color) 0 0 0 1px;
-
+                box-shadow: var(--font-color) 0 0 0 0.5px;
                 transition: 0s opacity;
                 opacity: 1;
                 &.faded {
@@ -2353,6 +2357,7 @@ body {
                 position: absolute;
                 color: var(--font-color);
                 background-color: var(--body-bg-color);
+                // box-shadow: inset var(--font-color) 1px -1px 1px -1px;
                 right: 10px;
                 top: 0;
                 z-index: 100;

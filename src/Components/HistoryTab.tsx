@@ -77,7 +77,6 @@ const HistoryTab = () => {
                                     const elem = locationContRef.current?.querySelector(
                                         '[data-focused="true"] a'
                                     ) as HTMLLIElement | null;
-                                    console.log(elem);
                                     if (elem) elem.click();
                                     break;
                                 }

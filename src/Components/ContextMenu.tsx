@@ -16,12 +16,12 @@ const ContextMenu = () => {
         if (contextMenuData && contextMenuData.items.length > 0) {
             if (ref.current) {
                 let x = contextMenuData.clickX;
-                let y = contextMenuData.clickY - window.app.titleBarHeight;
+                let y = contextMenuData.clickY;
                 if (x >= window.innerWidth - ref.current.offsetWidth - 10) {
                     x -= ref.current.offsetWidth;
                 }
                 if (y >= window.innerHeight - ref.current.offsetHeight - 10) {
-                    y -= ref.current.offsetHeight - window.app.titleBarHeight;
+                    y -= ref.current.offsetHeight;
                 }
                 setPos({ x, y });
                 ref.current.focus();

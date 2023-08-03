@@ -1117,7 +1117,6 @@ export const renderPDF = (
                                                     window.path.join(renderPath, "SOURCE"),
                                                     link
                                                 );
-                                                console.log({ count, success, renderPath, link });
                                                 res({ count, success, renderPath, link });
                                             }
                                         }
