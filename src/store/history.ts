@@ -190,12 +190,12 @@ const history = createSlice({
             if (newState.length === 0) newState = readHistory();
             return newState;
         },
-        /**
-         * take index in history.json as param
-         */
-        removeHistory: (state, action: PayloadAction<number>) => {
-            state.splice(action.payload, 1);
-            saveJSONfile(historyPath, current(state));
+        removeHistory: (state, action: PayloadAction<string>) => {
+            const index = state.findIndex((e) => e.data.link.toLowerCase() === action.payload.toLowerCase());
+            if (index >= 0) {
+                state.splice(index, 1);
+                saveJSONfile(historyPath, current(state));
+            }
         },
         deleteAllHistory: () => {
             saveJSONfile(historyPath, []);

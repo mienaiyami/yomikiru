@@ -9,22 +9,6 @@ const HistoryTab = () => {
     const [filter, setFilter] = useState<string>("");
     const [focused, setFocused] = useState(-1);
     const locationContRef = useRef<HTMLDivElement>(null);
-    const realList = (historyData: HistoryItem[], filter: string) => {
-        return historyData.filter((e) => {
-            if (
-                new RegExp(filter, "ig").test(
-                    e.type === "image"
-                        ? e.data.mangaName +
-                              (window.app.isSupportedFormat(e.data.chapterName)
-                                  ? `.${window.path.extname(e.data.chapterName)}`
-                                  : "")
-                        : e.data.title + ".epub"
-                )
-            ) {
-                return true;
-            }
-        });
-    };
     return (
         <div className={"contTab listCont " + (!appSettings.showTabs.history ? "collapsed " : "")} id="historyTab">
             <h2>Continue Reading</h2>
@@ -107,16 +91,27 @@ const HistoryTab = () => {
                     <p>No History...</p>
                 ) : (
                     <ol>
-                        {realList(history, filter).map((e, i, arr) => (
-                            <BookmarkHistoryListItem
-                                isBookmark={false}
-                                isHistory={true}
-                                index={i}
-                                focused={focused % arr.length === i}
-                                {...e}
-                                key={e.data.date}
-                            />
-                        ))}
+                        {history
+                            .filter((e) =>
+                                new RegExp(filter, "ig").test(
+                                    e.type === "image"
+                                        ? e.data.mangaName +
+                                              (window.app.isSupportedFormat(e.data.chapterName)
+                                                  ? `.${window.path.extname(e.data.chapterName)}`
+                                                  : "")
+                                        : e.data.title + ".epub"
+                                )
+                            )
+                            .map((e, i, arr) => (
+                                <BookmarkHistoryListItem
+                                    isBookmark={false}
+                                    isHistory={true}
+                                    index={i}
+                                    focused={focused % arr.length === i}
+                                    {...e}
+                                    key={e.data.date}
+                                />
+                            ))}
                     </ol>
                 )}
             </div>

@@ -34,7 +34,6 @@ const Main = (): ReactElement => {
     // const [dividerWidth, setDividerWidth] = useState<number>(0);
     useLayoutEffect(() => {
         const ff = () => {
-            console.log(contextMenuData?.focusBackElem);
             (contextMenuData?.focusBackElem as HTMLElement | null)?.focus();
             setContextMenuData(null);
         };

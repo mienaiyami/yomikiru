@@ -597,12 +597,12 @@ const App = (): ReactElement => {
                     },
                 };
             },
-            removeHistory(index) {
+            removeHistory(url) {
                 return {
                     label: "Remove",
-                    disabled: index >= 0 ? false : true,
+                    disabled: url ? false : true,
                     action() {
-                        dispatch(removeHistory(index));
+                        dispatch(removeHistory(url));
                     },
                 };
             },

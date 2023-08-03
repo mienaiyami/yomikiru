@@ -93,7 +93,7 @@ const BookmarkHistoryListItem = (props: ListItemE) => {
                     ];
                     if (props.isBookmark) items.push(window.contextMenu.template.removeBookmark(props.data.link));
                     else items.push(window.contextMenu.template.addToBookmark(props));
-                    if (props.isHistory) items.push(window.contextMenu.template.removeHistory(props.index));
+                    if (props.isHistory) items.push(window.contextMenu.template.removeHistory(props.data.link));
 
                     setContextMenuFocused(true);
                     // dispatch(

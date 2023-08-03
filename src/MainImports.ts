@@ -329,7 +329,7 @@ declare global {
                 copyPath: (url: string) => MenuListItem;
                 copyImage: (url: string) => MenuListItem;
                 addToBookmark: (data: ListItemE) => MenuListItem;
-                removeHistory: (index: number) => MenuListItem;
+                removeHistory: (url: string) => MenuListItem;
                 removeBookmark: (url: string) => MenuListItem;
                 unreadChapter: (mangaIndex: number, chapterIndex: number) => MenuListItem;
             };

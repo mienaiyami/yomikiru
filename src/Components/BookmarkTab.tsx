@@ -9,23 +9,6 @@ const BookmarkTab = () => {
     const [filter, setFilter] = useState<string>("");
     const [focused, setFocused] = useState(-1);
     const locationContRef = useRef<HTMLDivElement>(null);
-    const realList = (bookmarkData: Manga_BookItem[], filter: string) => {
-        return bookmarkData.filter((e) => {
-            if (
-                new RegExp(filter, "ig").test(
-                    e.type === "image"
-                        ? e.data.mangaName +
-                              (window.app.isSupportedFormat(e.data.chapterName)
-                                  ? `.${window.path.extname(e.data.chapterName)}`
-                                  : "")
-                        : e.data.title + ".epub"
-                )
-            ) {
-                return true;
-            }
-        });
-    };
-
     return (
         <div
             className={"contTab listCont " + (!appSettings.showTabs.bookmark ? "collapsed " : "")}
@@ -109,16 +92,27 @@ const BookmarkTab = () => {
                     <p>No Bookmarks...</p>
                 ) : (
                     <ol>
-                        {realList(bookmarks, filter).map((e, i, arr) => (
-                            <BookmarkHistoryListItem
-                                isHistory={false}
-                                isBookmark={true}
-                                focused={focused % arr.length === i}
-                                index={i}
-                                {...e}
-                                key={e.data.link}
-                            />
-                        ))}
+                        {bookmarks
+                            .filter((e) =>
+                                new RegExp(filter, "ig").test(
+                                    e.type === "image"
+                                        ? e.data.mangaName +
+                                              (window.app.isSupportedFormat(e.data.chapterName)
+                                                  ? `.${window.path.extname(e.data.chapterName)}`
+                                                  : "")
+                                        : e.data.title + ".epub"
+                                )
+                            )
+                            .map((e, i, arr) => (
+                                <BookmarkHistoryListItem
+                                    isHistory={false}
+                                    isBookmark={true}
+                                    focused={focused % arr.length === i}
+                                    index={i}
+                                    {...e}
+                                    key={e.data.link}
+                                />
+                            ))}
                     </ol>
                 )}
             </div>
