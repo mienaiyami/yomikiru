@@ -107,7 +107,7 @@ const HistoryTab = () => {
                                     isBookmark={false}
                                     isHistory={true}
                                     index={i}
-                                    focused={focused % arr.length === i}
+                                    focused={appSettings.showSearch && focused % arr.length === i}
                                     {...e}
                                     key={e.data.date}
                                 />

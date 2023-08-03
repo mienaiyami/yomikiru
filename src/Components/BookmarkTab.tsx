@@ -107,7 +107,7 @@ const BookmarkTab = () => {
                                 <BookmarkHistoryListItem
                                     isHistory={false}
                                     isBookmark={true}
-                                    focused={focused % arr.length === i}
+                                    focused={appSettings.showSearch && focused % arr.length === i}
                                     index={i}
                                     {...e}
                                     key={e.data.link}
