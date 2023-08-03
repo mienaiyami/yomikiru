@@ -430,7 +430,7 @@ const Settings = (): ReactElement => {
                     </button>
                 </div>
                 <div
-                    className={"cont"}
+                    className={"overlayCont settingCont"}
                     onKeyDown={(e) => {
                         if (e.key === "Escape") dispatch(setOpenSetting(false));
                     }}

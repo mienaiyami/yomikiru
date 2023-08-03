@@ -103,7 +103,7 @@ const AnilistSearch = () => {
         >
             <div className="clickClose" onClick={() => dispatch(setAniSearchOpen(false))}></div>
             <div
-                className="cont"
+                className="overlayCont"
                 onKeyDown={(e) => {
                     if (e.key === "Escape") dispatch(setAniSearchOpen(false));
                 }}

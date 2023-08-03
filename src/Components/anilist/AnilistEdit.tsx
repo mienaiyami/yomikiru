@@ -38,7 +38,7 @@ const AnilistEdit = () => {
         >
             <div className="clickClose" onClick={() => dispatch(setAniEditOpen(false))}></div>
             <div
-                className="cont"
+                className="overlayCont"
                 onKeyDown={(e) => {
                     if (e.key === "Escape") dispatch(setAniEditOpen(false));
                 }}
@@ -47,12 +47,13 @@ const AnilistEdit = () => {
             >
                 {tempData && (
                     <>
-                        <div
-                            className="info"
+                        <span
+                            className="banner"
                             style={{
                                 backgroundImage: `linear-gradient(0,var(--body-bg-color), transparent) , url('${tempData?.media.bannerImage}')`,
                             }}
-                        >
+                        ></span>
+                        <div className="info">
                             <div className="cover">
                                 <img src={tempData.media.coverImage.medium} alt="Cover" draggable={false} />
                             </div>

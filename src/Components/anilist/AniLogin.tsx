@@ -39,7 +39,7 @@ const AniLogin = () => {
         >
             <div className="clickClose" onClick={() => dispatch(setAniLoginOpen(false))}></div>
             <div
-                className="cont"
+                className="overlayCont"
                 onKeyDown={(e) => {
                     if (e.key === "Escape") dispatch(setAniLoginOpen(false));
                 }}
