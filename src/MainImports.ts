@@ -252,6 +252,7 @@ export const settingValidatorData = {
             value: 0,
         },
         quickFontFamily: [],
+        textSelect: true,
     },
 } as const;
 
@@ -1252,6 +1253,7 @@ const defaultSettings: AppSettings = {
             value: 0,
         },
         quickFontFamily: ["Roboto", "Cambria"],
+        textSelect: true,
     },
 };
 

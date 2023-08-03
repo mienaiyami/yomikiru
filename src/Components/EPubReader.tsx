@@ -1114,7 +1114,8 @@ const EPubReader = () => {
                     (appSettings.epubReaderSettings.hyphenation ? "hyphen " : "") +
                     (appSettings.epubReaderSettings.limitImgHeight ? "limitImgHeight " : "") +
                     (appSettings.epubReaderSettings.noIndent ? "noIndent " : "") +
-                    (appSettings.epubReaderSettings.invertImageColor ? "blendImage " : "")
+                    (appSettings.epubReaderSettings.invertImageColor ? "blendImage " : "") +
+                    (appSettings.epubReaderSettings.textSelect ? "textSelect " : "")
                 }
                 ref={mainRef}
                 style={{

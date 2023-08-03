@@ -1699,7 +1699,19 @@ body {
                         padding: 0 1.3em;
                         display: grid;
                         // place-items: center;
-
+                        table {
+                            tr {
+                                th,
+                                td {
+                                    &:nth-child(1) {
+                                        width: 40%;
+                                    }
+                                    &:nth-child(2) {
+                                        width: 60%;
+                                    }
+                                }
+                            }
+                        }
                         p {
                             width: 100%;
                             padding-bottom: 10px;
@@ -2787,6 +2799,13 @@ body {
                         }
                     }
                 }
+                &.textSelect {
+                    > .cont {
+                        * {
+                            user-select: text !important;
+                        }
+                    }
+                }
                 > .cont {
                     display: flex;
                     flex-direction: column;
@@ -2811,7 +2830,6 @@ body {
                     // }
 
                     * {
-                        user-select: text !important;
                         line-height: var(--line-height);
                         word-spacing: var(--word-spacing);
                         padding: revert;

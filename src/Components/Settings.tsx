@@ -1531,7 +1531,7 @@ const Settings = (): ReactElement => {
                                                 setEpubReaderSettings({ loadOneChapter: e.currentTarget.checked })
                                             );
                                         }}
-                                        labelAfter="Epub : Load By Chapter"
+                                        labelAfter="EPUB: Load By Chapter"
                                     />
                                     <div className="desc">
                                         Load and show one chapter at a time (from TOC). If disabled whole epub file
@@ -1539,6 +1539,19 @@ const Settings = (): ReactElement => {
                                         <br />
                                         Drawback : Content outside of TOC will not be accessible.
                                     </div>
+                                </div>
+                                <div className="toggleItem">
+                                    <InputCheckbox
+                                        checked={!appSettings.epubReaderSettings.textSelect}
+                                        className="noBG"
+                                        onChange={(e) => {
+                                            dispatch(
+                                                setEpubReaderSettings({ textSelect: !e.currentTarget.checked })
+                                            );
+                                        }}
+                                        labelAfter="EPUB: Disable Text Select"
+                                    />
+                                    <div className="desc">Removes ability to select text in epub reader.</div>
                                 </div>
                                 <div className="toggleItem">
                                     <InputCheckbox
@@ -1670,6 +1683,10 @@ const Settings = (): ReactElement => {
                                     <code>Backspace</code> to delete Key.
                                 </li>
                                 <li>
+                                    You can set <code>shift</code>+<code>key</code>, shortcut will appear as
+                                    capital or symbol.
+                                </li>
+                                <li>
                                     Reserved Keys :{" "}
                                     {reservedKeys.map((e) => (
                                         <span key={e}>
@@ -1727,8 +1744,8 @@ const Settings = (): ReactElement => {
                                             </a>
                                         </td>
                                         <td>
-                                            <code>ctrl</code>+<code>/</code> or <code>shift</code>+<code>F10</code>{" "}
-                                            or <code>ContextMenu/Menu</code>
+                                            (<code>ctrl</code>+<code>/</code>) or (<code>shift</code>+
+                                            <code>F10</code>) or <code>ContextMenu/Menu</code>
                                         </td>
                                     </tr>
                                     <tr>
@@ -2077,8 +2094,8 @@ const Settings = (): ReactElement => {
                                             directory/folder.
                                         </li>
                                         <li>
-                                            Click <code>ctrl</code>+<code>/</code> or <code>shift</code>+
-                                            <code>F10</code> or <code>ContextMenu/Menu</code> buttons to get right
+                                            Click (<code>ctrl</code>+<code>/</code>) or (<code>shift</code>+
+                                            <code>F10</code>) or <code>ContextMenu/Menu</code> buttons to get right
                                             click menu of focused item.
                                         </li>
                                     </ul>
