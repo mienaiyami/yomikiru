@@ -75,7 +75,10 @@ const ReaderSideListItem = memo(
                         setContextMenuData({
                             clickX: e.clientX,
                             clickY: e.clientY,
-                            focusBackElem: e.nativeEvent.relatedTarget,
+                            // lmao wtf am i doing?, idk how react props works and dont want to include `sideListRef` in it fearing performance
+                            focusBackElem:
+                                e.nativeEvent.relatedTarget ||
+                                e.currentTarget.parentElement?.parentElement?.parentElement?.parentElement,
                             items,
                         });
                     }}

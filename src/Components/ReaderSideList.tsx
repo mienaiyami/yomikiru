@@ -71,7 +71,13 @@ const ReaderSideList = memo(
         const locationContRef = useRef<HTMLDivElement>(null);
 
         useEffect(() => {
-            if (!contextMenuData && !isSideListPinned) return setListOpen(false);
+            if (
+                !contextMenuData &&
+                !isSideListPinned &&
+                document.activeElement !== sideListRef.current &&
+                !sideListRef.current?.contains(document.activeElement)
+            )
+                return setListOpen(false);
             setpreventListClose(true);
         }, [contextMenuData]);
         useEffect(() => {
@@ -194,7 +200,6 @@ const ReaderSideList = memo(
                     depth: 1,
                     ignoreInitial: true,
                 });
-                makeChapterList();
                 let timeout: NodeJS.Timeout;
                 const refresh = () => {
                     if (timeout) clearTimeout(timeout);
@@ -257,11 +262,22 @@ const ReaderSideList = memo(
                         setpreventListClose(false);
                     }
                 }}
+                onFocus={() => {
+                    setListOpen(true);
+                    setpreventListClose(true);
+                }}
                 onMouseDown={(e) => {
                     if (e.target instanceof Node && e.currentTarget.contains(e.target)) setpreventListClose(true);
                 }}
                 onBlur={(e) => {
-                    if (!preventListClose && !e.currentTarget.contains(document.activeElement)) setListOpen(false);
+                    if (
+                        !preventListClose &&
+                        !e.currentTarget.contains(document.activeElement) &&
+                        !contextMenuData
+                    ) {
+                        setListOpen(false);
+                        setpreventListClose(false);
+                    }
                 }}
                 onKeyDown={(e) => {
                     if (e.key === "Escape") {
@@ -330,8 +346,6 @@ const ReaderSideList = memo(
                                             '[data-focused="true"] a'
                                         ) as HTMLLIElement | null;
                                         if (elem) {
-                                            e.stopPropagation();
-                                            e.preventDefault();
                                             e.currentTarget.blur();
                                             elem.dispatchEvent(
                                                 window.contextMenu.fakeEvent(elem, e.currentTarget)
