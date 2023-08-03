@@ -1,6 +1,6 @@
 import { faAngleUp, faSort, faSyncAlt } from "@fortawesome/free-solid-svg-icons";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import { ReactElement, useContext, useEffect, useRef, useState, useLayoutEffect } from "react";
+import { ReactElement, useContext, useEffect, useRef, useState, useLayoutEffect, memo } from "react";
 import { AppContext } from "../App";
 import { setAppSettings } from "../store/appSettings";
 import { useAppDispatch, useAppSelector } from "../store/hooks";
@@ -23,6 +23,9 @@ const LocationsTab = (): ReactElement => {
     const [imageCount, setImageCount] = useState(0);
 
     const [focused, setFocused] = useState(-1);
+    // number is index of manga in history
+    const [historySimple, setHistorySimple] = useState<[number, string[]]>([-1, []]);
+
     const inputRef = useRef<HTMLInputElement>(null);
     const locationContRef = useRef<HTMLDivElement>(null);
 
@@ -123,29 +126,23 @@ const LocationsTab = (): ReactElement => {
             inputRef.current.focus();
         }
     }, [inputRef]);
-    const realList = (locations: LocationData[], filter: string) => {
-        // todo, move historyIndex outside or use like readerSideList
-        return locations.reduce((prev, e) => {
-            const historyIndex =
-                (window.fs.existsSync(e.link) &&
-                    window.fs.lstatSync(e.link).isFile() &&
-                    window.path.extname(e.link).toLowerCase()) === ".epub"
-                    ? -1
-                    : history.findIndex(
-                          (e) =>
-                              e.type === "image" &&
-                              (e as MangaHistoryItem).data.mangaLink.toLowerCase() === currentLink.toLowerCase()
-                      );
-            let historyChapterIndex = -1;
-            if (historyIndex >= 0)
-                historyChapterIndex = (history[historyIndex] as MangaHistoryItem).data.chaptersRead.findIndex(
-                    (a) => a === e.link.split(window.path.sep).pop() || ""
-                );
-            if (new RegExp(filter, "ig") && new RegExp(filter, "ig").test(e.name))
-                prev.push([e, historyIndex, historyChapterIndex]);
-            return prev;
-        }, [] as [LocationData, number, number][]);
-    };
+
+    useEffect(() => {
+        if (currentLink) {
+            const historyIndex = history.findIndex(
+                (e) =>
+                    e.type === "image" &&
+                    (e as MangaHistoryItem).data.mangaLink.toLowerCase() === currentLink.toLowerCase()
+            );
+            if (history[historyIndex])
+                setHistorySimple([
+                    historyIndex,
+                    (history[historyIndex] as MangaHistoryItem).data.chaptersRead.map((e) =>
+                        window.app.replaceExtension(e)
+                    ),
+                ]);
+        }
+    }, [history, currentLink]);
     return (
         <div className="contTab listCont" id="locationTab">
             <h2>Location</h2>
@@ -200,6 +197,8 @@ const LocationsTab = (): ReactElement => {
                             }
                             if (e.altKey && e.key === "ArrowUp")
                                 return setCurrentLink((link) => window.path.dirname(link));
+                            if ((e.ctrlKey && e.key === "/") || (e.shiftKey && e.key === "F10"))
+                                e.key = "ContextMenu";
                             switch (e.key) {
                                 case "ArrowDown":
                                     setFocused((init) => {
@@ -213,6 +212,18 @@ const LocationsTab = (): ReactElement => {
                                         return init - 1;
                                     });
                                     break;
+                                case "ContextMenu": {
+                                    const elem = locationContRef.current?.querySelector(
+                                        '[data-focused="true"] a'
+                                    ) as HTMLLIElement | null;
+                                    if (elem) {
+                                        e.stopPropagation();
+                                        e.preventDefault();
+                                        e.currentTarget.blur();
+                                        elem.dispatchEvent(window.contextMenu.fakeEvent(elem, inputRef.current));
+                                    }
+                                    break;
+                                }
                                 case "Enter": {
                                     if (locations.length === 0 && imageCount !== 0)
                                         return openInReader(currentLink);
@@ -227,7 +238,11 @@ const LocationsTab = (): ReactElement => {
                             }
                         }}
                         onBlur={() => {
-                            setFocused(-1);
+                            if (!document.activeElement?.classList.contains("contextMenu")) setFocused(-1);
+                        }}
+                        onContextMenu={(e) => {
+                            e.stopPropagation();
+                            e.preventDefault();
                         }}
                         onChange={(e) => {
                             let val = e.target.value;
@@ -303,24 +318,70 @@ const LocationsTab = (): ReactElement => {
                     <p>0 Folders, {imageCount} Images</p>
                 ) : (
                     <ol>
-                        {(appSettings.locationListSortType === "inverse"
-                            ? realList([...locations].reverse(), filter)
-                            : realList(locations, filter)
-                        ).map(([e, historyIndex, historyChapterIndex], i, arr) => (
-                            <LocationListItem
-                                name={e.name}
-                                link={e.link}
-                                focused={focused % arr.length === i}
-                                inHistory={[historyIndex, historyChapterIndex]}
-                                key={e.link}
-                                setCurrentLink={setCurrentLink}
-                            />
-                        ))}
+                        {(appSettings.locationListSortType === "inverse" ? [...locations].reverse() : locations)
+                            .filter((e) => new RegExp(filter, "ig") && new RegExp(filter, "ig").test(e.name))
+                            .map(
+                                (e, i, arr) =>
+                                    new RegExp(filter, "ig") &&
+                                    new RegExp(filter, "ig").test(e.name) && (
+                                        <LocationListItem
+                                            name={e.name}
+                                            link={e.link}
+                                            focused={
+                                                arr.length === 1 && document.activeElement === inputRef.current
+                                                    ? true
+                                                    : focused % arr.length === i
+                                            }
+                                            inHistory={[
+                                                historySimple[0],
+                                                historySimple[1].findIndex((a) => a === e.name),
+                                            ]}
+                                            key={e.link}
+                                            setCurrentLink={setCurrentLink}
+                                        />
+                                    )
+                            )}
                     </ol>
                 )}
             </div>
         </div>
     );
 };
+
+// const RealList = memo(
+//     ({
+//         locations,
+//         historySimple,
+//         inputRef,
+//         focused,setCurrentLink
+//     }: {
+//         locations: LocationData[]
+//         historySimple: [number, string[]]
+//         inputRef: React.RefObject<HTMLInputElement>;
+//         focused: number;
+//         setCurrentLink: React.Dispatch<React.SetStateAction<string>>
+//     }) => {
+//         return (
+//         <ol>
+//         {locations.map((e, i, arr) => (
+//             <LocationListItem
+//                 name={e.name}
+//                 link={e.link}
+//                 focused={
+//                     arr.length === 1 && document.activeElement === inputRef.current
+//                         ? true
+//                         : focused % arr.length === i
+//                 }
+//                 inHistory={[historySimple[0], historySimple[1].findIndex((a) => a === e.name)]}
+//                 key={e.link}
+//                 setCurrentLink={setCurrentLink}
+//             />
+//         ))}
+//             </ol>)
+//     },
+//     (prev, next) => {
+//         (prev.inputRef.current===next.inputRef.current) && (prev.focused===next.focused)
+//     }
+// );
 
 export default LocationsTab;

@@ -317,16 +317,19 @@ declare global {
                   }
                 | undefined;
         };
-        contextMenuTemplate: {
-            open: (url: string) => MenuListItem;
-            openInNewWindow: (url: string) => MenuListItem;
-            showInExplorer: (url: string) => MenuListItem;
-            copyPath: (url: string) => MenuListItem;
-            copyImage: (url: string) => MenuListItem;
-            addToBookmark: (data: ListItemE) => MenuListItem;
-            removeHistory: (index: number) => MenuListItem;
-            removeBookmark: (url: string) => MenuListItem;
-            unreadChapter: (mangaIndex: number, chapterIndex: number) => MenuListItem;
+        contextMenu: {
+            fakeEvent: (elem: HTMLElement, focusBackElem: HTMLElement | null) => MouseEvent;
+            template: {
+                open: (url: string) => MenuListItem;
+                openInNewWindow: (url: string) => MenuListItem;
+                showInExplorer: (url: string) => MenuListItem;
+                copyPath: (url: string) => MenuListItem;
+                copyImage: (url: string) => MenuListItem;
+                addToBookmark: (data: ListItemE) => MenuListItem;
+                removeHistory: (index: number) => MenuListItem;
+                removeBookmark: (url: string) => MenuListItem;
+                unreadChapter: (mangaIndex: number, chapterIndex: number) => MenuListItem;
+            };
         };
         app: {
             betterSortOrder: (x: string, y: string) => number;
@@ -621,6 +624,7 @@ declare global {
     interface IContextMenuData {
         clickX: number;
         clickY: number;
+        focusBackElem?: EventTarget | null;
         items: MenuListItem[];
     }
 
@@ -863,6 +867,22 @@ window.app.linkInReader = {
     page: 1,
     chapter: "",
 };
+// eslint-disable-next-line @typescript-eslint/ban-ts-comment
+//@ts-ignore
+window.contextMenu = {
+    fakeEvent(elem, focusBackElem) {
+        return new MouseEvent("contextmenu", {
+            bubbles: true,
+            cancelable: false,
+            view: window,
+            button: 2,
+            buttons: 0,
+            clientX: elem.getBoundingClientRect().width + elem.getBoundingClientRect().x - 10,
+            clientY: elem.getBoundingClientRect().height / 2 + elem.getBoundingClientRect().y,
+            relatedTarget: focusBackElem,
+        });
+    },
+};
 // window.fileSaveTimeOut = new Map();
 window.app.randomString = (length: number) => {
     let result = "";
@@ -989,42 +1009,6 @@ const saveJSONfile = (path: string, data: any) => {
         } catch (err) {
             console.error("ERROR::saveJSONfile:renderer:", err);
         }
-    // const checkOld = window.fileSaveTimeOut.get(path);
-    // if (checkOld) {
-    //     // console.log("saving in progress");
-    //     clearTimeout(checkOld);
-    // }
-    // window.fileSaveTimeOut.set(
-    //     path,
-    //     setTimeout(
-    //         () => {
-    //             const saveString = JSON.stringify(data, null, "\t");
-    //             if (saveString) {
-    //                 try {
-    //                     JSON.parse(saveString);
-    //                     // console.log("Saving " + path);
-    //                     if (sync) {
-    //                         window.fs.writeFileSync(path, JSON.stringify(data, null, "\t"));
-    //                         window.fileSaveTimeOut.delete(path);
-    //                     } else
-    //                         window.fs.writeFile(path, JSON.stringify(data, null, "\t"), (err) => {
-    //                             if (err) {
-    //                                 window.logger.error(err);
-    //                                 window.dialog.nodeError(err);
-    //                             }
-    //                             window.fileSaveTimeOut.delete(path);
-    //                         });
-    //                 } catch (err) {
-    //                     window.logger.error(err, "Retrying");
-    //                     setTimeout(() => {
-    //                         saveJSONfile(path, data, sync);
-    //                     }, 1000);
-    //                 }
-    //             }
-    //         },
-    //         sync ? 0 : 2000
-    //     )
-    // );
 };
 
 const userDataURL = window.electron.app.getPath("userData");

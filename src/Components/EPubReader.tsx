@@ -173,9 +173,9 @@ const HTMLPart = memo(
                 clickX: ev.clientX,
                 clickY: ev.clientY,
                 items: [
-                    window.contextMenuTemplate.copyImage(url),
-                    window.contextMenuTemplate.showInExplorer(url),
-                    window.contextMenuTemplate.copyPath(url),
+                    window.contextMenu.template.copyImage(url),
+                    window.contextMenu.template.showInExplorer(url),
+                    window.contextMenu.template.copyPath(url),
                 ],
             });
         };
@@ -1145,9 +1145,9 @@ const EPubReader = () => {
                                 addToBookmarkRef.current?.click();
                             },
                         },
-                        window.contextMenuTemplate.openInNewWindow(linkInReader.link),
-                        window.contextMenuTemplate.showInExplorer(linkInReader.link),
-                        window.contextMenuTemplate.copyPath(linkInReader.link),
+                        window.contextMenu.template.openInNewWindow(linkInReader.link),
+                        window.contextMenu.template.showInExplorer(linkInReader.link),
+                        window.contextMenu.template.copyPath(linkInReader.link),
                     ];
                     setContextMenuData({
                         clickX: e.clientX,

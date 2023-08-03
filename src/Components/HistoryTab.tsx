@@ -60,7 +60,22 @@ const HistoryTab = () => {
                             if (e.key === "Escape") {
                                 e.currentTarget.blur();
                             }
+                            if ((e.ctrlKey && e.key === "/") || (e.shiftKey && e.key === "F10"))
+                                e.key = "ContextMenu";
+
                             switch (e.key) {
+                                case "ContextMenu": {
+                                    const elem = locationContRef.current?.querySelector(
+                                        '[data-focused="true"] a'
+                                    ) as HTMLLIElement | null;
+                                    if (elem) {
+                                        e.stopPropagation();
+                                        e.preventDefault();
+                                        e.currentTarget.blur();
+                                        elem.dispatchEvent(window.contextMenu.fakeEvent(elem, e.currentTarget));
+                                    }
+                                    break;
+                                }
                                 case "ArrowDown":
                                     setFocused((init) => {
                                         if (init + 1 >= history.length) return 0;

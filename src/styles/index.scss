@@ -1383,17 +1383,17 @@ body {
                             font-size: 0.57em;
                         }
                     }
+                    a {
+                        text-decoration: underline;
+                        cursor: pointer;
+                        &:hover {
+                            color: var(--font-color);
+                        }
+                    }
                     .content2 {
                         padding: 0 1.3em;
                         font-size: 1em;
                         width: 100%;
-                        a {
-                            text-decoration: underline;
-                            cursor: pointer;
-                            &:hover {
-                                color: var(--font-color);
-                            }
-                        }
                         .settingItem2 {
                             box-shadow: inset 0 -2px 0 0 var(--divider-color);
                             &:last-of-type {

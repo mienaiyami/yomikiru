@@ -34,6 +34,7 @@ const ContextMenu = () => {
 
     const onClick = (e: React.MouseEvent<HTMLDivElement, MouseEvent>) => {
         e.stopPropagation();
+        if (e.button < 0) return;
         const target = e.currentTarget;
         // needed coz menu became null before triggering action
         setTimeout(() => {
@@ -49,6 +50,7 @@ const ContextMenu = () => {
                 onBlur={() => {
                     // setTimeout(() => dispatch(setContextMenu(null)), 100);
                     setContextMenuData(null);
+                    (contextMenuData.focusBackElem as HTMLElement | null)?.focus();
                 }}
                 onClick={onClick}
                 onContextMenu={onClick}
@@ -60,6 +62,9 @@ const ContextMenu = () => {
                 }}
                 onKeyDown={(e) => {
                     switch (e.key) {
+                        case "Escape":
+                            e.currentTarget.blur();
+                            break;
                         case "ArrowDown":
                         case "ArrowRight":
                             setFocused((init) => {

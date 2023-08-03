@@ -87,19 +87,20 @@ const BookmarkHistoryListItem = (props: ListItemE) => {
                 }}
                 onContextMenu={(e) => {
                     const items = [
-                        window.contextMenuTemplate.open(props.data.link),
-                        window.contextMenuTemplate.openInNewWindow(props.data.link),
-                        window.contextMenuTemplate.showInExplorer(props.data.link),
+                        window.contextMenu.template.open(props.data.link),
+                        window.contextMenu.template.openInNewWindow(props.data.link),
+                        window.contextMenu.template.showInExplorer(props.data.link),
                     ];
-                    if (props.isBookmark) items.push(window.contextMenuTemplate.removeBookmark(props.data.link));
-                    else items.push(window.contextMenuTemplate.addToBookmark(props));
-                    if (props.isHistory) items.push(window.contextMenuTemplate.removeHistory(props.index));
+                    if (props.isBookmark) items.push(window.contextMenu.template.removeBookmark(props.data.link));
+                    else items.push(window.contextMenu.template.addToBookmark(props));
+                    if (props.isHistory) items.push(window.contextMenu.template.removeHistory(props.index));
 
                     setContextMenuFocused(true);
                     // dispatch(
                     setContextMenuData({
                         clickX: e.clientX,
                         clickY: e.clientY,
+                        focusBackElem: e.nativeEvent.relatedTarget,
                         items,
                     });
                     // );

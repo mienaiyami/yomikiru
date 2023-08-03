@@ -549,7 +549,7 @@ const App = (): ReactElement => {
         //     // window.electron.ipcRenderer.send("abc");
         //     console.log("dddddddddd");
         // }, 1000);
-        window.contextMenuTemplate = {
+        window.contextMenu.template = {
             open(url) {
                 return {
                     label: "Open",

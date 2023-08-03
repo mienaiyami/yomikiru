@@ -573,9 +573,9 @@ const Reader = () => {
                                     addToBookmarkRef.current?.click();
                                 },
                             },
-                            window.contextMenuTemplate.copyImage(e),
-                            window.contextMenuTemplate.showInExplorer(e),
-                            window.contextMenuTemplate.copyPath(e),
+                            window.contextMenu.template.copyImage(e),
+                            window.contextMenu.template.showInExplorer(e),
+                            window.contextMenu.template.copyPath(e),
                         ],
                     });
                     // showContextMenu({
@@ -638,9 +638,9 @@ const Reader = () => {
                                     addToBookmarkRef.current?.click();
                                 },
                             },
-                            window.contextMenuTemplate.copyImage(e),
-                            window.contextMenuTemplate.showInExplorer(e),
-                            window.contextMenuTemplate.copyPath(e),
+                            window.contextMenu.template.copyImage(e),
+                            window.contextMenu.template.showInExplorer(e),
+                            window.contextMenu.template.copyPath(e),
                         ],
                     });
                     // showContextMenu({
@@ -1087,9 +1087,9 @@ const Reader = () => {
                                 addToBookmarkRef.current?.click();
                             },
                         },
-                        window.contextMenuTemplate.openInNewWindow(linkInReader.link),
-                        window.contextMenuTemplate.showInExplorer(linkInReader.link),
-                        window.contextMenuTemplate.copyPath(linkInReader.link),
+                        window.contextMenu.template.openInNewWindow(linkInReader.link),
+                        window.contextMenu.template.showInExplorer(linkInReader.link),
+                        window.contextMenu.template.copyPath(linkInReader.link),
                     ];
                     setContextMenuData({
                         clickX: e.clientX,

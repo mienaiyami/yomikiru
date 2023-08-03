@@ -199,13 +199,6 @@ const ReaderSideList = memo(
                 };
             }
         }, [mangaInReader, appSettings.autoRefreshSideList]);
-        const realList = (chapterData: ChapterData[], filter: string) => {
-            return chapterData.filter((e) => {
-                if (mangaInReader && new RegExp(filter, "ig").test(e.name)) {
-                    return true;
-                }
-            });
-        };
         const handleResizerDrag = (e: MouseEvent) => {
             if (draggingResizer) {
                 if (isSideListPinned) {
@@ -318,7 +311,23 @@ const ReaderSideList = memo(
                                 if (e.key === "Escape") {
                                     e.currentTarget.blur();
                                 }
+                                if ((e.ctrlKey && e.key === "/") || (e.shiftKey && e.key === "F10"))
+                                    e.key = "ContextMenu";
                                 switch (e.key) {
+                                    case "ContextMenu": {
+                                        const elem = locationContRef.current?.querySelector(
+                                            '[data-focused="true"] a'
+                                        ) as HTMLLIElement | null;
+                                        if (elem) {
+                                            e.stopPropagation();
+                                            e.preventDefault();
+                                            e.currentTarget.blur();
+                                            elem.dispatchEvent(
+                                                window.contextMenu.fakeEvent(elem, e.currentTarget)
+                                            );
+                                        }
+                                        break;
+                                    }
                                     case "ArrowDown":
                                         setFocused((init) => {
                                             if (init + 1 >= chapterData.length) return 0;
@@ -479,19 +488,29 @@ const ReaderSideList = memo(
                     ) : (
                         <ol>
                             {(appSettings.locationListSortType === "inverse"
-                                ? realList([...chapterData], filter).reverse()
-                                : realList(chapterData, filter)
-                            ).map((e, i, arr) => (
-                                <ReaderSideListItem
-                                    name={e.name}
-                                    inHistory={[historySimple[0], historySimple[1].findIndex((a) => a === e.name)]}
-                                    focused={focused % arr.length === i}
-                                    key={e.name}
-                                    pages={e.pages}
-                                    current={mangaInReader?.link === e.link}
-                                    link={e.link}
-                                />
-                            ))}
+                                ? [...chapterData].reverse()
+                                : chapterData
+                            )
+                                .filter(
+                                    (e) =>
+                                        mangaInReader &&
+                                        new RegExp(filter, "ig") &&
+                                        new RegExp(filter, "ig").test(e.name)
+                                )
+                                .map((e, i, arr) => (
+                                    <ReaderSideListItem
+                                        name={e.name}
+                                        inHistory={[
+                                            historySimple[0],
+                                            historySimple[1].findIndex((a) => a === e.name),
+                                        ]}
+                                        focused={focused % arr.length === i}
+                                        key={e.name}
+                                        pages={e.pages}
+                                        current={mangaInReader?.link === e.link}
+                                        link={e.link}
+                                    />
+                                ))}
                         </ol>
                     )}
                 </div>

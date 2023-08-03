@@ -29,6 +29,10 @@ const ReaderSideListItem = memo(
             if (!contextMenuData) setContextMenuFocused(false);
         }, [contextMenuData]);
 
+        // useEffect(()=>{
+        //     if()
+        // },[focused])
+
         return (
             <li
                 className={`${inHistory && inHistory[1] >= 0 ? "alreadyRead" : ""} ${current ? "current" : ""} ${
@@ -36,6 +40,7 @@ const ReaderSideListItem = memo(
                 }`}
                 data-focused={focused}
                 ref={(node) => {
+                    // todo, not working
                     if (node && focused) node.scrollIntoView({ block: "nearest" });
                 }}
             >
@@ -47,18 +52,19 @@ const ReaderSideListItem = memo(
                     }}
                     onContextMenu={(e) => {
                         const items = [
-                            window.contextMenuTemplate.open(link),
-                            window.contextMenuTemplate.openInNewWindow(link),
-                            window.contextMenuTemplate.showInExplorer(link),
-                            window.contextMenuTemplate.copyPath(link),
+                            window.contextMenu.template.open(link),
+                            window.contextMenu.template.openInNewWindow(link),
+                            window.contextMenu.template.showInExplorer(link),
+                            window.contextMenu.template.copyPath(link),
                         ];
                         if (inHistory && inHistory[1] >= 0) {
-                            items.push(window.contextMenuTemplate.unreadChapter(...inHistory));
+                            items.push(window.contextMenu.template.unreadChapter(...inHistory));
                         }
                         setContextMenuFocused(true);
                         setContextMenuData({
                             clickX: e.clientX,
                             clickY: e.clientY,
+                            focusBackElem: e.nativeEvent.relatedTarget,
                             items,
                         });
                     }}

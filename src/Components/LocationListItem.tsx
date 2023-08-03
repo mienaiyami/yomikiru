@@ -57,7 +57,6 @@ const LocationListItem = ({
     useEffect(() => {
         if (!contextMenuData) setContextMenuFocused(false);
     }, [contextMenuData]);
-
     return (
         <li
             className={`${inHistory && inHistory[1] >= 0 ? "alreadyRead" : ""} ${
@@ -89,19 +88,20 @@ const LocationListItem = ({
                 }}
                 onContextMenu={(e) => {
                     const items = [
-                        window.contextMenuTemplate.open(link),
-                        window.contextMenuTemplate.openInNewWindow(link),
-                        window.contextMenuTemplate.showInExplorer(link),
-                        window.contextMenuTemplate.copyPath(link),
+                        window.contextMenu.template.open(link),
+                        window.contextMenu.template.openInNewWindow(link),
+                        window.contextMenu.template.showInExplorer(link),
+                        window.contextMenu.template.copyPath(link),
                     ];
                     if (inHistory && inHistory[1] >= 0) {
-                        items.push(window.contextMenuTemplate.unreadChapter(...inHistory));
+                        items.push(window.contextMenu.template.unreadChapter(...inHistory));
                     }
                     setContextMenuFocused(true);
                     setContextMenuData({
                         clickX: e.clientX,
                         clickY: e.clientY,
                         items,
+                        focusBackElem: e.nativeEvent.relatedTarget,
                     });
                     // showContextMenu({
                     //     e: e.nativeEvent,

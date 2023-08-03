@@ -1700,9 +1700,34 @@ const Settings = (): ReactElement => {
                                         </td>
                                     </tr>
                                     <tr>
-                                        <td>Directory Up (search focused)</td>
+                                        <td>
+                                            Directory Up
+                                            <a
+                                                onClick={() => {
+                                                    scrollIntoView("#settings-usage-searchShortcutKeys", "extras");
+                                                }}
+                                            >
+                                                More Info.
+                                            </a>
+                                        </td>
                                         <td>
                                             <code>alt</code>+<code>ArrowUp</code>
+                                        </td>
+                                    </tr>
+                                    <tr>
+                                        <td>
+                                            Context Menu
+                                            <a
+                                                onClick={() => {
+                                                    scrollIntoView("#settings-usage-searchShortcutKeys", "extras");
+                                                }}
+                                            >
+                                                More Info.
+                                            </a>
+                                        </td>
+                                        <td>
+                                            <code>ctrl</code>+<code>/</code> or <code>shift</code>+<code>F10</code>{" "}
+                                            or <code>ContextMenu/Menu</code>
                                         </td>
                                     </tr>
                                     <tr>
@@ -2033,7 +2058,7 @@ const Settings = (): ReactElement => {
                                         <li>Dropping archive or epub file will open them in the reader</li>
                                     </ul>
                                 </li>
-                                <li>
+                                <li id="settings-usage-searchShortcutKeys">
                                     Search bar shortcut keys :
                                     <ul>
                                         <li>
@@ -2049,6 +2074,11 @@ const Settings = (): ReactElement => {
                                         <li>
                                             Click <code>alt</code>+<code>ArrowUp</code> to go up a
                                             directory/folder.
+                                        </li>
+                                        <li>
+                                            Click <code>ctrl</code>+<code>/</code> or <code>shift</code>+
+                                            <code>F10</code> or <code>ContextMenu/Menu</code> buttons to get right
+                                            click menu of focused item.
                                         </li>
                                     </ul>
                                 </li>
