@@ -1456,7 +1456,8 @@ const Settings = (): ReactElement => {
                                         labelAfter="Auto Refresh Side-list"
                                     />
                                     <div className="desc">
-                                        Automatically refresh reader side list every 5 second.
+                                        Automatically refresh reader-side-list when change in files is detected. It
+                                        can be heavy task if you have slow storage and chapter+page count is high.
                                     </div>
                                 </div>
                                 <div className="toggleItem">

@@ -106,7 +106,11 @@ const ReaderSideList = memo(
         useEffect(() => {
             if (chapterData.length >= 0) changePrevNext();
         }, [chapterData]);
-        const makeChapterList = async () => {
+        const makeChapterList = async (refresh = false) => {
+            if (!refresh) {
+                setFilter("");
+                setFocused(-1);
+            }
             // setFocused(-1);
             if (mangaInReader) {
                 const dir = mangaInReader.link.replace(mangaInReader.chapterName, "");
@@ -185,17 +189,24 @@ const ReaderSideList = memo(
             // refreshList();
 
             makeChapterList();
-            if (mangaInReader) {
-                let interval: NodeJS.Timer;
-                if (appSettings.autoRefreshSideList)
-                    interval = setInterval(() => {
-                        // refreshList();
-
-                        makeChapterList();
-                    }, 5000);
+            if (mangaInReader && appSettings.autoRefreshSideList) {
+                const watcher = window.chokidar.watch(mangaInReader.link.replace(mangaInReader.chapterName, ""), {
+                    depth: 1,
+                    ignoreInitial: true,
+                });
+                makeChapterList();
+                let timeout: NodeJS.Timeout;
+                const refresh = () => {
+                    if (timeout) clearTimeout(timeout);
+                    timeout = setTimeout(() => {
+                        makeChapterList(true);
+                    }, 1000);
+                };
+                watcher.on("all", () => {
+                    refresh();
+                });
                 return () => {
-                    // watcher.removeAllListeners();
-                    clearInterval(interval);
+                    watcher.removeAllListeners("all");
                 };
             }
         }, [mangaInReader, appSettings.autoRefreshSideList]);
