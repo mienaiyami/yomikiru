@@ -211,8 +211,8 @@ const Settings = (): ReactElement => {
         [...themeMakerRef.current!.querySelectorAll(".newThemeMakerRow")].forEach((e, i) => {
             if (e.querySelector("label")!.classList.contains("selected")) {
                 vars += `${props[i]}:${(
-                    e.querySelector(".newThemeMakerVar .optSelectBtn") as HTMLButtonElement
-                ).getAttribute("data-value")};`;
+                    e.querySelector(".newThemeMakerVar.optSelectBtn") as HTMLButtonElement | null
+                )?.getAttribute("data-value")};`;
             } else {
                 vars += `${props[i]}:${(e.querySelector(".newThemeMakerColorFull") as HTMLInputElement).value};`;
             }
@@ -252,7 +252,7 @@ const Settings = (): ReactElement => {
         [...themeMakerRef.current!.querySelectorAll(".newThemeMakerRow")].forEach((e, i) => {
             if (e.querySelector("label")!.classList.contains("selected")) {
                 newThemeData[props[i]] =
-                    (e.querySelector(".newThemeMakerVar .optSelectBtn") as HTMLButtonElement).getAttribute(
+                    (e.querySelector(".newThemeMakerVar.optSelectBtn") as HTMLButtonElement | null)?.getAttribute(
                         "data-value"
                     ) || "";
             } else {

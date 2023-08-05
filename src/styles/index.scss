@@ -479,32 +479,32 @@ body {
         }
     }
 
-    select {
-        width: 100%;
-        height: 100%;
-        // background: var(--text-input-bg);
-        background: var(--btn-color);
-        color: var(--font-color);
-        font-size: 1em;
-        padding: 0.4em;
-        border: none;
-        border-radius: 3px;
-        cursor: default;
-        user-select: none;
-        cursor: pointer;
-        font-family: inherit;
-        color-scheme: light dark;
-        &:focus,
-        &:active {
-            outline: none;
-            box-shadow: var(--btn-color-focus) 0 0 0px 2px;
-        }
-        &:disabled {
-            pointer-events: none;
-            cursor: not-allowed;
-            opacity: 0.5;
-        }
-    }
+    // select {
+    //     width: 100%;
+    //     height: 100%;
+    //     // background: var(--text-input-bg);
+    //     background: var(--btn-color);
+    //     color: var(--font-color);
+    //     font-size: 1em;
+    //     padding: 0.4em;
+    //     border: none;
+    //     border-radius: 3px;
+    //     cursor: default;
+    //     user-select: none;
+    //     cursor: pointer;
+    //     font-family: inherit;
+    //     color-scheme: light dark;
+    //     &:focus,
+    //     &:active {
+    //         outline: none;
+    //         box-shadow: var(--btn-color-focus) 0 0 0px 2px;
+    //     }
+    //     &:disabled {
+    //         pointer-events: none;
+    //         cursor: not-allowed;
+    //         opacity: 0.5;
+    //     }
+    // }
     svg {
         color: var(--icon-color);
     }
@@ -817,18 +817,13 @@ body {
                 cursor: pointer;
             }
         }
-        .optSelect:not(#specificity#specificity) {
+        button.optSelectBtn {
             width: 100%;
-            position: relative;
-            .optSelectBtn {
-                width: 100%;
-                padding: 10px;
-                text-align: left;
-                display: flex;
-                flex-direction: row;
-
-                justify-content: space-between;
-            }
+            padding: 10px;
+            // text-align: left;
+            display: flex;
+            flex-direction: row;
+            justify-content: space-between;
         }
         @mixin contFadeScaleIn($elem) {
             &[data-state="open"] {
@@ -1158,7 +1153,7 @@ body {
             border-radius: 4px;
             translate: 0 calc(-1 * var(--titleBar-height));
             min-width: 240px;
-            z-index: 10000;
+            z-index: 1000001;
             user-select: none;
             &:active,
             &:focus {
@@ -1197,13 +1192,15 @@ body {
             --min-width: fit-content;
             padding: 0px;
             min-width: var(--min-width);
-            max-height: min(25em, 70%);
+            max-height: min(30em, 70%);
             // max-height: 20em;
             overflow-y: auto;
+            background-color: var(--btn-color);
+            color: var(--font-color);
             ul {
                 li {
                     padding: 5px 10px;
-                    background-color: var(--btn-color);
+                    // background-color: var(--btn-color);
                 }
             }
         }
@@ -1507,19 +1504,19 @@ body {
                                     max-width: 10em;
                                     min-width: 8.8em;
                                 }
-                                select {
-                                    width: fit-content;
-                                    width: 10em;
-                                    text-overflow: ellipsis;
-                                    // ! temp only
-                                    font-size: 1.19em;
-                                    // height: 2.5em;
-                                    text-align: center;
-                                    option {
-                                        font-size: 1em;
-                                        padding: 5px;
-                                    }
-                                }
+                                // select {
+                                //     width: fit-content;
+                                //     width: 10em;
+                                //     text-overflow: ellipsis;
+                                //     // ! temp only
+                                //     font-size: 1.19em;
+                                //     // height: 2.5em;
+                                //     text-align: center;
+                                //     option {
+                                //         font-size: 1em;
+                                //         padding: 5px;
+                                //     }
+                                // }
                                 label:has(input[type="text"], input[type="number"]) {
                                     // @include labelNoBG();
                                     padding: 0;
@@ -2045,10 +2042,6 @@ body {
                         grid-template-columns: 1fr 1fr 1fr 1fr;
                         gap: 10px;
                         column-gap: 20px;
-                        select {
-                            // width: 8rem;
-                            padding: 10px;
-                        }
                         // input[type="number"] {
                         //     width: 5rem;
                         // }
@@ -2063,9 +2056,12 @@ body {
                                 padding: 0;
                                 gap: 5px;
                                 align-content: start;
-                                select,
+                                .optSelectBtn,
                                 input {
                                     text-align: center;
+                                }
+                                .optSelectBtn {
+                                    justify-content: space-evenly;
                                 }
                                 .input {
                                     width: 100%;
@@ -2414,7 +2410,7 @@ body {
                     }
                 }
 
-                button {
+                button: {
                     position: relative;
                     border: none;
                     min-width: 50px;
@@ -2424,8 +2420,7 @@ body {
                     justify-content: center;
                     font-size: 15px;
                 }
-
-                .menuExtender {
+                button.menuExtender {
                     z-index: 101;
                     position: absolute;
                     width: var(--extender-size);
@@ -2436,7 +2431,6 @@ body {
                     font-size: 20px;
                     opacity: 0.5;
                     background: var(--sideList-bg-color);
-
                     &:active,
                     &:focus {
                         background: var(--btn-color-focus);
@@ -2453,7 +2447,6 @@ body {
                         --translate: calc(-100% - 10px), -50%;
                     }
                 }
-
                 .main {
                     width: 100%;
                     height: 100%;
@@ -2541,7 +2534,8 @@ body {
                                 border-radius: 3px;
                                 min-height: 2.2em;
 
-                                p {
+                                p,
+                                .optSelectBtn {
                                     font-size: 0.75em;
                                 }
 

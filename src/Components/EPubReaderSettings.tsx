@@ -311,7 +311,6 @@ const EPUBReaderSettings = memo(
                                     paraAfter="Custom Font Family"
                                 />
                                 <InputSelect
-                                    labeled={true}
                                     disabled={appSettings.epubReaderSettings.useDefault_fontFamily}
                                     value={appSettings.epubReaderSettings.fontFamily}
                                     onChange={(value) => {
@@ -322,20 +321,25 @@ const EPUBReaderSettings = memo(
                                             })
                                         );
                                     }}
-                                >
-                                    {appSettings.epubReaderSettings.quickFontFamily.map((e) => (
-                                        <option key={e} value={e} style={{ fontFamily: e }}>
-                                            ★ {e}
-                                        </option>
-                                    ))}
-                                    {/* <option value="Roboto"> ★ Roboto</option>
-                                    <option value="Cambria"> ★ Cambria</option> */}
-                                    {fontList.map((e) => (
-                                        <option value={e} key={e} style={{ fontFamily: e }}>
-                                            {e}
-                                        </option>
-                                    ))}
-                                </InputSelect>
+                                    options={[
+                                        ...appSettings.epubReaderSettings.quickFontFamily.map(
+                                            (e) =>
+                                                ({
+                                                    label: `★ ${e}`,
+                                                    value: e,
+                                                    style: { fontFamily: e, fontSize: "1.2em" },
+                                                } as IOptSelectOption)
+                                        ),
+                                        ...fontList.map(
+                                            (e) =>
+                                                ({
+                                                    label: e,
+                                                    value: e,
+                                                    style: { fontFamily: e, fontSize: "1.2em" },
+                                                } as IOptSelectOption)
+                                        ),
+                                    ]}
+                                />
                                 <button
                                     disabled={appSettings.epubReaderSettings.useDefault_fontFamily}
                                     onClick={() => {

@@ -575,12 +575,6 @@ declare global {
         }[];
     };
 
-    type MenuListItem = {
-        label: string;
-        action: () => void;
-        disabled: boolean;
-    };
-
     /**
      * Available shortcut commands.
      * to add keyboard shortcuts, add ShortcutSchema to `window.shortcutsFunctions`
@@ -628,6 +622,12 @@ declare global {
          */
         key2: string;
     }
+    type MenuListItem = {
+        label: string;
+        action: () => void;
+        disabled: boolean;
+        style?: React.CSSProperties;
+    };
     type IContextMenuData = {
         clickX: number;
         clickY: number;
@@ -640,6 +640,11 @@ declare global {
         focusBackElem?: HTMLElement | null;
         // display: boolean;
         elemBox: HTMLElement | { x: number; y: number; width: number } | null;
+    };
+    type IOptSelectOption = {
+        label: string;
+        value: string;
+        style?: React.CSSProperties;
     };
     type AppSettings = DeepArrayToUnion<typeof settingValidatorData>;
 }

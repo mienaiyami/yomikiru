@@ -48,7 +48,8 @@ const AniLogin = () => {
             >
                 <h1>Link AniList</h1>
                 <p>
-                    Click "Proceed" to start authorization process. You will be redirected to your default browser.
+                    Click "Proceed" to start authorization process. You will be redirected to your default browser.{" "}
+                    <br />
                     After authorization, anilist will give you a token, copy and paste that below to complete
                     linking.
                     <br />

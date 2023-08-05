@@ -729,7 +729,9 @@ const ReaderSettings = memo(
                                         })
                                     );
                                 }}
-                                options={[...settingValidatorData.readerSettings.customColorFilter.blendMode]}
+                                options={[...settingValidatorData.readerSettings.customColorFilter.blendMode].map(
+                                    (e) => ({ label: e, value: e })
+                                )}
                             />
 
                             <InputCheckbox

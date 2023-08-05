@@ -30,12 +30,18 @@ const MenuList = () => {
                     width = optSelectData.elemBox.width;
                 }
                 if (x >= window.innerWidth - ref.current.offsetWidth - 10) {
-                    x -= ref.current.offsetWidth;
+                    if (optSelectData.elemBox instanceof HTMLElement)
+                        x = optSelectData.elemBox.getBoundingClientRect().right - ref.current.offsetWidth;
+                    else x -= ref.current.offsetWidth;
                 }
                 if (y >= window.innerHeight - ref.current.offsetHeight - 10) {
                     if (optSelectData.elemBox instanceof HTMLElement)
                         y -= ref.current.offsetHeight + 8 + optSelectData.elemBox.getBoundingClientRect().height;
                     else y -= ref.current.offsetHeight;
+                    if (y <= window.app.titleBarHeight && optSelectData.elemBox instanceof HTMLElement) {
+                        y = window.app.titleBarHeight;
+                        ref.current.style.maxHeight = optSelectData.elemBox.getBoundingClientRect().top + "px";
+                    }
                 }
                 setPos({ x, y, width });
                 ref.current.focus();
@@ -140,6 +146,7 @@ const MenuList = () => {
                             key={e.label}
                             onClick={e.action}
                             onContextMenu={e.action}
+                            style={{ ...e.style }}
                             ref={(node) => {
                                 if (node && i === focused)
                                     node.scrollIntoView({ behavior: "instant", block: "nearest" });

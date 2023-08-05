@@ -12,7 +12,6 @@ export const InputSelect = ({
     paraBefore,
     labeled = false,
     className = "",
-    children,
     options = [],
     disabled = false,
 }: {
@@ -25,17 +24,16 @@ export const InputSelect = ({
     onChange: (value: string) => void;
     className?: string;
     //string | JSX.Element | JSX.Element[] |( () => JSX.Element)
-    //ReactNode
-    children?: ReactNode;
-    options?: ({ label: string; value: string } | string)[];
+    options: IOptSelectOption[];
     disabled?: boolean;
 }) => {
     const [btnLabel, setBtnLabel] = useState(".");
+
     const { setOptSelectData } = useContext(AppContext);
 
     useLayoutEffect(() => {
         if (value) {
-            const aa = options.find((e) => (typeof e === "string" ? e === value : e.value === value));
+            const aa = options.find((e) => e.value === value);
             if (aa) {
                 if (typeof aa === "string") setBtnLabel(aa);
                 else setBtnLabel(aa.label);
@@ -43,141 +41,94 @@ export const InputSelect = ({
         }
     }, [value]);
 
+        // making it a component will cause re-render and issuess
+    // const SelectButton = ({ solo = true }: { solo?: boolean }) => (
+    //     <button
+    //         className={`optSelectBtn  ${solo ? `${disabled ? "disabled" : ""} ${className}` : ""}`}
+    //         data-value={value}
+    //         onClick={(e) => {
+    //             setOptSelectData({
+    //                 items: options.map((e) => ({
+    //                     label: e.label,
+    //                     disabled: e.value === value,
+    //                     action() {
+    //                         onChange(e.value);
+    //                     },
+    //                     style: e,
+    //                 })),
+    //                 focusBackElem: e.currentTarget,
+    //                 elemBox: e.currentTarget,
+    //                 onBlur() {
+    //                     setOptSelectData(null);
+    //                 },
+    //             });
+    //         }}
+    //     >
+    //         {btnLabel}
+    //         <FontAwesomeIcon icon={faChevronDown} />
+    //     </button>
+    // );
+
     if (labeled)
         return (
             <label className={(disabled ? "disabled " : "") + className}>
                 {labelBefore}
                 {paraBefore && <p>{paraBefore}</p>}
-                {/* <select
-                    disabled={disabled}
-                    value={value}
-                    onChange={onChange}
-                    onKeyDown={(e) => {
-                        if (e.key !== "Escape") {
-                            e.stopPropagation();
-                        }
+                <button
+                    className={`optSelectBtn`}
+                    data-value={value}
+                    onClick={(e) => {
+                        setOptSelectData({
+                            items: options.map((e) => ({
+                                label: e.label,
+                                disabled: e.value === value,
+                                action() {
+                                    onChange(e.value);
+                                },
+                                style: e,
+                            })),
+                            focusBackElem: e.currentTarget,
+                            elemBox: e.currentTarget,
+                            onBlur() {
+                                setOptSelectData(null);
+                            },
+                        });
                     }}
                 >
-                    {children}
-                    {options.map((e) => {
-                        if (typeof e === "string")
-                            return (
-                                <option value={e} key={e}>
-                                    {e}
-                                </option>
-                            );
-                        return (
-                            <option value={e.value} key={e.label}>
-                                {e.label}
-                            </option>
-                        );
-                    })}
-                </select> */}
-                {options && (
-                    <div className={`optSelect ${disabled ? "disabled" : ""} ${className}`}>
-                        <button
-                            className="optSelectBtn"
-                            data-value={value}
-                            onClick={(e) => {
-                                setOptSelectData({
-                                    items: options.map((e) => ({
-                                        label: typeof e === "string" ? e : e.label,
-                                        disabled: false,
-                                        action() {
-                                            console.log(typeof e === "string" ? e : e.value);
-                                            onChange(typeof e === "string" ? e : e.value);
-                                            // dont do this
-                                            // setDisplay(false);
-                                        },
-                                    })),
-                                    focusBackElem: e.currentTarget,
-                                    elemBox: e.currentTarget,
-                                    onBlur() {
-                                        setOptSelectData(null);
-                                    },
-                                });
-                            }}
-                        >
-                            {btnLabel}
-                            <FontAwesomeIcon icon={faChevronDown} />
-                        </button>
-                    </div>
-                )}
+                    {btnLabel}
+                    <FontAwesomeIcon icon={faChevronDown} />
+                </button>
+
                 {paraAfter && <p>{paraAfter}</p>}
                 {labelAfter}
             </label>
         );
-    // if (!children)
-    //     return (
-    //         <>
-    //             <button className="selectBtn">{value}</button>
-    //             <div className="selectOptions">
-    //                 {options.map((e) => (
-    //                     <div className="selectOptionItem" key={e}>
-    //                         {e}
-    //                     </div>
-    //                 ))}
-    //             </div>
-    //         </>
-    //     );
-
-    // todo, remove children totally
-    // if (options && !children)
     return (
-        <div className={`optSelect ${disabled ? "disabled" : ""} ${className}`}>
-            <button
-                className="optSelectBtn"
-                data-value={value}
-                onClick={(e) => {
-                    setOptSelectData({
-                        items: options.map((e) => ({
-                            label: typeof e === "string" ? e : e.label,
-                            disabled: false,
-                            action() {
-                                console.log(typeof e === "string" ? e : e.value);
-                                onChange(typeof e === "string" ? e : e.value);
-                            },
-                        })),
-                        focusBackElem: e.currentTarget,
-                        elemBox: e.currentTarget,
-                        onBlur() {
-                            setOptSelectData(null);
+        <button
+            className={`optSelectBtn ${disabled ? "disabled" : ""} ${className}`}
+            data-value={value}
+            onClick={(e) => {
+                // const textAlign = window.getComputedStyle(e.currentTarget)
+                //     .textAlign as React.CSSProperties["textAlign"];
+                setOptSelectData({
+                    items: options.map((e) => ({
+                        label: e.label,
+                        disabled: e.value === value,
+                        action() {
+                            onChange(e.value);
                         },
-                    });
-                }}
-            >
-                {btnLabel}
-                <FontAwesomeIcon icon={faChevronDown} />
-            </button>
-        </div>
+                        style: { ...e.style },
+                    })),
+                    focusBackElem: e.currentTarget,
+                    elemBox: e.currentTarget,
+                    onBlur() {
+                        setOptSelectData(null);
+                    },
+                });
+            }}
+        >
+            {btnLabel}
+            <FontAwesomeIcon icon={faChevronDown} />
+        </button>
     );
-
-    // return (
-    //     <select
-    //         className={className}
-    //         disabled={disabled}
-    //         value={value}
-    //         onChange={onChange}
-    //         onKeyDown={(e) => {
-    //             if (e.key !== "Escape") {
-    //                 e.stopPropagation();
-    //             }
-    //         }}
-    //     >
-    //         {children}
-    //         {options.map((e) => {
-    //             if (typeof e === "string")
-    //                 return (
-    //                     <option value={e} key={e}>
-    //                         {e}
-    //                     </option>
-    //                 );
-    //             return (
-    //                 <option value={e.value} key={e.label}>
-    //                     {e.label}
-    //                 </option>
-    //             );
-    //         })}
-    //     </select>
-    // );
 };
