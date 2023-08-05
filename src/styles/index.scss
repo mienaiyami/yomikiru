@@ -817,6 +817,14 @@ body {
                 cursor: pointer;
             }
         }
+        .optSelect:not(#specificity#specificity) {
+            width: 100%;
+            position: relative;
+            .optSelectBtn {
+                width: 100%;
+                text-align: left;
+            }
+        }
         @mixin contFadeScaleIn($elem) {
             &[data-state="open"] {
                 visibility: visible;
@@ -1177,7 +1185,49 @@ body {
                 }
             }
         }
+        .itemList {
+            --min-width: fit-content;
+            position: absolute;
+            top: 0;
+            left: 0;
+            background: var(--contextMenu-bg-color);
+            color: var(--contentMenu-item-color);
+            box-shadow: var(--btn-color-focus) 0 0 0 1px;
+            // border: 1px solid var(--btn-color-focus);
+            box-sizing: border-box;
+            padding: 0px;
+            border-radius: 4px;
+            translate: 0 calc(-1 * var(--titleBar-height));
+            min-width: var(--min-width);
+            z-index: 10000;
+            user-select: none;
+            max-height: min(25em, 70%);
+            // max-height: 20em;
+            overflow-y: auto;
+            &:active,
+            &:focus {
+                outline: none;
+            }
 
+            ul {
+                list-style: none;
+                margin: 0;
+                li {
+                    padding: 5px;
+                    line-height: normal;
+                    cursor: default;
+                    border-radius: 2px;
+                    &[data-focused="true"] {
+                        background: var(--btn-color-focus);
+                    }
+                    &.disabled {
+                        opacity: 0.5;
+                        pointer-events: none;
+                        cursor: not-allowed;
+                    }
+                }
+            }
+        }
         .overlayCont:not(.settingCont) {
             position: relative;
             background: var(--body-bg-color);

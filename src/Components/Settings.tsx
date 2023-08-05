@@ -288,17 +288,20 @@ const Settings = (): ReactElement => {
                         <InputSelect
                             value={rawColorWhole}
                             className="newThemeMakerVar"
+                            options={Object.entries(window.themeProps)
+                                .filter((e) => e[0] !== prop)
+                                .map((e) => ({ label: e[1], value: `var(${e[0]})` }))}
                             onChange={(e) => {
                                 setRawColorWhole(e.currentTarget.value);
                             }}
                         >
-                            {Object.entries(window.themeProps)
+                            {/* {Object.entries(window.themeProps)
                                 .filter((e) => e[0] !== prop)
                                 .map((e) => (
                                     <option key={e[0]} value={`var(${e[0]})`}>
                                         {e[1]}
                                     </option>
-                                ))}
+                                ))} */}
                         </InputSelect>
                     ) : (
                         <>

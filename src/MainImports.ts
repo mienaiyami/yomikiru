@@ -628,13 +628,19 @@ declare global {
          */
         key2: string;
     }
-    interface IContextMenuData {
+    type IContextMenuData = {
         clickX: number;
         clickY: number;
         focusBackElem?: EventTarget | null;
         items: MenuListItem[];
-    }
-
+    };
+    type IOptSelectData = {
+        items: MenuListItem[];
+        onBlur?: (e: React.FocusEvent<HTMLDivElement, Element>) => void;
+        focusBackElem?: HTMLElement | null;
+        // display: boolean;
+        elemBox: HTMLElement | { x: number; y: number; width: number } | null;
+    };
     type AppSettings = DeepArrayToUnion<typeof settingValidatorData>;
 }
 

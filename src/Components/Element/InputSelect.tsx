@@ -1,4 +1,5 @@
-import React, { ReactNode } from "react";
+import React, { ReactNode, useRef, useState, useLayoutEffect, useContext } from "react";
+import { AppContext } from "../../App";
 
 export const InputSelect = ({
     onChange,
@@ -24,15 +25,28 @@ export const InputSelect = ({
     //string | JSX.Element | JSX.Element[] |( () => JSX.Element)
     //ReactNode
     children?: ReactNode;
-    options?: string[];
+    options?: ({ label: string; value: string } | string)[];
     disabled?: boolean;
 }) => {
+    const [btnLabel, setBtnLabel] = useState(".");
+    const { setOptSelectData } = useContext(AppContext);
+
+    useLayoutEffect(() => {
+        if (value) {
+            const aa = options.find((e) => (typeof e === "string" ? e === value : e.value === value));
+            if (aa) {
+                if (typeof aa === "string") setBtnLabel(aa);
+                else setBtnLabel(aa.label);
+            }
+        }
+    }, [value]);
+
     if (labeled)
         return (
             <label className={(disabled ? "disabled " : "") + className}>
                 {labelBefore}
                 {paraBefore && <p>{paraBefore}</p>}
-                <select
+                {/* <select
                     disabled={disabled}
                     value={value}
                     onChange={onChange}
@@ -43,12 +57,47 @@ export const InputSelect = ({
                     }}
                 >
                     {children}
-                    {options.map((e) => (
-                        <option value={e} key={e}>
-                            {e}
-                        </option>
-                    ))}
-                </select>
+                    {options.map((e) => {
+                        if (typeof e === "string")
+                            return (
+                                <option value={e} key={e}>
+                                    {e}
+                                </option>
+                            );
+                        return (
+                            <option value={e.value} key={e.label}>
+                                {e.label}
+                            </option>
+                        );
+                    })}
+                </select> */}
+                {options && (
+                    <div className={`optSelect ${disabled ? "disabled" : ""} ${className}`}>
+                        <button
+                            className="optSelectBtn"
+                            onClick={(e) => {
+                                setOptSelectData({
+                                    items: options.map((e) => ({
+                                        label: typeof e === "string" ? e : e.label,
+                                        disabled: false,
+                                        action() {
+                                            console.log(typeof e === "string" ? e : e.value);
+                                            // dont do this
+                                            // setDisplay(false);
+                                        },
+                                    })),
+                                    focusBackElem: e.currentTarget,
+                                    elemBox: e.currentTarget,
+                                    onBlur() {
+                                        setOptSelectData(null);
+                                    },
+                                });
+                            }}
+                        >
+                            {btnLabel}
+                        </button>
+                    </div>
+                )}
                 {paraAfter && <p>{paraAfter}</p>}
                 {labelAfter}
             </label>
@@ -66,6 +115,38 @@ export const InputSelect = ({
     //             </div>
     //         </>
     //     );
+
+    // todo, remove children totally
+    console.log("rendered");
+    if (options && !children)
+        return (
+            <div className={`optSelect ${disabled ? "disabled" : ""} ${className}`}>
+                <button
+                    className="optSelectBtn"
+                    onClick={(e) => {
+                        setOptSelectData({
+                            items: options.map((e) => ({
+                                label: typeof e === "string" ? e : e.label,
+                                disabled: false,
+                                action() {
+                                    console.log(typeof e === "string" ? e : e.value);
+                                    // dont do this
+                                    // setDisplay(false);
+                                },
+                            })),
+                            focusBackElem: e.currentTarget,
+                            elemBox: e.currentTarget,
+                            onBlur() {
+                                setOptSelectData(null);
+                            },
+                        });
+                    }}
+                >
+                    {btnLabel}
+                </button>
+            </div>
+        );
+
     return (
         <select
             className={className}
@@ -79,11 +160,19 @@ export const InputSelect = ({
             }}
         >
             {children}
-            {options.map((e) => (
-                <option value={e} key={e}>
-                    {e}
-                </option>
-            ))}
+            {options.map((e) => {
+                if (typeof e === "string")
+                    return (
+                        <option value={e} key={e}>
+                            {e}
+                        </option>
+                    );
+                return (
+                    <option value={e.value} key={e.label}>
+                        {e.label}
+                    </option>
+                );
+            })}
         </select>
     );
 };

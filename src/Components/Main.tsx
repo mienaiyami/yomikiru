@@ -13,6 +13,7 @@ import Reader from "./Reader";
 import Settings from "./Settings";
 import AniLogin from "./anilist/AniLogin";
 import { AppContext } from "../App";
+import MenuList from "./Element/MenuList";
 
 const Main = (): ReactElement => {
     const appSettings = useAppSelector((store) => store.appSettings);
@@ -21,7 +22,7 @@ const Main = (): ReactElement => {
     const anilistToken = useAppSelector((store) => store.anilistToken);
     const isAniLoginOpen = useAppSelector((store) => store.isAniLoginOpen);
 
-    const { setContextMenuData, contextMenuData } = useContext(AppContext);
+    const { setContextMenuData, contextMenuData, optSelectData } = useContext(AppContext);
     const dispatch = useAppDispatch();
 
     // const [bookmarkTabDisplay, setBookmarkTabDisplay] = useState(true);
@@ -32,20 +33,13 @@ const Main = (): ReactElement => {
     // const tabContRef = useRef<HTMLDivElement>(null);
     // const [gridTemplate, setGridTemplate] = useState<string>("");
     // const [dividerWidth, setDividerWidth] = useState<number>(0);
+
     useLayoutEffect(() => {
         const ff = () => {
             (contextMenuData?.focusBackElem as HTMLElement | null)?.focus();
             setContextMenuData(null);
         };
-        // onDragOver={() => false}
-        // onDragLeave={() => false}
-        // onDragEnd={() => false}
         window.addEventListener("wheel", ff);
-        // if (tabContRef.current) {
-        //     setDividerWidth(
-        //         parseInt(window.getComputedStyle(tabContRef.current).getPropertyValue("--divider-width"))
-        //     );
-        // }
         return () => {
             window.removeEventListener("wheel", ff);
         };
@@ -363,6 +357,7 @@ const Main = (): ReactElement => {
             <Settings />
             <LoadingScreen />
             {contextMenuData && <ContextMenu />}
+            {optSelectData && <MenuList />}
             {!anilistToken && isAniLoginOpen && <AniLogin />}
             {linkInReader.type === "image" && linkInReader.link !== "" ? <Reader /> : ""}
             {linkInReader.type === "book" && linkInReader.link !== "" ? <EPubReader /> : ""}

@@ -44,6 +44,8 @@ interface IAppContext {
     openInNewWindow: (link: string) => void;
     contextMenuData: IContextMenuData | null;
     setContextMenuData: React.Dispatch<React.SetStateAction<IContextMenuData | null>>;
+    optSelectData: IOptSelectData | null;
+    setOptSelectData: React.Dispatch<React.SetStateAction<IOptSelectData | null>>;
     checkValidFolder: (
         link: string,
         callback: (isValid?: boolean, imgs?: string[]) => void,
@@ -64,6 +66,7 @@ const App = (): ReactElement => {
     const bookProgressRef: React.RefObject<HTMLInputElement> = createRef();
     const [firstRendered, setFirstRendered] = useState(false);
     const [contextMenuData, setContextMenuData] = useState<IContextMenuData | null>(null);
+    const [optSelectData, setOptSelectData] = useState<IOptSelectData | null>(null);
 
     const dispatch = useAppDispatch();
 
@@ -728,6 +731,8 @@ const App = (): ReactElement => {
                 checkValidFolder,
                 contextMenuData,
                 setContextMenuData,
+                optSelectData,
+                setOptSelectData,
             }}
         >
             <TopBar />
