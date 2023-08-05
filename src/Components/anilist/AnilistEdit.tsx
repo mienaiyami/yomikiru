@@ -88,7 +88,11 @@ const AnilistEdit = () => {
                                         "DROPPED",
                                         "PAUSED",
                                         "REPEATING",
-                                    ].map((e) => ({ label: e, value: e, style: { textAlign: "center" } }))}
+                                    ].map((e) => ({
+                                        label: e,
+                                        value: e,
+                                        style: { textAlign: "center" },
+                                    }))}
                                     value={tempData.status}
                                     onChange={(value) => {
                                         setTempData((init) => {

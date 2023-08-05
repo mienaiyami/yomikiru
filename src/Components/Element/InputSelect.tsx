@@ -41,7 +41,7 @@ export const InputSelect = ({
         }
     }, [value]);
 
-        // making it a component will cause re-render and issuess
+    // making it a component will cause re-render and issuess
     // const SelectButton = ({ solo = true }: { solo?: boolean }) => (
     //     <button
     //         className={`optSelectBtn  ${solo ? `${disabled ? "disabled" : ""} ${className}` : ""}`}
@@ -85,7 +85,7 @@ export const InputSelect = ({
                                 action() {
                                     onChange(e.value);
                                 },
-                                style: e,
+                                style: { ...e.style },
                             })),
                             focusBackElem: e.currentTarget,
                             elemBox: e.currentTarget,

@@ -146,7 +146,7 @@ const MenuList = () => {
                             key={e.label}
                             onClick={e.action}
                             onContextMenu={e.action}
-                            style={{ ...e.style }}
+                            style={e.style}
                             ref={(node) => {
                                 if (node && i === focused)
                                     node.scrollIntoView({ behavior: "instant", block: "nearest" });

@@ -491,6 +491,7 @@ const registerListener = () => {
             window.webContents.send("recordPageNumber");
             //backup in case window is stuck
             setTimeout(() => {
+                log.log("No response from window. Force closing app.");
                 if (window && !window.isDestroyed()) window.destroy();
             }, 5000);
             const dirToDlt = deleteDirsOnClose[currentWindowIndex];
