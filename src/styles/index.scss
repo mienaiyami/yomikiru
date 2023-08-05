@@ -822,7 +822,12 @@ body {
             position: relative;
             .optSelectBtn {
                 width: 100%;
+                padding: 10px;
                 text-align: left;
+                display: flex;
+                flex-direction: row;
+
+                justify-content: space-between;
             }
         }
         @mixin contFadeScaleIn($elem) {
@@ -1140,8 +1145,7 @@ body {
                 }
             }
         }
-
-        .contextMenu {
+        @mixin KeyboardList() {
             position: absolute;
             top: 0;
             left: 0;
@@ -1156,66 +1160,23 @@ body {
             min-width: 240px;
             z-index: 10000;
             user-select: none;
-
             &:active,
             &:focus {
                 outline: none;
             }
-
-            ul {
-                list-style: none;
-                li {
-                    padding: 10px;
-                    cursor: default;
-                    border-radius: 2px;
-                    &[data-focused="true"] {
-                        background: var(--btn-color-focus);
-                    }
-                    &.disabled {
-                        opacity: 0.5;
-                        pointer-events: none;
-                        cursor: not-allowed;
-                    }
-                    // &:hover {
-                    //     background: var(--btn-color-hover);
-                    // }
-                    // &:active {
-                    //     background: var(--btn-color-focus);
-                    // }
-                }
+            opacity: 0;
+            pointer-events: none;
+            &:focus-within {
+                opacity: 1;
+                pointer-events: all;
             }
-        }
-        .itemList {
-            --min-width: fit-content;
-            position: absolute;
-            top: 0;
-            left: 0;
-            background: var(--contextMenu-bg-color);
-            color: var(--contentMenu-item-color);
-            box-shadow: var(--btn-color-focus) 0 0 0 1px;
-            // border: 1px solid var(--btn-color-focus);
-            box-sizing: border-box;
-            padding: 0px;
-            border-radius: 4px;
-            translate: 0 calc(-1 * var(--titleBar-height));
-            min-width: var(--min-width);
-            z-index: 10000;
-            user-select: none;
-            max-height: min(25em, 70%);
-            // max-height: 20em;
-            overflow-y: auto;
-            &:active,
-            &:focus {
-                outline: none;
-            }
-
             ul {
                 list-style: none;
                 margin: 0;
                 li {
-                    padding: 5px;
-                    line-height: normal;
+                    padding: 10px;
                     cursor: default;
+                    line-height: normal;
                     border-radius: 2px;
                     &[data-focused="true"] {
                         background: var(--btn-color-focus);
@@ -1225,6 +1186,24 @@ body {
                         pointer-events: none;
                         cursor: not-allowed;
                     }
+                }
+            }
+        }
+        .contextMenu {
+            @include KeyboardList();
+        }
+        .itemList {
+            @include KeyboardList();
+            --min-width: fit-content;
+            padding: 0px;
+            min-width: var(--min-width);
+            max-height: min(25em, 70%);
+            // max-height: 20em;
+            overflow-y: auto;
+            ul {
+                li {
+                    padding: 5px 10px;
+                    background-color: var(--btn-color);
                 }
             }
         }

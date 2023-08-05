@@ -718,13 +718,13 @@ const ReaderSettings = memo(
                                 value={appSettings.readerSettings.customColorFilter.blendMode}
                                 labeled={true}
                                 paraBefore="Blend&nbsp;Mode:"
-                                onChange={(e) => {
+                                onChange={(value) => {
                                     dispatch(
                                         setReaderSettings({
                                             customColorFilter: {
                                                 ...appSettings.readerSettings.customColorFilter,
-                                                blendMode: e.currentTarget
-                                                    .value as AppSettings["readerSettings"]["customColorFilter"]["blendMode"],
+                                                blendMode:
+                                                    value as AppSettings["readerSettings"]["customColorFilter"]["blendMode"],
                                             },
                                         })
                                     );

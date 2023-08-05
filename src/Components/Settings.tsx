@@ -23,6 +23,125 @@ import { setUnzipping } from "../store/unzipping";
 import { setLoadingManga } from "../store/isLoadingManga";
 import { setLoadingMangaPercent } from "../store/loadingMangaPercent";
 
+const ThemeElement = ({
+    color,
+    prop,
+    currentTheme,
+    applyThemeTemp,
+}: {
+    color: string;
+    prop: ThemeDataMain;
+    currentTheme: typeof window.themeProps;
+    applyThemeTemp: () => void;
+}): ReactElement => {
+    const ref = useRef<HTMLInputElement>(null);
+    const [firstRendered, setFirstRendered] = useState(false);
+    // ex. #ffffff
+    const [rawColor, setRawColor] = useState(color.substring(0, 7));
+    // ex. #ffffffff , var(--icon-color)
+    const [rawColorWhole, setRawColorWhole] = useState(color);
+    const [opacity, setOpacity] = useState(color.length > 7 ? parseInt(color.substring(7), 16) / 2.55 : 100);
+    const [checked, setChecked] = useState(color.substring(0, 4) === "var(" ? true : false);
+
+    useEffect(() => {
+        setFirstRendered(true);
+    }, []);
+    useLayoutEffect(() => {
+        let base = color;
+        while (base && currentTheme[base.replace("var(", "").replace(")", "") as ThemeDataMain]) {
+            const clr = currentTheme[base.replace("var(", "").replace(")", "") as ThemeDataMain];
+            if (clr.includes("var(")) {
+                base = clr;
+                continue;
+            }
+            setRawColor(clr.substring(0, 7));
+            setOpacity(clr.length > 7 ? parseInt(clr.substring(7), 16) / 2.55 : 100);
+            break;
+        }
+    }, []);
+    useLayoutEffect(() => {
+        if (firstRendered) {
+            applyThemeTemp();
+        }
+    }, [rawColor, opacity, rawColorWhole]);
+    return (
+        <>
+            <td>
+                <button
+                    className="resetBtn"
+                    onClick={() => {
+                        setChecked(color.substring(0, 4) === "var(" ? true : false);
+                        setRawColorWhole(color);
+                        setRawColor(color.substring(0, 7));
+                        setOpacity(color.length > 7 ? parseInt(color.substring(7), 16) / 2.55 : 100);
+                    }}
+                    title="Reset"
+                >
+                    <FontAwesomeIcon icon={faSync} />
+                </button>
+                <label className={checked ? "selected" : ""} title="Link to variable">
+                    <input
+                        type="checkbox"
+                        defaultChecked={checked}
+                        ref={ref}
+                        onChange={() => setChecked((init) => !init)}
+                    />
+                    <FontAwesomeIcon icon={checked ? faUnlink : faLink} />
+                </label>
+            </td>
+            <td>
+                {checked ? (
+                    <InputSelect
+                        value={rawColorWhole}
+                        className="newThemeMakerVar"
+                        options={Object.entries(window.themeProps)
+                            .filter((e) => e[0] !== prop)
+                            .map((e) => ({ label: e[1], value: `var(${e[0]})` }))}
+                        onChange={(value) => {
+                            setRawColorWhole(value);
+                        }}
+                    ></InputSelect>
+                ) : (
+                    <>
+                        <InputColor
+                            value={rawColor || "#000000"}
+                            timeout={[
+                                500,
+                                (value) => setRawColor(value === "" ? "#000000" : value.substring(0, 7)),
+                            ]}
+                            title="Color"
+                        />
+                        <InputRange
+                            min={0}
+                            max={100}
+                            value={Math.ceil(opacity) ?? 100}
+                            title="Opacity"
+                            className="opacityRange"
+                            labeled
+                            timeout={[200, (value) => setOpacity(value)]}
+                        />
+                        <input
+                            type="text"
+                            className="newThemeMakerColorFull"
+                            onKeyDown={(e) => {
+                                e.stopPropagation();
+                            }}
+                            value={
+                                rawColor.substring(0, 7) +
+                                Math.round(opacity * 2.55)
+                                    .toString(16)
+                                    .padStart(2, "0")
+                            }
+                            style={{ display: "none" }}
+                            readOnly
+                        />
+                    </>
+                )}
+            </td>
+        </>
+    );
+};
+
 const Settings = (): ReactElement => {
     const appSettings = useAppSelector((store) => store.appSettings);
     const theme = useAppSelector((store) => store.theme.name);
@@ -49,6 +168,7 @@ const Settings = (): ReactElement => {
     const settingContRef = useRef<HTMLDivElement>(null);
 
     const currentTheme = useMemo(() => {
+        console.log("updating theme");
         return allThemes.find((e) => e.name === theme)!.main;
     }, [theme]);
     const themeMakerRef = useRef<HTMLDivElement>(null);
@@ -84,19 +204,17 @@ const Settings = (): ReactElement => {
 
     const reservedKeys = ["h", "Control", "Tab", "Shift", "Alt", "Escape"];
     const applyThemeTemp = () => {
-        const props: ThemeDataMain[] = [...themeMakerRef.current!.getElementsByClassName("newThemeMakerProp")].map(
+        const props: ThemeDataMain[] = [...themeMakerRef.current!.querySelectorAll(".newThemeMakerProp")].map(
             (e) => (e as HTMLElement).getAttribute("data-prop") as ThemeDataMain
         );
         let vars = "";
-        [...themeMakerRef.current!.getElementsByClassName("newThemeMakerRow")].forEach((e, i) => {
-            if (e.getElementsByTagName("label")[0].classList.contains("selected")) {
-                vars += `${props[i]}:${
-                    (e.getElementsByClassName("newThemeMakerVar")[0] as HTMLInputElement).value
-                };`;
+        [...themeMakerRef.current!.querySelectorAll(".newThemeMakerRow")].forEach((e, i) => {
+            if (e.querySelector("label")!.classList.contains("selected")) {
+                vars += `${props[i]}:${(
+                    e.querySelector(".newThemeMakerVar .optSelectBtn") as HTMLButtonElement
+                ).getAttribute("data-value")};`;
             } else {
-                vars += `${props[i]}:${
-                    (e.getElementsByClassName("newThemeMakerColorFull")[0] as HTMLInputElement).value
-                };`;
+                vars += `${props[i]}:${(e.querySelector(".newThemeMakerColorFull") as HTMLInputElement).value};`;
             }
         });
         document.body.setAttribute("style", vars);
@@ -105,7 +223,7 @@ const Settings = (): ReactElement => {
                 color: window.getComputedStyle(document.querySelector("body #topBar")!).backgroundColor,
                 symbolColor: window.getComputedStyle(document.querySelector("body #topBar .homeBtns button")!)
                     .color,
-                height: Math.floor(40 * window.electron.webFrame.getZoomFactor()),
+                height: Math.floor(window.app.titleBarHeight * window.electron.webFrame.getZoomFactor()),
             });
     };
     const saveTheme = (saveAndReplace = false) => {
@@ -126,20 +244,19 @@ const Settings = (): ReactElement => {
             });
             return;
         }
-        const props: ThemeDataMain[] = [...themeMakerRef.current!.getElementsByClassName("newThemeMakerProp")].map(
+        const props: ThemeDataMain[] = [...themeMakerRef.current!.querySelectorAll(".newThemeMakerProp")].map(
             (e) => (e as HTMLElement).getAttribute("data-prop") as ThemeDataMain
         );
         themeNameInputRef.current!.value = window.app.randomString(6);
         const newThemeData = { ...window.themeProps };
-        [...themeMakerRef.current!.getElementsByClassName("newThemeMakerRow")].forEach((e, i) => {
-            if (e.getElementsByTagName("label")[0].classList.contains("selected")) {
-                newThemeData[props[i]] = (
-                    e.getElementsByClassName("newThemeMakerVar")[0] as HTMLInputElement
-                ).value;
+        [...themeMakerRef.current!.querySelectorAll(".newThemeMakerRow")].forEach((e, i) => {
+            if (e.querySelector("label")!.classList.contains("selected")) {
+                newThemeData[props[i]] =
+                    (e.querySelector(".newThemeMakerVar .optSelectBtn") as HTMLButtonElement).getAttribute(
+                        "data-value"
+                    ) || "";
             } else {
-                newThemeData[props[i]] = (
-                    e.getElementsByClassName("newThemeMakerColorFull")[0] as HTMLInputElement
-                ).value;
+                newThemeData[props[i]] = (e.querySelector(".newThemeMakerColorFull") as HTMLInputElement).value;
             }
         });
         if (saveAndReplace) {
@@ -194,155 +311,6 @@ const Settings = (): ReactElement => {
             spellCheck={false}
         />
     );
-    const ThemeElement = ({ color, prop }: { color: string; prop: ThemeDataMain }): ReactElement => {
-        const ref = useRef<HTMLInputElement>(null);
-        const [firstRendered, setFirstRendered] = useState(false);
-        // ex. #ffffff
-        const [rawColor, setRawColor] = useState(color.substring(0, 7));
-        // ex. #ffffffff , var(--icon-color)
-        const [rawColorWhole, setRawColorWhole] = useState(color);
-        const [opacity, setOpacity] = useState(color.length > 7 ? parseInt(color.substring(7), 16) / 2.55 : 100);
-        const [checked, setChecked] = useState(color.substring(0, 4) === "var(" ? true : false);
-
-        useEffect(() => {
-            setFirstRendered(true);
-        }, []);
-        useLayoutEffect(() => {
-            let base = color;
-            while (base && currentTheme[base.replace("var(", "").replace(")", "") as ThemeDataMain]) {
-                const clr = currentTheme[base.replace("var(", "").replace(")", "") as ThemeDataMain];
-                if (clr.includes("var(")) {
-                    base = clr;
-                    continue;
-                }
-                setRawColor(clr.substring(0, 7));
-                setOpacity(clr.length > 7 ? parseInt(clr.substring(7), 16) / 2.55 : 100);
-                break;
-            }
-        }, []);
-        useLayoutEffect(() => {
-            if (firstRendered) {
-                // console.log(
-                //     prop,
-                //     rawColor.substring(0, 7) +
-                //         (Math.ceil(opacity * 2.55).toString(16).length < 2
-                //             ? "0" + Math.ceil(opacity * 2.55).toString(16)
-                //             : Math.ceil(opacity * 2.55).toString(16))
-                // );
-                // if (process.platform === "win32") {
-                //     if (prop === "--icon-color")
-                //         window.electron.getCurrentWindow().setTitleBarOverlay({ symbolColor: rawColor });
-                //     if (prop === "--topBar-color")
-                //         window.electron.getCurrentWindow().setTitleBarOverlay({ color: rawColor });
-                // }
-                applyThemeTemp();
-                // document.body.style.setProperty(
-                //     prop,
-                //     rawColor.substring(0, 7) +
-                //         (Math.ceil(opacity * 2.55).toString(16).length < 2
-                //             ? "0" + Math.ceil(opacity * 2.55).toString(16)
-                //             : Math.ceil(opacity * 2.55).toString(16))
-                // );
-            }
-        }, [rawColor, opacity, rawColorWhole]);
-        // useLayoutEffect(() => {
-        //     if (firstRendered) {
-        //         // if (process.platform === "win32") {
-        //         //     //! fix - change theme without saving
-        //         //     if (prop === "--icon-color")
-        //         //         window.electron.getCurrentWindow().setTitleBarOverlay({ symbolColor: rawColor });
-        //         //     if (prop === "--topBar-color")
-        //         //         window.electron.getCurrentWindow().setTitleBarOverlay({ color: rawColor });
-        //         // }
-        //         // document.body.style.setProperty(prop, rawColorWhole);
-        //         applyThemeTemp();
-        //     }
-        // }, [rawColorWhole]);
-        return (
-            <>
-                <td>
-                    <button
-                        className="resetBtn"
-                        onClick={() => {
-                            setChecked(color.substring(0, 4) === "var(" ? true : false);
-                            setRawColorWhole(color);
-                            setRawColor(color.substring(0, 7));
-                            setOpacity(color.length > 7 ? parseInt(color.substring(7), 16) / 2.55 : 100);
-                        }}
-                        title="Reset"
-                    >
-                        <FontAwesomeIcon icon={faSync} />
-                    </button>
-                    <label className={checked ? "selected" : ""} title="Link to variable">
-                        <input
-                            type="checkbox"
-                            defaultChecked={checked}
-                            ref={ref}
-                            onChange={() => setChecked((init) => !init)}
-                        />
-                        <FontAwesomeIcon icon={checked ? faUnlink : faLink} />
-                    </label>
-                </td>
-                <td>
-                    {checked ? (
-                        <InputSelect
-                            value={rawColorWhole}
-                            className="newThemeMakerVar"
-                            options={Object.entries(window.themeProps)
-                                .filter((e) => e[0] !== prop)
-                                .map((e) => ({ label: e[1], value: `var(${e[0]})` }))}
-                            onChange={(e) => {
-                                setRawColorWhole(e.currentTarget.value);
-                            }}
-                        >
-                            {/* {Object.entries(window.themeProps)
-                                .filter((e) => e[0] !== prop)
-                                .map((e) => (
-                                    <option key={e[0]} value={`var(${e[0]})`}>
-                                        {e[1]}
-                                    </option>
-                                ))} */}
-                        </InputSelect>
-                    ) : (
-                        <>
-                            <InputColor
-                                value={rawColor || "#000000"}
-                                timeout={[
-                                    500,
-                                    (value) => setRawColor(value === "" ? "#000000" : value.substring(0, 7)),
-                                ]}
-                                title="Color"
-                            />
-                            <InputRange
-                                min={0}
-                                max={100}
-                                value={Math.ceil(opacity) ?? 100}
-                                title="Opacity"
-                                className="opacityRange"
-                                labeled
-                                timeout={[200, (value) => setOpacity(value)]}
-                            />
-                            <input
-                                type="text"
-                                className="newThemeMakerColorFull"
-                                onKeyDown={(e) => {
-                                    e.stopPropagation();
-                                }}
-                                value={
-                                    rawColor.substring(0, 7) +
-                                    Math.round(opacity * 2.55)
-                                        .toString(16)
-                                        .padStart(2, "0")
-                                }
-                                style={{ display: "none" }}
-                                readOnly
-                            />
-                        </>
-                    )}
-                </td>
-            </>
-        );
-    };
     useLayoutEffect(() => {
         // could use directly in classname but need focus()
         if (settingContRef.current) {
@@ -1883,6 +1851,8 @@ const Settings = (): ReactElement => {
                                                     ]
                                                 }
                                                 prop={e[0] as ThemeDataMain}
+                                                applyThemeTemp={applyThemeTemp}
+                                                currentTheme={currentTheme}
                                             />
                                         </tr>
                                     ))}

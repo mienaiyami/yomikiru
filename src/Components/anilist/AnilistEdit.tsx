@@ -90,10 +90,10 @@ const AnilistEdit = () => {
                                         "REPEATING",
                                     ]}
                                     value={tempData.status}
-                                    onChange={(e) => {
-                                        const value = e.currentTarget.value as AniListMangaData["status"];
+                                    onChange={(value) => {
                                         setTempData((init) => {
-                                            if (init) return { ...init, status: value };
+                                            if (init)
+                                                return { ...init, status: value as AniListMangaData["status"] };
                                             return null;
                                         });
                                     }}

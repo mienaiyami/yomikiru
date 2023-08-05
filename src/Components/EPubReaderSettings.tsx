@@ -314,12 +314,11 @@ const EPUBReaderSettings = memo(
                                     labeled={true}
                                     disabled={appSettings.epubReaderSettings.useDefault_fontFamily}
                                     value={appSettings.epubReaderSettings.fontFamily}
-                                    onChange={(e) => {
+                                    onChange={(value) => {
                                         // makeScrollPos();
-                                        const val = e.currentTarget.value;
                                         dispatch(
                                             setEpubReaderSettings({
-                                                fontFamily: val,
+                                                fontFamily: value,
                                             })
                                         );
                                     }}

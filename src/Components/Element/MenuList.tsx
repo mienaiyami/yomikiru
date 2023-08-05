@@ -18,10 +18,6 @@ const MenuList = () => {
                 let y = 0;
                 let width = 0;
                 if (optSelectData.elemBox instanceof HTMLElement) {
-                    console.log(
-                        optSelectData.elemBox.getBoundingClientRect().x,
-                        optSelectData.elemBox.getBoundingClientRect().y
-                    );
                     x = optSelectData.elemBox.getBoundingClientRect().x;
                     y =
                         optSelectData.elemBox.getBoundingClientRect().y +
@@ -37,7 +33,9 @@ const MenuList = () => {
                     x -= ref.current.offsetWidth;
                 }
                 if (y >= window.innerHeight - ref.current.offsetHeight - 10) {
-                    y -= ref.current.offsetHeight;
+                    if (optSelectData.elemBox instanceof HTMLElement)
+                        y -= ref.current.offsetHeight + 8 + optSelectData.elemBox.getBoundingClientRect().height;
+                    else y -= ref.current.offsetHeight;
                 }
                 setPos({ x, y, width });
                 ref.current.focus();
@@ -70,7 +68,6 @@ const MenuList = () => {
                 className="itemList"
                 tabIndex={-1}
                 onBlur={(e) => {
-                    console.log(optSelectData.focusBackElem);
                     optSelectData.focusBackElem && optSelectData.focusBackElem.focus();
                     optSelectData.onBlur && optSelectData.onBlur(e);
                     // setTimeout(() => dispatch(setContextMenu(null)), 100);
@@ -151,9 +148,9 @@ const MenuList = () => {
                             onMouseEnter={() => {
                                 setFocused(i);
                             }}
-                            onMouseLeave={() => {
-                                setFocused(-1);
-                            }}
+                            // onMouseLeave={() => {
+                            //     setFocused(-1);
+                            // }}
                             className={`${e.disabled ? "disabled " : ""}`}
                         >
                             {e.label}
