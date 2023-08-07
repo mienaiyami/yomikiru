@@ -598,17 +598,19 @@ const ReaderSettings = memo(
                             <div className="colorFilterInputs">
                                 <InputColor
                                     value={
-                                        window.color.RGBA_to_hex({
-                                            r: appSettings.readerSettings.customColorFilter.r,
-                                            g: appSettings.readerSettings.customColorFilter.g,
-                                            b: appSettings.readerSettings.customColorFilter.b,
-                                        }) || "#ffffff"
+                                        window.color
+                                            .new({
+                                                r: appSettings.readerSettings.customColorFilter.r,
+                                                g: appSettings.readerSettings.customColorFilter.g,
+                                                b: appSettings.readerSettings.customColorFilter.b,
+                                            })
+                                            .hex() || "#ffffff"
                                     }
                                     disabled={!appSettings.readerSettings.customColorFilter.enabled}
                                     timeout={[
                                         500,
                                         (value) => {
-                                            const rgb = window.color.hex_to_RGBA(value);
+                                            const rgb = window.color.new(value).object();
                                             if (rgb) {
                                                 dispatch(
                                                     setReaderSettings({

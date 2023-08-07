@@ -21,6 +21,7 @@ import log from "electron-log";
 log.transports.file.resolvePath = () => path.join(app.getPath("userData"), "logs/renderer.log");
 import path from "path";
 import fs from "fs";
+import Color from "color";
 import themeJSON from "./themeInit.json";
 import AniList from "./Components/anilist/request";
 declare module "react" {
@@ -255,7 +256,6 @@ export const settingValidatorData = {
         textSelect: true,
     },
 } as const;
-
 // to add new theme property, add it to each theme in ./themeInit.json
 const themeProps = themeJSON.allData[0].main;
 declare global {
@@ -298,25 +298,37 @@ declare global {
          */
         al: AniList;
         color: {
-            RGBA_to_hex: (RGB: { r: number; g: number; b: number; a?: number }) => string | undefined;
-            hex_to_RGBA: (hex: string) =>
-                | {
-                      /**
-                       * [0-255] int
-                       */
-                      r: number;
-                      /**
-                       * [0-255] int
-                       */
-                      g: number;
-                      /**
-                       * [0-255] int
-                       */ b: number;
-                      /**
-                       * [0-1] float
-                       */ a: number;
-                  }
-                | undefined;
+            // RGBA_to_hex: (RGB: { r: number; g: number; b: number; a?: number }) => ColorFormats["hex"] | undefined;
+            // /**
+            //  *
+            //  * @param RGBA_Str rgba()
+            //  * @returns
+            //  */
+            // parseRGBA:(RGBA_Str:string)=>ColorFormats["rgba"];
+            // // stringifyRGBA:(RGBA:ColorFormats["rgba"])=>string;
+            // hex_to_RGBA: (hex: string) =>
+            //     | ColorFormats["rgba"]
+            //     | undefined;
+            // /**
+            //  * @param longHex #RRGGBBAA
+            //  */
+            // separateHex: (longHex: string) => { color: ColorFormats["hex"]; alpha: number };
+            new: (...args: Parameters<typeof Color>) => Color;
+            /**
+             * returns `Color` from css variable or color string
+             */
+            realColor: (var_or_color: string, themeDataMain: ThemeData["main"]) => Color;
+            /**
+             *
+             * @param variableStr css variable name, e.g. `var(--btn-color-hover)`
+             * @returns `--btn-color-hover`, `undefined` if not valid
+             */
+            cleanVariable: (variableStr: string) => ThemeDataMain | undefined;
+            /**
+             *
+             * @param variableStr css variable name, e.g. `var(--btn-color-hover)` or `--btn-color-hover`
+             */
+            varToColor: (variableStr: string, themeDataMain: ThemeData["main"]) => Color | undefined;
         };
         contextMenu: {
             fakeEvent: (
@@ -647,6 +659,31 @@ declare global {
         style?: React.CSSProperties;
     };
     type AppSettings = DeepArrayToUnion<typeof settingValidatorData>;
+    // type ColorFormats = {
+    //     hex:string;
+    //     rgba:{
+    //         /**
+    //          * [0-255] int
+    //          */
+    //         r: number;
+    //         /**
+    //          * [0-255] int
+    //          */
+    //         g: number;
+    //         /**
+    //          * [0-255] int
+    //          */ b: number;
+    //         /**
+    //          * [0-1] float
+    //          */ a: number;
+    //     }
+    //     hsla:{
+    //         h:number;
+    //         s:number;
+    //         l:number;
+    //         a:number;
+    //     }
+    // };
 }
 
 window.path = path;
@@ -923,51 +960,92 @@ window.app.randomString = (length: number) => {
     return result;
 };
 window.color = {
-    hex_to_RGBA(hex) {
-        if (hex && typeof hex === "string" && hex.charAt(0) === "#") {
-            const colorRaw = hex.replace("#", "");
-            const colorRGBA = {
-                r: 0,
-                g: 0,
-                b: 0,
-                a: 1,
-            };
-            if (colorRaw.length === 3) {
-                colorRGBA.r = parseInt(colorRaw.charAt(0).repeat(2), 16);
-                colorRGBA.g = parseInt(colorRaw.charAt(1).repeat(2), 16);
-                colorRGBA.b = parseInt(colorRaw.charAt(2).repeat(2), 16);
-            }
-            if (colorRaw.length === 4) {
-                colorRGBA.r = parseInt(colorRaw.charAt(0).repeat(2), 16);
-                colorRGBA.g = parseInt(colorRaw.charAt(1).repeat(2), 16);
-                colorRGBA.b = parseInt(colorRaw.charAt(2).repeat(2), 16);
-                colorRGBA.a = parseFloat((parseInt(colorRaw.charAt(2).repeat(2), 16) / 255).toFixed(3));
-            }
-            if (colorRaw.length === 6) {
-                colorRGBA.r = parseInt(colorRaw.substring(0, 2), 16);
-                colorRGBA.g = parseInt(colorRaw.substring(2, 4), 16);
-                colorRGBA.b = parseInt(colorRaw.substring(4, 6), 16);
-            }
-            if (colorRaw.length === 8) {
-                colorRGBA.r = parseInt(colorRaw.substring(0, 2), 16);
-                colorRGBA.g = parseInt(colorRaw.substring(2, 4), 16);
-                colorRGBA.b = parseInt(colorRaw.substring(4, 6), 16);
-                colorRGBA.a = parseFloat((parseInt(colorRaw.substring(6, 8), 16) / 255).toFixed(3));
-            }
-            return colorRGBA;
+    // hex_to_RGBA(hex) {
+    //     if (hex && typeof hex === "string" && hex.charAt(0) === "#") {
+    //         const colorRaw = hex.replace("#", "");
+    //         const colorRGBA = {
+    //             r: 0,
+    //             g: 0,
+    //             b: 0,
+    //             a: 1,
+    //         };
+    //         if (colorRaw.length === 3) {
+    //             colorRGBA.r = parseInt(colorRaw.charAt(0).repeat(2), 16);
+    //             colorRGBA.g = parseInt(colorRaw.charAt(1).repeat(2), 16);
+    //             colorRGBA.b = parseInt(colorRaw.charAt(2).repeat(2), 16);
+    //         }
+    //         if (colorRaw.length === 4) {
+    //             colorRGBA.r = parseInt(colorRaw.charAt(0).repeat(2), 16);
+    //             colorRGBA.g = parseInt(colorRaw.charAt(1).repeat(2), 16);
+    //             colorRGBA.b = parseInt(colorRaw.charAt(2).repeat(2), 16);
+    //             colorRGBA.a = parseFloat((parseInt(colorRaw.charAt(2).repeat(2), 16) / 255).toFixed(3));
+    //         }
+    //         if (colorRaw.length === 6) {
+    //             colorRGBA.r = parseInt(colorRaw.substring(0, 2), 16);
+    //             colorRGBA.g = parseInt(colorRaw.substring(2, 4), 16);
+    //             colorRGBA.b = parseInt(colorRaw.substring(4, 6), 16);
+    //         }
+    //         if (colorRaw.length === 8) {
+    //             colorRGBA.r = parseInt(colorRaw.substring(0, 2), 16);
+    //             colorRGBA.g = parseInt(colorRaw.substring(2, 4), 16);
+    //             colorRGBA.b = parseInt(colorRaw.substring(4, 6), 16);
+    //             colorRGBA.a = parseFloat((parseInt(colorRaw.substring(6, 8), 16) / 255).toFixed(3));
+    //         }
+    //         return colorRGBA;
+    //     }
+    // },
+    // RGBA_to_hex(RGB) {
+    //     if (RGB) {
+    //         let hex = "#";
+    //         hex += RGB.r.toString(16).padStart(2, "0");
+    //         hex += RGB.g.toString(16).padStart(2, "0");
+    //         hex += RGB.b.toString(16).padStart(2, "0");
+    //         if (RGB.a)
+    //             hex += Math.round(RGB.a * 255)
+    //                 .toString(16)
+    //                 .padStart(2, "0");
+    //         return hex;
+    //     }
+    // },
+    // separateHex(longHex) {
+    //     const hex = {
+    //         color: "",
+    //         alpha: 100,
+    //     };
+    //     if (longHex.length > 7) {
+    //         hex.color = longHex.substring(0, 7);
+    //         hex.alpha = parseInt(longHex.substring(7), 16) / 2.55;
+    //     }
+    //     return hex;
+    // },
+    new: (args) => Color(args),
+    realColor(var_or_color, themeDataMain) {
+        if (this.cleanVariable(var_or_color)) {
+            return this.varToColor(var_or_color, themeDataMain) as Color;
+        }
+        return this.new(var_or_color);
+    },
+    cleanVariable(variableStr) {
+        if (/var\(.*\)/gi.test(variableStr)) {
+            return variableStr.replace("var(", "").replace(")", "") as ThemeDataMain;
         }
     },
-    RGBA_to_hex(RGB) {
-        if (RGB) {
-            let hex = "#";
-            hex += RGB.r.toString(16).padStart(2, "0");
-            hex += RGB.g.toString(16).padStart(2, "0");
-            hex += RGB.b.toString(16).padStart(2, "0");
-            if (RGB.a)
-                hex += Math.round(RGB.a * 255)
-                    .toString(16)
-                    .padStart(2, "0");
-            return hex;
+    varToColor(variableStr, themeDataMain) {
+        if (/var\(.*\)/gi.test(variableStr)) {
+            let base = this.cleanVariable(variableStr);
+            let clr = "";
+            // getting real color value from a css variable (var(--btn-color-hover) -> #62636e)
+            while (base && themeDataMain[base]) {
+                clr = themeDataMain[base];
+                // repeating in case variable is linked to another variable (var(--btn-color-hover) -> var(--btn-color))
+                if (clr.includes("var(")) {
+                    base = this.cleanVariable(clr);
+                    continue;
+                }
+                break;
+            }
+            if (clr === "") window.logger.error("THEME::varToColor: color not found.");
+            return this.new(clr);
         }
     },
 };

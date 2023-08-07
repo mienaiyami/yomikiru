@@ -20,68 +20,67 @@ import { setAnilistToken } from "../store/anilistToken";
 import { setAniLoginOpen } from "../store/isAniLoginOpen";
 import InputCheckbox from "./Element/InputCheckbox";
 import { setUnzipping } from "../store/unzipping";
-import { setLoadingManga } from "../store/isLoadingManga";
-import { setLoadingMangaPercent } from "../store/loadingMangaPercent";
 
 const ThemeElement = ({
     color,
     prop,
     currentTheme,
-    applyThemeTemp,
+    changeValue,
 }: {
     color: string;
     prop: ThemeDataMain;
-    currentTheme: typeof window.themeProps;
-    applyThemeTemp: () => void;
+    currentTheme: ThemeData["main"];
+    changeValue: (prop: ThemeDataMain, value: string) => void;
 }): ReactElement => {
     const ref = useRef<HTMLInputElement>(null);
     const [firstRendered, setFirstRendered] = useState(false);
-    // ex. #ffffff
-    const [rawColor, setRawColor] = useState(color.substring(0, 7));
-    // ex. #ffffffff , var(--icon-color)
-    const [rawColorWhole, setRawColorWhole] = useState(color);
-    const [opacity, setOpacity] = useState(color.length > 7 ? parseInt(color.substring(7), 16) / 2.55 : 100);
-    const [checked, setChecked] = useState(color.substring(0, 4) === "var(" ? true : false);
+    const [realColor, setRealColor] = useState(window.color.realColor(color, currentTheme));
+    const [variable, setVariable] = useState(
+        window.color.cleanVariable(color) ? color : `var(${Object.keys(window.themeProps)[0]})`
+    );
+    const [checked, setChecked] = useState(!!window.color.cleanVariable(color));
 
+    //todo: i have no idea what this does rn, need to improve theme system
     useEffect(() => {
         setFirstRendered(true);
-    }, []);
-    useLayoutEffect(() => {
-        let base = color;
-        while (base && currentTheme[base.replace("var(", "").replace(")", "") as ThemeDataMain]) {
-            const clr = currentTheme[base.replace("var(", "").replace(")", "") as ThemeDataMain];
-            if (clr.includes("var(")) {
-                base = clr;
-                continue;
-            }
-            setRawColor(clr.substring(0, 7));
-            setOpacity(clr.length > 7 ? parseInt(clr.substring(7), 16) / 2.55 : 100);
-            break;
+    });
+    const resetValues = () => {
+        setFirstRendered(false);
+        setRealColor(window.color.realColor(color, currentTheme));
+        setVariable(window.color.cleanVariable(color) ? color : `var(${Object.keys(window.themeProps)[0]})`);
+        setChecked(!!window.color.cleanVariable(color));
+    };
+    useEffect(() => {
+        if (firstRendered) {
+            resetValues();
         }
-    }, []);
+    }, [color]);
     useLayoutEffect(() => {
         if (firstRendered) {
-            applyThemeTemp();
+            changeValue(prop, checked ? variable : realColor.hexa());
         }
-    }, [rawColor, opacity, rawColorWhole]);
+    }, [realColor, checked]);
+    useLayoutEffect(() => {
+        if (firstRendered && window.color.cleanVariable(variable)) {
+            const color = window.color.varToColor(variable, currentTheme);
+            if (color && color.hexa() !== realColor.hexa()) {
+                setRealColor(color);
+            }
+        }
+    }, [variable]);
     return (
         <>
             <td>
-                <button
-                    className="resetBtn"
-                    onClick={() => {
-                        setChecked(color.substring(0, 4) === "var(" ? true : false);
-                        setRawColorWhole(color);
-                        setRawColor(color.substring(0, 7));
-                        setOpacity(color.length > 7 ? parseInt(color.substring(7), 16) / 2.55 : 100);
-                    }}
-                    title="Reset"
-                >
+                <button className="resetBtn" onClick={resetValues} title="Reset">
                     <FontAwesomeIcon icon={faSync} />
                 </button>
-                <label className={checked ? "selected" : ""} title="Link to variable">
+                <label
+                    className={`${variable === `var(${prop})` ? "disabled" : ""} ${checked ? "selected" : ""}`}
+                    title="Link to variable"
+                >
                     <input
                         type="checkbox"
+                        // check if need checked
                         defaultChecked={checked}
                         ref={ref}
                         onChange={() => setChecked((init) => !init)}
@@ -92,52 +91,214 @@ const ThemeElement = ({
             <td>
                 {checked ? (
                     <InputSelect
-                        value={rawColorWhole}
+                        value={variable}
                         className="newThemeMakerVar"
                         options={Object.entries(window.themeProps)
                             .filter((e) => e[0] !== prop)
                             .map((e) => ({ label: e[1], value: `var(${e[0]})` }))}
                         onChange={(value) => {
-                            setRawColorWhole(value);
+                            setVariable(value);
                         }}
                     ></InputSelect>
                 ) : (
                     <>
                         <InputColor
-                            value={rawColor || "#000000"}
+                            value={realColor.hex() || "#ff0000"}
                             timeout={[
                                 500,
-                                (value) => setRawColor(value === "" ? "#000000" : value.substring(0, 7)),
+                                (value) => {
+                                    setRealColor((init) => {
+                                        const alpha = init.alpha();
+                                        return window.color.new(value).alpha(alpha);
+                                    });
+                                },
                             ]}
                             title="Color"
                         />
                         <InputRange
                             min={0}
                             max={100}
-                            value={Math.ceil(opacity) ?? 100}
+                            value={parseInt((realColor.alpha() * 100).toFixed()) ?? 100}
                             title="Opacity"
                             className="opacityRange"
                             labeled
-                            timeout={[200, (value) => setOpacity(value)]}
-                        />
-                        <input
-                            type="text"
-                            className="newThemeMakerColorFull"
-                            onKeyDown={(e) => {
-                                e.stopPropagation();
-                            }}
-                            value={
-                                rawColor.substring(0, 7) +
-                                Math.round(opacity * 2.55)
-                                    .toString(16)
-                                    .padStart(2, "0")
-                            }
-                            style={{ display: "none" }}
-                            readOnly
+                            timeout={[200, (value) => setRealColor((init) => init.alpha(value / 100))]}
                         />
                     </>
                 )}
             </td>
+        </>
+    );
+};
+
+const ThemeCont = () => {
+    const theme = useAppSelector((store) => store.theme.name);
+    const allThemes = useAppSelector((store) => store.theme.allData);
+
+    const dispatch = useAppDispatch();
+
+    const [fakeCurrentTheme, setFakeCurrentTheme] = useState(
+        Object.entries(window.themeProps).map((e) => ({
+            prop: e[0] as ThemeDataMain,
+            label: e[1],
+            value: allThemes.find((e) => e.name === theme)!.main[e[0] as ThemeDataMain],
+        }))
+    );
+    const [firstRendered, setFirstRendered] = useState(false);
+    const themeNameInputRef = useRef<HTMLInputElement>(null);
+
+    useLayoutEffect(() => {
+        if (firstRendered) {
+            setFakeCurrentTheme(
+                Object.entries(window.themeProps).map((e) => ({
+                    prop: e[0] as ThemeDataMain,
+                    label: e[1],
+                    value: allThemes.find((e) => e.name === theme)!.main[e[0] as ThemeDataMain],
+                }))
+            );
+        }
+    }, [theme]);
+    const applyThemeTemp = () => {
+        let vars = "";
+        fakeCurrentTheme.forEach((e) => {
+            vars += `${e.prop}:${e.value};`;
+        });
+        document.body.setAttribute("style", vars);
+        if (process.platform === "win32")
+            window.electron.getCurrentWindow().setTitleBarOverlay({
+                color: window.getComputedStyle(document.querySelector("body #topBar")!).backgroundColor,
+                symbolColor: window.getComputedStyle(document.querySelector("body #topBar .homeBtns button")!)
+                    .color,
+                height: Math.floor(window.app.titleBarHeight * window.electron.webFrame.getZoomFactor()),
+            });
+    };
+    const saveTheme = (saveAndReplace = false) => {
+        const nameInput = themeNameInputRef.current;
+        if (nameInput) {
+            let name = "";
+            name = nameInput.value || window.app.randomString(6);
+            if (saveAndReplace) name = theme;
+            if (themesRaw.allData.map((e) => e.name).includes(name)) {
+                window.dialog.customError({
+                    title: "Error",
+                    message: `Can't edit default themes, save as new instead.`,
+                });
+                return;
+            }
+            if (!saveAndReplace && allThemes.map((e) => e.name).includes(nameInput.value)) {
+                window.dialog.customError({
+                    title: "Error",
+                    message: `Theme name "${nameInput.value}" already exist, choose something else.`,
+                });
+                return;
+            }
+            const newThemeData = { ...window.themeProps };
+            fakeCurrentTheme.forEach((e) => {
+                newThemeData[e.prop] = e.value;
+            });
+            if (saveAndReplace) {
+                dispatch(updateTheme({ themeName: name, newThemeData }));
+                return;
+            }
+            nameInput.value = window.app.randomString(6);
+            dispatch(newTheme({ name: name, main: newThemeData }));
+            dispatch(setTheme(name));
+        }
+    };
+    useLayoutEffect(() => {
+        setFirstRendered(true);
+    }, []);
+    useLayoutEffect(() => {
+        if (firstRendered) {
+            applyThemeTemp();
+        }
+    }, [fakeCurrentTheme]);
+    const changeValue = (prop: ThemeDataMain, value: string) => {
+        setFakeCurrentTheme((init) => {
+            const dup = [...init];
+            dup.find((e) => e.prop === prop)!.value = value;
+            return dup;
+        });
+    };
+
+    return (
+        <>
+            <h1>
+                <span title={theme}>{theme}</span>
+                <input
+                    type="text"
+                    defaultValue={window.app.randomString(6)}
+                    ref={themeNameInputRef}
+                    onKeyDown={(e) => {
+                        e.stopPropagation();
+                    }}
+                    maxLength={20}
+                />
+                <button
+                    onClick={() => {
+                        saveTheme();
+                    }}
+                >
+                    Save as New
+                </button>
+                <button
+                    onClick={() => {
+                        saveTheme(true);
+                    }}
+                >
+                    Save
+                </button>
+            </h1>
+            <div className="themeMaker">
+                <ul>
+                    <li>
+                        To use previously defined color, click on link button and select property from dropdown
+                        options.
+                    </li>
+                    <li>Some changes may require refresh.</li>
+                </ul>
+                <table>
+                    <tbody>
+                        <tr>
+                            <th>Property</th>
+                            <th>Reset &nbsp;&nbsp;&nbsp;&nbsp;&nbsp; Link</th>
+                            <th>Color-Opacity / Variable</th>
+                        </tr>
+                        {fakeCurrentTheme.map((e) => (
+                            <tr key={e.prop} className="newThemeMakerRow">
+                                <td className="newThemeMakerProp" data-prop={e.prop}>
+                                    {e.label}
+                                </td>
+                                <ThemeElement
+                                    color={e.value}
+                                    prop={e.prop}
+                                    currentTheme={allThemes.find((e) => e.name === theme)!.main}
+                                    changeValue={changeValue}
+                                />
+                            </tr>
+                        ))}
+                        {/* <ThemeCont theme={theme} currentTheme={currentTheme} /> */}
+                        {/* {Object.entries(window.themeProps).map((e) => (
+                                        <tr key={e[0]} className="newThemeMakerRow">
+                                            <td className="newThemeMakerProp" data-prop={e[0]}>
+                                                {e[1]}
+                                            </td>
+                                            <ThemeElement
+                                                color={
+                                                    allThemes.find((e) => e.name === theme)!.main[
+                                                        e[0] as ThemeDataMain
+                                                    ]
+                                                }
+                                                theme={theme}
+                                                prop={e[0] as ThemeDataMain}
+                                                applyThemeTemp={applyThemeTemp}
+                                                currentTheme={currentTheme}
+                                            />
+                                        </tr>
+                                    ))} */}
+                    </tbody>
+                </table>
+            </div>
         </>
     );
 };
@@ -166,13 +327,6 @@ const Settings = (): ReactElement => {
     const dispatch = useAppDispatch();
 
     const settingContRef = useRef<HTMLDivElement>(null);
-
-    const currentTheme = useMemo(() => {
-        console.log("updating theme");
-        return allThemes.find((e) => e.name === theme)!.main;
-    }, [theme]);
-    const themeMakerRef = useRef<HTMLDivElement>(null);
-    const themeNameInputRef = useRef<HTMLInputElement>(null);
 
     useEffect(() => {
         if (isSettingOpen) {
@@ -203,77 +357,6 @@ const Settings = (): ReactElement => {
     }, [anilistToken]);
 
     const reservedKeys = ["h", "Control", "Tab", "Shift", "Alt", "Escape"];
-    const applyThemeTemp = () => {
-        const props: ThemeDataMain[] = [...themeMakerRef.current!.querySelectorAll(".newThemeMakerProp")].map(
-            (e) => (e as HTMLElement).getAttribute("data-prop") as ThemeDataMain
-        );
-        let vars = "";
-        [...themeMakerRef.current!.querySelectorAll(".newThemeMakerRow")].forEach((e, i) => {
-            if (e.querySelector("label")!.classList.contains("selected")) {
-                vars += `${props[i]}:${(
-                    e.querySelector(".newThemeMakerVar.optSelectBtn") as HTMLButtonElement | null
-                )?.getAttribute("data-value")};`;
-            } else {
-                vars += `${props[i]}:${(e.querySelector(".newThemeMakerColorFull") as HTMLInputElement).value};`;
-            }
-        });
-        document.body.setAttribute("style", vars);
-        if (process.platform === "win32")
-            window.electron.getCurrentWindow().setTitleBarOverlay({
-                color: window.getComputedStyle(document.querySelector("body #topBar")!).backgroundColor,
-                symbolColor: window.getComputedStyle(document.querySelector("body #topBar .homeBtns button")!)
-                    .color,
-                height: Math.floor(window.app.titleBarHeight * window.electron.webFrame.getZoomFactor()),
-            });
-    };
-    const saveTheme = (saveAndReplace = false) => {
-        let name = "";
-        name = themeNameInputRef.current!.value || window.app.randomString(6);
-        if (saveAndReplace) name = theme;
-        if (themesRaw.allData.map((e) => e.name).includes(name)) {
-            window.dialog.customError({
-                title: "Error",
-                message: `Can't edit default themes, save as new instead.`,
-            });
-            return;
-        }
-        if (!saveAndReplace && allThemes.map((e) => e.name).includes(themeNameInputRef.current!.value)) {
-            window.dialog.customError({
-                title: "Error",
-                message: `Theme name "${themeNameInputRef.current!.value}" already exist, choose something else.`,
-            });
-            return;
-        }
-        const props: ThemeDataMain[] = [...themeMakerRef.current!.querySelectorAll(".newThemeMakerProp")].map(
-            (e) => (e as HTMLElement).getAttribute("data-prop") as ThemeDataMain
-        );
-        themeNameInputRef.current!.value = window.app.randomString(6);
-        const newThemeData = { ...window.themeProps };
-        [...themeMakerRef.current!.querySelectorAll(".newThemeMakerRow")].forEach((e, i) => {
-            if (e.querySelector("label")!.classList.contains("selected")) {
-                newThemeData[props[i]] =
-                    (e.querySelector(".newThemeMakerVar.optSelectBtn") as HTMLButtonElement | null)?.getAttribute(
-                        "data-value"
-                    ) || "";
-            } else {
-                newThemeData[props[i]] = (e.querySelector(".newThemeMakerColorFull") as HTMLInputElement).value;
-            }
-        });
-        if (saveAndReplace) {
-            dispatch(updateTheme({ themeName: name, newThemeData }));
-            // setAllThemes((init) => {
-            //     init[init.findIndex((e) => e.name === name)].main = newThemeData;
-            //     return [...init];
-            // });
-            return;
-        }
-        dispatch(newTheme({ name: name, main: newThemeData }));
-        // setAllThemes((init) => {
-        //     init.push({ name: name, main: newThemeData });
-        //     return [...init];
-        // });
-        dispatch(setTheme(name));
-    };
 
     const ShortcutInput = ({ which, i }: { which: "key1" | "key2"; i: number }) => (
         <input
@@ -1784,81 +1867,7 @@ const Settings = (): ReactElement => {
                         </div>
                     </div>
                     <div className={`tab ${currentTab === TAB_INFO.makeTheme[0] ? "selected " : ""}`}>
-                        <h1>
-                            <span title={theme}>{theme}</span>
-                            <input
-                                type="text"
-                                defaultValue={window.app.randomString(6)}
-                                ref={themeNameInputRef}
-                                onKeyDown={(e) => {
-                                    e.stopPropagation();
-                                }}
-                                maxLength={20}
-                            />
-                            <button
-                                onClick={() => {
-                                    saveTheme();
-                                }}
-                            >
-                                Save as New
-                            </button>
-                            <button
-                                onClick={() => {
-                                    saveTheme(true);
-                                }}
-                            >
-                                Save
-                            </button>
-                        </h1>
-                        <div className="themeMaker" ref={themeMakerRef}>
-                            {/* <datalist id="cssColorVariableList">
-                                {Object.keys(
-                                    allThemes.find((e) => {
-                                        return e.name === theme;
-                                    })!.main
-                                ).map((e) => (
-                                    <option key={e} value={`var(${e})`}>{`var(${e})`}</option>
-                                ))}
-                            </datalist> */}
-                            <ul>
-                                <li>
-                                    To use previously defined color, click on link button and select property frm
-                                    dropdown options.
-                                </li>
-                                <li>
-                                    If you want to edit existing theme, click on theme then click on plus icon then
-                                    change theme according to your liking.
-                                </li>
-                                <li>Some changes require refresh.</li>
-                            </ul>
-                            <table>
-                                <tbody>
-                                    <tr>
-                                        <th>Property</th>
-                                        <th>Reset &nbsp;&nbsp;&nbsp;&nbsp;&nbsp; Link</th>
-                                        <th>Color-Opacity / Variable</th>
-                                    </tr>
-                                    {Object.entries(window.themeProps).map((e) => (
-                                        <tr key={e[0]} className="newThemeMakerRow">
-                                            <td className="newThemeMakerProp" data-prop={e[0]}>
-                                                {e[1]}
-                                            </td>
-                                            {/* <td>{e[1]}</td> */}
-                                            <ThemeElement
-                                                color={
-                                                    allThemes.find((e) => e.name === theme)!.main[
-                                                        e[0] as ThemeDataMain
-                                                    ]
-                                                }
-                                                prop={e[0] as ThemeDataMain}
-                                                applyThemeTemp={applyThemeTemp}
-                                                currentTheme={currentTheme}
-                                            />
-                                        </tr>
-                                    ))}
-                                </tbody>
-                            </table>
-                        </div>
+                        <ThemeCont />
                     </div>
                     <div className={`tab ${currentTab === TAB_INFO.about[0] ? "selected " : ""}`}>
                         <div className="content2">

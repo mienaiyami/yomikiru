@@ -35,8 +35,9 @@ export const InputSelect = ({
         if (value) {
             const aa = options.find((e) => e.value === value);
             if (aa) {
-                if (typeof aa === "string") setBtnLabel(aa);
-                else setBtnLabel(aa.label);
+                setBtnLabel(aa.label);
+            } else {
+                window.logger.error("InputSelect::value: value not found in options.");
             }
         }
     }, [value]);

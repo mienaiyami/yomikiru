@@ -1,3 +1,7 @@
+Does not follow semver.
+
+---
+
 ## Added
 
 - Option to render multiple pdfs, #216. Access from settings.
