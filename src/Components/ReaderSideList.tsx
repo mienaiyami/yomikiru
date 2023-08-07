@@ -192,12 +192,10 @@ const ReaderSideList = memo(
             }
         };
         useLayoutEffect(() => {
-            // refreshList();
-
             makeChapterList();
             if (mangaInReader && appSettings.autoRefreshSideList) {
                 const watcher = window.chokidar.watch(mangaInReader.link.replace(mangaInReader.chapterName, ""), {
-                    depth: 1,
+                    depth: 0,
                     ignoreInitial: true,
                 });
                 let timeout: NodeJS.Timeout;
@@ -214,7 +212,7 @@ const ReaderSideList = memo(
                     watcher.removeAllListeners("all");
                 };
             }
-        }, [mangaInReader, appSettings.autoRefreshSideList]);
+        }, [mangaInReader]);
         const handleResizerDrag = (e: MouseEvent) => {
             if (draggingResizer) {
                 if (isSideListPinned) {

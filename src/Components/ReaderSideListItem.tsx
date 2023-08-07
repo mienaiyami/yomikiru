@@ -26,7 +26,7 @@ const ReaderSideListItem = memo(
         const { openInReader, setContextMenuData, contextMenuData } = useContext(AppContext);
         const [contextMenuFocused, setContextMenuFocused] = useState(false);
         useEffect(() => {
-            if (!contextMenuData) setContextMenuFocused(false);
+            if (!contextMenuData && contextMenuFocused) setContextMenuFocused(false);
         }, [contextMenuData]);
 
         // useEffect(()=>{
