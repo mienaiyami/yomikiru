@@ -1,6 +1,6 @@
 import React, { useRef, useState, useEffect, useLayoutEffect, useContext } from "react";
 import { AppContext } from "../../App";
-
+// ! not indented to be used without `AppContext::optSelectData`
 //todo rename later for select only
 const MenuList = () => {
     const { optSelectData } = useContext(AppContext);

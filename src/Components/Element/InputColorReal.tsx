@@ -4,6 +4,8 @@ import InputNumber from "./InputNumber";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faEyeDropper, faSort } from "@fortawesome/free-solid-svg-icons";
 
+// ! not indented to be used without `AppContext::colorSelectData`
+
 const COLOR_FORMATS = ["RGBA", "HEX", "HSLA"] as const;
 
 const VALID_SLIDER = {
