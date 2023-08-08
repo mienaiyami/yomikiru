@@ -160,6 +160,7 @@ const MenuList = () => {
                             // }}
                             className={`${e.disabled ? "disabled " : ""}`}
                         >
+                            {e.disabled ? "• " : ""}
                             {e.label}
                         </li>
                     ))}
