@@ -32,7 +32,9 @@ const ThemeElement = ({
     currentTheme: ThemeData["main"];
     changeValue: (prop: ThemeDataMain, value: string) => void;
 }): ReactElement => {
+    const theme = useAppSelector((store) => store.theme.name);
     const ref = useRef<HTMLInputElement>(null);
+    const originalColor = useRef<string | null>(null);
     const [firstRendered, setFirstRendered] = useState(false);
     const [realColor, setRealColor] = useState(window.color.realColor(color, currentTheme));
     const [variable, setVariable] = useState(
@@ -40,11 +42,16 @@ const ThemeElement = ({
     );
     const [checked, setChecked] = useState(!!window.color.cleanVariable(color));
 
-    //todo: i have no idea what this does rn, need to improve theme system
+    useLayoutEffect(() => {
+        originalColor.current = color;
+    }, []);
+
     useEffect(() => {
         setFirstRendered(true);
     });
     const resetValues = () => {
+        // console.log(originalColor.current);
+        // if (!originalColor.current) return;
         setFirstRendered(false);
         setRealColor(window.color.realColor(color, currentTheme));
         setVariable(window.color.cleanVariable(color) ? color : `var(${Object.keys(window.themeProps)[0]})`);
@@ -71,7 +78,13 @@ const ThemeElement = ({
     return (
         <>
             <td>
-                <button className="resetBtn" onClick={resetValues} title="Reset">
+                <button
+                    className="resetBtn"
+                    onClick={() => {
+                        if (originalColor.current) changeValue(prop, originalColor.current);
+                    }}
+                    title="Reset"
+                >
                     <FontAwesomeIcon icon={faSync} />
                 </button>
                 <label
@@ -107,7 +120,7 @@ const ThemeElement = ({
                             timeout={[
                                 500,
                                 (value) => {
-                                    setRealColor((init) => window.color.new(value));
+                                    setRealColor(window.color.new(value));
                                 },
                             ]}
                             title="Color"
