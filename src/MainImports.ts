@@ -21,7 +21,7 @@ import log from "electron-log";
 log.transports.file.resolvePath = () => path.join(app.getPath("userData"), "logs/renderer.log");
 import path from "path";
 import fs from "fs";
-import Color from "color";
+import Colorjs from "color";
 import themeJSON from "./themeInit.json";
 import AniList from "./Components/anilist/request";
 declare module "react" {
@@ -313,11 +313,11 @@ declare global {
             //  * @param longHex #RRGGBBAA
             //  */
             // separateHex: (longHex: string) => { color: ColorFormats["hex"]; alpha: number };
-            new: (...args: Parameters<typeof Color>) => Color;
+            new: (...args: Parameters<typeof Colorjs>) => Colorjs;
             /**
              * returns `Color` from css variable or color string
              */
-            realColor: (var_or_color: string, themeDataMain: ThemeData["main"]) => Color;
+            realColor: (var_or_color: string, themeDataMain: ThemeData["main"]) => Colorjs;
             /**
              *
              * @param variableStr css variable name, e.g. `var(--btn-color-hover)`
@@ -328,7 +328,7 @@ declare global {
              *
              * @param variableStr css variable name, e.g. `var(--btn-color-hover)` or `--btn-color-hover`
              */
-            varToColor: (variableStr: string, themeDataMain: ThemeData["main"]) => Color | undefined;
+            varToColor: (variableStr: string, themeDataMain: ThemeData["main"]) => Colorjs | undefined;
         };
         contextMenu: {
             fakeEvent: (
@@ -656,9 +656,19 @@ declare global {
     type IOptSelectOption = {
         label: string;
         value: string;
+        // todo implement
+        current?: boolean;
         style?: React.CSSProperties;
     };
+    type IColorSelectData = {
+        value: Color;
+        onChange: (color: Color) => void;
+        onBlur?: (e: React.FocusEvent<HTMLDivElement, Element>) => void;
+        focusBackElem?: HTMLElement | null;
+        elemBox: HTMLElement | { x: number; y: number } | null;
+    };
     type AppSettings = DeepArrayToUnion<typeof settingValidatorData>;
+    type Color = Colorjs;
     // type ColorFormats = {
     //     hex:string;
     //     rgba:{
@@ -1018,10 +1028,10 @@ window.color = {
     //     }
     //     return hex;
     // },
-    new: (args) => Color(args),
+    new: (args) => Colorjs(args),
     realColor(var_or_color, themeDataMain) {
         if (this.cleanVariable(var_or_color)) {
-            return this.varToColor(var_or_color, themeDataMain) as Color;
+            return this.varToColor(var_or_color, themeDataMain) as Colorjs;
         }
         return this.new(var_or_color);
     },

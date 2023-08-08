@@ -1,4 +1,5 @@
-import React, { useState, useLayoutEffect } from "react";
+import React, { useState, useLayoutEffect, useContext } from "react";
+import { AppContext } from "../../App";
 
 const InputCheckboxColor = ({
     onChangeColor,
@@ -17,24 +18,25 @@ const InputCheckboxColor = ({
     labelBefore?: string;
     paraAfter?: string;
     paraBefore?: string;
-    value: string;
+    value: Color;
     checked: boolean;
     onChangeCheck: React.ChangeEventHandler<HTMLInputElement>;
-    onChangeColor?: React.ChangeEventHandler<HTMLInputElement>;
+    onChangeColor?: (color: Color) => void;
     className?: string;
     disabled?: boolean;
     /**
      * `[time_in_ms, fn_on_timeout]`
      * `fn_on_timeout` is called after time had passed after `onChange` and active element is event target
      */
-    timeout?: [number, (value: string) => void];
+    timeout?: [number, (color: Color) => void];
 }) => {
+    const { setColorSelectData } = useContext(AppContext);
     const [valueProxy, setValueProxy] = useState(value);
     useLayoutEffect(() => {
         let timeoutid: NodeJS.Timeout;
         if (timeout) {
             timeoutid = setTimeout(() => {
-                if (value !== valueProxy) timeout[1](valueProxy);
+                if (value.string() !== valueProxy.string()) timeout[1](valueProxy);
             }, timeout[0]);
         }
         return () => {
@@ -52,7 +54,7 @@ const InputCheckboxColor = ({
             <input type="checkbox" checked={checked} disabled={disabled} onChange={onChangeCheck} />
             {labelBefore}
             {paraBefore && <p>{paraBefore}</p>}
-            <input
+            {/* <input
                 type="color"
                 disabled={disabled || !checked}
                 value={valueProxy}
@@ -66,7 +68,34 @@ const InputCheckboxColor = ({
                         } else setValueProxy(e.currentTarget.value);
                     }
                 }}
-            />
+            /> */}
+            <button
+                disabled={disabled || !checked}
+                className="colorPickerBtn"
+                style={{ "--color": value.hsl().string() }}
+                onClick={(e) => {
+                    setColorSelectData({
+                        value: valueProxy,
+                        elemBox: e.currentTarget,
+                        onChange(color) {
+                            // setValueProxy(color.hex());
+                            const aaa = onChangeColor && onChangeColor(color);
+                            if (timeout) {
+                                if (onChangeColor) {
+                                    if (aaa === undefined)
+                                        return console.error(
+                                            "InputCheckboxColor:onChangeColor function must return."
+                                        );
+                                    setValueProxy(aaa);
+                                } else setValueProxy(color);
+                            }
+                        },
+                        focusBackElem: e.currentTarget,
+                    });
+                }}
+            >
+                <span className="colorShow"></span>
+            </button>
             {paraAfter && <p>{paraAfter}</p>}
             {labelAfter}
         </label>

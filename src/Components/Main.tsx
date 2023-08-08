@@ -1,5 +1,4 @@
-/* eslint-disable @typescript-eslint/no-non-null-assertion */
-import { ReactElement, useLayoutEffect, useContext } from "react";
+import { ReactElement, useContext, useEffect } from "react";
 import { setAppSettings } from "../store/appSettings";
 // import { setContextMenu } from "../store/contextMenu";
 import { useAppDispatch, useAppSelector } from "../store/hooks";
@@ -14,6 +13,7 @@ import Settings from "./Settings";
 import AniLogin from "./anilist/AniLogin";
 import { AppContext } from "../App";
 import MenuList from "./Element/MenuList";
+import InputColorReal from "./Element/InputColorReal";
 
 const Main = (): ReactElement => {
     const appSettings = useAppSelector((store) => store.appSettings);
@@ -22,8 +22,15 @@ const Main = (): ReactElement => {
     const anilistToken = useAppSelector((store) => store.anilistToken);
     const isAniLoginOpen = useAppSelector((store) => store.isAniLoginOpen);
 
-    const { setContextMenuData, contextMenuData, optSelectData } = useContext(AppContext);
+    const { contextMenuData, optSelectData, colorSelectData, setColorSelectData } = useContext(AppContext);
     const dispatch = useAppDispatch();
+
+    // useEffect(() => {
+    //     setColorSelectData({
+    //         elemBox: { x: 300, y: 300 },
+    //         value: window.color.new("#ffffff"),
+    //     });
+    // }, []);
 
     // const [bookmarkTabDisplay, setBookmarkTabDisplay] = useState(true);
     // const [historyTabDisplay, setHistoryTabDisplay] = useState(true);
@@ -33,17 +40,6 @@ const Main = (): ReactElement => {
     // const tabContRef = useRef<HTMLDivElement>(null);
     // const [gridTemplate, setGridTemplate] = useState<string>("");
     // const [dividerWidth, setDividerWidth] = useState<number>(0);
-
-    useLayoutEffect(() => {
-        const ff = () => {
-            (contextMenuData?.focusBackElem as HTMLElement | null)?.focus();
-            setContextMenuData(null);
-        };
-        window.addEventListener("wheel", ff);
-        return () => {
-            window.removeEventListener("wheel", ff);
-        };
-    }, [contextMenuData]);
 
     //! did i really wasted time on this
     //
@@ -358,6 +354,7 @@ const Main = (): ReactElement => {
             <LoadingScreen />
             {contextMenuData && <ContextMenu />}
             {optSelectData && <MenuList />}
+            {colorSelectData && <InputColorReal />}
             {!anilistToken && isAniLoginOpen && <AniLogin />}
             {linkInReader.type === "image" && linkInReader.link !== "" ? <Reader /> : ""}
             {linkInReader.type === "book" && linkInReader.link !== "" ? <EPubReader /> : ""}

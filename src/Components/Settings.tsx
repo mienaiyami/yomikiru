@@ -103,19 +103,16 @@ const ThemeElement = ({
                 ) : (
                     <>
                         <InputColor
-                            value={realColor.hex() || "#ff0000"}
+                            value={realColor}
                             timeout={[
                                 500,
                                 (value) => {
-                                    setRealColor((init) => {
-                                        const alpha = init.alpha();
-                                        return window.color.new(value).alpha(alpha);
-                                    });
+                                    setRealColor((init) => window.color.new(value));
                                 },
                             ]}
                             title="Color"
                         />
-                        <InputRange
+                        {/* <InputRange
                             min={0}
                             max={100}
                             value={parseInt((realColor.alpha() * 100).toFixed()) ?? 100}
@@ -123,7 +120,7 @@ const ThemeElement = ({
                             className="opacityRange"
                             labeled
                             timeout={[200, (value) => setRealColor((init) => init.alpha(value / 100))]}
-                        />
+                        /> */}
                     </>
                 )}
             </td>

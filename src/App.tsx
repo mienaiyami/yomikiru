@@ -46,6 +46,8 @@ interface IAppContext {
     setContextMenuData: React.Dispatch<React.SetStateAction<IContextMenuData | null>>;
     optSelectData: IOptSelectData | null;
     setOptSelectData: React.Dispatch<React.SetStateAction<IOptSelectData | null>>;
+    colorSelectData: IColorSelectData | null;
+    setColorSelectData: React.Dispatch<React.SetStateAction<IColorSelectData | null>>;
     checkValidFolder: (
         link: string,
         callback: (isValid?: boolean, imgs?: string[]) => void,
@@ -67,6 +69,7 @@ const App = (): ReactElement => {
     const [firstRendered, setFirstRendered] = useState(false);
     const [contextMenuData, setContextMenuData] = useState<IContextMenuData | null>(null);
     const [optSelectData, setOptSelectData] = useState<IOptSelectData | null>(null);
+    const [colorSelectData, setColorSelectData] = useState<IColorSelectData | null>(null);
 
     const dispatch = useAppDispatch();
 
@@ -733,6 +736,8 @@ const App = (): ReactElement => {
                 setContextMenuData,
                 optSelectData,
                 setOptSelectData,
+                colorSelectData,
+                setColorSelectData,
             }}
         >
             <TopBar />

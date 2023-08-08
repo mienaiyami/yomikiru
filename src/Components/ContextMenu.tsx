@@ -1,4 +1,4 @@
-import { useContext, useEffect, useRef, useState } from "react";
+import { useContext, useEffect, useRef, useState, useLayoutEffect } from "react";
 // import { AppContext } from "../App";
 // import { addBookmark, removeBookmark } from "../store/bookmarks";
 // import { setContextMenu } from "../store/contextMenu";
@@ -32,6 +32,15 @@ const ContextMenu = () => {
     //     if (visible) props?.realRef.current?.focus();
     // }, [visible]);
 
+    useLayoutEffect(() => {
+        const ff = () => {
+            ref.current?.blur();
+        };
+        window.addEventListener("wheel", ff);
+        return () => {
+            window.removeEventListener("wheel", ff);
+        };
+    }, []);
     const onClick = (e: React.MouseEvent<HTMLDivElement, MouseEvent>) => {
         e.stopPropagation();
         if (e.button < 0) return;

@@ -646,13 +646,13 @@ const EPUBReaderSettings = memo(
                                         })
                                     );
                                 }}
-                                value={appSettings.epubReaderSettings.fontColor}
+                                value={window.color.new(appSettings.epubReaderSettings.fontColor)}
                                 timeout={[
                                     500,
                                     (value) =>
                                         dispatch(
                                             setEpubReaderSettings({
-                                                fontColor: value,
+                                                fontColor: value.hexa(),
                                             })
                                         ),
                                 ]}
@@ -667,13 +667,13 @@ const EPUBReaderSettings = memo(
                                         })
                                     );
                                 }}
-                                value={appSettings.epubReaderSettings.linkColor}
+                                value={window.color.new(appSettings.epubReaderSettings.linkColor)}
                                 timeout={[
                                     500,
                                     (value) =>
                                         dispatch(
                                             setEpubReaderSettings({
-                                                linkColor: value,
+                                                linkColor: value.hexa(),
                                             })
                                         ),
                                 ]}
@@ -688,13 +688,13 @@ const EPUBReaderSettings = memo(
                                         })
                                     );
                                 }}
-                                value={appSettings.epubReaderSettings.backgroundColor}
+                                value={window.color.new(appSettings.epubReaderSettings.backgroundColor)}
                                 timeout={[
                                     500,
                                     (value) =>
                                         dispatch(
                                             setEpubReaderSettings({
-                                                backgroundColor: value,
+                                                backgroundColor: value.hexa(),
                                             })
                                         ),
                                 ]}
@@ -709,13 +709,13 @@ const EPUBReaderSettings = memo(
                                         })
                                     );
                                 }}
-                                value={appSettings.epubReaderSettings.progressBackgroundColor}
+                                value={window.color.new(appSettings.epubReaderSettings.progressBackgroundColor)}
                                 timeout={[
                                     500,
                                     (value) =>
                                         dispatch(
                                             setEpubReaderSettings({
-                                                progressBackgroundColor: value,
+                                                progressBackgroundColor: value.hexa(),
                                             })
                                         ),
                                 ]}

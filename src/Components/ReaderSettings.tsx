@@ -595,40 +595,35 @@ const ReaderSettings = memo(
                                 }}
                                 paraAfter="Use Custom Color Filter"
                             />
-                            <div className="colorFilterInputs">
-                                <InputColor
-                                    value={
-                                        window.color
-                                            .new({
-                                                r: appSettings.readerSettings.customColorFilter.r,
-                                                g: appSettings.readerSettings.customColorFilter.g,
-                                                b: appSettings.readerSettings.customColorFilter.b,
+                            {/* <div className="colorFilterInputs"> */}
+                            <InputColor
+                                value={window.color.new([
+                                    appSettings.readerSettings.customColorFilter.r,
+                                    appSettings.readerSettings.customColorFilter.g,
+                                    appSettings.readerSettings.customColorFilter.b,
+                                    appSettings.readerSettings.customColorFilter.a,
+                                ])}
+                                disabled={!appSettings.readerSettings.customColorFilter.enabled}
+                                timeout={[
+                                    500,
+                                    (value) => {
+                                        dispatch(
+                                            setReaderSettings({
+                                                customColorFilter: {
+                                                    ...appSettings.readerSettings.customColorFilter,
+                                                    r: value.red(),
+                                                    g: value.green(),
+                                                    b: value.blue(),
+                                                    a: value.alpha(),
+                                                },
                                             })
-                                            .hex() || "#ffffff"
-                                    }
-                                    disabled={!appSettings.readerSettings.customColorFilter.enabled}
-                                    timeout={[
-                                        500,
-                                        (value) => {
-                                            const rgb = window.color.new(value).object();
-                                            if (rgb) {
-                                                dispatch(
-                                                    setReaderSettings({
-                                                        customColorFilter: {
-                                                            ...appSettings.readerSettings.customColorFilter,
-                                                            r: rgb.r,
-                                                            g: rgb.g,
-                                                            b: rgb.b,
-                                                        },
-                                                    })
-                                                );
-                                            }
-                                        },
-                                    ]}
-                                    // labeled
-                                    // labelBefore="Color: "
-                                />
-                                {/* <InputRange
+                                        );
+                                    },
+                                ]}
+                                // labeled
+                                // labelBefore="Color: "
+                            />
+                            {/* <InputRange
                                     className={"colorRange"}
                                     min={0}
                                     max={255}
@@ -691,7 +686,7 @@ const ReaderSettings = memo(
                                             ),
                                     ]}
                                 /> */}
-                                <InputRange
+                            {/* <InputRange
                                     className={"colorRange"}
                                     min={0}
                                     max={1}
@@ -713,8 +708,8 @@ const ReaderSettings = memo(
                                                 })
                                             ),
                                     ]}
-                                />
-                            </div>
+                                /> */}
+                            {/* </div> */}
                             <InputSelect
                                 disabled={!appSettings.readerSettings.customColorFilter.enabled}
                                 value={appSettings.readerSettings.customColorFilter.blendMode}

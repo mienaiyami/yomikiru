@@ -458,6 +458,31 @@ body {
             border-radius: 3px;
         }
     }
+    .colorPickerBtn:not(#dummy#dummy) {
+        width: 100%;
+        min-height: 40px;
+        height: 100%;
+        padding: 0;
+        --color: black;
+        position: relative;
+        z-index: 1;
+        &::before {
+            content: "";
+            position: absolute;
+            border-radius: 3px;
+            inset: 4px;
+            // z-index: -1;
+            background: repeating-conic-gradient(gray 0% 25%, white 0% 50%) 50% /10px 10px;
+        }
+        .colorShow {
+            pointer-events: none;
+            background: var(--color);
+            position: absolute;
+            inset: 4px;
+            border-radius: 2px;
+            overflow: hidden;
+        }
+    }
     user-select: none;
     overflow: hidden;
 
@@ -1185,6 +1210,7 @@ body {
                 }
             }
         }
+        //todo make them # and check
         .contextMenu {
             @include KeyboardList();
         }
@@ -1202,6 +1228,167 @@ body {
                 li {
                     padding: 5px 10px;
                     // background-color: var(--btn-color);
+                }
+            }
+        }
+        #realColorInput {
+            @include KeyboardList();
+            width: 300px;
+            padding: 0;
+            // height: 300px;
+            // display: grid;
+            // grid-template-rows: 180px 20% 20%;
+            display: flex;
+            flex-direction: column;
+            --hue: 237deg;
+            --color: hsl(var(--hue), 100%, 50%);
+            --color-noAlpha: hsl(var(--hue), 100%, 50%);
+            // opacity: 1;
+            // pointer-events: all;
+            overflow: hidden;
+            > div {
+                inset: 0;
+            }
+            .slider {
+                position: absolute;
+                height: 100%;
+                aspect-ratio: 1 / 1;
+                // outline: 2px solid var(--icon-color);
+                box-shadow: 0 0 0 2px white, inset 0 0 0 2px black;
+                &.sliding {
+                    box-shadow: 0 0 0 4px white, inset 0 0 0 2px black;
+                }
+                border-radius: 10000px;
+                // background: hsl(var(--hue), 100%, 50%);
+                pointer-events: none;
+                --top: 0;
+                --left: 0;
+                top: var(--top);
+                left: var(--top);
+                translate: -50% -50%;
+            }
+            .SLGradient {
+                position: relative;
+                height: 180px;
+                background-image: linear-gradient(0, black, transparent),
+                    linear-gradient(90deg, white, hsl(var(--hue), 100%, 50%));
+                box-shadow: 0 0.5px 0 0 var(--btn-color-focus);
+                cursor: crosshair;
+                .slider {
+                    height: 10px;
+                    background: var(--color-noAlpha);
+                }
+            }
+            button {
+                // height: 40px;
+                height: 100%;
+                aspect-ratio: 1 / 1;
+                padding: 0;
+                border-radius: 4px;
+            }
+            .block2 {
+                height: 60px;
+                // display: flex;
+                display: grid;
+                grid-template-columns: 50px auto;
+                padding: 10px;
+                gap: 5px;
+                flex-direction: row;
+                padding-bottom: 0;
+                > div {
+                    inset: 0;
+                }
+                button {
+                    width: 100%;
+                }
+                .colorShow {
+                    pointer-events: none;
+                    background: var(--color);
+                    position: relative;
+                    overflow: hidden;
+                    &::before {
+                        content: "";
+                        position: absolute;
+                        inset: 0;
+                        z-index: -1;
+                        background: repeating-conic-gradient(gray 0% 25%, white 0% 50%) 50% /10px 10px;
+                    }
+                }
+                .hue-opacity {
+                    width: 100%;
+                    display: grid;
+                    grid-template-rows: 1fr 1fr;
+                    gap: 10px;
+                    padding: 8px 10px;
+                    > div {
+                        border-radius: 1000px;
+                        inset: 0;
+                        position: relative;
+                        cursor: crosshair;
+                    }
+                    .slider {
+                        translate: -50% 0;
+                        background: hsl(var(--hue), 100%, 50%);
+                    }
+                    .hueRange {
+                        background-image: linear-gradient(
+                            to right,
+                            hsl(0, 100%, 50%),
+                            hsl(60, 100%, 50%),
+                            hsl(120, 100%, 50%),
+                            hsl(180, 100%, 50%),
+                            hsl(240, 100%, 50%),
+                            hsl(300, 100%, 50%),
+                            hsl(360, 100%, 50%)
+                        );
+                    }
+                    .opacityRange {
+                        background: linear-gradient(to right, transparent, var(--color-noAlpha)),
+                            repeating-conic-gradient(gray 0% 25%, white 0% 50%) 50% /10px 10px;
+                        .slider {
+                            background: var(--color);
+                        }
+                    }
+                }
+            }
+            .values {
+                height: 70px;
+                padding: 10px;
+                // font-size: 0.9em;
+                display: flex;
+                gap: 5px;
+                button {
+                }
+                .colorValueInput {
+                    display: flex;
+                    flex-direction: row;
+                    width: 80%;
+                    gap: 5px;
+                    label {
+                        display: flex;
+                        flex-direction: row;
+                        padding: 0;
+                        width: 100%;
+                        flex-direction: column;
+                        align-items: center;
+                        justify-content: center;
+                        &:has(input[type="text"]) {
+                            input {
+                                padding: 5px;
+                                padding-left: 10px;
+                                width: 10em;
+                                position: relative;
+                                text-align: center;
+                            }
+                        }
+                        .input {
+                            width: 100%;
+                            input {
+                                padding: 5px;
+                                text-align: center;
+                            }
+                        }
+                    }
                 }
             }
         }
@@ -2557,16 +2744,16 @@ body {
                                     cursor: not-allowed;
                                 }
                             }
-                            .colorFilterInputs {
-                                display: grid;
-                                grid-template-columns: 30% auto;
-                                width: 100%;
-                                gap: 5px;
-                                input[type="color"] {
-                                    width: auto;
-                                    height: auto;
-                                }
-                            }
+                            // .colorFilterInputs {
+                            //     display: grid;
+                            //     grid-template-columns: 30% auto;
+                            //     width: 100%;
+                            //     gap: 5px;
+                            //     input[type="color"] {
+                            //         width: auto;
+                            //         height: auto;
+                            //     }
+                            // }
                             .colorRange {
                                 display: grid;
                                 grid-template-columns: auto 2rem;
