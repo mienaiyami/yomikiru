@@ -272,7 +272,7 @@ const ThemeCont = () => {
                         <tr>
                             <th>Property</th>
                             <th>Reset &nbsp;&nbsp;&nbsp;&nbsp;&nbsp; Link</th>
-                            <th>Color-Opacity / Variable</th>
+                            <th>Color / Variable</th>
                         </tr>
                         {fakeCurrentTheme.map((e) => (
                             <tr key={e.prop} className="newThemeMakerRow">

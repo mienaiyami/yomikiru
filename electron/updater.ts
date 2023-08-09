@@ -156,7 +156,7 @@ const downloadUpdates = (latestVersion: string, windowId: number) => {
                 type: "info",
                 title: "Updates downloaded",
                 message: "Updates downloaded.",
-                buttons: ["Install Now"],
+                buttons: ["Install Now", "Install on Quit"],
                 cancelId: 1,
             })
             .then((res) => {
