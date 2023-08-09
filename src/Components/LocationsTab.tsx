@@ -227,10 +227,13 @@ const LocationsTab = (): ReactElement => {
                                 case "Enter": {
                                     if (locations.length === 0 && imageCount !== 0)
                                         return openInReader(currentLink);
+
                                     const elem = locationContRef.current?.querySelector(
                                         '[data-focused="true"] a'
                                     ) as HTMLLIElement | null;
-                                    if (elem) elem.click();
+                                    if (elem) return elem.click();
+                                    const elems = locationContRef.current?.querySelectorAll("a");
+                                    if (elems?.length === 1) elems[0].click();
                                     break;
                                 }
                                 default:
@@ -327,11 +330,7 @@ const LocationsTab = (): ReactElement => {
                                         <LocationListItem
                                             name={e.name}
                                             link={e.link}
-                                            focused={
-                                                arr.length === 1 && document.activeElement === inputRef.current
-                                                    ? true
-                                                    : focused % arr.length === i
-                                            }
+                                            focused={focused >= 0 && focused % arr.length === i}
                                             inHistory={[
                                                 historySimple[0],
                                                 historySimple[1].findIndex((a) => a === e.name),

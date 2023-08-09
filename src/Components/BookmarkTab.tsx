@@ -77,7 +77,9 @@ const BookmarkTab = () => {
                                     const elem = locationContRef.current?.querySelector(
                                         '[data-focused="true"] a'
                                     ) as HTMLLIElement | null;
-                                    if (elem) elem.click();
+                                    if (elem) return elem.click();
+                                    const elems = locationContRef.current?.querySelectorAll("a");
+                                    if (elems?.length === 1) elems[0].click();
                                     break;
                                 }
                                 default:
@@ -107,7 +109,7 @@ const BookmarkTab = () => {
                                 <BookmarkHistoryListItem
                                     isHistory={false}
                                     isBookmark={true}
-                                    focused={appSettings.showSearch && focused % arr.length === i}
+                                    focused={focused >= 0 && focused % arr.length === i}
                                     index={i}
                                     {...e}
                                     key={e.data.link}

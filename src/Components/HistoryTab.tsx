@@ -76,7 +76,9 @@ const HistoryTab = () => {
                                     const elem = locationContRef.current?.querySelector(
                                         '[data-focused="true"] a'
                                     ) as HTMLLIElement | null;
-                                    if (elem) elem.click();
+                                    if (elem) return elem.click();
+                                    const elems = locationContRef.current?.querySelectorAll("a");
+                                    if (elems?.length === 1) elems[0].click();
                                     break;
                                 }
                                 default:
@@ -107,7 +109,7 @@ const HistoryTab = () => {
                                     isBookmark={false}
                                     isHistory={true}
                                     index={i}
-                                    focused={appSettings.showSearch && focused % arr.length === i}
+                                    focused={focused >= 0 && focused % arr.length === i}
                                     {...e}
                                     key={e.data.date}
                                 />

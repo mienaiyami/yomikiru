@@ -2076,7 +2076,11 @@ const Settings = (): ReactElement => {
                                             <code> ArrowDown</code> to navigate through results.
                                         </li>
                                         <li>
-                                            Click <code>Enter</code> to as new search location.
+                                            Click <code>Enter</code> (with item focused) to open.
+                                        </li>
+                                        <li>
+                                            Click <code>Enter</code> (without item focused) if only one item in
+                                            list to open.
                                         </li>
                                         <li>
                                             Click <code>Enter</code> on empty folder to open in reader.
