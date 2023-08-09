@@ -2,7 +2,7 @@ Does not follow semver.
 
 ---
 
-## Added
+<!-- ## Added
 
 - Option to clear app cache.
 - Context menu 
@@ -20,14 +20,11 @@ Does not follow semver.
   - Anilist data editor changes for better readability.
 - DEV:
   - Cleaned and improved theme maker code. Isolated theme maker, better theme apply and save
-  - Switched to color library to handle color conversions.
+  - Switched to color library to handle color conversions. -->
 
 ## Fixed
 
-- fixed #213, default location url edit.
-- removing searched history/bookmark by right click removes other instead.
-- highlighted bookmark/history if single item and search is off.
-- anilist search not focused on clicking "track".
-- side-list closes when context menu closes.
+- fixed #226, single item in location lists is highlighted.
+- fixed #230, color input not getting removed from DOM.
 
 ---
