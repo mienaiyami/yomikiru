@@ -17,7 +17,7 @@ const VALID_SLIDER = {
 type ValidSlider = keyof typeof VALID_SLIDER;
 
 const InputColorReal = () => {
-    const { colorSelectData } = useContext(AppContext);
+    const { colorSelectData, setColorSelectData } = useContext(AppContext);
     const [pos, setPos] = useState({ x: 0, y: 0 });
     const [formatSelected, setFormatSelected] = useState(0);
     const [color, setColor] = useState(window.color.new());
@@ -148,10 +148,11 @@ const InputColorReal = () => {
                 id="realColorInput"
                 tabIndex={-1}
                 onBlur={(e) => {
-                    if (e.target === e.currentTarget || e.currentTarget.contains(e.target)) return;
+                    if (e.currentTarget.contains(e.relatedTarget)) return;
                     // if(e.target)
                     colorSelectData.focusBackElem && colorSelectData.focusBackElem.focus();
                     colorSelectData.onBlur && colorSelectData.onBlur(e);
+                    setColorSelectData(null);
                 }}
                 // onClick={onClick}
                 // onContextMenu={onClick}
@@ -173,7 +174,7 @@ const InputColorReal = () => {
                     "--color-noAlpha": window.color.new(color).alpha(1).hsl().string(),
                 }}
                 onKeyDown={(e) => {
-                    if (!e.ctrlKey) {
+                    if (!e.ctrlKey || e.key !== "Escape") {
                         e.stopPropagation();
                         e.preventDefault();
                     }
