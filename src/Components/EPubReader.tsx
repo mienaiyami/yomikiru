@@ -23,6 +23,7 @@ import { setReaderSettings } from "../store/appSettings";
 import { setBookInReader } from "../store/bookInReader";
 import { setUnzipping } from "../store/unzipping";
 import { unzip } from "../MainImports";
+import ReaderSideList from "./ReaderSideList";
 
 // type ReaderImageSrc = string;
 // type ReaderHTML = Document;
@@ -553,28 +554,19 @@ const EPubReader = () => {
             );
 
         link = window.path.normalize(link);
+        const linkSplitted = link.split(window.path.sep).filter((e) => e !== "");
         setBookmarked(bookmarks.map((e) => e.data.link).includes(link));
         if ([".xhtml", ".html", ".txt"].includes(window.path.extname(link).toLowerCase())) {
-            console.log("aaa");
             const ext = window.path.extname(link).toLowerCase();
-            if (ext === ".xhtml" || ext === "html") {
-                try {
-                    const parser = new DOMParser();
-                    const doc = parseEPubXHTML(link, parser);
-                    dispatch(setReaderOpen(true));
-                    setNonEPUBFile(doc);
-                } catch (reason) {
-                    window.dialog.customError({
-                        message: "Error while reading file.",
-                        detail: reason as any,
-                    });
-                }
-            } else if (ext === ".txt") {
-                try {
+            try {
+                let doc = null as null | Document;
+                const parser = new DOMParser();
+                if (ext === ".xhtml" || ext === "html") {
+                    doc = parseEPubXHTML(link, parser);
+                } else if (ext === ".txt") {
                     const raw = window.fs.readFileSync(link, "utf-8");
                     if (!raw) throw Error();
                     const paras = raw.split("\r\n");
-                    const parser = new DOMParser();
                     const html = `
                     <!DOCTYPE html>
                     <html>
@@ -586,20 +578,29 @@ const EPubReader = () => {
                     </body>
                     </html>
                     `;
-                    const doc = parser.parseFromString(html, "text/html");
-                    setNonEPUBFile(doc);
-                    dispatch(setReaderOpen(true));
-                } catch (reason) {
-                    console.error(reason);
-                    window.dialog.customError({
-                        message: "Error while reading file.",
-                    });
+                    doc = parser.parseFromString(html, "text/html");
                 }
+                if (doc) {
+                    setNonEPUBFile(doc);
+                    dispatch(
+                        setBookInReader({
+                            author: "~",
+                            link,
+                            title: linkSplitted.at(-2) || "Error",
+                            chapter: linkSplitted.at(-1) || "Error",
+                        })
+                    );
+                    dispatch(setReaderOpen(true));
+                }
+            } catch (reason) {
+                console.error(reason);
+                window.dialog.customError({
+                    message: "Error while reading file.",
+                });
             }
             dispatch(setUnzipping(false));
             return;
         }
-        const linkSplitted = link.split(window.path.sep).filter((e) => e !== "");
         const extractPath = window.path.join(
             window.electron.app.getPath("temp"),
             `yomikiru-temp-EPub-${linkSplitted.at(-1)}`
@@ -1172,6 +1173,20 @@ const EPubReader = () => {
                     makeScrollPos={makeScrollPos}
                     findInPage={findInPage}
                     zenMode={zenMode}
+                />
+            )}
+            {nonEPUBFile && (
+                <ReaderSideList
+                    addToBookmarkRef={addToBookmarkRef}
+                    isBookmarked={isBookmarked}
+                    setBookmarked={setBookmarked}
+                    isSideListPinned={isSideListPinned}
+                    setSideListPinned={setSideListPinned}
+                    setSideListWidth={setSideListWidth}
+                    makeScrollPos={makeScrollPos}
+                    openNextChapterRef={openNextChapterRef}
+                    openPrevChapterRef={openPrevChapterRef}
+                    setshortcutText={setshortcutText}
                 />
             )}
             {appSettings.epubReaderSettings.showProgressInZenMode && (
