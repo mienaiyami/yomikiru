@@ -1377,8 +1377,8 @@ body {
                         &:has(input[type="text"]) {
                             input {
                                 padding: 5px;
+                                width: 90%;
                                 padding-left: 10px;
-                                width: 10em;
                                 position: relative;
                                 text-align: center;
                             }
