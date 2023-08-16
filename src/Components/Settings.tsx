@@ -1891,7 +1891,7 @@ const Settings = (): ReactElement => {
                                 <div className="main col">
                                     <InputCheckbox
                                         className="noBG"
-                                        paraAfter="Check for updates on app startup"
+                                        paraAfter="Check for updates every 5 hour"
                                         checked={appSettings.updateCheckerEnabled}
                                         onChange={(e) => {
                                             dispatch(
