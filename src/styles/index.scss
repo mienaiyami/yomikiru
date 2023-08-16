@@ -2717,7 +2717,9 @@ body {
                                 .optSelectBtn {
                                     font-size: 0.75em;
                                 }
-
+                                .colorPickerBtn:not(#dummy#dummy) {
+                                    width: 60px;
+                                }
                                 input[type="range"] {
                                     width: 100%;
                                 }

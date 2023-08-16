@@ -429,7 +429,7 @@ const EPUBReaderSettings = memo(
                                         (value) => dispatch(setEpubReaderSettings({ lineSpacing: value })),
                                     ]}
                                     paraBefore="Line Height&nbsp;:"
-                                    labelAfter="em"
+                                    paraAfter="em"
                                 />
                                 <InputCheckboxNumber
                                     checked={!appSettings.epubReaderSettings.useDefault_paragraphSpacing}
@@ -457,7 +457,7 @@ const EPUBReaderSettings = memo(
                                         (value) => dispatch(setEpubReaderSettings({ paragraphSpacing: value })),
                                     ]}
                                     paraBefore="Paragraph Spacing&nbsp;:"
-                                    labelAfter="em"
+                                    paraAfter="em"
                                 />
                                 <InputCheckboxNumber
                                     checked={!appSettings.epubReaderSettings.useDefault_wordSpacing}
@@ -485,15 +485,15 @@ const EPUBReaderSettings = memo(
                                         (value) => dispatch(setEpubReaderSettings({ wordSpacing: value })),
                                     ]}
                                     paraBefore="Word Spacing&nbsp;:"
-                                    labelAfter="em"
+                                    paraAfter="em"
                                 />
 
                                 <InputCheckbox
-                                    checked={appSettings.epubReaderSettings.noIndent}
+                                    checked={!appSettings.epubReaderSettings.noIndent}
                                     onChange={(e) => {
-                                        dispatch(setEpubReaderSettings({ noIndent: e.currentTarget.checked }));
+                                        dispatch(setEpubReaderSettings({ noIndent: !e.currentTarget.checked }));
                                     }}
-                                    paraAfter="No Indent"
+                                    paraAfter="Indentation"
                                 />
                                 {/* <InputCheckbox
                                     checked={appSettings.epubReaderSettings.hyphenation}
