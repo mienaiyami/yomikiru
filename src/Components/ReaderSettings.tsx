@@ -18,6 +18,7 @@ import InputNumber from "./Element/InputNumber";
 import InputCheckbox from "./Element/InputCheckbox";
 import InputCheckboxNumber from "./Element/InputCheckboxNumber";
 import InputColor from "./Element/InputColor";
+import InputCheckboxColor from "./Element/InputCheckboxColor";
 
 const ReaderSettings = memo(
     ({
@@ -581,9 +582,9 @@ const ReaderSettings = memo(
                             Color Filters
                         </div>
                         <div className="options col">
-                            <InputCheckbox
+                            <InputCheckboxColor
                                 checked={appSettings.readerSettings.customColorFilter.enabled}
-                                onChange={(e) => {
+                                onChangeCheck={(e) => {
                                     dispatch(
                                         setReaderSettings({
                                             customColorFilter: {
@@ -593,17 +594,13 @@ const ReaderSettings = memo(
                                         })
                                     );
                                 }}
-                                paraAfter="Use Custom Color Filter"
-                            />
-                            {/* <div className="colorFilterInputs"> */}
-                            <InputColor
+                                paraBefore="Use Custom Color Filter"
                                 value={window.color.new([
                                     appSettings.readerSettings.customColorFilter.r,
                                     appSettings.readerSettings.customColorFilter.g,
                                     appSettings.readerSettings.customColorFilter.b,
                                     appSettings.readerSettings.customColorFilter.a,
                                 ])}
-                                disabled={!appSettings.readerSettings.customColorFilter.enabled}
                                 timeout={[
                                     500,
                                     (value) => {
@@ -620,96 +617,7 @@ const ReaderSettings = memo(
                                         );
                                     },
                                 ]}
-                                // labeled
-                                // labelBefore="Color: "
                             />
-                            {/* <InputRange
-                                    className={"colorRange"}
-                                    min={0}
-                                    max={255}
-                                    value={appSettings.readerSettings.customColorFilter.r}
-                                    disabled={!appSettings.readerSettings.customColorFilter.enabled}
-                                    labeled={true}
-                                    labelText="R:"
-                                    timeout={[
-                                        350,
-                                        (value) =>
-                                            dispatch(
-                                                setReaderSettings({
-                                                    customColorFilter: {
-                                                        ...appSettings.readerSettings.customColorFilter,
-                                                        r: value,
-                                                    },
-                                                })
-                                            ),
-                                    ]}
-                                />
-                                <InputRange
-                                    className={"colorRange"}
-                                    min={0}
-                                    max={255}
-                                    value={appSettings.readerSettings.customColorFilter.g}
-                                    disabled={!appSettings.readerSettings.customColorFilter.enabled}
-                                    labeled={true}
-                                    labelText="G:"
-                                    timeout={[
-                                        350,
-                                        (value) =>
-                                            dispatch(
-                                                setReaderSettings({
-                                                    customColorFilter: {
-                                                        ...appSettings.readerSettings.customColorFilter,
-                                                        g: value,
-                                                    },
-                                                })
-                                            ),
-                                    ]}
-                                />
-                                <InputRange
-                                    className={"colorRange"}
-                                    min={0}
-                                    max={255}
-                                    value={appSettings.readerSettings.customColorFilter.b}
-                                    disabled={!appSettings.readerSettings.customColorFilter.enabled}
-                                    labeled={true}
-                                    labelText="B:"
-                                    timeout={[
-                                        350,
-                                        (value) =>
-                                            dispatch(
-                                                setReaderSettings({
-                                                    customColorFilter: {
-                                                        ...appSettings.readerSettings.customColorFilter,
-                                                        b: value,
-                                                    },
-                                                })
-                                            ),
-                                    ]}
-                                /> */}
-                            {/* <InputRange
-                                    className={"colorRange"}
-                                    min={0}
-                                    max={1}
-                                    step={0.1}
-                                    value={appSettings.readerSettings.customColorFilter.a}
-                                    disabled={!appSettings.readerSettings.customColorFilter.enabled}
-                                    labeled={true}
-                                    title="Alpha"
-                                    // labelText="A:"
-                                    timeout={[
-                                        350,
-                                        (value) =>
-                                            dispatch(
-                                                setReaderSettings({
-                                                    customColorFilter: {
-                                                        ...appSettings.readerSettings.customColorFilter,
-                                                        a: value,
-                                                    },
-                                                })
-                                            ),
-                                    ]}
-                                /> */}
-                            {/* </div> */}
                             <InputSelect
                                 disabled={!appSettings.readerSettings.customColorFilter.enabled}
                                 value={appSettings.readerSettings.customColorFilter.blendMode}
