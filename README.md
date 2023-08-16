@@ -33,19 +33,7 @@ It is a offline app to read locally stored manga or epub with great reading expe
 - Zen mode - read without any UI in full screen without any distraction.
 - Open in reader directly from the file explorer.
 - Drag and Drop support.
-- And many more.
 
-## Screenshots
+## [Guides](docs/GUIDE.md)
 
-![demo](github%20assets/1.png)
-![demo](github%20assets/2.png)
-![demo](github%20assets/3.png)
-![demo](github%20assets/4.png)
-![demo](github%20assets/5.png)
-![demo](github%20assets/6.png)
-![demo](github%20assets/7.png)
-![demo](github%20assets/8.png)
-
-<!-- ## About
-
-Development of this app started when I needed something to read my downloaded manga but everything had bad UX and reading experience. Started as a very basic web app which was very limited because of lack of file system. With my knowledge and experience, I didnt had much options at the time. I made a basic electron app to make it easier to read and navigate. Even after that, it was just me who used this app and I just though that if I wanted it so badly then other people might as well. I decided to put it on github under a name "offline-manga-reader". Then I learned react and git and things happened and started building it in new way for fun and the result was not so great but it was a lot for me. And with time and lot of community support with issues and requests, I reached here, to a reader so good that I could never use anything else or read online (except on cubari.moe). -->
+## [Screenshots](docs/SCREENSHOTS.md)
