@@ -144,7 +144,7 @@ const ReaderSettings = memo(
                                             ? 1
                                             : appSettings.readerSettings.readerWidth - steps;
                                     if (document.activeElement !== e.currentTarget)
-                                        setshortcutText("-" + readerWidth + "%");
+                                        setshortcutText(readerWidth + "%");
                                     dispatch(setReaderSettings({ readerWidth }));
                                     // e.currentTarget.dispatchEvent(new MouseEvent(type:"")))
                                 }}
@@ -165,7 +165,7 @@ const ReaderSettings = memo(
                                             : appSettings.readerSettings.readerWidth + steps;
 
                                     if (document.activeElement !== e.currentTarget)
-                                        setshortcutText("+" + readerWidth + "%");
+                                        setshortcutText(readerWidth + "%");
                                     dispatch(setReaderSettings({ readerWidth }));
                                 }}
                             >

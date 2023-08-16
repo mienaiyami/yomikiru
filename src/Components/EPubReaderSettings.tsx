@@ -162,7 +162,7 @@ const EPUBReaderSettings = memo(
                                             ? 1
                                             : appSettings.epubReaderSettings.readerWidth - steps;
                                     if (document.activeElement !== e.currentTarget)
-                                        setshortcutText("-" + readerWidth + "%");
+                                        setshortcutText(readerWidth + "%");
                                     dispatch(setEpubReaderSettings({ readerWidth }));
                                     // e.currentTarget.dispatchEvent(new MouseEvent(type:"")))
                                 }}
@@ -182,7 +182,7 @@ const EPUBReaderSettings = memo(
                                             : appSettings.epubReaderSettings.readerWidth + steps;
 
                                     if (document.activeElement !== e.currentTarget)
-                                        setshortcutText("+" + readerWidth + "%");
+                                        setshortcutText(readerWidth + "%");
                                     dispatch(setEpubReaderSettings({ readerWidth }));
                                 }}
                             >
