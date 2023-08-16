@@ -234,6 +234,21 @@ const ThemeCont = () => {
     return (
         <>
             <h1>
+                <button
+                    className="resetBtn"
+                    onClick={() => {
+                        setFakeCurrentTheme(
+                            Object.entries(window.themeProps).map((e) => ({
+                                prop: e[0] as ThemeDataMain,
+                                label: e[1],
+                                value: allThemes.find((e) => e.name === theme)!.main[e[0] as ThemeDataMain],
+                            }))
+                        );
+                    }}
+                    title="Reset All"
+                >
+                    <FontAwesomeIcon icon={faSync} />
+                </button>
                 <span title={theme}>{theme}</span>
                 <input
                     type="text"
