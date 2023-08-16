@@ -170,7 +170,9 @@ const ReaderSideList = memo(
                                         }
                                     });
                             } else if (
-                                [".zip", ".cbz", ".7z", ".pdf"].includes(window.path.extname(path).toLowerCase())
+                                [".zip", ".cbz", ".rar", ".7z", ".pdf"].includes(
+                                    window.path.extname(path).toLowerCase()
+                                )
                             ) {
                                 validFile++;
                                 setTimeout(() => {

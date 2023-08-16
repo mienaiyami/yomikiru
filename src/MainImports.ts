@@ -910,20 +910,23 @@ window.getCSSPath = (el) => {
 
 const collator = Intl.Collator(undefined, { numeric: true, sensitivity: "base" });
 window.app.betterSortOrder = collator.compare;
+//todo , make better
 window.app.replaceExtension = (str, replaceWith = "~") => {
     return str
         .replace(/\.zip$/i, replaceWith === "~" ? " $ZIP" : replaceWith)
         .replace(/\.cbz$/i, replaceWith === "~" ? " $CBZ" : replaceWith)
         .replace(/\.epub$/i, replaceWith === "~" ? " $EPUB" : replaceWith)
         .replace(/\.7z$/i, replaceWith === "~" ? " $7Z" : replaceWith)
-        .replace(/\.pdf$/i, replaceWith === "~" ? " $PDF" : replaceWith);
+        .replace(/\.pdf$/i, replaceWith === "~" ? " $PDF" : replaceWith)
+        .replace(/\.rar$/i, replaceWith === "~" ? " $RAR" : replaceWith);
 };
 window.app.isSupportedFormat = (str: string) =>
     window.app.replaceExtension(str).includes("$ZIP") ||
     window.app.replaceExtension(str).includes("$CBZ") ||
     window.app.replaceExtension(str).includes("$7Z") ||
     window.app.replaceExtension(str).includes("$EPUB") ||
-    window.app.replaceExtension(str).includes("$PDF");
+    window.app.replaceExtension(str).includes("$PDF") ||
+    window.app.replaceExtension(str).includes("$RAR");
 window.app.deleteDirOnClose = "";
 window.app.currentPageNumber = 1;
 window.app.epubHistorySaveData = null;

@@ -74,7 +74,7 @@ const LocationsTab = (): ReactElement => {
                         if (window.fs.existsSync(window.path.join(link, cur))) {
                             if (
                                 window.fs.lstatSync(window.path.join(link, cur)).isDirectory() ||
-                                [".zip", ".cbz", ".7z", ".epub", ".pdf"].includes(
+                                [".zip", ".cbz", ".rar", ".7z", ".epub", ".pdf"].includes(
                                     window.path.extname(cur).toLowerCase()
                                 )
                             ) {

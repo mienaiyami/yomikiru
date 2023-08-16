@@ -172,7 +172,7 @@ const App = (): ReactElement => {
                 }
             );
 
-        if ([".zip", ".cbz", ".7z"].includes(window.path.extname(link).toLowerCase())) {
+        if ([".zip", ".cbz", ".7z", ".rar"].includes(window.path.extname(link).toLowerCase())) {
             // const tempExtractPath = window.path.join(
             //     window.electron.app.getPath("temp"),
             //     `yomikiru-temp-Images-${linkSplitted[linkSplitted.length - 1]}-${window.app.randomString(10)}`
@@ -536,7 +536,7 @@ const App = (): ReactElement => {
                         closeReader();
                         openInReader(data[0].path);
                     } else if (
-                        [".zip", ".7z", ".cbz", ".epub", ".pdf"].includes(
+                        [".zip", ".7z", ".cbz", ".rar", ".epub", ".pdf"].includes(
                             window.path.extname(data[0].path.toLowerCase())
                         )
                     ) {

@@ -238,14 +238,9 @@ const handleSquirrelEvent = () => {
             `;
             const temp = fs.mkdtempSync(path.join(tmpdir(), "foo-"));
             fs.writeFileSync(path.join(temp, "uninstall.vbs"), uninstallFull);
-            // const cmd = spawn("cmd.exe", ["/K"], { detached: true });
-            // cmd.stdin.write("start " + temp + " \r\n");
             spawn("cscript.exe", [path.resolve(temp, "uninstall.vbs")], {
                 detached: true,
             });
-            // spawnSync("cscript.exe", [path.resolve(temp, "uninstall.vbs")]);
-            // fs.unlinkSync(path.resolve(rootFolder));
-            // fs.unlinkSync(app.getPath("userData"));
             app.quit();
             break;
 
@@ -260,20 +255,13 @@ if (handleSquirrelEvent()) {
 }
 
 const saveJSONfile = (path: string, data: any, sync = true) => {
-    // const saveString = JSON.stringify(data, null, "\t");
-    // if (saveString) {
-    // log.log("starting save :\t", path);
     try {
-        // JSON.parse(data);
-        // log.log("Saving " + path);
         if (sync) {
             fs.writeFileSync(path, data);
-            // log.log("done save :", path);
         } else
             fs.writeFile(path, data, (err) => {
                 if (err) {
                     log.error(err);
-                    // dialog.nodeError(err);
                 }
             });
     } catch (err) {
@@ -282,7 +270,6 @@ const saveJSONfile = (path: string, data: any, sync = true) => {
             saveJSONfile(path, data, sync);
         }, 1000);
     }
-    // }
 };
 
 // when manga reader opened from context menu "open with manga reader"
@@ -468,16 +455,6 @@ const registerListener = () => {
         const window = BrowserWindow.fromWebContents(e.sender)!;
         const closeEvent = (e: Electron.Event) => {
             e.preventDefault();
-            // log.log(currentWindowIndex, { windowsCont });
-            // log.log("sent page save request");
-            // window.webContents.executeJavaScript("window.app.deleteDirOnClose").then((link: string) => {
-            //     if (link && fs.existsSync(link))
-            //         fs.rmSync(link, {
-            //             recursive: true,
-            //         });
-            //     log.log("deleted temp dir");
-            //     log.log("got here somehow?");
-            // });
             let res = 1;
             if (ask)
                 res = dialog.showMessageBoxSync(window, {
@@ -504,24 +481,16 @@ const registerListener = () => {
                         fs.rmSync(dirToDlt, {
                             recursive: true,
                         });
-                        // log.log("deleted temp dir");
                     }
                 } catch (reason) {
                     log.error("Could not delete temp files:", reason);
                 }
         };
         const onClosed = () => {
-            // log.log("on closed");
             windowsCont[currentWindowIndex] = null;
             deleteDirsOnClose[currentWindowIndex] = null;
-            // log.log({ windowsCont });
-            // log.log({ deleteDirsOnClose });
             if (windowsCont.filter((e) => e !== null).length === 0) app.quit();
         };
-        // window.off("closed", onClosed);
-        // window.off("close", closeEvent);
-        // log.log("\n\nasdddddddddddddddddddddddddddddddddddddddddddddddddddd\n\n");
-        // log.log("\n\nregistered...\n\n");
         window.on("closed", onClosed);
         window.on("close", closeEvent);
     });
@@ -534,93 +503,41 @@ const registerListener = () => {
         return new Promise((res, rej) => {
             if (link && extractPath) {
                 if (fs.existsSync(extractPath)) fs.rmSync(extractPath, { recursive: true });
-                crossZip.unzip(link, extractPath, (err) => {
-                    if (err) rej(err);
-                    else {
-                        fs.writeFileSync(path.join(extractPath, "SOURCE"), link);
-                        res({ link, extractPath, status: "ok" });
+                if (path.extname(link) === ".rar") {
+                    try {
+                        fs.mkdirSync(extractPath);
+                        const unrar = spawn("unrar", ["x", "-ai", "-r", link, extractPath]);
+                        unrar.on("error", (err) => {
+                            if (err.message.includes("ENOENT"))
+                                rej("WinRAR not found. Try adding it to system PATHS.");
+                            else rej(err);
+                        });
+                        unrar.stderr.on("data", (data) => {
+                            rej(data);
+                        });
+                        unrar.on("close", (code) => {
+                            if (code === 0) {
+                                fs.writeFileSync(path.join(extractPath, "SOURCE"), link);
+                                res({ link, extractPath, status: "ok" });
+                            } else rej("WinRAR exited with code " + code);
+                        });
+                    } catch (reason) {
+                        log.error(reason);
+                        rej(reason);
                     }
-                });
+                } else
+                    crossZip.unzip(link, extractPath, (err) => {
+                        if (err) rej(err);
+                        else {
+                            fs.writeFileSync(path.join(extractPath, "SOURCE"), link);
+                            res({ link, extractPath, status: "ok" });
+                        }
+                    });
             } else rej("ELECTRON:UNZIP: Invalid link or extractPath.");
         });
     });
-    // ! getting  node-gyp failed to rebuild '..\node_modules\canvas' and i tried everything
-    // ipcMain.handle("renderPDF", (e, link: string, extractPath: string, scale: number) => {
-    //     return new Promise((res, rej) => {
-    //         if (link && extractPath && scale) {
-    //             console.log("starting extract", link);
-    //             pdfjsLib
-    //                 .getDocument(link)
-    //                 .promise.catch((reason) => {
-    //                     rej(reason);
-    //                 })
-    //                 .then((pdf) => {
-    //                     if (pdf) {
-    //                         // let count = 0;
-    //                         for (let i = 1; i <= pdf.numPages; i++) {
-    //                             pdf.getPage(i).then((page) => {
-    //                                 const viewport = page.getViewport({
-    //                                     scale: scale || 1.5,
-    //                                 });
-    //                                 e.sender
-    //                                     .executeJavaScript(
-    //                                         `
-    //                                  canvas = document.createElement("canvas");
-    //                                 canvas.width = ${viewport.width};
-    //                                 canvas.height = ${viewport.height};
-    //                                 context = canvas.getContext("2d");
-    //                                 `
-    //                                     )
-    //                                     .then((context) => {
-    //                                         console.log("asdasdasdasd");
-    //                                         console.log(context);
-    //                                     });
-    //                                 // const canvas = Canvas.createCanvas(viewport.width, viewport.height);
-    //                                 // const context = canvas.getContext("2d");
-    //                                 // if (context)
-    //                                 //     page.render({ canvasContext: context, viewport: viewport }).promise.then(
-    //                                 //         () => {
-    //                                 //             const image = canvas.toBuffer();
-    //                                 //             // const image = canvas.toDataURL("image/png");
-    //                                 //             // window.fs.writeFileSync(
-    //                                 //             //     window.path.join(extractPath, "./" + i + ".png"),
-    //                                 //             //     image.replace(/^data:image\/png;base64,/, ""),
-    //                                 //             //     "base64"
-    //                                 //             // );
-    //                                 //             window.fs.writeFileSync(
-    //                                 //                 window.path.join(extractPath, "./" + i + ".png"),
-    //                                 //                 image
-    //                                 //             );
-    //                                 //             count++;
-    //                                 //             e.sender.executeJavaScript(
-    //                                 //                 ` console.log("Made image", ${i} + ".png")`
-    //                                 //             );
-    //                                 //             // console.log("Made image", i + ".png");
-    //                                 //             page.cleanup();
-    //                                 //             if (count === pdf.numPages) res({ status: "ok" });
-    //                                 //         }
-    //                                 //     );
-    //                             });
-    //                         }
-    //                     }
-    //                 });
-    //         } else rej("ELECTRON:UNZIP: Invalid link or extractPath.");
-    //     });
-    // });
 };
 app.on("ready", () => {
-    // if (!app.isPackaged) {
-    //     try {
-    //         const reactDevToolsPath = path.join(
-    //             homedir(),
-    //             "AppData\\local\\Microsoft\\Edge\\User Data\\Default\\Extensions\\fmkadmapgofadopljbjfkapdkoienihi\\4.27.1_0"
-    //         );
-    //         session.defaultSession.loadExtension(reactDevToolsPath);
-    //     } catch (err) {
-    //         log.error(err);
-    //     }
-    // }
-
     /**
      * enables basic shortcut keys such as copy, paste, reload, etc.
      */
@@ -676,12 +593,6 @@ app.on("ready", () => {
     createWindow();
 });
 
-// app.on("window-all-closed", () => {
-//     if (process.platform !== "darwin") {
-//         log.log("closed all window");
-//         app.quit();
-//     }
-// });
 app.on("before-quit", () => {
     log.log("Quitting app...");
 });
