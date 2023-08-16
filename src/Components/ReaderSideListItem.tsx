@@ -54,6 +54,7 @@ const ReaderSideListItem = memo(
                         const items = [
                             window.contextMenu.template.open(link),
                             window.contextMenu.template.openInNewWindow(link),
+                            window.contextMenu.template.divider(),
                         ];
                         if (inHistory[1] >= 0) {
                             items.push(window.contextMenu.template.unreadChapter(...inHistory));
@@ -69,6 +70,7 @@ const ReaderSideListItem = memo(
                             items.push(window.contextMenu.template.readAllChapter(inHistory[0], chapters));
                         }
                         items.push(window.contextMenu.template.unreadAllChapter(inHistory[0]));
+                        items.push(window.contextMenu.template.divider());
                         items.push(window.contextMenu.template.showInExplorer(link));
                         items.push(window.contextMenu.template.copyPath(link));
                         setContextMenuFocused(true);

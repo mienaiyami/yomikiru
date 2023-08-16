@@ -5,6 +5,8 @@ import { useContext, useEffect, useRef, useState, useLayoutEffect } from "react"
 // import { removeHistory } from "../store/history";
 // import { useAppDispatch, useAppSelector } from "../store/hooks";
 import { AppContext } from "../App";
+import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
+import { faCheck } from "@fortawesome/free-solid-svg-icons";
 
 const ContextMenu = () => {
     // const contextMenuData = useAppSelector((store) => store.contextMenu);
@@ -86,15 +88,21 @@ const ContextMenu = () => {
                         case "ArrowDown":
                         case "ArrowRight":
                             setFocused((init) => {
-                                if (init + 1 >= contextMenuData.items.length) return 0;
-                                return init + 1;
+                                let f = init + 1;
+                                if (f >= contextMenuData.items.length) f = 0;
+                                if (ref.current?.querySelectorAll("ul li")[f]?.classList.contains("menu-divider"))
+                                    f++;
+                                return f;
                             });
                             break;
                         case "ArrowUp":
                         case "ArrowLeft":
                             setFocused((init) => {
-                                if (init - 1 < 0) return contextMenuData.items.length - 1;
-                                return init - 1;
+                                let f = init - 1;
+                                if (f < 0) f = contextMenuData.items.length - 1;
+                                if (ref.current?.querySelectorAll("ul li")[f]?.classList.contains("menu-divider"))
+                                    f--;
+                                return f;
                             });
                             break;
                         case "Enter":
@@ -110,25 +118,30 @@ const ContextMenu = () => {
                     }
                 }}
             >
-                <ul>
-                    {contextMenuData.items.map((e, i) => (
-                        <li
-                            role="menuitem"
-                            key={e.label}
-                            onClick={e.action}
-                            onContextMenu={e.action}
-                            data-focused={i === focused}
-                            onMouseEnter={() => {
-                                setFocused(i);
-                            }}
-                            onMouseLeave={() => {
-                                setFocused(-1);
-                            }}
-                            className={`${e.disabled ? "disabled " : ""}`}
-                        >
-                            {e.label}
-                        </li>
-                    ))}
+                <ul className={contextMenuData.padLeft ? "padLeft" : ""}>
+                    {contextMenuData.items.map((e, i) =>
+                        e.divider ? (
+                            <li role="menuitem" key={"divider" + i} className="menu-divider"></li>
+                        ) : (
+                            <li
+                                role="menuitem"
+                                key={e.label}
+                                onClick={e.action}
+                                onContextMenu={e.action}
+                                data-focused={i === focused}
+                                onMouseEnter={() => {
+                                    setFocused(i);
+                                }}
+                                onMouseLeave={() => {
+                                    setFocused(-1);
+                                }}
+                                className={`${e.disabled ? "disabled " : ""}`}
+                            >
+                                {e.selected ? <FontAwesomeIcon icon={faCheck} /> : <span></span>}
+                                {e.label}
+                            </li>
+                        )
+                    )}
                 </ul>
             </div>
         )

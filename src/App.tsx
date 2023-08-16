@@ -558,6 +558,15 @@ const App = (): ReactElement => {
         //     console.log("dddddddddd");
         // }, 1000);
         window.contextMenu.template = {
+            divider() {
+                return {
+                    label: "",
+                    action() {
+                        //
+                    },
+                    divider: true,
+                };
+            },
             open(url) {
                 return {
                     label: "Open",

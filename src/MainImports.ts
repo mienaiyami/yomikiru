@@ -52,6 +52,7 @@ export const settingValidatorData = {
     baseDir: "",
     customStylesheet: "",
     locationListSortType: ["normal", "inverse"],
+    locationListSortBy: ["name", "date"],
     /**
      * Check for new update on start of app.
      */
@@ -336,6 +337,7 @@ declare global {
                 focusBackElem?: HTMLElement | null
             ) => MouseEvent;
             template: {
+                divider: () => MenuListItem;
                 open: (url: string) => MenuListItem;
                 openInNewWindow: (url: string) => MenuListItem;
                 showInExplorer: (url: string) => MenuListItem;
@@ -637,13 +639,25 @@ declare global {
     type MenuListItem = {
         label: string;
         action: () => void;
-        disabled: boolean;
+        disabled?: boolean;
+        /**
+         * checked or enabled
+         */
+        selected?: boolean;
         style?: React.CSSProperties;
+        /**
+         * if true ignore all data and show line
+         */
+        divider?: boolean;
     };
     type IContextMenuData = {
         clickX: number;
         clickY: number;
         focusBackElem?: EventTarget | null;
+        /**
+         * leave extra space on left side, useful when have "check" items in list
+         */
+        padLeft?: boolean;
         items: MenuListItem[];
     };
     type IOptSelectData = {
@@ -1250,6 +1264,7 @@ const defaultSettings: AppSettings = {
     baseDir: window.electron.app.getPath("home"),
     customStylesheet: "",
     locationListSortType: "normal",
+    locationListSortBy: "name",
     updateCheckerEnabled: true,
     askBeforeClosing: false,
     skipMinorUpdate: false,

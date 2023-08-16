@@ -1187,7 +1187,7 @@ body {
             &:focus {
                 outline: none;
             }
-            opacity: 0;
+            opacity: 1;
             pointer-events: none;
             &:focus-within {
                 opacity: 1;
@@ -1201,6 +1201,14 @@ body {
                     cursor: default;
                     line-height: normal;
                     border-radius: 2px;
+                    &.menu-divider {
+                        height: 2px;
+                        width: 100%;
+                        // background-color: var(--btn-color-focus);
+                        background-color: var(--divider-color);
+                        margin: 2px 0;
+                        padding: 0;
+                    }
                     &[data-focused="true"] {
                         background: var(--btn-color-focus);
                     }
@@ -1215,6 +1223,15 @@ body {
         //todo make them # and check
         .contextMenu {
             @include KeyboardList();
+
+            ul {
+                &.padLeft {
+                    li {
+                        display: grid;
+                        grid-template-columns: 1.5em auto;
+                    }
+                }
+            }
         }
         .itemList {
             @include KeyboardList();

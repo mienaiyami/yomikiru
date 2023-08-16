@@ -1,16 +1,16 @@
 import { faAngleUp, faSort, faSyncAlt } from "@fortawesome/free-solid-svg-icons";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import { ReactElement, useContext, useEffect, useRef, useState, useLayoutEffect, memo } from "react";
+import { ReactElement, useContext, useEffect, useRef, useState, useLayoutEffect, memo, useMemo } from "react";
 import { AppContext } from "../App";
 import { setAppSettings } from "../store/appSettings";
 import { useAppDispatch, useAppSelector } from "../store/hooks";
 import LocationListItem from "./LocationListItem";
 import { promptSelectDir } from "../MainImports";
 
-type LocationData = { name: string; link: string };
+type LocationData = { name: string; link: string; dateModified: number };
 
 const LocationsTab = (): ReactElement => {
-    const { openInReader } = useContext(AppContext);
+    const { openInReader, setContextMenuData } = useContext(AppContext);
     const history = useAppSelector((store) => store.history);
     const appSettings = useAppSelector((store) => store.appSettings);
     const dispatch = useAppDispatch();
@@ -69,27 +69,26 @@ const LocationsTab = (): ReactElement => {
                         );
                     }).length
                 );
-                const dirNames = files
-                    .reduce((arr: LocationData[], cur) => {
-                        if (window.fs.existsSync(window.path.join(link, cur))) {
-                            if (
-                                window.fs.lstatSync(window.path.join(link, cur)).isDirectory() ||
-                                [".zip", ".cbz", ".rar", ".7z", ".epub", ".pdf"].includes(
-                                    window.path.extname(cur).toLowerCase()
-                                )
-                            ) {
-                                arr.push({
-                                    name: window.fs.lstatSync(window.path.join(link, cur)).isFile()
-                                        ? window.app.replaceExtension(cur)
-                                        : cur,
-                                    link: window.path.join(link, cur),
-                                });
-                            }
+                const dirNames = files.reduce((arr: LocationData[], cur) => {
+                    const stat = window.fs.lstatSync(window.path.join(link, cur));
+                    if (window.fs.existsSync(window.path.join(link, cur))) {
+                        if (
+                            stat.isDirectory() ||
+                            [".zip", ".cbz", ".rar", ".7z", ".epub", ".pdf"].includes(
+                                window.path.extname(cur).toLowerCase()
+                            )
+                        ) {
+                            arr.push({
+                                name: stat.isFile() ? window.app.replaceExtension(cur) : cur,
+                                link: window.path.join(link, cur),
+                                dateModified: stat.mtimeMs,
+                            });
                         }
-                        return arr;
-                        //  return (window.fs.lstatSync(window.path.join(link, e)) || false).isDirectory()
-                    }, [])
-                    .sort((a, b) => window.app.betterSortOrder(a.name, b.name));
+                    }
+                    return arr;
+                    //  return (window.fs.lstatSync(window.path.join(link, e)) || false).isDirectory()
+                }, []);
+
                 if (inputRef.current && !refresh) {
                     inputRef.current.value = "";
                 }
@@ -127,6 +126,14 @@ const LocationsTab = (): ReactElement => {
         }
     }, [inputRef]);
 
+    const sortedLocations = useMemo(() => {
+        const sorted =
+            appSettings.locationListSortBy === "name"
+                ? locations.sort((a, b) => window.app.betterSortOrder(a.name, b.name))
+                : locations.sort((a, b) => (a.dateModified < b.dateModified ? -1 : 1));
+        return appSettings.locationListSortType === "inverse" ? [...sorted].reverse() : sorted;
+    }, [locations, appSettings.locationListSortBy, appSettings.locationListSortType]);
+
     useEffect(() => {
         if (currentLink) {
             const historyIndex = history.findIndex(
@@ -158,15 +165,74 @@ const LocationsTab = (): ReactElement => {
                         <FontAwesomeIcon icon={faSyncAlt} />
                     </button> */}
                     <button
-                        data-tooltip="Sort"
+                        data-tooltip={
+                            "Sort: " +
+                            (appSettings.locationListSortType === "normal" ? "▲ " : "▼ ") +
+                            appSettings.locationListSortBy.toUpperCase()
+                        }
                         // tabIndex={-1}
-                        onClick={() => {
-                            dispatch(
-                                setAppSettings({
-                                    locationListSortType:
-                                        appSettings.locationListSortType === "inverse" ? "normal" : "inverse",
-                                })
-                            );
+                        onClick={(e) => {
+                            // dispatch(
+                            //     setAppSettings({
+                            //         locationListSortType:
+                            //             appSettings.locationListSortType === "inverse" ? "normal" : "inverse",
+                            //     })
+                            // );
+                            const items: MenuListItem[] = [
+                                {
+                                    label: "Name",
+                                    action() {
+                                        dispatch(
+                                            setAppSettings({
+                                                locationListSortBy: "name",
+                                            })
+                                        );
+                                    },
+                                    selected: appSettings.locationListSortBy === "name",
+                                },
+                                {
+                                    label: "Date Modified",
+                                    action() {
+                                        dispatch(
+                                            setAppSettings({
+                                                locationListSortBy: "date",
+                                                locationListSortType: "inverse",
+                                            })
+                                        );
+                                    },
+                                    selected: appSettings.locationListSortBy === "date",
+                                },
+                                window.contextMenu.template.divider(),
+                                {
+                                    label: "Ascending",
+                                    action() {
+                                        dispatch(
+                                            setAppSettings({
+                                                locationListSortType: "normal",
+                                            })
+                                        );
+                                    },
+                                    selected: appSettings.locationListSortType === "normal",
+                                },
+                                {
+                                    label: "Descending",
+                                    action() {
+                                        dispatch(
+                                            setAppSettings({
+                                                locationListSortType: "inverse",
+                                            })
+                                        );
+                                    },
+                                    selected: appSettings.locationListSortType === "inverse",
+                                },
+                            ];
+                            setContextMenuData({
+                                clickX: e.currentTarget.getBoundingClientRect().x,
+                                clickY: e.currentTarget.getBoundingClientRect().bottom + 4,
+                                padLeft: true,
+                                items,
+                                focusBackElem: e.currentTarget,
+                            });
                         }}
                     >
                         <FontAwesomeIcon icon={faSort} />
@@ -260,6 +326,7 @@ const LocationsTab = (): ReactElement => {
                                 }
                             if (val === ".." + window.path.sep)
                                 return setCurrentLink(window.path.resolve(currentLink, "../"));
+                            // check for exact match and open directly without enter
                             if (val[val.length - 1] === window.path.sep) {
                                 const index = locations.findIndex(
                                     (e) =>
@@ -321,7 +388,7 @@ const LocationsTab = (): ReactElement => {
                     <p>0 Folders, {imageCount} Images</p>
                 ) : (
                     <ol>
-                        {(appSettings.locationListSortType === "inverse" ? [...locations].reverse() : locations)
+                        {sortedLocations
                             .filter((e) => new RegExp(filter, "ig") && new RegExp(filter, "ig").test(e.name))
                             .map(
                                 (e, i, arr) =>

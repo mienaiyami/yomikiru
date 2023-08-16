@@ -91,6 +91,7 @@ const BookmarkHistoryListItem = (props: ListItemE) => {
                         window.contextMenu.template.openInNewWindow(props.data.link),
                         window.contextMenu.template.showInExplorer(props.data.link),
                         window.contextMenu.template.copyPath(props.data.link),
+                        window.contextMenu.template.divider(),
                     ];
                     if (props.isBookmark) items.push(window.contextMenu.template.removeBookmark(props.data.link));
                     else items.push(window.contextMenu.template.addToBookmark(props));
