@@ -327,7 +327,7 @@ const App = (): ReactElement => {
         link = window.path.normalize(link);
         window.electron.webFrame.clearCache();
         if (link === linkInReader.link) return;
-        if (link.toLowerCase().includes(".epub")) {
+        if ([".epub", ".xhtml", ".html", ".txt"].includes(window.path.extname(link).toLowerCase())) {
             dispatch(setUnzipping({ state: true, text: "Extracting and Loading epub..." }));
 
             // dispatch(setLoadingManga(true));

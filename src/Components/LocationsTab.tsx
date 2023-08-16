@@ -74,7 +74,7 @@ const LocationsTab = (): ReactElement => {
                     if (window.fs.existsSync(window.path.join(link, cur))) {
                         if (
                             stat.isDirectory() ||
-                            [".zip", ".cbz", ".rar", ".7z", ".epub", ".pdf"].includes(
+                            [".zip", ".cbz", ".rar", ".7z", ".epub", ".pdf", ".xhtml", ".html", ".txt"].includes(
                                 window.path.extname(cur).toLowerCase()
                             )
                         ) {
@@ -274,6 +274,7 @@ const LocationsTab = (): ReactElement => {
                                     break;
                                 case "ArrowUp":
                                     setFocused((init) => {
+                                        //todo fix: when searched, maybe move filter to sortedLocation
                                         if (init - 1 < 0) return locations.length - 1;
                                         return init - 1;
                                     });
