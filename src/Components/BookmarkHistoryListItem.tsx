@@ -90,28 +90,19 @@ const BookmarkHistoryListItem = (props: ListItemE) => {
                         window.contextMenu.template.open(props.data.link),
                         window.contextMenu.template.openInNewWindow(props.data.link),
                         window.contextMenu.template.showInExplorer(props.data.link),
+                        window.contextMenu.template.copyPath(props.data.link),
                     ];
                     if (props.isBookmark) items.push(window.contextMenu.template.removeBookmark(props.data.link));
                     else items.push(window.contextMenu.template.addToBookmark(props));
                     if (props.isHistory) items.push(window.contextMenu.template.removeHistory(props.data.link));
 
                     setContextMenuFocused(true);
-                    // dispatch(
                     setContextMenuData({
                         clickX: e.clientX,
                         clickY: e.clientY,
                         focusBackElem: e.nativeEvent.relatedTarget,
                         items,
                     });
-                    // );
-                    // showContextMenu({
-                    //     isBookmark: props.isBookmark || false,
-                    //     isHistory: props.isHistory || false,
-                    //     link: props.link,
-                    //     item: props,
-                    //     isFile: false,
-                    //     e: e.nativeEvent,
-                    // });
                 }}
             >
                 {props.type === "book" ? (
