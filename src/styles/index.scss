@@ -1873,7 +1873,9 @@ body {
                                     box-shadow: var(--btn-shadow-focus) 0 0 0px 2px;
                                 }
                             }
-
+                            .selected {
+                                background-color: var(--btn-color-focus);
+                            }
                             label {
                                 cursor: pointer;
                                 background-color: var(--btn-color);
@@ -1886,23 +1888,13 @@ body {
                                     display: none;
                                 }
 
-                                &:hover {
-                                    background-color: var(--btn-color-hover);
-                                }
                                 &:focus,
                                 &:active {
                                     background-color: var(--btn-color-focus);
                                     box-shadow: var(--btn-shadow-focus) 0 0 0px 2px;
                                 }
-                                &.selected {
-                                    background-color: var(--btn-color-focus);
-                                }
-                                &.opacityRange {
-                                    display: grid;
-                                    grid-template-columns: auto 1em;
-                                    gap: 5px;
-                                    // font-size: 1.3em;
-                                    justify-items: center;
+                                &:hover {
+                                    background-color: var(--btn-color-hover);
                                 }
                             }
                         }
@@ -2741,28 +2733,6 @@ body {
                                     opacity: 0.5;
                                     pointer-events: none;
                                     cursor: not-allowed;
-                                }
-                            }
-                            // .colorFilterInputs {
-                            //     display: grid;
-                            //     grid-template-columns: 30% auto;
-                            //     width: 100%;
-                            //     gap: 5px;
-                            //     input[type="color"] {
-                            //         width: auto;
-                            //         height: auto;
-                            //     }
-                            // }
-                            .colorRange {
-                                display: grid;
-                                grid-template-columns: auto 2rem;
-                                justify-items: center;
-
-                                // input[type="range"] {
-                                //     width: auto;
-                                // }
-                                &.labeled {
-                                    grid-template-columns: 1rem auto 2rem;
                                 }
                             }
                         }
