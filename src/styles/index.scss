@@ -69,6 +69,7 @@
     --scrollbar-thumb-color: #fff;
     --scrollbar-thumb-color-hover: #fff;
 
+    --code-text-color: #fff;
     --code-bg-color: #fff;
     --code-shadow-color: var(--btn-color);
 
@@ -540,6 +541,7 @@ body {
 
     code {
         display: inline;
+        color: var(--code-text-color);
         background-color: var(--code-bg-color);
         box-shadow: 0 0 2px 1px var(--code-shadow-color);
         text-shadow: 0 0 6px var(--body-bg-color);
@@ -1635,9 +1637,6 @@ body {
                                 padding: 0.5em 1em;
                                 font-size: 0.95em;
                                 color: var(--font-color-secondary);
-                                code {
-                                    color: var(--font-color);
-                                }
                             }
                             .row {
                                 flex-direction: row;

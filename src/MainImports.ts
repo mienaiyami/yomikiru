@@ -726,6 +726,7 @@ window.themeProps = {
     "--scrollbar-track-color": "ScrollBar Track Color",
     "--scrollbar-thumb-color": "ScrollBar Thumb Color",
     "--scrollbar-thumb-color-hover": "ScrollBar Thumb Color Hovered",
+    "--code-text-color": "Code Text Color",
     "--code-bg-color": "Code BG Color",
     "--code-shadow-color": "Code Shadow Color",
     "--divider-color": "Divider Color",
