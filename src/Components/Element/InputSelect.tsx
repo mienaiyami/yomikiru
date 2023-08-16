@@ -32,15 +32,15 @@ export const InputSelect = ({
     const { setOptSelectData } = useContext(AppContext);
 
     useLayoutEffect(() => {
-        if (value) {
-            const aa = options.find((e) => e.value === value);
-            if (aa) {
-                setBtnLabel(aa.label);
-            } else {
-                window.logger.error("InputSelect::value: value not found in options.");
-            }
+        // if (value) {
+        const aa = options.find((e) => e.value === value);
+        if (aa) {
+            setBtnLabel(aa.label);
+        } else {
+            window.logger.error("InputSelect::value: value not found in options.");
         }
-    }, [value]);
+        // }
+    }, [value, options]);
 
     // making it a component will cause re-render and issuess
     // const SelectButton = ({ solo = true }: { solo?: boolean }) => (
