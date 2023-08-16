@@ -26,6 +26,9 @@ const InputCheckbox = ({
         <label
             title={title}
             className={(disabled ? "disabled " : "") + (checked ? "optionSelected " : "") + className}
+            onKeyDown={(e) => {
+                if (e.key === "Enter" || e.key === " ") e.currentTarget.click();
+            }}
         >
             {/* {labelBefore}
             {paraBefore && <p>{paraBefore}</p>} */}

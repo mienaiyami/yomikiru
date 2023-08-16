@@ -210,7 +210,12 @@ const Reader = () => {
         const registerShortcuts = (e: KeyboardEvent) => {
             // /&& document.activeElement!.tagName === "BODY"
             window.app.keyRepeated = e.repeat;
-
+            if (
+                [" ", "Enter"].includes(e.key) &&
+                document.activeElement &&
+                document.activeElement.tagName === "BUTTON"
+            )
+                return;
             if ((e.ctrlKey && e.key === "/") || (e.shiftKey && e.key === "F10") || e.key === "ContextMenu") {
                 e.stopPropagation();
                 e.preventDefault();

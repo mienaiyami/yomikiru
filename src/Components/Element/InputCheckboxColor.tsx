@@ -47,7 +47,12 @@ const InputCheckboxColor = ({
         setValueProxy(value);
     }, [value]);
     return (
-        <label className={(disabled ? "disabled " : "") + (checked ? "optionSelected " : "") + className}>
+        <label
+            className={(disabled ? "disabled " : "") + (checked ? "optionSelected " : "") + className}
+            onKeyDown={(e) => {
+                if (e.key === "Enter" || e.key === " ") e.currentTarget.click();
+            }}
+        >
             <span className={`toggle-area ${checked ? "on" : "off"} `}>
                 <span className={`toggle-state`}></span>
             </span>
@@ -73,6 +78,9 @@ const InputCheckboxColor = ({
                 disabled={disabled || !checked}
                 className="colorPickerBtn"
                 style={{ "--color": value.hsl().string() }}
+                onKeyDown={(e) => {
+                    if (e.key === "Enter" || e.key === " ") e.stopPropagation();
+                }}
                 onClick={(e) => {
                     setColorSelectData({
                         value: valueProxy,
