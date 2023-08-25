@@ -426,6 +426,7 @@ const EPubReader = () => {
 
     useLayoutEffect(() => {
         if (appSettings.epubReaderSettings.loadOneChapter && readerRef.current) readerRef.current.scrollTop = 0;
+        const simpleChapterURL = currentChapterURL.split("#")[0];
         window.app.epubHistorySaveData = {
             chapter: "~",
             chapterURL: currentChapterURL,
@@ -433,7 +434,7 @@ const EPubReader = () => {
         };
         if (tocData)
             window.app.epubHistorySaveData.chapter =
-                tocData.nav.find((e) => e.src.includes(currentChapterURL))?.name || "~";
+                tocData.nav.find((e) => e.src.includes(simpleChapterURL))?.name || "~";
         if (
             window.app.epubHistorySaveData.chapter === "~" ||
             window.app.epubHistorySaveData.chapter === linkInReader.chapter
@@ -444,6 +445,7 @@ const EPubReader = () => {
                 setBookInReader({
                     ...bookInReader,
                     chapter: window.app.epubHistorySaveData.chapter as string,
+                    chapterURL: currentChapterURL,
                 })
             );
         dispatch(updateCurrentBookHistory());
@@ -489,6 +491,7 @@ const EPubReader = () => {
         (ev: MouseEvent | React.MouseEvent<HTMLAnchorElement, MouseEvent>) => {
             ev.preventDefault();
             const data_href = (ev.currentTarget as Element).getAttribute("data-href");
+            console.log(data_href, currentChapterURL);
             if (data_href) {
                 if (appSettings.epubReaderSettings.loadOneChapter) {
                     if (data_href.includes("#")) {

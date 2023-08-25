@@ -39,7 +39,6 @@ const EPubReaderSideList = memo(
          * `~` if appSettings.epubReaderSettings.loadOneChapter is `false`
          */
         currentChapterURL: string;
-        // setCurrentChapterURL: React.Dispatch<React.SetStateAction<string>>;
 
         epubLinkClick: (ev: MouseEvent | React.MouseEvent<HTMLAnchorElement, MouseEvent>) => void;
         addToBookmarkRef: React.RefObject<HTMLButtonElement>;
@@ -54,11 +53,9 @@ const EPubReaderSideList = memo(
         zenMode: boolean;
     }) => {
         const bookInReader = useAppSelector((store) => store.bookInReader);
-        // const history = useAppSelector((store) => store.history);
         const appSettings = useAppSelector((store) => store.appSettings);
         const linkInReader = useAppSelector((store) => store.linkInReader);
         const prevNextChapter = useAppSelector((store) => store.prevNextChapter);
-        // const contextMenu = useAppSelector((store) => store.contextMenu);
 
         const dispatch = useAppDispatch();
 
@@ -66,8 +63,6 @@ const EPubReaderSideList = memo(
         const [findInPageStr, setFindInPageStr] = useState<string>("");
         const [isListOpen, setListOpen] = useState(false);
         const [preventListClose, setpreventListClose] = useState(false);
-        // const prevMangaRef = useRef<string>("");
-        // const [historySimple, setHistorySimple] = useState<string[]>([]);
         const [draggingResizer, setDraggingResizer] = useState(false);
         const currentRef = useRef<HTMLAnchorElement | null>(null);
         useEffect(() => {
@@ -76,21 +71,6 @@ const EPubReaderSideList = memo(
                     currentRef.current?.scrollIntoView({ block: "start" });
                 }, 100);
         }, [zenMode]);
-        // useLayoutEffect(() => {
-        // }, [findInPage]);
-
-        // console.log('bbb');
-
-        // useEffect(() => {
-        //     if (!contextMenu && !isSideListPinned) return setListOpen(false);
-        //     setpreventListClose(true);
-        // }, [contextMenu]);
-        // useEffect(() => {
-        //     if (mangaInReader) {
-        //         const historyItem = history.find((e) => e.mangaLink === window.path.dirname(mangaInReader.link));
-        //         if (historyItem) setHistorySimple(historyItem.chaptersRead);
-        //     }
-        // }, [history]);
         useLayoutEffect(() => {
             if (isSideListPinned) {
                 setListOpen(true);
@@ -100,9 +80,14 @@ const EPubReaderSideList = memo(
         const changePrevNext = () => {
             if (bookInReader) {
                 const listData = tocData.nav.map((e) => e.src);
-                let nextIndex = (listData.findIndex((e) => e.includes(currentChapterURL)) || 0) + 1;
+
+                const simpleChapterURL = currentChapterURL.split("#")[0];
+                let currentChapterIndex = listData.findIndex((e) => e.includes(currentChapterURL));
+                if (currentChapterIndex < 0)
+                    currentChapterIndex = listData.findIndex((e) => e.includes(simpleChapterURL));
+                let nextIndex = currentChapterIndex + 1;
                 if (nextIndex < listData.length && listData[nextIndex] === currentChapterURL) nextIndex += 1;
-                let prevIndex = (listData.findIndex((e) => e.includes(currentChapterURL)) || 0) - 1;
+                let prevIndex = currentChapterIndex - 1;
                 if (prevIndex > 0 && listData[prevIndex] === currentChapterURL) prevIndex -= 1;
                 const prevCh = prevIndex < 0 ? "~" : listData[prevIndex];
                 const nextCh = nextIndex >= listData.length ? "~" : listData[nextIndex];
@@ -115,21 +100,6 @@ const EPubReaderSideList = memo(
             if (appSettings.epubReaderSettings.loadOneChapter) changePrevNext();
             else dispatch(setPrevNextChapter({ prev: "~", next: "~" }));
         }, [tocData, currentChapterURL]);
-
-        // useEffect(() => {
-        //     if (mangaInReader) {
-        //         if (prevMangaRef.current === mangaInReader.mangaName) {
-        //             changePrevNext();
-        //             return;
-        //         }
-        //         prevMangaRef.current = mangaInReader.mangaName;
-        //         makeChapterList();
-        //     }
-        // }, [mangaInReader]);
-
-        // useEffect(() => {
-        //     console.log(prevNextChapter, currentChapterURL);
-        // }, [prevNextChapter]);
 
         const handleResizerDrag = (e: MouseEvent) => {
             if (draggingResizer) {
@@ -342,18 +312,10 @@ const EPubReaderSideList = memo(
                                 if (sideListRef.current) {
                                     // [data-depth="1"
                                     sideListRef.current.querySelectorAll("a").forEach((e) => {
-                                        // console.log({ a: e.getAttribute("data-href"), b: prevNextChapter.next });
                                         if (e.getAttribute("data-href") === prevNextChapter.next)
                                             (e as HTMLAnchorElement).click();
-                                        // (
-                                        //     sideListRef.current.querySelector(
-                                        //         `a[data-href="${prevNextChapter.next}"`
-                                        //     ) as HTMLAnchorElement
-                                        // ).click();
                                     });
                                 }
-                                // dispatch(updateLastHistoryPage({ linkInReader: linkInReader.link }));
-                                // dispatch(setLinkInReader({ type: "image", link: prevNextChapter.next, page: 1 }));
                             }}
                         >
                             <FontAwesomeIcon icon={faArrowRight} />
@@ -366,16 +328,17 @@ const EPubReaderSideList = memo(
                         <span className="bold"> : </span>
                         <span>{tocData.title}</span>
                     </div>
-                    {/* <div>
-                    <span className="bold">Author</span>
-                    <span className="bold"> : </span>
-                    <span>{tocData.author}</span>
-                </div> */}
                     {appSettings.epubReaderSettings.loadOneChapter && (
                         <div>
                             <span className="bold">Chapter</span>
                             <span className="bold"> : </span>
-                            <span>{tocData.nav.find((e) => e.src.includes(currentChapterURL))?.name || "~"}</span>
+                            <span>
+                                {tocData.nav.find(
+                                    (e) =>
+                                        e.src.includes(currentChapterURL) ||
+                                        e.src.includes(currentChapterURL.split("#")[0])
+                                )?.name || "~"}
+                            </span>
                         </div>
                     )}
                 </div>
