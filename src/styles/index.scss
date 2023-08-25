@@ -1210,7 +1210,7 @@ body {
                         padding: 0;
                     }
                     &[data-focused="true"] {
-                        background: var(--btn-color-focus);
+                        background: var(--contentMenu-item-bg-color-hover);
                     }
                     &.disabled {
                         opacity: 0.5;

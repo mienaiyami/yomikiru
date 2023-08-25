@@ -746,7 +746,7 @@ window.themeProps = {
     "--divider-color": "Divider Color",
     "--contextMenu-bg-color": "Context-Menu BG",
     "--contentMenu-item-color": "Context-Menu Item BG",
-    "--contentMenu-item-bg-color-hover": "Context-Menu Item BG Hovered",
+    "--contentMenu-item-bg-color-hover": "Context-Menu Item BG Hovered/Focused",
     "--zenModePage-bg": "ZenMode Page Indicator BG (Manga Reader only)",
 };
 window.shortcutsFunctions = [
@@ -1433,7 +1433,7 @@ const isSettingsValid = (): { isValid: boolean; location: string[] } => {
         // makeSettingsJson();
         return { isValid: false, location: [] };
     }
-    const settings = JSON.parse(window.fs.readFileSync(settingsPath, "utf-8"));
+    const settings = JSON.parse(window.fs.readFileSync(settingsPath, "utf-8")) as Record<string, any>;
     const output: { isValid: boolean; location: string[] } = {
         isValid: true,
         location: [],
@@ -1455,6 +1455,8 @@ const isSettingsValid = (): { isValid: boolean; location: string[] } => {
             return;
         }
         if (value instanceof Array) {
+            // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+            //@ts-ignore
             if (!value.includes(settings[key])) {
                 output.isValid = false;
                 output.location.push(key);

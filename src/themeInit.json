@@ -36,7 +36,7 @@
                 "--divider-color": "var(--btn-color)",
                 "--contextMenu-bg-color": "var(--body-bg-color)",
                 "--contentMenu-item-color": "var(--font-color)",
-                "--contentMenu-item-bg-color-hover": "var(--btn-color-hover)",
+                "--contentMenu-item-bg-color-hover": "var(--btn-color-focus)",
                 "--zenModePage-bg": "var(--body-bg-color)"
             }
         },
@@ -75,7 +75,7 @@
                 "--reader-sidelist-divider-color": "var(--btn-color-hover)",
                 "--contextMenu-bg-color": "var(--body-bg-color)",
                 "--contentMenu-item-color": "var(--font-color)",
-                "--contentMenu-item-bg-color-hover": "var(--btn-color-hover)",
+                "--contentMenu-item-bg-color-hover": "var(--btn-color-focus)",
                 "--zenModePage-bg": "var(--body-bg-color)"
             }
         },
@@ -114,7 +114,7 @@
                 "--divider-color": "var(--topBar-color)",
                 "--contextMenu-bg-color": "var(--body-bg-color)",
                 "--contentMenu-item-color": "var(--font-color)",
-                "--contentMenu-item-bg-color-hover": "var(--btn-color-hover)",
+                "--contentMenu-item-bg-color-hover": "var(--btn-color-focus)",
                 "--zenModePage-bg": "var(--body-bg-color)"
             }
         },
@@ -153,7 +153,7 @@
                 "--reader-sidelist-divider-color": "var(--btn-color-hover)",
                 "--contextMenu-bg-color": "var(--body-bg-color)",
                 "--contentMenu-item-color": "var(--font-color)",
-                "--contentMenu-item-bg-color-hover": "var(--btn-color-hover)",
+                "--contentMenu-item-bg-color-hover": "var(--btn-color-focus)",
                 "--zenModePage-bg": "var(--body-bg-color)"
             }
         },
@@ -192,7 +192,7 @@
                 "--divider-color": "var(--topBar-color)",
                 "--contextMenu-bg-color": "var(--body-bg-color)",
                 "--contentMenu-item-color": "var(--font-color)",
-                "--contentMenu-item-bg-color-hover": "var(--btn-color-hover)",
+                "--contentMenu-item-bg-color-hover": "var(--btn-color-focus)",
                 "--zenModePage-bg": "var(--body-bg-color)"
             }
         }
