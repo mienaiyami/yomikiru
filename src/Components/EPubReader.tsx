@@ -587,12 +587,21 @@ const EPubReader = () => {
                 }
                 if (doc) {
                     setNonEPUBFile(doc);
+                    const mangaOpened = {
+                        chapterName: linkSplitted.at(-1) || "~",
+                        link,
+                        pages: 0,
+                        mangaName: linkSplitted.at(-2) || "~",
+                    };
+                    dispatch(setMangaInReader(mangaOpened));
                     dispatch(
-                        setMangaInReader({
-                            chapterName: linkSplitted.at(-1) || "~",
-                            link,
-                            pages: 0,
-                            mangaName: linkSplitted.at(-2) || "~",
+                        newHistory({
+                            type: "image",
+                            data: {
+                                mangaOpened,
+                                page: 0,
+                                recordChapter: true,
+                            },
                         })
                     );
                     dispatch(setReaderOpen(true));
