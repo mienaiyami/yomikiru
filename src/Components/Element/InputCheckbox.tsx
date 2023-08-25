@@ -32,7 +32,13 @@ const InputCheckbox = ({
         >
             {/* {labelBefore}
             {paraBefore && <p>{paraBefore}</p>} */}
-            <span className={`toggle-area ${checked ? "on" : "off"} `}>
+            <span
+                className={`toggle-area ${checked ? "on" : "off"} `}
+                tabIndex={0}
+                onKeyDown={(e) => {
+                    if (e.key === " ") e.preventDefault();
+                }}
+            >
                 <span className={`toggle-state`}></span>
             </span>
             <input type="checkbox" checked={checked} disabled={disabled} onChange={onChange} />

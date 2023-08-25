@@ -243,6 +243,11 @@ body {
                 box-shadow: 0 0 2px 0 var(--font-color);
                 transition: 0.1s ease-in-out background-color;
                 margin: 0 3px;
+
+                &:focus {
+                    outline: none;
+                    box-shadow: 0 0 2px 0 var(--font-color), var(--btn-shadow-focus) 0 0 0px 4px;
+                }
                 .toggle-state {
                     --toggle-width: 0.7em;
                     --aspect-ratio: 1;
@@ -1711,6 +1716,7 @@ body {
                         font-size: 1em;
                         padding: 20px;
                         user-select: text;
+                        letter-spacing: 0.02em;
                         * {
                             scroll-margin-top: 4em;
                         }
