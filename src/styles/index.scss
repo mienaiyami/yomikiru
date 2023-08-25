@@ -86,6 +86,7 @@
 #EPubReader hr {
     margin: 1.5em 0;
     width: 100%;
+    background-color: currentColor;
 }
 
 body.notWindows {
@@ -796,6 +797,7 @@ body {
             align-items: center;
         }
         @mixin contFadeScaleIn($elem) {
+            backdrop-filter: blur(4px);
             &[data-state="open"] {
                 visibility: visible;
                 #{$elem} {
