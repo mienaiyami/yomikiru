@@ -165,6 +165,7 @@ const history = createSlice({
                 const oldData = stateDup[index];
                 stateDup.splice(index, 1);
                 (oldData as BookHistoryItem).data.chapter = window.app.epubHistorySaveData.chapter;
+                (oldData as BookHistoryItem).data.chapterURL = window.app.epubHistorySaveData.chapterURL;
                 (oldData as BookHistoryItem).data.elementQueryString = window.app.epubHistorySaveData.queryString;
                 (oldData as BookHistoryItem).data.date = new Date().toLocaleString("en-UK", { hour12: true });
                 stateDup.unshift(oldData);

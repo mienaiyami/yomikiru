@@ -377,6 +377,7 @@ declare global {
              */
             epubHistorySaveData: {
                 chapter: string;
+                chapterURL: string;
                 queryString: string;
             } | null;
             scrollToPage: (
@@ -558,6 +559,7 @@ declare global {
         title: string;
         author: string;
         link: string;
+        chapterURL: string;
         date?: string;
         chapter?: string;
     };

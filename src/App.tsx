@@ -37,6 +37,11 @@ import { toggleOpenSetting } from "./store/isSettingOpen";
 interface IAppContext {
     pageNumberInputRef: React.RefObject<HTMLInputElement>;
     bookProgressRef: React.RefObject<HTMLInputElement>;
+    /**
+     * Check if folder have images then open those images in reader.
+     * @param link link of folder containing images to be opened in reader.
+     * @param page_or_chapterName pagenumber in case of manga and chapter name in case of epub
+     */
     openInReader: (link: string, page_or_chapterName?: number | string, elementQueryString?: string) => void;
     // addNewBookmark: (newBk: ChapterItem) => Promise<Electron.MessageBoxReturnValue> | undefined;
     closeReader: () => void;
@@ -318,11 +323,6 @@ const App = (): ReactElement => {
             }
         } else tempFn(link);
     };
-    /**
-     * Check if folder have images then open those images in reader.
-     * @param link link of folder containing images to be opened in reader.
-     * @param page_or_chapterName pagenumber in case of manga and chapter name in case of epub
-     */
     const openInReader = (link: string, page_or_chapterName?: number | string, elementQueryString?: string) => {
         link = window.path.normalize(link);
         window.electron.webFrame.clearCache();
@@ -659,6 +659,7 @@ const App = (): ReactElement => {
                                     link: data.data.link,
                                     title: data.data.title,
                                     chapter: data.data.chapter || "",
+                                    chapterURL: data.data.chapterURL,
                                     elementQueryString: data.data.elementQueryString || "",
                                     date: new Date().toLocaleString("en-UK", { hour12: true }),
                                 },

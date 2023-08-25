@@ -10,35 +10,6 @@ const BookmarkHistoryListItem = (props: ListItemE) => {
     useEffect(() => {
         if (!contextMenuData) setContextMenuFocused(false);
     }, [contextMenuData]);
-    // const dispatch = useAppDispatch();
-    // const [pos, setPos] = useState({ x: 0, y: 0 });
-    // const infoRef = useRef<HTMLDivElement>(null);
-    // const InfoOnHover = () => {
-    //     return (
-    //         <div className="infoOnHover" ref={infoRef} style={{ top: pos.y + "px" }}>
-    //             <div className="info-cont">
-    //                 <div className="title">Manga</div>
-    //                 <div className="info">{props.mangaName}</div>
-    //             </div>
-    //             <div className="info-cont">
-    //                 <div className="title">Chapter</div>
-    //                 <div className="info">{props.chapterName}</div>
-    //             </div>
-    //             <div className="info-cont">
-    //                 <div className="title">Pages</div>
-    //                 <div className="info">{props.pages}</div>
-    //             </div>
-    //             <div className="info-cont">
-    //                 <div className="title">Page</div>
-    //                 <div className="info">{props.page}</div>
-    //             </div>
-    //             <div className="info-cont">
-    //                 <div className="title">Date</div>
-    //                 <div className="info">{props.date}</div>
-    //             </div>
-    //         </div>
-    //     );
-    // };
     const title =
         props.type === "book"
             ? `Title       : ${props.data.title}\n` +
@@ -60,15 +31,6 @@ const BookmarkHistoryListItem = (props: ListItemE) => {
             ref={(node) => {
                 if (node && props.focused) node.scrollIntoView({ block: "nearest" });
             }}
-            // onMouseOver={(e) => {
-            //     let y = e.currentTarget.getBoundingClientRect().top;
-            //     // console.log(e.currentTarget.getBoundingClientRect().top);
-            //     if (infoRef.current)
-            //         if (y > window.innerHeight - infoRef.current.offsetHeight - 20) {
-            //             y = window.innerHeight - infoRef.current.offsetHeight - 20;
-            //         }
-            //     setPos({ x: e.currentTarget.offsetTop, y });
-            // }}
         >
             <a
                 className="big"
@@ -81,7 +43,9 @@ const BookmarkHistoryListItem = (props: ListItemE) => {
                     }
                     openInReader(
                         props.data.link,
-                        props.type === "image" ? props.data.page : props.data.chapter || "",
+                        props.type === "image"
+                            ? props.data.page
+                            : props.data.chapterURL || props.data.chapter || "",
                         props.type === "book" ? props.data.elementQueryString : ""
                     );
                 }}
@@ -114,8 +78,6 @@ const BookmarkHistoryListItem = (props: ListItemE) => {
                             &nbsp;&nbsp;&nbsp;
                             <span className="page">
                                 {" "}
-                                {/* EPUB
-                                <span className="num"></span> */}
                                 <code className="nonFolder">EPUB</code>
                             </span>
                         </span>
@@ -137,15 +99,11 @@ const BookmarkHistoryListItem = (props: ListItemE) => {
                                         {window.app.replaceExtension(props.data.chapterName).split("$")[1]}
                                     </code>
                                 )}
-                                {/* Page <span className="num">{(props.data.page || 1).toString()}</span> */}
                             </span>
                         </span>
                     </span>
                 )}
             </a>
-            {/* <div className="infoWrapper">
-                <InfoOnHover />
-            </div> */}
         </li>
     );
 };

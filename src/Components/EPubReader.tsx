@@ -428,6 +428,7 @@ const EPubReader = () => {
         if (appSettings.epubReaderSettings.loadOneChapter && readerRef.current) readerRef.current.scrollTop = 0;
         window.app.epubHistorySaveData = {
             chapter: "~",
+            chapterURL: currentChapterURL,
             queryString: "",
         };
         if (tocData)
@@ -724,8 +725,13 @@ const EPubReader = () => {
                                 });
                                 // // first with lowest depth
                                 // setCurrentChapterURL(tempTOCData.nav.find((e) => e.depth === 1)!.src);
-                                let currentChapterURL =
-                                    tempTOCData.nav.find((e) => e.name === linkInReader.chapter)?.src || "";
+
+                                let currentChapterURL = "";
+                                if (linkInReader.chapter.includes("\\") || linkInReader.chapter.includes("/"))
+                                    currentChapterURL = linkInReader.chapter;
+                                else
+                                    currentChapterURL =
+                                        tempTOCData.nav.find((e) => e.name === linkInReader.chapter)?.src || "";
                                 if (linkInReader.queryStr) setBookmarkedElem(linkInReader.queryStr);
                                 if (!currentChapterURL) currentChapterURL = tempTOCData.nav[0].src;
                                 const bookOpened: BookItem = {
@@ -733,6 +739,7 @@ const EPubReader = () => {
                                     link,
                                     title: tempTOCData.title,
                                     date: new Date().toLocaleString("en-UK", { hour12: true }),
+                                    chapterURL: currentChapterURL,
                                     chapter:
                                         tempTOCData.nav.find((e) => e.src.includes(currentChapterURL))?.name ??
                                         tempTOCData.nav[0].name,
@@ -842,6 +849,7 @@ const EPubReader = () => {
                     window.app.epubHistorySaveData = {
                         chapter: "~",
                         queryString: fff,
+                        chapterURL: currentChapterURL,
                     };
                     if (tocData)
                         window.app.epubHistorySaveData.chapter =
