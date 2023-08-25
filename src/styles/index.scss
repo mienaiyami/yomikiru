@@ -2678,7 +2678,7 @@ body {
                                 font-size: 1em;
                                 align-items: center;
                                 border-radius: 3px;
-                                min-height: 2.2em;
+                                height: 2.2em;
 
                                 p,
                                 .optSelectBtn {
@@ -2686,6 +2686,7 @@ body {
                                 }
                                 .colorPickerBtn:not(#dummy#dummy) {
                                     width: 60px;
+                                    height: 100%;
                                 }
                                 input[type="range"] {
                                     width: 100%;
