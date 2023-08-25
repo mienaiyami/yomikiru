@@ -32,7 +32,7 @@ const TopBar = (): ReactElement => {
             let chapterName = window.app.replaceExtension(mangaInReader.chapterName, "");
             if (mangaName.length > 13) mangaName = mangaName.substring(0, 20) + "...";
             if (chapterName.length > 83) chapterName = chapterName.substring(0, 80) + "...";
-            const title = mangaName + " | " + chapterName + " - " + window.electron.app.getName();
+            const title = `${window.electron.app.getName()} - ${mangaName} | ${chapterName}`;
             setTitle(chapterName.concat(window.electron.app.isPackaged ? "" : " - dev"));
             document.title = title;
             return;
@@ -48,8 +48,9 @@ const TopBar = (): ReactElement => {
                 if (chapterName.length > 83) chapterName = chapterName.substring(0, 80) + "...";
             }
             if (bookTitle.length > 83) bookTitle = bookTitle.substring(0, 80) + "...";
-            const title =
-                bookTitle + (chapterName ? " | " + chapterName : "") + " - " + window.electron.app.getName();
+            const title = `${window.electron.app.getName()} - ${bookTitle} ${
+                chapterName ? "| " + chapterName : ""
+            }`;
             setTitle(
                 (chapterName ? chapterName : bookTitle).concat(window.electron.app.isPackaged ? "" : " - dev")
             );
@@ -63,10 +64,14 @@ const TopBar = (): ReactElement => {
         setMaximized(window.electron.getCurrentWindow().isMaximized);
         window.electron.getCurrentWindow()?.on("maximize", () => setMaximized(true));
         window.electron.getCurrentWindow()?.on("unmaximize", () => setMaximized(false));
+        window.electron.getCurrentWindow()?.on("focus", () => document.body.classList.remove("blurred"));
+        window.electron.getCurrentWindow()?.on("blur", () => document.body.classList.add("blurred"));
     };
     const removeEventListener = () => {
         window.electron.getCurrentWindow()?.removeAllListeners("maximize");
         window.electron.getCurrentWindow()?.removeAllListeners("unmaximize");
+        window.electron.getCurrentWindow()?.removeAllListeners("focus");
+        window.electron.getCurrentWindow()?.removeAllListeners("blur");
     };
     useLayoutEffect(() => {
         attachEventListener();

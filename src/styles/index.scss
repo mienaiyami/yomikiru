@@ -178,6 +178,12 @@ body {
     color: var(--font-color);
     background: var(--body-bg-color);
 
+    &.blurred {
+        #topBar {
+            opacity: 0.5;
+        }
+    }
+
     &::backdrop {
         background: var(--body-bg-color);
     }
@@ -312,8 +318,6 @@ body {
         border-radius: 4px;
         // width: 100%;
         height: 100%;
-        input {
-        }
         &:hover {
             .spin {
                 visibility: visible;
@@ -375,25 +379,11 @@ body {
             //removing coz have custom now
             appearance: none;
             margin: 0;
-
-            // /* scale: 1.4; */
-            // position: absolute;
-            // height: 100%;
-            // top: 0;
-            // scale: 1.5;
-            // right: 4px;
         }
         &::placeholder {
             color: currentColor;
             opacity: 0.4;
         }
-        // &.noSpin {
-        //     &::-webkit-outer-spin-button,
-        //     &::-webkit-inner-spin-button {
-        //         -webkit-appearance: none;
-        //         margin: 0;
-        //     }
-        // }
     }
     input[type="date"] {
         background: var(--text-input-bg);
@@ -504,33 +494,6 @@ body {
             box-shadow: var(--btn-shadow-focus) 0 0 0px 2px;
         }
     }
-
-    // select {
-    //     width: 100%;
-    //     height: 100%;
-    //     // background: var(--text-input-bg);
-    //     background: var(--btn-color);
-    //     color: var(--font-color);
-    //     font-size: 1em;
-    //     padding: 0.4em;
-    //     border: none;
-    //     border-radius: 3px;
-    //     cursor: default;
-    //     user-select: none;
-    //     cursor: pointer;
-    //     font-family: inherit;
-    //     color-scheme: light dark;
-    //     &:focus,
-    //     &:active {
-    //         outline: none;
-    //         box-shadow: var(--btn-color-focus) 0 0 0px 2px;
-    //     }
-    //     &:disabled {
-    //         pointer-events: none;
-    //         cursor: not-allowed;
-    //         opacity: 0.5;
-    //     }
-    // }
     svg {
         color: var(--icon-color);
     }
@@ -592,28 +555,6 @@ body {
             transform: translate(var(--translate)) scale(1) rotate(var(--rotate));
         }
     }
-    // .selectBtn {
-    //     position: relative;
-    //     .selectOptions {
-    //         background-color: var(--btn-color);
-    //         border-radius: 4px;
-    //         position: absolute;
-    //         top: 100%;
-    //         display: flex;
-    //         flex-direction: column;
-    //         align-items: stretch;
-    //         // left: 0;
-    //         .selectOptionItem {
-    //             width: 100%;
-    //             padding: 5px;
-    //             text-align: center;
-    //             &:hover {
-    //                 background-color: var(--btn-color-hover);
-    //             }
-    //         }
-    //     }
-    // }
-
     #topBar {
         position: absolute;
         top: 0;
@@ -687,7 +628,7 @@ body {
             align-items: center;
             justify-content: center;
             width: calc(100% - (var(--button-width) * 10));
-
+            color: var(--font-color);
             .title {
                 position: relative;
                 max-width: 100%;
@@ -722,6 +663,7 @@ body {
                 padding: 0;
                 border-radius: 0;
                 cursor: default;
+                color: var(--font-color);
                 // visibility: hidden;
                 // width: calc(var(--button-width) * 2);
                 &::before {
