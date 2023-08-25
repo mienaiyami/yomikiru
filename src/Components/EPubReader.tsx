@@ -923,7 +923,7 @@ const EPubReader = () => {
                     100
             );
         if (bookProgressRef.current) bookProgressRef.current.value = progress.toString();
-        setBookProgress(progress);
+        setBookProgress(progress || 0);
         makeScrollPos();
     };
     const scrollToPage = (percent: number, behavior: ScrollBehavior = "smooth", callback?: () => void) => {
