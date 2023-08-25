@@ -43,6 +43,7 @@ export const InputSelect = ({
     }, [value, options]);
 
     // making it a component will cause re-render and issuess
+
     // const SelectButton = ({ solo = true }: { solo?: boolean }) => (
     //     <button
     //         className={`optSelectBtn  ${solo ? `${disabled ? "disabled" : ""} ${className}` : ""}`}
@@ -106,7 +107,8 @@ export const InputSelect = ({
         );
     return (
         <button
-            className={`optSelectBtn ${disabled ? "disabled" : ""} ${className}`}
+            className={`optSelectBtn ${className}`}
+            disabled={disabled}
             data-value={value}
             onClick={(e) => {
                 // const textAlign = window.getComputedStyle(e.currentTarget)

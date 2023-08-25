@@ -901,7 +901,7 @@ window.makeFileSafe = (string: string): string => {
 
 window.getCSSPath = (el) => {
     if (!(el instanceof Element)) return "";
-    const path = [];
+    const path = [] as string[];
     let elem = el;
     while (elem.nodeType === Node.ELEMENT_NODE) {
         let selector = elem.nodeName.toLowerCase();
@@ -1347,7 +1347,7 @@ const defaultSettings: AppSettings = {
     epubReaderSettings: {
         loadOneChapter: true,
         readerWidth: 50,
-        fontSize: 16,
+        fontSize: 20,
         useDefault_fontFamily: true,
         fontFamily: "Roboto",
         useDefault_lineSpacing: true,
