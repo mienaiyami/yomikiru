@@ -98,6 +98,7 @@ const bookmarks = createSlice({
             const index = state.findIndex((e) => e.data.link === action.payload.link);
             if (index > -1 && window.app.epubHistorySaveData) {
                 (state[index].data as BookBookmarkItem).chapter = window.app.epubHistorySaveData.chapter;
+                (state[index].data as BookBookmarkItem).chapterURL = window.app.epubHistorySaveData.chapterURL;
                 (state[index].data as BookBookmarkItem).elementQueryString =
                     window.app.epubHistorySaveData.queryString;
                 saveJSONfile(bookmarksPath, current(state));
