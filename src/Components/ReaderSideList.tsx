@@ -8,7 +8,7 @@ import {
 } from "@fortawesome/free-solid-svg-icons";
 import { faBookmark as farBookmark } from "@fortawesome/free-regular-svg-icons";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import { memo, useEffect, useLayoutEffect, useRef, useState, useContext } from "react";
+import { memo, useEffect, useLayoutEffect, useRef, useState, useContext, useMemo } from "react";
 import ReaderSideListItem from "./ReaderSideListItem";
 import { useAppDispatch, useAppSelector } from "../store/hooks";
 import { setLinkInReader } from "../store/linkInReader";
@@ -19,7 +19,7 @@ import { setPrevNextChapter } from "../store/prevNextChapter";
 import AnilistBar from "./anilist/AnilistBar";
 import { AppContext } from "../App";
 
-type ChapterData = { name: string; pages: number; link: string };
+type ChapterData = { name: string; pages: number; link: string; dateModified: number };
 
 const ReaderSideList = memo(
     ({
@@ -45,7 +45,7 @@ const ReaderSideList = memo(
         setSideListWidth: React.Dispatch<React.SetStateAction<number>>;
         makeScrollPos: () => void;
     }) => {
-        const { contextMenuData, openInReader } = useContext(AppContext);
+        const { contextMenuData, openInReader, setContextMenuData } = useContext(AppContext);
 
         const mangaInReader = useAppSelector((store) => store.mangaInReader);
         const history = useAppSelector((store) => store.history);
@@ -137,8 +137,9 @@ const ReaderSideList = memo(
                         } catch (err) {
                             aa = false;
                         }
+                        const stat = window.fs.lstatSync(path);
                         if (aa && window.path.extname(e).toLowerCase() !== ".sys")
-                            if (window.fs.lstatSync(path).isDirectory()) {
+                            if (stat.isDirectory()) {
                                 validFile++;
                                 window.fs.promises
                                     .readdir(path)
@@ -152,6 +153,7 @@ const ReaderSideList = memo(
                                                 name: window.app.replaceExtension(e),
                                                 pages: data.length,
                                                 link: path,
+                                                dateModified: stat.mtimeMs,
                                             });
                                         }
                                         if (responseCompleted >= validFile) {
@@ -181,6 +183,7 @@ const ReaderSideList = memo(
                                         name: window.app.replaceExtension(e),
                                         pages: 0,
                                         link: path,
+                                        dateModified: stat.mtimeMs,
                                     });
                                     if (responseCompleted >= validFile) {
                                         setChapterData(
@@ -258,6 +261,14 @@ const ReaderSideList = memo(
                 })
             );
         };
+
+        const sortedLocations = useMemo(() => {
+            const sorted =
+                appSettings.locationListSortBy === "name"
+                    ? chapterData.sort((a, b) => window.app.betterSortOrder(a.name, b.name))
+                    : chapterData.sort((a, b) => (a.dateModified < b.dateModified ? -1 : 1));
+            return appSettings.locationListSortType === "inverse" ? [...sorted].reverse() : sorted;
+        }, [chapterData, appSettings.locationListSortBy, appSettings.locationListSortType]);
 
         return (
             <div
@@ -406,16 +417,69 @@ const ReaderSideList = memo(
                             </button>
                         )}
                         <button
-                            // tabIndex={-1}
-                            data-tooltip="Sort"
-                            onClick={() =>
-                                dispatch(
-                                    setAppSettings({
-                                        locationListSortType:
-                                            appSettings.locationListSortType === "inverse" ? "normal" : "inverse",
-                                    })
-                                )
+                            data-tooltip={
+                                "Sort: " +
+                                (appSettings.locationListSortType === "normal" ? "▲ " : "▼ ") +
+                                appSettings.locationListSortBy.toUpperCase()
                             }
+                            // tabIndex={-1}
+                            onClick={(e) => {
+                                const items: MenuListItem[] = [
+                                    {
+                                        label: "Name",
+                                        action() {
+                                            dispatch(
+                                                setAppSettings({
+                                                    locationListSortBy: "name",
+                                                })
+                                            );
+                                        },
+                                        selected: appSettings.locationListSortBy === "name",
+                                    },
+                                    {
+                                        label: "Date Modified",
+                                        action() {
+                                            dispatch(
+                                                setAppSettings({
+                                                    locationListSortBy: "date",
+                                                    locationListSortType: "inverse",
+                                                })
+                                            );
+                                        },
+                                        selected: appSettings.locationListSortBy === "date",
+                                    },
+                                    window.contextMenu.template.divider(),
+                                    {
+                                        label: "Ascending",
+                                        action() {
+                                            dispatch(
+                                                setAppSettings({
+                                                    locationListSortType: "normal",
+                                                })
+                                            );
+                                        },
+                                        selected: appSettings.locationListSortType === "normal",
+                                    },
+                                    {
+                                        label: "Descending",
+                                        action() {
+                                            dispatch(
+                                                setAppSettings({
+                                                    locationListSortType: "inverse",
+                                                })
+                                            );
+                                        },
+                                        selected: appSettings.locationListSortType === "inverse",
+                                    },
+                                ];
+                                setContextMenuData({
+                                    clickX: e.currentTarget.getBoundingClientRect().x,
+                                    clickY: e.currentTarget.getBoundingClientRect().bottom + 4,
+                                    padLeft: true,
+                                    items,
+                                    focusBackElem: e.currentTarget,
+                                });
+                            }}
                         >
                             <FontAwesomeIcon icon={faSort} />
                         </button>
@@ -511,30 +575,26 @@ const ReaderSideList = memo(
                         <p>Loading...</p>
                     ) : (
                         <ol>
-                            {(appSettings.locationListSortType === "inverse"
-                                ? [...chapterData].reverse()
-                                : chapterData
-                            )
-                                .filter(
-                                    (e) =>
-                                        mangaInReader &&
+                            {sortedLocations
+                                .filter((e) => new RegExp(filter, "ig") && new RegExp(filter, "ig").test(e.name))
+                                .map(
+                                    (e, i, arr) =>
                                         new RegExp(filter, "ig") &&
-                                        new RegExp(filter, "ig").test(e.name)
-                                )
-                                .map((e, i, arr) => (
-                                    <ReaderSideListItem
-                                        name={e.name}
-                                        inHistory={[
-                                            historySimple[0],
-                                            historySimple[1].findIndex((a) => a === e.name),
-                                        ]}
-                                        focused={focused >= 0 && focused % arr.length === i}
-                                        key={e.name}
-                                        pages={e.pages}
-                                        current={mangaInReader?.link === e.link}
-                                        link={e.link}
-                                    />
-                                ))}
+                                        new RegExp(filter, "ig").test(e.name) && (
+                                            <ReaderSideListItem
+                                                name={e.name}
+                                                inHistory={[
+                                                    historySimple[0],
+                                                    historySimple[1].findIndex((a) => a === e.name),
+                                                ]}
+                                                focused={focused >= 0 && focused % arr.length === i}
+                                                key={e.name}
+                                                pages={e.pages}
+                                                current={mangaInReader?.link === e.link}
+                                                link={e.link}
+                                            />
+                                        )
+                                )}
                         </ol>
                     )}
                 </div>

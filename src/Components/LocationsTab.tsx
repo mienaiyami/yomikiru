@@ -155,15 +155,6 @@ const LocationsTab = (): ReactElement => {
             <h2>Location</h2>
             <div className="tools">
                 <div className="row1">
-                    {/* <button
-                        // tabIndex={-1}
-                        data-tooltip="Refresh"
-                        onClick={() => {
-                            displayList();
-                        }}
-                    >
-                        <FontAwesomeIcon icon={faSyncAlt} />
-                    </button> */}
                     <button
                         data-tooltip={
                             "Sort: " +
@@ -172,12 +163,6 @@ const LocationsTab = (): ReactElement => {
                         }
                         // tabIndex={-1}
                         onClick={(e) => {
-                            // dispatch(
-                            //     setAppSettings({
-                            //         locationListSortType:
-                            //             appSettings.locationListSortType === "inverse" ? "normal" : "inverse",
-                            //     })
-                            // );
                             const items: MenuListItem[] = [
                                 {
                                     label: "Name",
