@@ -23,6 +23,8 @@ import { setReaderSettings } from "../store/appSettings";
 import { setBookInReader } from "../store/bookInReader";
 import { setUnzipping } from "../store/unzipping";
 import { unzip } from "../MainImports";
+import ReaderSideList from "./ReaderSideList";
+import { setMangaInReader } from "../store/mangaInReader";
 
 // type ReaderImageSrc = string;
 // type ReaderHTML = Document;
@@ -94,7 +96,7 @@ const StyleSheets = memo(
     (prev, next) => prev.sheets.length === next.sheets.length && prev.sheets[0] === next.sheets[0]
 );
 
-function parseEPubHTMLX(filePath: string, parser: DOMParser) {
+function parseEPubXHTML(filePath: string, parser: DOMParser) {
     try {
         const txt = window.fs.readFileSync(decodeURIComponent(filePath), "utf-8");
         const xhtml = parser.parseFromString(txt, "application/xhtml+xml");
@@ -145,6 +147,79 @@ function parseEPubHTMLX(filePath: string, parser: DOMParser) {
         return doc;
     }
 }
+
+const HTMLSolo = memo(
+    ({
+        content,
+        url,
+        epubLinkClick,
+    }: {
+        content: Document;
+        url: string;
+        epubLinkClick: (ev: MouseEvent | React.MouseEvent<HTMLAnchorElement, MouseEvent>) => void;
+    }) => {
+        const { setContextMenuData } = useContext(AppContext);
+        // const [rendered, setRendered] = useState(false);;
+        return (
+            <div
+                className="cont htmlCont"
+                ref={(node) => {
+                    if (node && content) {
+                        const xhtml = content;
+                        // const url = e.url;
+                        // const id = e.id;
+                        while (node.hasChildNodes()) {
+                            node.removeChild(node.childNodes[0]);
+                        }
+                        // node.id = "epub-" + id;
+                        node.setAttribute("data-link-id", url);
+                        xhtml.body.childNodes.forEach((childNode) => {
+                            node.appendChild(childNode.cloneNode(true));
+                        });
+                        node.querySelectorAll("a").forEach((e) => {
+                            e.addEventListener("click", epubLinkClick);
+                        });
+                        node.querySelectorAll("img").forEach((e) => {
+                            e.oncontextmenu = (ev) => {
+                                ev.stopPropagation();
+                                const url = (ev.currentTarget as Element).getAttribute("src") || "";
+                                setContextMenuData({
+                                    clickX: ev.clientX,
+                                    clickY: ev.clientY,
+                                    items: [
+                                        window.contextMenu.template.copyImage(url),
+                                        window.contextMenu.template.showInExplorer(url),
+                                        window.contextMenu.template.copyPath(url),
+                                    ],
+                                });
+                            };
+                        });
+                        // if (!rendered && bookmarkedElem) {
+                        //     setTimeout(() => {
+                        //         const elem = node.querySelector(bookmarkedElem);
+                        //         if (elem) elem.scrollIntoView({ block: "start" });
+                        //     }, 200);
+                        // } else if (
+                        //     tocData &&
+                        //     tocData.nav[0].src !== currentChapterURL &&
+                        //     currentChapterURL.includes("#") &&
+                        //     currentChapterURL.includes(url)
+                        // ) {
+                        //     setTimeout(() => {
+                        //         const el = node.querySelector(
+                        //             `[data-id="${currentChapterURL.split("#")[1]}"]`
+                        //         );
+                        //         if (el) el.scrollIntoView({ block: "start" });
+                        //     }, 100);
+                        // }
+                        // setRendered(true);
+                    }
+                }}
+                // key={"key-" + i}
+            ></div>
+        );
+    }
+);
 
 const HTMLPart = memo(
     ({
@@ -220,7 +295,7 @@ const HTMLPart = memo(
                                 const id = e.id;
                                 if (!xhtml) {
                                     const parser = new DOMParser();
-                                    xhtml = parseEPubHTMLX(url, parser);
+                                    xhtml = parseEPubXHTML(url, parser);
                                 }
                                 // // ! temp, use memo or smoething
                                 while (node.hasChildNodes()) {
@@ -329,6 +404,8 @@ const EPubReader = () => {
     const [bookProgress, setBookProgress] = useState(0);
     // to auto scroll on opening bookmark
     const [bookmarkedElem, setBookmarkedElem] = useState("");
+
+    const [nonEPUBFile, setNonEPUBFile] = useState<null | Document>(null);
 
     const readerRef = useRef<HTMLDivElement>(null);
     const mainRef = useRef<HTMLSelectElement>(null);
@@ -478,216 +555,233 @@ const EPubReader = () => {
             );
 
         link = window.path.normalize(link);
-        setBookmarked(bookmarks.map((e) => e.data.link).includes(link));
         const linkSplitted = link.split(window.path.sep).filter((e) => e !== "");
-        // const extractPath = window.path.join(
-        //     window.electron.app.getPath("temp"),
-        //     `yomikiru-temp-EPub-${linkSplitted[linkSplitted.length - 1]}-${window.crypto.randomUUID()}`
-        // );
+        setBookmarked(bookmarks.map((e) => e.data.link).includes(link));
+        if ([".xhtml", ".html", ".txt"].includes(window.path.extname(link).toLowerCase())) {
+            const ext = window.path.extname(link).toLowerCase();
+            try {
+                let doc = null as null | Document;
+                const parser = new DOMParser();
+                if (ext === ".xhtml" || ext === "html") {
+                    doc = parseEPubXHTML(link, parser);
+                } else if (ext === ".txt") {
+                    const raw = window.fs.readFileSync(link, "utf-8");
+                    if (!raw) throw Error();
+                    const paras = raw.split("\r\n");
+                    const html = `
+                    <!DOCTYPE html>
+                    <html>
+                    <head>
+                    <title></title>
+                    </head>
+                    <body>
+                    ${paras.map((e) => `<p>${e}</p>`).join("")}
+                    </body>
+                    </html>
+                    `;
+                    doc = parser.parseFromString(html, "text/html");
+                }
+                if (doc) {
+                    setNonEPUBFile(doc);
+                    dispatch(
+                        setMangaInReader({
+                            chapterName: linkSplitted.at(-1) || "~",
+                            link,
+                            pages: 0,
+                            mangaName: linkSplitted.at(-2) || "~",
+                        })
+                    );
+                    dispatch(setReaderOpen(true));
+                }
+            } catch (reason) {
+                console.error(reason);
+                window.dialog.customError({
+                    message: "Error while reading file.",
+                });
+            }
+            dispatch(setUnzipping(false));
+            return;
+        }
         const extractPath = window.path.join(
             window.electron.app.getPath("temp"),
             `yomikiru-temp-EPub-${linkSplitted.at(-1)}`
         );
         const afterUnzip = (e: any) => {
-            if (e) {
-                console.log("done extracting epub file.");
-                console.timeLog("unzipping");
-                const parser = new DOMParser();
-                const META_INF_TEXT = window.fs.readFileSync(
-                    window.path.join(extractPath, "META-INF/container.xml"),
-                    "utf-8"
-                );
-                const META_INF = parser.parseFromString(META_INF_TEXT, "text/xml");
-                const CONTENT_PATH = window.path.join(
-                    extractPath,
-                    META_INF.querySelector("rootfile")?.getAttribute("full-path") || ""
-                );
-                if (
-                    CONTENT_PATH &&
-                    window.fs.existsSync(CONTENT_PATH) &&
-                    !window.fs.lstatSync(CONTENT_PATH).isDirectory()
-                ) {
-                    const CONTENT_OPF_TEXT = window.fs.readFileSync(CONTENT_PATH, "utf-8");
-                    const CONTENT_OPF = parser.parseFromString(CONTENT_OPF_TEXT, "text/xml");
-                    const manifestData = CONTENT_OPF.querySelectorAll("manifest > item");
-                    if (manifestData.length > 0) {
-                        const tempDisplayData: DisplayData[] = [];
-                        const tempStylesheets: string[] = [];
-                        // console.log(CONTENT_OPF);
-                        const authorName = CONTENT_OPF.getElementsByTagName("dc:creator")[0]?.textContent || "~";
-                        const bookName = CONTENT_OPF.getElementsByTagName("dc:title")[0]?.textContent || "~";
-                        // const authorName = CONTENT_OPF.querySelector("dc:creator")?.textContent || "~";
-                        // const bookName = CONTENT_OPF.querySelector("dc:title")?.textContent || "~";
-                        manifestData.forEach((manifest) => {
-                            const mediaType = manifest.getAttribute("media-type");
-                            if (mediaType === "application/xhtml+xml") {
-                                const href = manifest.getAttribute("href");
-                                if (href) {
-                                    const filePath = window.path.join(window.path.dirname(CONTENT_PATH), href);
-                                    if (!appSettings.epubReaderSettings.loadOneChapter) {
-                                        const xhtml = parseEPubHTMLX(filePath, parser);
-                                        tempDisplayData.push({
-                                            // type: "html",
-                                            content: xhtml,
-                                            id: manifest.getAttribute("id") || "",
-                                            url: filePath,
-                                        });
-                                    } else
-                                        tempDisplayData.push({
-                                            id: manifest.getAttribute("id") || "",
-                                            url: filePath,
-                                        });
-                                }
-                            }
-                            // if (mediaType?.startsWith("image/")) {
-                            //     const href = window.path.join(
-                            //         window.path.dirname(CONTENT_PATH),
-                            //         e.getAttribute("href") || ""
-                            //     );
-                            //     if (href) {
-                            //         // const filePath = window.path.join(window.path.dirname(CONTENT_PATH), href);
-                            //         tempDisplayData.push({
-                            //             type: "image",
-                            //             content: href,
-                            //             id: e.getAttribute("id") || "",
-                            //             url: href,
-                            //         });
-                            //     }
-                            // }
-                            if (mediaType === "text/css") {
-                                const href_old = manifest.getAttribute("href");
-                                if (href_old) {
-                                    const href = window.path.join(window.path.dirname(CONTENT_PATH), href_old);
-                                    tempStylesheets.push(href);
-                                }
-                            }
-                            //toc data
-                            if (mediaType === "application/x-dtbncx+xml") {
-                                const href = window.path.join(
-                                    window.path.dirname(CONTENT_PATH),
-                                    manifest.getAttribute("href") || ""
-                                );
-                                if (href) {
-                                    window.fs.readFile(href, "utf8", (err, data) => {
-                                        if (err) return console.error(err);
-                                        const tocXML = parser.parseFromString(data, "application/xml");
-                                        const depth_original = parseInt(
-                                            tocXML
-                                                .querySelector('meta[name="dtb:depth"]')
-                                                ?.getAttribute("content") || "1"
-                                        );
-                                        const tempTOCData: TOCData = {
-                                            title: bookName,
-                                            // title: tocXML.querySelector("docTitle text")?.textContent || "~",
-                                            author: authorName,
-                                            // author: tocXML.querySelector("docAuthor text")?.textContent || "~",
-                                            depth: depth_original,
-                                            nav: [],
-                                        };
-
-                                        /**idk y some epub had depth=2 but only had one navPoint, so making this */
-                                        let changedDepth = false;
-                                        /** some have useless depth making errors later  */
-                                        let depth_real = depth_original;
-                                        const getData = (selector: string, depth: number) => {
-                                            const elems = tocXML.querySelectorAll(selector);
-                                            if (elems.length <= 0) return;
-                                            if (depth < depth_real) {
-                                                changedDepth = true;
-                                                depth_real = depth;
-                                            }
-                                            elems.forEach((e, i) => {
-                                                tempTOCData.nav.push({
-                                                    name: e.querySelector("navLabel text")?.textContent || "~",
-                                                    src: window.path.join(
-                                                        window.path.dirname(href),
-                                                        // dunno why but some toc.ncx have src like "Text/Text/0202_Chapter_202_-_Seems_Like_Never_Coming_Back.xhtml"
-                                                        e
-                                                            .querySelector("content")
-                                                            ?.getAttribute("src")
-                                                            ?.replace("Text/Text/", "Text/") || ""
-                                                    ),
-                                                    depth: depth,
-                                                });
-                                                if (depth > 1) {
-                                                    getData(
-                                                        selector + `:nth-of-type(${i + 1}) > navPoint`,
-                                                        depth - 1
-                                                    );
-                                                }
-                                            });
-                                        };
-                                        getData("navMap > navPoint", depth_original);
-                                        // console.log(depth_real, depth_original, depth_original - depth_real + 1);
-                                        // if (!changedDepth)
-                                        tempTOCData.depth = depth_original - depth_real + 1;
-                                        tempTOCData.nav = tempTOCData.nav.map((e) => {
-                                            return { ...e, depth: e.depth - depth_real + 1 };
-                                        });
-                                        // // first with lowest depth
-                                        // setCurrentChapterURL(tempTOCData.nav.find((e) => e.depth === 1)!.src);
-                                        let currentChapterURL =
-                                            tempTOCData.nav.find((e) => e.name === linkInReader.chapter)?.src ||
-                                            "";
-                                        if (linkInReader.queryStr) setBookmarkedElem(linkInReader.queryStr);
-                                        if (!currentChapterURL) currentChapterURL = tempTOCData.nav[0].src;
-                                        const bookOpened: BookItem = {
-                                            author: tempTOCData.author,
-                                            link,
-                                            title: tempTOCData.title,
-                                            date: new Date().toLocaleString("en-UK", { hour12: true }),
-                                            chapter:
-                                                tempTOCData.nav.find((e) => e.src.includes(currentChapterURL))
-                                                    ?.name ?? tempTOCData.nav[0].name,
-                                        };
-                                        dispatch(setBookInReader(bookOpened));
-                                        dispatch(
-                                            newHistory({
-                                                type: "book",
-                                                data: {
-                                                    bookOpened,
-                                                    elementQueryString: elemBeforeChange || "",
-                                                },
-                                            })
-                                        );
-                                        settocData(tempTOCData);
-                                        setCurrentChapterURL(currentChapterURL);
-                                    });
-                                }
-                            }
-                        });
-                        const spineData = CONTENT_OPF.querySelectorAll("spine > itemref");
-                        if (spineData.length > 0) {
-                            const tempIDREf: string[] = [];
-                            spineData.forEach((e, i) => {
-                                tempIDREf.push(e.getAttribute("idref") || "no-idref-found-" + i);
-                            });
-                            if (tempIDREf.length > 200 && !appSettings.epubReaderSettings.loadOneChapter)
-                                window.dialog.warn({
-                                    message: "Too many chapters detected",
-                                    noOption: true,
-                                    detail: "It might cause instability and high RAM usage. It is recommended to enable option to load and show only chapter at a time from Settings → Other Settings.",
+            if (!e) {
+                return;
+            }
+            // console.log("Done extracting epub file.");
+            // console.timeLog("unzipping");
+            const parser = new DOMParser();
+            const META_INF_TEXT = window.fs.readFileSync(
+                window.path.join(extractPath, "META-INF/container.xml"),
+                "utf-8"
+            );
+            const META_INF = parser.parseFromString(META_INF_TEXT, "text/xml");
+            const CONTENT_PATH = window.path.join(
+                extractPath,
+                META_INF.querySelector("rootfile")?.getAttribute("full-path") || ""
+            );
+            if (
+                CONTENT_PATH &&
+                window.fs.existsSync(CONTENT_PATH) &&
+                !window.fs.lstatSync(CONTENT_PATH).isDirectory()
+            ) {
+                const CONTENT_OPF_TEXT = window.fs.readFileSync(CONTENT_PATH, "utf-8");
+                const CONTENT_OPF = parser.parseFromString(CONTENT_OPF_TEXT, "text/xml");
+                const manifestData = CONTENT_OPF.querySelectorAll("manifest > item");
+                if (manifestData.length <= 0) {
+                    return;
+                }
+                const tempDisplayData: DisplayData[] = [];
+                const tempStylesheets: string[] = [];
+                const authorName = CONTENT_OPF.getElementsByTagName("dc:creator")[0]?.textContent || "~";
+                const bookName = CONTENT_OPF.getElementsByTagName("dc:title")[0]?.textContent || "~";
+                manifestData.forEach((manifest) => {
+                    const mediaType = manifest.getAttribute("media-type");
+                    if (mediaType === "application/xhtml+xml") {
+                        const href = manifest.getAttribute("href");
+                        if (href) {
+                            const filePath = window.path.join(window.path.dirname(CONTENT_PATH), href);
+                            if (!appSettings.epubReaderSettings.loadOneChapter) {
+                                const xhtml = parseEPubXHTML(filePath, parser);
+                                tempDisplayData.push({
+                                    content: xhtml,
+                                    id: manifest.getAttribute("id") || "",
+                                    url: filePath,
                                 });
-                            setDisplayData(tempDisplayData);
-                            setEpubStylesheets(tempStylesheets);
-                            setDisplayOrder(tempIDREf);
-
-                            dispatch(setUnzipping(false));
-
-                            // dispatch(setLoadingMangaPercent(100));
-                            // dispatch(setLoadingManga(false));
-
-                            dispatch(setReaderOpen(true));
-                            console.timeEnd("unzipping");
+                            } else
+                                tempDisplayData.push({
+                                    id: manifest.getAttribute("id") || "",
+                                    url: filePath,
+                                });
                         }
                     }
+                    if (mediaType === "text/css") {
+                        const href_old = manifest.getAttribute("href");
+                        if (href_old) {
+                            const href = window.path.join(window.path.dirname(CONTENT_PATH), href_old);
+                            tempStylesheets.push(href);
+                        }
+                    }
+                    //toc data
+                    if (mediaType === "application/x-dtbncx+xml") {
+                        const href = window.path.join(
+                            window.path.dirname(CONTENT_PATH),
+                            manifest.getAttribute("href") || ""
+                        );
+                        if (href) {
+                            window.fs.readFile(href, "utf8", (err, data) => {
+                                if (err) return console.error(err);
+                                const tocXML = parser.parseFromString(data, "application/xml");
+                                const depth_original = parseInt(
+                                    tocXML.querySelector('meta[name="dtb:depth"]')?.getAttribute("content") || "1"
+                                );
+                                const tempTOCData: TOCData = {
+                                    title: bookName,
+                                    // title: tocXML.querySelector("docTitle text")?.textContent || "~",
+                                    author: authorName,
+                                    // author: tocXML.querySelector("docAuthor text")?.textContent || "~",
+                                    depth: depth_original,
+                                    nav: [],
+                                };
+
+                                /**idk y some epub had depth=2 but only had one navPoint, so making this */
+                                let changedDepth = false;
+                                /** some have useless depth making errors later  */
+                                let depth_real = depth_original;
+                                const getData = (selector: string, depth: number) => {
+                                    const elems = tocXML.querySelectorAll(selector);
+                                    if (elems.length <= 0) return;
+                                    if (depth < depth_real) {
+                                        changedDepth = true;
+                                        depth_real = depth;
+                                    }
+                                    elems.forEach((e, i) => {
+                                        tempTOCData.nav.push({
+                                            name: e.querySelector("navLabel text")?.textContent || "~",
+                                            src: window.path.join(
+                                                window.path.dirname(href),
+                                                // dunno why but some toc.ncx have src like "Text/Text/0202_Chapter_202_-_Seems_Like_Never_Coming_Back.xhtml"
+                                                e
+                                                    .querySelector("content")
+                                                    ?.getAttribute("src")
+                                                    ?.replace("Text/Text/", "Text/") || ""
+                                            ),
+                                            depth: depth,
+                                        });
+                                        if (depth > 1) {
+                                            getData(selector + `:nth-of-type(${i + 1}) > navPoint`, depth - 1);
+                                        }
+                                    });
+                                };
+                                getData("navMap > navPoint", depth_original);
+                                // console.log(depth_real, depth_original, depth_original - depth_real + 1);
+                                // if (!changedDepth)
+                                tempTOCData.depth = depth_original - depth_real + 1;
+                                tempTOCData.nav = tempTOCData.nav.map((e) => {
+                                    return { ...e, depth: e.depth - depth_real + 1 };
+                                });
+                                // // first with lowest depth
+                                // setCurrentChapterURL(tempTOCData.nav.find((e) => e.depth === 1)!.src);
+                                let currentChapterURL =
+                                    tempTOCData.nav.find((e) => e.name === linkInReader.chapter)?.src || "";
+                                if (linkInReader.queryStr) setBookmarkedElem(linkInReader.queryStr);
+                                if (!currentChapterURL) currentChapterURL = tempTOCData.nav[0].src;
+                                const bookOpened: BookItem = {
+                                    author: tempTOCData.author,
+                                    link,
+                                    title: tempTOCData.title,
+                                    date: new Date().toLocaleString("en-UK", { hour12: true }),
+                                    chapter:
+                                        tempTOCData.nav.find((e) => e.src.includes(currentChapterURL))?.name ??
+                                        tempTOCData.nav[0].name,
+                                };
+                                dispatch(setBookInReader(bookOpened));
+                                dispatch(
+                                    newHistory({
+                                        type: "book",
+                                        data: {
+                                            bookOpened,
+                                            elementQueryString: elemBeforeChange || "",
+                                        },
+                                    })
+                                );
+                                settocData(tempTOCData);
+                                setCurrentChapterURL(currentChapterURL);
+                            });
+                        }
+                    }
+                });
+                const spineData = CONTENT_OPF.querySelectorAll("spine > itemref");
+                if (spineData.length > 0) {
+                    const tempIDREf: string[] = [];
+                    spineData.forEach((e, i) => {
+                        tempIDREf.push(e.getAttribute("idref") || "no-idref-found-" + i);
+                    });
+                    if (tempIDREf.length > 200 && !appSettings.epubReaderSettings.loadOneChapter)
+                        window.dialog.warn({
+                            message: "Too many chapters detected",
+                            noOption: true,
+                            detail: "It might cause instability and high RAM usage. It is recommended to enable option to load and show only chapter at a time from Settings → Other Settings.",
+                        });
+                    setDisplayData(tempDisplayData);
+                    setEpubStylesheets(tempStylesheets);
+                    setDisplayOrder(tempIDREf);
+
+                    dispatch(setUnzipping(false));
+
+                    // dispatch(setLoadingMangaPercent(100));
+                    // dispatch(setLoadingManga(false));
+
+                    dispatch(setReaderOpen(true));
                 }
             }
         };
         // window.app.deleteDirOnClose = extractPath;
         console.log("extracting ", link, " at ", extractPath);
-        console.time("unzipping");
-        console.timeLog("unzipping");
+        // console.time("unzipping");
+        // console.timeLog("unzipping");
         try {
             if (
                 appSettings.keepExtractedFiles &&
@@ -697,16 +791,12 @@ const EPubReader = () => {
                 console.log("Found old epub extract.");
                 afterUnzip({ status: "ok" });
             } else {
-                // window.electron.ipcRenderer.invoke("unzip",{link,extractPath}).then()
                 if (!appSettings.keepExtractedFiles) window.app.deleteDirOnClose = extractPath;
                 unzip(link, extractPath)
                     .then(afterUnzip)
                     .catch((err) => {
                         if (err) {
                             dispatch(setUnzipping(false));
-                            // dispatch(setLoadingManga(false));
-                            // dispatch(setLoadingMangaPercent(0));
-                            // dispatch(setUnzipping(false));
                             if (err.message.includes("spawn unzip ENOENT"))
                                 return window.dialog.customError({
                                     message: "Error while extracting.",
@@ -722,6 +812,11 @@ const EPubReader = () => {
             }
         } catch (err) {
             window.logger.error("An Error occurred while checking/extracting epub:", err);
+            window.dialog.customError({
+                message: "An Error occurred while checking/extracting epub.",
+                detail: err as any,
+                log: false,
+            });
         }
     };
 
@@ -1040,7 +1135,8 @@ const EPubReader = () => {
             className={
                 (isSideListPinned ? "sideListPinned " : "") +
                 "reader " +
-                (zenMode && appSettings.hideCursorInZenMode ? "noCursor " : "")
+                (zenMode && appSettings.hideCursorInZenMode ? "noCursor " : "") +
+                (nonEPUBFile ? "fake " : "")
             }
             style={{
                 gridTemplateColumns: sideListWidth + "px auto",
@@ -1079,6 +1175,20 @@ const EPubReader = () => {
                     makeScrollPos={makeScrollPos}
                     findInPage={findInPage}
                     zenMode={zenMode}
+                />
+            )}
+            {nonEPUBFile && (
+                <ReaderSideList
+                    addToBookmarkRef={addToBookmarkRef}
+                    isBookmarked={isBookmarked}
+                    setBookmarked={setBookmarked}
+                    isSideListPinned={isSideListPinned}
+                    setSideListPinned={setSideListPinned}
+                    setSideListWidth={setSideListWidth}
+                    makeScrollPos={makeScrollPos}
+                    openNextChapterRef={openNextChapterRef}
+                    openPrevChapterRef={openPrevChapterRef}
+                    setshortcutText={setshortcutText}
                 />
             )}
             {appSettings.epubReaderSettings.showProgressInZenMode && (
@@ -1201,15 +1311,19 @@ const EPubReader = () => {
                 }}
             >
                 <StyleSheets sheets={epubStylesheets} />
-                <HTMLPart
-                    loadOneChapter={appSettings.epubReaderSettings.loadOneChapter}
-                    currentChapterURL={currentChapterURL}
-                    displayOrder={displayOrder}
-                    displayData={displayData}
-                    epubLinkClick={epubLinkClick}
-                    tocData={tocData || null}
-                    bookmarkedElem={bookmarkedElem}
-                />
+                {nonEPUBFile ? (
+                    <HTMLSolo content={nonEPUBFile} epubLinkClick={epubLinkClick} url={linkInReader.link} />
+                ) : (
+                    <HTMLPart
+                        loadOneChapter={appSettings.epubReaderSettings.loadOneChapter}
+                        currentChapterURL={currentChapterURL}
+                        displayOrder={displayOrder}
+                        displayData={displayData}
+                        epubLinkClick={epubLinkClick}
+                        tocData={tocData || null}
+                        bookmarkedElem={bookmarkedElem}
+                    />
+                )}
             </section>
         </div>
     );

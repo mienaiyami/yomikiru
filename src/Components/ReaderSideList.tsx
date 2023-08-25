@@ -45,7 +45,7 @@ const ReaderSideList = memo(
         setSideListWidth: React.Dispatch<React.SetStateAction<number>>;
         makeScrollPos: () => void;
     }) => {
-        const { contextMenuData } = useContext(AppContext);
+        const { contextMenuData, openInReader } = useContext(AppContext);
 
         const mangaInReader = useAppSelector((store) => store.mangaInReader);
         const history = useAppSelector((store) => store.history);
@@ -170,7 +170,7 @@ const ReaderSideList = memo(
                                         }
                                     });
                             } else if (
-                                [".zip", ".cbz", ".rar", ".7z", ".pdf"].includes(
+                                [".zip", ".cbz", ".rar", ".7z", ".pdf", ".xhtml", ".html", ".txt"].includes(
                                     window.path.extname(path).toLowerCase()
                                 )
                             ) {
@@ -244,6 +244,21 @@ const ReaderSideList = memo(
                 window.removeEventListener("mouseup", handleResizerMouseUp);
             };
         }, [draggingResizer]);
+
+        const temp_prevNextOpener = (link: string) => {
+            if ([".xhtml", ".html", ".txt"].includes(window.path.extname(link).toLowerCase()))
+                return openInReader(link);
+            // todo : do i need this?
+            dispatch(
+                setLinkInReader({
+                    type: "image",
+                    link,
+                    page: 1,
+                    chapter: "",
+                })
+            );
+        };
+
         return (
             <div
                 className={`readerSideList listCont ${isListOpen ? "open" : ""}`}
@@ -412,17 +427,7 @@ const ReaderSideList = memo(
                             tooltip="Open Previous"
                             disabled={prevNextChapter.prev === "~"}
                             clickAction={() => {
-                                // todo: removing updateHistory page on chapter change in same manga
-                                // dispatch(updateLastHistoryPage({ linkInReader: linkInReader.link }));
-                                // todo : do i need this?
-                                dispatch(
-                                    setLinkInReader({
-                                        type: "image",
-                                        link: prevNextChapter.prev,
-                                        page: 1,
-                                        chapter: "",
-                                    })
-                                );
+                                temp_prevNextOpener(prevNextChapter.prev);
                             }}
                         >
                             <FontAwesomeIcon icon={faArrowLeft} />
@@ -481,15 +486,7 @@ const ReaderSideList = memo(
                             tooltip="Open Next"
                             disabled={prevNextChapter.next === "~"}
                             clickAction={() => {
-                                // dispatch(updateLastHistoryPage({ linkInReader: linkInReader.link }));
-                                dispatch(
-                                    setLinkInReader({
-                                        type: "image",
-                                        link: prevNextChapter.next,
-                                        page: 1,
-                                        chapter: "",
-                                    })
-                                );
+                                temp_prevNextOpener(prevNextChapter.next);
                             }}
                         >
                             <FontAwesomeIcon icon={faArrowRight} />

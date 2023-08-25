@@ -2900,36 +2900,38 @@ body {
             }
         }
         #EPubReader {
-            .readerSideList {
-                .location-cont {
-                    li {
-                        --depth: 0;
-                        font-size: calc(1rem + calc(calc(var(--depth) / 3) * 1em));
-                        a {
-                            grid-template-columns: auto;
+            &:not(.fake) {
+                .readerSideList {
+                    .location-cont {
+                        li {
+                            --depth: 0;
+                            font-size: calc(1rem + calc(calc(var(--depth) / 3) * 1em));
+                            a {
+                                grid-template-columns: auto;
 
-                            &::before {
-                                display: none;
-                            }
-                        }
-                        &.collapsed {
-                            display: none;
-                        }
-                        &.collapse {
-                            &::before {
-                                content: "▼";
-                                display: inline-block;
-                                transform: rotate(0);
-                                height: 100%;
-                                aspect-ratio: 1;
-                                margin-top: 0.2em;
+                                &::before {
+                                    display: none;
+                                }
                             }
                             &.collapsed {
-                                display: flex;
-                                align-items: center;
+                                display: none;
+                            }
+                            &.collapse {
                                 &::before {
-                                    transform: rotate(-90deg);
-                                    margin-top: 0;
+                                    content: "▼";
+                                    display: inline-block;
+                                    transform: rotate(0);
+                                    height: 100%;
+                                    aspect-ratio: 1;
+                                    margin-top: 0.2em;
+                                }
+                                &.collapsed {
+                                    display: flex;
+                                    align-items: center;
+                                    &::before {
+                                        transform: rotate(-90deg);
+                                        margin-top: 0;
+                                    }
                                 }
                             }
                         }
