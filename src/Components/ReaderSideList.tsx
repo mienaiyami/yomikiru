@@ -45,10 +45,9 @@ const ReaderSideList = memo(
         setSideListWidth: React.Dispatch<React.SetStateAction<number>>;
         makeScrollPos: () => void;
     }) => {
-        const { contextMenuData } = useContext(AppContext);
+        const { contextMenuData, openInReader } = useContext(AppContext);
 
         const mangaInReader = useAppSelector((store) => store.mangaInReader);
-        const bookInReader = useAppSelector((store) => store.bookInReader);
         const history = useAppSelector((store) => store.history);
         const appSettings = useAppSelector((store) => store.appSettings);
         const prevNextChapter = useAppSelector((store) => store.prevNextChapter);
@@ -108,13 +107,6 @@ const ReaderSideList = memo(
                 const prevCh = prevIndex < 0 ? "~" : chapterData[prevIndex].link;
                 const nextCh = nextIndex >= chapterData.length ? "~" : chapterData[nextIndex].link;
                 dispatch(setPrevNextChapter({ prev: prevCh, next: nextCh }));
-            } else if (bookInReader) {
-                const listDataName = chapterData.map((e) => e.link);
-                const prevIndex = listDataName.indexOf(bookInReader.link) - 1;
-                const nextIndex = listDataName.indexOf(bookInReader.link) + 1;
-                const prevCh = prevIndex < 0 ? "~" : chapterData[prevIndex].link;
-                const nextCh = nextIndex >= chapterData.length ? "~" : chapterData[nextIndex].link;
-                dispatch(setPrevNextChapter({ prev: prevCh, next: nextCh }));
             }
         };
         useEffect(() => {
@@ -128,79 +120,6 @@ const ReaderSideList = memo(
             // setFocused(-1);
             if (mangaInReader) {
                 const dir = mangaInReader.link.replace(mangaInReader.chapterName, "");
-                window.fs.readdir(dir, (err, files) => {
-                    if (err) {
-                        window.logger.error(err);
-                        window.dialog.nodeError(err);
-                        return;
-                    }
-                    const listData: ChapterData[] = [];
-                    let validFile = 0;
-                    let responseCompleted = 0;
-                    files.forEach((e) => {
-                        const path = window.path.join(dir, e);
-                        let aa = true;
-                        try {
-                            window.fs.lstatSync(path);
-                        } catch (err) {
-                            aa = false;
-                        }
-                        if (aa && window.path.extname(e).toLowerCase() !== ".sys")
-                            if (window.fs.lstatSync(path).isDirectory()) {
-                                validFile++;
-                                window.fs.promises
-                                    .readdir(path)
-                                    .then((data) => {
-                                        responseCompleted++;
-                                        data = data.filter((e) =>
-                                            window.supportedFormats.includes(window.path.extname(e).toLowerCase())
-                                        );
-                                        if (data.length > 0) {
-                                            listData.push({
-                                                name: window.app.replaceExtension(e),
-                                                pages: data.length,
-                                                link: path,
-                                            });
-                                        }
-                                        if (responseCompleted >= validFile) {
-                                            setChapterData(
-                                                listData.sort((a, b) => window.app.betterSortOrder(a.name, b.name))
-                                            );
-                                        }
-                                    })
-                                    .catch((err) => {
-                                        window.logger.error(err);
-                                        responseCompleted++;
-                                        if (responseCompleted >= validFile) {
-                                            setChapterData(
-                                                listData.sort((a, b) => window.app.betterSortOrder(a.name, b.name))
-                                            );
-                                        }
-                                    });
-                            } else if (
-                                [".zip", ".cbz", ".rar", ".7z", ".pdf", ".xhtml", ".html", ".txt"].includes(
-                                    window.path.extname(path).toLowerCase()
-                                )
-                            ) {
-                                validFile++;
-                                setTimeout(() => {
-                                    responseCompleted++;
-                                    listData.push({
-                                        name: window.app.replaceExtension(e),
-                                        pages: 0,
-                                        link: path,
-                                    });
-                                    if (responseCompleted >= validFile) {
-                                        setChapterData(
-                                            listData.sort((a, b) => window.app.betterSortOrder(a.name, b.name))
-                                        );
-                                    }
-                                }, 1000);
-                            }
-                    });
-                });
-            } else if (bookInReader) {
-                const dir = window.path.dirname(bookInReader.link);
                 window.fs.readdir(dir, (err, files) => {
                     if (err) {
                         window.logger.error(err);
@@ -295,7 +214,7 @@ const ReaderSideList = memo(
                     watcher.removeAllListeners("all");
                 };
             }
-        }, [mangaInReader, bookInReader]);
+        }, [mangaInReader]);
         const handleResizerDrag = (e: MouseEvent) => {
             if (draggingResizer) {
                 if (isSideListPinned) {
@@ -325,6 +244,21 @@ const ReaderSideList = memo(
                 window.removeEventListener("mouseup", handleResizerMouseUp);
             };
         }, [draggingResizer]);
+
+        const temp_prevNextOpener = (link: string) => {
+            if ([".xhtml", ".html", ".txt"].includes(window.path.extname(link).toLowerCase()))
+                return openInReader(link);
+            // todo : do i need this?
+            dispatch(
+                setLinkInReader({
+                    type: "image",
+                    link,
+                    page: 1,
+                    chapter: "",
+                })
+            );
+        };
+
         return (
             <div
                 className={`readerSideList listCont ${isListOpen ? "open" : ""}`}
@@ -493,17 +427,7 @@ const ReaderSideList = memo(
                             tooltip="Open Previous"
                             disabled={prevNextChapter.prev === "~"}
                             clickAction={() => {
-                                // todo: removing updateHistory page on chapter change in same manga
-                                // dispatch(updateLastHistoryPage({ linkInReader: linkInReader.link }));
-                                // todo : do i need this?
-                                dispatch(
-                                    setLinkInReader({
-                                        type: "image",
-                                        link: prevNextChapter.prev,
-                                        page: 1,
-                                        chapter: "",
-                                    })
-                                );
+                                temp_prevNextOpener(prevNextChapter.prev);
                             }}
                         >
                             <FontAwesomeIcon icon={faArrowLeft} />
@@ -562,15 +486,7 @@ const ReaderSideList = memo(
                             tooltip="Open Next"
                             disabled={prevNextChapter.next === "~"}
                             clickAction={() => {
-                                // dispatch(updateLastHistoryPage({ linkInReader: linkInReader.link }));
-                                dispatch(
-                                    setLinkInReader({
-                                        type: "image",
-                                        link: prevNextChapter.next,
-                                        page: 1,
-                                        chapter: "",
-                                    })
-                                );
+                                temp_prevNextOpener(prevNextChapter.next);
                             }}
                         >
                             <FontAwesomeIcon icon={faArrowRight} />
@@ -601,7 +517,7 @@ const ReaderSideList = memo(
                             )
                                 .filter(
                                     (e) =>
-                                        (mangaInReader || bookInReader) &&
+                                        mangaInReader &&
                                         new RegExp(filter, "ig") &&
                                         new RegExp(filter, "ig").test(e.name)
                                 )
@@ -615,7 +531,7 @@ const ReaderSideList = memo(
                                         focused={focused >= 0 && focused % arr.length === i}
                                         key={e.name}
                                         pages={e.pages}
-                                        current={(mangaInReader || bookInReader)?.link === e.link}
+                                        current={mangaInReader?.link === e.link}
                                         link={e.link}
                                     />
                                 ))}

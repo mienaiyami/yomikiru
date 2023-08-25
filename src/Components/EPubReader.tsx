@@ -24,6 +24,7 @@ import { setBookInReader } from "../store/bookInReader";
 import { setUnzipping } from "../store/unzipping";
 import { unzip } from "../MainImports";
 import ReaderSideList from "./ReaderSideList";
+import { setMangaInReader } from "../store/mangaInReader";
 
 // type ReaderImageSrc = string;
 // type ReaderHTML = Document;
@@ -583,11 +584,11 @@ const EPubReader = () => {
                 if (doc) {
                     setNonEPUBFile(doc);
                     dispatch(
-                        setBookInReader({
-                            author: "~",
+                        setMangaInReader({
+                            chapterName: linkSplitted.at(-1) || "~",
                             link,
-                            title: linkSplitted.at(-2) || "Error",
-                            chapter: linkSplitted.at(-1) || "Error",
+                            pages: 0,
+                            mangaName: linkSplitted.at(-2) || "~",
                         })
                     );
                     dispatch(setReaderOpen(true));
@@ -1134,7 +1135,8 @@ const EPubReader = () => {
             className={
                 (isSideListPinned ? "sideListPinned " : "") +
                 "reader " +
-                (zenMode && appSettings.hideCursorInZenMode ? "noCursor " : "")
+                (zenMode && appSettings.hideCursorInZenMode ? "noCursor " : "") +
+                (nonEPUBFile ? "fake " : "")
             }
             style={{
                 gridTemplateColumns: sideListWidth + "px auto",
