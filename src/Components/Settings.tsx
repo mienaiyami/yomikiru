@@ -1831,6 +1831,36 @@ const Settings = (): ReactElement => {
                                         </td>
                                     </tr>
                                     <tr>
+                                        <td>Reader Size : 50%</td>
+                                        <td>
+                                            <code>ctrl</code>+<code>1</code>
+                                        </td>
+                                    </tr>
+                                    <tr>
+                                        <td>Reader Size : 100%</td>
+                                        <td>
+                                            <code>ctrl</code>+<code>2</code>
+                                        </td>
+                                    </tr>
+                                    <tr>
+                                        <td>Reader Size : 150%</td>
+                                        <td>
+                                            <code>ctrl</code>+<code>3</code>
+                                        </td>
+                                    </tr>
+                                    <tr>
+                                        <td>Reader Size : 200%</td>
+                                        <td>
+                                            <code>ctrl</code>+<code>4</code>
+                                        </td>
+                                    </tr>
+                                    <tr>
+                                        <td>Reader Size : 250%</td>
+                                        <td>
+                                            <code>ctrl</code>+<code>5</code>
+                                        </td>
+                                    </tr>
+                                    <tr>
                                         <td>Settings</td>
                                         <td>
                                             <code>ctrl</code>+<code>i</code>

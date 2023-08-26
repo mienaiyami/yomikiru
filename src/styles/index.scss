@@ -2713,21 +2713,30 @@ body {
                     min-height: 100%;
                 }
 
-                &.fitVertically .row .readerImg {
-                    width: auto !important;
-                    height: var(--body-height);
-                }
-                &.fitHorizontally .row .readerImg {
+                &.fitVertically .row {
                     width: 100%;
-                    height: auto !important;
+                    .readerImg {
+                        width: auto !important;
+                        height: var(--body-height);
+                    }
+                }
+                &.fitHorizontally .row {
+                    width: 100%;
+                    .readerImg {
+                        width: 100%;
+                        height: auto !important;
+                    }
                 }
                 &.fitHorizontally .row.twoPagePerRow .readerImg {
                     width: 50% !important;
                     height: auto !important;
                 }
-                &.original .row .readerImg {
-                    width: auto !important;
-                    height: auto !important;
+                &.original .row {
+                    width: 100%;
+                    .readerImg {
+                        width: auto !important;
+                        height: auto !important;
+                    }
                 }
 
                 &.gap {

@@ -228,6 +228,34 @@ const Reader = () => {
                     );
                 return;
             }
+            if (e.ctrlKey) {
+                if (e.key === "1") {
+                    dispatch(setReaderSettings({ fitOption: 0 }));
+                    setshortcutText(50 + "%");
+                    dispatch(setReaderSettings({ readerWidth: 50 }));
+                    return;
+                } else if (e.key === "2") {
+                    dispatch(setReaderSettings({ fitOption: 0 }));
+                    setshortcutText(100 + "%");
+                    dispatch(setReaderSettings({ readerWidth: 100 }));
+                    return;
+                } else if (e.key === "3") {
+                    dispatch(setReaderSettings({ widthClamped: false, fitOption: 0 }));
+                    setshortcutText(150 + "%");
+                    dispatch(setReaderSettings({ readerWidth: 150 }));
+                    return;
+                } else if (e.key === "4") {
+                    dispatch(setReaderSettings({ widthClamped: false, fitOption: 0 }));
+                    setshortcutText(200 + "%");
+                    dispatch(setReaderSettings({ readerWidth: 200 }));
+                    return;
+                } else if (e.key === "5") {
+                    dispatch(setReaderSettings({ widthClamped: false, fitOption: 0 }));
+                    setshortcutText(250 + "%");
+                    dispatch(setReaderSettings({ readerWidth: 250 }));
+                    return;
+                }
+            }
             if (!isSettingOpen && window.app.isReaderOpen && !isLoadingManga && !e.ctrlKey) {
                 if ([" ", "ArrowUp", "ArrowDown"].includes(e.key)) e.preventDefault();
                 if (document.activeElement!.tagName === "BODY" || document.activeElement === readerRef.current)
