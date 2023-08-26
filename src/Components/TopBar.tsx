@@ -64,7 +64,7 @@ const TopBar = (): ReactElement => {
         setMaximized(window.electron.getCurrentWindow().isMaximized);
         window.electron.getCurrentWindow()?.on("maximize", () => setMaximized(true));
         window.electron.getCurrentWindow()?.on("unmaximize", () => setMaximized(false));
-
+        //todo
         // const setSysBtnColor = (blurred = false) => {
         //     let color = window.color.new(window.getComputedStyle(document.body).color);
         //     if (blurred) color = color.alpha(0.3);
@@ -147,7 +147,12 @@ const TopBar = (): ReactElement => {
                     className="pageNumber noBG"
                     htmlFor="NavigateToPageInput"
                     data-tooltip="Navigate To Page Number"
-                    style={{ display: isReaderOpen && mangaInReader ? "flex" : "none" }}
+                    style={{
+                        display:
+                            isReaderOpen && mangaInReader && !/(\.xhtml|\.txt)/i.test(mangaInReader.link)
+                                ? "flex"
+                                : "none",
+                    }}
                 >
                     <input
                         type="number"
@@ -220,7 +225,13 @@ const TopBar = (): ReactElement => {
                 </label>
 
                 <label
-                    style={{ display: isReaderOpen && bookInReader ? "flex" : "none" }}
+                    style={{
+                        display:
+                            isReaderOpen &&
+                            (bookInReader || (mangaInReader && /(\.xhtml|\.txt)/i.test(mangaInReader.link)))
+                                ? "flex"
+                                : "none",
+                    }}
                     className="pageNumber noBG"
                 >
                     <input
