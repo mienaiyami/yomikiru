@@ -1262,6 +1262,9 @@ const EPubReader = () => {
                     "--word-spacing": appSettings.epubReaderSettings.useDefault_wordSpacing
                         ? "normal"
                         : appSettings.epubReaderSettings.wordSpacing + "em",
+                    "--letter-spacing": appSettings.epubReaderSettings.useDefault_letterSpacing
+                        ? "normal"
+                        : appSettings.epubReaderSettings.letterSpacing + "em",
                     "--paragraph-gap": appSettings.epubReaderSettings.useDefault_paragraphSpacing
                         ? "auto"
                         : appSettings.epubReaderSettings.paragraphSpacing / 2 + "em 0",

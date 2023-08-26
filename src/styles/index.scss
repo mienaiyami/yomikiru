@@ -2670,7 +2670,7 @@ body {
                             }
 
                             input[type="number"] {
-                                width: 3em;
+                                width: 3.5em;
                                 padding: 5px;
                                 padding-right: 0;
                             }
@@ -2909,6 +2909,7 @@ body {
                 --width: 50%;
                 --line-height: normal;
                 --word-spacing: normal;
+                --letter-spacing: normal;
                 --paragraph-gap: 1.6em 0;
                 --font-family: inherit;
                 --font-weight: inherit;
@@ -2995,6 +2996,7 @@ body {
                     * {
                         line-height: var(--line-height);
                         word-spacing: var(--word-spacing);
+                        letter-spacing: var(--letter-spacing);
                         padding: revert;
                         margin: revert;
                     }

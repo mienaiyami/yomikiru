@@ -462,7 +462,6 @@ const EPUBReaderSettings = memo(
                                 <InputCheckboxNumber
                                     checked={!appSettings.epubReaderSettings.useDefault_wordSpacing}
                                     onChangeCheck={(e) => {
-                                        // makeScrollPos();
                                         dispatch(
                                             setEpubReaderSettings({
                                                 useDefault_wordSpacing: !e.currentTarget.checked,
@@ -474,7 +473,6 @@ const EPUBReaderSettings = memo(
                                     max={20}
                                     value={appSettings.epubReaderSettings.wordSpacing}
                                     onChangeNum={(e) => {
-                                        // makeScrollPos();
                                         let value = e.valueAsNumber;
                                         if (value > 20) value = 20;
                                         if (value < 0) value = 0;
@@ -485,6 +483,32 @@ const EPUBReaderSettings = memo(
                                         (value) => dispatch(setEpubReaderSettings({ wordSpacing: value })),
                                     ]}
                                     paraBefore="Word Spacing&nbsp;:"
+                                    paraAfter="em"
+                                />
+                                <InputCheckboxNumber
+                                    checked={!appSettings.epubReaderSettings.useDefault_letterSpacing}
+                                    onChangeCheck={(e) => {
+                                        dispatch(
+                                            setEpubReaderSettings({
+                                                useDefault_letterSpacing: !e.currentTarget.checked,
+                                            })
+                                        );
+                                    }}
+                                    step={0.01}
+                                    min={-1}
+                                    max={1}
+                                    value={appSettings.epubReaderSettings.letterSpacing}
+                                    onChangeNum={(e) => {
+                                        let value = e.valueAsNumber;
+                                        if (value > 1) value = 1;
+                                        if (value < -1) value = -1;
+                                        return value;
+                                    }}
+                                    timeout={[
+                                        1000,
+                                        (value) => dispatch(setEpubReaderSettings({ letterSpacing: value })),
+                                    ]}
+                                    paraBefore="Letter Spacing&nbsp;:"
                                     paraAfter="em"
                                 />
 
