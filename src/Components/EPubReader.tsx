@@ -593,7 +593,7 @@ const EPubReader = () => {
                         pages: 0,
                         mangaName: linkSplitted.at(-2) || "~",
                     };
-                    dispatch(setMangaInReader(mangaOpened));
+                    if (readerRef.current) readerRef.current.scrollTop = 0;
                     dispatch(
                         newHistory({
                             type: "image",
@@ -604,6 +604,8 @@ const EPubReader = () => {
                             },
                         })
                     );
+
+                    dispatch(setMangaInReader(mangaOpened));
                     dispatch(setReaderOpen(true));
                 }
             } catch (reason) {
