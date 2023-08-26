@@ -64,11 +64,34 @@ const TopBar = (): ReactElement => {
         setMaximized(window.electron.getCurrentWindow().isMaximized);
         window.electron.getCurrentWindow()?.on("maximize", () => setMaximized(true));
         window.electron.getCurrentWindow()?.on("unmaximize", () => setMaximized(false));
-        window.electron.getCurrentWindow()?.isFocused()
-            ? document.body.classList.remove("blurred")
-            : document.body.classList.add("blurred");
-        window.electron.getCurrentWindow()?.on("focus", () => document.body.classList.remove("blurred"));
-        window.electron.getCurrentWindow()?.on("blur", () => document.body.classList.add("blurred"));
+
+        // const setSysBtnColor = (alpha = 1) => {
+        //     console.log(window.getComputedStyle(document.querySelector("body #topBar")!).backgroundColor);
+        //     window.electron.getCurrentWindow().setTitleBarOverlay({
+        //         color: window.color
+        //             .new(window.getComputedStyle(document.querySelector("body #topBar")!).backgroundColor)
+        //             .alpha(alpha)
+        //             .hexa(),
+        //         symbolColor: window.color
+        //             .new(window.getComputedStyle(document.querySelector("body #topBar .homeBtns button")!).color)
+        //             .alpha(alpha)
+        //             .hexa(),
+        //         height: Math.floor(40 * window.electron.webFrame.getZoomFactor()),
+        //     });
+        // };
+
+        const onBlur = () => {
+            document.body.classList.add("blurred");
+            // setSysBtnColor(0.5);
+        };
+        const onFocus = () => {
+            document.body.classList.remove("blurred");
+            // setSysBtnColor();
+        };
+
+        window.electron.getCurrentWindow()?.isFocused() ? onFocus() : onBlur();
+        window.electron.getCurrentWindow()?.on("focus", onFocus);
+        window.electron.getCurrentWindow()?.on("blur", onBlur);
     };
     const removeEventListener = () => {
         window.electron.getCurrentWindow()?.removeAllListeners("maximize");
