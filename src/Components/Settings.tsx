@@ -1628,9 +1628,12 @@ const Settings = (): ReactElement => {
                                                 setEpubReaderSettings({ textSelect: !e.currentTarget.checked })
                                             );
                                         }}
-                                        labelAfter="EPUB: Disable Text Select"
+                                        labelAfter="EPUB: Disable Text Select / Enable double-click zen mode"
                                     />
-                                    <div className="desc">Removes ability to select text in epub reader.</div>
+                                    <div className="desc">
+                                        Removes ability to select text in epub reader and enabled double-click zen
+                                        mode.
+                                    </div>
                                 </div>
                                 <div className="toggleItem">
                                     <InputCheckbox

@@ -19,7 +19,7 @@ import { newHistory, updateCurrentBookHistory } from "../store/history";
 // import contextMenu, { setContextMenu } from "../store/contextMenu";
 import EPUBReaderSettings from "./EPubReaderSettings";
 import EPubReaderSideList from "./EPubReaderSideList";
-import { setReaderSettings } from "../store/appSettings";
+import { setEpubReaderSettings, setReaderSettings } from "../store/appSettings";
 import { setBookInReader } from "../store/bookInReader";
 import { setUnzipping } from "../store/unzipping";
 import { unzip } from "../MainImports";
@@ -1281,17 +1281,28 @@ const EPubReader = () => {
                 }}
                 onContextMenu={(e) => {
                     e.stopPropagation();
-                    const items = [
+                    const items: MenuListItem[] = [
                         {
-                            label: "Toggle Zen Mode",
-                            disabled: false,
+                            label: "Zen Mode",
+                            selected: zenMode,
                             action() {
                                 setZenMode((init) => !init);
                             },
                         },
                         {
+                            label: "Dbl-Click Zen Mode",
+                            selected: !appSettings.epubReaderSettings.textSelect,
+                            action() {
+                                dispatch(
+                                    setEpubReaderSettings({
+                                        textSelect: !appSettings.epubReaderSettings.textSelect,
+                                    })
+                                );
+                            },
+                        },
+                        window.contextMenu.template.divider(),
+                        {
                             label: "Bookmark",
-                            disabled: false,
                             action() {
                                 addToBookmarkRef.current?.click();
                             },
@@ -1304,6 +1315,7 @@ const EPubReader = () => {
                         clickX: e.clientX,
                         clickY: e.clientY,
                         items,
+                        padLeft: true,
                     });
                 }}
                 onClick={(e) => {
@@ -1326,11 +1338,13 @@ const EPubReader = () => {
                     }
                 }}
                 onDoubleClick={(e) => {
-                    let clickPos = (e.clientX / e.currentTarget.offsetWidth) * 100;
-                    if (isSideListPinned) {
-                        clickPos = ((e.clientX - sideListWidth) / e.currentTarget.offsetWidth) * 100;
+                    if (!appSettings.epubReaderSettings.textSelect) {
+                        let clickPos = (e.clientX / e.currentTarget.offsetWidth) * 100;
+                        if (isSideListPinned) {
+                            clickPos = ((e.clientX - sideListWidth) / e.currentTarget.offsetWidth) * 100;
+                        }
+                        if (clickPos > 5 && clickPos < 95) setZenMode((init) => !init);
                     }
-                    if (clickPos > 5 && clickPos < 95) setZenMode((init) => !init);
                 }}
             >
                 <StyleSheets sheets={epubStylesheets} />

@@ -64,6 +64,9 @@ const TopBar = (): ReactElement => {
         setMaximized(window.electron.getCurrentWindow().isMaximized);
         window.electron.getCurrentWindow()?.on("maximize", () => setMaximized(true));
         window.electron.getCurrentWindow()?.on("unmaximize", () => setMaximized(false));
+        window.electron.getCurrentWindow()?.isFocused()
+            ? document.body.classList.remove("blurred")
+            : document.body.classList.add("blurred");
         window.electron.getCurrentWindow()?.on("focus", () => document.body.classList.remove("blurred"));
         window.electron.getCurrentWindow()?.on("blur", () => document.body.classList.add("blurred"));
     };
