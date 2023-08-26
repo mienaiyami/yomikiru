@@ -812,6 +812,13 @@ body {
         }
         @mixin contFadeScaleIn($elem) {
             backdrop-filter: blur(4px);
+            .clickClose {
+                position: absolute;
+                width: 100%;
+                height: 100%;
+                opacity: 0.75;
+                background-color: var(--body-bg-color);
+            }
             &[data-state="open"] {
                 visibility: visible;
                 #{$elem} {
@@ -824,6 +831,8 @@ body {
                     transform: scale(1.1);
                     transition: 0.1s cubic-bezier(1, 0, 1, 1) transform;
                 }
+                // transition: 0 visibility;
+                // transition-delay: 0.1s;
             }
         }
         .listCont {
@@ -1403,13 +1412,6 @@ body {
             place-items: center;
 
             @include contFadeScaleIn(".overlayCont");
-            .clickClose {
-                position: absolute;
-                width: 100%;
-                height: 100%;
-                opacity: 0.75;
-                background-color: var(--body-bg-color);
-            }
             .row {
                 display: flex;
                 flex-direction: row;
@@ -1443,30 +1445,6 @@ body {
             // transition: 0.3s all;
 
             @include contFadeScaleIn(".overflowWrap");
-            // &[data-state="open"] {
-            //     visibility: visible;
-
-            //     .overflowWrap {
-            //         transform: scale(1);
-            //     }
-            // }
-
-            // &[data-state="closed"] {
-            //     visibility: hidden;
-
-            //     .overflowWrap {
-            //         transform: scale(1.1);
-            //         transition: 0.1s cubic-bezier(1, 0, 1, 1) transform;
-            //     }
-            // }
-            // todo, can be added to @include contFadeScaleIn ?
-            .clickClose {
-                position: absolute;
-                width: 100%;
-                height: 100%;
-                opacity: 0.75;
-                background-color: var(--body-bg-color);
-            }
             .row {
                 display: flex;
                 flex-direction: row;
@@ -2103,13 +2081,6 @@ body {
                 place-items: center;
 
                 @include contFadeScaleIn(".overlayCont");
-                .clickClose {
-                    position: absolute;
-                    width: 100%;
-                    height: 100%;
-                    opacity: 0.75;
-                    background-color: var(--body-bg-color);
-                }
                 .row {
                     display: flex;
                     flex-direction: row;
@@ -2239,26 +2210,6 @@ body {
                 place-items: center;
 
                 @include contFadeScaleIn(".overlayCont");
-                // &[data-state="open"] {
-                //     visibility: visible;
-                //     .cont {
-                //         transform: scale(1);
-                //     }
-                // }
-                // &[data-state="closed"] {
-                //     visibility: hidden;
-                //     .cont {
-                //         transform: scale(1.1);
-                //         transition: 0.1s cubic-bezier(1, 0, 1, 1) transform;
-                //     }
-                // }
-                .clickClose {
-                    position: absolute;
-                    width: 100%;
-                    height: 100%;
-                    opacity: 0.75;
-                    background-color: var(--body-bg-color);
-                }
                 .row {
                     display: flex;
                     flex-direction: row;
@@ -2736,7 +2687,7 @@ body {
                 display: flex;
                 position: relative;
                 flex-direction: column;
-                align-items: center;
+                // align-items: center;
 
                 // for original size image
                 overflow-x: unset;
@@ -2795,7 +2746,7 @@ body {
                 .row {
                     display: flex;
                     justify-content: center;
-                    width: 100%;
+                    width: calc(100% + calc(max(0%, calc(var(--varWidth) - 100%)) * 2));
                     --max-width: 250%;
                     --max-height: auto;
                     transform: translate3d(0, 0, 0);
