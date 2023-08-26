@@ -536,7 +536,7 @@ const App = (): ReactElement => {
                         closeReader();
                         openInReader(data[0].path);
                     } else if (
-                        [".zip", ".7z", ".cbz", ".rar", ".epub", ".pdf"].includes(
+                        [".zip", ".7z", ".cbz", ".rar", ".epub", ".pdf", ".xhtml", ".txt"].includes(
                             window.path.extname(data[0].path.toLowerCase())
                         )
                     ) {
