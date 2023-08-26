@@ -1764,6 +1764,7 @@ const Settings = (): ReactElement => {
                                 <li>
                                     <code>Backspace</code> to delete Key.
                                 </li>
+                                <li>You can use middle mouse button or grab to scroll reader.</li>
                                 <li>
                                     You can set <code>shift</code>+<code>key</code>, shortcut will appear as
                                     capital or symbol.

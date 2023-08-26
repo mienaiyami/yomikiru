@@ -56,6 +56,8 @@ const Reader = () => {
     const [wasMaximized, setWasMaximized] = useState(false);
     // display this text then shortcuts clicked
     const [shortcutText, setshortcutText] = useState("");
+    // for grab to scroll
+    const [mouseDown, setMouseDown] = useState<null | { top: number; left: number; x: number; y: number }>(null);
 
     const readerSettingExtender = useRef<HTMLButtonElement>(null);
     const sizePlusRef = useRef<HTMLButtonElement>(null);
@@ -1100,6 +1102,7 @@ const Reader = () => {
                             : "none",
                     "--blend-bg": `rgba(${appSettings.readerSettings.customColorFilter.r},${appSettings.readerSettings.customColorFilter.g},${appSettings.readerSettings.customColorFilter.b},${appSettings.readerSettings.customColorFilter.a})`,
                     "--blend-mode": appSettings.readerSettings.customColorFilter.blendMode,
+                    cursor: mouseDown ? "grabbing" : "default",
                 }}
                 onWheel={(e) => {
                     if (e.ctrlKey) return;
@@ -1186,6 +1189,30 @@ const Reader = () => {
                         if (appSettings.readerSettings.readerTypeSelected === 2) {
                             if (clickPos <= 40) openNextPageRef.current?.click();
                             if (clickPos > 60) openPrevPageRef.current?.click();
+                        }
+                    }
+                }}
+                onMouseDown={(e) => {
+                    if (readerRef.current && imgContRef.current)
+                        setMouseDown({
+                            left: (isSideListPinned ? imgContRef.current : readerRef.current).scrollLeft,
+                            top: (isSideListPinned ? imgContRef.current : readerRef.current).scrollTop,
+                            x: e.clientX,
+                            y: e.clientY,
+                        });
+                }}
+                onMouseUp={() => {
+                    setMouseDown(null);
+                }}
+                onMouseLeave={() => {
+                    setMouseDown(null);
+                }}
+                onMouseMove={(e) => {
+                    if (mouseDown) {
+                        const elem = isSideListPinned ? imgContRef.current : readerRef.current;
+                        if (elem) {
+                            elem.scrollLeft = mouseDown.left - (e.clientX - mouseDown.x);
+                            elem.scrollTop = mouseDown.top - (e.clientY - mouseDown.y);
                         }
                     }
                 }}
