@@ -226,6 +226,11 @@ body {
             cursor: not-allowed;
         }
         @include labelNoBG();
+        &:not(.noBG):has(.input) {
+            input:focus {
+                box-shadow: none;
+            }
+        }
         &:has(span.toggle-area) {
             input[type="checkbox"] {
                 display: none;
@@ -320,7 +325,7 @@ body {
     }
     .input:not(#dummy#dummy):has(input[type="number"], .spin) {
         position: relative;
-        overflow: hidden;
+        // overflow: hidden;
         border-radius: 4px;
         // width: 100%;
         height: 100%;
@@ -349,7 +354,11 @@ body {
             // for consistency
             font-size: 1.2rem;
             min-width: auto;
+            &:nth-of-type(1) {
+                border-top-right-radius: 4px;
+            }
             &:nth-of-type(2) {
+                border-bottom-right-radius: 4px;
                 top: 50%;
             }
             &:focus,
