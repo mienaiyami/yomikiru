@@ -600,7 +600,7 @@ const EPubReader = () => {
                             data: {
                                 mangaOpened,
                                 page: 0,
-                                recordChapter: true,
+                                recordChapter: appSettings.recordChapterRead,
                             },
                         })
                     );
