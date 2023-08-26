@@ -2,8 +2,6 @@ import { useCallback, useContext, useEffect, useLayoutEffect, useRef, useState }
 import { AppContext } from "../App";
 import ReaderSideList from "./ReaderSideList";
 import ReaderSettings from "./ReaderSettings";
-import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import { faQuestionCircle } from "@fortawesome/free-regular-svg-icons";
 import { useAppDispatch, useAppSelector } from "../store/hooks";
 import { setReaderSettings } from "../store/appSettings";
 import { setMangaInReader } from "../store/mangaInReader";
@@ -12,7 +10,6 @@ import { setLoadingMangaPercent } from "../store/loadingMangaPercent";
 import { setLoadingManga } from "../store/isLoadingManga";
 import { setLinkInReader } from "../store/linkInReader";
 import { newHistory } from "../store/history";
-// import { setContextMenu } from "../store/contextMenu";
 import AnilistSearch from "./anilist/AnilistSearch";
 import AnilistEdit from "./anilist/AnilistEdit";
 

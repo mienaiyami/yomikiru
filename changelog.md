@@ -4,27 +4,31 @@ Does not follow semver.
 
 ## Added
 
-- added #227, theme option for code-text-color.
-- added option to reset all changes in theme maker.
-- added rar support, works only if WinRAR is present in system PATHS.
-- added "copy path" to bookmark/history context menu/
-- added #238. Sort options.
+- #242, sort by date option in reader-side-list.
+- epub letter spacing option.
+- added "dbl-click zen-mode" to epub body right click.
+- added #241, reader size shortcut keys.
+- added scroll reader with mouse grab.
+- #202, open single .txt or xhtml file. `experimental`
 
 ## Changed
 
-- Check for update every 5 hour if app is open.
-- UI Changes:
-  - theme prop name changes
-  - epub-reader-settings layout
-  - reader-settings layout
-  - color picked UI layout changes
-  - removed "-" , "+" on size change popup
-  - added context menu separator
+- #234, linked select hover/focused color to context-menu
+- #244, open epub from bookmark/history using chapterName -> chapterURL.
+- epub line (&lt;HR/&gt;) color to font-color from divider-color.
+- tab click focusable switches.
+- disable dbl-click zen-mode when "epub: text select" is enabled.
+- hide quotes in epub font select options.
+- change top-bar color when window is not focused.
+- Select Option:
+  - focus on selected option on open.
+  - click matching alphabet to scroll option into view.
 
 ## Fixed
 
-- fixed #235
-- fixed #236
-- fixed reader-settings space/enter not working in keyboard navigation.
+- fixed epub chapter reset after clicking a reference link.
+- epub font select working even when disabled.
+- fixed, image size over 100% not working right.
+- "NaN%" progress in epub zen mode if body have no scroll.
 
 ---
