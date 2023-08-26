@@ -325,7 +325,7 @@ const EPUBReaderSettings = memo(
                                         ...appSettings.epubReaderSettings.quickFontFamily.map(
                                             (e) =>
                                                 ({
-                                                    label: `★ ${e}`,
+                                                    label: `★ ${e.replaceAll('"', "")}`,
                                                     value: e,
                                                     style: { fontFamily: e, fontSize: "1.2em" },
                                                 } as IOptSelectOption)
@@ -333,7 +333,7 @@ const EPUBReaderSettings = memo(
                                         ...fontList.map(
                                             (e) =>
                                                 ({
-                                                    label: e,
+                                                    label: e.replaceAll('"', ""),
                                                     value: e,
                                                     style: { fontFamily: e, fontSize: "1.2em" },
                                                 } as IOptSelectOption)
