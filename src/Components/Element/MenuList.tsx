@@ -43,6 +43,7 @@ const MenuList = () => {
                         ref.current.style.maxHeight = optSelectData.elemBox.getBoundingClientRect().top + "px";
                     }
                 }
+                setFocused(optSelectData.items.findIndex((e) => e.selected));
                 setPos({ x, y, width });
                 ref.current.focus();
             }
@@ -53,6 +54,9 @@ const MenuList = () => {
         const ff = () => {
             ref.current?.blur();
         };
+        ref.current
+            ?.querySelector(`[data-default-selected="true"]`)
+            ?.scrollIntoView({ behavior: "instant", block: "nearest" });
         window.addEventListener("wheel", ff);
         return () => {
             window.removeEventListener("wheel", ff);
@@ -76,16 +80,9 @@ const MenuList = () => {
                 onBlur={(e) => {
                     optSelectData.focusBackElem && optSelectData.focusBackElem.focus();
                     optSelectData.onBlur && optSelectData.onBlur(e);
-                    // setTimeout(() => dispatch(setContextMenu(null)), 100);
-                    // (contextMenuData.focusBackElem as HTMLElement | null)?.focus();
-                    // setContextMenuData(null);
                 }}
                 onClick={onClick}
                 onContextMenu={onClick}
-                // ref={(node) => {
-                //     ref.current = node;
-                //     if (node) node.focus();
-                // }}
                 onWheel={(e) => {
                     e.stopPropagation();
                 }}
@@ -155,12 +152,13 @@ const MenuList = () => {
                             onMouseEnter={() => {
                                 setFocused(i);
                             }}
+                            data-default-selected={e.selected}
                             // onMouseLeave={() => {
                             //     setFocused(-1);
                             // }}
-                            className={`${e.disabled ? "disabled " : ""}`}
+                            // className={`${e.selected ? "selected " : ""}`}
                         >
-                            {e.disabled ? "• " : ""}
+                            <span>{e.selected ? "•" : ""}</span>
                             {e.label}
                         </li>
                     ))}

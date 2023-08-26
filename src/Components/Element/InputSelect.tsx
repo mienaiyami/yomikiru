@@ -83,7 +83,7 @@ export const InputSelect = ({
                         setOptSelectData({
                             items: options.map((e) => ({
                                 label: e.label,
-                                disabled: e.value === value,
+                                selected: e.value === value,
                                 action() {
                                     onChange(e.value);
                                 },
@@ -116,7 +116,7 @@ export const InputSelect = ({
                 setOptSelectData({
                     items: options.map((e) => ({
                         label: e.label,
-                        disabled: e.value === value,
+                        selected: e.value === value,
                         action() {
                             onChange(e.value);
                         },

@@ -672,8 +672,7 @@ declare global {
     type IOptSelectOption = {
         label: string;
         value: string;
-        // todo implement
-        current?: boolean;
+        selected?: boolean;
         style?: React.CSSProperties;
     };
     type IColorSelectData = {
