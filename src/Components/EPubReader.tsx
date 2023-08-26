@@ -739,7 +739,10 @@ const EPubReader = () => {
                                 // setCurrentChapterURL(tempTOCData.nav.find((e) => e.depth === 1)!.src);
 
                                 let currentChapterURL = "";
-                                if (linkInReader.chapter.includes("\\") || linkInReader.chapter.includes("/"))
+                                if (
+                                    (linkInReader.chapter && linkInReader.chapter?.includes("\\")) ||
+                                    linkInReader.chapter?.includes("/")
+                                )
                                     currentChapterURL = linkInReader.chapter;
                                 else
                                     currentChapterURL =
