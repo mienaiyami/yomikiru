@@ -65,24 +65,20 @@ const TopBar = (): ReactElement => {
         window.electron.getCurrentWindow()?.on("maximize", () => setMaximized(true));
         window.electron.getCurrentWindow()?.on("unmaximize", () => setMaximized(false));
 
-        // const setSysBtnColor = (alpha = 1) => {
-        //     console.log(window.getComputedStyle(document.querySelector("body #topBar")!).backgroundColor);
+        // const setSysBtnColor = (blurred = false) => {
+        //     let color = window.color.new(window.getComputedStyle(document.body).color);
+        //     if (blurred) color = color.alpha(0.3);
+        //     console.log(color);
+        //     (document.querySelector("body #topBar") as HTMLDivElement).style.color = color.hexa();
         //     window.electron.getCurrentWindow().setTitleBarOverlay({
-        //         color: window.color
-        //             .new(window.getComputedStyle(document.querySelector("body #topBar")!).backgroundColor)
-        //             .alpha(alpha)
-        //             .hexa(),
-        //         symbolColor: window.color
-        //             .new(window.getComputedStyle(document.querySelector("body #topBar .homeBtns button")!).color)
-        //             .alpha(alpha)
-        //             .hexa(),
+        //         symbolColor: color.hexa(),
         //         height: Math.floor(40 * window.electron.webFrame.getZoomFactor()),
         //     });
         // };
 
         const onBlur = () => {
             document.body.classList.add("blurred");
-            // setSysBtnColor(0.5);
+            // setSysBtnColor(true);
         };
         const onFocus = () => {
             document.body.classList.remove("blurred");

@@ -510,7 +510,7 @@ body {
         }
     }
     svg {
-        color: var(--icon-color);
+        color: inherit;
     }
 
     div:focus {
@@ -582,6 +582,7 @@ body {
         user-select: none;
         background: var(--topBar-color);
         z-index: 1000000;
+        color: var(--icon-color);
 
         button {
             font-size: 18px;
@@ -605,13 +606,12 @@ body {
                 width: var(--button-width);
                 background: none;
                 position: relative;
-                color: var(--icon-color);
                 height: 100%;
                 left: 0;
                 top: 0;
                 border: none;
                 cursor: pointer;
-
+                color: inherit;
                 &::before {
                     top: 100%;
                     left: 50%;
@@ -643,7 +643,7 @@ body {
             align-items: center;
             justify-content: center;
             width: calc(100% - (var(--button-width) * 10));
-            color: var(--font-color);
+            color: inherit;
             .title {
                 position: relative;
                 max-width: 100%;
