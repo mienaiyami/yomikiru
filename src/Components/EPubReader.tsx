@@ -1295,7 +1295,7 @@ const EPubReader = () => {
                             },
                         },
                         {
-                            label: "Dbl-Click Zen Mode",
+                            label: "Double Click Zen Mode",
                             selected: !appSettings.epubReaderSettings.textSelect,
                             action() {
                                 dispatch(
