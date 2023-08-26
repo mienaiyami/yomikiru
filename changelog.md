@@ -26,6 +26,7 @@ Does not follow semver.
 
 ## Fixed
 
+- update checker not triggering on app open.
 - fixed epub chapter reset after clicking a reference link.
 - epub font select working even when disabled.
 - fixed, image size over 100% not working right.
