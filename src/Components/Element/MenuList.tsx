@@ -105,6 +105,27 @@ const MenuList = () => {
                         e.currentTarget.blur();
                         return;
                     }
+                    if (e.key.length === 1 && /^[\w]/i.test(e.key)) {
+                        if (ref.current) {
+                            const elems = [...ref.current.querySelectorAll("li")];
+                            let i = focused;
+                            i = elems.findIndex(
+                                (elem, i2) =>
+                                    i < i2 &&
+                                    elem.innerText.length > 0 &&
+                                    elem.innerText[0].toLowerCase() === e.key.toLowerCase()
+                            );
+                            if (i < 0) {
+                                i = elems.findIndex(
+                                    (elem) =>
+                                        elem.innerText.length > 0 &&
+                                        elem.innerText[0].toLowerCase() === e.key.toLowerCase()
+                                );
+                            }
+                            if (i >= 0) setFocused(i);
+                            return;
+                        }
+                    }
                     switch (e.key) {
                         case "Escape":
                             e.currentTarget.blur();
