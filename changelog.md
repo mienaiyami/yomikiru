@@ -4,32 +4,26 @@ Does not follow semver.
 
 ## Added
 
-- #242, sort by date option in reader-side-list.
-- epub letter spacing option.
-- added "dbl-click zen-mode" to epub body right click.
-- added #241, reader size shortcut keys.
-- added scroll reader with mouse grab.
-- #202, open single .txt or xhtml file. `experimental`
+- added focus lock on popup elements.
+- added keyboard ctrl for theme link button
+
 
 ## Changed
 
-- #234, linked select hover/focused color to context-menu
-- #244, open epub from bookmark/history using chapterName -> chapterURL.
-- epub line (&lt;HR/&gt;) color to font-color from divider-color.
-- tab click focusable switches.
-- disable dbl-click zen-mode when "epub: text select" is enabled.
-- hide quotes in epub font select options.
-- change top-bar color when window is not focused.
-- Select Option:
-  - focus on selected option on open.
-  - click matching alphabet to scroll option into view.
+- changed updater check interval from 5 to 1 hour.
+- DEV:
+  - Updated config files for better DX and performance.
 
 ## Fixed
 
-- update checker not triggering on app open.
-- fixed epub chapter reset after clicking a reference link.
-- epub font select working even when disabled.
-- fixed, image size over 100% not working right.
-- "NaN%" progress in epub zen mode if body have no scroll.
+- fixed #249.
+- fixed text reader retaining scroll position on chapter change.
+- fixed #251.
+- fixed #250.
+- fixed: mouse-grab-reader-scroll changing chapter in reader mode ltr rtl
+- fixed color input escape and tab function.
+- fixed color filters not applying to canvas.
+- fixed: scroll position after reader size change, <https://github.com/mienaiyami/yomikiru/issues/241#issuecomment-1694488857>
+
 
 ---
