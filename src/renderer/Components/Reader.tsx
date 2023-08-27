@@ -228,6 +228,7 @@ const Reader = () => {
                 return;
             }
             if (e.ctrlKey) {
+                if (parseInt(e.key) >= 1 && parseInt(e.key) <= 5) makeScrollPos();
                 if (e.key === "1") {
                     dispatch(setReaderSettings({ fitOption: 0 }));
                     setshortcutText(50 + "%");
