@@ -428,7 +428,7 @@ const registerListener = () => {
             checkForUpdate(windowId, skipMinor);
             setInterval(() => {
                 checkForUpdate(windowId, skipMinor);
-            }, 1000 * 60 * 60 * 5);
+            }, 1000 * 60 * 60 * 1);
         }
     });
     ipcMain.on("checkForUpdate", (e, windowId, promptAfterCheck = false) => {

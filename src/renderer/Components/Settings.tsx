@@ -1937,7 +1937,7 @@ const Settings = (): ReactElement => {
                                 <div className="main col">
                                     <InputCheckbox
                                         className="noBG"
-                                        paraAfter="Check for updates every 5 hour"
+                                        paraAfter="Check for updates every 1 hour"
                                         checked={appSettings.updateCheckerEnabled}
                                         onChange={(e) => {
                                             dispatch(
