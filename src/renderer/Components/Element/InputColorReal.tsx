@@ -180,7 +180,7 @@ const InputColorReal = () => {
                         "--color-noAlpha": window.color.new(color).alpha(1).hsl().string(),
                     }}
                     onKeyDown={(e) => {
-                        if (!e.ctrlKey && !["Escape", "Tab", " ", "Enter"].includes(e.key)) {
+                        if (!e.ctrlKey && !["Tab", " ", "Enter"].includes(e.key)) {
                             e.stopPropagation();
                             e.preventDefault();
                         }
