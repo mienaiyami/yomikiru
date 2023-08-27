@@ -1,16 +1,19 @@
-const { IgnorePlugin } = require("webpack");
+import type { Configuration } from "webpack";
 
-const optionalPlugins = [];
-if (process.platform !== "darwin") {
-    optionalPlugins.push(new IgnorePlugin({ resourceRegExp: /^fsevents$/ }));
-}
+import { rules } from "./webpack.rules";
+import { plugins } from "./webpack.plugins";
 
-module.exports = {
+rules.push({
+    test: /\.css$/,
+    use: [{ loader: "style-loader" }, { loader: "css-loader" }],
+});
+
+export const rendererConfig: Configuration = {
     resolve: {
         extensions: [".ts", ".tsx", ".js"],
     },
     module: {
-        rules: require("./rules.webpack"),
+        rules,
     },
     externals: {
         electron: "commonjs2 electron",
@@ -18,6 +21,6 @@ module.exports = {
         // "../public/pdf.worker.min.js": "pdfjsLibWorker",
     },
     target: "electron-renderer",
-    plugins: [...optionalPlugins],
+    plugins,
     // target: "web",
 };

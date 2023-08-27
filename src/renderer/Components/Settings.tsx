@@ -1,8 +1,7 @@
-import { AppContext } from "../App";
 import { faGithub } from "@fortawesome/free-brands-svg-icons";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import { ReactElement, useContext, useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
-import { faEdit, faLink, faPlus, faSync, faTimes, faTrash, faUnlink } from "@fortawesome/free-solid-svg-icons";
+import { ReactElement, useEffect, useLayoutEffect, useRef, useState } from "react";
+import { faEdit, faLink, faPlus, faSync, faTrash, faUnlink } from "@fortawesome/free-solid-svg-icons";
 import themesRaw from "../themeInit.json";
 import { newTheme, updateTheme, deleteTheme, setTheme, resetAllTheme, addThemes } from "../store/themes";
 import { useAppDispatch, useAppSelector } from "../store/hooks";
@@ -11,7 +10,6 @@ import { setOpenSetting } from "../store/isSettingOpen";
 import { addBookmark, removeAllBookmarks } from "../store/bookmarks";
 import { makeNewSettings, setAppSettings, setEpubReaderSettings, setReaderSettings } from "../store/appSettings";
 import { InputSelect } from "./Element/InputSelect";
-import InputRange from "./Element/InputRange";
 import { promptSelectDir, renderPDF } from "../MainImports";
 import { deleteAllHistory } from "../store/history";
 import InputNumber from "./Element/InputNumber";
@@ -32,7 +30,6 @@ const ThemeElement = ({
     currentTheme: ThemeData["main"];
     changeValue: (prop: ThemeDataMain, value: string) => void;
 }): ReactElement => {
-    const theme = useAppSelector((store) => store.theme.name);
     const ref = useRef<HTMLInputElement>(null);
     const originalColor = useRef<string | null>(null);
     const [firstRendered, setFirstRendered] = useState(false);

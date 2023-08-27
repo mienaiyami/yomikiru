@@ -21,8 +21,6 @@ jobs:
         uses: actions/setup-node@v3
         with:
           node-version: 18.15.0
-      - name: testing...
-        run: node -v
       - name: Install dependencies
         run: yarn ci --network-timeout 1000000
       - name: forge make

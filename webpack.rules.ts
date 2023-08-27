@@ -1,12 +1,13 @@
-module.exports = [
+import type { ModuleOptions } from "webpack";
+
+export const rules: Required<ModuleOptions>["rules"] = [
     {
-        test: /\.node$/,
+        test: /native_modules[/\\].+\.node$/,
         use: "node-loader",
     },
     {
-        test: /\.(m?js|node)$/,
+        test: /[/\\]node_modules[/\\].+\.(m?js|node)$/,
         parser: { amd: false },
-
         use: {
             loader: "@vercel/webpack-asset-relocator-loader",
             options: {
@@ -15,10 +16,13 @@ module.exports = [
         },
     },
     {
-        test: /\.(js|ts|tsx)$/,
-        exclude: /node_modules/,
+        test: /\.tsx?$/,
+        exclude: /(node_modules|\.webpack)/,
         use: {
-            loader: "babel-loader",
+            loader: "ts-loader",
+            //   options: {
+            //     transpileOnly: true,
+            //   },
         },
     },
     {

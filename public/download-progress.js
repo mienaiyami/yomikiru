@@ -2,7 +2,7 @@ import { ipcRenderer } from "electron";
 const version = document.querySelector(".main .head span");
 const text = document.querySelector(".main .progressText");
 const progressElem = document.querySelector(".main .progressVisual .progress");
-import "../src/styles/download.scss";
+import "../src/renderer/styles/download.scss";
 
 ipcRenderer.on("version", (e, ver) => {
     version.innerText = ver + (process.arch === "x64" ? " 64-bit" : " 32-bit");

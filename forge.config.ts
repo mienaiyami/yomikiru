@@ -1,49 +1,48 @@
-/* eslint-disable @typescript-eslint/no-var-requires */
-const fs = require("fs");
-const path = require("path");
+import type { ForgeConfig } from "@electron-forge/shared-types";
+import { MakerSquirrel } from "@electron-forge/maker-squirrel";
+import { MakerZIP } from "@electron-forge/maker-zip";
+import { MakerDeb } from "@electron-forge/maker-deb";
+import { MakerRpm } from "@electron-forge/maker-rpm";
+import { AutoUnpackNativesPlugin } from "@electron-forge/plugin-auto-unpack-natives";
+import { WebpackPlugin } from "@electron-forge/plugin-webpack";
 
-module.exports = {
+import { mainConfig } from "./webpack.main.config";
+import { rendererConfig } from "./webpack.renderer.config";
+
+import fs from "fs";
+
+const config: ForgeConfig = {
     packagerConfig: {
         name: "Yomikiru",
+        asar: true,
     },
     plugins: [
-        {
-            name: "@electron-forge/plugin-webpack",
-            config: {
-                mainConfig: "./webpack/main.webpack.js",
-                devContentSecurityPolicy: "connect-src 'self' * 'unsafe-eval'",
-                renderer: {
-                    config: "./webpack/renderer.webpack.js",
-                    entryPoints: [
-                        {
-                            html: "./public/index.html",
-                            js: "./src/index.tsx",
-                            name: "home",
-                        },
-                        {
-                            html: "./public/download-progress.html",
-                            js: "./public/download-progress.js",
-                            name: "download_progress",
-                        },
-                    ],
-                },
+        new AutoUnpackNativesPlugin({}),
+        new WebpackPlugin({
+            mainConfig,
+            renderer: {
+                config: rendererConfig,
+                entryPoints: [
+                    {
+                        html: "./public/index.html",
+                        js: "./src/renderer/index.tsx",
+                        name: "home",
+                    },
+                    {
+                        html: "./public/download-progress.html",
+                        js: "./public/download-progress.js",
+                        name: "download_progress",
+                    },
+                ],
             },
-        },
+            devContentSecurityPolicy: "connect-src 'self' * 'unsafe-eval'",
+        }),
     ],
     makers: [
-        {
-            name: "@electron-forge/maker-squirrel",
-            platforms: ["win32"],
-            // config: {
-            // name: "Yomikiru",
-            // exe: "Yomikiru.exe",
-            // setupExe: `${packageJSON.name}_${packageJSON.version}_windows-setup.exe`,
-            // },
-        },
-        {
-            name: "@electron-forge/maker-deb",
-            platforms: ["linux"],
-            config: {
+        new MakerSquirrel({}, ["win32"]),
+        new MakerZIP({}, ["win32"]),
+        new MakerDeb(
+            {
                 options: {
                     maintainer: "mienaiyami",
                     homepage: "https://github.com/mienaiyami/yomikiru",
@@ -51,31 +50,15 @@ module.exports = {
                     depends: ["unzip", "xdg-utils"],
                 },
             },
-        },
-        {
-            name: "@electron-forge/maker-zip",
-            platforms: ["win32"],
-        },
+            ["linux"]
+        ),
     ],
     hooks: {
-        postMake: (config, makeResults) => {
+        postMake: async (config, makeResults) => {
+            // todo clean and test, use https://github.com/mienaiyami/electron-forge-vite-typescript-tailwind/blob/3c453b363729c0dddb049055c4ad7441b832e85a/forge.config.ts#L51
             // fs.writeFileSync("./test.json", JSON.stringify(makeResults, null, "\t"));
             if (!fs.existsSync("./out/full")) fs.mkdirSync("./out/full");
             let downloadBtns = `## Downloads\n\n`;
-            // makeResults.forEach((result) => {
-            // result.artifacts.forEach((e) => {
-            // if (path.extname(e) === ".zip") {
-
-            // makeResults.forEach(result=>{
-            //     if(result.platform==="win32"){
-            //         if(result.arch==="ia32"){
-            //             //zip
-            //             if(result.artifacts.length===1){
-
-            //             }
-            //         }
-            //     }
-            // })
             if (
                 fs.existsSync(
                     `./out/make/squirrel.windows/x64/Yomikiru-${makeResults[0].packageJSON.version} Setup.exe`
@@ -125,11 +108,11 @@ module.exports = {
                 );
             downloadBtns += `[![Download 64-bit Linux (Debian)](https://img.shields.io/badge/Linux%2064--bit%20(Debian)-Yomikiru--v${makeResults[0].packageJSON.version}--amd64.deb-brightgreen?logo=debian&logoColor=red)](https://github.com/mienaiyami/yomikiru/releases/download/v${makeResults[0].packageJSON.version}/Yomikiru-v${makeResults[0].packageJSON.version}-amd64.deb)\n\n`;
             downloadBtns += "---\n\n";
-            // }
-            // });
-            // });
             const base = fs.readFileSync("./changelog.md", "utf-8");
             fs.writeFileSync("./changelog-temp.md", downloadBtns + base, "utf-8");
+            return makeResults;
         },
     },
 };
+
+export default config;

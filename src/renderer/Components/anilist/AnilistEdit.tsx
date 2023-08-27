@@ -5,7 +5,6 @@ import { InputSelect } from "../Element/InputSelect";
 import InputNumber from "../Element/InputNumber";
 import { removeAnilistTracker } from "../../store/anilistTracking";
 import { setAnilistCurrentManga } from "../../store/anilistCurrentManga";
-import { target } from "../../../webpack/renderer.webpack";
 const AnilistEdit = () => {
     const dispatch = useAppDispatch();
     const contRef = useRef<HTMLDivElement>(null);
