@@ -20,9 +20,10 @@ export const rules: Required<ModuleOptions>["rules"] = [
         exclude: /(node_modules|\.webpack)/,
         use: {
             loader: "ts-loader",
-            //   options: {
-            //     transpileOnly: true,
-            //   },
+            // use this or `ForkTsCheckerWebpackPlugin` in `webpack/plugins.ts`
+            options: {
+                transpileOnly: true,
+            },
         },
     },
     {

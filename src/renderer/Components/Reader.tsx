@@ -1165,7 +1165,8 @@ const Reader = () => {
                     }
                 }}
                 onClick={(e) => {
-                    // && (e.target as HTMLElement).tagName === "IMG"
+                    setMouseDown(null);
+                    if (mouseDown && mouseDown.x !== e.clientX && mouseDown.y !== e.clientY) return;
                     const abc = prevNextDeciderLogic();
                     if (abc === 1) {
                         const clickPos = ((e.clientX - sideListWidth) / e.currentTarget.offsetWidth) * 100;
@@ -1198,9 +1199,9 @@ const Reader = () => {
                             y: e.clientY,
                         });
                 }}
-                onMouseUp={() => {
-                    setMouseDown(null);
-                }}
+                // onMouseUp={() => {
+                //     setMouseDown(null);
+                // }}
                 onMouseLeave={() => {
                     setMouseDown(null);
                 }}
