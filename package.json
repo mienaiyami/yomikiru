@@ -44,6 +44,7 @@
         "pdfjs-dist": "https://github.com/mienaiyami/pdfjs-dist",
         "react": "17.0.2",
         "react-dom": "17.0.2",
+        "react-focus-lock": "^2.9.5",
         "react-hot-loader": "^4.13.0",
         "react-redux": "^8.0.5"
     },

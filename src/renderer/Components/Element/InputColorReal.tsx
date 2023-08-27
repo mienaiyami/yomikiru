@@ -4,6 +4,8 @@ import InputNumber from "./InputNumber";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faEyeDropper, faSort } from "@fortawesome/free-solid-svg-icons";
 
+import FocusLock, { MoveFocusInside } from "react-focus-lock";
+
 // ! not indented to be used without `AppContext::colorSelectData`
 
 const COLOR_FORMATS = ["RGBA", "HEX", "HSLA"] as const;
@@ -144,129 +146,136 @@ const InputColorReal = () => {
 
     return (
         colorSelectData && (
-            <div
-                id="realColorInput"
-                tabIndex={-1}
-                onBlur={(e) => {
-                    if (e.currentTarget.contains(e.relatedTarget)) return;
-                    // if(e.target)
+            <FocusLock
+                onDeactivation={() => {
                     colorSelectData.focusBackElem && colorSelectData.focusBackElem.focus();
-                    colorSelectData.onBlur && colorSelectData.onBlur(e);
-                    setColorSelectData(null);
-                }}
-                // onClick={onClick}
-                // onContextMenu={onClick}
-                // ref={(node) => {
-                //     ref.current = node;
-                //     if (node) node.focus();
-                // }}
-                onWheel={(e) => {
-                    e.stopPropagation();
-                }}
-                ref={ref}
-                style={{
-                    left: pos.x,
-                    top: pos.y,
-                    // display: display ? "block" : "none",
-                    visibility: colorSelectData ? "visible" : "hidden",
-                    "--hue": color.hue() + "deg",
-                    "--color": color.hsl().string(),
-                    "--color-noAlpha": window.color.new(color).alpha(1).hsl().string(),
-                }}
-                onKeyDown={(e) => {
-                    if (!e.ctrlKey || e.key !== "Escape") {
-                        e.stopPropagation();
-                        e.preventDefault();
-                    }
-                    if (
-                        (e.ctrlKey && e.key === "/") ||
-                        (e.shiftKey && e.key === "F10") ||
-                        e.key === "ContextMenu"
-                    ) {
-                        e.currentTarget.blur();
-                        return;
-                    }
-                    switch (e.key) {
-                        case "Escape":
-                            e.currentTarget.blur();
-                            break;
-                        default:
-                            break;
-                    }
+                    // setColorSelectData(null);
                 }}
             >
                 <div
-                    className="SLGradient"
-                    ref={slRef}
-                    onMouseDown={(e) => {
-                        setSliding("SL");
-                        calcAndSetSL(e);
+                    id="realColorInput"
+                    tabIndex={-1}
+                    onBlur={(e) => {
+                        if (
+                            e.currentTarget.contains(e.relatedTarget) ||
+                            (e.relatedTarget && e.relatedTarget.getAttribute("data-focus-guard") === "true")
+                        )
+                            return;
+                        // colorSelectData.focusBackElem && colorSelectData.focusBackElem.focus();
+                        //todo, check if creates any issue or move to FocusLock
+                        colorSelectData.onBlur && colorSelectData.onBlur(e);
+                        setColorSelectData(null);
+                    }}
+                    onWheel={(e) => {
+                        e.stopPropagation();
+                    }}
+                    ref={ref}
+                    style={{
+                        left: pos.x,
+                        top: pos.y,
+                        // display: display ? "block" : "none",
+                        visibility: colorSelectData ? "visible" : "hidden",
+                        "--hue": color.hue() + "deg",
+                        "--color": color.hsl().string(),
+                        "--color-noAlpha": window.color.new(color).alpha(1).hsl().string(),
+                    }}
+                    onKeyDown={(e) => {
+                        if (!e.ctrlKey && !["Escape", "Tab", " ", "Enter"].includes(e.key)) {
+                            e.stopPropagation();
+                            e.preventDefault();
+                        }
+                        if (
+                            (e.ctrlKey && e.key === "/") ||
+                            (e.shiftKey && e.key === "F10") ||
+                            e.key === "ContextMenu"
+                        ) {
+                            e.currentTarget.focus();
+                            e.currentTarget.blur();
+                            return;
+                        }
+                        switch (e.key) {
+                            case "Escape":
+                                e.currentTarget.focus();
+                                e.currentTarget.blur();
+                                break;
+                            default:
+                                break;
+                        }
                     }}
                 >
-                    <span
-                        className={`slider SLSlider ${sliding === "SL" ? "sliding" : ""} `}
-                        style={{ left: color.saturationv() + "%", top: 100 - color.value() + "%" }}
-                    ></span>
-                </div>
-                <div className="block2">
-                    <button
-                        className="eyeDropper"
-                        onClick={() => {
-                            // eslint-disable-next-line @typescript-eslint/ban-ts-comment
-                            //@ts-ignore
-                            const eyeDropper = new EyeDropper();
-
-                            eyeDropper.open().then((result: any) => {
-                                setColor((init) => init.hex(result.sRGBHex));
-                            });
+                    <div
+                        className="SLGradient"
+                        ref={slRef}
+                        onMouseDown={(e) => {
+                            setSliding("SL");
+                            calcAndSetSL(e);
                         }}
                     >
-                        <FontAwesomeIcon icon={faEyeDropper} />
-                    </button>
-                    {/* <button tabIndex={-1} className="colorShow"></button> */}
-                    <div className="hue-opacity">
-                        <div
-                            className="hueRange"
-                            ref={hueRef}
-                            onMouseDown={(e) => {
-                                setSliding("HUE");
-                                calcAndSetHue(e);
-                            }}
-                        >
-                            <span
-                                className={`slider hueSlider ${sliding === "HUE" ? "sliding" : ""} `}
-                                style={{ left: color.hue() / 3.6 + "%" }}
-                            ></span>
-                        </div>
-                        <div
-                            className="opacityRange"
-                            ref={alphaRef}
-                            onMouseDown={(e) => {
-                                setSliding("ALPHA");
-                                calcAndSetAlpha(e);
-                            }}
-                        >
-                            <span
-                                className={`slider opacitySlider ${sliding === "ALPHA" ? "sliding" : ""} `}
-                                style={{ left: color.alpha() * 100 + "%" }}
-                            ></span>
+                        <span
+                            className={`slider SLSlider ${sliding === "SL" ? "sliding" : ""} `}
+                            style={{ left: color.saturationv() + "%", top: 100 - color.value() + "%" }}
+                        ></span>
+                    </div>
+                    <div className="block2">
+                        <MoveFocusInside>
+                            <button
+                                className="eyeDropper"
+                                onClick={() => {
+                                    // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+                                    //@ts-ignore
+                                    const eyeDropper = new EyeDropper();
+                                    eyeDropper.open().then((result: any) => {
+                                        setColor((init) => init.hex(result.sRGBHex));
+                                    });
+                                }}
+                            >
+                                <FontAwesomeIcon icon={faEyeDropper} />
+                            </button>
+                        </MoveFocusInside>
+                        <div className="hue-opacity">
+                            <div
+                                className="hueRange"
+                                ref={hueRef}
+                                onMouseDown={(e) => {
+                                    setSliding("HUE");
+                                    calcAndSetHue(e);
+                                }}
+                            >
+                                <span
+                                    className={`slider hueSlider ${sliding === "HUE" ? "sliding" : ""} `}
+                                    style={{ left: color.hue() / 3.6 + "%" }}
+                                ></span>
+                            </div>
+                            <div
+                                className="opacityRange"
+                                ref={alphaRef}
+                                onMouseDown={(e) => {
+                                    setSliding("ALPHA");
+                                    calcAndSetAlpha(e);
+                                }}
+                            >
+                                <span
+                                    className={`slider opacitySlider ${sliding === "ALPHA" ? "sliding" : ""} `}
+                                    style={{ left: color.alpha() * 100 + "%" }}
+                                ></span>
+                            </div>
                         </div>
                     </div>
+                    <div className="values">
+                        <button
+                            onClick={() => {
+                                setFormatSelected((init) => (init + 1) % COLOR_FORMATS.length);
+                            }}
+                        >
+                            {/* {COLOR_FORMATS[formatSelected]} */}
+                            <FontAwesomeIcon icon={faSort} />
+                        </button>
+                        {formatSelected === 0 && <RGBAInput color={color} setColor={setColor} key="rgba" />}
+                        {formatSelected === 1 && <HEXAInput color={color} setColor={setColor} key="hexa" />}
+                        {formatSelected === 2 && <HSLAInput color={color} setColor={setColor} key="hsla" />}
+                    </div>
                 </div>
-                <div className="values">
-                    <button
-                        onClick={() => {
-                            setFormatSelected((init) => (init + 1) % COLOR_FORMATS.length);
-                        }}
-                    >
-                        {/* {COLOR_FORMATS[formatSelected]} */}
-                        <FontAwesomeIcon icon={faSort} />
-                    </button>
-                    {formatSelected === 0 && <RGBAInput color={color} setColor={setColor} key="rgba" />}
-                    {formatSelected === 1 && <HEXAInput color={color} setColor={setColor} key="hexa" />}
-                    {formatSelected === 2 && <HSLAInput color={color} setColor={setColor} key="hsla" />}
-                </div>
-            </div>
+            </FocusLock>
         )
     );
 };

@@ -69,21 +69,6 @@ const InputColor = ({
             <label className={(disabled ? "disabled " : "") + className} title={title}>
                 {labelBefore}
                 {paraBefore && <p>{paraBefore}</p>}
-                {/* <input
-                    type="color"
-                    disabled={disabled}
-                    value={valueProxy}
-                    onChange={(e) => {
-                        const aaa = onChange && onChange(e);
-                        if (timeout) {
-                            if (onChange) {
-                                if (aaa === undefined)
-                                    return console.error("InputColor:onChange function must return.");
-                                setValueProxy(aaa);
-                            } else setValueProxy(e.currentTarget.value);
-                        }
-                    }}
-                /> */}
                 <button
                     disabled={disabled}
                     className="colorPickerBtn"
@@ -106,21 +91,6 @@ const InputColor = ({
             >
                 <span className="colorShow"></span>
             </button>
-            // <input
-            //     type="color"
-            //     disabled={disabled}
-            //     value={valueProxy}
-            //     onChange={(e) => {
-            //         const aaa = onChange && onChange(e);
-            //         if (timeout) {
-            //             if (onChange) {
-            //                 if (aaa === undefined)
-            //                     return console.error("InputColor:onChange function must return.");
-            //                 setValueProxy(aaa);
-            //             } else setValueProxy(e.currentTarget.value);
-            //         }
-            //     }}
-            // />
         );
 };
 

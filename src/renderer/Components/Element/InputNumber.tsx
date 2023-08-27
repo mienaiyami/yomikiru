@@ -149,7 +149,7 @@ const InputNumber = ({
                         max={max}
                         step={step}
                         onKeyDown={(e) => {
-                            if (e.key !== "Escape") {
+                            if (!["Escape", "Tab"].includes(e.key)) {
                                 e.stopPropagation();
                             }
                         }}
