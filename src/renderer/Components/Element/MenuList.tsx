@@ -1,5 +1,8 @@
 import React, { useRef, useState, useEffect, useLayoutEffect, useContext } from "react";
 import { AppContext } from "../../App";
+
+import FocusLock from "react-focus-lock";
+
 // ! not indented to be used without `AppContext::optSelectData`
 //todo rename later for select only
 const MenuList = () => {
@@ -74,117 +77,123 @@ const MenuList = () => {
     };
     return (
         optSelectData && (
-            <div
-                className="itemList"
-                tabIndex={-1}
-                onBlur={(e) => {
+            <FocusLock
+                onDeactivation={() => {
                     optSelectData.focusBackElem && optSelectData.focusBackElem.focus();
-                    optSelectData.onBlur && optSelectData.onBlur(e);
                 }}
-                onClick={onClick}
-                onContextMenu={onClick}
-                onWheel={(e) => {
-                    e.stopPropagation();
-                }}
-                ref={ref}
-                style={{
-                    left: pos.x,
-                    top: pos.y,
-                    // display: display ? "block" : "none",
-                    "--min-width": pos.width === 0 ? "fit-content" : pos.width + "px",
-                    visibility: optSelectData.items.length > 0 ? "visible" : "hidden",
-                }}
-                onKeyDown={(e) => {
-                    e.stopPropagation();
-                    e.preventDefault();
-                    if (
-                        (e.ctrlKey && e.key === "/") ||
-                        (e.shiftKey && e.key === "F10") ||
-                        e.key === "ContextMenu"
-                    ) {
-                        e.currentTarget.blur();
-                        return;
-                    }
-                    if (e.key.length === 1 && /^[\w]/i.test(e.key)) {
-                        if (ref.current) {
-                            const elems = [...ref.current.querySelectorAll("li")];
-                            let i = focused;
-                            i = elems.findIndex(
-                                (elem, i2) =>
-                                    i < i2 &&
-                                    elem.innerText.length > 0 &&
-                                    elem.innerText[0].toLowerCase() === e.key.toLowerCase()
-                            );
-                            if (i < 0) {
+            >
+                <div
+                    className="itemList"
+                    tabIndex={-1}
+                    onBlur={(e) => {
+                        // optSelectData.focusBackElem && optSelectData.focusBackElem.focus();
+                        optSelectData.onBlur && optSelectData.onBlur(e);
+                    }}
+                    onClick={onClick}
+                    onContextMenu={onClick}
+                    onWheel={(e) => {
+                        e.stopPropagation();
+                    }}
+                    ref={ref}
+                    style={{
+                        left: pos.x,
+                        top: pos.y,
+                        // display: display ? "block" : "none",
+                        "--min-width": pos.width === 0 ? "fit-content" : pos.width + "px",
+                        visibility: optSelectData.items.length > 0 ? "visible" : "hidden",
+                    }}
+                    onKeyDown={(e) => {
+                        e.stopPropagation();
+                        e.preventDefault();
+                        if (
+                            (e.ctrlKey && e.key === "/") ||
+                            (e.shiftKey && e.key === "F10") ||
+                            e.key === "ContextMenu"
+                        ) {
+                            e.currentTarget.blur();
+                            return;
+                        }
+                        if (e.key.length === 1 && /^[\w]/i.test(e.key)) {
+                            if (ref.current) {
+                                const elems = [...ref.current.querySelectorAll("li")];
+                                let i = focused;
                                 i = elems.findIndex(
-                                    (elem) =>
+                                    (elem, i2) =>
+                                        i < i2 &&
                                         elem.innerText.length > 0 &&
                                         elem.innerText[0].toLowerCase() === e.key.toLowerCase()
                                 );
+                                if (i < 0) {
+                                    i = elems.findIndex(
+                                        (elem) =>
+                                            elem.innerText.length > 0 &&
+                                            elem.innerText[0].toLowerCase() === e.key.toLowerCase()
+                                    );
+                                }
+                                if (i >= 0) setFocused(i);
+                                return;
                             }
-                            if (i >= 0) setFocused(i);
-                            return;
                         }
-                    }
-                    switch (e.key) {
-                        case "Escape":
-                            e.currentTarget.blur();
-                            break;
-                        case "ArrowDown":
-                        case "ArrowRight":
-                            setFocused((init) => {
-                                if (init + 1 >= optSelectData.items.length) return 0;
-                                return init + 1;
-                            });
-                            break;
-                        case "ArrowUp":
-                        case "ArrowLeft":
-                            setFocused((init) => {
-                                if (init - 1 < 0) return optSelectData.items.length - 1;
-                                return init - 1;
-                            });
-                            break;
-                        case "Enter":
-                        case " ": {
-                            const elem = ref.current?.querySelector(
-                                '[data-focused="true"]'
-                            ) as HTMLLIElement | null;
-                            if (elem && !elem.classList.contains("disabled")) elem.click();
-                            break;
+                        switch (e.key) {
+                            case "Escape":
+                                e.currentTarget.blur();
+                                break;
+                            case "ArrowDown":
+                            case "ArrowRight":
+                                setFocused((init) => {
+                                    if (init + 1 >= optSelectData.items.length) return 0;
+                                    return init + 1;
+                                });
+                                break;
+                            case "ArrowUp":
+                            case "ArrowLeft":
+                                setFocused((init) => {
+                                    if (init - 1 < 0) return optSelectData.items.length - 1;
+                                    return init - 1;
+                                });
+                                break;
+                            case "Enter":
+                            case " ": {
+                                const elem = ref.current?.querySelector(
+                                    '[data-focused="true"]'
+                                ) as HTMLLIElement | null;
+                                if (elem && !elem.classList.contains("disabled")) elem.click();
+                                break;
+                            }
+                            default:
+                                break;
                         }
-                        default:
-                            break;
-                    }
-                }}
-            >
-                <ul>
-                    {optSelectData.items.map((e, i) => (
-                        <li
-                            role="menuitem"
-                            key={e.label}
-                            onClick={e.action}
-                            onContextMenu={e.action}
-                            style={e.style}
-                            ref={(node) => {
-                                if (node && i === focused)
-                                    node.scrollIntoView({ behavior: "instant", block: "nearest" });
-                            }}
-                            data-focused={i === focused}
-                            onMouseEnter={() => {
-                                setFocused(i);
-                            }}
-                            data-default-selected={e.selected}
-                            // onMouseLeave={() => {
-                            //     setFocused(-1);
-                            // }}
-                            // className={`${e.selected ? "selected " : ""}`}
-                        >
-                            <span>{e.selected ? "•" : ""}</span>
-                            {e.label}
-                        </li>
-                    ))}
-                </ul>
-            </div>
+                    }}
+                >
+                    <ul>
+                        {optSelectData.items.map((e, i) => (
+                            <li
+                                role="menuitem"
+                                key={e.label}
+                                onClick={e.action}
+                                onContextMenu={e.action}
+                                style={e.style}
+                                ref={(node) => {
+                                    if (node && i === focused)
+                                        node.scrollIntoView({ behavior: "instant", block: "nearest" });
+                                }}
+                                data-focused={i === focused}
+                                onMouseEnter={() => {
+                                    setFocused(i);
+                                }}
+                                data-default-selected={e.selected}
+                                // onMouseLeave={() => {
+                                //     setFocused(-1);
+                                // }}
+                                // className={`${e.selected ? "selected " : ""}`}
+                            >
+                                <span>{e.selected ? "•" : ""}</span>
+                                {e.label}
+                            </li>
+                        ))}
+                    </ul>
+                </div>
+            </FocusLock>
         )
     );
 };

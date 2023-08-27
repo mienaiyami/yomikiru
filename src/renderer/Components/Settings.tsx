@@ -89,6 +89,13 @@ const ThemeElement = ({
                 <label
                     className={`${variable === `var(${prop})` ? "disabled" : ""} ${checked ? "selected" : ""}`}
                     title="Link to variable"
+                    onKeyDown={(e) => {
+                        if ([" ", "Enter"].includes(e.key)) {
+                            e.preventDefault();
+                            e.currentTarget.click();
+                        }
+                    }}
+                    tabIndex={0}
                 >
                     <input
                         type="checkbox"

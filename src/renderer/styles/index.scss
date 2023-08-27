@@ -219,6 +219,7 @@ body {
         &:focus,
         &:active {
             box-shadow: var(--btn-color-focus) 0 0 0px 2px;
+            outline: transparent;
         }
         &.disabled {
             opacity: 0.5;
