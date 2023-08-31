@@ -2759,7 +2759,8 @@ body {
                 .row {
                     display: flex;
                     justify-content: center;
-                    width: calc(100% + calc(max(0%, calc(var(--varWidth) - 100%)) * 2));
+                    // todo check if need to define for .wide as well
+                    width: calc(100% + calc(max(0%, calc(var(--varWidth) - 100%)) * 1));
                     --max-width: 250%;
                     --max-height: auto;
                     transform: translate3d(0, 0, 0);
