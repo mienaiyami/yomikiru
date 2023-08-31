@@ -2734,18 +2734,28 @@ body {
                         height: var(--body-height);
                     }
                 }
-                &.fitHorizontally .row {
-                    width: 100%;
-                    .readerImg {
+                &.fitHorizontally {
+                    .row {
                         width: 100%;
-                        height: auto !important;
+                        .readerImg {
+                            width: 100%;
+                            height: auto !important;
+                        }
+                        &.twoPagePerRow {
+                            &.wide {
+                                .readerImg {
+                                    width: 100% !important;
+                                    height: auto !important;
+                                }
+                            }
+                            .readerImg {
+                                width: 50% !important;
+                                height: auto !important;
+                            }
+                        }
                     }
                 }
-                &.fitHorizontally .row.twoPagePerRow .readerImg {
-                    width: 50% !important;
-                    height: auto !important;
-                }
-                &.original .row {
+                &.fitHorizontally .row &.original .row {
                     width: 100%;
                     .readerImg {
                         width: auto !important;
