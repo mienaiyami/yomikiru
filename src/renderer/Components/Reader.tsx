@@ -1191,7 +1191,7 @@ const Reader = () => {
                     }
                 }}
                 onMouseDown={(e) => {
-                    if (readerRef.current && imgContRef.current)
+                    if (e.button === 0 && readerRef.current && imgContRef.current)
                         setMouseDown({
                             left: (isSideListPinned ? imgContRef.current : readerRef.current).scrollLeft,
                             top: (isSideListPinned ? imgContRef.current : readerRef.current).scrollTop,
