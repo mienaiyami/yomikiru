@@ -70,20 +70,32 @@ const LocationsTab = (): ReactElement => {
                     }).length
                 );
                 const dirNames = files.reduce((arr: LocationData[], cur) => {
-                    const stat = window.fs.lstatSync(window.path.join(link, cur));
-                    if (window.fs.existsSync(window.path.join(link, cur))) {
-                        if (
-                            stat.isDirectory() ||
-                            [".zip", ".cbz", ".rar", ".7z", ".epub", ".pdf", ".xhtml", ".html", ".txt"].includes(
-                                window.path.extname(cur).toLowerCase()
-                            )
-                        ) {
-                            arr.push({
-                                name: stat.isFile() ? window.app.replaceExtension(cur) : cur,
-                                link: window.path.join(link, cur),
-                                dateModified: stat.mtimeMs,
-                            });
+                    try {
+                        const stat = window.fs.lstatSync(window.path.join(link, cur));
+                        if (window.fs.existsSync(window.path.join(link, cur))) {
+                            if (
+                                stat.isDirectory() ||
+                                [
+                                    ".zip",
+                                    ".cbz",
+                                    ".rar",
+                                    ".7z",
+                                    ".epub",
+                                    ".pdf",
+                                    ".xhtml",
+                                    ".html",
+                                    ".txt",
+                                ].includes(window.path.extname(cur).toLowerCase())
+                            ) {
+                                arr.push({
+                                    name: stat.isFile() ? window.app.replaceExtension(cur) : cur,
+                                    link: window.path.join(link, cur),
+                                    dateModified: stat.mtimeMs,
+                                });
+                            }
                         }
+                    } catch (err) {
+                        console.error(err);
                     }
                     return arr;
                     //  return (window.fs.lstatSync(window.path.join(link, e)) || false).isDirectory()
@@ -305,9 +317,13 @@ const LocationsTab = (): ReactElement => {
                             if (process.platform === "win32")
                                 if (/.:\\.*/.test(val)) {
                                     const aa = window.path.normalize(val);
-                                    if (window.fs.existsSync(aa) && window.fs.lstatSync(aa).isFile())
-                                        return openInReader(aa);
-                                    setCurrentLink(aa);
+                                    try {
+                                        if (window.fs.existsSync(aa) && window.fs.lstatSync(aa).isFile())
+                                            return openInReader(aa);
+                                        setCurrentLink(aa);
+                                    } catch (err) {
+                                        console.error(err);
+                                    }
                                     return;
                                 }
                             if (val === ".." + window.path.sep)
