@@ -70,6 +70,7 @@ const AnilistEdit = () => {
                                     <span>{tempData.media.title.native || "~"}</span>
                                     <span>
                                         <a
+                                            tabIndex={0}
                                             onClick={() => {
                                                 window.electron.shell.openExternal(tempData.media.siteUrl);
                                             }}

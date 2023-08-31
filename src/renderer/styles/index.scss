@@ -496,6 +496,16 @@ body {
     .icon {
         color: var(--icon-color) !important;
     }
+    a {
+        &:focus {
+            outline: transparent;
+        }
+        &[tabindex] {
+            &:focus {
+                box-shadow: var(--text-input-bg-focus) 0 0 0px 2px;
+            }
+        }
+    }
     button {
         font-family: inherit;
 
