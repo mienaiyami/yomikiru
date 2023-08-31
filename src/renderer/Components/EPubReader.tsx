@@ -12,11 +12,7 @@ import css, { Rule as CSSRule } from "css";
 import { AppContext } from "../App";
 import { useAppDispatch, useAppSelector } from "../store/hooks";
 import { setReaderOpen } from "../store/isReaderOpen";
-// import { setLoadingMangaPercent } from "../store/loadingMangaPercent";
-// import { setLoadingManga } from "../store/isLoadingManga";
-import { setLinkInReader } from "../store/linkInReader";
 import { newHistory, updateCurrentBookHistory } from "../store/history";
-// import contextMenu, { setContextMenu } from "../store/contextMenu";
 import EPUBReaderSettings from "./EPubReaderSettings";
 import EPubReaderSideList from "./EPubReaderSideList";
 import { setEpubReaderSettings, setReaderSettings } from "../store/appSettings";
@@ -26,18 +22,6 @@ import { unzip } from "../MainImports";
 import ReaderSideList from "./ReaderSideList";
 import { setMangaInReader } from "../store/mangaInReader";
 
-// type ReaderImageSrc = string;
-// type ReaderHTML = Document;
-
-// interface DisplayData {
-//     type: "image" | "html";
-//     /**
-//      * id from content.opf
-//      */
-//     id: string;
-//     url: string;
-//     content: ReaderHTML | ReaderImageSrc;
-// }
 interface DisplayData {
     /**
      * id from content.opf
@@ -46,14 +30,6 @@ interface DisplayData {
     url: string;
     content?: Document;
 }
-// const ImagePart = ({ src }: { src: ReaderImageSrc }) => {
-//     return (
-//         <div className="cont imgCont">
-//             <img src={src} alt="Image" />
-//         </div>
-//     );
-// };
-
 const StyleSheets = memo(
     ({ sheets }: { sheets: string[] }) => {
         return (
@@ -194,28 +170,8 @@ const HTMLSolo = memo(
                                 });
                             };
                         });
-                        // if (!rendered && bookmarkedElem) {
-                        //     setTimeout(() => {
-                        //         const elem = node.querySelector(bookmarkedElem);
-                        //         if (elem) elem.scrollIntoView({ block: "start" });
-                        //     }, 200);
-                        // } else if (
-                        //     tocData &&
-                        //     tocData.nav[0].src !== currentChapterURL &&
-                        //     currentChapterURL.includes("#") &&
-                        //     currentChapterURL.includes(url)
-                        // ) {
-                        //     setTimeout(() => {
-                        //         const el = node.querySelector(
-                        //             `[data-id="${currentChapterURL.split("#")[1]}"]`
-                        //         );
-                        //         if (el) el.scrollIntoView({ block: "start" });
-                        //     }, 100);
-                        // }
-                        // setRendered(true);
                     }
                 }}
-                // key={"key-" + i}
             ></div>
         );
     }
@@ -278,9 +234,6 @@ const HTMLPart = memo(
             );
             if (lastIndex < 0) lastIndex = Number.MAX_SAFE_INTEGER;
             linksInBetween.push(...displayDataWithOrder.slice(startIndex, lastIndex));
-            // console.log(currentChapterURL);
-            // console.log(tocData.nav.map((e) => e.src.split("\\").pop()));
-            // console.log(currentChapterURL, afterCurrentIndex, startIndex, tocData.nav, linksInBetween);
         }
         if (!tocData && loadOneChapter) return <p>Error/Loading</p>;
         return (
@@ -352,16 +305,6 @@ const HTMLPart = memo(
     }
 );
 
-// const PartCont = memo(({ data }: { data: DisplayData | string }) => {
-//     console.log("rendereddddd");
-//     if (typeof data === "string") return <p className="error">{data}</p>;
-//     return data.type === "html" ? (
-//         <HTMLPart xhtml={data.content as ReaderHTML} url={data.url} />
-//     ) : (
-//         <ImagePart src={data.content as ReaderImageSrc} />
-//     );
-// });
-
 const EPubReader = () => {
     const { bookProgressRef, setContextMenuData } = useContext(AppContext);
 
@@ -373,8 +316,6 @@ const EPubReader = () => {
     const isLoadingManga = useAppSelector((store) => store.isLoadingManga);
     const isSettingOpen = useAppSelector((store) => store.isSettingOpen);
     const bookmarks = useAppSelector((store) => store.bookmarks);
-    // const pageNumChangeDisabled = useAppSelector((store) => store.pageNumChangeDisabled);
-    // const prevNextChapter = useAppSelector((store) => store.prevNextChapter);
 
     const dispatch = useAppDispatch();
 
@@ -491,7 +432,6 @@ const EPubReader = () => {
         (ev: MouseEvent | React.MouseEvent<HTMLAnchorElement, MouseEvent>) => {
             ev.preventDefault();
             const data_href = (ev.currentTarget as Element).getAttribute("data-href");
-            console.log(data_href, currentChapterURL);
             if (data_href) {
                 if (appSettings.epubReaderSettings.loadOneChapter) {
                     if (data_href.includes("#")) {

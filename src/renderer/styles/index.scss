@@ -1954,6 +1954,9 @@ body {
             &.noCursor {
                 cursor: none;
             }
+            &.grabCursor {
+                cursor: grabbing;
+            }
             &.noOverflow {
                 .readerSettings {
                     right: 0;

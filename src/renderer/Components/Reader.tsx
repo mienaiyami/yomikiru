@@ -1012,7 +1012,7 @@ const Reader = () => {
             className={
                 (isSideListPinned ? "sideListPinned " : "") +
                 "reader " +
-                (zenMode && appSettings.hideCursorInZenMode ? "noCursor " : "") +
+                (zenMode && appSettings.hideCursorInZenMode ? "noCursor " : mouseDown ? "grabCursor" : "") +
                 ((readerRef.current?.offsetHeight || 0) >= (imgContRef.current?.scrollHeight || 0)
                     ? "noOverflow "
                     : "")
@@ -1100,7 +1100,6 @@ const Reader = () => {
                             : "none",
                     "--blend-bg": `rgba(${appSettings.readerSettings.customColorFilter.r},${appSettings.readerSettings.customColorFilter.g},${appSettings.readerSettings.customColorFilter.b},${appSettings.readerSettings.customColorFilter.a})`,
                     "--blend-mode": appSettings.readerSettings.customColorFilter.blendMode,
-                    cursor: mouseDown ? "grabbing" : "default",
                 }}
                 onWheel={(e) => {
                     if (e.ctrlKey) return;
