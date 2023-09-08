@@ -383,7 +383,8 @@ const EPUBReaderSettings = memo(
                                             })
                                         );
                                     }}
-                                    paraAfter="Font Weight (if supported for font)"
+                                    title="only if supported for font"
+                                    paraAfter="Font Weight"
                                 />
                                 <InputRange
                                     value={appSettings.epubReaderSettings.fontWeight}
