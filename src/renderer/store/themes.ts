@@ -11,7 +11,6 @@ export const setSysBtnColor = (blurred = false) => {
         if (blurred) {
             color = color.alpha(0.3);
         }
-        console.log(color.hexa());
         topbarElem.style.color = color.hexa();
         window.electron.getCurrentWindow().setTitleBarOverlay({
             color: window.getComputedStyle(topbarElem).backgroundColor,
