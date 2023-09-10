@@ -1,6 +1,6 @@
 # Yomikiru
 
-Manga/Manhwa/Comic/EPub Reader (not a downloader/host).
+Manga/Manhwa/Comic/Novel Reader (not a downloader/host).
 It is a offline app to read locally stored manga or epub with great reading experience.
 
 [![Github Latest Release](https://img.shields.io/github/v/tag/mienaiyami/yomikiru?label=release&style=flat-square&logo=github)](https://github.com/mienaiyami/yomikiru/releases/latest) |
@@ -10,7 +10,7 @@ It is a offline app to read locally stored manga or epub with great reading expe
 
 ## Who is this app for?
 
-- For people who prefer to download and read manga/manhwa (from services like hakuneko or tachidesk).
+- For people who prefer to download and read manga/manhwa (from services like hakuneko, tachidesk, torrents, etc.).
 - For people who download manga in batch.
 - For people who have a lot of manga and want to read them in organized way.
 - For people who want better reading experience, be it manhwa (vertical scroll with no gap), manga (2 pages per row, custom gap between rows, click mode with left-to-right or right-to-left and more), or epub (custom font size, magrins, font family and more).

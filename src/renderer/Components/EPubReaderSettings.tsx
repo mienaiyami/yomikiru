@@ -383,7 +383,7 @@ const EPUBReaderSettings = memo(
                                             })
                                         );
                                     }}
-                                    title="only if supported for font"
+                                    title="only if supported for the font-family"
                                     paraAfter="Font Weight"
                                 />
                                 <InputRange
