@@ -1,7 +1,7 @@
 import { faGithub } from "@fortawesome/free-brands-svg-icons";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { ReactElement, useEffect, useLayoutEffect, useRef, useState } from "react";
-import { faEdit, faPlus, faTrash } from "@fortawesome/free-solid-svg-icons";
+import { faEdit, faHeart, faPlus, faTrash } from "@fortawesome/free-solid-svg-icons";
 import themesRaw from "../themeInit.json";
 import { newTheme, deleteTheme, setTheme, resetAllTheme, addThemes } from "../store/themes";
 import { useAppDispatch, useAppSelector } from "../store/hooks";
@@ -180,7 +180,6 @@ const Settings = (): ReactElement => {
                                     <div className="main row">
                                         <input type="text" value={appSettings.baseDir} readOnly />
                                         <button
-                                            // onFocus={(e) => e.currentTarget.blur()}
                                             onClick={() => {
                                                 promptSelectDir((path) =>
                                                     dispatch(setAppSettings({ baseDir: path as string }))
@@ -515,7 +514,6 @@ const Settings = (): ReactElement => {
                                     <h3>Bookmarks</h3>
                                     <div className="main row">
                                         <button
-                                            // onFocus={(e) => e.currentTarget.blur()}
                                             onClick={() => {
                                                 if (bookmarks.length === 0) {
                                                     window.dialog.customError({
@@ -547,7 +545,6 @@ const Settings = (): ReactElement => {
                                             Export
                                         </button>
                                         <button
-                                            // onFocus={(e) => e.currentTarget.blur()}
                                             onClick={() => {
                                                 const opt = window.electron.dialog.showOpenDialogSync(
                                                     window.electron.getCurrentWindow(),
@@ -606,7 +603,6 @@ const Settings = (): ReactElement => {
                                             Import
                                         </button>
                                         <button
-                                            // onFocus={(e) => e.currentTarget.blur()}
                                             onClick={() => {
                                                 window.dialog
                                                     .warn({
@@ -898,7 +894,6 @@ const Settings = (): ReactElement => {
                                             readOnly
                                         />
                                         <button
-                                            // onFocus={(e) => e.currentTarget.blur()}
                                             onClick={(e) => {
                                                 promptSelectDir(
                                                     (path) => {
@@ -955,7 +950,6 @@ const Settings = (): ReactElement => {
                                             readOnly
                                         />
                                         <button
-                                            // onFocus={(e) => e.currentTarget.blur()}
                                             onClick={(e) => {
                                                 promptSelectDir((path) => {
                                                     setTempFolder(path as string);
@@ -1551,7 +1545,6 @@ const Settings = (): ReactElement => {
                                             <FontAwesomeIcon icon={faGithub} /> Announcements
                                         </button>
                                         <button
-                                            // onFocus={(e) => e.currentTarget.blur()}
                                             onClick={() =>
                                                 window.electron.shell.openExternal(
                                                     "https://github.com/mienaiyami/yomikiru/issues"
@@ -1560,6 +1553,19 @@ const Settings = (): ReactElement => {
                                         >
                                             <FontAwesomeIcon icon={faGithub} /> Submit Issue, Feature Request, Ask
                                             Question
+                                        </button>
+                                        <button
+                                            onClick={() =>
+                                                window.electron.shell.openExternal(
+                                                    "https://github.com/sponsors/mienaiyami"
+                                                )
+                                            }
+                                            style={{
+                                                gap: "4px",
+                                            }}
+                                        >
+                                            <FontAwesomeIcon icon={faHeart} />
+                                            Support
                                         </button>
                                     </div>
                                     <hr className="mini" />

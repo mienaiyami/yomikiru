@@ -1699,6 +1699,13 @@ body {
                                 // border-inline-width: 0;
                                 // box-shadow: inset 0 -2px 0 0 var(--divider-color);
                             }
+                            button {
+                                display: flex;
+                                flex-direction: row;
+                                gap: 0.3em;
+                                justify-content: center;
+                                align-items: center;
+                            }
                         }
                     }
                     ul {
