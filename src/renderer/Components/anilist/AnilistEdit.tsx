@@ -7,6 +7,7 @@ import { removeAnilistTracker } from "../../store/anilistTracking";
 import { setAnilistCurrentManga } from "../../store/anilistCurrentManga";
 
 import FocusLock from "react-focus-lock";
+import Link from "../Element/Link";
 
 const AnilistEdit = () => {
     const dispatch = useAppDispatch();
@@ -69,14 +70,7 @@ const AnilistEdit = () => {
                                     <span>{tempData.media.title.romaji || "~"}</span>
                                     <span>{tempData.media.title.native || "~"}</span>
                                     <span>
-                                        <a
-                                            tabIndex={0}
-                                            onClick={() => {
-                                                window.electron.shell.openExternal(tempData.media.siteUrl);
-                                            }}
-                                        >
-                                            {tempData.media.siteUrl}
-                                        </a>
+                                        <Link href={tempData.media.siteUrl}>{tempData.media.siteUrl}</Link>
                                     </span>
                                 </div>
                                 {/* <div className="col">
