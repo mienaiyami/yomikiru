@@ -2780,8 +2780,8 @@ body {
                     display: flex;
                     justify-content: center;
                     // todo check if need to define for .wide as well
-                    width: calc(100% + calc(max(0%, calc(var(--varWidth) - 100%)) * 1));
-                    --max-width: 250%;
+                    width: calc(100% + calc(max(0%, calc(var(--varWidth) - 100%))));
+                    --max-width: 100%;
                     --max-height: auto;
                     transform: translate3d(0, 0, 0);
 
@@ -2792,8 +2792,9 @@ body {
                     &.rtl {
                         flex-direction: row-reverse;
                     }
-
+                    // max-width: var(--max-width);
                     &.wide {
+                        width: calc((100% + calc(max(0%, calc(var(--varWidth) - 100%))) * 2));
                         .readerImg {
                             width: calc(var(--varWidth) * 2);
                             max-width: calc(var(--max-width) * 2);
@@ -2801,44 +2802,46 @@ body {
                     }
 
                     .readerImg {
-                        max-width: calc(var(--max-width));
                         max-height: var(--max-height);
                         width: var(--varWidth);
                         transform: translate3d(0, 0, 0);
                         image-orientation: none;
 
-                        // min-width: 1%;
                         // image-rendering: pixelated;
+                        max-width: var(--max-width);
+                        // max-width: 100%;
                     }
-
+                    //todo check if it is even needed
                     &.widthClamped {
+                        max-width: 100%;
                         .readerImg {
                             max-width: 100%;
                         }
                     }
-
+                    //todo fix for #241
                     &.twoPagePerRow {
+                        width: calc((100% + calc(max(0%, calc(var(--varWidth) - 100%))) * 1));
                         .readerImg {
-                            max-width: calc(var(--max-width) / 2);
                             width: calc(var(--varWidth) / 2);
+                            max-width: min(50%, calc(var(--max-width) / 2));
                         }
                         &.wide {
                             .readerImg {
-                                max-width: clc(var(--max-width));
                                 width: var(--varWidth);
+                                max-width: min(100%, var(--max-width));
                             }
                         }
 
                         &.widthClamped {
                             .readerImg {
                                 max-width: 50%;
-                                width: calc(var(--varWidth) / 2);
+                                // width: calc(var(--varWidth) / 2);
                             }
 
                             &.wide {
                                 .readerImg {
                                     max-width: 100%;
-                                    width: var(--varWidth);
+                                    // width: var(--varWidth);
                                 }
                             }
                         }
