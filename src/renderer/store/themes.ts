@@ -2,6 +2,25 @@ import { createSlice, current, PayloadAction } from "@reduxjs/toolkit";
 import themeInit from "../themeInit.json";
 import { saveJSONfile, themesPath } from "../MainImports";
 
+export const setSysBtnColor = (blurred = false) => {
+    const topbarElem = document.querySelector<HTMLDivElement>("body #topBar");
+    if (topbarElem) {
+        let color = window.color.new(
+            window.getComputedStyle(document.body).getPropertyValue("--icon-color") || "#ffffff"
+        );
+        if (blurred) {
+            color = color.alpha(0.3);
+        }
+        console.log(color.hexa());
+        topbarElem.style.color = color.hexa();
+        window.electron.getCurrentWindow().setTitleBarOverlay({
+            color: window.getComputedStyle(topbarElem).backgroundColor,
+            symbolColor: color.hexa(),
+            height: Math.floor(window.app.titleBarHeight * window.electron.webFrame.getZoomFactor()),
+        });
+    }
+};
+
 const setBodyTheme = ({ allData, name }: Themes) => {
     if (allData.map((e) => e.name).includes(name)) {
         let themeStr = "";
@@ -14,14 +33,7 @@ const setBodyTheme = ({ allData, name }: Themes) => {
             document.body.setAttribute("data-theme", name);
             if (process.platform === "win32") {
                 setTimeout(() => {
-                    window.electron.getCurrentWindow().setTitleBarOverlay({
-                        color: window.getComputedStyle(document.querySelector("body #topBar")!).backgroundColor,
-                        symbolColor: window.getComputedStyle(
-                            document.querySelector("body #topBar .homeBtns button")!
-                        ).color,
-                        height: Math.floor(40 * window.electron.webFrame.getZoomFactor()),
-                    });
-
+                    setSysBtnColor(!window.electron.getCurrentWindow().isFocused());
                     (document.querySelector(".windowBtnCont") as HTMLDivElement).style.right = `${
                         140 * (1 / window.electron.webFrame.getZoomFactor())
                     }px`;

@@ -12,6 +12,7 @@ import { AppContext } from "../App";
 import { useAppDispatch, useAppSelector } from "../store/hooks";
 import { setOpenSetting, toggleOpenSetting } from "../store/isSettingOpen";
 import { setPageNumChangeDisabled } from "../store/pageNumChangeDisabled";
+import { setSysBtnColor } from "../store/themes";
 
 const TopBar = (): ReactElement => {
     const [title, setTitle] = useState<string>("Yomikiru");
@@ -64,25 +65,12 @@ const TopBar = (): ReactElement => {
         setMaximized(window.electron.getCurrentWindow().isMaximized);
         window.electron.getCurrentWindow()?.on("maximize", () => setMaximized(true));
         window.electron.getCurrentWindow()?.on("unmaximize", () => setMaximized(false));
-        //todo
-        // const setSysBtnColor = (blurred = false) => {
-        //     let color = window.color.new(window.getComputedStyle(document.body).color);
-        //     if (blurred) color = color.alpha(0.3);
-        //     console.log(color);
-        //     (document.querySelector("body #topBar") as HTMLDivElement).style.color = color.hexa();
-        //     window.electron.getCurrentWindow().setTitleBarOverlay({
-        //         symbolColor: color.hexa(),
-        //         height: Math.floor(40 * window.electron.webFrame.getZoomFactor()),
-        //     });
-        // };
 
         const onBlur = () => {
-            document.body.classList.add("blurred");
-            // setSysBtnColor(true);
+            setSysBtnColor(true);
         };
         const onFocus = () => {
-            document.body.classList.remove("blurred");
-            // setSysBtnColor();
+            setSysBtnColor();
         };
 
         window.electron.getCurrentWindow()?.isFocused() ? onFocus() : onBlur();

@@ -3,7 +3,15 @@ import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { ReactElement, useEffect, useLayoutEffect, useRef, useState } from "react";
 import { faEdit, faLink, faPlus, faSync, faTrash, faUnlink } from "@fortawesome/free-solid-svg-icons";
 import themesRaw from "../themeInit.json";
-import { newTheme, updateTheme, deleteTheme, setTheme, resetAllTheme, addThemes } from "../store/themes";
+import {
+    newTheme,
+    updateTheme,
+    deleteTheme,
+    setTheme,
+    resetAllTheme,
+    addThemes,
+    setSysBtnColor,
+} from "../store/themes";
 import { useAppDispatch, useAppSelector } from "../store/hooks";
 import { resetShortcuts, setShortcuts } from "../store/shortcuts";
 import { setOpenSetting } from "../store/isSettingOpen";
@@ -20,7 +28,7 @@ import InputCheckbox from "./Element/InputCheckbox";
 import { setUnzipping } from "../store/unzipping";
 
 import FocusLock from "react-focus-lock";
-
+// todo move theme and shortcut to settings/*
 const ThemeElement = ({
     color,
     prop,
@@ -180,13 +188,7 @@ const ThemeCont = () => {
             vars += `${e.prop}:${e.value};`;
         });
         document.body.setAttribute("style", vars);
-        if (process.platform === "win32")
-            window.electron.getCurrentWindow().setTitleBarOverlay({
-                color: window.getComputedStyle(document.querySelector("body #topBar")!).backgroundColor,
-                symbolColor: window.getComputedStyle(document.querySelector("body #topBar .homeBtns button")!)
-                    .color,
-                height: Math.floor(window.app.titleBarHeight * window.electron.webFrame.getZoomFactor()),
-            });
+        if (process.platform === "win32") setSysBtnColor(!window.electron.getCurrentWindow().isFocused());
     };
     const saveTheme = (saveAndReplace = false) => {
         const nameInput = themeNameInputRef.current;
