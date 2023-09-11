@@ -1830,28 +1830,17 @@ body {
                             }
 
                             .resetBtn {
-                                background-color: var(--btn-color);
                                 padding: 10px;
                                 font-size: 15px;
                                 align-items: center;
                                 border-radius: 3px;
                                 overflow: initial;
-
-                                &:hover {
-                                    background-color: var(--btn-color-hover);
-                                }
-                                &:focus,
-                                &:active {
-                                    background-color: var(--btn-color-focus);
-                                    box-shadow: var(--btn-shadow-focus) 0 0 0px 2px;
-                                }
                             }
                             .selected {
                                 background-color: var(--btn-color-focus);
                             }
                             label {
                                 cursor: pointer;
-                                background-color: var(--btn-color);
                                 padding: 10px;
                                 font-size: 15px;
                                 align-items: center;
@@ -1861,13 +1850,8 @@ body {
                                     display: none;
                                 }
 
-                                &:focus,
                                 &:active {
                                     background-color: var(--btn-color-focus);
-                                    box-shadow: var(--btn-shadow-focus) 0 0 0px 2px;
-                                }
-                                &:hover {
-                                    background-color: var(--btn-color-hover);
                                 }
                             }
                         }
