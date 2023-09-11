@@ -1,30 +1,15 @@
 import fs from "fs";
 import path from "path";
 import IS_PORTABLE from "./IS_PORTABLE";
-import { exec, spawn, spawnSync } from "child_process";
+import { spawn } from "child_process";
 import { app, BrowserWindow, dialog, shell } from "electron";
 import fetch from "electron-fetch";
 import crossZip from "cross-zip";
 import logger from "electron-log";
 import { download, File } from "electron-dl";
+import { exec as execSudo } from "@vscode/sudo-prompt";
 
 declare const DOWNLOAD_PROGRESS_WEBPACK_ENTRY: string;
-
-/**
- * prevent deletion of these files in "Portable" version of app on installing new update.
- * add new settings/store file to this.
- */
-// const fileToKeep = [
-//     "bookmarks.json",
-//     "history.json",
-//     "settings.json",
-//     "themes.json",
-//     "shortcuts.json",
-//     "logs",
-//     "main.log",
-//     "renderer.log",
-//     "DISABLE_HARDWARE_ACCELERATION",
-// ];
 
 const downloadLink = "https://github.com/mienaiyami/yomikiru/releases/download/v";
 /**
@@ -80,30 +65,9 @@ const checkForUpdate = async (windowId: number, skipMinor = false, promptAfterCh
                 if (response.response === 1) {
                     downloadUpdates(latestVersion.join("."), windowId);
                     shell.openExternal("https://github.com/mienaiyami/yomikiru/releases");
-
-                    // const newWindow = new BrowserWindow({
-                    //     width: 1200,
-                    //     height: 800,
-                    //     minWidth: 940,
-                    //     minHeight: 560,
-                    //     backgroundColor: "#272727",
-                    //     title: `${app.getVersion()} ---> ${latestVersion}`,
-                    // });
-                    // newWindow.loadURL("https://github.com/mienaiyami/yomikiru/releases");
-                    // newWindow.setMenuBarVisibility(false);
                 }
                 if (response.response === 2) {
                     shell.openExternal("https://github.com/mienaiyami/yomikiru/releases");
-                    // const newWindow = new BrowserWindow({
-                    //     width: 1200,
-                    //     height: 800,
-                    //     minWidth: 940,
-                    //     minHeight: 560,
-                    //     backgroundColor: "#272727",
-                    //     title: `${app.getVersion()} ---> ${latestVersion}`,
-                    // });
-                    // newWindow.loadURL("https://github.com/mienaiyami/yomikiru/releases");
-                    // newWindow.setMenuBarVisibility(false);
                 }
             });
         return;
@@ -147,7 +111,6 @@ const downloadUpdates = (latestVersion: string, windowId: number) => {
     const window = BrowserWindow.fromId(windowId ?? 1)!;
     const tempPath = path.join(app.getPath("temp"), "yomikiru updates " + new Date().toDateString());
     if (fs.existsSync(tempPath)) fs.rmSync(tempPath, { recursive: true, force: true });
-    // spawnSync("powershell.exe", [`rm "${tempPath}" -r -force`]);
     fs.mkdirSync(tempPath);
     const promptInstall = () => {
         newWindow.close();
@@ -171,10 +134,6 @@ const downloadUpdates = (latestVersion: string, windowId: number) => {
             onStarted: () => {
                 logger.log("Downloading updates...");
                 logger.log(dl, `"${tempPath}"`);
-                // dialog.showMessageBox(window, {
-                //     message: "Download Started",
-                //     type: "info",
-                // });
             },
             onCancel: () => {
                 logger.log("Download canceled.");
@@ -183,7 +142,6 @@ const downloadUpdates = (latestVersion: string, windowId: number) => {
             onProgress: (progress) => {
                 webContents.send("progress", progress);
             },
-            // showProgressBar: true,
         }).catch((reason) => {
             dialog.showMessageBox(window, {
                 type: "error",
@@ -252,41 +210,38 @@ const downloadUpdates = (latestVersion: string, windowId: number) => {
         const dl = downloadLink + latestVersion + "/" + `Yomikiru-v${latestVersion}-amd64.deb`;
         downloadFile(dl, newWindow.webContents, (file) => {
             logger.log(`${file.filename} downloaded.`);
-            const script = `
-#!/bin/bash
-
-sudo dpkg -i "${file.path}"
-            `;
-            fs.writeFileSync(path.join(tempPath, "install.sh"), script);
             dialog
                 .showMessageBox(window, {
                     type: "info",
                     title: "Updates downloaded",
-                    message:
-                        'Updates downloaded.\nCurrently auto update not available for linux.\nTo install updates, run "install.sh" with permission to execute in following directory. Or install .deb normally.\n\n"' +
-                        tempPath +
-                        '"',
-                    buttons: ["Open Directory"],
+                    message: "Updates downloaded.",
+                    buttons: ["Install Now", "Install on Quit"],
                     cancelId: 1,
                 })
                 .then((res) => {
                     if (res.response === 0) {
-                        exec(`xdg-open "${tempPath}"`, (err) => {
-                            if (err) {
-                                if (err.message.includes("xdg-open: not found")) {
-                                    dialog.showMessageBoxSync(window, {
-                                        message:
-                                            "xdg-open: not found.\nRun 'sudo apt install xdg-utils' to use this command.",
-                                        title: "Yomikiru",
-                                        type: "error",
-                                    });
-                                } else
-                                    dialog.showMessageBoxSync(window, {
-                                        message: err.message,
-                                        title: "Yomikiru",
-                                        type: "error",
-                                    });
+                        execSudo(
+                            `dpkg -i "${file.path}"`,
+                            {
+                                name: "Yomikiru",
+                            },
+                            (err) => {
+                                if (err) throw err;
+                                logger.log("Installing updates...");
                             }
+                        );
+                    } else {
+                        app.on("will-quit", () => {
+                            execSudo(
+                                `dpkg -i "${file.path}"`,
+                                {
+                                    name: "Yomikiru",
+                                },
+                                (err) => {
+                                    if (err) throw err;
+                                    logger.log("Installing updates...");
+                                }
+                            );
                         });
                     }
                 });
