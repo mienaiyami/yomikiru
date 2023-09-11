@@ -1,4 +1,4 @@
-import { faMinus, faPlus, faWrench } from "@fortawesome/free-solid-svg-icons";
+import { faMinus, faPlus, faSlidersH } from "@fortawesome/free-solid-svg-icons";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import React, { useLayoutEffect, useState, memo } from "react";
 import InputNumber from "../Element/InputNumber";
@@ -76,7 +76,7 @@ const AnilistBar = memo(() => {
                     <FontAwesomeIcon icon={faPlus} />
                 </button>
                 <button data-tooltip="More Options" onClick={() => dispatch(setAniEditOpen(true))}>
-                    <FontAwesomeIcon icon={faWrench} />
+                    <FontAwesomeIcon icon={faSlidersH} />
                 </button>
             </div>
         );

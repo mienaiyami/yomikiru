@@ -2,19 +2,24 @@ Does not follow semver.
 
 ---
 
-<!-- ## Added -->
+## Added
+
+- option to sync app settings and themes across instances.
+- added #261 and private option in anilist data editor
 
 ## Changed
 
-- keyboard focus-able anilist link
-- better fit for color input in reader setting
+- UI:
+  - better blurred window titlebar
+  - context-menu separator
+  - more
+- keyboard accessible settings tab button.
+- debian after update download prompt.
 
 ## Fixed
 
-- fixed #256.
-- fixed: middle mouse button behavior in reader.
-- fixed: inaccurate width over 100%, <https://github.com/mienaiyami/yomikiru/issues/241#issuecomment-1695258454>
-- fixed loading error when location is drive name
-- fixed: wide images width in horizontal fit mode
+- fixed #262
+- fixed context menu for svg images in epub
+- fixed: clicking 'h' not saving manga progress sometimes.
 
 ---
