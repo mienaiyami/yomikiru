@@ -145,11 +145,12 @@ const history = createSlice({
             const stateDup: HistoryItem[] = JSON.parse(JSON.stringify(state));
             const link = window.app.linkInReader.link;
             const index = stateDup.findIndex((e) => e.data.link === link);
-            // not working on closing window
-            // use sth like window.lastMangaOpened;
-            // window.logger.log("asking to save ", link);
             if (index > -1) {
-                // console.log(`Updating ${stateDup[index].mangaName} to page ${window.app.currentPageNumber}`);
+                // console.log(
+                //     `Updating ${(stateDup[index] as MangaHistoryItem).data.mangaName} to page ${
+                //         window.app.currentPageNumber
+                //     }`
+                // );
                 (stateDup[index] as MangaHistoryItem).data.page = window.app.currentPageNumber;
                 saveJSONfile(historyPath, stateDup);
             }

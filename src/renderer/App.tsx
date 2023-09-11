@@ -389,7 +389,8 @@ const App = (): ReactElement => {
     const closeReader = () => {
         // console.log(linkInReader, window.app.linkInReader);
         // console.log(window.app.linkInReader);
-        if (mangaInReader) dispatch(updateCurrentHistoryPage());
+        if (window.app.linkInReader && window.app.linkInReader.type === "image")
+            dispatch(updateCurrentHistoryPage());
         if (window.app.linkInReader && window.app.linkInReader.type === "book")
             dispatch(updateCurrentBookHistory());
         dispatch(setReaderOpen(false));
