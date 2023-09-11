@@ -597,6 +597,15 @@ const Reader = () => {
         images.forEach((e, i) => {
             const img = document.createElement("img");
 
+            const dynamic = true;
+
+            const loaded = (success = false) => {
+                setImagesLoaded((init) => init + 1);
+                setImageWidthContainer((init) => [
+                    ...init,
+                    { img, index: i, isWide: success ? img.height / img.width <= 1.2 : false },
+                ]);
+            };
             if (appSettings.useCanvasBasedReader) {
                 const canvas = document.createElement("canvas");
                 canvas.setAttribute("draggable", "false");
@@ -666,6 +675,11 @@ const Reader = () => {
             } else {
                 img.setAttribute("draggable", "false");
                 img.setAttribute("data-pagenumber", JSON.stringify(i + 1));
+                if (dynamic) {
+                    img.loading = "lazy";
+                    img.height = window.innerHeight;
+                    img.width = window.innerHeight / 1.5;
+                }
                 img.classList.add("readerImg");
                 img.oncontextmenu = (ev) => {
                     ev.stopPropagation();
@@ -698,39 +712,44 @@ const Reader = () => {
                     //     link: e,
                     // });
                 };
-                img.onload = () => {
-                    // img.decode().catch((e) => console.error(e));
-                    setImageDecodeQueue((init) => {
-                        init.push(img);
-                        return [...init];
-                    });
-                    setImagesLoaded((init) => init + 1);
-                    setImageWidthContainer((init) => [
-                        ...init,
-                        {
-                            img,
-                            index: i,
-                            isWide: img.height / img.width <= 1.2,
-                        },
-                    ]);
+
+                img.onload = (e) => {
+                    if (dynamic) {
+                        (e.target as HTMLImageElement).removeAttribute("height");
+                        (e.target as HTMLImageElement).removeAttribute("width");
+                    } else {
+                        setImageDecodeQueue((init) => {
+                            init.push(img);
+                            return [...init];
+                        });
+                        loaded(true);
+                    }
                 };
                 img.onerror = () => {
-                    setImagesLoaded((init) => init + 1);
-                    setImageWidthContainer((init) => [...init, { img, index: i, isWide: false }]);
+                    !dynamic && loaded();
                 };
                 img.onabort = () => {
-                    setImagesLoaded((init) => init + 1);
-                    setImageWidthContainer((init) => [...init, { img, index: i, isWide: false }]);
+                    !dynamic && loaded();
                 };
             }
-            img.src = "file://" + e.replaceAll("#", "%23");
+            if (dynamic) {
+                img.setAttribute("data-src", "file://" + e.replaceAll("#", "%23"));
+                dynamic && loaded(true);
+            } else {
+                img.src = "file://" + e.replaceAll("#", "%23");
+            }
         });
     }, [images]);
     useEffect(() => {
         [...document.querySelector("section.imgCont")!.children].forEach((e, i) => {
             imageElementsIndex[i].forEach((canvasIndex) => {
-                if (imageWidthContainer[canvasIndex].img instanceof Element)
-                    e.appendChild(imageWidthContainer[canvasIndex].img as HTMLElement);
+                const elem = imageWidthContainer[canvasIndex].img;
+                if (elem instanceof HTMLCanvasElement) e.appendChild(elem as HTMLElement);
+                else {
+                    const src = elem.getAttribute("data-src");
+                    e.appendChild(elem);
+                    if (src) elem.src = src;
+                }
             });
         });
     }, [imageElementsIndex]);
