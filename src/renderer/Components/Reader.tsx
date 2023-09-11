@@ -3,7 +3,7 @@ import { AppContext } from "../App";
 import ReaderSideList from "./ReaderSideList";
 import ReaderSettings from "./ReaderSettings";
 import { useAppDispatch, useAppSelector } from "../store/hooks";
-import { setReaderSettings } from "../store/appSettings";
+import { setAppSettings, setReaderSettings } from "../store/appSettings";
 import { setMangaInReader } from "../store/mangaInReader";
 import { setReaderOpen } from "../store/isReaderOpen";
 import { setLoadingMangaPercent } from "../store/loadingMangaPercent";
@@ -600,39 +600,9 @@ const Reader = () => {
             if (appSettings.useCanvasBasedReader) {
                 const canvas = document.createElement("canvas");
                 canvas.setAttribute("draggable", "false");
+                canvas.setAttribute("src", e);
                 canvas.setAttribute("data-pagenumber", JSON.stringify(i + 1));
                 canvas.classList.add("readerImg");
-                canvas.oncontextmenu = (ev) => {
-                    ev.stopPropagation();
-                    setContextMenuData({
-                        clickX: ev.clientX,
-                        clickY: ev.clientY,
-                        items: [
-                            {
-                                label: "Toggle Zen Mode",
-                                disabled: false,
-                                action() {
-                                    setZenMode((init) => !init);
-                                },
-                            },
-                            {
-                                label: "Bookmark",
-                                disabled: false,
-                                action() {
-                                    addToBookmarkRef.current?.click();
-                                },
-                            },
-                            window.contextMenu.template.copyImage(e),
-                            window.contextMenu.template.showInExplorer(e),
-                            window.contextMenu.template.copyPath(e),
-                        ],
-                    });
-                    // showContextMenu({
-                    //     isImg: true,
-                    //     e: ev,
-                    //     link: e,
-                    // });
-                };
                 const ctx = canvas.getContext("2d");
 
                 img.onload = () => {
@@ -667,37 +637,6 @@ const Reader = () => {
                 img.setAttribute("draggable", "false");
                 img.setAttribute("data-pagenumber", JSON.stringify(i + 1));
                 img.classList.add("readerImg");
-                img.oncontextmenu = (ev) => {
-                    ev.stopPropagation();
-                    setContextMenuData({
-                        clickX: ev.clientX,
-                        clickY: ev.clientY,
-                        items: [
-                            {
-                                label: "Toggle Zen Mode",
-                                disabled: false,
-                                action() {
-                                    setZenMode((init) => !init);
-                                },
-                            },
-                            {
-                                label: "Bookmark",
-                                disabled: false,
-                                action() {
-                                    addToBookmarkRef.current?.click();
-                                },
-                            },
-                            window.contextMenu.template.copyImage(e),
-                            window.contextMenu.template.showInExplorer(e),
-                            window.contextMenu.template.copyPath(e),
-                        ],
-                    });
-                    // showContextMenu({
-                    //     isImg: true,
-                    //     e: ev,
-                    //     link: e,
-                    // });
-                };
                 img.onload = () => {
                     // img.decode().catch((e) => console.error(e));
                     setImageDecodeQueue((init) => {
@@ -1121,14 +1060,26 @@ const Reader = () => {
                 }}
                 onContextMenu={(e) => {
                     e.stopPropagation();
-                    const items = [
+                    const items: MenuListItem[] = [
                         {
-                            label: "Toggle Zen Mode",
-                            disabled: false,
+                            label: "Zen Mode",
+                            selected: zenMode,
                             action() {
                                 setZenMode((init) => !init);
                             },
                         },
+                        {
+                            label: "Hide Cursor in Zen Mode",
+                            selected: appSettings.hideCursorInZenMode,
+                            action() {
+                                dispatch(
+                                    setAppSettings({
+                                        hideCursorInZenMode: !appSettings.hideCursorInZenMode,
+                                    })
+                                );
+                            },
+                        },
+                        window.contextMenu.template.divider(),
                         {
                             label: "Bookmark",
                             disabled: false,
@@ -1136,14 +1087,22 @@ const Reader = () => {
                                 addToBookmarkRef.current?.click();
                             },
                         },
-                        window.contextMenu.template.openInNewWindow(linkInReader.link),
-                        window.contextMenu.template.showInExplorer(linkInReader.link),
-                        window.contextMenu.template.copyPath(linkInReader.link),
+                        window.contextMenu.template.divider(),
                     ];
+                    if (e.target instanceof HTMLElement) {
+                        const src = e.target.getAttribute("src");
+                        if (src) items.push(window.contextMenu.template.copyImage(src));
+                        else items.push(window.contextMenu.template.openInNewWindow(linkInReader.link));
+                    }
+                    items.push(
+                        window.contextMenu.template.copyPath(linkInReader.link),
+                        window.contextMenu.template.showInExplorer(linkInReader.link)
+                    );
                     setContextMenuData({
                         clickX: e.clientX,
                         clickY: e.clientY,
                         items,
+                        padLeft: true,
                     });
                 }}
                 onDoubleClick={(e) => {

@@ -624,7 +624,9 @@ const App = (): ReactElement => {
                     label: "Copy Image",
                     disabled: url ? false : true,
                     action() {
-                        window.electron.clipboard.writeImage(window.electron.nativeImage.createFromPath(url));
+                        window.electron.clipboard.writeImage(
+                            window.electron.nativeImage.createFromPath(url.replace("file://", ""))
+                        );
                     },
                 };
             },
