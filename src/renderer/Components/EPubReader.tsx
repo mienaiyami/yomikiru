@@ -262,9 +262,10 @@ const HTMLPart = memo(
                                 node.querySelectorAll("a").forEach((e) => {
                                     e.addEventListener("click", epubLinkClick);
                                 });
-                                node.querySelectorAll("img").forEach((e) => {
-                                    e.oncontextmenu = onContextMenu;
+                                node.querySelectorAll("img, image").forEach((e) => {
+                                    (e as HTMLElement).oncontextmenu = onContextMenu;
                                 });
+
                                 if (!rendered && bookmarkedElem) {
                                     setTimeout(() => {
                                         const elem = node.querySelector(bookmarkedElem);
