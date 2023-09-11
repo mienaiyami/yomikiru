@@ -4,7 +4,7 @@ import { ipcRenderer, webFrame } from "electron";
   //! in renderer with contextBridge from preload
 
 
-  //! nah is it really? idk, since no remote content is loaded other than anilist
+  //! nah is it really? i dont know, since no remote request is done other than anilist
  */
 import chokidar from "chokidar";
 import * as pdfjsLib from "pdfjs-dist/build/pdf.js";
@@ -88,6 +88,8 @@ export const settingValidatorData = {
     autoRefreshSideList: false,
     keepExtractedFiles: false,
     checkboxReaderSetting: false,
+    syncSettings: true,
+    syncThemes: true,
     readerSettings: {
         /**
          * width of reader in percent
@@ -1301,6 +1303,8 @@ const defaultSettings: AppSettings = {
     autoRefreshSideList: false,
     keepExtractedFiles: false,
     checkboxReaderSetting: false,
+    syncSettings: true,
+    syncThemes: true,
     readerSettings: {
         readerWidth: 60,
         variableImageSize: true,

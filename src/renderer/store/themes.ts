@@ -199,6 +199,14 @@ const themes = createSlice({
                 );
             } else state.allData.push(action.payload);
         },
+        refreshThemes: () => {
+            try {
+                //todo validate
+                return JSON.parse(window.fs.readFileSync(themesPath, "utf8"));
+            } catch {
+                //
+            }
+        },
         addThemes: (state, action: PayloadAction<ThemeData[]>) => {
             if (action.payload instanceof Array) {
                 action.payload.forEach((theme) => {
@@ -238,6 +246,7 @@ const themes = createSlice({
     },
 });
 
-export const { newTheme, updateTheme, deleteTheme, setTheme, resetAllTheme, addThemes } = themes.actions;
+export const { newTheme, updateTheme, deleteTheme, setTheme, resetAllTheme, addThemes, refreshThemes } =
+    themes.actions;
 
 export default themes.reducer;

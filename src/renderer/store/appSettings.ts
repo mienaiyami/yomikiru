@@ -1,34 +1,26 @@
-import { createSlice, current, isDraft, PayloadAction } from "@reduxjs/toolkit";
-import { UnionToIntersection } from "@reduxjs/toolkit/dist/tsHelpers";
-import {
-    defaultSettings,
-    makeSettingsJson,
-    isSettingsValid,
-    settingsPath,
-    saveJSONfile,
-    settingValidatorData,
-} from "../MainImports";
+import { createSlice, PayloadAction } from "@reduxjs/toolkit";
+import { defaultSettings, makeSettingsJson, isSettingsValid, settingsPath, saveJSONfile } from "../MainImports";
 
-// const bookmarkDataInit: ChapterItem[] = [];
-// const historyDataInit: HistoryItem[] = [];
-// const themesMain: ThemeData[] = [];
-// const shortcutsInit: ShortcutSchema[] = [];
-
-const isValidRes = isSettingsValid();
-if (!isValidRes.isValid) {
-    if (isValidRes.location.length === 0) {
-        window.dialog.customError({
-            message: "Unable to parse settings file, making new.",
-        });
-        makeSettingsJson();
-    } else {
-        window.dialog.warn({
-            message: `Some settings are invalid or new settings added. Re-writing settings.`,
-        });
-        window.logger.log(isSettingsValid());
-        makeSettingsJson(isSettingsValid().location);
+//todo try using zod or something else
+const validate = () => {
+    const isValidRes = isSettingsValid();
+    if (!isValidRes.isValid) {
+        if (isValidRes.location.length === 0) {
+            window.dialog.customError({
+                message: "Unable to parse settings file, making new.",
+            });
+            makeSettingsJson();
+        } else {
+            window.dialog.warn({
+                message: `Some settings are invalid or new settings added. Re-writing settings.`,
+            });
+            window.logger.log(isSettingsValid());
+            makeSettingsJson(isSettingsValid().location);
+        }
     }
-}
+};
+
+validate();
 
 const settings: AppSettings = JSON.parse(window.fs.readFileSync(settingsPath, "utf-8"));
 
@@ -42,18 +34,7 @@ type EPUBReaderSettingsOptional = {
     [K in keyof AppSettings["epubReaderSettings"]]?: AppSettings["epubReaderSettings"][K];
 };
 
-// type AppSettingsToggleable = {
-//     [K in keyof AppSettings as AppSettings[K] extends boolean | IsUnion<AppSettings[K]> ? K : never]?: boolean;
-// };
-// type AppSettingsToggleableKeys = keyof AppSettingsToggleable;
-// type ReaderSettingsToggleable = {
-//     [K in keyof AppSettings["readerSettings"] as AppSettings["readerSettings"][K] extends (boolean |string[] |number[])
-//         ? K
-//         : never]: boolean;
-// };
-// type ReaderSettingsToggleableKeys = keyof ReaderSettingsToggleable;
-
-export const appSettings = createSlice({
+const appSettings = createSlice({
     name: "appSettings",
     initialState: settings,
     reducers: {
@@ -84,19 +65,10 @@ export const appSettings = createSlice({
             saveJSONfile(settingsPath, JSON.parse(JSON.stringify(newSettings)));
             return newSettings;
         },
-
-        // toggleInMain: (state, action: PayloadAction<AppSettingsToggleableKeys[]>) => {
-        //     const newSetting = { ...state };
-        //     action.payload.forEach((e) => {
-        //         if(typeof newSetting[e]==="boolean")
-        //         newSetting[e] = !newSetting[e];
-        //         else {
-        //             const index = settingValidatorData[e]// as string[]|number[]).findIndex(newSetting[e]!);
-
-        //         }
-        //     });
-        //     return newSetting;
-        // },
+        refreshAppSettings: () => {
+            validate();
+            return JSON.parse(window.fs.readFileSync(settingsPath, "utf-8"));
+        },
         makeNewSettings: (state) => {
             makeSettingsJson();
             state = defaultSettings;
@@ -105,5 +77,6 @@ export const appSettings = createSlice({
     },
 });
 
-export const { setAppSettings, makeNewSettings, setReaderSettings, setEpubReaderSettings } = appSettings.actions;
+export const { setAppSettings, makeNewSettings, setReaderSettings, setEpubReaderSettings, refreshAppSettings } =
+    appSettings.actions;
 export default appSettings.reducer;

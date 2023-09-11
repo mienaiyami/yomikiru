@@ -1073,6 +1073,35 @@ const Settings = (): ReactElement => {
                                     </div>
                                     <div className="toggleItem">
                                         <InputCheckbox
+                                            checked={appSettings.syncSettings}
+                                            className="noBG"
+                                            onChange={(e) => {
+                                                dispatch(
+                                                    setAppSettings({ syncSettings: e.currentTarget.checked })
+                                                );
+                                            }}
+                                            labelAfter="Sync Settings"
+                                        />
+                                        <div className="desc">
+                                            Sync app settings across all opened windows.{" "}
+                                            <code>App Restart Needed</code>
+                                        </div>
+                                    </div>
+                                    <div className="toggleItem">
+                                        <InputCheckbox
+                                            checked={appSettings.syncThemes}
+                                            className="noBG"
+                                            onChange={(e) => {
+                                                dispatch(setAppSettings({ syncThemes: e.currentTarget.checked }));
+                                            }}
+                                            labelAfter="Sync Themes"
+                                        />
+                                        <div className="desc">
+                                            Sync themes across all opened windows. <code>App Restart Needed</code>
+                                        </div>
+                                    </div>
+                                    <div className="toggleItem">
+                                        <InputCheckbox
                                             checked={appSettings.recordChapterRead}
                                             className="noBG"
                                             onChange={(e) => {

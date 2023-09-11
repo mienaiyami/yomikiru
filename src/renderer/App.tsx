@@ -3,7 +3,7 @@ import { createContext, createRef, ReactElement, useEffect, useLayoutEffect, use
 import { useAppDispatch, useAppSelector } from "./store/hooks";
 import Main from "./Components/Main";
 import TopBar from "./Components/TopBar";
-import { setAppSettings } from "./store/appSettings";
+import { refreshAppSettings, setAppSettings } from "./store/appSettings";
 import { setUnzipping } from "./store/unzipping";
 import { setLoadingManga } from "./store/isLoadingManga";
 import loadingMangaPercent, { setLoadingMangaPercent } from "./store/loadingMangaPercent";
@@ -20,8 +20,16 @@ import {
 import { setReaderOpen } from "./store/isReaderOpen";
 import { setMangaInReader } from "./store/mangaInReader";
 import { addBookmark, refreshBookmark, removeBookmark } from "./store/bookmarks";
-import { setTheme } from "./store/themes";
-import { bookmarksPath, historyPath, promptSelectDir, renderPDF, unzip } from "./MainImports";
+import { refreshThemes, setTheme } from "./store/themes";
+import {
+    bookmarksPath,
+    historyPath,
+    promptSelectDir,
+    renderPDF,
+    settingsPath,
+    themesPath,
+    unzip,
+} from "./MainImports";
 import { setBookInReader } from "./store/bookInReader";
 import { setAniEditOpen } from "./store/isAniEditOpen";
 import { setAniLoginOpen } from "./store/isAniLoginOpen";
@@ -509,14 +517,19 @@ const App = (): ReactElement => {
             }
         };
 
-        // watching for file changes;
-        const watcher = window.chokidar.watch([historyPath, bookmarksPath]);
+        const filesToWatch = [historyPath, bookmarksPath];
+        if (appSettings.syncSettings) filesToWatch.push(settingsPath);
+        if (appSettings.syncThemes) filesToWatch.push(themesPath);
+        const watcher = window.chokidar.watch(filesToWatch);
         watcher.on("change", (path) => {
-            // todo: make it to ignore first call if another called within 2sec
-            setTimeout(() => {
-                if (path === historyPath) dispatch(refreshHistory());
-                if (path === bookmarksPath) dispatch(refreshBookmark());
-            }, 1500);
+            // // todo: make it to ignore first call if another called within 2sec
+            // setTimeout(() => {
+            //todo test is removing timeout cause issues
+            if (path === historyPath) dispatch(refreshHistory());
+            if (path === bookmarksPath) dispatch(refreshBookmark());
+            if (path === settingsPath) dispatch(refreshAppSettings());
+            if (path === themesPath) dispatch(refreshThemes());
+            // }, 1500);
         });
 
         window.addEventListener("keydown", eventsOnStart);
