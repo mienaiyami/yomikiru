@@ -120,40 +120,30 @@ const Settings = (): ReactElement => {
                 <div className="overflowWrap">
                     <div className="tabMovers">
                         <button
-                            tabIndex={-1}
-                            onFocus={(e) => e.currentTarget.blur()}
                             className={`tabBtn ${currentTab === TAB_INFO.settings[0] ? "selected " : ""}`}
                             onClick={() => setCurrentTab(TAB_INFO.settings[0])}
                         >
                             {TAB_INFO.settings[1]}
                         </button>
                         <button
-                            tabIndex={-1}
-                            onFocus={(e) => e.currentTarget.blur()}
                             className={`tabBtn ${currentTab === TAB_INFO.shortcutKeys[0] ? "selected " : ""}`}
                             onClick={() => setCurrentTab(TAB_INFO.shortcutKeys[0])}
                         >
                             {TAB_INFO.shortcutKeys[1]}
                         </button>
                         <button
-                            tabIndex={-1}
-                            onFocus={(e) => e.currentTarget.blur()}
                             className={`tabBtn ${currentTab === TAB_INFO.makeTheme[0] ? "selected " : ""}`}
                             onClick={() => setCurrentTab(TAB_INFO.makeTheme[0])}
                         >
                             {TAB_INFO.makeTheme[1]}
                         </button>
                         <button
-                            tabIndex={-1}
-                            onFocus={(e) => e.currentTarget.blur()}
                             className={`tabBtn ${currentTab === TAB_INFO.about[0] ? "selected " : ""}`}
                             onClick={() => setCurrentTab(TAB_INFO.about[0])}
                         >
                             {TAB_INFO.about[1]}
                         </button>
                         <button
-                            tabIndex={-1}
-                            onFocus={(e) => e.currentTarget.blur()}
                             className={`tabBtn ${currentTab === TAB_INFO.extras[0] ? "selected " : ""}`}
                             onClick={() => setCurrentTab(TAB_INFO.extras[0])}
                         >
