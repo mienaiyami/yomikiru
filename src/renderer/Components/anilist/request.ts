@@ -2,15 +2,17 @@ export default class AniList {
     #token = "";
     displayAdultContent = false;
     #currentMangaListId = null as null | number;
-    #mutation = `
-    mutation($mediaId: Int, $id: Int,$status:MediaListStatus, $score:Float, $progress:Int, $repeat:Int, $startedAt: FuzzyDateInput, $completedAt:FuzzyDateInput ){
-      SaveMediaListEntry(mediaId:$mediaId, id:$id,status:$status, score:$score,  progress:$progress,  repeat:$repeat,  startedAt:$startedAt,   completedAt:$completedAt,  ){
+    #mutation = `#graphql
+    mutation($mediaId: Int, $id: Int,$status:MediaListStatus, $score:Float, $progress:Int, $repeat:Int, $startedAt: FuzzyDateInput, $completedAt:FuzzyDateInput, $progressVolumes:Int, $private:Boolean){
+      SaveMediaListEntry(mediaId:$mediaId, id:$id,status:$status, score:$score,  progress:$progress,  repeat:$repeat,  startedAt:$startedAt,   completedAt:$completedAt, progressVolumes:$progressVolumes, private:$private  ){
         id
         mediaId
         status
         progress
+        progressVolumes
         score
         repeat
+        private
         startedAt{
             year
             month
@@ -55,7 +57,7 @@ export default class AniList {
         this.#currentMangaListId = id;
     }
     async checkToken(token: string) {
-        const query = `
+        const query = `#graphql
     query{
         Viewer{
                 name
@@ -127,7 +129,7 @@ export default class AniList {
         }
     }
     async getUserName() {
-        const query = `
+        const query = `#graphql
         query{
             Viewer{
                     name
@@ -148,7 +150,7 @@ export default class AniList {
      */
     async searchManga(name: string) {
         if (!name) return [];
-        const query = `
+        const query = `#graphql
         query($search: String,$displayAdultContent: Boolean){
             Page(page: 1, perPage: 20){
                 media(search: $search, type: MANGA, sort: POPULARITY_DESC, status_not: NOT_YET_RELEASED, isAdult:$displayAdultContent ){

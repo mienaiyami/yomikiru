@@ -486,8 +486,10 @@ declare global {
         mediaId: number;
         status: "CURRENT" | "PLANNING" | "COMPLETED" | "DROPPED" | "PAUSED" | "REPEATING";
         progress: number;
+        progressVolumes: number;
         score: number;
         repeat: number;
+        private: boolean;
         startedAt: {
             year: number | null;
             month: number | null;

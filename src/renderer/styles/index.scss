@@ -2172,6 +2172,7 @@ body {
                         display: grid;
                         padding: 0 10px 10px 10px;
                         grid-template-columns: 1fr 1fr 1fr 1fr;
+                        grid-template-rows: 1fr 1fr 50px;
                         gap: 10px;
                         column-gap: 20px;
                         // input[type="number"] {
@@ -2181,6 +2182,10 @@ body {
                             height: 80px;
                             display: grid;
                             align-items: end;
+                            &.last {
+                                height: 60px;
+                                align-items: center;
+                            }
                             label {
                                 // height: 100%;
                                 display: flex;
@@ -2197,6 +2202,26 @@ body {
                                 }
                                 .input {
                                     width: 100%;
+                                }
+                                &:has(input[type="checkbox"]) {
+                                    flex-direction: row;
+                                    padding: 10px;
+                                    justify-content: center;
+                                    gap: 10px;
+                                    input[type="checkbox"] {
+                                        display: block;
+                                    }
+                                    .toggle-area {
+                                        display: none;
+                                        &.on {
+                                            .toggle-state {
+                                                background-color: var(--body-bg-color) !important;
+                                            }
+                                        }
+                                    }
+                                    &.optionSelected {
+                                        background-color: var(--btn-color-focus);
+                                    }
                                 }
                             }
                         }

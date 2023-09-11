@@ -8,6 +8,7 @@ import { setAnilistCurrentManga } from "../../store/anilistCurrentManga";
 
 import FocusLock from "react-focus-lock";
 import Link from "../Element/Link";
+import InputCheckbox from "../Element/InputCheckbox";
 
 const AnilistEdit = () => {
     const dispatch = useAppDispatch();
@@ -110,7 +111,7 @@ const AnilistEdit = () => {
                                 <div>
                                     <InputNumber
                                         value={tempData.progress}
-                                        labelBefore="Progress"
+                                        labelBefore="Chapters"
                                         className="noBG"
                                         min={0}
                                         max={20000}
@@ -121,6 +122,25 @@ const AnilistEdit = () => {
                                             if (value > 20000) value = 20000;
                                             setTempData((init) => {
                                                 if (init) return { ...init, progress: value };
+                                                return null;
+                                            });
+                                        }}
+                                    />
+                                </div>
+                                <div>
+                                    <InputNumber
+                                        value={tempData.progressVolumes}
+                                        labelBefore="Volumes"
+                                        className="noBG"
+                                        min={0}
+                                        max={20000}
+                                        onChange={(e) => {
+                                            let value = e.valueAsNumber;
+                                            if (!value) value = 0;
+                                            if (value < 0) value = 0;
+                                            if (value > 20000) value = 20000;
+                                            setTempData((init) => {
+                                                if (init) return { ...init, progressVolumes: value };
                                                 return null;
                                             });
                                         }}
@@ -146,29 +166,6 @@ const AnilistEdit = () => {
                                         }}
                                     />
                                 </div>
-                                <div>
-                                    <button
-                                        onClick={(e) => {
-                                            const target = e.currentTarget;
-                                            const oldText = target.innerText;
-                                            target.innerText = "Saving...";
-                                            window.al.setCurrentMangaData(tempData).then((e) => {
-                                                if (e) {
-                                                    dispatch(setAnilistCurrentManga(e));
-                                                    target.innerText = "Saved!";
-                                                } else {
-                                                    target.innerText = "Failed!";
-                                                }
-                                                setTimeout(() => {
-                                                    target.innerText = oldText;
-                                                }, 1500);
-                                            });
-                                        }}
-                                    >
-                                        Save
-                                    </button>
-                                </div>
-
                                 <div>
                                     <label className="noBG">
                                         Start Date
@@ -235,6 +232,7 @@ const AnilistEdit = () => {
                                         />
                                     </label>
                                 </div>
+
                                 <div>
                                     <InputNumber
                                         value={tempData.repeat}
@@ -255,6 +253,46 @@ const AnilistEdit = () => {
                                     />
                                 </div>
                                 <div>
+                                    <InputCheckbox
+                                        checked={tempData.private}
+                                        labelAfter="Private"
+                                        onChange={(e) => {
+                                            const value = e.currentTarget.checked;
+                                            setTempData((init) => {
+                                                if (init)
+                                                    return {
+                                                        ...init,
+                                                        private: value,
+                                                    };
+                                                return null;
+                                            });
+                                        }}
+                                    />
+                                </div>
+                                <div></div>
+                                <div className="last">
+                                    <button
+                                        onClick={(e) => {
+                                            const target = e.currentTarget;
+                                            const oldText = target.innerText;
+                                            target.innerText = "Saving...";
+                                            window.al.setCurrentMangaData(tempData).then((e) => {
+                                                if (e) {
+                                                    dispatch(setAnilistCurrentManga(e));
+                                                    target.innerText = "Saved!";
+                                                } else {
+                                                    target.innerText = "Failed!";
+                                                }
+                                                setTimeout(() => {
+                                                    target.innerText = oldText;
+                                                }, 1500);
+                                            });
+                                        }}
+                                    >
+                                        Save
+                                    </button>
+                                </div>
+                                <div className="last">
                                     <button
                                         onClick={() =>
                                             mangaInReader &&
@@ -265,6 +303,7 @@ const AnilistEdit = () => {
                                         Untrack
                                     </button>
                                 </div>
+                                <div></div>
                             </div>
                         </>
                     )}
