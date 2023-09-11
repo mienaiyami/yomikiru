@@ -231,13 +231,18 @@ const downloadUpdates = (latestVersion: string, windowId: number) => {
                             }
                         );
                     } else {
-                        app.on("will-quit", () => {
+                        app.on("before-quit", () => {
                             execSudo(
                                 `dpkg -i "${file.path}"`,
                                 {
                                     name: "Yomikiru",
                                 },
                                 (err) => {
+                                    dialog.showMessageBox({
+                                        message: "Installing updates.",
+                                        type: "info",
+                                        title: "Yomikiru",
+                                    });
                                     if (err) throw err;
                                     logger.log("Installing updates...");
                                 }
