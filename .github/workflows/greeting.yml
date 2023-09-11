@@ -1,4 +1,5 @@
 name: Greetings
+run-name: Issue Greetings
 
 on: [issues]
 
