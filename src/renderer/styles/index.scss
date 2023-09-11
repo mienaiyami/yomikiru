@@ -1179,11 +1179,11 @@ body {
                     line-height: normal;
                     border-radius: 2px;
                     &.menu-divider {
-                        height: 2px;
+                        height: 1px;
                         width: 100%;
-                        // background-color: var(--btn-color-focus);
-                        background-color: var(--divider-color);
-                        margin: 2px 0;
+                        background-color: var(--btn-color-focus);
+                        // background-color: var(--divider-color);
+                        margin: 4px 0;
                         padding: 0;
                     }
                     &[data-focused="true"] {

@@ -2,51 +2,22 @@
 
 ## Recommended Folder structure
 
-<ul>
-    <li>
-        DEFAULT LOCATION\
-        <ul>
-            <li>
-                One Piece\
-                <ul>
-                    <li>
-                        Chapter 1\ <"Open" here</code>
-                        <ul>
-                            <li>001.png</li>
-                            <li>002.png</li>
-                            <li>003.png</li>
-                            <li>004.png</li>
-                            <li>...</li>
-                        </ul>
-                    </li>
-                    <li>
-                        Chapter 2\
-                        <ul>
-                            <li>001.png</li>
-                            <li>...</li>
-                        </ul>
-                    </li>
-                    <li>Chapter 3.cbz</li>
-                    <li>Chapter 4.pdf</li>
-                    <li>...</li>
-                </ul>
-            </li>
-            <li>
-                Bleach\
-                <ul>
-                    <li>
-                        Chapter 1\ <"Open" here</code>
-                        <ul>
-                            <li>001.png</li>
-                        </ul>
-                    </li>
-                    <li>Chapter 2.zip</li>
-                </ul>
-            </li>
-            <li>...</li>
-        </ul>
-    </li>
-</ul>
+```
+├─ DEFAULT LOCATION\
+│  ├─ One Piece\
+│  │  ├─ Chapter 1\
+│  │  │  ├─ 001.png
+│  │  │  ├─ 002.png
+│  │  │  ├─ 003.png
+│  │  │  ├─ 004.png
+│  │  ├─ Chapter 2\
+│  │  │  ├─ 001.png
+│  │  ├─ Chapter 3.cbz
+│  │  ├─ Chapter 4.pdf
+│  ├─ Bleach\
+│  │  ├─ Chapter 1
+│  │  ├─ Chapter 2.zip
+```
 
 ## TachiDesk
 
@@ -54,8 +25,10 @@ If you are using [Tachidesk](https://github.com/Suwayomi/Tachidesk-Server) to do
 
 1. Go to `%localappdata%\Tachidesk\`.
 2. Open `server.conf` with notepad.
-3. Change or add and save.
-    ```
+3. Change/add and save.
+
+    ```conf
     server.downloadsPath = "D:\\example\\path\\"
     ```
-4. You might need to delete folder set as previous path for it to work right.
+
+4. You might need to delete folder previous set as download path for it to work right.
