@@ -12,11 +12,12 @@ export const setSysBtnColor = (blurred = false) => {
             color = color.alpha(0.3);
         }
         topbarElem.style.color = color.hexa();
-        window.electron.getCurrentWindow().setTitleBarOverlay({
-            color: window.getComputedStyle(topbarElem).backgroundColor,
-            symbolColor: color.hexa(),
-            height: Math.floor(window.app.titleBarHeight * window.electron.webFrame.getZoomFactor()),
-        });
+        process.platform === "win32" &&
+            window.electron.getCurrentWindow().setTitleBarOverlay({
+                color: window.getComputedStyle(topbarElem).backgroundColor,
+                symbolColor: color.hexa(),
+                height: Math.floor(window.app.titleBarHeight * window.electron.webFrame.getZoomFactor()),
+            });
     }
 };
 

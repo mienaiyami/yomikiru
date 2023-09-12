@@ -507,9 +507,10 @@ const App = (): ReactElement => {
             if (e.ctrlKey && e.key === "i") dispatch(toggleOpenSetting());
             if (e.ctrlKey && (e.key === "=" || e.key === "-" || e.key === "0")) {
                 setTimeout(() => {
-                    window.electron.getCurrentWindow().setTitleBarOverlay({
-                        height: Math.floor(40 * window.electron.webFrame.getZoomFactor()),
-                    });
+                    process.platform === "win32" &&
+                        window.electron.getCurrentWindow().setTitleBarOverlay({
+                            height: Math.floor(40 * window.electron.webFrame.getZoomFactor()),
+                        });
                     // page nav/ window btn cont width
                     (document.querySelector(".windowBtnCont") as HTMLDivElement).style.right = `${
                         140 * (1 / window.electron.webFrame.getZoomFactor())
