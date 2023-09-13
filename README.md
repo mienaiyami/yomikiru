@@ -1,12 +1,12 @@
 # Yomikiru
 
-Manga/Manhwa/Comic/Novel Reader (not a downloader/host).
-It is a offline app to read locally stored manga or epub with great reading experience.
+Manga/Manhwa/Comic/Novel Reader for desktop (not a downloader/host).
+It is a offline dekstop app to read locally stored manga or epub with great reading experience.
 
 [![Github Latest Release](https://img.shields.io/github/v/tag/mienaiyami/yomikiru?label=release&style=flat-square&logo=github)](https://github.com/mienaiyami/yomikiru/releases/latest) |
 [![Github All Releases](https://img.shields.io/github/downloads/mienaiyami/yomikiru/total.svg?style=flat-square&logo=github)](https://github.com/mienaiyami/yomikiru/releases)
 
-> Yomikiru's epub reader is only fit for reading novels / light novels.
+> Yomikiru's epub reader is only fit for reading novels / light novels and might not support few advance epub functions.
 
 ## Who is this app for?
 
@@ -18,8 +18,8 @@ It is a offline app to read locally stored manga or epub with great reading expe
 
 ## Features(not limited to)
 
-- Lightweight, take low cpu and ram when running.
-- Supports most image formats (`".jpg", ".jpeg", ".png", ".webp", ".svg", ".apng", ".gif", ".avif"`) and archive (`.zip, .cbz`,`.7z`,`.rar`) and `.pdf`  (only as images, non-clickable). **It is recommended to use folder as chapters instead of archives like `.zip`, `.cbz`.**
+- Lightweight, takes low CPU and RAM.
+- Supports most image formats (`".jpg", ".jpeg", ".png", ".webp", ".svg", ".apng", ".gif", ".avif"`) and archive (`.zip`, `.cbz`, `.7z`, `.rar`) and `.pdf`  (only as images, non-clickable). **It is recommended to use folder as chapters instead of archives like `.zip`, `.cbz` for better experience**
 - Anilist support.
 - Create multiple instances of reader.
 - Multiple useful and customizable shortcuts.
