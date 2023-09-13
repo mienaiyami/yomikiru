@@ -788,7 +788,7 @@ const EPubReader = () => {
     const makeScrollPos = useCallback(
         (callback?: (queryString?: string) => any) => {
             if (mainRef.current) {
-                let y = 50;
+                let y = zenMode ? 10 : 50;
                 let x = mainRef.current.offsetLeft + mainRef.current.offsetWidth / 3;
                 let elem: Element | null = null;
                 const sectionMain = document.querySelector("#EPubReader > section");
@@ -817,7 +817,7 @@ const EPubReader = () => {
                 }
             }
         },
-        [mainRef.current, tocData, currentChapterURL]
+        [mainRef.current, tocData, currentChapterURL, zenMode]
     );
 
     const findInPage = useCallback(
