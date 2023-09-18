@@ -264,12 +264,14 @@ const LocationsTab = (): ReactElement => {
                                 e.key = "ContextMenu";
                             switch (e.key) {
                                 case "ArrowDown":
+                                    e.preventDefault();
                                     setFocused((init) => {
                                         if (init + 1 >= locations.length) return 0;
                                         return init + 1;
                                     });
                                     break;
                                 case "ArrowUp":
+                                    e.preventDefault();
                                     setFocused((init) => {
                                         //todo fix: when searched, maybe move filter to sortedLocation
                                         if (init - 1 < 0) return locations.length - 1;

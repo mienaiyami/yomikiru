@@ -62,12 +62,14 @@ const BookmarkTab = () => {
                                     break;
                                 }
                                 case "ArrowDown":
+                                    e.preventDefault();
                                     setFocused((init) => {
                                         if (init + 1 >= bookmarks.length) return 0;
                                         return init + 1;
                                     });
                                     break;
                                 case "ArrowUp":
+                                    e.preventDefault();
                                     setFocused((init) => {
                                         if (init - 1 < 0) return bookmarks.length - 1;
                                         return init - 1;

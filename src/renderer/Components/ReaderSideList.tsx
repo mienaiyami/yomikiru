@@ -380,12 +380,14 @@ const ReaderSideList = memo(
                                         break;
                                     }
                                     case "ArrowDown":
+                                        e.preventDefault();
                                         setFocused((init) => {
                                             if (init + 1 >= chapterData.length) return 0;
                                             return init + 1;
                                         });
                                         break;
                                     case "ArrowUp":
+                                        e.preventDefault();
                                         setFocused((init) => {
                                             if (init - 1 < 0) return chapterData.length - 1;
                                             return init - 1;
