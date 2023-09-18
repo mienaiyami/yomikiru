@@ -470,13 +470,14 @@ const EPUBReaderSettings = memo(
                                         );
                                     }}
                                     step={0.1}
-                                    min={0}
+                                    min={-1}
                                     max={20}
                                     value={appSettings.epubReaderSettings.wordSpacing}
                                     onChangeNum={(e) => {
+                                        //todo, do this automatically for all using given min max
                                         let value = e.valueAsNumber;
                                         if (value > 20) value = 20;
-                                        if (value < 0) value = 0;
+                                        if (value < -1) value = -1;
                                         return value;
                                     }}
                                     timeout={[

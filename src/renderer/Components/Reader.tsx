@@ -1107,13 +1107,18 @@ const Reader = () => {
                     ];
                     if (e.target instanceof HTMLElement) {
                         const src = e.target.getAttribute("src");
-                        if (src) items.push(window.contextMenu.template.copyImage(src));
+                        if (src)
+                            items.push(
+                                window.contextMenu.template.copyImage(src),
+                                window.contextMenu.template.copyPath(src),
+                                window.contextMenu.template.showInExplorer(src)
+                            );
                         else items.push(window.contextMenu.template.openInNewWindow(linkInReader.link));
-                    }
-                    items.push(
-                        window.contextMenu.template.copyPath(linkInReader.link),
-                        window.contextMenu.template.showInExplorer(linkInReader.link)
-                    );
+                    } else
+                        items.push(
+                            window.contextMenu.template.copyPath(linkInReader.link),
+                            window.contextMenu.template.showInExplorer(linkInReader.link)
+                        );
                     setContextMenuData({
                         clickX: e.clientX,
                         clickY: e.clientY,
