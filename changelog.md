@@ -4,22 +4,26 @@ Does not follow semver.
 
 ## Added
 
-- option to sync app settings and themes across instances.
-- added #261 and private option in anilist data editor
+- preserve scrollX when zooming past 100%.
+- added `` ` (backtick) `` for exact search keyword.
 
 ## Changed
 
-- UI:
-  - better blurred window titlebar
-  - context-menu separator
-  - more
-- keyboard accessible settings tab button.
-- debian after update download prompt.
+- UI
+  -
+
+- changed epub min word-spacing to -1
+- change default behavior of arrow up down in search
+- change default zenmode pagenum color to semi transparent
+- DEV:
+  - improved file ext info and related
 
 ## Fixed
 
-- fixed #262
-- fixed context menu for svg images in epub
-- fixed: clicking 'h' not saving manga progress sometimes.
+- fixed epub zen mode reader setting change incorrect preserve scroll
+- #241
+- fixed chapter opening shortcut not working
+- fixed anilist chapter input out of focus on input
+- fixed image context menu "show in file explorer" incorrect path
 
 ---
