@@ -2794,7 +2794,6 @@ body {
                 .row {
                     display: flex;
                     justify-content: center;
-                    // todo check if need to define for .wide as well
                     width: calc(100% + calc(max(0%, calc(var(--varWidth) - 100%))));
                     --max-width: 100%;
                     --max-height: auto;
@@ -2809,10 +2808,10 @@ body {
                     }
                     // max-width: var(--max-width);
                     &.wide {
-                        width: calc((100% + calc(max(0%, calc(var(--varWidth) - 100%))) * 2));
+                        width: calc((100% + calc(max(0%, calc((var(--varWidth) * 2) - 100%)))));
                         .readerImg {
                             width: calc(var(--varWidth) * 2);
-                            max-width: calc(var(--max-width) * 2);
+                            max-width: min(100%, var(--max-width));
                         }
                     }
 
@@ -2821,10 +2820,7 @@ body {
                         width: var(--varWidth);
                         transform: translate3d(0, 0, 0);
                         image-orientation: none;
-
-                        // image-rendering: pixelated;
                         max-width: var(--max-width);
-                        // max-width: 100%;
                     }
                     //todo check if it is even needed
                     &.widthClamped {
@@ -2833,7 +2829,6 @@ body {
                             max-width: 100%;
                         }
                     }
-                    //todo fix for #241
                     &.twoPagePerRow {
                         width: calc((100% + calc(max(0%, calc(var(--varWidth) - 100%))) * 1));
                         .readerImg {
