@@ -87,7 +87,9 @@ const ReaderSideListItem = memo(
                 >
                     <span className="text">{name.split(" $")[0]}</span>
                     {window.app.isSupportedFormat(name) ? (
-                        <code className="nonFolder">{name.split(" $")[1]}</code>
+                        <code className="nonFolder" data-type={name.split(" $")[1]}>
+                            {name.split(" $")[1]}
+                        </code>
                     ) : (
                         <span className="pageNum" title="Total Pages">
                             {pages}

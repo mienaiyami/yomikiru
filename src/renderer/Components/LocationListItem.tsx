@@ -41,7 +41,7 @@ const LocationListItem = ({
         if (
             appSettings.openDirectlyFromManga &&
             window.path.normalize(window.path.resolve(link + "../../../") + window.path.sep) ===
-                appSettings.baseDir
+                window.path.normalize(appSettings.baseDir + window.path.sep)
         ) {
             checkValidFolder(link, (isValid) => {
                 if (isValid) {
