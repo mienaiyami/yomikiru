@@ -37,7 +37,7 @@
                 "--contextMenu-bg-color": "var(--body-bg-color)",
                 "--contentMenu-item-color": "var(--font-color)",
                 "--contentMenu-item-bg-color-hover": "var(--btn-color-focus)",
-                "--zenModePage-bg": "var(--body-bg-color)"
+                "--zenModePage-bg": "#26262680"
             }
         },
         {
@@ -76,7 +76,7 @@
                 "--contextMenu-bg-color": "var(--body-bg-color)",
                 "--contentMenu-item-color": "var(--font-color)",
                 "--contentMenu-item-bg-color-hover": "var(--btn-color-focus)",
-                "--zenModePage-bg": "var(--body-bg-color)"
+                "--zenModePage-bg": "#00000080"
             }
         },
         {
@@ -115,7 +115,7 @@
                 "--contextMenu-bg-color": "var(--body-bg-color)",
                 "--contentMenu-item-color": "var(--font-color)",
                 "--contentMenu-item-bg-color-hover": "var(--btn-color-focus)",
-                "--zenModePage-bg": "var(--body-bg-color)"
+                "--zenModePage-bg": "#00000080"
             }
         },
         {
@@ -154,7 +154,7 @@
                 "--contextMenu-bg-color": "var(--body-bg-color)",
                 "--contentMenu-item-color": "var(--font-color)",
                 "--contentMenu-item-bg-color-hover": "var(--btn-color-focus)",
-                "--zenModePage-bg": "var(--body-bg-color)"
+                "--zenModePage-bg": "#ffffff90"
             }
         },
         {
@@ -193,7 +193,7 @@
                 "--contextMenu-bg-color": "var(--body-bg-color)",
                 "--contentMenu-item-color": "var(--font-color)",
                 "--contentMenu-item-bg-color-hover": "var(--btn-color-focus)",
-                "--zenModePage-bg": "var(--body-bg-color)"
+                "--zenModePage-bg": "#ffffff90"
             }
         }
     ]
