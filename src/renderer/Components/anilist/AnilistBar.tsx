@@ -57,37 +57,33 @@ const AnilistBar = memo(() => {
         }
     }, [isTracking]);
 
-    const Tracking = () => {
-        return (
-            <div className="btns">
-                <button onClick={() => setProgress((init) => init - 1)}>
-                    <FontAwesomeIcon icon={faMinus} />
-                </button>
-                <InputNumber
-                    value={progress}
-                    noSpin
-                    onChange={(e) => {
-                        let value = parseInt(e.value);
-                        if (!value || value < 0) value = 0;
-                        setProgress(value);
-                    }}
-                />
-                <button onClick={() => setProgress((init) => init + 1)}>
-                    <FontAwesomeIcon icon={faPlus} />
-                </button>
-                <button data-tooltip="More Options" onClick={() => dispatch(setAniEditOpen(true))}>
-                    <FontAwesomeIcon icon={faSlidersH} />
-                </button>
-            </div>
-        );
-    };
     return (
         <div className="anilistBar">
             <span className="bold">AniList</span>
             <span className="bold"> : </span>
             {isTracking ? (
                 anilistCurrentManga ? (
-                    <Tracking />
+                    <div className="btns">
+                        <button onClick={() => setProgress((init) => init - 1)}>
+                            <FontAwesomeIcon icon={faMinus} />
+                        </button>
+                        <InputNumber
+                            value={progress}
+                            noSpin
+                            onChange={(e) => {
+                                let value = parseInt(e.value);
+                                if (!value || value < 0) value = 0;
+                                return value;
+                            }}
+                            timeout={[2000, (value) => setProgress(value)]}
+                        />
+                        <button onClick={() => setProgress((init) => init + 1)}>
+                            <FontAwesomeIcon icon={faPlus} />
+                        </button>
+                        <button data-tooltip="More Options" onClick={() => dispatch(setAniEditOpen(true))}>
+                            <FontAwesomeIcon icon={faSlidersH} />
+                        </button>
+                    </div>
                 ) : (
                     <span>Network Error</span>
                 )
