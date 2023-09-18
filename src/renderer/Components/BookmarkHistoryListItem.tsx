@@ -87,16 +87,14 @@ const BookmarkHistoryListItem = (props: ListItemE) => {
                         <span className="text">{props.data.mangaName}</span>
                         <span className="chapter">
                             <span className="text">
-                                {window.app.replaceExtension(props.data.chapterName).split("$")[0]}
+                                {window.app.formats.files.getName(props.data.chapterName)}
                             </span>
                             &nbsp;&nbsp;&nbsp;
                             <span className="page">
                                 {" "}
-                                {window.app.isSupportedFormat(
-                                    window.app.replaceExtension(props.data.chapterName)
-                                ) && (
+                                {window.app.formats.files.test(props.data.chapterName) && (
                                     <code className="nonFolder">
-                                        {window.app.replaceExtension(props.data.chapterName).split("$")[1]}
+                                        {window.app.formats.files.getExt(props.data.chapterName)}
                                     </code>
                                 )}
                             </span>

@@ -30,7 +30,7 @@ const TopBar = (): ReactElement => {
     const setTitleWithSize = () => {
         if (mangaInReader) {
             let mangaName = mangaInReader.mangaName;
-            let chapterName = window.app.replaceExtension(mangaInReader.chapterName, "");
+            let chapterName = window.app.formats.files.getName(mangaInReader.chapterName);
             if (mangaName.length > 13) mangaName = mangaName.substring(0, 20) + "...";
             if (chapterName.length > 83) chapterName = chapterName.substring(0, 80) + "...";
             const title = `${window.electron.app.getName()} - ${mangaName} | ${chapterName}`;
@@ -45,7 +45,7 @@ const TopBar = (): ReactElement => {
                 bookInReader.chapter &&
                 bookInReader.chapter !== "~"
             ) {
-                chapterName = window.app.replaceExtension(bookInReader.chapter, "");
+                chapterName = window.app.formats.files.getName(bookInReader.chapter);
                 if (chapterName.length > 83) chapterName = chapterName.substring(0, 80) + "...";
             }
             if (bookTitle.length > 83) bookTitle = bookTitle.substring(0, 80) + "...";

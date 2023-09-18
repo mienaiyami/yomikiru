@@ -100,8 +100,8 @@ const HistoryTab = () => {
                                 new RegExp(filter, "ig").test(
                                     e.type === "image"
                                         ? e.data.mangaName +
-                                              (window.app.isSupportedFormat(e.data.chapterName)
-                                                  ? `.${window.path.extname(e.data.chapterName)}`
+                                              (window.app.formats.files.test(e.data.chapterName)
+                                                  ? `${window.path.extname(e.data.chapterName)}`
                                                   : "")
                                         : e.data.title + ".epub"
                                 )

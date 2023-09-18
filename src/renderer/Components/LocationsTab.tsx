@@ -65,7 +65,7 @@ const LocationsTab = (): ReactElement => {
                             aa &&
                             window.path.extname(e).toLowerCase() !== ".sys" &&
                             window.fs.lstatSync(window.path.join(link, e)).isFile() &&
-                            window.supportedFormats.includes(window.path.extname(e).toLowerCase())
+                            window.app.formats.image.test(e)
                         );
                     }).length
                 );
@@ -88,7 +88,7 @@ const LocationsTab = (): ReactElement => {
                                 ].includes(window.path.extname(cur).toLowerCase())
                             ) {
                                 arr.push({
-                                    name: stat.isFile() ? window.app.replaceExtension(cur) : cur,
+                                    name: cur,
                                     link: window.path.join(link, cur),
                                     dateModified: stat.mtimeMs,
                                 });
@@ -154,12 +154,7 @@ const LocationsTab = (): ReactElement => {
                     (e as MangaHistoryItem).data.mangaLink.toLowerCase() === currentLink.toLowerCase()
             );
             if (history[historyIndex])
-                setHistorySimple([
-                    historyIndex,
-                    (history[historyIndex] as MangaHistoryItem).data.chaptersRead.map((e) =>
-                        window.app.replaceExtension(e)
-                    ),
-                ]);
+                setHistorySimple([historyIndex, (history[historyIndex] as MangaHistoryItem).data.chaptersRead]);
         }
     }, [history, currentLink]);
     return (

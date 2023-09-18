@@ -59,14 +59,12 @@ const ReaderSideListItem = memo(
                         if (inHistory[1] >= 0) {
                             items.push(window.contextMenu.template.unreadChapter(...inHistory));
                         } else {
-                            items.push(
-                                window.contextMenu.template.readChapter(inHistory[0], name.replace(" $", "."))
-                            );
+                            items.push(window.contextMenu.template.readChapter(inHistory[0], name));
                         }
                         if (e.currentTarget.parentElement && e.currentTarget.parentElement.parentElement) {
                             const chapters = [
                                 ...e.currentTarget.parentElement.parentElement.querySelectorAll("a"),
-                            ].map((e) => e.title.replace(" $", "."));
+                            ].map((e) => e.title);
                             items.push(window.contextMenu.template.readAllChapter(inHistory[0], chapters));
                         }
                         items.push(window.contextMenu.template.unreadAllChapter(inHistory[0]));
@@ -85,10 +83,10 @@ const ReaderSideListItem = memo(
                         });
                     }}
                 >
-                    <span className="text">{name.split(" $")[0]}</span>
-                    {window.app.isSupportedFormat(name) ? (
-                        <code className="nonFolder" data-type={name.split(" $")[1]}>
-                            {name.split(" $")[1]}
+                    <span className="text">{window.app.formats.files.getName(name)}</span>
+                    {window.app.formats.files.test(name) ? (
+                        <code className="nonFolder" data-type={window.app.formats.files.getExt(name)}>
+                            {window.app.formats.files.getExt(name)}
                         </code>
                     ) : (
                         <span className="pageNum" title="Total Pages">

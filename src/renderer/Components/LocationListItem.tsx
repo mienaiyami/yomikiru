@@ -34,7 +34,7 @@ const LocationListItem = ({
             window.dialog.customError({ message: "Directory/File doesn't exist." });
             return;
         }
-        if (window.app.isSupportedFormat(name)) {
+        if (window.app.formats.files.test(name)) {
             openInReader(link);
             return;
         }
@@ -111,10 +111,12 @@ const LocationListItem = ({
                     // });
                 }}
             >
-                <span className="text">{name.split(" $")[0]}</span>
-                {window.app.isSupportedFormat(name) && <code className="nonFolder">{name.split(" $")[1]}</code>}
+                <span className="text">{window.app.formats.files.getName(name)}</span>
+                {window.app.formats.files.test(name) && (
+                    <code className="nonFolder">{window.app.formats.files.getExt(name)}</code>
+                )}
             </a>
-            {!appSettings.hideOpenArrow && !window.app.isSupportedFormat(name) && (
+            {!appSettings.hideOpenArrow && !window.app.formats.files.test(name) && (
                 <button
                     title="Open In Reader"
                     className="open-in-reader-btn"

@@ -138,7 +138,7 @@ const App = (): ReactElement => {
                     dispatch(setLoadingMangaPercent(0));
                 }
                 const imgs = files.filter((e) => {
-                    return window.supportedFormats.includes(window.path.extname(e).toLowerCase());
+                    return window.app.formats.image.test(e);
                 });
                 if (imgs.length <= 0) {
                     const dirOnly = files.filter(
@@ -185,7 +185,7 @@ const App = (): ReactElement => {
                 }
             );
 
-        if ([".zip", ".cbz", ".7z", ".rar"].includes(window.path.extname(link).toLowerCase())) {
+        if (window.app.formats.packedManga.test(link)) {
             // const tempExtractPath = window.path.join(
             //     window.electron.app.getPath("temp"),
             //     `yomikiru-temp-Images-${linkSplitted[linkSplitted.length - 1]}-${window.app.randomString(10)}`
@@ -335,7 +335,7 @@ const App = (): ReactElement => {
         link = window.path.normalize(link);
         window.electron.webFrame.clearCache();
         if (link === linkInReader.link) return;
-        if ([".epub", ".xhtml", ".html", ".txt"].includes(window.path.extname(link).toLowerCase())) {
+        if (window.app.formats.book.test(link)) {
             dispatch(setUnzipping({ state: true, text: "Extracting and Loading epub..." }));
 
             // dispatch(setLoadingManga(true));
@@ -550,14 +550,10 @@ const App = (): ReactElement => {
                     if (window.fs.lstatSync(data[0].path).isDirectory()) {
                         closeReader();
                         openInReader(data[0].path);
-                    } else if (
-                        [".zip", ".7z", ".cbz", ".rar", ".epub", ".pdf", ".xhtml", ".txt"].includes(
-                            window.path.extname(data[0].path.toLowerCase())
-                        )
-                    ) {
+                    } else if (window.app.formats.files.test(data[0].path)) {
                         closeReader();
                         openInReader(data[0].path);
-                    } else if (window.supportedFormats.includes(window.path.extname(data[0].path.toLowerCase()))) {
+                    } else if (window.app.formats.image.test(data[0].path.toLowerCase())) {
                         closeReader();
                         openInReader(window.path.dirname(data[0].path));
                     }

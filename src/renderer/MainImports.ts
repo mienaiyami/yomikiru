@@ -263,6 +263,43 @@ export const settingValidatorData = {
 } as const;
 // to add new theme property, add it to each theme in ./themeInit.json
 const themeProps = themeJSON.allData[0].main;
+
+const formats = {
+    /**
+     * Supported image formats.
+     */
+    image: {
+        list: [".jpg", ".jpeg", ".png", ".webp", ".svg", ".apng", ".gif", ".avif"],
+        test: function (str: string) {
+            return !!str && this.list.includes(path.extname(str).toLowerCase());
+        },
+    },
+    files: {
+        list: [".zip", ".cbz", ".7z", ".rar", ".pdf", ".epub", ".xhtml", ".html", ".txt"],
+        test: function (str: string) {
+            return !!str && this.list.includes(path.extname(str).toLowerCase());
+        },
+        getName(str: string) {
+            return path.basename(str, path.extname(str));
+        },
+        getExt(str: string) {
+            return path.extname(str).replace(".", "").toUpperCase();
+        },
+    },
+    packedManga: {
+        list: [".zip", ".cbz", ".7z", ".rar"],
+        test: function (str: string) {
+            return str && this.list.includes(path.extname(str).toLowerCase());
+        },
+    },
+    book: {
+        list: [".epub", ".xhtml", ".html", ".txt"],
+        test: function (str: string) {
+            return str && this.list.includes(path.extname(str).toLowerCase());
+        },
+    },
+};
+window.app.formats = formats;
 declare global {
     interface Window {
         electron: {
@@ -288,10 +325,6 @@ declare global {
          */
         makeFileSafe: (string: string) => string;
         logger: typeof log;
-        /**
-         * Supported image formats.
-         */
-        supportedFormats: string[];
         getCSSPath: (elem: Element) => string;
         path: typeof path;
         fs: typeof fs;
@@ -358,14 +391,7 @@ declare global {
         };
         app: {
             betterSortOrder: (x: string, y: string) => number;
-            /**
-             * returns string where .cbz and .zip are replace with " - CBZ file" and " - ZIP file" etc.
-             */
-            replaceExtension: (str: string, replaceWith?: string) => string;
-            /**
-             * check if url is zip,cbz,epub or any supported extension.
-             */
-            isSupportedFormat: (str: string) => boolean;
+            formats: typeof formats;
             /**
              * temp dir to be removed after closing chapter which was extracted
              */
@@ -719,7 +745,6 @@ declare global {
 
 window.path = path;
 window.fs = fs;
-window.supportedFormats = [".jpg", ".jpeg", ".png", ".webp", ".svg", ".apng", ".gif", ".avif"];
 window.themeProps = {
     "--body-bg-color": "Body BG Color",
     "--topBar-color": "Top-Bar BG Color",
@@ -931,34 +956,6 @@ window.getCSSPath = (el) => {
 
 const collator = Intl.Collator(undefined, { numeric: true, sensitivity: "base" });
 window.app.betterSortOrder = collator.compare;
-//todo , make better
-window.app.replaceExtension = (str, replaceWith = "~") => {
-    return (
-        str
-            .replace(/\.zip$/i, replaceWith === "~" ? " $ZIP" : replaceWith)
-            .replace(/\.cbz$/i, replaceWith === "~" ? " $CBZ" : replaceWith)
-            .replace(/\.epub$/i, replaceWith === "~" ? " $EPUB" : replaceWith)
-            .replace(/\.7z$/i, replaceWith === "~" ? " $7Z" : replaceWith)
-            .replace(/\.pdf$/i, replaceWith === "~" ? " $PDF" : replaceWith)
-            .replace(/\.rar$/i, replaceWith === "~" ? " $RAR" : replaceWith)
-            //todo: aaaaaaaaaaaaaaaa make it better.
-            .replace(/\.xhtml$/i, replaceWith === "~" ? " $XHTML" : replaceWith)
-            .replace(/\.html$/i, replaceWith === "~" ? " $HTML" : replaceWith)
-            .replace(/\.txt$/i, replaceWith === "~" ? " $TXT" : replaceWith)
-    );
-};
-window.app.isSupportedFormat = (str: string) =>
-    window.app.replaceExtension(str).includes("$ZIP") ||
-    window.app.replaceExtension(str).includes("$CBZ") ||
-    window.app.replaceExtension(str).includes("$7Z") ||
-    window.app.replaceExtension(str).includes("$EPUB") ||
-    window.app.replaceExtension(str).includes("$PDF") ||
-    window.app.replaceExtension(str).includes("$RAR") ||
-    //todo: aaaaaaaaaaaaaaaaaaaaaaaaa
-    window.app.replaceExtension(str).includes("$XHTML") ||
-    window.app.replaceExtension(str).includes("$HTML") ||
-    window.app.replaceExtension(str).includes("$TXT");
-
 window.app.deleteDirOnClose = "";
 window.app.currentPageNumber = 1;
 window.app.epubHistorySaveData = null;

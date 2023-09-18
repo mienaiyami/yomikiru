@@ -884,34 +884,18 @@ const Reader = () => {
                         Previous :{/* <FontAwesomeIcon icon={faQuestionCircle} />: */}
                     </span>
                     <span className="b">
-                        {
-                            window.app
-                                .replaceExtension(prevNextChapter.prev.split(window.path.sep).pop() || "")
-                                .split(" $")[0]
-                        }
-                        {window.app.isSupportedFormat(
-                            window.app.replaceExtension(prevNextChapter.prev.split(window.path.sep).pop() || "")
-                        ) && (
-                            <code>
-                                {
-                                    window.app
-                                        .replaceExtension(prevNextChapter.prev.split(window.path.sep).pop() || "")
-                                        .split(" $")[1]
-                                }
-                            </code>
+                        {window.app.formats.files.getName(prevNextChapter.prev)}
+                        {window.app.formats.files.test(prevNextChapter.prev) && (
+                            <code>{window.app.formats.files.getExt(prevNextChapter.prev)}</code>
                         )}
                     </span>
                 </div>
                 <div className="c">
                     <span className="a">Current :</span>
                     <span className="b">
-                        {window.app.replaceExtension(mangaInReader?.chapterName || "").split(" $")[0]}
-                        {window.app.isSupportedFormat(
-                            window.app.replaceExtension(mangaInReader?.chapterName || "")
-                        ) && (
-                            <code>
-                                {window.app.replaceExtension(mangaInReader?.chapterName || "").split(" $")[1]}
-                            </code>
+                        {window.app.formats.files.getName(mangaInReader?.chapterName || "")}
+                        {window.app.formats.files.test(mangaInReader?.chapterName || "") && (
+                            <code>{window.app.formats.files.getExt(mangaInReader?.chapterName || "")}</code>
                         )}
                     </span>
                 </div>
@@ -939,21 +923,9 @@ const Reader = () => {
                         Next :{/* <FontAwesomeIcon icon={faQuestionCircle} />: */}
                     </span>
                     <span className="b">
-                        {
-                            window.app
-                                .replaceExtension(prevNextChapter.next.split(window.path.sep).pop() || "")
-                                .split(" $")[0]
-                        }
-                        {window.app.isSupportedFormat(
-                            window.app.replaceExtension(prevNextChapter.next.split(window.path.sep).pop() || "")
-                        ) && (
-                            <code>
-                                {
-                                    window.app
-                                        .replaceExtension(prevNextChapter.next.split(window.path.sep).pop() || "")
-                                        .split(" $")[1]
-                                }
-                            </code>
+                        {window.app.formats.files.getName(prevNextChapter.next)}
+                        {window.app.formats.files.test(prevNextChapter.next) && (
+                            <code>{window.app.formats.files.getExt(prevNextChapter.next)}</code>
                         )}
                     </span>
                 </div>

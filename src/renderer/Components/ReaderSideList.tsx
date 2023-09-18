@@ -88,9 +88,7 @@ const ReaderSideList = memo(
                 if (history[historyIndex])
                     setHistorySimple([
                         historyIndex,
-                        (history[historyIndex] as MangaHistoryItem).data.chaptersRead.map((e) =>
-                            window.app.replaceExtension(e)
-                        ),
+                        (history[historyIndex] as MangaHistoryItem).data.chaptersRead,
                     ]);
             }
         }, [history]);
@@ -102,8 +100,8 @@ const ReaderSideList = memo(
         const changePrevNext = () => {
             if (mangaInReader) {
                 const listDataName = chapterData.map((e) => e.name);
-                const prevIndex = listDataName.indexOf(window.app.replaceExtension(mangaInReader.chapterName)) - 1;
-                const nextIndex = listDataName.indexOf(window.app.replaceExtension(mangaInReader.chapterName)) + 1;
+                const prevIndex = listDataName.indexOf(mangaInReader.chapterName) - 1;
+                const nextIndex = listDataName.indexOf(mangaInReader.chapterName) + 1;
                 const prevCh = prevIndex < 0 ? "~" : chapterData[prevIndex].link;
                 const nextCh = nextIndex >= chapterData.length ? "~" : chapterData[nextIndex].link;
                 dispatch(setPrevNextChapter({ prev: prevCh, next: nextCh }));
@@ -145,12 +143,10 @@ const ReaderSideList = memo(
                                     .readdir(path)
                                     .then((data) => {
                                         responseCompleted++;
-                                        data = data.filter((e) =>
-                                            window.supportedFormats.includes(window.path.extname(e).toLowerCase())
-                                        );
+                                        data = data.filter((e) => window.app.formats.image.test(e));
                                         if (data.length > 0) {
                                             listData.push({
-                                                name: window.app.replaceExtension(e),
+                                                name: e,
                                                 pages: data.length,
                                                 link: path,
                                                 dateModified: stat.mtimeMs,
@@ -171,16 +167,12 @@ const ReaderSideList = memo(
                                             );
                                         }
                                     });
-                            } else if (
-                                [".zip", ".cbz", ".rar", ".7z", ".pdf", ".xhtml", ".html", ".txt"].includes(
-                                    window.path.extname(path).toLowerCase()
-                                )
-                            ) {
+                            } else if (window.app.formats.files.test(path)) {
                                 validFile++;
                                 setTimeout(() => {
                                     responseCompleted++;
                                     listData.push({
-                                        name: window.app.replaceExtension(e),
+                                        name: e,
                                         pages: 0,
                                         link: path,
                                         dateModified: stat.mtimeMs,
@@ -568,7 +560,7 @@ const ReaderSideList = memo(
                     <div>
                         <span className="bold">Chapter</span>
                         <span className="bold"> : </span>
-                        <span>{window.app.replaceExtension(mangaInReader?.chapterName || "", "")}</span>
+                        <span>{window.app.formats.files.getName(mangaInReader?.chapterName || "")}</span>
                     </div>
                 </div>
                 {anilistToken && <AnilistBar />}
