@@ -44,7 +44,7 @@ const Reader = () => {
     const [isSideListPinned, setSideListPinned] = useState(false);
     const [sideListWidth, setSideListWidth] = useState(appSettings.readerSettings.sideListWidth || 450);
     const [isBookmarked, setBookmarked] = useState(false);
-    const [scrollPosPercent, setScrollPosPercent] = useState(0);
+    const [scrollPosPercent, setScrollPosPercent] = useState({ x: 0, y: 0 });
     const [zenMode, setZenMode] = useState(appSettings.openInZenMode || false);
     // used to be in app.tsx then sent to topBar.tsx by context provider but caused performance issue, now using window.currentPageNumber
     const [currentPageNumber, setCurrentPageNumber] = useState(1);
@@ -472,8 +472,15 @@ const Reader = () => {
     }, [isSideListPinned, appSettings, shortcuts, isLoadingManga, isSettingOpen]);
     const makeScrollPos = useCallback(() => {
         if (isSideListPinned && imgContRef.current)
-            return setScrollPosPercent(imgContRef.current.scrollTop / imgContRef.current.scrollHeight);
-        if (readerRef.current) setScrollPosPercent(readerRef.current.scrollTop / readerRef.current.scrollHeight);
+            return setScrollPosPercent({
+                x: imgContRef.current.scrollLeft / imgContRef.current.scrollWidth,
+                y: imgContRef.current.scrollTop / imgContRef.current.scrollHeight,
+            });
+        if (readerRef.current)
+            setScrollPosPercent({
+                x: readerRef.current.scrollLeft / readerRef.current.scrollWidth,
+                y: readerRef.current.scrollTop / readerRef.current.scrollHeight,
+            });
     }, [isSideListPinned, imgContRef.current, readerRef.current]);
     const changePageNumber = () => {
         if (!pageNumChangeDisabled) {
@@ -745,8 +752,14 @@ const Reader = () => {
         }
     }, [imagesLoaded]);
     useLayoutEffect(() => {
-        readerRef.current?.scrollTo(0, scrollPosPercent * readerRef.current.scrollHeight);
-        imgContRef.current?.scrollTo(0, scrollPosPercent * imgContRef.current.scrollHeight);
+        readerRef.current?.scrollTo(
+            scrollPosPercent.x * readerRef.current.scrollWidth,
+            scrollPosPercent.y * readerRef.current.scrollHeight
+        );
+        imgContRef.current?.scrollTo(
+            scrollPosPercent.x * imgContRef.current.scrollWidth,
+            scrollPosPercent.y * imgContRef.current.scrollHeight
+        );
     }, [appSettings.readerSettings.readerWidth, isSideListPinned]);
     useEffect(() => {
         window.app.linkInReader = linkInReader;
@@ -764,7 +777,10 @@ const Reader = () => {
     }, [isLoadingManga]);
     useLayoutEffect(() => {
         if (isSideListPinned) {
-            readerRef.current?.scrollTo(0, scrollPosPercent * readerRef.current.scrollHeight);
+            readerRef.current?.scrollTo(
+                scrollPosPercent.x * readerRef.current.scrollWidth,
+                scrollPosPercent.y * readerRef.current.scrollHeight
+            );
         }
         const timeOutId = setTimeout(() => {
             if (sideListWidth !== appSettings?.readerSettings?.sideListWidth)
