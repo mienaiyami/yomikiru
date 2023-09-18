@@ -126,8 +126,8 @@ const Usage = ({
                                     <code>One Piece</code> type <code>op</code>).
                                 </li>
                                 <li>
-                                    For exact search, add <code>"</code> in front of search. (e.g. For{" "}
-                                    <code>One Piece</code> type <code>"one</code>).
+                                    For exact search, add <code>"</code> or <code>`</code> in front of search.
+                                    (e.g. For <code>One Piece</code> type <code>`one</code>).
                                 </li>
                                 <li>
                                     Paste link to set browse pasted link in Locations tab. Or page link of a
