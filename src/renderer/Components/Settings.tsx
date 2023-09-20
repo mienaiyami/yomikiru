@@ -1320,6 +1320,28 @@ const Settings = (): ReactElement => {
                                     </div>
                                     <div className="toggleItem">
                                         <InputCheckbox
+                                            checked={appSettings.readerSettings.dynamicLoading}
+                                            className="noBG"
+                                            onChange={(e) => {
+                                                dispatch(
+                                                    setReaderSettings({
+                                                        dynamicLoading: e.currentTarget.checked,
+                                                    })
+                                                );
+                                            }}
+                                            labelAfter="Dynamic Image Loading"
+                                        />
+                                        <div className="desc">
+                                            Removes Initial loading screen and load Images as you scroll. Doesn't
+                                            work with "Canvas Based Rendering"
+                                            <br />
+                                            Drawbacks : Inconsistent scroll, no double-span images, stuttering
+                                            while scrolling.
+                                            <code>Experimental</code>
+                                        </div>
+                                    </div>
+                                    <div className="toggleItem">
+                                        <InputCheckbox
                                             checked={appSettings.epubReaderSettings.loadOneChapter}
                                             className="noBG"
                                             onChange={(e) => {
