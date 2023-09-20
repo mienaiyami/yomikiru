@@ -235,48 +235,16 @@ const App = (): ReactElement => {
                                 log: false,
                             });
                         });
-                    // window.crossZip.unzip(link, tempExtractPath, (err) => {
-                    //     if (err) {
-                    //         dispatch(setUnzipping(false));
-                    //         if (err.message.includes("spawn unzip ENOENT"))
-                    //             return window.dialog.customError({
-                    //                 message: "Error while extracting.",
-                    //                 detail: '"unzip" not found. Please install by using\n"sudo apt install unzip"',
-                    //             });
-                    //         return window.dialog.customError({
-                    //             message: "Error while extracting.",
-                    //             detail: err.message,
-                    //             log: false,
-                    //         });
-                    //     }
-                    //     tempFn(tempExtractPath, 1);
-                    // });
                 }
             } catch (err) {
                 window.logger.error("An Error occurred while checking/extracting archive:", err);
             }
         } else if (window.path.extname(link).toLowerCase() === ".pdf") {
-            // let tempExtractPath = window.path.join(
-            //     window.electron.app.getPath("temp"),
-            //     `yomikiru-temp-Images-${linkSplitted[linkSplitted.length - 1]}-${window.app.randomString(10)}`
-            // );
             const tempExtractPath = window.path.join(
                 window.electron.app.getPath("temp"),
                 `yomikiru-temp-images-scale_${appSettings.readerSettings.pdfScale}-${linkSplitted.at(-1)}`
             );
-            // if (window.fs.existsSync(tempExtractPath)) {
-            //     tempExtractPath += "-1";
-            // }
-
-            // link =
-            //     "http://localhost:48641/stuff/mangas/ln/Eminence%20in%20Shadow/The%20Eminence%20in%20Shadow,%20Vol.%201.pdf";
-
             try {
-                // console.log(
-                //     window.fs.existsSync(window.path.join(tempExtractPath, "SOURCE")),
-                //     window.fs.readFileSync(window.path.join(tempExtractPath, "SOURCE"), "utf-8"),
-                //     link
-                // );
                 if (
                     appSettings.keepExtractedFiles &&
                     window.fs.existsSync(window.path.join(tempExtractPath, "SOURCE")) &&
@@ -297,19 +265,6 @@ const App = (): ReactElement => {
                         })
                     );
 
-                    // pdf to img starts here
-
-                    // renderPDF(link, tempExtractPath, appSettings.readerSettings.pdfScale)
-                    //     .catch((reason) => {
-                    //         dispatch(setUnzipping(false));
-                    //         console.error("PDF Reading Error:", reason);
-                    //     })
-                    //     .then((e) => {
-                    //         if (e) tempFn(tempExtractPath, 1);
-                    //     });
-                    // if (!window.electron.app.isPackaged)
-                    //     link =
-                    //         "http://localhost:1834/stuff/mangas/ln/Eminence%20in%20Shadow/The%20Eminence%20in%20Shadow,%20Vol.%201.pdf";
                     renderPDF(link, tempExtractPath, appSettings.readerSettings.pdfScale, (total, done) =>
                         dispatch(
                             setUnzipping({
@@ -372,23 +327,8 @@ const App = (): ReactElement => {
                 true
             );
     };
-    // const updateLastHistoryPageNumber = () => {
-    //     if (history.length > 0)
-    //         setHistory((init) => {
-    //             if (
-    //                 (init.length > 0 && init[0] && init[0].link && init[0].link === linkInReader.link) ||
-    //                 linkInReader.link === ""
-    //             ) {
-    //                 init[0].page = window.app.currentPageNumber;
-    //                 return [...init];
-    //             }
-    //             return init;
-    //         });
-    // };
 
     const closeReader = () => {
-        // console.log(linkInReader, window.app.linkInReader);
-        // console.log(window.app.linkInReader);
         if (window.app.linkInReader && window.app.linkInReader.type === "image")
             dispatch(updateCurrentHistoryPage());
         if (window.app.linkInReader && window.app.linkInReader.type === "book")
@@ -741,10 +681,9 @@ const App = (): ReactElement => {
         };
     }, []);
 
-    // useLayoutEffect(() => {
-    //     if (appSettings.reducedMotion) document.body.classList.add("reducedMotion");
-    //     else document.body.classList.remove("reducedMotion");
-    // }, [appSettings.reducedMotion]);
+    useLayoutEffect(() => {
+        closeReader();
+    }, [appSettings.readerSettings.dynamicLoading]);
 
     return (
         <AppContext.Provider
