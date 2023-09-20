@@ -1335,7 +1335,7 @@ const Settings = (): ReactElement => {
                                             Removes Initial loading screen and load Images as you scroll. Doesn't
                                             work with "Canvas Based Rendering"
                                             <br />
-                                            Drawbacks : Inconsistent scroll, no double-span images, stuttering
+                                            Drawbacks : Inconsistent scroll size, no double-span images, stuttering
                                             while scrolling.
                                             <code>Experimental</code>
                                         </div>
