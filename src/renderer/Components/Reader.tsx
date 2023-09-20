@@ -12,6 +12,7 @@ import { setLinkInReader } from "../store/linkInReader";
 import { newHistory } from "../store/history";
 import AnilistSearch from "./anilist/AnilistSearch";
 import AnilistEdit from "./anilist/AnilistEdit";
+import { InView } from "react-intersection-observer";
 
 const Reader = () => {
     const { pageNumberInputRef, checkValidFolder, setContextMenuData } = useContext(AppContext);
@@ -594,10 +595,9 @@ const Reader = () => {
     };
     useLayoutEffect(() => {
         // window.electron.webFrame.clearCache();
+        const dynamic = appSettings.readerSettings.dynamicLoading;
         images.forEach((e, i) => {
             const img = document.createElement("img");
-
-            const dynamic = true;
 
             const loaded = (success = false) => {
                 setImagesLoaded((init) => init + 1);
@@ -677,7 +677,7 @@ const Reader = () => {
                 img.setAttribute("data-pagenumber", JSON.stringify(i + 1));
                 if (dynamic) {
                     img.loading = "lazy";
-                    img.height = window.innerHeight;
+                    img.height = window.innerHeight - 50;
                     img.width = window.innerHeight / 1.5;
                 }
                 img.classList.add("readerImg");
@@ -717,6 +717,7 @@ const Reader = () => {
                     if (dynamic) {
                         (e.target as HTMLImageElement).removeAttribute("height");
                         (e.target as HTMLImageElement).removeAttribute("width");
+                        (e.target as HTMLImageElement).style.opacity = "1";
                     } else {
                         setImageDecodeQueue((init) => {
                             init.push(img);
@@ -734,6 +735,7 @@ const Reader = () => {
             }
             if (dynamic) {
                 img.setAttribute("data-src", "file://" + e.replaceAll("#", "%23"));
+                img.style.opacity = "0";
                 dynamic && loaded(true);
             } else {
                 img.src = "file://" + e.replaceAll("#", "%23");
@@ -744,12 +746,7 @@ const Reader = () => {
         [...document.querySelector("section.imgCont")!.children].forEach((e, i) => {
             imageElementsIndex[i].forEach((canvasIndex) => {
                 const elem = imageWidthContainer[canvasIndex].img;
-                if (elem instanceof HTMLCanvasElement) e.appendChild(elem as HTMLElement);
-                else {
-                    const src = elem.getAttribute("data-src");
-                    e.appendChild(elem);
-                    if (src) elem.src = src;
-                }
+                if (elem instanceof HTMLElement) e.appendChild(elem);
             });
         });
     }, [imageElementsIndex]);
@@ -1234,17 +1231,17 @@ const Reader = () => {
                     }
                 }}
             >
-                {imageElementsIndex.map((e, i) => (
-                    <div
-                        className={
+                {imageElementsIndex.map((e, i) => {
+                    //todo check it is cause performance issue for !dynamic
+                    const props = {
+                        className:
                             "row " +
                             (appSettings.readerSettings.readingSide === 1 ? "rtl " : "ltr ") +
                             (wideImageContMap.includes(i) ? "wide " : "") +
                             (appSettings.readerSettings.pagesPerRowSelected !== 0 ? "twoPagePerRow " : "") +
-                            (appSettings.readerSettings.widthClamped ? "widthClamped " : "")
-                        }
-                        data-imagerow={i + 1}
-                        style={{
+                            (appSettings.readerSettings.widthClamped ? "widthClamped " : ""),
+                        "data-imagerow": i + 1,
+                        style: {
                             display: [1, 2].includes(appSettings.readerSettings.readerTypeSelected)
                                 ? currentImageRow === i + 1
                                     ? "flex"
@@ -1260,10 +1257,34 @@ const Reader = () => {
                                 !appSettings.readerSettings.widthClamped
                                     ? appSettings.readerSettings.maxHeight + "px"
                                     : "auto",
-                        }}
-                        key={i}
-                    ></div>
-                ))}
+                        },
+                        key: i,
+                    };
+                    if (appSettings.readerSettings.dynamicLoading)
+                        return (
+                            <InView
+                                as="div"
+                                initialInView={false}
+                                onChange={(inView, entry) => {
+                                    const load = () => {
+                                        entry.target.querySelectorAll("img").forEach((e) => {
+                                            const src = e.getAttribute("data-src");
+                                            if (src) e.src = src;
+                                        });
+                                        entry.target.setAttribute("data-rendered", "true");
+                                    };
+                                    if (i === 0) load();
+                                    const initial = entry.target.getAttribute("data-initial");
+                                    if (!initial) return entry.target.setAttribute("data-initial", "true");
+                                    const rendered = entry.target.getAttribute("data-rendered");
+                                    if (rendered) return;
+                                    if (inView) load();
+                                }}
+                                {...props}
+                            ></InView>
+                        );
+                    return <div {...props}></div>;
+                })}
             </section>
             {appSettings.readerSettings.readerTypeSelected === 0 ? <ChapterChanger /> : ""}
         </div>

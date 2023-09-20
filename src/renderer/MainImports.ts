@@ -139,6 +139,7 @@ export const settingValidatorData = {
          * higher scale = higher quality
          */
         pdfScale: 1,
+        dynamicLoading: false,
         customColorFilter: {
             enabled: false,
             /**
@@ -1322,6 +1323,7 @@ const defaultSettings: AppSettings = {
         invertImage: false,
         grayscale: false,
         pdfScale: 1.5,
+        dynamicLoading: false,
         customColorFilter: {
             enabled: false,
             r: 0,
