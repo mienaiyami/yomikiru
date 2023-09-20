@@ -1209,6 +1209,9 @@ const Reader = () => {
                                 !appSettings.readerSettings.widthClamped
                                     ? appSettings.readerSettings.maxHeight + "px"
                                     : "auto",
+                            height: appSettings.readerSettings.dynamicLoading
+                                ? `${window.innerHeight - 50}px`
+                                : "auto",
                         },
                         key: i,
                     };
@@ -1220,14 +1223,12 @@ const Reader = () => {
                                 onChange={(inView, entry) => {
                                     const load = () => {
                                         entry.target.querySelectorAll("img").forEach((e) => {
+                                            (entry.target as HTMLElement).style.height = "auto";
                                             const src = e.getAttribute("data-src");
                                             if (src) e.src = src;
                                         });
                                         entry.target.setAttribute("data-rendered", "true");
                                     };
-                                    if (i === 0) load();
-                                    const initial = entry.target.getAttribute("data-initial");
-                                    if (!initial) return entry.target.setAttribute("data-initial", "true");
                                     const rendered = entry.target.getAttribute("data-rendered");
                                     if (rendered) return;
                                     if (inView) load();
