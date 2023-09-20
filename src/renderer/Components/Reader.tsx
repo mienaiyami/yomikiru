@@ -1228,16 +1228,10 @@ const Reader = () => {
                                     if (i === 0) load();
                                     const initial = entry.target.getAttribute("data-initial");
                                     if (!initial) return entry.target.setAttribute("data-initial", "true");
+                                    const rendered = entry.target.getAttribute("data-rendered");
+                                    if (rendered) return;
                                     if (inView) load();
-                                    else {
-                                        entry.target.querySelectorAll("img").forEach((e) => {
-                                            if (e.src) {
-                                                e.height = e.clientHeight;
-                                                e.width = e.clientWidth;
-                                                e.src = "";
-                                            }
-                                        });
-                                    }
+                                    // unloading image does not free ram
                                 }}
                                 {...props}
                             ></InView>
