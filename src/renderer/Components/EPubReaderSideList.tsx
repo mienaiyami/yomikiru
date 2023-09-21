@@ -165,13 +165,18 @@ const EPubReaderSideList = memo(
             >
                 <div
                     className="indicator"
-                    onClick={() => {
+                    tabIndex={0}
+                    onClick={(e) => {
                         makeScrollPos();
                         if (isSideListPinned) {
                             sideListRef.current?.blur();
                             setListOpen(false);
                         }
                         setSideListPinned((init) => !init);
+                        e.currentTarget.blur();
+                    }}
+                    onKeyDown={(e) => {
+                        if ([" ", "Enter"].includes(e.key)) e.currentTarget.click();
                     }}
                 >
                     <FontAwesomeIcon

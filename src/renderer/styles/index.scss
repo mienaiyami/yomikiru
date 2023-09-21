@@ -2364,6 +2364,10 @@ body {
                     &:hover {
                         background-color: var(--btn-color-hover);
                     }
+                    &:focus,
+                    &:active {
+                        box-shadow: var(--btn-color-focus) 0 0 0px 2px;
+                    }
                 }
 
                 .reSizer {

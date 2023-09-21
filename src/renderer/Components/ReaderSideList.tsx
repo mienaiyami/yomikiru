@@ -309,13 +309,18 @@ const ReaderSideList = memo(
             >
                 <div
                     className="indicator"
-                    onClick={() => {
+                    onClick={(e) => {
                         makeScrollPos();
                         if (isSideListPinned) {
                             sideListRef.current?.blur();
                             setListOpen(false);
                         }
                         setSideListPinned((init) => !init);
+                        e.currentTarget.blur();
+                    }}
+                    tabIndex={0}
+                    onKeyDown={(e) => {
+                        if ([" ", "Enter"].includes(e.key)) e.currentTarget.click();
                     }}
                 >
                     <FontAwesomeIcon
