@@ -385,15 +385,6 @@ const Reader = () => {
                                         fitOption: fitOption as 0 | 1 | 2 | 3,
                                     })
                                 );
-                                // todo: display current mode in middle of screen and fade
-
-                                // dispatch(
-                                //     setAppSettings((init) => {
-                                //         init.readerSettings.fitOption += 1;
-                                //         if (init.readerSettings.fitOption === 4) init.readerSettings.fitOption = 0;
-                                //         return { ...init };
-                                //     })
-                                // );
                                 break;
                             }
                             case shortcutkey.selectReaderMode0?.key1:
