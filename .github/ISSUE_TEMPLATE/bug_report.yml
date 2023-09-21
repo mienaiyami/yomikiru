@@ -17,6 +17,13 @@ body:
   validations:
     required: true
 
+- type: dropdown
+  attributes:
+    label: Type of reader (is reader related)
+    options:
+      - image
+      - epub
+
 - type: textarea
   attributes:
     label: Steps to reproduce
