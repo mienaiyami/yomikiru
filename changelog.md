@@ -4,26 +4,22 @@ Does not follow semver.
 
 ## Added
 
-- preserve scrollX when zooming past 100%.
-- added `` ` (backtick) `` for exact search keyword.
+- dynamic image loading, can be enabled from settings.
+- style settings
+- #266
+- added `shift`+`cycleFitOption` for reverse
 
 ## Changed
 
 - UI
-  -
-
-- changed epub min word-spacing to -1
-- change default behavior of arrow up down in search
-- change default zenmode pagenum color to semi transparent
-- DEV:
-  - improved file ext info and related
+  - #267
+  - #266
+- show epub side-list on element focus inside
+- made side-list pin button keyboard accessible.
 
 ## Fixed
 
-- fixed epub zen mode reader setting change incorrect preserve scroll
-- #241
-- fixed chapter opening shortcut not working
-- fixed anilist chapter input out of focus on input
-- fixed image context menu "show in file explorer" incorrect path
+- #273
+- incorrect name for titles with `.` (dot) in name.
 
 ---
