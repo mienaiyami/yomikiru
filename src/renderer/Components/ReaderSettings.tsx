@@ -203,7 +203,7 @@ const ReaderSettings = memo(
                                 );
                             }}
                         >
-                            Fit options
+                            Fit Options
                         </div>
                         <div className="options">
                             <div className="row">
@@ -349,7 +349,7 @@ const ReaderSettings = memo(
                                 );
                             }}
                         >
-                            Reading mode
+                            Reading Mode
                         </div>
                         <div className="options">
                             <button
@@ -399,7 +399,7 @@ const ReaderSettings = memo(
                                 );
                             }}
                         >
-                            Pages per Row
+                            Pages Per Row
                         </div>
                         <div className="options">
                             <button
@@ -478,7 +478,7 @@ const ReaderSettings = memo(
                                 );
                             }}
                         >
-                            Reading side
+                            Reading Side
                         </div>
                         <div className="options">
                             <button
@@ -521,8 +521,9 @@ const ReaderSettings = memo(
                                     })
                                 );
                             }}
+                            title="Scrolling speed with keys."
                         >
-                            Scroll Speed (with keys)
+                            Scroll Speed
                         </div>
                         <div className="options">
                             <InputNumber
@@ -683,7 +684,7 @@ const ReaderSettings = memo(
                                 );
                             }}
                         >
-                            Other settings
+                            Other Settings
                         </div>
 
                         <div className="options col">

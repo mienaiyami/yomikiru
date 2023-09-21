@@ -714,8 +714,9 @@ const EPUBReaderSettings = memo(
                                     })
                                 );
                             }}
+                            title="Scrolling speed with keys."
                         >
-                            Scroll Speed (with keys)
+                            Scroll Speed
                         </div>
                         <div className="options">
                             <InputNumber
