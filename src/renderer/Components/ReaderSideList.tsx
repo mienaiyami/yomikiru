@@ -264,7 +264,9 @@ const ReaderSideList = memo(
 
         return (
             <div
-                className={`readerSideList listCont ${isListOpen ? "open" : ""}`}
+                className={`readerSideList listCont ${isListOpen ? "open" : ""} ${
+                    !appSettings.showTextFileBadge ? "hideTextFileBadge" : ""
+                } ${!appSettings.showPageCountInSideList ? "hidePageCountInSideList" : ""}`}
                 onMouseEnter={() => {
                     setpreventListClose(true);
                     if (!isListOpen) setListOpen(true);

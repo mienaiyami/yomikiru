@@ -2463,6 +2463,16 @@ body {
                         }
                     }
                 }
+                &.hideTextFileBadge {
+                    .nonFolder[data-type-text="true"] {
+                        display: none;
+                    }
+                }
+                &.hidePageCountInSideList {
+                    .pageNum {
+                        display: none;
+                    }
+                }
                 .location-cont {
                     margin-top: 5px;
                     padding: 0;

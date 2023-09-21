@@ -85,7 +85,7 @@ const ReaderSideListItem = memo(
                 >
                     <span className="text">{window.app.formats.files.getName(name)}</span>
                     {window.app.formats.files.test(name) ? (
-                        <code className="nonFolder" data-type={window.app.formats.files.getExt(name)}>
+                        <code className="nonFolder" data-type-text={window.app.formats.book.test(name)}>
                             {window.app.formats.files.getExt(name)}
                         </code>
                     ) : (

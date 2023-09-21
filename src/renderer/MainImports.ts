@@ -90,6 +90,14 @@ export const settingValidatorData = {
     checkboxReaderSetting: false,
     syncSettings: true,
     syncThemes: true,
+
+    //styles
+
+    showPageCountInSideList: true,
+    showTextFileBadge: true,
+
+    //styles end
+
     readerSettings: {
         /**
          * width of reader in percent
@@ -1305,6 +1313,8 @@ const defaultSettings: AppSettings = {
     checkboxReaderSetting: false,
     syncSettings: true,
     syncThemes: true,
+    showPageCountInSideList: true,
+    showTextFileBadge: true,
     readerSettings: {
         readerWidth: 60,
         variableImageSize: true,

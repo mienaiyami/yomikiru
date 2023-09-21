@@ -1137,41 +1137,6 @@ const Settings = (): ReactElement => {
                                     </div>
                                     <div className="toggleItem">
                                         <InputCheckbox
-                                            checked={!appSettings.readerSettings.disableChapterTransitionScreen}
-                                            className="noBG"
-                                            onChange={(e) => {
-                                                dispatch(
-                                                    setReaderSettings({
-                                                        disableChapterTransitionScreen: !e.currentTarget.checked,
-                                                    })
-                                                );
-                                            }}
-                                            labelAfter="Chapter Transition screen"
-                                        />
-                                        <div className="desc">
-                                            Show the chapter transition screen that show up at start and end of
-                                            chapter (only in vertical scroll Reading mode).
-                                        </div>
-                                    </div>
-                                    <div className="toggleItem">
-                                        <InputCheckbox
-                                            checked={!appSettings.disableListNumbering}
-                                            className="noBG"
-                                            onChange={(e) => {
-                                                dispatch(
-                                                    setAppSettings({
-                                                        disableListNumbering: !e.currentTarget.checked,
-                                                    })
-                                                );
-                                            }}
-                                            labelAfter="Location List Numbering"
-                                        />
-                                        <div className="desc">
-                                            Enabled Location List Numbering. This will be applied to all lists.
-                                        </div>
-                                    </div>
-                                    <div className="toggleItem">
-                                        <InputCheckbox
                                             checked={appSettings.showSearch}
                                             className="noBG"
                                             onChange={(e) => {
@@ -1213,24 +1178,6 @@ const Settings = (): ReactElement => {
                                             labelAfter="Zen Mode Cursor"
                                         />
                                         <div className="desc">Hide cursor in Zen Mode.</div>
-                                    </div>
-                                    <div className="toggleItem">
-                                        <InputCheckbox
-                                            checked={appSettings.showMoreDataOnItemHover}
-                                            className="noBG"
-                                            onChange={(e) => {
-                                                dispatch(
-                                                    setAppSettings({
-                                                        showMoreDataOnItemHover: e.currentTarget.checked,
-                                                    })
-                                                );
-                                            }}
-                                            labelAfter="More Info on Bookmark / History Hover"
-                                        />
-                                        <div className="desc">
-                                            Show more info such as "date", "total pages", "last page number",
-                                            "path" when mouse over items in bookmark / history tab.
-                                        </div>
                                     </div>
                                     <div className="toggleItem">
                                         <InputCheckbox
@@ -1398,6 +1345,93 @@ const Settings = (): ReactElement => {
                                             Use GPU to accelerate rendering. Prevents reader stuttering.{" "}
                                             <code>App Restart Needed</code>
                                         </div>
+                                    </div>
+                                </div>
+
+                                <div className="settingItem2 otherSettings">
+                                    <h3>Style Settings</h3>
+
+                                    <div className="toggleItem">
+                                        <InputCheckbox
+                                            checked={!appSettings.disableListNumbering}
+                                            className="noBG"
+                                            onChange={(e) => {
+                                                dispatch(
+                                                    setAppSettings({
+                                                        disableListNumbering: !e.currentTarget.checked,
+                                                    })
+                                                );
+                                            }}
+                                            labelAfter="Location List Numbering"
+                                        />
+                                        <div className="desc">
+                                            Enabled Location List Numbering. This will be applied to all lists.
+                                        </div>
+                                    </div>
+                                    <div className="toggleItem">
+                                        <InputCheckbox
+                                            checked={!appSettings.readerSettings.disableChapterTransitionScreen}
+                                            className="noBG"
+                                            onChange={(e) => {
+                                                dispatch(
+                                                    setReaderSettings({
+                                                        disableChapterTransitionScreen: !e.currentTarget.checked,
+                                                    })
+                                                );
+                                            }}
+                                            labelAfter="Chapter Transition screen"
+                                        />
+                                        <div className="desc">
+                                            Show the chapter transition screen that show up at start and end of
+                                            chapter (only in vertical scroll Reading mode).
+                                        </div>
+                                    </div>
+
+                                    <div className="toggleItem">
+                                        <InputCheckbox
+                                            checked={appSettings.showMoreDataOnItemHover}
+                                            className="noBG"
+                                            onChange={(e) => {
+                                                dispatch(
+                                                    setAppSettings({
+                                                        showMoreDataOnItemHover: e.currentTarget.checked,
+                                                    })
+                                                );
+                                            }}
+                                            labelAfter="More Info on Bookmark / History Hover"
+                                        />
+                                        <div className="desc">
+                                            Show more info such as "date", "total pages", "last page number",
+                                            "path" when mouse over items in bookmark / history tab.
+                                        </div>
+                                    </div>
+                                    <div className="toggleItem">
+                                        <InputCheckbox
+                                            checked={appSettings.showPageCountInSideList}
+                                            className="noBG"
+                                            onChange={(e) => {
+                                                dispatch(
+                                                    setAppSettings({
+                                                        showPageCountInSideList: e.currentTarget.checked,
+                                                    })
+                                                );
+                                            }}
+                                            labelAfter="Show Page Count in Side-List"
+                                        />
+                                    </div>
+                                    <div className="toggleItem">
+                                        <InputCheckbox
+                                            checked={appSettings.showTextFileBadge}
+                                            className="noBG"
+                                            onChange={(e) => {
+                                                dispatch(
+                                                    setAppSettings({
+                                                        showTextFileBadge: e.currentTarget.checked,
+                                                    })
+                                                );
+                                            }}
+                                            labelAfter="Show text files badge in Side-List"
+                                        />
                                     </div>
                                 </div>
                                 <div className="settingItem2 dangerZone">
