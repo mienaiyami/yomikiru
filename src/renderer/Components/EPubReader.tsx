@@ -955,6 +955,11 @@ const EPubReader = () => {
                     );
                 return;
             }
+            const topBottomLogic =
+                readerRef.current &&
+                !e.repeat &&
+                (readerRef.current.scrollTop <= window.innerHeight / 1.5 ||
+                    readerRef.current.scrollTop >= readerRef.current.scrollHeight - window.innerHeight / 1.5);
             if (!isSettingOpen && window.app.isReaderOpen && !isLoadingManga && !e.ctrlKey) {
                 if ([" ", "ArrowUp", "ArrowDown"].includes(e.key)) e.preventDefault();
                 if (!e.repeat) {
@@ -973,16 +978,21 @@ const EPubReader = () => {
                             // makeScrollPos();
                             setZenMode(false);
                             break;
-                        case shortcutkey.nextChapter?.key1:
-                        case shortcutkey.nextChapter?.key2:
+
                         case shortcutkey.nextPage?.key1:
                         case shortcutkey.nextPage?.key2:
+                            if (topBottomLogic) openNextChapterRef.current?.click();
+                            break;
+                        case shortcutkey.prevPage?.key1:
+                        case shortcutkey.prevPage?.key2:
+                            if (topBottomLogic) openPrevChapterRef.current?.click();
+                            break;
+                        case shortcutkey.nextChapter?.key1:
+                        case shortcutkey.nextChapter?.key2:
                             if (!e.repeat) openNextChapterRef.current?.click();
                             break;
                         case shortcutkey.prevChapter?.key1:
                         case shortcutkey.prevChapter?.key2:
-                        case shortcutkey.prevPage?.key1:
-                        case shortcutkey.prevPage?.key2:
                             if (!e.repeat) openPrevChapterRef.current?.click();
                             break;
                         case shortcutkey.bookmark?.key1:
