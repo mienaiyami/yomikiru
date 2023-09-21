@@ -289,10 +289,14 @@ const formats = {
             return !!str && this.list.includes(path.extname(str).toLowerCase());
         },
         getName(str: string) {
-            return path.basename(str, path.extname(str));
+            const ext = path.extname(str);
+            if (!this.list.includes(ext)) return str;
+            return path.basename(str, ext);
         },
         getExt(str: string) {
-            return path.extname(str).replace(".", "").toUpperCase();
+            const ext = path.extname(str);
+            if (!this.list.includes(ext)) return "";
+            return ext.replace(".", "").toUpperCase();
         },
     },
     packedManga: {
