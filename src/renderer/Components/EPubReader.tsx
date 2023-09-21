@@ -15,7 +15,7 @@ import { setReaderOpen } from "../store/isReaderOpen";
 import { newHistory, updateCurrentBookHistory } from "../store/history";
 import EPUBReaderSettings from "./EPubReaderSettings";
 import EPubReaderSideList from "./EPubReaderSideList";
-import { setEpubReaderSettings, setReaderSettings } from "../store/appSettings";
+import { setAppSettings, setEpubReaderSettings, setReaderSettings } from "../store/appSettings";
 import { setBookInReader } from "../store/bookInReader";
 import { setUnzipping } from "../store/unzipping";
 import { unzip } from "../MainImports";
@@ -1236,6 +1236,17 @@ const EPubReader = () => {
                             },
                         },
                         {
+                            label: "Hide Cursor in Zen Mode",
+                            selected: appSettings.hideCursorInZenMode,
+                            action() {
+                                dispatch(
+                                    setAppSettings({
+                                        hideCursorInZenMode: !appSettings.hideCursorInZenMode,
+                                    })
+                                );
+                            },
+                        },
+                        {
                             label: "Double Click Zen Mode",
                             selected: !appSettings.epubReaderSettings.textSelect,
                             action() {
@@ -1253,6 +1264,7 @@ const EPubReader = () => {
                                 addToBookmarkRef.current?.click();
                             },
                         },
+                        window.contextMenu.template.divider(),
                         window.contextMenu.template.openInNewWindow(linkInReader.link),
                         window.contextMenu.template.showInExplorer(linkInReader.link),
                         window.contextMenu.template.copyPath(linkInReader.link),
