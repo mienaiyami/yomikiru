@@ -369,20 +369,20 @@ const Reader = () => {
                                     })
                                 );
                                 break;
-                            case shortcutkey.cycleFitOptions?.key1:
-                            case shortcutkey.cycleFitOptions?.key2: {
-                                const fitOption = (
-                                    appSettings.readerSettings.fitOption + 1 === 4
-                                        ? 0
-                                        : appSettings.readerSettings.fitOption + 1
-                                ) as 0 | 2 | 1 | 3 | undefined;
+                            case shortcutkey.cycleFitOptions?.key1.toLowerCase():
+                            case shortcutkey.cycleFitOptions?.key2.toLowerCase():
+                            case shortcutkey.cycleFitOptions?.key1.toUpperCase():
+                            case shortcutkey.cycleFitOptions?.key2.toUpperCase(): {
+                                let fitOption = appSettings.readerSettings.fitOption + (e.shiftKey ? -1 : 1);
+                                if (fitOption < 0) fitOption = 3;
+                                fitOption %= 4;
                                 if (fitOption === 0) setshortcutText("Free");
                                 if (fitOption === 1) setshortcutText("Fit Vertically");
                                 if (fitOption === 2) setshortcutText("Fit Horizontally");
                                 if (fitOption === 3) setshortcutText("1:1");
                                 dispatch(
                                     setReaderSettings({
-                                        fitOption,
+                                        fitOption: fitOption as 0 | 1 | 2 | 3,
                                     })
                                 );
                                 // todo: display current mode in middle of screen and fade
