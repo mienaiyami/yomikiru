@@ -13,7 +13,7 @@ body:
 
 - type: dropdown
   attributes:
-    label: Type of reader (is reader related)
+    label: Type of reader (if reader related)
     options:
       - image
       - epub
