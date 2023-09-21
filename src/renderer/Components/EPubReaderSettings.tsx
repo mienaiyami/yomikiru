@@ -37,24 +37,6 @@ const EPUBReaderSettings = memo(
         const [isReaderSettingsOpen, setReaderSettingOpen] = useState(false);
         const [fontList, setFontList] = useState<string[]>([]);
 
-        // useLayoutEffect(() => {
-        // console.log("cccc");
-        // }, [
-        //     makeScrollPos,
-        //     readerRef,
-        //     readerSettingExtender,
-        //     setshortcutText,
-        //     sizePlusRef,
-        //     sizeMinusRef,
-        //     isReaderSettingsOpen,
-        //     fontList,
-        //     fontColor,
-        //     linkColor,
-        //     backgroundColor,
-        //     progressBackgroundColor,
-        //     appSettings,
-        // ]);
-
         useLayoutEffect(() => {
             getFonts()
                 .then((e) => {

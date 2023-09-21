@@ -145,6 +145,10 @@ const EPubReaderSideList = memo(
                         setpreventListClose(false);
                     }
                 }}
+                onFocus={() => {
+                    setListOpen(true);
+                    setpreventListClose(true);
+                }}
                 onMouseDown={(e) => {
                     if (e.target instanceof Node && e.currentTarget.contains(e.target)) setpreventListClose(true);
                 }}
