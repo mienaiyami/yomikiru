@@ -867,7 +867,10 @@ const Reader = () => {
                         Previous :{/* <FontAwesomeIcon icon={faQuestionCircle} />: */}
                     </span>
                     <span className="b">
-                        {window.app.formats.files.getName(prevNextChapter.prev)}
+                        {window.path.basename(
+                            prevNextChapter.prev,
+                            window.app.formats.files.getExt(prevNextChapter.prev)
+                        )}
                         {window.app.formats.files.test(prevNextChapter.prev) && (
                             <code>{window.app.formats.files.getExt(prevNextChapter.prev)}</code>
                         )}
@@ -876,7 +879,7 @@ const Reader = () => {
                 <div className="c">
                     <span className="a">Current :</span>
                     <span className="b">
-                        {window.app.formats.files.getName(mangaInReader?.chapterName || "")}
+                        {window.path.basename(mangaInReader?.chapterName || "")}
                         {window.app.formats.files.test(mangaInReader?.chapterName || "") && (
                             <code>{window.app.formats.files.getExt(mangaInReader?.chapterName || "")}</code>
                         )}
@@ -906,7 +909,10 @@ const Reader = () => {
                         Next :{/* <FontAwesomeIcon icon={faQuestionCircle} />: */}
                     </span>
                     <span className="b">
-                        {window.app.formats.files.getName(prevNextChapter.next)}
+                        {window.path.basename(
+                            prevNextChapter.next,
+                            window.app.formats.files.getExt(prevNextChapter.next)
+                        )}
                         {window.app.formats.files.test(prevNextChapter.next) && (
                             <code>{window.app.formats.files.getExt(prevNextChapter.next)}</code>
                         )}
