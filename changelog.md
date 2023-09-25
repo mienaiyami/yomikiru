@@ -4,22 +4,13 @@ Does not follow semver.
 
 ## Added
 
-- dynamic image loading, can be enabled from settings.
-- style settings
-- #266
-- added `shift`+`cycleFitOption` for reverse
+- auto download updates option.
+- show info box if app window is blank for more than 30seconds on start.
 
-## Changed
-
-- UI
-  - #267
-  - #266
-- show epub side-list on element focus inside
-- made side-list pin button keyboard accessible.
+<!-- ## Changed -->
 
 ## Fixed
 
-- #273
-- incorrect name for titles with `.` (dot) in name.
+- #287
 
 ---

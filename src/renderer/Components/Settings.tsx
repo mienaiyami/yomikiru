@@ -1276,15 +1276,15 @@ const Settings = (): ReactElement => {
                                                     })
                                                 );
                                             }}
+                                            disabled={appSettings.useCanvasBasedReader}
                                             labelAfter="Dynamic Image Loading"
                                         />
                                         <div className="desc">
                                             Removes Initial loading screen and load Images as you scroll. Doesn't
                                             work with "Canvas Based Rendering"
                                             <br />
-                                            Drawbacks : Inconsistent scroll size, no double-span images, stuttering
-                                            while scrolling.
-                                            <code>Experimental</code>
+                                            Drawbacks : Inconsistent scroll size, no double-span images support,
+                                            stuttering while scrolling.
                                         </div>
                                     </div>
                                     <div className="toggleItem">
