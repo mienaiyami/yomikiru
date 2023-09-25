@@ -602,7 +602,7 @@ const Reader = () => {
                 setImageWidthContainer((init) => [
                     ...init,
                     {
-                        img: dynamic ? "file://" + e.replaceAll("#", "%23") : img,
+                        img: "file://" + e.replaceAll("#", "%23"),
                         index: i,
                         isWide: success ? img.height / img.width <= 1.2 : false,
                     },
@@ -657,10 +657,10 @@ const Reader = () => {
                     loaded(true);
                 };
                 img.onerror = () => {
-                    !dynamic && loaded();
+                    loaded();
                 };
                 img.onabort = () => {
-                    !dynamic && loaded();
+                    loaded();
                 };
             }
             if (dynamic) {
@@ -672,12 +672,13 @@ const Reader = () => {
     }, [images]);
     useEffect(() => {
         //todo use just src for image and canvas, add canvas using element outside
-        [...document.querySelector("section.imgCont")!.children].forEach((e, i) => {
-            imageElementsIndex[i].forEach((canvasIndex) => {
-                const elem = imageWidthContainer[canvasIndex].img;
-                if (elem instanceof HTMLElement) e.appendChild(elem);
+        appSettings.useCanvasBasedReader &&
+            [...document.querySelector("section.imgCont")!.children].forEach((e, i) => {
+                imageElementsIndex[i].forEach((canvasIndex) => {
+                    const elem = imageWidthContainer[canvasIndex].img;
+                    if (elem instanceof HTMLElement) e.appendChild(elem);
+                });
             });
-        });
     }, [imageElementsIndex]);
     //todo improve
     useLayoutEffect(() => {
@@ -1149,6 +1150,7 @@ const Reader = () => {
                     }
                 }}
             >
+                {/* //todo not ideal, too much renders */}
                 {imageElementsIndex.map((e, i) => {
                     const props = {
                         className:
@@ -1200,19 +1202,33 @@ const Reader = () => {
                             >
                                 {imageElementsIndex[i].map(
                                     (e) =>
-                                        typeof imageWidthContainer[e].img === "string" && (
+                                        typeof imageWidthContainer[e]?.img === "string" && (
                                             <img
                                                 className="readerImg"
                                                 draggable={false}
-                                                data-pagenumber={imageWidthContainer[e].index + 1}
+                                                data-pagenumber={imageWidthContainer[e]?.index + 1}
                                                 loading="lazy"
-                                                data-src={imageWidthContainer[e].img}
+                                                data-src={imageWidthContainer[e]?.img as string}
                                             />
                                         )
                                 )}
                             </InView>
                         );
-                    return <div {...props}></div>;
+                    return (
+                        <div {...props}>
+                            {imageElementsIndex[i].map(
+                                (e) =>
+                                    typeof imageWidthContainer[e]?.img === "string" && (
+                                        <img
+                                            className="readerImg"
+                                            draggable={false}
+                                            data-pagenumber={imageWidthContainer[e].index + 1}
+                                            src={imageWidthContainer[e].img as string}
+                                        />
+                                    )
+                            )}
+                        </div>
+                    );
                 })}
             </section>
             {appSettings.readerSettings.readerTypeSelected === 0 ? <ChapterChanger /> : ""}
