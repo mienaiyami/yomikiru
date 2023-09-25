@@ -69,8 +69,8 @@ const ReaderSideListItem = memo(
                         }
                         items.push(window.contextMenu.template.unreadAllChapter(inHistory[0]));
                         items.push(window.contextMenu.template.divider());
-                        items.push(window.contextMenu.template.showInExplorer(link));
                         items.push(window.contextMenu.template.copyPath(link));
+                        items.push(window.contextMenu.template.showInExplorer(link));
                         setContextMenuFocused(true);
                         setContextMenuData({
                             clickX: e.clientX,

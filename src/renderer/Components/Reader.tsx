@@ -1074,12 +1074,13 @@ const Reader = () => {
                                 window.contextMenu.template.copyPath(src),
                                 window.contextMenu.template.showInExplorer(src)
                             );
-                        else items.push(window.contextMenu.template.openInNewWindow(linkInReader.link));
-                    } else
-                        items.push(
-                            window.contextMenu.template.copyPath(linkInReader.link),
-                            window.contextMenu.template.showInExplorer(linkInReader.link)
-                        );
+                        else
+                            items.push(
+                                window.contextMenu.template.copyPath(linkInReader.link),
+                                window.contextMenu.template.showInExplorer(linkInReader.link),
+                                window.contextMenu.template.openInNewWindow(linkInReader.link)
+                            );
+                    }
                     setContextMenuData({
                         clickX: e.clientX,
                         clickY: e.clientY,
