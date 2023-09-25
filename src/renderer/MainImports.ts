@@ -59,6 +59,7 @@ export const settingValidatorData = {
     updateCheckerEnabled: false,
     askBeforeClosing: false,
     skipMinorUpdate: false,
+    autoDownloadUpdate: false,
     /**
      * Open chapter in reader directly, one folder inside of base manga dir.
      */
@@ -1291,6 +1292,7 @@ const defaultSettings: AppSettings = {
     updateCheckerEnabled: true,
     askBeforeClosing: false,
     skipMinorUpdate: false,
+    autoDownloadUpdate: false,
     openDirectlyFromManga: false,
     showTabs: {
         bookmark: true,

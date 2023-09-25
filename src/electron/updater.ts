@@ -17,7 +17,12 @@ const downloadLink = "https://github.com/mienaiyami/yomikiru/releases/download/v
  * @param windowId id of window in which message box should be shown
  * @param promptAfterCheck (false by default) Show message box if current version is same as latest version.
  */
-const checkForUpdate = async (windowId: number, skipMinor = false, promptAfterCheck = false) => {
+const checkForUpdate = async (
+    windowId: number,
+    skipMinor = false,
+    promptAfterCheck = false,
+    autoDownload = false
+) => {
     const rawdata = await fetch("https://api.github.com/repos/mienaiyami/yomikiru/releases").then((data) =>
         data.json()
     );
@@ -47,29 +52,32 @@ const checkForUpdate = async (windowId: number, skipMinor = false, promptAfterCh
             latestVersion[1] === currentAppVersion[1] &&
             latestVersion[2] > currentAppVersion[2])
     ) {
-        dialog
-            .showMessageBox(window, {
-                type: "info",
-                title: "New Version Available",
-                message:
-                    `Current Version : ${currentAppVersion.join(".")}\n` +
-                    `Latest Version   : ${latestVersion.join(".")}` +
-                    (latestVersion[0] === currentAppVersion[0] && latestVersion[1] === currentAppVersion[1]
-                        ? `\n\nTo skip check for minor updates, enable "skip minor update" in settings`
-                        : ""),
-                buttons: ["Download Now", "Download and show Changelog", "Show Changelog", "Download Later"],
-                cancelId: 3,
-            })
-            .then((response) => {
-                if (response.response === 0) downloadUpdates(latestVersion.join("."), windowId);
-                if (response.response === 1) {
-                    downloadUpdates(latestVersion.join("."), windowId);
-                    shell.openExternal("https://github.com/mienaiyami/yomikiru/releases");
-                }
-                if (response.response === 2) {
-                    shell.openExternal("https://github.com/mienaiyami/yomikiru/releases");
-                }
-            });
+        if (autoDownload) {
+            downloadUpdates(latestVersion.join("."), windowId, true);
+        } else
+            dialog
+                .showMessageBox(window, {
+                    type: "info",
+                    title: "New Version Available",
+                    message:
+                        `Current Version : ${currentAppVersion.join(".")}\n` +
+                        `Latest Version   : ${latestVersion.join(".")}` +
+                        (latestVersion[0] === currentAppVersion[0] && latestVersion[1] === currentAppVersion[1]
+                            ? `\n\nTo skip check for minor updates, enable "skip minor update" in settings`
+                            : ""),
+                    buttons: ["Download Now", "Download and show Changelog", "Show Changelog", "Download Later"],
+                    cancelId: 3,
+                })
+                .then((response) => {
+                    if (response.response === 0) downloadUpdates(latestVersion.join("."), windowId);
+                    if (response.response === 1) {
+                        downloadUpdates(latestVersion.join("."), windowId);
+                        shell.openExternal("https://github.com/mienaiyami/yomikiru/releases");
+                    }
+                    if (response.response === 2) {
+                        shell.openExternal("https://github.com/mienaiyami/yomikiru/releases");
+                    }
+                });
         return;
     }
     logger.log("Running latest version.");
@@ -87,48 +95,59 @@ const checkForUpdate = async (windowId: number, skipMinor = false, promptAfterCh
  * @param latestVersion latest version ex. "2.3.8"
  * @param windowId id of window in which message box should be shown
  */
-const downloadUpdates = (latestVersion: string, windowId: number) => {
-    const newWindow = new BrowserWindow({
-        width: 560,
-        height: 160,
-        resizable: false,
-        backgroundColor: "#272727",
-        webPreferences: {
-            nodeIntegration: true,
-            contextIsolation: false,
-            // enableRemoteModule: true,
-            webSecurity: app.isPackaged,
-            safeDialogs: true,
-        },
-        maximizable: false,
-    });
-    newWindow.loadURL(DOWNLOAD_PROGRESS_WEBPACK_ENTRY);
-    newWindow.setMenuBarVisibility(false);
-    newWindow.webContents.once("dom-ready", () => {
-        newWindow.webContents.send("version", latestVersion);
-    });
+const downloadUpdates = (latestVersion: string, windowId: number, silent = false) => {
+    const newWindow =
+        !silent &&
+        new BrowserWindow({
+            width: 560,
+            height: 160,
+            resizable: false,
+            backgroundColor: "#272727",
+            webPreferences: {
+                nodeIntegration: true,
+                contextIsolation: false,
+                // enableRemoteModule: true,
+                webSecurity: app.isPackaged,
+                safeDialogs: true,
+            },
+            maximizable: false,
+        });
+    if (newWindow) {
+        newWindow.loadURL(DOWNLOAD_PROGRESS_WEBPACK_ENTRY);
+        newWindow.setMenuBarVisibility(false);
+        newWindow.webContents.once("dom-ready", () => {
+            newWindow.webContents.send("version", latestVersion);
+        });
+    }
 
     const window = BrowserWindow.fromId(windowId ?? 1)!;
     const tempPath = path.join(app.getPath("temp"), "yomikiru updates " + new Date().toDateString());
     if (fs.existsSync(tempPath)) fs.rmSync(tempPath, { recursive: true, force: true });
     fs.mkdirSync(tempPath);
     const promptInstall = () => {
-        newWindow.close();
+        newWindow && newWindow.close();
+        const buttons = ["Install Now", "Install on Quit"];
+        if (silent) buttons.push("Install and Show Changelog");
         dialog
             .showMessageBox(window, {
                 type: "info",
                 title: "Updates downloaded",
                 message: "Updates downloaded.",
-                buttons: ["Install Now", "Install on Quit"],
+                buttons,
                 cancelId: 1,
             })
             .then((res) => {
                 if (res.response === 0) {
                     app.quit();
                 }
+                if (res.response === 2) shell.openExternal("https://github.com/mienaiyami/yomikiru/releases");
             });
     };
-    const downloadFile = (dl: string, webContents: Electron.WebContents, callback: (file: File) => void) => {
+    const downloadFile = (
+        dl: string,
+        webContents: Electron.WebContents | false,
+        callback: (file: File) => void
+    ) => {
         download(window, dl, {
             directory: tempPath,
             onStarted: () => {
@@ -140,7 +159,7 @@ const downloadUpdates = (latestVersion: string, windowId: number) => {
             },
             onCompleted: (file) => callback(file),
             onProgress: (progress) => {
-                webContents.send("progress", progress);
+                webContents && webContents.send("progress", progress);
             },
         }).catch((reason) => {
             dialog.showMessageBox(window, {
@@ -160,7 +179,7 @@ const downloadUpdates = (latestVersion: string, windowId: number) => {
             const extractPath = path.join(tempPath, "updates");
             if (!fs.existsSync(extractPath)) fs.mkdirSync(extractPath);
 
-            downloadFile(dl, newWindow.webContents, (file) => {
+            downloadFile(dl, newWindow && newWindow.webContents, (file) => {
                 logger.log(`${file.filename} downloaded.`);
                 crossZip.unzip(file.path, extractPath, (err) => {
                     if (err) return logger.error(err);
@@ -190,7 +209,7 @@ const downloadUpdates = (latestVersion: string, windowId: number) => {
                 process.arch === "ia32"
                     ? downloadLink + latestVersion + "/" + `Yomikiru-v${latestVersion}-Setup.exe`
                     : downloadLink + latestVersion + "/" + `Yomikiru-v${latestVersion}-Setup-x64.exe`;
-            downloadFile(dl, newWindow.webContents, (file) => {
+            downloadFile(dl, newWindow && newWindow.webContents, (file) => {
                 logger.log(`${file.filename} downloaded.`);
                 app.on("quit", () => {
                     logger.log("Installing updates...");
@@ -208,7 +227,7 @@ const downloadUpdates = (latestVersion: string, windowId: number) => {
         }
     else if (process.platform === "linux") {
         const dl = downloadLink + latestVersion + "/" + `Yomikiru-v${latestVersion}-amd64.deb`;
-        downloadFile(dl, newWindow.webContents, (file) => {
+        downloadFile(dl, newWindow && newWindow.webContents, (file) => {
             logger.log(`${file.filename} downloaded.`);
             dialog
                 .showMessageBox(window, {

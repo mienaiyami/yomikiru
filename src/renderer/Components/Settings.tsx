@@ -1573,6 +1573,16 @@ const Settings = (): ReactElement => {
                                             title="Mostly just frequent updates rather than minor."
                                             paraAfter="Skip minor updates"
                                         />
+                                        <InputCheckbox
+                                            checked={appSettings.autoDownloadUpdate}
+                                            className="noBG"
+                                            onChange={(e) => {
+                                                dispatch(
+                                                    setAppSettings({ autoDownloadUpdate: e.currentTarget.checked })
+                                                );
+                                            }}
+                                            paraAfter="Auto download updates"
+                                        />
                                     </div>
                                     <div className="main row">
                                         <button

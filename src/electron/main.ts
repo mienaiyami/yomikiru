@@ -423,11 +423,11 @@ const registerListener = () => {
         });
     }
 
-    ipcMain.on("checkForUpdate:response", (e, res, windowId, skipMinor) => {
+    ipcMain.on("checkForUpdate:response", (e, res, windowId, skipMinor, autoDownload) => {
         if (res) {
-            checkForUpdate(windowId, skipMinor);
+            checkForUpdate(windowId, skipMinor, false, autoDownload);
             setInterval(() => {
-                checkForUpdate(windowId, skipMinor);
+                checkForUpdate(windowId, skipMinor, false, autoDownload);
             }, 1000 * 60 * 60 * 1);
         }
     });
