@@ -2835,6 +2835,12 @@ body {
                         transform: translate3d(0, 0, 0);
                         image-orientation: none;
                         max-width: var(--max-width);
+                        &::not([src]) {
+                            width: calc(100vh - 50px);
+                            height: calc(100vh / 1.5);
+                            opacity: 0;
+                        }
+                        opacity: 1;
                     }
                     //todo check if it is even needed
                     &.widthClamped {

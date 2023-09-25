@@ -161,8 +161,6 @@ const InputColorReal = () => {
                             (e.relatedTarget && e.relatedTarget.getAttribute("data-focus-guard") === "true")
                         )
                             return;
-                        // colorSelectData.focusBackElem && colorSelectData.focusBackElem.focus();
-                        //todo, check if creates any issue or move to FocusLock
                         colorSelectData.onBlur && colorSelectData.onBlur(e);
                         setColorSelectData(null);
                     }}

@@ -37,11 +37,6 @@ import { setAniSearchOpen } from "./store/isAniSearchOpen";
 import { setAnilistCurrentManga } from "./store/anilistCurrentManga";
 import { toggleOpenSetting } from "./store/isSettingOpen";
 
-// window.logger.log("New window opening...");
-
-// todo: why was i exporting this?
-// export { themesMain };
-
 interface IAppContext {
     pageNumberInputRef: React.RefObject<HTMLInputElement>;
     bookProgressRef: React.RefObject<HTMLInputElement>;
@@ -464,14 +459,10 @@ const App = (): ReactElement => {
         if (appSettings.syncThemes) filesToWatch.push(themesPath);
         const watcher = window.chokidar.watch(filesToWatch);
         watcher.on("change", (path) => {
-            // // todo: make it to ignore first call if another called within 2sec
-            // setTimeout(() => {
-            //todo test is removing timeout cause issues
             if (path === historyPath) dispatch(refreshHistory());
             if (path === bookmarksPath) dispatch(refreshBookmark());
             if (path === settingsPath) dispatch(refreshAppSettings());
             if (path === themesPath) dispatch(refreshThemes());
-            // }, 1500);
         });
 
         window.addEventListener("keydown", eventsOnStart);

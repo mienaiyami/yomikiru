@@ -14,7 +14,6 @@ import fs from "fs";
 const config: ForgeConfig = {
     packagerConfig: {
         name: "Yomikiru",
-        //todo check if need to change bin for linux
         asar: true,
         executableName: process.platform === "win32" ? "Yomikiru" : "yomikiru",
     },

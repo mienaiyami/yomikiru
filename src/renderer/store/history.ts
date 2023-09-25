@@ -123,20 +123,6 @@ const history = createSlice({
             }
             saveJSONfile(historyPath, stateDup);
         },
-        // todo: getlink from state directly;
-        // todo: fix; when called in App.tsx linkInReader is initialVlue even if changed
-        // updateLastHistoryPage: (state, action: PayloadAction<{ linkInReader: string }>) => {
-        //     const index = state.findIndex((e) => e.link === action.payload.linkInReader);
-        //     // todo : removed ` || action.payload.linkInReader === ""`; check consequences
-        //     // not working on closing window
-        //     // use sth like window.lastMangaOpened;
-        //     window.logger.log("asking to save ", action.payload);
-        //     if (index > -1) {
-        //         console.log(`Updating ${state[index].mangaName} to page ${window.app.currentPageNumber}`);
-        //         state[index].page = window.app.currentPageNumber;
-        //         saveJSONfile(historyPath, state);
-        //     }
-        // },
 
         /**
          * only for manga/image reader
@@ -146,11 +132,6 @@ const history = createSlice({
             const link = window.app.linkInReader.link;
             const index = stateDup.findIndex((e) => e.data.link === link);
             if (index > -1) {
-                // console.log(
-                //     `Updating ${(stateDup[index] as MangaHistoryItem).data.mangaName} to page ${
-                //         window.app.currentPageNumber
-                //     }`
-                // );
                 (stateDup[index] as MangaHistoryItem).data.page = window.app.currentPageNumber;
                 saveJSONfile(historyPath, stateDup);
             }

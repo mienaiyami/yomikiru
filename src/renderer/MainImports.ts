@@ -274,9 +274,6 @@ export const settingValidatorData = {
 const themeProps = themeJSON.allData[0].main;
 
 const formats = {
-    /**
-     * Supported image formats.
-     */
     image: {
         list: [".jpg", ".jpeg", ".png", ".webp", ".svg", ".apng", ".gif", ".avif"],
         test: function (str: string) {
@@ -433,7 +430,7 @@ declare global {
             // todo: fix
             // todo: make better way to do this
             /**
-             * why did i add this? bcoz fking linkInReader state is showing initial only in App.tsx
+             * why did i add this? bcoz linkInReader state is showing initial only in App.tsx
              */
             linkInReader: {
                 type: "image" | "book" | "";
@@ -1198,8 +1195,6 @@ export function promptSelectDir(
     });
 
     if (!result) return;
-    // todo, why need window.path.sep
-    // const path = asFile ? (multi ? result : result[0]) : window.path.normalize(result[0] + window.path.sep);
     const path = asFile ? (multi ? result : result[0]) : window.path.normalize(result[0]);
     cb && cb(path);
 }

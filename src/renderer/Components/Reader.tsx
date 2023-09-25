@@ -34,7 +34,7 @@ const Reader = () => {
 
     const [images, setImages] = useState<string[]>([]);
     const [imageWidthContainer, setImageWidthContainer] = useState<
-        { index: number; isWide: boolean; img: HTMLCanvasElement | HTMLImageElement }[]
+        { index: number; isWide: boolean; img: HTMLCanvasElement | HTMLImageElement | string }[]
     >([]);
     // take element from `imageWidthContainer` using index
     const [imageElementsIndex, setImageElementsIndex] = useState<number[][]>([]);
@@ -601,7 +601,11 @@ const Reader = () => {
                 setImagesLoaded((init) => init + 1);
                 setImageWidthContainer((init) => [
                     ...init,
-                    { img, index: i, isWide: success ? img.height / img.width <= 1.2 : false },
+                    {
+                        img: dynamic ? "file://" + e.replaceAll("#", "%23") : img,
+                        index: i,
+                        isWide: success ? img.height / img.width <= 1.2 : false,
+                    },
                 ]);
             };
             if (appSettings.useCanvasBasedReader) {
@@ -640,28 +644,17 @@ const Reader = () => {
                     setImagesLoaded((init) => init + 1);
                     setImageWidthContainer((init) => [...init, { img: canvas, index: i, isWide: false }]);
                 };
-            } else {
+            } else if (!dynamic) {
                 img.setAttribute("draggable", "false");
                 img.setAttribute("data-pagenumber", JSON.stringify(i + 1));
-                if (dynamic) {
-                    img.loading = "lazy";
-                    img.height = window.innerHeight - 50;
-                    img.width = window.innerHeight / 1.5;
-                }
                 img.classList.add("readerImg");
 
                 img.onload = (e) => {
-                    if (dynamic) {
-                        (e.target as HTMLImageElement).removeAttribute("height");
-                        (e.target as HTMLImageElement).removeAttribute("width");
-                        (e.target as HTMLImageElement).style.opacity = "1";
-                    } else {
-                        setImageDecodeQueue((init) => {
-                            init.push(img);
-                            return [...init];
-                        });
-                        loaded(true);
-                    }
+                    setImageDecodeQueue((init) => {
+                        init.push(img);
+                        return [...init];
+                    });
+                    loaded(true);
                 };
                 img.onerror = () => {
                     !dynamic && loaded();
@@ -671,15 +664,14 @@ const Reader = () => {
                 };
             }
             if (dynamic) {
-                img.setAttribute("data-src", "file://" + e.replaceAll("#", "%23"));
-                img.style.opacity = "0";
-                dynamic && loaded(true);
+                loaded(true);
             } else {
                 img.src = "file://" + e.replaceAll("#", "%23");
             }
         });
     }, [images]);
     useEffect(() => {
+        //todo use just src for image and canvas, add canvas using element outside
         [...document.querySelector("section.imgCont")!.children].forEach((e, i) => {
             imageElementsIndex[i].forEach((canvasIndex) => {
                 const elem = imageWidthContainer[canvasIndex].img;
@@ -687,6 +679,7 @@ const Reader = () => {
             });
         });
     }, [imageElementsIndex]);
+    //todo improve
     useLayoutEffect(() => {
         if (imagesLength > 0 && imagesLength === imageWidthContainer.length) {
             imageWidthContainer.sort((a, b) => a.index - b.index);
@@ -747,15 +740,7 @@ const Reader = () => {
     useEffect(() => {
         if (imagesLoaded !== 0 && imagesLength !== 0) {
             dispatch(setLoadingMangaPercent((100 * imagesLoaded) / imagesLength));
-            if (imagesLength === imagesLoaded) {
-                dispatch(setLoadingManga(false));
-                // console.log(currentPageNumber);
-                // setFirstScrolled(true);
-                // scrollToPage(currentPageNumber, "auto");
-                // setTimeout(() => {
-                //     scrollToPage(currentPageNumber, "auto");
-                // }, 3000);
-            }
+            if (imagesLength === imagesLoaded) dispatch(setLoadingManga(false));
         }
     }, [imagesLoaded]);
     useLayoutEffect(() => {
@@ -854,16 +839,6 @@ const Reader = () => {
                         if (clickPos > 60) openPrevPageRef.current?.click();
                     }
                 }
-
-                // const clickPos =
-                //     ((e.clientX - (isSideListPinned ? sideListWidth : 0)) / e.currentTarget.offsetWidth) * 100;
-                // if (appSettings.readerSettings.readerTypeSelected === 0) {
-                //     if (clickPos <= 40) openPrevChapterRef.current?.click();
-                //     if (clickPos > 60) openNextChapterRef.current?.click();
-                // } else {
-                //     if (clickPos <= 40) openPrevPageRef.current?.click();
-                //     if (clickPos > 60) openNextPageRef.current?.click();
-                // }
             }}
         >
             <div className="wrapper">
@@ -1175,7 +1150,6 @@ const Reader = () => {
                 }}
             >
                 {imageElementsIndex.map((e, i) => {
-                    //todo check it is cause performance issue for !dynamic
                     const props = {
                         className:
                             "row " +
@@ -1200,9 +1174,6 @@ const Reader = () => {
                                 !appSettings.readerSettings.widthClamped
                                     ? appSettings.readerSettings.maxHeight + "px"
                                     : "auto",
-                            height: appSettings.readerSettings.dynamicLoading
-                                ? `${window.innerHeight - 50}px`
-                                : "auto",
                         },
                         key: i,
                     };
@@ -1226,7 +1197,20 @@ const Reader = () => {
                                     // unloading image does not free ram
                                 }}
                                 {...props}
-                            ></InView>
+                            >
+                                {imageElementsIndex[i].map(
+                                    (e) =>
+                                        typeof imageWidthContainer[e].img === "string" && (
+                                            <img
+                                                className="readerImg"
+                                                draggable={false}
+                                                data-pagenumber={imageWidthContainer[e].index + 1}
+                                                loading="lazy"
+                                                data-src={imageWidthContainer[e].img}
+                                            />
+                                        )
+                                )}
+                            </InView>
                         );
                     return <div {...props}></div>;
                 })}
