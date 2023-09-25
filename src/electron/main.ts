@@ -422,7 +422,19 @@ const registerListener = () => {
                 });
         });
     }
-
+    const errorCheckTimeout = setTimeout(() => {
+        app.isPackaged &&
+            dialog
+                .showMessageBox({
+                    type: "info",
+                    message:
+                        "If you are seeing blank window then check the github page for new version or create an issue if no new version is available.",
+                    buttons: ["Ok", "Home Page"],
+                })
+                .then((e) => {
+                    if (e.response === 1) shell.openExternal("https://github.com/mienaiyami/yomikiru");
+                });
+    }, 1000 * 30);
     ipcMain.on("checkForUpdate:response", (e, res, windowId, skipMinor, autoDownload) => {
         if (res) {
             checkForUpdate(windowId, skipMinor, false, autoDownload);
@@ -430,6 +442,7 @@ const registerListener = () => {
                 checkForUpdate(windowId, skipMinor, false, autoDownload);
             }, 1000 * 60 * 60 * 1);
         }
+        clearTimeout(errorCheckTimeout);
     });
     ipcMain.on("checkForUpdate", (e, windowId, promptAfterCheck = false) => {
         checkForUpdate(windowId, false, promptAfterCheck);
