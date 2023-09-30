@@ -2741,14 +2741,29 @@ body {
 
                 --blend-bg: rgba(0, 0, 0, 0);
                 --blend-mode: normal;
+                --hue: 0;
+                --saturation: 1;
+                --brightness: 1;
+                --contrast: 1;
                 &.customColorFilter {
                     background-color: var(--blend-bg);
                     .row {
                         background-color: var(--blend-bg);
                         .readerImg {
                             mix-blend-mode: var(--blend-mode);
+                            filter: hue-rotate(calc(var(--hue) * 1deg)) brightness(var(--brightness))
+                                saturate(var(--saturation)) contrast(var(--contrast));
                         }
                     }
+                }
+                --invert: 0;
+                --grayscale: 0;
+                filter: invert(var(--invert)) grayscale(var(--grayscale));
+                &.invertImage {
+                    --invert: 1;
+                }
+                &.grayscale {
+                    --grayscale: 1;
                 }
 
                 &.readerMode1n2 {
@@ -2794,15 +2809,6 @@ body {
 
                 &.gap {
                     gap: var(--gapSize);
-                }
-                --invert: 0;
-                --grayscale: 0;
-                filter: invert(var(--invert)) grayscale(var(--grayscale));
-                &.invertImage {
-                    --invert: 1;
-                }
-                &.grayscale {
-                    --grayscale: 1;
                 }
 
                 .row {

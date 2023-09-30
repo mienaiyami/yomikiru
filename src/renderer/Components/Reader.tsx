@@ -1016,6 +1016,10 @@ const Reader = () => {
                             : "none",
                     "--blend-bg": `rgba(${appSettings.readerSettings.customColorFilter.r},${appSettings.readerSettings.customColorFilter.g},${appSettings.readerSettings.customColorFilter.b},${appSettings.readerSettings.customColorFilter.a})`,
                     "--blend-mode": appSettings.readerSettings.customColorFilter.blendMode,
+                    "--hue": appSettings.readerSettings.customColorFilter.hue,
+                    "--saturation": appSettings.readerSettings.customColorFilter.saturation + 1,
+                    "--brightness": appSettings.readerSettings.customColorFilter.brightness + 1,
+                    "--contrast": appSettings.readerSettings.customColorFilter.contrast + 1,
                 }}
                 onWheel={(e) => {
                     if (e.ctrlKey) return;

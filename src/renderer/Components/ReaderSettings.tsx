@@ -619,6 +619,7 @@ const ReaderSettings = memo(
                                     },
                                 ]}
                             />
+                            {/* //todo separate  */}
                             <InputSelect
                                 disabled={!appSettings.readerSettings.customColorFilter.enabled}
                                 value={appSettings.readerSettings.customColorFilter.blendMode}
@@ -639,7 +640,89 @@ const ReaderSettings = memo(
                                     (e) => ({ label: e, value: e })
                                 )}
                             />
-
+                            <InputRange
+                                labelText="Hue: "
+                                min={0}
+                                max={360}
+                                value={appSettings.readerSettings.customColorFilter.hue}
+                                disabled={!appSettings.readerSettings.customColorFilter.enabled}
+                                timeout={[
+                                    350,
+                                    (value) => {
+                                        dispatch(
+                                            setReaderSettings({
+                                                customColorFilter: {
+                                                    ...appSettings.readerSettings.customColorFilter,
+                                                    hue: value,
+                                                },
+                                            })
+                                        );
+                                    },
+                                ]}
+                            />
+                            <InputRange
+                                labelText="Contrast: "
+                                min={-1}
+                                max={1}
+                                step={0.1}
+                                value={appSettings.readerSettings.customColorFilter.contrast}
+                                disabled={!appSettings.readerSettings.customColorFilter.enabled}
+                                timeout={[
+                                    350,
+                                    (value) => {
+                                        dispatch(
+                                            setReaderSettings({
+                                                customColorFilter: {
+                                                    ...appSettings.readerSettings.customColorFilter,
+                                                    contrast: value,
+                                                },
+                                            })
+                                        );
+                                    },
+                                ]}
+                            />
+                            <InputRange
+                                labelText="Saturation: "
+                                min={-1}
+                                max={1}
+                                step={0.1}
+                                value={appSettings.readerSettings.customColorFilter.saturation}
+                                disabled={!appSettings.readerSettings.customColorFilter.enabled}
+                                timeout={[
+                                    350,
+                                    (value) => {
+                                        dispatch(
+                                            setReaderSettings({
+                                                customColorFilter: {
+                                                    ...appSettings.readerSettings.customColorFilter,
+                                                    saturation: value,
+                                                },
+                                            })
+                                        );
+                                    },
+                                ]}
+                            />
+                            <InputRange
+                                labelText="Brightness: "
+                                min={-1}
+                                max={1}
+                                step={0.1}
+                                value={appSettings.readerSettings.customColorFilter.brightness}
+                                disabled={!appSettings.readerSettings.customColorFilter.enabled}
+                                timeout={[
+                                    350,
+                                    (value) => {
+                                        dispatch(
+                                            setReaderSettings({
+                                                customColorFilter: {
+                                                    ...appSettings.readerSettings.customColorFilter,
+                                                    brightness: value,
+                                                },
+                                            })
+                                        );
+                                    },
+                                ]}
+                            />
                             <InputCheckbox
                                 checked={appSettings.readerSettings.invertImage}
                                 onChange={(e) => {

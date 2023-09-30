@@ -44,7 +44,7 @@ const InputRange = ({
     useLayoutEffect(() => {
         setValueProxy(value);
     }, [value]);
-    if (labeled)
+    if (labeled || labelText)
         return (
             <label className={(disabled ? "disabled " : "") + (labelText && "labeled ") + className} title={title}>
                 {labelText && <p>{labelText}</p>}
