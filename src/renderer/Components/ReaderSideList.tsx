@@ -45,7 +45,7 @@ const ReaderSideList = memo(
         setSideListWidth: React.Dispatch<React.SetStateAction<number>>;
         makeScrollPos: () => void;
     }) => {
-        const { contextMenuData, openInReader, setContextMenuData } = useContext(AppContext);
+        const { contextMenuData, openInReader, setContextMenuData, closeReader } = useContext(AppContext);
 
         const mangaInReader = useAppSelector((store) => store.mangaInReader);
         const history = useAppSelector((store) => store.history);
@@ -490,8 +490,22 @@ const ReaderSideList = memo(
                             className="ctrl-menu-item"
                             btnRef={openPrevChapterRef}
                             tooltip="Open Previous"
-                            disabled={prevNextChapter.prev === "~"}
                             clickAction={() => {
+                                if (prevNextChapter.prev === "~") {
+                                    window.dialog
+                                        .confirm({
+                                            message: "There's no previous chapter.",
+                                            buttons: ["Ok", "Home"],
+                                            noOption: false,
+                                            noLink: true,
+                                        })
+                                        .then((e) => {
+                                            if (e.response === 1) {
+                                                closeReader();
+                                            }
+                                        });
+                                    return;
+                                }
                                 temp_prevNextOpener(prevNextChapter.prev);
                             }}
                         >
@@ -549,8 +563,22 @@ const ReaderSideList = memo(
                             className="ctrl-menu-item"
                             btnRef={openNextChapterRef}
                             tooltip="Open Next"
-                            disabled={prevNextChapter.next === "~"}
                             clickAction={() => {
+                                if (prevNextChapter.next === "~") {
+                                    window.dialog
+                                        .confirm({
+                                            message: "There's no next chapter.",
+                                            buttons: ["Ok", "Home"],
+                                            noOption: false,
+                                            noLink: true,
+                                        })
+                                        .then((e) => {
+                                            if (e.response === 1) {
+                                                closeReader();
+                                            }
+                                        });
+                                    return;
+                                }
                                 temp_prevNextOpener(prevNextChapter.next);
                             }}
                         >

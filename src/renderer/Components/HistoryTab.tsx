@@ -113,7 +113,7 @@ const HistoryTab = () => {
                                     index={i}
                                     focused={focused >= 0 && focused % arr.length === i}
                                     {...e}
-                                    key={e.data.date}
+                                    key={`${e.data.date}-${i}`}
                                 />
                             ))}
                     </ol>

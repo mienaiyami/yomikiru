@@ -464,7 +464,7 @@ declare global {
             }: {
                 title?: string;
                 message: string;
-                detail?: string | undefined;
+                detail?: string;
                 log?: boolean;
             }) => Promise<Electron.MessageBoxReturnValue>;
             /**
@@ -483,7 +483,7 @@ declare global {
             }: {
                 title?: string;
                 message: string;
-                detail?: string | undefined;
+                detail?: string;
                 noOption?: boolean;
                 buttons?: string[];
                 defaultId?: number;
@@ -502,13 +502,15 @@ declare global {
                 noOption,
                 buttons,
                 defaultId,
+                noLink,
             }: {
                 title?: string;
                 message: string;
-                detail?: string | undefined;
+                detail?: string;
                 noOption?: boolean;
                 buttons?: string[];
                 defaultId?: number;
+                noLink?: boolean;
             }) => Promise<Electron.MessageBoxReturnValue>;
         };
     }
@@ -1144,7 +1146,10 @@ window.dialog = {
             defaultId,
         });
     },
-    confirm: ({ title = "Confirm", message, detail, noOption = true, buttons = ["Yes", "No"] }, defaultId = 1) =>
+    confirm: (
+        { title = "Confirm", message, detail, noOption = true, buttons = ["Yes", "No"], noLink },
+        defaultId = 1
+    ) =>
         window.electron.dialog.showMessageBox(window.electron.getCurrentWindow(), {
             type: "info",
             title: title,
@@ -1152,6 +1157,7 @@ window.dialog = {
             detail: detail,
             buttons: noOption ? [] : buttons,
             defaultId,
+            noLink,
         }),
 };
 
