@@ -140,7 +140,10 @@ const downloadUpdates = (latestVersion: string, windowId: number, silent = false
                 if (res.response === 0) {
                     app.quit();
                 }
-                if (res.response === 2) shell.openExternal("https://github.com/mienaiyami/yomikiru/releases");
+                if (res.response === 2) {
+                    shell.openExternal("https://github.com/mienaiyami/yomikiru/releases");
+                    app.quit();
+                }
             });
     };
     const downloadFile = (
