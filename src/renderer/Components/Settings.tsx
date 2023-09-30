@@ -1198,23 +1198,6 @@ const Settings = (): ReactElement => {
                                             chapter+page count is high.
                                         </div>
                                     </div>
-                                    <div className="toggleItem">
-                                        <InputCheckbox
-                                            checked={appSettings.checkboxReaderSetting}
-                                            className="noBG"
-                                            onChange={(e) => {
-                                                dispatch(
-                                                    setAppSettings({
-                                                        checkboxReaderSetting: e.currentTarget.checked,
-                                                    })
-                                                );
-                                            }}
-                                            labelAfter="Reader Settings Checkbox"
-                                        />
-                                        <div className="desc">
-                                            Show checkbox instead of toggle in reader settings.
-                                        </div>
-                                    </div>
                                     <div className="toggleItem" id="settings-keepExtractedFiles">
                                         <InputCheckbox
                                             checked={appSettings.keepExtractedFiles}
@@ -1403,6 +1386,24 @@ const Settings = (): ReactElement => {
                                         <div className="desc">
                                             Show more info such as "date", "total pages", "last page number",
                                             "path" when mouse over items in bookmark / history tab.
+                                        </div>
+                                    </div>
+
+                                    <div className="toggleItem">
+                                        <InputCheckbox
+                                            checked={appSettings.checkboxReaderSetting}
+                                            className="noBG"
+                                            onChange={(e) => {
+                                                dispatch(
+                                                    setAppSettings({
+                                                        checkboxReaderSetting: e.currentTarget.checked,
+                                                    })
+                                                );
+                                            }}
+                                            labelAfter="Reader Settings Checkbox"
+                                        />
+                                        <div className="desc">
+                                            Show checkbox instead of toggle in reader settings.
                                         </div>
                                     </div>
                                     <div className="toggleItem">
