@@ -958,8 +958,12 @@ const EPubReader = () => {
             const topBottomLogic =
                 readerRef.current &&
                 !e.repeat &&
-                (readerRef.current.scrollTop <= window.innerHeight / 1.5 ||
-                    readerRef.current.scrollTop >= readerRef.current.scrollHeight - window.innerHeight / 1.5);
+                (Math.ceil(
+                    readerRef.current.scrollTop +
+                        window.innerHeight +
+                        (1 + Math.abs(1 - window.electron.webFrame.getZoomFactor()))
+                ) >= readerRef.current.scrollHeight ||
+                    readerRef.current.scrollTop < window.innerHeight / 4);
             if (!isSettingOpen && window.app.isReaderOpen && !isLoadingManga && !e.ctrlKey) {
                 if ([" ", "ArrowUp", "ArrowDown"].includes(e.key)) e.preventDefault();
                 if (!e.repeat) {
