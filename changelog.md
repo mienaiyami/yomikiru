@@ -4,13 +4,19 @@ Does not follow semver.
 
 ## Added
 
-- auto download updates option.
-- show info box if app window is blank for more than 30seconds on start.
+- #274
+- #288
 
-<!-- ## Changed -->
+## Changed
+
+- electron version to 22.0.1
+- moved items in settings
 
 ## Fixed
 
-- #287
+- showing full path in chapter transition screen.
+- reader context menu option
+- epub next chapter with next page keys at scroll 100%
+- incorrect epub elements padding, margin
 
 ---

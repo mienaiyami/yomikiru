@@ -63,7 +63,7 @@ const checkForUpdate = async (
                         `Current Version : ${currentAppVersion.join(".")}\n` +
                         `Latest Version   : ${latestVersion.join(".")}` +
                         (latestVersion[0] === currentAppVersion[0] && latestVersion[1] === currentAppVersion[1]
-                            ? `\n\nTo skip check for minor updates, enable "skip minor update" in settings`
+                            ? `\n\nTo skip check for minor updates, enable "skip minor update" in settings.\nYou can also enable "auto download".`
                             : ""),
                     buttons: ["Download Now", "Download and show Changelog", "Show Changelog", "Download Later"],
                     cancelId: 3,
