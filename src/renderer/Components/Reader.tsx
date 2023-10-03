@@ -807,7 +807,10 @@ const Reader = () => {
 
     const ChapterChanger = () => (
         <div
-            className="chapterChangerScreen"
+            className={
+                "chapterChangerScreen " +
+                ([1, 2].includes(appSettings.readerSettings.readerTypeSelected) ? "readerMode1n2 " : "")
+            }
             style={{
                 display:
                     (appSettings.readerSettings.readerTypeSelected === 0 &&
