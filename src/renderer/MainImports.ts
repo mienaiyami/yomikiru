@@ -7,6 +7,7 @@ import { ipcRenderer, webFrame } from "electron";
   //! nah is it really? i dont know, since no remote request is done other than anilist
  */
 import chokidar from "chokidar";
+import { z } from "zod";
 import * as pdfjsLib from "pdfjs-dist/build/pdf.js";
 // import pdfjsLib from "pdfjs-dist";
 // eslint-disable-next-line @typescript-eslint/ban-ts-comment
@@ -29,25 +30,257 @@ declare module "react" {
         [key: `--${string}`]: string | number;
     }
 }
+// was used to get appsetting type from settings schema
+// type WidenPrimitive<T> =
+//     | (T extends number ? number : T)
+//     | (T extends boolean ? boolean : T)
+//     | (T extends string ? string : T)
+//     | (T extends bigint ? bigint : T);
 
-type WidenPrimitive<T> =
-    | (T extends number ? number : T)
-    | (T extends boolean ? boolean : T)
-    | (T extends string ? string : T)
-    | (T extends bigint ? bigint : T);
+// type DeepArrayToUnion<T> = T extends T
+//     ? {
+//           //! any[] as temp for now
+//           -readonly [K in keyof T]: T[K] extends readonly []
+//               ? any[]
+//               : T[K] extends readonly unknown[]
+//               ? DeepArrayToUnion<T[K][number]>
+//               : DeepArrayToUnion<WidenPrimitive<T[K]>>;
+//       }
+//     : never;
 
-type DeepArrayToUnion<T> = T extends T
-    ? {
-          //! any[] as temp for now
-          -readonly [K in keyof T]: T[K] extends readonly []
-              ? any[]
-              : T[K] extends readonly unknown[]
-              ? DeepArrayToUnion<T[K][number]>
-              : DeepArrayToUnion<WidenPrimitive<T[K]>>;
-      }
-    : never;
+// todo add .default()
+// todo can use .catch for better validating
+const settingSchema = z.object({
+    baseDir: z.string(),
+    customStylesheet: z.string(),
+    locationListSortType: z.union([z.literal("normal"), z.literal("inverse")]),
+    locationListSortBy: z.union([z.literal("name"), z.literal("date")]),
+    /**
+     * Check for new update on start of app.
+     */
+    updateCheckerEnabled: z.boolean(),
+    askBeforeClosing: z.boolean(),
+    skipMinorUpdate: z.boolean(),
+    autoDownloadUpdate: z.boolean(),
+    /**
+     * Open chapter in reader directly, one folder inside of base manga dir.
+     */
+    openDirectlyFromManga: z.boolean(),
+    showTabs: z.object({
+        bookmark: z.boolean(),
+        history: z.boolean(),
+    }),
+    useCanvasBasedReader: z.boolean(),
+    openOnDblClick: z.boolean(),
+    recordChapterRead: z.boolean(),
+    disableListNumbering: z.boolean(),
+    /**
+     * show search input for history and bookmark
+     */
+    showSearch: z.boolean(),
 
-// todo: use this as default settings by taking index 0 as default for arrays
+    openInZenMode: z.boolean(),
+    hideCursorInZenMode: z.boolean(),
+    hideOpenArrow: z.boolean(),
+    /**
+     * Show more data in title attr in bookmark/history tab items
+     */
+    showMoreDataOnItemHover: z.boolean(),
+    autoRefreshSideList: z.boolean(),
+    keepExtractedFiles: z.boolean(),
+    checkboxReaderSetting: z.boolean(),
+    syncSettings: z.boolean(),
+    syncThemes: z.boolean(),
+
+    //styles
+
+    showPageCountInSideList: z.boolean(),
+    showTextFileBadge: z.boolean(),
+
+    //styles end
+
+    readerSettings: z.object({
+        /**
+         * width of reader in percent
+         */
+        readerWidth: z
+            .number({
+                coerce: true,
+            })
+            .min(0),
+        variableImageSize: z.boolean(),
+        /**
+         * * `0` - Vertical scroll
+         * * `1` - Left to Right
+         * * `2` - Right to Left
+         */
+        readerTypeSelected: z.union([z.literal(0), z.literal(1), z.literal(2)]),
+        /**
+         * * `0` - One page per row.
+         * * `1` - Two pages per row.
+         * * `2` - Two pages per row, but first row only has one.
+         */
+        pagesPerRowSelected: z.union([z.literal(0), z.literal(1), z.literal(2)]),
+        gapBetweenRows: z.boolean(),
+        sideListWidth: z.number().min(10),
+        widthClamped: z.boolean(),
+        gapSize: z.number(),
+        showPageNumberInZenMode: z.boolean(),
+        scrollSpeedA: z.number(),
+        scrollSpeedB: z.number(),
+        /**
+         * reading direction in two pages per row
+         * * `0` - ltr
+         * * `1` - rtl
+         */
+        readingSide: z.union([z.literal(0), z.literal(1)]),
+        // fitVertically: false,
+        /**
+         * * `0` - None
+         * * `1` - Fit Vertically
+         * * `2` - Fit Horizontally
+         * * `3` - 1:1
+         */
+        fitOption: z.union([z.literal(0), z.literal(1), z.literal(2), z.literal(3)]),
+        disableChapterTransitionScreen: z.boolean(),
+        /**
+         * Decide which is enabled, maxWidth or maxHeight
+         */
+        maxHeightWidthSelector: z.union([z.literal("none"), z.literal("width"), z.literal("height")]),
+        maxWidth: z.number().min(1),
+        maxHeight: z.number().min(1),
+        /**
+         * to be used in `page.getViewport({ scale: | })`
+         * higher scale = higher quality
+         */
+        pdfScale: z.number(),
+        dynamicLoading: z.boolean(),
+        customColorFilter: z.object({
+            enabled: z.boolean(),
+            /**
+             * red 0-255
+             */
+            r: z.number().min(0).max(255),
+            g: z.number().min(0).max(255),
+            b: z.number().min(0).max(255),
+            /**
+             * alpha 0-1
+             */
+            a: z.number().min(0).max(1),
+            blendMode: z.union([
+                z.literal("color"),
+                z.literal("color-burn"),
+                z.literal("color-dodge"),
+                z.literal("darken"),
+                z.literal("difference"),
+                z.literal("exclusion"),
+                z.literal("hard-light"),
+                z.literal("hue"),
+                z.literal("lighten"),
+                z.literal("luminosity"),
+                z.literal("multiply"),
+                z.literal("normal"),
+                z.literal("overlay"),
+                z.literal("saturation"),
+                z.literal("screen"),
+                z.literal("soft-light"),
+            ]),
+            // doesnt come under this.enabled
+            hue: z.number(),
+            saturation: z.number(),
+            brightness: z.number(),
+            contrast: z.number(),
+        }),
+        invertImage: z.boolean(),
+        grayscale: z.boolean(),
+        forceLowBrightness: z.object({
+            enabled: z.boolean(),
+            /**
+             * opacity 0-1 of overlying black div
+             */
+            value: z.number(),
+        }),
+        settingsCollapsed: z.object({
+            size: z.boolean(),
+            fitOption: z.boolean(),
+            readingMode: z.boolean(),
+            pagePerRow: z.boolean(),
+            readingSide: z.boolean(),
+            scrollSpeed: z.boolean(),
+            customColorFilter: z.boolean(),
+            others: z.boolean(),
+        }),
+    }),
+    epubReaderSettings: z.object({
+        /**load and show only one chapter at a time from TOC */
+        loadOneChapter: z.boolean(),
+        /**
+         * width of reader in percent
+         */
+        readerWidth: z.number(),
+        /**
+         * font size in px.
+         */
+        fontSize: z.number(),
+        useDefault_fontFamily: z.boolean(),
+        fontFamily: z.string(),
+        useDefault_lineSpacing: z.boolean(),
+        /**
+         * line height in em
+         */
+        lineSpacing: z.number(),
+        useDefault_paragraphSpacing: z.boolean(),
+        /**
+         * gap in em
+         */
+        paragraphSpacing: z.number(),
+        useDefault_wordSpacing: z.boolean(),
+        wordSpacing: z.number(),
+        useDefault_letterSpacing: z.boolean(),
+        letterSpacing: z.number(),
+        hyphenation: z.boolean(),
+        scrollSpeedA: z.number(),
+        scrollSpeedB: z.number(),
+        /**
+         * limit image height to 100%
+         */
+        limitImgHeight: z.boolean(),
+        noIndent: z.boolean(),
+        // all color valeus are hex
+        useDefault_fontColor: z.boolean(),
+        fontColor: z.string(),
+        useDefault_linkColor: z.boolean(),
+        useDefault_fontWeight: z.boolean(),
+        fontWeight: z.number(),
+        linkColor: z.string(),
+        useDefault_backgroundColor: z.boolean(),
+        backgroundColor: z.string(),
+        useDefault_progressBackgroundColor: z.boolean(),
+        progressBackgroundColor: z.string(),
+        /**
+         * invert and blend-difference
+         */
+        invertImageColor: z.boolean(),
+
+        settingsCollapsed: z.object({
+            size: z.boolean(),
+            font: z.boolean(),
+            styles: z.boolean(),
+            scrollSpeed: z.boolean(),
+        }),
+        showProgressInZenMode: z.boolean(),
+        forceLowBrightness: z.object({
+            enabled: z.boolean(),
+            /**
+             * opacity 0-1 of overlying black div
+             */
+            value: z.number(),
+        }),
+        quickFontFamily: z.array(z.string()),
+        textSelect: z.boolean(),
+    }),
+});
+
 export const settingValidatorData = {
     baseDir: "",
     customStylesheet: "",
@@ -732,7 +965,7 @@ declare global {
         focusBackElem?: HTMLElement | null;
         elemBox: HTMLElement | { x: number; y: number } | null;
     };
-    type AppSettings = DeepArrayToUnion<typeof settingValidatorData>;
+    type AppSettings = z.infer<typeof settingSchema>;
     type Color = Colorjs;
     // type ColorFormats = {
     //     hex:string;
@@ -1294,7 +1527,6 @@ if (localStorage.getItem("anilist_token") === null) localStorage.setItem("anilis
 if (localStorage.getItem("anilist_tracking") === null) localStorage.setItem("anilist_tracking", "[]");
 window.al = new AniList(localStorage.getItem("anilist_token") || "");
 
-// todo: try taking automatically from settingValidator
 const defaultSettings: AppSettings = {
     baseDir: window.electron.app.getPath("home"),
     customStylesheet: "",
