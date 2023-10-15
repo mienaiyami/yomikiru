@@ -1,28 +1,7 @@
 import { createSlice, PayloadAction } from "@reduxjs/toolkit";
-import { defaultSettings, makeSettingsJson, isSettingsValid, settingsPath, saveJSONfile } from "../MainImports";
+import { settingSchema, makeSettingsJson, settingsPath, saveJSONfile, parseAppSettings } from "../MainImports";
 
-//todo try using zod or something else
-const validate = () => {
-    const isValidRes = isSettingsValid();
-    if (!isValidRes.isValid) {
-        if (isValidRes.location.length === 0) {
-            window.dialog.customError({
-                message: "Unable to parse settings file, making new.",
-            });
-            makeSettingsJson();
-        } else {
-            window.dialog.warn({
-                message: `Some settings are invalid or new settings added. Re-writing settings.`,
-            });
-            window.logger.log(isSettingsValid());
-            makeSettingsJson(isSettingsValid().location);
-        }
-    }
-};
-
-validate();
-
-const settings: AppSettings = JSON.parse(window.fs.readFileSync(settingsPath, "utf-8"));
+const settings = parseAppSettings();
 
 type AppSettingsOptional = {
     [K in keyof AppSettings]?: AppSettings[K];
@@ -66,13 +45,12 @@ const appSettings = createSlice({
             return newSettings;
         },
         refreshAppSettings: () => {
-            validate();
-            return JSON.parse(window.fs.readFileSync(settingsPath, "utf-8"));
+            return parseAppSettings();
         },
-        makeNewSettings: (state) => {
+        makeNewSettings: () => {
             makeSettingsJson();
-            state = defaultSettings;
-            return state;
+            //todo check if it reloads automatically
+            // return settingSchema.parse(undefined);
         },
     },
 });

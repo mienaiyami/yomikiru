@@ -1,23 +1,13 @@
 import { app, dialog, getCurrentWindow, clipboard, nativeImage, shell } from "@electron/remote";
 import { ipcRenderer, webFrame } from "electron";
-/*//! i know its dangerous but its offline app and i was unable to get BrowserWindow to work
-  //! in renderer with contextBridge from preload
 
-
-  //! nah is it really? i dont know, since no remote request is done other than anilist
- */
 import chokidar from "chokidar";
 import { z } from "zod";
 import * as pdfjsLib from "pdfjs-dist/build/pdf.js";
-// import pdfjsLib from "pdfjs-dist";
 // eslint-disable-next-line @typescript-eslint/ban-ts-comment
 //@ts-ignore
 import worker from "pdfjs-dist/build/pdf.worker.js";
 pdfjsLib.GlobalWorkerOptions.workerSrc = worker;
-// const worker = new Worker();
-// import * as pdfjsLib from "pdfjs-dist";
-// pdfjsLib.GlobalWorkerOptions.workerSrc = "./pdf.worker.js";
-
 import log from "electron-log";
 log.transports.file.resolvePath = () => path.join(app.getPath("userData"), "logs/renderer.log");
 import path from "path";
@@ -48,467 +38,374 @@ declare module "react" {
 //       }
 //     : never;
 
-// todo add .default()
-// todo can use .catch for better validating
-const settingSchema = z.object({
-    baseDir: z.string(),
-    customStylesheet: z.string(),
-    locationListSortType: z.union([z.literal("normal"), z.literal("inverse")]),
-    locationListSortBy: z.union([z.literal("name"), z.literal("date")]),
-    /**
-     * Check for new update on start of app.
-     */
-    updateCheckerEnabled: z.boolean(),
-    askBeforeClosing: z.boolean(),
-    skipMinorUpdate: z.boolean(),
-    autoDownloadUpdate: z.boolean(),
-    /**
-     * Open chapter in reader directly, one folder inside of base manga dir.
-     */
-    openDirectlyFromManga: z.boolean(),
-    showTabs: z.object({
-        bookmark: z.boolean(),
-        history: z.boolean(),
-    }),
-    useCanvasBasedReader: z.boolean(),
-    openOnDblClick: z.boolean(),
-    recordChapterRead: z.boolean(),
-    disableListNumbering: z.boolean(),
-    /**
-     * show search input for history and bookmark
-     */
-    showSearch: z.boolean(),
-
-    openInZenMode: z.boolean(),
-    hideCursorInZenMode: z.boolean(),
-    hideOpenArrow: z.boolean(),
-    /**
-     * Show more data in title attr in bookmark/history tab items
-     */
-    showMoreDataOnItemHover: z.boolean(),
-    autoRefreshSideList: z.boolean(),
-    keepExtractedFiles: z.boolean(),
-    checkboxReaderSetting: z.boolean(),
-    syncSettings: z.boolean(),
-    syncThemes: z.boolean(),
-
-    //styles
-
-    showPageCountInSideList: z.boolean(),
-    showTextFileBadge: z.boolean(),
-
-    //styles end
-
-    readerSettings: z.object({
+window.electron = {
+    app,
+    dialog,
+    shell,
+    ipcRenderer,
+    getCurrentWindow,
+    clipboard,
+    nativeImage,
+    webFrame,
+};
+const settingSchema = z
+    .object({
+        baseDir: z.string(),
+        customStylesheet: z.string(),
+        locationListSortType: z.union([z.literal("normal"), z.literal("inverse")]),
+        locationListSortBy: z.union([z.literal("name"), z.literal("date")]),
         /**
-         * width of reader in percent
+         * Check for new update on start of app.
          */
-        readerWidth: z
-            .number({
-                coerce: true,
-            })
-            .min(0),
-        variableImageSize: z.boolean(),
+        updateCheckerEnabled: z.boolean(),
+        askBeforeClosing: z.boolean(),
+        skipMinorUpdate: z.boolean(),
+        autoDownloadUpdate: z.boolean(),
         /**
-         * * `0` - Vertical scroll
-         * * `1` - Left to Right
-         * * `2` - Right to Left
+         * Open chapter in reader directly, one folder inside of base manga dir.
          */
-        readerTypeSelected: z.union([z.literal(0), z.literal(1), z.literal(2)]),
-        /**
-         * * `0` - One page per row.
-         * * `1` - Two pages per row.
-         * * `2` - Two pages per row, but first row only has one.
-         */
-        pagesPerRowSelected: z.union([z.literal(0), z.literal(1), z.literal(2)]),
-        gapBetweenRows: z.boolean(),
-        sideListWidth: z.number().min(10),
-        widthClamped: z.boolean(),
-        gapSize: z.number(),
-        showPageNumberInZenMode: z.boolean(),
-        scrollSpeedA: z.number(),
-        scrollSpeedB: z.number(),
-        /**
-         * reading direction in two pages per row
-         * * `0` - ltr
-         * * `1` - rtl
-         */
-        readingSide: z.union([z.literal(0), z.literal(1)]),
-        // fitVertically: false,
-        /**
-         * * `0` - None
-         * * `1` - Fit Vertically
-         * * `2` - Fit Horizontally
-         * * `3` - 1:1
-         */
-        fitOption: z.union([z.literal(0), z.literal(1), z.literal(2), z.literal(3)]),
-        disableChapterTransitionScreen: z.boolean(),
-        /**
-         * Decide which is enabled, maxWidth or maxHeight
-         */
-        maxHeightWidthSelector: z.union([z.literal("none"), z.literal("width"), z.literal("height")]),
-        maxWidth: z.number().min(1),
-        maxHeight: z.number().min(1),
-        /**
-         * to be used in `page.getViewport({ scale: | })`
-         * higher scale = higher quality
-         */
-        pdfScale: z.number(),
-        dynamicLoading: z.boolean(),
-        customColorFilter: z.object({
-            enabled: z.boolean(),
-            /**
-             * red 0-255
-             */
-            r: z.number().min(0).max(255),
-            g: z.number().min(0).max(255),
-            b: z.number().min(0).max(255),
-            /**
-             * alpha 0-1
-             */
-            a: z.number().min(0).max(1),
-            blendMode: z.union([
-                z.literal("color"),
-                z.literal("color-burn"),
-                z.literal("color-dodge"),
-                z.literal("darken"),
-                z.literal("difference"),
-                z.literal("exclusion"),
-                z.literal("hard-light"),
-                z.literal("hue"),
-                z.literal("lighten"),
-                z.literal("luminosity"),
-                z.literal("multiply"),
-                z.literal("normal"),
-                z.literal("overlay"),
-                z.literal("saturation"),
-                z.literal("screen"),
-                z.literal("soft-light"),
-            ]),
-            // doesnt come under this.enabled
-            hue: z.number(),
-            saturation: z.number(),
-            brightness: z.number(),
-            contrast: z.number(),
+        openDirectlyFromManga: z.boolean(),
+        showTabs: z.object({
+            bookmark: z.boolean(),
+            history: z.boolean(),
         }),
-        invertImage: z.boolean(),
-        grayscale: z.boolean(),
-        forceLowBrightness: z.object({
-            enabled: z.boolean(),
+        useCanvasBasedReader: z.boolean(),
+        openOnDblClick: z.boolean(),
+        recordChapterRead: z.boolean(),
+        disableListNumbering: z.boolean(),
+        /**
+         * show search input for history and bookmark
+         */
+        showSearch: z.boolean(),
+
+        openInZenMode: z.boolean(),
+        hideCursorInZenMode: z.boolean(),
+        hideOpenArrow: z.boolean(),
+        /**
+         * Show more data in title attr in bookmark/history tab items
+         */
+        showMoreDataOnItemHover: z.boolean(),
+        autoRefreshSideList: z.boolean(),
+        keepExtractedFiles: z.boolean(),
+        checkboxReaderSetting: z.boolean(),
+        syncSettings: z.boolean(),
+        syncThemes: z.boolean(),
+
+        //styles
+
+        showPageCountInSideList: z.boolean(),
+        showTextFileBadge: z.boolean(),
+
+        //styles end
+
+        readerSettings: z.object({
             /**
-             * opacity 0-1 of overlying black div
+             * width of reader in percent
              */
-            value: z.number(),
+            readerWidth: z.number().min(0),
+            variableImageSize: z.boolean(),
+            /**
+             * * `0` - Vertical scroll
+             * * `1` - Left to Right
+             * * `2` - Right to Left
+             */
+            readerTypeSelected: z.union([z.literal(0), z.literal(1), z.literal(2)]),
+            /**
+             * * `0` - One page per row.
+             * * `1` - Two pages per row.
+             * * `2` - Two pages per row, but first row only has one.
+             */
+            pagesPerRowSelected: z.union([z.literal(0), z.literal(1), z.literal(2)]),
+            gapBetweenRows: z.boolean(),
+            sideListWidth: z.number().min(10),
+            widthClamped: z.boolean(),
+            gapSize: z.number(),
+            showPageNumberInZenMode: z.boolean(),
+            scrollSpeedA: z.number(),
+            scrollSpeedB: z.number(),
+            /**
+             * reading direction in two pages per row
+             * * `0` - ltr
+             * * `1` - rtl
+             */
+            readingSide: z.union([z.literal(0), z.literal(1)]),
+            // fitVertically: false,
+            /**
+             * * `0` - None
+             * * `1` - Fit Vertically
+             * * `2` - Fit Horizontally
+             * * `3` - 1:1
+             */
+            fitOption: z.union([z.literal(0), z.literal(1), z.literal(2), z.literal(3)]),
+            disableChapterTransitionScreen: z.boolean(),
+            /**
+             * Decide which is enabled, maxWidth or maxHeight
+             */
+            maxHeightWidthSelector: z.union([z.literal("none"), z.literal("width"), z.literal("height")]),
+            maxWidth: z.number().min(1),
+            maxHeight: z.number().min(1),
+            /**
+             * to be used in `page.getViewport({ scale: | })`
+             * higher scale = higher quality
+             */
+            pdfScale: z.number(),
+            dynamicLoading: z.boolean(),
+            customColorFilter: z.object({
+                enabled: z.boolean(),
+                /**
+                 * red 0-255
+                 */
+                r: z.number().min(0).max(255),
+                g: z.number().min(0).max(255),
+                b: z.number().min(0).max(255),
+                /**
+                 * alpha 0-1
+                 */
+                a: z.number().min(0).max(1),
+                blendMode: z.union([
+                    z.literal("color"),
+                    z.literal("color-burn"),
+                    z.literal("color-dodge"),
+                    z.literal("darken"),
+                    z.literal("difference"),
+                    z.literal("exclusion"),
+                    z.literal("hard-light"),
+                    z.literal("hue"),
+                    z.literal("lighten"),
+                    z.literal("luminosity"),
+                    z.literal("multiply"),
+                    z.literal("normal"),
+                    z.literal("overlay"),
+                    z.literal("saturation"),
+                    z.literal("screen"),
+                    z.literal("soft-light"),
+                ]),
+                // doesnt come under this.enabled
+                hue: z.number(),
+                saturation: z.number(),
+                brightness: z.number(),
+                contrast: z.number(),
+            }),
+            invertImage: z.boolean(),
+            grayscale: z.boolean(),
+            forceLowBrightness: z.object({
+                enabled: z.boolean(),
+                /**
+                 * opacity 0-1 of overlying black div
+                 */
+                value: z.number(),
+            }),
+            settingsCollapsed: z.object({
+                size: z.boolean(),
+                fitOption: z.boolean(),
+                readingMode: z.boolean(),
+                pagePerRow: z.boolean(),
+                readingSide: z.boolean(),
+                scrollSpeed: z.boolean(),
+                customColorFilter: z.boolean(),
+                others: z.boolean(),
+            }),
         }),
-        settingsCollapsed: z.object({
-            size: z.boolean(),
-            fitOption: z.boolean(),
-            readingMode: z.boolean(),
-            pagePerRow: z.boolean(),
-            readingSide: z.boolean(),
-            scrollSpeed: z.boolean(),
-            customColorFilter: z.boolean(),
-            others: z.boolean(),
+        epubReaderSettings: z.object({
+            /**load and show only one chapter at a time from TOC */
+            loadOneChapter: z.boolean(),
+            /**
+             * width of reader in percent
+             */
+            readerWidth: z.number(),
+            /**
+             * font size in px.
+             */
+            fontSize: z.number(),
+            useDefault_fontFamily: z.boolean(),
+            fontFamily: z.string(),
+            useDefault_lineSpacing: z.boolean(),
+            /**
+             * line height in em
+             */
+            lineSpacing: z.number(),
+            useDefault_paragraphSpacing: z.boolean(),
+            /**
+             * gap in em
+             */
+            paragraphSpacing: z.number(),
+            useDefault_wordSpacing: z.boolean(),
+            wordSpacing: z.number(),
+            useDefault_letterSpacing: z.boolean(),
+            letterSpacing: z.number(),
+            hyphenation: z.boolean(),
+            scrollSpeedA: z.number(),
+            scrollSpeedB: z.number(),
+            /**
+             * limit image height to 100%
+             */
+            limitImgHeight: z.boolean(),
+            noIndent: z.boolean(),
+            // all color valeus are hex
+            useDefault_fontColor: z.boolean(),
+            fontColor: z.string(),
+            useDefault_linkColor: z.boolean(),
+            useDefault_fontWeight: z.boolean(),
+            fontWeight: z.number(),
+            linkColor: z.string(),
+            useDefault_backgroundColor: z.boolean(),
+            backgroundColor: z.string(),
+            useDefault_progressBackgroundColor: z.boolean(),
+            progressBackgroundColor: z.string(),
+            /**
+             * invert and blend-difference
+             */
+            invertImageColor: z.boolean(),
+
+            settingsCollapsed: z.object({
+                size: z.boolean(),
+                font: z.boolean(),
+                styles: z.boolean(),
+                scrollSpeed: z.boolean(),
+            }),
+            showProgressInZenMode: z.boolean(),
+            forceLowBrightness: z.object({
+                enabled: z.boolean(),
+                /**
+                 * opacity 0-1 of overlying black div
+                 */
+                value: z.number(),
+            }),
+            quickFontFamily: z.array(z.string()),
+            textSelect: z.boolean(),
         }),
-    }),
-    epubReaderSettings: z.object({
-        /**load and show only one chapter at a time from TOC */
-        loadOneChapter: z.boolean(),
-        /**
-         * width of reader in percent
-         */
-        readerWidth: z.number(),
-        /**
-         * font size in px.
-         */
-        fontSize: z.number(),
-        useDefault_fontFamily: z.boolean(),
-        fontFamily: z.string(),
-        useDefault_lineSpacing: z.boolean(),
-        /**
-         * line height in em
-         */
-        lineSpacing: z.number(),
-        useDefault_paragraphSpacing: z.boolean(),
-        /**
-         * gap in em
-         */
-        paragraphSpacing: z.number(),
-        useDefault_wordSpacing: z.boolean(),
-        wordSpacing: z.number(),
-        useDefault_letterSpacing: z.boolean(),
-        letterSpacing: z.number(),
-        hyphenation: z.boolean(),
-        scrollSpeedA: z.number(),
-        scrollSpeedB: z.number(),
-        /**
-         * limit image height to 100%
-         */
-        limitImgHeight: z.boolean(),
-        noIndent: z.boolean(),
-        // all color valeus are hex
-        useDefault_fontColor: z.boolean(),
-        fontColor: z.string(),
-        useDefault_linkColor: z.boolean(),
-        useDefault_fontWeight: z.boolean(),
-        fontWeight: z.number(),
-        linkColor: z.string(),
-        useDefault_backgroundColor: z.boolean(),
-        backgroundColor: z.string(),
-        useDefault_progressBackgroundColor: z.boolean(),
-        progressBackgroundColor: z.string(),
-        /**
-         * invert and blend-difference
-         */
-        invertImageColor: z.boolean(),
-
-        settingsCollapsed: z.object({
-            size: z.boolean(),
-            font: z.boolean(),
-            styles: z.boolean(),
-            scrollSpeed: z.boolean(),
-        }),
-        showProgressInZenMode: z.boolean(),
-        forceLowBrightness: z.object({
-            enabled: z.boolean(),
-            /**
-             * opacity 0-1 of overlying black div
-             */
-            value: z.number(),
-        }),
-        quickFontFamily: z.array(z.string()),
-        textSelect: z.boolean(),
-    }),
-});
-
-export const settingValidatorData = {
-    baseDir: "",
-    customStylesheet: "",
-    locationListSortType: ["normal", "inverse"],
-    locationListSortBy: ["name", "date"],
-    /**
-     * Check for new update on start of app.
-     */
-    updateCheckerEnabled: false,
-    askBeforeClosing: false,
-    skipMinorUpdate: false,
-    autoDownloadUpdate: false,
-    /**
-     * Open chapter in reader directly, one folder inside of base manga dir.
-     */
-    openDirectlyFromManga: false,
-    showTabs: {
-        bookmark: true,
-        history: true,
-    },
-    useCanvasBasedReader: false,
-    openOnDblClick: true,
-    // disableCachingCanvas: false,
-    recordChapterRead: true,
-    // showPageNumOnHome: true,
-    disableListNumbering: false,
-    /**
-     * show search input for history and bookmark
-     */
-    showSearch: false,
-
-    openInZenMode: false,
-    hideCursorInZenMode: false,
-    hideOpenArrow: false,
-    /**
-     * Show more data in title attr in bookmark/history tab items
-     */
-    showMoreDataOnItemHover: true,
-    autoRefreshSideList: false,
-    keepExtractedFiles: false,
-    checkboxReaderSetting: false,
-    syncSettings: true,
-    syncThemes: true,
-
-    //styles
-
-    showPageCountInSideList: true,
-    showTextFileBadge: true,
-
-    //styles end
-
-    readerSettings: {
-        /**
-         * width of reader in percent
-         */
-        readerWidth: 0,
-        variableImageSize: false,
-        /**
-         * * `0` - Vertical scroll
-         * * `1` - Left to Right
-         * * `2` - Right to Left
-         */
-        readerTypeSelected: [0, 1, 2],
-        /**
-         * * `0` - One page per row.
-         * * `1` - Two pages per row.
-         * * `2` - Two pages per row, but first row only has one.
-         */
-        pagesPerRowSelected: [0, 1, 2],
-        gapBetweenRows: false,
-        sideListWidth: 0,
-        widthClamped: true,
-        gapSize: 0,
-        showPageNumberInZenMode: false,
-        scrollSpeedA: 0,
-        scrollSpeedB: 0,
-        /**
-         * reading direction in two pages per row
-         * * `0` - ltr
-         * * `1` - rtl
-         */
-        readingSide: [0, 1],
-        // fitVertically: false,
-        /**
-         * * `0` - None
-         * * `1` - Fit Vertically
-         * * `2` - Fit Horizontally
-         * * `3` - 1:1
-         */
-        fitOption: [0, 1, 2, 3],
-        disableChapterTransitionScreen: false,
-        /**
-         * Decide which is enabled, maxWidth or maxHeight
-         */
-        maxHeightWidthSelector: ["none", "width", "height"],
-        maxWidth: 500,
-        maxHeight: 500,
-        /**
-         * to be used in `page.getViewport({ scale: | })`
-         * higher scale = higher quality
-         */
-        pdfScale: 1,
-        dynamicLoading: false,
-        customColorFilter: {
-            enabled: false,
-            /**
-             * red 0-255
-             */
-            r: 0,
-            g: 0,
-            b: 0,
-            /**
-             * alpha 0-1
-             */
-            a: 1,
-            blendMode: [
-                "color",
-                "color-burn",
-                "color-dodge",
-                "darken",
-                "difference",
-                "exclusion",
-                "hard-light",
-                "hue",
-                "lighten",
-                "luminosity",
-                "multiply",
-                "normal",
-                "overlay",
-                "saturation",
-                "screen",
-                "soft-light",
-            ],
-            // doesnt come under this.enabled
-            hue: 0,
-            saturation: 0,
-            brightness: 0,
-            contrast: 0,
+    })
+    .strip()
+    .default({
+        baseDir: window.electron.app.getPath("home"),
+        customStylesheet: "",
+        locationListSortType: "normal",
+        locationListSortBy: "name",
+        updateCheckerEnabled: true,
+        askBeforeClosing: false,
+        skipMinorUpdate: false,
+        autoDownloadUpdate: false,
+        openDirectlyFromManga: false,
+        showTabs: {
+            bookmark: true,
+            history: true,
         },
-        invertImage: false,
-        grayscale: false,
-        forceLowBrightness: {
-            enabled: false,
-            /**
-             * opacity 0-1 of overlying black div
-             */
-            value: 0,
+        useCanvasBasedReader: false,
+        openOnDblClick: true,
+        // disableCachingCanvas: false,
+        recordChapterRead: true,
+        // showPageNumOnHome: true,
+        disableListNumbering: true,
+        showSearch: false,
+        openInZenMode: false,
+        hideCursorInZenMode: false,
+        hideOpenArrow: false,
+        showMoreDataOnItemHover: true,
+        autoRefreshSideList: false,
+        keepExtractedFiles: false,
+        checkboxReaderSetting: false,
+        syncSettings: true,
+        syncThemes: true,
+        showPageCountInSideList: true,
+        showTextFileBadge: true,
+        readerSettings: {
+            readerWidth: 60,
+            variableImageSize: true,
+            readerTypeSelected: 0,
+            pagesPerRowSelected: 0,
+            gapBetweenRows: true,
+            sideListWidth: 450,
+            widthClamped: true,
+            gapSize: 10,
+            showPageNumberInZenMode: true,
+            scrollSpeedA: 5,
+            scrollSpeedB: 15,
+            readingSide: 1,
+            fitOption: 0,
+            disableChapterTransitionScreen: false,
+            maxHeightWidthSelector: "none",
+            maxHeight: 500,
+            maxWidth: 500,
+            invertImage: false,
+            grayscale: false,
+            pdfScale: 1.5,
+            dynamicLoading: false,
+            customColorFilter: {
+                enabled: false,
+                r: 0,
+                g: 0,
+                b: 0,
+                a: 1,
+                blendMode: "normal",
+                hue: 0,
+                saturation: 0,
+                brightness: 0,
+                contrast: 0,
+            },
+            forceLowBrightness: {
+                enabled: false,
+                value: 0.5,
+            },
+            settingsCollapsed: {
+                size: false,
+                fitOption: true,
+                readingMode: false,
+                pagePerRow: true,
+                readingSide: true,
+                scrollSpeed: true,
+                customColorFilter: true,
+                others: false,
+            },
         },
-        settingsCollapsed: {
-            size: false,
-            fitOption: false,
-            readingMode: false,
-            pagePerRow: false,
-            readingSide: false,
-            scrollSpeed: true,
-            customColorFilter: true,
-            others: false,
-        },
-    },
-    epubReaderSettings: {
-        /**load and show only one chapter at a time from TOC */
-        loadOneChapter: true,
-        /**
-         * width of reader in percent
-         */
-        readerWidth: 50,
-        /**
-         * font size in px.
-         */
-        fontSize: 16,
-        useDefault_fontFamily: true,
-        fontFamily: "Roboto",
-        useDefault_lineSpacing: true,
-        /**
-         * line height in em
-         */
-        lineSpacing: 1.4,
-        useDefault_paragraphSpacing: true,
-        /**
-         * gap in em
-         */
-        paragraphSpacing: 2,
-        useDefault_wordSpacing: true,
-        wordSpacing: 1,
-        useDefault_letterSpacing: true,
-        letterSpacing: 0,
-        hyphenation: false,
-        scrollSpeedA: 0,
-        scrollSpeedB: 0,
-        /**
-         * limit image height to 100%
-         */
-        limitImgHeight: true,
-        noIndent: false,
-        // all color valeus are hex
-        useDefault_fontColor: true,
-        fontColor: "none",
-        useDefault_linkColor: false,
-        useDefault_fontWeight: true,
-        fontWeight: 500,
-        linkColor: "none",
-        useDefault_backgroundColor: true,
-        backgroundColor: "none",
-        useDefault_progressBackgroundColor: true,
-        progressBackgroundColor: "none",
-        /**
-         * invert and blend-difference
-         */
-        invertImageColor: false,
+        epubReaderSettings: {
+            loadOneChapter: true,
+            readerWidth: 50,
+            fontSize: 20,
+            useDefault_fontFamily: true,
+            fontFamily: "Roboto",
+            useDefault_lineSpacing: true,
+            lineSpacing: 1.4,
+            useDefault_paragraphSpacing: true,
+            paragraphSpacing: 2,
+            useDefault_wordSpacing: true,
+            wordSpacing: 0,
+            useDefault_letterSpacing: true,
+            letterSpacing: 0,
+            hyphenation: false,
+            scrollSpeedA: 5,
+            scrollSpeedB: 15,
+            limitImgHeight: true,
+            noIndent: false,
 
-        settingsCollapsed: {
-            size: false,
-            font: false,
-            styles: true,
-            scrollSpeed: true,
+            useDefault_fontColor: true,
+            fontColor: "#ffffff",
+            useDefault_linkColor: false,
+            linkColor: "#0073ff",
+            useDefault_fontWeight: true,
+            fontWeight: 500,
+            useDefault_backgroundColor: true,
+            backgroundColor: "#000000",
+            useDefault_progressBackgroundColor: true,
+            progressBackgroundColor: "#000000",
+
+            invertImageColor: false,
+
+            settingsCollapsed: {
+                size: false,
+                font: false,
+                styles: true,
+                scrollSpeed: true,
+            },
+            showProgressInZenMode: true,
+            forceLowBrightness: {
+                enabled: false,
+                value: 0,
+            },
+            quickFontFamily: ["Roboto", "Cambria"],
+            textSelect: true,
         },
-        showProgressInZenMode: true,
-        forceLowBrightness: {
-            enabled: false,
-            /**
-             * opacity 0-1 of overlying black div
-             */
-            value: 0,
-        },
-        quickFontFamily: [],
-        textSelect: true,
-    },
-} as const;
+    });
+
 // to add new theme property, add it to each theme in ./themeInit.json
 const themeProps = themeJSON.allData[0].main;
 
@@ -1343,16 +1240,6 @@ window.color = {
         }
     },
 };
-window.electron = {
-    app,
-    dialog,
-    shell,
-    ipcRenderer,
-    getCurrentWindow,
-    clipboard,
-    nativeImage,
-    webFrame,
-};
 window.dialog = {
     nodeError: (err: NodeJS.ErrnoException) => {
         window.logger.error(err);
@@ -1527,259 +1414,160 @@ if (localStorage.getItem("anilist_token") === null) localStorage.setItem("anilis
 if (localStorage.getItem("anilist_tracking") === null) localStorage.setItem("anilist_tracking", "[]");
 window.al = new AniList(localStorage.getItem("anilist_token") || "");
 
-const defaultSettings: AppSettings = {
-    baseDir: window.electron.app.getPath("home"),
-    customStylesheet: "",
-    locationListSortType: "normal",
-    locationListSortBy: "name",
-    updateCheckerEnabled: true,
-    askBeforeClosing: false,
-    skipMinorUpdate: false,
-    autoDownloadUpdate: false,
-    openDirectlyFromManga: false,
-    showTabs: {
-        bookmark: true,
-        history: true,
-    },
-    useCanvasBasedReader: false,
-    openOnDblClick: true,
-    // disableCachingCanvas: false,
-    recordChapterRead: true,
-    // showPageNumOnHome: true,
-    disableListNumbering: true,
-    showSearch: false,
-    openInZenMode: false,
-    hideCursorInZenMode: false,
-    hideOpenArrow: false,
-    showMoreDataOnItemHover: true,
-    autoRefreshSideList: false,
-    keepExtractedFiles: false,
-    checkboxReaderSetting: false,
-    syncSettings: true,
-    syncThemes: true,
-    showPageCountInSideList: true,
-    showTextFileBadge: true,
-    readerSettings: {
-        readerWidth: 60,
-        variableImageSize: true,
-        readerTypeSelected: 0,
-        pagesPerRowSelected: 0,
-        gapBetweenRows: true,
-        sideListWidth: 450,
-        widthClamped: true,
-        gapSize: 10,
-        showPageNumberInZenMode: true,
-        scrollSpeedA: 5,
-        scrollSpeedB: 15,
-        readingSide: 1,
-        fitOption: 0,
-        disableChapterTransitionScreen: false,
-        maxHeightWidthSelector: "none",
-        maxHeight: 500,
-        maxWidth: 500,
-        invertImage: false,
-        grayscale: false,
-        pdfScale: 1.5,
-        dynamicLoading: false,
-        customColorFilter: {
-            enabled: false,
-            r: 0,
-            g: 0,
-            b: 0,
-            a: 1,
-            blendMode: "normal",
-            hue: 0,
-            saturation: 0,
-            brightness: 0,
-            contrast: 0,
-        },
-        forceLowBrightness: {
-            enabled: false,
-            value: 0.5,
-        },
-        settingsCollapsed: {
-            size: false,
-            fitOption: true,
-            readingMode: false,
-            pagePerRow: true,
-            readingSide: true,
-            scrollSpeed: true,
-            customColorFilter: true,
-            others: false,
-        },
-    },
-    epubReaderSettings: {
-        loadOneChapter: true,
-        readerWidth: 50,
-        fontSize: 20,
-        useDefault_fontFamily: true,
-        fontFamily: "Roboto",
-        useDefault_lineSpacing: true,
-        lineSpacing: 1.4,
-        useDefault_paragraphSpacing: true,
-        paragraphSpacing: 2,
-        useDefault_wordSpacing: true,
-        wordSpacing: 0,
-        useDefault_letterSpacing: true,
-        letterSpacing: 0,
-        hyphenation: false,
-        scrollSpeedA: 5,
-        scrollSpeedB: 15,
-        limitImgHeight: true,
-        noIndent: false,
-
-        useDefault_fontColor: true,
-        fontColor: "#ffffff",
-        useDefault_linkColor: false,
-        linkColor: "#0073ff",
-        useDefault_fontWeight: true,
-        fontWeight: 500,
-        useDefault_backgroundColor: true,
-        backgroundColor: "#000000",
-        useDefault_progressBackgroundColor: true,
-        progressBackgroundColor: "#000000",
-
-        invertImageColor: false,
-
-        settingsCollapsed: {
-            size: false,
-            font: false,
-            styles: true,
-            scrollSpeed: true,
-        },
-        showProgressInZenMode: true,
-        forceLowBrightness: {
-            enabled: false,
-            value: 0,
-        },
-        quickFontFamily: ["Roboto", "Cambria"],
-        textSelect: true,
-    },
+const makeSettingsJson = () => {
+    saveJSONfile(settingsPath, settingSchema.parse(undefined));
 };
-
-/**
- * Make settings.json for app.
- * @param locations (optional) only update given locations in settings.json.
- */
-const makeSettingsJson = (locations?: string[]) => {
-    if (locations) {
-        const settingsDataSaved = JSON.parse(window.fs.readFileSync(settingsPath, "utf-8"));
-        locations.forEach((e) => {
-            window.logger.log(`"SETTINGS: ${e}" missing/corrupted in app settings, adding new...`);
-            const l: string[] = e.split(".");
-            // eslint-disable-next-line @typescript-eslint/ban-ts-comment
-            //@ts-ignore
-            if (l.length === 1) settingsDataSaved[l[0]] = defaultSettings[l[0]];
-            // eslint-disable-next-line @typescript-eslint/ban-ts-comment
-            //@ts-ignore
-            if (l.length === 2) settingsDataSaved[l[0]][l[1]] = defaultSettings[l[0]][l[1]];
-            // eslint-disable-next-line @typescript-eslint/ban-ts-comment
-            //@ts-ignore
-            if (l.length === 3) settingsDataSaved[l[0]][l[1]][l[2]] = defaultSettings[l[0]][l[1]][l[2]];
-        });
-        window.fs.writeFileSync(settingsPath, JSON.stringify(settingsDataSaved, null, "\t"));
-    } else window.fs.writeFileSync(settingsPath, JSON.stringify(defaultSettings, null, "\t"));
-};
-
 if (!window.fs.existsSync(settingsPath)) {
     window.dialog.warn({ message: "No settings found, Select manga folder to make default in settings" });
     makeSettingsJson();
 }
 
-/**
- * Check if settings.json is valid or not.
- * @returns
- * * `isValid` - boolean
- * * `location` - array of invalid settings location, empty array if whole is corrupted
- */
-const isSettingsValid = (): { isValid: boolean; location: string[] } => {
+// left for reference
+// /**
+//  * Check if settings.json is valid or not.
+//  * @returns
+//  * * `isValid` - boolean
+//  * * `location` - array of invalid settings location, empty array if whole is corrupted
+//  */
+// const isSettingsValid = (): { isValid: boolean; location: string[] } => {
+//     try {
+//         JSON.parse(window.fs.readFileSync(settingsPath, "utf-8"));
+//     } catch (err) {
+//         window.logger.error(err);
+//         window.logger.log(window.fs.readFileSync(settingsPath, "utf-8"));
+//         // makeSettingsJson();
+//         return { isValid: false, location: [] };
+//     }
+//     const settings = JSON.parse(window.fs.readFileSync(settingsPath, "utf-8")) as Record<string, any>;
+//     const output: { isValid: boolean; location: string[] } = {
+//         isValid: true,
+//         location: [],
+//     };
+//     Object.entries(settingValidatorData).forEach(([key, value]) => {
+//         if (!Object.prototype.hasOwnProperty.call(settings, key)) {
+//             output.isValid = false;
+//             output.location.push(key);
+//             return;
+//         }
+//         if (
+//             (typeof value === "string" && typeof settings[key] !== "string") ||
+//             (typeof value === "number" && typeof settings[key] !== "number") ||
+//             (typeof value === "boolean" && typeof settings[key] !== "boolean") ||
+//             (typeof value === "object" && !(value instanceof Array) && typeof settings[key] !== "object")
+//         ) {
+//             output.isValid = false;
+//             output.location.push(key);
+//             return;
+//         }
+//         if (value instanceof Array) {
+//             // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+//             //@ts-ignore
+//             if (!value.includes(settings[key])) {
+//                 output.isValid = false;
+//                 output.location.push(key);
+//             }
+//             return;
+//         }
+//         if (value instanceof Object) {
+//             Object.entries(value).forEach(([key2, value2]) => {
+//                 if (!Object.prototype.hasOwnProperty.call(settings[key], key2)) {
+//                     output.isValid = false;
+//                     output.location.push(`${key}.${key2}`);
+//                     return;
+//                 }
+//                 if (
+//                     (typeof value2 === "string" && typeof settings[key][key2] !== "string") ||
+//                     (typeof value2 === "number" && typeof settings[key][key2] !== "number") ||
+//                     (typeof value2 === "boolean" && typeof settings[key][key2] !== "boolean") ||
+//                     (typeof value2 === "object" &&
+//                         !(value2 instanceof Array) &&
+//                         typeof settings[key][key2] !== "object")
+//                 ) {
+//                     output.isValid = false;
+//                     output.location.push(`${key}.${key2}`);
+//                     return;
+//                 }
+//                 if (value2 instanceof Array) {
+//                     if (value2.length === 0) {
+//                         if (!(settings[key][key2] instanceof Array)) {
+//                             output.isValid = false;
+//                             output.location.push(`${key}.${key2}`);
+//                         }
+//                         return;
+//                     }
+//                     // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+//                     //@ts-ignore
+//                     if (!value2.includes(settings[key][key2])) {
+//                         output.isValid = false;
+//                         output.location.push(`${key}.${key2}`);
+//                     }
+//                     return;
+//                 }
+//             });
+//         }
+//     });
+//     return output;
+// };
+
+const parseAppSettings = (): AppSettings => {
+    const defaultSettings = settingSchema.parse(undefined);
+
+    const getValueFromDeepObject = (obj: any, keys: (string | number)[]) => {
+        let result = obj;
+        for (const key of keys) {
+            if (result && Object.hasOwn(result, key)) {
+                result = result[key];
+            } else {
+                return undefined; // Key doesn't exist in the object
+            }
+        }
+        return result;
+    };
+    const setValueFromDeepObject = (obj: any, keys: (string | number)[], value: any) => {
+        let main = obj;
+        let i;
+        for (i = 0; i < keys.length - 1; i++) {
+            main = main[keys[i]];
+        }
+        main[keys[i]] = value;
+    };
+
     try {
-        JSON.parse(window.fs.readFileSync(settingsPath, "utf-8"));
+        //todo test for empty;
+        const parsedJSON = JSON.parse(window.fs.readFileSync(settingsPath, "utf-8"));
+        return settingSchema
+            .catch(({ error, input }) => {
+                const location = [] as string[];
+                const defaultSettings = settingSchema.parse(undefined);
+                const fixed = { ...input };
+                error.issues.forEach((e) => {
+                    location.push(e.path.join("."));
+                    setValueFromDeepObject(fixed, e.path, getValueFromDeepObject(defaultSettings, e.path));
+                });
+                window.dialog.warn({
+                    message: `Some settings are invalid or new settings added. Re-writing settings.`,
+                });
+                window.logger.log("Locations: ", location);
+                saveJSONfile(settingsPath, fixed);
+                return fixed as AppSettings;
+            })
+            .parse(parsedJSON);
     } catch (err) {
         window.logger.error(err);
         window.logger.log(window.fs.readFileSync(settingsPath, "utf-8"));
-        // makeSettingsJson();
-        return { isValid: false, location: [] };
+        window.dialog.customError({ message: "Unable to parse settings.json. Remaking." });
+        makeSettingsJson();
+        return defaultSettings;
     }
-    const settings = JSON.parse(window.fs.readFileSync(settingsPath, "utf-8")) as Record<string, any>;
-    const output: { isValid: boolean; location: string[] } = {
-        isValid: true,
-        location: [],
-    };
-    Object.entries(settingValidatorData).forEach(([key, value]) => {
-        if (!Object.prototype.hasOwnProperty.call(settings, key)) {
-            output.isValid = false;
-            output.location.push(key);
-            return;
-        }
-        if (
-            (typeof value === "string" && typeof settings[key] !== "string") ||
-            (typeof value === "number" && typeof settings[key] !== "number") ||
-            (typeof value === "boolean" && typeof settings[key] !== "boolean") ||
-            (typeof value === "object" && !(value instanceof Array) && typeof settings[key] !== "object")
-        ) {
-            output.isValid = false;
-            output.location.push(key);
-            return;
-        }
-        if (value instanceof Array) {
-            // eslint-disable-next-line @typescript-eslint/ban-ts-comment
-            //@ts-ignore
-            if (!value.includes(settings[key])) {
-                output.isValid = false;
-                output.location.push(key);
-            }
-            return;
-        }
-        if (value instanceof Object) {
-            Object.entries(value).forEach(([key2, value2]) => {
-                if (!Object.prototype.hasOwnProperty.call(settings[key], key2)) {
-                    output.isValid = false;
-                    output.location.push(`${key}.${key2}`);
-                    return;
-                }
-                if (
-                    (typeof value2 === "string" && typeof settings[key][key2] !== "string") ||
-                    (typeof value2 === "number" && typeof settings[key][key2] !== "number") ||
-                    (typeof value2 === "boolean" && typeof settings[key][key2] !== "boolean") ||
-                    (typeof value2 === "object" &&
-                        !(value2 instanceof Array) &&
-                        typeof settings[key][key2] !== "object")
-                ) {
-                    output.isValid = false;
-                    output.location.push(`${key}.${key2}`);
-                    return;
-                }
-                if (value2 instanceof Array) {
-                    if (value2.length === 0) {
-                        if (!(settings[key][key2] instanceof Array)) {
-                            output.isValid = false;
-                            output.location.push(`${key}.${key2}`);
-                        }
-                        return;
-                    }
-                    // eslint-disable-next-line @typescript-eslint/ban-ts-comment
-                    //@ts-ignore
-                    if (!value2.includes(settings[key][key2])) {
-                        output.isValid = false;
-                        output.location.push(`${key}.${key2}`);
-                    }
-                    return;
-                }
-            });
-        }
-    });
-    return output;
 };
-
 export {
     settingsPath,
     bookmarksPath,
     historyPath,
     themesPath,
     shortcutsPath,
-    defaultSettings,
     makeSettingsJson,
-    isSettingsValid,
     saveJSONfile,
+    settingSchema,
+    parseAppSettings,
 };

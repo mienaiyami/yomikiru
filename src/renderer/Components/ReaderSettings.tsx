@@ -13,11 +13,10 @@ import { setReaderSettings } from "../store/appSettings";
 import { useAppDispatch, useAppSelector } from "../store/hooks";
 import InputRange from "./Element/InputRange";
 import { InputSelect } from "./Element/InputSelect";
-import { settingValidatorData } from "../MainImports";
+import { settingSchema } from "../MainImports";
 import InputNumber from "./Element/InputNumber";
 import InputCheckbox from "./Element/InputCheckbox";
 import InputCheckboxNumber from "./Element/InputCheckboxNumber";
-import InputColor from "./Element/InputColor";
 import InputCheckboxColor from "./Element/InputCheckboxColor";
 
 const ReaderSettings = memo(
@@ -636,9 +635,25 @@ const ReaderSettings = memo(
                                         })
                                     );
                                 }}
-                                options={[...settingValidatorData.readerSettings.customColorFilter.blendMode].map(
-                                    (e) => ({ label: e, value: e })
-                                )}
+                                // todo get from schema
+                                options={[
+                                    "color",
+                                    "color-burn",
+                                    "color-dodge",
+                                    "darken",
+                                    "difference",
+                                    "exclusion",
+                                    "hard-light",
+                                    "hue",
+                                    "lighten",
+                                    "luminosity",
+                                    "multiply",
+                                    "normal",
+                                    "overlay",
+                                    "saturation",
+                                    "screen",
+                                    "soft-light",
+                                ].map((e) => ({ label: e, value: e }))}
                             />
                             <InputRange
                                 labelText="Hue: "
