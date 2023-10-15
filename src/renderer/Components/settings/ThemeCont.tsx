@@ -78,7 +78,7 @@ const ThemeElement = ({
                             e.currentTarget.click();
                         }
                     }}
-                    tabIndex={0}
+                    tabIndex={variable === `var(${prop})` ? -1 : 0}
                 >
                     <input
                         type="checkbox"
