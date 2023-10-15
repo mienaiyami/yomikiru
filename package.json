@@ -71,7 +71,7 @@
         "@vercel/webpack-asset-relocator-loader": "^1.7.3",
         "cross-env": "7.0.3",
         "css-loader": "^6.4.0",
-        "electron": "22.3.24",
+        "electron": "22.3.25",
         "eslint": "7.29.0",
         "eslint-plugin-import": "2.23.4",
         "eslint-plugin-node": "11.1.0",
