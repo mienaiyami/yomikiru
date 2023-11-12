@@ -37,3 +37,5 @@ It is a offline dekstop app to read locally stored manga or epub with great read
 ## [Guides](docs/GUIDE.md)
 
 ## [Screenshots](docs/SCREENSHOTS.md)
+
+## [Build and Compile](docs/build.md)
