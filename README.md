@@ -34,8 +34,13 @@ It is a offline dekstop app to read locally stored manga or epub with great read
 - Open in reader directly from the file explorer.
 - Drag and Drop support.
 
+
 ## [Guides](docs/GUIDE.md)
 
 ## [Screenshots](docs/SCREENSHOTS.md)
 
 ## [Build and Compile](docs/build.md)
+
+## Thank you for Supporting the project
+
+![info](https://github.com/mienaiyami/mienaiyami/blob/main/metrics.plugin.people.repository.svg)
