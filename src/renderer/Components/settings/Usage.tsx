@@ -182,6 +182,7 @@ const Usage = ({
                             To scroll using mouse while viewing full page, use "Left to Right" or "Right to Left"
                             reading mode, then "Fit Vertically" option or make image size lower than window height.
                         </li>
+                        <li>Middle mouse button for auto scrolling.</li>
                         <li>
                             Access the side list by moving the mouse to left side of the screen. You can pin and
                             resize the side list.
