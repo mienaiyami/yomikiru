@@ -460,7 +460,7 @@ const Settings = (): ReactElement => {
                                                         } catch (reason) {
                                                             window.dialog.customError({
                                                                 title: "Failed",
-                                                                message: `Invalid theme data. Please note that data much be similar to the result of "Copy Current Theme to Clipboard"`,
+                                                                message: `Invalid theme data. Please note that data must be similar to the result of "Copy Current Theme to Clipboard"`,
                                                             });
                                                         }
                                                     }
