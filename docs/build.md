@@ -1,8 +1,13 @@
 # Build Guide
 
-Require `node@v18.15.0` and `yarn`.
+Require `git`, `node@v18.15.0` and `yarn`.
 
 ```bash
+
+git clone https://github.com/mienaiyami/yomikiru/
+
+cd yomikiru
+
 # install dependencies
 yarn install
 
