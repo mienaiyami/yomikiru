@@ -415,7 +415,7 @@ const Settings = (): ReactElement => {
                                                     )
                                                 }
                                             >
-                                                Get more Themes
+                                                Share Theme / Get more Themes
                                             </button>
                                         </div>
                                         <div className="desc">
