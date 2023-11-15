@@ -33,14 +33,17 @@ const Reader = () => {
     const dispatch = useAppDispatch();
 
     const [images, setImages] = useState<string[]>([]);
-    const [imageWidthContainer, setImageWidthContainer] = useState<
+    const [imageData, setImageData] = useState<
         { index: number; isWide: boolean; img: HTMLCanvasElement | HTMLImageElement | string }[]
     >([]);
-    // take element from `imageWidthContainer` using index
-    const [imageElementsIndex, setImageElementsIndex] = useState<number[][]>([]);
-    const [wideImageContMap, setWideImageContMap] = useState<number[]>([]);
-    const [imageRowCount, setImageRowCount] = useState(0);
-    const [imagesLength, setImagesLength] = useState(0);
+    // take element from `imageData` using index
+    const [imageRow, setImageRow] = useState<
+        {
+            wide: boolean;
+            /** `i` is index of image from `imageData` */
+            i: number[];
+        }[]
+    >([]);
     const [imagesLoaded, setImagesLoaded] = useState(0);
     const [isSideListPinned, setSideListPinned] = useState(false);
     const [sideListWidth, setSideListWidth] = useState(appSettings.readerSettings.sideListWidth || 450);
@@ -50,6 +53,7 @@ const Reader = () => {
     // used to be in app.tsx then sent to topBar.tsx by context provider but caused performance issue, now using window.currentPageNumber
     const [currentPageNumber, setCurrentPageNumber] = useState(1);
     const [currentImageRow, setCurrentImageRow] = useState(1);
+
     const [chapterChangerDisplay, setChapterChangerDisplay] = useState(false);
     const [wasMaximized, setWasMaximized] = useState(false);
     // display this text then shortcuts clicked
@@ -506,7 +510,7 @@ const Reader = () => {
         if (readerRef.current) readerRef.current.scrollTop = 0;
     };
     const openNextPage = () => {
-        if (currentImageRow >= imageRowCount) {
+        if (currentImageRow >= imageRow.length) {
             // if (prevNextChapter.next === "~") return;
             if (
                 chapterChangerDisplay &&
@@ -537,6 +541,7 @@ const Reader = () => {
             window.cachedImageList = { link: "", images: [] };
             return;
         }
+        //todo: skip if already checked
         checkValidFolder(
             readerStuff.link,
             (isValid, imgs) => {
@@ -555,15 +560,15 @@ const Reader = () => {
         link = window.path.normalize(link);
         if (link[link.length - 1] === window.path.sep) link = link.substring(0, link.length - 1);
         setImages([]);
-        setWideImageContMap([]);
+        // setWideImageContMap([]);
         setCurrentPageNumber(1);
         if (pageNumberInputRef.current) pageNumberInputRef.current.value = "1";
         setCurrentImageRow(1);
-        setImagesLength(0);
+        // setImagesLength(0);
         setImagesLoaded(0);
-        setImageWidthContainer([]);
-        setImageElementsIndex([]);
-        setImageRowCount(0);
+        setImageData([]);
+        // setImageElementsIndex([]);
+        setImageRow([]);
         setImageDecodeQueue([]);
         setCurrentlyDecoding(false);
         setBookmarked(bookmarks.map((e) => e.data.link).includes(link));
@@ -587,7 +592,7 @@ const Reader = () => {
                 },
             })
         );
-        setImagesLength(imgs.length);
+        // setImagesLength(imgs.length);
         setImages(imgs);
         dispatch(setReaderOpen(true));
     };
@@ -596,10 +601,10 @@ const Reader = () => {
         const dynamic = appSettings.readerSettings.dynamicLoading;
         images.forEach((e, i) => {
             const img = document.createElement("img");
-
             const loaded = (success = false) => {
                 setImagesLoaded((init) => init + 1);
-                setImageWidthContainer((init) => [
+                //todo: fill array at right index instead of using .index
+                setImageData((init) => [
                     ...init,
                     {
                         img: "file://" + e.replaceAll("#", "%23"),
@@ -621,7 +626,7 @@ const Reader = () => {
                     canvas.height = img.height;
                     ctx?.drawImage(img, 0, 0);
                     setImagesLoaded((init) => init + 1);
-                    setImageWidthContainer((init) => [
+                    setImageData((init) => [
                         ...init,
                         {
                             img: canvas,
@@ -630,19 +635,18 @@ const Reader = () => {
                         },
                     ]);
                 };
-                img.onerror = () => {
+                const onError = () => {
                     canvas.width = 500;
                     canvas.height = 100;
-                    ctx?.fillText("Error occured while loading image.", 10, 10);
+                    ctx?.fillText("Error occurred while loading image.", 10, 10);
                     setImagesLoaded((init) => init + 1);
-                    setImageWidthContainer((init) => [...init, { img: canvas, index: i, isWide: false }]);
+                    setImageData((init) => [...init, { img: canvas, index: i, isWide: false }]);
+                };
+                img.onerror = () => {
+                    onError();
                 };
                 img.onabort = () => {
-                    canvas.width = 500;
-                    canvas.height = 100;
-                    ctx?.fillText("Loading of image aborted.", 10, 10);
-                    setImagesLoaded((init) => init + 1);
-                    setImageWidthContainer((init) => [...init, { img: canvas, index: i, isWide: false }]);
+                    onError();
                 };
             } else if (!dynamic) {
                 img.setAttribute("draggable", "false");
@@ -651,8 +655,7 @@ const Reader = () => {
 
                 img.onload = (e) => {
                     setImageDecodeQueue((init) => {
-                        init.push(img);
-                        return [...init];
+                        return [...init, img];
                     });
                     loaded(true);
                 };
@@ -674,57 +677,52 @@ const Reader = () => {
         //todo use just src for image and canvas, add canvas using element outside
         appSettings.useCanvasBasedReader &&
             [...document.querySelector("section.imgCont")!.children].forEach((e, i) => {
-                imageElementsIndex[i].forEach((canvasIndex) => {
-                    const elem = imageWidthContainer[canvasIndex].img;
+                imageRow[i].i.forEach((canvasIndex) => {
+                    const elem = imageData[canvasIndex].img;
                     if (elem instanceof HTMLElement) e.appendChild(elem);
                 });
             });
-    }, [imageElementsIndex]);
-    //todo improve
+    }, [imageRow]);
     useLayoutEffect(() => {
-        if (imagesLength > 0 && imagesLength === imageWidthContainer.length) {
-            imageWidthContainer.sort((a, b) => a.index - b.index);
-            const tempImageElements: number[][] = [];
-            const tempWideImageContMap: number[] = [];
+        if (images.length > 0 && images.length === imageData.length) {
+            imageData.sort((a, b) => a.index - b.index);
+            const tempImageRow: typeof imageRow = [];
             const wideImageEnabled =
                 appSettings.readerSettings.pagesPerRowSelected !== 0 ||
                 appSettings.readerSettings.variableImageSize;
-            // if(appSettings.readerSettings.pagesPerRowSelected === 0)
-            for (let index = 0; index < imageWidthContainer.length; index++) {
-                //! is there any meaning to this bs
+            for (let index = 0; index < imageData.length; index++) {
                 if (appSettings.readerSettings.pagesPerRowSelected === 0) {
-                    tempImageElements.push([index]);
-                    if (wideImageEnabled && imageWidthContainer[index].isWide)
-                        // todo : can `.length` be replace with `index`
-                        tempWideImageContMap.push(tempImageElements.length - 1);
+                    tempImageRow.push({
+                        i: [index],
+                        wide: wideImageEnabled && imageData[index].isWide,
+                    });
                     continue;
                 }
-                if (wideImageEnabled && imageWidthContainer[index].isWide) {
-                    tempImageElements.push([index]);
-                    tempWideImageContMap.push(tempImageElements.length - 1);
+                if (wideImageEnabled && imageData[index].isWide) {
+                    tempImageRow.push({
+                        i: [index],
+                        wide: true,
+                    });
                     continue;
                 }
-                if (appSettings.readerSettings.pagesPerRowSelected === 2 && index === 0) {
-                    tempImageElements.push([index]);
+                if (
+                    (appSettings.readerSettings.pagesPerRowSelected === 2 && index === 0) ||
+                    index === images.length - 1 ||
+                    (wideImageEnabled && imageData[index + 1].isWide)
+                ) {
+                    tempImageRow.push({
+                        i: [index],
+                        wide: false,
+                    });
                     continue;
                 }
-                if (index === images.length - 1) {
-                    tempImageElements.push([index]);
-                    continue;
-                }
-                if (wideImageEnabled && imageWidthContainer[index + 1].isWide) {
-                    tempImageElements.push([index]);
-                    continue;
-                }
-                tempImageElements.push([index, index + 1]);
+                tempImageRow.push({ wide: false, i: [index, index + 1] });
                 index++;
             }
-            setImageElementsIndex(tempImageElements);
-            setImageRowCount(tempImageElements.length);
-            setWideImageContMap(tempWideImageContMap);
+            setImageRow(tempImageRow);
         }
     }, [
-        imageWidthContainer,
+        imageData,
         appSettings.readerSettings.pagesPerRowSelected,
         appSettings.readerSettings.readerTypeSelected,
         appSettings.readerSettings.variableImageSize,
@@ -739,9 +737,9 @@ const Reader = () => {
         appSettings.readerSettings.pagesPerRowSelected,
     ]);
     useEffect(() => {
-        if (imagesLoaded !== 0 && imagesLength !== 0) {
-            dispatch(setLoadingMangaPercent((100 * imagesLoaded) / imagesLength));
-            if (imagesLength === imagesLoaded) dispatch(setLoadingManga(false));
+        if (imagesLoaded !== 0 && images.length !== 0) {
+            dispatch(setLoadingMangaPercent((100 * imagesLoaded) / images.length));
+            if (images.length === imagesLoaded) dispatch(setLoadingManga(false));
         }
     }, [imagesLoaded]);
     useLayoutEffect(() => {
@@ -892,7 +890,8 @@ const Reader = () => {
                     className="b"
                     style={{
                         display:
-                            currentImageRow >= imageRowCount || appSettings.readerSettings.readerTypeSelected === 0
+                            currentImageRow >= imageRow.length ||
+                            appSettings.readerSettings.readerTypeSelected === 0
                                 ? "flex"
                                 : "none",
                     }}
@@ -1029,12 +1028,13 @@ const Reader = () => {
                     if ([1, 2].includes(appSettings.readerSettings.readerTypeSelected))
                         if (isSideListPinned && imgContRef.current)
                             if (imgContRef.current.offsetHeight === imgContRef.current.scrollHeight) {
-                                if (e.nativeEvent.deltaY > 0 && currentImageRow !== imageRowCount) openNextPage();
+                                if (e.nativeEvent.deltaY > 0 && currentImageRow !== imageRow.length)
+                                    openNextPage();
                                 if (e.nativeEvent.deltaY < 0 && currentImageRow !== 1) openPrevPage();
                             }
                     if (!isSideListPinned && readerRef.current)
                         if (readerRef.current.offsetHeight === readerRef.current.scrollHeight) {
-                            if (e.nativeEvent.deltaY > 0 && currentImageRow !== imageRowCount) openNextPage();
+                            if (e.nativeEvent.deltaY > 0 && currentImageRow !== imageRow.length) openNextPage();
                             if (e.nativeEvent.deltaY < 0 && currentImageRow !== 1) openPrevPage();
                         }
                 }}
@@ -1164,13 +1164,12 @@ const Reader = () => {
                     }
                 }}
             >
-                {/* //todo not ideal, too much renders */}
-                {imageElementsIndex.map((e, i) => {
+                {imageRow.map((e, i) => {
                     const props = {
                         className:
                             "row " +
                             (appSettings.readerSettings.readingSide === 1 ? "rtl " : "ltr ") +
-                            (wideImageContMap.includes(i) ? "wide " : "") +
+                            (e.wide ? "wide " : "") +
                             (appSettings.readerSettings.pagesPerRowSelected !== 0 ? "twoPagePerRow " : "") +
                             (appSettings.readerSettings.widthClamped ? "widthClamped " : ""),
                         "data-imagerow": i + 1,
@@ -1214,15 +1213,16 @@ const Reader = () => {
                                 }}
                                 {...props}
                             >
-                                {imageElementsIndex[i].map(
+                                {e.i.map(
                                     (e) =>
-                                        typeof imageWidthContainer[e]?.img === "string" && (
+                                        typeof imageData[e]?.img === "string" && (
                                             <img
                                                 className="readerImg"
                                                 draggable={false}
-                                                data-pagenumber={imageWidthContainer[e]?.index + 1}
+                                                data-pagenumber={imageData[e]?.index + 1}
                                                 loading="lazy"
-                                                data-src={imageWidthContainer[e]?.img as string}
+                                                data-src={imageData[e].img}
+                                                key={imageData[e].img as string}
                                             />
                                         )
                                 )}
@@ -1230,14 +1230,15 @@ const Reader = () => {
                         );
                     return (
                         <div {...props}>
-                            {imageElementsIndex[i].map(
+                            {e.i.map(
                                 (e) =>
-                                    typeof imageWidthContainer[e]?.img === "string" && (
+                                    typeof imageData[e]?.img === "string" && (
                                         <img
                                             className="readerImg"
                                             draggable={false}
-                                            data-pagenumber={imageWidthContainer[e].index + 1}
-                                            src={imageWidthContainer[e].img as string}
+                                            data-pagenumber={imageData[e].index + 1}
+                                            src={imageData[e].img as string}
+                                            key={imageData[e].img as string}
                                         />
                                     )
                             )}
