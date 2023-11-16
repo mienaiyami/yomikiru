@@ -13,6 +13,7 @@ import React, { memo, useEffect, useLayoutEffect, useRef, useState, useMemo } fr
 import { useAppDispatch, useAppSelector } from "../store/hooks";
 import { setPrevNextChapter } from "../store/prevNextChapter";
 import { addBookmark, updateEPUBBookmark, removeBookmark } from "../store/bookmarks";
+import { setEpubReaderSettings } from "../store/appSettings";
 
 const EPubReaderSideList = memo(
     ({
@@ -257,20 +258,6 @@ const EPubReaderSideList = memo(
                         >
                             <FontAwesomeIcon icon={faArrowLeft} />
                         </Button_A>
-                        <button
-                            className="ctrl-menu-item"
-                            data-tooltip="Focus Current Chapter"
-                            onClick={() => {
-                                if (sideListRef.current) {
-                                    sideListRef.current.querySelectorAll("a").forEach((e) => {
-                                        if (e.getAttribute("data-href") === currentChapterURL)
-                                            e.scrollIntoView({ block: "nearest" });
-                                    });
-                                }
-                            }}
-                        >
-                            <FontAwesomeIcon icon={faLocationDot} />
-                        </button>
                         <Button_A
                             className="ctrl-menu-item"
                             tooltip="Bookmark"
@@ -367,7 +354,43 @@ const EPubReaderSideList = memo(
                         </div>
                     )}
                 </div>
-                <div className="location-cont">
+                <div className="tools">
+                    <div className="row2">
+                        <button
+                            className="ctrl-menu-item"
+                            data-tooltip="Improves performance"
+                            onClick={() => {
+                                dispatch(
+                                    setEpubReaderSettings({
+                                        hideSideList: !appSettings.epubReaderSettings.hideSideList,
+                                    })
+                                );
+                            }}
+                        >
+                            {appSettings.epubReaderSettings.hideSideList ? "Show" : "Hide"} List
+                        </button>
+                        <button
+                            className="ctrl-menu-item"
+                            data-tooltip="Focus Current Chapter"
+                            onClick={() => {
+                                if (sideListRef.current) {
+                                    sideListRef.current.querySelectorAll("a").forEach((e) => {
+                                        if (e.getAttribute("data-href") === currentChapterURL)
+                                            e.scrollIntoView({ block: "nearest" });
+                                    });
+                                }
+                            }}
+                        >
+                            <FontAwesomeIcon icon={faLocationDot} />
+                        </button>
+                    </div>
+                </div>
+                <div
+                    className="location-cont"
+                    style={{
+                        display: appSettings.epubReaderSettings.hideSideList ? "none" : "initial",
+                    }}
+                >
                     <List
                         tocData={tocData}
                         currentChapterURL={currentChapterURL}

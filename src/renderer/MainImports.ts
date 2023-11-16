@@ -277,6 +277,7 @@ const settingSchema = z
              * focus current chapter in sidelist, cause huge performance issue
              */
             focusChapterInList: z.boolean(),
+            hideSideList: z.boolean(),
         }),
     })
     .strip()
@@ -408,6 +409,7 @@ const settingSchema = z
             quickFontFamily: ["Roboto", "Cambria"],
             textSelect: true,
             focusChapterInList: true,
+            hideSideList: false,
         },
     });
 
