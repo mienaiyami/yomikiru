@@ -603,7 +603,6 @@ const Reader = () => {
             const img = document.createElement("img");
             const loaded = (success = false) => {
                 setImagesLoaded((init) => init + 1);
-                //todo: fill array at right index instead of using .index
                 setImageData((init) => [
                     ...init,
                     {

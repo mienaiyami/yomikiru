@@ -366,6 +366,7 @@ const EPubReaderSideList = memo(
     }
 );
 
+//todo optimize
 const List = memo(
     ({
         tocData,
@@ -401,6 +402,8 @@ const List = memo(
         );
 
         const [listShow, setListShow] = useState(temp_ListShow);
+
+        const appSettings = useAppSelector((store) => store.appSettings);
         // useLayoutEffect(() => {
         //     setListShow(temp_ListShow);
         // }, [currentChapterURL]);
@@ -452,20 +455,25 @@ const List = memo(
                         data-href={src}
                         data-depth={depth}
                         title={name}
-                        ref={(node) => {
-                            if (src.includes(currentChapterURL)) {
-                                currentRef.current = node;
-                                if (node) {
-                                    if (temp.length > 0 && !show)
-                                        setListShow((init) => {
-                                            const aa = Array(init.length).fill(false);
-                                            aa[index] = true;
-                                            return aa;
-                                        });
-                                    node.scrollIntoView({ block: "start" });
-                                }
-                            }
-                        }}
+                        // todo create option to exclude this.
+                        ref={
+                            appSettings.epubReaderSettings.focusChapterInList
+                                ? (node) => {
+                                      if (src.includes(currentChapterURL)) {
+                                          currentRef.current = node;
+                                          if (node) {
+                                              if (temp.length > 0 && !show)
+                                                  setListShow((init) => {
+                                                      const aa = Array(init.length).fill(false);
+                                                      aa[index] = true;
+                                                      return aa;
+                                                  });
+                                              node.scrollIntoView({ block: "start" });
+                                          }
+                                      }
+                                  }
+                                : undefined
+                        }
                     >
                         <span className="text">{"\u00A0".repeat((tocData.depth - depth) * 5) + name}</span>
                     </a>

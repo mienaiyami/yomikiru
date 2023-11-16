@@ -273,6 +273,10 @@ const settingSchema = z
             }),
             quickFontFamily: z.array(z.string()),
             textSelect: z.boolean(),
+            /**
+             * focus current chapter in sidelist, cause huge performance issue
+             */
+            focusChapterInList: z.boolean(),
         }),
     })
     .strip()
@@ -403,6 +407,7 @@ const settingSchema = z
             },
             quickFontFamily: ["Roboto", "Cambria"],
             textSelect: true,
+            focusChapterInList: true,
         },
     });
 
