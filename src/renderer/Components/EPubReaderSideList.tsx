@@ -5,6 +5,7 @@ import {
     faThumbtack,
     faArrowUp,
     faArrowDown,
+    faLocationDot,
 } from "@fortawesome/free-solid-svg-icons";
 import { faBookmark as farBookmark } from "@fortawesome/free-regular-svg-icons";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
@@ -256,6 +257,20 @@ const EPubReaderSideList = memo(
                         >
                             <FontAwesomeIcon icon={faArrowLeft} />
                         </Button_A>
+                        <button
+                            className="ctrl-menu-item"
+                            data-tooltip="Focus Current Chapter"
+                            onClick={() => {
+                                if (sideListRef.current) {
+                                    sideListRef.current.querySelectorAll("a").forEach((e) => {
+                                        if (e.getAttribute("data-href") === currentChapterURL)
+                                            e.scrollIntoView({ block: "nearest" });
+                                    });
+                                }
+                            }}
+                        >
+                            <FontAwesomeIcon icon={faLocationDot} />
+                        </button>
                         <Button_A
                             className="ctrl-menu-item"
                             tooltip="Bookmark"
@@ -320,6 +335,7 @@ const EPubReaderSideList = memo(
                             clickAction={() => {
                                 if (sideListRef.current) {
                                     // [data-depth="1"
+                                    //todo: use index instead of traversing
                                     sideListRef.current.querySelectorAll("a").forEach((e) => {
                                         if (e.getAttribute("data-href") === prevNextChapter.next)
                                             (e as HTMLAnchorElement).click();
