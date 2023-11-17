@@ -578,6 +578,11 @@
                 pointer-events: none;
             }
 
+            // &.tooltip-top-start::before {
+            //     left: 0%;
+            //     top: 0%;
+            //     --translate: 0% -100%;
+            // }
             &:hover::before {
                 opacity: 1;
                 visibility: visible;

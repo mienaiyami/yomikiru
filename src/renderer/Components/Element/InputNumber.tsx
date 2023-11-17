@@ -16,9 +16,9 @@ const InputNumber = ({
     disabled = false,
     noSpin = false,
     title,
+    tooltip,
     timeout,
 }: {
-    labeled?: boolean;
     labelAfter?: string;
     labelBefore?: string;
     paraAfter?: string;
@@ -36,6 +36,7 @@ const InputNumber = ({
     timeout?: [number, (value: number) => void];
     className?: string;
     title?: string;
+    tooltip?: string;
     disabled?: boolean;
 }) => {
     const [valueProxy, setValueProxy] = useState(value);
@@ -136,7 +137,7 @@ const InputNumber = ({
 
     if (labelAfter || labelBefore || paraAfter || paraBefore) {
         return (
-            <label className={(disabled ? "disabled " : "") + className} title={title}>
+            <label className={(disabled ? "disabled " : "") + className} title={title} data-tooltip={tooltip}>
                 {labelBefore}
                 {paraBefore && <p>{paraBefore}</p>}{" "}
                 <span className={"input " + (disabled ? "disabled " : "")}>
@@ -166,7 +167,7 @@ const InputNumber = ({
         );
     } else
         return (
-            <span className={"input " + (disabled ? "disabled " : "")}>
+            <span className={"input " + (disabled ? "disabled " : "")} data-tooltip={tooltip}>
                 <input
                     type="number"
                     ref={inputRef}

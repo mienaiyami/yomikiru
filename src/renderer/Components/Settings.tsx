@@ -660,7 +660,7 @@ const Settings = (): ReactElement => {
                                             </li>
                                             <li>
                                                 <div className="desc">
-                                                    For <code>.epub</code>, <code>txt</code>,{" "}
+                                                    For <code>.epub</code>, <code>.txt</code>,{" "}
                                                     <code>.html/.xhtml</code> (Opened in Epub/Text Reader)
                                                 </div>
                                                 <div className="main row">

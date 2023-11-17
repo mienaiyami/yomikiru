@@ -520,7 +520,7 @@ const ReaderSettings = memo(
                                     })
                                 );
                             }}
-                            title="Scrolling speed with keys."
+                            title={`Scrolling speed with keys.\nCheck Settings->Shortcut for more.`}
                         >
                             Scroll Speed
                         </div>
@@ -538,6 +538,12 @@ const ReaderSettings = memo(
                                 timeout={[1000, (value) => dispatch(setReaderSettings({ scrollSpeedA: value }))]}
                                 labelBefore="Scroll&nbsp;A&nbsp;:"
                                 labelAfter="px"
+                                // tooltip={(() => {
+                                //     const index1 = shortcuts.findIndex((e) => e.command === "scrollDown");
+                                //     const index2 = shortcuts.findIndex((e) => e.command === "scrollUp");
+                                //     return `Keys: "${shortcuts[index1].key1}" "${shortcuts[index1].key2}" / "${shortcuts[index2].key1}" "${shortcuts[index2].key2}"`;
+                                // })()}
+                                // className="tooltip-top-start"
                             />
                             <InputNumber
                                 min={1}
@@ -552,6 +558,11 @@ const ReaderSettings = memo(
                                 timeout={[1000, (value) => dispatch(setReaderSettings({ scrollSpeedB: value }))]}
                                 labelBefore="Scroll&nbsp;B&nbsp;:"
                                 labelAfter="px"
+                                // tooltip={(() => {
+                                //     const index = shortcuts.findIndex((e) => e.command === "largeScroll");
+                                //     return `Keys: "${shortcuts[index].key1}" "${shortcuts[index].key2}"`;
+                                // })()}
+                                // className="tooltip-top-start"
                             />
                         </div>
                     </div>
