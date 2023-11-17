@@ -633,9 +633,9 @@ const Settings = (): ReactElement => {
                                         <ul>
                                             <li>
                                                 <div className="desc">
-                                                    For folders, <code>.zip</code>, <code>.cbz</code>,{" "}
-                                                    <code>.7z</code>, <code>.pdf</code> (Opened in Manga/Image
-                                                    Reader)
+                                                    For folders, <code>.zip/.cbz</code>, <code>.7z/.cb7</code>,{" "}
+                                                    <code>.rar/.cbr</code>, <code>.pdf</code> (Opened in
+                                                    Manga/Image Reader)
                                                 </div>
                                                 <div className="main row">
                                                     <button
@@ -660,7 +660,8 @@ const Settings = (): ReactElement => {
                                             </li>
                                             <li>
                                                 <div className="desc">
-                                                    For <code>.epub</code> (Opened in Epub/Text Reader)
+                                                    For <code>.epub</code>, <code>txt</code>,{" "}
+                                                    <code>.html/.xhtml</code> (Opened in Epub/Text Reader)
                                                 </div>
                                                 <div className="main row">
                                                     <button

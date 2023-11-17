@@ -45,11 +45,11 @@ const addOptionToExplorerMenu = () => {
         : path.join(app.getPath("exe"), `../../${app.name}.exe`).replace(/\\/g, "\\\\");
     const regInit = `Windows Registry Editor Version 5.00
     
-    ; Setup context menu item for click on folders tree item:
+    ; setup context menu item for click on folders tree item
     [HKEY_CURRENT_USER\\Software\\Classes\\directory\\shell\\Yomikiru\\command]
     @="\\"${appPath}\\" \\"%V\\""
     
-    ; Optional: specify an icon for the item:   
+    ; specify an icon for the item
     [HKEY_CURRENT_USER\\Software\\Classes\\directory\\shell\\Yomikiru]
     @="Open in Yomikiru "
     "icon"="${appPath}"
@@ -76,6 +76,15 @@ const addOptionToExplorerMenu = () => {
     @="\\"${appPath}\\" \\"%V\\""
 
     [HKEY_CLASSES_ROOT\\.zip\\OpenWithProgids]
+    "Yomikiru"=""
+    [HKEY_CLASSES_ROOT\\.cbz\\OpenWithProgids]
+    "Yomikiru"=""
+    [HKEY_CLASSES_ROOT\\.cbr\\OpenWithProgids]
+    "Yomikiru"=""
+    [HKEY_CLASSES_ROOT\\.cb7\\OpenWithProgids]
+    "Yomikiru"=""
+
+    [HKEY_CLASSES_ROOT\\.rar\\OpenWithProgids]
     "Yomikiru"=""
 
     [HKEY_CLASSES_ROOT\\.pdf\\OpenWithProgids]
@@ -109,6 +118,18 @@ const addOptionToExplorerMenu_epub = () => {
 
     [HKEY_CLASSES_ROOT\\.epub\\shell\\Yomikiru\\command]
     @="\\"${appPath}\\" \\"%V\\""
+
+    [HKEY_CLASSES_ROOT\\.epub\\OpenWithProgids]
+    "Yomikiru"=""
+    
+    [HKEY_CLASSES_ROOT\\.txt\\OpenWithProgids]
+    "Yomikiru"=""
+    
+    [HKEY_CLASSES_ROOT\\.xhtml\\OpenWithProgids]
+    "Yomikiru"=""
+    
+    [HKEY_CLASSES_ROOT\\.html\\OpenWithProgids]
+    "Yomikiru"=""
     `;
 
     const tempPath = app.getPath("temp");
