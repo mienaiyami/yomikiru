@@ -5,6 +5,7 @@ import {
     faArrowRight,
     faBookmark,
     faThumbtack,
+    faLocationDot,
 } from "@fortawesome/free-solid-svg-icons";
 import { faBookmark as farBookmark } from "@fortawesome/free-regular-svg-icons";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
@@ -14,7 +15,7 @@ import { useAppDispatch, useAppSelector } from "../store/hooks";
 import { setLinkInReader } from "../store/linkInReader";
 // import { updateCurrentHistoryPage } from "../store/history";
 import { addBookmark, updateBookmark, removeBookmark } from "../store/bookmarks";
-import { setAppSettings } from "../store/appSettings";
+import { setAppSettings, setReaderSettings } from "../store/appSettings";
 import { setPrevNextChapter } from "../store/prevNextChapter";
 import AnilistBar from "./anilist/AnilistBar";
 import { AppContext } from "../App";
@@ -598,8 +599,45 @@ const ReaderSideList = memo(
                         <span>{window.app.formats.files.getName(mangaInReader?.chapterName || "")}</span>
                     </div>
                 </div>
+                <div className="tools">
+                    <div className="row2">
+                        <button
+                            className="ctrl-menu-item"
+                            data-tooltip="Improves performance"
+                            onClick={() => {
+                                dispatch(
+                                    setReaderSettings({
+                                        hideSideList: !appSettings.readerSettings.hideSideList,
+                                    })
+                                );
+                            }}
+                        >
+                            {appSettings.readerSettings.hideSideList ? "Show" : "Hide"} List
+                        </button>
+                        <button
+                            className="ctrl-menu-item"
+                            data-tooltip="Focus Current Chapter"
+                            onClick={() => {
+                                if (sideListRef.current) {
+                                    sideListRef.current.querySelectorAll("a").forEach((e) => {
+                                        if (e.getAttribute("data-url") === mangaInReader?.link)
+                                            e.scrollIntoView({ block: "nearest" });
+                                    });
+                                }
+                            }}
+                        >
+                            <FontAwesomeIcon icon={faLocationDot} />
+                        </button>
+                    </div>
+                </div>
                 {anilistToken && <AnilistBar />}
-                <div className="location-cont" ref={locationContRef}>
+                <div
+                    className="location-cont"
+                    ref={locationContRef}
+                    style={{
+                        display: appSettings.readerSettings.hideSideList ? "none" : "initial",
+                    }}
+                >
                     {chapterData.length <= 0 ? (
                         <p>Loading...</p>
                     ) : (

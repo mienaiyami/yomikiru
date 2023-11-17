@@ -50,6 +50,7 @@ const ReaderSideListItem = memo(
                     ref={(node) => {
                         if (current && node !== null) node.scrollIntoView({ block: "nearest" });
                     }}
+                    data-url={link}
                     onContextMenu={(e) => {
                         const items = [
                             window.contextMenu.template.open(link),

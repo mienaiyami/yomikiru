@@ -205,6 +205,7 @@ const settingSchema = z
                 customColorFilter: z.boolean(),
                 others: z.boolean(),
             }),
+            hideSideList: z.boolean(),
         }),
         epubReaderSettings: z.object({
             /**load and show only one chapter at a time from TOC */
@@ -361,6 +362,7 @@ const settingSchema = z
                 customColorFilter: true,
                 others: false,
             },
+            hideSideList: false,
         },
         epubReaderSettings: {
             loadOneChapter: true,
