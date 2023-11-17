@@ -1273,6 +1273,40 @@ const Settings = (): ReactElement => {
                                     </div>
                                     <div className="toggleItem">
                                         <InputCheckbox
+                                            // todo impl
+                                            checked={appSettings.readerSettings.focusChapterInList}
+                                            className="noBG"
+                                            onChange={(e) => {
+                                                dispatch(
+                                                    setReaderSettings({
+                                                        focusChapterInList: e.currentTarget.checked,
+                                                    })
+                                                );
+                                            }}
+                                            labelAfter="Focus current chapter in side-list "
+                                        />
+                                        <div className="desc">
+                                            Automatically focus/scroll to current chapter entry in side-list when
+                                            changing chapter. Can cause huge performance loss in case of epub with
+                                            large number (&gt; 500) of chapters.
+                                        </div>
+                                    </div>
+                                    <div className="toggleItem">
+                                        <InputCheckbox
+                                            checked={appSettings.epubReaderSettings.focusChapterInList}
+                                            className="noBG"
+                                            onChange={(e) => {
+                                                dispatch(
+                                                    setEpubReaderSettings({
+                                                        focusChapterInList: e.currentTarget.checked,
+                                                    })
+                                                );
+                                            }}
+                                            labelAfter="EPUB: Focus current chapter in side-list "
+                                        />
+                                    </div>
+                                    <div className="toggleItem">
+                                        <InputCheckbox
                                             checked={appSettings.epubReaderSettings.loadOneChapter}
                                             className="noBG"
                                             onChange={(e) => {
@@ -1305,25 +1339,6 @@ const Settings = (): ReactElement => {
                                         <div className="desc">
                                             Removes ability to select text in epub reader and enabled double-click
                                             zen mode.
-                                        </div>
-                                    </div>
-                                    <div className="toggleItem">
-                                        <InputCheckbox
-                                            checked={!appSettings.epubReaderSettings.focusChapterInList}
-                                            className="noBG"
-                                            onChange={(e) => {
-                                                dispatch(
-                                                    setEpubReaderSettings({
-                                                        focusChapterInList: !e.currentTarget.checked,
-                                                    })
-                                                );
-                                            }}
-                                            labelAfter="EPUB: Focus current chapter in side-list "
-                                        />
-                                        <div className="desc">
-                                            Automatically focus/scroll to current chapter entry in side-list when
-                                            changing chapter. Can cause huge performance loss in case of epub with
-                                            large number (&gt; 500) of chapters
                                         </div>
                                     </div>
                                     <div className="toggleItem">

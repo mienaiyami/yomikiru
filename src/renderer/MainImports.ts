@@ -205,6 +205,7 @@ const settingSchema = z
                 customColorFilter: z.boolean(),
                 others: z.boolean(),
             }),
+            focusChapterInList: z.boolean(),
             hideSideList: z.boolean(),
         }),
         epubReaderSettings: z.object({
@@ -362,6 +363,7 @@ const settingSchema = z
                 customColorFilter: true,
                 others: false,
             },
+            focusChapterInList: true,
             hideSideList: false,
         },
         epubReaderSettings: {

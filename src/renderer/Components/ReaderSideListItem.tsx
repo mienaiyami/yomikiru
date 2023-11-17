@@ -1,5 +1,6 @@
 import { useContext, memo, useEffect, useState } from "react";
 import { AppContext } from "../App";
+import { useAppSelector } from "../store/hooks";
 // import { setContextMenu } from "../store/contextMenu";
 // import { useAppDispatch } from "../store/hooks";
 
@@ -23,6 +24,8 @@ const ReaderSideListItem = memo(
         current: boolean;
         focused: boolean;
     }) => {
+        const appSettings = useAppSelector((state) => state.appSettings);
+
         const { openInReader, setContextMenuData, contextMenuData } = useContext(AppContext);
         const [contextMenuFocused, setContextMenuFocused] = useState(false);
         useEffect(() => {
@@ -40,16 +43,19 @@ const ReaderSideListItem = memo(
                 }`}
                 data-focused={focused}
                 ref={(node) => {
-                    // todo, not working
                     if (node && focused) node.scrollIntoView({ block: "nearest" });
                 }}
             >
                 <a
                     onClick={() => openInReader(link)}
                     title={name}
-                    ref={(node) => {
-                        if (current && node !== null) node.scrollIntoView({ block: "nearest" });
-                    }}
+                    ref={
+                        appSettings.readerSettings.focusChapterInList
+                            ? (node) => {
+                                  if (current && node !== null) node.scrollIntoView({ block: "nearest" });
+                              }
+                            : undefined
+                    }
                     data-url={link}
                     onContextMenu={(e) => {
                         const items = [
