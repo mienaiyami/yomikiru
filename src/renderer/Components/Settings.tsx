@@ -1273,7 +1273,6 @@ const Settings = (): ReactElement => {
                                     </div>
                                     <div className="toggleItem">
                                         <InputCheckbox
-                                            // todo impl
                                             checked={appSettings.readerSettings.focusChapterInList}
                                             className="noBG"
                                             onChange={(e) => {

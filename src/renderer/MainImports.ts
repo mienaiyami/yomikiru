@@ -428,7 +428,7 @@ const formats = {
         },
     },
     files: {
-        list: [".zip", ".cbz", ".7z", ".rar", ".pdf", ".epub", ".xhtml", ".html", ".txt"],
+        list: [".zip", ".cbz", ".7z", ".cb7", ".rar", ".cbr", ".pdf", ".epub", ".xhtml", ".html", ".txt"],
         test: function (str: string) {
             return !!str && this.list.includes(path.extname(str).toLowerCase());
         },
@@ -444,7 +444,7 @@ const formats = {
         },
     },
     packedManga: {
-        list: [".zip", ".cbz", ".7z", ".rar"],
+        list: [".zip", ".cbz", ".7z", ".cb7", ".rar", ".cbr"],
         test: function (str: string) {
             return str && this.list.includes(path.extname(str).toLowerCase());
         },
