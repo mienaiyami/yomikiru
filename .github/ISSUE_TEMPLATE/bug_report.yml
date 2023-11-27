@@ -5,7 +5,9 @@ labels:
 body:
 - type: markdown
   attributes:
-    value: Please make sure to [search for existing issues](https://github.com/mienaiyami/yomikiru/issues?q=) before filing a new one!
+    value: 
+      Please make sure to [search for existing issues](https://github.com/mienaiyami/yomikiru/issues?q=) before filing a new one!
+      Please **DO NOT DELETE** the issue unless its really needed. If the issue is fixed or stale then just mark it as closed.
 
 - type: dropdown
   attributes:
