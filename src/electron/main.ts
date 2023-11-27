@@ -341,13 +341,12 @@ const createWindow = (link?: string) => {
     newWindow.webContents.once("dom-ready", () => {
         // maximize also unhide window
         newWindow.maximize();
-        newWindow.webContents.send("loadMangaFromLink", { link: link || "" });
         if (isFirstWindow) {
             newWindow.webContents.send("checkForUpdate:query");
-            newWindow.webContents.send("loadMangaFromLink", { link: openFolderOnLaunch });
             isFirstWindow = false;
         }
         newWindow.webContents.send("askBeforeClose:query");
+        newWindow.webContents.send("loadMangaFromLink", { link: link || "" });
     });
     newWindow.webContents.setWindowOpenHandler(() => {
         return { action: "deny" };
@@ -626,13 +625,14 @@ app.on("ready", () => {
     const menu = Menu.buildFromTemplate(template);
     Menu.setApplicationMenu(menu);
     registerListener();
-    createWindow();
+    createWindow(openFolderOnLaunch);
 });
 
 app.on("before-quit", () => {
     log.log("Quitting app...");
 });
 app.on("activate", () => {
+    //todo: what is this for?
     if (BrowserWindow.getAllWindows().length === 0) {
         createWindow();
     }
