@@ -380,7 +380,6 @@ const App = (): ReactElement => {
     }, [window.app.deleteDirOnClose]);
 
     useLayoutEffect(() => {
-        // loading custom stylesheet
         const elem = document.head.querySelector("#customStylesheet");
         if (appSettings.customStylesheet && !elem) {
             if (window.fs.existsSync(appSettings.customStylesheet)) {

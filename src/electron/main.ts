@@ -22,6 +22,7 @@ if (IS_PORTABLE) {
 
 //// disabling hardware acceleration because it causes reader to stutter when scrolling
 ////18/05/23 - decided to not use it anymore as it make scrolling laggy
+//todo better way to do this
 if (fs.existsSync(path.join(app.getPath("userData"), "DISABLE_HARDWARE_ACCELERATION")))
     app.disableHardwareAcceleration();
 if (fs.existsSync(path.join(app.getPath("userData"), "TEMP_PATH"))) {
@@ -29,6 +30,8 @@ if (fs.existsSync(path.join(app.getPath("userData"), "TEMP_PATH"))) {
     if (fs.existsSync(tempPath)) app.setPath("temp", tempPath);
     else fs.rmSync(tempPath);
 }
+let OPEN_IN_EXISTING_WINDOW = false;
+if (fs.existsSync(path.join(app.getPath("userData"), "OPEN_IN_EXISTING_WINDOW"))) OPEN_IN_EXISTING_WINDOW = true;
 
 // change path in `settings.tsx as well if changing log path
 log.transports.file.resolvePath = () => path.join(app.getPath("userData"), "logs/main.log");
@@ -39,7 +42,6 @@ import checkForUpdate from "./updater";
 
 // registry, add option "open in reader" in  explorer context menu
 const addOptionToExplorerMenu = () => {
-    app;
     const appPath = IS_PORTABLE
         ? app.getPath("exe").replace(/\\/g, "\\\\")
         : path.join(app.getPath("exe"), `../../${app.name}.exe`).replace(/\\/g, "\\\\");
@@ -370,7 +372,15 @@ if (app.isPackaged) {
     app.on("second-instance", (event, commandLine) => {
         if (commandLine.length >= 3) {
             // for file explorer option
-            if (fs.existsSync(commandLine[2])) createWindow(commandLine[2]);
+            if (OPEN_IN_EXISTING_WINDOW) {
+                const window = BrowserWindow.getAllWindows().at(-1);
+                if (window) {
+                    window.webContents.send("loadMangaFromLink", { link: commandLine[2] });
+                    window.show();
+                } else {
+                    log.error("Could not get the window.");
+                }
+            } else if (fs.existsSync(commandLine[2])) createWindow(commandLine[2]);
         } else if (commandLine.length <= 2 || commandLine.includes("--new-window")) {
             log.log("second instance detected, opening new window...");
             createWindow();

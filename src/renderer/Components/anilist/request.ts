@@ -46,7 +46,7 @@ export default class AniList {
                 if (!e && e !== undefined)
                     window.dialog.customError({
                         message:
-                            "Unable to login to AniList. If persists, try loging in again using different token.",
+                            "Unable to login to AniList. If persists, try logging in again using different token.",
                     });
             });
     }

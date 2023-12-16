@@ -22,6 +22,7 @@ import ThemeCont from "./settings/ThemeCont";
 import Shortcuts from "./settings/Shortcuts";
 import Usage from "./settings/Usage";
 
+//todo: divide into components
 const Settings = (): ReactElement => {
     const appSettings = useAppSelector((store) => store.appSettings);
     const theme = useAppSelector((store) => store.theme.name);
@@ -29,16 +30,20 @@ const Settings = (): ReactElement => {
     const bookmarks = useAppSelector((store) => store.bookmarks);
     const isSettingOpen = useAppSelector((store) => store.isSettingOpen);
     const anilistToken = useAppSelector((store) => store.anilistToken);
-    // index of tab
     const [currentTab, setCurrentTab] = useState(0);
 
     const [anilistUsername, setAnilistUsername] = useState("Error");
     const [tempFolder, setTempFolder] = useState(window.electron.app.getPath("temp"));
 
-    //  disabled hardware acceleration
+    //todo make a better way to do this
     const [HAValue, setHAValue] = useState(
         window.fs.existsSync(
             window.path.join(window.electron.app.getPath("userData"), "DISABLE_HARDWARE_ACCELERATION")
+        ) || false
+    );
+    const [openInSameWindow, setOpenInSameWindow] = useState(
+        window.fs.existsSync(
+            window.path.join(window.electron.app.getPath("userData"), "OPEN_IN_EXISTING_WINDOW")
         ) || false
     );
 
@@ -629,6 +634,27 @@ const Settings = (): ReactElement => {
                                         <div className="desc">
                                             Add file explorer option (right click menu) to open item in Yomikiru's
                                             reader directly from File Explorer.
+                                        </div>
+                                        <div className="main">
+                                            <InputCheckbox
+                                                checked={openInSameWindow}
+                                                className="noBG"
+                                                onChange={(e) => {
+                                                    const fileName = window.path.join(
+                                                        window.electron.app.getPath("userData"),
+                                                        "OPEN_IN_EXISTING_WINDOW"
+                                                    );
+                                                    if (!e.currentTarget.checked) {
+                                                        if (window.fs.existsSync(fileName))
+                                                            window.fs.rmSync(fileName);
+                                                    } else {
+                                                        window.fs.writeFileSync(fileName, " ");
+                                                    }
+                                                    setOpenInSameWindow((init) => !init);
+                                                }}
+                                                labelAfter="Open In Existing Window"
+                                            />
+                                            <code>App Restart Needed</code>
                                         </div>
                                         <ul>
                                             <li>
