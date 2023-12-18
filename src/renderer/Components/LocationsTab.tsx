@@ -74,6 +74,7 @@ const LocationsTab = (): ReactElement => {
                         const stat = window.fs.lstatSync(window.path.join(link, cur));
                         if (window.fs.existsSync(window.path.join(link, cur))) {
                             if (
+                                //todo use window.app.formats
                                 stat.isDirectory() ||
                                 [
                                     ".zip",
