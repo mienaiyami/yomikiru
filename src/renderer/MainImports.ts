@@ -486,7 +486,12 @@ declare global {
         path: typeof path;
         fs: typeof fs;
         themeProps: { [e in ThemeDataMain]: string };
-        shortcutsFunctions: ShortcutSchema[];
+        keyFormatter: (event: KeyboardEvent | React.KeyboardEvent, limited?: boolean) => string;
+        SHORTCUT_COMMANDS: {
+            command: ShortcutCommands;
+            name: string;
+            defaultKeys: string[];
+        }[];
         // fileSaveTimeOut: Map<string, NodeJS.Timeout | null>;
         /**
          * Anilist
@@ -782,53 +787,18 @@ declare global {
         }[];
     };
 
+    //todo: why didnt i extract them from window.shortcutsFunctions. check and do.
     /**
      * Available shortcut commands.
      * to add keyboard shortcuts, add ShortcutSchema to `window.shortcutsFunctions`
      * then register shortcut in `Reader.tsx` under `registerShortcuts` function
      */
-    type ShortcutCommands =
-        | "navToPage"
-        | "toggleZenMode"
-        | "readerSettings"
-        | "nextChapter"
-        | "prevChapter"
-        | "bookmark"
-        | "sizePlus"
-        | "sizeMinus"
-        | "largeScroll"
-        | "nextPage"
-        | "prevPage"
-        | "scrollDown"
-        | "scrollUp"
-        | "showHidePageNumberInZen"
-        | "cycleFitOptions"
-        | "selectReaderMode0"
-        | "selectReaderMode1"
-        | "selectReaderMode2"
-        | "selectPagePerRow1"
-        | "selectPagePerRow2"
-        | "selectPagePerRow2odd"
-        | "fontSizePlus"
-        | "fontSizeMinus";
-    interface ShortcutSchema {
-        /**
-         * name of command
-         */
+    type ShortcutCommands = (typeof SHORTCUT_COMMAND_MAP)[number]["command"];
+
+    type ShortcutSchema = {
         command: ShortcutCommands;
-        /**
-         * display name in settings
-         */
-        name: string;
-        /**
-         * empty string for none
-         */
-        key1: string;
-        /**
-         * empty string for none
-         */
-        key2: string;
-    }
+        keys: string[];
+    };
     type MenuListItem = {
         label: string;
         action: () => void;
@@ -938,149 +908,264 @@ window.themeProps = {
     "--contextMenu-bg-color": "Context-Menu BG",
     "--contentMenu-item-color": "Context-Menu Item BG",
     "--contentMenu-item-bg-color-hover": "Context-Menu Item BG Hovered/Focused",
+    //todo move to reader settings or add duplicate for epub
     "--zenModePage-bg": "ZenMode Page Indicator BG (Manga Reader only)",
 };
-window.shortcutsFunctions = [
+const SHORTCUT_COMMAND_MAP = [
     {
-        command: "navToPage",
+        command: "navToPage" as const,
         name: "Search Page Number",
-        key1: "f",
-        key2: "",
+        defaultKeys: ["f"],
     },
     {
-        command: "toggleZenMode",
+        command: "toggleZenMode" as const,
         name: "Toggle Zen Mode / Full Screen",
-        key1: "`",
-        key2: "",
+        defaultKeys: ["backquote"],
     },
     {
-        command: "largeScroll",
-        name: "Bigger Scroll (Scroll B, Shift+key for reverse)",
-        key1: " ",
-        key2: "",
+        command: "largeScroll" as const,
+        name: "Bigger Scroll (Scroll B)",
+        defaultKeys: ["space"],
     },
     {
-        command: "scrollUp",
+        command: "largeScrollReverse" as const,
+        name: "Bigger Scroll (Scroll B)",
+        defaultKeys: ["shift+space"],
+    },
+    {
+        command: "scrollUp" as const,
         name: "Scroll Up (Scroll A)",
-        key1: "w",
-        key2: "ArrowUp",
+        defaultKeys: ["w", "up"],
     },
     {
-        command: "scrollDown",
+        command: "scrollDown" as const,
         name: "Scroll Down (Scroll A)",
-        key1: "s",
-        key2: "ArrowDown",
+        defaultKeys: ["s", "down"],
     },
     {
-        command: "prevPage",
+        command: "prevPage" as const,
         name: "Previous Page",
-        key1: "a",
-        key2: "ArrowLeft",
+        defaultKeys: ["a", "left"],
     },
     {
-        command: "nextPage",
+        command: "nextPage" as const,
         name: "Next Page",
-        key1: "d",
-        key2: "ArrowRight",
+        defaultKeys: ["d", "right"],
     },
     {
-        command: "nextChapter",
+        command: "nextChapter" as const,
         name: "Next Chapter",
-        key1: "]",
-        key2: "",
+        defaultKeys: ["bracketright"],
     },
     {
-        command: "prevChapter",
+        command: "prevChapter" as const,
         name: "Previous Chapter",
-        key1: "[",
-        key2: "",
+        defaultKeys: ["bracketleft"],
     },
     {
-        command: "bookmark",
+        command: "bookmark" as const,
         name: "Bookmark",
-        key1: "b",
-        key2: "",
+        defaultKeys: ["b"],
     },
     {
-        command: "sizePlus",
+        command: "sizePlus" as const,
         name: "Increase image size",
-        key1: "=",
-        key2: "+",
+        defaultKeys: ["equal", "numpad_plus"],
     },
     {
-        command: "sizeMinus",
+        command: "sizeMinus" as const,
         name: "Decrease image size",
-        key1: "-",
-        key2: "",
+        defaultKeys: ["minus", "numpad_minus"],
     },
     {
-        command: "readerSettings",
+        command: "readerSettings" as const,
         name: "Open/Close Reader Settings",
-        key1: "q",
-        key2: "",
+        defaultKeys: ["q"],
     },
     {
-        command: "showHidePageNumberInZen",
+        command: "showHidePageNumberInZen" as const,
         name: "Show/Hide Page number in Zen Mode",
-        key1: "p",
-        key2: "",
+        defaultKeys: ["p"],
     },
     {
-        command: "cycleFitOptions",
+        command: "cycleFitOptions" as const,
         name: "Cycle through fit options",
-        key1: "v",
-        key2: "",
+        defaultKeys: ["v"],
     },
     {
-        command: "selectReaderMode0",
+        command: "selectReaderMode0" as const,
         name: "Reading mode - Vertical Scroll",
-        key1: "9",
-        key2: "",
+        defaultKeys: ["9"],
     },
     {
-        command: "selectReaderMode1",
+        command: "selectReaderMode1" as const,
         name: "Reading mode - Left to Right",
-        key1: "0",
-        key2: "",
+        defaultKeys: ["0"],
     },
     {
-        command: "selectReaderMode2",
+        command: "selectReaderMode2" as const,
         name: "Reading mode - Right to Left",
-        key1: "",
-        key2: "",
+        defaultKeys: [],
     },
     {
-        command: "selectPagePerRow1",
+        command: "selectPagePerRow1" as const,
         name: "Select Page Per Row - 1",
-        key1: "1",
-        key2: "",
+        defaultKeys: ["1"],
     },
     {
-        command: "selectPagePerRow2",
+        command: "selectPagePerRow2" as const,
         name: "Select Page Per Row - 2",
-        key1: "2",
-        key2: "",
+        defaultKeys: ["2"],
     },
     {
-        command: "selectPagePerRow2odd",
+        command: "selectPagePerRow2odd" as const,
         name: "Select Page Per Row - 2odd",
-        key1: "3",
-        key2: "",
+        defaultKeys: ["3"],
     },
-
     {
-        command: "fontSizePlus",
+        command: "fontSizePlus" as const,
         name: "Increase font size (epub)",
-        key1: "",
-        key2: "",
+        defaultKeys: [],
     },
     {
-        command: "fontSizeMinus",
+        command: "fontSizeMinus" as const,
         name: "Decrease font size (epub)",
-        key1: "",
-        key2: "",
+        defaultKeys: [],
+    },
+    //todo find and impl function
+    {
+        command: "navToHome" as const,
+        name: "Home",
+        defaultKeys: ["h"],
+    },
+    {
+        command: "dirUp" as const,
+        name: "Directory Up",
+        defaultKeys: ["alt+up"],
+    },
+    {
+        command: "contextMenu" as const,
+        name: "Context Menu",
+        defaultKeys: ["ctrl+slash", "shift+f10", "menu"],
+    },
+    {
+        command: "readerSize_50" as const,
+        name: "Reader Size : 50%",
+        defaultKeys: ["ctrl+1"],
+    },
+    {
+        command: "readerSize_100" as const,
+        name: "Reader Size : 100%",
+        defaultKeys: ["ctrl+2"],
+    },
+    {
+        command: "readerSize_150" as const,
+        name: "Reader Size : 150%",
+        defaultKeys: ["ctrl+3"],
+    },
+    {
+        command: "readerSize_200" as const,
+        name: "Reader Size : 200%",
+        defaultKeys: ["ctrl+4"],
+    },
+    {
+        command: "readerSize_250" as const,
+        name: "Reader Size : 250%",
+        defaultKeys: ["ctrl+5"],
+    },
+    {
+        command: "openSettings" as const,
+        name: "Settings",
+        defaultKeys: ["ctrl+i"],
+    },
+    {
+        command: "uiSizeReset" as const,
+        name: "Reset UI Size",
+        defaultKeys: ["ctrl+0"],
+    },
+    {
+        command: "uiSizeDown" as const,
+        name: "Decrease UI Size",
+        defaultKeys: ["ctrl+minus"],
+    },
+    {
+        command: "uiSizeUp" as const,
+        name: "Increase UI Size",
+        defaultKeys: ["ctrl+equal"],
+    },
+    {
+        command: "listDown" as const,
+        name: "List Down",
+        defaultKeys: ["down", "ctrl+j"],
+    },
+    {
+        command: "listUp" as const,
+        name: "List Up",
+        defaultKeys: ["up", "ctrl+k"],
+    },
+    {
+        command: "listSelect" as const,
+        name: "List Select",
+        defaultKeys: ["enter"],
     },
 ];
+Object.freeze(SHORTCUT_COMMAND_MAP);
+window.SHORTCUT_COMMANDS = SHORTCUT_COMMAND_MAP;
+
+window.keyFormatter = (e, limited = true): string => {
+    if (limited && ["Control", "Shift", "Alt", "Tab", "Escape"].includes(e.key)) return "";
+
+    // using lowercase because more readable
+    let keyStr = "";
+    if (e.ctrlKey) keyStr += "ctrl+";
+    if (e.shiftKey) keyStr += "shift+";
+    if (e.altKey) keyStr += "alt+";
+
+    switch (true) {
+        case /^Key[A-Z]$/.test(e.code):
+            keyStr += e.code.slice(3).toLowerCase();
+            break;
+        case /^Digit[0-9]$/.test(e.code):
+            keyStr += e.code.slice(5);
+            break;
+        case /^Numpad[0-9]$/.test(e.code):
+            keyStr += "numpad_" + e.code.slice(6);
+            break;
+        case e.code === "NumpadAdd":
+            keyStr += "numpad_plus";
+            break;
+        case e.code === "NumpadSubtract":
+            keyStr += "numpad_minus";
+            break;
+        case e.code === "NumpadMultiply":
+            keyStr += "numpad_multiply";
+            break;
+        case e.code === "NumpadDivide":
+            keyStr += "numpad_divide";
+            break;
+        case e.code === "NumpadDecimal":
+            keyStr += "numpad_period";
+            break;
+        case e.code.startsWith("Arrow"):
+            keyStr += e.code.slice(5).toLowerCase();
+            break;
+        case e.code === "PageDown":
+            keyStr += "pagedown";
+            break;
+        case e.code === "PageUp":
+            keyStr += "pageup";
+            break;
+        case e.code === "ContextMenu":
+            keyStr += "menu";
+            break;
+        default:
+            keyStr += e.code.toLowerCase();
+            break;
+    }
+    // console.log(keyStr);
+    return keyStr;
+};
+
 window.logger = log;
 window.pdfjsLib = pdfjsLib;
 window.chokidar = chokidar;

@@ -5,7 +5,7 @@ import { faEdit, faHeart, faPlus, faTrash } from "@fortawesome/free-solid-svg-ic
 import themesRaw from "../themeInit.json";
 import { newTheme, deleteTheme, setTheme, resetAllTheme, addThemes } from "../store/themes";
 import { useAppDispatch, useAppSelector } from "../store/hooks";
-import { resetShortcuts, setShortcuts } from "../store/shortcuts";
+import { resetShortcuts } from "../store/shortcuts";
 import { setOpenSetting } from "../store/isSettingOpen";
 import { addBookmark, removeAllBookmarks } from "../store/bookmarks";
 import { makeNewSettings, setAppSettings, setEpubReaderSettings, setReaderSettings } from "../store/appSettings";

@@ -2,11 +2,13 @@ import React, { useRef, useState, useEffect, useLayoutEffect, useContext } from 
 import { AppContext } from "../../App";
 
 import FocusLock from "react-focus-lock";
+import { useAppSelector } from "../../store/hooks";
 
 // ! not indented to be used without `AppContext::optSelectData`
 //todo rename later for select only
 const MenuList = () => {
     const { optSelectData } = useContext(AppContext);
+    const shortcuts = useAppSelector((store) => store.shortcuts);
 
     //todo, maybe add height,width to it as well.
     const [pos, setPos] = useState({ x: 0, y: 0, width: 1 });
@@ -105,15 +107,18 @@ const MenuList = () => {
                     onKeyDown={(e) => {
                         e.stopPropagation();
                         e.preventDefault();
-                        if (
-                            (e.ctrlKey && e.key === "/") ||
-                            (e.shiftKey && e.key === "F10") ||
-                            e.key === "ContextMenu"
-                        ) {
+
+                        const keyStr = window.keyFormatter(e, false);
+                        if (keyStr === "") return;
+                        const shortcutsMapped = Object.fromEntries(
+                            shortcuts.map((e) => [e.command, e.keys])
+                        ) as Record<ShortcutCommands, string[]>;
+
+                        if (shortcutsMapped["contextMenu"].includes(keyStr)) {
                             e.currentTarget.blur();
                             return;
                         }
-                        if (e.key.length === 1 && /^[\w]/i.test(e.key)) {
+                        if (!e.ctrlKey && e.key.length === 1 && /^[\w]/i.test(e.key)) {
                             if (ref.current) {
                                 const elems = [...ref.current.querySelectorAll("li")];
                                 let i = focused;
@@ -134,26 +139,26 @@ const MenuList = () => {
                                 return;
                             }
                         }
-                        switch (e.key) {
-                            case "Escape":
+                        switch (true) {
+                            case keyStr === "escape":
                                 e.currentTarget.blur();
                                 break;
-                            case "ArrowDown":
-                            case "ArrowRight":
+                            case shortcutsMapped["listDown"].includes(keyStr):
+                            case keyStr === "right":
                                 setFocused((init) => {
                                     if (init + 1 >= optSelectData.items.length) return 0;
                                     return init + 1;
                                 });
                                 break;
-                            case "ArrowUp":
-                            case "ArrowLeft":
+                            case shortcutsMapped["listUp"].includes(keyStr):
+                            case keyStr === "left":
                                 setFocused((init) => {
                                     if (init - 1 < 0) return optSelectData.items.length - 1;
                                     return init - 1;
                                 });
                                 break;
-                            case "Enter":
-                            case " ": {
+                            case shortcutsMapped["listSelect"].includes(keyStr):
+                            case keyStr === "space": {
                                 const elem = ref.current?.querySelector(
                                     '[data-focused="true"]'
                                 ) as HTMLLIElement | null;

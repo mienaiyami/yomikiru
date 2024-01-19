@@ -70,6 +70,7 @@ const App = (): ReactElement => {
     const linkInReader = useAppSelector((store) => store.linkInReader);
     const mangaInReader = useAppSelector((store) => store.mangaInReader);
     const bookInReader = useAppSelector((store) => store.bookInReader);
+    const shortcuts = useAppSelector((store) => store.shortcuts);
     const theme = useAppSelector((state) => state.theme.name);
 
     const pageNumberInputRef: React.RefObject<HTMLInputElement> = createRef();
@@ -432,15 +433,27 @@ const App = (): ReactElement => {
         if (window.electron.getCurrentWindow().isFullScreen())
             window.electron.getCurrentWindow().setFullScreen(false);
         const eventsOnStart = (e: KeyboardEvent) => {
-            if (e.key === "h") {
+            const keyStr = window.keyFormatter(e);
+            if (keyStr === "") return;
+            const shortcutsMapped = Object.fromEntries(shortcuts.map((e) => [e.command, e.keys])) as Record<
+                ShortcutCommands,
+                string[]
+            >;
+            if (shortcutsMapped["navToHome"].includes(keyStr)) {
                 if (window.electron.getCurrentWindow().isFullScreen())
                     window.electron.getCurrentWindow().setFullScreen(false);
 
                 if (window.app.isReaderOpen) return closeReader();
                 window.location.reload();
             }
-            if (e.ctrlKey && e.key === "i") dispatch(toggleOpenSetting());
-            if (e.ctrlKey && (e.key === "=" || e.key === "-" || e.key === "0")) {
+            if (shortcutsMapped["openSettings"].includes(keyStr)) dispatch(toggleOpenSetting());
+            if (
+                [
+                    ...shortcutsMapped["uiSizeDown"],
+                    ...shortcutsMapped["uiSizeUp"],
+                    ...shortcutsMapped["uiSizeReset"],
+                ].includes(keyStr)
+            ) {
                 setTimeout(() => {
                     process.platform === "win32" &&
                         window.electron.getCurrentWindow().setTitleBarOverlay({

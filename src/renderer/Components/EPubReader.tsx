@@ -936,14 +936,20 @@ const EPubReader = () => {
             }
         };
 
-        const shortcutkey: { [e in ShortcutCommands]?: { key1: string; key2: string } } = {};
-        shortcuts.forEach((e) => {
-            shortcutkey[e.command] = { key1: e.key1, key2: e.key2 };
-        });
+        const shortcutsMapped = Object.fromEntries(shortcuts.map((e) => [e.command, e.keys])) as Record<
+            ShortcutCommands,
+            string[]
+        >;
         const registerShortcuts = (e: KeyboardEvent) => {
             // /&& document.activeElement!.tagName === "BODY"
             window.app.keyRepeated = e.repeat;
-            if ((e.ctrlKey && e.key === "/") || (e.shiftKey && e.key === "F10") || e.key === "ContextMenu") {
+            const keyStr = window.keyFormatter(e);
+            if (keyStr === "" && e.key !== "Escape") return;
+
+            const is = (keys: string[]) => {
+                return keys.includes(keyStr);
+            };
+            if (is(shortcutsMapped["contextMenu"])) {
                 e.stopPropagation();
                 e.preventDefault();
                 if (mainRef.current)
@@ -967,56 +973,45 @@ const EPubReader = () => {
             if (!isSettingOpen && window.app.isReaderOpen && !isLoadingManga && !e.ctrlKey) {
                 if ([" ", "ArrowUp", "ArrowDown"].includes(e.key)) e.preventDefault();
                 if (!e.repeat) {
-                    switch (e.key) {
-                        case shortcutkey.readerSettings?.key1:
-                        case shortcutkey.readerSettings?.key2:
+                    switch (true) {
+                        case is(shortcutsMapped["readerSettings"]):
                             readerSettingExtender.current?.click();
                             readerSettingExtender.current?.focus();
                             break;
-                        case shortcutkey.toggleZenMode?.key1:
-                        case shortcutkey.toggleZenMode?.key2:
+                        case is(shortcutsMapped["toggleZenMode"]):
                             // makeScrollPos();
                             setZenMode((prev) => !prev);
                             break;
-                        case "Escape":
+                        case e.key === "Escape":
                             // makeScrollPos();
                             setZenMode(false);
                             break;
 
-                        case shortcutkey.nextPage?.key1:
-                        case shortcutkey.nextPage?.key2:
+                        case is(shortcutsMapped["nextPage"]):
                             if (topBottomLogic) openNextChapterRef.current?.click();
                             break;
-                        case shortcutkey.prevPage?.key1:
-                        case shortcutkey.prevPage?.key2:
+                        case is(shortcutsMapped["prevPage"]):
                             if (topBottomLogic) openPrevChapterRef.current?.click();
                             break;
-                        case shortcutkey.nextChapter?.key1:
-                        case shortcutkey.nextChapter?.key2:
+                        case is(shortcutsMapped["nextChapter"]):
                             if (!e.repeat) openNextChapterRef.current?.click();
                             break;
-                        case shortcutkey.prevChapter?.key1:
-                        case shortcutkey.prevChapter?.key2:
+                        case is(shortcutsMapped["prevChapter"]):
                             if (!e.repeat) openPrevChapterRef.current?.click();
                             break;
-                        case shortcutkey.bookmark?.key1:
-                        case shortcutkey.bookmark?.key2:
+                        case is(shortcutsMapped["bookmark"]):
                             if (!e.repeat) addToBookmarkRef.current?.click();
                             break;
-                        case shortcutkey.sizePlus?.key1:
-                        case shortcutkey.sizePlus?.key2:
+                        case is(shortcutsMapped["sizePlus"]):
                             sizePlusRef.current?.click();
                             break;
-                        case shortcutkey.sizeMinus?.key1:
-                        case shortcutkey.sizeMinus?.key2:
+                        case is(shortcutsMapped["sizeMinus"]):
                             sizeMinusRef.current?.click();
                             break;
-                        case shortcutkey.fontSizePlus?.key1:
-                        case shortcutkey.fontSizePlus?.key2:
+                        case is(shortcutsMapped["fontSizePlus"]):
                             fontSizePlusRef.current?.click();
                             break;
-                        case shortcutkey.fontSizeMinus?.key1:
-                        case shortcutkey.fontSizeMinus?.key2:
+                        case is(shortcutsMapped["fontSizeMinus"]):
                             fontSizeMinusRef.current?.click();
                             break;
                         default:
@@ -1027,27 +1022,20 @@ const EPubReader = () => {
                         document.activeElement === readerRef.current
                     ) {
                         window.app.keydown = true;
-                        if (
-                            e.shiftKey &&
-                            (e.key === shortcutkey.largeScroll?.key1 || e.key === shortcutkey.largeScroll?.key2)
-                        ) {
-                            e.preventDefault();
-                            scrollReader(0 - appSettings.epubReaderSettings.scrollSpeedB);
-                            return;
-                        }
 
-                        switch (e.key) {
-                            case shortcutkey.largeScroll?.key1:
-                            case shortcutkey.largeScroll?.key2:
+                        switch (true) {
+                            case is(shortcutsMapped["largeScrollReverse"]):
+                                e.preventDefault();
+                                scrollReader(0 - appSettings.epubReaderSettings.scrollSpeedB);
+                                break;
+                            case is(shortcutsMapped["largeScroll"]):
                                 e.preventDefault();
                                 scrollReader(appSettings.epubReaderSettings.scrollSpeedB);
                                 break;
-                            case shortcutkey.scrollDown?.key1:
-                            case shortcutkey.scrollDown?.key2:
+                            case is(shortcutsMapped["scrollDown"]):
                                 scrollReader(appSettings.epubReaderSettings.scrollSpeedA);
                                 break;
-                            case shortcutkey.scrollUp?.key1:
-                            case shortcutkey.scrollUp?.key2:
+                            case is(shortcutsMapped["scrollUp"]):
                                 scrollReader(0 - appSettings.epubReaderSettings.scrollSpeedA);
                                 break;
                         }

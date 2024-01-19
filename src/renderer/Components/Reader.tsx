@@ -206,21 +206,27 @@ const Reader = () => {
                 }
             }
         };
-
-        const shortcutkey: { [e in ShortcutCommands]?: { key1: string; key2: string } } = {};
-        shortcuts.forEach((e) => {
-            shortcutkey[e.command] = { key1: e.key1, key2: e.key2 };
-        });
+        const shortcutsMapped = Object.fromEntries(shortcuts.map((e) => [e.command, e.keys])) as Record<
+            ShortcutCommands,
+            string[]
+        >;
         const registerShortcuts = (e: KeyboardEvent) => {
             // /&& document.activeElement!.tagName === "BODY"
             window.app.keyRepeated = e.repeat;
+
+            const keyStr = window.keyFormatter(e);
+            if (keyStr === "") return;
+
             if (
                 [" ", "Enter"].includes(e.key) &&
                 document.activeElement &&
                 document.activeElement.tagName === "BUTTON"
             )
                 return;
-            if ((e.ctrlKey && e.key === "/") || (e.shiftKey && e.key === "F10") || e.key === "ContextMenu") {
+            const is = (keys: string[]) => {
+                return keys.includes(keyStr);
+            };
+            if (is(shortcutsMapped["contextMenu"])) {
                 e.stopPropagation();
                 e.preventDefault();
                 if (imgContRef.current)
@@ -232,41 +238,43 @@ const Reader = () => {
                     );
                 return;
             }
-            if (e.ctrlKey) {
-                if (parseInt(e.key) >= 1 && parseInt(e.key) <= 5) makeScrollPos();
-                if (e.key === "1") {
-                    dispatch(setReaderSettings({ fitOption: 0 }));
-                    setshortcutText(50 + "%");
-                    dispatch(setReaderSettings({ readerWidth: 50 }));
-                    return;
-                } else if (e.key === "2") {
-                    dispatch(setReaderSettings({ fitOption: 0 }));
-                    setshortcutText(100 + "%");
-                    dispatch(setReaderSettings({ readerWidth: 100 }));
-                    return;
-                } else if (e.key === "3") {
-                    dispatch(setReaderSettings({ widthClamped: false, fitOption: 0 }));
-                    setshortcutText(150 + "%");
-                    dispatch(setReaderSettings({ readerWidth: 150 }));
-                    return;
-                } else if (e.key === "4") {
-                    dispatch(setReaderSettings({ widthClamped: false, fitOption: 0 }));
-                    setshortcutText(200 + "%");
-                    dispatch(setReaderSettings({ readerWidth: 200 }));
-                    return;
-                } else if (e.key === "5") {
-                    dispatch(setReaderSettings({ widthClamped: false, fitOption: 0 }));
-                    setshortcutText(250 + "%");
-                    dispatch(setReaderSettings({ readerWidth: 250 }));
-                    return;
-                }
+            if (is(shortcutsMapped["readerSize_50"])) {
+                makeScrollPos();
+                dispatch(setReaderSettings({ fitOption: 0 }));
+                setshortcutText(50 + "%");
+                dispatch(setReaderSettings({ readerWidth: 50 }));
+                return;
+            } else if (is(shortcutsMapped["readerSize_100"])) {
+                makeScrollPos();
+                dispatch(setReaderSettings({ fitOption: 0 }));
+                setshortcutText(100 + "%");
+                dispatch(setReaderSettings({ readerWidth: 100 }));
+                return;
+            } else if (is(shortcutsMapped["readerSize_150"])) {
+                makeScrollPos();
+                dispatch(setReaderSettings({ widthClamped: false, fitOption: 0 }));
+                setshortcutText(150 + "%");
+                dispatch(setReaderSettings({ readerWidth: 150 }));
+                return;
+            } else if (is(shortcutsMapped["readerSize_200"])) {
+                makeScrollPos();
+                dispatch(setReaderSettings({ widthClamped: false, fitOption: 0 }));
+                setshortcutText(200 + "%");
+                dispatch(setReaderSettings({ readerWidth: 200 }));
+                return;
+            } else if (is(shortcutsMapped["readerSize_250"])) {
+                makeScrollPos();
+                dispatch(setReaderSettings({ widthClamped: false, fitOption: 0 }));
+                setshortcutText(250 + "%");
+                dispatch(setReaderSettings({ readerWidth: 250 }));
+                return;
             }
+            // todo, check need to isLoadingManga
             if (!isSettingOpen && window.app.isReaderOpen && !isLoadingManga && !e.ctrlKey) {
                 if ([" ", "ArrowUp", "ArrowDown"].includes(e.key)) e.preventDefault();
                 if (document.activeElement!.tagName === "BODY" || document.activeElement === readerRef.current)
-                    switch (e.key) {
-                        case shortcutkey.nextPage?.key1:
-                        case shortcutkey.nextPage?.key2: {
+                    switch (true) {
+                        case is(shortcutsMapped["nextPage"]): {
                             const abc = prevNextDeciderLogic();
                             if (abc === 1) openNextChapterRef.current?.click();
                             else if (abc === 2) openNextChapterRef.current?.click();
@@ -279,8 +287,7 @@ const Reader = () => {
                             break;
                         }
 
-                        case shortcutkey.prevPage?.key1:
-                        case shortcutkey.prevPage?.key2: {
+                        case is(shortcutsMapped["prevPage"]): {
                             const abc = prevNextDeciderLogic();
                             if (abc === 1) openPrevChapterRef.current?.click();
                             else if (abc === 2) openPrevChapterRef.current?.click();
@@ -294,41 +301,33 @@ const Reader = () => {
                         }
                     }
                 if (!e.repeat) {
-                    switch (e.key) {
-                        case shortcutkey.navToPage?.key1:
-                        case shortcutkey.navToPage?.key2:
+                    switch (true) {
+                        case is(shortcutsMapped["navToPage"]):
                             navToPageButtonRef.current?.click();
                             break;
-                        case shortcutkey.toggleZenMode?.key1:
-                        case shortcutkey.toggleZenMode?.key2:
+                        case is(shortcutsMapped["toggleZenMode"]):
                             setZenMode((prev) => !prev);
                             break;
-                        case "Escape":
+                        case e.key === "Escape":
                             setZenMode(false);
                             break;
-                        case shortcutkey.readerSettings?.key1:
-                        case shortcutkey.readerSettings?.key2:
+                        case is(shortcutsMapped["readerSettings"]):
                             readerSettingExtender.current?.click();
                             readerSettingExtender.current?.focus();
                             break;
-                        case shortcutkey.nextChapter?.key1:
-                        case shortcutkey.nextChapter?.key2:
+                        case is(shortcutsMapped["nextChapter"]):
                             openNextChapterRef.current?.click();
                             break;
-                        case shortcutkey.prevChapter?.key1:
-                        case shortcutkey.prevChapter?.key2:
+                        case is(shortcutsMapped["prevChapter"]):
                             openPrevChapterRef.current?.click();
                             break;
-                        case shortcutkey.bookmark?.key1:
-                        case shortcutkey.bookmark?.key2:
+                        case is(shortcutsMapped["bookmark"]):
                             addToBookmarkRef.current?.click();
                             break;
-                        case shortcutkey.sizePlus?.key1:
-                        case shortcutkey.sizePlus?.key2:
+                        case is(shortcutsMapped["sizePlus"]):
                             sizePlusRef.current?.click();
                             break;
-                        case shortcutkey.sizeMinus?.key1:
-                        case shortcutkey.sizeMinus?.key2:
+                        case is(shortcutsMapped["sizeMinus"]):
                             sizeMinusRef.current?.click();
                             break;
                         default:
@@ -339,29 +338,20 @@ const Reader = () => {
                         document.activeElement === readerRef.current
                     ) {
                         window.app.keydown = true;
-                        if (
-                            e.shiftKey &&
-                            (e.key === shortcutkey.largeScroll?.key1 || e.key === shortcutkey.largeScroll?.key2)
-                        ) {
-                            scrollReader(0 - appSettings.readerSettings.scrollSpeedB);
-                            return;
-                        }
-                        switch (e.key) {
-                            case shortcutkey.largeScroll?.key1:
-                            case shortcutkey.largeScroll?.key2:
-                                scrollReader(appSettings.readerSettings.scrollSpeedB);
-
+                        switch (true) {
+                            case is(shortcutsMapped["largeScrollReverse"]):
+                                scrollReader(-appSettings.readerSettings.scrollSpeedB);
                                 break;
-                            case shortcutkey.scrollDown?.key1:
-                            case shortcutkey.scrollDown?.key2:
+                            case is(shortcutsMapped["largeScroll"]):
+                                scrollReader(appSettings.readerSettings.scrollSpeedB);
+                                break;
+                            case is(shortcutsMapped["scrollDown"]):
                                 scrollReader(appSettings.readerSettings.scrollSpeedA);
                                 break;
-                            case shortcutkey.scrollUp?.key1:
-                            case shortcutkey.scrollUp?.key2:
+                            case is(shortcutsMapped["scrollUp"]):
                                 scrollReader(0 - appSettings.readerSettings.scrollSpeedA);
                                 break;
-                            case shortcutkey.showHidePageNumberInZen?.key1:
-                            case shortcutkey.showHidePageNumberInZen?.key2:
+                            case is(shortcutsMapped["showHidePageNumberInZen"]):
                                 setshortcutText(
                                     (!appSettings.readerSettings.showPageNumberInZenMode ? "Show" : "Hide") +
                                         " page-number in Zen Mode"
@@ -373,10 +363,7 @@ const Reader = () => {
                                     })
                                 );
                                 break;
-                            case shortcutkey.cycleFitOptions?.key1.toLowerCase():
-                            case shortcutkey.cycleFitOptions?.key2.toLowerCase():
-                            case shortcutkey.cycleFitOptions?.key1.toUpperCase():
-                            case shortcutkey.cycleFitOptions?.key2.toUpperCase(): {
+                            case is(shortcutsMapped["cycleFitOptions"]): {
                                 let fitOption = appSettings.readerSettings.fitOption + (e.shiftKey ? -1 : 1);
                                 if (fitOption < 0) fitOption = 3;
                                 fitOption %= 4;
@@ -391,23 +378,19 @@ const Reader = () => {
                                 );
                                 break;
                             }
-                            case shortcutkey.selectReaderMode0?.key1:
-                            case shortcutkey.selectReaderMode0?.key2:
+                            case is(shortcutsMapped["selectReaderMode0"]):
                                 setshortcutText("Reading Mode - Vertical Scroll");
                                 dispatch(setReaderSettings({ readerTypeSelected: 0 }));
                                 break;
-                            case shortcutkey.selectReaderMode1?.key1:
-                            case shortcutkey.selectReaderMode1?.key2:
+                            case is(shortcutsMapped["selectReaderMode1"]):
                                 setshortcutText("Reading Mode - Left to Right");
                                 dispatch(setReaderSettings({ readerTypeSelected: 1 }));
                                 break;
-                            case shortcutkey.selectReaderMode2?.key1:
-                            case shortcutkey.selectReaderMode2?.key2:
+                            case is(shortcutsMapped["selectReaderMode2"]):
                                 setshortcutText("Reading Mode - Right to Left");
                                 dispatch(setReaderSettings({ readerTypeSelected: 2 }));
                                 break;
-                            case shortcutkey.selectPagePerRow1?.key1:
-                            case shortcutkey.selectPagePerRow1?.key2:
+                            case is(shortcutsMapped["selectPagePerRow1"]):
                                 if (appSettings.readerSettings.pagesPerRowSelected !== 0) {
                                     const pagesPerRowSelected = 0;
                                     let readerWidth = appSettings.readerSettings.readerWidth / 2;
@@ -419,8 +402,7 @@ const Reader = () => {
                                     dispatch(setReaderSettings({ pagesPerRowSelected, readerWidth }));
                                 }
                                 break;
-                            case shortcutkey.selectPagePerRow2?.key1:
-                            case shortcutkey.selectPagePerRow2?.key2: {
+                            case is(shortcutsMapped["selectPagePerRow2"]): {
                                 const pagesPerRowSelected = 1;
                                 let readerWidth = appSettings.readerSettings.readerWidth;
                                 if (appSettings.readerSettings.pagesPerRowSelected === 0) {
@@ -433,8 +415,7 @@ const Reader = () => {
                                 dispatch(setReaderSettings({ pagesPerRowSelected, readerWidth }));
                                 break;
                             }
-                            case shortcutkey.selectPagePerRow2odd?.key1:
-                            case shortcutkey.selectPagePerRow2odd?.key2: {
+                            case is(shortcutsMapped["selectPagePerRow2odd"]): {
                                 const pagesPerRowSelected = 2;
                                 let readerWidth = appSettings.readerSettings.readerWidth;
                                 if (appSettings.readerSettings.pagesPerRowSelected === 0) {
@@ -855,12 +836,7 @@ const Reader = () => {
                     <span
                         className="a"
                         data-tooltip={
-                            `press "${shortcuts.find((e) => e.command === "prevPage")?.key1}"` +
-                            `${
-                                shortcuts.find((e) => e.command === "prevPage")?.key2 === ""
-                                    ? ""
-                                    : ` or "${shortcuts.find((e) => e.command === "prevPage")?.key2}"`
-                            }` +
+                            `press "${shortcuts.find((e) => e.command === "prevPage")?.keys}"` +
                             ` or click left side of screen`
                         }
                     >
@@ -898,12 +874,7 @@ const Reader = () => {
                     <span
                         className="a"
                         data-tooltip={
-                            `press "${shortcuts.find((e) => e.command === "nextPage")?.key1}"` +
-                            `${
-                                shortcuts.find((e) => e.command === "nextPage")?.key2 === ""
-                                    ? ""
-                                    : ` or "${shortcuts.find((e) => e.command === "nextPage")?.key2}"`
-                            }` +
+                            `press "${shortcuts.find((e) => e.command === "nextPage")?.keys}"` +
                             ` or click right side of screen`
                         }
                     >

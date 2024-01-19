@@ -72,24 +72,31 @@ const Usage = ({
                     Search bar shortcut keys :
                     <ul>
                         <li>
-                            With any search bar focused click <code>ArrowUp</code> or <code> ArrowDown</code> to
+                            With any search bar focused click{" "}
+                            <code>{shortcuts.find((e) => e.command === "listDown")?.keys.join(", ")}</code> or{" "}
+                            <code> {shortcuts.find((e) => e.command === "listUp")?.keys.join(", ")}</code> to
                             navigate through results.
                         </li>
                         <li>
-                            Click <code>Enter</code> (with item focused) to open.
+                            Click <code>{shortcuts.find((e) => e.command === "listSelect")?.keys.join(", ")}</code>{" "}
+                            (with item focused) to open.
                         </li>
                         <li>
-                            Click <code>Enter</code> (without item focused) if only one item in list to open.
+                            Click <code>{shortcuts.find((e) => e.command === "listSelect")?.keys.join(", ")}</code>{" "}
+                            (without item focused) if only one item in list to open.
                         </li>
                         <li>
-                            Click <code>Enter</code> on empty folder to open in reader.
+                            Click <code>{shortcuts.find((e) => e.command === "listSelect")?.keys.join(", ")}</code>{" "}
+                            on empty folder to open in reader.
                         </li>
                         <li>
-                            Click <code>alt</code>+<code>ArrowUp</code> to go up a directory/folder.
+                            Click <code>{shortcuts.find((e) => e.command === "dirUp")?.keys.join(", ")}</code> to
+                            go up a directory/folder.
                         </li>
                         <li>
-                            Click (<code>ctrl</code>+<code>/</code>) or (<code>shift</code>+<code>F10</code>) or{" "}
-                            <code>ContextMenu/Menu</code> buttons to get right click menu of focused item.
+                            Click{" "}
+                            <code>{shortcuts.find((e) => e.command === "contextMenu")?.keys.join(", ")}</code>{" "}
+                            buttons to get right click menu of focused item.
                         </li>
                     </ul>
                 </li>
@@ -162,13 +169,10 @@ const Usage = ({
                         <li>
                             When using the "vertical Scroll" mode, you can change chapters on the first or last
                             page by clicking on either side of the screen or by clicking "prevPage" (
-                            <code>{shortcuts.find((e) => e.command === "prevPage")?.key1}</code>
-                            {" , "}
-                            <code>{shortcuts.find((e) => e.command === "prevPage")?.key2}</code>) or "nextPage" (
-                            <code>{shortcuts.find((e) => e.command === "nextPage")?.key1}</code>
-                            {" , "}
-                            <code>{shortcuts.find((e) => e.command === "nextPage")?.key2}</code> ) shortcut keys.
-                            No response in center 20% of screen.
+                            <code>{shortcuts.find((e) => e.command === "prevPage")?.keys.join(", ")}</code>) or
+                            "nextPage" (
+                            <code>{shortcuts.find((e) => e.command === "nextPage")?.keys.join(", ")}</code>)
+                            shortcut keys. No response in center 20% of screen.
                             <ul>
                                 <li>Left &nbsp;&nbsp;= Previous Chapter</li>
                                 <li>Right = Next Chapter</li>
@@ -190,8 +194,7 @@ const Usage = ({
                         <li>
                             Zen Mode (Full Screen Mode): Hides UI, Only shows images and page number if enabled.
                             Can be enabled using the shortcut key defined,{" "}
-                            <code>{shortcuts.find((e) => e.command === "toggleZenMode")?.key1}</code> or{" "}
-                            <code>{shortcuts.find((e) => e.command === "toggleZenMode")?.key2}</code>.
+                            <code>{shortcuts.find((e) => e.command === "toggleZenMode")?.keys.join(", ")}</code>
                         </li>
                         <li>
                             Double click to toggle zen mode. Working area by reading mode:

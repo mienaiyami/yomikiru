@@ -13,6 +13,7 @@ const LocationsTab = (): ReactElement => {
     const { openInReader, setContextMenuData } = useContext(AppContext);
     const history = useAppSelector((store) => store.history);
     const appSettings = useAppSelector((store) => store.appSettings);
+    const shortcuts = useAppSelector((store) => store.shortcuts);
     const dispatch = useAppDispatch();
 
     const [currentLink, setCurrentLink] = useState(window.path.resolve(appSettings.baseDir));
@@ -254,19 +255,24 @@ const LocationsTab = (): ReactElement => {
                             if (/\*|\?/gi.test(e.key)) {
                                 e.preventDefault();
                             }
-                            if (e.altKey && e.key === "ArrowUp")
+
+                            const keyStr = window.keyFormatter(e);
+                            if (keyStr === "") return;
+                            const shortcutsMapped = Object.fromEntries(
+                                shortcuts.map((e) => [e.command, e.keys])
+                            ) as Record<ShortcutCommands, string[]>;
+
+                            if (shortcutsMapped["dirUp"].includes(keyStr))
                                 return setCurrentLink((link) => window.path.dirname(link));
-                            if ((e.ctrlKey && e.key === "/") || (e.shiftKey && e.key === "F10"))
-                                e.key = "ContextMenu";
-                            switch (e.key) {
-                                case "ArrowDown":
+                            switch (true) {
+                                case shortcutsMapped["listDown"].includes(keyStr):
                                     e.preventDefault();
                                     setFocused((init) => {
                                         if (init + 1 >= locations.length) return 0;
                                         return init + 1;
                                     });
                                     break;
-                                case "ArrowUp":
+                                case shortcutsMapped["listUp"].includes(keyStr):
                                     e.preventDefault();
                                     setFocused((init) => {
                                         //todo fix: when searched, maybe move filter to sortedLocation
@@ -274,7 +280,7 @@ const LocationsTab = (): ReactElement => {
                                         return init - 1;
                                     });
                                     break;
-                                case "ContextMenu": {
+                                case shortcutsMapped["contextMenu"].includes(keyStr): {
                                     const elem = locationContRef.current?.querySelector(
                                         '[data-focused="true"] a'
                                     ) as HTMLLIElement | null;
@@ -286,7 +292,7 @@ const LocationsTab = (): ReactElement => {
                                     }
                                     break;
                                 }
-                                case "Enter": {
+                                case shortcutsMapped["listSelect"].includes(keyStr): {
                                     if (locations.length === 0 && imageCount !== 0)
                                         return openInReader(currentLink);
 

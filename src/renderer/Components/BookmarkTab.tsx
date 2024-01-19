@@ -5,6 +5,7 @@ import BookmarkHistoryListItem from "./BookmarkHistoryListItem";
 const BookmarkTab = () => {
     const bookmarks = useAppSelector((store) => store.bookmarks);
     const appSettings = useAppSelector((store) => store.appSettings);
+    const shortcuts = useAppSelector((store) => store.shortcuts);
 
     const [filter, setFilter] = useState<string>("");
     const [focused, setFocused] = useState(-1);
@@ -39,6 +40,7 @@ const BookmarkTab = () => {
                             setFocused(-1);
                         }}
                         onKeyDown={(e) => {
+                            //todo add proper stopPropagation to make sure globals dont stop working
                             e.stopPropagation();
                             if (/\[|\]|\(|\)|\*|\+|\?/gi.test(e.key)) {
                                 e.preventDefault();
@@ -46,10 +48,14 @@ const BookmarkTab = () => {
                             if (e.key === "Escape") {
                                 e.currentTarget.blur();
                             }
-                            if ((e.ctrlKey && e.key === "/") || (e.shiftKey && e.key === "F10"))
-                                e.key = "ContextMenu";
-                            switch (e.key) {
-                                case "ContextMenu": {
+                            const keyStr = window.keyFormatter(e);
+                            if (keyStr === "") return;
+                            const shortcutsMapped = Object.fromEntries(
+                                shortcuts.map((e) => [e.command, e.keys])
+                            ) as Record<ShortcutCommands, string[]>;
+
+                            switch (true) {
+                                case shortcutsMapped["contextMenu"].includes(keyStr): {
                                     const elem = locationContRef.current?.querySelector(
                                         '[data-focused="true"] a'
                                     ) as HTMLLIElement | null;
@@ -61,21 +67,21 @@ const BookmarkTab = () => {
                                     }
                                     break;
                                 }
-                                case "ArrowDown":
+                                case shortcutsMapped["listDown"].includes(keyStr):
                                     e.preventDefault();
                                     setFocused((init) => {
                                         if (init + 1 >= bookmarks.length) return 0;
                                         return init + 1;
                                     });
                                     break;
-                                case "ArrowUp":
+                                case shortcutsMapped["listUp"].includes(keyStr):
                                     e.preventDefault();
                                     setFocused((init) => {
                                         if (init - 1 < 0) return bookmarks.length - 1;
                                         return init - 1;
                                     });
                                     break;
-                                case "Enter": {
+                                case shortcutsMapped["listSelect"].includes(keyStr): {
                                     const elem = locationContRef.current?.querySelector(
                                         '[data-focused="true"] a'
                                     ) as HTMLLIElement | null;

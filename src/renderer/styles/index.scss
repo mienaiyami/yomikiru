@@ -806,7 +806,7 @@
                 }
 
                 color: var(--font-color);
-                font-family: "Roboto";
+                font-family: inherit;
                 font-size: 1em;
                 cursor: pointer;
                 padding: 10px 20px;
@@ -1880,7 +1880,41 @@
                                         }
                                         &:nth-child(2) {
                                             width: 60%;
+                                            overflow-x: auto;
                                         }
+                                    }
+                                }
+                            }
+                            .addNewKey {
+                                min-width: 6em;
+                                width: 6em;
+                                font-size: 0.9em;
+                                text-align: center;
+                            }
+                            div.keyDisplay {
+                                display: flex;
+                                flex-direction: row;
+                                position: relative;
+                                justify-content: start;
+                                align-items: start;
+                                font-size: 0.9rem;
+                                input {
+                                    min-width: 0;
+                                    text-align: center;
+                                }
+                                button {
+                                    position: absolute;
+                                    right: 8px;
+                                    top: 50%;
+                                    transform: translateY(-50%);
+                                    // font-size: 0.5rem;
+                                    display: none;
+                                    padding: 4px 8px;
+                                }
+                                &:hover,
+                                &:focus-within {
+                                    button {
+                                        display: block;
                                     }
                                 }
                             }

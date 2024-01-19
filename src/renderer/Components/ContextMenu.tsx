@@ -3,13 +3,13 @@ import { useContext, useEffect, useRef, useState, useLayoutEffect } from "react"
 // import { addBookmark, removeBookmark } from "../store/bookmarks";
 // import { setContextMenu } from "../store/contextMenu";
 // import { removeHistory } from "../store/history";
-// import { useAppDispatch, useAppSelector } from "../store/hooks";
+import { useAppDispatch, useAppSelector } from "../store/hooks";
 import { AppContext } from "../App";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faCheck } from "@fortawesome/free-solid-svg-icons";
 
 const ContextMenu = () => {
-    // const contextMenuData = useAppSelector((store) => store.contextMenu);
+    const shortcuts = useAppSelector((store) => store.shortcuts);
     const { contextMenuData, setContextMenuData } = useContext(AppContext);
     const [pos, setPos] = useState({ x: 0, y: 0 });
     const [focused, setFocused] = useState(-1);
@@ -73,20 +73,23 @@ const ContextMenu = () => {
                 }}
                 onKeyDown={(e) => {
                     e.stopPropagation();
-                    if (
-                        (e.ctrlKey && e.key === "/") ||
-                        (e.shiftKey && e.key === "F10") ||
-                        e.key === "ContextMenu"
-                    ) {
+                    const keyStr = window.keyFormatter(e, false);
+                    if (keyStr === "") return;
+                    const shortcutsMapped = Object.fromEntries(
+                        shortcuts.map((e) => [e.command, e.keys])
+                    ) as Record<ShortcutCommands, string[]>;
+
+                    if (shortcutsMapped["contextMenu"].includes(keyStr)) {
                         e.currentTarget.blur();
                         return;
                     }
-                    switch (e.key) {
-                        case "Escape":
+                    switch (true) {
+                        case keyStr === "escape":
+                            console.log(e.currentTarget);
                             e.currentTarget.blur();
                             break;
-                        case "ArrowDown":
-                        case "ArrowRight":
+                        case shortcutsMapped["listDown"].includes(keyStr):
+                        case keyStr === "right":
                             setFocused((init) => {
                                 let f = init + 1;
                                 if (f >= contextMenuData.items.length) f = 0;
@@ -95,8 +98,8 @@ const ContextMenu = () => {
                                 return f;
                             });
                             break;
-                        case "ArrowUp":
-                        case "ArrowLeft":
+                        case shortcutsMapped["listUp"].includes(keyStr):
+                        case keyStr === "left":
                             setFocused((init) => {
                                 let f = init - 1;
                                 if (f < 0) f = contextMenuData.items.length - 1;
@@ -105,8 +108,8 @@ const ContextMenu = () => {
                                 return f;
                             });
                             break;
-                        case "Enter":
-                        case " ": {
+                        case shortcutsMapped["listSelect"].includes(keyStr):
+                        case keyStr === "space": {
                             const elem = ref.current?.querySelector(
                                 '[data-focused="true"]'
                             ) as HTMLLIElement | null;

@@ -1,6 +1,87 @@
 import React from "react";
 import { useAppDispatch, useAppSelector } from "../../store/hooks";
-import { setShortcuts } from "../../store/shortcuts";
+import { removeShortcuts, setShortcuts } from "../../store/shortcuts";
+import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
+import { faClose } from "@fortawesome/free-solid-svg-icons";
+
+const reservedKeys = ["backspace", "ctrl+shift+i", "escape", "tab", "ctrl+n", "ctrl+w", "ctrl+r", "ctrl+shift+r"];
+const SHORTCUT_LIMIT = 4;
+
+const ShortcutInput = ({ command }: { command: ShortcutCommands }) => {
+    const shortcuts = useAppSelector((store) => store.shortcuts);
+    const dispatch = useAppDispatch();
+    const shortcut = shortcuts.find((e) => e.command === command);
+    if (!shortcut) return <p>Command "{command}" not found.</p>;
+    return (
+        <>
+            {shortcut.keys.map((key, i) => (
+                <div className="keyDisplay" key={i} title={key}>
+                    <input type="text" value={key} readOnly spellCheck={false} />
+                    <button
+                        onClick={() => {
+                            dispatch(removeShortcuts({ command, key }));
+                        }}
+                    >
+                        <FontAwesomeIcon icon={faClose} />
+                    </button>
+                </div>
+            ))}
+            {shortcut.keys.length < SHORTCUT_LIMIT && (
+                <input
+                    className="addNewKey"
+                    type="text"
+                    value={""}
+                    onKeyDown={(e) => {
+                        e.stopPropagation();
+                        if (!["Tab", "Escape"].includes(e.key)) e.preventDefault();
+                    }}
+                    onKeyUp={(e) => {
+                        e.preventDefault();
+                        e.stopPropagation();
+                        // if (["Control", "Shift", "Alt", "Tab", "Backspace"].includes(e.key)) return;
+                        // settingContRef.current?.focus();
+                        // if (e.key === "Backspace") {
+                        //     window.logger.log(`Deleting shortcut ${shortcuts[i].command}.${which}`);
+                        //     dispatch(setShortcuts({ index: i, key: "", which }));
+                        //     return;
+                        // }
+
+                        const newKey = window.keyFormatter(e.nativeEvent);
+                        if (newKey === "") return;
+                        //todo impl later
+                        const dupIndex = shortcuts.findIndex((e) => e.keys.includes(newKey));
+                        if (dupIndex >= 0) {
+                            const name =
+                                window.SHORTCUT_COMMANDS.find((e) => e.command === shortcuts[dupIndex].command)
+                                    ?.name || command;
+                            window.logger.warn(`"${newKey}" already bound to "${shortcuts[dupIndex].command}"`);
+                            window.dialog.warn({
+                                message: `"${newKey}" already bound to "${name}".`,
+                            });
+                            return;
+                        }
+
+                        if (reservedKeys.includes(newKey)) {
+                            //todo make a simple alert
+                            window.dialog.warn({
+                                message: "Can't use reserved key combination.",
+                            });
+                            window.logger.warn(`"${newKey}"` + " is reserved key combination.");
+
+                            e.currentTarget.focus();
+                            return;
+                        }
+
+                        dispatch(setShortcuts({ command, key: newKey }));
+                    }}
+                    placeholder="Add New"
+                    readOnly
+                    spellCheck={false}
+                />
+            )}
+        </>
+    );
+};
 
 const Shortcuts = ({
     settingContRef,
@@ -12,58 +93,11 @@ const Shortcuts = ({
         tab: "settings" | "shortcutKeys" | "makeTheme" | "about" | "extras"
     ) => void;
 }) => {
-    const shortcuts = useAppSelector((store) => store.shortcuts);
-    const dispatch = useAppDispatch();
-
-    const reservedKeys = ["h", "Control", "Tab", "Shift", "Alt", "Escape"];
-
-    const ShortcutInput = ({ which, i }: { which: "key1" | "key2"; i: number }) => (
-        <input
-            type="text"
-            value={shortcuts[i][which] === " " ? "Space" : shortcuts[i][which]}
-            onKeyDown={(e) => {
-                e.stopPropagation();
-            }}
-            onKeyUp={(e) => {
-                e.preventDefault();
-                e.stopPropagation();
-                if (reservedKeys.includes(e.key)) {
-                    window.logger.warn(`"${e.key}"` + " is reserved key.");
-                    e.currentTarget.focus();
-                    return;
-                }
-                settingContRef.current?.focus();
-                if (e.key === "Backspace") {
-                    window.logger.log(`Deleting shortcut ${shortcuts[i].command}.${which}`);
-                    dispatch(setShortcuts({ index: i, key: "", which }));
-                    return;
-                }
-                const dupIndex = shortcuts.findIndex((elem) => elem.key1 === e.key || elem.key2 === e.key);
-                if (dupIndex >= 0) {
-                    window.logger.warn(`"${e.key}" key already bind to "${shortcuts[dupIndex].name}"`);
-                    window.dialog.warn({
-                        message: `"${e.key}" key already bind to "${shortcuts[dupIndex].name}".`,
-                    });
-                    return;
-                }
-                window.logger.log(`Setting shortcut ${shortcuts[i].command}.${which} to "${e.key}"`);
-                dispatch(setShortcuts({ index: i, key: e.key, which }));
-            }}
-            readOnly
-            spellCheck={false}
-        />
-    );
-
     return (
         <div className="shortcutKey">
             <ul>
-                <li>
-                    <code>Backspace</code> to delete Key.
-                </li>
+                <li>Some changes may require app to restart.</li>
                 <li>You can use middle mouse button or grab to scroll reader.</li>
-                <li>
-                    You can set <code>shift</code>+<code>key</code>, shortcut will appear as capital or symbol.
-                </li>
                 <li>
                     Reserved Keys :{" "}
                     {reservedKeys.map((e) => (
@@ -80,140 +114,59 @@ const Shortcuts = ({
                         <th>Function</th>
                         <th>Key</th>
                     </tr>
-                    {shortcuts.map((e, i) => (
+                    {window.SHORTCUT_COMMANDS.map((e, i) => (
                         <tr key={e.command}>
-                            <td>{e.name}</td>
                             <td>
-                                <ShortcutInput which="key1" i={i} />
-                                <ShortcutInput which="key2" i={i} />
+                                {e.name}
+                                {(["dirUp", "contextMenu"] as ShortcutCommands[]).includes(e.command) && (
+                                    <a
+                                        onClick={() => {
+                                            scrollIntoView("#settings-usage-searchShortcutKeys", "extras");
+                                        }}
+                                    >
+                                        More Info.
+                                    </a>
+                                )}
+                            </td>
+                            <td>
+                                <ShortcutInput command={e.command} />
                             </td>
                         </tr>
                     ))}
                     <tr>
-                        <td>Home</td>
-                        <td>
-                            <code>h</code>
-                        </td>
-                    </tr>
-                    <tr>
-                        <td>
-                            Directory Up
-                            <a
-                                onClick={() => {
-                                    scrollIntoView("#settings-usage-searchShortcutKeys", "extras");
-                                }}
-                            >
-                                More Info.
-                            </a>
-                        </td>
-                        <td>
-                            <code>alt</code>+<code>ArrowUp</code>
-                        </td>
-                    </tr>
-                    <tr>
-                        <td>
-                            Context Menu
-                            <a
-                                onClick={() => {
-                                    scrollIntoView("#settings-usage-searchShortcutKeys", "extras");
-                                }}
-                            >
-                                More Info.
-                            </a>
-                        </td>
-                        <td>
-                            (<code>ctrl</code>+<code>/</code>) or (<code>shift</code>+<code>F10</code>) or{" "}
-                            <code>ContextMenu/Menu</code>
-                        </td>
-                    </tr>
-                    <tr>
-                        <td>Reader Size : 50%</td>
-                        <td>
-                            <code>ctrl</code>+<code>1</code>
-                        </td>
-                    </tr>
-                    <tr>
-                        <td>Reader Size : 100%</td>
-                        <td>
-                            <code>ctrl</code>+<code>2</code>
-                        </td>
-                    </tr>
-                    <tr>
-                        <td>Reader Size : 150%</td>
-                        <td>
-                            <code>ctrl</code>+<code>3</code>
-                        </td>
-                    </tr>
-                    <tr>
-                        <td>Reader Size : 200%</td>
-                        <td>
-                            <code>ctrl</code>+<code>4</code>
-                        </td>
-                    </tr>
-                    <tr>
-                        <td>Reader Size : 250%</td>
-                        <td>
-                            <code>ctrl</code>+<code>5</code>
-                        </td>
-                    </tr>
-                    <tr>
-                        <td>Settings</td>
-                        <td>
-                            <code>ctrl</code>+<code>i</code>
-                        </td>
-                    </tr>
-                    <tr>
                         <td>New Window</td>
                         <td>
-                            <code>ctrl</code>+<code>n</code>
+                            <code>ctrl+n</code>
                         </td>
                     </tr>
                     <tr>
                         <td>Close Window</td>
                         <td>
-                            <code>ctrl</code>+<code>w</code>
+                            <code>ctrl+w</code>
                         </td>
                     </tr>
                     <tr>
                         <td>Reader width</td>
                         <td>
-                            <code>ctrl</code>+<code>scroll</code>
+                            <code>ctrl+scroll</code>
                         </td>
                     </tr>
                     <tr>
                         <td>Reload UI</td>
                         <td>
-                            <code>ctrl</code>+<code>r</code>
+                            <code>ctrl+r</code>
                         </td>
                     </tr>
                     <tr>
                         <td>Reload UI and try to clear cache</td>
                         <td>
-                            <code>ctrl</code>+<code>shift</code>+<code>r</code>
-                        </td>
-                    </tr>
-                    <tr>
-                        <td>UI Scale Up</td>
-                        <td>
-                            <code>ctrl</code> + <code>=</code>
-                        </td>
-                    </tr>
-                    <tr>
-                        <td>UI Scale Down</td>
-                        <td>
-                            <code>ctrl</code> + <code>-</code>
-                        </td>
-                    </tr>
-                    <tr>
-                        <td>UI Scale Reset</td>
-                        <td>
-                            <code>ctrl</code> + <code>0</code>
+                            <code>ctrl+shift+r</code>
                         </td>
                     </tr>
                     <tr>
                         <td>Dev Tool</td>
                         <td>
-                            <code>ctrl</code>+<code>shift</code>+<code>i</code>
+                            <code>ctrl+shift+i</code>
                         </td>
                     </tr>
                 </tbody>

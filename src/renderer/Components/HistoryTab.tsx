@@ -5,6 +5,7 @@ import { useState, useRef } from "react";
 const HistoryTab = () => {
     const history = useAppSelector((store) => store.history);
     const appSettings = useAppSelector((store) => store.appSettings);
+    const shortcuts = useAppSelector((store) => store.shortcuts);
 
     const [filter, setFilter] = useState<string>("");
     const [focused, setFocused] = useState(-1);
@@ -37,6 +38,7 @@ const HistoryTab = () => {
                             setFocused(-1);
                         }}
                         onKeyDown={(e) => {
+                            //todo add proper stopPropagation to make sure globals dont stop working
                             e.stopPropagation();
                             if (/\[|\]|\(|\)|\*|\+|\?/gi.test(e.key)) {
                                 e.preventDefault();
@@ -44,11 +46,15 @@ const HistoryTab = () => {
                             if (e.key === "Escape") {
                                 e.currentTarget.blur();
                             }
-                            if ((e.ctrlKey && e.key === "/") || (e.shiftKey && e.key === "F10"))
-                                e.key = "ContextMenu";
+                            //todo make it resuable
+                            const keyStr = window.keyFormatter(e);
+                            if (keyStr === "") return;
+                            const shortcutsMapped = Object.fromEntries(
+                                shortcuts.map((e) => [e.command, e.keys])
+                            ) as Record<ShortcutCommands, string[]>;
 
-                            switch (e.key) {
-                                case "ContextMenu": {
+                            switch (true) {
+                                case shortcutsMapped["contextMenu"].includes(keyStr): {
                                     const elem = locationContRef.current?.querySelector(
                                         '[data-focused="true"] a'
                                     ) as HTMLLIElement | null;
@@ -60,21 +66,21 @@ const HistoryTab = () => {
                                     }
                                     break;
                                 }
-                                case "ArrowDown":
+                                case shortcutsMapped["listDown"].includes(keyStr):
                                     e.preventDefault();
                                     setFocused((init) => {
                                         if (init + 1 >= history.length) return 0;
                                         return init + 1;
                                     });
                                     break;
-                                case "ArrowUp":
+                                case shortcutsMapped["listUp"].includes(keyStr):
                                     e.preventDefault();
                                     setFocused((init) => {
                                         if (init - 1 < 0) return history.length - 1;
                                         return init - 1;
                                     });
                                     break;
-                                case "Enter": {
+                                case shortcutsMapped["listSelect"].includes(keyStr): {
                                     const elem = locationContRef.current?.querySelector(
                                         '[data-focused="true"] a'
                                     ) as HTMLLIElement | null;

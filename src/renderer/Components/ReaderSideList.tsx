@@ -55,6 +55,7 @@ const ReaderSideList = memo(
         const linkInReader = useAppSelector((store) => store.linkInReader);
         // const contextMenu = useAppSelector((store) => store.contextMenu);
         const anilistToken = useAppSelector((store) => store.anilistToken);
+        const shortcuts = useAppSelector((store) => store.shortcuts);
         const dispatch = useAppDispatch();
 
         const sideListRef = useRef<HTMLDivElement>(null);
@@ -364,10 +365,14 @@ const ReaderSideList = memo(
                                 if (e.key === "Escape") {
                                     e.currentTarget.blur();
                                 }
-                                if ((e.ctrlKey && e.key === "/") || (e.shiftKey && e.key === "F10"))
-                                    e.key = "ContextMenu";
-                                switch (e.key) {
-                                    case "ContextMenu": {
+                                const keyStr = window.keyFormatter(e);
+                                if (keyStr === "" && e.key !== "Escape") return;
+
+                                const shortcutsMapped = Object.fromEntries(
+                                    shortcuts.map((e) => [e.command, e.keys])
+                                ) as Record<ShortcutCommands, string[]>;
+                                switch (true) {
+                                    case shortcutsMapped["contextMenu"].includes(keyStr): {
                                         const elem = locationContRef.current?.querySelector(
                                             '[data-focused="true"] a'
                                         ) as HTMLLIElement | null;
@@ -379,21 +384,21 @@ const ReaderSideList = memo(
                                         }
                                         break;
                                     }
-                                    case "ArrowDown":
+                                    case shortcutsMapped["listDown"].includes(keyStr):
                                         e.preventDefault();
                                         setFocused((init) => {
                                             if (init + 1 >= chapterData.length) return 0;
                                             return init + 1;
                                         });
                                         break;
-                                    case "ArrowUp":
+                                    case shortcutsMapped["listUp"].includes(keyStr):
                                         e.preventDefault();
                                         setFocused((init) => {
                                             if (init - 1 < 0) return chapterData.length - 1;
                                             return init - 1;
                                         });
                                         break;
-                                    case "Enter": {
+                                    case shortcutsMapped["listSelect"].includes(keyStr): {
                                         const elem = locationContRef.current?.querySelector(
                                             '[data-focused="true"] a'
                                         ) as HTMLLIElement | null;
