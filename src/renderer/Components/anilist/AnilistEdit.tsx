@@ -10,6 +10,15 @@ import FocusLock from "react-focus-lock";
 import Link from "../Element/Link";
 import InputCheckbox from "../Element/InputCheckbox";
 
+const betterStatus = {
+    CURRENT: "Reading",
+    PLANNING: "Plan to Read",
+    COMPLETED: "Completed",
+    DROPPED: "Dropped",
+    PAUSED: "Paused",
+    REPEATING: "Repeating",
+};
+
 const AnilistEdit = () => {
     const dispatch = useAppDispatch();
     const contRef = useRef<HTMLDivElement>(null);
@@ -88,7 +97,7 @@ const AnilistEdit = () => {
                                             "PAUSED",
                                             "REPEATING",
                                         ].map((e) => ({
-                                            label: e,
+                                            label: betterStatus[e as AniListMangaData["status"]],
                                             value: e,
                                             style: { textAlign: "center" },
                                         }))}
