@@ -141,9 +141,12 @@ const LocationsTab = (): ReactElement => {
     }, [inputRef]);
 
     const sortedLocations = useMemo(() => {
+        const qq = (file: string) => {
+            return window.app.formats.files.getName(file);
+        };
         const sorted =
             appSettings.locationListSortBy === "name"
-                ? locations.sort((a, b) => window.app.betterSortOrder(a.name, b.name))
+                ? locations.sort((a, b) => window.app.betterSortOrder(qq(a.name), qq(b.name)))
                 : locations.sort((a, b) => (a.dateModified < b.dateModified ? -1 : 1));
         return appSettings.locationListSortType === "inverse" ? [...sorted].reverse() : sorted;
     }, [locations, appSettings.locationListSortBy, appSettings.locationListSortType]);

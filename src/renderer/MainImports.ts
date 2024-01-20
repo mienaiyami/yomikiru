@@ -787,12 +787,6 @@ declare global {
         }[];
     };
 
-    //todo: why didnt i extract them from window.shortcutsFunctions. check and do.
-    /**
-     * Available shortcut commands.
-     * to add keyboard shortcuts, add ShortcutSchema to `window.shortcutsFunctions`
-     * then register shortcut in `Reader.tsx` under `registerShortcuts` function
-     */
     type ShortcutCommands = (typeof SHORTCUT_COMMAND_MAP)[number]["command"];
 
     type ShortcutSchema = {
@@ -1032,7 +1026,6 @@ const SHORTCUT_COMMAND_MAP = [
         name: "Decrease font size (epub)",
         defaultKeys: [],
     },
-    //todo find and impl function
     {
         command: "navToHome" as const,
         name: "Home",

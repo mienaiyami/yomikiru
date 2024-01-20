@@ -48,7 +48,6 @@ const ShortcutInput = ({ command }: { command: ShortcutCommands }) => {
 
                         const newKey = window.keyFormatter(e.nativeEvent);
                         if (newKey === "") return;
-                        //todo impl later
                         const dupIndex = shortcuts.findIndex((e) => e.keys.includes(newKey));
                         if (dupIndex >= 0) {
                             const name =
