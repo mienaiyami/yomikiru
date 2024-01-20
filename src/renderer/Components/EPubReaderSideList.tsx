@@ -371,7 +371,7 @@ const EPubReaderSideList = memo(
                         </button>
                         <button
                             className="ctrl-menu-item"
-                            data-tooltip="Focus Current Chapter"
+                            data-tooltip="Locate Current Chapter"
                             onClick={() => {
                                 if (sideListRef.current) {
                                     sideListRef.current.querySelectorAll("a").forEach((e) => {
