@@ -1308,7 +1308,7 @@ const Settings = (): ReactElement => {
                                                     })
                                                 );
                                             }}
-                                            labelAfter="Focus current chapter in side-list "
+                                            labelAfter="Auto-Focus current chapter in side-list "
                                         />
                                         <div className="desc">
                                             Automatically focus/scroll to current chapter entry in side-list when
@@ -1327,7 +1327,7 @@ const Settings = (): ReactElement => {
                                                     })
                                                 );
                                             }}
-                                            labelAfter="EPUB: Focus current chapter in side-list "
+                                            labelAfter="EPUB: Auto-Focus current chapter in side-list "
                                         />
                                     </div>
                                     <div className="toggleItem">

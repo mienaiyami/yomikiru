@@ -432,13 +432,14 @@ const App = (): ReactElement => {
         // here bcoz reload doesnt make window exit fullscreen
         if (window.electron.getCurrentWindow().isFullScreen())
             window.electron.getCurrentWindow().setFullScreen(false);
+
+        const shortcutsMapped = Object.fromEntries(shortcuts.map((e) => [e.command, e.keys])) as Record<
+            ShortcutCommands,
+            string[]
+        >;
         const eventsOnStart = (e: KeyboardEvent) => {
             const keyStr = window.keyFormatter(e);
             if (keyStr === "") return;
-            const shortcutsMapped = Object.fromEntries(shortcuts.map((e) => [e.command, e.keys])) as Record<
-                ShortcutCommands,
-                string[]
-            >;
             if (shortcutsMapped["navToHome"].includes(keyStr)) {
                 if (window.electron.getCurrentWindow().isFullScreen())
                     window.electron.getCurrentWindow().setFullScreen(false);
@@ -466,6 +467,7 @@ const App = (): ReactElement => {
                 }, 1000);
             }
         };
+        window.addEventListener("keydown", eventsOnStart);
 
         const filesToWatch = [historyPath, bookmarksPath];
         if (appSettings.syncSettings) filesToWatch.push(settingsPath);
@@ -477,8 +479,6 @@ const App = (): ReactElement => {
             if (path === settingsPath) dispatch(refreshAppSettings());
             if (path === themesPath) dispatch(refreshThemes());
         });
-
-        window.addEventListener("keydown", eventsOnStart);
 
         const dropFile = (e: DragEvent) => {
             e.preventDefault();

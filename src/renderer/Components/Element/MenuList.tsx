@@ -110,6 +110,7 @@ const MenuList = () => {
 
                         const keyStr = window.keyFormatter(e, false);
                         if (keyStr === "") return;
+                        //todo: can be turned into memo when shortcuts increases
                         const shortcutsMapped = Object.fromEntries(
                             shortcuts.map((e) => [e.command, e.keys])
                         ) as Record<ShortcutCommands, string[]>;
