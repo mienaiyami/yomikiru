@@ -11,6 +11,56 @@ import { exec as execSudo } from "@vscode/sudo-prompt";
 
 declare const DOWNLOAD_PROGRESS_WEBPACK_ENTRY: string;
 
+const checkForAnnouncements = async () => {
+    try {
+        const raw = await fetch("https://raw.githubusercontent.com/mienaiyami/yomikiru/master/announcements.txt")
+            .then((data) => data.text())
+            .then((data) => data.split("\n").filter((e) => e !== ""));
+        const existingPath = path.join(app.getPath("userData"), "announcements.txt");
+        if (!fs.existsSync(existingPath)) {
+            fs.writeFileSync(existingPath, "");
+        }
+        const existing = fs
+            .readFileSync(path.join(app.getPath("userData"), "announcements.txt"), "utf-8")
+            .split("\n")
+            .filter((e) => e !== "");
+        const newAnnouncements = raw.filter((e) => !existing.includes(e));
+        fs.writeFileSync(existingPath, raw.join("\n"));
+        if (newAnnouncements.length === 1)
+            dialog
+                .showMessageBox({
+                    type: "info",
+                    title: "New Announcement",
+                    message: "There's a new announcement. Check it out!",
+                    detail: newAnnouncements[0],
+                    buttons: ["Show", "Dismiss"],
+                    cancelId: 1,
+                })
+                .then((res) => {
+                    if (res.response === 0) shell.openExternal(newAnnouncements[0]);
+                });
+        else if (newAnnouncements.length > 1)
+            dialog
+                .showMessageBox({
+                    type: "info",
+                    title: "New Announcements",
+                    message: "There are new announcements. Check them out!",
+                    detail: newAnnouncements.join("\n"),
+                    buttons: ["Open Each", "Open Announcement Page", "Dismiss"],
+                    cancelId: 2,
+                })
+                .then((res) => {
+                    if (res.response === 0) newAnnouncements.forEach((e) => shell.openExternal(e));
+                    else if (res.response === 1)
+                        shell.openExternal(
+                            "https://github.com/mienaiyami/yomikiru/discussions/categories/announcements"
+                        );
+                });
+    } catch (error) {
+        logger.error("checkForAnnouncements:", error);
+    }
+};
+
 const downloadLink = "https://github.com/mienaiyami/yomikiru/releases/download/v";
 /**
  *
@@ -23,6 +73,7 @@ const checkForUpdate = async (
     promptAfterCheck = false,
     autoDownload = false
 ) => {
+    checkForAnnouncements();
     const rawdata = await fetch("https://api.github.com/repos/mienaiyami/yomikiru/releases").then((data) =>
         data.json()
     );
