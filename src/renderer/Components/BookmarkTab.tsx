@@ -27,8 +27,8 @@ const BookmarkTab = () => {
                         onChange={(e) => {
                             const val = e.target.value;
                             let filter = "";
-                            if (val[0] === '"' || val[0] === "`") {
-                                filter = "^" + val.replaceAll('"', "").replaceAll("`", "");
+                            if (['"', "`", "'"].includes(val[0])) {
+                                filter = "^" + val.replaceAll(/('|"|`)/g, "");
                             } else
                                 for (let i = 0; i < val.length; i++) {
                                     filter += val[i] + ".*";
