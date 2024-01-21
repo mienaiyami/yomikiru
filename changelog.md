@@ -1,28 +1,24 @@
 Does not follow semver.
 
 ---
+**Note** - You will be experiencing less frequent updates and slow resolving of issues (unless severe), which you might have noticed already in fast few months. Due to other works, I might not be able to resolve issues for weeks/months. Support the project so I can give it more time, create PR for simple issue such as UI/text change.
 
 ## Added
 
-- hide side-list button (only ui) for better performance with high chapter count.
-- option to disable auto focus current chapter in side-list for better performance with high chapter count.
-- button to focus current chapter in side-list.
+- added #306.
+- added `'` to exact search starter.
+- announcement notification.
 
 ## Changed
 
-- reduced chapter transition screen height to 50%.
-- electron version updated.
-- changed shortcut key list order.
-- UI:
-  - anilist login ui
-- dev:
-  - switching from custom to zod to validate settings.
-  - code refactor (Reader.tsx), bugs expected.
+- Better key bindings. Support for ctrl,shift and alt. More customizable shortcuts.
+- Better anilist status labels.
+- ui changes
 
 ## Fixed
 
-- quit app on "install and show changelog" after auto download.
-- minor keyboard accessability fix, 84a317b5c23e1c3a77b53543a93cad6559d42bfd
-- #303, and format fix for .cb7 and .cbr
+- #300.
+- #314
+- #329
 
 ---

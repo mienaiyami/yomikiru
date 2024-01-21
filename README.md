@@ -6,7 +6,7 @@ It is a offline dekstop app to read locally stored manga or epub with great read
 [![Github Latest Release](https://img.shields.io/github/v/tag/mienaiyami/yomikiru?label=release&style=flat-square&logo=github)](https://github.com/mienaiyami/yomikiru/releases/latest) |
 [![Github All Releases](https://img.shields.io/github/downloads/mienaiyami/yomikiru/total.svg?style=flat-square&logo=github)](https://github.com/mienaiyami/yomikiru/releases)
 
-> Yomikiru's epub reader is only fit for reading novels / light novels and might not support few advance epub functions.
+> Yomikiru's epub reader is only fit for reading novels / light novels and might not support few advance epub features.
 
 ## Who is this app for?
 
@@ -33,7 +33,6 @@ It is a offline dekstop app to read locally stored manga or epub with great read
 - Zen mode - read without any UI in full screen without any distraction.
 - Open in reader directly from the file explorer.
 - Drag and Drop support.
-
 
 ## [Guides](docs/GUIDE.md)
 
