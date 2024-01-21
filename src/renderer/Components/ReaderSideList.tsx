@@ -257,9 +257,12 @@ const ReaderSideList = memo(
         };
 
         const sortedLocations = useMemo(() => {
+            const qq = (file: string) => {
+                return window.app.formats.files.getName(file);
+            };
             const sorted =
                 appSettings.locationListSortBy === "name"
-                    ? chapterData.sort((a, b) => window.app.betterSortOrder(a.name, b.name))
+                    ? chapterData.sort((a, b) => window.app.betterSortOrder(qq(a.name), qq(b.name)))
                     : chapterData.sort((a, b) => (a.dateModified < b.dateModified ? -1 : 1));
             return appSettings.locationListSortType === "inverse" ? [...sorted].reverse() : sorted;
         }, [chapterData, appSettings.locationListSortBy, appSettings.locationListSortType]);
