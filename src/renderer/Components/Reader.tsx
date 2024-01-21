@@ -270,7 +270,7 @@ const Reader = () => {
                 return;
             }
             // todo, check need to isLoadingManga
-            if (!isSettingOpen && window.app.isReaderOpen && !isLoadingManga && !e.ctrlKey) {
+            if (!isSettingOpen && window.app.isReaderOpen && !isLoadingManga) {
                 if ([" ", "ArrowUp", "ArrowDown"].includes(e.key)) e.preventDefault();
                 if (document.activeElement!.tagName === "BODY" || document.activeElement === readerRef.current)
                     switch (true) {
