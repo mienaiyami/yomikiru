@@ -45,18 +45,11 @@ const ShortcutInput = ({ command }: { command: ShortcutCommands }) => {
                     value={""}
                     onKeyDown={(e) => {
                         e.stopPropagation();
-                        if (!["Tab", "Escape", "Escape"].includes(e.key)) e.preventDefault();
+                        if (!["Tab", "Escape"].includes(e.key)) e.preventDefault();
                     }}
                     onKeyUp={(e) => {
                         e.preventDefault();
                         e.stopPropagation();
-                        // if (["Control", "Shift", "Alt", "Tab", "Backspace"].includes(e.key)) return;
-                        // settingContRef.current?.focus();
-                        // if (e.key === "Backspace") {
-                        //     window.logger.log(`Deleting shortcut ${shortcuts[i].command}.${which}`);
-                        //     dispatch(setShortcuts({ index: i, key: "", which }));
-                        //     return;
-                        // }
 
                         const newKey = window.keyFormatter(e.nativeEvent);
                         if (newKey === "") return;
@@ -95,10 +88,10 @@ const ShortcutInput = ({ command }: { command: ShortcutCommands }) => {
 };
 
 const Shortcuts = ({
-    settingContRef,
+    // settingContRef,
     scrollIntoView,
 }: {
-    settingContRef: React.RefObject<HTMLDivElement>;
+    // settingContRef: React.RefObject<HTMLDivElement>;
     scrollIntoView: (
         elementQuery: string,
         tab: "settings" | "shortcutKeys" | "makeTheme" | "about" | "extras"

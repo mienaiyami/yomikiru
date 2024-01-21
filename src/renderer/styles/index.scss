@@ -1886,10 +1886,13 @@
                                 }
                             }
                             .addNewKey {
-                                min-width: 6em;
-                                width: 6em;
+                                min-width: 7em;
+                                width: 7em;
                                 font-size: 0.9em;
                                 text-align: center;
+                                &::placeholder {
+                                    opacity: 1;
+                                }
                             }
                             div.keyDisplay {
                                 display: flex;

@@ -1596,7 +1596,7 @@ const Settings = (): ReactElement => {
                         </div>
                         <div className={`tab ${currentTab === TAB_INFO.shortcutKeys[0] ? "selected " : ""}`}>
                             {/* <h1>Shortcut Keys</h1> */}
-                            <Shortcuts scrollIntoView={scrollIntoView} settingContRef={settingContRef} />
+                            <Shortcuts scrollIntoView={scrollIntoView} />
                         </div>
                         <div className={`tab ${currentTab === TAB_INFO.makeTheme[0] ? "selected " : ""}`}>
                             <ThemeCont />
