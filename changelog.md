@@ -5,20 +5,15 @@ Does not follow semver.
 
 ## Added
 
-- added #306.
-- added `'` to exact search starter.
-- announcement notification.
+- added #334
 
 ## Changed
 
-- Better key bindings. Support for ctrl,shift and alt. More customizable shortcuts.
-- Better anilist status labels.
-- ui changes
+- changed color of shortcut "Add New" #335
 
 ## Fixed
 
-- #300.
-- #314
-- #329
+- fixed #331
+- fixed #332
 
 ---
