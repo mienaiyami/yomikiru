@@ -4,7 +4,7 @@ import { removeShortcuts, setShortcuts } from "../../store/shortcuts";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faClose } from "@fortawesome/free-solid-svg-icons";
 
-const reservedKeys = ["backspace", "ctrl+shift+i", "escape", "tab", "ctrl+n", "ctrl+w", "ctrl+r", "ctrl+shift+r"];
+const reservedKeys = ["ctrl+shift+i", "escape", "tab", "ctrl+n", "ctrl+w", "ctrl+r", "ctrl+shift+r"];
 const SHORTCUT_LIMIT = 4;
 
 const ShortcutInput = ({ command }: { command: ShortcutCommands }) => {
@@ -16,7 +16,19 @@ const ShortcutInput = ({ command }: { command: ShortcutCommands }) => {
         <>
             {shortcut.keys.map((key, i) => (
                 <div className="keyDisplay" key={i} title={key}>
-                    <input type="text" value={key} readOnly spellCheck={false} />
+                    <input
+                        type="text"
+                        value={key}
+                        readOnly
+                        spellCheck={false}
+                        onKeyDown={(e) => {
+                            if (e.key === "Backspace") {
+                                e.preventDefault();
+                                e.stopPropagation();
+                                dispatch(removeShortcuts({ command, key }));
+                            }
+                        }}
+                    />
                     <button
                         onClick={() => {
                             dispatch(removeShortcuts({ command, key }));
@@ -33,7 +45,7 @@ const ShortcutInput = ({ command }: { command: ShortcutCommands }) => {
                     value={""}
                     onKeyDown={(e) => {
                         e.stopPropagation();
-                        if (!["Tab", "Escape"].includes(e.key)) e.preventDefault();
+                        if (!["Tab", "Escape", "Escape"].includes(e.key)) e.preventDefault();
                     }}
                     onKeyUp={(e) => {
                         e.preventDefault();
@@ -97,6 +109,9 @@ const Shortcuts = ({
             <ul>
                 <li>Some changes may require app to restart.</li>
                 <li>You can use middle mouse button or grab to scroll reader.</li>
+                <li>
+                    Use <code>Backspace</code> to clear key binding.
+                </li>
                 <li>
                     Reserved Keys :{" "}
                     {reservedKeys.map((e) => (
