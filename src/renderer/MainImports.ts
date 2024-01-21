@@ -918,12 +918,12 @@ const SHORTCUT_COMMAND_MAP = [
     },
     {
         command: "largeScroll" as const,
-        name: "Bigger Scroll (Scroll B)",
+        name: "Scroll Down (Scroll B)",
         defaultKeys: ["space"],
     },
     {
         command: "largeScrollReverse" as const,
-        name: "Bigger Scroll (Scroll B)",
+        name: "Scroll Up (Scroll B)",
         defaultKeys: ["shift+space"],
     },
     {
