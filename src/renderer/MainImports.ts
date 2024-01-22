@@ -963,12 +963,12 @@ const SHORTCUT_COMMAND_MAP = [
     },
     {
         command: "sizePlus" as const,
-        name: "Increase image size",
+        name: "Increase Reader size",
         defaultKeys: ["equal", "numpad_plus"],
     },
     {
         command: "sizeMinus" as const,
-        name: "Decrease image size",
+        name: "Decrease Reader size",
         defaultKeys: ["minus", "numpad_minus"],
     },
     {
