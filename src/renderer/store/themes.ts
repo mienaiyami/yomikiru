@@ -1,6 +1,6 @@
 import { createSlice, current, PayloadAction } from "@reduxjs/toolkit";
 import themeInit from "../themeInit.json";
-import { saveJSONfile, themesPath } from "../MainImports";
+import { saveJSONfile, themesPath } from "../utils/paths";
 
 export const setSysBtnColor = (blurred = false) => {
     const topbarElem = document.querySelector<HTMLDivElement>("body #topBar");

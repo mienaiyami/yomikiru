@@ -21,21 +21,15 @@ import { setReaderOpen } from "./store/isReaderOpen";
 import { setMangaInReader } from "./store/mangaInReader";
 import { addBookmark, refreshBookmark, removeBookmark } from "./store/bookmarks";
 import { refreshThemes, setTheme } from "./store/themes";
-import {
-    bookmarksPath,
-    historyPath,
-    promptSelectDir,
-    renderPDF,
-    settingsPath,
-    themesPath,
-    unzip,
-} from "./MainImports";
+import { bookmarksPath, historyPath, settingsPath, themesPath } from "./utils/paths";
 import { setBookInReader } from "./store/bookInReader";
 import { setAniEditOpen } from "./store/isAniEditOpen";
 import { setAniLoginOpen } from "./store/isAniLoginOpen";
 import { setAniSearchOpen } from "./store/isAniSearchOpen";
 import { setAnilistCurrentManga } from "./store/anilistCurrentManga";
 import { toggleOpenSetting } from "./store/isSettingOpen";
+import { promptSelectDir, unzip } from "./MainImports";
+import { renderPDF } from "./utils/pdf";
 
 interface IAppContext {
     pageNumberInputRef: React.RefObject<HTMLInputElement>;

@@ -13,7 +13,6 @@ import { setReaderSettings } from "../store/appSettings";
 import { useAppDispatch, useAppSelector } from "../store/hooks";
 import InputRange from "./Element/InputRange";
 import { InputSelect } from "./Element/InputSelect";
-import { settingSchema } from "../MainImports";
 import InputNumber from "./Element/InputNumber";
 import InputCheckbox from "./Element/InputCheckbox";
 import InputCheckboxNumber from "./Element/InputCheckboxNumber";

@@ -9,7 +9,7 @@ import { resetShortcuts } from "../store/shortcuts";
 import { setOpenSetting } from "../store/isSettingOpen";
 import { addBookmark, removeAllBookmarks } from "../store/bookmarks";
 import { makeNewSettings, setAppSettings, setEpubReaderSettings, setReaderSettings } from "../store/appSettings";
-import { promptSelectDir, renderPDF } from "../MainImports";
+import { promptSelectDir } from "../MainImports";
 import { deleteAllHistory } from "../store/history";
 import InputNumber from "./Element/InputNumber";
 import { setAnilistToken } from "../store/anilistToken";
@@ -21,6 +21,7 @@ import FocusLock from "react-focus-lock";
 import ThemeCont from "./settings/ThemeCont";
 import Shortcuts from "./settings/Shortcuts";
 import Usage from "./settings/Usage";
+import { renderPDF } from "../utils/pdf";
 
 //todo: divide into components
 const Settings = (): ReactElement => {

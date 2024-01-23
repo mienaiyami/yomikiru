@@ -1,5 +1,5 @@
-import { createSlice, current, original, PayloadAction } from "@reduxjs/toolkit";
-import { historyPath, saveJSONfile } from "../MainImports";
+import { createSlice, current, PayloadAction } from "@reduxjs/toolkit";
+import { historyPath, saveJSONfile } from "../utils/paths";
 
 const initialState: HistoryItem[] = [];
 

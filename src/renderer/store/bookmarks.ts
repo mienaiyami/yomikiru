@@ -1,5 +1,5 @@
 import { createSlice, current, PayloadAction } from "@reduxjs/toolkit";
-import { bookmarksPath, saveJSONfile } from "../MainImports";
+import { bookmarksPath, saveJSONfile } from "../utils/paths";
 
 const initialState: Manga_BookItem[] = [];
 /**
