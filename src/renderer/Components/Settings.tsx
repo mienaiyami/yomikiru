@@ -1626,7 +1626,12 @@ const Settings = (): ReactElement => {
                             <div className="content2">
                                 <div className="settingItem2">
                                     <h3>Version</h3>
-                                    <div className="desc">
+                                    <div
+                                        className="desc"
+                                        style={{
+                                            userSelect: "text",
+                                        }}
+                                    >
                                         {window.electron.app.getVersion()}
                                         {" | "}
                                         {process.arch === "x64" ? "64-bit" : "32-bit"}
