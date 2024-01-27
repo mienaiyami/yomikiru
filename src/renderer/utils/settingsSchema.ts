@@ -160,6 +160,7 @@ const settingSchema = z
             }),
             focusChapterInList: z.boolean(),
             hideSideList: z.boolean(),
+            autoUpdateAnilistProgress: z.boolean(),
         }),
         epubReaderSettings: z.object({
             /**load and show only one chapter at a time from TOC */
@@ -318,6 +319,7 @@ const settingSchema = z
             },
             focusChapterInList: true,
             hideSideList: false,
+            autoUpdateAnilistProgress: false,
         },
         epubReaderSettings: {
             loadOneChapter: true,

@@ -434,31 +434,44 @@ const App = (): ReactElement => {
         const eventsOnStart = (e: KeyboardEvent) => {
             const keyStr = window.keyFormatter(e);
             if (keyStr === "") return;
-            if (shortcutsMapped["navToHome"].includes(keyStr)) {
-                if (window.electron.getCurrentWindow().isFullScreen())
-                    window.electron.getCurrentWindow().setFullScreen(false);
-
-                if (window.app.isReaderOpen) return closeReader();
-                window.location.reload();
-            }
-            if (shortcutsMapped["openSettings"].includes(keyStr)) dispatch(toggleOpenSetting());
-            if (
-                [
-                    ...shortcutsMapped["uiSizeDown"],
-                    ...shortcutsMapped["uiSizeUp"],
-                    ...shortcutsMapped["uiSizeReset"],
-                ].includes(keyStr)
-            ) {
-                setTimeout(() => {
-                    process.platform === "win32" &&
-                        window.electron.getCurrentWindow().setTitleBarOverlay({
-                            height: Math.floor(40 * window.electron.webFrame.getZoomFactor()),
-                        });
-                    // page nav/ window btn cont width
-                    (document.querySelector(".windowBtnCont") as HTMLDivElement).style.right = `${
-                        140 * (1 / window.electron.webFrame.getZoomFactor())
-                    }px`;
-                }, 1000);
+            const i = (keys: string[]) => {
+                return keys.includes(keyStr);
+            };
+            const afterUIScale = () => {
+                process.platform === "win32" &&
+                    window.electron.getCurrentWindow().setTitleBarOverlay({
+                        height: Math.floor(40 * window.electron.webFrame.getZoomFactor()),
+                    });
+                // page nav/ window btn cont width
+                (document.querySelector(".windowBtnCont") as HTMLDivElement).style.right = `${
+                    140 * (1 / window.electron.webFrame.getZoomFactor())
+                }px`;
+            };
+            switch (true) {
+                // todo test each
+                case i(shortcutsMapped["navToHome"]):
+                    if (window.electron.getCurrentWindow().isFullScreen())
+                        window.electron.getCurrentWindow().setFullScreen(false);
+                    if (window.app.isReaderOpen) return closeReader();
+                    window.location.reload();
+                    break;
+                case i(shortcutsMapped["openSettings"]):
+                    dispatch(toggleOpenSetting());
+                    break;
+                case i(shortcutsMapped["uiSizeReset"]):
+                    window.electron.webFrame.setZoomFactor(1);
+                    afterUIScale();
+                    break;
+                case i(shortcutsMapped["uiSizeDown"]):
+                    window.electron.webFrame.setZoomFactor(window.electron.webFrame.getZoomFactor() - 0.1);
+                    afterUIScale();
+                    break;
+                case i(shortcutsMapped["uiSizeUp"]):
+                    window.electron.webFrame.setZoomFactor(window.electron.webFrame.getZoomFactor() + 0.1);
+                    afterUIScale();
+                    break;
+                default:
+                    break;
             }
         };
         window.addEventListener("keydown", eventsOnStart);

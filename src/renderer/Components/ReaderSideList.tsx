@@ -192,6 +192,7 @@ const ReaderSideList = memo(
         };
         useLayoutEffect(() => {
             makeChapterList();
+
             if (mangaInReader && appSettings.autoRefreshSideList) {
                 const watcher = window.chokidar.watch(mangaInReader.link.replace(mangaInReader.chapterName, ""), {
                     depth: 0,

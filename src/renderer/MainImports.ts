@@ -105,27 +105,11 @@ declare global {
             name: string;
             defaultKeys: string[];
         }[];
-        // fileSaveTimeOut: Map<string, NodeJS.Timeout | null>;
         /**
          * Anilist
          */
         al: AniList;
         color: {
-            // RGBA_to_hex: (RGB: { r: number; g: number; b: number; a?: number }) => ColorFormats["hex"] | undefined;
-            // /**
-            //  *
-            //  * @param RGBA_Str rgba()
-            //  * @returns
-            //  */
-            // parseRGBA:(RGBA_Str:string)=>ColorFormats["rgba"];
-            // // stringifyRGBA:(RGBA:ColorFormats["rgba"])=>string;
-            // hex_to_RGBA: (hex: string) =>
-            //     | ColorFormats["rgba"]
-            //     | undefined;
-            // /**
-            //  * @param longHex #RRGGBBAA
-            //  */
-            // separateHex: (longHex: string) => { color: ColorFormats["hex"]; alpha: number };
             new: (...args: Parameters<typeof Colorjs>) => Colorjs;
             /**
              * returns `Color` from css variable or color string

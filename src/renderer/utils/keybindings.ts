@@ -20,14 +20,14 @@ const SHORTCUT_COMMAND_MAP = [
         defaultKeys: ["shift+space"],
     },
     {
-        command: "scrollUp" as const,
-        name: "Scroll Up (Scroll A)",
-        defaultKeys: ["w", "up"],
-    },
-    {
         command: "scrollDown" as const,
         name: "Scroll Down (Scroll A)",
         defaultKeys: ["s", "down"],
+    },
+    {
+        command: "scrollUp" as const,
+        name: "Scroll Up (Scroll A)",
+        defaultKeys: ["w", "up"],
     },
     {
         command: "prevPage" as const,

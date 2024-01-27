@@ -13,6 +13,37 @@ import { newHistory } from "../store/history";
 import AnilistSearch from "./anilist/AnilistSearch";
 import AnilistEdit from "./anilist/AnilistEdit";
 import { InView } from "react-intersection-observer";
+import { setAnilistCurrentManga } from "../store/anilistCurrentManga";
+
+const processChapterNumber = (chapterName: string): number | undefined => {
+    /*
+    possible chapter name formats
+    chapter 1123.33as
+    chapter 123 asd
+    ch. 1
+    ch1
+    c 1
+    c1
+    part 1
+    pt. 1
+    pt1
+    episode 1
+    ep 1
+    ep1
+    uploader_ch.1
+
+    support float chapter number
+    /(^| |\.|_)((chapter|(c(h)?)|(p(t)?(art)?)|(ep(isode)?))((\s)?(-|_|\.)?(\s)?)?(?<main>\d+(\.\d+)?))/gi;
+     */
+    const regex = /(^| |\.|_)((chapter|(c(h)?)|(p(t)?(art)?)|(ep(isode)?))((\s)?(-|_|\.)?(\s)?)?(?<main>\d+))/gi;
+    const results = [...chapterName.matchAll(regex)];
+    if (results.length === 0) return;
+    const result = results[0].groups?.main;
+    if (!result) return;
+    const chapterNumber = parseInt(result);
+    if (isNaN(chapterNumber)) return;
+    return chapterNumber;
+};
 
 const Reader = () => {
     const { pageNumberInputRef, checkValidFolder, setContextMenuData } = useContext(AppContext);
@@ -22,6 +53,7 @@ const Reader = () => {
     const isReaderOpen = useAppSelector((store) => store.isReaderOpen);
     const linkInReader = useAppSelector((store) => store.linkInReader);
     const mangaInReader = useAppSelector((store) => store.mangaInReader);
+    const anilistCurrentManga = useAppSelector((store) => store.anilistCurrentManga);
     const isLoadingManga = useAppSelector((store) => store.isLoadingManga);
     const isSettingOpen = useAppSelector((store) => store.isSettingOpen);
     const bookmarks = useAppSelector((store) => store.bookmarks);
@@ -48,6 +80,7 @@ const Reader = () => {
     const [isSideListPinned, setSideListPinned] = useState(false);
     const [sideListWidth, setSideListWidth] = useState(appSettings.readerSettings.sideListWidth || 450);
     const [isBookmarked, setBookmarked] = useState(false);
+    //not called on scroll but manually
     const [scrollPosPercent, setScrollPosPercent] = useState({ x: 0, y: 0 });
     const [zenMode, setZenMode] = useState(appSettings.openInZenMode || false);
     // used to be in app.tsx then sent to topBar.tsx by context provider but caused performance issue, now using window.currentPageNumber
@@ -60,6 +93,7 @@ const Reader = () => {
     const [shortcutText, setshortcutText] = useState("");
     // for grab to scroll
     const [mouseDown, setMouseDown] = useState<null | { top: number; left: number; x: number; y: number }>(null);
+    const [updatedAnilistProgress, setUpdatedAnilistProgress] = useState(false);
 
     const readerSettingExtender = useRef<HTMLButtonElement>(null);
     const sizePlusRef = useRef<HTMLButtonElement>(null);
@@ -460,9 +494,9 @@ const Reader = () => {
             });
     }, [isSideListPinned, imgContRef.current, readerRef.current]);
     const changePageNumber = () => {
-        if (!pageNumChangeDisabled) {
+        if (!pageNumChangeDisabled && imgContRef.current) {
             const elem = document.elementFromPoint(
-                imgContRef.current!.clientWidth / 2 + imgContRef.current!.offsetLeft,
+                imgContRef.current.clientWidth / 2 + imgContRef.current.offsetLeft,
                 window.innerHeight / (appSettings.readerSettings.readerTypeSelected === 0 ? 4 : 2)
             );
             if (elem && (elem.tagName === "IMG" || elem.tagName === "CANVAS")) {
@@ -540,6 +574,7 @@ const Reader = () => {
     const loadImgs = (link: string, imgs: string[]) => {
         link = window.path.normalize(link);
         if (link[link.length - 1] === window.path.sep) link = link.substring(0, link.length - 1);
+        //mark, reset
         setImages([]);
         // setWideImageContMap([]);
         setCurrentPageNumber(1);
@@ -551,6 +586,7 @@ const Reader = () => {
         // setImageElementsIndex([]);
         setImageRow([]);
         setImageDecodeQueue([]);
+        setUpdatedAnilistProgress(false);
         setCurrentlyDecoding(false);
         setBookmarked(bookmarks.map((e) => e.data.link).includes(link));
         setChapterChangerDisplay(false);
@@ -761,6 +797,32 @@ const Reader = () => {
             clearTimeout(timeOutId);
         };
     }, [sideListWidth]);
+    useLayoutEffect(() => {
+        // anilist auto update progress
+        if (updatedAnilistProgress || !appSettings.readerSettings.autoUpdateAnilistProgress) return;
+        if (currentPageNumber / images.length > (images.length <= 4 ? 0.5 : 0.7)) {
+            if (!anilistCurrentManga || !mangaInReader) {
+                // console.error("anilistCurrentManga is null, this should not happen");
+                return;
+            }
+            const chapterNumber = processChapterNumber(mangaInReader.chapterName);
+            if (!chapterNumber) {
+                console.log("Anilist::autoUpdateAnilistProgress: Could not get chapter number from the title.");
+                return;
+            }
+            setUpdatedAnilistProgress(true);
+            if (chapterNumber > anilistCurrentManga.progress)
+                window.al.setCurrentMangaProgress(chapterNumber).then((e) => {
+                    if (e) {
+                        dispatch(setAnilistCurrentManga(e));
+                        console.log("Anilist::autoUpdateAnilistProgress: updated progress", chapterNumber);
+                    } else {
+                        console.error("Anilist::autoUpdateAnilistProgress: Failed to sync AniList progress.");
+                        // window.dialog.customError({ message: "Failed to sync AniList progress.", log: false });
+                    }
+                });
+        }
+    }, [currentPageNumber, appSettings.readerSettings.autoUpdateAnilistProgress]);
     useLayoutEffect(() => {
         changePageNumber();
     }, [currentImageRow]);

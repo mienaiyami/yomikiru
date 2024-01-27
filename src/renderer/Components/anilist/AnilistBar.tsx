@@ -11,6 +11,7 @@ const AnilistBar = memo(() => {
     const anilistTracking = useAppSelector((store) => store.anilistTracking);
     const mangaInReader = useAppSelector((store) => store.mangaInReader);
     const anilistCurrentManga = useAppSelector((store) => store.anilistCurrentManga);
+    const isAniEditOpen = useAppSelector((store) => store.isAniEditOpen);
 
     const [isTracking, setTracking] = useState(false);
     const [progress, setProgress] = useState(anilistCurrentManga?.progress || 0);
@@ -44,6 +45,7 @@ const AnilistBar = memo(() => {
             clearTimeout(timeout);
         };
     }, [progress]);
+
     useLayoutEffect(() => {
         if (isTracking && mangaInReader) {
             const found = anilistTracking.find((e) => e.localURL === window.path.dirname(mangaInReader.link));
@@ -55,7 +57,7 @@ const AnilistBar = memo(() => {
                 });
             }
         }
-    }, [isTracking]);
+    }, [isTracking, mangaInReader, isAniEditOpen]);
 
     return (
         <div className="anilistBar">

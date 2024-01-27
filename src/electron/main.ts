@@ -606,9 +606,10 @@ app.on("ready", () => {
                 { role: "forceReload" },
                 { role: "toggleDevTools" },
                 { type: "separator" },
-                { role: "resetZoom" },
-                { role: "zoomIn", accelerator: "CommandOrControl+=" },
-                { role: "zoomOut" },
+                // ! moving to App.tsx
+                // { role: "resetZoom" },
+                // { role: "zoomIn", accelerator: "CommandOrControl+=" },
+                // { role: "zoomOut" },
             ],
         },
         {

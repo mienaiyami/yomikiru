@@ -5,15 +5,18 @@ Does not follow semver.
 
 ## Added
 
-- added #334
+- added #279, anilist auto update progress.
 
 ## Changed
 
-- changed color of shortcut "Add New" #335
+- sync in-app anilist progress on chapter change and anilist editor open.
+- UI:
+  - shortcuts name update
+- dev:
+  - code refactor.
 
 ## Fixed
 
-- fixed #331
-- fixed #332
+- fixed: custom keybinding for UI scale not working.
 
 ---
