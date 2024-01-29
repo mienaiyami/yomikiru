@@ -288,10 +288,11 @@ const saveFile = (path: string, data: any, sync = true, retry = 3) => {
                 }
             });
     } catch (err) {
-        log.error("ERROR::saveFile:electron:", err, "Retrying...,", retry - 1, "left");
-        setTimeout(() => {
-            saveFile(path, data, sync, retry - 1);
-        }, 1000);
+        log.error("main::saveFile:", err, "Retrying...,", retry - 1, "left");
+        if (retry > 0)
+            setTimeout(() => {
+                saveFile(path, data, sync, retry - 1);
+            }, 1000);
     }
 };
 

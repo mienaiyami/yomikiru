@@ -70,9 +70,7 @@ type NewHistoryData =
               elementQueryString: string;
           };
       };
-/**
- * ! im not returning state as it auto refresh on saveJSONfile
- */
+
 const history = createSlice({
     name: "history",
     initialState,
