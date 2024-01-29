@@ -277,20 +277,20 @@ if (handleSquirrelEvent()) {
     app.quit();
 }
 
-const saveJSONfile = (path: string, data: any, sync = true) => {
+const saveJSONfile = (path: string, data: any, sync = true, retry = 3) => {
     try {
         if (sync) {
             fs.writeFileSync(path, data);
         } else
             fs.writeFile(path, data, (err) => {
                 if (err) {
-                    log.error(err);
+                    throw err;
                 }
             });
     } catch (err) {
-        log.error("ERROR::saveJSONfile:electron:", err, "Retrying...");
+        log.error("ERROR::saveJSONfile:electron:", err, "Retrying...,", retry - 1, "left");
         setTimeout(() => {
-            saveJSONfile(path, data, sync);
+            saveJSONfile(path, data, sync, retry - 1);
         }, 1000);
     }
 };
