@@ -277,7 +277,7 @@ if (handleSquirrelEvent()) {
     app.quit();
 }
 
-const saveFile = (path: string, data: any, sync = true, retry = 3) => {
+const saveFile = (path: string, data: string, sync = true, retry = 3) => {
     try {
         if (sync) {
             fs.writeFileSync(path, data);

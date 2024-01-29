@@ -41,6 +41,7 @@ const InputCheckboxNumber = ({
 }) => {
     const [valueProxy, setValueProxy] = useState(value);
     const repeater = useRef<NodeJS.Timer | null>(null);
+    const mouseDownRef = useRef(false);
     const inputRef = useRef<HTMLInputElement | null>(null);
     useLayoutEffect(() => {
         let timeoutid: NodeJS.Timeout;
@@ -73,6 +74,7 @@ const InputCheckboxNumber = ({
         }
     };
     const stopRepeater = () => {
+        if (mouseDownRef.current) mouseDownRef.current = false;
         if (repeater.current) {
             clearInterval(repeater.current);
             setTimeout(() => {
@@ -81,57 +83,63 @@ const InputCheckboxNumber = ({
         }
         repeater.current = null;
     };
-    const ButtonUp = () => (
-        <button
-            className="spin"
-            onMouseUp={stopRepeater}
-            onMouseLeave={stopRepeater}
-            onMouseOut={stopRepeater}
-            onMouseDown={() => {
-                if (repeater.current) clearInterval(repeater.current);
-                repeater.current = setInterval(() => {
-                    if (inputRef.current) {
-                        const value = inputRef.current.valueAsNumber || parseFloat(min.toString());
-                        if (max && value + step > parseFloat(max.toString()))
-                            inputRef.current.value = max.toString();
-                        inputRef.current.value = parseFloat((value + step).toFixed(3)).toString();
-                        changeHandler(inputRef.current);
-                        // setTimeout(() => {
-                        //     if (inputRef.current) inputRef.current.focus();
-                        // }, 200);
-                    }
-                }, 100);
-            }}
-        >
-            <FontAwesomeIcon icon={faCaretUp} />
-        </button>
-    );
+    const ButtonUp = () => {
+        const valueUp = () => {
+            if (inputRef.current) {
+                const value = inputRef.current.valueAsNumber || parseFloat(min.toString());
+                if (max && value + step > parseFloat(max.toString())) inputRef.current.value = max.toString();
+                inputRef.current.value = parseFloat((value + step).toFixed(3)).toString();
+                changeHandler(inputRef.current);
+            }
+        };
+        return (
+            <button
+                className="spin"
+                onMouseLeave={stopRepeater}
+                // onMouseOut={stopRepeater}
+                onMouseUp={stopRepeater}
+                onMouseDown={() => {
+                    mouseDownRef.current = true;
+                    if (repeater.current) clearInterval(repeater.current);
+                    valueUp();
+                    setTimeout(() => {
+                        if (mouseDownRef.current) repeater.current = setInterval(valueUp, 100);
+                    }, 500);
+                }}
+            >
+                <FontAwesomeIcon icon={faCaretUp} />
+            </button>
+        );
+    };
 
-    const ButtonDown = () => (
-        <button
-            className="spin"
-            onMouseUp={stopRepeater}
-            onMouseLeave={stopRepeater}
-            onMouseOut={stopRepeater}
-            onMouseDown={() => {
-                if (repeater.current) clearInterval(repeater.current);
-                repeater.current = setInterval(() => {
-                    if (inputRef.current) {
-                        const value = inputRef.current.valueAsNumber || parseFloat(min.toString());
-                        if (min && value - step < parseFloat(min.toString()))
-                            inputRef.current.value = min.toString();
-                        inputRef.current.value = parseFloat((value - step).toFixed(3)).toString();
-                        changeHandler(inputRef.current);
-                        // setTimeout(() => {
-                        //     if (inputRef.current) inputRef.current.focus();
-                        // }, 200);
-                    }
-                }, 100);
-            }}
-        >
-            <FontAwesomeIcon icon={faCaretDown} />
-        </button>
-    );
+    const ButtonDown = () => {
+        const valueDown = () => {
+            if (inputRef.current) {
+                const value = inputRef.current.valueAsNumber || parseFloat(min.toString());
+                if (min && value - step < parseFloat(min.toString())) inputRef.current.value = min.toString();
+                inputRef.current.value = parseFloat((value - step).toFixed(3)).toString();
+                changeHandler(inputRef.current);
+            }
+        };
+        return (
+            <button
+                className="spin"
+                onMouseLeave={stopRepeater}
+                // onMouseOut={stopRepeater}
+                onMouseUp={stopRepeater}
+                onMouseDown={() => {
+                    mouseDownRef.current = true;
+                    if (repeater.current) clearInterval(repeater.current);
+                    valueDown();
+                    setTimeout(() => {
+                        if (mouseDownRef.current) repeater.current = setInterval(valueDown, 100);
+                    }, 500);
+                }}
+            >
+                <FontAwesomeIcon icon={faCaretDown} />
+            </button>
+        );
+    };
     return (
         <label
             className={(disabled ? "disabled " : "") + (checked ? "optionSelected " : "") + className}
