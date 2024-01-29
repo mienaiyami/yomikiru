@@ -277,7 +277,7 @@ if (handleSquirrelEvent()) {
     app.quit();
 }
 
-const saveJSONfile = (path: string, data: any, sync = true, retry = 3) => {
+const saveFile = (path: string, data: any, sync = true, retry = 3) => {
     try {
         if (sync) {
             fs.writeFileSync(path, data);
@@ -288,9 +288,9 @@ const saveJSONfile = (path: string, data: any, sync = true, retry = 3) => {
                 }
             });
     } catch (err) {
-        log.error("ERROR::saveJSONfile:electron:", err, "Retrying...,", retry - 1, "left");
+        log.error("ERROR::saveFile:electron:", err, "Retrying...,", retry - 1, "left");
         setTimeout(() => {
-            saveJSONfile(path, data, sync, retry - 1);
+            saveFile(path, data, sync, retry - 1);
         }, 1000);
     }
 };
@@ -541,7 +541,7 @@ const registerListener = () => {
     });
     ipcMain.on("saveFile", (e, path: string, data: string) => {
         // log.log("received file", path);
-        saveJSONfile(path, data);
+        saveFile(path, data);
     });
 
     ipcMain.handle("unzip", (e, link: string, extractPath: string) => {

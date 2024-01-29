@@ -33,10 +33,6 @@ if (window.fs.existsSync(shortcutsPath)) {
                     });
                 }
             });
-            // ! take name from window.shortcutsFunctions instead
-            // data.forEach((e) => {
-            //     e.name = window.shortcutsFunctions.find((a) => a.command === e.command)?.name as string;
-            // });
             window.fs.writeFileSync(shortcutsPath, JSON.stringify(data, null, "\t"));
             initialState.push(...data);
         } catch (err) {
