@@ -750,6 +750,25 @@ const Settings = (): ReactElement => {
                                             </button>
                                         )}
                                     </div>
+                                    <div className="toggleItem">
+                                        <InputCheckbox
+                                            checked={appSettings.readerSettings.autoUpdateAnilistProgress}
+                                            className="noBG"
+                                            onChange={(e) => {
+                                                dispatch(
+                                                    setReaderSettings({
+                                                        autoUpdateAnilistProgress: e.currentTarget.checked,
+                                                    })
+                                                );
+                                            }}
+                                            disabled={!anilistToken}
+                                            labelAfter="Auto-Update AniList Progress"
+                                        />
+                                        <div className="desc">
+                                            Automatically update AniList progress when chapter is read over 70%.
+                                            Only works if chapter names are well formatted.
+                                        </div>
+                                    </div>
                                 </div>
                                 <div className="settingItem2" id="settings-pdfScale">
                                     <h3>PDF OPTIONS</h3>
@@ -1299,25 +1318,6 @@ const Settings = (): ReactElement => {
                                         </div>
                                     </div>
 
-                                    <div className="toggleItem">
-                                        <InputCheckbox
-                                            checked={appSettings.readerSettings.autoUpdateAnilistProgress}
-                                            className="noBG"
-                                            onChange={(e) => {
-                                                dispatch(
-                                                    setReaderSettings({
-                                                        autoUpdateAnilistProgress: e.currentTarget.checked,
-                                                    })
-                                                );
-                                            }}
-                                            disabled={!anilistToken}
-                                            labelAfter="Auto-Update AniList Progress"
-                                        />
-                                        <div className="desc">
-                                            Automatically update AniList progress when chapter is read over 70%.
-                                            Only works if chapter names are well formatted.
-                                        </div>
-                                    </div>
                                     <div className="toggleItem">
                                         <InputCheckbox
                                             checked={appSettings.readerSettings.focusChapterInList}
