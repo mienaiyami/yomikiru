@@ -1,3 +1,6 @@
+import Pica from "pica";
+// import picaWorker from "pica/lib/worker.js";
+
 import { useCallback, useContext, useEffect, useLayoutEffect, useRef, useState } from "react";
 import { AppContext } from "../App";
 import ReaderSideList from "./ReaderSideList";
@@ -8,10 +11,10 @@ import { setMangaInReader } from "../store/mangaInReader";
 import { setReaderOpen } from "../store/isReaderOpen";
 import { setLoadingMangaPercent } from "../store/loadingMangaPercent";
 import { setLoadingManga } from "../store/isLoadingManga";
+import AnilistEdit from "./anilist/AnilistEdit";
 import { setLinkInReader } from "../store/linkInReader";
 import { newHistory } from "../store/history";
 import AnilistSearch from "./anilist/AnilistSearch";
-import AnilistEdit from "./anilist/AnilistEdit";
 import { InView } from "react-intersection-observer";
 import { setAnilistCurrentManga } from "../store/anilistCurrentManga";
 
@@ -65,9 +68,7 @@ const Reader = () => {
     const dispatch = useAppDispatch();
 
     const [images, setImages] = useState<string[]>([]);
-    const [imageData, setImageData] = useState<
-        { index: number; isWide: boolean; img: HTMLCanvasElement | HTMLImageElement | string }[]
-    >([]);
+    const [imageData, setImageData] = useState<{ index: number; isWide: boolean; img: string }[]>([]);
     // take element from `imageData` using index
     const [imageRow, setImageRow] = useState<
         {
@@ -616,7 +617,9 @@ const Reader = () => {
     useLayoutEffect(() => {
         // window.electron.webFrame.clearCache();
         const dynamic = appSettings.readerSettings.dynamicLoading;
-        images.forEach((e, i) => {
+        // let count = 0;
+        const timeStart = performance.now();
+        images.forEach((e, idx) => {
             const img = document.createElement("img");
             const loaded = (success = false) => {
                 setImagesLoaded((init) => init + 1);
@@ -624,49 +627,68 @@ const Reader = () => {
                     ...init,
                     {
                         img: "file://" + e.replaceAll("#", "%23"),
-                        index: i,
+                        index: idx,
                         isWide: success ? img.height / img.width <= 1.2 : false,
                     },
                 ]);
             };
             if (appSettings.useCanvasBasedReader) {
+                if (idx !== 0) return;
                 const canvas = document.createElement("canvas");
-                canvas.setAttribute("draggable", "false");
-                canvas.setAttribute("src", e);
-                canvas.setAttribute("data-pagenumber", JSON.stringify(i + 1));
-                canvas.classList.add("readerImg");
-                const ctx = canvas.getContext("2d");
-
                 img.onload = () => {
-                    canvas.width = img.width;
-                    canvas.height = img.height;
-                    ctx?.drawImage(img, 0, 0);
-                    setImagesLoaded((init) => init + 1);
-                    setImageData((init) => [
-                        ...init,
-                        {
-                            img: canvas,
-                            index: i,
-                            isWide: img.height / img.width <= 1.2,
-                        },
-                    ]);
+                    const ratio = img.width / img.height;
+                    canvas.width = (appSettings.readerSettings.readerWidth * window.innerWidth) / 100;
+                    console.log(`width : ${img.width} ==> ${canvas.width}`);
+                    canvas.height = canvas.width / ratio;
+                    const pica = Pica({
+                        // for some reason ww is giving require error,
+                        //todo try to add ww
+                        features: ["wasm", "js", "ww"],
+                        concurrency: 1,
+                    });
+                    //todo try doing it sync
+                    console.log(`starting resize:${idx} , time:${performance.now() - timeStart}`);
+                    pica.resize(img, canvas, {})
+                        .then((result) => {
+                            console.log(`resized:${idx} , time:${performance.now() - timeStart}`);
+                            return pica.toBlob(result, "image/png", 1);
+                        })
+                        .then((blob) => {
+                            const url = URL.createObjectURL(blob);
+                            console.log(`URL made:${idx} , time:${performance.now() - timeStart}`);
+                            // console.log(url);
+                            // if (count >= images.length) console.log(`time taken:${performance.now() - timeStart}`);
+                            setImagesLoaded((init) => init + 1);
+                            setImageData((init) => [
+                                ...init,
+                                {
+                                    img: url,
+                                    index: idx,
+                                    isWide: img.height / img.width <= 1.2,
+                                },
+                            ]);
+                        });
+
+                    //todo make sure to do this after load
+                    // URL.revokeObjectURL(url);
                 };
-                const onError = () => {
-                    canvas.width = 500;
-                    canvas.height = 100;
-                    ctx?.fillText("Error occurred while loading image.", 10, 10);
-                    setImagesLoaded((init) => init + 1);
-                    setImageData((init) => [...init, { img: canvas, index: i, isWide: false }]);
-                };
-                img.onerror = () => {
-                    onError();
-                };
-                img.onabort = () => {
-                    onError();
-                };
+                //todo
+                // const onError = () => {
+                //     canvas.width = 500;
+                //     canvas.height = 100;
+                //     ctx?.fillText("Error occurred while loading image.", 10, 10);
+                //     setImagesLoaded((init) => init + 1);
+                //     setImageData((init) => [...init, { img: canvas, index: i, isWide: false }]);
+                // };
+                // img.onerror = () => {
+                //     onError();
+                // };
+                // img.onabort = () => {
+                //     onError();
+                // };
             } else if (!dynamic) {
                 img.setAttribute("draggable", "false");
-                img.setAttribute("data-pagenumber", JSON.stringify(i + 1));
+                img.setAttribute("data-pagenumber", JSON.stringify(idx + 1));
                 img.classList.add("readerImg");
 
                 img.onload = (e) => {
@@ -689,16 +711,16 @@ const Reader = () => {
             }
         });
     }, [images]);
-    useEffect(() => {
-        //todo use just src for image and canvas, add canvas using element outside
-        appSettings.useCanvasBasedReader &&
-            [...document.querySelector("section.imgCont")!.children].forEach((e, i) => {
-                imageRow[i].i.forEach((canvasIndex) => {
-                    const elem = imageData[canvasIndex].img;
-                    if (elem instanceof HTMLElement) e.appendChild(elem);
-                });
-            });
-    }, [imageRow]);
+    // useEffect(() => {
+    //     //todo use just src for image and canvas, add canvas using element outside
+    //     appSettings.useCanvasBasedReader &&
+    //         [...document.querySelector("section.imgCont")!.children].forEach((e, i) => {
+    //             imageRow[i].i.forEach((canvasIndex) => {
+    //                 const elem = imageData[canvasIndex].img;
+    //                 if (elem instanceof HTMLElement) e.appendChild(elem);
+    //             });
+    //         });
+    // }, [imageRow]);
     useLayoutEffect(() => {
         if (images.length > 0 && images.length === imageData.length) {
             imageData.sort((a, b) => a.index - b.index);
@@ -1245,35 +1267,39 @@ const Reader = () => {
                                 }}
                                 {...props}
                             >
-                                {e.i.map(
-                                    (e) =>
-                                        typeof imageData[e]?.img === "string" && (
-                                            <img
-                                                className="readerImg"
-                                                draggable={false}
-                                                data-pagenumber={imageData[e]?.index + 1}
-                                                loading="lazy"
-                                                data-src={imageData[e].img}
-                                                key={imageData[e].img as string}
-                                            />
-                                        )
-                                )}
+                                {e.i.map((e) => (
+                                    <img
+                                        className="readerImg"
+                                        onLoad={(e) => {
+                                            console.log("main img loaded, ");
+                                            if (appSettings.useCanvasBasedReader)
+                                                URL.revokeObjectURL(e.currentTarget.src);
+                                        }}
+                                        draggable={false}
+                                        data-pagenumber={imageData[e]?.index + 1}
+                                        loading="lazy"
+                                        data-src={imageData[e].img}
+                                        key={imageData[e].img as string}
+                                    />
+                                ))}
                             </InView>
                         );
                     return (
                         <div {...props}>
-                            {e.i.map(
-                                (e) =>
-                                    typeof imageData[e]?.img === "string" && (
-                                        <img
-                                            className="readerImg"
-                                            draggable={false}
-                                            data-pagenumber={imageData[e].index + 1}
-                                            src={imageData[e].img as string}
-                                            key={imageData[e].img as string}
-                                        />
-                                    )
-                            )}
+                            {e.i.map((e) => (
+                                <img
+                                    className="readerImg"
+                                    onLoad={(e) => {
+                                        console.log("main img loaded, ");
+                                        if (appSettings.useCanvasBasedReader)
+                                            URL.revokeObjectURL(e.currentTarget.src);
+                                    }}
+                                    draggable={false}
+                                    data-pagenumber={imageData[e].index + 1}
+                                    src={imageData[e].img as string}
+                                    key={imageData[e].img as string}
+                                />
+                            ))}
                         </div>
                     );
                 })}

@@ -1,5 +1,7 @@
 import { app, dialog, getCurrentWindow, clipboard, nativeImage, shell } from "@electron/remote";
 import { ipcRenderer, webFrame } from "electron";
+import path from "path";
+import fs from "fs";
 
 import * as pdfjsLib from "pdfjs-dist/build/pdf.js";
 
@@ -7,8 +9,7 @@ import chokidar from "chokidar";
 import { z } from "zod";
 import log from "electron-log";
 log.transports.file.resolvePath = () => path.join(app.getPath("userData"), "logs/renderer.log");
-import path from "path";
-import fs from "fs";
+
 import Colorjs from "color";
 import themeJSON from "./themeInit.json";
 import AniList from "./Components/anilist/request";
