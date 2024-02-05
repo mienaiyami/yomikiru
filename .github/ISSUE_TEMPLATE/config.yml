@@ -1,1 +1,6 @@
 blank_issues_enabled: false
+
+contact_links:
+    - name: Question (Discussions)
+      url: https://github.com/mienaiyami/yomikiru/discussions/categories/q-a
+      about: "Ask a question about this app"

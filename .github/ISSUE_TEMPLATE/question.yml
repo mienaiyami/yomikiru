@@ -1,20 +1,20 @@
 name: ❓ Question
-description: Ask question related to this app.
+description: Ask question related to this app's codebase.
 labels:
-- question
+    - question
 body:
-- type: markdown
-  attributes:
-    value:
-      Please make sure to [search for existing issues](https://github.com/mienaiyami/yomikiru/issues?q=) before filing a new one!
+    - type: markdown
+      attributes:
+          value:
+              Please make sure to [search for existing issues](https://github.com/mienaiyami/yomikiru/issues?q=) before filing a new one!
 
-      Create a discussion in the [Discussions as Q&A](https://github.com/mienaiyami/yomikiru/discussions/categories/q-a) for questions that are not related to bugs or feature requests.
+              Create a discussion in the [Discussions as Q&A](https://github.com/mienaiyami/yomikiru/discussions/categories/q-a) for questions that are not related to bugs or feature requests.
 
-      Please **DO NOT DELETE** the issue unless its really needed. If the issue is fixed or stale then just mark it as closed.
+              Please **DO NOT DELETE** the issue unless its really needed. If the issue is fixed or stale then just mark it as closed.
 
-- type: textarea
-  attributes:
-    label: Question
-    description: Question.
-  validations:
-    required: true
+    - type: textarea
+      attributes:
+          label: Question
+          description: Question.
+      validations:
+          required: true
