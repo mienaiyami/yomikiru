@@ -11,6 +11,9 @@ rules.push({
 export const rendererConfig: Configuration = {
     resolve: {
         extensions: [".ts", ".tsx", ".js"],
+        alias: {
+            // pica: "pica/dist/pica",
+        },
     },
     module: {
         rules,
