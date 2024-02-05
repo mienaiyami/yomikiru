@@ -45,6 +45,8 @@ It is a offline desktop app to read locally stored manga or epub with great read
 
 ## [Build and Compile](docs/build.md)
 
+## [Contributing](docs/contribute.md)
+
 ## Thank you for Supporting the project
 
 ![info](https://github.com/mienaiyami/mienaiyami/blob/main/metrics.plugin.people.repository.svg)
