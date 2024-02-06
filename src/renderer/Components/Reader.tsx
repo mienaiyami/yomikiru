@@ -1,4 +1,4 @@
-import Pica from "pica";
+// import Pica from "pica";
 // import picaWorker from "pica/lib/worker.js";
 
 import { useCallback, useContext, useEffect, useLayoutEffect, useRef, useState } from "react";
@@ -619,6 +619,17 @@ const Reader = () => {
         const dynamic = appSettings.readerSettings.dynamicLoading;
         // let count = 0;
         const timeStart = performance.now();
+        const cancelSignal = new AbortController();
+        cancelSignal.signal.addEventListener("abort", () => {
+            console.log("Reader closed, aborting image resampling.");
+        });
+        const checkAndAbort = () => {
+            if (!window.app.isReaderOpen) {
+                cancelSignal.abort();
+                return true;
+            }
+            return false;
+        };
         images.forEach((e, idx) => {
             const img = document.createElement("img");
             const loaded = (success = false) => {
@@ -633,27 +644,36 @@ const Reader = () => {
                 ]);
             };
             if (appSettings.useCanvasBasedReader) {
-                if (idx !== 0) return;
                 const canvas = document.createElement("canvas");
                 img.onload = () => {
                     const ratio = img.width / img.height;
+                    // canvas.width = window.innerWidth;
+                    //todo plan on how to handle readerWidth after first render
                     canvas.width = (appSettings.readerSettings.readerWidth * window.innerWidth) / 100;
                     console.log(`width : ${img.width} ==> ${canvas.width}`);
                     canvas.height = canvas.width / ratio;
-                    const pica = Pica({
-                        // for some reason ww is giving require error,
-                        //todo try to add ww
+                    const pica = window.pica({
+                        // features: ["wasm", "js"],
                         features: ["wasm", "js", "ww"],
-                        concurrency: 1,
                     });
                     //todo try doing it sync
                     console.log(`starting resize:${idx} , time:${performance.now() - timeStart}`);
-                    pica.resize(img, canvas, {})
+                    pica.resize(img, canvas, {
+                        cancelToken: new Promise((resolve, reject) => {
+                            cancelSignal.signal.addEventListener("abort", () => {
+                                reject("aborted");
+                            });
+                        }),
+                        // filter: "lanczos2",
+                    })
                         .then((result) => {
+                            if (checkAndAbort()) return;
                             console.log(`resized:${idx} , time:${performance.now() - timeStart}`);
                             return pica.toBlob(result, "image/png", 1);
                         })
                         .then((blob) => {
+                            if (checkAndAbort()) return;
+                            if (!blob) return;
                             const url = URL.createObjectURL(blob);
                             console.log(`URL made:${idx} , time:${performance.now() - timeStart}`);
                             // console.log(url);
@@ -667,6 +687,9 @@ const Reader = () => {
                                     isWide: img.height / img.width <= 1.2,
                                 },
                             ]);
+                        })
+                        .catch((e) => {
+                            console.error("Image resampler::", e);
                         });
 
                     //todo make sure to do this after load

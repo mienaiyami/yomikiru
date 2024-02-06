@@ -55,4 +55,11 @@ export const rules: Required<ModuleOptions>["rules"] = [
             name: "[name].[ext]",
         },
     },
+    {
+        test: /pica\.min\.js/,
+        loader: "file-loader",
+        options: {
+            name: "[name].[ext]",
+        },
+    },
 ];

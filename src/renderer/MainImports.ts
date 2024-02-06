@@ -5,6 +5,13 @@ import fs from "fs";
 
 import * as pdfjsLib from "pdfjs-dist/build/pdf.js";
 
+//! pica is imported inside index.html, this line here will make pica.min.js to be included in build (not bundled)
+//! if you know a better way to do this pls PR
+//! using pica directly make webWorker feature to not work
+// eslint-disable-next-line @typescript-eslint/ban-ts-comment
+//@ts-ignore
+import "pica/dist/pica.min";
+
 import chokidar from "chokidar";
 import { z } from "zod";
 import log from "electron-log";
