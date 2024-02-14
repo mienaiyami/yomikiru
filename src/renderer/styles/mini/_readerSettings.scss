@@ -1,0 +1,181 @@
+.readerSettings {
+    --extender-size: 60px;
+    position: absolute;
+    color: var(--font-color);
+    background-color: var(--body-bg-color);
+    right: 10px;
+    top: 0;
+    z-index: 100;
+    border-radius: 0 0 0 10px;
+    width: 300px;
+    ::-webkit-scrollbar {
+        display: none;
+    }
+    &.closed {
+        width: 0;
+        height: 0;
+        .main {
+            display: none;
+        }
+    }
+
+    &.checkboxSetting {
+        label:has(span.toggle-area) {
+            input[type="checkbox"] {
+                display: block;
+            }
+            .toggle-area {
+                display: none;
+            }
+        }
+    }
+
+    button: {
+        position: relative;
+        border: none;
+        min-width: 50px;
+        padding: 10px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 15px;
+    }
+    button.menuExtender {
+        z-index: 101;
+        position: absolute;
+        width: var(--extender-size);
+        height: var(--extender-size);
+        right: 0;
+        top: 0;
+        border-radius: 0 0 0 20px;
+        font-size: 20px;
+        opacity: 0.5;
+        background: var(--sideList-bg-color);
+        &:active,
+        &:focus {
+            background: var(--btn-color-focus);
+            opacity: 1;
+        }
+        &:hover {
+            background: var(--btn-color-hover);
+            opacity: 1;
+        }
+
+        &::before {
+            top: 0;
+            left: 0;
+            --translate: calc(-100% - 10px), -50%;
+        }
+    }
+    .main {
+        width: 100%;
+        height: 100%;
+        max-height: var(--body-height);
+        overflow: auto;
+        position: relative;
+        display: flex;
+        flex-direction: column;
+        padding: 5px 10px;
+        font-size: 1.2rem;
+        .settingItem {
+            display: flex;
+            flex-direction: column;
+            padding: 5px 0;
+            gap: 5px;
+
+            .name {
+                font-size: 20px;
+                border-radius: 3px;
+                &::before {
+                    content: "▼";
+                    display: inline-block;
+                    transform: rotate(-90deg);
+                    margin-right: 5px;
+                }
+                &:focus-visible {
+                    box-shadow: var(--btn-color-focus) 0 0 0px 2px;
+                }
+                &.expanded {
+                    & ~ .options {
+                        display: flex;
+                    }
+                    &::before {
+                        transform: rotate(0);
+                    }
+                }
+            }
+
+            .options {
+                display: none;
+                flex-direction: row;
+                flex-wrap: wrap;
+                gap: 5px;
+
+                .optionSelected {
+                    background-color: var(--btn-color-focus);
+                }
+                .row {
+                    display: flex;
+                    flex-direction: row;
+                    gap: 5px;
+                }
+                .col {
+                    display: flex;
+                    flex-direction: column;
+                    width: 100%;
+                    gap: 5px;
+                }
+                &.col {
+                    flex-direction: column;
+                }
+
+                input[type="number"] {
+                    width: 3.5em;
+                    padding: 5px;
+                    padding-right: 0;
+                }
+
+                button:disabled {
+                    opacity: 0.5;
+                }
+
+                label {
+                    display: flex;
+                    cursor: pointer;
+                    background-color: var(--btn-color);
+                    padding: 5px;
+                    gap: 5px;
+                    font-size: 1em;
+                    align-items: center;
+                    border-radius: 3px;
+                    height: 2.2em;
+
+                    p,
+                    .optSelectBtn {
+                        font-size: 0.75em;
+                    }
+                    .colorPickerBtn:not(#dummy#dummy) {
+                        width: 60px;
+                        height: 100%;
+                    }
+                    input[type="range"] {
+                        width: 100%;
+                    }
+
+                    &:hover {
+                        background-color: var(--btn-color-hover);
+                    }
+                    &:focus,
+                    &:active {
+                        box-shadow: var(--btn-color-focus) 0 0 0px 2px;
+                    }
+                    &.disabled {
+                        opacity: 0.5;
+                        pointer-events: none;
+                        cursor: not-allowed;
+                    }
+                }
+            }
+        }
+    }
+}

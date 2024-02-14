@@ -1,0 +1,164 @@
+.readerSideList {
+    background: var(--sideList-bg-color);
+    height: var(--body-height);
+    width: var(--sideListWidth);
+    min-width: 196px;
+    max-width: 90%;
+    z-index: 100;
+    position: absolute;
+    left: 0;
+    top: 0;
+    display: flex;
+    flex-direction: column;
+    padding: 10px;
+    padding-top: 5px;
+    box-sizing: border-box;
+    transform: translateX(calc(-100% + 10px));
+    transition: 0.2s transform;
+    .indicator {
+        position: absolute;
+        cursor: pointer;
+        right: 0;
+        top: 50%;
+        background-color: var(--sideList-bg-color);
+        height: 100px;
+        border-radius: 0 5px 5px 0;
+        width: 20px;
+        display: grid;
+        place-items: center;
+        transform: translate(100%, -50%);
+        &:hover {
+            background-color: var(--btn-color-hover);
+        }
+        &:focus,
+        &:active {
+            box-shadow: var(--btn-color-focus) 0 0 0px 2px;
+        }
+    }
+    .reSizer {
+        position: absolute;
+        cursor: ew-resize;
+        right: 0;
+        top: 0;
+        background-color: var(--sideList-bg);
+        width: 10px;
+        height: 100%;
+        &:hover {
+            background-color: var(--btn-color-hover);
+        }
+    }
+    &.open {
+        transform: translateX(0);
+    }
+    .in-reader {
+        font-size: 20px;
+        user-select: text;
+        border: solid var(--reader-sidelist-divider-color);
+        border-width: 4px 0;
+        margin-top: 7px;
+        margin-bottom: 5px;
+        padding: 5px;
+        padding-right: 10px;
+        display: flex;
+        flex-direction: column;
+        gap: 6px;
+        cursor: text;
+        font-weight: 300;
+        font-size: 16px;
+        > div {
+            display: grid;
+            grid-template-columns: 5rem 1rem auto;
+            align-items: baseline;
+            > span {
+                word-break: break-word;
+                &:not(.bold) {
+                    padding-top: 0.3rem;
+                }
+            }
+            .bold {
+                font-size: 20px;
+                font-weight: 700;
+                display: inline-block;
+                position: relative;
+            }
+        }
+    }
+    .anilistBar {
+        font-size: 20px;
+        border: solid var(--reader-sidelist-divider-color);
+        border-width: 0 0 4px 0;
+        display: grid;
+        grid-template-columns: 5rem 1rem auto;
+        align-items: baseline;
+        padding: 5px;
+        div.btns {
+            display: flex;
+            flex-direction: row;
+            gap: 6px;
+            font-size: 0.8em;
+            > :nth-child(n) {
+                width: 30%;
+            }
+            > :nth-child(2n) {
+                width: 20%;
+            }
+            > .input input {
+                text-align: center;
+            }
+        }
+        span {
+            &.bold {
+                font-size: 20px;
+                font-weight: 700;
+                display: inline-block;
+                position: relative;
+            }
+        }
+    }
+    &.hideTextFileBadge {
+        .nonFolder[data-type-text="true"] {
+            display: none;
+        }
+    }
+    &.hidePageCountInSideList {
+        .pageNum {
+            display: none;
+        }
+    }
+    .location-cont {
+        margin-top: 5px;
+        padding: 0;
+        a {
+            --grid-template: 2.3em;
+        }
+    }
+    .tools {
+        margin-bottom: 0;
+        button {
+            &::before {
+                left: 50%;
+                top: 100%;
+                --translate: -50%, 10px;
+            }
+        }
+        .row2 {
+            display: flex;
+            flex-direction: row;
+            width: 100%;
+            height: 44px;
+            gap: 6px;
+            justify-content: stretch;
+            button {
+                width: 100%;
+                &::before {
+                    left: 50%;
+                    top: 0;
+                    --translate: -50%, calc(-100% - 10px);
+                }
+            }
+            button.bookmarkBtn {
+                width: auto;
+            }
+        }
+    }
+}

@@ -1,0 +1,174 @@
+#topBar {
+    position: absolute;
+    top: 0;
+    left: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 100vw;
+    height: var(--titleBar-height);
+    user-select: none;
+    background: var(--topBar-color);
+    z-index: 1000000;
+    color: var(--icon-color);
+
+    button {
+        font-size: 18px;
+    }
+
+    input {
+        border-radius: 0;
+        padding: 0;
+    }
+    .homeBtns {
+        position: absolute;
+        left: 0;
+        top: 0;
+        display: flex;
+        flex-direction: row;
+        align-items: center;
+        width: calc(var(--button-width) * 5);
+        height: 100%;
+
+        button {
+            width: var(--button-width);
+            background: none;
+            position: relative;
+            height: 100%;
+            left: 0;
+            top: 0;
+            border: none;
+            cursor: pointer;
+            color: inherit;
+            &::before {
+                top: 100%;
+                left: 50%;
+                --translate: -50%, 10px;
+            }
+
+            -webkit-app-region: no-drag;
+
+            &:hover,
+            &:active {
+                background: var(--topBar-btn-hover);
+            }
+        }
+    }
+
+    .titleDragable {
+        position: absolute;
+        left: 0;
+        top: 0;
+        height: 100%;
+        width: 100%;
+        -webkit-app-region: drag;
+    }
+
+    .mainTitleCont {
+        position: absolute;
+        height: 100%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        width: calc(100% - (var(--button-width) * 10));
+        color: inherit;
+        .title {
+            position: relative;
+            max-width: 100%;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            font-size: 25px;
+        }
+    }
+
+    .windowBtnCont {
+        -webkit-app-region: no-drag;
+        position: absolute;
+        // width: calc(var(--button-width) * 2 + 138px);
+
+        top: 0;
+        right: 138px;
+        z-index: 3000;
+        display: flex;
+        flex-direction: row;
+        height: 100%;
+        align-items: center;
+
+        .pageNumber {
+            position: relative;
+            display: flex;
+            flex-direction: row;
+            align-items: center;
+            justify-content: flex-end;
+            height: 100%;
+            background: none;
+            padding: 0;
+            border-radius: 0;
+            cursor: default;
+            color: var(--font-color);
+            // visibility: hidden;
+            // width: calc(var(--button-width) * 2);
+            &::before {
+                top: 100%;
+                left: 50%;
+                --translate: -50%, 10px;
+            }
+
+            .totalPage {
+                display: block;
+                font-size: 25px;
+                // text-align: center;
+                // width: calc(var(--button-width) * 1);
+            }
+
+            .pageNumberInput {
+                z-index: inherit;
+                width: calc(var(--button-width) * 1);
+                text-align: right;
+                font-size: 25px;
+                box-sizing: border-box;
+                font-family: Roboto;
+                cursor: text;
+                background: var(--text-input-bg);
+                border: none;
+                // padding: 10px;
+                height: 100%;
+                box-sizing: border-box;
+                color: var(--font-color);
+
+                &::-webkit-outer-spin-button,
+                &::-webkit-inner-spin-button {
+                    -webkit-appearance: none;
+                    margin: 0;
+                }
+
+                &:focus,
+                &:active {
+                    background: var(--text-input-bg-focus);
+                    box-shadow: none;
+                    outline: none;
+                }
+            }
+        }
+
+        button {
+            z-index: inherit;
+            background: none;
+            box-sizing: border-box;
+            color: var(--icon-color);
+            border: none;
+            width: var(--button-width);
+            height: 100%;
+
+            &:focus {
+                outline: none;
+            }
+
+            &:hover,
+            &:active {
+                background: var(--topBar-btn-hover);
+            }
+        }
+    }
+}

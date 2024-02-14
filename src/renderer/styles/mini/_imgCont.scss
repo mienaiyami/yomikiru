@@ -1,0 +1,158 @@
+.imgCont {
+    width: 100%;
+    display: flex;
+    position: relative;
+    flex-direction: column;
+    // align-items: center;
+
+    // for original size image
+    overflow-x: unset;
+
+    // overflow: auto;
+    --varWidth: 100%;
+    --gapSize: 10px;
+
+    --blend-bg: rgba(0, 0, 0, 0);
+    --blend-mode: normal;
+    --hue: 0;
+    --saturation: 1;
+    --brightness: 1;
+    --contrast: 1;
+    &.customColorFilter {
+        background-color: var(--blend-bg);
+        .row {
+            background-color: var(--blend-bg);
+            .readerImg {
+                mix-blend-mode: var(--blend-mode);
+                filter: hue-rotate(calc(var(--hue) * 1deg)) brightness(var(--brightness))
+                    saturate(var(--saturation)) contrast(var(--contrast));
+            }
+        }
+    }
+    --invert: 0;
+    --grayscale: 0;
+    filter: invert(var(--invert)) grayscale(var(--grayscale));
+    &.invertImage {
+        --invert: 1;
+    }
+    &.grayscale {
+        --grayscale: 1;
+    }
+
+    &.readerMode1n2 {
+        justify-content: center;
+        min-height: 100%;
+    }
+
+    &.fitVertically .row {
+        width: 100%;
+        .readerImg {
+            width: auto !important;
+            height: var(--body-height);
+        }
+    }
+    &.fitHorizontally {
+        .row {
+            width: 100%;
+            .readerImg {
+                width: 100%;
+                height: auto !important;
+            }
+            &.twoPagePerRow {
+                &.wide {
+                    .readerImg {
+                        width: 100% !important;
+                        height: auto !important;
+                    }
+                }
+                .readerImg {
+                    width: 50% !important;
+                    height: auto !important;
+                }
+            }
+        }
+    }
+    &.original .row {
+        width: 100%;
+        .readerImg {
+            width: auto !important;
+            height: auto !important;
+        }
+    }
+
+    &.gap {
+        gap: var(--gapSize);
+    }
+
+    .row {
+        display: flex;
+        justify-content: center;
+        width: calc(100% + calc(max(0%, calc(var(--varWidth) - 100%))));
+        --max-width: 100%;
+        --max-height: auto;
+        transform: translate3d(0, 0, 0);
+
+        &.ltr {
+            flex-direction: row;
+        }
+
+        &.rtl {
+            flex-direction: row-reverse;
+        }
+        &.wide {
+            width: calc((100% + calc(max(0%, calc((var(--varWidth) * 2) - 100%)))));
+            .readerImg {
+                width: calc(var(--varWidth) * 2);
+                max-width: min(100%, var(--max-width));
+            }
+        }
+
+        .readerImg {
+            max-height: var(--max-height);
+            width: var(--varWidth);
+            transform: translate3d(0, 0, 0);
+            image-orientation: none;
+            max-width: var(--max-width);
+            &::not([src]) {
+                width: calc(100vh - 50px);
+                height: calc(100vh / 1.5);
+                opacity: 0;
+            }
+            opacity: 1;
+        }
+        //todo check if it is even needed
+        &.widthClamped {
+            max-width: 100%;
+            .readerImg {
+                max-width: 100%;
+            }
+        }
+        &.twoPagePerRow {
+            width: calc((100% + calc(max(0%, calc(var(--varWidth) - 100%))) * 1));
+            .readerImg {
+                width: calc(var(--varWidth) / 2);
+                max-width: min(50%, calc(var(--max-width) / 2));
+            }
+            &.wide {
+                .readerImg {
+                    width: var(--varWidth);
+                    max-width: min(100%, var(--max-width));
+                }
+            }
+
+            &.widthClamped {
+                .readerImg {
+                    max-width: 50%;
+                    // width: calc(var(--varWidth) / 2);
+                }
+
+                &.wide {
+                    .readerImg {
+                        max-width: 100%;
+                        // width: var(--varWidth);
+                    }
+                }
+            }
+        }
+    }
+}

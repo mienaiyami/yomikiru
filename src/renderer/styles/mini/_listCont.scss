@@ -1,0 +1,264 @@
+// almost all chapter/manga list
+.listCont {
+    .location-cont {
+        position: relative;
+        height: 100%;
+        // overflow-y: scroll;
+        // overflow-x: visible;
+        overflow-y: auto;
+        ol {
+            position: relative;
+            counter-reset: countList;
+            z-index: 99;
+
+            li {
+                position: relative;
+                display: flex;
+                width: 100%;
+                align-items: stretch;
+                border-radius: 2px;
+                background: var(--listItem-bg-color);
+                // border-bottom: 1px solid var(--color-primary);
+                height: 100%;
+
+                &[data-focused="true"] {
+                    background: var(--listItem-bg-color-hover);
+                }
+                &:hover,
+                &:active {
+                    background-color: var(--listItem-bg-color-hover);
+                }
+                code.nonFolder {
+                    margin-left: auto;
+                    margin-right: 5px;
+                }
+                &.focused {
+                    background-color: var(--listItem-bg-color-hover);
+                }
+                a {
+                    cursor: pointer;
+                    display: grid;
+                    --grid-template: 0;
+                    &:has(> code.nonFolder) {
+                        --grid-template: auto;
+                    }
+                    gap: 5px;
+                    grid-template-columns: 2.1em auto var(--grid-template);
+                    // display: flex;
+                    // flex-direction: row;
+                    align-items: start;
+                    padding: 5px;
+                    &:is(.big) {
+                        padding: 10px 5px;
+                    }
+                    width: 100%;
+                    overflow: hidden;
+
+                    .pageNum {
+                        margin-left: auto;
+                        min-width: 2em;
+                        text-align: end;
+                    }
+                    .double {
+                        display: inline-flex;
+                        flex-direction: column;
+                        gap: 5px;
+                        .chapter {
+                            display: flex;
+                            .text,
+                            .page {
+                                color: var(--font-color-secondary);
+                            }
+                            .page:has(code.nonFolder) {
+                                .nonFolder {
+                                    // margin-right: 2.6em;
+                                    margin-right: 0.6em;
+                                }
+                                opacity: 1;
+                            }
+                            .page {
+                                // margin-left: auto;
+                                white-space: nowrap;
+                                display: flex;
+                                // display: var(--show-page-num-on-home);
+                                gap: 5px;
+                                // .num {
+                                //     min-width: 2.2em;
+                                // }
+                            }
+                        }
+                    }
+
+                    .text {
+                        overflow: hidden;
+                        text-overflow: ellipsis;
+                        display: -webkit-box;
+
+                        word-break: break-all;
+                        -webkit-line-clamp: 1;
+                        /* number of lines to show */
+                        -webkit-box-orient: vertical;
+                    }
+
+                    &::before {
+                        counter-increment: countList;
+                        content: counter(countList) ".\00a0";
+                        text-align: right;
+                    }
+                }
+
+                button {
+                    margin: 0;
+                    cursor: pointer;
+                    user-select: none;
+                    padding: 5px 20px;
+                    box-sizing: border-box;
+                    align-self: stretch;
+                    border: none;
+                    display: flex;
+                    font-size: 20px;
+                    background: var(--body-bg);
+
+                    &:hover,
+                    &:active,
+                    &:focus {
+                        background: var(--btn-color-focus);
+                    }
+                    &:hover {
+                        background: var(--btn-color-hover);
+                    }
+                }
+            }
+
+            .alreadyRead {
+                background: var(--listItem-bg-color-read);
+
+                &:hover,
+                &:active {
+                    background-color: var(--listItem-bg-color-hover);
+                }
+            }
+
+            .current {
+                background: var(--listItem-bg-color-current);
+            }
+        }
+    }
+
+    .tools {
+        display: flex;
+        flex-direction: column;
+        gap: 5px;
+        // margin-bottom: 5px;
+        --button-width1: 45px;
+        font-size: 1.2rem;
+
+        margin-bottom: 10px;
+        .currentPath {
+            display: flex;
+            gap: 10px;
+            align-items: center;
+            // padding: 0 10px;
+            border-bottom: 5px solid var(--divider-color);
+            padding-bottom: 10px;
+            span {
+                font-size: 0.8em;
+                user-select: text;
+            }
+            button {
+                padding: 5px;
+                min-width: calc(var(--button-width) * 2 + 5px);
+                pointer-events: all;
+                &:hover {
+                    &:disabled {
+                        cursor: not-allowed;
+                        opacity: 1;
+                        background-color: var(--btn-color);
+                    }
+                }
+            }
+        }
+        .row1 {
+            gap: 6px;
+            display: flex;
+            flex-direction: row;
+            height: 44px;
+            // padding: 0 10px;
+        }
+
+        button {
+            // padding: 0;
+            width: var(--button-width);
+            height: 100%;
+            overflow: visible;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+
+            &::before {
+                left: 0;
+                top: 0;
+                --translate: 0%, calc(-100% - 10px);
+            }
+        }
+    }
+}
+// 3 tabs of home page
+.tabCont {
+    flex-direction: row;
+    --divider-width: 25px;
+    display: flex;
+    position: relative;
+    width: 100%;
+    height: 100%;
+    .contTab {
+        width: 100%;
+        height: 100%;
+        position: relative;
+        display: flex;
+        overflow-y: auto;
+        flex-direction: column;
+        padding: 20px 10px;
+        flex: 1;
+        h2 {
+            margin-bottom: 10px;
+            text-align: center;
+            padding-bottom: 10px;
+            font-weight: 400;
+            border-bottom: 5px solid var(--divider-color);
+            box-sizing: border-box;
+
+            button {
+                padding: 0 10px;
+                margin: 0;
+                margin-left: 5px;
+            }
+        }
+        &.collapsed {
+            flex: 0;
+            padding: 0;
+        }
+    }
+
+    .divider {
+        display: grid;
+        place-items: center;
+        cursor: pointer;
+        height: 100%;
+        // margin: 0 10px;
+        padding: 0 10px;
+
+        &:hover {
+            .bar {
+                background-color: var(--btn-color-hover);
+            }
+        }
+
+        .bar {
+            height: 100%;
+            width: 6.9px;
+            min-width: 6.9px;
+            background-color: var(--divider-color);
+        }
+    }
+}

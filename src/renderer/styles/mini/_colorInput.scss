@@ -1,0 +1,153 @@
+@use "mixins";
+#realColorInput {
+    @include mixins.KeyboardList();
+    width: 300px;
+    padding: 0;
+    display: flex;
+    flex-direction: column;
+    --hue: 237deg;
+    --color: hsl(var(--hue), 100%, 50%);
+    --color-noAlpha: hsl(var(--hue), 100%, 50%);
+    overflow: hidden;
+    > div {
+        inset: 0;
+    }
+    .slider {
+        position: absolute;
+        height: 100%;
+        aspect-ratio: 1 / 1;
+        box-shadow: 0 0 0 2px white, inset 0 0 0 2px black;
+        &.sliding {
+            box-shadow: 0 0 0 4px white, inset 0 0 0 2px black;
+        }
+        border-radius: 10000px;
+        pointer-events: none;
+        --top: 0;
+        --left: 0;
+        top: var(--top);
+        left: var(--top);
+        translate: -50% -50%;
+    }
+    .SLGradient {
+        position: relative;
+        height: 180px;
+        background-image: linear-gradient(0, black, transparent),
+            linear-gradient(90deg, white, hsl(var(--hue), 100%, 50%));
+        box-shadow: 0 0.5px 0 0 var(--btn-color-focus);
+        cursor: crosshair;
+        .slider {
+            height: 10px;
+            background: var(--color-noAlpha);
+        }
+    }
+    button {
+        // height: 40px;
+        height: 100%;
+        aspect-ratio: 1 / 1;
+        padding: 0;
+        border-radius: 4px;
+    }
+    .block2 {
+        height: 60px;
+        // display: flex;
+        display: grid;
+        grid-template-columns: 50px auto;
+        padding: 10px;
+        gap: 5px;
+        flex-direction: row;
+        padding-bottom: 0;
+        > div {
+            inset: 0;
+        }
+        button {
+            width: 100%;
+        }
+        .colorShow {
+            pointer-events: none;
+            background: var(--color);
+            position: relative;
+            overflow: hidden;
+            &::before {
+                content: "";
+                position: absolute;
+                inset: 0;
+                z-index: -1;
+                background: repeating-conic-gradient(gray 0% 25%, white 0% 50%) 50% /10px 10px;
+            }
+        }
+        .hue-opacity {
+            width: 100%;
+            display: grid;
+            grid-template-rows: 1fr 1fr;
+            gap: 10px;
+            padding: 8px 10px;
+            > div {
+                border-radius: 1000px;
+                inset: 0;
+                position: relative;
+                cursor: crosshair;
+            }
+            .slider {
+                translate: -50% 0;
+                background: hsl(var(--hue), 100%, 50%);
+            }
+            .hueRange {
+                background-image: linear-gradient(
+                    to right,
+                    hsl(0, 100%, 50%),
+                    hsl(60, 100%, 50%),
+                    hsl(120, 100%, 50%),
+                    hsl(180, 100%, 50%),
+                    hsl(240, 100%, 50%),
+                    hsl(300, 100%, 50%),
+                    hsl(360, 100%, 50%)
+                );
+            }
+            .opacityRange {
+                background: linear-gradient(to right, transparent, var(--color-noAlpha)),
+                    repeating-conic-gradient(gray 0% 25%, white 0% 50%) 50% /10px 10px;
+                .slider {
+                    background: var(--color);
+                }
+            }
+        }
+    }
+    .values {
+        height: 70px;
+        padding: 10px;
+        // font-size: 0.9em;
+        display: flex;
+        gap: 5px;
+        .colorValueInput {
+            display: flex;
+            flex-direction: row;
+            width: 80%;
+            gap: 5px;
+            label {
+                display: flex;
+                flex-direction: row;
+                padding: 0;
+                width: 100%;
+                flex-direction: column;
+                align-items: center;
+                justify-content: center;
+                &:has(input[type="text"]) {
+                    input {
+                        padding: 5px;
+                        width: 90%;
+                        padding-left: 10px;
+                        position: relative;
+                        text-align: center;
+                    }
+                }
+                .input {
+                    width: 100%;
+                    input {
+                        padding: 5px;
+                        text-align: center;
+                    }
+                }
+            }
+        }
+    }
+}

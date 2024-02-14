@@ -1,0 +1,236 @@
+#anilistEdit {
+    width: 100%;
+    height: 100%;
+    position: absolute;
+    top: 0;
+    left: 0;
+    z-index: 102;
+    display: grid;
+    place-items: center;
+    @include mixins.contFadeScaleIn(".overlayCont");
+    .row {
+        display: flex;
+        flex-direction: row;
+    }
+    .col {
+        display: flex;
+        flex-direction: column;
+    }
+    .overlayCont {
+        width: min(700px, 80%);
+        display: grid;
+        grid-template-rows: 200px auto;
+        .banner {
+            position: absolute;
+            background-size: cover;
+            background-position: 50% 0%;
+            background-repeat: no-repeat;
+            width: 100%;
+            height: 55%;
+            opacity: 0.6;
+            z-index: -1;
+        }
+        .info {
+            display: grid;
+            grid-template-columns: 20% 80%;
+            padding: 10px 0;
+            height: 100%;
+            background-size: cover;
+            background-position: 50% 0%;
+            background-repeat: no-repeat;
+            .cover {
+                height: 100%;
+                display: grid;
+                place-items: center;
+                img {
+                    height: 100%;
+                    box-shadow: var(--body-bg-color) 0px 3px 15px -3px;
+                    border-radius: 6px;
+                }
+            }
+            > div {
+                align-items: start;
+                width: 100%;
+                height: 100%;
+                justify-content: space-evenly;
+                padding: 0 10px;
+                &:nth-of-type(3) {
+                    align-items: stretch;
+                }
+                span {
+                    user-select: text;
+                    cursor: default;
+                    color: var(--font-color-secondary);
+                    font-size: 1em;
+                    text-shadow: 0 0 5px var(--body-bg-color);
+                }
+                > :nth-child(1) {
+                    color: var(--font-color);
+                    font-size: 1.6em;
+                }
+                span:has(a) {
+                    cursor: pointer;
+                    text-decoration: underline;
+                    &:hover {
+                        color: var(--font-color);
+                    }
+                }
+            }
+        }
+        .data {
+            display: grid;
+            padding: 0 10px 10px 10px;
+            grid-template-columns: 1fr 1fr 1fr 1fr;
+            grid-template-rows: 1fr 1fr 60px;
+            gap: 10px;
+            column-gap: 20px;
+            > div {
+                height: 80px;
+                display: grid;
+                align-items: end;
+                &.last {
+                    height: 60px;
+                }
+                label {
+                    display: flex;
+                    flex-direction: column;
+                    padding: 0;
+                    gap: 5px;
+                    align-content: start;
+                    .optSelectBtn,
+                    input {
+                        text-align: center;
+                    }
+                    .optSelectBtn {
+                        justify-content: space-evenly;
+                    }
+                    .input {
+                        width: 100%;
+                    }
+                    &:has(input[type="checkbox"]) {
+                        flex-direction: row;
+                        padding: 10px;
+                        justify-content: center;
+                        gap: 10px;
+                        input[type="checkbox"] {
+                            display: block;
+                        }
+                        .toggle-area {
+                            display: none;
+                            &.on {
+                                .toggle-state {
+                                    background-color: var(--body-bg-color) !important;
+                                }
+                            }
+                        }
+                        &.optionSelected {
+                            background-color: var(--btn-color-focus);
+                        }
+                    }
+                }
+            }
+        }
+    }
+}
+
+#anilistSearch {
+    width: 100%;
+    height: 100%;
+    position: absolute;
+    top: 0;
+    left: 0;
+    z-index: 101;
+    display: grid;
+    place-items: center;
+    @include mixins.contFadeScaleIn(".overlayCont");
+    .row {
+        display: flex;
+        flex-direction: row;
+    }
+    .overlayCont {
+        .searchBar {
+            display: flex;
+            flex-direction: row;
+            gap: 6px;
+            padding: 10px;
+            box-shadow: inset 0 -2px 0 0 var(--divider-color);
+            font-size: 1.2em;
+        }
+        .results {
+            height: 70vh;
+            overflow: auto;
+            p {
+                padding: 10px;
+            }
+            ol {
+                .row {
+                    display: flex;
+                    flex-direction: row;
+                    gap: 6px;
+                }
+                .col {
+                    display: flex;
+                    flex-direction: column;
+                    gap: 6px;
+                }
+                li {
+                    list-style: none;
+                    margin: 2px;
+                    button {
+                        padding: 10px;
+                        height: 130px;
+                        width: 100%;
+                        font-size: 1em;
+                        gap: 10px;
+                        background: none;
+
+                        &:hover {
+                            background: var(--btn-color-hover);
+                        }
+                        &:active {
+                            background-color: var(--btn-color-focus);
+                        }
+                        .cover {
+                            width: 20%;
+                            height: 100%;
+                            background-position: center center;
+                            background-repeat: no-repeat;
+                            background-size: cover;
+                            border-radius: 6px;
+                        }
+                        > div {
+                            align-items: start;
+                            width: 80%;
+                            height: 100%;
+                            justify-content: space-around;
+                            span {
+                                text-overflow: ellipsis;
+                                overflow: hidden;
+                                white-space: nowrap;
+                                max-width: 100%;
+                                font-size: 1.2em;
+                            }
+                            > :nth-child(2),
+                            > :nth-child(3) {
+                                color: var(--font-color-secondary);
+                                font-size: 1em;
+                            }
+                            > div {
+                                gap: 10px;
+
+                                font-size: 0.9em;
+                                span {
+                                    align-items: center;
+                                    :nth-child(1) {
+                                        color: var(--font-color-secondary);
+                                        font-size: 1em;
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
+}

@@ -1,0 +1,317 @@
+//! only meant to be imported inside body directly
+@mixin labelNoBG {
+    &.noBG {
+        background: none !important;
+        &:has(input:focus) {
+            box-shadow: none;
+        }
+        &:hover {
+            background: none !important;
+        }
+        &:focus,
+        &:active {
+            box-shadow: none !important;
+        }
+        .toggle-area {
+            &.on {
+                .toggle-state {
+                    background-color: var(--body-bg-color) !important;
+                }
+            }
+        }
+    }
+}
+label:has(input:focus) {
+    box-shadow: var(--btn-color-focus) 0 0 0px 2px;
+}
+label {
+    display: flex;
+    cursor: pointer;
+    background-color: var(--btn-color);
+    padding: 0.4em;
+    gap: 0.4em;
+    font-size: 1em;
+    align-items: center;
+    border-radius: 0.2em;
+    // min-height: 2.2em;
+
+    p {
+        font-size: 0.8em;
+    }
+    &:hover {
+        background-color: var(--btn-color-hover);
+    }
+    &:focus,
+    &:active {
+        box-shadow: var(--btn-color-focus) 0 0 0px 2px;
+        outline: transparent;
+    }
+    &.disabled {
+        opacity: 0.5;
+        pointer-events: none;
+        cursor: not-allowed;
+    }
+    @include labelNoBG();
+    &:not(.noBG):has(.input) {
+        input:focus {
+            box-shadow: none;
+        }
+    }
+    &:has(span.toggle-area) {
+        input[type="checkbox"] {
+            display: none;
+        }
+        .toggle-area {
+            // margin-left: auto;
+            user-select: none;
+            --width: 1.7em;
+            --padding: 0.1em;
+            width: var(--width);
+            height: 0.9em;
+            padding: var(--padding);
+            flex-shrink: 0;
+            border-radius: 10000px;
+            box-shadow: 0 0 2px 0 var(--font-color);
+            transition: 0.1s ease-in-out background-color;
+            margin: 0 3px;
+
+            &:focus {
+                outline: none;
+                box-shadow: 0 0 2px 0 var(--font-color), var(--btn-shadow-focus) 0 0 0px 4px;
+            }
+            .toggle-state {
+                --toggle-width: 0.7em;
+                --aspect-ratio: 1;
+                height: var(--toggle-width);
+                aspect-ratio: var(--aspect-ratio);
+                display: block;
+                background-color: var(--font-color);
+                opacity: 0.5;
+                border-radius: 10000px;
+                position: relative;
+                left: 0;
+                top: 50%;
+                transform: translate(0, -50%);
+                transition-duration: 0.1s;
+                transition-timing-function: ease-in-out;
+                // transform-origin: top;
+                transition-property: left, opacity, background-color, width, aspect-ratio;
+            }
+            &.on {
+                background-color: var(--font-color);
+                // box-shadow: 0 0 0 1px var(--font-color);
+                .toggle-state {
+                    opacity: 1;
+                    left: calc(
+                        calc(var(--width) - calc(var(--padding) * 2)) -
+                            calc(var(--toggle-width) * var(--aspect-ratio))
+                    );
+                    background-color: var(--btn-color-focus);
+                }
+            }
+            &:not(.on):hover {
+                box-shadow: 0 0 0 1px var(--font-color);
+                .toggle-state {
+                    opacity: 1;
+                }
+            }
+            &:active {
+                .toggle-state {
+                    transition-property: left, opacity, background-color, width, aspect-ratio;
+                    --aspect-ratio: 1.3;
+                }
+            }
+        }
+    }
+}
+
+input[type="checkbox"] {
+    accent-color: var(--icon-color);
+    opacity: 0.3;
+    &:checked {
+        opacity: 1;
+    }
+    &:focus,
+    &:active {
+        outline: none;
+    }
+    color-scheme: light;
+}
+input[type="range"] {
+    accent-color: var(--icon-color);
+    color-scheme: light dark;
+    &::-webkit-slider-thumb {
+        // thumb height = 16px
+        // (16-6)/2
+        margin-top: -5px;
+    }
+    &::-webkit-slider-runnable-track {
+        height: 6px;
+    }
+}
+.input:not(#dummy#dummy):has(input[type="number"], .spin) {
+    position: relative;
+    // overflow: hidden;
+    border-radius: 4px;
+    // width: 100%;
+    height: 100%;
+    &:hover {
+        .spin {
+            visibility: visible;
+        }
+    }
+    &.disabled {
+        .spin {
+            display: none;
+        }
+    }
+    .spin {
+        position: absolute;
+        visibility: hidden;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        padding: 0;
+        right: 0;
+        height: 50%;
+        width: 1.5em;
+        border-radius: 0;
+        top: 0;
+        // for consistency
+        font-size: 1.2rem;
+        min-width: auto;
+        &:nth-of-type(1) {
+            border-top-right-radius: 4px;
+        }
+        &:nth-of-type(2) {
+            border-bottom-right-radius: 4px;
+            top: 50%;
+        }
+        &:focus,
+        &:active {
+            box-shadow: none;
+        }
+    }
+}
+input[type="text"],
+input[type="number"] {
+    background: var(--text-input-bg);
+    overflow: scroll;
+    cursor: text;
+    color: var(--font-color);
+    font-family: "roboto";
+    outline: none;
+    border-radius: 3px;
+    width: 100%;
+    border: none;
+    font-size: 1em;
+    padding: 0.66em;
+
+    color-scheme: light dark;
+    &:disabled {
+        cursor: not-allowed;
+    }
+    &:focus {
+        box-shadow: var(--text-input-bg-focus) 0 0 0px 2px;
+        // background-color: var(--text-input-bg-focus);
+    }
+    &::-webkit-outer-spin-button,
+    &::-webkit-inner-spin-button {
+        //removing coz have custom now
+        appearance: none;
+        margin: 0;
+    }
+    &::placeholder {
+        color: currentColor;
+        opacity: 0.4;
+    }
+}
+input[type="date"] {
+    background: var(--text-input-bg);
+    color: var(--font-color);
+    font-family: "roboto";
+    outline: none;
+    border-radius: 3px;
+    width: 100%;
+    border: none;
+    font-size: 1em;
+    padding: 10px;
+    cursor: pointer;
+    color-scheme: light dark;
+    &:disabled {
+        cursor: not-allowed;
+    }
+    // &:hover {
+    //     background-color: var(--text-input-bg-focus);
+    // }
+    &:focus {
+        box-shadow: var(--text-input-bg-focus) 0 0 0px 2px;
+    }
+    &::-webkit-calendar-picker-indicator {
+        cursor: pointer;
+        scale: 1.5;
+    }
+}
+
+input[type="color"] {
+    appearance: none;
+    border-radius: 4px;
+    cursor: pointer;
+    border: none;
+    // border: 1px solid var(--text-input-bg);
+    // background-color: var(--text-input-bg);
+    background-color: var(--btn-color);
+    color-scheme: light dark;
+    &:disabled {
+        filter: opacity(0.3);
+        // cursor: not-allowed;
+        pointer-events: none;
+    }
+    &:hover {
+        // background-color: var(--text-input-bg-focus);
+        background-color: var(--btn-color-hover);
+        &::-webkit-color-swatch-wrapper {
+            background-color: var(--btn-color-hover);
+            // background-color: var(--text-input-bg-focus);
+        }
+    }
+    &::-webkit-color-swatch-wrapper {
+        padding: 3px;
+        border-radius: 3px;
+        border: none;
+        // background-color: var(--text-input-bg);
+        background-color: var(--btn-color);
+    }
+
+    &::-webkit-color-swatch {
+        border: none;
+        width: 100%;
+        height: 100%;
+        border-radius: 3px;
+    }
+}
+.colorPickerBtn:not(#dummy#dummy) {
+    width: 100%;
+    // min-height: 40px;
+    height: 100%;
+    padding: 0;
+    --color: black;
+    position: relative;
+    z-index: 1;
+    &::before {
+        content: "";
+        position: absolute;
+        border-radius: 3px;
+        inset: 4px;
+        // z-index: -1;
+        background: repeating-conic-gradient(gray 0% 25%, white 0% 50%) 50% /10px 10px;
+    }
+    .colorShow {
+        pointer-events: none;
+        background: var(--color);
+        position: absolute;
+        inset: 4px;
+        border-radius: 2px;
+        overflow: hidden;
+    }
+}

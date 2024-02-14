@@ -1,0 +1,76 @@
+@mixin contFadeScaleIn($elem) {
+    backdrop-filter: blur(4px);
+    .clickClose {
+        position: absolute;
+        width: 100%;
+        height: 100%;
+        opacity: 0.75;
+        background-color: var(--body-bg-color);
+    }
+    &[data-state="open"] {
+        visibility: visible;
+        #{$elem} {
+            transform: scale(1);
+        }
+    }
+    &[data-state="closed"] {
+        visibility: hidden;
+        #{$elem} {
+            transform: scale(1.1);
+            transition: 0.1s cubic-bezier(1, 0, 1, 1) transform;
+        }
+    }
+}
+
+@mixin KeyboardList() {
+    position: absolute;
+    top: 0;
+    left: 0;
+    background: var(--contextMenu-bg-color);
+    color: var(--contentMenu-item-color);
+    box-shadow: var(--btn-color-focus) 0 0 0 1px;
+    // border: 1px solid var(--btn-color-focus);
+    box-sizing: border-box;
+    padding: 4px;
+    border-radius: 4px;
+    translate: 0 calc(-1 * var(--titleBar-height));
+    min-width: 240px;
+    z-index: 1000001;
+    user-select: none;
+    &:active,
+    &:focus {
+        outline: none;
+    }
+    opacity: 1;
+    pointer-events: none;
+    &:focus-within {
+        opacity: 1;
+        pointer-events: all;
+    }
+    ul {
+        list-style: none;
+        margin: 0;
+        li {
+            padding: 10px;
+            cursor: default;
+            line-height: normal;
+            border-radius: 2px;
+            &.menu-divider {
+                height: 1px;
+                width: 100%;
+                background-color: var(--btn-color-focus);
+                // background-color: var(--divider-color);
+                margin: 4px 0;
+                padding: 0;
+            }
+            &[data-focused="true"] {
+                background: var(--contentMenu-item-bg-color-hover);
+            }
+            &.disabled {
+                opacity: 0.5;
+                pointer-events: none;
+                cursor: not-allowed;
+            }
+        }
+    }
+}
