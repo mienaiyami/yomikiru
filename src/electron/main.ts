@@ -549,6 +549,8 @@ const registerListener = () => {
         return new Promise((res, rej) => {
             if (link && extractPath) {
                 if (fs.existsSync(extractPath)) fs.rmSync(extractPath, { recursive: true });
+                // unrar does not support zip
+                // https://stackoverflow.com/a/19337595
                 if (path.extname(link) === ".rar") {
                     try {
                         fs.mkdirSync(extractPath);

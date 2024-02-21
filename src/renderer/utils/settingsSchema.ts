@@ -418,7 +418,7 @@ const parseAppSettings = (): z.infer<typeof settingSchema> => {
                 window.dialog.warn({
                     message: `Some settings are invalid or new settings added. Re-writing settings.`,
                 });
-                window.logger.log("Locations: ", location);
+                window.logger.log("appSettings invalid at :", location);
                 saveJSONfile(settingsPath, fixed);
                 return fixed as z.infer<typeof settingSchema>;
             })
