@@ -23,9 +23,18 @@ import Shortcuts from "./settings/Shortcuts";
 import Usage from "./settings/Usage";
 import { renderPDF } from "../utils/pdf";
 
+const TAB_INFO = {
+    settings: [0, "Settings"],
+    shortcutKeys: [1, "Shortcut Keys"],
+    makeTheme: [2, "Theme Maker"],
+    about: [3, "About"],
+    extras: [4, "Extras"],
+} as const;
+
 //todo: divide into components
 const Settings = (): ReactElement => {
     const appSettings = useAppSelector((store) => store.appSettings);
+    const shortcuts = useAppSelector((store) => store.shortcuts);
     const theme = useAppSelector((store) => store.theme.name);
     const allThemes = useAppSelector((store) => store.theme.allData);
     const bookmarks = useAppSelector((store) => store.bookmarks);
@@ -61,6 +70,36 @@ const Settings = (): ReactElement => {
     }, [isSettingOpen]);
 
     useEffect(() => {
+        //todo extract to hook
+        // const shortcutsMapped = Object.fromEntries(shortcuts.map((e) => [e.command, e.keys])) as Record<
+        //     ShortcutCommands,
+        //     string[]
+        // >;
+        const keydownEvent = (e: KeyboardEvent) => {
+            const keyStr = window.keyFormatter(e);
+            if (keyStr === "") return;
+            const i = (keys: string[]) => {
+                return keys.includes(keyStr);
+            };
+            const maxTabLength = Object.keys(TAB_INFO).length;
+            switch (true) {
+                case i(shortcuts.find((e) => e.command === "nextChapter")?.keys || []):
+                    // case i(shortcutsMapped["nextChapter"]):
+                    setCurrentTab((init) => (init + 1) % maxTabLength);
+                    break;
+                case i(shortcuts.find((e) => e.command === "prevChapter")?.keys || []):
+                    // case i(shortcutsMapped["prevChapter"]):
+                    setCurrentTab((init) => (init - 1 + maxTabLength) % maxTabLength);
+                    break;
+            }
+        };
+        window.addEventListener("keydown", keydownEvent);
+        return () => {
+            window.removeEventListener("keydown", keydownEvent);
+        };
+    }, [shortcuts]);
+
+    useEffect(() => {
         if (tempFolder !== window.electron.app.getPath("temp"))
             try {
                 if (window.fs.existsSync(tempFolder)) {
@@ -89,14 +128,6 @@ const Settings = (): ReactElement => {
             settingContRef.current?.focus();
         }, 100);
     }, [currentTab]);
-
-    const TAB_INFO = {
-        settings: [0, "Settings"],
-        shortcutKeys: [1, "Shortcut Keys"],
-        makeTheme: [2, "Theme Maker"],
-        about: [3, "About"],
-        extras: [4, "Extras"],
-    } as const;
 
     const scrollIntoView = (elementQuery: string, tab: keyof typeof TAB_INFO) => {
         setCurrentTab(TAB_INFO[tab][0]);
