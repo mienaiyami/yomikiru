@@ -610,20 +610,51 @@ const Reader = () => {
             })
         );
         // setImagesLength(imgs.length);
+
+        //todo remove later
+        // const safeImages: string[] = [];
+        // const allChecked = () => {
+        //     if (safeImages.length === imgs.length) {
+        //         setImages(safeImages);
+        //         dispatch(setReaderOpen(true));
+        //     }
+        // };
+        // for (let i = 0; i < imgs.length; i++) {
+        //     const img = imgs[i];
+        //     if (img.length < 256) {
+        //         safeImages.push(img);
+        //         allChecked();
+        //         continue;
+        //     }
+        //     window.fs.readFile(img, "base64", (err, data) => {
+        //         if (err) {
+        //             // yea
+        //             safeImages.push(img);
+        //             console.error(err);
+        //         }
+        //         const base64URL = `data:image/${window.path.extname(img).substring(1)};base64,${data}`;
+        //         safeImages.push(base64URL);
+        //         allChecked();
+        //         // console.log(base64URL);
+        //     });
+        // }
+        //
+
         setImages(imgs);
         dispatch(setReaderOpen(true));
     };
     useLayoutEffect(() => {
         // window.electron.webFrame.clearCache();
         const dynamic = appSettings.readerSettings.dynamicLoading;
-        images.forEach((e, i) => {
+        images.forEach((imgURL, i) => {
             const img = document.createElement("img");
+            let imageSafeURL = imgURL;
             const loaded = (success = false) => {
                 setImagesLoaded((init) => init + 1);
                 setImageData((init) => [
                     ...init,
                     {
-                        img: "file://" + e.replaceAll("#", "%23"),
+                        img: imageSafeURL,
                         index: i,
                         isWide: success ? img.height / img.width <= 1.2 : false,
                     },
@@ -632,7 +663,7 @@ const Reader = () => {
             if (appSettings.useCanvasBasedReader) {
                 const canvas = document.createElement("canvas");
                 canvas.setAttribute("draggable", "false");
-                canvas.setAttribute("src", e);
+                canvas.setAttribute("src", imgURL);
                 canvas.setAttribute("data-pagenumber", JSON.stringify(i + 1));
                 canvas.classList.add("readerImg");
                 const ctx = canvas.getContext("2d");
@@ -652,9 +683,11 @@ const Reader = () => {
                     ]);
                 };
                 const onError = () => {
+                    if (!ctx) return;
                     canvas.width = 500;
                     canvas.height = 100;
-                    ctx?.fillText("Error occurred while loading image.", 10, 10);
+                    ctx.fillStyle = window.getComputedStyle(document.body).color || "black";
+                    ctx.fillText("Error occurred while loading image.", 10, 10);
                     setImagesLoaded((init) => init + 1);
                     setImageData((init) => [...init, { img: canvas, index: i, isWide: false }]);
                 };
@@ -682,10 +715,24 @@ const Reader = () => {
                     loaded();
                 };
             }
-            if (dynamic) {
-                loaded(true);
+            const load = () => {
+                if (dynamic) {
+                    loaded(true);
+                } else {
+                    // todo check if its better to convert to base64 here instead of in loadImgs
+                    img.src = imageSafeURL;
+                }
+            };
+            if (imgURL.length < 256) {
+                load();
             } else {
-                img.src = "file://" + e.replaceAll("#", "%23");
+                window.fs.readFile(imgURL, "base64", (err, data) => {
+                    if (err) {
+                        console.error(err);
+                    }
+                    imageSafeURL = `data:image/${window.path.extname(imgURL).substring(1)};base64,${data}`;
+                    load();
+                });
             }
         });
     }, [images]);
@@ -1106,7 +1153,8 @@ const Reader = () => {
                         window.contextMenu.template.divider(),
                     ];
                     if (e.target instanceof HTMLElement) {
-                        const src = e.target.getAttribute("src");
+                        let src = e.target.getAttribute("src");
+                        if (!src || src?.startsWith("data:")) src = e.target.getAttribute("data-src") || src;
                         if (src)
                             items.push(
                                 window.contextMenu.template.copyImage(src),
@@ -1233,7 +1281,7 @@ const Reader = () => {
                                     const load = () => {
                                         entry.target.querySelectorAll("img").forEach((e) => {
                                             (entry.target as HTMLElement).style.height = "auto";
-                                            const src = e.getAttribute("data-src");
+                                            const src = e.getAttribute("data-load-src");
                                             if (src) e.src = src;
                                         });
                                         entry.target.setAttribute("data-rendered", "true");
@@ -1253,7 +1301,8 @@ const Reader = () => {
                                                 draggable={false}
                                                 data-pagenumber={imageData[e]?.index + 1}
                                                 loading="lazy"
-                                                data-src={imageData[e].img}
+                                                data-load-src={imageData[e].img}
+                                                data-src={images[e]}
                                                 key={imageData[e].img as string}
                                             />
                                         )
@@ -1270,6 +1319,8 @@ const Reader = () => {
                                             draggable={false}
                                             data-pagenumber={imageData[e].index + 1}
                                             src={imageData[e].img as string}
+                                            // data-src is real file path
+                                            data-src={images[e]}
                                             key={imageData[e].img as string}
                                         />
                                     )
