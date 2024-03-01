@@ -1238,8 +1238,12 @@ const Reader = () => {
                     if (mouseDown) {
                         const elem = isSideListPinned ? imgContRef.current : readerRef.current;
                         if (elem) {
-                            elem.scrollLeft = mouseDown.left - (e.clientX - mouseDown.x);
-                            elem.scrollTop = mouseDown.top - (e.clientY - mouseDown.y);
+                            elem.scrollLeft =
+                                mouseDown.left -
+                                (e.clientX - mouseDown.x) * appSettings.readerSettings.touchScrollMultiplier;
+                            elem.scrollTop =
+                                mouseDown.top -
+                                (e.clientY - mouseDown.y) * appSettings.readerSettings.touchScrollMultiplier;
                         }
                     }
                 }}

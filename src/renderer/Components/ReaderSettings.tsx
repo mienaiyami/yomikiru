@@ -535,7 +535,7 @@ const ReaderSettings = memo(
                                     return value;
                                 }}
                                 timeout={[1000, (value) => dispatch(setReaderSettings({ scrollSpeedA: value }))]}
-                                labelBefore="Scroll&nbsp;A&nbsp;:"
+                                labelBefore="Scroll&nbsp;A&nbsp;(key)&nbsp;:"
                                 labelAfter="px"
                                 // tooltip={(() => {
                                 //     const index1 = shortcuts.findIndex((e) => e.command === "scrollDown");
@@ -555,13 +555,31 @@ const ReaderSettings = memo(
                                     return value;
                                 }}
                                 timeout={[1000, (value) => dispatch(setReaderSettings({ scrollSpeedB: value }))]}
-                                labelBefore="Scroll&nbsp;B&nbsp;:"
+                                labelBefore="Scroll&nbsp;B&nbsp;(key)&nbsp;:"
                                 labelAfter="px"
                                 // tooltip={(() => {
                                 //     const index = shortcuts.findIndex((e) => e.command === "largeScroll");
                                 //     return `Keys: "${shortcuts[index].key1}" "${shortcuts[index].key2}"`;
                                 // })()}
                                 // className="tooltip-top-start"
+                            />
+                            <InputNumber
+                                min={0.1}
+                                max={100}
+                                step={0.1}
+                                value={appSettings.readerSettings.touchScrollMultiplier}
+                                onChange={(e) => {
+                                    let value = e.valueAsNumber;
+                                    if (value > 100) value = 100;
+                                    if (value < 0.1) value = 0.1;
+                                    return value;
+                                }}
+                                timeout={[
+                                    1000,
+                                    (value) => dispatch(setReaderSettings({ touchScrollMultiplier: value })),
+                                ]}
+                                labelBefore="Drag&nbsp;Multiplier&nbsp;:"
+                                labelAfter="x"
                             />
                         </div>
                     </div>
