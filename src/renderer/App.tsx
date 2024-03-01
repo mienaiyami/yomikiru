@@ -448,7 +448,6 @@ const App = (): ReactElement => {
                 }px`;
             };
             switch (true) {
-                // todo test each
                 case i(shortcutsMapped["navToHome"]):
                     if (window.electron.getCurrentWindow().isFullScreen())
                         window.electron.getCurrentWindow().setFullScreen(false);

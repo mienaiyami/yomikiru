@@ -70,7 +70,7 @@ const Settings = (): ReactElement => {
     }, [isSettingOpen]);
 
     useEffect(() => {
-        //todo extract to hook
+        //todo extract to hook?
         // const shortcutsMapped = Object.fromEntries(shortcuts.map((e) => [e.command, e.keys])) as Record<
         //     ShortcutCommands,
         //     string[]
