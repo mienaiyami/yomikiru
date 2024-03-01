@@ -5,18 +5,17 @@ Does not follow semver.
 
 ## Added
 
-- added #279, anilist auto update progress.
+- move between setting tabs using nextChapter/prevChapter shortcut keys.
+- speed multiplier for "drag to scroll", #357.
 
 ## Changed
 
-- sync in-app anilist progress on chapter change and anilist editor open.
-- UI:
-  - shortcuts name update
+- improved number input spin buttons, #313
 - dev:
-  - code refactor.
+  - divided style file into smaller for better management.
 
 ## Fixed
 
-- fixed: custom keybinding for UI scale not working.
+- fixed unable to read images due to windows filepath limit, #351
 
 ---
