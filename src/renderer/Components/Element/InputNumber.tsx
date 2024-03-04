@@ -88,7 +88,7 @@ const InputNumber = ({
     const ButtonUp = () => {
         const valueUp = () => {
             if (inputRef.current) {
-                const value = inputRef.current.valueAsNumber || parseFloat(min.toString());
+                const value = inputRef.current.valueAsNumber ?? parseFloat(min.toString());
                 if (max && value + step > parseFloat(max.toString())) inputRef.current.value = max.toString();
                 inputRef.current.value = parseFloat((value + step).toFixed(3)).toString();
                 changeHandler(inputRef.current);
@@ -117,7 +117,7 @@ const InputNumber = ({
     const ButtonDown = () => {
         const valueDown = () => {
             if (inputRef.current) {
-                const value = inputRef.current.valueAsNumber || parseFloat(min.toString());
+                const value = inputRef.current.valueAsNumber ?? parseFloat(min.toString());
                 if (min && value - step < parseFloat(min.toString())) inputRef.current.value = min.toString();
                 inputRef.current.value = parseFloat((value - step).toFixed(3)).toString();
                 changeHandler(inputRef.current);
