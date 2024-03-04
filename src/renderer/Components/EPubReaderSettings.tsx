@@ -390,7 +390,7 @@ const EPUBReaderSettings = memo(
                                     }}
                                     step={0.1}
                                     min={0}
-                                    max={20}
+                                    max={10}
                                     value={appSettings.epubReaderSettings.lineSpacing}
                                     timeout={[
                                         1000,
@@ -411,7 +411,7 @@ const EPUBReaderSettings = memo(
                                     }}
                                     step={0.1}
                                     min={0}
-                                    max={20}
+                                    max={10}
                                     value={appSettings.epubReaderSettings.paragraphSpacing}
                                     timeout={[
                                         1000,
@@ -431,7 +431,7 @@ const EPUBReaderSettings = memo(
                                     }}
                                     step={0.1}
                                     min={-1}
-                                    max={20}
+                                    max={5}
                                     value={appSettings.epubReaderSettings.wordSpacing}
                                     timeout={[
                                         1000,
