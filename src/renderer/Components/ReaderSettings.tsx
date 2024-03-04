@@ -115,14 +115,8 @@ const ReaderSettings = memo(
                                 value={appSettings.readerSettings.readerWidth}
                                 min={1}
                                 max={maxWidth}
-                                onChange={(e) => {
+                                onChange={() => {
                                     makeScrollPos();
-
-                                    let value = e.valueAsNumber;
-                                    if (!value) value = 0;
-                                    value = value >= maxWidth ? maxWidth : value;
-
-                                    return value;
                                 }}
                                 timeout={[1000, (value) => dispatch(setReaderSettings({ readerWidth: value }))]}
                                 disabled={appSettings.readerSettings.fitOption !== 0}
@@ -284,12 +278,6 @@ const ReaderSettings = memo(
                                         appSettings.readerSettings.widthClamped ||
                                         appSettings.readerSettings.fitOption !== 0
                                     }
-                                    onChangeNum={(e) => {
-                                        let value = e.valueAsNumber;
-                                        if (value > 5000) value = 5000;
-                                        if (value < 0) value = 0;
-                                        return value;
-                                    }}
                                     timeout={[1000, (value) => dispatch(setReaderSettings({ maxWidth: value }))]}
                                     paraBefore="Max Image Width&nbsp;&nbsp;:"
                                     paraAfter="px"
@@ -313,12 +301,6 @@ const ReaderSettings = memo(
                                         appSettings.readerSettings.widthClamped ||
                                         appSettings.readerSettings.fitOption !== 0
                                     }
-                                    onChangeNum={(e) => {
-                                        let value = e.valueAsNumber;
-                                        if (value > 5000) value = 5000;
-                                        if (value < 0) value = 0;
-                                        return value;
-                                    }}
                                     timeout={[1000, (value) => dispatch(setReaderSettings({ maxHeight: value }))]}
                                     paraBefore="Max Image Height&nbsp;:"
                                     paraAfter="px"
@@ -528,12 +510,6 @@ const ReaderSettings = memo(
                                 min={1}
                                 max={500}
                                 value={appSettings.readerSettings.scrollSpeedA}
-                                onChange={(e) => {
-                                    let value = e.valueAsNumber;
-                                    if (value > 500) value = 500;
-                                    if (value < 1) value = 1;
-                                    return value;
-                                }}
                                 timeout={[1000, (value) => dispatch(setReaderSettings({ scrollSpeedA: value }))]}
                                 labelBefore="Scroll&nbsp;A&nbsp;(key)&nbsp;:"
                                 labelAfter="px"
@@ -548,12 +524,6 @@ const ReaderSettings = memo(
                                 min={1}
                                 max={500}
                                 value={appSettings.readerSettings.scrollSpeedB}
-                                onChange={(e) => {
-                                    let value = e.valueAsNumber;
-                                    if (value > 500) value = 500;
-                                    if (value < 1) value = 1;
-                                    return value;
-                                }}
                                 timeout={[1000, (value) => dispatch(setReaderSettings({ scrollSpeedB: value }))]}
                                 labelBefore="Scroll&nbsp;B&nbsp;(key)&nbsp;:"
                                 labelAfter="px"
@@ -568,12 +538,6 @@ const ReaderSettings = memo(
                                 max={100}
                                 step={0.1}
                                 value={appSettings.readerSettings.touchScrollMultiplier}
-                                onChange={(e) => {
-                                    let value = e.valueAsNumber;
-                                    if (value > 100) value = 100;
-                                    if (value < 0.1) value = 0.1;
-                                    return value;
-                                }}
                                 timeout={[
                                     1000,
                                     (value) => dispatch(setReaderSettings({ touchScrollMultiplier: value })),
@@ -830,11 +794,7 @@ const ReaderSettings = memo(
                                 }}
                                 value={appSettings.readerSettings.gapSize}
                                 min={0}
-                                onChangeNum={(e) => {
-                                    let value = e.valueAsNumber;
-                                    if (!value) value = 0;
-                                    return value;
-                                }}
+                                max={2000}
                                 timeout={[1000, (value) => dispatch(setReaderSettings({ gapSize: value }))]}
                                 paraBefore="Gap between rows&nbsp;:"
                                 paraAfter="px"

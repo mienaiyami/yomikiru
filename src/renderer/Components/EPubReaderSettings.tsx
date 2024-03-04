@@ -118,13 +118,9 @@ const EPUBReaderSettings = memo(
                                 value={appSettings.epubReaderSettings.readerWidth}
                                 min={1}
                                 max={maxWidth}
-                                onChange={(e) => {
-                                    // makeScrollPos();
-                                    let value = e.valueAsNumber;
-                                    if (!value) value = 0;
-                                    value = value >= maxWidth ? maxWidth : value;
-                                    return value;
-                                }}
+                                // onChange={(e) => {
+                                // makeScrollPos();
+                                // }}
                                 timeout={[
                                     1000,
                                     (value) => dispatch(setEpubReaderSettings({ readerWidth: value })),
@@ -215,13 +211,9 @@ const EPUBReaderSettings = memo(
                                     value={appSettings.epubReaderSettings.fontSize}
                                     min={1}
                                     max={100}
-                                    onChange={(e) => {
-                                        // makeScrollPos();
-                                        let value = e.valueAsNumber;
-                                        if (!value) value = 0;
-                                        value = value >= 100 ? 100 : value;
-                                        return value;
-                                    }}
+                                    // onChange={(e) => {
+                                    // makeScrollPos();
+                                    // }}
                                     timeout={[
                                         1000,
                                         (value) => dispatch(setEpubReaderSettings({ fontSize: value })),
@@ -400,13 +392,6 @@ const EPUBReaderSettings = memo(
                                     min={0}
                                     max={20}
                                     value={appSettings.epubReaderSettings.lineSpacing}
-                                    onChangeNum={(e) => {
-                                        // makeScrollPos();
-                                        let value = e.valueAsNumber;
-                                        if (value > 20) value = 20;
-                                        if (value < 0) value = 0;
-                                        return value;
-                                    }}
                                     timeout={[
                                         1000,
                                         (value) => dispatch(setEpubReaderSettings({ lineSpacing: value })),
@@ -428,13 +413,6 @@ const EPUBReaderSettings = memo(
                                     min={0}
                                     max={20}
                                     value={appSettings.epubReaderSettings.paragraphSpacing}
-                                    onChangeNum={(e) => {
-                                        // makeScrollPos();
-                                        let value = e.valueAsNumber;
-                                        if (value > 20) value = 20;
-                                        if (value < 0) value = 0;
-                                        return value;
-                                    }}
                                     timeout={[
                                         1000,
                                         (value) => dispatch(setEpubReaderSettings({ paragraphSpacing: value })),
@@ -455,13 +433,6 @@ const EPUBReaderSettings = memo(
                                     min={-1}
                                     max={20}
                                     value={appSettings.epubReaderSettings.wordSpacing}
-                                    onChangeNum={(e) => {
-                                        //todo, do this automatically for all using given min max
-                                        let value = e.valueAsNumber;
-                                        if (value > 20) value = 20;
-                                        if (value < -1) value = -1;
-                                        return value;
-                                    }}
                                     timeout={[
                                         1000,
                                         (value) => dispatch(setEpubReaderSettings({ wordSpacing: value })),
@@ -482,12 +453,6 @@ const EPUBReaderSettings = memo(
                                     min={-1}
                                     max={1}
                                     value={appSettings.epubReaderSettings.letterSpacing}
-                                    onChangeNum={(e) => {
-                                        let value = e.valueAsNumber;
-                                        if (value > 1) value = 1;
-                                        if (value < -1) value = -1;
-                                        return value;
-                                    }}
                                     timeout={[
                                         1000,
                                         (value) => dispatch(setEpubReaderSettings({ letterSpacing: value })),
@@ -705,12 +670,6 @@ const EPUBReaderSettings = memo(
                                 value={appSettings.epubReaderSettings.scrollSpeedA}
                                 min={1}
                                 max={500}
-                                onChange={(e) => {
-                                    let value = e.valueAsNumber;
-                                    if (value > 500) value = 500;
-                                    if (value < 1) value = 1;
-                                    return value;
-                                }}
                                 timeout={[
                                     1000,
                                     (value) => dispatch(setEpubReaderSettings({ scrollSpeedA: value })),
@@ -722,12 +681,6 @@ const EPUBReaderSettings = memo(
                                 value={appSettings.epubReaderSettings.scrollSpeedB}
                                 min={1}
                                 max={500}
-                                onChange={(e) => {
-                                    let value = e.valueAsNumber;
-                                    if (value > 500) value = 500;
-                                    if (value < 1) value = 1;
-                                    return value;
-                                }}
                                 timeout={[
                                     1000,
                                     (value) => dispatch(setEpubReaderSettings({ scrollSpeedB: value })),

@@ -30,7 +30,7 @@ const InputCheckboxNumber = ({
     checked: boolean;
     noSpin?: boolean;
     onChangeCheck: React.ChangeEventHandler<HTMLInputElement>;
-    onChangeNum: (currentTarget: HTMLInputElement) => void | number;
+    onChangeNum?: (currentTarget: HTMLInputElement) => void | number;
     /**
      * `[time_in_ms, fn_on_timeout]`
      * `fn_on_timeout` is called after time had passed after `onChangeNum` and active element is event target
@@ -39,6 +39,7 @@ const InputCheckboxNumber = ({
     className?: string;
     disabled?: boolean;
 }) => {
+    if (!onChangeNum && !timeout) throw new Error("InputCheckboxNumber: onChangeNum or timeout must be defined");
     const [valueProxy, setValueProxy] = useState(value);
     const repeater = useRef<NodeJS.Timer | null>(null);
     const mouseDownRef = useRef(false);
@@ -64,13 +65,19 @@ const InputCheckboxNumber = ({
         };
     }, []);
 
-    const changeHandler = (currentTarget: HTMLInputElement) => {
+    const changeHandler = () => {
+        const currentTarget = inputRef.current;
+        if (!currentTarget) {
+            console.error("InputCheckboxNumber: inputRef.current is null");
+            return;
+        }
         if (!currentTarget.value) currentTarget.value = "0";
-        const aaa = onChangeNum(currentTarget);
+        const aaa = onChangeNum && onChangeNum(currentTarget);
         if (aaa !== undefined) currentTarget.value = aaa.toString();
         if (timeout) {
-            if (aaa === undefined) return console.error("InputCheckboxNumber:onChangeNum function must return.");
-            setValueProxy(aaa);
+            if (aaa === undefined) {
+                setValueProxy(currentTarget.valueAsNumber ?? parseFloat(min.toString()));
+            } else setValueProxy(aaa);
         }
     };
     const stopRepeater = () => {
@@ -87,16 +94,16 @@ const InputCheckboxNumber = ({
         const valueUp = () => {
             if (inputRef.current) {
                 const value = inputRef.current.valueAsNumber ?? parseFloat(min.toString());
-                if (max && value + step > parseFloat(max.toString())) inputRef.current.value = max.toString();
                 inputRef.current.value = parseFloat((value + step).toFixed(3)).toString();
-                changeHandler(inputRef.current);
+                if (max !== undefined && value + step > parseFloat(max.toString()))
+                    inputRef.current.value = max.toString();
+                changeHandler();
             }
         };
         return (
             <button
                 className="spin"
                 onMouseLeave={stopRepeater}
-                // onMouseOut={stopRepeater}
                 onMouseUp={stopRepeater}
                 onMouseDown={() => {
                     mouseDownRef.current = true;
@@ -116,16 +123,16 @@ const InputCheckboxNumber = ({
         const valueDown = () => {
             if (inputRef.current) {
                 const value = inputRef.current.valueAsNumber ?? parseFloat(min.toString());
-                if (min && value - step < parseFloat(min.toString())) inputRef.current.value = min.toString();
                 inputRef.current.value = parseFloat((value - step).toFixed(3)).toString();
-                changeHandler(inputRef.current);
+                if (min !== undefined && value - step < parseFloat(min.toString()))
+                    inputRef.current.value = min.toString();
+                changeHandler();
             }
         };
         return (
             <button
                 className="spin"
                 onMouseLeave={stopRepeater}
-                // onMouseOut={stopRepeater}
                 onMouseUp={stopRepeater}
                 onMouseDown={() => {
                     mouseDownRef.current = true;
@@ -168,7 +175,12 @@ const InputCheckboxNumber = ({
                         }
                     }}
                     onChange={(e) => {
-                        changeHandler(e.currentTarget);
+                        const value = e.currentTarget.valueAsNumber;
+                        if (min !== undefined && value < parseFloat(min.toString()))
+                            e.currentTarget.value = min.toString();
+                        if (max !== undefined && value > parseFloat(max.toString()))
+                            e.currentTarget.value = max.toString();
+                        changeHandler();
                     }}
                 />
                 {!noSpin && <ButtonUp />}

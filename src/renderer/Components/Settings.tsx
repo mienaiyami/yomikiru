@@ -820,10 +820,7 @@ const Settings = (): ReactElement => {
                                             max={5}
                                             step={0.1}
                                             onChange={(e) => {
-                                                let value = e.valueAsNumber;
-                                                if (!value) value = 0;
-                                                value = value >= 5 ? 5 : value;
-                                                value = value <= 0.1 ? 0.1 : value;
+                                                const value = e.valueAsNumber;
                                                 dispatch(setReaderSettings({ pdfScale: value }));
                                             }}
                                             labelBefore="SCALE"

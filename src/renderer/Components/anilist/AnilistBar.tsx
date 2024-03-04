@@ -72,11 +72,7 @@ const AnilistBar = memo(() => {
                         <InputNumber
                             value={progress}
                             noSpin
-                            onChange={(e) => {
-                                let value = parseInt(e.value);
-                                if (!value || value < 0) value = 0;
-                                return value;
-                            }}
+                            min={0}
                             timeout={[2000, (value) => setProgress(value)]}
                         />
                         <button onClick={() => setProgress((init) => init + 1)}>

@@ -28,7 +28,7 @@ const InputNumber = ({
     step?: number;
     value: number;
     noSpin?: boolean;
-    onChange: (currentTarget: HTMLInputElement) => void | number;
+    onChange?: (currentTarget: HTMLInputElement) => void | number;
     /**
      * `[time_in_ms, fn_on_timeout]`
      * `fn_on_timeout` is called after time had passed after `onChange` and active element is event target
@@ -39,6 +39,7 @@ const InputNumber = ({
     tooltip?: string;
     disabled?: boolean;
 }) => {
+    if (!onChange && !timeout) throw new Error("InputNumber: onChange or timeout must be defined");
     const [valueProxy, setValueProxy] = useState(value);
     const repeater = useRef<NodeJS.Timer | null>(null);
     const mouseDownRef = useRef(false);
@@ -66,13 +67,19 @@ const InputNumber = ({
         };
     }, []);
 
-    const changeHandler = (currentTarget: HTMLInputElement) => {
+    const changeHandler = () => {
+        const currentTarget = inputRef.current;
+        if (!currentTarget) {
+            console.error("InputNumber: inputRef.current is null");
+            return;
+        }
         if (!currentTarget.value) currentTarget.value = "0";
-        const aaa = onChange(currentTarget);
+        const aaa = onChange && onChange(currentTarget);
         if (aaa !== undefined) currentTarget.value = aaa.toString();
         if (timeout) {
-            if (aaa === undefined) return console.error("InputNumber:onChange function must return.");
-            setValueProxy(aaa);
+            if (aaa === undefined) {
+                setValueProxy(currentTarget.valueAsNumber ?? parseFloat(min.toString()));
+            } else setValueProxy(aaa);
         }
     };
     const stopRepeater = () => {
@@ -89,9 +96,10 @@ const InputNumber = ({
         const valueUp = () => {
             if (inputRef.current) {
                 const value = inputRef.current.valueAsNumber ?? parseFloat(min.toString());
-                if (max && value + step > parseFloat(max.toString())) inputRef.current.value = max.toString();
                 inputRef.current.value = parseFloat((value + step).toFixed(3)).toString();
-                changeHandler(inputRef.current);
+                if (max !== undefined && value + step > parseFloat(max.toString()))
+                    inputRef.current.value = max.toString();
+                changeHandler();
             }
         };
         return (
@@ -118,9 +126,10 @@ const InputNumber = ({
         const valueDown = () => {
             if (inputRef.current) {
                 const value = inputRef.current.valueAsNumber ?? parseFloat(min.toString());
-                if (min && value - step < parseFloat(min.toString())) inputRef.current.value = min.toString();
                 inputRef.current.value = parseFloat((value - step).toFixed(3)).toString();
-                changeHandler(inputRef.current);
+                if (min !== undefined && value - step < parseFloat(min.toString()))
+                    inputRef.current.value = min.toString();
+                changeHandler();
             }
         };
         return (
@@ -163,7 +172,12 @@ const InputNumber = ({
                             }
                         }}
                         onChange={(e) => {
-                            changeHandler(e.currentTarget);
+                            const value = e.currentTarget.valueAsNumber;
+                            if (min !== undefined && value < parseFloat(min.toString()))
+                                e.currentTarget.value = min.toString();
+                            if (max !== undefined && value > parseFloat(max.toString()))
+                                e.currentTarget.value = max.toString();
+                            changeHandler();
                         }}
                     />
                     {!noSpin && <ButtonUp />}
@@ -190,7 +204,12 @@ const InputNumber = ({
                         }
                     }}
                     onChange={(e) => {
-                        changeHandler(e.currentTarget);
+                        const value = e.currentTarget.valueAsNumber;
+                        if (min !== undefined && value < parseFloat(min.toString()))
+                            e.currentTarget.value = min.toString();
+                        if (max !== undefined && value > parseFloat(max.toString()))
+                            e.currentTarget.value = max.toString();
+                        changeHandler();
                     }}
                     title={title}
                 />

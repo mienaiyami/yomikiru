@@ -125,10 +125,7 @@ const AnilistEdit = () => {
                                         min={0}
                                         max={20000}
                                         onChange={(e) => {
-                                            let value = e.valueAsNumber;
-                                            if (!value) value = 0;
-                                            if (value < 0) value = 0;
-                                            if (value > 20000) value = 20000;
+                                            const value = e.valueAsNumber;
                                             setTempData((init) => {
                                                 if (init) return { ...init, progress: value };
                                                 return null;
@@ -144,10 +141,7 @@ const AnilistEdit = () => {
                                         min={0}
                                         max={20000}
                                         onChange={(e) => {
-                                            let value = e.valueAsNumber;
-                                            if (!value) value = 0;
-                                            if (value < 0) value = 0;
-                                            if (value > 20000) value = 20000;
+                                            const value = e.valueAsNumber;
                                             setTempData((init) => {
                                                 if (init) return { ...init, progressVolumes: value };
                                                 return null;
@@ -164,10 +158,7 @@ const AnilistEdit = () => {
                                         max={10}
                                         step={0.5}
                                         onChange={(e) => {
-                                            let value = e.valueAsNumber;
-                                            if (!value) value = 0;
-                                            if (value < 0) value = 0;
-                                            if (value > 10) value = 10;
+                                            const value = e.valueAsNumber;
                                             setTempData((init) => {
                                                 if (init) return { ...init, score: value };
                                                 return null;
@@ -250,10 +241,7 @@ const AnilistEdit = () => {
                                         min={0}
                                         max={1000}
                                         onChange={(e) => {
-                                            let value = e.valueAsNumber;
-                                            if (!value) value = 0;
-                                            if (value < 0) value = 0;
-                                            if (value > 1000) value = 1000;
+                                            const value = e.valueAsNumber;
                                             setTempData((init) => {
                                                 if (init) return { ...init, repeat: value };
                                                 return null;
