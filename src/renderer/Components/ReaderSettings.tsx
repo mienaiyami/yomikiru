@@ -543,7 +543,7 @@ const ReaderSettings = memo(
                                     (value) => dispatch(setReaderSettings({ touchScrollMultiplier: value })),
                                 ]}
                                 labelBefore="Drag&nbsp;Multiplier&nbsp;:"
-                                labelAfter="x"
+                                // labelAfter="x"
                             />
                         </div>
                     </div>
