@@ -113,6 +113,8 @@ const InputNumber = ({
                     if (repeater.current) clearInterval(repeater.current);
                     valueUp();
                     setTimeout(() => {
+                        // yea maybe not the best way to do it but too lazy to make new ref
+                        if (repeater.current) clearInterval(repeater.current);
                         if (mouseDownRef.current) repeater.current = setInterval(valueUp, 100);
                     }, 500);
                 }}
@@ -143,6 +145,7 @@ const InputNumber = ({
                     if (repeater.current) clearInterval(repeater.current);
                     valueDown();
                     setTimeout(() => {
+                        if (repeater.current) clearInterval(repeater.current);
                         if (mouseDownRef.current) repeater.current = setInterval(valueDown, 100);
                     }, 500);
                 }}

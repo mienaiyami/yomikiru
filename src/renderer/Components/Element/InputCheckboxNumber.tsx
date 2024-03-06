@@ -110,6 +110,7 @@ const InputCheckboxNumber = ({
                     if (repeater.current) clearInterval(repeater.current);
                     valueUp();
                     setTimeout(() => {
+                        if (repeater.current) clearInterval(repeater.current);
                         if (mouseDownRef.current) repeater.current = setInterval(valueUp, 100);
                     }, 500);
                 }}
@@ -139,6 +140,7 @@ const InputCheckboxNumber = ({
                     if (repeater.current) clearInterval(repeater.current);
                     valueDown();
                     setTimeout(() => {
+                        if (repeater.current) clearInterval(repeater.current);
                         if (mouseDownRef.current) repeater.current = setInterval(valueDown, 100);
                     }, 500);
                 }}
