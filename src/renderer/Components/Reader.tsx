@@ -648,7 +648,7 @@ const Reader = () => {
         const dynamic = appSettings.readerSettings.dynamicLoading;
         images.forEach((imgURL, i) => {
             const img = document.createElement("img");
-            let imageSafeURL = imgURL;
+            let imageSafeURL = imgURL.replaceAll("#", "%23");
             const loaded = (success = false) => {
                 setImagesLoaded((init) => init + 1);
                 setImageData((init) => [
