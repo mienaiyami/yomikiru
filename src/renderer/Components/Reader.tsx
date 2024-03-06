@@ -248,7 +248,9 @@ const Reader = () => {
             // /&& document.activeElement!.tagName === "BODY"
             window.app.keyRepeated = e.repeat;
 
-            const keyStr = window.keyFormatter(e);
+            //todo check consequences of using false
+            // needed for `escape`
+            const keyStr = window.keyFormatter(e, false);
             if (keyStr === "") return;
 
             if (
