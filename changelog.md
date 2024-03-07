@@ -4,8 +4,7 @@ Does not follow semver.
 
 ## Fixed
 
-- looping number inputs on clicking spin buttons.
-- images with `#` in name not loading, #373
-- zen mode not exiting on `escape` kwy, #372
+- images not showing on linux, #376.
+- epub: toggle progress in zen mode with keybinding, #368.
 
 ---
