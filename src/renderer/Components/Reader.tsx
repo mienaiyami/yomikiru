@@ -650,7 +650,7 @@ const Reader = () => {
         const dynamic = appSettings.readerSettings.dynamicLoading;
         images.forEach((imgURL, i) => {
             const img = document.createElement("img");
-            let imageSafeURL = imgURL.replaceAll("#", "%23");
+            let imageSafeURL = "file://" + imgURL.replaceAll("#", "%23");
             const loaded = (success = false) => {
                 setImagesLoaded((init) => init + 1);
                 setImageData((init) => [
@@ -1156,7 +1156,8 @@ const Reader = () => {
                     ];
                     if (e.target instanceof HTMLElement) {
                         let src = e.target.getAttribute("src");
-                        if (!src || src?.startsWith("data:")) src = e.target.getAttribute("data-src") || src;
+                        if (!src || src?.startsWith("data:") || src?.startsWith("file"))
+                            src = e.target.getAttribute("data-src") || src;
                         if (src)
                             items.push(
                                 window.contextMenu.template.copyImage(src),
