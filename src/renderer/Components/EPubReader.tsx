@@ -1042,6 +1042,18 @@ const EPubReader = () => {
                             case is(shortcutsMapped["scrollUp"]):
                                 scrollReader(0 - appSettings.epubReaderSettings.scrollSpeedA);
                                 break;
+                            case is(shortcutsMapped["showHidePageNumberInZen"]):
+                                setshortcutText(
+                                    (!appSettings.epubReaderSettings.showProgressInZenMode ? "Show" : "Hide") +
+                                        " progress in Zen Mode"
+                                );
+                                dispatch(
+                                    setEpubReaderSettings({
+                                        showProgressInZenMode:
+                                            !appSettings.epubReaderSettings.showProgressInZenMode,
+                                    })
+                                );
+                                break;
                         }
                     }
                 }
