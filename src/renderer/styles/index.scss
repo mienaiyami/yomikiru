@@ -1056,8 +1056,8 @@
                     .readerSideList {
                         .location-cont {
                             li {
-                                --depth: 0;
-                                font-size: calc(1rem + calc(calc(var(--depth) / 3) * 1em));
+                                // --level-top: 0;
+                                // font-size: calc(1rem + calc(calc(var(--level-top) / 3) * 1em));
                                 a {
                                     grid-template-columns: auto;
 
@@ -1065,9 +1065,9 @@
                                         display: none;
                                     }
                                 }
-                                &.collapsed {
-                                    display: none;
-                                }
+                                // &.collapsed {
+                                //     display: none;
+                                // }
                                 &.collapse {
                                     &::before {
                                         content: "▼";
@@ -1083,6 +1083,9 @@
                                         &::before {
                                             transform: rotate(-90deg);
                                             margin-top: 0;
+                                        }
+                                        & + ol {
+                                            display: none;
                                         }
                                     }
                                 }
@@ -1187,7 +1190,7 @@
                                 text-decoration-style: solid;
                             }
                         }
-                        a[href]::before {
+                        a[data-href^="http"]::before {
                             content: "";
                             width: 1rem;
                             height: 1rem;

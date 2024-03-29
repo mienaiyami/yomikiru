@@ -11,38 +11,52 @@ import { faBookmark as farBookmark } from "@fortawesome/free-regular-svg-icons";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import React, { memo, useEffect, useLayoutEffect, useRef, useState, useMemo } from "react";
 import { useAppDispatch, useAppSelector } from "../store/hooks";
-import { setPrevNextChapter } from "../store/prevNextChapter";
 import { addBookmark, updateEPUBBookmark, removeBookmark } from "../store/bookmarks";
 import { setEpubReaderSettings } from "../store/appSettings";
 
 const EPubReaderSideList = memo(
     ({
-        tocData,
-        openNextChapterRef,
-        openPrevChapterRef,
-        currentChapterURL,
+        // openNextChapterRef,
+        // openPrevChapterRef,
+        // currentChapterURL,
         // setCurrentChapterURL,
+        epubNCX,
+        epubTOC,
+        epubMetadata,
+        openNextChapter,
+        openPrevChapter,
+        currentChapter,
         addToBookmarkRef,
         setshortcutText,
         isBookmarked,
         setBookmarked,
         findInPage,
-        epubLinkClick,
+        onEpubLinkClick,
         isSideListPinned,
         setSideListPinned,
         setSideListWidth,
         makeScrollPos,
         zenMode,
     }: {
-        tocData: TOCData;
-        openNextChapterRef: React.RefObject<HTMLButtonElement>;
-        openPrevChapterRef: React.RefObject<HTMLButtonElement>;
+        // openNextChapterRef: React.RefObject<HTMLButtonElement>;
+        // openPrevChapterRef: React.RefObject<HTMLButtonElement>;
+        openNextChapter: () => void;
+        openPrevChapter: () => void;
         /**
          * `~` if appSettings.epubReaderSettings.loadOneChapter is `false`
          */
-        currentChapterURL: string;
-
-        epubLinkClick: (ev: MouseEvent | React.MouseEvent<HTMLAnchorElement, MouseEvent>) => void;
+        // currentChapterURL: string;
+        // currentChapter: {
+        //     id: string;
+        //     /** `#` part of url */
+        //     fragment: string;
+        // };
+        /** currentChapter Id */
+        currentChapter: EPUB.Spine[number];
+        epubMetadata: EPUB.MetaData;
+        epubTOC: EPUB.TOC;
+        epubNCX: EPUB.NCXTree[];
+        onEpubLinkClick: (ev: MouseEvent | React.MouseEvent<HTMLAnchorElement, MouseEvent>) => void;
         addToBookmarkRef: React.RefObject<HTMLButtonElement>;
         isBookmarked: boolean;
         setBookmarked: React.Dispatch<React.SetStateAction<boolean>>;
@@ -78,30 +92,6 @@ const EPubReaderSideList = memo(
                 setListOpen(true);
             }
         }, [isSideListPinned]);
-
-        const changePrevNext = () => {
-            if (bookInReader) {
-                const listData = tocData.nav.map((e) => e.src);
-
-                const simpleChapterURL = currentChapterURL.split("#")[0];
-                let currentChapterIndex = listData.findIndex((e) => e.includes(currentChapterURL));
-                if (currentChapterIndex < 0)
-                    currentChapterIndex = listData.findIndex((e) => e.includes(simpleChapterURL));
-                let nextIndex = currentChapterIndex + 1;
-                if (nextIndex < listData.length && listData[nextIndex] === currentChapterURL) nextIndex += 1;
-                let prevIndex = currentChapterIndex - 1;
-                if (prevIndex > 0 && listData[prevIndex] === currentChapterURL) prevIndex -= 1;
-                const prevCh = prevIndex < 0 ? "~" : listData[prevIndex];
-                const nextCh = nextIndex >= listData.length ? "~" : listData[nextIndex];
-                // console.log({ prev: prevCh, next: nextCh });
-                dispatch(setPrevNextChapter({ prev: prevCh, next: nextCh }));
-            }
-        };
-
-        useEffect(() => {
-            if (appSettings.epubReaderSettings.loadOneChapter) changePrevNext();
-            else dispatch(setPrevNextChapter({ prev: "~", next: "~" }));
-        }, [tocData, currentChapterURL]);
 
         const handleResizerDrag = (e: MouseEvent) => {
             if (draggingResizer) {
@@ -240,29 +230,22 @@ const EPubReaderSideList = memo(
                         </button>
                     </div>
                     <div className="row2">
-                        <Button_A
+                        <button
                             className="ctrl-menu-item"
-                            btnRef={openPrevChapterRef}
-                            tooltip="Open Previous"
-                            disabled={prevNextChapter.prev === "~"}
-                            clickAction={() => {
-                                if (sideListRef.current) {
-                                    sideListRef.current.querySelectorAll("a").forEach((e) => {
-                                        if (e.getAttribute("data-href") === prevNextChapter.prev)
-                                            (e as HTMLAnchorElement).click();
-                                    });
-                                }
-
-                                // dispatch(setLinkInReader({ type: "image", link: prevNextChapter.prev, page: 1 }));
+                            data-tooltip="Open Previous"
+                            //todo
+                            // disabled={prevNextChapter.prev === "~"}
+                            onClick={() => {
+                                openPrevChapter();
                             }}
                         >
                             <FontAwesomeIcon icon={faArrowLeft} />
-                        </Button_A>
-                        <Button_A
+                        </button>
+                        <button
                             className="ctrl-menu-item"
-                            tooltip="Bookmark"
-                            btnRef={addToBookmarkRef}
-                            clickAction={() => {
+                            data-tooltip="Bookmark"
+                            ref={addToBookmarkRef}
+                            onClick={() => {
                                 if (isBookmarked) {
                                     return window.dialog
                                         .warn({
@@ -313,43 +296,32 @@ const EPubReaderSideList = memo(
                             }}
                         >
                             <FontAwesomeIcon icon={isBookmarked ? faBookmark : farBookmark} />
-                        </Button_A>
-                        <Button_A
+                        </button>
+                        <button
                             className="ctrl-menu-item"
-                            btnRef={openNextChapterRef}
-                            tooltip="Open Next"
+                            data-tooltip="Open Next"
                             disabled={prevNextChapter.next === "~"}
-                            clickAction={() => {
-                                if (sideListRef.current) {
-                                    // [data-depth="1"
-                                    //todo: use index instead of traversing
-                                    sideListRef.current.querySelectorAll("a").forEach((e) => {
-                                        if (e.getAttribute("data-href") === prevNextChapter.next)
-                                            (e as HTMLAnchorElement).click();
-                                    });
-                                }
+                            onClick={() => {
+                                openNextChapter();
                             }}
                         >
                             <FontAwesomeIcon icon={faArrowRight} />
-                        </Button_A>
+                        </button>
                     </div>
                 </div>
                 <div className="in-reader">
                     <div>
                         <span className="bold">Title</span>
                         <span className="bold"> : </span>
-                        <span>{tocData.title}</span>
+                        <span>{epubMetadata.title}</span>
                     </div>
                     {appSettings.epubReaderSettings.loadOneChapter && (
                         <div>
                             <span className="bold">Chapter</span>
                             <span className="bold"> : </span>
                             <span>
-                                {tocData.nav.find(
-                                    (e) =>
-                                        e.src.includes(currentChapterURL) ||
-                                        e.src.includes(currentChapterURL.split("#")[0])
-                                )?.name || "~"}
+                                {/* //todo use "one above(get from spine+toc)" .title if not found */}
+                                {epubTOC.get(currentChapter.href)?.title || "~"}
                             </span>
                         </div>
                     )}
@@ -373,11 +345,19 @@ const EPubReaderSideList = memo(
                             className="ctrl-menu-item"
                             data-tooltip="Locate Current Chapter"
                             onClick={() => {
+                                //todo maybe make a state for closest item in toc according to id and spine
                                 if (sideListRef.current) {
-                                    sideListRef.current.querySelectorAll("a").forEach((e) => {
-                                        if (e.getAttribute("data-href") === currentChapterURL)
-                                            e.scrollIntoView({ block: "nearest" });
-                                    });
+                                    const elem = sideListRef.current.querySelector(
+                                        `a[data-href="${currentChapter.href.replaceAll("\\", "\\\\")}"]`
+                                    );
+                                    console.log(elem, currentChapter.href);
+                                    if (elem) {
+                                        sideListRef.current
+                                            .querySelectorAll(".current")
+                                            .forEach((e) => e.classList.remove("current"));
+                                        elem.parentElement?.classList.add("current");
+                                        elem.scrollIntoView({ block: "center" });
+                                    }
                                 }
                             }}
                         >
@@ -385,21 +365,26 @@ const EPubReaderSideList = memo(
                         </button>
                     </div>
                 </div>
-                <div
-                    className="location-cont"
-                    style={{
-                        display: appSettings.epubReaderSettings.hideSideList ? "none" : "initial",
-                    }}
-                >
-                    <List
-                        tocData={tocData}
-                        currentChapterURL={currentChapterURL}
-                        epubLinkClick={epubLinkClick}
-                        sideListRef={sideListRef}
-                        // setCurrentChapterURL={setCurrentChapterURL}
-                        currentRef={currentRef}
-                    />
-                </div>
+                {!appSettings.epubReaderSettings.hideSideList && (
+                    <div
+                        className="location-cont"
+                        // style={{
+                        //     display: appSettings.epubReaderSettings.hideSideList ? "none" : "initial",
+                        // }}
+                    >
+                        <List
+                            currentChapter={currentChapter}
+                            onEpubLinkClick={onEpubLinkClick}
+                            epubNCX={epubNCX}
+                            // epubNCXDepth={epubMetadata.ncx_depth}
+                            epubTOC={epubTOC}
+                            sideListRef={sideListRef}
+                            focusChapterInList={appSettings.epubReaderSettings.focusChapterInList}
+                            // setCurrentChapterURL={setCurrentChapterURL}
+                            // currentRef={currentRef}
+                        />
+                    </div>
+                )}
             </div>
         );
     }
@@ -408,155 +393,91 @@ const EPubReaderSideList = memo(
 //todo optimize
 const List = memo(
     ({
-        tocData,
-        currentChapterURL,
-        epubLinkClick,
+        epubNCX,
+        // epubNCXDepth,
+        epubTOC,
+        onEpubLinkClick,
         sideListRef,
-        // setCurrentChapterURL,
-        currentRef,
-    }: {
-        tocData: TOCData;
-        currentChapterURL: string;
-        epubLinkClick: (ev: MouseEvent | React.MouseEvent<HTMLAnchorElement, MouseEvent>) => void;
+        currentChapter,
+        focusChapterInList,
+    }: // setCurrentChapterURL,
+    // currentRef,
+    {
+        currentChapter: EPUB.Spine[number];
+        epubTOC: EPUB.TOC;
+        epubNCX: EPUB.NCXTree[];
+        // epubNCXDepth: number;
+        onEpubLinkClick: (ev: MouseEvent | React.MouseEvent<HTMLAnchorElement, MouseEvent>) => void;
         sideListRef: React.RefObject<HTMLDivElement>;
+
+        focusChapterInList: boolean;
         // setCurrentChapterURL: React.Dispatch<React.SetStateAction<string>>;
-        currentRef: React.MutableRefObject<HTMLAnchorElement | null>;
+        // currentRef: React.MutableRefObject<HTMLAnchorElement | null>;
     }) => {
-        const temp_ListShow: boolean[] = [];
-        const temp = useMemo(
-            () =>
-                tocData.nav.reduce((acc, cur) => {
-                    const len = acc.length;
-                    if (tocData.depth === 2) {
-                        if (cur.depth === 2) {
-                            acc.push({ parent: cur, child: [] });
-                            temp_ListShow.push(false);
-                        }
-                        if (cur.depth === 1) acc[len - 1].child.push(cur);
-                        if (cur.src.includes(currentChapterURL)) temp_ListShow[acc.length - 1] = true;
-                    }
-                    return acc;
-                }, [] as { parent: TOCData["nav"][0]; child: TOCData["nav"] }[]),
-            [tocData]
-        );
+        //todo add button to show toc.xhtml if exist
+        if (epubTOC.size === 0) return <p>No TOC found in epub</p>;
 
-        const [listShow, setListShow] = useState(temp_ListShow);
-
-        const appSettings = useAppSelector((store) => store.appSettings);
-        // useLayoutEffect(() => {
-        //     setListShow(temp_ListShow);
-        // }, [currentChapterURL]);
-        // useLayoutEffect(() => {
-        //     console.log(listShow);
-        // }, [listShow]);
-        // console.log(tocData.depth, temp);
-
-        //! i have literally no idea wtf i was doing here
-
-        const ListItem = ({
-            name,
-            depth,
-            src,
-            index = -1,
-        }: {
-            name: string;
-            depth: number;
-            src: string;
-            index?: number;
-        }) => {
-            const show = index < 0 ? true : listShow[index];
-            return (
-                <li
-                    className={`${src.includes(currentChapterURL) ? "current" : ""} ${
-                        depth === 2 ? "collapse" : ""
-                    } ${!show ? "collapsed" : ""}`}
-                    style={{ "--depth": depth - 1 }}
-                    onClick={() => {
-                        if (depth === 2) {
-                            setListShow((init) => {
-                                const dup = [...init];
-                                dup[index] = !dup[index];
-                                return dup;
-                            });
-                        }
-                    }}
-                >
-                    {/* {depth===2&& <span className={`toggleCollapse ${!show?"collapsed ":""}`}>▼</span> } */}
-                    <a
-                        onClick={(ev) => {
-                            ev.stopPropagation();
-                            epubLinkClick(ev);
-                            sideListRef.current?.blur();
-
-                            // why was it here before?
-                            // setCurrentChapterURL(ev.currentTarget.getAttribute("data-href") || "~");
-                        }}
-                        data-href={src}
-                        data-depth={depth}
-                        title={name}
-                        // todo create option to exclude this.
-                        ref={
-                            appSettings.epubReaderSettings.focusChapterInList
-                                ? (node) => {
-                                      if (src.includes(currentChapterURL)) {
-                                          currentRef.current = node;
-                                          if (node) {
-                                              if (temp.length > 0 && !show)
-                                                  setListShow((init) => {
-                                                      const aa = Array(init.length).fill(false);
-                                                      aa[index] = true;
-                                                      return aa;
-                                                  });
-                                              node.scrollIntoView({ block: "start" });
-                                          }
-                                      }
-                                  }
-                                : undefined
-                        }
-                    >
-                        <span className="text">{"\u00A0".repeat((tocData.depth - depth) * 5) + name}</span>
-                    </a>
-                </li>
-            );
-        };
-        if (tocData.depth === 2 && temp.length > 0) {
+        const [listShow, setListShow] = useState(new Array(epubTOC.size).fill(true));
+        const NestedList = ({ ncx }: { ncx: EPUB.NCXTree[] }) => {
             return (
                 <ol>
-                    {temp.map((e, i) => (
-                        <React.Fragment key={e.parent.name}>
-                            <ListItem {...e.parent} key={e.parent.name} index={i} />
-                            {e.child.map((c) => (
-                                <ListItem {...c} key={c.name} index={i} />
-                            ))}
+                    {ncx.map((e) => (
+                        <React.Fragment key={e.ncx_index2}>
+                            <li
+                                className={`${e.sub.length > 0 ? "collapse" : ""} ${
+                                    listShow[e.ncx_index2] ? "collapsed" : ""
+                                } ${epubTOC.get(e.navId)?.href === currentChapter.href ? "current" : ""}`}
+                                // style={{ "--level-top": epubNCXDepth - e.level }}
+                                onClick={() => {
+                                    setListShow((init) => {
+                                        const dup = [...init];
+                                        dup[e.ncx_index2] = !dup[e.ncx_index2];
+                                        return dup;
+                                    });
+                                }}
+                            >
+                                <a
+                                    onClick={(ev) => {
+                                        ev.stopPropagation();
+                                        onEpubLinkClick(ev);
+                                        sideListRef.current?.blur();
+                                    }}
+                                    title={epubTOC.get(e.navId)?.title}
+                                    data-href={epubTOC.get(e.navId)?.href}
+                                    data-depth={e.level}
+                                    //todo check if works
+                                    ref={
+                                        focusChapterInList
+                                            ? (node) => {
+                                                  if (node && epubTOC.get(e.navId)?.href === currentChapter.href) {
+                                                      if (listShow[e.ncx_index2] === false)
+                                                          setListShow((init) => {
+                                                              const dup = [...init];
+                                                              dup[e.ncx_index2] = true;
+                                                              return dup;
+                                                          });
+                                                      node.scrollIntoView({ block: "start" });
+                                                  }
+                                              }
+                                            : undefined
+                                    }
+                                >
+                                    <span className="text">
+                                        {"\u00A0".repeat(e.level * 5)}
+                                        {epubTOC.get(e.navId)?.title}
+                                    </span>
+                                </a>
+                            </li>
+                            {e.sub.length > 0 && <NestedList ncx={e.sub} />}
                         </React.Fragment>
                     ))}
                 </ol>
             );
-        }
-        return (
-            <ol>
-                {tocData.nav.map((e) => (
-                    <ListItem {...e} key={e.name} />
-                ))}
-            </ol>
-        );
+        };
+        return <NestedList ncx={epubNCX} />;
     },
-    (prev, next) => prev.currentChapterURL === next.currentChapterURL
+    // focusChapterInList will make sure that it wont rerender when its `false` for performance benefits
+    (prev, next) => !prev.focusChapterInList || prev.currentChapter.href === next.currentChapter.href
 );
 
-const Button_A = (props: any) => {
-    return (
-        <button
-            className={props.className}
-            data-tooltip={props.tooltip}
-            ref={props.btnRef}
-            onClick={props.clickAction}
-            // tabIndex={-1}
-            disabled={props.disabled}
-            // onFocus={(e) => e.currentTarget.blur()}
-        >
-            {props.children}
-        </button>
-    );
-};
 export default EPubReaderSideList;

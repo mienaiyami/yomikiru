@@ -329,6 +329,7 @@ declare global {
              * Set of chapter names already read under same manga.
              */
             chaptersRead: string[];
+            //todo: don't need, can be taken from dir(link)
             mangaLink: string;
         } & ChapterItem;
     };
@@ -352,6 +353,7 @@ declare global {
         title: string;
         author: string;
         link: string;
+        //todo: currently chapterURL is full path, make it same as EPUBContent.href, or use chapterId instead
         chapterURL: string;
         date?: string;
         chapter?: string;
@@ -383,6 +385,61 @@ declare global {
             depth: number;
         }[];
     };
+    //eslint-disable-next-line @typescript-eslint/no-namespace
+    namespace EPUB {
+        type MetaData = {
+            title: string;
+            author: string;
+            // description: string;
+            cover: string;
+            /**
+             * full path of the directory containing the opf file (inside extracted epub directory)
+             */
+            opfDir: string;
+            ncx_depth: number;
+        };
+        /**
+         * map key is id of item
+         */
+        type Manifest = Map<
+            string,
+            {
+                id: string;
+                href: string;
+                mediaType: string;
+
+                // here for quick access, taken from toc
+                title?: string;
+                order?: number;
+                level?: number;
+            }
+        >;
+        // /** array of idref, defines display order*/
+        // also including href for quick lookup (wont have to convert manifest to array each time to check find url)
+        type Spine = {
+            id: string;
+            href: string;
+        }[];
+        type TOCElement = {
+            navId: string;
+            title: string;
+            href: string;
+            level: number;
+            /**corresponding chapter id from spine */
+            chapterId?: string;
+        };
+        /** key is `navId` */
+        type TOC = Map<string, TOCElement>;
+        type NCXTree = {
+            navId: string;
+            /** index without including sub */
+            ncx_index1: number;
+            /** index including sub */
+            ncx_index2: number;
+            level: number;
+            sub: NCXTree[];
+        };
+    }
 
     type ShortcutCommands = (typeof SHORTCUT_COMMAND_MAP)[number]["command"];
 
