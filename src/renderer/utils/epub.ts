@@ -239,7 +239,6 @@ export default class EPUB {
                 if (src.startsWith("http")) return args[0];
                 return `src="${path.join(path.dirname(chapterPath), src)}" data-original-src="${src}" `;
             });
-            // ignoring xlink:href for now
             txt = txt.replace(/(?<=\s|^)(href=)(["']?)([^"'\n]*?)(\2)/gi, (...args) => {
                 const href = args[3] as string;
                 if (href.startsWith("http"))
@@ -249,6 +248,15 @@ export default class EPUB {
                 return `data-href="${
                     href.startsWith("#") ? href : path.join(path.dirname(chapterPath), href)
                 }" data-original-href="${href}"`;
+            });
+            // for svg images
+            txt = txt.replace(/(?<=\s|^)(xlink:href=)(["']?)([^"'\n]*?)(\2)/gi, (...args) => {
+                const href = args[3] as string;
+                if (href.startsWith("http")) return args[0];
+                return `xlink:href="${path.join(
+                    path.dirname(chapterPath),
+                    href
+                )}" data-original-xlink:href="${href}"`;
             });
             // replacing id so that it doesn't conflict with other elements
             txt = txt.replace(/(?<=\s|^)(id=)/gi, "data-epub-id=");
