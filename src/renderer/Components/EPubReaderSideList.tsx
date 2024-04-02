@@ -283,9 +283,9 @@ const EPubReaderSideList = memo(
                                                     type: "book",
                                                     data: {
                                                         ...bookInReader,
-                                                        chapter: window.app.epubHistorySaveData.chapter,
-                                                        elementQueryString:
-                                                            window.app.epubHistorySaveData.queryString,
+                                                        chapterData: {
+                                                            ...window.app.epubHistorySaveData,
+                                                        },
                                                     },
                                                 })
                                             );

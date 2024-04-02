@@ -161,13 +161,14 @@ declare global {
             clickDelay: number;
             lastClick: number;
             currentPageNumber: number;
+            //todo improve
             /**
              * used in epub reader only
              */
             epubHistorySaveData: {
-                chapter: string;
-                chapterURL: string;
-                queryString: string;
+                chapterName: string;
+                id: string;
+                elementQueryString: string;
             } | null;
             scrollToPage: (
                 pageNumber_or_percent: number,
@@ -176,8 +177,7 @@ declare global {
             ) => void;
             keyRepeated: boolean;
 
-            // todo: fix
-            // todo: make better way to do this
+            //todo try to remove if possible, or modify for better use
             /**
              * why did i add this? bcoz linkInReader state is showing initial only in App.tsx
              */
@@ -186,6 +186,8 @@ declare global {
                 link: string;
                 page: number;
                 chapter: string;
+                /** for epub */
+                chapterId?: string;
                 /**
                  * elem query string for epub auto scroll
                  */
@@ -319,6 +321,7 @@ declare global {
         link: string;
         pages: number;
     }
+    //todo combine with MangaItem
     type ChapterItem = MangaItem & {
         page: number;
     };
@@ -335,12 +338,7 @@ declare global {
     };
     type BookHistoryItem = {
         type: "book";
-        data: {
-            /**
-             * css query string of element to focus on load
-             */
-            elementQueryString: string;
-        } & BookItem;
+        data: BookItem;
     };
     type HistoryItem = MangaHistoryItem | BookHistoryItem;
     type ListItemE = Manga_BookItem & {
@@ -353,16 +351,17 @@ declare global {
         title: string;
         author: string;
         link: string;
-        //todo: currently chapterURL is full path, make it same as EPUBContent.href, or use chapterId instead
-        chapterURL: string;
+        //todo impl
+        cover: string;
         date?: string;
-        chapter?: string;
-    };
-    type BookBookmarkItem = BookItem & {
-        /**
-         * css query string of element to focus on load
-         */
-        elementQueryString: string;
+        chapterData: {
+            chapterName: string;
+            id: string;
+            /**
+             * css query string of element to focus on load
+             */
+            elementQueryString: string;
+        };
     };
     type Manga_BookItem =
         | {
@@ -371,20 +370,8 @@ declare global {
           }
         | {
               type: "book";
-              data: BookBookmarkItem;
+              data: BookItem;
           };
-    type TOCData = {
-        title: string;
-        author: string;
-        /**real depth */
-        depth: number;
-        nav: {
-            src: string;
-            name: string;
-            /**depth level of current nav */
-            depth: number;
-        }[];
-    };
     //eslint-disable-next-line @typescript-eslint/no-namespace
     namespace EPUB {
         type MetaData = {
@@ -428,7 +415,7 @@ declare global {
             /**corresponding chapter id from spine */
             chapterId?: string;
         };
-        /** key is `navId` */
+        /** key is `navId`, not same as `Spine.id` */
         type TOC = Map<string, TOCElement>;
         type NCXTree = {
             navId: string;
@@ -550,7 +537,7 @@ window.getCSSPath = (el) => {
     while (elem.nodeType === Node.ELEMENT_NODE) {
         let selector = elem.nodeName.toLowerCase();
         if (elem.id) {
-            selector += "#" + elem.id.trim();
+            selector += "#" + elem.id.trim().replaceAll(".", "\\.");
             path.unshift(selector);
             break;
         } else {

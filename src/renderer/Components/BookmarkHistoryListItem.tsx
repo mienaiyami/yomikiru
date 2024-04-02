@@ -13,7 +13,7 @@ const BookmarkHistoryListItem = (props: ListItemE) => {
     const title =
         props.type === "book"
             ? `Title       : ${props.data.title}\n` +
-              `Chapter : ${props.data.chapter || "~"}\n` +
+              `Chapter : ${props.data?.chapterData?.chapterName || "~"}\n` +
               `Date      : ${props.data.date}\n` +
               `Path      : ${props.data.link}`
             : `Manga   : ${props.data.mangaName}\n` +
@@ -43,10 +43,12 @@ const BookmarkHistoryListItem = (props: ListItemE) => {
                     }
                     openInReader(
                         props.data.link,
-                        props.type === "image"
-                            ? props.data.page
-                            : props.data.chapterURL || props.data.chapter || "",
-                        props.type === "book" ? props.data.elementQueryString : ""
+                        props.type === "book"
+                            ? {
+                                  epubChapterId: props.data?.chapterData?.id,
+                                  epubElementQueryString: props.data?.chapterData?.elementQueryString,
+                              }
+                            : { mangaPageNumber: props.data.page }
                     );
                 }}
                 onContextMenu={(e) => {
@@ -74,7 +76,7 @@ const BookmarkHistoryListItem = (props: ListItemE) => {
                     <span className="double">
                         <span className="text">{props.data.title}</span>
                         <span className="text chapter">
-                            <span className="text">{props.data.chapter || "~"}</span>
+                            <span className="text">{props.data?.chapterData?.chapterName || "~"}</span>
                             &nbsp;&nbsp;&nbsp;
                             <span className="page">
                                 {" "}

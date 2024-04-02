@@ -8,7 +8,8 @@ const shortcutsPath = window.path.join(userDataURL, "shortcuts.json");
 const saveJSONfile = (path: string, data: any) => {
     // console.log("Saving file ", window.fileSaveTimeOut, path);
     //todo: replace with better json parser/stringifier
-    const str = JSON.stringify(data, null, "\t");
+    const str = JSON.stringify(data, null, "  ");
+    // const str = JSON.stringify(data);
     if (str)
         try {
             // window.logger.log("Sent file to save:", path);

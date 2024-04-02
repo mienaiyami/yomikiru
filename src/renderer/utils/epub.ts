@@ -89,7 +89,7 @@ export default class EPUB {
                 title: opf.getElementsByTagName("dc:title")[0]?.textContent || "No Title",
                 author: [...opf.getElementsByTagName("dc:creator")].map((el) => el.textContent).join(", "),
                 // description: opf.querySelector("dc:description")?.textContent || "No Description",
-                cover: coverSrc,
+                cover: path.join(path.dirname(opfPath), coverSrc),
                 opfDir: path.dirname(opfPath),
                 ncx_depth: 0,
             };

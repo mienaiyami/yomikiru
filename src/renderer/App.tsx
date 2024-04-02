@@ -1,4 +1,5 @@
 import "./MainImports";
+import { promptSelectDir, unzip } from "./MainImports";
 import { createContext, createRef, ReactElement, useEffect, useLayoutEffect, useState } from "react";
 import { useAppDispatch, useAppSelector } from "./store/hooks";
 import Main from "./Components/Main";
@@ -28,18 +29,23 @@ import { setAniLoginOpen } from "./store/isAniLoginOpen";
 import { setAniSearchOpen } from "./store/isAniSearchOpen";
 import { setAnilistCurrentManga } from "./store/anilistCurrentManga";
 import { toggleOpenSetting } from "./store/isSettingOpen";
-import { promptSelectDir, unzip } from "./MainImports";
 import { renderPDF } from "./utils/pdf";
 
 interface IAppContext {
     pageNumberInputRef: React.RefObject<HTMLInputElement>;
     bookProgressRef: React.RefObject<HTMLInputElement>;
     /**
-     * Check if folder have images then open those images in reader.
-     * @param link link of folder containing images to be opened in reader.
-     * @param page_or_chapterName pagenumber in case of manga and chapter name in case of epub
+     * Check if folder have images then open those images in reader, or open in epub-reader if `.epub`
+     * @param link link of folder containing images or epub file.
      */
-    openInReader: (link: string, page_or_chapterName?: number | string, elementQueryString?: string) => void;
+    openInReader: (
+        link: string,
+        extra?: {
+            mangaPageNumber?: number;
+            epubChapterId?: string;
+            epubElementQueryString?: string;
+        }
+    ) => void;
     // addNewBookmark: (newBk: ChapterItem) => Promise<Electron.MessageBoxReturnValue> | undefined;
     closeReader: () => void;
     // updateLastHistoryPageNumber: () => void;
@@ -276,7 +282,14 @@ const App = (): ReactElement => {
             }
         } else tempFn(link);
     };
-    const openInReader = (link: string, page_or_chapterName?: number | string, elementQueryString?: string) => {
+    const openInReader = (
+        link: string,
+        extra?: {
+            mangaPageNumber?: number;
+            epubChapterId?: string;
+            epubElementQueryString?: string;
+        }
+    ) => {
         link = window.path.normalize(link);
         window.electron.webFrame.clearCache();
         if (link === linkInReader.link) return;
@@ -291,8 +304,9 @@ const App = (): ReactElement => {
                     type: "book",
                     link: link,
                     page: 0,
-                    chapter: page_or_chapterName as string,
-                    queryStr: elementQueryString,
+                    chapter: "",
+                    chapterId: extra?.epubChapterId || "",
+                    queryStr: extra?.epubElementQueryString || "",
                 })
             );
         } else
@@ -308,7 +322,7 @@ const App = (): ReactElement => {
                             setLinkInReader({
                                 type: "image",
                                 link,
-                                page: (page_or_chapterName as number) || 1,
+                                page: extra?.mangaPageNumber || 1,
                                 chapter: "",
                             })
                         );
@@ -618,12 +632,8 @@ const App = (): ReactElement => {
                             const newItem: Manga_BookItem = {
                                 type: "book",
                                 data: {
-                                    author: data.data.author,
-                                    link: data.data.link,
-                                    title: data.data.title,
-                                    chapter: data.data.chapter || "",
-                                    chapterURL: data.data.chapterURL,
-                                    elementQueryString: data.data.elementQueryString || "",
+                                    ...data.data,
+                                    chapterData: { ...data.data.chapterData },
                                     date: new Date().toLocaleString("en-UK", { hour12: true }),
                                 },
                             };

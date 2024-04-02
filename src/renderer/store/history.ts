@@ -3,6 +3,7 @@ import { historyPath, saveJSONfile } from "../utils/paths";
 
 const initialState: HistoryItem[] = [];
 
+//todo remove later
 /**
  * updating from old schema to new to support epub
  */
@@ -55,6 +56,7 @@ const historyData = readHistory();
 // if (historyData.length === 0) window.fs.writeFileSync(historyPath, "[]");
 initialState.push(...historyData);
 
+//todo redo before release, theres also `Manga_BookItem`
 type NewHistoryData =
     | {
           type: "image";
@@ -115,7 +117,10 @@ const history = createSlice({
                     type: "book",
                     data: {
                         ...data.bookOpened,
-                        elementQueryString: data.elementQueryString,
+                        chapterData: {
+                            ...data.bookOpened.chapterData,
+                            elementQueryString: data.elementQueryString,
+                        },
                     },
                 });
             }
@@ -144,9 +149,9 @@ const history = createSlice({
             if (index > -1 && window.app.epubHistorySaveData) {
                 const oldData = stateDup[index];
                 stateDup.splice(index, 1);
-                (oldData as BookHistoryItem).data.chapter = window.app.epubHistorySaveData.chapter;
-                (oldData as BookHistoryItem).data.chapterURL = window.app.epubHistorySaveData.chapterURL;
-                (oldData as BookHistoryItem).data.elementQueryString = window.app.epubHistorySaveData.queryString;
+                (oldData as BookHistoryItem).data.chapterData = {
+                    ...window.app.epubHistorySaveData,
+                };
                 (oldData as BookHistoryItem).data.date = new Date().toLocaleString("en-UK", { hour12: true });
                 stateDup.unshift(oldData);
                 saveJSONfile(historyPath, stateDup);
