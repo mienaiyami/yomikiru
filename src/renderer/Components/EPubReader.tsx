@@ -23,21 +23,6 @@ import { setMangaInReader } from "../store/mangaInReader";
 
 import EPUB from "../utils/epub";
 
-//!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-/*
-! for internal links, some may contain #, it will disrupt current chapter like in prev versions
-! first check if the href with # is in toc or not, if so 
-
-! not all epub have toc
-
-! it might be better to use a chapter pointer(in main), which will show items from spine, independent of toc,
-! and getting items in between 2 toc items for performance,
-! chapter will be shown only from spine,
-! but to still highlight current chapter in toc, we can move up in spine matching each item in toc to get current chapter
-
-! it might be better to use id instead of url, and send hash to scroll to internal-id if hash in clicked url.
-*/
-
 const StyleSheets = memo(
     ({ sheets }: { sheets: string[] }) => {
         return (
@@ -49,7 +34,6 @@ const StyleSheets = memo(
                             try {
                                 const stylesheet = document.createElement("style");
                                 let txt = window.fs.readFileSync(url, "utf-8");
-                                // console.log(txt, url, epubStylesheets);
                                 const matches = Array.from(txt.matchAll(/url\((.*?)\);/gi));
                                 matches.forEach((e) => {
                                     // for font
@@ -63,6 +47,7 @@ const StyleSheets = memo(
                                     );
                                 });
                                 // to make sure styles don't apply outside
+                                // todo, can use scope in latest version of electron
                                 const ast = css.parse(txt);
                                 ast.stylesheet?.rules.forEach((e) => {
                                     if (e.type === "rule") {
@@ -104,12 +89,9 @@ const HTMLSolo = memo(
                 ref={(node) => {
                     if (node && content) {
                         const xhtml = content;
-                        // const url = e.url;
-                        // const id = e.id;
                         while (node.hasChildNodes()) {
                             node.removeChild(node.childNodes[0]);
                         }
-                        // node.id = "epub-" + id;
                         node.setAttribute("data-link-id", url);
                         xhtml.body.childNodes.forEach((childNode) => {
                             node.appendChild(childNode.cloneNode(true));
@@ -161,12 +143,10 @@ const HTMLPart = memo(
     }) => {
         const { setContextMenuData } = useContext(AppContext);
         const [rendered, setRendered] = useState(false);
-        // useLayoutEffect(() => {
-        //     setRendered(false);
-        // }, [currentChapter]);
         const onContextMenu = (ev: MouseEvent) => {
             ev.stopPropagation();
-            const url = (ev.currentTarget as Element).getAttribute("src") || "";
+            const target = ev.currentTarget as Element;
+            const url = target.getAttribute("src") || target.getAttribute("data-src") || "";
             setContextMenuData({
                 clickX: ev.clientX,
                 clickY: ev.clientY,
@@ -177,14 +157,15 @@ const HTMLPart = memo(
                 ],
             });
         };
-
-        console.log("rendered", currentChapter);
+        // console.log("rendered", currentChapter);
         return (
             <div
                 className="cont htmlCont"
                 key={currentChapter.id + currentChapter.fragment}
                 ref={async (node) => {
                     if (node && !rendered) {
+                        // to prevent multiple calls
+                        setRendered(true);
                         const manifestItem = epubManifest.get(currentChapter.id);
                         if (!manifestItem) {
                             console.error("Error: manifest item not found for id:", currentChapter.id);
@@ -208,22 +189,18 @@ const HTMLPart = memo(
                         } else if (currentChapter.fragment) {
                             setTimeout(() => {
                                 const el = node.querySelector(`[data-epub-id="${currentChapter.fragment}"]`);
-                                console.log("test", el);
                                 if (el) el.scrollIntoView({ block: "start" });
                             });
                         }
-                        setRendered(true);
                     }
                 }}
             ></div>
         );
     },
     (prev, next) => {
-        //todo important, rerendering on setting change
         const currentChapterId = prev.currentChapter.id === next.currentChapter.id;
         const currentChapterFragment = prev.currentChapter.fragment === next.currentChapter.fragment;
         const epubManifest = prev.epubManifest.size === next.epubManifest.size;
-        // console.log(currentChapterId && currentChapterFragment && epubManifest);
         return currentChapterId && currentChapterFragment && epubManifest;
     }
 );
@@ -251,11 +228,20 @@ const EPubReader = () => {
     } | null>(null);
     /** index of current chapter in EPUB.Spine */
     const [currentChapter, setCurrentChapter] = useState({
-        index: 0,
+        index: -1,
         fragment: "",
     });
     /**
+     * `EPUB.Spine.id` before `currentChapter` that has a title in toc
+     * only for display purpose in side-list, titlebar, history
+     * it can be heavy to get because title only exists in toc, and not all href have a title
+     * so it will find any last title before current chapter (href from spine) which has a occurrence in toc
+     */
+    const [currentChapterFake, setCurrentChapterFake] = useState("");
+
+    /**
      *  css selector of element which was on top of view before changing size,etc.
+     *  also used on first load to scroll to last read position
      */
     const [elemBeforeChange, setElemBeforeChange] = useState(linkInReader.queryStr || "");
     const [isSideListPinned, setSideListPinned] = useState(false);
@@ -263,13 +249,10 @@ const EPubReader = () => {
     const [zenMode, setZenMode] = useState(appSettings.openInZenMode || false);
     const [isBookmarked, setBookmarked] = useState(false);
     const [wasMaximized, setWasMaximized] = useState(false);
-    // display this text then shortcuts clicked
+    // display this text when shortcuts clicked
     const [shortcutText, setshortcutText] = useState("");
     // [0-100]
     const [bookProgress, setBookProgress] = useState(0);
-    //todo try joining in with currentChapter
-    // to auto scroll on opening bookmark
-    const [bookmarkedElem, setBookmarkedElem] = useState("");
 
     const [nonEPUBFile, setNonEPUBFile] = useState<null | Document>(null);
 
@@ -280,8 +263,6 @@ const EPubReader = () => {
     const sizeMinusRef = useRef<HTMLButtonElement>(null);
     const fontSizePlusRef = useRef<HTMLButtonElement>(null);
     const fontSizeMinusRef = useRef<HTMLButtonElement>(null);
-    // const openPrevChapterRef = useRef<HTMLButtonElement>(null);
-    // const openNextChapterRef = useRef<HTMLButtonElement>(null);
     const shortcutTextRef = useRef<HTMLDivElement>(null);
     const addToBookmarkRef = useRef<HTMLButtonElement>(null);
 
@@ -289,36 +270,52 @@ const EPubReader = () => {
         window.app.linkInReader = linkInReader;
         loadEPub(linkInReader.link);
     }, [linkInReader]);
-
-    //todo make a state to hold chapter name for display purpose
     useLayoutEffect(() => {
         if (appSettings.epubReaderSettings.loadOneChapter && readerRef.current) readerRef.current.scrollTop = 0;
-        // const simpleChapterURL = currentChapterURL.split("#")[0];
-        window.app.epubHistorySaveData = {
-            chapterName: "~",
-            id: epubData?.spine[currentChapter.index].id || "",
-            elementQueryString: "",
+        const update = (id: string) => {
+            window.app.epubHistorySaveData = {
+                chapterName: epubData?.manifest.get(id)?.title || "~",
+                id,
+                elementQueryString: "",
+            };
+            if (bookInReader)
+                dispatch(
+                    setBookInReader({
+                        ...bookInReader,
+                        chapterData: {
+                            ...window.app.epubHistorySaveData,
+                        },
+                    })
+                );
+            dispatch(updateCurrentBookHistory());
         };
-        // if (tocData)
-        //     window.app.epubHistorySaveData.chapter =
-        //         tocData.nav.find((e) => e.src.includes(simpleChapterURL))?.name || "~";
-        // if (
-        //     window.app.epubHistorySaveData.chapter === "~" ||
-        //     window.app.epubHistorySaveData.chapter === linkInReader.chapter
-        // )
-        //     window.app.epubHistorySaveData.queryString = linkInReader.queryStr || "";
-        if (bookInReader)
-            dispatch(
-                setBookInReader({
-                    ...bookInReader,
-                    chapterData: {
-                        chapterName: "~",
-                        id: epubData?.spine[currentChapter.index].id || "",
-                        elementQueryString: "",
-                    },
-                })
-            );
-        dispatch(updateCurrentBookHistory());
+        const abortController = new AbortController();
+        (async function () {
+            if (epubData) {
+                let index = currentChapter.index;
+                let id = "";
+                // const now = performance.now();
+                // will only check 10 chapters before current chapter
+                while (index >= 0 && currentChapter.index - index < 10 && !abortController.signal.aborted) {
+                    // const now2 = performance.now();
+                    // console.log("single chapter 1", performance.now() - now2);
+                    if (epubData.spine[index].id) {
+                        id = epubData.spine[index].id;
+                        break;
+                    }
+                    // console.log("single chapter 2", performance.now() - now2);
+                    index--;
+                }
+                if (!abortController.signal.aborted) {
+                    update(id);
+                    setCurrentChapterFake(id);
+                }
+                // console.log("time in fake chapter", performance.now() - now);
+            }
+        })();
+        return () => {
+            abortController.abort();
+        };
     }, [currentChapter.index, epubData]);
 
     /**previous find in page resulting p */
@@ -330,19 +327,11 @@ const EPubReader = () => {
 
     const scrollReader = (intensity: number) => {
         if (readerRef.current) {
-            // let startTime: number
             let prevTime: number;
             const anim = (timeStamp: number) => {
-                // if (startTime === undefined) startTime = timeStamp;
-                // const elapsed = timeStamp - startTime;
                 if (prevTime !== timeStamp && readerRef.current) {
-                    // if (isSideListPinned && mainRef.current) {
-                    //     mainRef.current.scrollBy(0, intensity);
-                    // } else {
                     readerRef.current.scrollBy(0, intensity);
-                    // }
                 }
-                // if (elapsed < window.app.clickDelay) {
                 if (window.app.keydown) {
                     prevTime = timeStamp;
                     window.requestAnimationFrame(anim);
@@ -362,12 +351,15 @@ const EPubReader = () => {
     };
     const openPrevChapter = () => {
         setCurrentChapter((prev) => {
-            if (prev.index - 1 >= 0) return { index: prev.index - 1, fragment: "" };
+            if (prev.index - 1 >= 0) {
+                setElemBeforeChange("");
+                return { index: prev.index - 1, fragment: "" };
+            }
             return prev;
         });
     };
     /**
-     * scroll to internal links or open extrrnal link
+     * scroll to internal links or open external link
      * * `data-href` - scroll to internal
      * * `href     ` - open external
      */
@@ -388,6 +380,7 @@ const EPubReader = () => {
                             if (res.response === 0) window.electron.shell.openExternal(href);
                         });
                 } else {
+                    setElemBeforeChange("");
                     if (appSettings.epubReaderSettings.loadOneChapter) {
                         const fragment = href.split("#")[1] || "";
                         if (href.startsWith("#")) {
@@ -505,7 +498,6 @@ const EPubReader = () => {
         EPUB.readEpubFile(link, appSettings.keepExtractedFiles)
             .then((ed) => {
                 // todo : When current chapter is not top level(level=0), make BookItem.chapter concat of all parent chapters.
-                //todo refine
                 let currentChapterIndex = 0;
                 if (linkInReader.chapterId)
                     currentChapterIndex = ed.spine.findIndex((e) => e.id === linkInReader.chapterId);
@@ -529,18 +521,16 @@ const EPubReader = () => {
                         type: "book",
                         data: {
                             bookOpened,
-                            //todo
-                            elementQueryString: "",
-                            // elementQueryString: elemBeforeChange || "",
+                            elementQueryString: elemBeforeChange || "",
                         },
                     })
                 );
-                setEpubData(ed);
-                setBookmarkedElem(linkInReader.queryStr || "");
                 setCurrentChapter({
                     index: currentChapterIndex,
                     fragment: "",
                 });
+                setEpubData(ed);
+                setElemBeforeChange(linkInReader.queryStr || "");
                 // if (ed.toc.length > 200 && !appSettings.epubReaderSettings.loadOneChapter)
                 //     window.dialog.warn({
                 //         message: "Too many chapters in book.",
@@ -575,17 +565,8 @@ const EPubReader = () => {
                 }
                 if (elem) {
                     const fff = window.getCSSPath(elem);
-                    //todo
-                    // window.app.epubHistorySaveData = {
-                    //     chapter: "~",
-                    //     queryString: fff,
-                    //     chapterURL: currentChapterURL,
-                    // };
-                    // if (tocData)
-                    //     window.app.epubHistorySaveData.chapter =
-                    //         tocData.nav.find((e) => e.src.includes(currentChapterURL))?.name || "~";
                     window.app.epubHistorySaveData = {
-                        chapterName: "~",
+                        chapterName: epubData?.manifest.get(currentChapterFake)?.title || "~",
                         id: epubData?.spine[currentChapter.index].id || "",
                         elementQueryString: fff,
                     };
@@ -594,7 +575,7 @@ const EPubReader = () => {
                 }
             }
         },
-        [mainRef.current, zenMode, epubData, currentChapter.index]
+        [mainRef.current, zenMode, epubData, currentChapter.index, currentChapterFake]
     );
 
     // todo: find in innerHTML and replace with span.highlight
@@ -629,9 +610,6 @@ const EPubReader = () => {
                         prevResult: para,
                         prevStr: str,
                     };
-                    // index+=forward ? 1 : 0;
-                    // if (index === paras.length - 1) setFindInPageIndex(0);
-                    // else
                     setFindInPageIndex(index + 1);
                 }
             }
@@ -851,13 +829,13 @@ const EPubReader = () => {
     }, [isSideListPinned, appSettings, isLoadingManga, shortcuts, isSettingOpen, epubData]);
 
     useLayoutEffect(() => {
-        console.log(elemBeforeChange);
         if (elemBeforeChange)
             document.querySelector(elemBeforeChange)?.scrollIntoView({
                 behavior: "auto",
                 block: "start",
             });
     }, [
+        epubData,
         appSettings.epubReaderSettings.readerWidth,
         isSideListPinned,
         appSettings.epubReaderSettings.fontSize,
@@ -922,17 +900,11 @@ const EPubReader = () => {
                 epubData && (
                     <EPubReaderSideList
                         onEpubLinkClick={onEpubLinkClick}
-                        // openNextChapterRef={openNextChapterRef}
-                        // openPrevChapterRef={openPrevChapterRef}
-                        epubNCX={epubData.ncx}
-                        epubTOC={epubData.toc}
-                        epubMetadata={epubData.metadata}
                         openNextChapter={openNextChapter}
                         openPrevChapter={openPrevChapter}
                         currentChapter={epubData.spine[currentChapter.index]}
-                        // currentChapterURL={currentChapterURL}
-
-                        // setCurrentChapterURL={setCurrentChapterURL}
+                        currentChapterFake={currentChapterFake}
+                        epubData={epubData}
                         addToBookmarkRef={addToBookmarkRef}
                         setshortcutText={setshortcutText}
                         isBookmarked={isBookmarked}
@@ -1120,7 +1092,7 @@ const EPubReader = () => {
                             currentChapter={{
                                 id: epubData.spine[currentChapter.index].id,
                                 fragment: currentChapter.fragment,
-                                elementQuery: bookmarkedElem,
+                                elementQuery: elemBeforeChange,
                             }}
                             epubManifest={epubData.manifest}
                             // bookmarkedElem={bookmarkedElem}

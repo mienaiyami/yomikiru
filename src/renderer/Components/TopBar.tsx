@@ -42,10 +42,10 @@ const TopBar = (): ReactElement => {
             let chapterName = "";
             if (
                 appSettings.epubReaderSettings.loadOneChapter &&
-                bookInReader.chapter &&
-                bookInReader.chapter !== "~"
+                bookInReader.chapterData &&
+                bookInReader.chapterData.chapterName !== "~"
             ) {
-                chapterName = window.app.formats.files.getName(bookInReader.chapter);
+                chapterName = window.app.formats.files.getName(bookInReader.chapterData.chapterName);
                 if (chapterName.length > 83) chapterName = chapterName.substring(0, 80) + "...";
             }
             if (bookTitle.length > 83) bookTitle = bookTitle.substring(0, 80) + "...";
@@ -97,7 +97,7 @@ const TopBar = (): ReactElement => {
     }, []);
     useEffect(() => {
         setTitleWithSize();
-    }, [mangaInReader, bookInReader, bookInReader?.chapter]);
+    }, [mangaInReader, bookInReader, bookInReader?.chapterData.chapterName]);
 
     return (
         <div id="topBar">

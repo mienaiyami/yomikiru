@@ -16,16 +16,11 @@ import { setEpubReaderSettings } from "../store/appSettings";
 
 const EPubReaderSideList = memo(
     ({
-        // openNextChapterRef,
-        // openPrevChapterRef,
-        // currentChapterURL,
-        // setCurrentChapterURL,
-        epubNCX,
-        epubTOC,
-        epubMetadata,
+        epubData,
         openNextChapter,
         openPrevChapter,
         currentChapter,
+        currentChapterFake,
         addToBookmarkRef,
         setshortcutText,
         isBookmarked,
@@ -38,24 +33,17 @@ const EPubReaderSideList = memo(
         makeScrollPos,
         zenMode,
     }: {
-        // openNextChapterRef: React.RefObject<HTMLButtonElement>;
-        // openPrevChapterRef: React.RefObject<HTMLButtonElement>;
         openNextChapter: () => void;
         openPrevChapter: () => void;
-        /**
-         * `~` if appSettings.epubReaderSettings.loadOneChapter is `false`
-         */
-        // currentChapterURL: string;
-        // currentChapter: {
-        //     id: string;
-        //     /** `#` part of url */
-        //     fragment: string;
-        // };
-        /** currentChapter Id */
         currentChapter: EPUB.Spine[number];
-        epubMetadata: EPUB.MetaData;
-        epubTOC: EPUB.TOC;
-        epubNCX: EPUB.NCXTree[];
+        currentChapterFake: string;
+        epubData: {
+            manifest: EPUB.Manifest;
+            spine: EPUB.Spine;
+            metadata: EPUB.MetaData;
+            ncx: EPUB.NCXTree[];
+            toc: EPUB.TOC;
+        };
         onEpubLinkClick: (ev: MouseEvent | React.MouseEvent<HTMLAnchorElement, MouseEvent>) => void;
         addToBookmarkRef: React.RefObject<HTMLButtonElement>;
         isBookmarked: boolean;
@@ -313,16 +301,13 @@ const EPubReaderSideList = memo(
                     <div>
                         <span className="bold">Title</span>
                         <span className="bold"> : </span>
-                        <span>{epubMetadata.title}</span>
+                        <span>{epubData.metadata.title}</span>
                     </div>
                     {appSettings.epubReaderSettings.loadOneChapter && (
                         <div>
                             <span className="bold">Chapter</span>
                             <span className="bold"> : </span>
-                            <span>
-                                {/* //todo use "one above(get from spine+toc)" .title if not found */}
-                                {epubTOC.get(currentChapter.href)?.title || "~"}
-                            </span>
+                            <span>{epubData.manifest.get(currentChapterFake)?.title || "~"}</span>
                         </div>
                     )}
                 </div>
@@ -345,12 +330,12 @@ const EPubReaderSideList = memo(
                             className="ctrl-menu-item"
                             data-tooltip="Locate Current Chapter"
                             onClick={() => {
-                                //todo maybe make a state for closest item in toc according to id and spine
                                 if (sideListRef.current) {
+                                    const href =
+                                        epubData.manifest.get(currentChapterFake)?.href || currentChapter.href;
                                     const elem = sideListRef.current.querySelector(
-                                        `a[data-href="${currentChapter.href.replaceAll("\\", "\\\\")}"]`
+                                        `a[data-href="${href.replaceAll("\\", "\\\\")}"]`
                                     );
-                                    console.log(elem, currentChapter.href);
                                     if (elem) {
                                         sideListRef.current
                                             .querySelectorAll(".current")
@@ -373,15 +358,14 @@ const EPubReaderSideList = memo(
                         // }}
                     >
                         <List
-                            currentChapter={currentChapter}
+                            // currentChapter={currentChapter}
+                            currentChapterHref={
+                                epubData.manifest.get(currentChapterFake)?.href || currentChapter.href
+                            }
                             onEpubLinkClick={onEpubLinkClick}
-                            epubNCX={epubNCX}
-                            // epubNCXDepth={epubMetadata.ncx_depth}
-                            epubTOC={epubTOC}
+                            epubNCX={epubData.ncx}
+                            epubTOC={epubData.toc}
                             sideListRef={sideListRef}
-                            focusChapterInList={appSettings.epubReaderSettings.focusChapterInList}
-                            // setCurrentChapterURL={setCurrentChapterURL}
-                            // currentRef={currentRef}
                         />
                     </div>
                 )}
@@ -394,28 +378,21 @@ const EPubReaderSideList = memo(
 const List = memo(
     ({
         epubNCX,
-        // epubNCXDepth,
         epubTOC,
         onEpubLinkClick,
         sideListRef,
-        currentChapter,
-        focusChapterInList,
-    }: // setCurrentChapterURL,
-    // currentRef,
-    {
-        currentChapter: EPUB.Spine[number];
+        currentChapterHref,
+    }: {
+        currentChapterHref: string;
         epubTOC: EPUB.TOC;
         epubNCX: EPUB.NCXTree[];
-        // epubNCXDepth: number;
         onEpubLinkClick: (ev: MouseEvent | React.MouseEvent<HTMLAnchorElement, MouseEvent>) => void;
         sideListRef: React.RefObject<HTMLDivElement>;
-
-        focusChapterInList: boolean;
-        // setCurrentChapterURL: React.Dispatch<React.SetStateAction<string>>;
-        // currentRef: React.MutableRefObject<HTMLAnchorElement | null>;
     }) => {
         //todo add button to show toc.xhtml if exist
         if (epubTOC.size === 0) return <p>No TOC found in epub</p>;
+
+        const appSettings = useAppSelector((store) => store.appSettings);
 
         const [listShow, setListShow] = useState(new Array(epubTOC.size).fill(true));
         const NestedList = ({ ncx }: { ncx: EPUB.NCXTree[] }) => {
@@ -426,7 +403,7 @@ const List = memo(
                             <li
                                 className={`${e.sub.length > 0 ? "collapse" : ""} ${
                                     listShow[e.ncx_index2] ? "collapsed" : ""
-                                } ${epubTOC.get(e.navId)?.href === currentChapter.href ? "current" : ""}`}
+                                } ${epubTOC.get(e.navId)?.href === currentChapterHref ? "current" : ""}`}
                                 // style={{ "--level-top": epubNCXDepth - e.level }}
                                 onClick={() => {
                                     setListShow((init) => {
@@ -447,9 +424,9 @@ const List = memo(
                                     data-depth={e.level}
                                     //todo check if works
                                     ref={
-                                        focusChapterInList
+                                        appSettings.epubReaderSettings.focusChapterInList
                                             ? (node) => {
-                                                  if (node && epubTOC.get(e.navId)?.href === currentChapter.href) {
+                                                  if (node && epubTOC.get(e.navId)?.href === currentChapterHref) {
                                                       if (listShow[e.ncx_index2] === false)
                                                           setListShow((init) => {
                                                               const dup = [...init];
@@ -476,8 +453,10 @@ const List = memo(
         };
         return <NestedList ncx={epubNCX} />;
     },
+    //todo imp check if need in props
     // focusChapterInList will make sure that it wont rerender when its `false` for performance benefits
-    (prev, next) => !prev.focusChapterInList || prev.currentChapter.href === next.currentChapter.href
+    // (prev, next) => !prev.focusChapterInList || prev.currentChapter.href === next.currentChapter.href
+    (prev, next) => prev.currentChapterHref === next.currentChapterHref
 );
 
 export default EPubReaderSideList;

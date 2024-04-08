@@ -1,4 +1,4 @@
-import "./MainImports";
+// import "./MainImports";
 import { promptSelectDir, unzip } from "./MainImports";
 import { createContext, createRef, ReactElement, useEffect, useLayoutEffect, useState } from "react";
 import { useAppDispatch, useAppSelector } from "./store/hooks";
@@ -528,10 +528,6 @@ const App = (): ReactElement => {
         document.addEventListener("dragover", ee);
         document.addEventListener("drop", dropFile);
 
-        // setInterval(() => {
-        //     // window.electron.ipcRenderer.send("abc");
-        //     console.log("dddddddddd");
-        // }, 1000);
         window.contextMenu.template = {
             divider() {
                 return {

@@ -146,6 +146,7 @@ const history = createSlice({
             const stateDup: HistoryItem[] = JSON.parse(JSON.stringify(state));
             const link = window.app.linkInReader.link;
             const index = stateDup.findIndex((e) => e.data.link === link);
+            // console.log("updateCurrentBookHistory", index, window.app.epubHistorySaveData);
             if (index > -1 && window.app.epubHistorySaveData) {
                 const oldData = stateDup[index];
                 stateDup.splice(index, 1);
