@@ -400,18 +400,19 @@ const List = memo(
 
         const appSettings = useAppSelector((store) => store.appSettings);
 
-        const [listShow, setListShow] = useState(new Array(epubTOC.size).fill(true));
+        const [listShow, setListShow] = useState(new Array(epubTOC.size).fill(false));
         const NestedList = ({ ncx }: { ncx: EPUB.NCXTree[] }) => {
             return (
                 <ol>
                     {ncx.map((e) => (
                         <React.Fragment key={e.ncx_index2}>
                             <li
-                                className={`${e.sub.length > 0 ? "collapse" : ""} ${
-                                    listShow[e.ncx_index2] ? "collapsed" : ""
+                                className={`${e.sub.length > 0 ? "collapsible" : ""} ${
+                                    !listShow[e.ncx_index2] ? "collapsed" : ""
                                 } ${epubTOC.get(e.navId)?.href === currentChapterHref ? "current" : ""}`}
                                 // style={{ "--level-top": epubNCXDepth - e.level }}
-                                onClick={() => {
+                                onClick={(ev) => {
+                                    ev.stopPropagation();
                                     setListShow((init) => {
                                         const dup = [...init];
                                         dup[e.ncx_index2] = !dup[e.ncx_index2];

@@ -1070,7 +1070,7 @@
                                 // &.collapsed {
                                 //     display: none;
                                 // }
-                                &.collapse {
+                                &.collapsible {
                                     &::before {
                                         content: "▼";
                                         display: inline-block;
