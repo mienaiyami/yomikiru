@@ -59,8 +59,6 @@ const EPubReaderSideList = memo(
         const bookInReader = useAppSelector((store) => store.bookInReader);
         const appSettings = useAppSelector((store) => store.appSettings);
         const linkInReader = useAppSelector((store) => store.linkInReader);
-        const prevNextChapter = useAppSelector((store) => store.prevNextChapter);
-
         const dispatch = useAppDispatch();
 
         const sideListRef = useRef<HTMLDivElement>(null);
@@ -221,8 +219,6 @@ const EPubReaderSideList = memo(
                         <button
                             className="ctrl-menu-item"
                             data-tooltip="Open Previous"
-                            //todo
-                            // disabled={prevNextChapter.prev === "~"}
                             onClick={() => {
                                 openPrevChapter();
                             }}
@@ -288,7 +284,6 @@ const EPubReaderSideList = memo(
                         <button
                             className="ctrl-menu-item"
                             data-tooltip="Open Next"
-                            disabled={prevNextChapter.next === "~"}
                             onClick={() => {
                                 openNextChapter();
                             }}
@@ -348,6 +343,18 @@ const EPubReaderSideList = memo(
                         >
                             <FontAwesomeIcon icon={faLocationDot} />
                         </button>
+                        {epubData.metadata.navId && (
+                            <a
+                                data-href={epubData.manifest.get(epubData.metadata.navId)?.href}
+                                onClick={(ev) => {
+                                    ev.preventDefault();
+                                    onEpubLinkClick(ev);
+                                }}
+                                className="btn"
+                            >
+                                Show in-book TOC
+                            </a>
+                        )}
                     </div>
                 </div>
                 {!appSettings.epubReaderSettings.hideSideList && (
@@ -374,7 +381,6 @@ const EPubReaderSideList = memo(
     }
 );
 
-//todo optimize
 const List = memo(
     ({
         epubNCX,

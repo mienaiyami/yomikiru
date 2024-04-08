@@ -134,7 +134,8 @@
     }
     .tools {
         margin-bottom: 0;
-        button {
+        button,
+        .btn {
             &::before {
                 left: 50%;
                 top: 100%;
@@ -148,7 +149,9 @@
             height: 44px;
             gap: 6px;
             justify-content: stretch;
-            button {
+            font-size: 0.8em;
+            button,
+            .btn {
                 width: 100%;
                 &::before {
                     left: 50%;

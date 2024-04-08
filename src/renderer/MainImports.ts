@@ -384,6 +384,8 @@ declare global {
              */
             opfDir: string;
             ncx_depth: number;
+            /** id of item with `[properties="nav"]` ie xhtml nav */
+            navId?: string;
         };
         /**
          * map key is id of item

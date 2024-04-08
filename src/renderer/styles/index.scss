@@ -188,7 +188,8 @@
                 }
             }
         }
-        button {
+        button,
+        .btn {
             font-family: inherit;
 
             &:disabled {
@@ -296,7 +297,8 @@
                     }
                 }
             }
-            button {
+            button,
+            .btn {
                 background: var(--btn-color);
 
                 &:hover {

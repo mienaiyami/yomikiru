@@ -92,6 +92,7 @@ export default class EPUB {
                 cover: path.join(path.dirname(opfPath), coverSrc),
                 opfDir: path.dirname(opfPath),
                 ncx_depth: 0,
+                navId: opf.querySelector("manifest > item[properties='nav']")?.getAttribute("id") || "",
             };
             const manifestItems = opf.querySelectorAll("manifest > item");
             if (manifestItems.length === 0) throw new Error("parseEpubDir: No manifest items found.");
@@ -134,8 +135,6 @@ export default class EPUB {
             const ncxPath = opf
                 .querySelector("manifest > item[media-type='application/x-dtbncx+xml']")
                 ?.getAttribute("href");
-            //todo handle for no ncx file
-            // can add nav.xhtml to metadata and use in case no ncx provided
             if (!ncxPath)
                 throw new Error("parseEpubDir: No ncx file found. todo: display whole spine if no ncx found");
             const ncxRaw = await fs.readFile(path.join(path.dirname(opfPath), ncxPath), "utf-8");
@@ -169,7 +168,8 @@ export default class EPUB {
                         return;
                     }
                     src = path.join(path.dirname(path.join(path.dirname(opfPath), ncxPath)), src);
-                    //todo check if need to add check for duplicate starting string in src
+                    //todo check if need to add check for duplicate starting string in src, like "Text/Text/",
+                    // check comment in prev version
 
                     // doing this takes around 1000ms on 2500 chapters, ~200ms without it
                     // on 1900 chapters, ~700ms with, ~160ms without
@@ -287,7 +287,6 @@ export default class EPUB {
             // //remove all on* attributes
             // txt = txt.replace(/(\s)(on\w+)(\s*=\s*["']?[^"'\s>]*?["'\s>])/gi, "");
             // txt = txt.replace(/(?<=\s|^)(src=)(["']?)([^"'\n]*?)(\2)/gi, (...args) => {
-            //     // todo image stuff
             //     const src = args[3];
             //     if (src.startsWith("http")) return args[0];
             //     return `src="${path.join(path.dirname(chapterPath), src)}" data-original-src="${src}" `;

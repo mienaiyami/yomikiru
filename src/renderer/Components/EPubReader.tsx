@@ -121,7 +121,6 @@ const HTMLSolo = memo(
     }
 );
 
-// todo : maybe need redo
 const HTMLPart = memo(
     ({
         epubManifest,
@@ -299,7 +298,7 @@ const EPubReader = () => {
                 while (index >= 0 && currentChapter.index - index < 10 && !abortController.signal.aborted) {
                     // const now2 = performance.now();
                     // console.log("single chapter 1", performance.now() - now2);
-                    if (epubData.spine[index].id) {
+                    if (epubData.manifest.get(epubData.spine[index].id)?.title) {
                         id = epubData.spine[index].id;
                         break;
                     }
@@ -352,7 +351,6 @@ const EPubReader = () => {
     const openPrevChapter = () => {
         setCurrentChapter((prev) => {
             if (prev.index - 1 >= 0) {
-                setElemBeforeChange("");
                 return { index: prev.index - 1, fragment: "" };
             }
             return prev;
