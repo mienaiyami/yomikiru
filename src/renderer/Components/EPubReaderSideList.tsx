@@ -66,6 +66,9 @@ const EPubReaderSideList = memo(
         const [isListOpen, setListOpen] = useState(false);
         const [preventListClose, setpreventListClose] = useState(false);
         const [draggingResizer, setDraggingResizer] = useState(false);
+        // when "", will hide all lists
+        const [displayList, setDisplayList] = useState<"" | "content" | "bookmarks" | "notes">("content");
+
         const currentRef = useRef<HTMLAnchorElement | null>(null);
         useEffect(() => {
             if (!zenMode && currentRef.current)
@@ -307,63 +310,104 @@ const EPubReaderSideList = memo(
                     )}
                 </div>
                 <div className="tools">
-                    <div className="row2">
+                    <div className="btnOptions">
                         <button
-                            className="ctrl-menu-item"
-                            data-tooltip="Improves performance"
+                            className={`${displayList === "content" ? "selected" : ""}`}
                             onClick={() => {
-                                dispatch(
-                                    setEpubReaderSettings({
-                                        hideSideList: !appSettings.epubReaderSettings.hideSideList,
-                                    })
-                                );
+                                setDisplayList((init) => (init === "content" ? "" : "content"));
                             }}
                         >
-                            {appSettings.epubReaderSettings.hideSideList ? "Show" : "Hide"} List
+                            Content
                         </button>
                         <button
-                            className="ctrl-menu-item"
-                            data-tooltip="Locate Current Chapter"
+                            className={`${displayList === "bookmarks" ? "selected" : ""}`}
                             onClick={() => {
-                                if (sideListRef.current) {
-                                    const href =
-                                        epubData.manifest.get(currentChapterFake)?.href || currentChapter.href;
-                                    const elem = sideListRef.current.querySelector(
-                                        `a[data-href="${href.replaceAll("\\", "\\\\")}"]`
-                                    );
-                                    if (elem) {
-                                        sideListRef.current
-                                            .querySelectorAll(".current")
-                                            .forEach((e) => e.classList.remove("current"));
-                                        elem.parentElement?.classList.add("current");
-                                        elem.scrollIntoView({ block: "center" });
-                                    }
-                                }
+                                setDisplayList((init) => (init === "bookmarks" ? "" : "bookmarks"));
                             }}
                         >
-                            <FontAwesomeIcon icon={faLocationDot} />
+                            Bookmarks
                         </button>
-                        {epubData.metadata.navId && (
-                            <a
-                                data-href={epubData.manifest.get(epubData.metadata.navId)?.href}
-                                onClick={(ev) => {
-                                    ev.preventDefault();
-                                    onEpubLinkClick(ev);
-                                }}
-                                className="btn"
-                            >
-                                Show in-book TOC
-                            </a>
-                        )}
+                        <button
+                            className={`${displayList === "notes" ? "selected" : ""}`}
+                            onClick={() => {
+                                setDisplayList((init) => (init === "notes" ? "" : "notes"));
+                            }}
+                        >
+                            Notes
+                        </button>
                     </div>
+                    {displayList === "content" && (
+                        <div className="row2">
+                            <button
+                                className="ctrl-menu-item"
+                                data-tooltip="Improves performance"
+                                onClick={() => {
+                                    dispatch(
+                                        setEpubReaderSettings({
+                                            hideSideList: !appSettings.epubReaderSettings.hideSideList,
+                                        })
+                                    );
+                                }}
+                            >
+                                {appSettings.epubReaderSettings.hideSideList ? "Show" : "Hide"} List
+                            </button>
+                            <button
+                                className="ctrl-menu-item"
+                                data-tooltip="Locate Current Chapter"
+                                onClick={() => {
+                                    if (sideListRef.current) {
+                                        const href =
+                                            epubData.manifest.get(currentChapterFake)?.href || currentChapter.href;
+                                        const elem = sideListRef.current.querySelector(
+                                            `a[data-href="${href.replaceAll("\\", "\\\\")}"]`
+                                        );
+                                        //todo : not a good way, state in List stays unchanged
+                                        if (elem) {
+                                            console.log(elem, elem.parentElement);
+                                            // sideListRef.current
+                                            //     .querySelectorAll(".current")
+                                            //     .forEach((e) => e.classList.remove("current"));
+                                            elem.parentElement?.classList.add("current");
+                                            const grandParent = elem.parentElement?.parentElement;
+                                            const grandParentPrevSibling = grandParent?.previousElementSibling;
+                                            if (
+                                                grandParent &&
+                                                grandParent.tagName === "OL" &&
+                                                grandParentPrevSibling &&
+                                                grandParentPrevSibling.tagName === "LI"
+                                            )
+                                                grandParentPrevSibling.classList.remove("collapsed");
+                                            elem.scrollIntoView({ block: "center" });
+                                        }
+                                    }
+                                }}
+                            >
+                                <FontAwesomeIcon icon={faLocationDot} />
+                            </button>
+                            {epubData.metadata.navId && (
+                                <a
+                                    data-href={epubData.manifest.get(epubData.metadata.navId)?.href}
+                                    onClick={(ev) => {
+                                        ev.preventDefault();
+                                        onEpubLinkClick(ev);
+                                    }}
+                                    className="btn"
+                                >
+                                    Show in-book TOC
+                                </a>
+                            )}
+                        </div>
+                    )}
                 </div>
-                {!appSettings.epubReaderSettings.hideSideList && (
-                    <div
-                        className="location-cont"
-                        // style={{
-                        //     display: appSettings.epubReaderSettings.hideSideList ? "none" : "initial",
-                        // }}
-                    >
+                {/* //todo remove  appSettings.epubReaderSettings.hideSideList */}
+                {/* {!appSettings.epubReaderSettings.hideSideList && ( */}
+                <div
+                    className="location-cont"
+                    // style={{
+                    //     display: appSettings.epubReaderSettings.hideSideList ? "none" : "initial",
+                    // }}
+                >
+                    {displayList === "content" && (
                         <List
                             // currentChapter={currentChapter}
                             currentChapterHref={
@@ -374,8 +418,10 @@ const EPubReaderSideList = memo(
                             epubTOC={epubData.toc}
                             sideListRef={sideListRef}
                         />
-                    </div>
-                )}
+                    )}
+                    {displayList === "bookmarks" && <p>To be implemented</p>}
+                    {displayList === "notes" && <p>To be implemented</p>}
+                </div>
             </div>
         );
     }
