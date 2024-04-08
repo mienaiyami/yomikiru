@@ -167,9 +167,11 @@ export default class EPUB {
                         console.error("EPUB::parseEpubDir: No src found in navPoint. Skipping.");
                         return;
                     }
-                    src = path.join(path.dirname(path.join(path.dirname(opfPath), ncxPath)), src);
                     //todo check if need to add check for duplicate starting string in src, like "Text/Text/",
-                    // check comment in prev version
+                    // check comment in prev version, mostly in web scrapped epub
+                    // 2024-04-09 : decided to add just for edge cases
+                    src = src.replace("Text/Text/", "Text/");
+                    src = path.join(path.dirname(path.join(path.dirname(opfPath), ncxPath)), src);
 
                     // doing this takes around 1000ms on 2500 chapters, ~200ms without it
                     // on 1900 chapters, ~700ms with, ~160ms without
