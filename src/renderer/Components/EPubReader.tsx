@@ -317,12 +317,12 @@ const EPubReader = () => {
         };
     }, [currentChapter.index, epubData]);
 
-    /**previous find in page resulting p */
     const findInPageRefs = useRef<{
-        prevResult: HTMLParagraphElement;
+        // prevResult: HTMLParagraphElement;
         prevStr: string;
+        originalHTML: string;
+        currentIndex: number;
     } | null>(null);
-    const [findInPageIndex, setFindInPageIndex] = useState(0);
 
     const scrollReader = (intensity: number) => {
         if (readerRef.current) {
@@ -576,43 +576,58 @@ const EPubReader = () => {
         [mainRef.current, zenMode, epubData, currentChapter.index, currentChapterFake]
     );
 
-    // todo: find in innerHTML and replace with span.highlight
     const findInPage = useCallback(
         (str: string, forward = true) => {
+            //todo it wont work with multiple spine item
             if (str === "") {
-                if (findInPageRefs.current) {
-                    findInPageRefs.current.prevResult?.classList.remove("findInPage");
+                if (findInPageRefs.current && mainRef.current) {
+                    const cont = mainRef.current.querySelector(":scope > .cont");
+                    if (cont) cont.innerHTML = findInPageRefs.current.originalHTML;
                 }
                 findInPageRefs.current = null;
-                setFindInPageIndex(0);
                 return;
             }
-            str = str.toLowerCase();
-            let index = findInPageIndex + (forward ? 0 : -2);
-            if (findInPageRefs.current && findInPageRefs.current.prevStr !== str) index = 0;
             if (mainRef.current) {
-                const paras = [...mainRef.current.querySelectorAll("p")].filter((e) =>
-                    e.textContent?.toLowerCase().includes(str)
-                );
-                if (index < 0) index = paras.length - 1;
-                if (index >= paras.length) index = 0;
-                const para = paras[index];
-                if (para) {
-                    findInPageRefs.current?.prevResult?.classList.remove("findInPage");
-                    para.classList.add("findInPage");
-                    para.scrollIntoView({
-                        behavior: "auto",
-                        block: "start",
-                    });
+                const cont = mainRef.current.querySelector(":scope > .cont");
+                if (!cont) return;
+                if (!findInPageRefs.current) {
                     findInPageRefs.current = {
-                        prevResult: para,
-                        prevStr: str,
+                        originalHTML: cont.innerHTML,
+                        currentIndex: 0,
+                        //todo check if even need now
+                        prevStr: "",
                     };
-                    setFindInPageIndex(index + 1);
+                }
+                if (findInPageRefs.current) {
+                    if (findInPageRefs.current.currentIndex === 0 || str !== findInPageRefs.current.prevStr) {
+                        const modified = findInPageRefs.current.originalHTML.replace(
+                            new RegExp(`(${str})`, "ig"),
+                            `<span class="findInPage-highlight">$1</span>`
+                        );
+                        cont.innerHTML = modified;
+                    }
+                    let index = findInPageRefs.current.currentIndex + (forward ? 0 : -2);
+                    if (findInPageRefs.current.prevStr !== str) index = 0;
+                    const foundElems = mainRef.current.querySelectorAll(".findInPage-highlight");
+                    foundElems.forEach((e) => e.classList.remove("current"));
+                    if (index < 0) index = foundElems.length - 1;
+                    else if (index >= foundElems.length) index = 0;
+                    const currentElem = foundElems[index];
+                    if (currentElem) {
+                        currentElem.classList.add("current");
+                        currentElem.scrollIntoView({
+                            behavior: "auto",
+                            block: "start",
+                        });
+                        findInPageRefs.current.currentIndex = index + 1;
+                        findInPageRefs.current.prevStr = str;
+                    } else {
+                        console.warn("findInPage: element not found.");
+                    }
                 }
             }
         },
-        [findInPageRefs.current, mainRef.current, findInPageIndex]
+        [findInPageRefs.current, mainRef.current]
     );
 
     const updateProgress = () => {

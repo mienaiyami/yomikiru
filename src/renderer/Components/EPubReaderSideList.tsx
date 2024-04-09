@@ -178,10 +178,8 @@ const EPubReaderSideList = memo(
                             type="text"
                             name=""
                             spellCheck={false}
-                            placeholder="Find In Page"
-                            // tabIndex={-1}
+                            placeholder="Find In Page (regexp allowed)"
                             onChange={(e) => {
-                                // if (e.currentTarget.value === "")
                                 setFindInPageStr(e.currentTarget.value);
                             }}
                             onKeyDown={(e) => {

@@ -1174,6 +1174,15 @@
                         width: var(--width);
                         background-color: var(--epub-background-color);
                         margin: 20px 0;
+                        .findInPage-highlight {
+                            color: var(--font-select-color);
+                            background: var(--font-select-bg-color);
+                            &.current {
+                                background: none;
+                                color: currentColor;
+                                outline: 1px solid var(--font-select-bg-color);
+                            }
+                        }
                         * {
                             line-height: var(--line-height);
                             word-spacing: var(--word-spacing);
