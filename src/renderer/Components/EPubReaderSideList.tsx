@@ -407,16 +407,24 @@ const EPubReaderSideList = memo(
                     // }}
                 >
                     {displayList === "content" && (
-                        <List
-                            // currentChapter={currentChapter}
-                            currentChapterHref={
-                                epubData.manifest.get(currentChapterFake)?.href || currentChapter.href
-                            }
-                            onEpubLinkClick={onEpubLinkClick}
-                            epubNCX={epubData.ncx}
-                            epubTOC={epubData.toc}
-                            sideListRef={sideListRef}
-                        />
+                        <>
+                            {epubData.toc.size > 500 && (
+                                <p>
+                                    Too many chapters, click "Content" to hide list to improve performance of
+                                    application.
+                                </p>
+                            )}
+                            <List
+                                // currentChapter={currentChapter}
+                                currentChapterHref={
+                                    epubData.manifest.get(currentChapterFake)?.href || currentChapter.href
+                                }
+                                onEpubLinkClick={onEpubLinkClick}
+                                epubNCX={epubData.ncx}
+                                epubTOC={epubData.toc}
+                                sideListRef={sideListRef}
+                            />
+                        </>
                     )}
                     {displayList === "bookmarks" && <p>To be implemented</p>}
                     {displayList === "notes" && <p>To be implemented</p>}

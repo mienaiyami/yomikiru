@@ -386,7 +386,10 @@ if (!window.fs.existsSync(settingsPath)) {
 
 const parseAppSettings = (): z.infer<typeof settingSchema> => {
     const defaultSettings = settingSchema.parse(undefined);
-    if (settingNotFound) return defaultSettings;
+    if (settingNotFound) {
+        settingNotFound = false;
+        return defaultSettings;
+    }
 
     const getValueFromDeepObject = (obj: any, keys: (string | number)[]) => {
         let result = obj;
