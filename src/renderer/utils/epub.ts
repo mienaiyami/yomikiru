@@ -26,6 +26,10 @@ export default class EPUB {
             } else {
                 if (!keepExtractedFiles) window.app.deleteDirOnClose = extractPath;
                 try {
+                    if (window.fs.existsSync(extractPath))
+                        await fs.rm(extractPath, {
+                            recursive: true,
+                        });
                     await unzipAsync(epubPath, extractPath);
                     if (keepExtractedFiles) window.fs.writeFileSync(path.join(extractPath, "SOURCE"), epubPath);
                     return true;
@@ -54,6 +58,18 @@ export default class EPUB {
             else window.logger.error("An Error occurred while checking/extracting epub:", err);
             throw new Error("Error while extracting.");
         }
+    }
+    static async readEpubFile(epubPath: string, keepExtractedFiles: boolean) {
+        const extractPath = path.join(
+            window.electron.app.getPath("temp"),
+            `yomikiru-temp-EPub-${epubPath.split(path.sep).at(-1)}`
+        );
+        // const now = performance.now();
+        const extractSuccess = await EPUB.extractEpub(epubPath, extractPath, keepExtractedFiles);
+        if (!extractSuccess) throw new Error("Error while extracting.");
+        const parsed = await EPUB.parseEpubDir(extractPath);
+        // console.log(performance.now() - now);
+        return parsed;
     }
     /**
      *
@@ -209,18 +225,6 @@ export default class EPUB {
                 });
             throw e;
         }
-    }
-    static async readEpubFile(epubPath: string, keepExtractedFiles: boolean) {
-        const extractPath = path.join(
-            window.electron.app.getPath("temp"),
-            `yomikiru-temp-EPub-${epubPath.split(path.sep).at(-1)}`
-        );
-        // const now = performance.now();
-        const extractSuccess = await EPUB.extractEpub(epubPath, extractPath, keepExtractedFiles);
-        if (!extractSuccess) throw new Error("Error while extracting.");
-        const parsed = await EPUB.parseEpubDir(extractPath);
-        // console.log(performance.now() - now);
-        return parsed;
     }
     static async parseChapter(str: string, chapterPath: string) {
         // const now = performance.now();

@@ -264,7 +264,7 @@ const settingSchema = z
         hideOpenArrow: false,
         showMoreDataOnItemHover: true,
         autoRefreshSideList: false,
-        keepExtractedFiles: false,
+        keepExtractedFiles: true,
         checkboxReaderSetting: false,
         syncSettings: true,
         syncThemes: true,
