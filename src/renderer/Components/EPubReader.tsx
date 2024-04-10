@@ -340,22 +340,22 @@ const EPubReader = () => {
             return;
         }
     };
-    const openNextChapter = () => {
+    const openNextChapter = useCallback(() => {
         setCurrentChapter((prev) => {
             if (epubData && prev.index + 1 < epubData.spine.length) {
                 return { index: prev.index + 1, fragment: "" };
             }
             return prev;
         });
-    };
-    const openPrevChapter = () => {
+    }, [epubData]);
+    const openPrevChapter = useCallback(() => {
         setCurrentChapter((prev) => {
             if (prev.index - 1 >= 0) {
                 return { index: prev.index - 1, fragment: "" };
             }
             return prev;
         });
-    };
+    }, [epubData]);
     /**
      * scroll to internal links or open external link
      * * `data-href` - scroll to internal
