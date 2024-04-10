@@ -112,12 +112,12 @@ const SHORTCUT_COMMAND_MAP = [
     {
         command: "fontSizePlus" as const,
         name: "Increase font size (epub)",
-        defaultKeys: [],
+        defaultKeys: ["shift+equal"],
     },
     {
         command: "fontSizeMinus" as const,
         name: "Decrease font size (epub)",
-        defaultKeys: [],
+        defaultKeys: ["shift+minus"],
     },
     {
         command: "navToHome" as const,

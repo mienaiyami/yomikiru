@@ -19,6 +19,7 @@
         "make": "electron-forge make --arch=ia32,x64",
         "make:exe": "electron-forge make --targets=@electron-forge/maker-squirrel",
         "make:zip": "electron-forge make --targets=@electron-forge/maker-zip --arch=ia32",
+        "make:zip64": "electron-forge make --targets=@electron-forge/maker-zip --arch=x64",
         "make:deb": "electron-forge make --targets=@electron-forge/maker-deb",
         "release": "node tagAndPush.js"
     },

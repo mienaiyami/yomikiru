@@ -377,13 +377,16 @@ const settingSchema = z
 const makeSettingsJson = () => {
     saveJSONfile(settingsPath, settingSchema.parse(undefined));
 };
+let settingNotFound = false;
 if (!window.fs.existsSync(settingsPath)) {
     window.dialog.warn({ message: "No settings found, Select manga folder to make default in settings" });
+    settingNotFound = true;
     makeSettingsJson();
 }
 
 const parseAppSettings = (): z.infer<typeof settingSchema> => {
     const defaultSettings = settingSchema.parse(undefined);
+    if (settingNotFound) return defaultSettings;
 
     const getValueFromDeepObject = (obj: any, keys: (string | number)[]) => {
         let result = obj;
