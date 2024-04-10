@@ -2,6 +2,7 @@ import { unzip } from "cross-zip";
 import fs from "fs/promises";
 import path from "path";
 
+// todo : remove node integration and move to ipc
 const unzipAsync = (zipPath: string, extractPath: string) => {
     return new Promise<void>((resolve, reject) => {
         unzip(zipPath, extractPath, (err) => {
@@ -92,6 +93,7 @@ export default class EPUB {
                 cover: path.join(path.dirname(opfPath), coverSrc),
                 opfDir: path.dirname(opfPath),
                 ncx_depth: 0,
+                //! navId wont work if it is not present in spine
                 navId: opf.querySelector("manifest > item[properties='nav']")?.getAttribute("id") || "",
             };
             const manifestItems = opf.querySelectorAll("manifest > item");
@@ -131,7 +133,6 @@ export default class EPUB {
                     href: manifestItem.href,
                 };
             });
-
             const ncxPath = opf
                 .querySelector("manifest > item[media-type='application/x-dtbncx+xml']")
                 ?.getAttribute("href");
@@ -221,6 +222,95 @@ export default class EPUB {
         // console.log(performance.now() - now);
         return parsed;
     }
+    static async parseChapter(str: string, chapterPath: string) {
+        // const now = performance.now();
+
+        /*
+             was planning to only use regex, but some tags don't get parsed right if
+             it is set to container using `.innerHTML`, because it uses "text/html"
+             parsing with "application/xhtml+xml" is required;
+            */
+
+        const domP = new DOMParser();
+        const doc = domP.parseFromString(str, "application/xhtml+xml");
+        doc.querySelectorAll("script").forEach((el) => el.remove());
+        doc.querySelectorAll("[src]").forEach((el) => {
+            const src = el.getAttribute("src") as string;
+            if (src.startsWith("http")) return;
+            el.setAttribute("src", path.join(path.dirname(chapterPath), src));
+            el.setAttribute("data-original-src", src);
+        });
+        doc.querySelectorAll("[href]").forEach((el) => {
+            const href = el.getAttribute("href") as string;
+            if (href.startsWith("http")) {
+                el.setAttribute("data-href", href);
+            } else {
+                el.setAttribute(
+                    "data-href",
+                    href.startsWith("#") ? href : path.join(path.dirname(chapterPath), href)
+                );
+                el.setAttribute("data-original-href", href);
+            }
+        });
+        doc.querySelectorAll("svg image").forEach((el) => {
+            const href = el.getAttribute("xlink:href") as string;
+            if (href.startsWith("http")) return;
+            el.setAttribute("xlink:href", path.join(path.dirname(chapterPath), href));
+            el.setAttribute("data-src", path.join(path.dirname(chapterPath), href));
+            el.setAttribute("data-original-xlink:href", href);
+        });
+        doc.querySelectorAll("[id]").forEach((el) => {
+            const id = el.getAttribute("id") as string;
+            el.setAttribute("data-epub-id", id);
+            el.removeAttribute("id");
+        });
+        let txt = doc.body.innerHTML;
+        //todo check if something like this can be done, test "[*|href]"
+        // doc.querySelectorAll("[on*]").forEach((el) => el.removeAttribute("on*"));
+        //remove all on* attributes
+        txt = txt.replace(/(\s)(on\w+)(\s*=\s*["']?[^"'\s>]*?["'\s>])/gi, "");
+
+        /*
+             ! with a lot of performance testing on multiple large epub, using regex is significantly slower
+             ! code is here for reference, remove later
+            */
+
+        // // get body only
+        // let txt = raw.match(/<body[^>]*>\1([\s\S]*)<\/body>/i)?.at(1) || "Unable to parse chapter.";
+
+        // txt = txt.replace(/<script[^>]*>[\s\S]*?<\/script>/i, "");
+        // //remove all on* attributes
+        // txt = txt.replace(/(\s)(on\w+)(\s*=\s*["']?[^"'\s>]*?["'\s>])/gi, "");
+        // txt = txt.replace(/(?<=\s|^)(src=)(["']?)([^"'\n]*?)(\2)/gi, (...args) => {
+        //     const src = args[3];
+        //     if (src.startsWith("http")) return args[0];
+        //     return `src="${path.join(path.dirname(chapterPath), src)}" data-original-src="${src}" `;
+        // });
+        // txt = txt.replace(/(?<=\s|^)(href=)(["']?)([^"'\n]*?)(\2)/gi, (...args) => {
+        //     const href = args[3] as string;
+        //     if (href.startsWith("http"))
+        //         // return args[0];
+        //         return `data-href="${href}"`;
+        //     // need to be data-href so it doesn't get modified by browser
+        //     return `data-href="${
+        //         href.startsWith("#") ? href : path.join(path.dirname(chapterPath), href)
+        //     }" data-original-href="${href}"`;
+        // });
+        // // for svg images
+        // txt = txt.replace(/(?<=\s|^)(xlink:href=)(["']?)([^"'\n]*?)(\2)/gi, (...args) => {
+        //     const href = args[3] as string;
+        //     if (href.startsWith("http")) return args[0];
+        //     return `xlink:href="${path.join(
+        //         path.dirname(chapterPath),
+        //         href
+        //     )}" data-original-xlink:href="${href}"`;
+        // });
+        // // replacing id so that it doesn't conflict with other elements
+        // txt = txt.replace(/(?<=\s|^)(id=)/gi, "data-epub-id=");
+
+        // console.log("parsed chapter", performance.now() - now + "ms");
+        return txt;
+    }
     /**
      * Reading chapter using chapterPath is better instead of id, to avoid passing EPUB.EPUBContent[]
      * @param chapterPath path of chapter file inside extracted epub dir
@@ -230,93 +320,7 @@ export default class EPUB {
             chapterPath = window.decodeURI(chapterPath);
             if (!window.fs.existsSync(chapterPath)) throw new Error("EPUB::readChapter: Chapter file not found.");
             const raw = await fs.readFile(chapterPath, "utf-8");
-            // const now = performance.now();
-
-            /*
-             was planning to only use regex, but some tags don't get parsed right if
-             it is set to container using `.innerHTML`, because it uses "text/html"
-             parsing with "application/xhtml+xml" is required;
-            */
-
-            const domP = new DOMParser();
-            const doc = domP.parseFromString(raw, "application/xhtml+xml");
-            doc.querySelectorAll("script").forEach((el) => el.remove());
-            doc.querySelectorAll("[src]").forEach((el) => {
-                const src = el.getAttribute("src") as string;
-                if (src.startsWith("http")) return;
-                el.setAttribute("src", path.join(path.dirname(chapterPath), src));
-                el.setAttribute("data-original-src", src);
-            });
-            doc.querySelectorAll("[href]").forEach((el) => {
-                const href = el.getAttribute("href") as string;
-                if (href.startsWith("http")) {
-                    el.setAttribute("data-href", href);
-                } else {
-                    el.setAttribute(
-                        "data-href",
-                        href.startsWith("#") ? href : path.join(path.dirname(chapterPath), href)
-                    );
-                    el.setAttribute("data-original-href", href);
-                }
-            });
-            doc.querySelectorAll("svg image").forEach((el) => {
-                const href = el.getAttribute("xlink:href") as string;
-                if (href.startsWith("http")) return;
-                el.setAttribute("xlink:href", path.join(path.dirname(chapterPath), href));
-                el.setAttribute("data-src", path.join(path.dirname(chapterPath), href));
-                el.setAttribute("data-original-xlink:href", href);
-            });
-            doc.querySelectorAll("[id]").forEach((el) => {
-                const id = el.getAttribute("id") as string;
-                el.setAttribute("data-epub-id", id);
-                el.removeAttribute("id");
-            });
-            let txt = doc.body.innerHTML;
-            //todo check if something like this can be done, test "[*|href]"
-            // doc.querySelectorAll("[on*]").forEach((el) => el.removeAttribute("on*"));
-            //remove all on* attributes
-            txt = txt.replace(/(\s)(on\w+)(\s*=\s*["']?[^"'\s>]*?["'\s>])/gi, "");
-
-            /*
-             ! with a lot of performance testing on multiple large epub, using regex is significantly slower
-             ! code is here for reference, remove later
-            */
-
-            // // get body only
-            // let txt = raw.match(/<body[^>]*>\1([\s\S]*)<\/body>/i)?.at(1) || "Unable to parse chapter.";
-
-            // txt = txt.replace(/<script[^>]*>[\s\S]*?<\/script>/i, "");
-            // //remove all on* attributes
-            // txt = txt.replace(/(\s)(on\w+)(\s*=\s*["']?[^"'\s>]*?["'\s>])/gi, "");
-            // txt = txt.replace(/(?<=\s|^)(src=)(["']?)([^"'\n]*?)(\2)/gi, (...args) => {
-            //     const src = args[3];
-            //     if (src.startsWith("http")) return args[0];
-            //     return `src="${path.join(path.dirname(chapterPath), src)}" data-original-src="${src}" `;
-            // });
-            // txt = txt.replace(/(?<=\s|^)(href=)(["']?)([^"'\n]*?)(\2)/gi, (...args) => {
-            //     const href = args[3] as string;
-            //     if (href.startsWith("http"))
-            //         // return args[0];
-            //         return `data-href="${href}"`;
-            //     // need to be data-href so it doesn't get modified by browser
-            //     return `data-href="${
-            //         href.startsWith("#") ? href : path.join(path.dirname(chapterPath), href)
-            //     }" data-original-href="${href}"`;
-            // });
-            // // for svg images
-            // txt = txt.replace(/(?<=\s|^)(xlink:href=)(["']?)([^"'\n]*?)(\2)/gi, (...args) => {
-            //     const href = args[3] as string;
-            //     if (href.startsWith("http")) return args[0];
-            //     return `xlink:href="${path.join(
-            //         path.dirname(chapterPath),
-            //         href
-            //     )}" data-original-xlink:href="${href}"`;
-            // });
-            // // replacing id so that it doesn't conflict with other elements
-            // txt = txt.replace(/(?<=\s|^)(id=)/gi, "data-epub-id=");
-
-            // console.log("parsed chapter", performance.now() - now + "ms");
-            return txt;
+            return await this.parseChapter(raw, chapterPath);
         } catch (e) {
             if (e instanceof Error || typeof e === "string") window.logger.error(e);
             else window.logger.error("EPUB::readChapter: Error while reading chapter:", e);

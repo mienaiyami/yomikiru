@@ -71,55 +71,55 @@ const StyleSheets = memo(
     (prev, next) => prev.sheets.length === next.sheets.length && prev.sheets[0] === next.sheets[0]
 );
 
-const HTMLSolo = memo(
-    ({
-        content,
-        url,
-        epubLinkClick,
-    }: {
-        content: Document;
-        url: string;
-        epubLinkClick: (ev: MouseEvent | React.MouseEvent<HTMLAnchorElement, MouseEvent>) => void;
-    }) => {
-        const { setContextMenuData } = useContext(AppContext);
-        // const [rendered, setRendered] = useState(false);;
-        return (
-            <div
-                className="cont htmlCont"
-                ref={(node) => {
-                    if (node && content) {
-                        const xhtml = content;
-                        while (node.hasChildNodes()) {
-                            node.removeChild(node.childNodes[0]);
-                        }
-                        node.setAttribute("data-link-id", url);
-                        xhtml.body.childNodes.forEach((childNode) => {
-                            node.appendChild(childNode.cloneNode(true));
-                        });
-                        node.querySelectorAll("a").forEach((e) => {
-                            e.addEventListener("click", epubLinkClick);
-                        });
-                        node.querySelectorAll("img").forEach((e) => {
-                            e.oncontextmenu = (ev) => {
-                                ev.stopPropagation();
-                                const url = (ev.currentTarget as Element).getAttribute("src") || "";
-                                setContextMenuData({
-                                    clickX: ev.clientX,
-                                    clickY: ev.clientY,
-                                    items: [
-                                        window.contextMenu.template.copyImage(url),
-                                        window.contextMenu.template.showInExplorer(url),
-                                        window.contextMenu.template.copyPath(url),
-                                    ],
-                                });
-                            };
-                        });
-                    }
-                }}
-            ></div>
-        );
-    }
-);
+// const HTMLSolo = memo(
+//     ({
+//         content,
+//         url,
+//         epubLinkClick,
+//     }: {
+//         content: string;
+//         url: string;
+//         epubLinkClick: (ev: MouseEvent | React.MouseEvent<HTMLAnchorElement, MouseEvent>) => void;
+//     }) => {
+//         const { setContextMenuData } = useContext(AppContext);
+//         // const [rendered, setRendered] = useState(false);;
+//         return (
+//             <div
+//                 className="cont htmlCont"
+//                 ref={(node) => {
+//                     if (node && content) {
+//                         const xhtml = content;
+//                         while (node.hasChildNodes()) {
+//                             node.removeChild(node.childNodes[0]);
+//                         }
+//                         node.setAttribute("data-link-id", url);
+//                         xhtml.body.childNodes.forEach((childNode) => {
+//                             node.appendChild(childNode.cloneNode(true));
+//                         });
+//                         node.querySelectorAll("a").forEach((e) => {
+//                             e.addEventListener("click", epubLinkClick);
+//                         });
+//                         node.querySelectorAll("img").forEach((e) => {
+//                             e.oncontextmenu = (ev) => {
+//                                 ev.stopPropagation();
+//                                 const url = (ev.currentTarget as Element).getAttribute("src") || "";
+//                                 setContextMenuData({
+//                                     clickX: ev.clientX,
+//                                     clickY: ev.clientY,
+//                                     items: [
+//                                         window.contextMenu.template.copyImage(url),
+//                                         window.contextMenu.template.showInExplorer(url),
+//                                         window.contextMenu.template.copyPath(url),
+//                                     ],
+//                                 });
+//                             };
+//                         });
+//                     }
+//                 }}
+//             ></div>
+//         );
+//     }
+// );
 
 const HTMLPart = memo(
     ({
@@ -252,8 +252,8 @@ const EPubReader = () => {
     const [shortcutText, setshortcutText] = useState("");
     // [0-100]
     const [bookProgress, setBookProgress] = useState(0);
-
-    const [nonEPUBFile, setNonEPUBFile] = useState<null | Document>(null);
+    /** for use when opened file is txt,html,xhtml */
+    const [nonEPUBFileContent, setNonEPUBFileContent] = useState<null | string>(null);
 
     const readerRef = useRef<HTMLDivElement>(null);
     const mainRef = useRef<HTMLSelectElement>(null);
@@ -437,10 +437,10 @@ const EPubReader = () => {
         if ([".xhtml", ".html", ".txt"].includes(window.path.extname(link).toLowerCase())) {
             // const ext = window.path.extname(link).toLowerCase();
             // try {
-            //     let doc = null as null | Document;
+            //     let content=""
             //     const parser = new DOMParser();
             //     if (ext === ".xhtml" || ext === "html") {
-            //         doc = parseEPubXHTML(link, parser);
+            //         const raw = window.fs.readFile()
             //     } else if (ext === ".txt") {
             //         const raw = window.fs.readFileSync(link, "utf-8");
             //         if (!raw) throw Error();
@@ -889,7 +889,7 @@ const EPubReader = () => {
                 (isSideListPinned ? "sideListPinned " : "") +
                 "reader " +
                 (zenMode && appSettings.hideCursorInZenMode ? "noCursor " : "") +
-                (nonEPUBFile ? "fake " : "")
+                (nonEPUBFileContent ? "fake " : "")
             }
             style={{
                 gridTemplateColumns: sideListWidth + "px auto",
@@ -1094,24 +1094,27 @@ const EPubReader = () => {
                 }}
             >
                 <StyleSheets sheets={epubData?.styleSheets || []} />
-                {nonEPUBFile ? (
-                    <HTMLSolo content={nonEPUBFile} epubLinkClick={onEpubLinkClick} url={linkInReader.link} />
-                ) : (
-                    epubData && (
-                        <HTMLPart
-                            // loadOneChapter={appSettings.epubReaderSettings.loadOneChapter}
-                            key={"epub" + currentChapter.index}
-                            onEpubLinkClick={onEpubLinkClick}
-                            currentChapter={{
-                                id: epubData.spine[currentChapter.index].id,
-                                fragment: currentChapter.fragment,
-                                elementQuery: elemBeforeChange,
-                            }}
-                            epubManifest={epubData.manifest}
-                            // bookmarkedElem={bookmarkedElem}
-                        />
-                    )
-                )}
+                {nonEPUBFileContent
+                    ? // <HTMLSolo
+                      //     content={nonEPUBFileContent}
+                      //     epubLinkClick={onEpubLinkClick}
+                      //     url={linkInReader.link}
+                      // />
+                      ""
+                    : epubData && (
+                          <HTMLPart
+                              // loadOneChapter={appSettings.epubReaderSettings.loadOneChapter}
+                              key={"epub" + currentChapter.index}
+                              onEpubLinkClick={onEpubLinkClick}
+                              currentChapter={{
+                                  id: epubData.spine[currentChapter.index].id,
+                                  fragment: currentChapter.fragment,
+                                  elementQuery: elemBeforeChange,
+                              }}
+                              epubManifest={epubData.manifest}
+                              // bookmarkedElem={bookmarkedElem}
+                          />
+                      )}
             </section>
         </div>
     );

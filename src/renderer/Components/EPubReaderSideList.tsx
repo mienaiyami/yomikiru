@@ -314,6 +314,7 @@ const EPubReaderSideList = memo(
                             onClick={() => {
                                 setDisplayList((init) => (init === "content" ? "" : "content"));
                             }}
+                            data-tooltip="Click again to hide"
                         >
                             Content
                         </button>
@@ -336,7 +337,7 @@ const EPubReaderSideList = memo(
                     </div>
                     {displayList === "content" && (
                         <div className="row2">
-                            <button
+                            {/* <button
                                 className="ctrl-menu-item"
                                 data-tooltip="Improves performance"
                                 onClick={() => {
@@ -348,7 +349,7 @@ const EPubReaderSideList = memo(
                                 }}
                             >
                                 {appSettings.epubReaderSettings.hideSideList ? "Show" : "Hide"} List
-                            </button>
+                            </button> */}
                             <button
                                 className="ctrl-menu-item"
                                 data-tooltip="Locate Current Chapter"
