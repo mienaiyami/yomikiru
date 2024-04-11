@@ -294,7 +294,7 @@ const App = (): ReactElement => {
         window.electron.webFrame.clearCache();
         if (link === linkInReader.link) return;
         if (window.app.formats.book.test(link)) {
-            dispatch(setUnzipping({ state: true, text: "Extracting and Loading epub..." }));
+            dispatch(setUnzipping({ state: true, text: "PROCESSING EPUB" }));
 
             // dispatch(setLoadingManga(true));
             // dispatch(setLoadingMangaPercent(0));
