@@ -22,6 +22,7 @@ import ReaderSideList from "./ReaderSideList";
 import { setMangaInReader } from "../store/mangaInReader";
 
 import EPUB from "../utils/epub";
+import Modal from "./Element/Modal";
 
 const StyleSheets = memo(
     ({ sheets }: { sheets: string[] }) => {
@@ -254,6 +255,10 @@ const EPubReader = () => {
     const [bookProgress, setBookProgress] = useState(0);
     /** for use when opened file is txt,html,xhtml */
     const [nonEPUBFileContent, setNonEPUBFileContent] = useState<null | string>(null);
+    const [footnoteModalData, setFootnoteModalData] = useState<{
+        title: string;
+        content: string;
+    } | null>(null);
 
     const readerRef = useRef<HTMLDivElement>(null);
     const mainRef = useRef<HTMLSelectElement>(null);
@@ -381,19 +386,21 @@ const EPubReader = () => {
                     setElemBeforeChange("");
                     if (appSettings.epubReaderSettings.loadOneChapter) {
                         const fragment = href.split("#")[1] || "";
-                        if (href.startsWith("#")) {
+                        if (
+                            href.startsWith("#") ||
+                            href.split("#")[0] === epubData.spine[currentChapter.index].href
+                        ) {
                             // setCurrentChapter(prev=>({...prev, fragment}))
                             if (
                                 ev.currentTarget instanceof HTMLElement &&
                                 ev.currentTarget.getAttribute("epub:type")?.includes("note")
                             ) {
-                                // for test use lotm.epub
+                                // for test use lotm,orv epub
                                 const note =
                                     document.querySelector(`[data-epub-id="${fragment}"]`)?.innerHTML || "";
-                                window.dialog.confirm({
-                                    message: ev.currentTarget.innerText,
-                                    detail: note,
-                                    title: "Note",
+                                setFootnoteModalData({
+                                    title: ev.currentTarget.innerText,
+                                    content: note,
                                 });
                                 return;
                             }
@@ -416,7 +423,7 @@ const EPubReader = () => {
                 }
             }
         },
-        [epubData]
+        [epubData, currentChapter.index]
     );
 
     const loadEPub = (link: string) => {
@@ -1093,6 +1100,25 @@ const EPubReader = () => {
                     }
                 }}
             >
+                {footnoteModalData && (
+                    <Modal open={true} onClose={() => setFootnoteModalData(null)}>
+                        <span className="title">{footnoteModalData.title}</span>
+                        <div
+                            className="content"
+                            ref={(node) => {
+                                if (node) {
+                                    node.innerHTML = footnoteModalData.content;
+                                    node.querySelectorAll("a").forEach((e) => {
+                                        e.addEventListener("click", (ev) => {
+                                            setFootnoteModalData(null);
+                                            onEpubLinkClick(ev);
+                                        });
+                                    });
+                                }
+                            }}
+                        ></div>
+                    </Modal>
+                )}
                 <StyleSheets sheets={epubData?.styleSheets || []} />
                 {nonEPUBFileContent
                     ? // <HTMLSolo

@@ -1,4 +1,7 @@
 //! only meant to be imported inside body directly
+
+//todo imp, use @layer for this, and check if it cause issues in UI
+
 @mixin labelNoBG {
     &.noBG {
         background: none !important;
@@ -313,5 +316,31 @@ input[type="color"] {
         inset: 4px;
         border-radius: 2px;
         overflow: hidden;
+    }
+}
+
+.modal-element {
+    width: 100%;
+    height: 100%;
+    position: fixed;
+    top: 0;
+    left: 0;
+    z-index: 100;
+    display: grid;
+    place-items: center;
+    @include mixins.contFadeScaleIn(".modal-overlayCont");
+    .modal-overlayCont {
+        position: relative;
+        background: var(--body-bg-color);
+        border-radius: 4px;
+        transition: 0.3s cubic-bezier(0, 1.15, 1, 1) transform;
+        min-width: 300px;
+        box-shadow: rgba(0, 0, 0, 0.3) 0px 19px 38px, rgba(0, 0, 0, 0.22) 0px 15px 12px;
+        display: flex;
+        flex-direction: column;
+        align-items: stretch;
+        gap: 10px;
+        overflow: hidden;
+        padding: 20px;
     }
 }

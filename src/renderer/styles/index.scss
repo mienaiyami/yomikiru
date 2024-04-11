@@ -1165,6 +1165,46 @@
                             }
                         }
                     }
+                    a {
+                        cursor: pointer;
+                        color: var(--epub-link-color);
+                        &:hover {
+                            text-decoration-line: underline;
+                            text-decoration-style: solid;
+                        }
+                    }
+                    a[data-href^="http"]::before {
+                        content: "";
+                        width: 1rem;
+                        height: 1rem;
+                        display: inline-block;
+                        background: currentColor;
+                        -webkit-mask: url("./external.svg") no-repeat 50% 50%;
+                        -webkit-mask-size: cover;
+                        mask: url("./external.svg") no-repeat 50% 50%;
+                        mask-size: cover;
+                        margin: 0 2px;
+                        vertical-align: middle;
+                    }
+                    .modal-element {
+                        .modal-overlayCont {
+                            user-select: text;
+                            max-width: var(--width);
+                            box-shadow: currentColor 0 0 0 0.5px;
+                            gap: 20px;
+                            color: var(--epub-font-color);
+                            .title {
+                                font-size: 2em;
+                                padding-bottom: 10px;
+                                font-weight: bold;
+                                box-shadow: inset 0 -1px 0 0 currentColor;
+                            }
+                            .content {
+                                max-height: 50%;
+                                overflow: auto;
+                            }
+                        }
+                    }
                     > .cont {
                         display: flex;
                         flex-direction: column;
@@ -1192,33 +1232,6 @@
                         }
                         fieldset {
                             border-color: var(--epub-font-color);
-                        }
-                        a {
-                            cursor: pointer;
-                            color: var(--epub-link-color);
-                            &:hover {
-                                text-decoration-line: underline;
-                                text-decoration-style: solid;
-                            }
-                        }
-                        a[data-href^="http"]::before {
-                            content: "";
-                            width: 1rem;
-                            height: 1rem;
-                            display: inline-block;
-                            background: currentColor;
-                            -webkit-mask: url("./external.svg") no-repeat 50% 50%;
-                            -webkit-mask-size: cover;
-                            mask: url("./external.svg") no-repeat 50% 50%;
-                            mask-size: cover;
-                            margin: 0 2px;
-                            vertical-align: middle;
-                        }
-                        p {
-                            &.findInPage {
-                                box-shadow: var(--font-color) 0 0 0 2px;
-                                scroll-margin-top: 30px;
-                            }
                         }
                     }
                 }

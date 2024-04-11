@@ -246,6 +246,7 @@ export default class EPUB {
         });
         doc.querySelectorAll("[href]").forEach((el) => {
             const href = el.getAttribute("href") as string;
+            el.removeAttribute("href");
             if (href.startsWith("http")) {
                 el.setAttribute("data-href", href);
             } else {

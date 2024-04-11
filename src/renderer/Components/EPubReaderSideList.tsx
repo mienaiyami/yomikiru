@@ -362,7 +362,6 @@ const EPubReaderSideList = memo(
                                         );
                                         //todo : not a good way, state in List stays unchanged
                                         if (elem) {
-                                            console.log(elem, elem.parentElement);
                                             // sideListRef.current
                                             //     .querySelectorAll(".current")
                                             //     .forEach((e) => e.classList.remove("current"));
