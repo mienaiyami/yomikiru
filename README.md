@@ -8,6 +8,9 @@ It is a offline desktop app to read locally stored manga or epub with great read
 
 > Yomikiru's epub reader is only fit for reading novels / light novels and might not support few advance epub features.
 
+> [!NOTE]  
+> https://github.com/mienaiyami/yomikiru/discussions/384
+
 ## What it does not do
 
 - Host any content or provide a way to read any online content.
