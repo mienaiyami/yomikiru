@@ -32,3 +32,10 @@ If you are using [Tachidesk](https://github.com/Suwayomi/Tachidesk-Server) to do
     ```
 
 4. You might need to delete folder previous set as download path for it to work right.
+
+## Archive files issue in windows
+
+If you are unable to open any files like zip,cbz,etc. then do this.
+- Click `win+s`(windows search) and type powershell and open it as adminstrator.
+- Run this command `Set-ExecutionPolicy Unrestricted -Scope CurrentUser -Force`.
+- Restart Yomikiru.
