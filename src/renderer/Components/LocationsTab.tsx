@@ -351,12 +351,10 @@ const LocationsTab = (): ReactElement => {
                                 } else val = val.replaceAll(window.path.sep, "");
                             }
 
-                            val = val.replaceAll("[", "\\[");
-                            val = val.replaceAll("]", "\\]");
-                            val = val.replaceAll("(", "\\(");
-                            val = val.replaceAll(")", "\\)");
-                            val = val.replaceAll("*", "\\-");
-                            val = val.replaceAll("+", "\\+");
+                            const mustEscape = "[]()*+";
+                            for (let c of mustEscape)
+                                val = val.replaceAll(c, "\\" + c);
+                            val = val.replaceAll('*', '-');
 
                             let filter = "";
                             if (['"', "`", "'"].includes(val[0])) {
@@ -367,7 +365,11 @@ const LocationsTab = (): ReactElement => {
                                         filter += window.path.sep;
                                         continue;
                                     }
-                                    filter += val[i] + ".*";
+                                    // avoid unescaping regexp characters
+                                    if (val[i] === '\\' && i + 1 < val.length && mustEscape.includes(val[i + 1]))
+                                        filter += val[i];
+                                    else
+                                        filter += val[i] + ".*";
                                 }
                             setFocused(-1);
                             setFilter(filter);
