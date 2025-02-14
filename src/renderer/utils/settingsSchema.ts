@@ -238,6 +238,7 @@ const settingSchema = z
         }),
     })
     .strip()
+    // it is separate do i dont leave default-less value
     .default({
         baseDir: window.electron.app.getPath("home"),
         customStylesheet: "",

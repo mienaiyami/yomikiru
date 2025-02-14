@@ -27,8 +27,11 @@ if (fs.existsSync(path.join(app.getPath("userData"), "DISABLE_HARDWARE_ACCELERAT
     app.disableHardwareAcceleration();
 if (fs.existsSync(path.join(app.getPath("userData"), "TEMP_PATH"))) {
     const tempPath = fs.readFileSync(path.join(app.getPath("userData"), "TEMP_PATH"), "utf-8");
-    if (fs.existsSync(tempPath)) app.setPath("temp", tempPath);
-    else fs.rmSync(tempPath);
+    app.setPath("temp", tempPath);
+    if (!fs.existsSync(tempPath)) {
+        log.log("Set tempPath does not exist, creating,", tempPath);
+        fs.mkdirSync(tempPath);
+    }
 }
 let OPEN_IN_EXISTING_WINDOW = false;
 if (fs.existsSync(path.join(app.getPath("userData"), "OPEN_IN_EXISTING_WINDOW"))) OPEN_IN_EXISTING_WINDOW = true;

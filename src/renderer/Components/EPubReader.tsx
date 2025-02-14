@@ -71,57 +71,6 @@ const StyleSheets = memo(
     },
     (prev, next) => prev.sheets.length === next.sheets.length && prev.sheets[0] === next.sheets[0]
 );
-
-// const HTMLSolo = memo(
-//     ({
-//         content,
-//         url,
-//         epubLinkClick,
-//     }: {
-//         content: string;
-//         url: string;
-//         epubLinkClick: (ev: MouseEvent | React.MouseEvent<HTMLAnchorElement, MouseEvent>) => void;
-//     }) => {
-//         const { setContextMenuData } = useContext(AppContext);
-//         // const [rendered, setRendered] = useState(false);;
-//         return (
-//             <div
-//                 className="cont htmlCont"
-//                 ref={(node) => {
-//                     if (node && content) {
-//                         const xhtml = content;
-//                         while (node.hasChildNodes()) {
-//                             node.removeChild(node.childNodes[0]);
-//                         }
-//                         node.setAttribute("data-link-id", url);
-//                         xhtml.body.childNodes.forEach((childNode) => {
-//                             node.appendChild(childNode.cloneNode(true));
-//                         });
-//                         node.querySelectorAll("a").forEach((e) => {
-//                             e.addEventListener("click", epubLinkClick);
-//                         });
-//                         node.querySelectorAll("img").forEach((e) => {
-//                             e.oncontextmenu = (ev) => {
-//                                 ev.stopPropagation();
-//                                 const url = (ev.currentTarget as Element).getAttribute("src") || "";
-//                                 setContextMenuData({
-//                                     clickX: ev.clientX,
-//                                     clickY: ev.clientY,
-//                                     items: [
-//                                         window.contextMenu.template.copyImage(url),
-//                                         window.contextMenu.template.showInExplorer(url),
-//                                         window.contextMenu.template.copyPath(url),
-//                                     ],
-//                                 });
-//                             };
-//                         });
-//                     }
-//                 }}
-//             ></div>
-//         );
-//     }
-// );
-
 const HTMLPart = memo(
     ({
         epubManifest,
@@ -601,11 +550,11 @@ const EPubReader = () => {
                     findInPageRefs.current = {
                         originalHTML: cont.innerHTML,
                         currentIndex: 0,
-                        //todo check if even need now
                         prevStr: "",
                     };
                 }
                 if (findInPageRefs.current) {
+                    //todo : this results in dom events getting destroyed, use canvas as alternative? or re-attach events
                     if (findInPageRefs.current.currentIndex === 0 || str !== findInPageRefs.current.prevStr) {
                         const modified = findInPageRefs.current.originalHTML.replace(
                             new RegExp(`(${str})`, "ig"),

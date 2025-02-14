@@ -19,6 +19,11 @@ const updateBookmarks = (data: any): Manga_BookItem[] => {
     saveJSONfile(bookmarksPath, newBk);
     return newBk;
 };
+/**
+ * 13/05/2024
+ * changes made to remove bookmarks.json and adding dependency on history.json
+ */
+const updateBookmarksV2 = (data: unknown) => {};
 
 const readBookmark = (): Manga_BookItem[] => {
     if (window.fs.existsSync(bookmarksPath)) {
