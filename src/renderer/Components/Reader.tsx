@@ -31,11 +31,12 @@ const processChapterNumber = (chapterName: string): number | undefined => {
     ep 1
     ep1
     uploader_ch.1
+    uploader-ch.1
 
     support float chapter number
-    /(^| |\.|_)((chapter|(c(h)?)|(p(t)?(art)?)|(ep(isode)?))((\s)?(-|_|\.)?(\s)?)?(?<main>\d+(\.\d+)?))/gi;
+    /(^| |\.|_|-)((chapter|(c(h)?)|(p(t)?(art)?)|(ep(isode)?))((\s)?(-|_|\.)?(\s)?)?(?<main>\d+(\.\d+)?))/gi;
      */
-    const regex = /(^| |\.|_)((chapter|(c(h)?)|(p(t)?(art)?)|(ep(isode)?))((\s)?(-|_|\.)?(\s)?)?(?<main>\d+))/gi;
+    const regex = /(^| |\.|_|-)((chapter|(c(h)?)|(p(t)?(art)?)|(ep(isode)?))((\s)?(-|_|\.)?(\s)?)?(?<main>\d+))/gi;
     const results = [...chapterName.matchAll(regex)];
     if (results.length === 0) return;
     const result = results[0].groups?.main;
