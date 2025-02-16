@@ -9,9 +9,13 @@
         "url": "https://github.com/mienaiyami/yomikiru"
     },
     "scripts": {
-        "preci": "rm -rf ./node_modules",
-        "ci": "yarn install --immutable --immutable-cache --check-cache",
-        "start": "electron-forge start",
+        "dev": "electron-forge start",
+        "rebuild:electron": "electron-rebuild -f -w better-sqlite3",
+        "rebuild:node": "pnpm rebuild better-sqlite3",
+        "drizzle:push": "pnpm drizzle push",
+        "drizzle:studio": "pnpm drizzle studio",
+        "drizzle:generate": "pnpm drizzle generate",
+        "drizzle:migrate": "set ELECTRON_RUN_AS_NODE=false && pnpm rebuild:node && pnpm drizzle-kit migrate",
         "eslint": "eslint .",
         "tslint": "tsc --noemit",
         "lint": "eslint . && tsc --noemit",
@@ -33,10 +37,13 @@
         "@fortawesome/react-fontawesome": "^0.2.0",
         "@reduxjs/toolkit": "^1.9.3",
         "@vscode/sudo-prompt": "^9.3.1",
+        "better-sqlite3": "^11.8.1",
         "chokidar": "^3.5.3",
         "color": "^4.2.3",
         "cross-zip": "^4.0.0",
         "css": "^3.0.0",
+        "dotenv": "^16.4.7",
+        "drizzle-orm": "^0.39.3",
         "electron-dl": "^3.5.0",
         "electron-fetch": "^1.9.1",
         "electron-log": "^4.4.8",
@@ -49,7 +56,7 @@
         "react-hot-loader": "^4.13.0",
         "react-intersection-observer": "^9.5.2",
         "react-redux": "^8.0.5",
-        "zod": "^3.22.2"
+        "zod": "^3.22.3"
     },
     "devDependencies": {
         "@electron-forge/cli": "^6.4.1",
@@ -59,6 +66,9 @@
         "@electron-forge/maker-zip": "^6.4.1",
         "@electron-forge/plugin-auto-unpack-natives": "^6.4.1",
         "@electron-forge/plugin-webpack": "^6.4.1",
+        "@electron-forge/shared-types": "^7.6.1",
+        "@electron/rebuild": "^3.7.1",
+        "@types/better-sqlite3": "^7.6.12",
         "@types/color": "^3.0.3",
         "@types/cross-zip": "^4.0.0",
         "@types/css": "^0.0.33",
@@ -72,6 +82,7 @@
         "@vercel/webpack-asset-relocator-loader": "^1.7.3",
         "cross-env": "7.0.3",
         "css-loader": "^6.4.0",
+        "drizzle-kit": "^0.30.4",
         "electron": "22.3.25",
         "eslint": "7.29.0",
         "eslint-plugin-import": "2.23.4",
@@ -86,9 +97,25 @@
         "style-loader": "^3.3.0",
         "ts-loader": "^9.2.2",
         "ts-node": "^10.0.0",
+        "tsx": "^4.19.2",
         "typescript": "^5.2.2",
         "url-loader": "^4.1.1",
         "wait-on": "5.3.0",
+        "webpack": "^5.98.0",
         "worker-loader": "^3.0.8"
+    },
+    "pnpm": {
+        "onlyBuiltDependencies": [
+            "@fortawesome/fontawesome-common-types",
+            "@fortawesome/fontawesome-svg-core",
+            "@fortawesome/free-brands-svg-icons",
+            "@fortawesome/free-regular-svg-icons",
+            "@fortawesome/free-solid-svg-icons",
+            "better-sqlite3",
+            "canvas",
+            "electron",
+            "electron-winstaller",
+            "esbuild"
+        ]
     }
 }

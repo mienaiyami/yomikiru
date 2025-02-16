@@ -1,15 +1,16 @@
 /* eslint-disable no-case-declarations */
-import { app, session, BrowserWindow, Menu, shell, ipcMain, MenuItemConstructorOptions, dialog } from "electron";
+import { app, BrowserWindow, Menu, shell, ipcMain, MenuItemConstructorOptions, dialog } from "electron";
 import path from "path";
 import fs from "fs";
-import IS_PORTABLE from "./IS_PORTABLE";
-import { homedir, tmpdir } from "os";
+import { IS_PORTABLE, log, saveFile } from "./util";
+
+import { exec, spawn } from "child_process";
+import crossZip from "cross-zip";
+
 import * as remote from "@electron/remote/main";
 remote.initialize();
+
 declare const HOME_WEBPACK_ENTRY: string;
-import { exec, spawn, spawnSync } from "child_process";
-import crossZip from "cross-zip";
-import log from "electron-log";
 
 if (require("electron-squirrel-startup")) app.quit();
 if (IS_PORTABLE) {
@@ -36,268 +37,22 @@ if (fs.existsSync(path.join(app.getPath("userData"), "TEMP_PATH"))) {
 let OPEN_IN_EXISTING_WINDOW = false;
 if (fs.existsSync(path.join(app.getPath("userData"), "OPEN_IN_EXISTING_WINDOW"))) OPEN_IN_EXISTING_WINDOW = true;
 
-// change path in `settings.tsx as well if changing log path
-log.transports.file.resolvePath = () => path.join(app.getPath("userData"), "logs/main.log");
-log.log("Starting app...");
-
-import sudo from "@vscode/sudo-prompt";
 import checkForUpdate from "./updater";
-
-// registry, add option "open in reader" in  explorer context menu
-const addOptionToExplorerMenu = () => {
-    const appPath = IS_PORTABLE
-        ? app.getPath("exe").replace(/\\/g, "\\\\")
-        : path.join(app.getPath("exe"), `../../${app.name}.exe`).replace(/\\/g, "\\\\");
-    const regInit = `Windows Registry Editor Version 5.00
-    
-    ; setup context menu item for click on folders tree item
-    [HKEY_CURRENT_USER\\Software\\Classes\\directory\\shell\\Yomikiru\\command]
-    @="\\"${appPath}\\" \\"%V\\""
-    
-    ; specify an icon for the item
-    [HKEY_CURRENT_USER\\Software\\Classes\\directory\\shell\\Yomikiru]
-    @="Open in Yomikiru "
-    "icon"="${appPath}"
-
-    
-    [HKEY_CLASSES_ROOT\\.cbz\\shell\\Yomikiru]
-    @="Open in Yomikiru"
-    "Icon"="${appPath}"
-
-    [HKEY_CLASSES_ROOT\\.cbz\\shell\\Yomikiru\\command]
-    @="\\"${appPath}\\" \\"%V\\""
-
-
-    [HKEY_CLASSES_ROOT\\Yomikiru]
-    @="Yomikiru"
-
-    [HKEY_CLASSES_ROOT\\Yomikiru\\DefaultIcon]
-    @="${appPath}"
-
-    [HKEY_CLASSES_ROOT\\Yomikiru\\shell\\open]
-    "Icon"="${appPath}"
-
-    [HKEY_CLASSES_ROOT\\Yomikiru\\shell\\open\\command]
-    @="\\"${appPath}\\" \\"%V\\""
-
-    [HKEY_CLASSES_ROOT\\.zip\\OpenWithProgids]
-    "Yomikiru"=""
-    [HKEY_CLASSES_ROOT\\.cbz\\OpenWithProgids]
-    "Yomikiru"=""
-    [HKEY_CLASSES_ROOT\\.cbr\\OpenWithProgids]
-    "Yomikiru"=""
-    [HKEY_CLASSES_ROOT\\.cb7\\OpenWithProgids]
-    "Yomikiru"=""
-
-    [HKEY_CLASSES_ROOT\\.rar\\OpenWithProgids]
-    "Yomikiru"=""
-
-    [HKEY_CLASSES_ROOT\\.pdf\\OpenWithProgids]
-    "Yomikiru"=""
-
-    [HKEY_CLASSES_ROOT\\.7z\\OpenWithProgids]
-    "Yomikiru"=""
-    `;
-
-    const tempPath = app.getPath("temp");
-    fs.writeFileSync(path.join(tempPath, "createOpenWithYomikiru.reg"), regInit);
-
-    const op = {
-        name: "Yomikiru",
-        icns: app.getPath("exe"),
-    };
-    sudo.exec("regedit.exe /S " + path.join(tempPath, "createOpenWithYomikiru.reg"), op, function (error) {
-        if (error) log.error(error);
-    });
-};
-const addOptionToExplorerMenu_epub = () => {
-    app;
-    const appPath = IS_PORTABLE
-        ? app.getPath("exe").replace(/\\/g, "\\\\")
-        : path.join(app.getPath("exe"), `../../${app.name}.exe`).replace(/\\/g, "\\\\");
-    const regInit = `Windows Registry Editor Version 5.00
-    
-    [HKEY_CLASSES_ROOT\\.epub\\shell\\Yomikiru]
-    @="Open in Yomikiru"
-    "Icon"="${appPath}"
-
-    [HKEY_CLASSES_ROOT\\.epub\\shell\\Yomikiru\\command]
-    @="\\"${appPath}\\" \\"%V\\""
-
-    [HKEY_CLASSES_ROOT\\.epub\\OpenWithProgids]
-    "Yomikiru"=""
-    
-    [HKEY_CLASSES_ROOT\\.txt\\OpenWithProgids]
-    "Yomikiru"=""
-    
-    [HKEY_CLASSES_ROOT\\.xhtml\\OpenWithProgids]
-    "Yomikiru"=""
-    
-    [HKEY_CLASSES_ROOT\\.html\\OpenWithProgids]
-    "Yomikiru"=""
-    `;
-
-    const tempPath = app.getPath("temp");
-    fs.writeFileSync(path.join(tempPath, "createOpenWithYomikiru-epub.reg"), regInit);
-
-    const op = {
-        name: "Yomikiru",
-        icns: app.getPath("exe"),
-    };
-    sudo.exec("regedit.exe /S " + path.join(tempPath, "createOpenWithYomikiru-epub.reg"), op, function (error) {
-        if (error) log.error(error);
-    });
-};
-const deleteOptionInExplorerMenu = () => {
-    const regDelete = `Windows Registry Editor Version 5.00
-    
-    [-HKEY_CURRENT_USER\\Software\\Classes\\directory\\shell\\Yomikiru]
-    
-    [-HKEY_CLASSES_ROOT\\.cbz\\shell\\Yomikiru]
-
-    [-HKEY_CLASSES_ROOT\\Yomikiru]
-
-    [HKEY_CLASSES_ROOT\\.zip\\OpenWithProgids]
-    "Yomikiru"=-
-
-    [HKEY_CLASSES_ROOT\\.pdf\\OpenWithProgids]
-    "Yomikiru"=-
-
-    [HKEY_CLASSES_ROOT\\.7z\\OpenWithProgids]
-    "Yomikiru"=-
-    `;
-    fs.writeFileSync(path.join(app.getPath("temp"), "deleteOpenWithYomikiru.reg"), regDelete);
-    const op = {
-        name: "Yomikiru",
-        icns: app.getPath("exe"),
-    };
-    sudo.exec(
-        "regedit.exe /S " + path.join(app.getPath("temp"), "deleteOpenWithYomikiru.reg"),
-        op,
-        function (error) {
-            if (error) log.error(error);
-        }
-    );
-};
-const deleteOptionInExplorerMenu_epub = () => {
-    const regDelete = `Windows Registry Editor Version 5.00
-    
-    [-HKEY_CLASSES_ROOT\\.epub\\shell\\Yomikiru]
-
-    `;
-    fs.writeFileSync(path.join(app.getPath("temp"), "deleteOpenWithYomikiru-epub.reg"), regDelete);
-    const op = {
-        name: "Yomikiru",
-        icns: app.getPath("exe"),
-    };
-    sudo.exec(
-        "regedit.exe /S " + path.join(app.getPath("temp"), "deleteOpenWithYomikiru-epub.reg"),
-        op,
-        function (error) {
-            if (error) log.error(error);
-        }
-    );
-};
-
-const handleSquirrelEvent = () => {
-    if (process.argv.length === 1 || process.platform !== "win32") {
-        return false;
-    }
-    const appFolder = path.resolve(process.execPath, "..");
-    const rootFolder = path.resolve(appFolder, "..");
-    // const updateDotExe = path.resolve(path.join(rootFolder, "Update.exe"));
-    const appPath = IS_PORTABLE
-        ? app.getPath("exe").replace(/\\/g, "\\\\")
-        : path.join(app.getPath("exe").replace(/\\/g, "\\\\"), `../../${app.name}.exe`);
-    // const spawnUpdate = (args: any) => spawn(updateDotExe, args);
-    const squirrelEvent = process.argv[1];
-    switch (squirrelEvent) {
-        case "--squirrel-install":
-        case "--squirrel-updated":
-            // const createShortcutArgs = [
-            //     `--createShortcut="${app.getName()}.exe"`,
-            //     "--shortcut-locations=Desktop,StartMenu",
-            // ];
-            // spawn(path.join(appPath, "../Update.exe"), createShortcutArgs, { detached: true });
-            const vbsScript = `
-            Set WshShell = CreateObject("Wscript.shell")
-            strDesktop = WshShell.SpecialFolders("Desktop")
-            Set oMyShortcut = WshShell.CreateShortcut(strDesktop + "\\Yomikiru.lnk")
-            oMyShortcut.WindowStyle = "1"
-            oMyShortcut.IconLocation = "${path.resolve(rootFolder, "app.ico")}"
-            OMyShortcut.TargetPath = "${appPath}"
-            oMyShortCut.Save
-            strStartMenu = WshShell.SpecialFolders("StartMenu")
-            Set oMyShortcut2 = WshShell.CreateShortcut(strStartMenu + "\\programs\\Yomikiru.lnk")
-            oMyShortcut2.WindowStyle = "1"
-            oMyShortcut2.IconLocation = "${path.resolve(rootFolder, "app.ico")}"
-            OMyShortcut2.TargetPath = "${appPath}"
-            oMyShortCut2.Save
-            `;
-            fs.writeFileSync(path.resolve(rootFolder, "shortcut.vbs"), vbsScript);
-            spawnSync("cscript.exe", [path.resolve(rootFolder, "shortcut.vbs")]);
-
-            // fs.unlinkSync(path.resolve(rootFolder, "shortcut.vbs"));
-            app.quit();
-            break;
-
-        case "--squirrel-uninstall":
-            if (
-                fs.existsSync(
-                    path.resolve(homedir(), "AppData/Roaming/Microsoft/Windows/Start Menu/Programs/Yomikiru.lnk")
-                )
-            )
-                fs.unlinkSync(
-                    path.resolve(homedir(), "AppData/Roaming/Microsoft/Windows/Start Menu/Programs/Yomikiru.lnk")
-                );
-            deleteOptionInExplorerMenu();
-            deleteOptionInExplorerMenu_epub();
-            if (fs.existsSync(path.resolve(homedir(), "Desktop/Yomikiru.lnk")))
-                fs.unlinkSync(path.resolve(homedir(), "Desktop/Yomikiru.lnk"));
-            const uninstallFull = `
-            set WshShell = CreateObject("Wscript.shell")
-            WScript.Sleep 30000
-            Dim FSO
-            set FSO=CreateObject("Scripting.FileSystemObject")
-            FSO.DeleteFolder("${app.getPath("userData")}")
-            FSO.DeleteFolder("${rootFolder}\\*")
-            `;
-            const temp = fs.mkdtempSync(path.join(tmpdir(), "foo-"));
-            fs.writeFileSync(path.join(temp, "uninstall.vbs"), uninstallFull);
-            spawn("cscript.exe", [path.resolve(temp, "uninstall.vbs")], {
-                detached: true,
-            });
-            app.quit();
-            break;
-
-        case "--squirrel-obsolete":
-            app.quit();
-            break;
-    }
-};
+import {
+    addOptionToExplorerMenu,
+    addOptionToExplorerMenu_epub,
+    deleteOptionInExplorerMenu,
+    deleteOptionInExplorerMenu_epub,
+} from "./util/shelloptions";
+import handleSquirrelEvent from "./util/handleSquirrelEvent";
+import { DatabaseService } from "./db";
+import { setupDatabaseHandlers } from "./ipc/database";
 
 if (handleSquirrelEvent()) {
     app.quit();
 }
 
-const saveFile = (path: string, data: string, sync = true, retry = 3) => {
-    try {
-        if (sync) {
-            fs.writeFileSync(path, data);
-        } else
-            fs.writeFile(path, data, (err) => {
-                if (err) {
-                    throw err;
-                }
-            });
-    } catch (err) {
-        log.error("main::saveFile:", err, "Retrying...,", retry - 1, "left");
-        if (retry > 0)
-            setTimeout(() => {
-                saveFile(path, data, sync, retry - 1);
-            }, 1000);
-    }
-};
+const db = new DatabaseService();
 
 // when manga reader opened from context menu "open with manga reader"
 let openFolderOnLaunch = "";
@@ -403,6 +158,8 @@ if (process.platform === "win32")
             description: "Create a new window",
         },
     ]);
+
+// todo: extract to separate file
 const registerListener = () => {
     ipcMain.on("openLinkInNewWindow", (e, link) => {
         createWindow(link);
@@ -588,7 +345,7 @@ const registerListener = () => {
         });
     });
 };
-app.on("ready", () => {
+app.on("ready", async () => {
     /**
      * enables basic shortcut keys such as copy, paste, reload, etc.
      */
@@ -641,7 +398,12 @@ app.on("ready", () => {
     ];
     const menu = Menu.buildFromTemplate(template);
     Menu.setApplicationMenu(menu);
+
+    await db.initialize();
+    setupDatabaseHandlers(db);
+
     registerListener();
+
     createWindow(openFolderOnLaunch);
 });
 
@@ -649,7 +411,6 @@ app.on("before-quit", () => {
     log.log("Quitting app...");
 });
 app.on("activate", () => {
-    //todo: what is this for?
     if (BrowserWindow.getAllWindows().length === 0) {
         createWindow();
     }

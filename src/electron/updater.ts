@@ -1,6 +1,6 @@
 import fs from "fs";
 import path from "path";
-import IS_PORTABLE from "./IS_PORTABLE";
+import { IS_PORTABLE } from "./util";
 import { spawn } from "child_process";
 import { app, BrowserWindow, dialog, shell } from "electron";
 import fetch from "electron-fetch";

@@ -17,6 +17,7 @@ export const rendererConfig: Configuration = {
     },
     externals: {
         electron: "commonjs2 electron",
+        "better-sqlite3": "commonjs better-sqlite3",
         // "../public/pdf.min.js": "pdfjsLib",
         // "../public/pdf.worker.min.js": "pdfjsLibWorker",
     },

@@ -14,6 +14,7 @@ import themeJSON from "./themeInit.json";
 import AniList from "./Components/anilist/request";
 import { settingSchema } from "./utils/settingsSchema";
 import { SHORTCUT_COMMAND_MAP, keyFormatter } from "./utils/keybindings";
+import { DatabaseChannels, IpcChannel } from "@common/types/ipc";
 declare module "react" {
     interface CSSProperties {
         [key: `--${string}`]: string | number;
@@ -314,64 +315,7 @@ declare global {
             [e in ThemeDataMain]: string;
         };
     }
-    interface MangaItem {
-        mangaName: string;
-        chapterName: string;
-        date?: string;
-        link: string;
-        pages: number;
-    }
-    //todo combine with MangaItem
-    type ChapterItem = MangaItem & {
-        page: number;
-    };
-    type MangaHistoryItem = {
-        type: "image";
-        data: {
-            /**
-             * Set of chapter names already read under same manga.
-             */
-            chaptersRead: string[];
-            //todo: don't need, can be taken from dir(link)
-            mangaLink: string;
-        } & ChapterItem;
-    };
-    type BookHistoryItem = {
-        type: "book";
-        data: BookItem;
-    };
-    type HistoryItem = MangaHistoryItem | BookHistoryItem;
-    type ListItemE = Manga_BookItem & {
-        index: number;
-        isBookmark: boolean;
-        isHistory: boolean;
-        focused: boolean;
-    };
-    type BookItem = {
-        title: string;
-        author: string;
-        link: string;
-        //todo impl
-        cover: string;
-        date?: string;
-        chapterData: {
-            chapterName: string;
-            id: string;
-            /**
-             * css query string of element to focus on load
-             */
-            elementQueryString: string;
-        };
-    };
-    type Manga_BookItem =
-        | {
-              type: "image";
-              data: ChapterItem;
-          }
-        | {
-              type: "book";
-              data: BookItem;
-          };
+
     //eslint-disable-next-line @typescript-eslint/no-namespace
     namespace EPUB {
         type MetaData = {
@@ -716,3 +660,11 @@ if (localStorage.getItem("anilist_tracking") === null) localStorage.setItem("ani
 window.al = new AniList(localStorage.getItem("anilist_token") || "");
 
 export { unzip, promptSelectDir };
+export const ipc = {
+    invoke: async <T extends IpcChannel>(
+        channel: T,
+        ...args: DatabaseChannels[T]["request"] extends void ? [] : [DatabaseChannels[T]["request"]]
+    ): Promise<DatabaseChannels[T]["response"]> => {
+        return window.electron.ipcRenderer.invoke(channel, ...args);
+    },
+};

@@ -6,8 +6,8 @@ import { MakerRpm } from "@electron-forge/maker-rpm";
 import { AutoUnpackNativesPlugin } from "@electron-forge/plugin-auto-unpack-natives";
 import { WebpackPlugin } from "@electron-forge/plugin-webpack";
 
-import { mainConfig } from "./webpack.main.config";
-import { rendererConfig } from "./webpack.renderer.config";
+import { mainConfig } from "./webpack/webpack.main.config";
+import { rendererConfig } from "./webpack/webpack.renderer.config";
 
 import fs from "fs";
 
@@ -15,7 +15,12 @@ const config: ForgeConfig = {
     packagerConfig: {
         name: "Yomikiru",
         asar: true,
+        extraResource: ["better-sqlite3"],
         executableName: process.platform === "win32" ? "Yomikiru" : "yomikiru",
+    },
+    rebuildConfig: {
+        extraModules: ["better-sqlite3"],
+        force: true,
     },
     plugins: [
         new AutoUnpackNativesPlugin({}),
