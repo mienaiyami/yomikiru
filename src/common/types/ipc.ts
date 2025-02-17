@@ -1,24 +1,32 @@
 import { InferInsertModel } from "drizzle-orm";
 import type { LibraryItem, MangaProgress, BookProgress, MangaBookmark, BookBookmark, BookNote } from "./db";
-import type { HistoryItem, Manga_BookItem } from "./legacy";
 import { libraryItems } from "../../electron/db/schema";
 
 // must include
-const DatabaseChannelsNames = [
+export const DatabaseChannelsNames = [
     "db:library:getItem",
-    "db:library:getWholeAndProgress",
+    "db:library:getAllAndProgress",
     "db:library:addItem",
+    "db:library:getAllBookmarks",
     "db:manga:getProgress",
     "db:manga:updateProgress",
+    "db:manga:updateChaptersRead",
+    "db:manga:updateChaptersReadAll",
     "db:manga:addBookmark",
     "db:manga:getBookmarks",
+    "db:manga:deleteBookmarks",
+    // "db:manga:getAllBookmarks",
     "db:book:getProgress",
     "db:book:updateProgress",
     "db:book:getBookmarks",
     "db:book:addBookmark",
+    "db:book:deleteBookmarks",
+    // "db:book:getAllBookmarks",
     "db:book:getNotes",
     "db:book:addNote",
-    "db:migrateFromJSON",
+    "db:book:deleteNotes",
+    // doing this on main process
+    // "db:migrateFromJSON",
 ] as const;
 
 // todo: move all ipc to this file
@@ -28,7 +36,7 @@ export type DatabaseChannels = {
         request: { link: string };
         response: LibraryItem | null;
     };
-    "db:library:getWholeAndProgress": {
+    "db:library:getAllAndProgress": {
         request: void;
         response: {
             item: LibraryItem;
@@ -47,7 +55,14 @@ export type DatabaseChannels = {
         };
         response: LibraryItem;
     };
-
+    "db:library:getAllBookmarks": {
+        request: void;
+        response: {
+            mangaBookmarks: MangaBookmark[];
+            bookBookmarks: BookBookmark[];
+        };
+        // response: ((MangaBookmark & { type: "manga" }) | (BookBookmark & { type: "book" }))[];
+    };
     "db:manga:getProgress": {
         request: { itemLink: string };
         response: MangaProgress | null;
@@ -56,15 +71,24 @@ export type DatabaseChannels = {
         request: {
             itemLink: string;
             data: {
-                chapterName: string;
-                chapterLink: string;
-                currentPage: number;
-                chaptersRead: string[];
-                lastReadAt: Date;
+                chapterName?: string;
+                chapterLink?: string;
+                currentPage?: number;
+                chaptersRead?: string[];
+                lastReadAt?: Date;
                 totalPages?: number;
             };
         };
-        response: void;
+        response: MangaProgress | null;
+    };
+    "db:manga:updateChaptersRead": {
+        request: { itemLink: string; chapterName: string; read: boolean };
+        response: string[];
+    };
+    "db:manga:updateChaptersReadAll": {
+        // pass empty chapters to unmark all chapters
+        request: { itemLink: string; chapters: string[]; read: boolean };
+        response: string[];
     };
     "db:manga:getBookmarks": {
         request: { itemLink: string };
@@ -77,7 +101,11 @@ export type DatabaseChannels = {
             link: string;
             note?: string;
         };
-        response: MangaBookmark;
+        response: MangaBookmark | null;
+    };
+    "db:manga:deleteBookmarks": {
+        request: { itemLink: string; ids: number[]; all?: boolean };
+        response: boolean;
     };
     "db:book:getProgress": {
         request: { itemLink: string };
@@ -87,13 +115,13 @@ export type DatabaseChannels = {
         request: {
             itemLink: string;
             data: {
-                chapterId: string;
-                chapterName: string;
-                position: string;
-                lastReadAt: Date;
+                chapterId?: string;
+                chapterName?: string;
+                position?: string;
+                lastReadAt?: Date;
             };
         };
-        response: void;
+        response: BookProgress | null;
     };
 
     "db:book:getBookmarks": {
@@ -108,7 +136,11 @@ export type DatabaseChannels = {
             title: string;
             note?: string;
         };
-        response: BookBookmark;
+        response: BookBookmark | null;
+    };
+    "db:book:deleteBookmarks": {
+        request: { itemLink: string; ids: number[]; all?: boolean };
+        response: boolean;
     };
 
     "db:book:getNotes": {
@@ -124,25 +156,31 @@ export type DatabaseChannels = {
             selectedText: string;
             color: string;
         };
-        response: BookNote;
-    };
-
-    "db:migrateFromJSON": {
-        request: {
-            historyData: HistoryItem[];
-            bookmarkData: Manga_BookItem[];
-        };
         response: void;
     };
+    "db:book:deleteNotes": {
+        request: { itemLink: string; ids: number[]; all?: boolean };
+        response: boolean;
+    };
+
+    // "db:migrateFromJSON": {
+    //     request: {
+    //         historyData: HistoryItem[];
+    //         bookmarkData: Manga_BookItem[];
+    //     };
+    //     response: void;
+    // };
 };
-type VerifyChannels = (typeof DatabaseChannelsNames)[number] extends keyof DatabaseChannels
-    ? keyof DatabaseChannels extends (typeof DatabaseChannelsNames)[number]
+type MissingChannels = Exclude<(typeof DatabaseChannelsNames)[number], keyof DatabaseChannels>;
+type ExtraChannels = Exclude<keyof DatabaseChannels, (typeof DatabaseChannelsNames)[number]>;
+
+type AssertChannels<Missing extends string, Extra extends string> = [Missing] extends [never]
+    ? [Extra] extends [never]
         ? true
-        : never
-    : never;
-type Assert<T extends true> = T;
-type _Check = Assert<VerifyChannels>;
-// DatabaseChannels must include all DatabaseChannelsNames
-const _check: _Check = true;
+        : `Extra : ${Extra}`
+    : `Missing : ${Missing}`;
+
+type _Check = AssertChannels<MissingChannels, ExtraChannels>;
+const _check: _Check = true as _Check;
 
 export type IpcChannel = keyof DatabaseChannels;

@@ -1,9 +1,49 @@
-{
-    "name": "dark2",
-    "allData": [
+// modify this to add new theme property
+export const themeProps = {
+    "--body-bg-color": "Body BG Color",
+    "--topBar-color": "Top-Bar BG Color",
+    "--icon-color": "Icon Color",
+    "--font-color": "Text Color",
+    "--font-color-secondary": "Text Color Secondary",
+    "--font-select-color": "Selected Text Color",
+    "--font-select-bg-color": "Selected Text BG Color",
+    "--btn-color": "Button Color",
+    "--btn-color-hover": "Button Hover Color",
+    "--btn-color-focus": "Button Focus Color",
+    "--btn-shadow-focus": "Button Focus Shadow Color",
+    "--topBar-btn-hover": "Top-Bar Button Color Hovered",
+    "--text-input-bg": "Input BG Color",
+    "--text-input-bg-focus": "Input BG Color Focused",
+    "--listItem-bg-color": "List-Item BG Color",
+    "--listItem-bg-color-hover": "List-Item BG Color Hovered",
+    "--listItem-bg-color-read": "List-Item BG Color AlreadyRead",
+    "--listItem-bg-color-current": "List-Item BG Color (Current in SideList)",
+    "--readerSettings-bg": "Reader Settings BG",
+    "--readerSettings-toggleBtn-bg-color": "Reader Setting Toggle Button Color",
+    "--readerSettings-toggleBtn-bg-color-hover": "Reader Setting Toggle Button Color Hovered",
+    "--sideList-bg-color": "Reader Side-List BG Color",
+    "--reader-sidelist-divider-color": "Reader Side-List Divider Color",
+    "--scrollbar-track-color": "Scroll-Bar Track Color",
+    "--scrollbar-thumb-color": "Scroll-Bar Thumb Color",
+    "--scrollbar-thumb-color-hover": "Scroll-Bar Thumb Color Hovered",
+    "--code-text-color": "Code Text Color",
+    "--code-bg-color": "Code BG Color",
+    "--code-shadow-color": "Code Shadow Color",
+    "--divider-color": "Divider Color",
+    "--contextMenu-bg-color": "Context-Menu BG",
+    "--contentMenu-item-color": "Context-Menu Item BG",
+    "--contentMenu-item-bg-color-hover": "Context-Menu Item BG Hovered/Focused",
+    //todo move to reader settings or add duplicate for epub
+    "--zenModePage-bg": "ZenMode Page Indicator BG (Manga Reader only)",
+};
+
+export const initThemeData = {
+    // default theme
+    name: "dark2",
+    allData: [
         {
-            "name": "dark1",
-            "main": {
+            name: "dark1",
+            main: {
                 "--body-bg-color": "#262626ff",
                 "--topBar-color": "#1f1f1fff",
                 "--icon-color": "#ffffffff",
@@ -37,12 +77,12 @@
                 "--contextMenu-bg-color": "var(--body-bg-color)",
                 "--contentMenu-item-color": "var(--font-color)",
                 "--contentMenu-item-bg-color-hover": "var(--btn-color-focus)",
-                "--zenModePage-bg": "#26262680"
-            }
+                "--zenModePage-bg": "#26262680",
+            },
         },
         {
-            "name": "dark2",
-            "main": {
+            name: "dark2",
+            main: {
                 "--body-bg-color": "#000000",
                 "--sideList-bg-color": "var(--topBar-color)",
                 "--icon-color": "#fff8f0",
@@ -76,12 +116,12 @@
                 "--contextMenu-bg-color": "var(--body-bg-color)",
                 "--contentMenu-item-color": "var(--font-color)",
                 "--contentMenu-item-bg-color-hover": "var(--btn-color-focus)",
-                "--zenModePage-bg": "#00000080"
-            }
+                "--zenModePage-bg": "#00000080",
+            },
         },
         {
-            "name": "dark3",
-            "main": {
+            name: "dark3",
+            main: {
                 "--body-bg-color": "#000000ff",
                 "--topBar-color": "#17171cff",
                 "--icon-color": "#fff8f0ff",
@@ -115,12 +155,12 @@
                 "--contextMenu-bg-color": "var(--body-bg-color)",
                 "--contentMenu-item-color": "var(--font-color)",
                 "--contentMenu-item-bg-color-hover": "var(--btn-color-focus)",
-                "--zenModePage-bg": "#00000080"
-            }
+                "--zenModePage-bg": "#00000080",
+            },
         },
         {
-            "name": "light1",
-            "main": {
+            name: "light1",
+            main: {
                 "--body-bg-color": "#ffffff",
                 "--sideList-bg-color": "var(--topBar-color)",
                 "--icon-color": "#000c29",
@@ -154,12 +194,12 @@
                 "--contextMenu-bg-color": "var(--body-bg-color)",
                 "--contentMenu-item-color": "var(--font-color)",
                 "--contentMenu-item-bg-color-hover": "var(--btn-color-focus)",
-                "--zenModePage-bg": "#ffffff90"
-            }
+                "--zenModePage-bg": "#ffffff90",
+            },
         },
         {
-            "name": "light2",
-            "main": {
+            name: "light2",
+            main: {
                 "--body-bg-color": "#ffffffff",
                 "--topBar-color": "#e0e0e0ff",
                 "--icon-color": "#000c29ff",
@@ -193,8 +233,11 @@
                 "--contextMenu-bg-color": "var(--body-bg-color)",
                 "--contentMenu-item-color": "var(--font-color)",
                 "--contentMenu-item-bg-color-hover": "var(--btn-color-focus)",
-                "--zenModePage-bg": "#ffffff90"
-            }
-        }
-    ]
-}
+                "--zenModePage-bg": "#ffffff90",
+            },
+        },
+    ],
+} satisfies {
+    name: string;
+    allData: ThemeData[];
+};

@@ -97,7 +97,7 @@ const AnilistEdit = () => {
                                             "PAUSED",
                                             "REPEATING",
                                         ].map((e) => ({
-                                            label: betterStatus[e as AniListMangaData["status"]],
+                                            label: betterStatus[e as Anilist.MangaData["status"]],
                                             value: e,
                                             style: { textAlign: "center" },
                                         }))}
@@ -107,7 +107,7 @@ const AnilistEdit = () => {
                                                 if (init)
                                                     return {
                                                         ...init,
-                                                        status: value as AniListMangaData["status"],
+                                                        status: value as Anilist.MangaData["status"],
                                                     };
                                                 return null;
                                             });

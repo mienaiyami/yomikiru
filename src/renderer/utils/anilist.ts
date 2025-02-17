@@ -39,7 +39,12 @@ export default class AniList {
     }
     `;
 
-    constructor(token: string) {
+    constructor() {
+        // for first launch
+        if (localStorage.getItem("anilist_token") === null) localStorage.setItem("anilist_token", "");
+        if (localStorage.getItem("anilist_tracking") === null) localStorage.setItem("anilist_tracking", "[]");
+
+        const token = localStorage.getItem("anilist_token") || "";
         this.#token = token;
         if (token)
             this.checkToken(token).then((e) => {
@@ -202,10 +207,10 @@ export default class AniList {
         const variables = this.getVariables({ mediaId });
         const data = await this.fetch(this.#mutation, variables);
         if (data) {
-            return data.SaveMediaListEntry as AniListMangaData;
+            return data.SaveMediaListEntry as Anilist.MangaData;
         }
     }
-    async setCurrentMangaData(newData: Omit<AniListMangaData, "id" | "mediaId" | "media">) {
+    async setCurrentMangaData(newData: Omit<Anilist.MangaData, "id" | "mediaId" | "media">) {
         if (!this.#currentMangaListId) {
             window.logger.error("AniList::setCurrentMangaStatus: currentMangaListId not defined.");
             return;
@@ -213,10 +218,10 @@ export default class AniList {
         const variables = this.getVariables({ id: this.#currentMangaListId, ...newData });
         const data = await this.fetch(this.#mutation, variables);
         if (data) {
-            return data.SaveMediaListEntry as AniListMangaData;
+            return data.SaveMediaListEntry as Anilist.MangaData;
         }
     }
-    async setCurrentMangaProgress(progress: AniListMangaData["progress"]) {
+    async setCurrentMangaProgress(progress: Anilist.MangaData["progress"]) {
         if (!this.#currentMangaListId) {
             window.logger.error("AniList::setCurrentMangaProgress: currentMangaListId not defined.");
             return;
@@ -224,7 +229,7 @@ export default class AniList {
         const variables = this.getVariables({ id: this.#currentMangaListId, progress });
         const data = await this.fetch(this.#mutation, variables);
         if (data) {
-            return data.SaveMediaListEntry as AniListMangaData;
+            return data.SaveMediaListEntry as Anilist.MangaData;
         }
     }
 }

@@ -1,6 +1,6 @@
 import { createSlice, PayloadAction } from "@reduxjs/toolkit";
 
-let initialState: AniListTrackStore = JSON.parse(localStorage.getItem("anilist_tracking") || "[]");
+let initialState: Anilist.TrackStore = JSON.parse(localStorage.getItem("anilist_tracking") || "[]");
 initialState = initialState.filter((e) => {
     if (!window.fs.existsSync(e.localURL)) {
         window.logger.log(`"${e.localURL}" no longer exist, removing from AniList Tracking.`);
@@ -13,7 +13,7 @@ const anilistTracking = createSlice({
     name: "anilistTracking",
     initialState,
     reducers: {
-        setAnilistTracking: (state, action: PayloadAction<AniListTrackStore>) => {
+        setAnilistTracking: (state, action: PayloadAction<Anilist.TrackStore>) => {
             try {
                 if (!(action.payload instanceof Array)) throw Error("Incorrect Format.");
                 const str = JSON.stringify(action.payload);
@@ -26,7 +26,7 @@ const anilistTracking = createSlice({
                 });
             }
         },
-        addAnilistTracker: (state, action: PayloadAction<AniListTrackItem>) => {
+        addAnilistTracker: (state, action: PayloadAction<Anilist.TrackItem>) => {
             try {
                 if ("localURL" in action.payload) {
                     const stateDup = [...state];

@@ -1,5 +1,5 @@
 import { createSlice, PayloadAction } from "@reduxjs/toolkit";
-import { saveJSONfile, shortcutsPath } from "../utils/paths";
+import { saveJSONfile, shortcutsPath } from "../utils/file";
 
 const initialState: ShortcutSchema[] = [];
 

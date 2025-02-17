@@ -1,6 +1,6 @@
 import { createSlice, current, PayloadAction } from "@reduxjs/toolkit";
-import themeInit from "../themeInit.json";
-import { saveJSONfile, themesPath } from "../utils/paths";
+import { saveJSONfile, themesPath } from "../utils/file";
+import { initThemeData } from "../utils/theme";
 
 export const setSysBtnColor = (blurred = false) => {
     const topbarElem = document.querySelector<HTMLDivElement>("body #topBar");
@@ -89,11 +89,11 @@ if (window.fs.existsSync(themesPath)) {
                 let rewriteNeeded = false;
                 (data as Themes).allData.forEach((e) => {
                     if (!e.main[prop as ThemeDataMain]) {
-                        if (themeInit.allData.map((t) => t.name).includes(e.name)) {
+                        if (initThemeData.allData.map((t) => t.name).includes(e.name)) {
                             window.logger.log(
                                 `"${prop}" does not exist on default theme - "${e.name}", rewriting it whole.`
                             );
-                            e.main = themeInit.allData.find((t) => t.name === e.name)!.main;
+                            e.main = initThemeData.allData.find((t) => t.name === e.name)!.main;
                             rewriteNeeded = true;
                         } else {
                             window.logger.log(
@@ -106,7 +106,7 @@ if (window.fs.existsSync(themesPath)) {
                         }
                     }
                     /**check and fix change in theme value */
-                    themeInit.allData.forEach((e) => {
+                    initThemeData.allData.forEach((e) => {
                         const dataTheme = (data as Themes).allData.find((a) => a.name === e.name);
                         if (dataTheme)
                             Object.entries(e.main).forEach(([key, value]) => {
@@ -119,7 +119,7 @@ if (window.fs.existsSync(themesPath)) {
             // check if default theme exist
             // todo: remove in later versions, today 15/07/2023
             let changed2 = false;
-            [...themeInit.allData].reverse().forEach((e) => {
+            [...initThemeData.allData].reverse().forEach((e) => {
                 if (!data.allData.map((e: any) => e.name).includes(e.name)) {
                     window.logger.log(`Added default theme "${e.name}".`);
                     data.allData.unshift(e);
@@ -152,10 +152,10 @@ if (window.fs.existsSync(themesPath)) {
                     message: "Unable to parse " + themesPath + "\nMaking new themes.json..." + "\n" + err,
                 });
             window.logger.error(err);
-            initialState.name = themeInit.name;
-            initialState.allData = themeInit.allData;
-            // window.fs.writeFileSync(themesPath, JSON.stringify(themeInit));
-            window.fs.writeFileSync(themesPath, JSON.stringify(themeInit, null, "\t"));
+            initialState.name = initThemeData.name;
+            initialState.allData = initThemeData.allData;
+            // window.fs.writeFileSync(themesPath, JSON.stringify(initThemeData));
+            window.fs.writeFileSync(themesPath, JSON.stringify(initThemeData, null, "\t"));
         }
         // if (JSON.parse(raw).length < 3) {
         //     window.fs.writeFileSync(themesPath, JSON.stringify(themes));
@@ -163,9 +163,9 @@ if (window.fs.existsSync(themesPath)) {
         // }else
     }
 } else {
-    initialState.name = themeInit.name;
-    initialState.allData = themeInit.allData;
-    window.fs.writeFileSync(themesPath, JSON.stringify(themeInit, null, "\t"));
+    initialState.name = initThemeData.name;
+    initialState.allData = initThemeData.allData;
+    window.fs.writeFileSync(themesPath, JSON.stringify(initThemeData, null, "\t"));
 }
 
 if (!initialState.allData.map((e) => e.name).includes(initialState.name)) {
@@ -211,7 +211,7 @@ const themes = createSlice({
         addThemes: (state, action: PayloadAction<ThemeData[]>) => {
             if (action.payload instanceof Array) {
                 action.payload.forEach((theme) => {
-                    if (("main" && "name") in theme) {
+                    if ("name" in theme) {
                         if (state.allData.map((e) => e.name).includes(theme.name)) {
                             window.logger.error(
                                 "Tried to add new theme but theme name already exist. Name:",
@@ -241,8 +241,8 @@ const themes = createSlice({
             saveJSONfile(themesPath, current(state));
         },
         resetAllTheme: () => {
-            saveJSONandApply(themeInit);
-            return themeInit;
+            saveJSONandApply(initThemeData);
+            return initThemeData;
         },
     },
 });

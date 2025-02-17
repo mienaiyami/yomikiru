@@ -9,7 +9,7 @@ import { resetShortcuts } from "../store/shortcuts";
 import { setOpenSetting } from "../store/isSettingOpen";
 import { addBookmark, removeAllBookmarks } from "../store/bookmarks";
 import { makeNewSettings, setAppSettings, setEpubReaderSettings, setReaderSettings } from "../store/appSettings";
-import { promptSelectDir } from "../MainImports";
+import { promptSelectDir } from "../utils/main";
 import { deleteAllHistory } from "../store/history";
 import InputNumber from "./Element/InputNumber";
 import { setAnilistToken } from "../store/anilistToken";

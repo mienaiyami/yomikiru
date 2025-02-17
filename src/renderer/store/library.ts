@@ -1,49 +1,81 @@
-import { createSlice, createAsyncThunk } from "@reduxjs/toolkit";
+import { createSlice, createAsyncThunk, PayloadAction } from "@reduxjs/toolkit";
 import type { LibraryItem, MangaProgress, BookProgress } from "@common/types/db";
-import { ipc } from "../MainImports";
+import { ipc } from "../utils/ipc";
 import { DatabaseChannels } from "@common/types/ipc";
 
-interface LibraryState {
-    items: Record<string, LibraryItem>;
-    mangaProgress: Record<string, MangaProgress>;
-    bookProgress: Record<string, BookProgress>;
+// todo : add proper error handling
+
+type ItemWithProgress = {
+    item: LibraryItem;
+    mangaProgress: MangaProgress | null;
+    bookProgress: BookProgress | null;
+};
+
+type LibraryState = {
+    items: Map<string, LibraryItem>;
+    mangaProgress: Map<string, MangaProgress>;
+    bookProgress: Map<string, BookProgress>;
     loading: boolean;
     error: string | null;
-}
+};
 
 const initialState: LibraryState = {
-    items: {},
-    mangaProgress: {},
-    bookProgress: {},
+    items: new Map(),
+    mangaProgress: new Map(),
+    bookProgress: new Map(),
     loading: false,
     error: null,
 };
 
-export const fetchWholeLibrary = createAsyncThunk("library/fetchWhole", async () => {
-    const items = await ipc.invoke("db:library:getWholeAndProgress");
-    return items;
+export const getAllItemsWithProgress = createAsyncThunk("library/getAllItemsWithProgress", async () => {
+    return await ipc.invoke("db:library:getAllAndProgress");
 });
 
-// export const fetchLibraryItem = createAsyncThunk("library/fetchItem", async (link: string) => {
-//     const item = await ipc.invoke("db:library:getItem", { link });
-//     if (!item) {
-//         throw new Error("Item not found");
-//     }
-//     const progress =
-//         item.type === "manga"
-//             ? await ipc.invoke("db:manga:getProgress", { itemLink: item.link })
-//             : await ipc.invoke("db:book:getProgress", { itemLink: item.link });
-//     return { item, progress };
-// });
+export const addItem = createAsyncThunk(
+    "library/addItem",
+    async (args: DatabaseChannels["db:library:addItem"]["request"]) => {
+        return await ipc.invoke("db:library:addItem", args);
+    }
+);
 
 export const updateMangaProgress = createAsyncThunk(
     "library/updateMangaProgress",
-    async (data: DatabaseChannels["db:manga:updateProgress"]["request"]) => {
-        await ipc.invoke("db:manga:updateProgress", data);
-        return { data };
+    async (args: DatabaseChannels["db:manga:updateProgress"]["request"]) => {
+        const res = await ipc.invoke("db:manga:updateProgress", args);
+        if (!res) throw new Error("Failed to update progress");
+        return res;
     }
 );
-// add more update functions for book progress, bookmarks, etc.
+
+export const updateBookProgress = createAsyncThunk(
+    "library/updateBookProgress",
+    async (args: DatabaseChannels["db:book:updateProgress"]["request"]) => {
+        const res = await ipc.invoke("db:book:updateProgress", args);
+        if (!res) throw new Error("Failed to update progress");
+        return res;
+    }
+);
+
+// export const clearProgress = createAsyncThunk(
+//     "library/clearProgress",
+//     async ({ itemLink }: { itemLink: string }) => {}
+// );
+
+export const updateChaptersRead = createAsyncThunk(
+    "library/updateChaptersRead",
+    async ({ itemLink, chapterName, read }: { itemLink: string; chapterName: string; read: boolean }) => {
+        const chapterRead = await ipc.invoke("db:manga:updateChaptersRead", { itemLink, chapterName, read });
+        return { itemLink, chapterRead };
+    }
+);
+export const updateChaptersReadAll = createAsyncThunk(
+    "library/updateChaptersReadAll",
+    // pass empty chapters to unmark all chapters
+    async ({ itemLink, chapters, read }: { itemLink: string; chapters: string[]; read: boolean }) => {
+        const chaptersRead = await ipc.invoke("db:manga:updateChaptersReadAll", { itemLink, chapters, read });
+        return { itemLink, chaptersRead };
+    }
+);
 
 const librarySlice = createSlice({
     name: "library",
@@ -55,30 +87,49 @@ const librarySlice = createSlice({
     },
     extraReducers: (builder) => {
         builder
-            .addCase(fetchWholeLibrary.pending, (state) => {
+            .addCase(getAllItemsWithProgress.pending, (state) => {
                 state.loading = true;
+                state.error = null;
             })
-            .addCase(fetchWholeLibrary.fulfilled, (state, action) => {
-                state.items = {};
-                state.mangaProgress = {};
-                state.bookProgress = {};
-                for (const { item, mangaProgress, bookProgress } of action.payload) {
-                    state.items[item.link] = item;
-                    if (mangaProgress) state.mangaProgress[item.link] = mangaProgress;
-                    if (bookProgress) state.bookProgress[item.link] = bookProgress;
-                }
+            .addCase(getAllItemsWithProgress.fulfilled, (state, action: PayloadAction<ItemWithProgress[]>) => {
+                action.payload.forEach(({ item, mangaProgress, bookProgress }) => {
+                    state.items.set(item.link, item);
+                    if (mangaProgress) state.mangaProgress.set(item.link, mangaProgress);
+                    if (bookProgress) state.bookProgress.set(item.link, bookProgress);
+                });
                 state.loading = false;
             })
-            .addCase(fetchWholeLibrary.rejected, (state, action) => {
+            .addCase(getAllItemsWithProgress.rejected, (state, action) => {
                 state.loading = false;
-                state.error = action.error.message || "Failed to fetch item";
+                state.error = action.error.message || "Failed to load items";
+            })
+            .addCase(addItem.fulfilled, (state, action: PayloadAction<LibraryItem>) => {
+                state.items.set(action.payload.link, action.payload);
+                // todo: add progress
             })
             .addCase(updateMangaProgress.fulfilled, (state, action) => {
-                const { data } = action.payload;
-                state.mangaProgress[data.itemLink] = {
-                    ...state.mangaProgress[data.itemLink],
-                    ...data,
-                };
+                state.mangaProgress.set(action.payload.itemLink, {
+                    ...action.payload,
+                } as MangaProgress);
+            })
+            .addCase(updateBookProgress.fulfilled, (state, action) => {
+                state.bookProgress.set(action.payload.itemLink, {
+                    ...action.payload,
+                } as BookProgress);
+            })
+            .addCase(updateChaptersRead.fulfilled, (state, action) => {
+                const { itemLink, chapterRead } = action.payload;
+                const progress = state.mangaProgress.get(itemLink);
+                if (progress) {
+                    progress.chaptersRead = chapterRead;
+                }
+            })
+            .addCase(updateChaptersReadAll.fulfilled, (state, action) => {
+                const { itemLink, chaptersRead } = action.payload;
+                const progress = state.mangaProgress.get(itemLink);
+                if (progress) {
+                    progress.chaptersRead = chaptersRead;
+                }
             });
     },
 });

@@ -1,5 +1,5 @@
 // import "./MainImports";
-import { promptSelectDir, unzip } from "./MainImports";
+import { promptSelectDir, unzip } from "./utils/main";
 import { createContext, createRef, ReactElement, useEffect, useLayoutEffect, useState } from "react";
 import { useAppDispatch, useAppSelector } from "./store/hooks";
 import Main from "./Components/Main";
@@ -22,7 +22,7 @@ import { setReaderOpen } from "./store/isReaderOpen";
 import { setMangaInReader } from "./store/mangaInReader";
 import { addBookmark, refreshBookmark, removeBookmark } from "./store/bookmarks";
 import { refreshThemes, setTheme } from "./store/themes";
-import { bookmarksPath, historyPath, settingsPath, themesPath } from "./utils/paths";
+import { bookmarksPath, historyPath, settingsPath, themesPath } from "./utils/file";
 import { setBookInReader } from "./store/bookInReader";
 import { setAniEditOpen } from "./store/isAniEditOpen";
 import { setAniLoginOpen } from "./store/isAniLoginOpen";

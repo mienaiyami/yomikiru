@@ -2,9 +2,9 @@ import { drizzle } from "drizzle-orm/better-sqlite3";
 import { migrate } from "drizzle-orm/better-sqlite3/migrator";
 // libsql wont work because of node/electron version issues
 import path from "path";
-import fs from "fs";
 import { app } from "electron";
 import { eq } from "drizzle-orm";
+import * as schema from "./schema";
 import { libraryItems, mangaProgress, bookProgress, mangaBookmarks, bookBookmarks } from "./schema";
 import { HistoryItem, Manga_BookItem } from "@common/types/legacy";
 import Database from "better-sqlite3";
@@ -20,7 +20,7 @@ export class DatabaseService {
         // const dbPath = `file:${path.join(app.getPath("userData"), "data.db")}`;
         // const dbPath = "file:data.db";
         const sqlite = new Database(app.isPackaged ? path.join(app.getPath("userData"), "data.db") : "data.db");
-        this._db = drizzle({ client: sqlite });
+        this._db = drizzle({ client: sqlite, schema, logger: true });
         // this.client = createClient({
         //     url: dbPath,
         // });
@@ -31,10 +31,11 @@ export class DatabaseService {
         return this._db;
     }
     async initialize() {
+        // todo add this to webpack copy
         migrate(this._db, {
             migrationsFolder: path.resolve("./drizzle"),
         });
-        console.log(await this._db.select().from(libraryItems));
+        console.log(this._db.all(`select unixepoch() as time`));
     }
 
     async addLibraryItem(
@@ -66,31 +67,49 @@ export class DatabaseService {
         });
     }
 
-    async updateMangaProgress(itemLink: string, data: Omit<typeof mangaProgress.$inferInsert, "itemLink">) {
-        await this._db
-            .insert(mangaProgress)
-            .values({ itemLink, ...data })
-            .onConflictDoUpdate({ target: mangaProgress.itemLink, set: data });
+    async updateMangaProgress(
+        itemLink: string,
+        data: Partial<Omit<typeof mangaProgress.$inferInsert, "itemLink">>
+    ) {
+        data = Object.fromEntries(Object.entries(data).filter(([_, v]) => v !== undefined));
+        // todo : check if works fine
+        return await this._db
+            .update(mangaProgress)
+            .set(data)
+            .where(eq(mangaProgress.itemLink, itemLink))
+            .returning();
     }
 
-    async addMangaChapterRead(itemLink: string, chapterName: string) {
-        const [progress] = await this._db.select().from(mangaProgress).where(eq(mangaProgress.itemLink, itemLink));
-        if (progress) {
-            const chaptersRead = progress.chaptersRead || [];
-            if (!chaptersRead.includes(chapterName)) {
-                chaptersRead.push(chapterName);
-                await this.updateMangaProgress(itemLink, { ...progress, chaptersRead });
+    async updateMangaChapterRead(itemLink: string, chapterNames: string[], read: boolean) {
+        return await this._db.transaction(async (tx) => {
+            const [progress] = await tx.select().from(mangaProgress).where(eq(mangaProgress.itemLink, itemLink));
+            if (!progress) {
+                throw new Error("Progress not found");
             }
-        } else {
-            throw new Error("Progress not found");
-        }
+            const chaptersRead = progress.chaptersRead || [];
+            if (read) {
+                progress.chaptersRead = Array.from(new Set([...chaptersRead, ...chapterNames]));
+            } else {
+                if (chapterNames.length === 0) progress.chaptersRead = [];
+                else progress.chaptersRead = chaptersRead.filter((c) => !chapterNames.includes(c));
+            }
+            return (
+                await tx
+                    .update(mangaProgress)
+                    .set({ chaptersRead: progress.chaptersRead })
+                    .where(eq(mangaProgress.itemLink, itemLink))
+                    .returning()
+            )[0].chaptersRead;
+        });
     }
 
-    async updateBookProgress(itemLink: string, data: Omit<typeof bookProgress.$inferInsert, "itemLink">) {
-        await this._db
-            .insert(bookProgress)
-            .values({ itemLink, ...data })
-            .onConflictDoUpdate({ target: bookProgress.itemLink, set: data });
+    async updateBookProgress(itemLink: string, data: Partial<Omit<typeof bookProgress.$inferInsert, "itemLink">>) {
+        data = Object.fromEntries(Object.entries(data).filter(([_, v]) => v !== undefined));
+        return await this._db
+            .update(bookProgress)
+            .set(data)
+            .where(eq(bookProgress.itemLink, itemLink))
+            .returning();
     }
 
     // todo: review

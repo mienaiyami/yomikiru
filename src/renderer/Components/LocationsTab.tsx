@@ -5,7 +5,7 @@ import { AppContext } from "../App";
 import { setAppSettings } from "../store/appSettings";
 import { useAppDispatch, useAppSelector } from "../store/hooks";
 import LocationListItem from "./LocationListItem";
-import { promptSelectDir } from "../MainImports";
+import { promptSelectDir } from "../utils/main";
 
 type LocationData = { name: string; link: string; dateModified: number };
 

@@ -15,7 +15,7 @@ const renderPDF = (
             res: (result: { count: number; success: number; renderPath: string; link: string }) => void,
             rej: (reason: { message: string; reason?: string }) => void
         ) => {
-            const doc = window.pdfjsLib.getDocument(link);
+            const doc = pdfjsLib.getDocument(link);
             doc.onPassword = () => {
                 window.dialog.customError({
                     message: "PDF is password protected.",

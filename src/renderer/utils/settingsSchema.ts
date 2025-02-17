@@ -1,5 +1,5 @@
 import { z } from "zod";
-import { saveJSONfile, settingsPath } from "./paths";
+import { saveJSONfile, settingsPath } from "./file";
 
 const settingSchema = z
     .object({
