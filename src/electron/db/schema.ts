@@ -1,12 +1,11 @@
 import { relations, sql } from "drizzle-orm";
-import { sqliteTable, text, integer } from "drizzle-orm/sqlite-core";
+import { sqliteTable, text, integer, unique } from "drizzle-orm/sqlite-core";
 
 // todo : add relations
-// todo : make link unique and use it as primary key?
 
 export const libraryItems = sqliteTable("library_items", {
     /** link of manga/epub , not a chapter */
-    link: text().notNull().primaryKey(),
+    link: text().primaryKey(),
     type: text({ enum: ["manga", "book"] }).notNull(),
     title: text().notNull(),
     updatedAt: integer({ mode: "timestamp_ms" })
@@ -23,8 +22,7 @@ export const libraryItems = sqliteTable("library_items", {
 export const mangaProgress = sqliteTable("manga_progress", {
     itemLink: text()
         .references(() => libraryItems.link, { onDelete: "cascade" })
-        .primaryKey()
-        .notNull(),
+        .primaryKey(),
     chapterName: text().notNull(),
     chapterLink: text().notNull(),
     currentPage: integer().default(1).notNull(),
@@ -36,8 +34,7 @@ export const mangaProgress = sqliteTable("manga_progress", {
 export const bookProgress = sqliteTable("book_progress", {
     itemLink: text()
         .references(() => libraryItems.link, { onDelete: "cascade" })
-        .primaryKey()
-        .notNull(),
+        .primaryKey(),
     chapterId: text().notNull(),
     chapterName: text().default("~").notNull(),
     /** CSS selector, elementQueryString */
@@ -45,58 +42,67 @@ export const bookProgress = sqliteTable("book_progress", {
     lastReadAt: integer({ mode: "timestamp_ms" }).notNull(),
 });
 
-export const mangaBookmarks = sqliteTable("manga_bookmarks", {
-    // one to many
-    id: integer({ mode: "number" }).primaryKey({ autoIncrement: true }).notNull(),
-    itemLink: text()
-        .references(() => libraryItems.link, { onDelete: "cascade" })
-        .notNull(),
-    page: integer().notNull(),
-    link: text().notNull(),
-    note: text().default(""),
-    createdAt: integer({ mode: "timestamp_ms" })
-        .notNull()
-        .default(sql`(unixepoch() * 1000)`),
-});
+export const mangaBookmarks = sqliteTable(
+    "manga_bookmarks",
+    {
+        id: integer({ mode: "number" }).primaryKey({ autoIncrement: true }),
+        itemLink: text()
+            .references(() => libraryItems.link, { onDelete: "cascade" })
+            .notNull(),
+        page: integer().notNull(),
+        link: text().notNull(),
+        note: text().default(""),
+        createdAt: integer({ mode: "timestamp_ms" })
+            .notNull()
+            .default(sql`(unixepoch() * 1000)`),
+    },
+    (t) => [unique().on(t.link, t.page)]
+);
 
-export const bookBookmarks = sqliteTable("book_bookmarks", {
-    // one to many
-    id: integer({ mode: "number" }).primaryKey({ autoIncrement: true }).notNull(),
-    itemLink: text()
-        .references(() => libraryItems.link, { onDelete: "cascade" })
-        .notNull(),
-    /** this is id of chapter in the epub file */
-    chapterId: text().notNull(),
-    /** CSS selector, elementQueryString */
-    position: text().notNull(),
-    title: text().notNull(),
-    note: text(),
-    createdAt: integer({ mode: "timestamp_ms" })
-        .notNull()
-        .default(sql`(unixepoch() * 1000)`),
-});
+export const bookBookmarks = sqliteTable(
+    "book_bookmarks",
+    {
+        id: integer({ mode: "number" }).primaryKey({ autoIncrement: true }),
+        itemLink: text()
+            .references(() => libraryItems.link, { onDelete: "cascade" })
+            .notNull(),
+        /** this is id of chapter in the epub file */
+        chapterId: text().notNull(),
+        /** CSS selector, elementQueryString */
+        position: text().notNull(),
+        title: text().notNull(),
+        note: text(),
+        createdAt: integer({ mode: "timestamp_ms" })
+            .notNull()
+            .default(sql`(unixepoch() * 1000)`),
+    },
+    (t) => [unique().on(t.chapterId, t.position)]
+);
 
-export const bookNotes = sqliteTable("book_notes", {
-    // one to many
-    id: integer({ mode: "number" }).primaryKey({ autoIncrement: true }).notNull(),
-    itemLink: text()
-        .references(() => libraryItems.link, { onDelete: "cascade" })
-        .notNull(),
-    /** this is id of chapter in the epub file */
-    chapterId: text().notNull(),
-    /** CSS selector, elementQueryString */
-    position: text().notNull(),
-    content: text().notNull(),
-    selectedText: text().notNull(),
-    color: text().notNull(),
-    createdAt: integer({ mode: "timestamp_ms" })
-        .notNull()
-        .default(sql`(unixepoch() * 1000)`),
-    updatedAt: integer({ mode: "timestamp_ms" })
-        .notNull()
-        .default(sql`(unixepoch() * 1000)`)
-        .$onUpdate(() => sql`(unixepoch() * 1000)`),
-});
+export const bookNotes = sqliteTable(
+    "book_notes",
+    {
+        id: integer({ mode: "number" }).primaryKey({ autoIncrement: true }),
+        itemLink: text()
+            .references(() => libraryItems.link, { onDelete: "cascade" })
+            .notNull(),
+        /** this is id of chapter in the epub file */
+        chapterId: text().notNull(),
+        /** CSS selector, elementQueryString */
+        position: text().notNull(),
+        content: text().notNull(),
+        selectedText: text().notNull(),
+        color: text().notNull(),
+        createdAt: integer({ mode: "timestamp_ms" })
+            .notNull()
+            .default(sql`(unixepoch() * 1000)`),
+        updatedAt: integer({ mode: "timestamp_ms" })
+            .notNull()
+            .default(sql`(unixepoch() * 1000)`)
+            .$onUpdate(() => sql`(unixepoch() * 1000)`),
+    },
+    (t) => [unique().on(t.chapterId, t.position, t.selectedText)]
+);
 
 export const libraryItemsRelations = relations(libraryItems, ({ one, many }) => ({
     mangaProgress: one(mangaProgress),

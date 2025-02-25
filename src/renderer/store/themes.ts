@@ -34,9 +34,8 @@ const setBodyTheme = ({ allData, name }: Themes) => {
             if (process.platform === "win32") {
                 setTimeout(() => {
                     setSysBtnColor(!window.electron.getCurrentWindow().isFocused());
-                    (document.querySelector(".windowBtnCont") as HTMLDivElement).style.right = `${
-                        140 * (1 / window.electron.webFrame.getZoomFactor())
-                    }px`;
+                    const elem = document.querySelector(".windowBtnCont") as HTMLDivElement;
+                    if (elem) elem.style.right = `${140 * (1 / window.electron.webFrame.getZoomFactor())}px`;
                 }, 1000);
             }
         } else {

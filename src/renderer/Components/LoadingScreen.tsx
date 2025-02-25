@@ -1,4 +1,4 @@
-import { useAppSelector } from "../store/hooks";
+import { useAppSelector } from "@store/hooks";
 
 const LoadingScreen = () => {
     const isLoadingManga = useAppSelector((store) => store.isLoadingManga);

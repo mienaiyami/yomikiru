@@ -1,3 +1,4 @@
+import { MangaItem } from "@common/types/legacy";
 import { createSlice, PayloadAction } from "@reduxjs/toolkit";
 
 const initialState = null as MangaItem | null;

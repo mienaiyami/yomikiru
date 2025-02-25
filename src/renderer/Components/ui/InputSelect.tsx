@@ -3,7 +3,7 @@ import { AppContext } from "../../App";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faChevronDown } from "@fortawesome/free-solid-svg-icons";
 
-export const InputSelect = ({
+const InputSelect = ({
     onChange,
     value,
     labelAfter,
@@ -24,7 +24,7 @@ export const InputSelect = ({
     onChange: (value: string) => void;
     className?: string;
     //string | JSX.Element | JSX.Element[] |( () => JSX.Element)
-    options: IOptSelectOption[];
+    options: Menu.OptSelectOption[];
     disabled?: boolean;
 }) => {
     const [btnLabel, setBtnLabel] = useState(".");
@@ -135,3 +135,5 @@ export const InputSelect = ({
         </button>
     );
 };
+
+export default InputSelect;

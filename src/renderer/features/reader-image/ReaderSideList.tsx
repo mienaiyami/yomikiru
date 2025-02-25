@@ -11,14 +11,14 @@ import { faBookmark as farBookmark } from "@fortawesome/free-regular-svg-icons";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { memo, useEffect, useLayoutEffect, useRef, useState, useContext, useMemo } from "react";
 import ReaderSideListItem from "./ReaderSideListItem";
-import { useAppDispatch, useAppSelector } from "../store/hooks";
-import { setLinkInReader } from "../store/linkInReader";
+import { useAppDispatch, useAppSelector } from "../../store/hooks";
+import { setLinkInReader } from "../../store/linkInReader";
 // import { updateCurrentHistoryPage } from "../store/history";
-import { addBookmark, updateBookmark, removeBookmark } from "../store/bookmarks";
-import { setAppSettings, setReaderSettings } from "../store/appSettings";
-import { setPrevNextChapter } from "../store/prevNextChapter";
-import AnilistBar from "./anilist/AnilistBar";
-import { AppContext } from "../App";
+import { addBookmark, removeBookmark } from "../../store/bookmarks";
+import { setAppSettings, setReaderSettings } from "../../store/appSettings";
+import { setPrevNextChapter } from "../../store/prevNextChapter";
+import AnilistBar from "../anilist/AnilistBar";
+import { AppContext } from "../../App";
 
 type ChapterData = { name: string; pages: number; link: string; dateModified: number };
 
@@ -49,7 +49,7 @@ const ReaderSideList = memo(
         const { contextMenuData, openInReader, setContextMenuData, closeReader } = useContext(AppContext);
 
         const mangaInReader = useAppSelector((store) => store.mangaInReader);
-        const history = useAppSelector((store) => store.history);
+        const library = useAppSelector((store) => store.library);
         const appSettings = useAppSelector((store) => store.appSettings);
         const prevNextChapter = useAppSelector((store) => store.prevNextChapter);
         const linkInReader = useAppSelector((store) => store.linkInReader);
@@ -65,8 +65,6 @@ const ReaderSideList = memo(
         const [preventListClose, setpreventListClose] = useState(false);
         // const prevMangaRef = useRef<string>("");
 
-        // number is index of manga in history
-        const [historySimple, setHistorySimple] = useState<[number, string[]]>([-1, []]);
         const [draggingResizer, setDraggingResizer] = useState(false);
 
         const [focused, setFocused] = useState(-1);
@@ -82,18 +80,7 @@ const ReaderSideList = memo(
                 return setListOpen(false);
             setpreventListClose(true);
         }, [contextMenuData]);
-        useEffect(() => {
-            if (mangaInReader) {
-                const historyIndex = history.findIndex(
-                    (e) => (e as MangaHistoryItem).data.mangaLink === window.path.dirname(mangaInReader.link)
-                );
-                if (history[historyIndex])
-                    setHistorySimple([
-                        historyIndex,
-                        (history[historyIndex] as MangaHistoryItem).data.chaptersRead,
-                    ]);
-            }
-        }, [history]);
+
         useLayoutEffect(() => {
             if (isSideListPinned) {
                 setListOpen(true);
@@ -435,7 +422,7 @@ const ReaderSideList = memo(
                             }
                             // tabIndex={-1}
                             onClick={(e) => {
-                                const items: MenuListItem[] = [
+                                const items: Menu.ListItem[] = [
                                     {
                                         label: "Name",
                                         action() {
@@ -538,28 +525,31 @@ const ReaderSideList = memo(
                                             defaultId: 0,
                                         })
                                         .then(({ response }) => {
-                                            if (response === 1) {
-                                                dispatch(removeBookmark(linkInReader.link));
-                                                setshortcutText("Bookmark Removed");
-                                                setBookmarked(false);
-                                            }
-                                            if (response === 2) {
-                                                setshortcutText("Bookmark Updated");
-                                                dispatch(
-                                                    updateBookmark({
-                                                        link: linkInReader.link,
-                                                        page: window.app.currentPageNumber,
-                                                    })
-                                                );
-                                            }
+                                            // if (response === 1) {
+                                            //     dispatch(removeBookmark(linkInReader.link));
+                                            //     setshortcutText("Bookmark Removed");
+                                            //     setBookmarked(false);
+                                            // }
+                                            // if (response === 2) {
+                                            //     setshortcutText("Bookmark Updated");
+                                            //     dispatch(
+                                            //         updateBookmark()
+                                            //     );
+                                            // }
                                         });
                                 }
                                 if (mangaInReader) {
                                     // was addnewBookmark before
                                     dispatch(
                                         addBookmark({
-                                            type: "image",
-                                            data: { ...mangaInReader, page: window.app.currentPageNumber || 0 },
+                                            type: "manga",
+                                            data: {
+                                                itemLink: window.path.dirname(linkInReader.link),
+                                                page: linkInReader.page,
+                                                link: linkInReader.link,
+                                                note: "",
+                                                title: mangaInReader.chapterName,
+                                            },
                                         })
                                     );
                                     setshortcutText("Bookmark Added");
@@ -659,10 +649,7 @@ const ReaderSideList = memo(
                                         new RegExp(filter, "ig").test(e.name) && (
                                             <ReaderSideListItem
                                                 name={e.name}
-                                                inHistory={[
-                                                    historySimple[0],
-                                                    historySimple[1].findIndex((a) => a === e.name),
-                                                ]}
+                                                inHistory={Object.hasOwn(library.items, e.link)}
                                                 focused={focused >= 0 && focused % arr.length === i}
                                                 key={e.name}
                                                 pages={e.pages}

@@ -1,6 +1,6 @@
 import { useContext, memo, useEffect, useState } from "react";
-import { AppContext } from "../App";
-import { useAppSelector } from "../store/hooks";
+import { useAppSelector } from "@store/hooks";
+import { AppContext } from "src/renderer/App";
 // import { setContextMenu } from "../store/contextMenu";
 // import { useAppDispatch } from "../store/hooks";
 
@@ -16,11 +16,7 @@ const ReaderSideListItem = memo(
         name: string;
         pages: number;
         link: string;
-        /**
-         * `[0]` - index of manga in history
-         * `[1]` - index of chapter in manga chapter read
-         */
-        inHistory: [number, number];
+        inHistory: boolean;
         current: boolean;
         focused: boolean;
     }) => {
@@ -38,7 +34,7 @@ const ReaderSideListItem = memo(
 
         return (
             <li
-                className={`${inHistory && inHistory[1] >= 0 ? "alreadyRead" : ""} ${current ? "current" : ""} ${
+                className={`${inHistory ? "alreadyRead" : ""} ${current ? "current" : ""} ${
                     contextMenuFocused ? "focused" : ""
                 }`}
                 data-focused={focused}
@@ -58,23 +54,26 @@ const ReaderSideListItem = memo(
                     }
                     data-url={link}
                     onContextMenu={(e) => {
+                        // todo move it to parent
                         const items = [
                             window.contextMenu.template.open(link),
                             window.contextMenu.template.openInNewWindow(link),
                             window.contextMenu.template.divider(),
                         ];
-                        if (inHistory[1] >= 0) {
-                            items.push(window.contextMenu.template.unreadChapter(...inHistory));
+                        if (inHistory) {
+                            items.push(window.contextMenu.template.unreadChapter(window.path.dirname(link), name));
                         } else {
-                            items.push(window.contextMenu.template.readChapter(inHistory[0], name));
+                            items.push(window.contextMenu.template.readChapter(window.path.dirname(link), name));
                         }
                         if (e.currentTarget.parentElement && e.currentTarget.parentElement.parentElement) {
                             const chapters = [
                                 ...e.currentTarget.parentElement.parentElement.querySelectorAll("a"),
                             ].map((e) => e.title);
-                            items.push(window.contextMenu.template.readAllChapter(inHistory[0], chapters));
+                            items.push(
+                                window.contextMenu.template.readAllChapter(window.path.dirname(link), chapters)
+                            );
                         }
-                        items.push(window.contextMenu.template.unreadAllChapter(inHistory[0]));
+                        items.push(window.contextMenu.template.unreadAllChapter(window.path.dirname(link)));
                         items.push(window.contextMenu.template.divider());
                         items.push(window.contextMenu.template.copyPath(link));
                         items.push(window.contextMenu.template.showInExplorer(link));

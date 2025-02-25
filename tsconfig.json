@@ -14,7 +14,18 @@
         "skipLibCheck": true,
         "baseUrl": "./",
         "paths": {
-            "@common/*": ["src/common/*"]
+            "@common/*": ["src/common/*"],
+            //
+            "@electron/*": ["src/electron/*"],
+            //
+            "@ui/*": ["src/renderer/components/ui/*"],
+            "@hooks/*": ["src/renderer/hooks/*"],
+            "@store/*": ["src/renderer/store/*"],
+            "@features/*": ["src/renderer/features/*"],
+            "@renderer-utils/*": ["src/renderer/utils/*"],
+            "@renderer-types/*": ["src/renderer/types/*"]
+            // "@renderer/*": ["src/renderer/*"]
         }
     }
+    // "include": ["src/**/*"]
 }

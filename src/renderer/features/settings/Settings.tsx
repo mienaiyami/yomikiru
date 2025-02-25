@@ -2,26 +2,24 @@ import { faGithub } from "@fortawesome/free-brands-svg-icons";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { ReactElement, useEffect, useLayoutEffect, useRef, useState } from "react";
 import { faEdit, faHeart, faPlus, faTrash } from "@fortawesome/free-solid-svg-icons";
-import themesRaw from "../themeInit.json";
-import { newTheme, deleteTheme, setTheme, resetAllTheme, addThemes } from "../store/themes";
-import { useAppDispatch, useAppSelector } from "../store/hooks";
-import { resetShortcuts } from "../store/shortcuts";
-import { setOpenSetting } from "../store/isSettingOpen";
-import { addBookmark, removeAllBookmarks } from "../store/bookmarks";
-import { makeNewSettings, setAppSettings, setEpubReaderSettings, setReaderSettings } from "../store/appSettings";
-import { promptSelectDir } from "../utils/main";
-import { deleteAllHistory } from "../store/history";
-import InputNumber from "./Element/InputNumber";
-import { setAnilistToken } from "../store/anilistToken";
-import { setAniLoginOpen } from "../store/isAniLoginOpen";
-import InputCheckbox from "./Element/InputCheckbox";
-import { setUnzipping } from "../store/unzipping";
+import { newTheme, deleteTheme, setTheme, resetAllTheme, addThemes } from "@store/themes";
+import { useAppDispatch, useAppSelector } from "@store/hooks";
+import { resetShortcuts } from "@store/shortcuts";
+import { setOpenSetting } from "@store/isSettingOpen";
+import { makeNewSettings, setAppSettings, setEpubReaderSettings, setReaderSettings } from "@store/appSettings";
+import InputNumber from "@ui/InputNumber";
+import { setAnilistToken } from "@store/anilistToken";
+import { setAniLoginOpen } from "@store/isAniLoginOpen";
+import InputCheckbox from "@ui/InputCheckbox";
+import { setUnzipping } from "@store/unzipping";
 
 import FocusLock from "react-focus-lock";
-import ThemeCont from "./settings/ThemeCont";
-import Shortcuts from "./settings/Shortcuts";
-import Usage from "./settings/Usage";
-import { renderPDF } from "../utils/pdf";
+import ThemeCont from "./ThemeCont";
+import Shortcuts from "./Shortcuts";
+import Usage from "./Usage";
+import { renderPDF } from "@renderer-utils/pdf";
+import { promptSelectDir } from "@renderer-utils/file";
+import { initThemeData } from "@renderer-utils/theme";
 
 const TAB_INFO = {
     settings: [0, "Settings"],
@@ -231,7 +229,7 @@ const Settings = (): ReactElement => {
                                             <div className="themeButtons" key={e.name}>
                                                 <button
                                                     className={`${theme === e.name ? "selected" : ""} ${
-                                                        themesRaw.allData.map((e) => e.name).includes(e.name)
+                                                        initThemeData.allData.map((e) => e.name).includes(e.name)
                                                             ? "default"
                                                             : ""
                                                     }`}
@@ -249,7 +247,7 @@ const Settings = (): ReactElement => {
                                                         });
                                                         return;
                                                     }
-                                                    if (themesRaw.allData.map((q) => q.name).includes(e.name)) {
+                                                    if (initThemeData.allData.map((q) => q.name).includes(e.name)) {
                                                         window.dialog.customError({
                                                             title: "Error",
                                                             message: `Unable to delete default themes.`,
@@ -285,10 +283,10 @@ const Settings = (): ReactElement => {
                                                 <FontAwesomeIcon icon={faPlus} /> <span className="icon">/</span>{" "}
                                                 <FontAwesomeIcon icon={faEdit} />
                                             </button>
-                                            {!themesRaw.allData.map((q) => q.name).includes(theme) && (
+                                            {!initThemeData.allData.map((q) => q.name).includes(theme) && (
                                                 <button
                                                     onClick={() => {
-                                                        // if (themesRaw.allData.map((q) => q.name).includes(theme)) {
+                                                        // if (initThemeData.allData.map((q) => q.name).includes(theme)) {
                                                         //     window.dialog.customError({
                                                         //         title: "Error",
                                                         //         message: `Can't delete default themes.`,
@@ -350,7 +348,9 @@ const Settings = (): ReactElement => {
                                                     if (opt == undefined) return;
                                                     const themeForExport = allThemes.filter(
                                                         (e) =>
-                                                            !themesRaw.allData.map((e) => e.name).includes(e.name)
+                                                            !initThemeData.allData
+                                                                .map((e) => e.name)
+                                                                .includes(e.name)
                                                     );
                                                     window.fs.writeFileSync(
                                                         opt,
@@ -542,118 +542,121 @@ const Settings = (): ReactElement => {
                                     <div className="main row">
                                         <button
                                             onClick={() => {
-                                                if (bookmarks.length === 0) {
-                                                    window.dialog.customError({
-                                                        message: "No bookmarks detected.",
-                                                        log: false,
-                                                    });
-                                                    return;
-                                                }
-                                                const opt = window.electron.dialog.showSaveDialogSync(
-                                                    window.electron.getCurrentWindow(),
-                                                    {
-                                                        title: "Export Bookmarks",
-                                                        defaultPath: "yomikiru-bookmarks.json",
-                                                        filters: [
-                                                            {
-                                                                name: "json",
-                                                                extensions: ["json"],
-                                                            },
-                                                        ],
-                                                    }
-                                                );
-                                                if (opt == undefined) return;
-                                                window.fs.writeFileSync(
-                                                    opt,
-                                                    JSON.stringify(bookmarks, null, "\t") || JSON.stringify([])
-                                                );
+                                                throw new Error("Not implemented");
+                                                // if (bookmarks === 0) {
+                                                //     window.dialog.customError({
+                                                //         message: "No bookmarks detected.",
+                                                //         log: false,
+                                                //     });
+                                                //     return;
+                                                // }
+                                                // const opt = window.electron.dialog.showSaveDialogSync(
+                                                //     window.electron.getCurrentWindow(),
+                                                //     {
+                                                //         title: "Export Bookmarks",
+                                                //         defaultPath: "yomikiru-bookmarks.json",
+                                                //         filters: [
+                                                //             {
+                                                //                 name: "json",
+                                                //                 extensions: ["json"],
+                                                //             },
+                                                //         ],
+                                                //     }
+                                                // );
+                                                // if (opt == undefined) return;
+                                                // window.fs.writeFileSync(
+                                                //     opt,
+                                                //     JSON.stringify(bookmarks, null, "\t") || JSON.stringify([])
+                                                // );
                                             }}
                                         >
                                             Export
                                         </button>
                                         <button
                                             onClick={() => {
-                                                const opt = window.electron.dialog.showOpenDialogSync(
-                                                    window.electron.getCurrentWindow(),
-                                                    {
-                                                        properties: ["openFile"],
-                                                        filters: [
-                                                            {
-                                                                name: "Json",
-                                                                extensions: ["json"],
-                                                            },
-                                                        ],
-                                                    }
-                                                );
-                                                if (opt == undefined) return;
-                                                const data: Manga_BookItem[] = JSON.parse(
-                                                    window.fs.readFileSync(opt[0], "utf8")
-                                                );
-                                                const dataToAdd: Manga_BookItem[] = [];
-                                                let similarFound = 0;
-                                                let importedCount = 0;
-                                                if (!(data instanceof Array)) {
-                                                    window.dialog.customError({
-                                                        message:
-                                                            "Data is not in correct format. To make sure it is correct, compare it with existing bookmark.json and fix.",
-                                                        log: false,
-                                                    });
-                                                    return;
-                                                }
-                                                data.forEach((item) => {
-                                                    if ("type" in item && "data" in item) {
-                                                        if (
-                                                            !bookmarks
-                                                                .map((e) => e.data.link)
-                                                                .includes(item.data.link)
-                                                        ) {
-                                                            dataToAdd.push(item);
-                                                            importedCount++;
-                                                        } else {
-                                                            similarFound++;
-                                                        }
-                                                    }
-                                                });
-                                                if (similarFound > 0)
-                                                    window.dialog.warn({
-                                                        title: "warning",
-                                                        message: "Found " + similarFound + " with same link",
-                                                    });
-                                                window.dialog.confirm({
-                                                    title: "Imported",
-                                                    message: "Imported " + importedCount + " bookmarks.",
-                                                    noOption: true,
-                                                });
-                                                dispatch(addBookmark(dataToAdd));
+                                                throw new Error("Not implemented");
+                                                // const opt = window.electron.dialog.showOpenDialogSync(
+                                                //     window.electron.getCurrentWindow(),
+                                                //     {
+                                                //         properties: ["openFile"],
+                                                //         filters: [
+                                                //             {
+                                                //                 name: "Json",
+                                                //                 extensions: ["json"],
+                                                //             },
+                                                //         ],
+                                                //     }
+                                                // );
+                                                // if (opt == undefined) return;
+                                                // const data: Manga_BookItem[] = JSON.parse(
+                                                //     window.fs.readFileSync(opt[0], "utf8")
+                                                // );
+                                                // const dataToAdd: Manga_BookItem[] = [];
+                                                // let similarFound = 0;
+                                                // let importedCount = 0;
+                                                // if (!(data instanceof Array)) {
+                                                //     window.dialog.customError({
+                                                //         message:
+                                                //             "Data is not in correct format. To make sure it is correct, compare it with existing bookmark.json and fix.",
+                                                //         log: false,
+                                                //     });
+                                                //     return;
+                                                // }
+                                                // data.forEach((item) => {
+                                                //     if ("type" in item && "data" in item) {
+                                                //         if (
+                                                //             !bookmarks
+                                                //                 .map((e) => e.data.link)
+                                                //                 .includes(item.data.link)
+                                                //         ) {
+                                                //             dataToAdd.push(item);
+                                                //             importedCount++;
+                                                //         } else {
+                                                //             similarFound++;
+                                                //         }
+                                                //     }
+                                                // });
+                                                // if (similarFound > 0)
+                                                //     window.dialog.warn({
+                                                //         title: "warning",
+                                                //         message: "Found " + similarFound + " with same link",
+                                                //     });
+                                                // window.dialog.confirm({
+                                                //     title: "Imported",
+                                                //     message: "Imported " + importedCount + " bookmarks.",
+                                                //     noOption: true,
+                                                // });
+                                                // dispatch(addBookmark(dataToAdd));
                                             }}
                                         >
                                             Import
                                         </button>
                                         <button
                                             onClick={() => {
-                                                window.dialog
-                                                    .warn({
-                                                        title: "Delete BookMarks",
-                                                        message: "Are you sure you want to clear bookmarks?",
-                                                        noOption: false,
-                                                    })
-                                                    .then(({ response }) => {
-                                                        if (response == undefined) return;
-                                                        if (response === 1) return;
-                                                        if (response === 0) {
-                                                            window.dialog
-                                                                .warn({
-                                                                    title: "Delete Bookmarks",
-                                                                    noOption: false,
-                                                                    message:
-                                                                        "Are you really sure you want to clear bookmarks?\nThis process is irreversible.",
-                                                                })
-                                                                .then((res) => {
-                                                                    if (res.response === 1) return;
-                                                                    dispatch(removeAllBookmarks());
-                                                                });
-                                                        }
-                                                    });
+                                                throw new Error("Not implemented");
+                                                // window.dialog
+                                                //     .warn({
+                                                //         title: "Delete BookMarks",
+                                                //         message: "Are you sure you want to clear bookmarks?",
+                                                //         noOption: false,
+                                                //     })
+                                                //     .then(({ response }) => {
+                                                //         if (response == undefined) return;
+                                                //         if (response === 1) return;
+                                                //         if (response === 0) {
+                                                //             window.dialog
+                                                //                 .warn({
+                                                //                     title: "Delete Bookmarks",
+                                                //                     noOption: false,
+                                                //                     message:
+                                                //                         "Are you really sure you want to clear bookmarks?\nThis process is irreversible.",
+                                                //                 })
+                                                //                 .then((res) => {
+                                                //                     if (res.response === 1) return;
+                                                //                     dispatch(removeAllBookmarks());
+                                                //                 });
+                                                //         }
+                                                //     });
                                             }}
                                         >
                                             Delete All Bookmarks
@@ -1549,16 +1552,17 @@ const Settings = (): ReactElement => {
                                     <div className="main row">
                                         <button
                                             onClick={() => {
-                                                window.dialog
-                                                    .warn({
-                                                        title: "Warning",
-                                                        message: "Are you sure you want to clear history?",
-                                                        noOption: false,
-                                                    })
-                                                    .then((res) => {
-                                                        if (res && res.response === 0)
-                                                            dispatch(deleteAllHistory());
-                                                    });
+                                                throw new Error("Not implemented");
+                                                // window.dialog
+                                                //     .warn({
+                                                //         title: "Warning",
+                                                //         message: "Are you sure you want to clear history?",
+                                                //         noOption: false,
+                                                //     })
+                                                //     .then((res) => {
+                                                //         if (res && res.response === 0)
+                                                //             dispatch(deleteAllHistory());
+                                                //     });
                                             }}
                                         >
                                             Clear History

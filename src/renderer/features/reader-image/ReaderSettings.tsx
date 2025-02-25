@@ -8,15 +8,15 @@ import {
     faExpandArrowsAlt,
 } from "@fortawesome/free-solid-svg-icons";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
+import { setReaderSettings } from "@store/appSettings";
+import { useAppDispatch, useAppSelector } from "@store/hooks";
+import InputCheckbox from "@ui/InputCheckbox";
+import InputCheckboxColor from "@ui/InputCheckboxColor";
+import InputCheckboxNumber from "@ui/InputCheckboxNumber";
+import InputNumber from "@ui/InputNumber";
+import InputRange from "@ui/InputRange";
+import InputSelect from "@ui/InputSelect";
 import { memo, useEffect, useState } from "react";
-import { setReaderSettings } from "../store/appSettings";
-import { useAppDispatch, useAppSelector } from "../store/hooks";
-import InputRange from "./Element/InputRange";
-import { InputSelect } from "./Element/InputSelect";
-import InputNumber from "./Element/InputNumber";
-import InputCheckbox from "./Element/InputCheckbox";
-import InputCheckboxNumber from "./Element/InputCheckboxNumber";
-import InputCheckboxColor from "./Element/InputCheckboxColor";
 
 const ReaderSettings = memo(
     ({

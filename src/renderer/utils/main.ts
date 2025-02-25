@@ -1,17 +1,8 @@
 import { app, dialog, getCurrentWindow, clipboard, nativeImage, shell } from "@electron/remote";
 import { ipcRenderer, webFrame } from "electron";
-
-import log from "electron-log";
-log.transports.file.resolvePath = () => path.join(app.getPath("userData"), "logs/renderer.log");
-
 import path from "path";
 import fs from "fs";
-import AniList from "./anilist";
-import { SHORTCUT_COMMAND_MAP, keyFormatter } from "./keybindings";
-import { colorUtils } from "./color";
-import { dialogUtils } from "./dialog";
-import { formatUtils, makeFileSafe } from "./file";
-import { themeProps } from "./theme";
+import * as chokidar from "chokidar";
 
 window.electron = {
     app,
@@ -25,13 +16,24 @@ window.electron = {
     webFrame,
 };
 
-window.themeProps = themeProps;
-
-window.app.formats = formatUtils;
-
 // todo: remove these later
 window.path = path;
 window.fs = fs;
+window.chokidar = chokidar;
+
+import log from "electron-log";
+log.transports.file.resolvePath = () => path.join(app.getPath("userData"), "logs/renderer.log");
+
+import AniList from "./anilist";
+import { SHORTCUT_COMMAND_MAP, keyFormatter } from "./keybindings";
+import { colorUtils } from "./color";
+import { dialogUtils } from "./dialog";
+import { formatUtils, makeFileSafe } from "./file";
+import { themeProps } from "./theme";
+
+window.themeProps = themeProps;
+
+window.app.formats = formatUtils;
 
 window.SHORTCUT_COMMANDS = SHORTCUT_COMMAND_MAP;
 window.keyFormatter = keyFormatter;

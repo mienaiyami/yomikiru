@@ -1,6 +1,5 @@
-import React from "react";
-import { useAppDispatch, useAppSelector } from "../../store/hooks";
-import { removeShortcuts, setShortcuts } from "../../store/shortcuts";
+import { useAppDispatch, useAppSelector } from "@store/hooks";
+import { removeShortcuts, setShortcuts } from "@store/shortcuts";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faClose } from "@fortawesome/free-solid-svg-icons";
 

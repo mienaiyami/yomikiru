@@ -1,8 +1,6 @@
 import { configureStore } from "@reduxjs/toolkit";
 import appSettingsReducer from "./appSettings";
-import bookmarksReducer from "./bookmarks";
 // import contextMenuReducer from "./contextMenu";
-import historyReducer from "./history";
 import isLoadingMangaReducer from "./isLoadingManga";
 import isReaderOpenReducer from "./isReaderOpen";
 import isSettingOpenReducer from "./isSettingOpen";
@@ -22,11 +20,15 @@ import isAniSearchOpenReducer from "./isAniSearchOpen";
 import anilistCurrentMangaReducer from "./anilistCurrentManga";
 import isAniEditOpenReducer from "./isAniEditOpen";
 
+import libraryReducer from "./library";
+import bookmarksReducer from "./bookmarks";
+
 const store = configureStore({
     reducer: {
         appSettings: appSettingsReducer,
         theme: themesReducer,
         bookmarks: bookmarksReducer,
+        library: libraryReducer,
         isSettingOpen: isSettingOpenReducer,
         isReaderOpen: isReaderOpenReducer,
         isLoadingManga: isLoadingMangaReducer,
@@ -36,7 +38,6 @@ const store = configureStore({
         linkInReader: linkInReaderReducer,
         prevNextChapter: prevNextChapterReducer,
         mangaInReader: mangaInReaderReducer,
-        history: historyReducer,
         shortcuts: shortcutsReducer,
         // contextMenu: contextMenuReducer,
         bookInReader: bookInReaderReducer,
@@ -47,6 +48,10 @@ const store = configureStore({
         anilistCurrentManga: anilistCurrentMangaReducer,
         isAniEditOpen: isAniEditOpenReducer,
     },
+    middleware: (getDefaultMiddleware) =>
+        getDefaultMiddleware({
+            serializableCheck: false,
+        }),
 });
 
 export default store;

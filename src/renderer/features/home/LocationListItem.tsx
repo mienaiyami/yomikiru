@@ -1,31 +1,29 @@
 import { faAngleRight } from "@fortawesome/free-solid-svg-icons";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
+import { useAppSelector } from "@store/hooks";
 import { ReactElement, useContext, useState, useEffect } from "react";
-import { AppContext } from "../App";
-// import { setContextMenu } from "../store/contextMenu";
-import { useAppDispatch, useAppSelector } from "../store/hooks";
+import { AppContext } from "src/renderer/App";
 
 const LocationListItem = ({
     name,
     link,
     inHistory,
     setCurrentLink,
+    onContextMenu,
     focused,
 }: {
     name: string;
     link: string;
     setCurrentLink: React.Dispatch<React.SetStateAction<string>>;
-    /**
-     * `[0]` - index of manga in history
-     * `[1]` - index of chapter in manga chapter read
-     */
-    inHistory: [number, number];
+    inHistory: boolean;
+    onContextMenu: (e: React.MouseEvent<HTMLAnchorElement, MouseEvent>, link: string, inHistory: boolean) => void;
+
     /**
      * for keyboard navigation
      */
     focused: boolean;
 }): ReactElement => {
-    const { openInReader, checkValidFolder, setContextMenuData, contextMenuData } = useContext(AppContext);
+    const { openInReader, checkValidFolder, contextMenuData } = useContext(AppContext);
     const appSettings = useAppSelector((store) => store.appSettings);
     const [contextMenuFocused, setContextMenuFocused] = useState(false);
 
@@ -55,13 +53,12 @@ const LocationListItem = ({
     };
 
     useEffect(() => {
+        // try using active instead
         if (!contextMenuData) setContextMenuFocused(false);
     }, [contextMenuData]);
     return (
         <li
-            className={`${inHistory && inHistory[1] >= 0 ? "alreadyRead" : ""} ${
-                contextMenuFocused ? "focused" : ""
-            }`}
+            className={`${inHistory ? "alreadyRead" : ""} ${contextMenuFocused ? "focused" : ""}`}
             data-focused={focused}
             ref={(node) => {
                 if (node && focused) node.scrollIntoView({ block: "nearest" });
@@ -87,28 +84,8 @@ const LocationListItem = ({
                     } else onClickHandle();
                 }}
                 onContextMenu={(e) => {
-                    const items = [
-                        window.contextMenu.template.open(link),
-                        window.contextMenu.template.openInNewWindow(link),
-                    ];
-                    if (inHistory && inHistory[1] >= 0) {
-                        items.push(window.contextMenu.template.unreadChapter(...inHistory));
-                    }
-                    if (inHistory[0] >= 0) items.push(window.contextMenu.template.unreadAllChapter(inHistory[0]));
-                    items.push(window.contextMenu.template.showInExplorer(link));
-                    items.push(window.contextMenu.template.copyPath(link));
                     setContextMenuFocused(true);
-                    setContextMenuData({
-                        clickX: e.clientX,
-                        clickY: e.clientY,
-                        items,
-                        focusBackElem: e.nativeEvent.relatedTarget,
-                    });
-                    // showContextMenu({
-                    //     e: e.nativeEvent,
-                    //     isFile: true,
-                    //     link: link,
-                    // });
+                    onContextMenu(e, link, inHistory);
                 }}
             >
                 <span className="text">{window.app.formats.files.getName(name)}</span>

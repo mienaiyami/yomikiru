@@ -26,36 +26,36 @@ export { userDataURL, settingsPath, bookmarksPath, historyPath, themesPath, shor
 export const formatUtils = {
     image: {
         list: [".jpg", ".jpeg", ".png", ".webp", ".svg", ".apng", ".gif", ".avif"],
-        test: function (str: string) {
-            return !!str && this.list.includes(path.extname(str).toLowerCase());
+        test: (str: string) => {
+            return !!str && formatUtils.image.list.includes(path.extname(str).toLowerCase());
         },
     },
     files: {
         list: [".zip", ".cbz", ".7z", ".cb7", ".rar", ".cbr", ".pdf", ".epub", ".xhtml", ".html", ".txt"],
-        test: function (str: string) {
-            return !!str && this.list.includes(path.extname(str).toLowerCase());
+        test: (str: string) => {
+            return !!str && formatUtils.files.list.includes(path.extname(str).toLowerCase());
         },
-        getName(str: string) {
+        getName: (str: string) => {
             const ext = path.extname(str);
-            if (!this.list.includes(ext)) return str;
+            if (!formatUtils.files.list.includes(ext)) return str;
             return path.basename(str, ext);
         },
-        getExt(str: string) {
+        getExt: (str: string) => {
             const ext = path.extname(str);
-            if (!this.list.includes(ext)) return "";
+            if (!formatUtils.files.list.includes(ext)) return "";
             return ext.replace(".", "").toUpperCase();
         },
     },
     packedManga: {
         list: [".zip", ".cbz", ".7z", ".cb7", ".rar", ".cbr"],
-        test: function (str: string) {
-            return str && this.list.includes(path.extname(str).toLowerCase());
+        test: (str: string) => {
+            return str && formatUtils.packedManga.list.includes(path.extname(str).toLowerCase());
         },
     },
     book: {
         list: [".epub", ".xhtml", ".html", ".txt"],
-        test: function (str: string) {
-            return str && this.list.includes(path.extname(str).toLowerCase());
+        test: (str: string) => {
+            return str && formatUtils.book.list.includes(path.extname(str).toLowerCase());
         },
     },
 };

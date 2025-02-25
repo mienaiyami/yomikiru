@@ -1,22 +1,32 @@
-import { faAngleUp, faSort, faSyncAlt } from "@fortawesome/free-solid-svg-icons";
+import LocationListItem from "@features/home/LocationListItem";
+import { faAngleUp, faSort } from "@fortawesome/free-solid-svg-icons";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import { ReactElement, useContext, useEffect, useRef, useState, useLayoutEffect, memo, useMemo } from "react";
-import { AppContext } from "../App";
-import { setAppSettings } from "../store/appSettings";
-import { useAppDispatch, useAppSelector } from "../store/hooks";
-import LocationListItem from "./LocationListItem";
-import { promptSelectDir } from "../utils/main";
+import { promptSelectDir } from "@renderer-utils/file";
+import { setAppSettings } from "@store/appSettings";
+import { useAppDispatch, useAppSelector } from "@store/hooks";
+import {
+    ReactElement,
+    useContext,
+    useEffect,
+    useRef,
+    useState,
+    useLayoutEffect,
+    useMemo,
+    useCallback,
+} from "react";
+import { AppContext } from "src/renderer/App";
 
 type LocationData = { name: string; link: string; dateModified: number };
 
 const LocationsTab = (): ReactElement => {
     const { openInReader, setContextMenuData } = useContext(AppContext);
-    const history = useAppSelector((store) => store.history);
+    const library = useAppSelector((store) => store.library.items);
     const appSettings = useAppSelector((store) => store.appSettings);
     const shortcuts = useAppSelector((store) => store.shortcuts);
     const dispatch = useAppDispatch();
 
     const [currentLink, setCurrentLink] = useState(window.path.resolve(appSettings.baseDir));
+    const item = library[currentLink];
 
     const [locations, setLocations] = useState<LocationData[]>([]);
     const [isLoadingFile, setIsLoadingFile] = useState(true);
@@ -24,8 +34,6 @@ const LocationsTab = (): ReactElement => {
     const [imageCount, setImageCount] = useState(0);
 
     const [focused, setFocused] = useState(-1);
-    // number is index of manga in history
-    const [historySimple, setHistorySimple] = useState<[number, string[]]>([-1, []]);
 
     const inputRef = useRef<HTMLInputElement>(null);
     const locationContRef = useRef<HTMLDivElement>(null);
@@ -111,6 +119,7 @@ const LocationsTab = (): ReactElement => {
             });
         }
     };
+
     useLayoutEffect(() => {
         if (currentLink !== appSettings.baseDir) setCurrentLink(window.path.resolve(appSettings.baseDir));
     }, [appSettings.baseDir]);
@@ -127,13 +136,14 @@ const LocationsTab = (): ReactElement => {
                 displayList(currentLink, true);
             }, 1000);
         };
-        watcher.on("all", (e) => {
+        watcher.on("all", () => {
             refresh();
         });
         return () => {
             watcher.removeAllListeners("all");
         };
     }, [currentLink]);
+
     useEffect(() => {
         if (inputRef.current) {
             inputRef.current.focus();
@@ -141,9 +151,7 @@ const LocationsTab = (): ReactElement => {
     }, [inputRef]);
 
     const sortedLocations = useMemo(() => {
-        const qq = (file: string) => {
-            return window.app.formats.files.getName(file);
-        };
+        const qq = window.app.formats.files.getName;
         const sorted =
             appSettings.locationListSortBy === "name"
                 ? locations.sort((a, b) => window.app.betterSortOrder(qq(a.name), qq(b.name)))
@@ -151,17 +159,30 @@ const LocationsTab = (): ReactElement => {
         return appSettings.locationListSortType === "inverse" ? [...sorted].reverse() : sorted;
     }, [locations, appSettings.locationListSortBy, appSettings.locationListSortType]);
 
-    useEffect(() => {
-        if (currentLink) {
-            const historyIndex = history.findIndex(
-                (e) =>
-                    e.type === "image" &&
-                    (e as MangaHistoryItem).data.mangaLink.toLowerCase() === currentLink.toLowerCase()
-            );
-            if (history[historyIndex])
-                setHistorySimple([historyIndex, (history[historyIndex] as MangaHistoryItem).data.chaptersRead]);
-        }
-    }, [history, currentLink]);
+    const onContextMenu = useCallback(
+        (e: React.MouseEvent<HTMLAnchorElement, MouseEvent>, link: string, inHistory: boolean) => {
+            const items = [
+                window.contextMenu.template.open(link),
+                window.contextMenu.template.openInNewWindow(link),
+            ];
+            if (inHistory) {
+                items.push(
+                    window.contextMenu.template.unreadChapter(currentLink, window.app.formats.files.getName(link))
+                );
+                items.push(window.contextMenu.template.unreadAllChapter(currentLink));
+            }
+            items.push(window.contextMenu.template.showInExplorer(link));
+            items.push(window.contextMenu.template.copyPath(link));
+            setContextMenuData({
+                clickX: e.clientX,
+                clickY: e.clientY,
+                items,
+                focusBackElem: e.nativeEvent.relatedTarget,
+            });
+        },
+        [currentLink]
+    );
+
     return (
         <div className="contTab listCont" id="locationTab">
             <h2>Location</h2>
@@ -175,7 +196,7 @@ const LocationsTab = (): ReactElement => {
                         }
                         // tabIndex={-1}
                         onClick={(e) => {
-                            const items: MenuListItem[] = [
+                            const items: Menu.ListItem[] = [
                                 {
                                     label: "Name",
                                     action() {
@@ -407,10 +428,13 @@ const LocationsTab = (): ReactElement => {
                                             name={e.name}
                                             link={e.link}
                                             focused={focused >= 0 && focused % arr.length === i}
-                                            inHistory={[
-                                                historySimple[0],
-                                                historySimple[1].findIndex((a) => a === e.name),
-                                            ]}
+                                            // todo : improve history
+                                            inHistory={
+                                                item?.type === "manga"
+                                                    ? item.progress.chaptersRead.includes(e.name)
+                                                    : false
+                                            }
+                                            onContextMenu={onContextMenu}
                                             key={e.link}
                                             setCurrentLink={setCurrentLink}
                                         />

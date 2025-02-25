@@ -1,9 +1,9 @@
-import { useAppDispatch, useAppSelector } from "../store/hooks";
-import BookmarkHistoryListItem from "./BookmarkHistoryListItem";
+import { useAppSelector } from "@store/hooks";
 import { useState, useRef } from "react";
+import BookmarkHistoryListItem from "./BookmarkHistoryListItem";
 
 const HistoryTab = () => {
-    const history = useAppSelector((store) => store.history);
+    const library = useAppSelector((store) => store.library.items);
     const appSettings = useAppSelector((store) => store.appSettings);
     const shortcuts = useAppSelector((store) => store.shortcuts);
 
@@ -53,73 +53,72 @@ const HistoryTab = () => {
                                 shortcuts.map((e) => [e.command, e.keys])
                             ) as Record<ShortcutCommands, string[]>;
 
-                            switch (true) {
-                                case shortcutsMapped["contextMenu"].includes(keyStr): {
-                                    const elem = locationContRef.current?.querySelector(
-                                        '[data-focused="true"] a'
-                                    ) as HTMLLIElement | null;
-                                    if (elem) {
-                                        e.stopPropagation();
-                                        e.preventDefault();
-                                        e.currentTarget.blur();
-                                        elem.dispatchEvent(window.contextMenu.fakeEvent(elem, e.currentTarget));
-                                    }
-                                    break;
-                                }
-                                case shortcutsMapped["listDown"].includes(keyStr):
-                                    e.preventDefault();
-                                    setFocused((init) => {
-                                        if (init + 1 >= history.length) return 0;
-                                        return init + 1;
-                                    });
-                                    break;
-                                case shortcutsMapped["listUp"].includes(keyStr):
-                                    e.preventDefault();
-                                    setFocused((init) => {
-                                        if (init - 1 < 0) return history.length - 1;
-                                        return init - 1;
-                                    });
-                                    break;
-                                case shortcutsMapped["listSelect"].includes(keyStr): {
-                                    const elem = locationContRef.current?.querySelector(
-                                        '[data-focused="true"] a'
-                                    ) as HTMLLIElement | null;
-                                    if (elem) return elem.click();
-                                    const elems = locationContRef.current?.querySelectorAll("a");
-                                    if (elems?.length === 1) elems[0].click();
-                                    break;
-                                }
-                                default:
-                                    break;
-                            }
+                            // switch (true) {
+                            //     case shortcutsMapped["contextMenu"].includes(keyStr): {
+                            //         const elem = locationContRef.current?.querySelector(
+                            //             '[data-focused="true"] a'
+                            //         ) as HTMLLIElement | null;
+                            //         if (elem) {
+                            //             e.stopPropagation();
+                            //             e.preventDefault();
+                            //             e.currentTarget.blur();
+                            //             elem.dispatchEvent(window.contextMenu.fakeEvent(elem, e.currentTarget));
+                            //         }
+                            //         break;
+                            //     }
+                            //     case shortcutsMapped["listDown"].includes(keyStr):
+                            //         e.preventDefault();
+                            //         setFocused((init) => {
+                            //             if (init + 1 >= history.length) return 0;
+                            //             return init + 1;
+                            //         });
+                            //         break;
+                            //     case shortcutsMapped["listUp"].includes(keyStr):
+                            //         e.preventDefault();
+                            //         setFocused((init) => {
+                            //             if (init - 1 < 0) return history.length - 1;
+                            //             return init - 1;
+                            //         });
+                            //         break;
+                            //     case shortcutsMapped["listSelect"].includes(keyStr): {
+                            //         const elem = locationContRef.current?.querySelector(
+                            //             '[data-focused="true"] a'
+                            //         ) as HTMLLIElement | null;
+                            //         if (elem) return elem.click();
+                            //         const elems = locationContRef.current?.querySelectorAll("a");
+                            //         if (elems?.length === 1) elems[0].click();
+                            //         break;
+                            //     }
+                            //     default:
+                            //         break;
+                            // }
                         }}
                     />
                 </div>
             )}
             <div className="location-cont" ref={locationContRef}>
-                {history.length === 0 ? (
-                    <p>No History...</p>
+                {Object.keys(library).length === 0 ? (
+                    <p>Library Empty</p>
                 ) : (
                     <ol>
-                        {history
+                        {[...Object.values(library)]
                             .filter((e) =>
                                 new RegExp(filter, "ig").test(
-                                    e.type === "image"
-                                        ? e.data.mangaName +
-                                              (window.app.formats.files.test(e.data.chapterName)
-                                                  ? `${window.path.extname(e.data.chapterName)}`
+                                    e.type === "manga"
+                                        ? e.title +
+                                              (window.app.formats.files.test(e.progress.chapterName || "")
+                                                  ? `${window.path.extname(e.progress.chapterName || "")}`
                                                   : "")
-                                        : e.data.title + ".epub"
+                                        : e.title + ".epub"
                                 )
                             )
                             .map((e, i, arr) => (
                                 <BookmarkHistoryListItem
                                     isBookmark={false}
                                     isHistory={true}
-                                    index={i}
                                     focused={focused >= 0 && focused % arr.length === i}
-                                    {...e}
-                                    key={`${e.data.date}-${i}`}
+                                    link={e.link}
+                                    key={`${e.updatedAt}-${i}`}
                                 />
                             ))}
                     </ol>

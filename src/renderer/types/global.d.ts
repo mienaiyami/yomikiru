@@ -1,19 +1,19 @@
 import { app, dialog, getCurrentWindow, clipboard, nativeImage, shell } from "@electron/remote";
 import { ipcRenderer, webFrame } from "electron";
 
-import chokidar from "chokidar";
+import * as chokidar from "chokidar";
 
 import log from "electron-log";
 import path from "path";
 import fs from "fs";
 import AniList from "../utils/anilist";
 import Colorjs from "color";
-import { ListItemE } from "@common/types/legacy";
 import { settingSchema } from "../utils/settingsSchema";
 import { SHORTCUT_COMMAND_MAP } from "../utils/keybindings";
 import { z } from "zod";
 import { formatUtils } from "../utils/file";
 import { themeProps } from "../utils/theme";
+import { addBookmark } from "../store/bookmarks";
 
 declare global {
     interface Window {
@@ -74,13 +74,14 @@ declare global {
                 showInExplorer: (url: string) => Menu.ListItem;
                 copyPath: (url: string) => Menu.ListItem;
                 copyImage: (url: string) => Menu.ListItem;
-                addToBookmark: (data: ListItemE) => Menu.ListItem;
-                removeHistory: (url: string) => Menu.ListItem;
-                removeBookmark: (url: string) => Menu.ListItem;
-                unreadChapter: (mangaIndex: number, chapterIndex: number) => Menu.ListItem;
-                unreadAllChapter: (mangaIndex: number) => Menu.ListItem;
-                readChapter: (mangaIndex: number, chapters: string) => Menu.ListItem;
-                readAllChapter: (mangaIndex: number, chapters: string[]) => Menu.ListItem;
+                addToBookmark: (args: Parameters<typeof addBookmark>["0"]) => Menu.ListItem;
+                // todo update
+                // removeHistory: (url: string) => Menu.ListItem;
+                removeBookmark: (itemLink: string, bookmarkId: number, type: "manga" | "book") => Menu.ListItem;
+                unreadChapter: (itemLink: string, chapterName: string) => Menu.ListItem;
+                unreadAllChapter: (itemLink: string) => Menu.ListItem;
+                readChapter: (itemLink: string, chapterName: string) => Menu.ListItem;
+                readAllChapter: (itemLink: string, chapterNames: string[]) => Menu.ListItem;
             };
         };
         app: {

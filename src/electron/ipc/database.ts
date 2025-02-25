@@ -3,8 +3,8 @@ import type { DatabaseChannels, IpcChannel } from "@common/types/ipc";
 import { DatabaseService } from "../db";
 import { electronOnly } from "../util";
 import { bookBookmarks, bookNotes, bookProgress, libraryItems, mangaBookmarks, mangaProgress } from "../db/schema";
-import { and, eq, inArray } from "drizzle-orm";
-import { MangaProgress } from "@common/types/db";
+import { and, eq, inArray, sql } from "drizzle-orm";
+import { BookProgress, LibraryItem, MangaProgress } from "@common/types/db";
 
 electronOnly();
 
@@ -37,16 +37,22 @@ const handlers: {
         const itemsWithProgress = await db.db
             .select({
                 item: libraryItems,
-                mangaProgress,
-                bookProgress,
+                mangaProgress: mangaProgress,
+                bookProgress: bookProgress,
             })
             .from(libraryItems)
             .leftJoin(mangaProgress, eq(libraryItems.link, mangaProgress.itemLink))
             .leftJoin(bookProgress, eq(libraryItems.link, bookProgress.itemLink));
-        return itemsWithProgress;
+        return itemsWithProgress.map(({ item, bookProgress, mangaProgress }) => ({
+            ...item,
+            progress: mangaProgress || bookProgress,
+        })) as (
+            | (LibraryItem & { type: "book"; progress: BookProgress })
+            | (LibraryItem & { type: "manga"; progress: MangaProgress })
+        )[];
     },
     "db:library:addItem": async (db, request) => {
-        return (await db.addLibraryItem(request.data, request.progress)) ?? null;
+        return (await db.addLibraryItem(request.data)) ?? null;
     },
     "db:library:getAllBookmarks": async (db) => {
         const mangaBk = await db.db.select().from(mangaBookmarks);
@@ -76,6 +82,13 @@ const handlers: {
         return await db.db.select().from(mangaBookmarks).where(eq(mangaBookmarks.itemLink, request.itemLink));
     },
     "db:manga:addBookmark": async (db, request) => {
+        const existing = await db.db
+            .select()
+            .from(mangaBookmarks)
+            .where(and(eq(mangaBookmarks.link, request.link), eq(mangaBookmarks.page, request.page)));
+        if (existing.length > 0) {
+            return existing[0];
+        }
         return (await db.db.insert(mangaBookmarks).values(request).returning())?.[0] ?? null;
     },
     "db:manga:deleteBookmarks": async (db, request) => {

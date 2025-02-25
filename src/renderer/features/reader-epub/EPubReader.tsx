@@ -9,20 +9,19 @@ import React, {
     useMemo,
 } from "react";
 import css, { Rule as CSSRule } from "css";
-import { AppContext } from "../App";
-import { useAppDispatch, useAppSelector } from "../store/hooks";
-import { setReaderOpen } from "../store/isReaderOpen";
-import { newHistory, updateCurrentBookHistory } from "../store/history";
+
+import { BookHistoryItem } from "@common/types/legacy";
+import { AppContext } from "src/renderer/App";
+import { useAppDispatch, useAppSelector } from "@store/hooks";
+import { setBookInReader } from "@store/bookInReader";
+import { setUnzipping } from "@store/unzipping";
+import { setAppSettings, setEpubReaderSettings, setReaderSettings } from "@store/appSettings";
 import EPUBReaderSettings from "./EPubReaderSettings";
 import EPubReaderSideList from "./EPubReaderSideList";
-import { setAppSettings, setEpubReaderSettings, setReaderSettings } from "../store/appSettings";
-import { setBookInReader } from "../store/bookInReader";
-import { setUnzipping } from "../store/unzipping";
-import ReaderSideList from "./ReaderSideList";
-import { setMangaInReader } from "../store/mangaInReader";
-
-import EPUB from "../utils/epub";
-import Modal from "./Element/Modal";
+import { setReaderOpen } from "@store/isReaderOpen";
+import EPUB from "@renderer-utils/epub";
+import Modal from "@ui/Modal";
+import { addLibraryItem, updateBookProgress, updateCurrentBookProgress } from "@store/library";
 
 const StyleSheets = memo(
     ({ sheets }: { sheets: string[] }) => {
@@ -240,7 +239,7 @@ const EPubReader = () => {
                         },
                     })
                 );
-            dispatch(updateCurrentBookHistory());
+            dispatch(updateCurrentBookProgress());
         };
         const abortController = new AbortController();
         (async function () {
@@ -388,7 +387,7 @@ const EPubReader = () => {
             );
 
         link = window.path.normalize(link);
-        setBookmarked(bookmarks.map((e) => e.data.link).includes(link));
+        // setBookmarked(bookmarks.map((e) => e.data.link).includes(link));
         //todo
         if ([".xhtml", ".html", ".txt"].includes(window.path.extname(link).toLowerCase())) {
             // const ext = window.path.extname(link).toLowerCase();
@@ -450,13 +449,14 @@ const EPubReader = () => {
             return;
         }
         EPUB.readEpubFile(link, appSettings.keepExtractedFiles)
-            .then((ed) => {
+            .then(async (ed) => {
                 // todo : When current chapter is not top level(level=0), make BookItem.chapter concat of all parent chapters.
                 let currentChapterIndex = 0;
                 if (linkInReader.chapterId)
                     currentChapterIndex = ed.spine.findIndex((e) => e.id === linkInReader.chapterId);
                 if (currentChapterIndex < 0) currentChapterIndex = 0;
-                const bookOpened: BookItem = {
+                //todo remove
+                const bookOpened: BookHistoryItem["data"] = {
                     author: ed.metadata.author,
                     link,
                     title: ed.metadata.title,
@@ -470,15 +470,30 @@ const EPubReader = () => {
                     },
                 };
                 dispatch(setBookInReader(bookOpened));
-                dispatch(
-                    newHistory({
-                        type: "book",
+                const res = await dispatch(
+                    addLibraryItem({
                         data: {
-                            bookOpened,
-                            elementQueryString: elemBeforeChange || "",
+                            type: "book",
+                            link,
+                            title: ed.metadata.title,
+                            author: ed.metadata.author,
+                            cover: ed.metadata.cover,
                         },
                     })
                 );
+                if (res.meta.requestStatus === "fulfilled") {
+                    //todo
+                    dispatch(
+                        updateBookProgress({
+                            data: {
+                                chapterId: ed.spine[currentChapterIndex].id,
+                                chapterName: "~",
+                                position: "",
+                            },
+                            itemLink: link,
+                        })
+                    );
+                }
                 setCurrentChapter({
                     index: currentChapterIndex,
                     fragment: "",
@@ -971,7 +986,7 @@ const EPubReader = () => {
                 }}
                 onContextMenu={(e) => {
                     e.stopPropagation();
-                    const items: MenuListItem[] = [
+                    const items: Menu.ListItem[] = [
                         {
                             label: "Zen Mode",
                             selected: zenMode,

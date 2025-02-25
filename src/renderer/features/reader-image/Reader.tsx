@@ -1,19 +1,20 @@
 import { useCallback, useContext, useEffect, useLayoutEffect, useRef, useState } from "react";
-import { AppContext } from "../App";
+import { AppContext } from "../../App";
 import ReaderSideList from "./ReaderSideList";
 import ReaderSettings from "./ReaderSettings";
-import { useAppDispatch, useAppSelector } from "../store/hooks";
-import { setAppSettings, setReaderSettings } from "../store/appSettings";
-import { setMangaInReader } from "../store/mangaInReader";
-import { setReaderOpen } from "../store/isReaderOpen";
-import { setLoadingMangaPercent } from "../store/loadingMangaPercent";
-import { setLoadingManga } from "../store/isLoadingManga";
-import { setLinkInReader } from "../store/linkInReader";
-import { newHistory } from "../store/history";
-import AnilistSearch from "./anilist/AnilistSearch";
-import AnilistEdit from "./anilist/AnilistEdit";
+import { useAppDispatch, useAppSelector } from "../../store/hooks";
+import { setAppSettings, setReaderSettings } from "../../store/appSettings";
+import { setMangaInReader } from "../../store/mangaInReader";
+import { setReaderOpen } from "../../store/isReaderOpen";
+import { setLoadingMangaPercent } from "../../store/loadingMangaPercent";
+import { setLoadingManga } from "../../store/isLoadingManga";
+import { setLinkInReader } from "../../store/linkInReader";
+import AnilistSearch from "../anilist/AnilistSearch";
+import AnilistEdit from "../anilist/AnilistEdit";
 import { InView } from "react-intersection-observer";
-import { setAnilistCurrentManga } from "../store/anilistCurrentManga";
+import { setAnilistCurrentManga } from "../../store/anilistCurrentManga";
+import { MangaItem } from "@common/types/legacy";
+import { addLibraryItem, updateChaptersRead, updateMangaProgress } from "../../store/library";
 
 const processChapterNumber = (chapterName: string): number | undefined => {
     /*
@@ -57,6 +58,8 @@ const Reader = () => {
     const isLoadingManga = useAppSelector((store) => store.isLoadingManga);
     const isSettingOpen = useAppSelector((store) => store.isSettingOpen);
     const bookmarks = useAppSelector((store) => store.bookmarks);
+
+    const library = useAppSelector((store) => store.library.items);
     const pageNumChangeDisabled = useAppSelector((store) => store.pageNumChangeDisabled);
     const prevNextChapter = useAppSelector((store) => store.prevNextChapter);
     const isAniSearchOpen = useAppSelector((store) => store.isAniSearchOpen);
@@ -590,27 +593,46 @@ const Reader = () => {
         setImageDecodeQueue([]);
         setUpdatedAnilistProgress(false);
         setCurrentlyDecoding(false);
-        setBookmarked(bookmarks.map((e) => e.data.link).includes(link));
+        // setBookmarked(bookmarks.manga.has());
         setChapterChangerDisplay(false);
-        const linksplitted = link.split(window.path.sep).filter((e) => e !== "");
+        const linkSplitted = link.split(window.path.sep).filter((e) => e !== "");
         const mangaOpened: MangaItem = {
-            mangaName: linksplitted[linksplitted.length - 2],
-            chapterName: linksplitted[linksplitted.length - 1],
+            mangaName: linkSplitted[linkSplitted.length - 2],
+            chapterName: linkSplitted[linkSplitted.length - 1],
             link,
             date: new Date().toLocaleString("en-UK", { hour12: true }),
             pages: imgs.length,
         };
         dispatch(setMangaInReader(mangaOpened));
-        dispatch(
-            newHistory({
-                type: "image",
-                data: {
-                    mangaOpened,
-                    page: linkInReader.page,
-                    recordChapter: appSettings.recordChapterRead,
-                },
-            })
-        );
+        const item = library[window.path.dirname(link)];
+        if (item) {
+            dispatch(
+                updateMangaProgress({
+                    itemLink: item.link,
+                    data: {
+                        chapterLink: link,
+                        currentPage: 1,
+                        totalPages: mangaOpened.pages,
+                        lastReadAt: new Date(),
+                        chapterName: mangaOpened.chapterName,
+                    },
+                })
+            );
+        } else
+            dispatch(
+                addLibraryItem({
+                    data: {
+                        link: window.path.dirname(link),
+                        title: mangaOpened.mangaName,
+                        type: "manga",
+                    },
+                    progress: {
+                        chapterLink: link,
+                        totalPages: mangaOpened.pages,
+                        currentPage: 1,
+                    },
+                })
+            );
         // setImagesLength(imgs.length);
 
         //todo remove later
@@ -859,6 +881,13 @@ const Reader = () => {
                 console.log("Anilist::autoUpdateAnilistProgress: Could not get chapter number from the title.");
                 return;
             }
+            dispatch(
+                updateChaptersRead({
+                    itemLink: window.path.dirname(mangaInReader.link),
+                    chapterName: mangaInReader.chapterName,
+                    read: true,
+                })
+            );
             setUpdatedAnilistProgress(true);
             if (chapterNumber > anilistCurrentManga.progress)
                 window.al.setCurrentMangaProgress(chapterNumber).then((e) => {
@@ -1125,7 +1154,7 @@ const Reader = () => {
                 }}
                 onContextMenu={(e) => {
                     e.stopPropagation();
-                    const items: MenuListItem[] = [
+                    const items: Menu.ListItem[] = [
                         {
                             label: "Zen Mode",
                             selected: zenMode,

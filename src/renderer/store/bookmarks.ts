@@ -142,19 +142,21 @@ import { DatabaseChannels } from "@common/types/ipc";
 import { ipc } from "../utils/ipc";
 
 type BookmarksState = {
-    manga: Map<string, MangaBookmark[]>;
-    book: Map<string, BookBookmark[]>;
+    // map of key:itemLink value: bookmarks
+    manga: Record<string, MangaBookmark[]>;
+    book: Record<string, BookBookmark[]>;
     loading: boolean;
     error: string | null;
 };
 const initialState: BookmarksState = {
-    manga: new Map(),
-    book: new Map(),
+    manga: {},
+    book: {},
     loading: false,
     error: null,
 };
 export const fetchAllBookmarks = createAsyncThunk("bookmarks/fetchAll", async () => {
     const bookmarks = await ipc.invoke("db:library:getAllBookmarks");
+    console.log({ bookmarks });
     return bookmarks;
 });
 
@@ -172,10 +174,12 @@ export const addBookmark = createAsyncThunk(
         data,
         type,
     }: {
-        data: DatabaseChannels["db:book:addBookmark"]["request"];
+        data: DatabaseChannels["db:book:addBookmark" | "db:manga:addBookmark"]["request"];
         type: "manga" | "book";
     }) => {
         const bookmark = await ipc.invoke(`db:${type}:addBookmark`, data);
+        console.log({ bookmark });
+        if (!bookmark) throw new Error("Failed to add bookmark");
         return { bookmark, type };
     }
 );
@@ -202,61 +206,64 @@ const bookmarksSlice = createSlice({
             state.error = null;
         },
     },
+
     extraReducers: (builder) => {
         builder
             .addCase(fetchAllBookmarks.pending, (state) => {
                 state.loading = true;
             })
             .addCase(fetchAllBookmarks.fulfilled, (state, action) => {
-                state.manga = new Map();
+                state.manga = {};
                 for (const mangaBookmark of action.payload.mangaBookmarks) {
-                    if (!state.manga.has(mangaBookmark.itemLink)) {
-                        state.manga.set(mangaBookmark.itemLink, []);
+                    if (!state.manga[mangaBookmark.itemLink]) {
+                        state.manga[mangaBookmark.itemLink] = [];
                     }
-                    state.manga.get(mangaBookmark.itemLink)?.push(mangaBookmark);
+                    state.manga[mangaBookmark.itemLink].push(mangaBookmark);
                 }
                 for (const bookBookmark of action.payload.bookBookmarks) {
-                    if (!state.book.has(bookBookmark.itemLink)) {
-                        state.book.set(bookBookmark.itemLink, []);
+                    if (!state.book[bookBookmark.itemLink]) {
+                        state.book[bookBookmark.itemLink] = [];
                     }
-                    state.book.get(bookBookmark.itemLink)?.push(bookBookmark);
+                    state.book[bookBookmark.itemLink].push(bookBookmark);
                 }
                 state.loading = false;
-            })
-            .addCase(addBookmark.fulfilled, (state, action) => {
-                const bookmark = action.payload.bookmark;
-                if (action.payload.type === "manga") {
-                    state.manga.get(bookmark.itemLink)?.push(bookmark as MangaBookmark);
-                } else {
-                    state.book.get(bookmark.itemLink)?.push(bookmark as BookBookmark);
-                }
-            })
-            .addCase(removeBookmark.fulfilled, (state, action) => {
-                const { itemLink, type, ids } = action.payload;
-                if (!ids) {
-                    console.error("ids not returned from db");
-                    return;
-                }
-                if (type === "manga") {
-                    state.manga.set(
-                        itemLink,
-                        state.manga.get(itemLink)?.filter((bookmark) => !ids.includes(bookmark.id)) ?? []
-                    );
-                } else {
-                    state.book.set(
-                        itemLink,
-                        state.book.get(itemLink)?.filter((bookmark) => !ids.includes(bookmark.id)) ?? []
-                    );
-                }
-            })
-            .addCase(removeAllBookmarks.fulfilled, (state, action) => {
-                const { itemLink, type } = action.payload;
-                if (type === "manga") {
-                    state.manga.set(itemLink, []);
-                } else {
-                    state.book.set(itemLink, []);
-                }
             });
+        // for now just refetch all bookmarks on event
+
+        // .addCase(addBookmark.fulfilled, (state, action) => {
+        //     const bookmark = action.payload.bookmark;
+        //     if (action.payload.type === "manga") {
+        //         if (!state.manga[bookmark.itemLink]) {
+        //             state.manga[bookmark.itemLink] = [];
+        //         }
+        //         state.manga[bookmark.itemLink].push(bookmark as MangaBookmark);
+        //     } else {
+        //         if (!state.book[bookmark.itemLink]) {
+        //             state.book[bookmark.itemLink] = [];
+        //         }
+        //         state.book[bookmark.itemLink].push(bookmark as BookBookmark);
+        //     }
+        // })
+        // .addCase(removeBookmark.fulfilled, (state, action) => {
+        //     const { itemLink, type, ids } = action.payload;
+        //     if (!ids) {
+        //         console.error("ids not returned from db");
+        //         return;
+        //     }
+        //     if (type === "manga") {
+        //         state.manga[itemLink] = state.manga[itemLink].filter((b) => !ids.includes(b.id));
+        //     } else {
+        //         state.book[itemLink] = state.book[itemLink].filter((b) => !ids.includes(b.id));
+        //     }
+        // })
+        // .addCase(removeAllBookmarks.fulfilled, (state, action) => {
+        //     const { itemLink, type } = action.payload;
+        //     if (type === "manga") {
+        //         state.manga[itemLink] = [];
+        //     } else {
+        //         state.book[itemLink] = [];
+        //     }
+        // });
     },
 });
 

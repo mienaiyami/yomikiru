@@ -15,7 +15,8 @@ const config: ForgeConfig = {
     packagerConfig: {
         name: "Yomikiru",
         asar: true,
-        extraResource: ["better-sqlite3"],
+        // needed for migrating better-sqlite3
+        extraResource: ["./drizzle"],
         executableName: process.platform === "win32" ? "Yomikiru" : "yomikiru",
     },
     rebuildConfig: {

@@ -1,5 +1,4 @@
 import Colorjs from "color";
-import type { ThemeDataMain } from "../types/theme";
 
 export const colorUtils: typeof window.color = {
     new: (args) => Colorjs(args),

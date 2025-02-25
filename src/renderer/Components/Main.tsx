@@ -1,19 +1,18 @@
-import { ReactElement, useContext, useEffect } from "react";
-import { setAppSettings } from "../store/appSettings";
-// import { setContextMenu } from "../store/contextMenu";
-import { useAppDispatch, useAppSelector } from "../store/hooks";
-import BookmarkTab from "./BookmarkTab";
+import { ReactElement, useContext } from "react";
 import ContextMenu from "./ContextMenu";
-import EPubReader from "./EPubReader";
-import HistoryTab from "./HistoryTab";
 import LoadingScreen from "./LoadingScreen";
-import LocationsTab from "./LocationsTab";
-import Reader from "./Reader";
-import Settings from "./Settings";
-import AniLogin from "./anilist/AniLogin";
+import { useAppDispatch, useAppSelector } from "@store/hooks";
 import { AppContext } from "../App";
-import MenuList from "./Element/MenuList";
-import InputColorReal from "./Element/InputColorReal";
+import LocationsTab from "@features/home/LocationsTab";
+import { setAppSettings } from "@store/appSettings";
+import BookmarkTab from "@features/home/BookmarkTab";
+import HistoryTab from "@features/home/HistoryTab";
+import Settings from "@features/settings/Settings";
+import MenuList from "@ui/MenuList";
+import InputColorReal from "@ui/InputColorReal";
+import AniLogin from "@features/anilist/AniLogin";
+import Reader from "@features/reader-image/Reader";
+import EPubReader from "@features/reader-epub/EPubReader";
 
 const Main = (): ReactElement => {
     const appSettings = useAppSelector((store) => store.appSettings);
@@ -22,7 +21,7 @@ const Main = (): ReactElement => {
     const anilistToken = useAppSelector((store) => store.anilistToken);
     const isAniLoginOpen = useAppSelector((store) => store.isAniLoginOpen);
 
-    const { contextMenuData, optSelectData, colorSelectData, setColorSelectData } = useContext(AppContext);
+    const { contextMenuData, optSelectData, colorSelectData } = useContext(AppContext);
     const dispatch = useAppDispatch();
 
     // useEffect(() => {
@@ -309,9 +308,7 @@ const Main = (): ReactElement => {
                     // "--show-page-num-on-home": appSettings.showPageNumOnHome ? "flex" : "none",
                 }}
             >
-                <LocationsTab
-                // ref={locationTabRef}
-                />
+                <LocationsTab />
                 <div
                     className="divider"
                     onClick={() =>
@@ -328,9 +325,7 @@ const Main = (): ReactElement => {
                 >
                     <div className="bar"></div>
                 </div>
-                <BookmarkTab
-                //  ref={bookmarkTabRef}
-                />
+                <BookmarkTab />
                 <div
                     className="divider"
                     onClick={() =>
@@ -346,9 +341,7 @@ const Main = (): ReactElement => {
                 >
                     <div className="bar"></div>
                 </div>
-                <HistoryTab
-                // ref={historyTabRef}
-                />
+                <HistoryTab />
             </div>
             <Settings />
             <LoadingScreen />

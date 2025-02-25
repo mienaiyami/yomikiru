@@ -1,11 +1,11 @@
 import { faMinus, faPlus, faSlidersH } from "@fortawesome/free-solid-svg-icons";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
+import { setAnilistCurrentManga } from "@store/anilistCurrentManga";
+import { useAppDispatch, useAppSelector } from "@store/hooks";
+import { setAniEditOpen } from "@store/isAniEditOpen";
+import { setAniSearchOpen } from "@store/isAniSearchOpen";
+import InputNumber from "@ui/InputNumber";
 import React, { useLayoutEffect, useState, memo } from "react";
-import InputNumber from "../Element/InputNumber";
-import { useAppDispatch, useAppSelector } from "../../store/hooks";
-import { setAniSearchOpen } from "../../store/isAniSearchOpen";
-import { setAnilistCurrentManga } from "../../store/anilistCurrentManga";
-import { setAniEditOpen } from "../../store/isAniEditOpen";
 
 const AnilistBar = memo(() => {
     const anilistTracking = useAppSelector((store) => store.anilistTracking);

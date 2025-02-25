@@ -1,11 +1,11 @@
 import { ReactElement, useEffect, useLayoutEffect, useRef, useState } from "react";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faLink, faSync, faUnlink } from "@fortawesome/free-solid-svg-icons";
-import themesRaw from "../../themeInit.json";
-import { newTheme, updateTheme, setTheme, setSysBtnColor } from "../../store/themes";
-import { useAppDispatch, useAppSelector } from "../../store/hooks";
-import { InputSelect } from "../Element/InputSelect";
-import InputColor from "../Element/InputColor";
+import { newTheme, updateTheme, setTheme, setSysBtnColor } from "@store/themes";
+import { useAppDispatch, useAppSelector } from "@store/hooks";
+import InputSelect from "@ui/InputSelect";
+import InputColor from "@ui/InputColor";
+import { initThemeData } from "../../utils/theme";
 const ThemeElement = ({
     color,
     prop,
@@ -162,7 +162,7 @@ const ThemeCont = () => {
             let name = "";
             name = nameInput.value || window.app.randomString(6);
             if (saveAndReplace) name = theme;
-            if (themesRaw.allData.map((e) => e.name).includes(name)) {
+            if (initThemeData.allData.map((e) => e.name).includes(name)) {
                 window.dialog.customError({
                     title: "Error",
                     message: `Can't edit default themes, save as new instead.`,

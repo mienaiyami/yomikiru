@@ -1,4 +1,5 @@
 import type { Configuration } from "webpack";
+import TsconfigPathsPlugin from "tsconfig-paths-webpack-plugin";
 
 import { rules } from "./webpack.rules";
 import { plugins } from "./webpack.plugins";
@@ -11,13 +12,14 @@ rules.push({
 export const rendererConfig: Configuration = {
     resolve: {
         extensions: [".ts", ".tsx", ".js"],
+        plugins: [new TsconfigPathsPlugin()],
     },
     module: {
         rules,
     },
     externals: {
         electron: "commonjs2 electron",
-        "better-sqlite3": "commonjs better-sqlite3",
+        // "better-sqlite3": "commonjs better-sqlite3",
         // "../public/pdf.min.js": "pdfjsLib",
         // "../public/pdf.worker.min.js": "pdfjsLibWorker",
     },

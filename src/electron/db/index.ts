@@ -17,10 +17,8 @@ export class DatabaseService {
     private _db: ReturnType<typeof drizzle>;
     // private client: ReturnType<typeof createClient>;
     constructor() {
-        // const dbPath = `file:${path.join(app.getPath("userData"), "data.db")}`;
-        // const dbPath = "file:data.db";
         const sqlite = new Database(app.isPackaged ? path.join(app.getPath("userData"), "data.db") : "data.db");
-        this._db = drizzle({ client: sqlite, schema, logger: true });
+        this._db = drizzle({ client: sqlite, schema });
         // this.client = createClient({
         //     url: dbPath,
         // });
@@ -31,38 +29,22 @@ export class DatabaseService {
         return this._db;
     }
     async initialize() {
-        // todo add this to webpack copy
+        console.log("Migrating database");
         migrate(this._db, {
-            migrationsFolder: path.resolve("./drizzle"),
+            migrationsFolder: app.isPackaged ? path.join(path.dirname(app.getAppPath()), "drizzle") : "drizzle",
         });
         console.log(this._db.all(`select unixepoch() as time`));
     }
 
-    async addLibraryItem(
-        data: typeof libraryItems.$inferInsert,
-        {
-            chapterLink,
-            totalPages,
-            currentPage = 1,
-        }: {
-            chapterLink: string;
-            totalPages: number;
-            currentPage?: number;
-        }
-    ) {
+    async addLibraryItem(data: typeof libraryItems.$inferInsert) {
         return await this._db.transaction(async (tx) => {
             const [item] = await tx.insert(libraryItems).values(data).returning();
-            if (item.type === "manga") {
-                await tx.insert(mangaProgress).values({
-                    itemLink: item.link,
-                    chapterLink,
-                    currentPage,
-                    chaptersRead: [],
-                    totalPages,
-                    lastReadAt: new Date(),
-                    chapterName: path.basename(chapterLink),
-                });
-            }
+            // if (item.type === "manga") {
+            //     await tx.insert(mangaProgress).values({
+            //         itemLink: item.link,
+            //         chapterLink: initialProgress.chapterLink,
+            //     });
+            // }
             return item;
         });
     }
@@ -71,7 +53,8 @@ export class DatabaseService {
         itemLink: string,
         data: Partial<Omit<typeof mangaProgress.$inferInsert, "itemLink">>
     ) {
-        data = Object.fromEntries(Object.entries(data).filter(([_, v]) => v !== undefined));
+        data = Object.fromEntries(Object.entries(data).filter(([_, v]) => Boolean(v)));
+        console.log({ data });
         // todo : check if works fine
         return await this._db
             .update(mangaProgress)
@@ -113,6 +96,7 @@ export class DatabaseService {
     }
 
     // todo: review
+    // todo: add option in frontend to manually import as well
     async migrateFromJSON(historyData: HistoryItem[], bookmarkData: Manga_BookItem[]) {
         return await this._db.transaction(async (tx) => {
             for (const item of historyData) {

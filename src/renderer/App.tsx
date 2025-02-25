@@ -1,37 +1,33 @@
-// import "./MainImports";
-import { promptSelectDir, unzip } from "./utils/main";
 import { createContext, createRef, ReactElement, useEffect, useLayoutEffect, useState } from "react";
-import { useAppDispatch, useAppSelector } from "./store/hooks";
-import Main from "./Components/Main";
-import TopBar from "./Components/TopBar";
-import { refreshAppSettings, setAppSettings } from "./store/appSettings";
-import { setUnzipping } from "./store/unzipping";
-import { setLoadingManga } from "./store/isLoadingManga";
-import loadingMangaPercent, { setLoadingMangaPercent } from "./store/loadingMangaPercent";
-import { setLinkInReader } from "./store/linkInReader";
+import { useAppDispatch, useAppSelector } from "@store/hooks";
+import Main from "./components/Main";
+import TopBar from "./components/TopBar";
+import { refreshAppSettings, setAppSettings } from "@store/appSettings";
+import { setUnzipping } from "@store/unzipping";
+import { setLoadingManga } from "@store/isLoadingManga";
+import { setLoadingMangaPercent } from "@store/loadingMangaPercent";
+import { setLinkInReader } from "@store/linkInReader";
+import { setReaderOpen } from "@store/isReaderOpen";
+import { setMangaInReader } from "@store/mangaInReader";
+import { addBookmark, fetchAllBookmarks, removeBookmark } from "@store/bookmarks";
+import { refreshThemes, setTheme } from "@store/themes";
+import { bookmarksPath, historyPath, promptSelectDir, settingsPath, themesPath, unzip } from "./utils/file";
+import { setBookInReader } from "@store/bookInReader";
+import { setAniEditOpen } from "@store/isAniEditOpen";
+import { setAniLoginOpen } from "@store/isAniLoginOpen";
+import { setAniSearchOpen } from "@store/isAniSearchOpen";
+import { setAnilistCurrentManga } from "@store/anilistCurrentManga";
+import { toggleOpenSetting } from "@store/isSettingOpen";
+import { renderPDF } from "@renderer-utils/pdf";
 import {
-    refreshHistory,
-    updateCurrentHistoryPage,
-    updateCurrentBookHistory,
-    removeHistory,
-    unreadChapter,
-    readChapter,
-    unreadAllChapter,
-} from "./store/history";
-import { setReaderOpen } from "./store/isReaderOpen";
-import { setMangaInReader } from "./store/mangaInReader";
-import { addBookmark, refreshBookmark, removeBookmark } from "./store/bookmarks";
-import { refreshThemes, setTheme } from "./store/themes";
-import { bookmarksPath, historyPath, settingsPath, themesPath } from "./utils/file";
-import { setBookInReader } from "./store/bookInReader";
-import { setAniEditOpen } from "./store/isAniEditOpen";
-import { setAniLoginOpen } from "./store/isAniLoginOpen";
-import { setAniSearchOpen } from "./store/isAniSearchOpen";
-import { setAnilistCurrentManga } from "./store/anilistCurrentManga";
-import { toggleOpenSetting } from "./store/isSettingOpen";
-import { renderPDF } from "./utils/pdf";
+    fetchAllItemsWithProgress,
+    updateBookProgress,
+    updateChaptersRead,
+    updateChaptersReadAll,
+    updateMangaProgress,
+} from "@store/library";
 
-interface IAppContext {
+interface AppContext {
     pageNumberInputRef: React.RefObject<HTMLInputElement>;
     bookProgressRef: React.RefObject<HTMLInputElement>;
     /**
@@ -50,12 +46,12 @@ interface IAppContext {
     closeReader: () => void;
     // updateLastHistoryPageNumber: () => void;
     openInNewWindow: (link: string) => void;
-    contextMenuData: IContextMenuData | null;
-    setContextMenuData: React.Dispatch<React.SetStateAction<IContextMenuData | null>>;
-    optSelectData: IOptSelectData | null;
-    setOptSelectData: React.Dispatch<React.SetStateAction<IOptSelectData | null>>;
-    colorSelectData: IColorSelectData | null;
-    setColorSelectData: React.Dispatch<React.SetStateAction<IColorSelectData | null>>;
+    contextMenuData: Menu.ContextMenuData | null;
+    setContextMenuData: React.Dispatch<React.SetStateAction<Menu.ContextMenuData | null>>;
+    optSelectData: Menu.OptSelectData | null;
+    setOptSelectData: React.Dispatch<React.SetStateAction<Menu.OptSelectData | null>>;
+    colorSelectData: Menu.ColorSelectData | null;
+    setColorSelectData: React.Dispatch<React.SetStateAction<Menu.ColorSelectData | null>>;
     checkValidFolder: (
         link: string,
         callback: (isValid?: boolean, imgs?: string[]) => void,
@@ -63,22 +59,20 @@ interface IAppContext {
     ) => void;
 }
 
-export const AppContext = createContext<IAppContext>(null!);
+export const AppContext = createContext<AppContext>(null!);
 const App = (): ReactElement => {
     const appSettings = useAppSelector((state) => state.appSettings);
     const isReaderOpen = useAppSelector((state) => state.isReaderOpen);
     const linkInReader = useAppSelector((store) => store.linkInReader);
-    const mangaInReader = useAppSelector((store) => store.mangaInReader);
-    const bookInReader = useAppSelector((store) => store.bookInReader);
     const shortcuts = useAppSelector((store) => store.shortcuts);
     const theme = useAppSelector((state) => state.theme.name);
 
     const pageNumberInputRef: React.RefObject<HTMLInputElement> = createRef();
     const bookProgressRef: React.RefObject<HTMLInputElement> = createRef();
     const [firstRendered, setFirstRendered] = useState(false);
-    const [contextMenuData, setContextMenuData] = useState<IContextMenuData | null>(null);
-    const [optSelectData, setOptSelectData] = useState<IOptSelectData | null>(null);
-    const [colorSelectData, setColorSelectData] = useState<IColorSelectData | null>(null);
+    const [contextMenuData, setContextMenuData] = useState<Menu.ContextMenuData | null>(null);
+    const [optSelectData, setOptSelectData] = useState<Menu.OptSelectData | null>(null);
+    const [colorSelectData, setColorSelectData] = useState<Menu.ColorSelectData | null>(null);
 
     const dispatch = useAppDispatch();
 
@@ -333,10 +327,31 @@ const App = (): ReactElement => {
     };
 
     const closeReader = () => {
+        // todo:  use ipc to update db and take data from react state
         if (window.app.linkInReader && window.app.linkInReader.type === "image")
-            dispatch(updateCurrentHistoryPage());
+            dispatch(
+                updateMangaProgress({
+                    itemLink: window.path.dirname(window.app.linkInReader.link),
+                    data: {
+                        currentPage: window.app.currentPageNumber,
+                        chapterLink: window.app.linkInReader.link,
+                        chapterName: window.app.linkInReader.chapter,
+                        lastReadAt: new Date(),
+                    },
+                })
+            );
         if (window.app.linkInReader && window.app.linkInReader.type === "book")
-            dispatch(updateCurrentBookHistory());
+            dispatch(
+                updateBookProgress({
+                    itemLink: window.app.linkInReader.link,
+                    data: {
+                        chapterId: window.app.linkInReader.chapterId,
+                        chapterName: window.app.linkInReader.chapter,
+                        position: window.app.linkInReader.queryStr,
+                        lastReadAt: new Date(),
+                    },
+                })
+            );
         dispatch(setReaderOpen(false));
         dispatch(setLinkInReader({ type: "", link: "", page: 1, chapter: "" }));
         dispatch(setLoadingManga(false));
@@ -409,6 +424,8 @@ const App = (): ReactElement => {
 
     useEffect(() => {
         setFirstRendered(true);
+        dispatch(fetchAllItemsWithProgress());
+        dispatch(fetchAllBookmarks());
         window.electron.ipcRenderer.on("loadMangaFromLink", (e, data) => {
             if (data && typeof data.link === "string" && data.link !== "") openInReader(data.link);
         });
@@ -425,6 +442,7 @@ const App = (): ReactElement => {
         window.electron.ipcRenderer.on("askBeforeClose:query", () => {
             window.electron.ipcRenderer.send("askBeforeClose:response", appSettings.askBeforeClosing);
         });
+        //todo update
         window.electron.ipcRenderer.on("recordPageNumber", () => {
             // window.logger.log("received recordPageNumber");
             if (isReaderOpen) closeReader();
@@ -494,8 +512,6 @@ const App = (): ReactElement => {
         if (appSettings.syncThemes) filesToWatch.push(themesPath);
         const watcher = window.chokidar.watch(filesToWatch);
         watcher.on("change", (path) => {
-            if (path === historyPath) dispatch(refreshHistory());
-            if (path === bookmarksPath) dispatch(refreshBookmark());
             if (path === settingsPath) dispatch(refreshAppSettings());
             if (path === themesPath) dispatch(refreshThemes());
         });
@@ -587,98 +603,79 @@ const App = (): ReactElement => {
                     },
                 };
             },
-            removeHistory(url) {
-                return {
-                    label: "Remove",
-                    disabled: url ? false : true,
-                    action() {
-                        dispatch(removeHistory(url));
-                    },
-                };
-            },
-            removeBookmark(url) {
+            // removeHistory(url) {
+            //     return {
+            //         label: "Remove",
+            //         disabled: url ? false : true,
+            //         action() {
+            //             dispatch(removeHistory(url));
+            //         },
+            //     };
+            // },
+            removeBookmark(itemLink, bookmarkId, type) {
                 return {
                     label: "Remove Bookmark",
-                    disabled: url ? false : true,
+                    // disabled:  ? false : true,
                     action() {
-                        dispatch(removeBookmark(url));
+                        dispatch(
+                            removeBookmark({
+                                itemLink,
+                                ids: [bookmarkId],
+                                type,
+                            })
+                        );
                     },
                 };
             },
-            addToBookmark(data) {
+            addToBookmark(args) {
                 return {
                     label: "Add to Bookmarks",
-                    disabled: data ? false : true,
+                    // disabled: args ? false : true,
                     action() {
-                        if (data.type === "image") {
-                            const newItem: Manga_BookItem = {
-                                type: "image",
-                                data: {
-                                    mangaName: data.data.mangaName,
-                                    chapterName: data.data.chapterName,
-                                    pages: data.data.pages,
-                                    page: data.data.page,
-                                    link: data.data.link,
-                                    date: new Date().toLocaleString("en-UK", { hour12: true }),
-                                },
-                            };
-                            dispatch(addBookmark(newItem));
-                        }
-                        if (data.type === "book") {
-                            const newItem: Manga_BookItem = {
-                                type: "book",
-                                data: {
-                                    ...data.data,
-                                    chapterData: { ...data.data.chapterData },
-                                    date: new Date().toLocaleString("en-UK", { hour12: true }),
-                                },
-                            };
-                            dispatch(addBookmark(newItem));
-                        }
+                        dispatch(addBookmark(args));
                     },
                 };
             },
-            unreadChapter(mangaIndex, chapterIndex) {
+            unreadChapter(itemLink: string, chapterName: string) {
                 return {
                     label: "Mark as Unread",
-                    disabled: mangaIndex >= 0 && chapterIndex >= 0 ? false : true,
+                    // todo check why i added these
+                    // disabled: mangaIndex >= 0 && chapterIndex >= 0 ? false : true,
                     action() {
-                        if (mangaIndex >= 0 && chapterIndex >= 0)
-                            dispatch(unreadChapter([mangaIndex, chapterIndex]));
+                        dispatch(
+                            updateChaptersRead({
+                                chapterName,
+                                itemLink,
+                                read: false,
+                            })
+                        );
                     },
                 };
             },
-            readChapter(mangaIndex, chapter) {
+            readChapter(itemLink: string, chapterName: string) {
                 return {
                     label: "Mark as Read",
-                    disabled: mangaIndex >= 0 && chapter ? false : true,
+                    // disabled: mangaIndex >= 0 && chapter ? false : true,
                     action() {
-                        if (mangaIndex >= 0 && chapter) dispatch(readChapter({ mangaIndex, chapters: [chapter] }));
+                        dispatch(updateChaptersRead({ itemLink, chapterName, read: true }));
                     },
                 };
             },
             readAllChapter(mangaIndex, chapters) {
                 return {
                     label: "Mark All as Read",
-                    disabled: mangaIndex >= 0 && chapters.length > 0 ? false : true,
+                    // disabled: mangaIndex >= 0 && chapters.length > 0 ? false : true,
                     action() {
-                        if (mangaIndex >= 0 && chapters.length > 0)
-                            dispatch(readChapter({ mangaIndex, chapters }));
+                        dispatch(updateChaptersReadAll({ itemLink: mangaIndex, chapters, read: true }));
                     },
                 };
             },
             unreadAllChapter(mangaIndex) {
                 return {
                     label: "Mark All as Unread",
-                    disabled: mangaIndex >= 0 ? false : true,
+                    // disabled: mangaIndex >= 0 ? false : true,
                     action() {
-                        if (mangaIndex >= 0)
-                            window.dialog
-                                .confirm({
-                                    message: "Mark All Chapters as Unread?",
-                                    noOption: false,
-                                })
-                                .then((res) => res.response === 0 && dispatch(unreadAllChapter(mangaIndex)));
+                        dispatch(updateChaptersReadAll({ itemLink: mangaIndex, chapters: [], read: false }));
                     },
                 };
             },

@@ -1,15 +1,15 @@
 import { faBars, faMinus, faPlus, faTimes } from "@fortawesome/free-solid-svg-icons";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { memo, useEffect, useLayoutEffect, useState } from "react";
-import { setEpubReaderSettings } from "../store/appSettings";
-import { useAppDispatch, useAppSelector } from "../store/hooks";
 import { getFonts } from "font-list";
-import { InputSelect } from "./Element/InputSelect";
-import InputNumber from "./Element/InputNumber";
-import InputCheckboxNumber from "./Element/InputCheckboxNumber";
-import InputCheckbox from "./Element/InputCheckbox";
-import InputCheckboxColor from "./Element/InputCheckboxColor";
-import InputRange from "./Element/InputRange";
+import { useAppDispatch, useAppSelector } from "@store/hooks";
+import { setEpubReaderSettings } from "@store/appSettings";
+import InputNumber from "@ui/InputNumber";
+import InputCheckbox from "@ui/InputCheckbox";
+import InputSelect from "@ui/InputSelect";
+import InputRange from "@ui/InputRange";
+import InputCheckboxNumber from "@ui/InputCheckboxNumber";
+import InputCheckboxColor from "@ui/InputCheckboxColor";
 
 const EPUBReaderSettings = memo(
     ({
@@ -302,7 +302,7 @@ const EPUBReaderSettings = memo(
                                                     label: `★ ${e.replaceAll('"', "")}`,
                                                     value: e,
                                                     style: { fontFamily: e, fontSize: "1.2em" },
-                                                } as IOptSelectOption)
+                                                } as Menu.OptSelectOption)
                                         ),
                                         ...fontList.map(
                                             (e) =>
@@ -310,7 +310,7 @@ const EPUBReaderSettings = memo(
                                                     label: e.replaceAll('"', ""),
                                                     value: e,
                                                     style: { fontFamily: e, fontSize: "1.2em" },
-                                                } as IOptSelectOption)
+                                                } as Menu.OptSelectOption)
                                         ),
                                     ]}
                                 />

@@ -3,31 +3,31 @@ import type { LibraryItem, MangaProgress, BookProgress, MangaBookmark, BookBookm
 import { libraryItems } from "../../electron/db/schema";
 
 // must include
-export const DatabaseChannelsNames = [
-    "db:library:getItem",
-    "db:library:getAllAndProgress",
-    "db:library:addItem",
-    "db:library:getAllBookmarks",
-    "db:manga:getProgress",
-    "db:manga:updateProgress",
-    "db:manga:updateChaptersRead",
-    "db:manga:updateChaptersReadAll",
-    "db:manga:addBookmark",
-    "db:manga:getBookmarks",
-    "db:manga:deleteBookmarks",
-    // "db:manga:getAllBookmarks",
-    "db:book:getProgress",
-    "db:book:updateProgress",
-    "db:book:getBookmarks",
-    "db:book:addBookmark",
-    "db:book:deleteBookmarks",
-    // "db:book:getAllBookmarks",
-    "db:book:getNotes",
-    "db:book:addNote",
-    "db:book:deleteNotes",
-    // doing this on main process
-    // "db:migrateFromJSON",
-] as const;
+// export const DatabaseChannelsNames = [
+//     "db:library:getItem",
+//     "db:library:getAllAndProgress",
+//     "db:library:addItem",
+//     "db:library:getAllBookmarks",
+//     "db:manga:getProgress",
+//     "db:manga:updateProgress",
+//     "db:manga:updateChaptersRead",
+//     "db:manga:updateChaptersReadAll",
+//     "db:manga:addBookmark",
+//     "db:manga:getBookmarks",
+//     "db:manga:deleteBookmarks",
+//     // "db:manga:getAllBookmarks",
+//     "db:book:getProgress",
+//     "db:book:updateProgress",
+//     "db:book:getBookmarks",
+//     "db:book:addBookmark",
+//     "db:book:deleteBookmarks",
+//     // "db:book:getAllBookmarks",
+//     "db:book:getNotes",
+//     "db:book:addNote",
+//     "db:book:deleteNotes",
+//     // doing this on main process
+//     // "db:migrateFromJSON",
+// ] as const;
 
 // todo: move all ipc to this file
 
@@ -38,20 +38,19 @@ export type DatabaseChannels = {
     };
     "db:library:getAllAndProgress": {
         request: void;
-        response: {
-            item: LibraryItem;
-            mangaProgress: MangaProgress | null;
-            bookProgress: BookProgress | null;
-        }[];
+        response: (
+            | (LibraryItem & { type: "book"; progress: BookProgress })
+            | (LibraryItem & { type: "manga"; progress: MangaProgress })
+        )[];
     };
     "db:library:addItem": {
         request: {
             data: Omit<InferInsertModel<typeof libraryItems>, "createdAt" | "updatedAt">;
-            progress: {
-                chapterLink: string;
-                totalPages: number;
-                currentPage?: number;
-            };
+            // progress: {
+            //     chapterLink: string;
+            //     totalPages: number;
+            //     currentPage?: number;
+            // };
         };
         response: LibraryItem;
     };
@@ -161,6 +160,7 @@ export type DatabaseChannels = {
     "db:book:deleteNotes": {
         request: { itemLink: string; ids: number[]; all?: boolean };
         response: boolean;
+        // asd: 123;
     };
 
     // "db:migrateFromJSON": {
@@ -171,16 +171,16 @@ export type DatabaseChannels = {
     //     response: void;
     // };
 };
-type MissingChannels = Exclude<(typeof DatabaseChannelsNames)[number], keyof DatabaseChannels>;
-type ExtraChannels = Exclude<keyof DatabaseChannels, (typeof DatabaseChannelsNames)[number]>;
+// type MissingChannels = Exclude<(typeof DatabaseChannelsNames)[number], keyof DatabaseChannels>;
+// type ExtraChannels = Exclude<keyof DatabaseChannels, (typeof DatabaseChannelsNames)[number]>;
 
-type AssertChannels<Missing extends string, Extra extends string> = [Missing] extends [never]
-    ? [Extra] extends [never]
-        ? true
-        : `Extra : ${Extra}`
-    : `Missing : ${Missing}`;
+// type AssertChannels<Missing extends string, Extra extends string> = [Missing] extends [never]
+//     ? [Extra] extends [never]
+//         ? true
+//         : `Extra : ${Extra}`
+//     : `Missing : ${Missing}`;
 
-type _Check = AssertChannels<MissingChannels, ExtraChannels>;
-const _check: _Check = true as _Check;
+// type _Check = AssertChannels<MissingChannels, ExtraChannels>;
+// const _check: _Check = true as _Check;
 
 export type IpcChannel = keyof DatabaseChannels;

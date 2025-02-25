@@ -1,12 +1,8 @@
 import { useContext, useEffect, useRef, useState, useLayoutEffect } from "react";
-// import { AppContext } from "../App";
-// import { addBookmark, removeBookmark } from "../store/bookmarks";
-// import { setContextMenu } from "../store/contextMenu";
-// import { removeHistory } from "../store/history";
-import { useAppDispatch, useAppSelector } from "../store/hooks";
-import { AppContext } from "../App";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faCheck } from "@fortawesome/free-solid-svg-icons";
+import { useAppSelector } from "@store/hooks";
+import { AppContext } from "../App";
 
 const ContextMenu = () => {
     const shortcuts = useAppSelector((store) => store.shortcuts);
@@ -30,19 +26,17 @@ const ContextMenu = () => {
             }
         }
     }, [contextMenuData]);
-    // useEffect(() => {
-    //     if (visible) props?.realRef.current?.focus();
-    // }, [visible]);
 
     useLayoutEffect(() => {
-        const ff = () => {
+        const handleWheel = () => {
             ref.current?.blur();
         };
-        window.addEventListener("wheel", ff);
+        window.addEventListener("wheel", handleWheel);
         return () => {
-            window.removeEventListener("wheel", ff);
+            window.removeEventListener("wheel", handleWheel);
         };
     }, []);
+
     const onClick = (e: React.MouseEvent<HTMLDivElement, MouseEvent>) => {
         e.stopPropagation();
         if (e.button < 0) return;
@@ -75,6 +69,7 @@ const ContextMenu = () => {
                     e.stopPropagation();
                     const keyStr = window.keyFormatter(e, false);
                     if (keyStr === "") return;
+
                     const shortcutsMapped = Object.fromEntries(
                         shortcuts.map((e) => [e.command, e.keys])
                     ) as Record<ShortcutCommands, string[]>;
@@ -85,7 +80,6 @@ const ContextMenu = () => {
                     }
                     switch (true) {
                         case keyStr === "escape":
-                            console.log(e.currentTarget);
                             e.currentTarget.blur();
                             break;
                         case shortcutsMapped["listDown"].includes(keyStr):

@@ -1,14 +1,14 @@
+import { setAnilistCurrentManga } from "@store/anilistCurrentManga";
+import { removeAnilistTracker } from "@store/anilistTracking";
+import { useAppDispatch, useAppSelector } from "@store/hooks";
+import { setAniEditOpen } from "@store/isAniEditOpen";
+import InputCheckbox from "@ui/InputCheckbox";
+import InputNumber from "@ui/InputNumber";
+import InputSelect from "@ui/InputSelect";
+import Link from "@ui/Link";
 import React, { useEffect, useLayoutEffect, useRef, useState } from "react";
-import { useAppDispatch, useAppSelector } from "../../store/hooks";
-import { setAniEditOpen } from "../../store/isAniEditOpen";
-import { InputSelect } from "../Element/InputSelect";
-import InputNumber from "../Element/InputNumber";
-import { removeAnilistTracker } from "../../store/anilistTracking";
-import { setAnilistCurrentManga } from "../../store/anilistCurrentManga";
 
 import FocusLock from "react-focus-lock";
-import Link from "../Element/Link";
-import InputCheckbox from "../Element/InputCheckbox";
 
 const betterStatus = {
     CURRENT: "Reading",

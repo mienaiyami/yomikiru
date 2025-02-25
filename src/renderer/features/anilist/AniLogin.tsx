@@ -1,7 +1,7 @@
+import { setAnilistToken } from "@store/anilistToken";
+import { useAppDispatch, useAppSelector } from "@store/hooks";
+import { setAniLoginOpen } from "@store/isAniLoginOpen";
 import React, { useState, useRef, useEffect } from "react";
-import { useAppDispatch, useAppSelector } from "../../store/hooks";
-import { setAnilistToken } from "../../store/anilistToken";
-import { setAniLoginOpen } from "../../store/isAniLoginOpen";
 
 import FocusLock from "react-focus-lock";
 

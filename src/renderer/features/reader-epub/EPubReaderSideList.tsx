@@ -9,10 +9,9 @@ import {
 } from "@fortawesome/free-solid-svg-icons";
 import { faBookmark as farBookmark } from "@fortawesome/free-regular-svg-icons";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import React, { memo, useEffect, useLayoutEffect, useRef, useState, useMemo } from "react";
-import { useAppDispatch, useAppSelector } from "../store/hooks";
-import { addBookmark, updateEPUBBookmark, removeBookmark } from "../store/bookmarks";
-import { setEpubReaderSettings } from "../store/appSettings";
+import { Fragment, memo, useEffect, useLayoutEffect, useRef, useState } from "react";
+import { useAppDispatch, useAppSelector } from "@store/hooks";
+import { addBookmark } from "@store/bookmarks";
 
 const EPubReaderSideList = memo(
     ({
@@ -243,21 +242,25 @@ const EPubReaderSideList = memo(
                                             defaultId: 0,
                                         })
                                         .then(({ response }) => {
-                                            if (response === 1) {
-                                                dispatch(removeBookmark(linkInReader.link));
-                                                setshortcutText("Bookmark Removed");
-                                                setBookmarked(false);
-                                            }
-                                            if (response === 2) {
-                                                makeScrollPos(() => {
-                                                    setshortcutText("Bookmark Updated");
-                                                    dispatch(
-                                                        updateEPUBBookmark({
-                                                            link: linkInReader.link,
-                                                        })
-                                                    );
-                                                });
-                                            }
+                                            throw new Error("Not implemented");
+                                            // if (response === 1) {
+                                            //     dispatch(removeBookmark({
+                                            //         itemLink : linkInReader.link,
+                                            //         type: "book",
+                                            //     }));
+                                            //     setshortcutText("Bookmark Removed");
+                                            //     setBookmarked(false);
+                                            // }
+                                            // if (response === 2) {
+                                            //     makeScrollPos(() => {
+                                            //         setshortcutText("Bookmark Updated");
+                                            //         dispatch(
+                                            //             updateEPUBBookmark({
+                                            //                 link: linkInReader.link,
+                                            //             })
+                                            //         );
+                                            //     });
+                                            // }
                                         });
                                 }
                                 if (bookInReader) {
@@ -457,7 +460,7 @@ const List = memo(
             return (
                 <ol>
                     {ncx.map((e) => (
-                        <React.Fragment key={e.ncx_index2}>
+                        <Fragment key={e.ncx_index2}>
                             <li
                                 className={`${e.sub.length > 0 ? "collapsible" : ""} ${
                                     !listShow[e.ncx_index2] ? "collapsed" : ""
@@ -505,7 +508,7 @@ const List = memo(
                                 </a>
                             </li>
                             {e.sub.length > 0 && <NestedList ncx={e.sub} />}
-                        </React.Fragment>
+                        </Fragment>
                     ))}
                 </ol>
             );

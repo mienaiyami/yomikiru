@@ -1,7 +1,7 @@
+import { addAnilistTracker } from "@store/anilistTracking";
+import { useAppDispatch, useAppSelector } from "@store/hooks";
+import { setAniSearchOpen } from "@store/isAniSearchOpen";
 import React, { useEffect, useRef, useState } from "react";
-import { useAppDispatch, useAppSelector } from "../../store/hooks";
-import { setAniSearchOpen } from "../../store/isAniSearchOpen";
-import { addAnilistTracker } from "../../store/anilistTracking";
 
 import FocusLock from "react-focus-lock";
 
