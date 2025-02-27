@@ -1,4 +1,5 @@
 import { createSlice, PayloadAction } from "@reduxjs/toolkit";
+import AniList from "@utils/anilist";
 
 const initialState = localStorage.getItem("anilist_token") || "";
 
@@ -10,7 +11,7 @@ const anilistToken = createSlice({
             let aa = action.payload;
             if (!aa) aa = "";
             localStorage.setItem("anilist_token", aa);
-            window.al.setToken(aa);
+            AniList.setToken(aa);
             return aa;
         },
     },

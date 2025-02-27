@@ -16,6 +16,7 @@ import InputCheckboxNumber from "@ui/InputCheckboxNumber";
 import InputNumber from "@ui/InputNumber";
 import InputRange from "@ui/InputRange";
 import InputSelect from "@ui/InputSelect";
+import { colorUtils } from "@utils/color";
 import { memo, useEffect, useState } from "react";
 
 const ReaderSettings = memo(
@@ -587,7 +588,7 @@ const ReaderSettings = memo(
                                     );
                                 }}
                                 paraBefore="Use Custom Color Filter"
-                                value={window.color.new([
+                                value={colorUtils.new([
                                     appSettings.readerSettings.customColorFilter.r,
                                     appSettings.readerSettings.customColorFilter.g,
                                     appSettings.readerSettings.customColorFilter.b,

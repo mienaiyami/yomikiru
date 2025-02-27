@@ -22,7 +22,7 @@
             "@hooks/*": ["src/renderer/hooks/*"],
             "@store/*": ["src/renderer/store/*"],
             "@features/*": ["src/renderer/features/*"],
-            "@renderer-utils/*": ["src/renderer/utils/*"],
+            "@utils/*": ["src/renderer/utils/*"],
             "@renderer-types/*": ["src/renderer/types/*"]
             // "@renderer/*": ["src/renderer/*"]
         }

@@ -1,7 +1,3 @@
-import { unzip } from "cross-zip";
-import fs from "fs/promises";
-import path from "path";
-
 // todo : remove node integration and move to ipc
 const unzipAsync = (zipPath: string, extractPath: string) => {
     return new Promise<void>((resolve, reject) => {
@@ -36,12 +32,12 @@ export default class EPUB {
                 } catch (err) {
                     if (err instanceof Error) {
                         if (err.message.includes("spawn unzip ENOENT")) {
-                            window.dialog.customError({
+                            dialogUtils.customError({
                                 message: "Error while extracting.",
                                 detail: '"unzip" not found. Please install by using\n"sudo apt install unzip"',
                             });
                         } else
-                            window.dialog.customError({
+                            dialogUtils.customError({
                                 message: "Error while extracting.",
                                 detail: err.message,
                             });
@@ -51,7 +47,7 @@ export default class EPUB {
             }
         } catch (err) {
             if (err instanceof Error || typeof err === "string")
-                window.dialog.customError({
+                dialogUtils.customError({
                     message: "An Error occurred while checking/extracting epub.",
                     detail: err.toString(),
                 });
@@ -219,7 +215,7 @@ export default class EPUB {
             return { metadata, manifest, spine, toc, ncx, styleSheets };
         } catch (e) {
             if (e instanceof Error || e instanceof String)
-                window.dialog.customError({
+                dialogUtils.customError({
                     message: "Error while parsing epub.",
                     detail: e.toString(),
                 });

@@ -1,4 +1,5 @@
 import { createSlice, PayloadAction } from "@reduxjs/toolkit";
+import { dialogUtils } from "@utils/dialog";
 
 let initialState: Anilist.TrackStore = JSON.parse(localStorage.getItem("anilist_tracking") || "[]");
 initialState = initialState.filter((e) => {
@@ -20,7 +21,7 @@ const anilistTracking = createSlice({
                 localStorage.setItem("anilist_tracking", str);
                 return action.payload;
             } catch (reason) {
-                window.dialog.customError({
+                dialogUtils.customError({
                     message: "Failed to save AniList tracker",
                     detail: reason as string,
                 });
@@ -36,7 +37,7 @@ const anilistTracking = createSlice({
                     return stateDup;
                 } else throw Error("Invalid Format.");
             } catch (reason) {
-                window.dialog.customError({
+                dialogUtils.customError({
                     message: "Failed to save AniList tracker",
                     detail: reason as string,
                 });
@@ -55,7 +56,7 @@ const anilistTracking = createSlice({
                     return stateDup;
                 } else throw Error("Invalid Format.");
             } catch (reason) {
-                window.dialog.customError({
+                dialogUtils.customError({
                     message: "Failed to save AniList tracker",
                     detail: reason as string,
                 });

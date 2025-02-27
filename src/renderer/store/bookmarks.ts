@@ -34,7 +34,7 @@
 //                 if (data.length === 0 || data[0].type) return data;
 //                 else return updateBookmarks(data);
 //             } catch (err) {
-//                 window.dialog.customError({
+//                 dialogUtils.customError({
 //                     message: "Unable to parse " + bookmarksPath + "\nMaking new bookmarks.json.",
 //                 });
 //                 window.logger.error(err);
@@ -71,7 +71,7 @@
 //                 const existingBookmark = state.findIndex((e) => e.data.link === newBk.data.link);
 //                 if (existingBookmark > -1) {
 //                     // if (state[existingBookmark].page === newBk.page){
-//                     //     window.dialog.warn({
+//                     //     dialogUtils.warn({
 //                     //         title: "Bookmark Already Exist",
 //                     //         message: "Bookmark Already Exist",
 //                     //     });
@@ -139,7 +139,6 @@
 import { createSlice, createAsyncThunk } from "@reduxjs/toolkit";
 import type { MangaBookmark, BookBookmark } from "@common/types/db";
 import { DatabaseChannels } from "@common/types/ipc";
-import { ipc } from "../utils/ipc";
 
 type BookmarksState = {
     // map of key:itemLink value: bookmarks
@@ -155,7 +154,7 @@ const initialState: BookmarksState = {
     error: null,
 };
 export const fetchAllBookmarks = createAsyncThunk("bookmarks/fetchAll", async () => {
-    const bookmarks = await ipc.invoke("db:library:getAllBookmarks");
+    const bookmarks = await window.electron.invoke("db:library:getAllBookmarks");
     console.log({ bookmarks });
     return bookmarks;
 });
@@ -177,7 +176,7 @@ export const addBookmark = createAsyncThunk(
         data: DatabaseChannels["db:book:addBookmark" | "db:manga:addBookmark"]["request"];
         type: "manga" | "book";
     }) => {
-        const bookmark = await ipc.invoke(`db:${type}:addBookmark`, data);
+        const bookmark = await window.electron.invoke(`db:${type}:addBookmark`, data);
         console.log({ bookmark });
         if (!bookmark) throw new Error("Failed to add bookmark");
         return { bookmark, type };
@@ -186,14 +185,14 @@ export const addBookmark = createAsyncThunk(
 export const removeBookmark = createAsyncThunk(
     "bookmarks/remove",
     async ({ itemLink, type, ids }: { itemLink: string; type: "manga" | "book"; ids: number[] }) => {
-        const res = await ipc.invoke(`db:${type}:deleteBookmarks`, { itemLink, ids });
+        const res = await window.electron.invoke(`db:${type}:deleteBookmarks`, { itemLink, ids });
         return { itemLink, type, ids };
     }
 );
 export const removeAllBookmarks = createAsyncThunk(
     "bookmarks/removeAll",
     async ({ itemLink, type }: { itemLink: string; type: "manga" | "book" }) => {
-        await ipc.invoke(`db:${type}:deleteBookmarks`, { itemLink, ids: [] });
+        await window.electron.invoke(`db:${type}:deleteBookmarks`, { itemLink, ids: [] });
         return { itemLink, type };
     }
 );

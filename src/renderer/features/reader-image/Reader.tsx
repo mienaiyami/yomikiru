@@ -15,6 +15,9 @@ import { InView } from "react-intersection-observer";
 import { setAnilistCurrentManga } from "../../store/anilistCurrentManga";
 import { MangaItem } from "@common/types/legacy";
 import { addLibraryItem, updateChaptersRead, updateMangaProgress } from "../../store/library";
+import { formatUtils } from "@utils/file";
+import { keyFormatter } from "@utils/keybindings";
+import AniList from "@utils/anilist";
 
 const processChapterNumber = (chapterName: string): number | undefined => {
     /*
@@ -191,21 +194,20 @@ const Reader = () => {
         readerRef.current?.focus();
     }, [isReaderOpen]);
     useEffect(() => {
-        if ((zenMode && !window.electron.getCurrentWindow().isMaximized()) || (!zenMode && !wasMaximized)) {
+        if ((zenMode && !window.electron.currentWindow.isMaximized()) || (!zenMode && !wasMaximized)) {
             setTimeout(() => {
                 scrollToPage(currentPageNumber, "auto");
             }, 100);
         }
         if (zenMode) {
             setSideListPinned(false);
-            setWasMaximized(window.electron.getCurrentWindow().isMaximized());
+            setWasMaximized(window.electron.currentWindow.isMaximized());
             document.body.classList.add("zenMode");
-            window.electron.getCurrentWindow().setFullScreen(true);
+            window.electron.currentWindow.setFullScreen(true);
         } else {
             document.body.classList.remove("zenMode");
             setWasMaximized(false);
-            if (window.electron.getCurrentWindow().isFullScreen())
-                window.electron.getCurrentWindow().setFullScreen(false);
+            if (window.electron.currentWindow.isFullScreen()) window.electron.currentWindow.setFullScreen(false);
         }
     }, [zenMode]);
     /**
@@ -253,7 +255,7 @@ const Reader = () => {
 
             //todo check consequences of using false
             // needed for `escape`
-            const keyStr = window.keyFormatter(e, false);
+            const keyStr = keyFormatter(e, false);
             if (keyStr === "") return;
 
             if (
@@ -626,11 +628,12 @@ const Reader = () => {
                         title: mangaOpened.mangaName,
                         type: "manga",
                     },
-                    progress: {
-                        chapterLink: link,
-                        totalPages: mangaOpened.pages,
-                        currentPage: 1,
-                    },
+                    //todo impl
+                    // progress: {
+                    //     chapterLink: link,
+                    //     totalPages: mangaOpened.pages,
+                    //     currentPage: 1,
+                    // },
                 })
             );
         // setImagesLength(imgs.length);
@@ -750,13 +753,13 @@ const Reader = () => {
             if (imgURL.length < 256) {
                 load();
             } else {
-                window.fs.readFile(imgURL, "base64", (err, data) => {
-                    if (err) {
-                        console.error(err);
-                    }
-                    imageSafeURL = `data:image/${window.path.extname(imgURL).substring(1)};base64,${data}`;
-                    load();
-                });
+                window.fs
+                    .readFile(imgURL, "base64")
+                    .then((data) => {
+                        imageSafeURL = `data:image/${window.path.extname(imgURL).substring(1)};base64,${data}`;
+                        load();
+                    })
+                    .catch(console.error);
             }
         });
     }, [images]);
@@ -890,13 +893,13 @@ const Reader = () => {
             );
             setUpdatedAnilistProgress(true);
             if (chapterNumber > anilistCurrentManga.progress)
-                window.al.setCurrentMangaProgress(chapterNumber).then((e) => {
+                AniList.setCurrentMangaProgress(chapterNumber).then((e) => {
                     if (e) {
                         dispatch(setAnilistCurrentManga(e));
                         console.log("Anilist::autoUpdateAnilistProgress: updated progress", chapterNumber);
                     } else {
                         console.error("Anilist::autoUpdateAnilistProgress: Failed to sync AniList progress.");
-                        // window.dialog.customError({ message: "Failed to sync AniList progress.", log: false });
+                        // dialogUtils.customError({ message: "Failed to sync AniList progress.", log: false });
                     }
                 });
         }
@@ -985,10 +988,10 @@ const Reader = () => {
                     <span className="b">
                         {window.path.basename(
                             prevNextChapter.prev,
-                            window.app.formats.files.getExt(prevNextChapter.prev)
+                            formatUtils.files.getExt(prevNextChapter.prev)
                         )}
-                        {window.app.formats.files.test(prevNextChapter.prev) && (
-                            <code>{window.app.formats.files.getExt(prevNextChapter.prev)}</code>
+                        {formatUtils.files.test(prevNextChapter.prev) && (
+                            <code>{formatUtils.files.getExt(prevNextChapter.prev)}</code>
                         )}
                     </span>
                 </div>
@@ -996,8 +999,8 @@ const Reader = () => {
                     <span className="a">Current :</span>
                     <span className="b">
                         {window.path.basename(mangaInReader?.chapterName || "")}
-                        {window.app.formats.files.test(mangaInReader?.chapterName || "") && (
-                            <code>{window.app.formats.files.getExt(mangaInReader?.chapterName || "")}</code>
+                        {formatUtils.files.test(mangaInReader?.chapterName || "") && (
+                            <code>{formatUtils.files.getExt(mangaInReader?.chapterName || "")}</code>
                         )}
                     </span>
                 </div>
@@ -1023,10 +1026,10 @@ const Reader = () => {
                     <span className="b">
                         {window.path.basename(
                             prevNextChapter.next,
-                            window.app.formats.files.getExt(prevNextChapter.next)
+                            formatUtils.files.getExt(prevNextChapter.next)
                         )}
-                        {window.app.formats.files.test(prevNextChapter.next) && (
-                            <code>{window.app.formats.files.getExt(prevNextChapter.next)}</code>
+                        {formatUtils.files.test(prevNextChapter.next) && (
+                            <code>{formatUtils.files.getExt(prevNextChapter.next)}</code>
                         )}
                     </span>
                 </div>

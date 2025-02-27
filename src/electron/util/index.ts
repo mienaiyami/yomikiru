@@ -1,4 +1,4 @@
-import { app } from "electron";
+import { app, BrowserWindow } from "electron";
 import _log from "electron-log";
 import path from "path";
 import fs from "fs";
@@ -34,4 +34,11 @@ export const saveFile = (path: string, data: string, sync = true, retry = 3) => 
 
 export const electronOnly = () => {
     if (process.type === "renderer") throw new Error("This function is only available in the main process.");
+};
+
+export const getWindowFromWebContents = (webContents: Electron.WebContents) => {
+    const win = BrowserWindow.fromWebContents(webContents);
+    // to avoid typescript errors because in most cases it will never be null
+    if (!win) throw new Error("BrowserWindow not found");
+    return win;
 };

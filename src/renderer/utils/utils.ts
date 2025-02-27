@@ -1,47 +1,10 @@
-import { app, dialog, getCurrentWindow, clipboard, nativeImage, shell } from "@electron/remote";
-import { ipcRenderer, webFrame } from "electron";
-import path from "path";
-import fs from "fs";
-import * as chokidar from "chokidar";
+// import log from "electron-log";
+// log.transports.file.resolvePath = () =>
+//     window.path.join(window.Electron.app.getPath("userData"), "logs/renderer.log");
 
-window.electron = {
-    app,
-    dialog,
-    shell,
-    // todo remove ipcRenderer in favor of typed ./ipc
-    ipcRenderer,
-    getCurrentWindow,
-    clipboard,
-    nativeImage,
-    webFrame,
-};
+// window.logger = log;
 
-// todo: remove these later
-window.path = path;
-window.fs = fs;
-window.chokidar = chokidar;
-
-import log from "electron-log";
-log.transports.file.resolvePath = () => path.join(app.getPath("userData"), "logs/renderer.log");
-
-import AniList from "./anilist";
-import { SHORTCUT_COMMAND_MAP, keyFormatter } from "./keybindings";
-import { colorUtils } from "./color";
-import { dialogUtils } from "./dialog";
-import { formatUtils, makeFileSafe } from "./file";
-import { themeProps } from "./theme";
-
-window.themeProps = themeProps;
-
-window.app.formats = formatUtils;
-
-window.SHORTCUT_COMMANDS = SHORTCUT_COMMAND_MAP;
-window.keyFormatter = keyFormatter;
-window.logger = log;
-
-window.makeFileSafe = makeFileSafe;
-
-window.getCSSPath = (el) => {
+export const getCSSPath = (el: Element): string => {
     if (!(el instanceof Element)) return "";
     const path = [] as string[];
     let elem = el;
@@ -111,7 +74,7 @@ window.contextMenu = {
     },
 };
 
-window.app.randomString = (length: number) => {
+export const randomString = (length: number) => {
     let result = "";
     const characters = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789";
     for (let i = 0; i <= length; i++) {
@@ -119,7 +82,3 @@ window.app.randomString = (length: number) => {
     }
     return result;
 };
-
-window.color = colorUtils;
-window.dialog = dialogUtils;
-window.al = new AniList();

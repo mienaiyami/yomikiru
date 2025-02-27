@@ -1,6 +1,7 @@
 import { useContext, memo, useEffect, useState } from "react";
 import { useAppSelector } from "@store/hooks";
 import { AppContext } from "src/renderer/App";
+import { formatUtils } from "@utils/file";
 // import { setContextMenu } from "../store/contextMenu";
 // import { useAppDispatch } from "../store/hooks";
 
@@ -89,10 +90,10 @@ const ReaderSideListItem = memo(
                         });
                     }}
                 >
-                    <span className="text">{window.app.formats.files.getName(name)}</span>
-                    {window.app.formats.files.test(name) ? (
-                        <code className="nonFolder" data-type-text={window.app.formats.book.test(name)}>
-                            {window.app.formats.files.getExt(name)}
+                    <span className="text">{formatUtils.files.getName(name)}</span>
+                    {formatUtils.files.test(name) ? (
+                        <code className="nonFolder" data-type-text={formatUtils.book.test(name)}>
+                            {formatUtils.files.getExt(name)}
                         </code>
                     ) : (
                         <span className="pageNum" title="Total Pages">

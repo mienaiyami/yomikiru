@@ -19,6 +19,9 @@ import { setAppSettings, setReaderSettings } from "../../store/appSettings";
 import { setPrevNextChapter } from "../../store/prevNextChapter";
 import AnilistBar from "../anilist/AnilistBar";
 import { AppContext } from "../../App";
+import { formatUtils } from "@utils/file";
+import { dialogUtils } from "@utils/dialog";
+import { keyFormatter } from "@utils/keybindings";
 
 type ChapterData = { name: string; pages: number; link: string; dateModified: number };
 
@@ -107,37 +110,29 @@ const ReaderSideList = memo(
             // setFocused(-1);
             if (mangaInReader) {
                 const dir = mangaInReader.link.replace(mangaInReader.chapterName, "");
-                window.fs.readdir(dir, (err, files) => {
-                    if (err) {
-                        window.logger.error(err);
-                        window.dialog.nodeError(err);
-                        return;
-                    }
+                try {
+                    const files = await window.fs.readdir(dir);
                     const listData: ChapterData[] = [];
                     let validFile = 0;
                     let responseCompleted = 0;
-                    files.forEach((e) => {
-                        const path = window.path.join(dir, e);
-                        let aa = true;
+                    files.forEach(async (e) => {
                         try {
-                            window.fs.lstatSync(path);
-                        } catch (err) {
-                            aa = false;
-                        }
-                        const stat = window.fs.lstatSync(path);
-                        if (aa && window.path.extname(e).toLowerCase() !== ".sys")
-                            if (stat.isDirectory()) {
+                            const filePath = window.path.join(dir, e);
+
+                            const stat = await window.fs.stat(filePath);
+                            //todo refactor
+                            if (stat.isDir) {
                                 validFile++;
-                                window.fs.promises
-                                    .readdir(path)
+                                window.fs
+                                    .readdir(filePath)
                                     .then((data) => {
                                         responseCompleted++;
-                                        data = data.filter((e) => window.app.formats.image.test(e));
+                                        data = data.filter((e) => formatUtils.image.test(e));
                                         if (data.length > 0) {
                                             listData.push({
                                                 name: e,
                                                 pages: data.length,
-                                                link: path,
+                                                link: filePath,
                                                 dateModified: stat.mtimeMs,
                                             });
                                         }
@@ -156,14 +151,15 @@ const ReaderSideList = memo(
                                             );
                                         }
                                     });
-                            } else if (window.app.formats.files.test(path)) {
+                            } else if (formatUtils.files.test(filePath)) {
                                 validFile++;
+                                //todo why?
                                 setTimeout(() => {
                                     responseCompleted++;
                                     listData.push({
                                         name: e,
                                         pages: 0,
-                                        link: path,
+                                        link: filePath,
                                         dateModified: stat.mtimeMs,
                                     });
                                     if (responseCompleted >= validFile) {
@@ -173,30 +169,39 @@ const ReaderSideList = memo(
                                     }
                                 }, 1000);
                             }
+                        } catch (err) {
+                            if (err instanceof Error) dialogUtils.nodeError(err);
+                            else console.error(err);
+                        }
                     });
-                });
+                } catch (err) {
+                    if (err instanceof Error) dialogUtils.nodeError(err);
+                    else console.error(err);
+                }
             }
         };
         useLayoutEffect(() => {
             makeChapterList();
 
             if (mangaInReader && appSettings.autoRefreshSideList) {
-                const watcher = window.chokidar.watch(mangaInReader.link.replace(mangaInReader.chapterName, ""), {
-                    depth: 0,
-                    ignoreInitial: true,
-                });
-                let timeout: NodeJS.Timeout;
                 const refresh = () => {
                     if (timeout) clearTimeout(timeout);
                     timeout = setTimeout(() => {
                         makeChapterList(true);
                     }, 1000);
                 };
-                watcher.on("all", () => {
-                    refresh();
+                const closeWatcher = window.chokidar.watch({
+                    path: mangaInReader.link.replace(mangaInReader.chapterName, ""),
+                    event: "all",
+                    options: {
+                        depth: 0,
+                        ignoreInitial: true,
+                    },
+                    callback: refresh,
                 });
+                let timeout: NodeJS.Timeout;
                 return () => {
-                    watcher.removeAllListeners("all");
+                    closeWatcher();
                 };
             }
         }, [mangaInReader]);
@@ -246,7 +251,7 @@ const ReaderSideList = memo(
 
         const sortedLocations = useMemo(() => {
             const qq = (file: string) => {
-                return window.app.formats.files.getName(file);
+                return formatUtils.files.getName(file);
             };
             const sorted =
                 appSettings.locationListSortBy === "name"
@@ -356,7 +361,7 @@ const ReaderSideList = memo(
                                 if (e.key === "Escape") {
                                     e.currentTarget.blur();
                                 }
-                                const keyStr = window.keyFormatter(e);
+                                const keyStr = keyFormatter(e);
                                 if (keyStr === "" && e.key !== "Escape") return;
 
                                 const shortcutsMapped = Object.fromEntries(
@@ -489,7 +494,7 @@ const ReaderSideList = memo(
                             tooltip="Open Previous"
                             clickAction={() => {
                                 if (prevNextChapter.prev === "~") {
-                                    window.dialog
+                                    dialogUtils
                                         .confirm({
                                             message: "There's no previous chapter.",
                                             buttons: ["Ok", "Home"],
@@ -514,7 +519,7 @@ const ReaderSideList = memo(
                             btnRef={addToBookmarkRef}
                             clickAction={() => {
                                 if (isBookmarked) {
-                                    return window.dialog
+                                    return dialogUtils
                                         .warn({
                                             title: "Warning",
                                             message:
@@ -565,7 +570,7 @@ const ReaderSideList = memo(
                             tooltip="Open Next"
                             clickAction={() => {
                                 if (prevNextChapter.next === "~") {
-                                    window.dialog
+                                    dialogUtils
                                         .confirm({
                                             message: "There's no next chapter.",
                                             buttons: ["Ok", "Home"],
@@ -595,7 +600,7 @@ const ReaderSideList = memo(
                     <div>
                         <span className="bold">Chapter</span>
                         <span className="bold"> : </span>
-                        <span>{window.app.formats.files.getName(mangaInReader?.chapterName || "")}</span>
+                        <span>{formatUtils.files.getName(mangaInReader?.chapterName || "")}</span>
                     </div>
                 </div>
                 <div className="tools">

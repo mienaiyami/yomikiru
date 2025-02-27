@@ -12,6 +12,7 @@ import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { Fragment, memo, useEffect, useLayoutEffect, useRef, useState } from "react";
 import { useAppDispatch, useAppSelector } from "@store/hooks";
 import { addBookmark } from "@store/bookmarks";
+import { dialogUtils } from "@utils/dialog";
 
 const EPubReaderSideList = memo(
     ({
@@ -231,7 +232,7 @@ const EPubReaderSideList = memo(
                             ref={addToBookmarkRef}
                             onClick={() => {
                                 if (isBookmarked) {
-                                    return window.dialog
+                                    return dialogUtils
                                         .warn({
                                             title: "Warning",
                                             message:

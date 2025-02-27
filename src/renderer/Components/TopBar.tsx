@@ -9,17 +9,18 @@ import {
     faTimes,
 } from "@fortawesome/free-solid-svg-icons";
 import { AppContext } from "../App";
-import { useAppDispatch, useAppSelector } from "../store/hooks";
-import { setOpenSetting, toggleOpenSetting } from "../store/isSettingOpen";
-import { setPageNumChangeDisabled } from "../store/pageNumChangeDisabled";
-import { setSysBtnColor } from "../store/themes";
+import { useAppDispatch, useAppSelector } from "@store/hooks";
+import { setOpenSetting, toggleOpenSetting } from "@store/isSettingOpen";
+import { setPageNumChangeDisabled } from "@store/pageNumChangeDisabled";
+import { setSysBtnColor } from "@store/themes";
+import { formatUtils } from "@utils/file";
 
 const TopBar = (): ReactElement => {
     const [title, setTitle] = useState<string>("Yomikiru");
     const { pageNumberInputRef, bookProgressRef, closeReader } = useContext(AppContext);
     const mangaInReader = useAppSelector((store) => store.mangaInReader);
     const bookInReader = useAppSelector((store) => store.bookInReader);
-    const [isMaximized, setMaximized] = useState(window.electron.getCurrentWindow().isMaximized ?? true);
+    const [isMaximized, setMaximized] = useState(window.electron.currentWindow.isMaximized() || false);
     const isReaderOpen = useAppSelector((store) => store.isReaderOpen);
     const appSettings = useAppSelector((store) => store.appSettings);
 
@@ -30,7 +31,7 @@ const TopBar = (): ReactElement => {
     const setTitleWithSize = () => {
         if (mangaInReader) {
             let mangaName = mangaInReader.mangaName;
-            let chapterName = window.app.formats.files.getName(mangaInReader.chapterName);
+            let chapterName = formatUtils.files.getName(mangaInReader.chapterName);
             if (mangaName.length > 13) mangaName = mangaName.substring(0, 20) + "...";
             if (chapterName.length > 83) chapterName = chapterName.substring(0, 80) + "...";
             const title = `${window.electron.app.getName()} - ${mangaName} | ${chapterName}`;
@@ -45,7 +46,7 @@ const TopBar = (): ReactElement => {
                 bookInReader.chapterData &&
                 bookInReader.chapterData.chapterName !== "~"
             ) {
-                chapterName = window.app.formats.files.getName(bookInReader.chapterData.chapterName);
+                chapterName = formatUtils.files.getName(bookInReader.chapterData.chapterName);
                 if (chapterName.length > 83) chapterName = chapterName.substring(0, 80) + "...";
             }
             if (bookTitle.length > 83) bookTitle = bookTitle.substring(0, 80) + "...";
@@ -58,41 +59,34 @@ const TopBar = (): ReactElement => {
             document.title = title;
             return;
         }
-        setTitle(window.electron.app.name.concat(window.electron.app.isPackaged ? "" : " - dev"));
-        document.title = window.electron.app.name;
+        setTitle(window.electron.app.getName().concat(window.electron.app.isPackaged ? "" : " - dev"));
+        document.title = window.electron.app.getName();
     };
-    const attachEventListener = () => {
-        setMaximized(window.electron.getCurrentWindow().isMaximized);
-        window.electron.getCurrentWindow()?.on("maximize", () => setMaximized(true));
-        window.electron.getCurrentWindow()?.on("unmaximize", () => setMaximized(false));
-
+    useLayoutEffect(() => {
         const onBlur = () => {
             setSysBtnColor(true);
         };
         const onFocus = () => {
             setSysBtnColor();
         };
+        setMaximized(window.electron.currentWindow.isMaximized());
+        window.electron.currentWindow.isFocused() ? onFocus() : onBlur();
 
-        window.electron.getCurrentWindow()?.isFocused() ? onFocus() : onBlur();
-        window.electron.getCurrentWindow()?.on("focus", onFocus);
-        window.electron.getCurrentWindow()?.on("blur", onBlur);
-    };
-    const removeEventListener = () => {
-        window.electron.getCurrentWindow()?.removeAllListeners("maximize");
-        window.electron.getCurrentWindow()?.removeAllListeners("unmaximize");
-        window.electron.getCurrentWindow()?.removeAllListeners("focus");
-        window.electron.getCurrentWindow()?.removeAllListeners("blur");
-    };
-    useLayoutEffect(() => {
-        attachEventListener();
-        const ff = () => {
+        const listeners: (() => void)[] = [];
+
+        listeners.push(window.electron.currentWindow.on("maximize", () => setMaximized(true)));
+        listeners.push(window.electron.currentWindow.on("unmaximize", () => setMaximized(false)));
+        listeners.push(window.electron.currentWindow.on("focus", onFocus));
+        listeners.push(window.electron.currentWindow.on("blur", onBlur));
+
+        const updatePageNumberInput = () => {
             (document.querySelector("#NavigateToPageInput") as HTMLInputElement).value =
                 window.app.currentPageNumber.toString();
         };
-        window.addEventListener("pageNumberChange", ff);
+        window.addEventListener("pageNumberChange", updatePageNumberInput);
         return () => {
-            window.removeEventListener("pageNumberChange", ff);
-            removeEventListener();
+            listeners.forEach((e) => e());
+            window.removeEventListener("pageNumberChange", updatePageNumberInput);
         };
     }, []);
     useEffect(() => {
@@ -264,14 +258,14 @@ const TopBar = (): ReactElement => {
                     />
                     <span className="totalPage">%</span>
                 </label>
-                {process.platform !== "win32" ? (
+                {window.process.platform !== "win32" ? (
                     <>
                         <button
                             tabIndex={-1}
                             id="minimizeBtn"
                             title="Minimize"
                             onFocus={(e) => e.currentTarget.blur()}
-                            onClick={() => window.electron.getCurrentWindow().minimize()}
+                            onClick={() => window.electron.currentWindow.minimize()}
                         >
                             <FontAwesomeIcon icon={faMinus} />
                         </button>
@@ -281,8 +275,8 @@ const TopBar = (): ReactElement => {
                             onFocus={(e) => e.currentTarget.blur()}
                             title={isMaximized ? "Restore" : "Maximize"}
                             onClick={() => {
-                                if (isMaximized) return window.electron.getCurrentWindow().restore();
-                                window.electron.getCurrentWindow().maximize();
+                                if (isMaximized) return window.electron.currentWindow.restore();
+                                window.electron.currentWindow.maximize();
                             }}
                         >
                             <FontAwesomeIcon icon={isMaximized ? faWindowRestore : faWindowMaximize} />
@@ -292,7 +286,7 @@ const TopBar = (): ReactElement => {
                             id="closeBtn"
                             title="Close"
                             onFocus={(e) => e.currentTarget.blur()}
-                            onClick={() => window.electron.getCurrentWindow().close()}
+                            onClick={() => window.electron.currentWindow.close()}
                         >
                             <FontAwesomeIcon icon={faTimes} />
                         </button>

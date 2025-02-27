@@ -22,7 +22,7 @@ const Link = ({
             }}
             onClick={() => {
                 if (confirmOpen)
-                    window.dialog
+                    dialogUtils
                         .confirm({
                             message: "Open URL in Browser?",
                             detail: href,

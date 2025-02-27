@@ -1,4 +1,5 @@
 import { createSlice, PayloadAction } from "@reduxjs/toolkit";
+import AniList from "@utils/anilist";
 
 const initialState = null as Anilist.MangaData | null;
 
@@ -7,8 +8,8 @@ const anilistCurrentManga = createSlice({
     initialState,
     reducers: {
         setAnilistCurrentManga: (state, action: PayloadAction<Anilist.MangaData | null>) => {
-            if (action.payload) window.al.setCurrentMangaListId(action.payload.id);
-            else window.al.setCurrentMangaListId(null);
+            if (action.payload) AniList.setCurrentMangaListId(action.payload.id);
+            else AniList.setCurrentMangaListId(null);
             return action.payload;
         },
     },

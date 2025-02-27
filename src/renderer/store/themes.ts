@@ -1,11 +1,13 @@
 import { createSlice, current, PayloadAction } from "@reduxjs/toolkit";
 import { saveJSONfile, themesPath } from "../utils/file";
-import { initThemeData } from "../utils/theme";
+import { initThemeData, themeProps } from "../utils/theme";
+import { colorUtils } from "@utils/color";
+import { dialogUtils } from "@utils/dialog";
 
 export const setSysBtnColor = (blurred = false) => {
     const topbarElem = document.querySelector<HTMLDivElement>("body #topBar");
     if (topbarElem) {
-        let color = window.color.new(
+        let color = colorUtils.new(
             window.getComputedStyle(document.body).getPropertyValue("--icon-color") || "#ffffff"
         );
         if (blurred) {
@@ -13,7 +15,7 @@ export const setSysBtnColor = (blurred = false) => {
         }
         topbarElem.style.color = color.hexa();
         process.platform === "win32" &&
-            window.electron.getCurrentWindow().setTitleBarOverlay({
+            window.electron.currentWindow.setTitleBarOverlay()({
                 color: window.getComputedStyle(topbarElem).backgroundColor,
                 symbolColor: color.hexa(),
                 height: Math.floor(window.app.titleBarHeight * window.electron.webFrame.getZoomFactor()),
@@ -33,21 +35,21 @@ const setBodyTheme = ({ allData, name }: Themes) => {
             document.body.setAttribute("data-theme", name);
             if (process.platform === "win32") {
                 setTimeout(() => {
-                    setSysBtnColor(!window.electron.getCurrentWindow().isFocused());
+                    setSysBtnColor(!window.electron.currentWindow.isFocused());
                     const elem = document.querySelector(".windowBtnCont") as HTMLDivElement;
                     if (elem) elem.style.right = `${140 * (1 / window.electron.webFrame.getZoomFactor())}px`;
                 }, 1000);
             }
         } else {
-            window.dialog.customError({
+            dialogUtils.customError({
                 title: "Error",
                 message: '"' + name + '" Theme does not exist or is corrupted.\nRewriting theme',
             });
-            window.fs.unlinkSync(window.path.join(window.electron.app.getPath("userData"), "themes.json"));
+            window.fs.rm(window.path.join(window.electron.app.getPath("userData"), "themes.json"));
             window.location.reload();
         }
     } else {
-        window.dialog.customError({
+        dialogUtils.customError({
             title: "Error",
             message: `Theme "${name}" does not exist. Try fixing or deleting theme.json and settings.json in "userdata" folder.(at "%appdata%/Yomikiru/" or in main folder on Portable version)`,
         });
@@ -84,7 +86,7 @@ if (window.fs.existsSync(themesPath)) {
             if (typeof data.allData[0].main === "string" || !Array.isArray(data.allData))
                 throw { message: "Theme variable does not exist on theme.main" };
             const addedProp = new Set<string>();
-            for (const prop in window.themeProps) {
+            for (const prop in themeProps) {
                 let rewriteNeeded = false;
                 (data as Themes).allData.forEach((e) => {
                     if (!e.main[prop as ThemeDataMain]) {
@@ -98,7 +100,7 @@ if (window.fs.existsSync(themesPath)) {
                             window.logger.log(
                                 `"${prop}" does not exist on theme - "${e.name}", adding it with value "#ff0000".`
                             );
-                            addedProp.add('\t"' + window.themeProps[prop as ThemeDataMain] + '"');
+                            addedProp.add('\t"' + themeProps[prop as ThemeDataMain] + '"');
                             rewriteNeeded = true;
                             changed = true;
                             e.main[prop as ThemeDataMain] = "#ff0000";
@@ -126,13 +128,13 @@ if (window.fs.existsSync(themesPath)) {
                 }
             });
             if (changed2) {
-                window.dialog.warn({
+                dialogUtils.warn({
                     message: "Changes in Default Themes. Old themes still exist but can be deleted.",
                 });
                 window.fs.writeFileSync(themesPath, JSON.stringify(data, null, "\t"));
             }
             if (changed) {
-                window.dialog.warn({
+                dialogUtils.warn({
                     message:
                         'Some properties were missing in themes. Added new as "Red" color, change accordingly or re-edit default themes.' +
                         "\nNew Properties:\n" +
@@ -143,11 +145,11 @@ if (window.fs.existsSync(themesPath)) {
             initialState.allData = data.allData;
         } catch (err: any) {
             if (err.message === "newTheme")
-                window.dialog.customError({
+                dialogUtils.customError({
                     message: "Theme system changed, old themes will be deleted. Sorry for your inconvenience.",
                 });
             else
-                window.dialog.customError({
+                dialogUtils.customError({
                     message: "Unable to parse " + themesPath + "\nMaking new themes.json..." + "\n" + err,
                 });
             window.logger.error(err);
@@ -168,7 +170,7 @@ if (window.fs.existsSync(themesPath)) {
 }
 
 if (!initialState.allData.map((e) => e.name).includes(initialState.name)) {
-    window.dialog.customError({
+    dialogUtils.customError({
         title: "Error",
         message: `Theme "${initialState.name}" does not exist. Switching to default theme.`,
     });
@@ -221,10 +223,7 @@ const themes = createSlice({
                 });
             }
         },
-        updateTheme: (
-            state,
-            action: PayloadAction<{ themeName: string; newThemeData: typeof window.themeProps }>
-        ) => {
+        updateTheme: (state, action: PayloadAction<{ themeName: string; newThemeData: typeof themeProps }>) => {
             state.allData[state.allData.findIndex((e) => e.name === action.payload.themeName)].main =
                 action.payload.newThemeData;
             saveJSONandApply(current(state));

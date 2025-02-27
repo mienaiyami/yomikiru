@@ -27,7 +27,7 @@ const Main = (): ReactElement => {
     // useEffect(() => {
     //     setColorSelectData({
     //         elemBox: { x: 300, y: 300 },
-    //         value: window.color.new("#ffffff"),
+    //         value: colorUtils.new("#ffffff"),
     //     });
     // }, []);
 

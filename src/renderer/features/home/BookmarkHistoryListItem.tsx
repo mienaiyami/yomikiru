@@ -1,4 +1,6 @@
 import { useAppSelector } from "@store/hooks";
+import { dialogUtils } from "@utils/dialog";
+import { formatUtils } from "@utils/file";
 import { useContext, useState, useEffect } from "react";
 import { AppContext } from "src/renderer/App";
 
@@ -44,7 +46,7 @@ const BookmarkHistoryListItem = (props: {
                 className="big"
                 onClick={() => {
                     if (!window.fs.existsSync(link)) {
-                        window.dialog.customError({
+                        dialogUtils.customError({
                             message: "File/folder does not exit.",
                         });
                         return;
@@ -97,14 +99,14 @@ const BookmarkHistoryListItem = (props: {
                         <span className="text">{item.title}</span>
                         <span className="chapter">
                             <span className="text">
-                                {window.app.formats.files.getName(item.progress.chapterName || "~")}
+                                {formatUtils.files.getName(item.progress.chapterName || "~")}
                             </span>
                             &nbsp;&nbsp;&nbsp;
                             <span className="page">
                                 {" "}
-                                {window.app.formats.files.test(item.progress.chapterName || "~") && (
+                                {formatUtils.files.test(item.progress.chapterName || "~") && (
                                     <code className="nonFolder">
-                                        {window.app.formats.files.getExt(item.progress.chapterName || "~")}
+                                        {formatUtils.files.getExt(item.progress.chapterName || "~")}
                                     </code>
                                 )}
                             </span>

@@ -6,6 +6,7 @@ import InputCheckbox from "@ui/InputCheckbox";
 import InputNumber from "@ui/InputNumber";
 import InputSelect from "@ui/InputSelect";
 import Link from "@ui/Link";
+import AniList from "@utils/anilist";
 import React, { useEffect, useLayoutEffect, useRef, useState } from "react";
 
 import FocusLock from "react-focus-lock";
@@ -273,7 +274,7 @@ const AnilistEdit = () => {
                                             const target = e.currentTarget;
                                             const oldText = target.innerText;
                                             target.innerText = "Saving...";
-                                            window.al.setCurrentMangaData(tempData).then((e) => {
+                                            AniList.setCurrentMangaData(tempData).then((e) => {
                                                 if (e) {
                                                     dispatch(setAnilistCurrentManga(e));
                                                     target.innerText = "Saved!";

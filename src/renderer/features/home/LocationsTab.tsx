@@ -1,7 +1,7 @@
 import LocationListItem from "@features/home/LocationListItem";
 import { faAngleUp, faSort } from "@fortawesome/free-solid-svg-icons";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import { promptSelectDir } from "@renderer-utils/file";
+import { formatUtils, promptSelectDir } from "@utils/file";
 import { setAppSettings } from "@store/appSettings";
 import { useAppDispatch, useAppSelector } from "@store/hooks";
 import {
@@ -15,6 +15,8 @@ import {
     useCallback,
 } from "react";
 import { AppContext } from "src/renderer/App";
+import { dialogUtils } from "@utils/dialog";
+import { keyFormatter } from "@utils/keybindings";
 
 type LocationData = { name: string; link: string; dateModified: number };
 
@@ -25,6 +27,7 @@ const LocationsTab = (): ReactElement => {
     const shortcuts = useAppSelector((store) => store.shortcuts);
     const dispatch = useAppDispatch();
 
+    //todo : use reducer instead and check if exists and is dir
     const [currentLink, setCurrentLink] = useState(window.path.resolve(appSettings.baseDir));
     const item = library[currentLink];
 
@@ -38,85 +41,68 @@ const LocationsTab = (): ReactElement => {
     const inputRef = useRef<HTMLInputElement>(null);
     const locationContRef = useRef<HTMLDivElement>(null);
 
-    const displayList = (link = currentLink, refresh = false): void => {
-        if (!refresh) {
-            setFilter("");
-            setFocused(-1);
-        }
-        if (!window.fs.existsSync(link)) {
-            if (!window.fs.existsSync(appSettings.baseDir)) {
-                window.dialog.customError({ message: "Default Location doesn't exist." });
-                promptSelectDir((path) => dispatch(setAppSettings({ baseDir: path as string })));
-                return;
+    const displayList = async (link = currentLink, refresh = false): Promise<void> => {
+        try {
+            if (!refresh) {
+                setFilter("");
+                setFocused(-1);
             }
-            window.dialog.customError({ message: "Directory/File doesn't exist." });
-            setCurrentLink(window.path.resolve(appSettings.baseDir));
-            return;
-        }
-
-        if (window.fs.existsSync(link) && window.fs.lstatSync(link).isDirectory()) {
-            if (!refresh) setIsLoadingFile(true);
-            window.fs.readdir(link, (err, files) => {
-                if (err) {
-                    window.logger.error(err);
-                    window.dialog.nodeError(err);
+            if (!window.fs.existsSync(link)) {
+                // todo: does it need to be here?
+                if (!window.fs.existsSync(appSettings.baseDir)) {
+                    dialogUtils.customError({ message: "Default Location doesn't exist." });
+                    promptSelectDir((path) => dispatch(setAppSettings({ baseDir: path as string })));
                     return;
                 }
-                setImageCount(
-                    files.filter((e) => {
-                        let aa = true;
+                dialogUtils.customError({ message: "Directory/File doesn't exist." });
+                setCurrentLink(window.path.resolve(appSettings.baseDir));
+                return;
+            }
+
+            if (window.fs.existsSync(link) && window.fs.isDir(link)) {
+                if (!refresh) setIsLoadingFile(true);
+                const files = await window.fs.readdir(link);
+                let imgCount = 0;
+
+                // order does not matter because it need to be sorted later
+                const dirNames: typeof locations = [];
+                //todo : test this
+                await Promise.all(
+                    files.map(async (fileName) => {
                         try {
-                            window.fs.lstatSync(window.path.join(link, e));
-                        } catch (err) {
-                            aa = false;
-                        }
-                        return (
-                            aa &&
-                            window.path.extname(e).toLowerCase() !== ".sys" &&
-                            window.fs.lstatSync(window.path.join(link, e)).isFile() &&
-                            window.app.formats.image.test(e)
-                        );
-                    }).length
-                );
-                const dirNames = files.reduce((arr: LocationData[], cur) => {
-                    try {
-                        const stat = window.fs.lstatSync(window.path.join(link, cur));
-                        if (window.fs.existsSync(window.path.join(link, cur))) {
-                            if (
-                                //todo use window.app.formats
-                                stat.isDirectory() ||
-                                [
-                                    ".zip",
-                                    ".cbz",
-                                    ".rar",
-                                    ".7z",
-                                    ".epub",
-                                    ".pdf",
-                                    ".xhtml",
-                                    ".html",
-                                    ".txt",
-                                ].includes(window.path.extname(cur).toLowerCase())
-                            ) {
-                                arr.push({
-                                    name: cur,
-                                    link: window.path.join(link, cur),
+                            const filePath = window.path.join(link, fileName);
+                            // to prevent errors in case system files or no permissions or doesn't exist
+                            await window.fs.access(filePath, window.fs.constants.R_OK);
+                            const stat = await window.fs.stat(filePath);
+                            if (stat.isFile && formatUtils.image.test(fileName)) {
+                                imgCount++;
+                                return;
+                            }
+                            if (stat.isDir || (stat.isFile && formatUtils.files.test(fileName))) {
+                                dirNames.push({
+                                    name: fileName,
+                                    link: filePath,
                                     dateModified: stat.mtimeMs,
                                 });
                             }
+                        } catch (error) {
+                            console.log(error);
                         }
-                    } catch (err) {
-                        console.error(err);
-                    }
-                    return arr;
-                    //  return (window.fs.lstatSync(window.path.join(link, e)) || false).isDirectory()
-                }, []);
+                    })
+                );
 
                 if (inputRef.current && !refresh) {
                     inputRef.current.value = "";
                 }
+                setImageCount(imgCount);
                 setLocations(dirNames);
                 setIsLoadingFile(false);
-            });
+            }
+        } catch (err) {
+            if (err instanceof Error) {
+                dialogUtils.nodeError(err);
+            }
+            window.logger.error(err);
         }
     };
 
@@ -124,26 +110,29 @@ const LocationsTab = (): ReactElement => {
         if (currentLink !== appSettings.baseDir) setCurrentLink(window.path.resolve(appSettings.baseDir));
     }, [appSettings.baseDir]);
     useLayoutEffect(() => {
-        const watcher = window.chokidar.watch(currentLink, {
-            depth: 0,
-            ignoreInitial: true,
-        });
-        displayList();
-        let timeout: NodeJS.Timeout;
         const refresh = () => {
             if (timeout) clearTimeout(timeout);
             timeout = setTimeout(() => {
                 displayList(currentLink, true);
             }, 1000);
         };
-        watcher.on("all", () => {
-            refresh();
+        const closeWatcher = window.chokidar.watch({
+            path: currentLink,
+            event: "add",
+            options: {
+                depth: 0,
+                ignoreInitial: true,
+            },
+            callback: refresh,
         });
+        displayList();
+        let timeout: NodeJS.Timeout;
         return () => {
-            watcher.removeAllListeners("all");
+            closeWatcher();
         };
     }, [currentLink]);
 
+    // todo move it to ref={}
     useEffect(() => {
         if (inputRef.current) {
             inputRef.current.focus();
@@ -151,7 +140,7 @@ const LocationsTab = (): ReactElement => {
     }, [inputRef]);
 
     const sortedLocations = useMemo(() => {
-        const qq = window.app.formats.files.getName;
+        const qq = formatUtils.files.getName;
         const sorted =
             appSettings.locationListSortBy === "name"
                 ? locations.sort((a, b) => window.app.betterSortOrder(qq(a.name), qq(b.name)))
@@ -167,7 +156,7 @@ const LocationsTab = (): ReactElement => {
             ];
             if (inHistory) {
                 items.push(
-                    window.contextMenu.template.unreadChapter(currentLink, window.app.formats.files.getName(link))
+                    window.contextMenu.template.unreadChapter(currentLink, formatUtils.files.getName(link))
                 );
                 items.push(window.contextMenu.template.unreadAllChapter(currentLink));
             }
@@ -280,7 +269,7 @@ const LocationsTab = (): ReactElement => {
                                 e.preventDefault();
                             }
 
-                            const keyStr = window.keyFormatter(e);
+                            const keyStr = keyFormatter(e);
                             if (keyStr === "") return;
                             const shortcutsMapped = Object.fromEntries(
                                 shortcuts.map((e) => [e.command, e.keys])
@@ -341,19 +330,17 @@ const LocationsTab = (): ReactElement => {
                         }}
                         onChange={(e) => {
                             let val = e.target.value;
-                            // val = val.replaceAll('"', "");
+
+                            // for changing drive in windows
                             if (process.platform === "win32")
                                 if (/.:\\.*/.test(val)) {
                                     const aa = window.path.normalize(val);
-                                    try {
-                                        if (window.fs.existsSync(aa) && window.fs.lstatSync(aa).isFile())
-                                            return openInReader(aa);
-                                        setCurrentLink(aa);
-                                    } catch (err) {
-                                        console.error(err);
-                                    }
+                                    // opens directly if path is a file
+                                    if (window.fs.isFile(aa)) return openInReader(aa);
+                                    setCurrentLink(aa);
                                     return;
                                 }
+                            // move up one directory
                             if (val === ".." + window.path.sep)
                                 return setCurrentLink(window.path.resolve(currentLink, "../"));
                             // check for exact match and open directly without enter
@@ -364,8 +351,7 @@ const LocationsTab = (): ReactElement => {
                                 );
                                 if (index >= 0) {
                                     const aa = window.path.normalize(locations[index].link);
-                                    if (window.fs.existsSync(aa) && window.fs.lstatSync(aa).isFile())
-                                        return openInReader(aa);
+                                    if (window.fs.isFile(aa)) return openInReader(aa);
                                     return setCurrentLink(aa);
                                     // need or not?
                                     // return setCurrentLink(window.path.normalize(locations[index].link + window.path.sep));
@@ -446,41 +432,5 @@ const LocationsTab = (): ReactElement => {
         </div>
     );
 };
-
-// const RealList = memo(
-//     ({
-//         locations,
-//         historySimple,
-//         inputRef,
-//         focused,setCurrentLink
-//     }: {
-//         locations: LocationData[]
-//         historySimple: [number, string[]]
-//         inputRef: React.RefObject<HTMLInputElement>;
-//         focused: number;
-//         setCurrentLink: React.Dispatch<React.SetStateAction<string>>
-//     }) => {
-//         return (
-//         <ol>
-//         {locations.map((e, i, arr) => (
-//             <LocationListItem
-//                 name={e.name}
-//                 link={e.link}
-//                 focused={
-//                     arr.length === 1 && document.activeElement === inputRef.current
-//                         ? true
-//                         : focused % arr.length === i
-//                 }
-//                 inHistory={[historySimple[0], historySimple[1].findIndex((a) => a === e.name)]}
-//                 key={e.link}
-//                 setCurrentLink={setCurrentLink}
-//             />
-//         ))}
-//             </ol>)
-//     },
-//     (prev, next) => {
-//         (prev.inputRef.current===next.inputRef.current) && (prev.focused===next.focused)
-//     }
-// );
 
 export default LocationsTab;

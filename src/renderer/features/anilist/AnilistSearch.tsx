@@ -1,6 +1,7 @@
 import { addAnilistTracker } from "@store/anilistTracking";
 import { useAppDispatch, useAppSelector } from "@store/hooks";
 import { setAniSearchOpen } from "@store/isAniSearchOpen";
+import AniList from "@utils/anilist";
 import React, { useEffect, useRef, useState } from "react";
 
 import FocusLock from "react-focus-lock";
@@ -10,7 +11,7 @@ const AnilistSearch = () => {
     const mangaInReader = useAppSelector((store) => store.mangaInReader);
 
     const [search, setSearch] = useState("");
-    const [result, setResult] = useState<Awaited<ReturnType<typeof window.al.searchManga>>>([]);
+    const [result, setResult] = useState<Awaited<ReturnType<typeof AniList.searchManga>>>([]);
     const [searchTimeout, setSearchTimeout] = useState<NodeJS.Timeout | null>(null);
 
     // const contRef = useRef<HTMLDivElement>(null);
@@ -24,7 +25,7 @@ const AnilistSearch = () => {
         setSearch(mangaInReader?.mangaName || "");
     }, []);
     useEffect(() => {
-        window.al.searchManga(search).then((e) => {
+        AniList.searchManga(search).then((e) => {
             setResult(e);
         });
     }, [search]);

@@ -5,12 +5,13 @@ import fs from "fs";
 import { IS_PORTABLE, log, saveFile } from "./util";
 
 import { exec, spawn } from "child_process";
-import crossZip from "cross-zip";
+import * as crossZip from "cross-zip";
 
 import * as remote from "@electron/remote/main";
 remote.initialize();
 
 declare const HOME_WEBPACK_ENTRY: string;
+declare const HOME_PRELOAD_WEBPACK_ENTRY: string;
 
 if (require("electron-squirrel-startup")) app.quit();
 if (IS_PORTABLE) {
@@ -47,6 +48,11 @@ import {
 import handleSquirrelEvent from "./util/handleSquirrelEvent";
 import { DatabaseService } from "./db";
 import { setupDatabaseHandlers } from "./ipc/database";
+import { WindowManager } from "./util/window";
+import { registerExplorerHandlers } from "./ipc/explorer";
+import { registerUpdateHandlers } from "./ipc/update";
+import { registerFSHandlers } from "./ipc/fs";
+import { registerDialogHandlers } from "./ipc/dialog";
 
 if (handleSquirrelEvent()) {
     app.quit();
@@ -60,65 +66,6 @@ if (app.isPackaged && process.argv[1] && fs.existsSync(process.argv[1])) {
     openFolderOnLaunch = process.argv[1];
 }
 
-// declare const HOME_PRELOAD_WEBPACK_ENTRY: string;
-const windowsCont: (BrowserWindow | null)[] = [];
-const deleteDirsOnClose: (string | null)[] = [];
-let isFirstWindow = true;
-
-/**
- * Create main reader window.
- * @param link (optional) open given link/location in manga reader after loading window.
- */
-const createWindow = (link?: string) => {
-    const newWindow = new BrowserWindow({
-        width: 1200,
-        height: 800,
-        minWidth: 853,
-        minHeight: 480,
-        frame: false,
-        backgroundColor: "#000000",
-        show: false,
-        titleBarStyle: process.platform === "win32" ? "hidden" : "default",
-        titleBarOverlay: {
-            color: "#2e2e2e",
-            symbolColor: "#ffffff",
-            height: 40,
-        },
-        webPreferences: {
-            nodeIntegration: true,
-            contextIsolation: false,
-            // enableRemoteModule: true,
-            webSecurity: app.isPackaged,
-            safeDialogs: true,
-            // preload: HOME_PRELOAD_WEBPACK_ENTRY,
-        },
-    });
-    // newWindow.webContents.setFrameRate(60);
-    windowsCont.push(newWindow);
-    deleteDirsOnClose.push(null);
-    newWindow.loadURL(HOME_WEBPACK_ENTRY);
-    newWindow.setMenuBarVisibility(false);
-    remote.enable(newWindow.webContents);
-    newWindow.webContents.once("dom-ready", () => {
-        // maximize also unhide window
-        newWindow.maximize();
-        if (isFirstWindow) {
-            newWindow.webContents.send("checkForUpdate:query");
-            isFirstWindow = false;
-        }
-        newWindow.webContents.send("askBeforeClose:query");
-        newWindow.webContents.send("loadMangaFromLink", { link: link || "" });
-    });
-    newWindow.webContents.setWindowOpenHandler(() => {
-        return { action: "deny" };
-    });
-    // // ! try removeing coz theres 2 "close "
-    // newWindow.on("close", () => {
-    //     newWindow.webContents.send("recordPageNumber");
-    //     windowsCont] = null;
-    //     if (windowsCont.filter((e) => e !== null).length === 0) app.quit();
-    // });
-};
 if (app.isPackaged) {
     /**
      * code to make sure only one instance of app is running at one time.
@@ -139,212 +86,14 @@ if (app.isPackaged) {
                 } else {
                     log.error("Could not get the window.");
                 }
-            } else if (fs.existsSync(commandLine[2])) createWindow(commandLine[2]);
+            } else if (fs.existsSync(commandLine[2])) WindowManager.createWindow(commandLine[2]);
         } else if (commandLine.length <= 2 || commandLine.includes("--new-window")) {
             log.log("second instance detected, opening new window...");
-            createWindow();
+            WindowManager.createWindow();
         }
     });
 }
-// taskbar right click option
-if (process.platform === "win32")
-    app.setUserTasks([
-        {
-            program: process.execPath,
-            arguments: "--new-window",
-            iconPath: process.execPath,
-            iconIndex: 0,
-            title: "New Window",
-            description: "Create a new window",
-        },
-    ]);
 
-// todo: extract to separate file
-const registerListener = () => {
-    ipcMain.on("openLinkInNewWindow", (e, link) => {
-        createWindow(link);
-    });
-    if (process.platform === "win32") {
-        ipcMain.on("addOptionToExplorerMenu", () => {
-            addOptionToExplorerMenu();
-        });
-        ipcMain.on("deleteOptionInExplorerMenu", () => {
-            deleteOptionInExplorerMenu();
-        });
-        ipcMain.on("addOptionToExplorerMenu:epub", () => {
-            addOptionToExplorerMenu_epub();
-        });
-        ipcMain.on("deleteOptionInExplorerMenu:epub", () => {
-            deleteOptionInExplorerMenu_epub();
-        });
-    }
-    ipcMain.handle("changeTempPath", (e, newPath: string) => {
-        app.setPath("temp", newPath);
-        const lockFile = path.join(app.getPath("userData"), "TEMP_PATH");
-        if (newPath === process.env.TEMP && fs.existsSync(lockFile)) fs.rmSync(lockFile);
-        fs.writeFileSync(lockFile, newPath);
-    });
-    if (process.platform === "linux") {
-        ipcMain.on("showInExplorer", (e, filePath) => {
-            if (!fs.lstatSync(filePath).isDirectory()) filePath = path.dirname(filePath);
-            if (fs.existsSync(filePath))
-                exec(`xdg-open "${filePath}"`, (err, stdout, stderr) => {
-                    if (err) {
-                        if (err.message.includes("xdg-open: not found")) {
-                            dialog.showMessageBoxSync(
-                                (BrowserWindow.fromWebContents(e.sender) || BrowserWindow.fromId(1))!,
-                                {
-                                    message:
-                                        "xdg-open: not found.\nRun 'sudo apt install xdg-utils' to use this command.",
-                                    title: "Yomikiru",
-                                    type: "error",
-                                }
-                            );
-                        } else
-                            dialog.showMessageBoxSync(
-                                (BrowserWindow.fromWebContents(e.sender) || BrowserWindow.fromId(1))!,
-                                {
-                                    message: err.message,
-                                    title: "Yomikiru",
-                                    type: "error",
-                                }
-                            );
-                    }
-                });
-        });
-    }
-    const errorCheckTimeout = setTimeout(() => {
-        app.isPackaged &&
-            dialog
-                .showMessageBox({
-                    type: "info",
-                    message:
-                        "If you are seeing blank window then check the github page for new version or create an issue if no new version is available.",
-                    buttons: ["Ok", "Home Page"],
-                })
-                .then((e) => {
-                    if (e.response === 1) shell.openExternal("https://github.com/mienaiyami/yomikiru");
-                });
-    }, 1000 * 30);
-    ipcMain.on("checkForUpdate:response", (e, res, windowId, skipMinor, autoDownload) => {
-        if (res) {
-            checkForUpdate(windowId, skipMinor, false, autoDownload);
-            setInterval(() => {
-                checkForUpdate(windowId, skipMinor, false, autoDownload);
-            }, 1000 * 60 * 60 * 1);
-        }
-        clearTimeout(errorCheckTimeout);
-    });
-    ipcMain.on("checkForUpdate", (e, windowId, promptAfterCheck = false) => {
-        checkForUpdate(windowId, false, promptAfterCheck);
-    });
-    ipcMain.on("addDirToDlt", (e, dir) => {
-        try {
-            const index = windowsCont.findIndex((a) => a && a.id === BrowserWindow.fromWebContents(e.sender)?.id);
-            if (index > -1) {
-                deleteDirsOnClose[index] = dir;
-                // log.log({ deleteDirsOnClose });
-            }
-        } catch (error) {
-            log.error(error);
-        }
-    });
-    ipcMain.on("destroyWindow", (e) => {
-        // log.log("received destroy");
-        const window = BrowserWindow.fromWebContents(e.sender);
-        if (window && !window.isDestroyed()) window.destroy();
-    });
-    ipcMain.on("askBeforeClose:response", (e, ask = false) => {
-        const currentWindowIndex = windowsCont.findIndex(
-            (a) => a && a.id === BrowserWindow.fromWebContents(e.sender)?.id
-        );
-        const window = BrowserWindow.fromWebContents(e.sender)!;
-        const closeEvent = (e: Electron.Event) => {
-            e.preventDefault();
-            let res = 1;
-            if (ask)
-                res = dialog.showMessageBoxSync(window, {
-                    message: "Close this window?",
-                    title: "Yomikiru",
-                    buttons: ["No", "Yes"],
-                    type: "question",
-                });
-            if (res === 0) {
-                return;
-            }
-            // it also destroys current window.
-            // window closes before recieving message to save history file, so it is needed
-            window.webContents.send("recordPageNumber");
-            //backup in case window is stuck
-            setTimeout(() => {
-                log.log("No response from window. Force closing app.");
-                if (window && !window.isDestroyed()) window.destroy();
-            }, 5000);
-            const dirToDlt = deleteDirsOnClose[currentWindowIndex];
-            if (dirToDlt)
-                try {
-                    if (fs.existsSync(dirToDlt) && fs.lstatSync(dirToDlt).isDirectory()) {
-                        fs.rmSync(dirToDlt, {
-                            recursive: true,
-                        });
-                    }
-                } catch (reason) {
-                    log.error("Could not delete temp files:", reason);
-                }
-        };
-        const onClosed = () => {
-            windowsCont[currentWindowIndex] = null;
-            deleteDirsOnClose[currentWindowIndex] = null;
-            if (windowsCont.filter((e) => e !== null).length === 0) app.quit();
-        };
-        window.on("closed", onClosed);
-        window.on("close", closeEvent);
-    });
-    ipcMain.on("saveFile", (e, path: string, data: string) => {
-        // log.log("received file", path);
-        saveFile(path, data);
-    });
-
-    ipcMain.handle("unzip", (e, link: string, extractPath: string) => {
-        return new Promise((res, rej) => {
-            if (link && extractPath) {
-                if (fs.existsSync(extractPath)) fs.rmSync(extractPath, { recursive: true });
-                // unrar does not support zip
-                // https://stackoverflow.com/a/19337595
-                if (path.extname(link) === ".rar") {
-                    try {
-                        fs.mkdirSync(extractPath);
-                        const unrar = spawn("unrar", ["x", "-ai", "-r", link, extractPath]);
-                        unrar.on("error", (err) => {
-                            if (err.message.includes("ENOENT"))
-                                rej("WinRAR not found. Try adding it to system PATHS.");
-                            else rej(err);
-                        });
-                        unrar.stderr.on("data", (data) => {
-                            rej(data);
-                        });
-                        unrar.on("close", (code) => {
-                            if (code === 0) {
-                                fs.writeFileSync(path.join(extractPath, "SOURCE"), link);
-                                res({ link, extractPath, status: "ok" });
-                            } else rej("WinRAR exited with code " + code);
-                        });
-                    } catch (reason) {
-                        log.error(reason);
-                        rej(reason);
-                    }
-                } else
-                    crossZip.unzip(link, extractPath, (err) => {
-                        if (err) rej(err);
-                        else {
-                            fs.writeFileSync(path.join(extractPath, "SOURCE"), link);
-                            res({ link, extractPath, status: "ok" });
-                        }
-                    });
-            } else rej("ELECTRON:UNZIP: Invalid link or extractPath.");
-        });
-    });
-};
 app.on("ready", async () => {
     /**
      * enables basic shortcut keys such as copy, paste, reload, etc.
@@ -386,7 +135,7 @@ app.on("ready", async () => {
                 {
                     label: "New Window",
                     accelerator: process.platform === "darwin" ? "Cmd+N" : "Ctrl+N",
-                    click: () => createWindow(),
+                    click: () => WindowManager.createWindow(),
                 },
                 {
                     label: "Close",
@@ -402,9 +151,14 @@ app.on("ready", async () => {
     await db.initialize();
     setupDatabaseHandlers(db);
 
-    registerListener();
+    WindowManager.registerListeners();
 
-    createWindow(openFolderOnLaunch);
+    registerUpdateHandlers();
+    registerExplorerHandlers();
+    registerFSHandlers();
+    registerDialogHandlers();
+
+    WindowManager.createWindow(openFolderOnLaunch);
 });
 
 app.on("before-quit", () => {
@@ -412,6 +166,6 @@ app.on("before-quit", () => {
 });
 app.on("activate", () => {
     if (BrowserWindow.getAllWindows().length === 0) {
-        createWindow();
+        WindowManager.createWindow();
     }
 });

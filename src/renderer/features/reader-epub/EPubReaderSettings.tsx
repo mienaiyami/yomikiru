@@ -1,7 +1,6 @@
 import { faBars, faMinus, faPlus, faTimes } from "@fortawesome/free-solid-svg-icons";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { memo, useEffect, useLayoutEffect, useState } from "react";
-import { getFonts } from "font-list";
 import { useAppDispatch, useAppSelector } from "@store/hooks";
 import { setEpubReaderSettings } from "@store/appSettings";
 import InputNumber from "@ui/InputNumber";
@@ -10,6 +9,7 @@ import InputSelect from "@ui/InputSelect";
 import InputRange from "@ui/InputRange";
 import InputCheckboxNumber from "@ui/InputCheckboxNumber";
 import InputCheckboxColor from "@ui/InputCheckboxColor";
+import { colorUtils } from "@utils/color";
 
 const EPUBReaderSettings = memo(
     ({
@@ -38,13 +38,14 @@ const EPUBReaderSettings = memo(
         const [fontList, setFontList] = useState<string[]>([]);
 
         useLayoutEffect(() => {
-            getFonts()
-                .then((e) => {
-                    setFontList(e);
-                })
-                .catch((e) => {
-                    console.error("unable to get font list: ", e);
-                });
+            // todo get from ipc
+            // getFonts()
+            //     .then((e) => {
+            //         setFontList(e);
+            //     })
+            //     .catch((e) => {
+            //         console.error("unable to get font list: ", e);
+            //     });
         }, []);
 
         const maxWidth = 100;
@@ -511,7 +512,7 @@ const EPUBReaderSettings = memo(
                                         })
                                     );
                                 }}
-                                value={window.color.new(appSettings.epubReaderSettings.fontColor)}
+                                value={colorUtils.new(appSettings.epubReaderSettings.fontColor)}
                                 timeout={[
                                     500,
                                     (value) =>
@@ -532,7 +533,7 @@ const EPUBReaderSettings = memo(
                                         })
                                     );
                                 }}
-                                value={window.color.new(appSettings.epubReaderSettings.linkColor)}
+                                value={colorUtils.new(appSettings.epubReaderSettings.linkColor)}
                                 timeout={[
                                     500,
                                     (value) =>
@@ -553,7 +554,7 @@ const EPUBReaderSettings = memo(
                                         })
                                     );
                                 }}
-                                value={window.color.new(appSettings.epubReaderSettings.backgroundColor)}
+                                value={colorUtils.new(appSettings.epubReaderSettings.backgroundColor)}
                                 timeout={[
                                     500,
                                     (value) =>
@@ -574,7 +575,7 @@ const EPUBReaderSettings = memo(
                                         })
                                     );
                                 }}
-                                value={window.color.new(appSettings.epubReaderSettings.progressBackgroundColor)}
+                                value={colorUtils.new(appSettings.epubReaderSettings.progressBackgroundColor)}
                                 timeout={[
                                     500,
                                     (value) =>

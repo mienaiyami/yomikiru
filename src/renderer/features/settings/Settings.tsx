@@ -17,9 +17,12 @@ import FocusLock from "react-focus-lock";
 import ThemeCont from "./ThemeCont";
 import Shortcuts from "./Shortcuts";
 import Usage from "./Usage";
-import { renderPDF } from "@renderer-utils/pdf";
-import { promptSelectDir } from "@renderer-utils/file";
-import { initThemeData } from "@renderer-utils/theme";
+import { renderPDF } from "@utils/pdf";
+import { promptSelectDir } from "@utils/file";
+import { initThemeData } from "@utils/theme";
+import { keyFormatter } from "@utils/keybindings";
+import AniList from "@utils/anilist";
+import { dialogUtils } from "@utils/dialog";
 
 const TAB_INFO = {
     settings: [0, "Settings"],
@@ -74,7 +77,7 @@ const Settings = (): ReactElement => {
         //     string[]
         // >;
         const keydownEvent = (e: KeyboardEvent) => {
-            const keyStr = window.keyFormatter(e);
+            const keyStr = keyFormatter(e);
             if (keyStr === "") return;
             const i = (keys: string[]) => {
                 return keys.includes(keyStr);
@@ -101,7 +104,7 @@ const Settings = (): ReactElement => {
         if (tempFolder !== window.electron.app.getPath("temp"))
             try {
                 if (window.fs.existsSync(tempFolder)) {
-                    window.electron.ipcRenderer.invoke("changeTempPath", tempFolder).then(() => {
+                    window.electron.invoke("fs:changeTempPath", tempFolder).then(() => {
                         window.logger.log("Temp path changed to", tempFolder);
                     });
                 } else throw new Error("Folder does not exist : " + tempFolder);
@@ -112,7 +115,7 @@ const Settings = (): ReactElement => {
 
     useEffect(() => {
         if (anilistToken)
-            window.al.getUserName().then((name) => {
+            AniList.getUserName().then((name) => {
                 if (name) setAnilistUsername(name);
             });
     }, [anilistToken]);
@@ -241,20 +244,20 @@ const Settings = (): ReactElement => {
                                                 {/* <button
                                                 onClick={() => {
                                                     if (e.name === theme) {
-                                                        window.dialog.warn({
+                                                        dialogUtils.warn({
                                                             message:
                                                                 "Choose other theme before deleting this one.",
                                                         });
                                                         return;
                                                     }
                                                     if (initThemeData.allData.map((q) => q.name).includes(e.name)) {
-                                                        window.dialog.customError({
+                                                        dialogUtils.customError({
                                                             title: "Error",
                                                             message: `Unable to delete default themes.`,
                                                         });
                                                         return;
                                                     }
-                                                    window.dialog
+                                                    dialogUtils
                                                         .confirm({
                                                             message: `Delete theme "${e.name}"`,
                                                             noOption: false,
@@ -287,13 +290,13 @@ const Settings = (): ReactElement => {
                                                 <button
                                                     onClick={() => {
                                                         // if (initThemeData.allData.map((q) => q.name).includes(theme)) {
-                                                        //     window.dialog.customError({
+                                                        //     dialogUtils.customError({
                                                         //         title: "Error",
                                                         //         message: `Can't delete default themes.`,
                                                         //     });
                                                         //     return;
                                                         // }
-                                                        window.dialog
+                                                        dialogUtils
                                                             .confirm({
                                                                 message: `Delete theme "${theme}"`,
                                                                 noOption: false,
@@ -331,52 +334,46 @@ const Settings = (): ReactElement => {
                                     <div className=" col">
                                         <div className="main row">
                                             <button
-                                                onClick={() => {
-                                                    const opt = window.electron.dialog.showSaveDialogSync(
-                                                        window.electron.getCurrentWindow(),
-                                                        {
-                                                            title: "Export Themes",
-                                                            defaultPath: "yomikiru-themes.json",
-                                                            filters: [
-                                                                {
-                                                                    name: "json",
-                                                                    extensions: ["json"],
-                                                                },
-                                                            ],
-                                                        }
-                                                    );
-                                                    if (opt == undefined) return;
+                                                onClick={async () => {
+                                                    const opt = await dialogUtils.showSaveDialog({
+                                                        title: "Export Themes",
+                                                        defaultPath: "yomikiru-themes.json",
+                                                        filters: [
+                                                            {
+                                                                name: "json",
+                                                                extensions: ["json"],
+                                                            },
+                                                        ],
+                                                    });
+                                                    if (!opt.filePath) return;
                                                     const themeForExport = allThemes.filter(
                                                         (e) =>
                                                             !initThemeData.allData
                                                                 .map((e) => e.name)
                                                                 .includes(e.name)
                                                     );
-                                                    window.fs.writeFileSync(
-                                                        opt,
-                                                        JSON.stringify(themeForExport, null, "\t")
-                                                    );
+                                                    window.electron.invoke("fs:saveFile", {
+                                                        filePath: opt.filePath,
+                                                        data: JSON.stringify(themeForExport, null, "\t"),
+                                                    });
                                                 }}
                                             >
                                                 Export
                                             </button>
                                             <button
-                                                onClick={() => {
-                                                    const opt = window.electron.dialog.showOpenDialogSync(
-                                                        window.electron.getCurrentWindow(),
-                                                        {
-                                                            properties: ["openFile"],
-                                                            filters: [
-                                                                {
-                                                                    name: "Json",
-                                                                    extensions: ["json"],
-                                                                },
-                                                            ],
-                                                        }
-                                                    );
-                                                    if (opt == undefined) return;
+                                                onClick={async () => {
+                                                    const opt = await dialogUtils.showOpenDialog({
+                                                        properties: ["openFile"],
+                                                        filters: [
+                                                            {
+                                                                name: "Json",
+                                                                extensions: ["json"],
+                                                            },
+                                                        ],
+                                                    });
+                                                    if (!opt.filePaths.length) return;
                                                     const data: ThemeData[] | Themes = JSON.parse(
-                                                        window.fs.readFileSync(opt[0], "utf8")
+                                                        await window.fs.readFile(opt.filePaths[0], "utf8")
                                                     );
                                                     const dataToAdd: ThemeData[] = [];
                                                     let importedCount = 0;
@@ -391,7 +388,7 @@ const Settings = (): ReactElement => {
                                                                             .map((a) => a.name)
                                                                             .includes(e.name)
                                                                     ) {
-                                                                        window.dialog.warn({
+                                                                        dialogUtils.warn({
                                                                             message:
                                                                                 "Same theme name detected. Wont be imported.\nName: " +
                                                                                 e.name,
@@ -407,7 +404,7 @@ const Settings = (): ReactElement => {
                                                                     );
                                                             });
                                                         } else {
-                                                            window.dialog.customError({
+                                                            dialogUtils.customError({
                                                                 message: "Data is not in correct format.",
                                                                 log: false,
                                                             });
@@ -420,7 +417,7 @@ const Settings = (): ReactElement => {
                                                                     existingThemeNames.includes(e.name) ||
                                                                     dataToAdd.map((a) => a.name).includes(e.name)
                                                                 ) {
-                                                                    window.dialog.warn({
+                                                                    dialogUtils.warn({
                                                                         message:
                                                                             "Same theme name detected. Wont be imported.\nName: " +
                                                                             e.name,
@@ -435,7 +432,7 @@ const Settings = (): ReactElement => {
                                                                     i
                                                                 );
                                                         });
-                                                    window.dialog.confirm({
+                                                    dialogUtils.confirm({
                                                         title: "Imported",
                                                         message: "Imported " + importedCount + " themes.",
                                                         noOption: true,
@@ -447,7 +444,7 @@ const Settings = (): ReactElement => {
                                             </button>
                                             <button
                                                 onClick={() =>
-                                                    window.electron.shell.openExternal(
+                                                    window.electron.openExternal(
                                                         "https://github.com/mienaiyami/yomikiru/discussions/191"
                                                     )
                                                 }
@@ -469,7 +466,7 @@ const Settings = (): ReactElement => {
                                         <div className="main row">
                                             <button
                                                 onClick={() => {
-                                                    const theme = window.electron.clipboard.readText("clipboard");
+                                                    const theme = window.electron.readText("clipboard");
                                                     if (theme) {
                                                         try {
                                                             const themeJSON = JSON.parse(theme);
@@ -480,7 +477,7 @@ const Settings = (): ReactElement => {
                                                                             .map((e) => e.name)
                                                                             .includes(themeJSON.name)
                                                                     ) {
-                                                                        window.dialog.warn({
+                                                                        dialogUtils.warn({
                                                                             message:
                                                                                 "Same theme name detected. Wont be imported.\nName: " +
                                                                                 themeJSON.name,
@@ -489,13 +486,13 @@ const Settings = (): ReactElement => {
                                                                         dispatch(newTheme(themeJSON));
                                                                     }
                                                                 } else
-                                                                    window.dialog.customError({
+                                                                    dialogUtils.customError({
                                                                         title: "Failed",
                                                                         message: `Invalid theme data. Please note that data must be similar to the result of "Copy Current Theme to Clipboard"`,
                                                                     });
                                                             }
                                                         } catch (reason) {
-                                                            window.dialog.customError({
+                                                            dialogUtils.customError({
                                                                 title: "Failed",
                                                                 message: `Invalid theme data. Please note that data must be similar to the result of "Copy Current Theme to Clipboard"`,
                                                             });
@@ -510,7 +507,7 @@ const Settings = (): ReactElement => {
                                                     const currentTheme = allThemes.find((e) => e.name === theme);
                                                     if (currentTheme) {
                                                         try {
-                                                            window.electron.clipboard.writeText(
+                                                            window.electron.writeText(
                                                                 JSON.stringify(currentTheme, null, "\t")
                                                             );
                                                             const target = e.currentTarget;
@@ -525,7 +522,7 @@ const Settings = (): ReactElement => {
                                                                 target.innerText = oldText;
                                                             }, 3000);
                                                         } catch (reason) {
-                                                            window.dialog.customError({
+                                                            dialogUtils.customError({
                                                                 message: "Failed to copy theme: " + reason,
                                                             });
                                                         }
@@ -544,7 +541,7 @@ const Settings = (): ReactElement => {
                                             onClick={() => {
                                                 throw new Error("Not implemented");
                                                 // if (bookmarks === 0) {
-                                                //     window.dialog.customError({
+                                                //     dialogUtils.customError({
                                                 //         message: "No bookmarks detected.",
                                                 //         log: false,
                                                 //     });
@@ -595,7 +592,7 @@ const Settings = (): ReactElement => {
                                                 // let similarFound = 0;
                                                 // let importedCount = 0;
                                                 // if (!(data instanceof Array)) {
-                                                //     window.dialog.customError({
+                                                //     dialogUtils.customError({
                                                 //         message:
                                                 //             "Data is not in correct format. To make sure it is correct, compare it with existing bookmark.json and fix.",
                                                 //         log: false,
@@ -617,11 +614,11 @@ const Settings = (): ReactElement => {
                                                 //     }
                                                 // });
                                                 // if (similarFound > 0)
-                                                //     window.dialog.warn({
+                                                //     dialogUtils.warn({
                                                 //         title: "warning",
                                                 //         message: "Found " + similarFound + " with same link",
                                                 //     });
-                                                // window.dialog.confirm({
+                                                // dialogUtils.confirm({
                                                 //     title: "Imported",
                                                 //     message: "Imported " + importedCount + " bookmarks.",
                                                 //     noOption: true,
@@ -634,7 +631,7 @@ const Settings = (): ReactElement => {
                                         <button
                                             onClick={() => {
                                                 throw new Error("Not implemented");
-                                                // window.dialog
+                                                // dialogUtils
                                                 //     .warn({
                                                 //         title: "Delete BookMarks",
                                                 //         message: "Are you sure you want to clear bookmarks?",
@@ -644,7 +641,7 @@ const Settings = (): ReactElement => {
                                                 //         if (response == undefined) return;
                                                 //         if (response === 1) return;
                                                 //         if (response === 0) {
-                                                //             window.dialog
+                                                //             dialogUtils
                                                 //                 .warn({
                                                 //                     title: "Delete Bookmarks",
                                                 //                     noOption: false,
@@ -675,15 +672,15 @@ const Settings = (): ReactElement => {
                                                 checked={openInSameWindow}
                                                 className="noBG"
                                                 onChange={(e) => {
+                                                    // todo make another system for such settings
                                                     const fileName = window.path.join(
                                                         window.electron.app.getPath("userData"),
                                                         "OPEN_IN_EXISTING_WINDOW"
                                                     );
                                                     if (!e.currentTarget.checked) {
-                                                        if (window.fs.existsSync(fileName))
-                                                            window.fs.rmSync(fileName);
+                                                        if (window.fs.existsSync(fileName)) window.fs.rm(fileName);
                                                     } else {
-                                                        window.fs.writeFileSync(fileName, " ");
+                                                        window.fs.writeFile(fileName, " ");
                                                     }
                                                     setOpenInSameWindow((init) => !init);
                                                 }}
@@ -700,19 +697,13 @@ const Settings = (): ReactElement => {
                                                 </div>
                                                 <div className="main row">
                                                     <button
-                                                        onClick={() =>
-                                                            window.electron.ipcRenderer.send(
-                                                                "addOptionToExplorerMenu"
-                                                            )
-                                                        }
+                                                        onClick={() => window.electron.send("explorer:addOption")}
                                                     >
                                                         Add
                                                     </button>
                                                     <button
                                                         onClick={() =>
-                                                            window.electron.ipcRenderer.send(
-                                                                "deleteOptionInExplorerMenu"
-                                                            )
+                                                            window.electron.send("explorer:removeOption")
                                                         }
                                                     >
                                                         Remove
@@ -727,18 +718,14 @@ const Settings = (): ReactElement => {
                                                 <div className="main row">
                                                     <button
                                                         onClick={() =>
-                                                            window.electron.ipcRenderer.send(
-                                                                "addOptionToExplorerMenu:epub"
-                                                            )
+                                                            window.electron.send("explorer:addOption:epub")
                                                         }
                                                     >
                                                         Add
                                                     </button>
                                                     <button
                                                         onClick={() =>
-                                                            window.electron.ipcRenderer.send(
-                                                                "deleteOptionInExplorerMenu:epub"
-                                                            )
+                                                            window.electron.send("explorer:removeOption:epub")
                                                         }
                                                     >
                                                         Remove
@@ -880,10 +867,10 @@ const Settings = (): ReactElement => {
                                                                     }-${linkSplitted.at(-1)}`
                                                                 );
                                                                 if (window.fs.existsSync(renderPath))
-                                                                    window.fs.rmSync(renderPath, {
+                                                                    await window.fs.rm(renderPath, {
                                                                         recursive: true,
                                                                     });
-                                                                window.fs.mkdirSync(renderPath);
+                                                                await window.fs.mkdir(renderPath);
                                                                 console.log(
                                                                     `Rendering "${path}" at "${renderPath}"`
                                                                 );
@@ -905,7 +892,7 @@ const Settings = (): ReactElement => {
                                                                         reason.message &&
                                                                         !reason.message.includes("password")
                                                                     )
-                                                                        window.dialog.customError({
+                                                                        dialogUtils.customError({
                                                                             message: "Error in rendering PDF",
                                                                             detail: path,
                                                                             log: false,
@@ -918,7 +905,7 @@ const Settings = (): ReactElement => {
                                                                 }
                                                             }
                                                             // dispatch(setUnzipping(false));
-                                                            window.dialog.confirm({
+                                                            dialogUtils.confirm({
                                                                 message: "Rendered all PDFs",
                                                             });
                                                             dispatch(setUnzipping(false));
@@ -1032,7 +1019,7 @@ const Settings = (): ReactElement => {
                                             onClick={(e) => {
                                                 if (process.env.TEMP) setTempFolder(process.env.TEMP);
                                                 else
-                                                    window.dialog.customError({
+                                                    dialogUtils.customError({
                                                         message: "Unable to get default temp path.",
                                                     });
                                             }}
@@ -1040,51 +1027,39 @@ const Settings = (): ReactElement => {
                                             Use Default
                                         </button>
                                         <button
-                                            onClick={(e) => {
-                                                const target = e.currentTarget;
-                                                target.disabled = true;
-                                                window.electron.dialog
-                                                    .showMessageBox(window.electron.getCurrentWindow(), {
+                                            onClick={async (e) => {
+                                                try {
+                                                    const target = e.currentTarget;
+                                                    target.disabled = true;
+                                                    const res = await dialogUtils.confirm({
                                                         message: "Clear all extracted/rendered files?",
                                                         checkboxLabel: "Also clear app's cache.",
                                                         buttons: ["Yes", "No"],
                                                         cancelId: 1,
                                                         defaultId: 1,
                                                         type: "question",
-                                                    })
-                                                    .then((res) => {
-                                                        setTimeout(() => {
-                                                            target.disabled = false;
-                                                        }, 6000);
-                                                        if (res.response === 0) {
-                                                            if (res.checkboxChecked) {
-                                                                window.electron
-                                                                    .getCurrentWindow()
-                                                                    .webContents.session.clearCache();
-                                                                window.electron
-                                                                    .getCurrentWindow()
-                                                                    .webContents.session.clearCodeCaches({
-                                                                        urls: [],
-                                                                    });
-                                                            }
-                                                            window.fs.readdir(tempFolder, (err, files) => {
-                                                                if (err) return window.logger.error(err);
-                                                                files
-                                                                    .filter((e) => e.startsWith("yomikiru"))
-                                                                    .map((e) => window.path.join(tempFolder, e))
-                                                                    .forEach(
-                                                                        (e) =>
-                                                                            window.fs.existsSync(e) &&
-                                                                            window.fs.rm(
-                                                                                e,
-                                                                                { force: true, recursive: true },
-                                                                                (err) =>
-                                                                                    err && window.logger.error(err)
-                                                                            )
-                                                                    );
-                                                            });
-                                                        }
                                                     });
+
+                                                    setTimeout(() => {
+                                                        target.disabled = false;
+                                                    }, 6000);
+                                                    if (res.response === 0) {
+                                                        if (res.checkboxChecked) {
+                                                            window.electron.clearAppCache();
+                                                        }
+                                                        const files = await window.fs.readdir(tempFolder);
+                                                        files
+                                                            .filter((e) => e.startsWith("yomikiru"))
+                                                            .forEach((e) =>
+                                                                window.fs.rm(window.path.join(tempFolder, e), {
+                                                                    force: true,
+                                                                    recursive: true,
+                                                                })
+                                                            );
+                                                    }
+                                                } catch (err) {
+                                                    window.logger.error(err);
+                                                }
                                             }}
                                         >
                                             Delete all File Cache
@@ -1428,9 +1403,9 @@ const Settings = (): ReactElement => {
                                                     "DISABLE_HARDWARE_ACCELERATION"
                                                 );
                                                 if (e.currentTarget.checked) {
-                                                    if (window.fs.existsSync(fileName)) window.fs.rmSync(fileName);
+                                                    if (window.fs.existsSync(fileName)) window.fs.rm(fileName);
                                                 } else {
-                                                    window.fs.writeFileSync(fileName, " ");
+                                                    window.fs.writeFile(fileName, " ");
                                                 }
                                                 setHAValue((init) => !init);
                                             }}
@@ -1553,7 +1528,7 @@ const Settings = (): ReactElement => {
                                         <button
                                             onClick={() => {
                                                 throw new Error("Not implemented");
-                                                // window.dialog
+                                                // dialogUtils
                                                 //     .warn({
                                                 //         title: "Warning",
                                                 //         message: "Are you sure you want to clear history?",
@@ -1569,7 +1544,7 @@ const Settings = (): ReactElement => {
                                         </button>
                                         <button
                                             onClick={() => {
-                                                window.dialog
+                                                dialogUtils
                                                     .warn({
                                                         title: "Reset themes",
                                                         message: "This will delete all Themes. Continue?",
@@ -1579,7 +1554,7 @@ const Settings = (): ReactElement => {
                                                         if (response == undefined) return;
                                                         if (response === 1) return;
                                                         if (response === 0) {
-                                                            window.dialog
+                                                            dialogUtils
                                                                 .warn({
                                                                     title: "Reset Themes",
                                                                     noOption: false,
@@ -1598,7 +1573,7 @@ const Settings = (): ReactElement => {
                                         </button>
                                         <button
                                             onClick={() => {
-                                                window.dialog
+                                                dialogUtils
                                                     .warn({
                                                         title: "Warning",
                                                         message: "Reset Shortcuts to default?",
@@ -1615,7 +1590,7 @@ const Settings = (): ReactElement => {
                                         </button>
                                         <button
                                             onClick={() => {
-                                                window.dialog
+                                                dialogUtils
                                                     .warn({
                                                         title: "Reset Settings",
                                                         message: "This will reset all Settings. Continue?",
@@ -1625,7 +1600,7 @@ const Settings = (): ReactElement => {
                                                         if (response == undefined) return;
                                                         if (response === 1) return;
                                                         if (response === 0) {
-                                                            window.dialog
+                                                            dialogUtils
                                                                 .warn({
                                                                     title: "Reset Settings",
                                                                     noOption: false,
@@ -1706,18 +1681,16 @@ const Settings = (): ReactElement => {
                                     <div className="main row">
                                         <button
                                             onClick={() => {
-                                                window.electron.ipcRenderer.send(
-                                                    "checkForUpdate",
-                                                    window.electron.getCurrentWindow().id,
-                                                    true
-                                                );
+                                                window.electron.send("update:check:manual", {
+                                                    promptAfterCheck: true,
+                                                });
                                             }}
                                         >
                                             Check for Update Now
                                         </button>
                                         <button
                                             onClick={() =>
-                                                window.electron.shell.openExternal(
+                                                window.electron.openExternal(
                                                     "https://github.com/mienaiyami/yomikiru/releases"
                                                 )
                                             }
@@ -1732,7 +1705,7 @@ const Settings = (): ReactElement => {
                                     <div className="main col">
                                         <button
                                             onClick={() =>
-                                                window.electron.shell.openExternal(
+                                                window.electron.openExternal(
                                                     "https://github.com/mienaiyami/yomikiru/"
                                                 )
                                             }
@@ -1741,7 +1714,7 @@ const Settings = (): ReactElement => {
                                         </button>
                                         <button
                                             onClick={() =>
-                                                window.electron.shell.openExternal(
+                                                window.electron.openExternal(
                                                     "https://github.com/mienaiyami/yomikiru/discussions/categories/announcements"
                                                 )
                                             }
@@ -1750,7 +1723,7 @@ const Settings = (): ReactElement => {
                                         </button>
                                         <button
                                             onClick={() =>
-                                                window.electron.shell.openExternal(
+                                                window.electron.openExternal(
                                                     "https://github.com/mienaiyami/yomikiru/issues"
                                                 )
                                             }
@@ -1760,7 +1733,7 @@ const Settings = (): ReactElement => {
                                         </button>
                                         <button
                                             onClick={() =>
-                                                window.electron.shell.openExternal(
+                                                window.electron.openExternal(
                                                     "https://github.com/sponsors/mienaiyami"
                                                 )
                                             }
@@ -1779,7 +1752,7 @@ const Settings = (): ReactElement => {
                                                 const target = e.currentTarget;
                                                 target.innerText =
                                                     "\u00a0".repeat(16) + "Copied!" + "\u00a0".repeat(16);
-                                                window.electron.clipboard.writeText("mienaiyami0@gmail.com");
+                                                window.electron.writeText("mienaiyami0@gmail.com");
                                                 target.disabled = true;
                                                 setTimeout(() => {
                                                     target.disabled = false;
@@ -1796,9 +1769,9 @@ const Settings = (): ReactElement => {
                                                     "logs/main.log"
                                                 );
                                                 if (process.platform === "win32")
-                                                    window.electron.shell.showItemInFolder(filePath);
+                                                    window.electron.showItemInFolder(filePath);
                                                 else if (process.platform === "linux")
-                                                    window.electron.ipcRenderer.send("showInExplorer", filePath);
+                                                    window.electron.invoke("fs:showInExplorer", filePath);
                                             }}
                                         >
                                             Show Local Logs

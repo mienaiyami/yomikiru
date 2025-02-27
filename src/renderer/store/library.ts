@@ -1,5 +1,4 @@
 import { createSlice, createAsyncThunk } from "@reduxjs/toolkit";
-import { ipc } from "../utils/ipc";
 import { DatabaseChannels } from "@common/types/ipc";
 
 // todo : add proper error handling
@@ -21,7 +20,7 @@ const initialState: LibraryState = {
 };
 
 export const fetchAllItemsWithProgress = createAsyncThunk("library/getAllItemsWithProgress", async () => {
-    const data = await ipc.invoke("db:library:getAllAndProgress");
+    const data = await window.electron.invoke("db:library:getAllAndProgress");
     console.log(data);
     return data;
 });
@@ -29,14 +28,14 @@ export const fetchAllItemsWithProgress = createAsyncThunk("library/getAllItemsWi
 export const addLibraryItem = createAsyncThunk(
     "library/addItem",
     async (args: DatabaseChannels["db:library:addItem"]["request"]) => {
-        return await ipc.invoke("db:library:addItem", args);
+        return await window.electron.invoke("db:library:addItem", args);
     }
 );
 
 export const updateMangaProgress = createAsyncThunk(
     "library/updateMangaProgress",
     async (args: DatabaseChannels["db:manga:updateProgress"]["request"]) => {
-        const res = await ipc.invoke("db:manga:updateProgress", args);
+        const res = await window.electron.invoke("db:manga:updateProgress", args);
         if (!res) throw new Error("Failed to update progress");
         return res;
     }
@@ -45,7 +44,7 @@ export const updateMangaProgress = createAsyncThunk(
 export const updateBookProgress = createAsyncThunk(
     "library/updateBookProgress",
     async (args: DatabaseChannels["db:book:updateProgress"]["request"]) => {
-        const res = await ipc.invoke("db:book:updateProgress", args);
+        const res = await window.electron.invoke("db:book:updateProgress", args);
         if (!res) throw new Error("Failed to update progress");
         return res;
     }
@@ -54,7 +53,7 @@ export const updateBookProgress = createAsyncThunk(
 // todo: this is temp only, plan to remove windiw.app.linkInReader and window.app.epubHistorySaveData
 export const updateCurrentBookProgress = createAsyncThunk("library/updateCurrentBookProgress", async () => {
     const link = window.app.linkInReader.link;
-    const res = await ipc.invoke("db:book:updateProgress", {
+    const res = await window.electron.invoke("db:book:updateProgress", {
         itemLink: link,
         data: {
             chapterId: window.app.epubHistorySaveData?.id,
@@ -74,7 +73,11 @@ export const updateCurrentBookProgress = createAsyncThunk("library/updateCurrent
 export const updateChaptersRead = createAsyncThunk(
     "library/updateChaptersRead",
     async ({ itemLink, chapterName, read }: { itemLink: string; chapterName: string; read: boolean }) => {
-        const chapterRead = await ipc.invoke("db:manga:updateChaptersRead", { itemLink, chapterName, read });
+        const chapterRead = await window.electron.invoke("db:manga:updateChaptersRead", {
+            itemLink,
+            chapterName,
+            read,
+        });
         return { itemLink, chapterRead };
     }
 );
@@ -82,7 +85,11 @@ export const updateChaptersReadAll = createAsyncThunk(
     "library/updateChaptersReadAll",
     // pass empty chapters to unmark all chapters
     async ({ itemLink, chapters, read }: { itemLink: string; chapters: string[]; read: boolean }) => {
-        const chaptersRead = await ipc.invoke("db:manga:updateChaptersReadAll", { itemLink, chapters, read });
+        const chaptersRead = await window.electron.invoke("db:manga:updateChaptersReadAll", {
+            itemLink,
+            chapters,
+            read,
+        });
         return { itemLink, chaptersRead };
     }
 );

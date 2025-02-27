@@ -1,6 +1,6 @@
 import ReactDOM from "react-dom";
 
-import "./utils/main";
+// import "./utils/utils";
 
 import App from "./App";
 import "./styles/index.scss";

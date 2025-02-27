@@ -34,11 +34,11 @@
 //                 else return updateHistory(data);
 //             } catch (err) {
 //                 // if ((err as Error).message === "History format changed.")
-//                 //     window.dialog.customError({
+//                 //     dialogUtils.customError({
 //                 //         message: "History format changed.\nSorry for the inconvenience.",
 //                 //     });
 //                 // else
-//                 window.dialog.customError({
+//                 dialogUtils.customError({
 //                     message: "Unable to parse " + historyPath + "\nMaking new history.json...",
 //                 });
 //                 window.logger.error(err);

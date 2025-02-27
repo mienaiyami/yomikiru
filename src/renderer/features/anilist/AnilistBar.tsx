@@ -1,11 +1,13 @@
 import { faMinus, faPlus, faSlidersH } from "@fortawesome/free-solid-svg-icons";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
+import { dialogUtils } from "@utils/dialog";
 import { setAnilistCurrentManga } from "@store/anilistCurrentManga";
 import { useAppDispatch, useAppSelector } from "@store/hooks";
 import { setAniEditOpen } from "@store/isAniEditOpen";
 import { setAniSearchOpen } from "@store/isAniSearchOpen";
 import InputNumber from "@ui/InputNumber";
 import React, { useLayoutEffect, useState, memo } from "react";
+import AniList from "@utils/anilist";
 
 const AnilistBar = memo(() => {
     const anilistTracking = useAppSelector((store) => store.anilistTracking);
@@ -32,11 +34,11 @@ const AnilistBar = memo(() => {
         const timeout = setTimeout(() => {
             anilistCurrentManga &&
                 anilistCurrentManga.progress !== progress &&
-                window.al.setCurrentMangaProgress(progress).then((e) => {
+                AniList.setCurrentMangaProgress(progress).then((e) => {
                     if (e) {
                         dispatch(setAnilistCurrentManga(e));
                     } else {
-                        window.dialog.customError({ message: "Failed to sync AniList progress.", log: false });
+                        dialogUtils.customError({ message: "Failed to sync AniList progress.", log: false });
                         setProgress(anilistCurrentManga.progress);
                     }
                 });
@@ -50,7 +52,7 @@ const AnilistBar = memo(() => {
         if (isTracking && mangaInReader) {
             const found = anilistTracking.find((e) => e.localURL === window.path.dirname(mangaInReader.link));
             if (found) {
-                window.al.getMangaData(found.anilistMediaId).then((e) => {
+                AniList.getMangaData(found.anilistMediaId).then((e) => {
                     if (e) {
                         dispatch(setAnilistCurrentManga(e));
                     }

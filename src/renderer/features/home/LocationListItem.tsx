@@ -1,6 +1,8 @@
 import { faAngleRight } from "@fortawesome/free-solid-svg-icons";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { useAppSelector } from "@store/hooks";
+import { dialogUtils } from "@utils/dialog";
+import { formatUtils } from "@utils/file";
 import { ReactElement, useContext, useState, useEffect } from "react";
 import { AppContext } from "src/renderer/App";
 
@@ -29,10 +31,10 @@ const LocationListItem = ({
 
     const onClickHandle = (a = true) => {
         if (!window.fs.existsSync(link)) {
-            window.dialog.customError({ message: "Directory/File doesn't exist." });
+            dialogUtils.customError({ message: "Directory/File doesn't exist." });
             return;
         }
-        if (window.app.formats.files.test(name)) {
+        if (formatUtils.files.test(name)) {
             openInReader(link);
             return;
         }
@@ -88,12 +90,12 @@ const LocationListItem = ({
                     onContextMenu(e, link, inHistory);
                 }}
             >
-                <span className="text">{window.app.formats.files.getName(name)}</span>
-                {window.app.formats.files.test(name) && (
-                    <code className="nonFolder">{window.app.formats.files.getExt(name)}</code>
+                <span className="text">{formatUtils.files.getName(name)}</span>
+                {formatUtils.files.test(name) && (
+                    <code className="nonFolder">{formatUtils.files.getExt(name)}</code>
                 )}
             </a>
-            {!appSettings.hideOpenArrow && !window.app.formats.files.test(name) && (
+            {!appSettings.hideOpenArrow && !formatUtils.files.test(name) && (
                 <button
                     title="Open In Reader"
                     className="open-in-reader-btn"

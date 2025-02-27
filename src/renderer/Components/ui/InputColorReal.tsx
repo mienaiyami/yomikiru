@@ -22,7 +22,7 @@ const InputColorReal = () => {
     const { colorSelectData, setColorSelectData } = useContext(AppContext);
     const [pos, setPos] = useState({ x: 0, y: 0 });
     const [formatSelected, setFormatSelected] = useState(0);
-    const [color, setColor] = useState(window.color.new());
+    const [color, setColor] = useState(colorUtils.new());
     const [sliding, setSliding] = useState<ValidSlider | null>(null);
     const ref = useRef<HTMLDivElement | null>(null);
     const slRef = useRef<HTMLDivElement | null>(null);
@@ -175,7 +175,7 @@ const InputColorReal = () => {
                         visibility: colorSelectData ? "visible" : "hidden",
                         "--hue": color.hue() + "deg",
                         "--color": color.hsl().string(),
-                        "--color-noAlpha": window.color.new(color).alpha(1).hsl().string(),
+                        "--color-noAlpha": colorUtils.new(color).alpha(1).hsl().string(),
                     }}
                     onKeyDown={(e) => {
                         if (!e.ctrlKey && !["Tab", " ", "Enter"].includes(e.key)) {
@@ -403,7 +403,7 @@ const HEXAInput = ({
     useLayoutEffect(() => {
         const timeout = setTimeout(() => {
             try {
-                const newColor = window.color.new(value);
+                const newColor = colorUtils.new(value);
                 setColor(newColor);
             } catch {
                 //
@@ -429,7 +429,7 @@ const HEXAInput = ({
                     onChange={(e) => {
                         setValue(e.currentTarget.value);
                         // try {
-                        // const newColor = window.color.new(e.currentTarget.value);
+                        // const newColor = colorUtils.new(e.currentTarget.value);
                         // setColor(newColor);
                         // } catch {
                         //     //

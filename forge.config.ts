@@ -8,6 +8,7 @@ import { WebpackPlugin } from "@electron-forge/plugin-webpack";
 
 import { mainConfig } from "./webpack/webpack.main.config";
 import { rendererConfig } from "./webpack/webpack.renderer.config";
+import { preloadConfig } from "./webpack/webpack.preload.config";
 
 import fs from "fs";
 
@@ -26,6 +27,9 @@ const config: ForgeConfig = {
     plugins: [
         new AutoUnpackNativesPlugin({}),
         new WebpackPlugin({
+            devServer: {
+                liveReload: false,
+            },
             mainConfig,
             renderer: {
                 config: rendererConfig,
@@ -34,6 +38,10 @@ const config: ForgeConfig = {
                         html: "./public/index.html",
                         js: "./src/renderer/index.tsx",
                         name: "home",
+                        preload: {
+                            js: "./src/electron/preload.ts",
+                            config: preloadConfig,
+                        },
                     },
                     {
                         html: "./public/download-progress.html",

@@ -2,6 +2,8 @@ import { useState, useRef, useMemo } from "react";
 import { BookBookmark, MangaBookmark } from "@common/types/db";
 import { useAppSelector } from "@store/hooks";
 import BookmarkHistoryListItem from "./BookmarkHistoryListItem";
+import { formatUtils } from "@utils/file";
+import { keyFormatter } from "@utils/keybindings";
 
 const BookmarkTab = () => {
     const bookmarks = useAppSelector((store) => store.bookmarks);
@@ -64,7 +66,7 @@ const BookmarkTab = () => {
                             if (e.key === "Escape") {
                                 e.currentTarget.blur();
                             }
-                            const keyStr = window.keyFormatter(e);
+                            const keyStr = keyFormatter(e);
                             if (keyStr === "") return;
                             const shortcutsMapped = Object.fromEntries(
                                 shortcuts.map((e) => [e.command, e.keys])
@@ -123,7 +125,7 @@ const BookmarkTab = () => {
                                 new RegExp(filter, "ig").test(
                                     "page" in e
                                         ? library.items[e.itemLink].title +
-                                              (window.app.formats.files.test(window.path.dirname(e.link))
+                                              (formatUtils.files.test(window.path.dirname(e.link))
                                                   ? `${window.path.extname(e.link)}`
                                                   : "")
                                         : e.title + ".epub"

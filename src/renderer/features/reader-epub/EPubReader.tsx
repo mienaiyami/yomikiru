@@ -8,7 +8,7 @@ import React, {
     useCallback,
     useMemo,
 } from "react";
-import css, { Rule as CSSRule } from "css";
+import * as css from "css";
 
 import { BookHistoryItem } from "@common/types/legacy";
 import { AppContext } from "src/renderer/App";
@@ -19,9 +19,12 @@ import { setAppSettings, setEpubReaderSettings, setReaderSettings } from "@store
 import EPUBReaderSettings from "./EPubReaderSettings";
 import EPubReaderSideList from "./EPubReaderSideList";
 import { setReaderOpen } from "@store/isReaderOpen";
-import EPUB from "@renderer-utils/epub";
+import EPUB from "@utils/epub";
 import Modal from "@ui/Modal";
 import { addLibraryItem, updateBookProgress, updateCurrentBookProgress } from "@store/library";
+import { dialogUtils } from "@utils/dialog";
+import { getCSSPath } from "@utils/utils";
+import { keyFormatter } from "@utils/keybindings";
 
 const StyleSheets = memo(
     ({ sheets }: { sheets: string[] }) => {
@@ -30,10 +33,11 @@ const StyleSheets = memo(
                 className="stylesheets"
                 ref={(node) => {
                     if (node) {
-                        sheets.forEach((url) => {
+                        // todo check async behavior
+                        sheets.forEach(async (url) => {
                             try {
                                 const stylesheet = document.createElement("style");
-                                let txt = window.fs.readFileSync(url, "utf-8");
+                                let txt = await window.fs.readFile(url, "utf-8");
                                 const matches = Array.from(txt.matchAll(/url\((.*?)\);/gi));
                                 matches.forEach((e) => {
                                     // for font
@@ -51,7 +55,7 @@ const StyleSheets = memo(
                                 const ast = css.parse(txt);
                                 ast.stylesheet?.rules.forEach((e) => {
                                     if (e.type === "rule") {
-                                        (e as CSSRule).selectors = (e as CSSRule).selectors?.map((e) =>
+                                        (e as css.Rule).selectors = (e as css.Rule).selectors?.map((e) =>
                                             e.includes("section.main") ? e : "#EPubReader section.main " + e
                                         );
                                     }
@@ -321,14 +325,14 @@ const EPubReader = () => {
             const href = (ev.currentTarget as HTMLAnchorElement).getAttribute("data-href");
             if (href) {
                 if (href.startsWith("http")) {
-                    window.dialog
+                    dialogUtils
                         .warn({
                             message: "Open external link?",
                             detail: href,
                             noOption: false,
                         })
                         .then((res) => {
-                            if (res.response === 0) window.electron.shell.openExternal(href);
+                            if (res.response === 0) window.electron.openExternal(href);
                         });
                 } else {
                     setElemBeforeChange("");
@@ -359,7 +363,7 @@ const EPubReader = () => {
                         }
                         const itemIdx = epubData.spine.findIndex((e) => e.href === href.split("#")[0]);
                         if (itemIdx < 0) {
-                            window.dialog.customError({
+                            dialogUtils.customError({
                                 message: "Could not find the chapter for corresponding link.",
                             });
                             return;
@@ -376,18 +380,14 @@ const EPubReader = () => {
 
     const loadEPub = (link: string) => {
         if (window.fs.existsSync(window.app.deleteDirOnClose))
-            window.fs.rm(
-                window.app.deleteDirOnClose,
-                {
+            window.fs
+                .rm(window.app.deleteDirOnClose, {
                     recursive: true,
-                },
-                (err) => {
-                    if (err) window.logger.error(err);
-                }
-            );
+                })
+                .catch((err) => window.logger.error("Error while deleting temp dir", err));
 
         link = window.path.normalize(link);
-        // setBookmarked(bookmarks.map((e) => e.data.link).includes(link));
+
         //todo
         if ([".xhtml", ".html", ".txt"].includes(window.path.extname(link).toLowerCase())) {
             // const ext = window.path.extname(link).toLowerCase();
@@ -438,11 +438,11 @@ const EPubReader = () => {
             //     }
             // } catch (reason) {
             //     console.error(reason);
-            //     window.dialog.customError({
+            //     dialogUtils.customError({
             //         message: "Error while reading file.",
             //     });
             // }
-            window.dialog.customError({
+            dialogUtils.customError({
                 message: "This mode is not supported yet, will be implemented in future.",
             });
             dispatch(setUnzipping(false));
@@ -501,7 +501,7 @@ const EPubReader = () => {
                 setEpubData(ed);
                 setElemBeforeChange(linkInReader.queryStr || "");
                 // if (ed.toc.length > 200 && !appSettings.epubReaderSettings.loadOneChapter)
-                //     window.dialog.warn({
+                //     dialogUtils.warn({
                 //         message: "Too many chapters in book.",
                 //         detail: "It might cause instability and high RAM usage. It is recommended to enable option to load and show only chapter at a time from Settings → Other Settings.",
                 //         noOption: false,
@@ -533,7 +533,7 @@ const EPubReader = () => {
                     y += 10;
                 }
                 if (elem) {
-                    const fff = window.getCSSPath(elem);
+                    const fff = getCSSPath(elem);
                     window.app.epubHistorySaveData = {
                         chapterName: epubData?.manifest.get(currentChapterFake)?.title || "~",
                         id: epubData?.spine[currentChapter.index].id || "",
@@ -624,7 +624,7 @@ const EPubReader = () => {
     };
     window.app.scrollToPage = scrollToPage;
     useEffect(() => {
-        if ((zenMode && !window.electron.getCurrentWindow().isMaximized()) || (!zenMode && !wasMaximized)) {
+        if ((zenMode && !window.electron.currentWindow.isMaximized()) || (!zenMode && !wasMaximized)) {
             setTimeout(() => {
                 if (elemBeforeChange)
                     document.querySelector(elemBeforeChange)?.scrollIntoView({
@@ -635,14 +635,13 @@ const EPubReader = () => {
         }
         if (zenMode) {
             setSideListPinned(false);
-            setWasMaximized(window.electron.getCurrentWindow().isMaximized());
+            setWasMaximized(window.electron.currentWindow.isMaximized());
             document.body.classList.add("zenMode");
-            window.electron.getCurrentWindow().setFullScreen(true);
+            window.electron.currentWindow.setFullScreen(true);
         } else {
             document.body.classList.remove("zenMode");
             setWasMaximized(false);
-            if (window.electron.getCurrentWindow().isFullScreen())
-                window.electron.getCurrentWindow().setFullScreen(false);
+            if (window.electron.currentWindow.isFullScreen()) window.electron.currentWindow.setFullScreen(false);
         }
     }, [zenMode]);
 
@@ -686,7 +685,7 @@ const EPubReader = () => {
         const registerShortcuts = (e: KeyboardEvent) => {
             // /&& document.activeElement!.tagName === "BODY"
             window.app.keyRepeated = e.repeat;
-            const keyStr = window.keyFormatter(e);
+            const keyStr = keyFormatter(e);
             if (keyStr === "" && e.key !== "Escape") return;
 
             const is = (keys: string[]) => {

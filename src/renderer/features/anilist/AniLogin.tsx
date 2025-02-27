@@ -1,6 +1,7 @@
 import { setAnilistToken } from "@store/anilistToken";
 import { useAppDispatch, useAppSelector } from "@store/hooks";
 import { setAniLoginOpen } from "@store/isAniLoginOpen";
+import AniList from "@utils/anilist";
 import React, { useState, useRef, useEffect } from "react";
 
 import FocusLock from "react-focus-lock";
@@ -62,7 +63,7 @@ const AniLogin = () => {
                         {!proceeded && (
                             <button
                                 onClick={() => {
-                                    window.electron.shell.openExternal(
+                                    window.electron.openExternal(
                                         "https://anilist.co/api/v2/oauth/authorize?client_id=13234&response_type=token"
                                     );
                                     setProceeded(true);
@@ -88,7 +89,7 @@ const AniLogin = () => {
                                             const token = inputRef.current.value.trimEnd();
                                             const elem = e.currentTarget;
                                             elem.innerText = "Checking...";
-                                            window.al.checkToken(token).then((e) => {
+                                            AniList.checkToken(token).then((e) => {
                                                 if (e) {
                                                     elem.innerText = "Linked!";
                                                     setTimeout(() => {

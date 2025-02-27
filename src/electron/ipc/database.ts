@@ -1,30 +1,12 @@
 import { ipcMain } from "electron";
-import type { DatabaseChannels, IpcChannel } from "@common/types/ipc";
+import type { DatabaseChannels } from "@common/types/ipc";
 import { DatabaseService } from "../db";
-import { electronOnly } from "../util";
 import { bookBookmarks, bookNotes, bookProgress, libraryItems, mangaBookmarks, mangaProgress } from "../db/schema";
 import { and, eq, inArray, sql } from "drizzle-orm";
 import { BookProgress, LibraryItem, MangaProgress } from "@common/types/db";
 
-electronOnly();
-
-// type Handler<T extends IpcChannel> = (
-//     request: DatabaseChannels[T]["request"]
-// ) => Promise<DatabaseChannels[T]["response"]>;
-
-// function handle<T extends IpcChannel>(channel: T, handler: Handler<T>) {
-//     ipcMain.handle(channel, async (_, request) => {
-//         try {
-//             return await handler(request);
-//         } catch (error) {
-//             console.error(`Error in IPC channel "${channel}":`, error);
-//             throw error;
-//         }
-//     });
-// }
-
 const handlers: {
-    [K in IpcChannel]: (
+    [K in keyof DatabaseChannels]: (
         db: DatabaseService,
         request: DatabaseChannels[K]["request"]
     ) => Promise<DatabaseChannels[K]["response"]>;
@@ -149,7 +131,7 @@ export function setupDatabaseHandlers(db: DatabaseService) {
     for (const channel in handlers) {
         ipcMain.handle(channel, async (_, request) => {
             try {
-                return await handlers[channel as IpcChannel](db, request);
+                return await handlers[channel as keyof DatabaseChannels](db, request);
             } catch (error) {
                 console.error(`Error in IPC channel "${channel}":`, error);
                 throw error;

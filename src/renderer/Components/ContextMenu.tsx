@@ -3,6 +3,7 @@ import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faCheck } from "@fortawesome/free-solid-svg-icons";
 import { useAppSelector } from "@store/hooks";
 import { AppContext } from "../App";
+import { keyFormatter } from "@utils/keybindings";
 
 const ContextMenu = () => {
     const shortcuts = useAppSelector((store) => store.shortcuts);
@@ -67,7 +68,7 @@ const ContextMenu = () => {
                 }}
                 onKeyDown={(e) => {
                     e.stopPropagation();
-                    const keyStr = window.keyFormatter(e, false);
+                    const keyStr = keyFormatter(e, false);
                     if (keyStr === "") return;
 
                     const shortcutsMapped = Object.fromEntries(

@@ -5,7 +5,10 @@ import { newTheme, updateTheme, setTheme, setSysBtnColor } from "@store/themes";
 import { useAppDispatch, useAppSelector } from "@store/hooks";
 import InputSelect from "@ui/InputSelect";
 import InputColor from "@ui/InputColor";
-import { initThemeData } from "../../utils/theme";
+import { initThemeData, themeProps } from "@utils/theme";
+import { colorUtils } from "@utils/color";
+import { randomString } from "@utils/utils";
+import { dialogUtils } from "@utils/dialog";
 const ThemeElement = ({
     color,
     prop,
@@ -20,11 +23,11 @@ const ThemeElement = ({
     const ref = useRef<HTMLInputElement>(null);
     const originalColor = useRef<string | null>(null);
     const [firstRendered, setFirstRendered] = useState(false);
-    const [realColor, setRealColor] = useState(window.color.realColor(color, currentTheme));
+    const [realColor, setRealColor] = useState(colorUtils.realColor(color, currentTheme));
     const [variable, setVariable] = useState(
-        window.color.cleanVariable(color) ? color : `var(${Object.keys(window.themeProps)[0]})`
+        colorUtils.cleanVariable(color) ? color : `var(${Object.keys(themeProps)[0]})`
     );
-    const [checked, setChecked] = useState(!!window.color.cleanVariable(color));
+    const [checked, setChecked] = useState(!!colorUtils.cleanVariable(color));
 
     useLayoutEffect(() => {
         originalColor.current = color;
@@ -35,9 +38,9 @@ const ThemeElement = ({
     });
     const resetValues = () => {
         setFirstRendered(false);
-        setRealColor(window.color.realColor(color, currentTheme));
-        setVariable(window.color.cleanVariable(color) ? color : `var(${Object.keys(window.themeProps)[0]})`);
-        setChecked(!!window.color.cleanVariable(color));
+        setRealColor(colorUtils.realColor(color, currentTheme));
+        setVariable(colorUtils.cleanVariable(color) ? color : `var(${Object.keys(themeProps)[0]})`);
+        setChecked(!!colorUtils.cleanVariable(color));
     };
     useEffect(() => {
         if (firstRendered) {
@@ -50,8 +53,8 @@ const ThemeElement = ({
         }
     }, [realColor, checked]);
     useLayoutEffect(() => {
-        if (firstRendered && window.color.cleanVariable(variable)) {
-            const color = window.color.varToColor(variable, currentTheme);
+        if (firstRendered && colorUtils.cleanVariable(variable)) {
+            const color = colorUtils.varToColor(variable, currentTheme);
             if (color && color.hexa() !== realColor.hexa()) {
                 setRealColor(color);
             }
@@ -95,7 +98,7 @@ const ThemeElement = ({
                     <InputSelect
                         value={variable}
                         className="newThemeMakerVar"
-                        options={Object.entries(window.themeProps)
+                        options={Object.entries(themeProps)
                             .filter((e) => e[0] !== prop)
                             .map((e) => ({ label: e[1], value: `var(${e[0]})` }))}
                         onChange={(value) => {
@@ -109,7 +112,7 @@ const ThemeElement = ({
                             timeout={[
                                 500,
                                 (value) => {
-                                    setRealColor(window.color.new(value));
+                                    setRealColor(colorUtils.new(value));
                                 },
                             ]}
                             title="Color"
@@ -128,7 +131,7 @@ const ThemeCont = () => {
     const dispatch = useAppDispatch();
 
     const [fakeCurrentTheme, setFakeCurrentTheme] = useState(
-        Object.entries(window.themeProps).map((e) => ({
+        Object.entries(themeProps).map((e) => ({
             prop: e[0] as ThemeDataMain,
             label: e[1],
             value: allThemes.find((e) => e.name === theme)!.main[e[0] as ThemeDataMain],
@@ -140,7 +143,7 @@ const ThemeCont = () => {
     useLayoutEffect(() => {
         if (firstRendered) {
             setFakeCurrentTheme(
-                Object.entries(window.themeProps).map((e) => ({
+                Object.entries(themeProps).map((e) => ({
                     prop: e[0] as ThemeDataMain,
                     label: e[1],
                     value: allThemes.find((e) => e.name === theme)!.main[e[0] as ThemeDataMain],
@@ -154,29 +157,29 @@ const ThemeCont = () => {
             vars += `${e.prop}:${e.value};`;
         });
         document.body.setAttribute("style", vars);
-        if (process.platform === "win32") setSysBtnColor(!window.electron.getCurrentWindow().isFocused());
+        if (process.platform === "win32") setSysBtnColor(!window.electron.currentWindow.isFocused());
     };
     const saveTheme = (saveAndReplace = false) => {
         const nameInput = themeNameInputRef.current;
         if (nameInput) {
             let name = "";
-            name = nameInput.value || window.app.randomString(6);
+            name = nameInput.value || randomString(6);
             if (saveAndReplace) name = theme;
             if (initThemeData.allData.map((e) => e.name).includes(name)) {
-                window.dialog.customError({
+                dialogUtils.customError({
                     title: "Error",
                     message: `Can't edit default themes, save as new instead.`,
                 });
                 return;
             }
             if (!saveAndReplace && allThemes.map((e) => e.name).includes(nameInput.value)) {
-                window.dialog.customError({
+                dialogUtils.customError({
                     title: "Error",
                     message: `Theme name "${nameInput.value}" already exist, choose something else.`,
                 });
                 return;
             }
-            const newThemeData = { ...window.themeProps };
+            const newThemeData = { ...themeProps };
             fakeCurrentTheme.forEach((e) => {
                 newThemeData[e.prop] = e.value;
             });
@@ -184,7 +187,7 @@ const ThemeCont = () => {
                 dispatch(updateTheme({ themeName: name, newThemeData }));
                 return;
             }
-            nameInput.value = window.app.randomString(6);
+            nameInput.value = randomString(6);
             dispatch(newTheme({ name: name, main: newThemeData }));
             dispatch(setTheme(name));
         }
@@ -212,7 +215,7 @@ const ThemeCont = () => {
                     className="resetBtn"
                     onClick={() => {
                         setFakeCurrentTheme(
-                            Object.entries(window.themeProps).map((e) => ({
+                            Object.entries(themeProps).map((e) => ({
                                 prop: e[0] as ThemeDataMain,
                                 label: e[1],
                                 value: allThemes.find((e) => e.name === theme)!.main[e[0] as ThemeDataMain],
@@ -226,7 +229,7 @@ const ThemeCont = () => {
                 <span title={theme}>{theme}</span>
                 <input
                     type="text"
-                    defaultValue={window.app.randomString(6)}
+                    defaultValue={randomString(6)}
                     ref={themeNameInputRef}
                     onKeyDown={(e) => {
                         e.stopPropagation();
@@ -277,7 +280,7 @@ const ThemeCont = () => {
                             </tr>
                         ))}
                         {/* <ThemeCont theme={theme} currentTheme={currentTheme} /> */}
-                        {/* {Object.entries(window.themeProps).map((e) => (
+                        {/* {Object.entries(themeProps).map((e) => (
                                         <tr key={e[0]} className="newThemeMakerRow">
                                             <td className="newThemeMakerProp" data-prop={e[0]}>
                                                 {e[1]}

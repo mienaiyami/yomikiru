@@ -1,9 +1,11 @@
 import { createSlice, PayloadAction } from "@reduxjs/toolkit";
 import { saveJSONfile, shortcutsPath } from "../utils/file";
+import { SHORTCUT_COMMAND_MAP } from "@utils/keybindings";
+import { dialogUtils } from "@utils/dialog";
 
 const initialState: ShortcutSchema[] = [];
 
-const defaultShortcuts: ShortcutSchema[] = window.SHORTCUT_COMMANDS.map((e) => ({
+const defaultShortcuts: ShortcutSchema[] = SHORTCUT_COMMAND_MAP.map((e) => ({
     command: e.command,
     keys: e.defaultKeys,
 }));
@@ -22,9 +24,9 @@ if (window.fs.existsSync(shortcutsPath)) {
 
             // check if shortcut key is missing in shortcuts.json, if so then add
             const shortcutKeyEntries = data.map((e) => e.command);
-            const shortcutKeyOriginal = window.SHORTCUT_COMMANDS.map((e) => e.command);
+            const shortcutKeyOriginal = SHORTCUT_COMMAND_MAP.map((e) => e.command);
             data = data.filter((e) => shortcutKeyOriginal.includes(e.command));
-            window.SHORTCUT_COMMANDS.forEach((e) => {
+            SHORTCUT_COMMAND_MAP.forEach((e) => {
                 if (!shortcutKeyEntries.includes(e.command)) {
                     window.logger.log(`Function ${e} does not exist in shortcuts.json. Adding it.`);
                     data.push({
@@ -33,25 +35,25 @@ if (window.fs.existsSync(shortcutsPath)) {
                     });
                 }
             });
-            window.fs.writeFileSync(shortcutsPath, JSON.stringify(data, null, "\t"));
+            window.fs.writeFile(shortcutsPath, JSON.stringify(data, null, "\t"));
             initialState.push(...data);
         } catch (err) {
             if (err instanceof Error && err.message.includes("old shortcuts")) {
-                window.dialog.warn({
+                dialogUtils.warn({
                     message:
                         "Shortcut system is updating to support advanced key combinations. This will replace the old shortcut system and result in the loss of your current shortcuts. Sorry for the inconvenience.",
                 });
             } else
-                window.dialog.customError({
+                dialogUtils.customError({
                     message: "Unable to parse " + shortcutsPath + "\nMaking new shortcuts.json...",
                 });
             window.logger.error(err);
-            window.fs.writeFileSync(shortcutsPath, JSON.stringify(defaultShortcuts, null, "\t"));
+            window.fs.writeFile(shortcutsPath, JSON.stringify(defaultShortcuts, null, "\t"));
             initialState.push(...defaultShortcuts);
         }
     }
 } else {
-    window.fs.writeFileSync(shortcutsPath, JSON.stringify(defaultShortcuts, null, "\t"));
+    window.fs.writeFile(shortcutsPath, JSON.stringify(defaultShortcuts, null, "\t"));
     initialState.push(...defaultShortcuts);
 }
 

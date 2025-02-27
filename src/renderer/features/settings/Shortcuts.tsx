@@ -2,6 +2,8 @@ import { useAppDispatch, useAppSelector } from "@store/hooks";
 import { removeShortcuts, setShortcuts } from "@store/shortcuts";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faClose } from "@fortawesome/free-solid-svg-icons";
+import { keyFormatter, SHORTCUT_COMMAND_MAP } from "@utils/keybindings";
+import { dialogUtils } from "@utils/dialog";
 
 const reservedKeys = ["ctrl+shift+i", "escape", "tab", "ctrl+n", "ctrl+w", "ctrl+r", "ctrl+shift+r"];
 const SHORTCUT_LIMIT = 4;
@@ -50,15 +52,15 @@ const ShortcutInput = ({ command }: { command: ShortcutCommands }) => {
                         e.preventDefault();
                         e.stopPropagation();
 
-                        const newKey = window.keyFormatter(e.nativeEvent);
+                        const newKey = keyFormatter(e.nativeEvent);
                         if (newKey === "") return;
                         const dupIndex = shortcuts.findIndex((e) => e.keys.includes(newKey));
                         if (dupIndex >= 0) {
                             const name =
-                                window.SHORTCUT_COMMANDS.find((e) => e.command === shortcuts[dupIndex].command)
+                                SHORTCUT_COMMAND_MAP.find((e) => e.command === shortcuts[dupIndex].command)
                                     ?.name || command;
                             window.logger.warn(`"${newKey}" already bound to "${shortcuts[dupIndex].command}"`);
-                            window.dialog.warn({
+                            dialogUtils.warn({
                                 message: `"${newKey}" already bound to "${name}".`,
                             });
                             return;
@@ -66,7 +68,7 @@ const ShortcutInput = ({ command }: { command: ShortcutCommands }) => {
 
                         if (reservedKeys.includes(newKey)) {
                             //todo make a simple alert
-                            window.dialog.warn({
+                            dialogUtils.warn({
                                 message: "Can't use reserved key combination.",
                             });
                             window.logger.warn(`"${newKey}"` + " is reserved key combination.");
@@ -120,7 +122,7 @@ const Shortcuts = ({
                         <th>Function</th>
                         <th>Key</th>
                     </tr>
-                    {window.SHORTCUT_COMMANDS.map((e, i) => (
+                    {SHORTCUT_COMMAND_MAP.map((e, i) => (
                         <tr key={e.command}>
                             <td>
                                 {e.name}

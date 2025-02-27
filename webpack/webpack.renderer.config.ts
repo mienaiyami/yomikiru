@@ -13,17 +13,23 @@ export const rendererConfig: Configuration = {
     resolve: {
         extensions: [".ts", ".tsx", ".js"],
         plugins: [new TsconfigPathsPlugin()],
+        fallback: {
+            url: false,
+            fs: false,
+            path: false,
+            os: false,
+        },
     },
     module: {
         rules,
     },
     externals: {
         electron: "commonjs2 electron",
-        // "better-sqlite3": "commonjs better-sqlite3",
-        // "../public/pdf.min.js": "pdfjsLib",
-        // "../public/pdf.worker.min.js": "pdfjsLibWorker",
     },
-    target: "electron-renderer",
+    // target: "electron-renderer",
     plugins,
-    // target: "web",
+
+    mode: "development",
+    devtool: "inline-source-map",
+    target: "web",
 };

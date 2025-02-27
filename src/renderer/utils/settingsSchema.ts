@@ -1,5 +1,6 @@
 import { z } from "zod";
 import { saveJSONfile, settingsPath } from "./file";
+import { dialogUtils } from "./dialog";
 
 const settingSchema = z
     .object({
@@ -380,7 +381,7 @@ const makeSettingsJson = () => {
 };
 let settingNotFound = false;
 if (!window.fs.existsSync(settingsPath)) {
-    window.dialog.warn({ message: "No settings found, Select manga folder to make default in settings" });
+    dialogUtils.warn({ message: "No settings found, Select manga folder to make default in settings" });
     settingNotFound = true;
     makeSettingsJson();
 }
@@ -424,7 +425,7 @@ const parseAppSettings = (): z.infer<typeof settingSchema> => {
                     location.push(e.path.join("."));
                     setValueFromDeepObject(fixed, e.path, getValueFromDeepObject(defaultSettings, e.path));
                 });
-                window.dialog.warn({
+                dialogUtils.warn({
                     message: `Some settings are invalid or new settings added. Re-writing settings.`,
                 });
                 window.logger.log("appSettings invalid at :", location);
@@ -435,7 +436,7 @@ const parseAppSettings = (): z.infer<typeof settingSchema> => {
     } catch (err) {
         window.logger.error(err);
         window.logger.log(window.fs.readFileSync(settingsPath, "utf-8"));
-        window.dialog.customError({ message: "Unable to parse settings.json. Remaking." });
+        dialogUtils.customError({ message: "Unable to parse settings.json. Remaking." });
         makeSettingsJson();
         return defaultSettings;
     }

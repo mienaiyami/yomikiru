@@ -1,6 +1,8 @@
 import { useAppSelector } from "@store/hooks";
 import { useState, useRef } from "react";
 import BookmarkHistoryListItem from "./BookmarkHistoryListItem";
+import { formatUtils } from "@utils/file";
+import { keyFormatter } from "@utils/keybindings";
 
 const HistoryTab = () => {
     const library = useAppSelector((store) => store.library.items);
@@ -47,7 +49,7 @@ const HistoryTab = () => {
                                 e.currentTarget.blur();
                             }
                             //todo make it resuable
-                            const keyStr = window.keyFormatter(e);
+                            const keyStr = keyFormatter(e);
                             if (keyStr === "") return;
                             const shortcutsMapped = Object.fromEntries(
                                 shortcuts.map((e) => [e.command, e.keys])
@@ -106,7 +108,7 @@ const HistoryTab = () => {
                                 new RegExp(filter, "ig").test(
                                     e.type === "manga"
                                         ? e.title +
-                                              (window.app.formats.files.test(e.progress.chapterName || "")
+                                              (formatUtils.files.test(e.progress.chapterName || "")
                                                   ? `${window.path.extname(e.progress.chapterName || "")}`
                                                   : "")
                                         : e.title + ".epub"

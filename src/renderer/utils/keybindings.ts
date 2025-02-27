@@ -1,4 +1,4 @@
-const SHORTCUT_COMMAND_MAP = [
+export const SHORTCUT_COMMAND_MAP = [
     {
         command: "navToPage" as const,
         name: "Search Page Number",
@@ -197,7 +197,7 @@ const SHORTCUT_COMMAND_MAP = [
 ];
 Object.freeze(SHORTCUT_COMMAND_MAP);
 
-const keyFormatter = (e: KeyboardEvent | React.KeyboardEvent, limited = true): string => {
+export const keyFormatter = (e: KeyboardEvent | React.KeyboardEvent, limited = true): string => {
     if (limited && ["Control", "Shift", "Alt", "Tab", "Escape"].includes(e.key)) return "";
 
     // using lowercase because more readable
@@ -250,5 +250,3 @@ const keyFormatter = (e: KeyboardEvent | React.KeyboardEvent, limited = true): s
     // console.log(keyStr);
     return keyStr;
 };
-
-export { SHORTCUT_COMMAND_MAP, keyFormatter };

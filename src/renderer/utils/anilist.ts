@@ -1,8 +1,10 @@
+import { dialogUtils } from "./dialog";
+
 export default class AniList {
-    #token = "";
-    displayAdultContent = false;
-    #currentMangaListId = null as null | number;
-    #mutation = `#graphql
+    static #token = "";
+    static displayAdultContent = false;
+    static #currentMangaListId = null as null | number;
+    static #mutation = `#graphql
     mutation($mediaId: Int, $id: Int,$status:MediaListStatus, $score:Float, $progress:Int, $repeat:Int, $startedAt: FuzzyDateInput, $completedAt:FuzzyDateInput, $progressVolumes:Int, $private:Boolean){
       SaveMediaListEntry(mediaId:$mediaId, id:$id,status:$status, score:$score,  progress:$progress,  repeat:$repeat,  startedAt:$startedAt,   completedAt:$completedAt, progressVolumes:$progressVolumes, private:$private  ){
         id
@@ -39,7 +41,7 @@ export default class AniList {
     }
     `;
 
-    constructor() {
+    static {
         // for first launch
         if (localStorage.getItem("anilist_token") === null) localStorage.setItem("anilist_token", "");
         if (localStorage.getItem("anilist_tracking") === null) localStorage.setItem("anilist_tracking", "[]");
@@ -49,19 +51,22 @@ export default class AniList {
         if (token)
             this.checkToken(token).then((e) => {
                 if (!e && e !== undefined)
-                    window.dialog.customError({
+                    dialogUtils.customError({
                         message:
                             "Unable to login to AniList. If persists, try logging in again using different token.",
                     });
             });
     }
-    setToken(token: string) {
+    private constructor() {
+        throw new Error("Cannot instantiate static class");
+    }
+    static setToken(token: string) {
         this.#token = token;
     }
-    setCurrentMangaListId(id: null | number) {
+    static setCurrentMangaListId(id: null | number) {
         this.#currentMangaListId = id;
     }
-    async checkToken(token: string) {
+    static async checkToken(token: string) {
         const query = `#graphql
     query{
         Viewer{
@@ -91,10 +96,10 @@ export default class AniList {
             }
             return raw.ok;
         } catch (reason) {
-            window.dialog.customError({ message: "Unable to make request to AniList server." });
+            dialogUtils.customError({ message: "Unable to make request to AniList server." });
         }
     }
-    async fetch(query: string, variables = {}) {
+    static async fetch(query: string, variables = {}) {
         if (!this.#token) {
             window.logger.error("AniList::fetch: user not logged in.");
             return;
@@ -123,7 +128,7 @@ export default class AniList {
                 if (json) {
                     window.logger.error(json);
                     if (json.errors.message === "Invalid token")
-                        window.dialog.customError({
+                        dialogUtils.customError({
                             message: "AniList: Invalid token",
                             detail: "Try logging out and in again.",
                         });
@@ -133,7 +138,7 @@ export default class AniList {
             window.logger.error("AniList::fetch:\n" + reason);
         }
     }
-    async getUserName() {
+    static async getUserName() {
         const query = `#graphql
         query{
             Viewer{
@@ -145,7 +150,7 @@ export default class AniList {
         if (data) return data.Viewer.name;
         else return "Error";
     }
-    getVariables(variables: object) {
+    static getVariables(variables: object) {
         return this.displayAdultContent ? { ...variables } : { ...variables, displayAdultContent: false };
     }
     /**
@@ -153,7 +158,7 @@ export default class AniList {
      * @param name search term in `English` or `Romaji`
      * does not include unreleased manga
      */
-    async searchManga(name: string) {
+    static async searchManga(name: string) {
         if (!name) return [];
         const query = `#graphql
         query($search: String,$displayAdultContent: Boolean){
@@ -203,14 +208,14 @@ export default class AniList {
             }[];
         return [];
     }
-    async getMangaData(mediaId: number) {
+    static async getMangaData(mediaId: number) {
         const variables = this.getVariables({ mediaId });
         const data = await this.fetch(this.#mutation, variables);
         if (data) {
             return data.SaveMediaListEntry as Anilist.MangaData;
         }
     }
-    async setCurrentMangaData(newData: Omit<Anilist.MangaData, "id" | "mediaId" | "media">) {
+    static async setCurrentMangaData(newData: Omit<Anilist.MangaData, "id" | "mediaId" | "media">) {
         if (!this.#currentMangaListId) {
             window.logger.error("AniList::setCurrentMangaStatus: currentMangaListId not defined.");
             return;
@@ -221,7 +226,7 @@ export default class AniList {
             return data.SaveMediaListEntry as Anilist.MangaData;
         }
     }
-    async setCurrentMangaProgress(progress: Anilist.MangaData["progress"]) {
+    static async setCurrentMangaProgress(progress: Anilist.MangaData["progress"]) {
         if (!this.#currentMangaListId) {
             window.logger.error("AniList::setCurrentMangaProgress: currentMangaListId not defined.");
             return;

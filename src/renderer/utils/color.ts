@@ -1,6 +1,25 @@
 import Colorjs from "color";
 
-export const colorUtils: typeof window.color = {
+type ColorUtils = {
+    new: (...args: Parameters<typeof Colorjs>) => Colorjs;
+    /**
+     * returns `Color` from css variable or color string
+     */
+    realColor: (var_or_color: string, themeDataMain: ThemeData["main"]) => Colorjs;
+    /**
+     *
+     * @param variableStr css variable name, e.g. `var(--btn-color-hover)`
+     * @returns `--btn-color-hover`, `undefined` if not valid
+     */
+    cleanVariable: (variableStr: string) => ThemeDataMain | undefined;
+    /**
+     *
+     * @param variableStr css variable name, e.g. `var(--btn-color-hover)` or `--btn-color-hover`
+     */
+    varToColor: (variableStr: string, themeDataMain: ThemeData["main"]) => Colorjs | undefined;
+};
+
+export const colorUtils: ColorUtils = {
     new: (args) => Colorjs(args),
     realColor(var_or_color, themeDataMain) {
         if (this.cleanVariable(var_or_color)) {
