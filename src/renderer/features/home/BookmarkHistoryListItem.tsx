@@ -10,28 +10,34 @@ const BookmarkHistoryListItem = (props: {
     isHistory: boolean;
     isBookmark: boolean;
     link: string;
+    // id from db
+    id: number;
 }) => {
     const { openInReader, setContextMenuData, contextMenuData } = useContext(AppContext);
     const appSettings = useAppSelector((store) => store.appSettings);
-    const item = useAppSelector((store) => store.library.items[props.link]);
-    const link = item.type === "book" ? item.link : item.progress.chapterLink;
-    if (!item) return <p>Error: Item not found</p>;
+    const libraryItem = useAppSelector((store) => store.library.items[props.link]);
+
+    // todo: this is temp only until properly implemented
+    if (!libraryItem) return <p>Error: Item not found</p>;
+    if (libraryItem.type === "manga" && !libraryItem.progress) return <p>Error: Item not found</p>;
+    const link = libraryItem.type === "book" ? libraryItem.link : libraryItem.progress?.chapterLink;
+    if (!link) return <p>Error: Link not found</p>;
     const [contextMenuFocused, setContextMenuFocused] = useState(false);
     useEffect(() => {
         if (!contextMenuData) setContextMenuFocused(false);
     }, [contextMenuData]);
     const title =
-        item.type === "book"
-            ? `Title       : ${item.title}\n` +
-              `Chapter : ${item.progress?.chapterName || "~"}\n` +
-              `Date      : ${item.progress?.lastReadAt}\n` +
-              `Path      : ${item.link}`
-            : `Manga   : ${item.title}\n` +
-              `Chapter : ${item.progress?.chapterName}\n` +
-              `Pages    : ${item.progress.totalPages}\n` +
-              `Page      : ${item.progress.currentPage}\n` +
-              `Date      : ${item.progress.lastReadAt}\n` +
-              `Path      : ${item.link}`;
+        libraryItem.type === "book"
+            ? `Title       : ${libraryItem.title}\n` +
+              `Chapter : ${libraryItem.progress?.chapterName || "~"}\n` +
+              `Date      : ${libraryItem.progress?.lastReadAt}\n` +
+              `Path      : ${libraryItem.link}`
+            : `Manga   : ${libraryItem.title}\n` +
+              `Chapter : ${libraryItem.progress?.chapterName}\n` +
+              `Pages    : ${libraryItem.progress?.totalPages}\n` +
+              `Page      : ${libraryItem.progress?.currentPage}\n` +
+              `Date      : ${libraryItem.progress?.lastReadAt}\n` +
+              `Path      : ${libraryItem.link}`;
 
     return (
         <li
@@ -53,12 +59,12 @@ const BookmarkHistoryListItem = (props: {
                     }
                     openInReader(
                         link,
-                        item.type === "book"
+                        libraryItem.type === "book"
                             ? {
-                                  epubChapterId: item.progress.chapterId,
-                                  epubElementQueryString: item.progress.position,
+                                  epubChapterId: libraryItem.progress?.chapterId,
+                                  epubElementQueryString: libraryItem.progress?.position,
                               }
-                            : { mangaPageNumber: item.progress.currentPage }
+                            : { mangaPageNumber: libraryItem.progress?.currentPage || 1 }
                     );
                 }}
                 onContextMenu={(e) => {
@@ -82,11 +88,11 @@ const BookmarkHistoryListItem = (props: {
                     });
                 }}
             >
-                {item.type === "book" ? (
+                {libraryItem.type === "book" ? (
                     <span className="double">
-                        <span className="text">{item.title}</span>
+                        <span className="text">{libraryItem.title}</span>
                         <span className="text chapter">
-                            <span className="text">{item.progress.chapterName || "~"}</span>
+                            <span className="text">{libraryItem.progress?.chapterName || "~"}</span>
                             &nbsp;&nbsp;&nbsp;
                             <span className="page">
                                 {" "}
@@ -96,17 +102,17 @@ const BookmarkHistoryListItem = (props: {
                     </span>
                 ) : (
                     <span className="double">
-                        <span className="text">{item.title}</span>
+                        <span className="text">{libraryItem.title}</span>
                         <span className="chapter">
                             <span className="text">
-                                {formatUtils.files.getName(item.progress.chapterName || "~")}
+                                {formatUtils.files.getName(libraryItem.progress?.chapterName || "~")}
                             </span>
                             &nbsp;&nbsp;&nbsp;
                             <span className="page">
                                 {" "}
-                                {formatUtils.files.test(item.progress.chapterName || "~") && (
+                                {formatUtils.files.test(libraryItem.progress?.chapterName || "~") && (
                                     <code className="nonFolder">
-                                        {formatUtils.files.getExt(item.progress.chapterName || "~")}
+                                        {formatUtils.files.getExt(libraryItem.progress?.chapterName || "~")}
                                     </code>
                                 )}
                             </span>

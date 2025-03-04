@@ -1,6 +1,7 @@
 import { InferInsertModel } from "drizzle-orm";
 import type { LibraryItem, MangaProgress, BookProgress, MangaBookmark, BookBookmark, BookNote } from "./db";
-import { libraryItems } from "../../electron/db/schema";
+import { bookProgress, libraryItems, mangaProgress } from "../../electron/db/schema";
+import { AddToLibraryData } from "@electron/db";
 
 /**
  * m2r: main to renderer
@@ -20,16 +21,11 @@ export type DatabaseChannels = {
     "db:library:getAllAndProgress": ChannelDefinition<
         void,
         (
-            | (LibraryItem & { type: "book"; progress: BookProgress })
-            | (LibraryItem & { type: "manga"; progress: MangaProgress })
+            | (LibraryItem & { type: "book"; progress: BookProgress | null })
+            | (LibraryItem & { type: "manga"; progress: MangaProgress | null })
         )[]
     >;
-    "db:library:addItem": ChannelDefinition<
-        {
-            data: Omit<InferInsertModel<typeof libraryItems>, "createdAt" | "updatedAt">;
-        },
-        LibraryItem
-    >;
+    "db:library:addItem": ChannelDefinition<AddToLibraryData, LibraryItem>;
     "db:library:getAllBookmarks": ChannelDefinition<
         void,
         {
@@ -109,6 +105,26 @@ export type DatabaseChannels = {
         void
     >;
     "db:book:deleteNotes": ChannelDefinition<{ itemLink: string; ids: number[]; all?: boolean }, boolean>;
+};
+
+// ! for updating store only, temp only
+export type DatabaseChangeChannels = {
+    "db:library:change": ChannelDefinition<
+        (
+            | (LibraryItem & { type: "book"; progress: BookProgress | null })
+            | (LibraryItem & { type: "manga"; progress: MangaProgress | null })
+        )[],
+        void,
+        "m2r"
+    >;
+    "db:bookmark:change": ChannelDefinition<
+        {
+            mangaBookmarks: MangaBookmark[];
+            bookBookmarks: BookBookmark[];
+        },
+        void,
+        "m2r"
+    >;
 };
 
 export type WindowManagementChannels = {
@@ -218,6 +234,7 @@ export type DialogChannels = {
 };
 
 export type IPCChannels = DatabaseChannels &
+    DatabaseChangeChannels &
     WindowManagementChannels &
     FileSystemChannels &
     UpdateChannels &

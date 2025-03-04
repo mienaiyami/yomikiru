@@ -24,10 +24,7 @@ const BookmarkTab = () => {
         });
         return arr;
     }, [bookmarks]);
-    console.log({
-        bookmarks,
-        bookmarksArray,
-    });
+
     return (
         <div
             className={"contTab listCont " + (!appSettings.showTabs.bookmark ? "collapsed " : "")}
@@ -137,6 +134,7 @@ const BookmarkTab = () => {
                                     isBookmark={true}
                                     focused={focused >= 0 && focused % arr.length === i}
                                     link={e.itemLink}
+                                    id={e.id}
                                     key={e.id}
                                 />
                             ))}

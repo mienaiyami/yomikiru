@@ -1,8 +1,8 @@
-import sudo from "@vscode/sudo-prompt";
+import * as sudo from "@vscode/sudo-prompt";
 import { app } from "electron";
 import fs from "fs";
 import path from "path";
-import { IS_PORTABLE } from ".";
+import { IS_PORTABLE, log } from ".";
 
 // registry, add option "open in reader" in  explorer context menu
 export const addOptionToExplorerMenu = () => {

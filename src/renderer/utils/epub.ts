@@ -1,12 +1,5 @@
-// todo : remove node integration and move to ipc
-const unzipAsync = (zipPath: string, extractPath: string) => {
-    return new Promise<void>((resolve, reject) => {
-        unzip(zipPath, extractPath, (err) => {
-            if (err) reject(err);
-            else resolve();
-        });
-    });
-};
+import { dialogUtils } from "./dialog";
+import { unzip } from "./file";
 
 export default class EPUB {
     static async extractEpub(epubPath: string, extractPath: string, keepExtractedFiles: boolean) {
@@ -14,8 +7,8 @@ export default class EPUB {
         try {
             if (
                 keepExtractedFiles &&
-                window.fs.existsSync(path.join(extractPath, "SOURCE")) &&
-                window.fs.readFileSync(path.join(extractPath, "SOURCE"), "utf-8") === epubPath
+                window.fs.existsSync(window.path.join(extractPath, "SOURCE")) &&
+                window.fs.readFileSync(window.path.join(extractPath, "SOURCE"), "utf-8") === epubPath
             ) {
                 console.log("EPUB::extractEpub : Found old epub extract.");
                 return true;
@@ -23,11 +16,11 @@ export default class EPUB {
                 if (!keepExtractedFiles) window.app.deleteDirOnClose = extractPath;
                 try {
                     if (window.fs.existsSync(extractPath))
-                        await fs.rm(extractPath, {
+                        await window.fs.rm(extractPath, {
                             recursive: true,
                         });
-                    await unzipAsync(epubPath, extractPath);
-                    if (keepExtractedFiles) window.fs.writeFileSync(path.join(extractPath, "SOURCE"), epubPath);
+                    await unzip(epubPath, extractPath);
+                    if (keepExtractedFiles) window.fs.writeFile(window.path.join(extractPath, "SOURCE"), epubPath);
                     return true;
                 } catch (err) {
                     if (err instanceof Error) {
@@ -56,9 +49,9 @@ export default class EPUB {
         }
     }
     static async readEpubFile(epubPath: string, keepExtractedFiles: boolean) {
-        const extractPath = path.join(
+        const extractPath = window.path.join(
             window.electron.app.getPath("temp"),
-            `yomikiru-temp-EPub-${epubPath.split(path.sep).at(-1)}`
+            `yomikiru-temp-EPub-${epubPath.split(window.path.sep).at(-1)}`
         );
         // const now = performance.now();
         const extractSuccess = await EPUB.extractEpub(epubPath, extractPath, keepExtractedFiles);
@@ -83,15 +76,15 @@ export default class EPUB {
             const exists = (p: string) => window.fs.existsSync(p);
             if (!window.fs.existsSync) throw new Error("parseEpubDir: Path does not exist.");
             const parser = new DOMParser();
-            const containerPath = path.join(dirPath, "META-INF/container.xml");
+            const containerPath = window.path.join(dirPath, "META-INF/container.xml");
             if (!exists(containerPath)) throw new Error("parseEpubDir: container.xml not found.");
-            const containerRaw = await fs.readFile(containerPath, "utf-8");
+            const containerRaw = await window.fs.readFile(containerPath, "utf-8");
             const container = parser.parseFromString(containerRaw, "text/xml");
             const rootfile = container.querySelector("rootfile")?.getAttribute("full-path");
             if (!rootfile) throw new Error("parseEpubDir: rootfile not found.");
-            const opfPath = path.join(dirPath, rootfile);
+            const opfPath = window.path.join(dirPath, rootfile);
             if (!exists(opfPath)) throw new Error("parseEpubDir: opf file not found.");
-            const opfRaw = await fs.readFile(opfPath, "utf-8");
+            const opfRaw = await window.fs.readFile(opfPath, "utf-8");
             const opf = parser.parseFromString(opfRaw, "text/xml");
 
             const coverId = opf.querySelector("meta[name='cover']")?.getAttribute("content");
@@ -102,8 +95,8 @@ export default class EPUB {
                 title: opf.getElementsByTagName("dc:title")[0]?.textContent || "No Title",
                 author: [...opf.getElementsByTagName("dc:creator")].map((el) => el.textContent).join(", "),
                 // description: opf.querySelector("dc:description")?.textContent || "No Description",
-                cover: path.join(path.dirname(opfPath), coverSrc),
-                opfDir: path.dirname(opfPath),
+                cover: window.path.join(window.path.dirname(opfPath), coverSrc),
+                opfDir: window.path.dirname(opfPath),
                 ncx_depth: 0,
                 //! navId wont work if it is not present in spine
                 navId: opf.querySelector("manifest > item[properties='nav']")?.getAttribute("id") || "",
@@ -115,7 +108,7 @@ export default class EPUB {
                 .map((el) => {
                     const href = el.getAttribute("href");
                     if (!href) return "";
-                    return path.join(metadata.opfDir, href);
+                    return window.path.join(metadata.opfDir, href);
                 })
                 .filter((el) => el);
             const manifest: EPUB.Manifest = new Map();
@@ -123,7 +116,7 @@ export default class EPUB {
                 const id = el.getAttribute("id");
                 let href = el.getAttribute("href");
                 if (!id || !href) return;
-                href = path.join(metadata.opfDir, href);
+                href = window.path.join(metadata.opfDir, href);
                 manifest.set(id, {
                     id,
                     href,
@@ -150,7 +143,10 @@ export default class EPUB {
                 ?.getAttribute("href");
             if (!ncxPath)
                 throw new Error("parseEpubDir: No ncx file found. todo: display whole spine if no ncx found");
-            const ncxRaw = await fs.readFile(path.join(path.dirname(opfPath), ncxPath), "utf-8");
+            const ncxRaw = await window.fs.readFile(
+                window.path.join(window.path.dirname(opfPath), ncxPath),
+                "utf-8"
+            );
             const ncxXML = parser.parseFromString(ncxRaw, "text/xml");
             // toc is different from contents, toc mostly doesn't include all elements.
             // toc and ncx can be merged? or should be kept separate?
@@ -184,7 +180,10 @@ export default class EPUB {
                     // check comment in prev version, mostly in web scrapped epub
                     // 2024-04-09 : decided to add just for edge cases
                     src = src.replace("Text/Text/", "Text/");
-                    src = path.join(path.dirname(path.join(path.dirname(opfPath), ncxPath)), src);
+                    src = window.path.join(
+                        window.path.dirname(window.path.join(window.path.dirname(opfPath), ncxPath)),
+                        src
+                    );
 
                     // doing this takes around 1000ms on 2500 chapters, ~200ms without it
                     // on 1900 chapters, ~700ms with, ~160ms without
@@ -237,7 +236,7 @@ export default class EPUB {
         doc.querySelectorAll("[src]").forEach((el) => {
             const src = el.getAttribute("src") as string;
             if (src.startsWith("http")) return;
-            el.setAttribute("src", path.join(path.dirname(chapterPath), src));
+            el.setAttribute("src", window.path.join(window.path.dirname(chapterPath), src));
             el.setAttribute("data-original-src", src);
         });
         doc.querySelectorAll("[href]").forEach((el) => {
@@ -248,7 +247,7 @@ export default class EPUB {
             } else {
                 el.setAttribute(
                     "data-href",
-                    href.startsWith("#") ? href : path.join(path.dirname(chapterPath), href)
+                    href.startsWith("#") ? href : window.path.join(window.path.dirname(chapterPath), href)
                 );
                 el.setAttribute("data-original-href", href);
             }
@@ -256,8 +255,8 @@ export default class EPUB {
         doc.querySelectorAll("svg image").forEach((el) => {
             const href = el.getAttribute("xlink:href") as string;
             if (href.startsWith("http")) return;
-            el.setAttribute("xlink:href", path.join(path.dirname(chapterPath), href));
-            el.setAttribute("data-src", path.join(path.dirname(chapterPath), href));
+            el.setAttribute("xlink:href", window.path.join(window.path.dirname(chapterPath), href));
+            el.setAttribute("data-src", window.path.join(window.path.dirname(chapterPath), href));
             el.setAttribute("data-original-xlink:href", href);
         });
         doc.querySelectorAll("[id]").forEach((el) => {
@@ -320,7 +319,7 @@ export default class EPUB {
         try {
             chapterPath = window.decodeURI(chapterPath);
             if (!window.fs.existsSync(chapterPath)) throw new Error("EPUB::readChapter: Chapter file not found.");
-            const raw = await fs.readFile(chapterPath, "utf-8");
+            const raw = await window.fs.readFile(chapterPath, "utf-8");
             return await this.parseChapter(raw, chapterPath);
         } catch (e) {
             if (e instanceof Error || typeof e === "string") window.logger.error(e);

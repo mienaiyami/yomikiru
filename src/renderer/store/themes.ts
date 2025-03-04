@@ -79,7 +79,7 @@ if (window.fs.existsSync(themesPath)) {
                     allData: data,
                 };
                 window.logger.log("Old theme version detected. Converting to new.");
-                window.fs.writeFileSync(themesPath, JSON.stringify(data, null, "\t"));
+                saveJSONfile(themesPath, data);
             }
 
             // validate theme data
@@ -115,7 +115,7 @@ if (window.fs.existsSync(themesPath)) {
                             });
                     });
                 });
-                if (rewriteNeeded) window.fs.writeFileSync(themesPath, JSON.stringify(data, null, "\t"));
+                if (rewriteNeeded) saveJSONfile(themesPath, data);
             }
             // check if default theme exist
             // todo: remove in later versions, today 15/07/2023
@@ -131,7 +131,7 @@ if (window.fs.existsSync(themesPath)) {
                 dialogUtils.warn({
                     message: "Changes in Default Themes. Old themes still exist but can be deleted.",
                 });
-                window.fs.writeFileSync(themesPath, JSON.stringify(data, null, "\t"));
+                saveJSONfile(themesPath, data);
             }
             if (changed) {
                 dialogUtils.warn({
@@ -156,7 +156,7 @@ if (window.fs.existsSync(themesPath)) {
             initialState.name = initThemeData.name;
             initialState.allData = initThemeData.allData;
             // window.fs.writeFileSync(themesPath, JSON.stringify(initThemeData));
-            window.fs.writeFileSync(themesPath, JSON.stringify(initThemeData, null, "\t"));
+            saveJSONfile(themesPath, initThemeData);
         }
         // if (JSON.parse(raw).length < 3) {
         //     window.fs.writeFileSync(themesPath, JSON.stringify(themes));
@@ -166,7 +166,7 @@ if (window.fs.existsSync(themesPath)) {
 } else {
     initialState.name = initThemeData.name;
     initialState.allData = initThemeData.allData;
-    window.fs.writeFileSync(themesPath, JSON.stringify(initThemeData, null, "\t"));
+    saveJSONfile(themesPath, initThemeData);
 }
 
 if (!initialState.allData.map((e) => e.name).includes(initialState.name)) {
@@ -175,7 +175,7 @@ if (!initialState.allData.map((e) => e.name).includes(initialState.name)) {
         message: `Theme "${initialState.name}" does not exist. Switching to default theme.`,
     });
     initialState.name = "theme2";
-    window.fs.writeFileSync(themesPath, JSON.stringify(initialState, null, "\t"));
+    saveJSONfile(themesPath, initialState);
     window.location.reload();
 }
 

@@ -10,10 +10,10 @@ import {
 } from "@fortawesome/free-solid-svg-icons";
 import { AppContext } from "../App";
 import { useAppDispatch, useAppSelector } from "@store/hooks";
-import { setOpenSetting, toggleOpenSetting } from "@store/isSettingOpen";
 import { setPageNumChangeDisabled } from "@store/pageNumChangeDisabled";
 import { setSysBtnColor } from "@store/themes";
 import { formatUtils } from "@utils/file";
+import { setSettingsOpen, toggleSettingsOpen } from "@store/ui";
 
 const TopBar = (): ReactElement => {
     const [title, setTitle] = useState<string>("Yomikiru");
@@ -21,7 +21,7 @@ const TopBar = (): ReactElement => {
     const mangaInReader = useAppSelector((store) => store.mangaInReader);
     const bookInReader = useAppSelector((store) => store.bookInReader);
     const [isMaximized, setMaximized] = useState(window.electron.currentWindow.isMaximized() || false);
-    const isReaderOpen = useAppSelector((store) => store.isReaderOpen);
+    const isReaderOpen = useAppSelector((store) => store.ui.isOpen.reader);
     const appSettings = useAppSelector((store) => store.appSettings);
 
     const [pageScrollTimeoutID, setTimeoutID] = useState<NodeJS.Timeout | null>(null);
@@ -102,7 +102,7 @@ const TopBar = (): ReactElement => {
                     onFocus={(e) => e.currentTarget.blur()}
                     onClick={() => {
                         isReaderOpen ? closeReader() : window.location.reload();
-                        dispatch(setOpenSetting(false));
+                        dispatch(setSettingsOpen(false));
                     }}
                     tabIndex={-1}
                     data-tooltip="Home"
@@ -113,7 +113,7 @@ const TopBar = (): ReactElement => {
                     className="settingsBtn"
                     onFocus={(e) => e.currentTarget.blur()}
                     onClick={() => {
-                        dispatch(toggleOpenSetting());
+                        dispatch(toggleSettingsOpen());
                     }}
                     tabIndex={-1}
                     data-tooltip="Settings"

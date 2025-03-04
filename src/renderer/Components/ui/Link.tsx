@@ -1,3 +1,4 @@
+import { dialogUtils } from "@utils/dialog";
 import React from "react";
 
 const Link = ({
@@ -29,9 +30,9 @@ const Link = ({
                             noOption: false,
                         })
                         .then((res) => {
-                            if (res.response === 0) window.electron.shell.openExternal(href);
+                            if (res.response === 0) window.electron.openExternal(href);
                         });
-                else window.electron.shell.openExternal(href);
+                else window.electron.openExternal(href);
             }}
         >
             {children}

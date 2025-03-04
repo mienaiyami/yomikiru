@@ -7,7 +7,7 @@ import { setUnzipping } from "@store/unzipping";
 import { setLoadingManga } from "@store/isLoadingManga";
 import { setLoadingMangaPercent } from "@store/loadingMangaPercent";
 import { setLinkInReader } from "@store/linkInReader";
-import { setReaderOpen } from "@store/isReaderOpen";
+
 import { setMangaInReader } from "@store/mangaInReader";
 import { addBookmark, fetchAllBookmarks, removeBookmark } from "@store/bookmarks";
 import { refreshThemes, setTheme } from "@store/themes";
@@ -21,14 +21,11 @@ import {
     unzip,
 } from "./utils/file";
 import { setBookInReader } from "@store/bookInReader";
-import { setAniEditOpen } from "@store/isAniEditOpen";
-import { setAniLoginOpen } from "@store/isAniLoginOpen";
-import { setAniSearchOpen } from "@store/isAniSearchOpen";
-import { setAnilistCurrentManga } from "@store/anilistCurrentManga";
-import { toggleOpenSetting } from "@store/isSettingOpen";
+
 import { renderPDF } from "@utils/pdf";
 import {
     fetchAllItemsWithProgress,
+    setLibrary,
     updateBookProgress,
     updateChaptersRead,
     updateChaptersReadAll,
@@ -37,6 +34,16 @@ import {
 } from "@store/library";
 import { dialogUtils } from "@utils/dialog";
 import { keyFormatter } from "@utils/keybindings";
+import { DatabaseChannels } from "@common/types/ipc";
+import { BookBookmark, MangaBookmark } from "@common/types/db";
+import {
+    setAnilistEditOpen,
+    setAnilistLoginOpen,
+    setAnilistSearchOpen,
+    setReaderOpen,
+    toggleSettingsOpen,
+} from "@store/ui";
+import { setAnilistCurrentManga } from "@store/anilist";
 
 interface AppContext {
     pageNumberInputRef: React.RefObject<HTMLInputElement>;
@@ -73,7 +80,7 @@ interface AppContext {
 export const AppContext = createContext<AppContext>(null!);
 const App = (): ReactElement => {
     const appSettings = useAppSelector((state) => state.appSettings);
-    const isReaderOpen = useAppSelector((state) => state.isReaderOpen);
+    const isReaderOpen = useAppSelector((state) => state.ui.isOpen.reader);
     const linkInReader = useAppSelector((store) => store.linkInReader);
     const shortcuts = useAppSelector((store) => store.shortcuts);
     const theme = useAppSelector((state) => state.theme.name);
@@ -406,9 +413,9 @@ const App = (): ReactElement => {
         dispatch(setLinkInReader({ type: "", link: "", page: 1, chapter: "" }));
         dispatch(setLoadingManga(false));
         dispatch(setAnilistCurrentManga(null));
-        dispatch(setAniEditOpen(false));
-        dispatch(setAniLoginOpen(false));
-        dispatch(setAniSearchOpen(false));
+        dispatch(setAnilistEditOpen(false));
+        dispatch(setAnilistLoginOpen(false));
+        dispatch(setAnilistSearchOpen(false));
         dispatch(setLoadingMangaPercent(0));
         dispatch(setMangaInReader(null));
         dispatch(setBookInReader(null));
@@ -475,6 +482,36 @@ const App = (): ReactElement => {
                 if (link) openInReader(link);
             })
         );
+        listeners.push(
+            window.electron.on("db:library:change", (data) => {
+                console.log("updating library", data);
+                const items = data.reduce((acc, item) => {
+                    acc[item.link] = item;
+                    return acc;
+                }, {} as Record<string, DatabaseChannels["db:library:getAllAndProgress"]["response"][0]>);
+                dispatch(setLibrary(items));
+            })
+        );
+        listeners.push(
+            // todo: temp only
+            window.electron.on("db:bookmark:change", (data) => {
+                console.log("updating bookmark", data);
+                const manga = {} as Record<string, MangaBookmark[]>;
+                for (const mangaBookmark of data.mangaBookmarks) {
+                    if (!manga[mangaBookmark.itemLink]) {
+                        manga[mangaBookmark.itemLink] = [];
+                    }
+                    manga[mangaBookmark.itemLink].push(mangaBookmark);
+                }
+                const book = {} as Record<string, BookBookmark[]>;
+                for (const bookBookmark of data.bookBookmarks) {
+                    if (!book[bookBookmark.itemLink]) {
+                        book[bookBookmark.itemLink] = [];
+                    }
+                    book[bookBookmark.itemLink].push(bookBookmark);
+                }
+            })
+        );
         window.electron.send("window:askBeforeClose:response", appSettings.askBeforeClosing);
         listeners.push(
             window.electron.on("update:check:query", () => {
@@ -537,7 +574,7 @@ const App = (): ReactElement => {
                     window.location.reload();
                     break;
                 case i(shortcutsMapped["openSettings"]):
-                    dispatch(toggleOpenSetting());
+                    dispatch(toggleSettingsOpen());
                     break;
                 case i(shortcutsMapped["uiSizeReset"]):
                     window.electron.webFrame.setZoomFactor(1);

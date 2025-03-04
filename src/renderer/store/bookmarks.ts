@@ -136,7 +136,7 @@
 
 // export default bookmarks.reducer;
 
-import { createSlice, createAsyncThunk } from "@reduxjs/toolkit";
+import { createSlice, createAsyncThunk, PayloadAction } from "@reduxjs/toolkit";
 import type { MangaBookmark, BookBookmark } from "@common/types/db";
 import { DatabaseChannels } from "@common/types/ipc";
 
@@ -204,6 +204,9 @@ const bookmarksSlice = createSlice({
         clearError: (state) => {
             state.error = null;
         },
+        setBookmarks: (state, action: PayloadAction<BookmarksState>) => {
+            return action.payload;
+        },
     },
 
     extraReducers: (builder) => {
@@ -219,6 +222,7 @@ const bookmarksSlice = createSlice({
                     }
                     state.manga[mangaBookmark.itemLink].push(mangaBookmark);
                 }
+                state.book = {};
                 for (const bookBookmark of action.payload.bookBookmarks) {
                     if (!state.book[bookBookmark.itemLink]) {
                         state.book[bookBookmark.itemLink] = [];
@@ -266,6 +270,6 @@ const bookmarksSlice = createSlice({
     },
 });
 
-export const { clearError: clearError_bookmark } = bookmarksSlice.actions;
+export const { clearError: clearError_bookmark, setBookmarks } = bookmarksSlice.actions;
 
 export default bookmarksSlice.reducer;

@@ -1,27 +1,20 @@
-import { addAnilistTracker } from "@store/anilistTracking";
+import { addAnilistTracker } from "@store/anilist";
 import { useAppDispatch, useAppSelector } from "@store/hooks";
-import { setAniSearchOpen } from "@store/isAniSearchOpen";
+import { setAnilistSearchOpen } from "@store/ui";
 import AniList from "@utils/anilist";
-import React, { useEffect, useRef, useState } from "react";
+import React, { useEffect, useState } from "react";
 
 import FocusLock from "react-focus-lock";
 
 const AnilistSearch = () => {
-    // const anilistTracking = useAppSelector((store) => store.anilistTracking);
     const mangaInReader = useAppSelector((store) => store.mangaInReader);
 
     const [search, setSearch] = useState("");
     const [result, setResult] = useState<Awaited<ReturnType<typeof AniList.searchManga>>>([]);
     const [searchTimeout, setSearchTimeout] = useState<NodeJS.Timeout | null>(null);
 
-    // const contRef = useRef<HTMLDivElement>(null);
-    // const inputRef = useRef<HTMLInputElement>(null);
     const dispatch = useAppDispatch();
     useEffect(() => {
-        // if (inputRef.current) {
-        //     // inputRef.current.focus();
-        //     inputRef.current.value = mangaInReader?.mangaName || "";
-        // }
         setSearch(mangaInReader?.mangaName || "");
     }, []);
     useEffect(() => {
@@ -29,12 +22,6 @@ const AnilistSearch = () => {
             setResult(e);
         });
     }, [search]);
-
-    // useEffect(() => {
-    //     setTimeout(() => {
-    //         if (contRef.current) contRef.current.setAttribute("data-state", "open");
-    //     }, 100);
-    // }, []);
 
     const ResultListItem = ({
         english,
@@ -65,7 +52,7 @@ const AnilistSearch = () => {
                                     localURL: window.path.dirname(mangaInReader.link),
                                 })
                             );
-                            dispatch(setAniSearchOpen(false));
+                            dispatch(setAnilistSearchOpen(false));
                         }
                     }}
                 >
@@ -105,11 +92,11 @@ const AnilistSearch = () => {
                     }
                 }}
             >
-                <div className="clickClose" onClick={() => dispatch(setAniSearchOpen(false))}></div>
+                <div className="clickClose" onClick={() => dispatch(setAnilistSearchOpen(false))}></div>
                 <div
                     className="overlayCont"
                     onKeyDown={(e) => {
-                        if (e.key === "Escape") dispatch(setAniSearchOpen(false));
+                        if (e.key === "Escape") dispatch(setAnilistSearchOpen(false));
                     }}
                     tabIndex={-1}
                     // ref={contRef}

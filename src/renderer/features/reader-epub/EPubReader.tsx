@@ -18,13 +18,13 @@ import { setUnzipping } from "@store/unzipping";
 import { setAppSettings, setEpubReaderSettings, setReaderSettings } from "@store/appSettings";
 import EPUBReaderSettings from "./EPubReaderSettings";
 import EPubReaderSideList from "./EPubReaderSideList";
-import { setReaderOpen } from "@store/isReaderOpen";
 import EPUB from "@utils/epub";
 import Modal from "@ui/Modal";
 import { addLibraryItem, updateBookProgress, updateCurrentBookProgress } from "@store/library";
 import { dialogUtils } from "@utils/dialog";
 import { getCSSPath } from "@utils/utils";
 import { keyFormatter } from "@utils/keybindings";
+import { setReaderOpen } from "@store/ui";
 
 const StyleSheets = memo(
     ({ sheets }: { sheets: string[] }) => {
@@ -162,11 +162,11 @@ const EPubReader = () => {
 
     const appSettings = useAppSelector((store) => store.appSettings);
     const shortcuts = useAppSelector((store) => store.shortcuts);
-    const isReaderOpen = useAppSelector((store) => store.isReaderOpen);
+    const isReaderOpen = useAppSelector((store) => store.ui.isOpen.reader);
+    const isSettingOpen = useAppSelector((store) => store.ui.isOpen.settings);
     const linkInReader = useAppSelector((store) => store.linkInReader);
     const bookInReader = useAppSelector((store) => store.bookInReader);
     const isLoadingManga = useAppSelector((store) => store.isLoadingManga);
-    const isSettingOpen = useAppSelector((store) => store.isSettingOpen);
     const bookmarks = useAppSelector((store) => store.bookmarks);
 
     const dispatch = useAppDispatch();
@@ -472,12 +472,18 @@ const EPubReader = () => {
                 dispatch(setBookInReader(bookOpened));
                 const res = await dispatch(
                     addLibraryItem({
+                        type: "book",
                         data: {
                             type: "book",
                             link,
                             title: ed.metadata.title,
                             author: ed.metadata.author,
                             cover: ed.metadata.cover,
+                        },
+                        progress: {
+                            chapterId: ed.spine[currentChapterIndex].id,
+                            chapterName: "~",
+                            position: "",
                         },
                     })
                 );

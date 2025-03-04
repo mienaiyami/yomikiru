@@ -5,11 +5,10 @@ import { faEdit, faHeart, faPlus, faTrash } from "@fortawesome/free-solid-svg-ic
 import { newTheme, deleteTheme, setTheme, resetAllTheme, addThemes } from "@store/themes";
 import { useAppDispatch, useAppSelector } from "@store/hooks";
 import { resetShortcuts } from "@store/shortcuts";
-import { setOpenSetting } from "@store/isSettingOpen";
+
 import { makeNewSettings, setAppSettings, setEpubReaderSettings, setReaderSettings } from "@store/appSettings";
 import InputNumber from "@ui/InputNumber";
-import { setAnilistToken } from "@store/anilistToken";
-import { setAniLoginOpen } from "@store/isAniLoginOpen";
+
 import InputCheckbox from "@ui/InputCheckbox";
 import { setUnzipping } from "@store/unzipping";
 
@@ -23,6 +22,8 @@ import { initThemeData } from "@utils/theme";
 import { keyFormatter } from "@utils/keybindings";
 import AniList from "@utils/anilist";
 import { dialogUtils } from "@utils/dialog";
+import { setAnilistLoginOpen, setSettingsOpen } from "@store/ui";
+import { setAnilistToken } from "@store/anilist";
 
 const TAB_INFO = {
     settings: [0, "Settings"],
@@ -39,8 +40,8 @@ const Settings = (): ReactElement => {
     const theme = useAppSelector((store) => store.theme.name);
     const allThemes = useAppSelector((store) => store.theme.allData);
     const bookmarks = useAppSelector((store) => store.bookmarks);
-    const isSettingOpen = useAppSelector((store) => store.isSettingOpen);
-    const anilistToken = useAppSelector((store) => store.anilistToken);
+    const isSettingOpen = useAppSelector((store) => store.ui.isOpen.settings);
+    const anilistToken = useAppSelector((store) => store.anilist.token);
     const [currentTab, setCurrentTab] = useState(0);
 
     const [anilistUsername, setAnilistUsername] = useState("Error");
@@ -154,7 +155,7 @@ const Settings = (): ReactElement => {
     return (
         <FocusLock disabled={!isSettingOpen}>
             <div id="settings" data-state={isSettingOpen ? "open" : "closed"}>
-                <div className="clickClose" onClick={() => dispatch(setOpenSetting(false))}></div>
+                <div className="clickClose" onClick={() => dispatch(setSettingsOpen(false))}></div>
                 <div className="overflowWrap">
                     <div className="tabMovers">
                         <button
@@ -191,7 +192,7 @@ const Settings = (): ReactElement => {
                     <div
                         className={"overlayCont settingCont"}
                         onKeyDown={(e) => {
-                            if (e.key === "Escape") dispatch(setOpenSetting(false));
+                            if (e.key === "Escape") dispatch(setSettingsOpen(false));
                         }}
                         tabIndex={-1}
                         ref={settingContRef}
@@ -754,7 +755,7 @@ const Settings = (): ReactElement => {
                                         <button
                                             disabled={anilistToken ? true : false}
                                             onClick={() => {
-                                                dispatch(setAniLoginOpen(true));
+                                                dispatch(setAnilistLoginOpen(true));
                                             }}
                                         >
                                             {!anilistToken

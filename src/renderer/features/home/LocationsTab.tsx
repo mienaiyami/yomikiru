@@ -417,7 +417,7 @@ const LocationsTab = (): ReactElement => {
                                             // todo : improve history
                                             inHistory={
                                                 item?.type === "manga"
-                                                    ? item.progress.chaptersRead.includes(e.name)
+                                                    ? item.progress?.chaptersRead.includes(e.name) || false
                                                     : false
                                             }
                                             onContextMenu={onContextMenu}

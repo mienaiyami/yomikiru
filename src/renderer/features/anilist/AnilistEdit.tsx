@@ -1,7 +1,6 @@
-import { setAnilistCurrentManga } from "@store/anilistCurrentManga";
-import { removeAnilistTracker } from "@store/anilistTracking";
+import { removeAnilistTracker, setAnilistCurrentManga } from "@store/anilist";
 import { useAppDispatch, useAppSelector } from "@store/hooks";
-import { setAniEditOpen } from "@store/isAniEditOpen";
+import { setAnilistEditOpen } from "@store/ui";
 import InputCheckbox from "@ui/InputCheckbox";
 import InputNumber from "@ui/InputNumber";
 import InputSelect from "@ui/InputSelect";
@@ -23,7 +22,7 @@ const betterStatus = {
 const AnilistEdit = () => {
     const dispatch = useAppDispatch();
     const contRef = useRef<HTMLDivElement>(null);
-    const anilistCurrentManga = useAppSelector((store) => store.anilistCurrentManga);
+    const anilistCurrentManga = useAppSelector((store) => store.anilist.currentManga);
     const mangaInReader = useAppSelector((store) => store.mangaInReader);
 
     const [tempData, setTempData] = useState(anilistCurrentManga);
@@ -51,11 +50,11 @@ const AnilistEdit = () => {
                     }
                 }}
             >
-                <div className="clickClose" onClick={() => dispatch(setAniEditOpen(false))}></div>
+                <div className="clickClose" onClick={() => dispatch(setAnilistEditOpen(false))}></div>
                 <div
                     className="overlayCont"
                     onKeyDown={(e) => {
-                        if (e.key === "Escape") dispatch(setAniEditOpen(false));
+                        if (e.key === "Escape") dispatch(setAnilistEditOpen(false));
                     }}
                     tabIndex={-1}
                     ref={contRef}

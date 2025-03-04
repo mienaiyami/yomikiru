@@ -3,14 +3,6 @@ import { getWindowFromWebContents } from "@electron/util";
 import { ipc } from "./utils";
 
 export const registerDialogHandlers = () => {
-    ipc.handle("dialog:error", (event, args) => {
-        return dialog.showMessageBox(getWindowFromWebContents(event.sender), {
-            type: "error",
-            title: args.title,
-            message: args.message,
-            detail: args.detail,
-        });
-    });
     ipc.handle("dialog:nodeError", (event, args) => {
         return dialog.showMessageBox(getWindowFromWebContents(event.sender), {
             type: "error",

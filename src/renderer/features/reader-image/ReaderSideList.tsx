@@ -57,7 +57,7 @@ const ReaderSideList = memo(
         const prevNextChapter = useAppSelector((store) => store.prevNextChapter);
         const linkInReader = useAppSelector((store) => store.linkInReader);
         // const contextMenu = useAppSelector((store) => store.contextMenu);
-        const anilistToken = useAppSelector((store) => store.anilistToken);
+        const anilistToken = useAppSelector((store) => store.anilist.token);
         const shortcuts = useAppSelector((store) => store.shortcuts);
         const dispatch = useAppDispatch();
 

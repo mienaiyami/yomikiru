@@ -2,22 +2,24 @@ import { useCallback, useContext, useEffect, useLayoutEffect, useRef, useState }
 import { AppContext } from "../../App";
 import ReaderSideList from "./ReaderSideList";
 import ReaderSettings from "./ReaderSettings";
-import { useAppDispatch, useAppSelector } from "../../store/hooks";
-import { setAppSettings, setReaderSettings } from "../../store/appSettings";
-import { setMangaInReader } from "../../store/mangaInReader";
-import { setReaderOpen } from "../../store/isReaderOpen";
-import { setLoadingMangaPercent } from "../../store/loadingMangaPercent";
-import { setLoadingManga } from "../../store/isLoadingManga";
-import { setLinkInReader } from "../../store/linkInReader";
+import { useAppDispatch, useAppSelector } from "@store/hooks";
+import { setAppSettings, setReaderSettings } from "@store/appSettings";
+import { setMangaInReader } from "@store/mangaInReader";
+
+import { setLoadingMangaPercent } from "@store/loadingMangaPercent";
+import { setLoadingManga } from "@store/isLoadingManga";
+import { setLinkInReader } from "@store/linkInReader";
 import AnilistSearch from "../anilist/AnilistSearch";
 import AnilistEdit from "../anilist/AnilistEdit";
 import { InView } from "react-intersection-observer";
-import { setAnilistCurrentManga } from "../../store/anilistCurrentManga";
+
 import { MangaItem } from "@common/types/legacy";
-import { addLibraryItem, updateChaptersRead, updateMangaProgress } from "../../store/library";
+import { addLibraryItem, updateChaptersRead, updateMangaProgress } from "@store/library";
 import { formatUtils } from "@utils/file";
 import { keyFormatter } from "@utils/keybindings";
 import AniList from "@utils/anilist";
+import { setReaderOpen } from "@store/ui";
+import { setAnilistCurrentManga } from "@store/anilist";
 
 const processChapterNumber = (chapterName: string): number | undefined => {
     /*
@@ -54,19 +56,19 @@ const Reader = () => {
 
     const appSettings = useAppSelector((store) => store.appSettings);
     const shortcuts = useAppSelector((store) => store.shortcuts);
-    const isReaderOpen = useAppSelector((store) => store.isReaderOpen);
+    const isReaderOpen = useAppSelector((store) => store.ui.isOpen.reader);
+    const isSettingOpen = useAppSelector((store) => store.ui.isOpen.settings);
     const linkInReader = useAppSelector((store) => store.linkInReader);
     const mangaInReader = useAppSelector((store) => store.mangaInReader);
-    const anilistCurrentManga = useAppSelector((store) => store.anilistCurrentManga);
+    const anilistCurrentManga = useAppSelector((store) => store.anilist.currentManga);
     const isLoadingManga = useAppSelector((store) => store.isLoadingManga);
-    const isSettingOpen = useAppSelector((store) => store.isSettingOpen);
     const bookmarks = useAppSelector((store) => store.bookmarks);
 
     const library = useAppSelector((store) => store.library.items);
     const pageNumChangeDisabled = useAppSelector((store) => store.pageNumChangeDisabled);
     const prevNextChapter = useAppSelector((store) => store.prevNextChapter);
-    const isAniSearchOpen = useAppSelector((store) => store.isAniSearchOpen);
-    const isAniEditOpen = useAppSelector((store) => store.isAniEditOpen);
+    const isAniSearchOpen = useAppSelector((store) => store.ui.isOpen.anilist.search);
+    const isAniEditOpen = useAppSelector((store) => store.ui.isOpen.anilist.edit);
 
     const dispatch = useAppDispatch();
 
@@ -623,49 +625,20 @@ const Reader = () => {
         } else
             dispatch(
                 addLibraryItem({
+                    type: "manga",
                     data: {
                         link: window.path.dirname(link),
                         title: mangaOpened.mangaName,
                         type: "manga",
                     },
-                    //todo impl
-                    // progress: {
-                    //     chapterLink: link,
-                    //     totalPages: mangaOpened.pages,
-                    //     currentPage: 1,
-                    // },
+                    progress: {
+                        chapterLink: link,
+                        currentPage: 1,
+                        totalPages: mangaOpened.pages,
+                        chapterName: mangaOpened.chapterName,
+                    },
                 })
             );
-        // setImagesLength(imgs.length);
-
-        //todo remove later
-        // const safeImages: string[] = [];
-        // const allChecked = () => {
-        //     if (safeImages.length === imgs.length) {
-        //         setImages(safeImages);
-        //         dispatch(setReaderOpen(true));
-        //     }
-        // };
-        // for (let i = 0; i < imgs.length; i++) {
-        //     const img = imgs[i];
-        //     if (img.length < 256) {
-        //         safeImages.push(img);
-        //         allChecked();
-        //         continue;
-        //     }
-        //     window.fs.readFile(img, "base64", (err, data) => {
-        //         if (err) {
-        //             // yea
-        //             safeImages.push(img);
-        //             console.error(err);
-        //         }
-        //         const base64URL = `data:image/${window.path.extname(img).substring(1)};base64,${data}`;
-        //         safeImages.push(base64URL);
-        //         allChecked();
-        //         // console.log(base64URL);
-        //     });
-        // }
-        //
 
         setImages(imgs);
         dispatch(setReaderOpen(true));

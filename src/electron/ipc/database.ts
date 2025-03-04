@@ -1,9 +1,23 @@
-import { ipcMain } from "electron";
-import type { DatabaseChannels } from "@common/types/ipc";
+import { BrowserWindow, ipcMain } from "electron";
+import type { DatabaseChangeChannels, DatabaseChannels } from "@common/types/ipc";
 import { DatabaseService } from "../db";
 import { bookBookmarks, bookNotes, bookProgress, libraryItems, mangaBookmarks, mangaProgress } from "../db/schema";
 import { and, eq, inArray, sql } from "drizzle-orm";
 import { BookProgress, LibraryItem, MangaProgress } from "@common/types/db";
+import { ipc } from "./utils";
+
+const pingDatabaseChange = async <T extends keyof DatabaseChangeChannels>(
+    channel: T,
+    data: DatabaseChangeChannels[T]["request"]
+) => {
+    // todo: maybe send whole data on channel and then update store?
+    const windows = BrowserWindow.getAllWindows();
+    windows.forEach((window) => {
+        if (!window.isDestroyed()) {
+            ipc.send(window.webContents, channel, data);
+        }
+    });
+};
 
 const handlers: {
     [K in keyof DatabaseChannels]: (
@@ -34,7 +48,9 @@ const handlers: {
         )[];
     },
     "db:library:addItem": async (db, request) => {
-        return (await db.addLibraryItem(request.data)) ?? null;
+        const data = (await db.addLibraryItem(request)) ?? null;
+        pingDatabaseChange("db:library:change", await handlers["db:library:getAllAndProgress"](db));
+        return data;
     },
     "db:library:getAllBookmarks": async (db) => {
         const mangaBk = await db.db.select().from(mangaBookmarks);
@@ -49,16 +65,23 @@ const handlers: {
             .select()
             .from(mangaProgress)
             .where(eq(mangaProgress.itemLink, request.itemLink));
+        pingDatabaseChange("db:library:change", await handlers["db:library:getAllAndProgress"](db));
         return progress ?? null;
     },
     "db:manga:updateProgress": async (db, request) => {
-        return (await db.updateMangaProgress(request.itemLink, request.data))?.[0] ?? null;
+        const data = (await db.updateMangaProgress(request.itemLink, request.data))?.[0] ?? null;
+        pingDatabaseChange("db:library:change", await handlers["db:library:getAllAndProgress"](db));
+        return data;
     },
     "db:manga:updateChaptersRead": async (db, request) => {
-        return await db.updateMangaChapterRead(request.itemLink, [request.chapterName], request.read);
+        const data = await db.updateMangaChapterRead(request.itemLink, [request.chapterName], request.read);
+        pingDatabaseChange("db:library:change", await handlers["db:library:getAllAndProgress"](db));
+        return data;
     },
     "db:manga:updateChaptersReadAll": async (db, request) => {
-        return await db.updateMangaChapterRead(request.itemLink, request.chapters, request.read);
+        const data = await db.updateMangaChapterRead(request.itemLink, request.chapters, request.read);
+        pingDatabaseChange("db:library:change", await handlers["db:library:getAllAndProgress"](db));
+        return data;
     },
     "db:manga:getBookmarks": async (db, request) => {
         return await db.db.select().from(mangaBookmarks).where(eq(mangaBookmarks.itemLink, request.itemLink));
@@ -71,7 +94,9 @@ const handlers: {
         if (existing.length > 0) {
             return existing[0];
         }
-        return (await db.db.insert(mangaBookmarks).values(request).returning())?.[0] ?? null;
+        const data = (await db.db.insert(mangaBookmarks).values(request).returning())?.[0] ?? null;
+        if (data) pingDatabaseChange("db:bookmark:change", await handlers["db:library:getAllBookmarks"](db));
+        return data;
     },
     "db:manga:deleteBookmarks": async (db, request) => {
         if (request.all) {
@@ -81,6 +106,8 @@ const handlers: {
         await db.db
             .delete(mangaBookmarks)
             .where(and(eq(mangaBookmarks.itemLink, request.itemLink), inArray(mangaBookmarks.id, request.ids)));
+
+        pingDatabaseChange("db:bookmark:change", await handlers["db:library:getAllBookmarks"](db));
         return true;
     },
     "db:book:getProgress": async (db, request) => {
@@ -88,13 +115,18 @@ const handlers: {
         return item ?? null;
     },
     "db:book:updateProgress": async (db, request) => {
-        return (await db.updateBookProgress(request.itemLink, request.data))?.[0];
+        const data = (await db.updateBookProgress(request.itemLink, request.data))?.[0];
+
+        pingDatabaseChange("db:library:change", await handlers["db:library:getAllAndProgress"](db));
+        return data;
     },
     "db:book:getBookmarks": async (db, request) => {
         return await db.db.select().from(bookBookmarks).where(eq(bookBookmarks.itemLink, request.itemLink));
     },
     "db:book:addBookmark": async (db, request) => {
-        return (await db.db.insert(bookBookmarks).values(request).returning())?.[0] ?? null;
+        const data = (await db.db.insert(bookBookmarks).values(request).returning())?.[0] ?? null;
+        if (data) pingDatabaseChange("db:bookmark:change", await handlers["db:library:getAllBookmarks"](db));
+        return data;
     },
     "db:book:deleteBookmarks": async (db, request) => {
         if (request.all) {
@@ -104,6 +136,8 @@ const handlers: {
         await db.db
             .delete(bookBookmarks)
             .where(and(eq(bookBookmarks.itemLink, request.itemLink), inArray(bookBookmarks.id, request.ids)));
+
+        pingDatabaseChange("db:bookmark:change", await handlers["db:library:getAllBookmarks"](db));
         return true;
     },
     "db:book:getNotes": async (db, request) => {

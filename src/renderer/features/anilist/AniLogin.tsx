@@ -1,6 +1,6 @@
-import { setAnilistToken } from "@store/anilistToken";
+import { setAnilistToken } from "@store/anilist";
 import { useAppDispatch, useAppSelector } from "@store/hooks";
-import { setAniLoginOpen } from "@store/isAniLoginOpen";
+import { setAnilistLoginOpen } from "@store/ui";
 import AniList from "@utils/anilist";
 import React, { useState, useRef, useEffect } from "react";
 
@@ -10,7 +10,7 @@ const AniLogin = () => {
     const [proceeded, setProceeded] = useState(false);
     const inputRef = useRef<HTMLInputElement>(null);
 
-    const isAniLoginOpen = useAppSelector((store) => store.isAniLoginOpen);
+    const isAniLoginOpen = useAppSelector((store) => store.ui.isOpen.anilist.login);
     const contRef = useRef<HTMLDivElement>(null);
 
     const dispatch = useAppDispatch();
@@ -41,11 +41,11 @@ const AniLogin = () => {
                     }
                 }}
             >
-                <div className="clickClose" onClick={() => dispatch(setAniLoginOpen(false))}></div>
+                <div className="clickClose" onClick={() => dispatch(setAnilistLoginOpen(false))}></div>
                 <div
                     className="overlayCont"
                     onKeyDown={(e) => {
-                        if (e.key === "Escape") dispatch(setAniLoginOpen(false));
+                        if (e.key === "Escape") dispatch(setAnilistLoginOpen(false));
                     }}
                     tabIndex={-1}
                     ref={contRef}
@@ -94,7 +94,7 @@ const AniLogin = () => {
                                                     elem.innerText = "Linked!";
                                                     setTimeout(() => {
                                                         dispatch(setAnilistToken(token));
-                                                        dispatch(setAniLoginOpen(false));
+                                                        dispatch(setAnilistLoginOpen(false));
                                                     }, 1000);
                                                 } else {
                                                     elem.innerText = "Invalid Token / Error";

@@ -168,7 +168,7 @@ export class WindowManager {
         ipc.handle("window:openLinkInNewWindow", (_, link) => {
             this.createWindow(link);
         });
-        ipc.handle("fs:addDirToDelete", (e, dir) => {
+        ipc.handle("window:addDirToDelete", (e, dir) => {
             this.addDirToDelete(e.sender, dir);
         });
         ipc.handle("window:destroy", (e) => {

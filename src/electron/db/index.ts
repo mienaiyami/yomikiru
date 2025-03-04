@@ -3,7 +3,7 @@ import { migrate } from "drizzle-orm/better-sqlite3/migrator";
 // libsql wont work because of node/electron version issues
 import path from "path";
 import { app } from "electron";
-import { eq } from "drizzle-orm";
+import { eq, InferInsertModel } from "drizzle-orm";
 import * as schema from "./schema";
 import { libraryItems, mangaProgress, bookProgress, mangaBookmarks, bookBookmarks } from "./schema";
 import { HistoryItem, Manga_BookItem } from "@common/types/legacy";
@@ -12,6 +12,22 @@ import { electronOnly } from "../util";
 
 electronOnly();
 // todo : add proper error handling
+
+export type AddToLibraryData =
+    | {
+          type: "book";
+          data: Omit<InferInsertModel<typeof libraryItems>, "createdAt" | "updatedAt"> & {
+              type: "book";
+          };
+          progress: Omit<InferInsertModel<typeof bookProgress>, "lastReadAt" | "itemLink">;
+      }
+    | {
+          type: "manga";
+          data: Omit<InferInsertModel<typeof libraryItems>, "createdAt" | "updatedAt"> & {
+              type: "manga";
+          };
+          progress: Omit<InferInsertModel<typeof mangaProgress>, "chaptersRead" | "lastReadAt" | "itemLink">;
+      };
 
 export class DatabaseService {
     private _db: ReturnType<typeof drizzle>;
@@ -35,16 +51,23 @@ export class DatabaseService {
         });
         console.log(this._db.all(`select unixepoch() as time`));
     }
-
-    async addLibraryItem(data: typeof libraryItems.$inferInsert) {
+    async addLibraryItem(data: AddToLibraryData) {
         return await this._db.transaction(async (tx) => {
-            const [item] = await tx.insert(libraryItems).values(data).returning();
-            // if (item.type === "manga") {
-            //     await tx.insert(mangaProgress).values({
-            //         itemLink: item.link,
-            //         chapterLink: initialProgress.chapterLink,
-            //     });
-            // }
+            const [item] = await tx.insert(libraryItems).values(data.data).returning();
+            if (data.type === "manga") {
+                await tx.insert(mangaProgress).values({
+                    itemLink: item.link,
+                    ...data.progress,
+                    chaptersRead: [],
+                    lastReadAt: new Date(),
+                });
+            } else {
+                await tx.insert(bookProgress).values({
+                    itemLink: item.link,
+                    ...data.progress,
+                    lastReadAt: new Date(),
+                });
+            }
             return item;
         });
     }

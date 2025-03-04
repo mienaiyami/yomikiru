@@ -108,8 +108,8 @@ const HistoryTab = () => {
                                 new RegExp(filter, "ig").test(
                                     e.type === "manga"
                                         ? e.title +
-                                              (formatUtils.files.test(e.progress.chapterName || "")
-                                                  ? `${window.path.extname(e.progress.chapterName || "")}`
+                                              (formatUtils.files.test(e.progress?.chapterName || "")
+                                                  ? `${window.path.extname(e.progress?.chapterName || "")}`
                                                   : "")
                                         : e.title + ".epub"
                                 )
@@ -120,6 +120,7 @@ const HistoryTab = () => {
                                     isHistory={true}
                                     focused={focused >= 0 && focused % arr.length === i}
                                     link={e.link}
+                                    id={i}
                                     key={`${e.updatedAt}-${i}`}
                                 />
                             ))}

@@ -1,19 +1,18 @@
 import { faMinus, faPlus, faSlidersH } from "@fortawesome/free-solid-svg-icons";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { dialogUtils } from "@utils/dialog";
-import { setAnilistCurrentManga } from "@store/anilistCurrentManga";
 import { useAppDispatch, useAppSelector } from "@store/hooks";
-import { setAniEditOpen } from "@store/isAniEditOpen";
-import { setAniSearchOpen } from "@store/isAniSearchOpen";
 import InputNumber from "@ui/InputNumber";
 import React, { useLayoutEffect, useState, memo } from "react";
 import AniList from "@utils/anilist";
+import { setAnilistCurrentManga } from "@store/anilist";
+import { setAnilistEditOpen, setAnilistSearchOpen } from "@store/ui";
 
 const AnilistBar = memo(() => {
-    const anilistTracking = useAppSelector((store) => store.anilistTracking);
+    const anilistTracking = useAppSelector((store) => store.anilist.tracking);
     const mangaInReader = useAppSelector((store) => store.mangaInReader);
-    const anilistCurrentManga = useAppSelector((store) => store.anilistCurrentManga);
-    const isAniEditOpen = useAppSelector((store) => store.isAniEditOpen);
+    const anilistCurrentManga = useAppSelector((store) => store.anilist.currentManga);
+    const isAniEditOpen = useAppSelector((store) => store.ui.isOpen.anilist.edit);
 
     const [isTracking, setTracking] = useState(false);
     const [progress, setProgress] = useState(anilistCurrentManga?.progress || 0);
@@ -24,7 +23,7 @@ const AnilistBar = memo(() => {
             setTracking(true);
         else {
             setTracking(false);
-            dispatch(setAniEditOpen(false));
+            dispatch(setAnilistEditOpen(false));
         }
     }, [anilistTracking, mangaInReader]);
     useLayoutEffect(() => {
@@ -80,7 +79,7 @@ const AnilistBar = memo(() => {
                         <button onClick={() => setProgress((init) => init + 1)}>
                             <FontAwesomeIcon icon={faPlus} />
                         </button>
-                        <button data-tooltip="More Options" onClick={() => dispatch(setAniEditOpen(true))}>
+                        <button data-tooltip="More Options" onClick={() => dispatch(setAnilistEditOpen(true))}>
                             <FontAwesomeIcon icon={faSlidersH} />
                         </button>
                     </div>
@@ -88,7 +87,7 @@ const AnilistBar = memo(() => {
                     <span>Network Error</span>
                 )
             ) : (
-                <button onClick={() => dispatch(setAniSearchOpen(true))}>Track</button>
+                <button onClick={() => dispatch(setAnilistSearchOpen(true))}>Track</button>
             )}
         </div>
     );

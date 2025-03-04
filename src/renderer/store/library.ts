@@ -1,4 +1,4 @@
-import { createSlice, createAsyncThunk } from "@reduxjs/toolkit";
+import { createSlice, createAsyncThunk, PayloadAction } from "@reduxjs/toolkit";
 import { DatabaseChannels } from "@common/types/ipc";
 
 // todo : add proper error handling
@@ -50,7 +50,7 @@ export const updateBookProgress = createAsyncThunk(
     }
 );
 
-// todo: this is temp only, plan to remove windiw.app.linkInReader and window.app.epubHistorySaveData
+// todo: this is temp only, plan to remove window.app.linkInReader and window.app.epubHistorySaveData
 export const updateCurrentBookProgress = createAsyncThunk("library/updateCurrentBookProgress", async () => {
     const link = window.app.linkInReader.link;
     const res = await window.electron.invoke("db:book:updateProgress", {
@@ -100,6 +100,9 @@ const librarySlice = createSlice({
     reducers: {
         clearError: (state) => {
             state.error = null;
+        },
+        setLibrary: (state, action: PayloadAction<LibraryState["items"]>) => {
+            state.items = action.payload;
         },
     },
     extraReducers: (builder) => {
@@ -163,5 +166,5 @@ const librarySlice = createSlice({
     },
 });
 
-export const { clearError: clearError_library } = librarySlice.actions;
+export const { clearError: clearError_library, setLibrary } = librarySlice.actions;
 export default librarySlice.reducer;

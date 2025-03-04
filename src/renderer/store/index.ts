@@ -1,9 +1,6 @@
 import { configureStore } from "@reduxjs/toolkit";
 import appSettingsReducer from "./appSettings";
-// import contextMenuReducer from "./contextMenu";
 import isLoadingMangaReducer from "./isLoadingManga";
-import isReaderOpenReducer from "./isReaderOpen";
-import isSettingOpenReducer from "./isSettingOpen";
 import linkInReaderReducer from "./linkInReader";
 import loadingMangaPercentReducer from "./loadingMangaPercent";
 import mangaInReaderReducer from "./mangaInReader";
@@ -13,15 +10,10 @@ import shortcutsReducer from "./shortcuts";
 import themesReducer from "./themes";
 import unzippingReducer from "./unzipping";
 import bookInReaderReducer from "./bookInReader";
-import anilistTokenReducer from "./anilistToken";
-import isAniLoginOpenReducer from "./isAniLoginOpen";
-import anilistTrackingReducer from "./anilistTracking";
-import isAniSearchOpenReducer from "./isAniSearchOpen";
-import anilistCurrentMangaReducer from "./anilistCurrentManga";
-import isAniEditOpenReducer from "./isAniEditOpen";
-
+import anilistReducer from "./anilist";
 import libraryReducer from "./library";
 import bookmarksReducer from "./bookmarks";
+import uiReducer from "./ui";
 
 const store = configureStore({
     reducer: {
@@ -29,8 +21,6 @@ const store = configureStore({
         theme: themesReducer,
         bookmarks: bookmarksReducer,
         library: libraryReducer,
-        isSettingOpen: isSettingOpenReducer,
-        isReaderOpen: isReaderOpenReducer,
         isLoadingManga: isLoadingMangaReducer,
         unzipping: unzippingReducer,
         pageNumChangeDisabled: pageNumChangeDisabledReducer,
@@ -39,14 +29,9 @@ const store = configureStore({
         prevNextChapter: prevNextChapterReducer,
         mangaInReader: mangaInReaderReducer,
         shortcuts: shortcutsReducer,
-        // contextMenu: contextMenuReducer,
         bookInReader: bookInReaderReducer,
-        anilistToken: anilistTokenReducer,
-        isAniLoginOpen: isAniLoginOpenReducer,
-        anilistTracking: anilistTrackingReducer,
-        isAniSearchOpen: isAniSearchOpenReducer,
-        anilistCurrentManga: anilistCurrentMangaReducer,
-        isAniEditOpen: isAniEditOpenReducer,
+        anilist: anilistReducer,
+        ui: uiReducer,
     },
     middleware: (getDefaultMiddleware) =>
         getDefaultMiddleware({
