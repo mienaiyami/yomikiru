@@ -26,8 +26,7 @@ declare global {
                 copyPath: (url: string) => Menu.ListItem;
                 copyImage: (url: string) => Menu.ListItem;
                 addToBookmark: (args: Parameters<typeof addBookmark>["0"]) => Menu.ListItem;
-                // todo update
-                // removeHistory: (url: string) => Menu.ListItem;
+                removeHistory: (url: string) => Menu.ListItem;
                 removeBookmark: (itemLink: string, bookmarkId: number, type: "manga" | "book") => Menu.ListItem;
                 unreadChapter: (itemLink: string, chapterName: string) => Menu.ListItem;
                 unreadAllChapter: (itemLink: string) => Menu.ListItem;
@@ -42,7 +41,8 @@ declare global {
              */
             deleteDirOnClose: string;
             titleBarHeight: number;
-            isReaderOpen: boolean;
+            // todo remove
+            // isReaderOpen: boolean;
             clickDelay: number;
             lastClick: number;
             currentPageNumber: number;
@@ -66,18 +66,18 @@ declare global {
             /**
              * why did i add this? bcoz linkInReader state is showing initial only in App.tsx
              */
-            linkInReader: {
-                type: "image" | "book" | "";
-                link: string;
-                page: number;
-                chapter: string;
-                /** for epub */
-                chapterId?: string;
-                /**
-                 * elem query string for epub auto scroll
-                 */
-                queryStr?: string;
-            };
+            // linkInReader: {
+            //     type: "image" | "book" | "";
+            //     link: string;
+            //     page: number;
+            //     chapter: string;
+            //     /** for epub */
+            //     chapterId?: string;
+            //     /**
+            //      * elem query string for epub auto scroll
+            //      */
+            //     queryStr?: string;
+            // };
 
             // to remove later
             keydown: boolean;

@@ -1,22 +1,22 @@
-import { createSlice, PayloadAction } from "@reduxjs/toolkit";
+// import { createSlice, PayloadAction } from "@reduxjs/toolkit";
 
-const initialState: typeof window.app.linkInReader = {
-    type: "image",
-    link: window.loadManga || "",
-    page: 0,
-    chapter: "",
-};
+// const initialState: typeof window.app.linkInReader = {
+//     type: "image",
+//     link: window.loadManga || "",
+//     page: 0,
+//     chapter: "",
+// };
 
-const linkInReader = createSlice({
-    name: "linkInReader",
-    initialState,
-    reducers: {
-        setLinkInReader: (state, action: PayloadAction<typeof initialState>) => {
-            return { ...action.payload };
-        },
-    },
-});
+// const linkInReader = createSlice({
+//     name: "linkInReader",
+//     initialState,
+//     reducers: {
+//         setLinkInReader: (state, action: PayloadAction<typeof initialState>) => {
+//             return { ...action.payload };
+//         },
+//     },
+// });
 
-export const { setLinkInReader } = linkInReader.actions;
+// export const { setLinkInReader } = linkInReader.actions;
 
-export default linkInReader.reducer;
+// export default linkInReader.reducer;

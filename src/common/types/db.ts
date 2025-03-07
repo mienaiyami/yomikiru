@@ -10,6 +10,7 @@ import type {
 
 export type LibraryItem = InferSelectModel<typeof libraryItems>;
 export type MangaProgress = InferSelectModel<typeof mangaProgress>;
+export type MangaProgressWOChapterRead = Omit<MangaProgress, "chaptersRead">;
 export type BookProgress = InferSelectModel<typeof bookProgress>;
 export type MangaBookmark = InferSelectModel<typeof mangaBookmarks>;
 export type BookBookmark = InferSelectModel<typeof bookBookmarks>;
@@ -17,3 +18,7 @@ export type BookNote = InferSelectModel<typeof bookNotes>;
 
 export type Progress = MangaProgress | BookProgress;
 export type Bookmark = MangaBookmark | BookBookmark;
+
+export type LibraryItemWithProgress =
+    | (LibraryItem & { type: "book"; progress: BookProgress | null })
+    | (LibraryItem & { type: "manga"; progress: MangaProgress | null });

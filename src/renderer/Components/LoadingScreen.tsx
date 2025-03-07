@@ -1,28 +1,27 @@
 import { useAppSelector } from "@store/hooks";
 
 const LoadingScreen = () => {
-    const isLoadingManga = useAppSelector((store) => store.isLoadingManga);
-    const loadingMangaPercent = useAppSelector((store) => store.loadingMangaPercent);
-    const unzipping = useAppSelector((store) => store.unzipping);
+    const loading = useAppSelector((store) => store.reader.loading);
+    console.log("loading", loading);
     return (
-        <div id="loadingScreen" style={{ display: isLoadingManga || unzipping.state ? "grid" : "none" }}>
+        <div id="loadingScreen" style={{ display: loading ? "grid" : "none" }}>
             {/* <div className="name">
                 ({mangaInReader?.pages}) {mangaInReader?.mangaName} - {mangaInReader?.chapterName}
             </div> */}
-            {unzipping.state ? (
-                <div className="unzipping">{unzipping.text || "EXTRACTING/PROCESSING"}</div>
-            ) : (
-                <div className="loadingBarCont">
-                    <div
-                        className="loadingbar"
-                        style={{
-                            width:
-                                Math.floor(loadingMangaPercent) > 100
-                                    ? 100
-                                    : Math.floor(loadingMangaPercent) + "%",
-                        }}
-                    ></div>
-                </div>
+            {loading && (
+                <>
+                    <div className="loadingText">{loading.message}</div>
+                    {loading.percent !== null && (
+                        <div className="loadingBarCont">
+                            <div
+                                className="loadingBar"
+                                style={{
+                                    width: loading.percent > 100 ? 100 : loading.percent + "%",
+                                }}
+                            ></div>
+                        </div>
+                    )}
+                </>
             )}
         </div>
     );

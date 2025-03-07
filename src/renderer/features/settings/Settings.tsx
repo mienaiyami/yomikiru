@@ -10,7 +10,6 @@ import { makeNewSettings, setAppSettings, setEpubReaderSettings, setReaderSettin
 import InputNumber from "@ui/InputNumber";
 
 import InputCheckbox from "@ui/InputCheckbox";
-import { setUnzipping } from "@store/unzipping";
 
 import FocusLock from "react-focus-lock";
 import ThemeCont from "./ThemeCont";
@@ -24,6 +23,7 @@ import AniList from "@utils/anilist";
 import { dialogUtils } from "@utils/dialog";
 import { setAnilistLoginOpen, setSettingsOpen } from "@store/ui";
 import { setAnilistToken } from "@store/anilist";
+import { setReaderLoading } from "@store/reader";
 
 const TAB_INFO = {
     settings: [0, "Settings"],
@@ -852,9 +852,8 @@ const Settings = (): ReactElement => {
                                                                 const path = paths[i];
                                                                 const linkSplitted = path.split(window.path.sep);
                                                                 dispatch(
-                                                                    setUnzipping({
-                                                                        state: true,
-                                                                        text: `[${i + 1}/${
+                                                                    setReaderLoading({
+                                                                        message: `[${i + 1}/${
                                                                             paths.length
                                                                         }] Rendering "${linkSplitted
                                                                             .at(-1)
@@ -909,9 +908,7 @@ const Settings = (): ReactElement => {
                                                             dialogUtils.confirm({
                                                                 message: "Rendered all PDFs",
                                                             });
-                                                            dispatch(setUnzipping(false));
-                                                            // dispatch(setLoadingManga(false));
-                                                            // dispatch(setLoadingMangaPercent(0));
+                                                            dispatch(setReaderLoading(null));
                                                         })();
                                                     },
                                                     true,

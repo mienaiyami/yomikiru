@@ -1,5 +1,5 @@
 import React, { ReactNode, useRef, useState, useLayoutEffect, useContext } from "react";
-import { AppContext } from "../../App";
+import { useAppContext } from "../../App";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faChevronDown } from "@fortawesome/free-solid-svg-icons";
 
@@ -29,7 +29,7 @@ const InputSelect = ({
 }) => {
     const [btnLabel, setBtnLabel] = useState(".");
 
-    const { setOptSelectData } = useContext(AppContext);
+    const { setOptSelectData } = useAppContext();
 
     useLayoutEffect(() => {
         // if (value) {

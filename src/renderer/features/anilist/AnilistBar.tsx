@@ -7,10 +7,11 @@ import React, { useLayoutEffect, useState, memo } from "react";
 import AniList from "@utils/anilist";
 import { setAnilistCurrentManga } from "@store/anilist";
 import { setAnilistEditOpen, setAnilistSearchOpen } from "@store/ui";
+import { getReaderManga } from "@store/reader";
 
 const AnilistBar = memo(() => {
     const anilistTracking = useAppSelector((store) => store.anilist.tracking);
-    const mangaInReader = useAppSelector((store) => store.mangaInReader);
+    const mangaInReader = useAppSelector(getReaderManga);
     const anilistCurrentManga = useAppSelector((store) => store.anilist.currentManga);
     const isAniEditOpen = useAppSelector((store) => store.ui.isOpen.anilist.edit);
 

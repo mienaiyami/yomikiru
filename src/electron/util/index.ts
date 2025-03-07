@@ -3,15 +3,24 @@ import _log from "electron-log";
 import path from "path";
 import fs from "fs";
 
-// change path in `settings.tsx as well if changing log path
-_log.transports.file.resolvePath = () => path.join(app.getPath("userData"), "logs/main.log");
-
-export const log = _log;
-
 export const IS_PORTABLE =
     app.isPackaged &&
     process.platform === "win32" &&
     !app.getAppPath().includes(path.dirname(app.getPath("appData")));
+
+if (IS_PORTABLE) {
+    const folderPath = path.join(app.getAppPath(), "../../userdata/");
+    if (!fs.existsSync(folderPath)) {
+        fs.mkdirSync(folderPath);
+    }
+    console.log("folderPath", folderPath);
+    app.setPath("userData", folderPath);
+}
+
+// change path in `settings.tsx as well if changing log path
+_log.transports.file.resolvePath = () => path.join(app.getPath("userData"), "logs/main.log");
+
+export const log = _log;
 
 export const saveFile = (path: string, data: string, sync = true, retry = 3) => {
     try {

@@ -11,17 +11,17 @@ import { faBookmark as farBookmark } from "@fortawesome/free-regular-svg-icons";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { memo, useEffect, useLayoutEffect, useRef, useState, useContext, useMemo } from "react";
 import ReaderSideListItem from "./ReaderSideListItem";
-import { useAppDispatch, useAppSelector } from "../../store/hooks";
-import { setLinkInReader } from "../../store/linkInReader";
+import { useAppDispatch, useAppSelector } from "@store/hooks";
 // import { updateCurrentHistoryPage } from "../store/history";
-import { addBookmark, removeBookmark } from "../../store/bookmarks";
-import { setAppSettings, setReaderSettings } from "../../store/appSettings";
-import { setPrevNextChapter } from "../../store/prevNextChapter";
+import { addBookmark } from "@store/bookmarks";
+import { setAppSettings, setReaderSettings } from "@store/appSettings";
+import { setPrevNextChapter } from "@store/prevNextChapter";
 import AnilistBar from "../anilist/AnilistBar";
-import { AppContext } from "../../App";
 import { formatUtils } from "@utils/file";
 import { dialogUtils } from "@utils/dialog";
 import { keyFormatter } from "@utils/keybindings";
+import { getReaderManga, setReaderState } from "@store/reader";
+import { useAppContext } from "src/renderer/App";
 
 type ChapterData = { name: string; pages: number; link: string; dateModified: number };
 
@@ -49,13 +49,15 @@ const ReaderSideList = memo(
         setSideListWidth: React.Dispatch<React.SetStateAction<number>>;
         makeScrollPos: () => void;
     }) => {
-        const { contextMenuData, openInReader, setContextMenuData, closeReader } = useContext(AppContext);
+        const { contextMenuData, openInReader, setContextMenuData, closeReader } = useAppContext();
 
-        const mangaInReader = useAppSelector((store) => store.mangaInReader);
+        const linkInReader = useAppSelector((store) => store.reader.link);
+        const mangaLink = useAppSelector((store) => store.reader.content?.link);
+        // mangaInReader.link !== linkInReader
+        const mangaInReader = useAppSelector(getReaderManga);
         const library = useAppSelector((store) => store.library);
         const appSettings = useAppSelector((store) => store.appSettings);
         const prevNextChapter = useAppSelector((store) => store.prevNextChapter);
-        const linkInReader = useAppSelector((store) => store.linkInReader);
         // const contextMenu = useAppSelector((store) => store.contextMenu);
         const anilistToken = useAppSelector((store) => store.anilist.token);
         const shortcuts = useAppSelector((store) => store.shortcuts);
@@ -92,8 +94,8 @@ const ReaderSideList = memo(
         const changePrevNext = () => {
             if (mangaInReader) {
                 const listDataName = chapterData.map((e) => e.name);
-                const prevIndex = listDataName.indexOf(mangaInReader.chapterName) - 1;
-                const nextIndex = listDataName.indexOf(mangaInReader.chapterName) + 1;
+                const prevIndex = listDataName.indexOf(mangaInReader.progress?.chapterName || "") - 1;
+                const nextIndex = listDataName.indexOf(mangaInReader.progress?.chapterName || "") + 1;
                 const prevCh = prevIndex < 0 ? "~" : chapterData[prevIndex].link;
                 const nextCh = nextIndex >= chapterData.length ? "~" : chapterData[nextIndex].link;
                 dispatch(setPrevNextChapter({ prev: prevCh, next: nextCh }));
@@ -108,8 +110,9 @@ const ReaderSideList = memo(
                 setFocused(-1);
             }
             // setFocused(-1);
-            if (mangaInReader) {
-                const dir = mangaInReader.link.replace(mangaInReader.chapterName, "");
+            if (mangaLink) {
+                const dir = mangaLink;
+                console.log("dir", dir);
                 try {
                     const files = await window.fs.readdir(dir);
                     const listData: ChapterData[] = [];
@@ -183,7 +186,7 @@ const ReaderSideList = memo(
         useLayoutEffect(() => {
             makeChapterList();
 
-            if (mangaInReader && appSettings.autoRefreshSideList) {
+            if (mangaLink && appSettings.autoRefreshSideList) {
                 const refresh = () => {
                     if (timeout) clearTimeout(timeout);
                     timeout = setTimeout(() => {
@@ -191,7 +194,7 @@ const ReaderSideList = memo(
                     }, 1000);
                 };
                 const closeWatcher = window.chokidar.watch({
-                    path: mangaInReader.link.replace(mangaInReader.chapterName, ""),
+                    path: mangaLink,
                     event: "all",
                     options: {
                         depth: 0,
@@ -204,7 +207,7 @@ const ReaderSideList = memo(
                     closeWatcher();
                 };
             }
-        }, [mangaInReader]);
+        }, [mangaLink]);
         const handleResizerDrag = (e: MouseEvent) => {
             if (draggingResizer) {
                 if (isSideListPinned) {
@@ -238,13 +241,15 @@ const ReaderSideList = memo(
         const temp_prevNextOpener = (link: string) => {
             if ([".xhtml", ".html", ".txt"].includes(window.path.extname(link).toLowerCase()))
                 return openInReader(link);
-            // todo : do i need this?
+            // todo :temp
             dispatch(
-                setLinkInReader({
-                    type: "image",
-                    link,
-                    page: 1,
-                    chapter: "",
+                setReaderState({
+                    link: link,
+                    type: "manga",
+                    content: null,
+                    mangaPageNumber: 1,
+                    epubChapterId: undefined,
+                    epubElementQueryString: undefined,
                 })
             );
         };
@@ -543,17 +548,19 @@ const ReaderSideList = memo(
                                             // }
                                         });
                                 }
-                                if (mangaInReader) {
+                                if (mangaInReader?.progress) {
                                     // was addnewBookmark before
                                     dispatch(
                                         addBookmark({
                                             type: "manga",
                                             data: {
-                                                itemLink: window.path.dirname(linkInReader.link),
-                                                page: linkInReader.page,
-                                                link: linkInReader.link,
+                                                itemLink: window.path.dirname(
+                                                    mangaInReader.progress.itemLink || ""
+                                                ),
+                                                page: mangaInReader.progress.currentPage || 1,
+                                                link: mangaInReader.progress.itemLink || "",
                                                 note: "",
-                                                title: mangaInReader.chapterName,
+                                                title: mangaInReader.progress.chapterName || "",
                                             },
                                         })
                                     );
@@ -595,12 +602,12 @@ const ReaderSideList = memo(
                     <div>
                         <span className="bold">Manga</span>
                         <span className="bold"> : </span>
-                        <span>{mangaInReader?.mangaName}</span>
+                        <span>{mangaInReader?.title}</span>
                     </div>
                     <div>
                         <span className="bold">Chapter</span>
                         <span className="bold"> : </span>
-                        <span>{formatUtils.files.getName(mangaInReader?.chapterName || "")}</span>
+                        <span>{formatUtils.files.getName(mangaInReader?.progress?.chapterName || "")}</span>
                     </div>
                 </div>
                 <div className="tools">

@@ -1,5 +1,5 @@
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import { ReactElement, useContext, useEffect, useLayoutEffect, useState } from "react";
+import { ReactElement, useEffect, useLayoutEffect, useState } from "react";
 import {
     faHome,
     faCog,
@@ -8,7 +8,7 @@ import {
     faWindowMaximize,
     faTimes,
 } from "@fortawesome/free-solid-svg-icons";
-import { AppContext } from "../App";
+import { useAppContext } from "../App";
 import { useAppDispatch, useAppSelector } from "@store/hooks";
 import { setPageNumChangeDisabled } from "@store/pageNumChangeDisabled";
 import { setSysBtnColor } from "@store/themes";
@@ -17,11 +17,11 @@ import { setSettingsOpen, toggleSettingsOpen } from "@store/ui";
 
 const TopBar = (): ReactElement => {
     const [title, setTitle] = useState<string>("Yomikiru");
-    const { pageNumberInputRef, bookProgressRef, closeReader } = useContext(AppContext);
-    const mangaInReader = useAppSelector((store) => store.mangaInReader);
-    const bookInReader = useAppSelector((store) => store.bookInReader);
+    const { pageNumberInputRef, bookProgressRef, closeReader } = useAppContext();
     const [isMaximized, setMaximized] = useState(window.electron.currentWindow.isMaximized() || false);
-    const isReaderOpen = useAppSelector((store) => store.ui.isOpen.reader);
+    const readerContent = useAppSelector((store) => store.reader.content);
+    // todo: move input to separate component
+    const currentPageNumber = useAppSelector((store) => store.reader.mangaPageNumber);
     const appSettings = useAppSelector((store) => store.appSettings);
 
     const [pageScrollTimeoutID, setTimeoutID] = useState<NodeJS.Timeout | null>(null);
@@ -29,24 +29,25 @@ const TopBar = (): ReactElement => {
     const dispatch = useAppDispatch();
 
     const setTitleWithSize = () => {
-        if (mangaInReader) {
-            let mangaName = mangaInReader.mangaName;
-            let chapterName = formatUtils.files.getName(mangaInReader.chapterName);
+        if (!readerContent) return;
+        if (readerContent.type === "manga") {
+            let mangaName = readerContent.title;
+            let chapterName = formatUtils.files.getName(readerContent.progress?.chapterName || "");
             if (mangaName.length > 13) mangaName = mangaName.substring(0, 20) + "...";
             if (chapterName.length > 83) chapterName = chapterName.substring(0, 80) + "...";
             const title = `${window.electron.app.getName()} - ${mangaName} | ${chapterName}`;
             setTitle(chapterName.concat(window.electron.app.isPackaged ? "" : " - dev"));
             document.title = title;
             return;
-        } else if (bookInReader) {
-            let bookTitle = bookInReader.title;
+        } else if (readerContent.type === "book") {
+            let bookTitle = readerContent.title;
             let chapterName = "";
             if (
                 appSettings.epubReaderSettings.loadOneChapter &&
-                bookInReader.chapterData &&
-                bookInReader.chapterData.chapterName !== "~"
+                readerContent.progress &&
+                readerContent.progress.chapterName !== "~"
             ) {
-                chapterName = formatUtils.files.getName(bookInReader.chapterData.chapterName);
+                chapterName = readerContent.progress.chapterName;
                 if (chapterName.length > 83) chapterName = chapterName.substring(0, 80) + "...";
             }
             if (bookTitle.length > 83) bookTitle = bookTitle.substring(0, 80) + "...";
@@ -79,19 +80,29 @@ const TopBar = (): ReactElement => {
         listeners.push(window.electron.currentWindow.on("focus", onFocus));
         listeners.push(window.electron.currentWindow.on("blur", onBlur));
 
-        const updatePageNumberInput = () => {
-            (document.querySelector("#NavigateToPageInput") as HTMLInputElement).value =
-                window.app.currentPageNumber.toString();
-        };
-        window.addEventListener("pageNumberChange", updatePageNumberInput);
-        return () => {
-            listeners.forEach((e) => e());
-            window.removeEventListener("pageNumberChange", updatePageNumberInput);
-        };
+        // const updatePageNumberInput = () => {
+        //     const elem = document.querySelector("#NavigateToPageInput") as HTMLInputElement;
+        //     if (elem) {
+        //         elem.value = window.app.currentPageNumber.toString();
+        //     }
+        // };
+        // window.addEventListener("pageNumberChange", updatePageNumberInput);
+        // return () => {
+        //     listeners.forEach((e) => e());
+        //     window.removeEventListener("pageNumberChange", updatePageNumberInput);
+        // };
     }, []);
     useEffect(() => {
+        console.log("currentPageNumber", currentPageNumber);
+        if (currentPageNumber) {
+            if (pageNumberInputRef.current) {
+                pageNumberInputRef.current.value = currentPageNumber.toString();
+            }
+        }
+    }, [currentPageNumber]);
+    useEffect(() => {
         setTitleWithSize();
-    }, [mangaInReader, bookInReader, bookInReader?.chapterData.chapterName]);
+    }, [readerContent]);
 
     return (
         <div id="topBar">
@@ -101,7 +112,7 @@ const TopBar = (): ReactElement => {
                     className="home"
                     onFocus={(e) => e.currentTarget.blur()}
                     onClick={() => {
-                        isReaderOpen ? closeReader() : window.location.reload();
+                        readerContent ? closeReader() : window.location.reload();
                         dispatch(setSettingsOpen(false));
                     }}
                     tabIndex={-1}
@@ -125,139 +136,127 @@ const TopBar = (): ReactElement => {
                 <div className="title">{title}</div>
             </div>
             <div className="windowBtnCont">
-                <label
-                    className="pageNumber noBG"
-                    htmlFor="NavigateToPageInput"
-                    data-tooltip="Navigate To Page Number"
-                    style={{
-                        display:
-                            isReaderOpen && mangaInReader && !/(\.xhtml|\.txt)/i.test(mangaInReader.link)
-                                ? "flex"
-                                : "none",
-                    }}
-                >
-                    <input
-                        type="number"
-                        id="NavigateToPageInput"
-                        className="pageNumberInput"
-                        defaultValue={1}
-                        placeholder="Page Num."
-                        ref={pageNumberInputRef}
-                        min="1"
-                        max={mangaInReader?.pages || 0}
-                        onFocus={(e) => {
-                            e.currentTarget.select();
-                        }}
-                        onBlur={() => {
-                            dispatch(setPageNumChangeDisabled(false));
-                        }}
-                        onKeyDown={(e) => {
-                            e.stopPropagation();
-                            if (pageScrollTimeoutID) clearTimeout(pageScrollTimeoutID);
-                            if (
-                                !(
-                                    /[0-9]/gi.test(e.key) ||
-                                    e.key === "Backspace" ||
-                                    e.key == "Enter" ||
-                                    e.key == "Escape"
+                {readerContent && readerContent.type === "manga" && (
+                    <label
+                        className="pageNumber noBG"
+                        htmlFor="NavigateToPageInput"
+                        data-tooltip="Navigate To Page Number"
+                    >
+                        <input
+                            type="number"
+                            id="NavigateToPageInput"
+                            className="pageNumberInput"
+                            defaultValue={1}
+                            placeholder="Page Num."
+                            ref={pageNumberInputRef}
+                            min="1"
+                            max={readerContent.progress?.totalPages || 0}
+                            onFocus={(e) => {
+                                e.currentTarget.select();
+                            }}
+                            onBlur={() => {
+                                dispatch(setPageNumChangeDisabled(false));
+                            }}
+                            onKeyDown={(e) => {
+                                e.stopPropagation();
+                                if (pageScrollTimeoutID) clearTimeout(pageScrollTimeoutID);
+                                if (
+                                    !(
+                                        /[0-9]/gi.test(e.key) ||
+                                        e.key === "Backspace" ||
+                                        e.key == "Enter" ||
+                                        e.key == "Escape"
+                                    )
                                 )
-                            )
+                                    e.preventDefault();
+                            }}
+                            onKeyUp={(e) => {
+                                if (pageScrollTimeoutID) clearTimeout(pageScrollTimeoutID);
+                                if (e.key == "Enter" || e.key == "Escape") {
+                                    e.currentTarget.blur();
+                                }
+                                if (e.key === "Enter") {
+                                    let pagenumber = parseInt(e.currentTarget.value);
+                                    if (pagenumber > (readerContent.progress?.totalPages || 0))
+                                        pagenumber = readerContent.progress?.totalPages || 0;
+                                    if (pageNumberInputRef.current && pageNumberInputRef.current) {
+                                        pageNumberInputRef.current.value = pagenumber.toString();
+                                    }
+                                    if (!pagenumber) return;
+                                    dispatch(setPageNumChangeDisabled(true));
+                                    window.app.scrollToPage(pagenumber, "smooth", () => {
+                                        dispatch(setPageNumChangeDisabled(false));
+                                    });
+                                    return;
+                                }
+                                if (/[0-9]/gi.test(e.key) || e.key === "Backspace") {
+                                    let pagenumber = parseInt(e.currentTarget.value);
+                                    if (pagenumber > (readerContent.progress?.totalPages || 0))
+                                        pagenumber = readerContent.progress?.totalPages || 0;
+                                    if (pageNumberInputRef.current && pageNumberInputRef.current) {
+                                        pageNumberInputRef.current.value = pagenumber.toString();
+                                    }
+                                    if (!pagenumber) return;
+                                    setTimeoutID(
+                                        setTimeout(() => {
+                                            dispatch(setPageNumChangeDisabled(true));
+                                            window.app.scrollToPage(pagenumber);
+                                        }, 1000)
+                                    );
+                                    return;
+                                }
                                 e.preventDefault();
-                        }}
-                        onKeyUp={(e) => {
-                            if (pageScrollTimeoutID) clearTimeout(pageScrollTimeoutID);
-                            if (e.key == "Enter" || e.key == "Escape") {
-                                e.currentTarget.blur();
-                            }
-                            if (e.key === "Enter") {
-                                let pagenumber = parseInt(e.currentTarget.value);
-                                if (pagenumber > (mangaInReader?.pages || 0))
-                                    pagenumber = mangaInReader?.pages || 0;
-                                if (pageNumberInputRef.current && pageNumberInputRef.current) {
-                                    pageNumberInputRef.current.value = pagenumber.toString();
-                                }
-                                if (!pagenumber) return;
-                                dispatch(setPageNumChangeDisabled(true));
-                                window.app.scrollToPage(pagenumber, "smooth", () => {
-                                    dispatch(setPageNumChangeDisabled(false));
-                                });
-                                return;
-                            }
-                            if (/[0-9]/gi.test(e.key) || e.key === "Backspace") {
-                                let pagenumber = parseInt(e.currentTarget.value);
-                                if (pagenumber > (mangaInReader?.pages || 0))
-                                    pagenumber = mangaInReader?.pages || 0;
-                                if (pageNumberInputRef.current && pageNumberInputRef.current) {
-                                    pageNumberInputRef.current.value = pagenumber.toString();
-                                }
-                                if (!pagenumber) return;
-                                setTimeoutID(
-                                    setTimeout(() => {
-                                        dispatch(setPageNumChangeDisabled(true));
-                                        window.app.scrollToPage(pagenumber);
-                                    }, 1000)
-                                );
-                                return;
-                            }
-                            e.preventDefault();
-                        }}
-                        tabIndex={-1}
-                    />
-                    <span className="totalPage">/{mangaInReader?.pages || 0}</span>
-                </label>
-
-                <label
-                    style={{
-                        display:
-                            isReaderOpen &&
-                            (bookInReader || (mangaInReader && /(\.xhtml|\.txt)/i.test(mangaInReader.link)))
-                                ? "flex"
-                                : "none",
-                    }}
-                    className="pageNumber noBG"
-                >
-                    <input
-                        className="pageNumberInput"
-                        ref={bookProgressRef}
-                        type="number"
-                        defaultValue={0}
-                        min={0}
-                        max={100}
-                        onFocus={(e) => {
-                            e.currentTarget.select();
-                        }}
-                        onKeyDown={(e) => {
-                            e.stopPropagation();
-                            if (
-                                !(
-                                    /[0-9]/gi.test(e.key) ||
-                                    e.key === "Backspace" ||
-                                    e.key == "Enter" ||
-                                    e.key == "Escape"
+                            }}
+                            tabIndex={-1}
+                        />
+                        <span className="totalPage">/{readerContent.progress?.totalPages || 0}</span>
+                    </label>
+                )}
+                {readerContent && readerContent.type === "book" && (
+                    <label className="pageNumber noBG">
+                        <input
+                            className="pageNumberInput"
+                            ref={bookProgressRef}
+                            type="number"
+                            defaultValue={0}
+                            min={0}
+                            max={100}
+                            onFocus={(e) => {
+                                e.currentTarget.select();
+                            }}
+                            onKeyDown={(e) => {
+                                e.stopPropagation();
+                                if (
+                                    !(
+                                        /[0-9]/gi.test(e.key) ||
+                                        e.key === "Backspace" ||
+                                        e.key == "Enter" ||
+                                        e.key == "Escape"
+                                    )
                                 )
-                            )
-                                e.preventDefault();
-                        }}
-                        onKeyUp={(e) => {
-                            if (e.key == "Enter" || e.key == "Escape") {
-                                e.currentTarget.blur();
-                            }
-                            if (/[0-9]/gi.test(e.key) || e.key === "Backspace") {
-                                let percent = parseInt(e.currentTarget.value);
-                                if (percent > 100) percent = 100;
-                                if (bookProgressRef.current && bookProgressRef.current) {
-                                    bookProgressRef.current.value = percent.toString();
+                                    e.preventDefault();
+                            }}
+                            onKeyUp={(e) => {
+                                if (e.key == "Enter" || e.key == "Escape") {
+                                    e.currentTarget.blur();
                                 }
-                                // if (!percent) return;
-                                window.app.scrollToPage(percent, "auto");
-                                return;
-                            }
-                            e.preventDefault();
-                        }}
-                        tabIndex={-1}
-                    />
-                    <span className="totalPage">%</span>
-                </label>
+                                if (/[0-9]/gi.test(e.key) || e.key === "Backspace") {
+                                    let percent = parseInt(e.currentTarget.value);
+                                    if (percent > 100) percent = 100;
+                                    if (bookProgressRef.current && bookProgressRef.current) {
+                                        bookProgressRef.current.value = percent.toString();
+                                    }
+                                    // if (!percent) return;
+                                    window.app.scrollToPage(percent, "auto");
+                                    return;
+                                }
+                                e.preventDefault();
+                            }}
+                            tabIndex={-1}
+                        />
+                        <span className="totalPage">%</span>
+                    </label>
+                )}
                 {window.process.platform !== "win32" ? (
                     <>
                         <button

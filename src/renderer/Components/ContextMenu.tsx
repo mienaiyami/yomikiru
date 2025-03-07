@@ -1,13 +1,13 @@
-import { useContext, useEffect, useRef, useState, useLayoutEffect } from "react";
+import { useEffect, useRef, useState, useLayoutEffect } from "react";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faCheck } from "@fortawesome/free-solid-svg-icons";
 import { useAppSelector } from "@store/hooks";
-import { AppContext } from "../App";
+import { useAppContext } from "../App";
 import { keyFormatter } from "@utils/keybindings";
 
 const ContextMenu = () => {
     const shortcuts = useAppSelector((store) => store.shortcuts);
-    const { contextMenuData, setContextMenuData } = useContext(AppContext);
+    const { contextMenuData, setContextMenuData } = useAppContext();
     const [pos, setPos] = useState({ x: 0, y: 0 });
     const [focused, setFocused] = useState(-1);
     const ref = useRef<HTMLDivElement>(null);

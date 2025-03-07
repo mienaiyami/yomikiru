@@ -1,5 +1,5 @@
 import React, { useRef, useState, useEffect, useLayoutEffect, useContext } from "react";
-import { AppContext } from "../../App";
+import { useAppContext } from "../../App";
 import InputNumber from "./InputNumber";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faEyeDropper, faSort } from "@fortawesome/free-solid-svg-icons";
@@ -19,7 +19,7 @@ const VALID_SLIDER = {
 type ValidSlider = keyof typeof VALID_SLIDER;
 
 const InputColorReal = () => {
-    const { colorSelectData, setColorSelectData } = useContext(AppContext);
+    const { colorSelectData, setColorSelectData } = useAppContext();
     const [pos, setPos] = useState({ x: 0, y: 0 });
     const [formatSelected, setFormatSelected] = useState(0);
     const [color, setColor] = useState(colorUtils.new());

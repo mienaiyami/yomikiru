@@ -4,23 +4,10 @@ import path from "path";
 import fs from "fs";
 import { IS_PORTABLE, log, saveFile } from "./util";
 
-import { exec, spawn } from "child_process";
-import * as crossZip from "cross-zip";
-
 import * as remote from "@electron/remote/main";
 remote.initialize();
 
-declare const HOME_WEBPACK_ENTRY: string;
-declare const HOME_PRELOAD_WEBPACK_ENTRY: string;
-
 if (require("electron-squirrel-startup")) app.quit();
-if (IS_PORTABLE) {
-    const folderPath = path.join(app.getAppPath(), "../../userdata/");
-    if (!fs.existsSync(folderPath)) {
-        fs.mkdirSync(folderPath);
-    }
-    app.setPath("userData", folderPath);
-}
 
 //// disabling hardware acceleration because it causes reader to stutter when scrolling
 ////18/05/23 - decided to not use it anymore as it make scrolling laggy
@@ -38,13 +25,6 @@ if (fs.existsSync(path.join(app.getPath("userData"), "TEMP_PATH"))) {
 let OPEN_IN_EXISTING_WINDOW = false;
 if (fs.existsSync(path.join(app.getPath("userData"), "OPEN_IN_EXISTING_WINDOW"))) OPEN_IN_EXISTING_WINDOW = true;
 
-import checkForUpdate from "./updater";
-import {
-    addOptionToExplorerMenu,
-    addOptionToExplorerMenu_epub,
-    deleteOptionInExplorerMenu,
-    deleteOptionInExplorerMenu_epub,
-} from "./util/shelloptions";
 import handleSquirrelEvent from "./util/handleSquirrelEvent";
 import { DatabaseService } from "./db";
 import { setupDatabaseHandlers } from "./ipc/database";

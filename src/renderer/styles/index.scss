@@ -875,6 +875,7 @@
                 z-index: 100000;
                 background: var(--body-bg-color);
                 display: grid;
+                gap: 1em;
                 place-content: center;
                 display: none;
                 width: 100%;
@@ -900,8 +901,9 @@
                     }
                 }
 
-                .unzipping {
+                .loadingText {
                     font-size: 4em;
+                    text-align: center;
                     animation: 2s linear fadeInOut infinite;
                 }
 
@@ -914,7 +916,7 @@
                     height: 30px;
                     border: 1px solid var(--btn-color-focus);
 
-                    .loadingbar {
+                    .loadingBar {
                         position: relative;
                         width: 0;
                         height: 100%;

@@ -14,14 +14,14 @@ import {
     useMemo,
     useCallback,
 } from "react";
-import { AppContext } from "src/renderer/App";
+import { useAppContext } from "src/renderer/App";
 import { dialogUtils } from "@utils/dialog";
 import { keyFormatter } from "@utils/keybindings";
 
 type LocationData = { name: string; link: string; dateModified: number };
 
 const LocationsTab = (): ReactElement => {
-    const { openInReader, setContextMenuData } = useContext(AppContext);
+    const { openInReader, setContextMenuData } = useAppContext();
     const library = useAppSelector((store) => store.library.items);
     const appSettings = useAppSelector((store) => store.appSettings);
     const shortcuts = useAppSelector((store) => store.shortcuts);

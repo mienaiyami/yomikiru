@@ -1,3 +1,5 @@
+import { dialogUtils } from "./dialog";
+
 const userDataURL = window.electron.app.getPath("userData");
 const settingsPath = window.path.join(userDataURL, "settings.json");
 const bookmarksPath = window.path.join(userDataURL, "bookmarks.json");

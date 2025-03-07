@@ -11,7 +11,7 @@ import React, {
 import * as css from "css";
 
 import { BookHistoryItem } from "@common/types/legacy";
-import { AppContext } from "src/renderer/App";
+import { useAppContext } from "src/renderer/App";
 import { useAppDispatch, useAppSelector } from "@store/hooks";
 import { setBookInReader } from "@store/bookInReader";
 import { setUnzipping } from "@store/unzipping";
@@ -20,7 +20,7 @@ import EPUBReaderSettings from "./EPubReaderSettings";
 import EPubReaderSideList from "./EPubReaderSideList";
 import EPUB from "@utils/epub";
 import Modal from "@ui/Modal";
-import { addLibraryItem, updateBookProgress, updateCurrentBookProgress } from "@store/library";
+import { addLibraryItem, updateBookProgress, updateCurrentItemProgress } from "@store/library";
 import { dialogUtils } from "@utils/dialog";
 import { getCSSPath } from "@utils/utils";
 import { keyFormatter } from "@utils/keybindings";
@@ -93,7 +93,7 @@ const HTMLPart = memo(
         // bookmarkedElem: string;
         onEpubLinkClick: (ev: MouseEvent | React.MouseEvent<HTMLAnchorElement, MouseEvent>) => void;
     }) => {
-        const { setContextMenuData } = useContext(AppContext);
+        const { setContextMenuData } = useAppContext();
         const [rendered, setRendered] = useState(false);
         const onContextMenu = (ev: MouseEvent) => {
             ev.stopPropagation();
@@ -158,7 +158,7 @@ const HTMLPart = memo(
 );
 
 const EPubReader = () => {
-    const { bookProgressRef, setContextMenuData } = useContext(AppContext);
+    const { bookProgressRef, setContextMenuData } = useAppContext();
 
     const appSettings = useAppSelector((store) => store.appSettings);
     const shortcuts = useAppSelector((store) => store.shortcuts);
@@ -243,7 +243,7 @@ const EPubReader = () => {
                         },
                     })
                 );
-            dispatch(updateCurrentBookProgress());
+            dispatch(updateCurrentItemProgress());
         };
         const abortController = new AbortController();
         (async function () {
@@ -718,7 +718,7 @@ const EPubReader = () => {
                         (1 + Math.abs(1 - window.electron.webFrame.getZoomFactor()))
                 ) >= readerRef.current.scrollHeight ||
                     readerRef.current.scrollTop < window.innerHeight / 4);
-            if (!isSettingOpen && window.app.isReaderOpen && !isLoadingManga) {
+            if (!isSettingOpen && isReaderOpen && !isLoadingManga) {
                 if ([" ", "ArrowUp", "ArrowDown"].includes(e.key)) e.preventDefault();
                 if (!e.repeat) {
                     switch (true) {
@@ -815,7 +815,7 @@ const EPubReader = () => {
             window.removeEventListener("keydown", registerShortcuts);
             window.removeEventListener("keyup", aaa);
         };
-    }, [isSideListPinned, appSettings, isLoadingManga, shortcuts, isSettingOpen, epubData]);
+    }, [isSideListPinned, appSettings, isLoadingManga, shortcuts, isSettingOpen, epubData, isReaderOpen]);
 
     useLayoutEffect(() => {
         if (elemBeforeChange)

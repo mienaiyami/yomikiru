@@ -1,17 +1,17 @@
-import { createSlice, PayloadAction } from "@reduxjs/toolkit";
+// import { createSlice, PayloadAction } from "@reduxjs/toolkit";
 
-const initialState = false;
+// const initialState = false;
 
-const isLoadingManga = createSlice({
-    name: "isLoadingManga",
-    initialState,
-    reducers: {
-        setLoadingManga: (state, action: PayloadAction<boolean>) => {
-            return action.payload;
-        },
-    },
-});
+// const isLoadingManga = createSlice({
+//     name: "isLoadingManga",
+//     initialState,
+//     reducers: {
+//         setLoadingManga: (state, action: PayloadAction<boolean>) => {
+//             return action.payload;
+//         },
+//     },
+// });
 
-export const { setLoadingManga } = isLoadingManga.actions;
+// export const { setLoadingManga } = isLoadingManga.actions;
 
-export default isLoadingManga.reducer;
+// export default isLoadingManga.reducer;

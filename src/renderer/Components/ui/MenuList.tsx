@@ -1,5 +1,5 @@
 import React, { useRef, useState, useEffect, useLayoutEffect, useContext } from "react";
-import { AppContext } from "../../App";
+import { useAppContext } from "../../App";
 
 import FocusLock from "react-focus-lock";
 import { useAppSelector } from "../../store/hooks";
@@ -7,7 +7,7 @@ import { useAppSelector } from "../../store/hooks";
 // ! not indented to be used without `AppContext::optSelectData`
 //todo rename later for select only
 const MenuList = () => {
-    const { optSelectData } = useContext(AppContext);
+    const { optSelectData } = useAppContext();
     const shortcuts = useAppSelector((store) => store.shortcuts);
 
     //todo, maybe add height,width to it as well.

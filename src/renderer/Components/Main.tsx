@@ -2,7 +2,7 @@ import { ReactElement, useContext } from "react";
 import ContextMenu from "./ContextMenu";
 import LoadingScreen from "./LoadingScreen";
 import { useAppDispatch, useAppSelector } from "@store/hooks";
-import { AppContext } from "../App";
+import { useAppContext } from "../App";
 import LocationsTab from "@features/home/LocationsTab";
 import { setAppSettings } from "@store/appSettings";
 import BookmarkTab from "@features/home/BookmarkTab";
@@ -13,15 +13,23 @@ import InputColorReal from "@ui/InputColorReal";
 import AniLogin from "@features/anilist/AniLogin";
 import Reader from "@features/reader-image/Reader";
 import EPubReader from "@features/reader-epub/EPubReader";
+import { shallowEqual } from "react-redux";
 
 const Main = (): ReactElement => {
     const appSettings = useAppSelector((store) => store.appSettings);
-    const isReaderOpen = useAppSelector((store) => store.ui.isOpen.reader);
-    const linkInReader = useAppSelector((store) => store.linkInReader);
+    const reader = useAppSelector(
+        (store) => ({
+            active: store.reader.active,
+            type: store.reader.type,
+            link: store.reader.link,
+        }),
+        shallowEqual
+    );
+    console.log("readerContent", reader);
     const anilistToken = useAppSelector((store) => store.anilist.token);
     const isAniLoginOpen = useAppSelector((store) => store.ui.isOpen.anilist.login);
 
-    const { contextMenuData, optSelectData, colorSelectData } = useContext(AppContext);
+    const { contextMenuData, optSelectData, colorSelectData } = useAppContext();
     const dispatch = useAppDispatch();
 
     return (
@@ -29,7 +37,7 @@ const Main = (): ReactElement => {
             <div
                 className="tabCont"
                 style={{
-                    display: isReaderOpen ? "none" : "flex",
+                    display: reader.active ? "none" : "flex",
                 }}
             >
                 <LocationsTab />
@@ -72,8 +80,7 @@ const Main = (): ReactElement => {
             {optSelectData && <MenuList />}
             {colorSelectData && <InputColorReal />}
             {!anilistToken && isAniLoginOpen && <AniLogin />}
-            {linkInReader.type === "image" && linkInReader.link !== "" ? <Reader /> : ""}
-            {linkInReader.type === "book" && linkInReader.link !== "" ? <EPubReader /> : ""}
+            {reader.link && (reader.type === "manga" ? <Reader /> : reader.type === "book" ? <EPubReader /> : "")}
         </div>
     );
 };

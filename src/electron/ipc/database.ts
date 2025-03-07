@@ -2,7 +2,7 @@ import { BrowserWindow, ipcMain } from "electron";
 import type { DatabaseChangeChannels, DatabaseChannels } from "@common/types/ipc";
 import { DatabaseService } from "../db";
 import { bookBookmarks, bookNotes, bookProgress, libraryItems, mangaBookmarks, mangaProgress } from "../db/schema";
-import { and, eq, inArray, sql } from "drizzle-orm";
+import { and, desc, eq, inArray, sql } from "drizzle-orm";
 import { BookProgress, LibraryItem, MangaProgress } from "@common/types/db";
 import { ipc } from "./utils";
 
@@ -38,7 +38,8 @@ const handlers: {
             })
             .from(libraryItems)
             .leftJoin(mangaProgress, eq(libraryItems.link, mangaProgress.itemLink))
-            .leftJoin(bookProgress, eq(libraryItems.link, bookProgress.itemLink));
+            .leftJoin(bookProgress, eq(libraryItems.link, bookProgress.itemLink))
+            .orderBy(desc(libraryItems.createdAt));
         return itemsWithProgress.map(({ item, bookProgress, mangaProgress }) => ({
             ...item,
             progress: mangaProgress || bookProgress,
@@ -51,6 +52,16 @@ const handlers: {
         const data = (await db.addLibraryItem(request)) ?? null;
         pingDatabaseChange("db:library:change", await handlers["db:library:getAllAndProgress"](db));
         return data;
+    },
+    "db:library:deleteItem": async (db, request) => {
+        try {
+            await db.db.delete(libraryItems).where(eq(libraryItems.link, request.link));
+            pingDatabaseChange("db:library:change", await handlers["db:library:getAllAndProgress"](db));
+            return true;
+        } catch (error) {
+            console.error(`Error in IPC channel "db:library:deleteItem":`, error);
+            return false;
+        }
     },
     "db:library:getAllBookmarks": async (db) => {
         const mangaBk = await db.db.select().from(mangaBookmarks);
@@ -69,7 +80,7 @@ const handlers: {
         return progress ?? null;
     },
     "db:manga:updateProgress": async (db, request) => {
-        const data = (await db.updateMangaProgress(request.itemLink, request.data))?.[0] ?? null;
+        const data = (await db.updateMangaProgress(request))?.[0] ?? null;
         pingDatabaseChange("db:library:change", await handlers["db:library:getAllAndProgress"](db));
         return data;
     },

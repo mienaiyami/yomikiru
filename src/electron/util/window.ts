@@ -166,6 +166,7 @@ export class WindowManager {
     }
     static registerListeners() {
         ipc.handle("window:openLinkInNewWindow", (_, link) => {
+            console.log("opening link in new window", link);
             this.createWindow(link);
         });
         ipc.handle("window:addDirToDelete", (e, dir) => {

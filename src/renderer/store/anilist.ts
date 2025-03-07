@@ -7,30 +7,21 @@ type AnilistState = {
     currentManga: Anilist.MangaData | null;
 };
 
-let initialTracking: Anilist.TrackStore = [];
-let initialToken: string | null = null;
-try {
-    initialTracking = JSON.parse(localStorage.getItem("anilist_tracking") || "[]");
-    initialTracking = initialTracking.filter((e) => {
-        // todo: cleanup later with async for performance?
-        if (!window.fs.existsSync(e.localURL)) {
-            window.logger.log(`"${e.localURL}" no longer exist, removing from AniList Tracking.`);
-            return false;
-        }
-        return true;
-    });
-
-    initialToken = localStorage.getItem("anilist_token") || null;
-} catch (e) {
-    console.error(e);
-}
-
 const initialState: AnilistState = {
-    //todo: maybe dont need token in store? maintain in Anilist class?
-    token: initialToken,
-    tracking: initialTracking,
+    token: localStorage.getItem("anilist_token") || null,
+    tracking: loadTrackingFromStorage(),
     currentManga: null,
 };
+
+function loadTrackingFromStorage(): Anilist.TrackStore {
+    try {
+        const tracking = JSON.parse(localStorage.getItem("anilist_tracking") || "[]") as Anilist.TrackStore;
+        return tracking.filter((e) => window.fs.existsSync(e.localURL));
+    } catch (e) {
+        console.error(e);
+        return [];
+    }
+}
 
 const anilistSlice = createSlice({
     name: "anilist",

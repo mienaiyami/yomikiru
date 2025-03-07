@@ -2,7 +2,7 @@ import { useAppSelector } from "@store/hooks";
 import { dialogUtils } from "@utils/dialog";
 import { formatUtils } from "@utils/file";
 import { useContext, useState, useEffect } from "react";
-import { AppContext } from "src/renderer/App";
+import { useAppContext } from "src/renderer/App";
 
 // todo: need to update this coz wont work with multiple bookmarks
 const BookmarkHistoryListItem = (props: {
@@ -13,7 +13,7 @@ const BookmarkHistoryListItem = (props: {
     // id from db
     id: number;
 }) => {
-    const { openInReader, setContextMenuData, contextMenuData } = useContext(AppContext);
+    const { openInReader, setContextMenuData, contextMenuData } = useAppContext();
     const appSettings = useAppSelector((store) => store.appSettings);
     const libraryItem = useAppSelector((store) => store.library.items[props.link]);
 
@@ -74,6 +74,7 @@ const BookmarkHistoryListItem = (props: {
                         window.contextMenu.template.showInExplorer(link),
                         window.contextMenu.template.copyPath(link),
                         window.contextMenu.template.divider(),
+                        window.contextMenu.template.removeHistory(props.link),
                     ];
                     // if (props.isBookmark) items.push(window.contextMenu.template.removeBookmark(props.data.link));
                     // else items.push(window.contextMenu.template.addToBookmark(props));

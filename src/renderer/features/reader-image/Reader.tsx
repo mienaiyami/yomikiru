@@ -1,25 +1,28 @@
 import { useCallback, useContext, useEffect, useLayoutEffect, useRef, useState } from "react";
-import { AppContext } from "../../App";
+import { useAppContext } from "../../App";
 import ReaderSideList from "./ReaderSideList";
 import ReaderSettings from "./ReaderSettings";
 import { useAppDispatch, useAppSelector } from "@store/hooks";
 import { setAppSettings, setReaderSettings } from "@store/appSettings";
-import { setMangaInReader } from "@store/mangaInReader";
-
-import { setLoadingMangaPercent } from "@store/loadingMangaPercent";
-import { setLoadingManga } from "@store/isLoadingManga";
-import { setLinkInReader } from "@store/linkInReader";
 import AnilistSearch from "../anilist/AnilistSearch";
 import AnilistEdit from "../anilist/AnilistEdit";
 import { InView } from "react-intersection-observer";
 
-import { MangaItem } from "@common/types/legacy";
-import { addLibraryItem, updateChaptersRead, updateMangaProgress } from "@store/library";
+import { addLibraryItem, selectLibraryItem, updateChaptersRead, updateMangaProgress } from "@store/library";
 import { formatUtils } from "@utils/file";
 import { keyFormatter } from "@utils/keybindings";
 import AniList from "@utils/anilist";
-import { setReaderOpen } from "@store/ui";
 import { setAnilistCurrentManga } from "@store/anilist";
+import {
+    getReaderManga,
+    getReaderMangaState,
+    setReaderLoading,
+    setReaderMangaPageNumber,
+    setReaderOpen,
+    setReaderState,
+    updateReaderContent,
+} from "@store/reader";
+import { LibraryItem, MangaProgress } from "@common/types/db";
 
 const processChapterNumber = (chapterName: string): number | undefined => {
     /*
@@ -52,19 +55,20 @@ const processChapterNumber = (chapterName: string): number | undefined => {
 };
 
 const Reader = () => {
-    const { pageNumberInputRef, checkValidFolder, setContextMenuData } = useContext(AppContext);
+    const { pageNumberInputRef, checkValidFolder, setContextMenuData } = useAppContext();
 
     const appSettings = useAppSelector((store) => store.appSettings);
     const shortcuts = useAppSelector((store) => store.shortcuts);
-    const isReaderOpen = useAppSelector((store) => store.ui.isOpen.reader);
+    const isReaderOpen = useAppSelector((store) => store.reader.active);
     const isSettingOpen = useAppSelector((store) => store.ui.isOpen.settings);
-    const linkInReader = useAppSelector((store) => store.linkInReader);
-    const mangaInReader = useAppSelector((store) => store.mangaInReader);
+    const linkInReader = useAppSelector((store) => store.reader.link);
+    const readerState = useAppSelector(getReaderMangaState);
     const anilistCurrentManga = useAppSelector((store) => store.anilist.currentManga);
-    const isLoadingManga = useAppSelector((store) => store.isLoadingManga);
+    const isLoadingManga = useAppSelector((store) => store.reader.loading !== null);
     const bookmarks = useAppSelector((store) => store.bookmarks);
 
-    const library = useAppSelector((store) => store.library.items);
+    // todo: extract to hook
+    const libraryItem = useAppSelector((store) => selectLibraryItem(store, linkInReader));
     const pageNumChangeDisabled = useAppSelector((store) => store.pageNumChangeDisabled);
     const prevNextChapter = useAppSelector((store) => store.prevNextChapter);
     const isAniSearchOpen = useAppSelector((store) => store.ui.isOpen.anilist.search);
@@ -141,12 +145,12 @@ const Reader = () => {
         }
     };
     //! check if really needed
-    const pageChangeEvent = new Event("pageNumberChange");
+    // const pageChangeEvent = new Event("pageNumberChange");
 
     const scrollToPage = (pageNumber: number, behavior: ScrollBehavior = "smooth", callback?: () => void) => {
         const reader = document.querySelector("#reader");
         if (reader) {
-            if (pageNumber >= 1 && pageNumber <= (mangaInReader?.pages || 1)) {
+            if (pageNumber >= 1 && pageNumber <= (readerState?.content?.progress?.totalPages || 1)) {
                 //! pageNumber no longer in use
                 const imgElem = document.querySelector(
                     "#reader .imgCont .readerImg[data-pagenumber='" + pageNumber + "']"
@@ -173,24 +177,26 @@ const Reader = () => {
             imageDecodeQueue
                 .shift()
                 ?.decode()
-                .then((e) => {
+                .then(() => {
                     setCurrentlyDecoding(false);
                 })
                 .catch((err) => console.error(err));
         }
     }, [currentlyDecoding, imageDecodeQueue]);
 
-    useLayoutEffect(() => {
-        window.app.currentPageNumber = currentPageNumber;
-        // too heavy
-        // setHistory((init) => {
-        //     if (init[0].link === linkInReader.link) {
-        //         init[0].page = currentPageNumber;
-        //         return [...init];
-        //     }
-        //     return init;
-        // });
-        window.dispatchEvent(pageChangeEvent);
+    useEffect(() => {
+        // window.app.currentPageNumber = currentPageNumber;
+        // // too heavy
+        // // setHistory((init) => {
+        // //     if (init[0].link === linkInReader.link) {
+        // //         init[0].page = currentPageNumber;
+        // //         return [...init];
+        // //     }
+        // //     return init;
+        // // });
+        // window.dispatchEvent(pageChangeEvent);
+        console.log("currentPageNumber", currentPageNumber);
+        dispatch(setReaderMangaPageNumber(currentPageNumber));
     }, [currentPageNumber]);
     useEffect(() => {
         readerRef.current?.focus();
@@ -313,7 +319,7 @@ const Reader = () => {
                 return;
             }
             // todo, check need to isLoadingManga
-            if (!isSettingOpen && window.app.isReaderOpen && !isLoadingManga) {
+            if (!isSettingOpen && isReaderOpen && !isLoadingManga) {
                 if ([" ", "ArrowUp", "ArrowDown"].includes(e.key)) e.preventDefault();
                 if (document.activeElement!.tagName === "BODY" || document.activeElement === readerRef.current)
                     switch (true) {
@@ -489,7 +495,8 @@ const Reader = () => {
             window.removeEventListener("keydown", registerShortcuts);
             window.removeEventListener("keyup", onKeyUp);
         };
-    }, [isSideListPinned, appSettings, shortcuts, isLoadingManga, isSettingOpen]);
+    }, [isSideListPinned, appSettings, shortcuts, isLoadingManga, isSettingOpen, isReaderOpen]);
+
     const makeScrollPos = useCallback(() => {
         if (isSideListPinned && imgContRef.current)
             return setScrollPosPercent({
@@ -502,6 +509,7 @@ const Reader = () => {
                 y: readerRef.current.scrollTop / readerRef.current.scrollHeight,
             });
     }, [isSideListPinned, imgContRef.current, readerRef.current]);
+
     const changePageNumber = () => {
         if (!pageNumChangeDisabled && imgContRef.current) {
             const elem = document.elementFromPoint(
@@ -573,75 +581,74 @@ const Reader = () => {
                     setCurrentPageNumber(readerStuff.page || 1);
                     return loadImgs(readerStuff.link, imgs);
                 }
-                dispatch(
-                    setLinkInReader({ type: "image", link: mangaInReader?.link || "", page: 1, chapter: "" })
-                );
+                // todo: why was this here?
+                // dispatch(
+                //     setLinkInReader({ type: "image", link: mangaInReader?.link || "", page: 1, chapter: "" })
+                // );
             },
             true
         );
     };
-    const loadImgs = (link: string, imgs: string[]) => {
+    const loadImgs = async (link: string, imgs: string[]) => {
         link = window.path.normalize(link);
         if (link[link.length - 1] === window.path.sep) link = link.substring(0, link.length - 1);
         //mark, reset
         setImages([]);
-        // setWideImageContMap([]);
         setCurrentPageNumber(1);
         if (pageNumberInputRef.current) pageNumberInputRef.current.value = "1";
         setCurrentImageRow(1);
-        // setImagesLength(0);
         setImagesLoaded(0);
         setImageData([]);
-        // setImageElementsIndex([]);
         setImageRow([]);
         setImageDecodeQueue([]);
         setUpdatedAnilistProgress(false);
         setCurrentlyDecoding(false);
-        // setBookmarked(bookmarks.manga.has());
         setChapterChangerDisplay(false);
         const linkSplitted = link.split(window.path.sep).filter((e) => e !== "");
-        const mangaOpened: MangaItem = {
-            mangaName: linkSplitted[linkSplitted.length - 2],
-            chapterName: linkSplitted[linkSplitted.length - 1],
-            link,
-            date: new Date().toLocaleString("en-UK", { hour12: true }),
-            pages: imgs.length,
+
+        //todo test
+        const progress: MangaProgress = {
+            chapterLink: link,
+            currentPage: readerState?.mangaPageNumber || 1,
+            lastReadAt: new Date(),
+            chapterName: linkSplitted.at(-1) || "",
+            itemLink: window.path.dirname(link),
+            totalPages: imgs.length,
+            chaptersRead: [],
         };
-        dispatch(setMangaInReader(mangaOpened));
-        const item = library[window.path.dirname(link)];
-        if (item) {
+        if (libraryItem && libraryItem.type === "manga") {
             dispatch(
-                updateMangaProgress({
-                    itemLink: item.link,
-                    data: {
-                        chapterLink: link,
-                        currentPage: 1,
-                        totalPages: mangaOpened.pages,
-                        lastReadAt: new Date(),
-                        chapterName: mangaOpened.chapterName,
-                    },
+                updateReaderContent({
+                    ...libraryItem,
+                    progress,
                 })
             );
-        } else
+            dispatch(updateMangaProgress(progress));
+        } else {
+            const mangaOpened = {
+                title: linkSplitted[linkSplitted.length - 2],
+                type: "manga",
+                author: null,
+                cover: imgs[0],
+                createdAt: new Date(),
+                updatedAt: new Date(),
+                link: window.path.dirname(link),
+            } as const;
             dispatch(
                 addLibraryItem({
                     type: "manga",
-                    data: {
-                        link: window.path.dirname(link),
-                        title: mangaOpened.mangaName,
-                        type: "manga",
-                    },
+                    data: mangaOpened,
                     progress: {
                         chapterLink: link,
                         currentPage: 1,
-                        totalPages: mangaOpened.pages,
-                        chapterName: mangaOpened.chapterName,
+                        totalPages: imgs.length,
+                        chapterName: linkSplitted.at(-1) || "",
                     },
                 })
             );
-
+        }
         setImages(imgs);
-        dispatch(setReaderOpen(true));
+        dispatch(setReaderOpen());
     };
     useLayoutEffect(() => {
         // window.electron.webFrame.clearCache();
@@ -801,8 +808,8 @@ const Reader = () => {
     ]);
     useEffect(() => {
         if (imagesLoaded !== 0 && images.length !== 0) {
-            dispatch(setLoadingMangaPercent((100 * imagesLoaded) / images.length));
-            if (images.length === imagesLoaded) dispatch(setLoadingManga(false));
+            dispatch(setReaderLoading({ percent: (100 * imagesLoaded) / images.length }));
+            if (images.length === imagesLoaded) dispatch(setReaderLoading(null));
         }
     }, [imagesLoaded]);
     useLayoutEffect(() => {
@@ -816,12 +823,12 @@ const Reader = () => {
         );
     }, [appSettings.readerSettings.readerWidth, isSideListPinned]);
     useEffect(() => {
-        window.app.linkInReader = linkInReader;
-        if (linkInReader && linkInReader.link !== "") {
-            if (mangaInReader && mangaInReader.link === linkInReader.link) return;
-            checkForImgsAndLoad(linkInReader);
-        }
-    }, [linkInReader]);
+        if (!readerState?.link || !readerState?.mangaPageNumber) return;
+        checkForImgsAndLoad({
+            link: readerState.link,
+            page: readerState.mangaPageNumber,
+        });
+    }, [readerState?.link]);
     useEffect(() => {
         if (!isLoadingManga) {
             setTimeout(() => {
@@ -848,19 +855,19 @@ const Reader = () => {
         // anilist auto update progress
         if (updatedAnilistProgress || !appSettings.readerSettings.autoUpdateAnilistProgress) return;
         if (currentPageNumber / images.length > (images.length <= 4 ? 0.5 : 0.7)) {
-            if (!anilistCurrentManga || !mangaInReader) {
+            if (!anilistCurrentManga || !readerState?.content?.progress) {
                 // console.error("anilistCurrentManga is null, this should not happen");
                 return;
             }
-            const chapterNumber = processChapterNumber(mangaInReader.chapterName);
+            const chapterNumber = processChapterNumber(readerState?.content?.progress?.chapterName);
             if (!chapterNumber) {
                 console.log("Anilist::autoUpdateAnilistProgress: Could not get chapter number from the title.");
                 return;
             }
             dispatch(
                 updateChaptersRead({
-                    itemLink: window.path.dirname(mangaInReader.link),
-                    chapterName: mangaInReader.chapterName,
+                    itemLink: readerState?.content?.progress?.itemLink,
+                    chapterName: readerState?.content?.progress?.chapterName,
                     read: true,
                 })
             );
@@ -971,9 +978,11 @@ const Reader = () => {
                 <div className="c">
                     <span className="a">Current :</span>
                     <span className="b">
-                        {window.path.basename(mangaInReader?.chapterName || "")}
-                        {formatUtils.files.test(mangaInReader?.chapterName || "") && (
-                            <code>{formatUtils.files.getExt(mangaInReader?.chapterName || "")}</code>
+                        {window.path.basename(readerState?.content?.progress?.chapterName || "")}
+                        {formatUtils.files.test(readerState?.content?.progress?.chapterName || "") && (
+                            <code>
+                                {formatUtils.files.getExt(readerState?.content?.progress?.chapterName || "")}
+                            </code>
                         )}
                     </span>
                 </div>
@@ -1068,7 +1077,7 @@ const Reader = () => {
             </div>
             {appSettings.readerSettings.showPageNumberInZenMode && (
                 <div className={"zenModePageNumber " + "show"}>
-                    {currentPageNumber}/{mangaInReader?.pages}
+                    {currentPageNumber}/{readerState?.content?.progress?.totalPages}
                 </div>
             )}
             <ChapterChanger />
@@ -1171,9 +1180,9 @@ const Reader = () => {
                             );
                         else
                             items.push(
-                                window.contextMenu.template.copyPath(linkInReader.link),
-                                window.contextMenu.template.showInExplorer(linkInReader.link),
-                                window.contextMenu.template.openInNewWindow(linkInReader.link)
+                                window.contextMenu.template.copyPath(linkInReader),
+                                window.contextMenu.template.showInExplorer(linkInReader),
+                                window.contextMenu.template.openInNewWindow(linkInReader)
                             );
                     }
                     setContextMenuData({

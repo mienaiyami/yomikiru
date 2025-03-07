@@ -1,5 +1,6 @@
 import { removeAnilistTracker, setAnilistCurrentManga } from "@store/anilist";
 import { useAppDispatch, useAppSelector } from "@store/hooks";
+import { getReaderManga } from "@store/reader";
 import { setAnilistEditOpen } from "@store/ui";
 import InputCheckbox from "@ui/InputCheckbox";
 import InputNumber from "@ui/InputNumber";
@@ -23,7 +24,7 @@ const AnilistEdit = () => {
     const dispatch = useAppDispatch();
     const contRef = useRef<HTMLDivElement>(null);
     const anilistCurrentManga = useAppSelector((store) => store.anilist.currentManga);
-    const mangaInReader = useAppSelector((store) => store.mangaInReader);
+    const mangaInReader = useAppSelector(getReaderManga);
 
     const [tempData, setTempData] = useState(anilistCurrentManga);
 

@@ -26,9 +26,11 @@ export const mangaProgress = sqliteTable("manga_progress", {
     chapterName: text().notNull(),
     chapterLink: text().notNull(),
     currentPage: integer().default(1).notNull(),
-    chaptersRead: text({ mode: "json" }).$type<string[]>().notNull(),
-    totalPages: integer(),
-    lastReadAt: integer({ mode: "timestamp_ms" }).notNull(),
+    chaptersRead: text({ mode: "json" }).$type<string[]>().notNull().default([]),
+    totalPages: integer().default(0).notNull(),
+    lastReadAt: integer({ mode: "timestamp_ms" })
+        .notNull()
+        .default(sql`(unixepoch() * 1000)`),
 });
 
 export const bookProgress = sqliteTable("book_progress", {

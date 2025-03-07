@@ -1,5 +1,7 @@
 import { createSlice, createAsyncThunk, PayloadAction } from "@reduxjs/toolkit";
 import { DatabaseChannels } from "@common/types/ipc";
+import { useAppSelector } from "./hooks";
+import { RootState } from ".";
 
 // todo : add proper error handling
 
@@ -50,20 +52,49 @@ export const updateBookProgress = createAsyncThunk(
     }
 );
 
+export const deleteLibraryItem = createAsyncThunk(
+    "library/deleteItem",
+    async (args: DatabaseChannels["db:library:deleteItem"]["request"]) => {
+        return await window.electron.invoke("db:library:deleteItem", args);
+    }
+);
+
 // todo: this is temp only, plan to remove window.app.linkInReader and window.app.epubHistorySaveData
-export const updateCurrentBookProgress = createAsyncThunk("library/updateCurrentBookProgress", async () => {
-    const link = window.app.linkInReader.link;
-    const res = await window.electron.invoke("db:book:updateProgress", {
-        itemLink: link,
-        data: {
-            chapterId: window.app.epubHistorySaveData?.id,
-            chapterName: window.app.epubHistorySaveData?.chapterName,
-            position: window.app.epubHistorySaveData?.elementQueryString,
-        },
-    });
-    if (!res) throw new Error("Failed to update progress");
-    return res;
-});
+export const updateCurrentItemProgress = createAsyncThunk(
+    "library/updateCurrentItemProgress",
+    async (_, { getState }) => {
+        //todo test
+        const readerState = (getState() as RootState).reader;
+        if (!readerState.link) {
+            console.error("No link in reader");
+            return;
+        }
+        console.log({
+            readerState,
+        });
+        if (readerState.type === "book") {
+            const res = await window.electron.invoke("db:book:updateProgress", {
+                itemLink: readerState.link,
+                data: {
+                    chapterId: readerState.epubChapterId,
+                    lastReadAt: new Date(),
+                    position: readerState.epubElementQueryString,
+                },
+            });
+            if (!res) throw new Error("Failed to update progress");
+            return res;
+        } else if (readerState.type === "manga") {
+            const res = await window.electron.invoke("db:manga:updateProgress", {
+                itemLink: window.path.dirname(readerState.link),
+                chapterLink: readerState.content?.progress?.chapterLink,
+                currentPage: readerState.mangaPageNumber,
+                lastReadAt: new Date(),
+            });
+            if (!res) throw new Error("Failed to update progress");
+            return res;
+        }
+    }
+);
 
 // export const clearProgress = createAsyncThunk(
 //     "library/clearProgress",
@@ -168,3 +199,13 @@ const librarySlice = createSlice({
 
 export const { clearError: clearError_library, setLibrary } = librarySlice.actions;
 export default librarySlice.reducer;
+
+export const selectLibraryItem = (state: RootState, path: string) => {
+    try {
+        const dirPath = window.path.dirname(path);
+        return state.library.items[dirPath] ?? null;
+    } catch (error) {
+        console.error("Error in selectLibraryItem:", error);
+        return null;
+    }
+};

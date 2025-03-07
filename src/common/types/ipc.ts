@@ -1,6 +1,12 @@
-import { InferInsertModel } from "drizzle-orm";
-import type { LibraryItem, MangaProgress, BookProgress, MangaBookmark, BookBookmark, BookNote } from "./db";
-import { bookProgress, libraryItems, mangaProgress } from "../../electron/db/schema";
+import type {
+    LibraryItem,
+    MangaProgress,
+    BookProgress,
+    MangaBookmark,
+    BookBookmark,
+    BookNote,
+    LibraryItemWithProgress,
+} from "./db";
 import { AddToLibraryData } from "@electron/db";
 
 /**
@@ -18,14 +24,9 @@ type ChannelDefinition<Req = unknown, Res = unknown, Dir extends "m2r" | "r2m" =
 
 export type DatabaseChannels = {
     "db:library:getItem": ChannelDefinition<{ link: string }, LibraryItem | null>;
-    "db:library:getAllAndProgress": ChannelDefinition<
-        void,
-        (
-            | (LibraryItem & { type: "book"; progress: BookProgress | null })
-            | (LibraryItem & { type: "manga"; progress: MangaProgress | null })
-        )[]
-    >;
+    "db:library:getAllAndProgress": ChannelDefinition<void, LibraryItemWithProgress[]>;
     "db:library:addItem": ChannelDefinition<AddToLibraryData, LibraryItem>;
+    "db:library:deleteItem": ChannelDefinition<{ link: string }, boolean>;
     "db:library:getAllBookmarks": ChannelDefinition<
         void,
         {
@@ -37,14 +38,12 @@ export type DatabaseChannels = {
     "db:manga:updateProgress": ChannelDefinition<
         {
             itemLink: string;
-            data: {
-                chapterName?: string;
-                chapterLink?: string;
-                currentPage?: number;
-                chaptersRead?: string[];
-                lastReadAt?: Date;
-                totalPages?: number;
-            };
+            chapterName?: string;
+            chapterLink?: string;
+            currentPage?: number;
+            chaptersRead?: string[];
+            lastReadAt?: Date;
+            totalPages?: number;
         },
         MangaProgress | null
     >;

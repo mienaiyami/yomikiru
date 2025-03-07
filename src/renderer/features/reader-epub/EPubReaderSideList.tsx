@@ -13,6 +13,8 @@ import { Fragment, memo, useEffect, useLayoutEffect, useRef, useState } from "re
 import { useAppDispatch, useAppSelector } from "@store/hooks";
 import { addBookmark } from "@store/bookmarks";
 import { dialogUtils } from "@utils/dialog";
+import { getReaderLink } from "@store/reader";
+import { getReaderBook } from "@store/reader";
 
 const EPubReaderSideList = memo(
     ({
@@ -56,9 +58,9 @@ const EPubReaderSideList = memo(
         makeScrollPos: (callback?: ((queryString?: string) => any) | undefined) => void;
         zenMode: boolean;
     }) => {
-        const bookInReader = useAppSelector((store) => store.bookInReader);
+        const bookInReader = useAppSelector(getReaderBook);
         const appSettings = useAppSelector((store) => store.appSettings);
-        const linkInReader = useAppSelector((store) => store.linkInReader);
+        const linkInReader = useAppSelector(getReaderLink);
         const dispatch = useAppDispatch();
 
         const sideListRef = useRef<HTMLDivElement>(null);

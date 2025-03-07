@@ -1,14 +1,9 @@
-import { createContext, createRef, ReactElement, useEffect, useLayoutEffect, useState } from "react";
+import { createContext, createRef, ReactElement, useContext, useEffect, useLayoutEffect, useState } from "react";
 import { useAppDispatch, useAppSelector } from "@store/hooks";
 import Main from "./components/Main";
 import TopBar from "./components/TopBar";
 import { refreshAppSettings, setAppSettings } from "@store/appSettings";
-import { setUnzipping } from "@store/unzipping";
-import { setLoadingManga } from "@store/isLoadingManga";
-import { setLoadingMangaPercent } from "@store/loadingMangaPercent";
-import { setLinkInReader } from "@store/linkInReader";
 
-import { setMangaInReader } from "@store/mangaInReader";
 import { addBookmark, fetchAllBookmarks, removeBookmark } from "@store/bookmarks";
 import { refreshThemes, setTheme } from "@store/themes";
 import {
@@ -20,16 +15,16 @@ import {
     themesPath,
     unzip,
 } from "./utils/file";
-import { setBookInReader } from "@store/bookInReader";
 
 import { renderPDF } from "@utils/pdf";
 import {
+    deleteLibraryItem,
     fetchAllItemsWithProgress,
     setLibrary,
     updateBookProgress,
     updateChaptersRead,
     updateChaptersReadAll,
-    updateCurrentBookProgress,
+    updateCurrentItemProgress,
     updateMangaProgress,
 } from "@store/library";
 import { dialogUtils } from "@utils/dialog";
@@ -40,10 +35,11 @@ import {
     setAnilistEditOpen,
     setAnilistLoginOpen,
     setAnilistSearchOpen,
-    setReaderOpen,
+    // setReaderOpen,
     toggleSettingsOpen,
 } from "@store/ui";
 import { setAnilistCurrentManga } from "@store/anilist";
+import { resetReaderState, setReaderLoading, setReaderState } from "@store/reader";
 
 interface AppContext {
     pageNumberInputRef: React.RefObject<HTMLInputElement>;
@@ -77,11 +73,19 @@ interface AppContext {
     ) => void;
 }
 
-export const AppContext = createContext<AppContext>(null!);
+const AppContext = createContext<AppContext | null>(null);
+
+export const useAppContext = () => {
+    const context = useContext(AppContext);
+    if (!context) throw new Error("AppContext not found");
+    return context;
+};
+
 const App = (): ReactElement => {
     const appSettings = useAppSelector((state) => state.appSettings);
-    const isReaderOpen = useAppSelector((state) => state.ui.isOpen.reader);
-    const linkInReader = useAppSelector((store) => store.linkInReader);
+    // const isReaderOpen = useAppSelector((state) => state.ui.isOpen.reader);
+    const isReaderOpen = useAppSelector((state) => state.reader.active);
+    const linkInReader = useAppSelector((state) => state.reader.link);
     const shortcuts = useAppSelector((store) => store.shortcuts);
     const theme = useAppSelector((state) => state.theme.name);
 
@@ -104,6 +108,8 @@ const App = (): ReactElement => {
             dispatch(setTheme(theme));
         }
     }, [firstRendered]);
+
+    //todo refactor
     /**
      * Check if `{link}` has images or is in archive format(zip,cbz).
      * If link is a archive then extract it in temp dir and check for images.
@@ -119,7 +125,7 @@ const App = (): ReactElement => {
         callback: (isValid?: boolean, imgs?: string[]) => void,
         sendImgs?: boolean
     ): Promise<void> => {
-        // Convert callback-style function to async/await pattern
+        // convert callback-style function to async/await pattern
         const processDirectory = async (link: string, goInAndRetry = 0): Promise<void> => {
             try {
                 const files = await window.fs.readdir(link);
@@ -130,15 +136,19 @@ const App = (): ReactElement => {
                         message: "Folder is empty.",
                         detail: link,
                     });
-                    dispatch(setUnzipping(false));
+                    // dispatch(setUnzipping(false));
                     callback(false);
                     return;
                 }
 
-                dispatch(setUnzipping(false));
+                // dispatch(setUnzipping(false));
                 if (sendImgs) {
-                    dispatch(setLoadingManga(true));
-                    dispatch(setLoadingMangaPercent(0));
+                    dispatch(
+                        setReaderLoading({
+                            percent: 0,
+                            message: `Processing images`,
+                        })
+                    );
                 }
 
                 const imgs = files.filter((e) => formatUtils.image.test(e));
@@ -148,7 +158,7 @@ const App = (): ReactElement => {
                     const dirOnlyPromises = files.map(async (e) => {
                         const fullPath = window.path.join(link, e);
                         try {
-                            const isDirectory = await window.fs.isDir(fullPath);
+                            const isDirectory = window.fs.isDir(fullPath);
                             if (isDirectory) {
                                 const subDirFiles = await window.fs.readdir(fullPath);
                                 return { path: fullPath, isEmpty: subDirFiles.length === 0 };
@@ -172,10 +182,10 @@ const App = (): ReactElement => {
                         message: "Folder doesn't contain any supported image format.",
                         log: false,
                     });
-                    dispatch(setLoadingManga(false));
                     callback(false);
                     return;
                 }
+                dispatch(setReaderLoading(null));
 
                 if (sendImgs) {
                     callback(
@@ -184,11 +194,13 @@ const App = (): ReactElement => {
                     );
                     return;
                 }
-
+                console.log("callback(true)111");
                 callback(true);
+                console.log("callback(true)222");
+                return;
             } catch (err) {
                 window.logger.error("Error processing directory:", err);
-                dispatch(setUnzipping(false));
+                // dispatch(setUnzipping(false));
                 callback(false);
             }
         };
@@ -196,7 +208,6 @@ const App = (): ReactElement => {
         try {
             const linkSplitted = link.split(window.path.sep);
 
-            // Clean up previous temp directory if exists
             if (window.fs.existsSync(window.app.deleteDirOnClose)) {
                 try {
                     await window.fs.rm(window.app.deleteDirOnClose, { recursive: true });
@@ -205,6 +216,8 @@ const App = (): ReactElement => {
                 }
             }
 
+            // if loading screen show is here, it might just flash for a second and load.
+
             if (formatUtils.packedManga.test(link)) {
                 const tempExtractPath = window.path.join(
                     window.electron.app.getPath("temp"),
@@ -212,7 +225,6 @@ const App = (): ReactElement => {
                 );
 
                 try {
-                    // Check if we already have extracted this archive
                     const sourcePath = window.path.join(tempExtractPath, "SOURCE");
                     const hasExtracted =
                         appSettings.keepExtractedFiles &&
@@ -227,7 +239,12 @@ const App = (): ReactElement => {
                         if (!appSettings.keepExtractedFiles) {
                             window.app.deleteDirOnClose = tempExtractPath;
                         }
-                        dispatch(setUnzipping(true));
+                        dispatch(
+                            setReaderLoading({
+                                percent: 0,
+                                message: `Extracting "${linkSplitted.at(-1)?.substring(0, 20)}..."`,
+                            })
+                        );
 
                         try {
                             const result = await unzip(link, tempExtractPath);
@@ -235,7 +252,7 @@ const App = (): ReactElement => {
                                 await processDirectory(tempExtractPath, 1);
                             }
                         } catch (err) {
-                            dispatch(setUnzipping(false));
+                            dispatch(setReaderLoading(null));
                             if (err instanceof Error)
                                 if (err.message?.includes("spawn unzip ENOENT")) {
                                     dialogUtils.customError({
@@ -263,7 +280,6 @@ const App = (): ReactElement => {
                 );
 
                 try {
-                    // Check if we already have rendered this PDF
                     const sourcePath = window.path.join(tempExtractPath, "SOURCE");
                     const hasRendered =
                         appSettings.keepExtractedFiles &&
@@ -291,9 +307,9 @@ const App = (): ReactElement => {
                         }
 
                         dispatch(
-                            setUnzipping({
-                                state: true,
-                                text: `Rendering "${linkSplitted.at(-1)?.substring(0, 20)}..."`,
+                            setReaderLoading({
+                                percent: 0,
+                                message: `Rendering "${linkSplitted.at(-1)?.substring(0, 20)}..."`,
                             })
                         );
 
@@ -304,9 +320,9 @@ const App = (): ReactElement => {
                                 appSettings.readerSettings.pdfScale,
                                 (total, done) =>
                                     dispatch(
-                                        setUnzipping({
-                                            state: true,
-                                            text: `[${done}/${total}] Rendering "${linkSplitted
+                                        setReaderLoading({
+                                            percent: 0,
+                                            message: `[${done}/${total}] Rendering "${linkSplitted
                                                 .at(-1)
                                                 ?.substring(0, 20)}..."`,
                                         })
@@ -314,7 +330,7 @@ const App = (): ReactElement => {
                             );
                             await processDirectory(tempExtractPath, 1);
                         } catch (err) {
-                            dispatch(setUnzipping(false));
+                            dispatch(setReaderLoading(null));
                             window.logger.error("PDF rendering error:", err);
                             callback(false);
                         }
@@ -328,7 +344,7 @@ const App = (): ReactElement => {
             }
         } catch (err) {
             window.logger.error("checkValidFolder failed:", err);
-            dispatch(setUnzipping(false));
+            dispatch(setReaderLoading(null));
             callback(false);
         }
     };
@@ -343,21 +359,21 @@ const App = (): ReactElement => {
     ) => {
         link = window.path.normalize(link);
         window.electron.webFrame.clearCache();
-        if (link === linkInReader.link) return;
+        if (linkInReader === link) return;
         if (formatUtils.book.test(link)) {
-            dispatch(setUnzipping({ state: true, text: "PROCESSING EPUB" }));
+            // dispatch(setUnzipping({ state: true, text: "PROCESSING EPUB" }));
 
             // dispatch(setLoadingManga(true));
             // dispatch(setLoadingMangaPercent(0));
-
+            dispatch(setReaderLoading({ percent: 0, message: "Processing EPUB" }));
             dispatch(
-                setLinkInReader({
+                setReaderState({
                     type: "book",
-                    link: link,
-                    page: 0,
-                    chapter: "",
-                    chapterId: extra?.epubChapterId || "",
-                    queryStr: extra?.epubElementQueryString || "",
+                    content: null,
+                    link,
+                    mangaPageNumber: 0,
+                    epubChapterId: extra?.epubChapterId || "",
+                    epubElementQueryString: extra?.epubElementQueryString || "",
                 })
             );
         } else
@@ -369,12 +385,18 @@ const App = (): ReactElement => {
                             link,
                             images: imgs,
                         };
+                        // dispatch(
+                        //     setReaderLoading({
+                        //         percent: 0,
+                        //         message: "Processing Images123123",
+                        //     })
+                        // );
                         dispatch(
-                            setLinkInReader({
-                                type: "image",
+                            setReaderState({
+                                type: "manga",
+                                content: null,
                                 link,
-                                page: extra?.mangaPageNumber || 1,
-                                chapter: "",
+                                mangaPageNumber: extra?.mangaPageNumber || 1,
                             })
                         );
                     }
@@ -383,42 +405,14 @@ const App = (): ReactElement => {
             );
     };
 
-    const closeReader = () => {
-        // todo:  use ipc to update db and take data from react state
-        if (window.app.linkInReader && window.app.linkInReader.type === "image")
-            dispatch(
-                updateMangaProgress({
-                    itemLink: window.path.dirname(window.app.linkInReader.link),
-                    data: {
-                        currentPage: window.app.currentPageNumber,
-                        chapterLink: window.app.linkInReader.link,
-                        chapterName: window.app.linkInReader.chapter,
-                        lastReadAt: new Date(),
-                    },
-                })
-            );
-        if (window.app.linkInReader && window.app.linkInReader.type === "book")
-            dispatch(
-                updateBookProgress({
-                    itemLink: window.app.linkInReader.link,
-                    data: {
-                        chapterId: window.app.linkInReader.chapterId,
-                        chapterName: window.app.linkInReader.chapter,
-                        position: window.app.linkInReader.queryStr,
-                        lastReadAt: new Date(),
-                    },
-                })
-            );
-        dispatch(setReaderOpen(false));
-        dispatch(setLinkInReader({ type: "", link: "", page: 1, chapter: "" }));
-        dispatch(setLoadingManga(false));
+    const closeReader = async () => {
+        console.log("closeReader");
+        await dispatch(updateCurrentItemProgress());
+        dispatch(resetReaderState());
         dispatch(setAnilistCurrentManga(null));
         dispatch(setAnilistEditOpen(false));
         dispatch(setAnilistLoginOpen(false));
         dispatch(setAnilistSearchOpen(false));
-        dispatch(setLoadingMangaPercent(0));
-        dispatch(setMangaInReader(null));
-        dispatch(setBookInReader(null));
 
         if (window.fs.existsSync(window.app.deleteDirOnClose))
             window.fs.rm(window.app.deleteDirOnClose, {
@@ -439,7 +433,8 @@ const App = (): ReactElement => {
         else
             checkValidFolder(
                 link,
-                (isValid) => {
+                (isValid, imgs) => {
+                    console.log("openInNewWindow", isValid, imgs);
                     if (isValid) window.electron.send("window:openLinkInNewWindow", link);
                 },
                 false
@@ -471,8 +466,6 @@ const App = (): ReactElement => {
     }, [appSettings.customStylesheet]);
 
     useEffect(() => {
-        const abortController = new AbortController();
-        const signal = abortController.signal;
         const listeners: (() => void)[] = [];
         setFirstRendered(true);
         dispatch(fetchAllItemsWithProgress());
@@ -529,14 +522,14 @@ const App = (): ReactElement => {
         );
         //todo update
         listeners.push(
-            window.electron.on("reader:recordPage", () => {
+            window.electron.on("reader:recordPage", async () => {
                 // window.logger.log("received recordPageNumber");
                 if (isReaderOpen) closeReader();
-                else if (window.app.linkInReader.link !== "") {
-                    //todo
-                    if (window.app.linkInReader.type === "image") dispatch();
-                    else dispatch(updateCurrentBookProgress());
-                }
+                // else if (window.app.linkInReader.link !== "") {
+                //     //todo
+                //     if (window.app.linkInReader.type === "image") dispatch();
+                //     else dispatch(updateCurrentItemProgress());
+                // }
                 window.electron.send("window:destroy");
             })
         );
@@ -545,56 +538,6 @@ const App = (): ReactElement => {
         );
         // here bcoz reload doesnt make window exit fullscreen
         if (window.electron.currentWindow.isFullScreen()) window.electron.currentWindow.setFullScreen(false);
-
-        const shortcutsMapped = Object.fromEntries(shortcuts.map((e) => [e.command, e.keys])) as Record<
-            ShortcutCommands,
-            string[]
-        >;
-        const eventsOnStart = (e: KeyboardEvent) => {
-            const keyStr = keyFormatter(e);
-            if (keyStr === "") return;
-            const i = (keys: string[]) => {
-                return keys.includes(keyStr);
-            };
-            const afterUIScale = () => {
-                process.platform === "win32" &&
-                    window.electron.currentWindow.setTitleBarOverlay()({
-                        height: Math.floor(40 * window.electron.webFrame.getZoomFactor()),
-                    });
-                // page nav/ window btn cont width
-                (document.querySelector(".windowBtnCont") as HTMLDivElement).style.right = `${
-                    140 * (1 / window.electron.webFrame.getZoomFactor())
-                }px`;
-            };
-            switch (true) {
-                case i(shortcutsMapped["navToHome"]):
-                    if (window.electron.currentWindow.isFullScreen())
-                        window.electron.currentWindow.setFullScreen(false);
-                    if (window.app.isReaderOpen) return closeReader();
-                    window.location.reload();
-                    break;
-                case i(shortcutsMapped["openSettings"]):
-                    dispatch(toggleSettingsOpen());
-                    break;
-                case i(shortcutsMapped["uiSizeReset"]):
-                    window.electron.webFrame.setZoomFactor(1);
-                    afterUIScale();
-                    break;
-                case i(shortcutsMapped["uiSizeDown"]):
-                    window.electron.webFrame.setZoomFactor(window.electron.webFrame.getZoomFactor() - 0.1);
-                    afterUIScale();
-                    break;
-                case i(shortcutsMapped["uiSizeUp"]):
-                    window.electron.webFrame.setZoomFactor(window.electron.webFrame.getZoomFactor() + 0.1);
-                    afterUIScale();
-                    break;
-                default:
-                    break;
-            }
-        };
-        window.addEventListener("keydown", eventsOnStart, {
-            signal,
-        });
 
         const filesToWatch = [historyPath, bookmarksPath];
         if (appSettings.syncSettings) filesToWatch.push(settingsPath);
@@ -608,33 +551,7 @@ const App = (): ReactElement => {
             },
         });
 
-        const dropFile = (e: DragEvent) => {
-            e.preventDefault();
-            if (e.dataTransfer) {
-                const data = e.dataTransfer.files;
-                if (data.length > 0) {
-                    if (!window.fs.existsSync(data[0].path)) return;
-                    if (window.app.linkInReader && window.app.linkInReader.link === data[0].path) return;
-                    if (data.length > 1)
-                        dialogUtils.customError({
-                            message: "More than one file/folder dropped. Only first in list will be loaded.",
-                        });
-                    if (window.fs.isDir(data[0].path)) {
-                        closeReader();
-                        openInReader(data[0].path);
-                    } else if (formatUtils.files.test(data[0].path)) {
-                        closeReader();
-                        openInReader(data[0].path);
-                    } else if (formatUtils.image.test(data[0].path.toLowerCase())) {
-                        closeReader();
-                        openInReader(window.path.dirname(data[0].path));
-                    }
-                }
-            }
-        };
-        document.addEventListener("dragover", (e) => e.preventDefault(), { signal });
-        document.addEventListener("drop", dropFile, { signal });
-
+        // todo: use radix ui
         window.contextMenu.template = {
             divider() {
                 return {
@@ -693,15 +610,19 @@ const App = (): ReactElement => {
                     },
                 };
             },
-            // removeHistory(url) {
-            //     return {
-            //         label: "Remove",
-            //         disabled: url ? false : true,
-            //         action() {
-            //             dispatch(removeHistory(url));
-            //         },
-            //     };
-            // },
+            removeHistory(url) {
+                return {
+                    label: "Remove",
+                    disabled: url ? false : true,
+                    action() {
+                        dispatch(
+                            deleteLibraryItem({
+                                link: url,
+                            })
+                        );
+                    },
+                };
+            },
             removeBookmark(itemLink, bookmarkId, type) {
                 return {
                     label: "Remove Bookmark",
@@ -777,9 +698,97 @@ const App = (): ReactElement => {
         };
     }, []);
 
-    useLayoutEffect(() => {
-        closeReader();
-    }, [appSettings.readerSettings.dynamicLoading]);
+    useEffect(() => {
+        const shortcutsMapped = Object.fromEntries(shortcuts.map((e) => [e.command, e.keys])) as Record<
+            ShortcutCommands,
+            string[]
+        >;
+        const eventsOnStart = (e: KeyboardEvent) => {
+            const keyStr = keyFormatter(e);
+            if (keyStr === "") return;
+            const i = (keys: string[]) => {
+                return keys.includes(keyStr);
+            };
+            const afterUIScale = () => {
+                process.platform === "win32" &&
+                    window.electron.currentWindow.setTitleBarOverlay()({
+                        height: Math.floor(40 * window.electron.webFrame.getZoomFactor()),
+                    });
+                // page nav/ window btn cont width
+                (document.querySelector(".windowBtnCont") as HTMLDivElement).style.right = `${
+                    140 * (1 / window.electron.webFrame.getZoomFactor())
+                }px`;
+            };
+            switch (true) {
+                case i(shortcutsMapped["navToHome"]):
+                    if (window.electron.currentWindow.isFullScreen())
+                        window.electron.currentWindow.setFullScreen(false);
+                    if (isReaderOpen) return closeReader();
+                    window.location.reload();
+                    break;
+                case i(shortcutsMapped["openSettings"]):
+                    dispatch(toggleSettingsOpen());
+                    break;
+                case i(shortcutsMapped["uiSizeReset"]):
+                    window.electron.webFrame.setZoomFactor(1);
+                    afterUIScale();
+                    break;
+                case i(shortcutsMapped["uiSizeDown"]):
+                    window.electron.webFrame.setZoomFactor(window.electron.webFrame.getZoomFactor() - 0.1);
+                    afterUIScale();
+                    break;
+                case i(shortcutsMapped["uiSizeUp"]):
+                    window.electron.webFrame.setZoomFactor(window.electron.webFrame.getZoomFactor() + 0.1);
+                    afterUIScale();
+                    break;
+                default:
+                    break;
+            }
+        };
+        window.addEventListener("keydown", eventsOnStart);
+        return () => {
+            window.removeEventListener("keydown", eventsOnStart);
+        };
+    }, [shortcuts, isReaderOpen]);
+
+    useEffect(() => {
+        const abortController = new AbortController();
+        const signal = abortController.signal;
+        document.addEventListener("dragover", (e) => e.preventDefault(), { signal });
+        document.addEventListener(
+            "drop",
+            (e) => {
+                e.preventDefault();
+                if (e.dataTransfer) {
+                    const data = e.dataTransfer.files;
+                    if (data.length > 0) {
+                        if (!window.fs.existsSync(data[0].path)) return;
+                        if (linkInReader === data[0].path) return;
+                        if (data.length > 1)
+                            dialogUtils.customError({
+                                message: "More than one file/folder dropped. Only first in list will be loaded.",
+                            });
+                        if (window.fs.isDir(data[0].path)) {
+                            closeReader();
+                            openInReader(data[0].path);
+                        } else if (formatUtils.files.test(data[0].path)) {
+                            closeReader();
+                            openInReader(data[0].path);
+                        } else if (formatUtils.image.test(data[0].path.toLowerCase())) {
+                            closeReader();
+                            openInReader(window.path.dirname(data[0].path));
+                        }
+                    }
+                }
+            },
+            { signal }
+        );
+        return () => abortController.abort();
+    }, [linkInReader]);
+
+    // useLayoutEffect(() => {
+    //     closeReader();
+    // }, [appSettings.readerSettings.dynamicLoading]);
 
     return (
         <AppContext.Provider

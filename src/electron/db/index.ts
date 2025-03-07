@@ -73,16 +73,17 @@ export class DatabaseService {
     }
 
     async updateMangaProgress(
-        itemLink: string,
-        data: Partial<Omit<typeof mangaProgress.$inferInsert, "itemLink">>
+        data: Partial<Omit<typeof mangaProgress.$inferInsert, "itemLink">> & {
+            itemLink: string;
+        }
     ) {
-        data = Object.fromEntries(Object.entries(data).filter(([_, v]) => Boolean(v)));
+        // data = Object.fromEntries(Object.entries(data).filter(([_, v]) => Boolean(v)));
         console.log({ data });
         // todo : check if works fine
         return await this._db
             .update(mangaProgress)
             .set(data)
-            .where(eq(mangaProgress.itemLink, itemLink))
+            .where(eq(mangaProgress.itemLink, data.itemLink))
             .returning();
     }
 

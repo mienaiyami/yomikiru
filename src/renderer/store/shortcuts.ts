@@ -16,7 +16,6 @@ if (window.fs.existsSync(shortcutsPath)) {
     if (raw) {
         try {
             let data: ShortcutSchema[] = JSON.parse(raw);
-
             // check if shortcut.json is pre version 2.18.5
             if (Object.keys(data[0]).includes("key1")) {
                 throw Error("old shortcuts.json detected");
@@ -51,6 +50,9 @@ if (window.fs.existsSync(shortcutsPath)) {
             window.fs.writeFile(shortcutsPath, JSON.stringify(defaultShortcuts, null, "\t"));
             initialState.push(...defaultShortcuts);
         }
+    } else {
+        window.fs.writeFile(shortcutsPath, JSON.stringify(defaultShortcuts, null, "\t"));
+        initialState.push(...defaultShortcuts);
     }
 } else {
     window.fs.writeFile(shortcutsPath, JSON.stringify(defaultShortcuts, null, "\t"));

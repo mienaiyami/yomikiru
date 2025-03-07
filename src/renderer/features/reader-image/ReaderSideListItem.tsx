@@ -1,6 +1,6 @@
 import { useContext, memo, useEffect, useState } from "react";
 import { useAppSelector } from "@store/hooks";
-import { AppContext } from "src/renderer/App";
+import { useAppContext } from "src/renderer/App";
 import { formatUtils } from "@utils/file";
 // import { setContextMenu } from "../store/contextMenu";
 // import { useAppDispatch } from "../store/hooks";
@@ -23,7 +23,7 @@ const ReaderSideListItem = memo(
     }) => {
         const appSettings = useAppSelector((state) => state.appSettings);
 
-        const { openInReader, setContextMenuData, contextMenuData } = useContext(AppContext);
+        const { openInReader, setContextMenuData, contextMenuData } = useAppContext();
         const [contextMenuFocused, setContextMenuFocused] = useState(false);
         useEffect(() => {
             if (!contextMenuData && contextMenuFocused) setContextMenuFocused(false);

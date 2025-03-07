@@ -4,7 +4,7 @@ import { useAppSelector } from "@store/hooks";
 import { dialogUtils } from "@utils/dialog";
 import { formatUtils } from "@utils/file";
 import { ReactElement, useContext, useState, useEffect } from "react";
-import { AppContext } from "src/renderer/App";
+import { useAppContext } from "src/renderer/App";
 
 const LocationListItem = ({
     name,
@@ -25,7 +25,7 @@ const LocationListItem = ({
      */
     focused: boolean;
 }): ReactElement => {
-    const { openInReader, checkValidFolder, contextMenuData } = useContext(AppContext);
+    const { openInReader, checkValidFolder, contextMenuData } = useAppContext();
     const appSettings = useAppSelector((store) => store.appSettings);
     const [contextMenuFocused, setContextMenuFocused] = useState(false);
 

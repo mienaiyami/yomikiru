@@ -1,5 +1,5 @@
 import React, { useState, useLayoutEffect, useContext } from "react";
-import { AppContext } from "../../App";
+import { useAppContext } from "../../App";
 
 const InputCheckboxColor = ({
     onChangeColor,
@@ -30,7 +30,7 @@ const InputCheckboxColor = ({
      */
     timeout?: [number, (color: Color) => void];
 }) => {
-    const { setColorSelectData } = useContext(AppContext);
+    const { setColorSelectData } = useAppContext();
     const [valueProxy, setValueProxy] = useState(value);
     useLayoutEffect(() => {
         let timeoutid: NodeJS.Timeout;
