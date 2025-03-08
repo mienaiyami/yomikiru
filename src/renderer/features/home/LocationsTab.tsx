@@ -88,7 +88,7 @@ const LocationsTab = (): ReactElement => {
                         } catch (error) {
                             console.log(error);
                         }
-                    })
+                    }),
                 );
 
                 if (inputRef.current && !refresh) {
@@ -106,11 +106,13 @@ const LocationsTab = (): ReactElement => {
         }
     };
 
-    useLayoutEffect(() => {
+    useEffect(() => {
         if (currentLink !== appSettings.baseDir) setCurrentLink(window.path.resolve(appSettings.baseDir));
     }, [appSettings.baseDir]);
-    useLayoutEffect(() => {
+    useEffect(() => {
+        let timeout: NodeJS.Timeout;
         const refresh = () => {
+            console.log("refresh");
             if (timeout) clearTimeout(timeout);
             timeout = setTimeout(() => {
                 displayList(currentLink, true);
@@ -118,7 +120,7 @@ const LocationsTab = (): ReactElement => {
         };
         const closeWatcher = window.chokidar.watch({
             path: currentLink,
-            event: "add",
+            event: "all",
             options: {
                 depth: 0,
                 ignoreInitial: true,
@@ -126,7 +128,6 @@ const LocationsTab = (): ReactElement => {
             callback: refresh,
         });
         displayList();
-        let timeout: NodeJS.Timeout;
         return () => {
             closeWatcher();
         };
@@ -156,7 +157,7 @@ const LocationsTab = (): ReactElement => {
             ];
             if (inHistory) {
                 items.push(
-                    window.contextMenu.template.unreadChapter(currentLink, formatUtils.files.getName(link))
+                    window.contextMenu.template.unreadChapter(currentLink, formatUtils.files.getName(link)),
                 );
                 items.push(window.contextMenu.template.unreadAllChapter(currentLink));
             }
@@ -169,7 +170,7 @@ const LocationsTab = (): ReactElement => {
                 focusBackElem: e.nativeEvent.relatedTarget,
             });
         },
-        [currentLink]
+        [currentLink],
     );
 
     return (
@@ -192,7 +193,7 @@ const LocationsTab = (): ReactElement => {
                                         dispatch(
                                             setAppSettings({
                                                 locationListSortBy: "name",
-                                            })
+                                            }),
                                         );
                                     },
                                     selected: appSettings.locationListSortBy === "name",
@@ -204,7 +205,7 @@ const LocationsTab = (): ReactElement => {
                                             setAppSettings({
                                                 locationListSortBy: "date",
                                                 locationListSortType: "inverse",
-                                            })
+                                            }),
                                         );
                                     },
                                     selected: appSettings.locationListSortBy === "date",
@@ -216,7 +217,7 @@ const LocationsTab = (): ReactElement => {
                                         dispatch(
                                             setAppSettings({
                                                 locationListSortType: "normal",
-                                            })
+                                            }),
                                         );
                                     },
                                     selected: appSettings.locationListSortType === "normal",
@@ -227,7 +228,7 @@ const LocationsTab = (): ReactElement => {
                                         dispatch(
                                             setAppSettings({
                                                 locationListSortType: "inverse",
-                                            })
+                                            }),
                                         );
                                     },
                                     selected: appSettings.locationListSortType === "inverse",
@@ -272,7 +273,7 @@ const LocationsTab = (): ReactElement => {
                             const keyStr = keyFormatter(e);
                             if (keyStr === "") return;
                             const shortcutsMapped = Object.fromEntries(
-                                shortcuts.map((e) => [e.command, e.keys])
+                                shortcuts.map((e) => [e.command, e.keys]),
                             ) as Record<ShortcutCommands, string[]>;
 
                             if (shortcutsMapped["dirUp"].includes(keyStr))
@@ -295,7 +296,7 @@ const LocationsTab = (): ReactElement => {
                                     break;
                                 case shortcutsMapped["contextMenu"].includes(keyStr): {
                                     const elem = locationContRef.current?.querySelector(
-                                        '[data-focused="true"] a'
+                                        '[data-focused="true"] a',
                                     ) as HTMLLIElement | null;
                                     if (elem) {
                                         e.stopPropagation();
@@ -310,7 +311,7 @@ const LocationsTab = (): ReactElement => {
                                         return openInReader(currentLink);
 
                                     const elem = locationContRef.current?.querySelector(
-                                        '[data-focused="true"] a'
+                                        '[data-focused="true"] a',
                                     ) as HTMLLIElement | null;
                                     if (elem) return elem.click();
                                     const elems = locationContRef.current?.querySelectorAll("a");
@@ -347,7 +348,7 @@ const LocationsTab = (): ReactElement => {
                             if (val[val.length - 1] === window.path.sep) {
                                 const index = locations.findIndex(
                                     (e) =>
-                                        e.name.toUpperCase() === val.replaceAll(window.path.sep, "").toUpperCase()
+                                        e.name.toUpperCase() === val.replaceAll(window.path.sep, "").toUpperCase(),
                                 );
                                 if (index >= 0) {
                                     const aa = window.path.normalize(locations[index].link);
@@ -424,7 +425,7 @@ const LocationsTab = (): ReactElement => {
                                             key={e.link}
                                             setCurrentLink={setCurrentLink}
                                         />
-                                    )
+                                    ),
                             )}
                     </ol>
                 )}

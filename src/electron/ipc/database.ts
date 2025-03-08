@@ -5,16 +5,28 @@ import { bookBookmarks, bookNotes, bookProgress, libraryItems, mangaBookmarks, m
 import { and, desc, eq, inArray, sql } from "drizzle-orm";
 import { BookProgress, LibraryItem, MangaProgress } from "@common/types/db";
 import { ipc } from "./utils";
+import { log } from "@electron/util";
 
+/**
+ * Sends database change notifications to all open windows
+ * @param channel The database change channel
+ * @param data The data to send
+ */
 const pingDatabaseChange = async <T extends keyof DatabaseChangeChannels>(
     channel: T,
-    data: DatabaseChangeChannels[T]["request"]
+    data: DatabaseChangeChannels[T]["request"],
 ) => {
     // todo: maybe send whole data on channel and then update store?
     const windows = BrowserWindow.getAllWindows();
     windows.forEach((window) => {
         if (!window.isDestroyed()) {
-            ipc.send(window.webContents, channel, data);
+            try {
+                // Use type assertion to resolve TypeScript error
+                // This is safe because DatabaseChangeChannels should be part of MainToRendererChannels
+                ipc.send(window.webContents, channel, data);
+            } catch (error) {
+                log.error(`Failed to send ${channel} notification to window:`, error);
+            }
         }
     });
 };
@@ -22,7 +34,7 @@ const pingDatabaseChange = async <T extends keyof DatabaseChangeChannels>(
 const handlers: {
     [K in keyof DatabaseChannels]: (
         db: DatabaseService,
-        request: DatabaseChannels[K]["request"]
+        request: DatabaseChannels[K]["request"],
     ) => Promise<DatabaseChannels[K]["response"]>;
 } = {
     "db:library:getItem": async (db, request) => {
@@ -39,7 +51,7 @@ const handlers: {
             .from(libraryItems)
             .leftJoin(mangaProgress, eq(libraryItems.link, mangaProgress.itemLink))
             .leftJoin(bookProgress, eq(libraryItems.link, bookProgress.itemLink))
-            .orderBy(desc(libraryItems.createdAt));
+            .orderBy(desc(libraryItems.updatedAt));
         return itemsWithProgress.map(({ item, bookProgress, mangaProgress }) => ({
             ...item,
             progress: mangaProgress || bookProgress,
