@@ -51,7 +51,7 @@ const handlers: {
             .from(libraryItems)
             .leftJoin(mangaProgress, eq(libraryItems.link, mangaProgress.itemLink))
             .leftJoin(bookProgress, eq(libraryItems.link, bookProgress.itemLink))
-            .orderBy(desc(libraryItems.updatedAt));
+            .orderBy(desc(mangaProgress.lastReadAt), desc(bookProgress.lastReadAt));
         return itemsWithProgress.map(({ item, bookProgress, mangaProgress }) => ({
             ...item,
             progress: mangaProgress || bookProgress,

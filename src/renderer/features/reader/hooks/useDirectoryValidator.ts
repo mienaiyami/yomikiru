@@ -9,6 +9,7 @@ import { dialogUtils } from "@utils/dialog";
 export const useDirectoryValidator = () => {
     const dispatch = useAppDispatch();
     const appSettings = useAppSelector((state) => state.appSettings);
+    const linkInReader = useAppSelector((state) => state.reader.link);
 
     const createValidator = useCallback(() => {
         //todo : fix, its getting called on each open in reader
@@ -78,7 +79,10 @@ export const useDirectoryValidator = () => {
                 epubElementQueryString?: string;
                 /**
                  * 0 means no subdirectories will be checked for images
-                 * @default 1
+                 * 1 means only the first level of subdirectories will be checked for images
+                 * should not be used with direct images (non packed), it will mess up library item
+                 * @default 0
+                 * 1 for packed manga
                  */
                 maxSubdirectoryDepth?: number;
                 /**
@@ -92,11 +96,16 @@ export const useDirectoryValidator = () => {
                 mangaPageNumber = 1,
                 epubChapterId = "",
                 epubElementQueryString = "",
-                maxSubdirectoryDepth = 1,
+                maxSubdirectoryDepth = formatUtils.packedManga.test(link) ? 1 : 0,
                 errorOnInvalid = true,
             } = options || {};
 
             const normalizedLink = window.path.normalize(link);
+            if (linkInReader === normalizedLink) {
+                dispatch(setReaderLoading(null));
+                return true;
+            }
+
             window.electron.webFrame.clearCache();
 
             if (formatUtils.book.test(normalizedLink)) {
@@ -138,6 +147,7 @@ export const useDirectoryValidator = () => {
                 );
                 return true;
             }
+            dispatch(setReaderLoading(null));
             if (errorOnInvalid) {
                 await dialogUtils.customError({
                     title: "Invalid Folder",
@@ -147,7 +157,7 @@ export const useDirectoryValidator = () => {
             }
             return false;
         },
-        [dispatch, validateDirectory],
+        [dispatch, validateDirectory, linkInReader],
     );
 
     return {
