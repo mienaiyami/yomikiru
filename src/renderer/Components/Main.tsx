@@ -25,7 +25,6 @@ const Main = (): ReactElement => {
         }),
         shallowEqual
     );
-    console.log("readerContent", reader);
     const anilistToken = useAppSelector((store) => store.anilist.token);
     const isAniLoginOpen = useAppSelector((store) => store.ui.isOpen.anilist.login);
 

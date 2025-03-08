@@ -83,11 +83,9 @@ declare global {
             keydown: boolean;
         };
         /**
-         * Link of manga to be opened in reader only on start of new window.
-         * Changed on window load, if `loadManga!==""` then open link (loadManga).
+         * TODO: refactor
+         * @deprecated
          */
-        // todo check if still needed
-        // loadManga: string;
         cachedImageList: { link: string; images: string[] };
         temp: unknown;
     }

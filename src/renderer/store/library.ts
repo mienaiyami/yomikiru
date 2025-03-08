@@ -23,7 +23,6 @@ const initialState: LibraryState = {
 
 export const fetchAllItemsWithProgress = createAsyncThunk("library/getAllItemsWithProgress", async () => {
     const data = await window.electron.invoke("db:library:getAllAndProgress");
-    console.log(data);
     return data;
 });
 

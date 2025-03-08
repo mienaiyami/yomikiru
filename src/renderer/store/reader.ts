@@ -145,7 +145,6 @@ const readerSlice = createSlice({
         // handling status and loading separately because it creates issues like unattended loading state
         setReaderState: (state, action: PayloadAction<Partial<Omit<ReaderState, "status" | "loading">>>) => {
             Object.assign(state, action.payload);
-            console.log("setReaderState", state);
         },
         updateReaderContent: (state, action: PayloadAction<ReaderState["content"]>) => {
             state.content = action.payload;
@@ -162,7 +161,6 @@ const readerSlice = createSlice({
             state.loading = null;
         },
         setReaderLoading: (state, action: PayloadAction<{ percent?: number; message?: string } | null>) => {
-            console.log("setReaderLoading", action.payload);
             if (action.payload === null) {
                 state.loading = null;
                 return;

@@ -55,7 +55,7 @@ const processChapterNumber = (chapterName: string): number | undefined => {
 };
 
 const Reader = () => {
-    const { pageNumberInputRef, checkValidFolder, setContextMenuData } = useAppContext();
+    const { pageNumberInputRef, validateDirectory, setContextMenuData } = useAppContext();
 
     const appSettings = useAppSelector((store) => store.appSettings);
     const shortcuts = useAppSelector((store) => store.shortcuts);
@@ -564,30 +564,20 @@ const Reader = () => {
      * @example
      * "D://manga/chapter/"
      */
-    const checkForImgsAndLoad = (readerStuff: { link: string; page: number }) => {
-        if (window.cachedImageList?.link === readerStuff.link && window.cachedImageList.images) {
+    const checkForImgsAndLoad = (options: { link: string; page: number }) => {
+        if (window.cachedImageList?.link === options.link && window.cachedImageList.images) {
             // console.log("using cached image list for " + link);
-            loadImgs(readerStuff.link, window.cachedImageList.images);
+            loadImgs(options.link, window.cachedImageList.images);
 
-            setCurrentPageNumber(readerStuff.page || 1);
+            setCurrentPageNumber(options.page || 1);
             window.cachedImageList = { link: "", images: [] };
             return;
         }
-        //todo: skip if already checked
-        checkValidFolder(
-            readerStuff.link,
-            (isValid, imgs) => {
-                if (isValid && imgs) {
-                    setCurrentPageNumber(readerStuff.page || 1);
-                    return loadImgs(readerStuff.link, imgs);
-                }
-                // todo: why was this here?
-                // dispatch(
-                //     setLinkInReader({ type: "image", link: mangaInReader?.link || "", page: 1, chapter: "" })
-                // );
-            },
-            true
-        );
+        validateDirectory(options.link).then((result) => {
+            if (result.isValid && result.images) {
+                loadImgs(options.link, result.images);
+            }
+        });
     };
     const loadImgs = async (link: string, imgs: string[]) => {
         link = window.path.normalize(link);

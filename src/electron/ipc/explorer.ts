@@ -8,17 +8,17 @@ import { ipc } from "./utils";
 
 export const registerExplorerHandlers = () => {
     if (process.platform === "win32") {
-        ipc.handle("explorer:addOption", () => {
-            addOptionToExplorerMenu();
+        ipc.handle("explorer:addOption", async () => {
+            return await addOptionToExplorerMenu();
         });
-        ipc.handle("explorer:removeOption", () => {
-            deleteOptionInExplorerMenu();
+        ipc.handle("explorer:removeOption", async () => {
+            return await deleteOptionInExplorerMenu();
         });
-        ipc.handle("explorer:addOption:epub", () => {
-            addOptionToExplorerMenu_epub();
+        ipc.handle("explorer:addOption:epub", async () => {
+            return await addOptionToExplorerMenu_epub();
         });
-        ipc.handle("explorer:removeOption:epub", () => {
-            deleteOptionInExplorerMenu_epub();
+        ipc.handle("explorer:removeOption:epub", async () => {
+            return await deleteOptionInExplorerMenu_epub();
         });
     }
 };

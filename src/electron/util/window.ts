@@ -112,8 +112,10 @@ export class WindowManager {
             ipc.send(window.webContents, "reader:recordPage");
             //backup in case window is stuck
             setTimeout(() => {
-                log.log("No response from window. Force closing app.");
-                if (!window.isDestroyed()) window.destroy();
+                if (!window.isDestroyed()) {
+                    log.log("No response from window. Force closing app.");
+                    window.destroy();
+                }
             }, 5000);
 
             await this.cleanupTempDir(currentWindowIndex);
@@ -127,6 +129,8 @@ export class WindowManager {
             }
         };
 
+        window.removeAllListeners("closed");
+        window.removeAllListeners("close");
         window.on("closed", onClosed);
         window.on("close", closeEvent);
     }
@@ -145,7 +149,7 @@ export class WindowManager {
     static addDirToDelete(window: Electron.WebContents | number, dir: string) {
         try {
             const index = this.windows.findIndex(
-                (w) => w && w.id === (typeof window === "number" ? window : getWindowFromWebContents(window).id)
+                (w) => w && w.id === (typeof window === "number" ? window : getWindowFromWebContents(window).id),
             );
             if (index > -1) {
                 this.deleteDirsOnClose[index] = dir;
@@ -165,17 +169,16 @@ export class WindowManager {
         return this.windows.filter((w): w is BrowserWindow => w !== null);
     }
     static registerListeners() {
-        ipc.handle("window:openLinkInNewWindow", (_, link) => {
-            console.log("opening link in new window", link);
+        ipc.on("window:openLinkInNewWindow", (_, link) => {
             this.createWindow(link);
         });
-        ipc.handle("window:addDirToDelete", (e, dir) => {
+        ipc.on("window:addDirToDelete", (e, dir) => {
             this.addDirToDelete(e.sender, dir);
         });
-        ipc.handle("window:destroy", (e) => {
+        ipc.on("window:destroy", (e) => {
             this.destroyWindow(getWindowFromWebContents(e.sender));
         });
-        ipc.handle("window:askBeforeClose:response", (e, res = false) => {
+        ipc.on("window:askBeforeClose:response", (e, res = false) => {
             this.handleWindowClose(getWindowFromWebContents(e.sender), res);
         });
     }

@@ -2,7 +2,6 @@ import { useAppSelector } from "@store/hooks";
 
 const LoadingScreen = () => {
     const loading = useAppSelector((store) => store.reader.loading);
-    console.log("loading", loading);
     return (
         <div id="loadingScreen" style={{ display: loading ? "grid" : "none" }}>
             {/* <div className="name">

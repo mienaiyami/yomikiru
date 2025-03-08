@@ -25,7 +25,7 @@ const LocationListItem = ({
      */
     focused: boolean;
 }): ReactElement => {
-    const { openInReader, checkValidFolder, contextMenuData } = useAppContext();
+    const { openInReader, validateDirectory, contextMenuData } = useAppContext();
     const appSettings = useAppSelector((store) => store.appSettings);
     const [contextMenuFocused, setContextMenuFocused] = useState(false);
 
@@ -43,11 +43,9 @@ const LocationListItem = ({
             window.path.normalize(window.path.resolve(link + "../../../") + window.path.sep) ===
                 window.path.normalize(appSettings.baseDir + window.path.sep)
         ) {
-            checkValidFolder(link, (isValid) => {
+            openInReader(link).then((isValid) => {
                 if (isValid) {
-                    // had to do this coz below code always set it
-                    if (a) setCurrentLink(window.path.dirname(link));
-                    openInReader(link);
+                    setCurrentLink(window.path.dirname(link));
                 }
             });
         }

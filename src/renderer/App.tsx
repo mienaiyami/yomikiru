@@ -40,6 +40,8 @@ import {
 } from "@store/ui";
 import { setAnilistCurrentManga } from "@store/anilist";
 import { resetReaderState, setReaderLoading, setReaderState } from "@store/reader";
+import { useDirectoryValidator } from "@features/reader/hooks/useDirectoryValidator";
+import { electron } from "process";
 
 interface AppContext {
     pageNumberInputRef: React.RefObject<HTMLInputElement>;
@@ -48,14 +50,7 @@ interface AppContext {
      * Check if folder have images then open those images in reader, or open in epub-reader if `.epub`
      * @param link link of folder containing images or epub file.
      */
-    openInReader: (
-        link: string,
-        extra?: {
-            mangaPageNumber?: number;
-            epubChapterId?: string;
-            epubElementQueryString?: string;
-        }
-    ) => void;
+    openInReader: ReturnType<typeof useDirectoryValidator>["openInReaderIfValid"];
     // addNewBookmark: (newBk: ChapterItem) => Promise<Electron.MessageBoxReturnValue> | undefined;
     closeReader: () => void;
     // updateLastHistoryPageNumber: () => void;
@@ -66,11 +61,7 @@ interface AppContext {
     setOptSelectData: React.Dispatch<React.SetStateAction<Menu.OptSelectData | null>>;
     colorSelectData: Menu.ColorSelectData | null;
     setColorSelectData: React.Dispatch<React.SetStateAction<Menu.ColorSelectData | null>>;
-    checkValidFolder: (
-        link: string,
-        callback: (isValid?: boolean, imgs?: string[]) => void,
-        sendImgs?: boolean
-    ) => void;
+    validateDirectory: ReturnType<typeof useDirectoryValidator>["validateDirectory"];
 }
 
 const AppContext = createContext<AppContext | null>(null);
@@ -98,6 +89,8 @@ const App = (): ReactElement => {
 
     const dispatch = useAppDispatch();
 
+    const { openInReaderIfValid, validateDirectory } = useDirectoryValidator();
+
     useEffect(() => {
         if (firstRendered) {
             if (appSettings.baseDir === "") {
@@ -108,302 +101,6 @@ const App = (): ReactElement => {
             dispatch(setTheme(theme));
         }
     }, [firstRendered]);
-
-    //todo refactor
-    /**
-     * Check if `{link}` has images or is in archive format(zip,cbz).
-     * If link is a archive then extract it in temp dir and check for images.
-     * @param link link of folder containing images or zip/cbz.
-     * @param callback `{imgs}` array of full link of images.
-     * @param sendImgs send full images links after done.
-     */
-    const checkValidFolder = async (
-        link: string,
-        /**
-         * `{imgs}` array of full link of images.
-         */
-        callback: (isValid?: boolean, imgs?: string[]) => void,
-        sendImgs?: boolean
-    ): Promise<void> => {
-        // convert callback-style function to async/await pattern
-        const processDirectory = async (link: string, goInAndRetry = 0): Promise<void> => {
-            try {
-                const files = await window.fs.readdir(link);
-
-                if (files.length <= 0) {
-                    dialogUtils.customError({
-                        title: "No images found",
-                        message: "Folder is empty.",
-                        detail: link,
-                    });
-                    // dispatch(setUnzipping(false));
-                    callback(false);
-                    return;
-                }
-
-                // dispatch(setUnzipping(false));
-                if (sendImgs) {
-                    dispatch(
-                        setReaderLoading({
-                            percent: 0,
-                            message: `Processing images`,
-                        })
-                    );
-                }
-
-                const imgs = files.filter((e) => formatUtils.image.test(e));
-
-                if (imgs.length <= 0) {
-                    // Check for subdirectories with content
-                    const dirOnlyPromises = files.map(async (e) => {
-                        const fullPath = window.path.join(link, e);
-                        try {
-                            const isDirectory = window.fs.isDir(fullPath);
-                            if (isDirectory) {
-                                const subDirFiles = await window.fs.readdir(fullPath);
-                                return { path: fullPath, isEmpty: subDirFiles.length === 0 };
-                            }
-                            return { path: fullPath, isEmpty: true };
-                        } catch (err) {
-                            window.logger.error(`Error checking directory ${fullPath}:`, err);
-                            return { path: fullPath, isEmpty: true };
-                        }
-                    });
-
-                    const dirResults = await Promise.all(dirOnlyPromises);
-                    const nonEmptyDirs = dirResults.filter((dir) => !dir.isEmpty).map((dir) => dir.path);
-
-                    if (goInAndRetry > 0 && nonEmptyDirs.length > 0) {
-                        return processDirectory(nonEmptyDirs[0], goInAndRetry - 1);
-                    }
-
-                    dialogUtils.customError({
-                        title: "No images found",
-                        message: "Folder doesn't contain any supported image format.",
-                        log: false,
-                    });
-                    callback(false);
-                    return;
-                }
-                dispatch(setReaderLoading(null));
-
-                if (sendImgs) {
-                    callback(
-                        true,
-                        imgs.sort(window.app.betterSortOrder).map((e) => window.path.join(link, e))
-                    );
-                    return;
-                }
-                console.log("callback(true)111");
-                callback(true);
-                console.log("callback(true)222");
-                return;
-            } catch (err) {
-                window.logger.error("Error processing directory:", err);
-                // dispatch(setUnzipping(false));
-                callback(false);
-            }
-        };
-
-        try {
-            const linkSplitted = link.split(window.path.sep);
-
-            if (window.fs.existsSync(window.app.deleteDirOnClose)) {
-                try {
-                    await window.fs.rm(window.app.deleteDirOnClose, { recursive: true });
-                } catch (err) {
-                    window.logger.error("Failed to remove previous temp directory:", err);
-                }
-            }
-
-            // if loading screen show is here, it might just flash for a second and load.
-
-            if (formatUtils.packedManga.test(link)) {
-                const tempExtractPath = window.path.join(
-                    window.electron.app.getPath("temp"),
-                    `yomikiru-temp-images-${linkSplitted.at(-1)}`
-                );
-
-                try {
-                    const sourcePath = window.path.join(tempExtractPath, "SOURCE");
-                    const hasExtracted =
-                        appSettings.keepExtractedFiles &&
-                        window.fs.existsSync(sourcePath) &&
-                        window.fs.readFileSync(sourcePath, "utf-8") === link;
-
-                    if (hasExtracted) {
-                        console.log("Found old archive extract.");
-                        await processDirectory(tempExtractPath, 1);
-                    } else {
-                        console.log(`Extracting "${link}" to "${tempExtractPath}"`);
-                        if (!appSettings.keepExtractedFiles) {
-                            window.app.deleteDirOnClose = tempExtractPath;
-                        }
-                        dispatch(
-                            setReaderLoading({
-                                percent: 0,
-                                message: `Extracting "${linkSplitted.at(-1)?.substring(0, 20)}..."`,
-                            })
-                        );
-
-                        try {
-                            const result = await unzip(link, tempExtractPath);
-                            if (result) {
-                                await processDirectory(tempExtractPath, 1);
-                            }
-                        } catch (err) {
-                            dispatch(setReaderLoading(null));
-                            if (err instanceof Error)
-                                if (err.message?.includes("spawn unzip ENOENT")) {
-                                    dialogUtils.customError({
-                                        message: "Error while extracting.",
-                                        detail: '"unzip" not found. Please install by using\n"sudo apt install unzip"',
-                                    });
-                                } else {
-                                    dialogUtils.customError({
-                                        message: "Error while extracting.",
-                                        detail: err.message || String(err),
-                                        log: false,
-                                    });
-                                }
-                            callback(false);
-                        }
-                    }
-                } catch (err) {
-                    window.logger.error("An Error occurred while checking/extracting archive:", err);
-                    callback(false);
-                }
-            } else if (window.path.extname(link).toLowerCase() === ".pdf") {
-                const tempExtractPath = window.path.join(
-                    window.electron.app.getPath("temp"),
-                    `yomikiru-temp-images-scale_${appSettings.readerSettings.pdfScale}-${linkSplitted.at(-1)}`
-                );
-
-                try {
-                    const sourcePath = window.path.join(tempExtractPath, "SOURCE");
-                    const hasRendered =
-                        appSettings.keepExtractedFiles &&
-                        window.fs.existsSync(sourcePath) &&
-                        window.fs.readFileSync(sourcePath, "utf-8") === link;
-
-                    if (hasRendered) {
-                        console.log("Found old rendered pdf.");
-                        await processDirectory(tempExtractPath, 1);
-                    } else {
-                        try {
-                            if (window.fs.existsSync(tempExtractPath)) {
-                                await window.fs.rm(tempExtractPath, { recursive: true });
-                            }
-                            await window.fs.mkdir(tempExtractPath);
-                        } catch (err) {
-                            window.logger.error("Failed to prepare PDF extraction directory:", err);
-                            callback(false);
-                            return;
-                        }
-
-                        console.log(`Rendering "${link}" at "${tempExtractPath}"`);
-                        if (!appSettings.keepExtractedFiles) {
-                            window.app.deleteDirOnClose = tempExtractPath;
-                        }
-
-                        dispatch(
-                            setReaderLoading({
-                                percent: 0,
-                                message: `Rendering "${linkSplitted.at(-1)?.substring(0, 20)}..."`,
-                            })
-                        );
-
-                        try {
-                            await renderPDF(
-                                link,
-                                tempExtractPath,
-                                appSettings.readerSettings.pdfScale,
-                                (total, done) =>
-                                    dispatch(
-                                        setReaderLoading({
-                                            percent: 0,
-                                            message: `[${done}/${total}] Rendering "${linkSplitted
-                                                .at(-1)
-                                                ?.substring(0, 20)}..."`,
-                                        })
-                                    )
-                            );
-                            await processDirectory(tempExtractPath, 1);
-                        } catch (err) {
-                            dispatch(setReaderLoading(null));
-                            window.logger.error("PDF rendering error:", err);
-                            callback(false);
-                        }
-                    }
-                } catch (err) {
-                    window.logger.error("An Error occurred while checking/rendering pdf:", err);
-                    callback(false);
-                }
-            } else {
-                await processDirectory(link);
-            }
-        } catch (err) {
-            window.logger.error("checkValidFolder failed:", err);
-            dispatch(setReaderLoading(null));
-            callback(false);
-        }
-    };
-
-    const openInReader = (
-        link: string,
-        extra?: {
-            mangaPageNumber?: number;
-            epubChapterId?: string;
-            epubElementQueryString?: string;
-        }
-    ) => {
-        link = window.path.normalize(link);
-        window.electron.webFrame.clearCache();
-        if (linkInReader === link) return;
-        if (formatUtils.book.test(link)) {
-            // dispatch(setUnzipping({ state: true, text: "PROCESSING EPUB" }));
-
-            // dispatch(setLoadingManga(true));
-            // dispatch(setLoadingMangaPercent(0));
-            dispatch(setReaderLoading({ percent: 0, message: "Processing EPUB" }));
-            dispatch(
-                setReaderState({
-                    type: "book",
-                    content: null,
-                    link,
-                    mangaPageNumber: 0,
-                    epubChapterId: extra?.epubChapterId || "",
-                    epubElementQueryString: extra?.epubElementQueryString || "",
-                })
-            );
-        } else
-            checkValidFolder(
-                link,
-                (isValid, imgs) => {
-                    if (isValid && imgs) {
-                        window.cachedImageList = {
-                            link,
-                            images: imgs,
-                        };
-                        // dispatch(
-                        //     setReaderLoading({
-                        //         percent: 0,
-                        //         message: "Processing Images123123",
-                        //     })
-                        // );
-                        dispatch(
-                            setReaderState({
-                                type: "manga",
-                                content: null,
-                                link,
-                                mangaPageNumber: extra?.mangaPageNumber || 1,
-                            })
-                        );
-                    }
-                },
-                true
-            );
-    };
 
     const closeReader = async () => {
         console.log("closeReader");
@@ -428,17 +125,8 @@ const App = (): ReactElement => {
     };
 
     const openInNewWindow = (link: string) => {
-        if (link.toLowerCase().includes(".epub") && window.fs.existsSync(link))
-            window.electron.send("window:openLinkInNewWindow", link);
-        else
-            checkValidFolder(
-                link,
-                (isValid, imgs) => {
-                    console.log("openInNewWindow", isValid, imgs);
-                    if (isValid) window.electron.send("window:openLinkInNewWindow", link);
-                },
-                false
-            );
+        // new window will be opened, if link is invalid then it will be forced closed.
+        if (window.fs.existsSync(link)) window.electron.send("window:openLinkInNewWindow", link);
     };
 
     useLayoutEffect(() => {
@@ -472,18 +160,24 @@ const App = (): ReactElement => {
         dispatch(fetchAllBookmarks());
         listeners.push(
             window.electron.on("reader:loadLink", ({ link }) => {
-                if (link) openInReader(link);
-            })
+                if (link)
+                    openInReaderIfValid(link, {
+                        maxSubdirectoryDepth: 0,
+                    }).then((isValid) => {
+                        if (!isValid) {
+                            window.electron.send("window:destroy");
+                        }
+                    });
+            }),
         );
         listeners.push(
             window.electron.on("db:library:change", (data) => {
-                console.log("updating library", data);
                 const items = data.reduce((acc, item) => {
                     acc[item.link] = item;
                     return acc;
                 }, {} as Record<string, DatabaseChannels["db:library:getAllAndProgress"]["response"][0]>);
                 dispatch(setLibrary(items));
-            })
+            }),
         );
         listeners.push(
             // todo: temp only
@@ -503,9 +197,8 @@ const App = (): ReactElement => {
                     }
                     book[bookBookmark.itemLink].push(bookBookmark);
                 }
-            })
+            }),
         );
-        window.electron.send("window:askBeforeClose:response", appSettings.askBeforeClosing);
         listeners.push(
             window.electron.on("update:check:query", () => {
                 window.electron.send("update:check:response", {
@@ -513,12 +206,12 @@ const App = (): ReactElement => {
                     enabled: appSettings.updateCheckerEnabled,
                     skipMinor: appSettings.skipMinorUpdate,
                 });
-            })
+            }),
         );
         listeners.push(
             window.electron.on("window:askBeforeClose:query", () => {
                 window.electron.send("window:askBeforeClose:response", appSettings.askBeforeClosing);
-            })
+            }),
         );
         //todo update
         listeners.push(
@@ -531,10 +224,10 @@ const App = (): ReactElement => {
                 //     else dispatch(updateCurrentItemProgress());
                 // }
                 window.electron.send("window:destroy");
-            })
+            }),
         );
         window.app.titleBarHeight = parseFloat(
-            window.getComputedStyle(document.body).getPropertyValue("--titleBar-height")
+            window.getComputedStyle(document.body).getPropertyValue("--titleBar-height"),
         );
         // here bcoz reload doesnt make window exit fullscreen
         if (window.electron.currentWindow.isFullScreen()) window.electron.currentWindow.setFullScreen(false);
@@ -567,7 +260,7 @@ const App = (): ReactElement => {
                     label: "Open",
                     disabled: url ? false : true,
                     action() {
-                        openInReader(url);
+                        openInReaderIfValid(url);
                     },
                 };
             },
@@ -618,7 +311,7 @@ const App = (): ReactElement => {
                         dispatch(
                             deleteLibraryItem({
                                 link: url,
-                            })
+                            }),
                         );
                     },
                 };
@@ -633,7 +326,7 @@ const App = (): ReactElement => {
                                 itemLink,
                                 ids: [bookmarkId],
                                 type,
-                            })
+                            }),
                         );
                     },
                 };
@@ -658,7 +351,7 @@ const App = (): ReactElement => {
                                 chapterName,
                                 itemLink,
                                 read: false,
-                            })
+                            }),
                         );
                     },
                 };
@@ -770,18 +463,18 @@ const App = (): ReactElement => {
                             });
                         if (window.fs.isDir(data[0].path)) {
                             closeReader();
-                            openInReader(data[0].path);
+                            openInReaderIfValid(data[0].path);
                         } else if (formatUtils.files.test(data[0].path)) {
                             closeReader();
-                            openInReader(data[0].path);
+                            openInReaderIfValid(data[0].path);
                         } else if (formatUtils.image.test(data[0].path.toLowerCase())) {
                             closeReader();
-                            openInReader(window.path.dirname(data[0].path));
+                            openInReaderIfValid(window.path.dirname(data[0].path));
                         }
                     }
                 }
             },
-            { signal }
+            { signal },
         );
         return () => abortController.abort();
     }, [linkInReader]);
@@ -795,10 +488,10 @@ const App = (): ReactElement => {
             value={{
                 pageNumberInputRef,
                 bookProgressRef,
-                openInReader,
+                openInReader: openInReaderIfValid,
                 closeReader,
                 openInNewWindow,
-                checkValidFolder,
+                validateDirectory,
                 contextMenuData,
                 setContextMenuData,
                 optSelectData,

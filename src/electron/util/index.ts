@@ -48,6 +48,8 @@ export const electronOnly = () => {
 export const getWindowFromWebContents = (webContents: Electron.WebContents) => {
     const win = BrowserWindow.fromWebContents(webContents);
     // to avoid typescript errors because in most cases it will never be null
-    if (!win) throw new Error("BrowserWindow not found");
+    if (!win) {
+        throw new Error("BrowserWindow not found");
+    }
     return win;
 };

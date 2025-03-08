@@ -18,9 +18,9 @@ export const registerUpdateHandlers = () => {
                 });
     }, 1000 * 30);
 
-    ipc.handle("update:check:response", async (event, args) => {
+    ipc.on("update:check:response", (e, args) => {
         if (args.enabled) {
-            const windowId = getWindowFromWebContents(event.sender).id;
+            const windowId = getWindowFromWebContents(e.sender).id;
             checkForUpdate(windowId, args.skipMinor, false, args.autoDownload);
             setInterval(() => {
                 checkForUpdate(windowId, args.skipMinor, false, args.autoDownload);
@@ -28,7 +28,7 @@ export const registerUpdateHandlers = () => {
         }
         clearTimeout(errorCheckTimeout);
     });
-    ipc.handle("update:check:manual", async (e, { promptAfterCheck = true }) => {
+    ipc.on("update:check:manual", (e, { promptAfterCheck = true }) => {
         const windowId = getWindowFromWebContents(e.sender).id;
         checkForUpdate(windowId, false, promptAfterCheck);
     });

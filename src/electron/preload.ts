@@ -3,7 +3,7 @@ import { app, clipboard, nativeImage, getCurrentWindow } from "@electron/remote"
 import path from "path";
 import fs from "fs/promises";
 import { existsSync, lstatSync, rmSync, accessSync, mkdir, read, readFileSync } from "fs";
-import { IPCChannels } from "@common/types/ipc";
+import type { IPCChannels } from "@common/types/ipc";
 import * as chokidar from "chokidar";
 
 type FunctionLess<T> = {
@@ -126,7 +126,7 @@ const electronAPI = {
     //
     on: <T extends keyof IPCChannels>(
         channel: T,
-        callback: (data: IPCChannels[T]["request"]) => void
+        callback: (data: IPCChannels[T]["request"]) => void,
     ): (() => void) => {
         const handler = (event: Electron.IpcRendererEvent, data: IPCChannels[T]["request"]) => callback(data);
         ipcRenderer.on(channel, handler);
@@ -136,7 +136,6 @@ const electronAPI = {
         channel: T,
         ...data: IPCChannels[T]["request"] extends void ? [] : [IPCChannels[T]["request"]]
     ): Promise<IPCChannels[T]["response"]> => {
-        // todo add method to only allow safe channels
         return ipcRenderer.invoke(channel, ...data);
     },
     send: <T extends keyof IPCChannels>(

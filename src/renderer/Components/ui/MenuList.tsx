@@ -3,6 +3,7 @@ import { useAppContext } from "../../App";
 
 import FocusLock from "react-focus-lock";
 import { useAppSelector } from "../../store/hooks";
+import { keyFormatter } from "@utils/keybindings";
 
 // ! not indented to be used without `AppContext::optSelectData`
 //todo rename later for select only
@@ -108,11 +109,11 @@ const MenuList = () => {
                         e.stopPropagation();
                         e.preventDefault();
 
-                        const keyStr = window.keyFormatter(e, false);
+                        const keyStr = keyFormatter(e, false);
                         if (keyStr === "") return;
                         //todo: can be turned into memo when shortcuts increases
                         const shortcutsMapped = Object.fromEntries(
-                            shortcuts.map((e) => [e.command, e.keys])
+                            shortcuts.map((e) => [e.command, e.keys]),
                         ) as Record<ShortcutCommands, string[]>;
 
                         if (shortcutsMapped["contextMenu"].includes(keyStr)) {
@@ -127,13 +128,13 @@ const MenuList = () => {
                                     (elem, i2) =>
                                         i < i2 &&
                                         elem.innerText.length > 0 &&
-                                        elem.innerText[0].toLowerCase() === e.key.toLowerCase()
+                                        elem.innerText[0].toLowerCase() === e.key.toLowerCase(),
                                 );
                                 if (i < 0) {
                                     i = elems.findIndex(
                                         (elem) =>
                                             elem.innerText.length > 0 &&
-                                            elem.innerText[0].toLowerCase() === e.key.toLowerCase()
+                                            elem.innerText[0].toLowerCase() === e.key.toLowerCase(),
                                     );
                                 }
                                 if (i >= 0) setFocused(i);
@@ -161,7 +162,7 @@ const MenuList = () => {
                             case shortcutsMapped["listSelect"].includes(keyStr):
                             case keyStr === "space": {
                                 const elem = ref.current?.querySelector(
-                                    '[data-focused="true"]'
+                                    '[data-focused="true"]',
                                 ) as HTMLLIElement | null;
                                 if (elem && !elem.classList.contains("disabled")) elem.click();
                                 break;

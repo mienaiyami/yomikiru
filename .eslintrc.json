@@ -32,7 +32,7 @@
         },
         "import/resolver": {
             "typescript": {
-                // "alwaysTryTypes": true
+                "alwaysTryTypes": true
             }
         }
     }

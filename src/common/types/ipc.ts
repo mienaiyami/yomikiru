@@ -169,10 +169,10 @@ export type UpdateChannels = {
 };
 
 export type ExplorerMenuChannels = {
-    "explorer:addOption": ChannelDefinition<void, void>;
-    "explorer:removeOption": ChannelDefinition<void, void>;
-    "explorer:addOption:epub": ChannelDefinition<void, void>;
-    "explorer:removeOption:epub": ChannelDefinition<void, void>;
+    "explorer:addOption": ChannelDefinition<void, boolean>;
+    "explorer:removeOption": ChannelDefinition<void, boolean>;
+    "explorer:addOption:epub": ChannelDefinition<void, boolean>;
+    "explorer:removeOption:epub": ChannelDefinition<void, boolean>;
 };
 
 export type ReaderChannels = {

@@ -112,7 +112,6 @@ const ReaderSideList = memo(
             // setFocused(-1);
             if (mangaLink) {
                 const dir = mangaLink;
-                console.log("dir", dir);
                 try {
                     const files = await window.fs.readdir(dir);
                     const listData: ChapterData[] = [];

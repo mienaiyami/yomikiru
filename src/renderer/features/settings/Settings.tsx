@@ -24,6 +24,7 @@ import { dialogUtils } from "@utils/dialog";
 import { setAnilistLoginOpen, setSettingsOpen } from "@store/ui";
 import { setAnilistToken } from "@store/anilist";
 import { setReaderLoading } from "@store/reader";
+import FileExplorerOptions from "./components/FileExplorerOptions";
 
 const TAB_INFO = {
     settings: [0, "Settings"],
@@ -50,13 +51,8 @@ const Settings = (): ReactElement => {
     //todo make a better way to do this
     const [HAValue, setHAValue] = useState(
         window.fs.existsSync(
-            window.path.join(window.electron.app.getPath("userData"), "DISABLE_HARDWARE_ACCELERATION")
-        ) || false
-    );
-    const [openInSameWindow, setOpenInSameWindow] = useState(
-        window.fs.existsSync(
-            window.path.join(window.electron.app.getPath("userData"), "OPEN_IN_EXISTING_WINDOW")
-        ) || false
+            window.path.join(window.electron.app.getPath("userData"), "DISABLE_HARDWARE_ACCELERATION"),
+        ) || false,
     );
 
     const dispatch = useAppDispatch();
@@ -211,7 +207,7 @@ const Settings = (): ReactElement => {
                                         <button
                                             onClick={() => {
                                                 promptSelectDir((path) =>
-                                                    dispatch(setAppSettings({ baseDir: path as string }))
+                                                    dispatch(setAppSettings({ baseDir: path as string })),
                                                 );
                                             }}
                                         >
@@ -305,7 +301,7 @@ const Settings = (): ReactElement => {
                                                             .then((res) => {
                                                                 if (res.response === 0) {
                                                                     const themeIndex = allThemes.findIndex(
-                                                                        (e) => e.name === theme
+                                                                        (e) => e.name === theme,
                                                                     );
                                                                     if (
                                                                         themeIndex > -1 &&
@@ -313,8 +309,8 @@ const Settings = (): ReactElement => {
                                                                     ) {
                                                                         dispatch(
                                                                             setTheme(
-                                                                                allThemes[themeIndex - 1].name
-                                                                            )
+                                                                                allThemes[themeIndex - 1].name,
+                                                                            ),
                                                                         );
                                                                         dispatch(deleteTheme(themeIndex));
                                                                         // setAllThemes((init) => {
@@ -351,7 +347,7 @@ const Settings = (): ReactElement => {
                                                         (e) =>
                                                             !initThemeData.allData
                                                                 .map((e) => e.name)
-                                                                .includes(e.name)
+                                                                .includes(e.name),
                                                     );
                                                     window.electron.invoke("fs:saveFile", {
                                                         filePath: opt.filePath,
@@ -374,7 +370,7 @@ const Settings = (): ReactElement => {
                                                     });
                                                     if (!opt.filePaths.length) return;
                                                     const data: ThemeData[] | Themes = JSON.parse(
-                                                        await window.fs.readFile(opt.filePaths[0], "utf8")
+                                                        await window.fs.readFile(opt.filePaths[0], "utf8"),
                                                     );
                                                     const dataToAdd: ThemeData[] = [];
                                                     let importedCount = 0;
@@ -401,7 +397,7 @@ const Settings = (): ReactElement => {
                                                                 } else
                                                                     window.logger.warn(
                                                                         "IMPORTING THEMES: Invalid data at index",
-                                                                        i
+                                                                        i,
                                                                     );
                                                             });
                                                         } else {
@@ -430,7 +426,7 @@ const Settings = (): ReactElement => {
                                                             } else
                                                                 window.logger.warn(
                                                                     "IMPORTING THEMES: Invalid data at index",
-                                                                    i
+                                                                    i,
                                                                 );
                                                         });
                                                     dialogUtils.confirm({
@@ -446,7 +442,7 @@ const Settings = (): ReactElement => {
                                             <button
                                                 onClick={() =>
                                                     window.electron.openExternal(
-                                                        "https://github.com/mienaiyami/yomikiru/discussions/191"
+                                                        "https://github.com/mienaiyami/yomikiru/discussions/191",
                                                     )
                                                 }
                                             >
@@ -509,7 +505,7 @@ const Settings = (): ReactElement => {
                                                     if (currentTheme) {
                                                         try {
                                                             window.electron.writeText(
-                                                                JSON.stringify(currentTheme, null, "\t")
+                                                                JSON.stringify(currentTheme, null, "\t"),
                                                             );
                                                             const target = e.currentTarget;
                                                             const oldText = target.innerText;
@@ -661,81 +657,7 @@ const Settings = (): ReactElement => {
                                         </button>
                                     </div>
                                 </div>
-                                {process.platform === "win32" && (
-                                    <div className="settingItem2" id="settings-fileExplorerOption">
-                                        <h3>File Explorer Option</h3>
-                                        <div className="desc">
-                                            Add file explorer option (right click menu) to open item in Yomikiru's
-                                            reader directly from File Explorer.
-                                        </div>
-                                        <div className="main">
-                                            <InputCheckbox
-                                                checked={openInSameWindow}
-                                                className="noBG"
-                                                onChange={(e) => {
-                                                    // todo make another system for such settings
-                                                    const fileName = window.path.join(
-                                                        window.electron.app.getPath("userData"),
-                                                        "OPEN_IN_EXISTING_WINDOW"
-                                                    );
-                                                    if (!e.currentTarget.checked) {
-                                                        if (window.fs.existsSync(fileName)) window.fs.rm(fileName);
-                                                    } else {
-                                                        window.fs.writeFile(fileName, " ");
-                                                    }
-                                                    setOpenInSameWindow((init) => !init);
-                                                }}
-                                                labelAfter="Open In Existing Window"
-                                            />
-                                            <code>App Restart Needed</code>
-                                        </div>
-                                        <ul>
-                                            <li>
-                                                <div className="desc">
-                                                    For folders, <code>.zip/.cbz</code>, <code>.7z/.cb7</code>,{" "}
-                                                    <code>.rar/.cbr</code>, <code>.pdf</code> (Opened in
-                                                    Manga/Image Reader)
-                                                </div>
-                                                <div className="main row">
-                                                    <button
-                                                        onClick={() => window.electron.send("explorer:addOption")}
-                                                    >
-                                                        Add
-                                                    </button>
-                                                    <button
-                                                        onClick={() =>
-                                                            window.electron.send("explorer:removeOption")
-                                                        }
-                                                    >
-                                                        Remove
-                                                    </button>
-                                                </div>
-                                            </li>
-                                            <li>
-                                                <div className="desc">
-                                                    For <code>.epub</code>, <code>.txt</code>,{" "}
-                                                    <code>.html/.xhtml</code> (Opened in Epub/Text Reader)
-                                                </div>
-                                                <div className="main row">
-                                                    <button
-                                                        onClick={() =>
-                                                            window.electron.send("explorer:addOption:epub")
-                                                        }
-                                                    >
-                                                        Add
-                                                    </button>
-                                                    <button
-                                                        onClick={() =>
-                                                            window.electron.send("explorer:removeOption:epub")
-                                                        }
-                                                    >
-                                                        Remove
-                                                    </button>
-                                                </div>
-                                            </li>
-                                        </ul>
-                                    </div>
-                                )}
+                                {process.platform === "win32" && <FileExplorerOptions />}
                                 <div className="settingItem2">
                                     <h3>AniList</h3>
                                     <div className="desc">
@@ -780,7 +702,7 @@ const Settings = (): ReactElement => {
                                                 dispatch(
                                                     setReaderSettings({
                                                         autoUpdateAnilistProgress: e.currentTarget.checked,
-                                                    })
+                                                    }),
                                                 );
                                             }}
                                             disabled={!anilistToken}
@@ -858,13 +780,13 @@ const Settings = (): ReactElement => {
                                                                         }] Rendering "${linkSplitted
                                                                             .at(-1)
                                                                             ?.substring(0, 20)}..."`,
-                                                                    })
+                                                                    }),
                                                                 );
                                                                 const renderPath = window.path.join(
                                                                     window.electron.app.getPath("temp"),
                                                                     `yomikiru-temp-images-scale_${
                                                                         appSettings.readerSettings.pdfScale
-                                                                    }-${linkSplitted.at(-1)}`
+                                                                    }-${linkSplitted.at(-1)}`,
                                                                 );
                                                                 if (window.fs.existsSync(renderPath))
                                                                     await window.fs.rm(renderPath, {
@@ -872,13 +794,13 @@ const Settings = (): ReactElement => {
                                                                     });
                                                                 await window.fs.mkdir(renderPath);
                                                                 console.log(
-                                                                    `Rendering "${path}" at "${renderPath}"`
+                                                                    `Rendering "${path}" at "${renderPath}"`,
                                                                 );
                                                                 try {
                                                                     await renderPDF(
                                                                         path,
                                                                         renderPath,
-                                                                        appSettings.readerSettings.pdfScale
+                                                                        appSettings.readerSettings.pdfScale,
                                                                     );
                                                                     // dispatch(
                                                                     //     setLoadingMangaPercent(
@@ -918,7 +840,7 @@ const Settings = (): ReactElement => {
                                                             name: "pdf",
                                                         },
                                                     ],
-                                                    true
+                                                    true,
                                                 );
                                             }}
                                         >
@@ -951,7 +873,7 @@ const Settings = (): ReactElement => {
                                                 promptSelectDir(
                                                     (path) => {
                                                         dispatch(
-                                                            setAppSettings({ customStylesheet: path as string })
+                                                            setAppSettings({ customStylesheet: path as string }),
                                                         );
                                                         // const target = e.currentTarget;
                                                         // target.innerText = "Applying...";
@@ -966,7 +888,7 @@ const Settings = (): ReactElement => {
                                                             extensions: ["css"],
                                                             name: "Cascading Style Sheets",
                                                         },
-                                                    ]
+                                                    ],
                                                 );
                                             }}
                                         >
@@ -1052,7 +974,7 @@ const Settings = (): ReactElement => {
                                                                 window.fs.rm(window.path.join(tempFolder, e), {
                                                                     force: true,
                                                                     recursive: true,
-                                                                })
+                                                                }),
                                                             );
                                                     }
                                                 } catch (err) {
@@ -1072,7 +994,7 @@ const Settings = (): ReactElement => {
                                             className="noBG"
                                             onChange={(e) => {
                                                 dispatch(
-                                                    setAppSettings({ openOnDblClick: e.currentTarget.checked })
+                                                    setAppSettings({ openOnDblClick: e.currentTarget.checked }),
                                                 );
                                             }}
                                             labelAfter="Open on double-click"
@@ -1087,7 +1009,7 @@ const Settings = (): ReactElement => {
                                             className="noBG"
                                             onChange={(e) => {
                                                 dispatch(
-                                                    setAppSettings({ hideOpenArrow: !e.currentTarget.checked })
+                                                    setAppSettings({ hideOpenArrow: !e.currentTarget.checked }),
                                                 );
                                             }}
                                             labelAfter="Open In Reader Arrow / Button"
@@ -1102,7 +1024,7 @@ const Settings = (): ReactElement => {
                                             className="noBG"
                                             onChange={(e) => {
                                                 dispatch(
-                                                    setAppSettings({ askBeforeClosing: e.currentTarget.checked })
+                                                    setAppSettings({ askBeforeClosing: e.currentTarget.checked }),
                                                 );
                                             }}
                                             labelAfter="Confirm Close Window"
@@ -1118,7 +1040,7 @@ const Settings = (): ReactElement => {
                                             className="noBG"
                                             onChange={(e) => {
                                                 dispatch(
-                                                    setAppSettings({ syncSettings: e.currentTarget.checked })
+                                                    setAppSettings({ syncSettings: e.currentTarget.checked }),
                                                 );
                                             }}
                                             labelAfter="Sync Settings"
@@ -1147,7 +1069,7 @@ const Settings = (): ReactElement => {
                                             className="noBG"
                                             onChange={(e) => {
                                                 dispatch(
-                                                    setAppSettings({ recordChapterRead: e.currentTarget.checked })
+                                                    setAppSettings({ recordChapterRead: e.currentTarget.checked }),
                                                 );
                                             }}
                                             labelAfter="Record chapter read"
@@ -1166,7 +1088,7 @@ const Settings = (): ReactElement => {
                                                 dispatch(
                                                     setAppSettings({
                                                         openDirectlyFromManga: e.currentTarget.checked,
-                                                    })
+                                                    }),
                                                 );
                                             }}
                                             labelAfter="Chapter Opening Shortcut"
@@ -1178,7 +1100,7 @@ const Settings = (): ReactElement => {
                                                 onClick={() => {
                                                     scrollIntoView(
                                                         "#settings-usage-openDirectlyFromManga",
-                                                        "extras"
+                                                        "extras",
                                                     );
                                                 }}
                                             >
@@ -1205,7 +1127,7 @@ const Settings = (): ReactElement => {
                                             className="noBG"
                                             onChange={(e) => {
                                                 dispatch(
-                                                    setAppSettings({ openInZenMode: e.currentTarget.checked })
+                                                    setAppSettings({ openInZenMode: e.currentTarget.checked }),
                                                 );
                                             }}
                                             labelAfter="Auto Zen Mode"
@@ -1223,7 +1145,7 @@ const Settings = (): ReactElement => {
                                                 dispatch(
                                                     setAppSettings({
                                                         hideCursorInZenMode: e.currentTarget.checked,
-                                                    })
+                                                    }),
                                                 );
                                             }}
                                             labelAfter="Zen Mode Cursor"
@@ -1238,7 +1160,7 @@ const Settings = (): ReactElement => {
                                                 dispatch(
                                                     setAppSettings({
                                                         autoRefreshSideList: e.currentTarget.checked,
-                                                    })
+                                                    }),
                                                 );
                                             }}
                                             labelAfter="Auto Refresh Side-list"
@@ -1257,7 +1179,7 @@ const Settings = (): ReactElement => {
                                                 dispatch(
                                                     setAppSettings({
                                                         keepExtractedFiles: e.currentTarget.checked,
-                                                    })
+                                                    }),
                                                 );
                                             }}
                                             labelAfter="Keep Temp Files"
@@ -1285,7 +1207,7 @@ const Settings = (): ReactElement => {
                                                 dispatch(
                                                     setAppSettings({
                                                         useCanvasBasedReader: e.currentTarget.checked,
-                                                    })
+                                                    }),
                                                 );
                                             }}
                                             labelAfter="Canvas Based Rendering"
@@ -1307,7 +1229,7 @@ const Settings = (): ReactElement => {
                                                 dispatch(
                                                     setReaderSettings({
                                                         dynamicLoading: e.currentTarget.checked,
-                                                    })
+                                                    }),
                                                 );
                                             }}
                                             disabled={appSettings.useCanvasBasedReader}
@@ -1330,7 +1252,7 @@ const Settings = (): ReactElement => {
                                                 dispatch(
                                                     setReaderSettings({
                                                         focusChapterInList: e.currentTarget.checked,
-                                                    })
+                                                    }),
                                                 );
                                             }}
                                             labelAfter="Auto-Focus current chapter in side-list "
@@ -1349,7 +1271,7 @@ const Settings = (): ReactElement => {
                                                 dispatch(
                                                     setEpubReaderSettings({
                                                         focusChapterInList: e.currentTarget.checked,
-                                                    })
+                                                    }),
                                                 );
                                             }}
                                             labelAfter="EPUB: Auto-Focus current chapter in side-list "
@@ -1363,7 +1285,7 @@ const Settings = (): ReactElement => {
                                                 dispatch(
                                                     setEpubReaderSettings({
                                                         loadOneChapter: e.currentTarget.checked,
-                                                    })
+                                                    }),
                                                 );
                                             }}
                                             labelAfter="EPUB: Load By Chapter"
@@ -1381,7 +1303,9 @@ const Settings = (): ReactElement => {
                                             className="noBG"
                                             onChange={(e) => {
                                                 dispatch(
-                                                    setEpubReaderSettings({ textSelect: !e.currentTarget.checked })
+                                                    setEpubReaderSettings({
+                                                        textSelect: !e.currentTarget.checked,
+                                                    }),
                                                 );
                                             }}
                                             labelAfter="EPUB: Disable Text Select / Enable double-click zen mode"
@@ -1398,7 +1322,7 @@ const Settings = (): ReactElement => {
                                             onChange={(e) => {
                                                 const fileName = window.path.join(
                                                     window.electron.app.getPath("userData"),
-                                                    "DISABLE_HARDWARE_ACCELERATION"
+                                                    "DISABLE_HARDWARE_ACCELERATION",
                                                 );
                                                 if (e.currentTarget.checked) {
                                                     if (window.fs.existsSync(fileName)) window.fs.rm(fileName);
@@ -1427,7 +1351,7 @@ const Settings = (): ReactElement => {
                                                 dispatch(
                                                     setAppSettings({
                                                         disableListNumbering: !e.currentTarget.checked,
-                                                    })
+                                                    }),
                                                 );
                                             }}
                                             labelAfter="Location List Numbering"
@@ -1444,7 +1368,7 @@ const Settings = (): ReactElement => {
                                                 dispatch(
                                                     setReaderSettings({
                                                         disableChapterTransitionScreen: !e.currentTarget.checked,
-                                                    })
+                                                    }),
                                                 );
                                             }}
                                             labelAfter="Chapter Transition screen"
@@ -1463,7 +1387,7 @@ const Settings = (): ReactElement => {
                                                 dispatch(
                                                     setAppSettings({
                                                         showMoreDataOnItemHover: e.currentTarget.checked,
-                                                    })
+                                                    }),
                                                 );
                                             }}
                                             labelAfter="More Info on Bookmark / History Hover"
@@ -1482,7 +1406,7 @@ const Settings = (): ReactElement => {
                                                 dispatch(
                                                     setAppSettings({
                                                         checkboxReaderSetting: e.currentTarget.checked,
-                                                    })
+                                                    }),
                                                 );
                                             }}
                                             labelAfter="Reader Settings Checkbox"
@@ -1499,7 +1423,7 @@ const Settings = (): ReactElement => {
                                                 dispatch(
                                                     setAppSettings({
                                                         showPageCountInSideList: e.currentTarget.checked,
-                                                    })
+                                                    }),
                                                 );
                                             }}
                                             labelAfter="Show Page Count in Side-List"
@@ -1513,7 +1437,7 @@ const Settings = (): ReactElement => {
                                                 dispatch(
                                                     setAppSettings({
                                                         showTextFileBadge: e.currentTarget.checked,
-                                                    })
+                                                    }),
                                                 );
                                             }}
                                             labelAfter="Show text files badge in Side-List"
@@ -1650,7 +1574,7 @@ const Settings = (): ReactElement => {
                                                 dispatch(
                                                     setAppSettings({
                                                         updateCheckerEnabled: e.currentTarget.checked,
-                                                    })
+                                                    }),
                                                 );
                                             }}
                                         />
@@ -1659,7 +1583,7 @@ const Settings = (): ReactElement => {
                                             className="noBG"
                                             onChange={(e) => {
                                                 dispatch(
-                                                    setAppSettings({ skipMinorUpdate: e.currentTarget.checked })
+                                                    setAppSettings({ skipMinorUpdate: e.currentTarget.checked }),
                                                 );
                                             }}
                                             title="Mostly just frequent updates rather than minor."
@@ -1670,7 +1594,9 @@ const Settings = (): ReactElement => {
                                             className="noBG"
                                             onChange={(e) => {
                                                 dispatch(
-                                                    setAppSettings({ autoDownloadUpdate: e.currentTarget.checked })
+                                                    setAppSettings({
+                                                        autoDownloadUpdate: e.currentTarget.checked,
+                                                    }),
                                                 );
                                             }}
                                             paraAfter="Auto download updates"
@@ -1689,7 +1615,7 @@ const Settings = (): ReactElement => {
                                         <button
                                             onClick={() =>
                                                 window.electron.openExternal(
-                                                    "https://github.com/mienaiyami/yomikiru/releases"
+                                                    "https://github.com/mienaiyami/yomikiru/releases",
                                                 )
                                             }
                                         >
@@ -1704,7 +1630,7 @@ const Settings = (): ReactElement => {
                                         <button
                                             onClick={() =>
                                                 window.electron.openExternal(
-                                                    "https://github.com/mienaiyami/yomikiru/"
+                                                    "https://github.com/mienaiyami/yomikiru/",
                                                 )
                                             }
                                         >
@@ -1713,7 +1639,7 @@ const Settings = (): ReactElement => {
                                         <button
                                             onClick={() =>
                                                 window.electron.openExternal(
-                                                    "https://github.com/mienaiyami/yomikiru/discussions/categories/announcements"
+                                                    "https://github.com/mienaiyami/yomikiru/discussions/categories/announcements",
                                                 )
                                             }
                                         >
@@ -1722,7 +1648,7 @@ const Settings = (): ReactElement => {
                                         <button
                                             onClick={() =>
                                                 window.electron.openExternal(
-                                                    "https://github.com/mienaiyami/yomikiru/issues"
+                                                    "https://github.com/mienaiyami/yomikiru/issues",
                                                 )
                                             }
                                         >
@@ -1732,7 +1658,7 @@ const Settings = (): ReactElement => {
                                         <button
                                             onClick={() =>
                                                 window.electron.openExternal(
-                                                    "https://github.com/sponsors/mienaiyami"
+                                                    "https://github.com/sponsors/mienaiyami",
                                                 )
                                             }
                                             style={{
@@ -1764,7 +1690,7 @@ const Settings = (): ReactElement => {
                                             onClick={() => {
                                                 const filePath = window.path.join(
                                                     window.electron.app.getPath("userData"),
-                                                    "logs/main.log"
+                                                    "logs/main.log",
                                                 );
                                                 if (process.platform === "win32")
                                                     window.electron.showItemInFolder(filePath);
