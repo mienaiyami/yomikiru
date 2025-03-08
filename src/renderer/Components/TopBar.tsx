@@ -29,7 +29,11 @@ const TopBar = (): ReactElement => {
     const dispatch = useAppDispatch();
 
     const setTitleWithSize = () => {
-        if (!readerContent) return;
+        if (!readerContent) {
+            setTitle(window.electron.app.getName().concat(window.electron.app.isPackaged ? "" : " - dev"));
+            document.title = window.electron.app.getName();
+            return;
+        }
         if (readerContent.type === "manga") {
             let mangaName = readerContent.title;
             let chapterName = formatUtils.files.getName(readerContent.progress?.chapterName || "");
@@ -55,13 +59,11 @@ const TopBar = (): ReactElement => {
                 chapterName ? "| " + chapterName : ""
             }`;
             setTitle(
-                (chapterName ? chapterName : bookTitle).concat(window.electron.app.isPackaged ? "" : " - dev")
+                (chapterName ? chapterName : bookTitle).concat(window.electron.app.isPackaged ? "" : " - dev"),
             );
             document.title = title;
             return;
         }
-        setTitle(window.electron.app.getName().concat(window.electron.app.isPackaged ? "" : " - dev"));
-        document.title = window.electron.app.getName();
     };
     useLayoutEffect(() => {
         const onBlur = () => {
@@ -79,18 +81,6 @@ const TopBar = (): ReactElement => {
         listeners.push(window.electron.currentWindow.on("unmaximize", () => setMaximized(false)));
         listeners.push(window.electron.currentWindow.on("focus", onFocus));
         listeners.push(window.electron.currentWindow.on("blur", onBlur));
-
-        // const updatePageNumberInput = () => {
-        //     const elem = document.querySelector("#NavigateToPageInput") as HTMLInputElement;
-        //     if (elem) {
-        //         elem.value = window.app.currentPageNumber.toString();
-        //     }
-        // };
-        // window.addEventListener("pageNumberChange", updatePageNumberInput);
-        // return () => {
-        //     listeners.forEach((e) => e());
-        //     window.removeEventListener("pageNumberChange", updatePageNumberInput);
-        // };
     }, []);
     useEffect(() => {
         console.log("currentPageNumber", currentPageNumber);
@@ -201,7 +191,7 @@ const TopBar = (): ReactElement => {
                                         setTimeout(() => {
                                             dispatch(setPageNumChangeDisabled(true));
                                             window.app.scrollToPage(pagenumber);
-                                        }, 1000)
+                                        }, 1000),
                                     );
                                     return;
                                 }

@@ -10,13 +10,13 @@ import {
 import { faBookmark as farBookmark } from "@fortawesome/free-regular-svg-icons";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { memo, useEffect, useLayoutEffect, useRef, useState, useContext, useMemo } from "react";
-import ReaderSideListItem from "./ReaderSideListItem";
+import ReaderSideListItem from "../../reader-image/ReaderSideListItem";
 import { useAppDispatch, useAppSelector } from "@store/hooks";
 // import { updateCurrentHistoryPage } from "../store/history";
 import { addBookmark } from "@store/bookmarks";
 import { setAppSettings, setReaderSettings } from "@store/appSettings";
 import { setPrevNextChapter } from "@store/prevNextChapter";
-import AnilistBar from "../anilist/AnilistBar";
+import AnilistBar from "../../anilist/AnilistBar";
 import { formatUtils } from "@utils/file";
 import { dialogUtils } from "@utils/dialog";
 import { keyFormatter } from "@utils/keybindings";
@@ -140,7 +140,9 @@ const ReaderSideList = memo(
                                         }
                                         if (responseCompleted >= validFile) {
                                             setChapterData(
-                                                listData.sort((a, b) => window.app.betterSortOrder(a.name, b.name))
+                                                listData.sort((a, b) =>
+                                                    window.app.betterSortOrder(a.name, b.name),
+                                                ),
                                             );
                                         }
                                     })
@@ -149,7 +151,9 @@ const ReaderSideList = memo(
                                         responseCompleted++;
                                         if (responseCompleted >= validFile) {
                                             setChapterData(
-                                                listData.sort((a, b) => window.app.betterSortOrder(a.name, b.name))
+                                                listData.sort((a, b) =>
+                                                    window.app.betterSortOrder(a.name, b.name),
+                                                ),
                                             );
                                         }
                                     });
@@ -166,7 +170,7 @@ const ReaderSideList = memo(
                                     });
                                     if (responseCompleted >= validFile) {
                                         setChapterData(
-                                            listData.sort((a, b) => window.app.betterSortOrder(a.name, b.name))
+                                            listData.sort((a, b) => window.app.betterSortOrder(a.name, b.name)),
                                         );
                                     }
                                 }, 1000);
@@ -249,7 +253,7 @@ const ReaderSideList = memo(
                     mangaPageNumber: 1,
                     epubChapterId: undefined,
                     epubElementQueryString: undefined,
-                })
+                }),
             );
         };
 
@@ -369,17 +373,17 @@ const ReaderSideList = memo(
                                 if (keyStr === "" && e.key !== "Escape") return;
 
                                 const shortcutsMapped = Object.fromEntries(
-                                    shortcuts.map((e) => [e.command, e.keys])
+                                    shortcuts.map((e) => [e.command, e.keys]),
                                 ) as Record<ShortcutCommands, string[]>;
                                 switch (true) {
                                     case shortcutsMapped["contextMenu"].includes(keyStr): {
                                         const elem = locationContRef.current?.querySelector(
-                                            '[data-focused="true"] a'
+                                            '[data-focused="true"] a',
                                         ) as HTMLLIElement | null;
                                         if (elem) {
                                             e.currentTarget.blur();
                                             elem.dispatchEvent(
-                                                window.contextMenu.fakeEvent(elem, e.currentTarget)
+                                                window.contextMenu.fakeEvent(elem, e.currentTarget),
                                             );
                                         }
                                         break;
@@ -400,7 +404,7 @@ const ReaderSideList = memo(
                                         break;
                                     case shortcutsMapped["listSelect"].includes(keyStr): {
                                         const elem = locationContRef.current?.querySelector(
-                                            '[data-focused="true"] a'
+                                            '[data-focused="true"] a',
                                         ) as HTMLLIElement | null;
                                         if (elem) return elem.click();
                                         const elems = locationContRef.current?.querySelectorAll("a");
@@ -438,7 +442,7 @@ const ReaderSideList = memo(
                                             dispatch(
                                                 setAppSettings({
                                                     locationListSortBy: "name",
-                                                })
+                                                }),
                                             );
                                         },
                                         selected: appSettings.locationListSortBy === "name",
@@ -450,7 +454,7 @@ const ReaderSideList = memo(
                                                 setAppSettings({
                                                     locationListSortBy: "date",
                                                     locationListSortType: "inverse",
-                                                })
+                                                }),
                                             );
                                         },
                                         selected: appSettings.locationListSortBy === "date",
@@ -462,7 +466,7 @@ const ReaderSideList = memo(
                                             dispatch(
                                                 setAppSettings({
                                                     locationListSortType: "normal",
-                                                })
+                                                }),
                                             );
                                         },
                                         selected: appSettings.locationListSortType === "normal",
@@ -473,7 +477,7 @@ const ReaderSideList = memo(
                                             dispatch(
                                                 setAppSettings({
                                                     locationListSortType: "inverse",
-                                                })
+                                                }),
                                             );
                                         },
                                         selected: appSettings.locationListSortType === "inverse",
@@ -554,14 +558,14 @@ const ReaderSideList = memo(
                                             type: "manga",
                                             data: {
                                                 itemLink: window.path.dirname(
-                                                    mangaInReader.progress.itemLink || ""
+                                                    mangaInReader.progress.itemLink || "",
                                                 ),
                                                 page: mangaInReader.progress.currentPage || 1,
                                                 link: mangaInReader.progress.itemLink || "",
                                                 note: "",
                                                 title: mangaInReader.progress.chapterName || "",
                                             },
-                                        })
+                                        }),
                                     );
                                     setshortcutText("Bookmark Added");
                                     setBookmarked(true);
@@ -618,7 +622,7 @@ const ReaderSideList = memo(
                                 dispatch(
                                     setReaderSettings({
                                         hideSideList: !appSettings.readerSettings.hideSideList,
-                                    })
+                                    }),
                                 );
                             }}
                         >
@@ -667,14 +671,14 @@ const ReaderSideList = memo(
                                                 current={mangaInReader?.link === e.link}
                                                 link={e.link}
                                             />
-                                        )
+                                        ),
                                 )}
                         </ol>
                     )}
                 </div>
             </div>
         );
-    }
+    },
 );
 
 const Button = (props: any) => {

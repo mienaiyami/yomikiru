@@ -47,7 +47,7 @@ const StyleSheets = memo(
                                         "file://" +
                                             window.path
                                                 .join(window.path.dirname(url), url_old)
-                                                .replaceAll("\\", "/")
+                                                .replaceAll("\\", "/"),
                                     );
                                 });
                                 // to make sure styles don't apply outside
@@ -56,7 +56,7 @@ const StyleSheets = memo(
                                 ast.stylesheet?.rules.forEach((e) => {
                                     if (e.type === "rule") {
                                         (e as css.Rule).selectors = (e as css.Rule).selectors?.map((e) =>
-                                            e.includes("section.main") ? e : "#EPubReader section.main " + e
+                                            e.includes("section.main") ? e : "#EPubReader section.main " + e,
                                         );
                                     }
                                 });
@@ -72,7 +72,7 @@ const StyleSheets = memo(
             ></div>
         );
     },
-    (prev, next) => prev.sheets.length === next.sheets.length && prev.sheets[0] === next.sheets[0]
+    (prev, next) => prev.sheets.length === next.sheets.length && prev.sheets[0] === next.sheets[0],
 );
 const HTMLPart = memo(
     ({
@@ -154,7 +154,7 @@ const HTMLPart = memo(
         const currentChapterFragment = prev.currentChapter.fragment === next.currentChapter.fragment;
         const epubManifest = prev.epubManifest.size === next.epubManifest.size;
         return currentChapterId && currentChapterFragment && epubManifest;
-    }
+    },
 );
 
 const EPubReader = () => {
@@ -241,7 +241,7 @@ const EPubReader = () => {
                         chapterData: {
                             ...window.app.epubHistorySaveData,
                         },
-                    })
+                    }),
                 );
             dispatch(updateCurrentItemProgress());
         };
@@ -375,7 +375,7 @@ const EPubReader = () => {
                 }
             }
         },
-        [epubData, currentChapter.index]
+        [epubData, currentChapter.index],
     );
 
     const loadEPub = (link: string) => {
@@ -485,7 +485,7 @@ const EPubReader = () => {
                             chapterName: "~",
                             position: "",
                         },
-                    })
+                    }),
                 );
                 if (res.meta.requestStatus === "fulfilled") {
                     //todo
@@ -497,7 +497,7 @@ const EPubReader = () => {
                                 position: "",
                             },
                             itemLink: link,
-                        })
+                        }),
                     );
                 }
                 setCurrentChapter({
@@ -550,7 +550,7 @@ const EPubReader = () => {
                 }
             }
         },
-        [mainRef.current, zenMode, epubData, currentChapter.index, currentChapterFake]
+        [mainRef.current, zenMode, epubData, currentChapter.index, currentChapterFake],
     );
 
     const findInPage = useCallback(
@@ -579,7 +579,7 @@ const EPubReader = () => {
                     if (findInPageRefs.current.currentIndex === 0 || str !== findInPageRefs.current.prevStr) {
                         const modified = findInPageRefs.current.originalHTML.replace(
                             new RegExp(`(${str})`, "ig"),
-                            `<span class="findInPage-highlight">$1</span>`
+                            `<span class="findInPage-highlight">$1</span>`,
                         );
                         cont.innerHTML = modified;
                     }
@@ -604,7 +604,7 @@ const EPubReader = () => {
                 }
             }
         },
-        [findInPageRefs.current, mainRef.current]
+        [findInPageRefs.current, mainRef.current],
     );
 
     const updateProgress = () => {
@@ -614,7 +614,7 @@ const EPubReader = () => {
                 Math.round(
                     (readerRef.current.scrollTop /
                         (readerRef.current.scrollHeight - readerRef.current.offsetHeight)) *
-                        100
+                        100,
                 ) || 0;
         if (bookProgressRef.current) bookProgressRef.current.value = progress.toString();
         setBookProgress(progress);
@@ -704,8 +704,8 @@ const EPubReader = () => {
                     mainRef.current.dispatchEvent(
                         window.contextMenu.fakeEvent(
                             { posX: window.innerWidth / 2, posY: window.innerHeight / 2 },
-                            readerRef.current
-                        )
+                            readerRef.current,
+                        ),
                     );
                 return;
             }
@@ -715,7 +715,7 @@ const EPubReader = () => {
                 (Math.ceil(
                     readerRef.current.scrollTop +
                         window.innerHeight +
-                        (1 + Math.abs(1 - window.electron.webFrame.getZoomFactor()))
+                        (1 + Math.abs(1 - window.electron.webFrame.getZoomFactor())),
                 ) >= readerRef.current.scrollHeight ||
                     readerRef.current.scrollTop < window.innerHeight / 4);
             if (!isSettingOpen && isReaderOpen && !isLoadingManga) {
@@ -789,13 +789,13 @@ const EPubReader = () => {
                             case is(shortcutsMapped["showHidePageNumberInZen"]):
                                 setshortcutText(
                                     (!appSettings.epubReaderSettings.showProgressInZenMode ? "Show" : "Hide") +
-                                        " progress in Zen Mode"
+                                        " progress in Zen Mode",
                                 );
                                 dispatch(
                                     setEpubReaderSettings({
                                         showProgressInZenMode:
                                             !appSettings.epubReaderSettings.showProgressInZenMode,
-                                    })
+                                    }),
                                 );
                                 break;
                         }
@@ -1006,7 +1006,7 @@ const EPubReader = () => {
                                 dispatch(
                                     setAppSettings({
                                         hideCursorInZenMode: !appSettings.hideCursorInZenMode,
-                                    })
+                                    }),
                                 );
                             },
                         },
@@ -1017,7 +1017,7 @@ const EPubReader = () => {
                                 dispatch(
                                     setEpubReaderSettings({
                                         textSelect: !appSettings.epubReaderSettings.textSelect,
-                                    })
+                                    }),
                                 );
                             },
                         },
@@ -1046,7 +1046,7 @@ const EPubReader = () => {
                             Math.ceil(
                                 readerRef.current.scrollTop +
                                     window.innerHeight +
-                                    (1 + Math.abs(1 - window.electron.webFrame.getZoomFactor()))
+                                    (1 + Math.abs(1 - window.electron.webFrame.getZoomFactor())),
                             ) >= readerRef.current.scrollHeight ||
                             readerRef.current.scrollTop < window.innerHeight / 4
                         ) {

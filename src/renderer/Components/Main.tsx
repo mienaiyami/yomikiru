@@ -11,8 +11,8 @@ import Settings from "@features/settings/Settings";
 import MenuList from "@ui/MenuList";
 import InputColorReal from "@ui/InputColorReal";
 import AniLogin from "@features/anilist/AniLogin";
-import Reader from "@features/reader-image/Reader";
-import EPubReader from "@features/reader-epub/EPubReader";
+import Reader from "@features/reader/manga/Reader";
+import EPubReader from "@features/reader/epub/EPubReader";
 import { shallowEqual } from "react-redux";
 
 const Main = (): ReactElement => {
@@ -23,7 +23,7 @@ const Main = (): ReactElement => {
             type: store.reader.type,
             link: store.reader.link,
         }),
-        shallowEqual
+        shallowEqual,
     );
     const anilistToken = useAppSelector((store) => store.anilist.token);
     const isAniLoginOpen = useAppSelector((store) => store.ui.isOpen.anilist.login);
@@ -49,7 +49,7 @@ const Main = (): ReactElement => {
                                     bookmark: !appSettings.showTabs.bookmark,
                                     history: appSettings.showTabs.history,
                                 },
-                            })
+                            }),
                         )
                     }
                 >
@@ -65,7 +65,7 @@ const Main = (): ReactElement => {
                                     bookmark: appSettings.showTabs.bookmark,
                                     history: !appSettings.showTabs.history,
                                 },
-                            })
+                            }),
                         )
                     }
                 >

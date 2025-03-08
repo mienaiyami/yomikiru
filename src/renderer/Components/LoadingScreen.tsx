@@ -4,9 +4,6 @@ const LoadingScreen = () => {
     const loading = useAppSelector((store) => store.reader.loading);
     return (
         <div id="loadingScreen" style={{ display: loading ? "grid" : "none" }}>
-            {/* <div className="name">
-                ({mangaInReader?.pages}) {mangaInReader?.mangaName} - {mangaInReader?.chapterName}
-            </div> */}
             {loading && (
                 <>
                     <div className="loadingText">{loading.message}</div>

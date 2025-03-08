@@ -1,11 +1,11 @@
 import { useCallback, useContext, useEffect, useLayoutEffect, useRef, useState } from "react";
-import { useAppContext } from "../../App";
+import { useAppContext } from "../../../App";
 import ReaderSideList from "./ReaderSideList";
 import ReaderSettings from "./ReaderSettings";
 import { useAppDispatch, useAppSelector } from "@store/hooks";
 import { setAppSettings, setReaderSettings } from "@store/appSettings";
-import AnilistSearch from "../anilist/AnilistSearch";
-import AnilistEdit from "../anilist/AnilistEdit";
+import AnilistSearch from "../../anilist/AnilistSearch";
+import AnilistEdit from "../../anilist/AnilistEdit";
 import { InView } from "react-intersection-observer";
 
 import { addLibraryItem, selectLibraryItem, updateChaptersRead, updateMangaProgress } from "@store/library";
@@ -153,7 +153,7 @@ const Reader = () => {
             if (pageNumber >= 1 && pageNumber <= (readerState?.content?.progress?.totalPages || 1)) {
                 //! pageNumber no longer in use
                 const imgElem = document.querySelector(
-                    "#reader .imgCont .readerImg[data-pagenumber='" + pageNumber + "']"
+                    "#reader .imgCont .readerImg[data-pagenumber='" + pageNumber + "']",
                 );
                 if ([1, 2].includes(appSettings.readerSettings.readerTypeSelected)) {
                     const rowNumber = parseInt(imgElem?.parentElement?.getAttribute("data-imagerow") || "1");
@@ -282,8 +282,8 @@ const Reader = () => {
                     imgContRef.current.dispatchEvent(
                         window.contextMenu.fakeEvent(
                             { posX: window.innerWidth / 2, posY: window.innerHeight / 2 },
-                            readerRef.current
-                        )
+                            readerRef.current,
+                        ),
                     );
                 return;
             }
@@ -403,13 +403,13 @@ const Reader = () => {
                             case is(shortcutsMapped["showHidePageNumberInZen"]):
                                 setshortcutText(
                                     (!appSettings.readerSettings.showPageNumberInZenMode ? "Show" : "Hide") +
-                                        " page-number in Zen Mode"
+                                        " page-number in Zen Mode",
                                 );
                                 dispatch(
                                     setReaderSettings({
                                         showPageNumberInZenMode:
                                             !appSettings.readerSettings.showPageNumberInZenMode,
-                                    })
+                                    }),
                                 );
                                 break;
                             case is(shortcutsMapped["cycleFitOptions"]): {
@@ -423,7 +423,7 @@ const Reader = () => {
                                 dispatch(
                                     setReaderSettings({
                                         fitOption: fitOption as 0 | 1 | 2 | 3,
-                                    })
+                                    }),
                                 );
                                 break;
                             }
@@ -514,7 +514,7 @@ const Reader = () => {
         if (!pageNumChangeDisabled && imgContRef.current) {
             const elem = document.elementFromPoint(
                 imgContRef.current.clientWidth / 2 + imgContRef.current.offsetLeft,
-                window.innerHeight / (appSettings.readerSettings.readerTypeSelected === 0 ? 4 : 2)
+                window.innerHeight / (appSettings.readerSettings.readerTypeSelected === 0 ? 4 : 2),
             );
             if (elem && (elem.tagName === "IMG" || elem.tagName === "CANVAS")) {
                 const pageNumber = parseInt(elem.getAttribute("data-pagenumber") || "1");
@@ -611,7 +611,7 @@ const Reader = () => {
                 updateReaderContent({
                     ...libraryItem,
                     progress,
-                })
+                }),
             );
             dispatch(updateMangaProgress(progress));
         } else {
@@ -634,7 +634,7 @@ const Reader = () => {
                         totalPages: imgs.length,
                         chapterName: linkSplitted.at(-1) || "",
                     },
-                })
+                }),
             );
         }
         setImages(imgs);
@@ -805,11 +805,11 @@ const Reader = () => {
     useLayoutEffect(() => {
         readerRef.current?.scrollTo(
             scrollPosPercent.x * readerRef.current.scrollWidth,
-            scrollPosPercent.y * readerRef.current.scrollHeight
+            scrollPosPercent.y * readerRef.current.scrollHeight,
         );
         imgContRef.current?.scrollTo(
             scrollPosPercent.x * imgContRef.current.scrollWidth,
-            scrollPosPercent.y * imgContRef.current.scrollHeight
+            scrollPosPercent.y * imgContRef.current.scrollHeight,
         );
     }, [appSettings.readerSettings.readerWidth, isSideListPinned]);
     useEffect(() => {
@@ -830,7 +830,7 @@ const Reader = () => {
         if (isSideListPinned) {
             readerRef.current?.scrollTo(
                 scrollPosPercent.x * readerRef.current.scrollWidth,
-                scrollPosPercent.y * readerRef.current.scrollHeight
+                scrollPosPercent.y * readerRef.current.scrollHeight,
             );
         }
         const timeOutId = setTimeout(() => {
@@ -859,7 +859,7 @@ const Reader = () => {
                     itemLink: readerState?.content?.progress?.itemLink,
                     chapterName: readerState?.content?.progress?.chapterName,
                     read: true,
-                })
+                }),
             );
             setUpdatedAnilistProgress(true);
             if (chapterNumber > anilistCurrentManga.progress)
@@ -958,7 +958,7 @@ const Reader = () => {
                     <span className="b">
                         {window.path.basename(
                             prevNextChapter.prev,
-                            formatUtils.files.getExt(prevNextChapter.prev)
+                            formatUtils.files.getExt(prevNextChapter.prev),
                         )}
                         {formatUtils.files.test(prevNextChapter.prev) && (
                             <code>{formatUtils.files.getExt(prevNextChapter.prev)}</code>
@@ -998,7 +998,7 @@ const Reader = () => {
                     <span className="b">
                         {window.path.basename(
                             prevNextChapter.next,
-                            formatUtils.files.getExt(prevNextChapter.next)
+                            formatUtils.files.getExt(prevNextChapter.next),
                         )}
                         {formatUtils.files.test(prevNextChapter.next) && (
                             <code>{formatUtils.files.getExt(prevNextChapter.next)}</code>
@@ -1088,7 +1088,7 @@ const Reader = () => {
                     (appSettings.readerSettings.gapBetweenRows ? "gap " : "") +
                     ([1, 2].includes(appSettings.readerSettings.readerTypeSelected) ? "readerMode1n2 " : "") +
                     (["", "fitVertically ", "fitHorizontally ", "original "].at(
-                        appSettings.readerSettings.fitOption
+                        appSettings.readerSettings.fitOption,
                     ) ?? "") +
                     (appSettings.readerSettings.customColorFilter.enabled ? "customColorFilter " : "") +
                     (appSettings.readerSettings.invertImage ? "invertImage " : "") +
@@ -1144,7 +1144,7 @@ const Reader = () => {
                                 dispatch(
                                     setAppSettings({
                                         hideCursorInZenMode: !appSettings.hideCursorInZenMode,
-                                    })
+                                    }),
                                 );
                             },
                         },
@@ -1166,13 +1166,13 @@ const Reader = () => {
                             items.push(
                                 window.contextMenu.template.copyImage(src),
                                 window.contextMenu.template.copyPath(src),
-                                window.contextMenu.template.showInExplorer(src)
+                                window.contextMenu.template.showInExplorer(src),
                             );
                         else
                             items.push(
                                 window.contextMenu.template.copyPath(linkInReader),
                                 window.contextMenu.template.showInExplorer(linkInReader),
-                                window.contextMenu.template.openInNewWindow(linkInReader)
+                                window.contextMenu.template.openInNewWindow(linkInReader),
                             );
                     }
                     setContextMenuData({
@@ -1316,7 +1316,7 @@ const Reader = () => {
                                                 data-src={images[e]}
                                                 key={imageData[e].img as string}
                                             />
-                                        )
+                                        ),
                                 )}
                             </InView>
                         );
@@ -1334,7 +1334,7 @@ const Reader = () => {
                                             data-src={images[e]}
                                             key={imageData[e].img as string}
                                         />
-                                    )
+                                    ),
                             )}
                         </div>
                     );
