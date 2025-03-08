@@ -1,5 +1,5 @@
 import { relations, sql } from "drizzle-orm";
-import { sqliteTable, text, integer, unique } from "drizzle-orm/sqlite-core";
+import { sqliteTable, text, integer, unique, uniqueIndex } from "drizzle-orm/sqlite-core";
 
 // todo : add relations
 
@@ -58,7 +58,10 @@ export const mangaBookmarks = sqliteTable(
             .notNull()
             .default(sql`(unixepoch() * 1000)`),
     },
-    (t) => [unique().on(t.link, t.page)]
+    (t) => [
+        unique("uq_manga_bookmarks_link_page").on(t.link, t.page),
+        uniqueIndex("idx_manga_bookmarks_item_link").on(t.itemLink),
+    ],
 );
 
 export const bookBookmarks = sqliteTable(
@@ -78,7 +81,10 @@ export const bookBookmarks = sqliteTable(
             .notNull()
             .default(sql`(unixepoch() * 1000)`),
     },
-    (t) => [unique().on(t.chapterId, t.position)]
+    (t) => [
+        unique("uq_book_bookmarks_chapter_id_position").on(t.chapterId, t.position),
+        uniqueIndex("idx_book_bookmarks_item_link").on(t.itemLink),
+    ],
 );
 
 export const bookNotes = sqliteTable(
@@ -103,7 +109,10 @@ export const bookNotes = sqliteTable(
             .default(sql`(unixepoch() * 1000)`)
             .$onUpdate(() => sql`(unixepoch() * 1000)`),
     },
-    (t) => [unique().on(t.chapterId, t.position, t.selectedText)]
+    (t) => [
+        unique("uq_book_notes_chapter_id_position_selected_text").on(t.chapterId, t.position, t.selectedText),
+        uniqueIndex("idx_book_notes_item_link").on(t.itemLink),
+    ],
 );
 
 export const libraryItemsRelations = relations(libraryItems, ({ one, many }) => ({

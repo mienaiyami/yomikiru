@@ -16,7 +16,7 @@
         "drizzle:push": "pnpm drizzle push",
         "drizzle:studio": "pnpm drizzle studio",
         "drizzle:generate": "pnpm drizzle generate",
-        "drizzle:migrate": "set ELECTRON_RUN_AS_NODE=false && pnpm drizzle-kit migrate",
+        "drizzle:migrate": "pnpm drizzle migrate",
         "eslint": "eslint .",
         "tslint": "tsc --noemit",
         "lint": "eslint . && tsc --noemit",
