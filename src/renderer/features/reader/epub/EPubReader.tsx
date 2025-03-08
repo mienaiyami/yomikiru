@@ -13,18 +13,17 @@ import * as css from "css";
 import { BookHistoryItem } from "@common/types/legacy";
 import { useAppContext } from "src/renderer/App";
 import { useAppDispatch, useAppSelector } from "@store/hooks";
-import { setBookInReader } from "@store/bookInReader";
-import { setUnzipping } from "@store/unzipping";
 import { setAppSettings, setEpubReaderSettings, setReaderSettings } from "@store/appSettings";
 import EPUBReaderSettings from "./EPubReaderSettings";
 import EPubReaderSideList from "./EPubReaderSideList";
 import EPUB from "@utils/epub";
 import Modal from "@ui/Modal";
-import { addLibraryItem, updateBookProgress, updateCurrentItemProgress } from "@store/library";
+import { addLibraryItem, selectLibraryItem, updateBookProgress, updateCurrentItemProgress } from "@store/library";
 import { dialogUtils } from "@utils/dialog";
 import { getCSSPath } from "@utils/utils";
 import { keyFormatter } from "@utils/keybindings";
-import { setReaderOpen } from "@store/ui";
+import { getReaderBook, setReaderLoading, setReaderOpen, updateReaderBookProgress } from "@store/reader";
+import { BookProgress } from "@common/types/db";
 
 const StyleSheets = memo(
     ({ sheets }: { sheets: string[] }) => {
@@ -157,27 +156,30 @@ const HTMLPart = memo(
     },
 );
 
+type EPubData = {
+    metadata: EPUB.MetaData;
+    manifest: EPUB.Manifest;
+    spine: EPUB.Spine;
+    toc: EPUB.TOC;
+    ncx: EPUB.NCXTree[];
+    styleSheets: string[];
+};
+
 const EPubReader = () => {
     const { bookProgressRef, setContextMenuData } = useAppContext();
 
     const appSettings = useAppSelector((store) => store.appSettings);
     const shortcuts = useAppSelector((store) => store.shortcuts);
-    const isReaderOpen = useAppSelector((store) => store.ui.isOpen.reader);
     const isSettingOpen = useAppSelector((store) => store.ui.isOpen.settings);
-    const linkInReader = useAppSelector((store) => store.linkInReader);
-    const bookInReader = useAppSelector((store) => store.bookInReader);
-    const isLoadingManga = useAppSelector((store) => store.isLoadingManga);
+    const readerState = useAppSelector((store) => store.reader);
+    const bookInReader = useAppSelector(getReaderBook);
+    const isLoading = useAppSelector((store) => store.reader.loading !== null);
     const bookmarks = useAppSelector((store) => store.bookmarks);
 
+    const libraryItem = useAppSelector((store) => selectLibraryItem(store, readerState.link));
+
     const dispatch = useAppDispatch();
-    const [epubData, setEpubData] = useState<{
-        metadata: EPUB.MetaData;
-        manifest: EPUB.Manifest;
-        spine: EPUB.Spine;
-        toc: EPUB.TOC;
-        ncx: EPUB.NCXTree[];
-        styleSheets: string[];
-    } | null>(null);
+    const [epubData, setEpubData] = useState<EPubData | null>(null);
     /** index of current chapter in EPUB.Spine */
     const [currentChapter, setCurrentChapter] = useState({
         index: -1,
@@ -195,7 +197,7 @@ const EPubReader = () => {
      *  css selector of element which was on top of view before changing size,etc.
      *  also used on first load to scroll to last read position
      */
-    const [elemBeforeChange, setElemBeforeChange] = useState(linkInReader.queryStr || "");
+    const [elemBeforeChange, setElemBeforeChange] = useState(readerState.epubElementQueryString || "");
     const [isSideListPinned, setSideListPinned] = useState(false);
     const [sideListWidth, setSideListWidth] = useState(appSettings.readerSettings.sideListWidth || 450);
     const [zenMode, setZenMode] = useState(appSettings.openInZenMode || false);
@@ -223,50 +225,36 @@ const EPubReader = () => {
     const addToBookmarkRef = useRef<HTMLButtonElement>(null);
 
     useLayoutEffect(() => {
-        window.app.linkInReader = linkInReader;
-        loadEPub(linkInReader.link);
-    }, [linkInReader]);
+        if (readerState.link) {
+            loadEPub(readerState.link);
+        }
+    }, [readerState.link]);
     useLayoutEffect(() => {
         if (appSettings.epubReaderSettings.loadOneChapter && readerRef.current) readerRef.current.scrollTop = 0;
-        const update = (id: string) => {
-            window.app.epubHistorySaveData = {
-                chapterName: epubData?.manifest.get(id)?.title || "~",
-                id,
-                elementQueryString: "",
-            };
-            if (bookInReader)
-                dispatch(
-                    setBookInReader({
-                        ...bookInReader,
-                        chapterData: {
-                            ...window.app.epubHistorySaveData,
-                        },
-                    }),
-                );
-            dispatch(updateCurrentItemProgress());
-        };
         const abortController = new AbortController();
         (async function () {
             if (epubData) {
                 let index = currentChapter.index;
                 let id = "";
-                // const now = performance.now();
                 // will only check 10 chapters before current chapter
                 while (index >= 0 && currentChapter.index - index < 10 && !abortController.signal.aborted) {
-                    // const now2 = performance.now();
-                    // console.log("single chapter 1", performance.now() - now2);
                     if (epubData.manifest.get(epubData.spine[index].id)?.title) {
                         id = epubData.spine[index].id;
                         break;
                     }
-                    // console.log("single chapter 2", performance.now() - now2);
                     index--;
                 }
                 if (!abortController.signal.aborted) {
-                    update(id);
+                    dispatch(
+                        updateReaderBookProgress({
+                            chapterId: id,
+                            position: "",
+                            chapterName: epubData.manifest.get(id)?.title || "~",
+                        }),
+                    );
+                    dispatch(updateCurrentItemProgress());
                     setCurrentChapterFake(id);
                 }
-                // console.log("time in fake chapter", performance.now() - now);
             }
         })();
         return () => {
@@ -445,58 +433,38 @@ const EPubReader = () => {
             dialogUtils.customError({
                 message: "This mode is not supported yet, will be implemented in future.",
             });
-            dispatch(setUnzipping(false));
+            dispatch(setReaderLoading(null));
             return;
         }
         EPUB.readEpubFile(link, appSettings.keepExtractedFiles)
             .then(async (ed) => {
                 // todo : When current chapter is not top level(level=0), make BookItem.chapter concat of all parent chapters.
                 let currentChapterIndex = 0;
-                if (linkInReader.chapterId)
-                    currentChapterIndex = ed.spine.findIndex((e) => e.id === linkInReader.chapterId);
+                if (readerState.epubChapterId)
+                    currentChapterIndex = ed.spine.findIndex((e) => e.id === readerState.epubChapterId);
                 if (currentChapterIndex < 0) currentChapterIndex = 0;
-                //todo remove
-                const bookOpened: BookHistoryItem["data"] = {
-                    author: ed.metadata.author,
-                    link,
-                    title: ed.metadata.title,
-                    //todo: change to ISO date and modify other places
-                    date: new Date().toLocaleString("en-UK", { hour12: true }),
-                    cover: ed.metadata.cover,
-                    chapterData: {
-                        id: ed.spine[currentChapterIndex].id,
-                        chapterName: "~",
-                        elementQueryString: "",
-                    },
+
+                const progress: BookProgress = {
+                    chapterId: ed.spine[currentChapterIndex].id,
+                    chapterName: ed.manifest.get(ed.spine[currentChapterIndex].id)?.title || "~",
+                    position: readerState.epubElementQueryString || "",
+                    itemLink: link,
+                    lastReadAt: new Date(),
                 };
-                dispatch(setBookInReader(bookOpened));
-                const res = await dispatch(
-                    addLibraryItem({
-                        type: "book",
-                        data: {
+                if (libraryItem && libraryItem.type === "book") {
+                    await dispatch(updateBookProgress({ data: progress, itemLink: link }));
+                } else {
+                    await dispatch(
+                        addLibraryItem({
                             type: "book",
-                            link,
-                            title: ed.metadata.title,
-                            author: ed.metadata.author,
-                            cover: ed.metadata.cover,
-                        },
-                        progress: {
-                            chapterId: ed.spine[currentChapterIndex].id,
-                            chapterName: "~",
-                            position: "",
-                        },
-                    }),
-                );
-                if (res.meta.requestStatus === "fulfilled") {
-                    //todo
-                    dispatch(
-                        updateBookProgress({
                             data: {
-                                chapterId: ed.spine[currentChapterIndex].id,
-                                chapterName: "~",
-                                position: "",
+                                type: "book",
+                                link,
+                                title: ed.metadata.title,
+                                author: ed.metadata.author,
+                                cover: ed.metadata.cover,
                             },
-                            itemLink: link,
+                            progress,
                         }),
                     );
                 }
@@ -505,18 +473,18 @@ const EPubReader = () => {
                     fragment: "",
                 });
                 setEpubData(ed);
-                setElemBeforeChange(linkInReader.queryStr || "");
+                setElemBeforeChange(readerState.epubElementQueryString || "");
                 // if (ed.toc.length > 200 && !appSettings.epubReaderSettings.loadOneChapter)
                 //     dialogUtils.warn({
                 //         message: "Too many chapters in book.",
                 //         detail: "It might cause instability and high RAM usage. It is recommended to enable option to load and show only chapter at a time from Settings → Other Settings.",
                 //         noOption: false,
                 //     });
-                dispatch(setUnzipping(false));
-                dispatch(setReaderOpen(true));
+                dispatch(setReaderLoading(null));
+                dispatch(setReaderOpen());
             })
             .catch(() => {
-                dispatch(setUnzipping(false));
+                dispatch(setReaderLoading(null));
             });
     };
 
@@ -718,7 +686,7 @@ const EPubReader = () => {
                         (1 + Math.abs(1 - window.electron.webFrame.getZoomFactor())),
                 ) >= readerRef.current.scrollHeight ||
                     readerRef.current.scrollTop < window.innerHeight / 4);
-            if (!isSettingOpen && isReaderOpen && !isLoadingManga) {
+            if (!isSettingOpen && readerState.active && !isLoading) {
                 if ([" ", "ArrowUp", "ArrowDown"].includes(e.key)) e.preventDefault();
                 if (!e.repeat) {
                     switch (true) {
@@ -815,7 +783,7 @@ const EPubReader = () => {
             window.removeEventListener("keydown", registerShortcuts);
             window.removeEventListener("keyup", aaa);
         };
-    }, [isSideListPinned, appSettings, isLoadingManga, shortcuts, isSettingOpen, epubData, isReaderOpen]);
+    }, [isSideListPinned, appSettings, isLoading, shortcuts, isSettingOpen, epubData, readerState.active]);
 
     useLayoutEffect(() => {
         if (elemBeforeChange)
@@ -869,7 +837,7 @@ const EPubReader = () => {
             }
             style={{
                 gridTemplateColumns: sideListWidth + "px auto",
-                display: isReaderOpen ? (isSideListPinned ? "grid" : "block") : "none",
+                display: readerState.active ? (isSideListPinned ? "grid" : "block") : "none",
                 "--sideListWidth": sideListWidth + "px",
             }}
             onScroll={updateProgress}
@@ -1029,9 +997,9 @@ const EPubReader = () => {
                             },
                         },
                         window.contextMenu.template.divider(),
-                        window.contextMenu.template.openInNewWindow(linkInReader.link),
-                        window.contextMenu.template.showInExplorer(linkInReader.link),
-                        window.contextMenu.template.copyPath(linkInReader.link),
+                        window.contextMenu.template.openInNewWindow(readerState.link),
+                        window.contextMenu.template.showInExplorer(readerState.link),
+                        window.contextMenu.template.copyPath(readerState.link),
                     ];
                     setContextMenuData({
                         clickX: e.clientX,

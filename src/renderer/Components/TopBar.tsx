@@ -14,6 +14,7 @@ import { setPageNumChangeDisabled } from "@store/pageNumChangeDisabled";
 import { setSysBtnColor } from "@store/themes";
 import { formatUtils } from "@utils/file";
 import { setSettingsOpen, toggleSettingsOpen } from "@store/ui";
+import { shallowEqual } from "react-redux";
 
 const TopBar = (): ReactElement => {
     const [title, setTitle] = useState<string>("Yomikiru");
@@ -21,7 +22,12 @@ const TopBar = (): ReactElement => {
     const [isMaximized, setMaximized] = useState(window.electron.currentWindow.isMaximized() || false);
     const readerContent = useAppSelector((store) => store.reader.content);
     // todo: move input to separate component
-    const currentPageNumber = useAppSelector((store) => store.reader.mangaPageNumber);
+    const currentPageNumber = useAppSelector((store) => {
+        if (store.reader.type === "manga" && store.reader.content?.progress) {
+            return store.reader.content.progress.currentPage;
+        }
+        return 1;
+    }, shallowEqual);
     const appSettings = useAppSelector((store) => store.appSettings);
 
     const [pageScrollTimeoutID, setTimeoutID] = useState<NodeJS.Timeout | null>(null);

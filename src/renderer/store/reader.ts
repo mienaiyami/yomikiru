@@ -1,6 +1,10 @@
 import { createSlice, PayloadAction } from "@reduxjs/toolkit";
 import type { LibraryItemWithProgress } from "@common/types/db";
 import { RootState } from ".";
+
+// ! ReaderState.content.progress is not linked to libraryItem.progress
+// ! both are independent to prevent issues with multiple windows
+
 type ReaderState = {
     /**
      * link of either manga-chapter or whole epub
@@ -25,12 +29,13 @@ type ReaderState = {
               percent: null;
           };
     /**
-     * temp solution, page number at which chapter should be opened
-     * as well as current page number as you scroll
+     * Page number at which chapter should be opened
+     * DON'T USE THIS FOR SAVING, USE content.progress.currentPage
      */
     mangaPageNumber?: number;
     /**
      * id+query string of position at which epub chapter should be opened
+     * DON'T USE THIS FOR SAVING, USE content.progress.chapterId and content.progress.position
      */
     epubChapterId?: string;
     epubElementQueryString?: string;
@@ -181,19 +186,31 @@ const readerSlice = createSlice({
                 };
             }
         },
-        setReaderMangaPageNumber: (state, action: PayloadAction<number>) => {
-            if (state.type === "manga") {
-                state.mangaPageNumber = action.payload;
+        updateReaderMangaCurrentPage: (state, action: PayloadAction<number>) => {
+            if (state.type === "manga" && state.content?.progress) {
+                state.content.progress.currentPage = action.payload;
             }
         },
-        setReaderEpubChapterId: (state, action: PayloadAction<string>) => {
-            if (state.type === "book") {
-                state.epubChapterId = action.payload;
-            }
-        },
-        setReaderEpubElementQueryString: (state, action: PayloadAction<string>) => {
-            if (state.type === "book") {
-                state.epubElementQueryString = action.payload;
+        /**
+         * Update in memory progress of book
+         * NOT SAVED TO DB, USE library.updateBookProgress instead
+         */
+        updateReaderBookProgress: (
+            state,
+            action: PayloadAction<
+                Partial<{
+                    chapterId: string;
+                    position: string;
+                    chapterName: string;
+                }>
+            >,
+        ) => {
+            const { chapterId, position, chapterName } = action.payload;
+            console.log("updateReaderBookProgress", state.content?.progress);
+            if (state.type === "book" && state.content?.progress) {
+                state.content.progress.chapterId = chapterId || state.content.progress.chapterId;
+                state.content.progress.position = position || state.content.progress.position;
+                state.content.progress.chapterName = chapterName || state.content.progress.chapterName;
             }
         },
     },
@@ -206,9 +223,8 @@ export const {
     updateReaderContent,
     setReaderOpen,
     setReaderClose,
-    setReaderMangaPageNumber,
-    setReaderEpubChapterId,
-    setReaderEpubElementQueryString,
+    updateReaderMangaCurrentPage,
+    updateReaderBookProgress,
 } = readerSlice.actions;
 export default readerSlice.reducer;
 

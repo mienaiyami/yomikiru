@@ -22,7 +22,10 @@ const initialState: LibraryState = {
 };
 
 export const fetchAllItemsWithProgress = createAsyncThunk("library/getAllItemsWithProgress", async () => {
+    const now = performance.now();
     const data = await window.electron.invoke("db:library:getAllAndProgress");
+    const time = performance.now() - now;
+    console.log(`db:library:getAllAndProgress took ${time}ms`);
     return data;
 });
 
@@ -30,7 +33,7 @@ export const addLibraryItem = createAsyncThunk(
     "library/addItem",
     async (args: DatabaseChannels["db:library:addItem"]["request"]) => {
         return await window.electron.invoke("db:library:addItem", args);
-    }
+    },
 );
 
 export const updateMangaProgress = createAsyncThunk(
@@ -39,7 +42,7 @@ export const updateMangaProgress = createAsyncThunk(
         const res = await window.electron.invoke("db:manga:updateProgress", args);
         if (!res) throw new Error("Failed to update progress");
         return res;
-    }
+    },
 );
 
 export const updateBookProgress = createAsyncThunk(
@@ -48,14 +51,14 @@ export const updateBookProgress = createAsyncThunk(
         const res = await window.electron.invoke("db:book:updateProgress", args);
         if (!res) throw new Error("Failed to update progress");
         return res;
-    }
+    },
 );
 
 export const deleteLibraryItem = createAsyncThunk(
     "library/deleteItem",
     async (args: DatabaseChannels["db:library:deleteItem"]["request"]) => {
         return await window.electron.invoke("db:library:deleteItem", args);
-    }
+    },
 );
 
 // todo: this is temp only, plan to remove window.app.linkInReader and window.app.epubHistorySaveData
@@ -71,28 +74,30 @@ export const updateCurrentItemProgress = createAsyncThunk(
         console.log({
             readerState,
         });
-        if (readerState.type === "book") {
+        if (readerState.type === "book" && readerState.content?.progress) {
             const res = await window.electron.invoke("db:book:updateProgress", {
                 itemLink: readerState.link,
                 data: {
-                    chapterId: readerState.epubChapterId,
-                    lastReadAt: new Date(),
-                    position: readerState.epubElementQueryString,
+                    chapterId: readerState.content.progress.chapterId,
+                    chapterName: readerState.content.progress.chapterName,
+                    position: readerState.content.progress.position,
                 },
             });
             if (!res) throw new Error("Failed to update progress");
             return res;
-        } else if (readerState.type === "manga") {
+        } else if (readerState.type === "manga" && readerState.content?.progress) {
             const res = await window.electron.invoke("db:manga:updateProgress", {
                 itemLink: window.path.dirname(readerState.link),
-                chapterLink: readerState.content?.progress?.chapterLink,
-                currentPage: readerState.mangaPageNumber,
-                lastReadAt: new Date(),
+                chapterLink: readerState.content.progress.chapterLink,
+                currentPage: readerState.content.progress.currentPage,
+                chapterName: readerState.content.progress.chapterName,
             });
             if (!res) throw new Error("Failed to update progress");
             return res;
+        } else {
+            console.error("No progress to update");
         }
-    }
+    },
 );
 
 // export const clearProgress = createAsyncThunk(
@@ -109,7 +114,7 @@ export const updateChaptersRead = createAsyncThunk(
             read,
         });
         return { itemLink, chapterRead };
-    }
+    },
 );
 export const updateChaptersReadAll = createAsyncThunk(
     "library/updateChaptersReadAll",
@@ -121,7 +126,7 @@ export const updateChaptersReadAll = createAsyncThunk(
             read,
         });
         return { itemLink, chaptersRead };
-    }
+    },
 );
 
 const librarySlice = createSlice({

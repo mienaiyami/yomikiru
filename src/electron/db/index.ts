@@ -31,14 +31,9 @@ export type AddToLibraryData =
 
 export class DatabaseService {
     private _db: ReturnType<typeof drizzle>;
-    // private client: ReturnType<typeof createClient>;
     constructor() {
         const sqlite = new Database(app.isPackaged ? path.join(app.getPath("userData"), "data.db") : "data.db");
         this._db = drizzle({ client: sqlite, schema });
-        // this.client = createClient({
-        //     url: dbPath,
-        // });
-        // this._db = drizzle(dbPath);
     }
 
     get db() {
@@ -73,16 +68,18 @@ export class DatabaseService {
     }
 
     async updateMangaProgress(
-        data: Partial<Omit<typeof mangaProgress.$inferInsert, "itemLink">> & {
+        data: Partial<Omit<typeof mangaProgress.$inferInsert, "itemLink" | "lastReadAt">> & {
             itemLink: string;
-        }
+        },
     ) {
         // data = Object.fromEntries(Object.entries(data).filter(([_, v]) => Boolean(v)));
-        console.log({ data });
         // todo : check if works fine
         return await this._db
             .update(mangaProgress)
-            .set(data)
+            .set({
+                ...data,
+                lastReadAt: new Date(),
+            })
             .where(eq(mangaProgress.itemLink, data.itemLink))
             .returning();
     }
@@ -110,11 +107,17 @@ export class DatabaseService {
         });
     }
 
-    async updateBookProgress(itemLink: string, data: Partial<Omit<typeof bookProgress.$inferInsert, "itemLink">>) {
+    async updateBookProgress(
+        itemLink: string,
+        data: Partial<Omit<typeof bookProgress.$inferInsert, "itemLink" | "lastReadAt">>,
+    ) {
         data = Object.fromEntries(Object.entries(data).filter(([_, v]) => v !== undefined));
         return await this._db
             .update(bookProgress)
-            .set(data)
+            .set({
+                ...data,
+                lastReadAt: new Date(),
+            })
             .where(eq(bookProgress.itemLink, itemLink))
             .returning();
     }

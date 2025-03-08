@@ -14,15 +14,13 @@ import { keyFormatter } from "@utils/keybindings";
 import AniList from "@utils/anilist";
 import { setAnilistCurrentManga } from "@store/anilist";
 import {
-    getReaderManga,
     getReaderMangaState,
     setReaderLoading,
-    setReaderMangaPageNumber,
     setReaderOpen,
-    setReaderState,
     updateReaderContent,
+    updateReaderMangaCurrentPage,
 } from "@store/reader";
-import { LibraryItem, MangaProgress } from "@common/types/db";
+import { MangaProgress } from "@common/types/db";
 
 const processChapterNumber = (chapterName: string): number | undefined => {
     /*
@@ -185,18 +183,7 @@ const Reader = () => {
     }, [currentlyDecoding, imageDecodeQueue]);
 
     useEffect(() => {
-        // window.app.currentPageNumber = currentPageNumber;
-        // // too heavy
-        // // setHistory((init) => {
-        // //     if (init[0].link === linkInReader.link) {
-        // //         init[0].page = currentPageNumber;
-        // //         return [...init];
-        // //     }
-        // //     return init;
-        // // });
-        // window.dispatchEvent(pageChangeEvent);
-        console.log("currentPageNumber", currentPageNumber);
-        dispatch(setReaderMangaPageNumber(currentPageNumber));
+        dispatch(updateReaderMangaCurrentPage(currentPageNumber));
     }, [currentPageNumber]);
     useEffect(() => {
         readerRef.current?.focus();
@@ -813,10 +800,10 @@ const Reader = () => {
         );
     }, [appSettings.readerSettings.readerWidth, isSideListPinned]);
     useEffect(() => {
-        if (!readerState?.link || !readerState?.mangaPageNumber) return;
+        if (!readerState?.link) return;
         checkForImgsAndLoad({
             link: readerState.link,
-            page: readerState.mangaPageNumber,
+            page: readerState.mangaPageNumber || 1,
         });
     }, [readerState?.link]);
     useEffect(() => {

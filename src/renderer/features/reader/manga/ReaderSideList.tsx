@@ -10,7 +10,6 @@ import {
 import { faBookmark as farBookmark } from "@fortawesome/free-regular-svg-icons";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { memo, useEffect, useLayoutEffect, useRef, useState, useContext, useMemo } from "react";
-import ReaderSideListItem from "../../reader-image/ReaderSideListItem";
 import { useAppDispatch, useAppSelector } from "@store/hooks";
 // import { updateCurrentHistoryPage } from "../store/history";
 import { addBookmark } from "@store/bookmarks";
@@ -22,6 +21,7 @@ import { dialogUtils } from "@utils/dialog";
 import { keyFormatter } from "@utils/keybindings";
 import { getReaderManga, setReaderState } from "@store/reader";
 import { useAppContext } from "src/renderer/App";
+import ReaderSideListItem from "./ReaderSideListItem";
 
 type ChapterData = { name: string; pages: number; link: string; dateModified: number };
 
