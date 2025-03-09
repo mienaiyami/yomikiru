@@ -61,6 +61,7 @@ export type DatabaseChannels = {
             itemLink: string;
             page: number;
             link: string;
+            chapterName: string;
             note?: string;
         },
         MangaBookmark | null
@@ -84,8 +85,8 @@ export type DatabaseChannels = {
         {
             itemLink: string;
             chapterId: string;
+            chapterName: string;
             position: string;
-            title: string;
             note?: string;
         },
         BookBookmark | null

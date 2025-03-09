@@ -16,7 +16,7 @@ const EPUBReaderSettings = memo(
         makeScrollPos,
         readerRef,
         readerSettingExtender,
-        setshortcutText,
+        setShortcutText,
         sizePlusRef,
         sizeMinusRef,
         fontSizePlusRef,
@@ -25,7 +25,7 @@ const EPUBReaderSettings = memo(
         makeScrollPos: () => void;
         readerRef: React.RefObject<HTMLDivElement>;
         readerSettingExtender: React.RefObject<HTMLButtonElement>;
-        setshortcutText: React.Dispatch<React.SetStateAction<string>>;
+        setShortcutText: React.Dispatch<React.SetStateAction<string>>;
         sizePlusRef: React.RefObject<HTMLButtonElement>;
         sizeMinusRef: React.RefObject<HTMLButtonElement>;
         fontSizePlusRef: React.RefObject<HTMLButtonElement>;
@@ -38,14 +38,14 @@ const EPUBReaderSettings = memo(
         const [fontList, setFontList] = useState<string[]>([]);
 
         useLayoutEffect(() => {
-            // todo get from ipc
-            // getFonts()
-            //     .then((e) => {
-            //         setFontList(e);
-            //     })
-            //     .catch((e) => {
-            //         console.error("unable to get font list: ", e);
-            //     });
+            window
+                .getFonts()
+                .then((e) => {
+                    setFontList(e);
+                })
+                .catch((e) => {
+                    console.error("unable to get font list: ", e);
+                });
         }, []);
 
         const maxWidth = 100;
@@ -108,7 +108,7 @@ const EPUBReaderSettings = memo(
                                             ...appSettings.epubReaderSettings.settingsCollapsed,
                                             size: !appSettings.epubReaderSettings.settingsCollapsed.size,
                                         },
-                                    })
+                                    }),
                                 );
                             }}
                         >
@@ -141,7 +141,7 @@ const EPUBReaderSettings = memo(
                                             ? 1
                                             : appSettings.epubReaderSettings.readerWidth - steps;
                                     if (document.activeElement !== e.currentTarget)
-                                        setshortcutText(readerWidth + "%");
+                                        setShortcutText(readerWidth + "%");
                                     dispatch(setEpubReaderSettings({ readerWidth }));
                                     // e.currentTarget.dispatchEvent(new MouseEvent(type:"")))
                                 }}
@@ -161,7 +161,7 @@ const EPUBReaderSettings = memo(
                                             : appSettings.epubReaderSettings.readerWidth + steps;
 
                                     if (document.activeElement !== e.currentTarget)
-                                        setshortcutText(readerWidth + "%");
+                                        setShortcutText(readerWidth + "%");
                                     dispatch(setEpubReaderSettings({ readerWidth }));
                                 }}
                             >
@@ -175,7 +175,7 @@ const EPUBReaderSettings = memo(
                                         dispatch(
                                             setEpubReaderSettings({
                                                 limitImgHeight: e.currentTarget.checked,
-                                            })
+                                            }),
                                         );
                                     }}
                                     paraAfter="Limit Image height to viewport"
@@ -200,7 +200,7 @@ const EPUBReaderSettings = memo(
                                             ...appSettings.epubReaderSettings.settingsCollapsed,
                                             font: !appSettings.epubReaderSettings.settingsCollapsed.font,
                                         },
-                                    })
+                                    }),
                                 );
                             }}
                         >
@@ -229,7 +229,7 @@ const EPUBReaderSettings = memo(
 
                                         newSize = newSize < 1 ? 1 : newSize;
                                         if (document.activeElement !== e.currentTarget)
-                                            setshortcutText(newSize + "px");
+                                            setShortcutText(newSize + "px");
                                         dispatch(setEpubReaderSettings({ fontSize: newSize }));
                                     }}
                                 >
@@ -243,7 +243,7 @@ const EPUBReaderSettings = memo(
 
                                         newSize = newSize > 100 ? 100 : newSize;
                                         if (document.activeElement !== e.currentTarget)
-                                            setshortcutText(newSize + "px");
+                                            setShortcutText(newSize + "px");
                                         dispatch(setEpubReaderSettings({ fontSize: newSize }));
                                     }}
                                 >
@@ -251,28 +251,6 @@ const EPUBReaderSettings = memo(
                                 </button>
                             </div>
                             <div className="col">
-                                {/* <label>
-                                <p>Font size&nbsp;:</p>
-                                <input
-                                    type="number"
-                                    value={appSettings.epubReaderSettings.fontSize}
-                                    min={1}
-                                    max={100}
-                                    onKeyDown={(e) => {
-                                        if (e.key !== "Escape") {
-                                            e.stopPropagation();
-                                        }
-                                    }}
-                                    onChange={(e) => {
-                                        makeScrollPos();
-                                        let value = e.target.valueAsNumber;
-                                        if (!value) value = 0;
-                                        value = value >= 100 ? 100 : value;
-                                        dispatch(setEpubReaderSettings({ fontSize: value }));
-                                    }}
-                                />
-                                px
-                            </label> */}
                                 <InputCheckbox
                                     checked={!appSettings.epubReaderSettings.useDefault_fontFamily}
                                     onChange={(e) => {
@@ -280,7 +258,7 @@ const EPUBReaderSettings = memo(
                                         dispatch(
                                             setEpubReaderSettings({
                                                 useDefault_fontFamily: !e.currentTarget.checked,
-                                            })
+                                            }),
                                         );
                                     }}
                                     paraAfter="Custom Font Family"
@@ -293,7 +271,7 @@ const EPUBReaderSettings = memo(
                                         dispatch(
                                             setEpubReaderSettings({
                                                 fontFamily: value,
-                                            })
+                                            }),
                                         );
                                     }}
                                     options={[
@@ -303,7 +281,7 @@ const EPUBReaderSettings = memo(
                                                     label: `★ ${e.replaceAll('"', "")}`,
                                                     value: e,
                                                     style: { fontFamily: e, fontSize: "1.2em" },
-                                                } as Menu.OptSelectOption)
+                                                } as Menu.OptSelectOption),
                                         ),
                                         ...fontList.map(
                                             (e) =>
@@ -311,7 +289,7 @@ const EPUBReaderSettings = memo(
                                                     label: e.replaceAll('"', ""),
                                                     value: e,
                                                     style: { fontFamily: e, fontSize: "1.2em" },
-                                                } as Menu.OptSelectOption)
+                                                } as Menu.OptSelectOption),
                                         ),
                                     ]}
                                 />
@@ -320,16 +298,16 @@ const EPUBReaderSettings = memo(
                                     onClick={() => {
                                         if (
                                             appSettings.epubReaderSettings.quickFontFamily.includes(
-                                                appSettings.epubReaderSettings.fontFamily
+                                                appSettings.epubReaderSettings.fontFamily,
                                             )
                                         ) {
                                             dispatch(
                                                 setEpubReaderSettings({
                                                     quickFontFamily:
                                                         appSettings.epubReaderSettings.quickFontFamily.filter(
-                                                            (e) => e !== appSettings.epubReaderSettings.fontFamily
+                                                            (e) => e !== appSettings.epubReaderSettings.fontFamily,
                                                         ),
-                                                })
+                                                }),
                                             );
                                         } else {
                                             dispatch(
@@ -338,13 +316,13 @@ const EPUBReaderSettings = memo(
                                                         ...appSettings.epubReaderSettings.quickFontFamily,
                                                         appSettings.epubReaderSettings.fontFamily,
                                                     ],
-                                                })
+                                                }),
                                             );
                                         }
                                     }}
                                 >
                                     {appSettings.epubReaderSettings.quickFontFamily.includes(
-                                        appSettings.epubReaderSettings.fontFamily
+                                        appSettings.epubReaderSettings.fontFamily,
                                     )
                                         ? "Remove Star"
                                         : "Star Font Family"}
@@ -355,7 +333,7 @@ const EPUBReaderSettings = memo(
                                         dispatch(
                                             setEpubReaderSettings({
                                                 useDefault_fontWeight: !e.currentTarget.checked,
-                                            })
+                                            }),
                                         );
                                     }}
                                     title="only if supported for the font-family"
@@ -375,7 +353,7 @@ const EPUBReaderSettings = memo(
                                             dispatch(
                                                 setEpubReaderSettings({
                                                     fontWeight: value,
-                                                })
+                                                }),
                                             ),
                                     ]}
                                 />
@@ -386,7 +364,7 @@ const EPUBReaderSettings = memo(
                                         dispatch(
                                             setEpubReaderSettings({
                                                 useDefault_lineSpacing: !e.currentTarget.checked,
-                                            })
+                                            }),
                                         );
                                     }}
                                     step={0.1}
@@ -407,7 +385,7 @@ const EPUBReaderSettings = memo(
                                         dispatch(
                                             setEpubReaderSettings({
                                                 useDefault_paragraphSpacing: !e.currentTarget.checked,
-                                            })
+                                            }),
                                         );
                                     }}
                                     step={0.1}
@@ -427,7 +405,7 @@ const EPUBReaderSettings = memo(
                                         dispatch(
                                             setEpubReaderSettings({
                                                 useDefault_wordSpacing: !e.currentTarget.checked,
-                                            })
+                                            }),
                                         );
                                     }}
                                     step={0.1}
@@ -447,7 +425,7 @@ const EPUBReaderSettings = memo(
                                         dispatch(
                                             setEpubReaderSettings({
                                                 useDefault_letterSpacing: !e.currentTarget.checked,
-                                            })
+                                            }),
                                         );
                                     }}
                                     step={0.01}
@@ -496,7 +474,7 @@ const EPUBReaderSettings = memo(
                                             ...appSettings.epubReaderSettings.settingsCollapsed,
                                             styles: !appSettings.epubReaderSettings.settingsCollapsed.styles,
                                         },
-                                    })
+                                    }),
                                 );
                             }}
                         >
@@ -509,7 +487,7 @@ const EPUBReaderSettings = memo(
                                     dispatch(
                                         setEpubReaderSettings({
                                             useDefault_fontColor: !e.currentTarget.checked,
-                                        })
+                                        }),
                                     );
                                 }}
                                 value={colorUtils.new(appSettings.epubReaderSettings.fontColor)}
@@ -519,7 +497,7 @@ const EPUBReaderSettings = memo(
                                         dispatch(
                                             setEpubReaderSettings({
                                                 fontColor: value.hexa(),
-                                            })
+                                            }),
                                         ),
                                 ]}
                                 paraBefore="Font Color&nbsp;:"
@@ -530,7 +508,7 @@ const EPUBReaderSettings = memo(
                                     dispatch(
                                         setEpubReaderSettings({
                                             useDefault_linkColor: !e.currentTarget.checked,
-                                        })
+                                        }),
                                     );
                                 }}
                                 value={colorUtils.new(appSettings.epubReaderSettings.linkColor)}
@@ -540,7 +518,7 @@ const EPUBReaderSettings = memo(
                                         dispatch(
                                             setEpubReaderSettings({
                                                 linkColor: value.hexa(),
-                                            })
+                                            }),
                                         ),
                                 ]}
                                 paraBefore="Link Color&nbsp;:"
@@ -551,7 +529,7 @@ const EPUBReaderSettings = memo(
                                     dispatch(
                                         setEpubReaderSettings({
                                             useDefault_backgroundColor: !e.currentTarget.checked,
-                                        })
+                                        }),
                                     );
                                 }}
                                 value={colorUtils.new(appSettings.epubReaderSettings.backgroundColor)}
@@ -561,7 +539,7 @@ const EPUBReaderSettings = memo(
                                         dispatch(
                                             setEpubReaderSettings({
                                                 backgroundColor: value.hexa(),
-                                            })
+                                            }),
                                         ),
                                 ]}
                                 paraBefore="Background Color&nbsp;:"
@@ -572,7 +550,7 @@ const EPUBReaderSettings = memo(
                                     dispatch(
                                         setEpubReaderSettings({
                                             useDefault_progressBackgroundColor: !e.currentTarget.checked,
-                                        })
+                                        }),
                                     );
                                 }}
                                 value={colorUtils.new(appSettings.epubReaderSettings.progressBackgroundColor)}
@@ -582,7 +560,7 @@ const EPUBReaderSettings = memo(
                                         dispatch(
                                             setEpubReaderSettings({
                                                 progressBackgroundColor: value.hexa(),
-                                            })
+                                            }),
                                         ),
                                 ]}
                                 paraBefore="Progress Background Color&nbsp;:"
@@ -596,7 +574,7 @@ const EPUBReaderSettings = memo(
                                                 ...appSettings.epubReaderSettings.forceLowBrightness,
                                                 enabled: e.currentTarget.checked,
                                             },
-                                        })
+                                        }),
                                     );
                                 }}
                                 paraAfter="Force Low brightness"
@@ -618,7 +596,7 @@ const EPUBReaderSettings = memo(
                                                     ...appSettings.epubReaderSettings.forceLowBrightness,
                                                     value,
                                                 },
-                                            })
+                                            }),
                                         ),
                                 ]}
                             />
@@ -634,7 +612,7 @@ const EPUBReaderSettings = memo(
                                 checked={appSettings.epubReaderSettings.showProgressInZenMode}
                                 onChange={(e) => {
                                     dispatch(
-                                        setEpubReaderSettings({ showProgressInZenMode: e.currentTarget.checked })
+                                        setEpubReaderSettings({ showProgressInZenMode: e.currentTarget.checked }),
                                     );
                                 }}
                                 paraAfter="Show progress in Zen mode"
@@ -659,7 +637,7 @@ const EPUBReaderSettings = memo(
                                             scrollSpeed:
                                                 !appSettings.epubReaderSettings.settingsCollapsed.scrollSpeed,
                                         },
-                                    })
+                                    }),
                                 );
                             }}
                             title="Scrolling speed with keys."
@@ -694,7 +672,7 @@ const EPUBReaderSettings = memo(
                 </div>
             </div>
         );
-    }
+    },
 );
 
 export default EPUBReaderSettings;

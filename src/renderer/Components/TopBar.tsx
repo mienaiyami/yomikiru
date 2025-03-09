@@ -82,11 +82,15 @@ const TopBar = (): ReactElement => {
         window.electron.currentWindow.isFocused() ? onFocus() : onBlur();
 
         const listeners: (() => void)[] = [];
-
+        // required in case of reloads and other events
+        window.electron.currentWindow.clearEvents(["maximize", "unmaximize", "focus", "blur"]);
         listeners.push(window.electron.currentWindow.on("maximize", () => setMaximized(true)));
         listeners.push(window.electron.currentWindow.on("unmaximize", () => setMaximized(false)));
         listeners.push(window.electron.currentWindow.on("focus", onFocus));
         listeners.push(window.electron.currentWindow.on("blur", onBlur));
+        return () => {
+            listeners.forEach((e) => e());
+        };
     }, []);
     useEffect(() => {
         console.log("currentPageNumber", currentPageNumber);

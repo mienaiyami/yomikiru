@@ -1,7 +1,7 @@
 {
   "version": "6",
   "dialect": "sqlite",
-  "id": "1c9e6b8e-0421-4ef7-8f94-e6eb8f5b4167",
+  "id": "9ccf29b6-d134-4417-8134-e8fd13312ca4",
   "prevId": "00000000-0000-0000-0000-000000000000",
   "tables": {
     "book_bookmarks": {
@@ -21,6 +21,14 @@
           "notNull": true,
           "autoincrement": false
         },
+        "chapterName": {
+          "name": "chapterName",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false,
+          "default": "'~'"
+        },
         "chapterId": {
           "name": "chapterId",
           "type": "text",
@@ -30,13 +38,6 @@
         },
         "position": {
           "name": "position",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": true,
-          "autoincrement": false
-        },
-        "title": {
-          "name": "title",
           "type": "text",
           "primaryKey": false,
           "notNull": true,
@@ -54,11 +55,26 @@
           "type": "integer",
           "primaryKey": false,
           "notNull": true,
-          "autoincrement": false,
-          "default": "(unixepoch() * 1000)"
+          "autoincrement": false
         }
       },
-      "indexes": {},
+      "indexes": {
+        "idx_book_bookmarks_item_link": {
+          "name": "idx_book_bookmarks_item_link",
+          "columns": [
+            "itemLink"
+          ],
+          "isUnique": false
+        },
+        "uq_book_bookmarks_chapter_id_position": {
+          "name": "uq_book_bookmarks_chapter_id_position",
+          "columns": [
+            "chapterId",
+            "position"
+          ],
+          "isUnique": true
+        }
+      },
       "foreignKeys": {
         "book_bookmarks_itemLink_library_items_link_fk": {
           "name": "book_bookmarks_itemLink_library_items_link_fk",
@@ -135,19 +151,34 @@
           "type": "integer",
           "primaryKey": false,
           "notNull": true,
-          "autoincrement": false,
-          "default": "(unixepoch() * 1000)"
+          "autoincrement": false
         },
         "updatedAt": {
           "name": "updatedAt",
           "type": "integer",
           "primaryKey": false,
           "notNull": true,
-          "autoincrement": false,
-          "default": "(unixepoch() * 1000)"
+          "autoincrement": false
         }
       },
-      "indexes": {},
+      "indexes": {
+        "idx_book_notes_item_link": {
+          "name": "idx_book_notes_item_link",
+          "columns": [
+            "itemLink"
+          ],
+          "isUnique": false
+        },
+        "uq_book_notes_chapter_id_position_selected_text": {
+          "name": "uq_book_notes_chapter_id_position_selected_text",
+          "columns": [
+            "chapterId",
+            "position",
+            "selectedText"
+          ],
+          "isUnique": true
+        }
+      },
       "foreignKeys": {
         "book_notes_itemLink_library_items_link_fk": {
           "name": "book_notes_itemLink_library_items_link_fk",
@@ -256,16 +287,14 @@
           "type": "integer",
           "primaryKey": false,
           "notNull": true,
-          "autoincrement": false,
-          "default": "(unixepoch() * 1000)"
+          "autoincrement": false
         },
         "createdAt": {
           "name": "createdAt",
           "type": "integer",
           "primaryKey": false,
           "notNull": true,
-          "autoincrement": false,
-          "default": "(unixepoch() * 1000)"
+          "autoincrement": false
         },
         "author": {
           "name": "author",
@@ -305,6 +334,14 @@
           "notNull": true,
           "autoincrement": false
         },
+        "chapterName": {
+          "name": "chapterName",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false,
+          "default": "'~'"
+        },
         "page": {
           "name": "page",
           "type": "integer",
@@ -332,11 +369,26 @@
           "type": "integer",
           "primaryKey": false,
           "notNull": true,
-          "autoincrement": false,
-          "default": "(unixepoch() * 1000)"
+          "autoincrement": false
         }
       },
-      "indexes": {},
+      "indexes": {
+        "idx_manga_bookmarks_item_link": {
+          "name": "idx_manga_bookmarks_item_link",
+          "columns": [
+            "itemLink"
+          ],
+          "isUnique": false
+        },
+        "uq_manga_bookmarks_link_page": {
+          "name": "uq_manga_bookmarks_link_page",
+          "columns": [
+            "link",
+            "page"
+          ],
+          "isUnique": true
+        }
+      },
       "foreignKeys": {
         "manga_bookmarks_itemLink_library_items_link_fk": {
           "name": "manga_bookmarks_itemLink_library_items_link_fk",
@@ -393,14 +445,16 @@
           "type": "text",
           "primaryKey": false,
           "notNull": true,
-          "autoincrement": false
+          "autoincrement": false,
+          "default": "'[]'"
         },
         "totalPages": {
           "name": "totalPages",
           "type": "integer",
           "primaryKey": false,
-          "notNull": false,
-          "autoincrement": false
+          "notNull": true,
+          "autoincrement": false,
+          "default": 0
         },
         "lastReadAt": {
           "name": "lastReadAt",

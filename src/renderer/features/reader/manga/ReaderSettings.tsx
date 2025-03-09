@@ -24,14 +24,14 @@ const ReaderSettings = memo(
         makeScrollPos,
         readerRef,
         readerSettingExtender,
-        setshortcutText,
+        setShortcutText,
         sizePlusRef,
         sizeMinusRef,
     }: {
         makeScrollPos: () => void;
         readerRef: React.RefObject<HTMLDivElement>;
         readerSettingExtender: React.RefObject<HTMLButtonElement>;
-        setshortcutText: React.Dispatch<React.SetStateAction<string>>;
+        setShortcutText: React.Dispatch<React.SetStateAction<string>>;
         sizePlusRef: React.RefObject<HTMLButtonElement>;
         sizeMinusRef: React.RefObject<HTMLButtonElement>;
     }) => {
@@ -105,7 +105,7 @@ const ReaderSettings = memo(
                                             ...appSettings.readerSettings.settingsCollapsed,
                                             size: !appSettings.readerSettings.settingsCollapsed.size,
                                         },
-                                    })
+                                    }),
                                 );
                             }}
                         >
@@ -137,7 +137,7 @@ const ReaderSettings = memo(
                                             ? 1
                                             : appSettings.readerSettings.readerWidth - steps;
                                     if (document.activeElement !== e.currentTarget)
-                                        setshortcutText(readerWidth + "%");
+                                        setShortcutText(readerWidth + "%");
                                     dispatch(setReaderSettings({ readerWidth }));
                                     // e.currentTarget.dispatchEvent(new MouseEvent(type:"")))
                                 }}
@@ -158,7 +158,7 @@ const ReaderSettings = memo(
                                             : appSettings.readerSettings.readerWidth + steps;
 
                                     if (document.activeElement !== e.currentTarget)
-                                        setshortcutText(readerWidth + "%");
+                                        setShortcutText(readerWidth + "%");
                                     dispatch(setReaderSettings({ readerWidth }));
                                 }}
                             >
@@ -192,7 +192,7 @@ const ReaderSettings = memo(
                                             ...appSettings.readerSettings.settingsCollapsed,
                                             fitOption: !appSettings.readerSettings.settingsCollapsed.fitOption,
                                         },
-                                    })
+                                    }),
                                 );
                             }}
                         >
@@ -219,7 +219,7 @@ const ReaderSettings = memo(
                                         dispatch(
                                             setReaderSettings({
                                                 fitOption: appSettings.readerSettings.fitOption === 1 ? 0 : 1,
-                                            })
+                                            }),
                                         );
                                     }}
                                     title="Fit Vertically"
@@ -234,7 +234,7 @@ const ReaderSettings = memo(
                                         dispatch(
                                             setReaderSettings({
                                                 fitOption: appSettings.readerSettings.fitOption === 2 ? 0 : 2,
-                                            })
+                                            }),
                                         );
                                     }}
                                     title="Fit Horizontally"
@@ -250,7 +250,7 @@ const ReaderSettings = memo(
                                         dispatch(
                                             setReaderSettings({
                                                 fitOption: appSettings.readerSettings.fitOption === 3 ? 0 : 3,
-                                            })
+                                            }),
                                         );
                                     }}
                                     title="Original"
@@ -269,7 +269,7 @@ const ReaderSettings = memo(
                                                     appSettings.readerSettings.maxHeightWidthSelector !== "width"
                                                         ? "width"
                                                         : "none",
-                                            })
+                                            }),
                                         );
                                     }}
                                     min={0}
@@ -292,7 +292,7 @@ const ReaderSettings = memo(
                                                     appSettings.readerSettings.maxHeightWidthSelector !== "height"
                                                         ? "height"
                                                         : "none",
-                                            })
+                                            }),
                                         );
                                     }}
                                     min={0}
@@ -326,7 +326,7 @@ const ReaderSettings = memo(
                                             ...appSettings.readerSettings.settingsCollapsed,
                                             readingMode: !appSettings.readerSettings.settingsCollapsed.readingMode,
                                         },
-                                    })
+                                    }),
                                 );
                             }}
                         >
@@ -376,7 +376,7 @@ const ReaderSettings = memo(
                                             ...appSettings.readerSettings.settingsCollapsed,
                                             pagePerRow: !appSettings.readerSettings.settingsCollapsed.pagePerRow,
                                         },
-                                    })
+                                    }),
                                 );
                             }}
                         >
@@ -455,7 +455,7 @@ const ReaderSettings = memo(
                                             ...appSettings.readerSettings.settingsCollapsed,
                                             readingSide: !appSettings.readerSettings.settingsCollapsed.readingSide,
                                         },
-                                    })
+                                    }),
                                 );
                             }}
                         >
@@ -499,7 +499,7 @@ const ReaderSettings = memo(
                                             ...appSettings.readerSettings.settingsCollapsed,
                                             scrollSpeed: !appSettings.readerSettings.settingsCollapsed.scrollSpeed,
                                         },
-                                    })
+                                    }),
                                 );
                             }}
                             title={`Scrolling speed with keys.\nCheck Settings->Shortcut for more.`}
@@ -568,7 +568,7 @@ const ReaderSettings = memo(
                                             customColorFilter:
                                                 !appSettings.readerSettings.settingsCollapsed.customColorFilter,
                                         },
-                                    })
+                                    }),
                                 );
                             }}
                         >
@@ -584,7 +584,7 @@ const ReaderSettings = memo(
                                                 ...appSettings.readerSettings.customColorFilter,
                                                 enabled: e.currentTarget.checked,
                                             },
-                                        })
+                                        }),
                                     );
                                 }}
                                 paraBefore="Use Custom Color Filter"
@@ -606,7 +606,7 @@ const ReaderSettings = memo(
                                                     b: value.blue(),
                                                     a: value.alpha(),
                                                 },
-                                            })
+                                            }),
                                         );
                                     },
                                 ]}
@@ -625,7 +625,7 @@ const ReaderSettings = memo(
                                                 blendMode:
                                                     value as AppSettings["readerSettings"]["customColorFilter"]["blendMode"],
                                             },
-                                        })
+                                        }),
                                     );
                                 }}
                                 // todo get from schema
@@ -663,7 +663,7 @@ const ReaderSettings = memo(
                                                     ...appSettings.readerSettings.customColorFilter,
                                                     hue: value,
                                                 },
-                                            })
+                                            }),
                                         );
                                     },
                                 ]}
@@ -684,7 +684,7 @@ const ReaderSettings = memo(
                                                     ...appSettings.readerSettings.customColorFilter,
                                                     contrast: value,
                                                 },
-                                            })
+                                            }),
                                         );
                                     },
                                 ]}
@@ -705,7 +705,7 @@ const ReaderSettings = memo(
                                                     ...appSettings.readerSettings.customColorFilter,
                                                     saturation: value,
                                                 },
-                                            })
+                                            }),
                                         );
                                     },
                                 ]}
@@ -726,7 +726,7 @@ const ReaderSettings = memo(
                                                     ...appSettings.readerSettings.customColorFilter,
                                                     brightness: value,
                                                 },
-                                            })
+                                            }),
                                         );
                                     },
                                 ]}
@@ -737,7 +737,7 @@ const ReaderSettings = memo(
                                     dispatch(
                                         setReaderSettings({
                                             invertImage: e.currentTarget.checked,
-                                        })
+                                        }),
                                     );
                                 }}
                                 paraAfter="Invert Image"
@@ -748,7 +748,7 @@ const ReaderSettings = memo(
                                     dispatch(
                                         setReaderSettings({
                                             grayscale: e.currentTarget.checked,
-                                        })
+                                        }),
                                     );
                                 }}
                                 paraAfter="Grayscale"
@@ -771,7 +771,7 @@ const ReaderSettings = memo(
                                             ...appSettings.readerSettings.settingsCollapsed,
                                             others: !appSettings.readerSettings.settingsCollapsed.others,
                                         },
-                                    })
+                                    }),
                                 );
                             }}
                         >
@@ -804,7 +804,7 @@ const ReaderSettings = memo(
                                 checked={appSettings.readerSettings.showPageNumberInZenMode}
                                 onChange={(e) => {
                                     dispatch(
-                                        setReaderSettings({ showPageNumberInZenMode: e.currentTarget.checked })
+                                        setReaderSettings({ showPageNumberInZenMode: e.currentTarget.checked }),
                                     );
                                 }}
                                 paraAfter="Show Page Number in Zen Mode"
@@ -818,7 +818,7 @@ const ReaderSettings = memo(
                                                 ...appSettings.readerSettings.forceLowBrightness,
                                                 enabled: e.currentTarget.checked,
                                             },
-                                        })
+                                        }),
                                     );
                                 }}
                                 paraAfter="Force Low brightness"
@@ -841,7 +841,7 @@ const ReaderSettings = memo(
                                                     ...appSettings.readerSettings.forceLowBrightness,
                                                     value,
                                                 },
-                                            })
+                                            }),
                                         ),
                                 ]}
                             />
@@ -850,7 +850,7 @@ const ReaderSettings = memo(
                 </div>
             </div>
         );
-    }
+    },
 );
 
 export default ReaderSettings;

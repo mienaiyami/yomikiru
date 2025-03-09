@@ -5,6 +5,7 @@ import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faEyeDropper, faSort } from "@fortawesome/free-solid-svg-icons";
 
 import FocusLock, { MoveFocusInside } from "react-focus-lock";
+import { colorUtils } from "@utils/color";
 
 // ! not indented to be used without `AppContext::colorSelectData`
 

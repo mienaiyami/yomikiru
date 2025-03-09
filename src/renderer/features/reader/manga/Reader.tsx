@@ -63,7 +63,6 @@ const Reader = () => {
     const readerState = useAppSelector(getReaderMangaState);
     const anilistCurrentManga = useAppSelector((store) => store.anilist.currentManga);
     const isLoadingManga = useAppSelector((store) => store.reader.loading !== null);
-    const bookmarks = useAppSelector((store) => store.bookmarks);
 
     // todo: extract to hook
     const libraryItem = useAppSelector((store) => selectLibraryItem(store, linkInReader));
@@ -89,18 +88,17 @@ const Reader = () => {
     const [imagesLoaded, setImagesLoaded] = useState(0);
     const [isSideListPinned, setSideListPinned] = useState(false);
     const [sideListWidth, setSideListWidth] = useState(appSettings.readerSettings.sideListWidth || 450);
-    const [isBookmarked, setBookmarked] = useState(false);
     //not called on scroll but manually
     const [scrollPosPercent, setScrollPosPercent] = useState({ x: 0, y: 0 });
     const [zenMode, setZenMode] = useState(appSettings.openInZenMode || false);
-    // used to be in app.tsx then sent to topBar.tsx by context provider but caused performance issue, now using window.currentPageNumber
+    // todo: maybe can remove now?
     const [currentPageNumber, setCurrentPageNumber] = useState(1);
     const [currentImageRow, setCurrentImageRow] = useState(1);
 
     const [chapterChangerDisplay, setChapterChangerDisplay] = useState(false);
     const [wasMaximized, setWasMaximized] = useState(false);
     // display this text then shortcuts clicked
-    const [shortcutText, setshortcutText] = useState("");
+    const [shortcutText, setShortcutText] = useState("");
     // for grab to scroll
     const [mouseDown, setMouseDown] = useState<null | { top: number; left: number; x: number; y: number }>(null);
     const [updatedAnilistProgress, setUpdatedAnilistProgress] = useState(false);
@@ -277,31 +275,31 @@ const Reader = () => {
             if (is(shortcutsMapped["readerSize_50"])) {
                 makeScrollPos();
                 dispatch(setReaderSettings({ fitOption: 0 }));
-                setshortcutText(50 + "%");
+                setShortcutText(50 + "%");
                 dispatch(setReaderSettings({ readerWidth: 50 }));
                 return;
             } else if (is(shortcutsMapped["readerSize_100"])) {
                 makeScrollPos();
                 dispatch(setReaderSettings({ fitOption: 0 }));
-                setshortcutText(100 + "%");
+                setShortcutText(100 + "%");
                 dispatch(setReaderSettings({ readerWidth: 100 }));
                 return;
             } else if (is(shortcutsMapped["readerSize_150"])) {
                 makeScrollPos();
                 dispatch(setReaderSettings({ widthClamped: false, fitOption: 0 }));
-                setshortcutText(150 + "%");
+                setShortcutText(150 + "%");
                 dispatch(setReaderSettings({ readerWidth: 150 }));
                 return;
             } else if (is(shortcutsMapped["readerSize_200"])) {
                 makeScrollPos();
                 dispatch(setReaderSettings({ widthClamped: false, fitOption: 0 }));
-                setshortcutText(200 + "%");
+                setShortcutText(200 + "%");
                 dispatch(setReaderSettings({ readerWidth: 200 }));
                 return;
             } else if (is(shortcutsMapped["readerSize_250"])) {
                 makeScrollPos();
                 dispatch(setReaderSettings({ widthClamped: false, fitOption: 0 }));
-                setshortcutText(250 + "%");
+                setShortcutText(250 + "%");
                 dispatch(setReaderSettings({ readerWidth: 250 }));
                 return;
             }
@@ -388,7 +386,7 @@ const Reader = () => {
                                 scrollReader(0 - appSettings.readerSettings.scrollSpeedA);
                                 break;
                             case is(shortcutsMapped["showHidePageNumberInZen"]):
-                                setshortcutText(
+                                setShortcutText(
                                     (!appSettings.readerSettings.showPageNumberInZenMode ? "Show" : "Hide") +
                                         " page-number in Zen Mode",
                                 );
@@ -403,10 +401,10 @@ const Reader = () => {
                                 let fitOption = appSettings.readerSettings.fitOption + (e.shiftKey ? -1 : 1);
                                 if (fitOption < 0) fitOption = 3;
                                 fitOption %= 4;
-                                if (fitOption === 0) setshortcutText("Free");
-                                if (fitOption === 1) setshortcutText("Fit Vertically");
-                                if (fitOption === 2) setshortcutText("Fit Horizontally");
-                                if (fitOption === 3) setshortcutText("1:1");
+                                if (fitOption === 0) setShortcutText("Free");
+                                if (fitOption === 1) setShortcutText("Fit Vertically");
+                                if (fitOption === 2) setShortcutText("Fit Horizontally");
+                                if (fitOption === 3) setShortcutText("1:1");
                                 dispatch(
                                     setReaderSettings({
                                         fitOption: fitOption as 0 | 1 | 2 | 3,
@@ -415,15 +413,15 @@ const Reader = () => {
                                 break;
                             }
                             case is(shortcutsMapped["selectReaderMode0"]):
-                                setshortcutText("Reading Mode - Vertical Scroll");
+                                setShortcutText("Reading Mode - Vertical Scroll");
                                 dispatch(setReaderSettings({ readerTypeSelected: 0 }));
                                 break;
                             case is(shortcutsMapped["selectReaderMode1"]):
-                                setshortcutText("Reading Mode - Left to Right");
+                                setShortcutText("Reading Mode - Left to Right");
                                 dispatch(setReaderSettings({ readerTypeSelected: 1 }));
                                 break;
                             case is(shortcutsMapped["selectReaderMode2"]):
-                                setshortcutText("Reading Mode - Right to Left");
+                                setShortcutText("Reading Mode - Right to Left");
                                 dispatch(setReaderSettings({ readerTypeSelected: 2 }));
                                 break;
                             case is(shortcutsMapped["selectPagePerRow1"]):
@@ -434,7 +432,7 @@ const Reader = () => {
                                     if (readerWidth > (appSettings.readerSettings.widthClamped ? 100 : 500))
                                         readerWidth = appSettings.readerSettings.widthClamped ? 100 : 500;
                                     if (readerWidth < 1) readerWidth = 1;
-                                    setshortcutText("Page per Row - 1");
+                                    setShortcutText("Page per Row - 1");
                                     dispatch(setReaderSettings({ pagesPerRowSelected, readerWidth }));
                                 }
                                 break;
@@ -447,7 +445,7 @@ const Reader = () => {
                                         readerWidth = appSettings.readerSettings.widthClamped ? 100 : 500;
                                     if (readerWidth < 1) readerWidth = 1;
                                 }
-                                setshortcutText("Page per Row - 2");
+                                setShortcutText("Page per Row - 2");
                                 dispatch(setReaderSettings({ pagesPerRowSelected, readerWidth }));
                                 break;
                             }
@@ -460,7 +458,7 @@ const Reader = () => {
                                         readerWidth = appSettings.readerSettings.widthClamped ? 100 : 500;
                                     if (readerWidth < 1) readerWidth = 1;
                                 }
-                                setshortcutText("Page per Row - 2odd");
+                                setShortcutText("Page per Row - 2odd");
                                 dispatch(setReaderSettings({ pagesPerRowSelected, readerWidth }));
                                 break;
                             }
@@ -1029,15 +1027,13 @@ const Reader = () => {
                 readerSettingExtender={readerSettingExtender}
                 sizePlusRef={sizePlusRef}
                 sizeMinusRef={sizeMinusRef}
-                setshortcutText={setshortcutText}
+                setShortcutText={setShortcutText}
             />
             <ReaderSideList
                 openNextChapterRef={openNextChapterRef}
                 openPrevChapterRef={openPrevChapterRef}
                 addToBookmarkRef={addToBookmarkRef}
-                setshortcutText={setshortcutText}
-                isBookmarked={isBookmarked}
-                setBookmarked={setBookmarked}
+                setShortcutText={setShortcutText}
                 isSideListPinned={isSideListPinned}
                 setSideListPinned={setSideListPinned}
                 setSideListWidth={setSideListWidth}

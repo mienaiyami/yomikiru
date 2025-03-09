@@ -3,6 +3,8 @@ import { sqliteTable, text, integer, unique, index } from "drizzle-orm/sqlite-co
 
 // todo : add relations
 
+const timeNow = sql`(unixepoch() * 1000)`;
+
 export const libraryItems = sqliteTable("library_items", {
     /** link of manga/epub , not a chapter */
     link: text().primaryKey(),
@@ -10,11 +12,11 @@ export const libraryItems = sqliteTable("library_items", {
     title: text().notNull(),
     updatedAt: integer({ mode: "timestamp_ms" })
         .notNull()
-        .default(sql`(unixepoch() * 1000)`)
-        .$onUpdate(() => sql`(unixepoch() * 1000)`),
+        .$defaultFn(() => timeNow)
+        .$onUpdate(() => timeNow),
     createdAt: integer({ mode: "timestamp_ms" })
         .notNull()
-        .default(sql`(unixepoch() * 1000)`),
+        .$defaultFn(() => timeNow),
     author: text(),
     cover: text(),
 });
@@ -30,7 +32,7 @@ export const mangaProgress = sqliteTable("manga_progress", {
     totalPages: integer().default(0).notNull(),
     lastReadAt: integer({ mode: "timestamp_ms" })
         .notNull()
-        .default(sql`(unixepoch() * 1000)`),
+        .$defaultFn(() => timeNow),
 });
 
 export const bookProgress = sqliteTable("book_progress", {
@@ -51,12 +53,13 @@ export const mangaBookmarks = sqliteTable(
         itemLink: text()
             .references(() => libraryItems.link, { onDelete: "cascade" })
             .notNull(),
+        chapterName: text().notNull().default("~"),
         page: integer().notNull(),
         link: text().notNull(),
         note: text().default(""),
         createdAt: integer({ mode: "timestamp_ms" })
             .notNull()
-            .default(sql`(unixepoch() * 1000)`),
+            .$defaultFn(() => timeNow),
     },
     (t) => [
         unique("uq_manga_bookmarks_link_page").on(t.link, t.page),
@@ -71,15 +74,17 @@ export const bookBookmarks = sqliteTable(
         itemLink: text()
             .references(() => libraryItems.link, { onDelete: "cascade" })
             .notNull(),
+        chapterName: text().notNull().default("~"),
         /** this is id of chapter in the epub file */
         chapterId: text().notNull(),
         /** CSS selector, elementQueryString */
         position: text().notNull(),
-        title: text().notNull(),
+        // removing title in favor of chapterName because its confusing
+        // title: text().notNull(),
         note: text(),
         createdAt: integer({ mode: "timestamp_ms" })
             .notNull()
-            .default(sql`(unixepoch() * 1000)`),
+            .$defaultFn(() => timeNow),
     },
     (t) => [
         unique("uq_book_bookmarks_chapter_id_position").on(t.chapterId, t.position),
@@ -103,11 +108,11 @@ export const bookNotes = sqliteTable(
         color: text().notNull(),
         createdAt: integer({ mode: "timestamp_ms" })
             .notNull()
-            .default(sql`(unixepoch() * 1000)`),
+            .$defaultFn(() => timeNow),
         updatedAt: integer({ mode: "timestamp_ms" })
             .notNull()
-            .default(sql`(unixepoch() * 1000)`)
-            .$onUpdate(() => sql`(unixepoch() * 1000)`),
+            .$defaultFn(() => timeNow)
+            .$onUpdate(() => timeNow),
     },
     (t) => [
         unique("uq_book_notes_chapter_id_position_selected_text").on(t.chapterId, t.position, t.selectedText),

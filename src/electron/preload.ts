@@ -5,6 +5,7 @@ import fs from "fs/promises";
 import { existsSync, lstatSync, rmSync, accessSync, mkdir, read, readFileSync } from "fs";
 import type { IPCChannels } from "@common/types/ipc";
 import * as chokidar from "chokidar";
+import { getFonts } from "font-list";
 
 type FunctionLess<T> = {
     [K in keyof T as T[K] extends () => any ? never : K]: T[K];
@@ -116,10 +117,21 @@ const electronAPI = {
         restore: () => getCurrentWindow().restore(),
         close: () => getCurrentWindow().close(),
         setTitleBarOverlay: () => getCurrentWindow().setTitleBarOverlay,
+        clearEvents: (events?: BrowserWindowEvent[]) => {
+            const window = getCurrentWindow();
+            if (events) {
+                events.forEach((event) => {
+                    window.removeAllListeners(event);
+                });
+            } else {
+                window.removeAllListeners();
+            }
+        },
         on: (event: BrowserWindowEvent, callback: () => void): (() => void) => {
             const handler = () => callback();
-            getCurrentWindow().on(event as any, handler);
-            return () => getCurrentWindow().off(event, handler);
+            const window = getCurrentWindow();
+            window.on(event as any, handler);
+            return () => window.off(event, handler);
         },
         // self: () => getCurrentWindow(),
     },
@@ -175,6 +187,7 @@ contextBridge.exposeInMainWorld("path", pathAPI);
 contextBridge.exposeInMainWorld("electron", electronAPI);
 contextBridge.exposeInMainWorld("chokidar", chokidarAPI);
 contextBridge.exposeInMainWorld("process", processObj);
+contextBridge.exposeInMainWorld("getFonts", getFonts);
 //todo temp only
 contextBridge.exposeInMainWorld("logger", console);
 
@@ -186,5 +199,6 @@ declare global {
         chokidar: typeof chokidarAPI;
         process: typeof processObj;
         logger: typeof console;
+        getFonts: typeof getFonts;
     }
 }

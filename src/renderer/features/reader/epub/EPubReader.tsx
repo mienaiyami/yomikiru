@@ -72,7 +72,7 @@ const EPubReader = () => {
     const [isBookmarked, setBookmarked] = useState(false);
     const [wasMaximized, setWasMaximized] = useState(false);
     // display this text when shortcuts clicked
-    const [shortcutText, setshortcutText] = useState("");
+    const [shortcutText, setShortcutText] = useState("");
     // [0-100]
     const [bookProgress, setBookProgress] = useState(0);
     /** for use when opened file is txt,html,xhtml */
@@ -639,7 +639,7 @@ const EPubReader = () => {
                                 scrollReader(0 - appSettings.epubReaderSettings.scrollSpeedA);
                                 break;
                             case is(shortcutsMapped["showHidePageNumberInZen"]):
-                                setshortcutText(
+                                setShortcutText(
                                     (!appSettings.epubReaderSettings.showProgressInZenMode ? "Show" : "Hide") +
                                         " progress in Zen Mode",
                                 );
@@ -733,7 +733,7 @@ const EPubReader = () => {
                 readerSettingExtender={readerSettingExtender}
                 sizePlusRef={sizePlusRef}
                 sizeMinusRef={sizeMinusRef}
-                setshortcutText={setshortcutText}
+                setShortcutText={setShortcutText}
                 fontSizePlusRef={fontSizePlusRef}
                 fontSizeMinusRef={fontSizeMinusRef}
             />
@@ -747,7 +747,7 @@ const EPubReader = () => {
                         currentChapterFake={currentChapterFake}
                         epubData={epubData}
                         addToBookmarkRef={addToBookmarkRef}
-                        setshortcutText={setshortcutText}
+                        setShortcutText={setShortcutText}
                         isBookmarked={isBookmarked}
                         setBookmarked={setBookmarked}
                         isSideListPinned={isSideListPinned}
@@ -769,7 +769,7 @@ const EPubReader = () => {
                 //         makeScrollPos={makeScrollPos}
                 //         openNextChapterRef={openNextChapterRef}
                 //         openPrevChapterRef={openPrevChapterRef}
-                //         setshortcutText={setshortcutText}
+                //         setShortcutText={setShortcutText}
                 //     />
                 // )}
             }

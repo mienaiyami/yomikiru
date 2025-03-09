@@ -4,7 +4,7 @@ import Main from "./components/Main";
 import TopBar from "./components/TopBar";
 import { refreshAppSettings, setAppSettings } from "@store/appSettings";
 
-import { addBookmark, fetchAllBookmarks, removeBookmark } from "@store/bookmarks";
+import { addBookmark, fetchAllBookmarks, removeBookmark, setBookmarks } from "@store/bookmarks";
 import { refreshThemes, setTheme } from "@store/themes";
 import {
     bookmarksPath,
@@ -170,6 +170,7 @@ const App = (): ReactElement => {
                     });
             }),
         );
+        // todo: these are temp only
         listeners.push(
             window.electron.on("db:library:change", (data) => {
                 const items = data.reduce((acc, item) => {
@@ -177,6 +178,10 @@ const App = (): ReactElement => {
                     return acc;
                 }, {} as Record<string, DatabaseChannels["db:library:getAllAndProgress"]["response"][0]>);
                 dispatch(setLibrary(items));
+            }),
+            window.electron.on("db:bookmark:change", (data) => {
+                dispatch(fetchAllBookmarks());
+                // dispatch(setBookmarks(data));
             }),
         );
         listeners.push(

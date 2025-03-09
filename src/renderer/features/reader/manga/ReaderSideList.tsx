@@ -12,7 +12,7 @@ import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { memo, useEffect, useLayoutEffect, useRef, useState, useContext, useMemo } from "react";
 import { useAppDispatch, useAppSelector } from "@store/hooks";
 // import { updateCurrentHistoryPage } from "../store/history";
-import { addBookmark } from "@store/bookmarks";
+import { addBookmark, removeBookmark } from "@store/bookmarks";
 import { setAppSettings, setReaderSettings } from "@store/appSettings";
 import { setPrevNextChapter } from "@store/prevNextChapter";
 import AnilistBar from "../../anilist/AnilistBar";
@@ -30,9 +30,7 @@ const ReaderSideList = memo(
         openNextChapterRef,
         openPrevChapterRef,
         addToBookmarkRef,
-        setshortcutText,
-        isBookmarked,
-        setBookmarked,
+        setShortcutText,
         isSideListPinned,
         setSideListPinned,
         setSideListWidth,
@@ -41,9 +39,7 @@ const ReaderSideList = memo(
         openNextChapterRef: React.RefObject<HTMLButtonElement>;
         openPrevChapterRef: React.RefObject<HTMLButtonElement>;
         addToBookmarkRef: React.RefObject<HTMLButtonElement>;
-        isBookmarked: boolean;
-        setBookmarked: React.Dispatch<React.SetStateAction<boolean>>;
-        setshortcutText: React.Dispatch<React.SetStateAction<string>>;
+        setShortcutText: React.Dispatch<React.SetStateAction<string>>;
         isSideListPinned: boolean;
         setSideListPinned: React.Dispatch<React.SetStateAction<boolean>>;
         setSideListWidth: React.Dispatch<React.SetStateAction<number>>;
@@ -56,6 +52,7 @@ const ReaderSideList = memo(
         // mangaInReader.link !== linkInReader
         const mangaInReader = useAppSelector(getReaderManga);
         const library = useAppSelector((store) => store.library);
+        const bookmarks = useAppSelector((store) => store.bookmarks);
         const appSettings = useAppSelector((store) => store.appSettings);
         const prevNextChapter = useAppSelector((store) => store.prevNextChapter);
         // const contextMenu = useAppSelector((store) => store.contextMenu);
@@ -68,12 +65,28 @@ const ReaderSideList = memo(
         const [filter, setFilter] = useState<string>("");
         const [isListOpen, setListOpen] = useState(false);
         const [preventListClose, setpreventListClose] = useState(false);
+
         // const prevMangaRef = useRef<string>("");
 
         const [draggingResizer, setDraggingResizer] = useState(false);
 
         const [focused, setFocused] = useState(-1);
         const locationContRef = useRef<HTMLDivElement>(null);
+        const [bookmarkedId, setBookmarkedId] = useState<number | null>(null);
+
+        useEffect(() => {
+            if (mangaInReader?.link) {
+                setBookmarkedId(
+                    bookmarks.manga[mangaInReader.link]?.find(
+                        (b) =>
+                            b.link === mangaInReader.progress?.chapterLink &&
+                            b.page === mangaInReader.progress?.currentPage,
+                    )?.id || null,
+                );
+            } else {
+                setBookmarkedId(null);
+            }
+        }, [bookmarks, mangaInReader]);
 
         useEffect(() => {
             if (
@@ -526,51 +539,44 @@ const ReaderSideList = memo(
                             tooltip="Bookmark"
                             btnRef={addToBookmarkRef}
                             clickAction={() => {
-                                if (isBookmarked) {
+                                if (!mangaInReader || !mangaInReader.progress) return;
+                                const itemLink = mangaInReader.link;
+                                if (bookmarkedId !== null) {
                                     return dialogUtils
                                         .warn({
                                             title: "Warning",
-                                            message:
-                                                "Remove - Remove Bookmark\n" +
-                                                "Replace - Replace existing bookmark with current page number",
+                                            message: "Remove - Remove Bookmark",
                                             noOption: false,
-                                            buttons: ["Cancel", "Remove", "Replace"],
+                                            buttons: ["Cancel", "Remove"],
                                             defaultId: 0,
                                         })
                                         .then(({ response }) => {
-                                            // if (response === 1) {
-                                            //     dispatch(removeBookmark(linkInReader.link));
-                                            //     setshortcutText("Bookmark Removed");
-                                            //     setBookmarked(false);
-                                            // }
-                                            // if (response === 2) {
-                                            //     setshortcutText("Bookmark Updated");
-                                            //     dispatch(
-                                            //         updateBookmark()
-                                            //     );
-                                            // }
+                                            if (response === 1 && mangaInReader) {
+                                                dispatch(
+                                                    removeBookmark({
+                                                        itemLink,
+                                                        type: "manga",
+                                                        ids: [bookmarkedId],
+                                                    }),
+                                                );
+                                            }
                                         });
                                 }
-                                if (mangaInReader?.progress) {
-                                    // was addnewBookmark before
-                                    dispatch(
-                                        addBookmark({
-                                            type: "manga",
-                                            data: {
-                                                itemLink: mangaInReader.progress.itemLink,
-                                                page: mangaInReader.progress.currentPage || 1,
-                                                link: mangaInReader.link || "",
-                                                note: "",
-                                                title: mangaInReader.progress.chapterName || "",
-                                            },
-                                        }),
-                                    );
-                                    setshortcutText("Bookmark Added");
-                                    setBookmarked(true);
-                                }
+                                dispatch(
+                                    addBookmark({
+                                        type: "manga",
+                                        data: {
+                                            itemLink,
+                                            page: mangaInReader.progress.currentPage || 1,
+                                            link: mangaInReader.progress.chapterLink,
+                                            chapterName: mangaInReader.progress.chapterName,
+                                        },
+                                    }),
+                                );
+                                setShortcutText("Bookmark Added");
                             }}
                         >
-                            <FontAwesomeIcon icon={isBookmarked ? faBookmark : farBookmark} />
+                            <FontAwesomeIcon icon={bookmarkedId !== null ? faBookmark : farBookmark} />
                         </Button>
                         <Button
                             className="ctrl-menu-item"

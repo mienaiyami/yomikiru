@@ -193,7 +193,7 @@ export class DatabaseService {
                         itemLink: item.link,
                         chapterId: bookmark.data.chapterData.id,
                         position: bookmark.data.chapterData.elementQueryString,
-                        title: bookmark.data.chapterData.chapterName,
+                        chapterName: bookmark.data.chapterData.chapterName,
                         createdAt: new Date(bookmark.data.date || 0),
                     });
                 }

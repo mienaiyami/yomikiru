@@ -3,6 +3,7 @@ import { dialogUtils } from "@utils/dialog";
 import { formatUtils } from "@utils/file";
 import { useContext, useState, useEffect } from "react";
 import { useAppContext } from "src/renderer/App";
+import { MangaBookmark, BookBookmark } from "@common/types/db";
 
 // todo: need to update this coz wont work with multiple bookmarks
 const BookmarkHistoryListItem = (props: {
@@ -12,22 +13,32 @@ const BookmarkHistoryListItem = (props: {
     link: string;
     // id from db
     id: number;
+    bookmark?: MangaBookmark | BookBookmark;
 }) => {
     const { openInReader, setContextMenuData, contextMenuData } = useAppContext();
     const appSettings = useAppSelector((store) => store.appSettings);
     const libraryItem = useAppSelector((store) => store.library.items[props.link]);
 
+    if (props.isBookmark && !props.bookmark) return <p>Error: Bookmark not found</p>;
+
     // todo: this is temp only until properly implemented
     if (!libraryItem) return <p>Error: Item not found</p>;
     if (libraryItem.type === "manga" && !libraryItem.progress) return <p>Error: Item not found</p>;
-    const link = libraryItem.type === "book" ? libraryItem.link : libraryItem.progress?.chapterLink;
+    const link =
+        props.bookmark && "page" in props.bookmark
+            ? props.bookmark.link
+            : libraryItem.type === "book"
+            ? libraryItem.link
+            : libraryItem.progress?.chapterLink;
     if (!link) return <p>Error: Link not found</p>;
+
     const [contextMenuFocused, setContextMenuFocused] = useState(false);
+
     useEffect(() => {
         if (!contextMenuData) setContextMenuFocused(false);
     }, [contextMenuData]);
-    const title =
-        libraryItem.type === "book"
+    const title = props.isHistory
+        ? libraryItem.type === "book"
             ? `Title       : ${libraryItem.title}\n` +
               `Chapter : ${libraryItem.progress?.chapterName || "~"}\n` +
               `Date      : ${libraryItem.progress?.lastReadAt}\n` +
@@ -37,7 +48,78 @@ const BookmarkHistoryListItem = (props: {
               `Pages    : ${libraryItem.progress?.totalPages}\n` +
               `Page      : ${libraryItem.progress?.currentPage}\n` +
               `Date      : ${libraryItem.progress?.lastReadAt}\n` +
-              `Path      : ${libraryItem.link}`;
+              `Path      : ${libraryItem.link}`
+        : `Title       : ${libraryItem.title}\n` +
+          `Chapter : ${props.bookmark?.chapterName || "~"}\n` +
+          `Date      : ${props.bookmark?.createdAt}\n` +
+          `Path      : ${props.bookmark?.itemLink}`;
+
+    const handleClick = () => {
+        if (!window.fs.existsSync(link)) {
+            dialogUtils.customError({
+                message: "File/folder does not exit.",
+            });
+            return;
+        }
+        let options = {};
+        if (props.isHistory) {
+            options =
+                libraryItem.type === "book"
+                    ? {
+                          epubChapterId: libraryItem.progress?.chapterId,
+                          epubElementQueryString: libraryItem.progress?.position,
+                      }
+                    : { mangaPageNumber: libraryItem.progress?.currentPage || 1 };
+        } else {
+            if (props.bookmark && "chapterId" in props.bookmark) {
+                options = {
+                    epubChapterId: props.bookmark?.chapterId,
+                    epubElementQueryString: props.bookmark?.position,
+                };
+            } else {
+                options = {
+                    mangaPageNumber: props.bookmark?.page,
+                };
+            }
+        }
+
+        openInReader(link, options);
+    };
+
+    const handleContextMenu = (e: React.MouseEvent) => {
+        const items = [
+            window.contextMenu.template.open(link),
+            window.contextMenu.template.openInNewWindow(link),
+            window.contextMenu.template.showInExplorer(link),
+            window.contextMenu.template.copyPath(link),
+            window.contextMenu.template.divider(),
+        ];
+
+        if (props.isHistory) {
+            items.push(window.contextMenu.template.removeHistory(props.link));
+        }
+
+        if (props.isBookmark && props.bookmark) {
+            items.push(
+                window.contextMenu.template.removeBookmark(
+                    props.bookmark.itemLink,
+                    props.bookmark.id,
+                    libraryItem.type,
+                ),
+            );
+        }
+        //  else if (!props.isBookmark) {
+        //     items.push(window.contextMenu.template.addToBookmark(props.link));
+        // }
+
+        setContextMenuFocused(true);
+        setContextMenuData({
+            clickX: e.clientX,
+            clickY: e.clientY,
+            focusBackElem: e.nativeEvent.relatedTarget,
+            items,
+        });
+    };
 
     return (
         <li
@@ -48,55 +130,16 @@ const BookmarkHistoryListItem = (props: {
                 if (node && props.focused) node.scrollIntoView({ block: "nearest" });
             }}
         >
-            <a
-                className="big"
-                onClick={() => {
-                    if (!window.fs.existsSync(link)) {
-                        dialogUtils.customError({
-                            message: "File/folder does not exit.",
-                        });
-                        return;
-                    }
-                    openInReader(
-                        link,
-                        libraryItem.type === "book"
-                            ? {
-                                  epubChapterId: libraryItem.progress?.chapterId,
-                                  epubElementQueryString: libraryItem.progress?.position,
-                              }
-                            : { mangaPageNumber: libraryItem.progress?.currentPage || 1 }
-                    );
-                }}
-                onContextMenu={(e) => {
-                    const items = [
-                        window.contextMenu.template.open(link),
-                        window.contextMenu.template.openInNewWindow(link),
-                        window.contextMenu.template.showInExplorer(link),
-                        window.contextMenu.template.copyPath(link),
-                        window.contextMenu.template.divider(),
-                        window.contextMenu.template.removeHistory(props.link),
-                    ];
-                    // if (props.isBookmark) items.push(window.contextMenu.template.removeBookmark(props.data.link));
-                    // else items.push(window.contextMenu.template.addToBookmark(props));
-                    // if (props.isHistory) items.push(window.contextMenu.template.removeHistory(props.data.link));
-
-                    setContextMenuFocused(true);
-                    setContextMenuData({
-                        clickX: e.clientX,
-                        clickY: e.clientY,
-                        focusBackElem: e.nativeEvent.relatedTarget,
-                        items,
-                    });
-                }}
-            >
+            <a className="big" onClick={handleClick} onContextMenu={handleContextMenu}>
                 {libraryItem.type === "book" ? (
                     <span className="double">
                         <span className="text">{libraryItem.title}</span>
                         <span className="text chapter">
-                            <span className="text">{libraryItem.progress?.chapterName || "~"}</span>
+                            <span className="text">
+                                {props.bookmark?.chapterName || libraryItem.progress?.chapterName || "~"}
+                            </span>
                             &nbsp;&nbsp;&nbsp;
                             <span className="page">
-                                {" "}
                                 <code className="nonFolder">EPUB</code>
                             </span>
                         </span>
@@ -106,14 +149,21 @@ const BookmarkHistoryListItem = (props: {
                         <span className="text">{libraryItem.title}</span>
                         <span className="chapter">
                             <span className="text">
-                                {formatUtils.files.getName(libraryItem.progress?.chapterName || "~")}
+                                {formatUtils.files.getName(
+                                    props.bookmark?.chapterName || libraryItem.progress?.chapterName || "~",
+                                )}
                             </span>
                             &nbsp;&nbsp;&nbsp;
                             <span className="page">
-                                {" "}
-                                {formatUtils.files.test(libraryItem.progress?.chapterName || "~") && (
+                                {formatUtils.files.test(
+                                    props.bookmark?.chapterName || libraryItem.progress?.chapterName || "~",
+                                ) && (
                                     <code className="nonFolder">
-                                        {formatUtils.files.getExt(libraryItem.progress?.chapterName || "~")}
+                                        {formatUtils.files.getExt(
+                                            props.bookmark?.chapterName ||
+                                                libraryItem.progress?.chapterName ||
+                                                "~",
+                                        )}
                                     </code>
                                 )}
                             </span>

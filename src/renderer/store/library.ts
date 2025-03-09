@@ -96,11 +96,6 @@ export const updateCurrentItemProgress = createAsyncThunk(
     },
 );
 
-// export const clearProgress = createAsyncThunk(
-//     "library/clearProgress",
-//     async ({ itemLink }: { itemLink: string }) => {}
-// );
-
 export const updateChaptersRead = createAsyncThunk(
     "library/updateChaptersRead",
     async ({ itemLink, chapterName, read }: { itemLink: string; chapterName: string; read: boolean }) => {

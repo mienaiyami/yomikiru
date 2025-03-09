@@ -23,7 +23,7 @@ const pingDatabaseChange = async <T extends keyof DatabaseChangeChannels>(
             try {
                 // Use type assertion to resolve TypeScript error
                 // This is safe because DatabaseChangeChannels should be part of MainToRendererChannels
-                ipc.send(window.webContents, channel, data);
+                ipc.send(window.webContents, channel as any, data);
             } catch (error) {
                 log.error(`Failed to send ${channel} notification to window:`, error);
             }
@@ -110,13 +110,13 @@ const handlers: {
         return await db.db.select().from(mangaBookmarks).where(eq(mangaBookmarks.itemLink, request.itemLink));
     },
     "db:manga:addBookmark": async (db, request) => {
-        const existing = await db.db
-            .select()
-            .from(mangaBookmarks)
-            .where(and(eq(mangaBookmarks.link, request.link), eq(mangaBookmarks.page, request.page)));
-        if (existing.length > 0) {
-            return existing[0];
-        }
+        // const existing = await db.db
+        //     .select()
+        //     .from(mangaBookmarks)
+        //     .where(and(eq(mangaBookmarks.link, request.link), eq(mangaBookmarks.page, request.page)));
+        // if (existing.length > 0) {
+        //     return existing[0];
+        // }
         // manually doing this makes sure no extra data is added to the db
         const data =
             (
@@ -127,6 +127,7 @@ const handlers: {
                         link: request.link,
                         page: request.page,
                         note: request.note,
+                        chapterName: request.chapterName,
                     })
                     .returning()
             )?.[0] ?? null;
@@ -169,7 +170,7 @@ const handlers: {
                         chapterId: request.chapterId,
                         note: request.note,
                         position: request.position,
-                        title: request.title,
+                        chapterName: request.chapterName,
                     })
                     .returning()
             )?.[0] ?? null;
