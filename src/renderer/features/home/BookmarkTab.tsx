@@ -24,7 +24,10 @@ const BookmarkTab = () => {
         });
         return arr;
     }, [bookmarks]);
-
+    console.log({
+        bookmarks,
+        bookmarksArray,
+    });
     return (
         <div
             className={"contTab listCont " + (!appSettings.showTabs.bookmark ? "collapsed " : "")}
@@ -66,7 +69,7 @@ const BookmarkTab = () => {
                             const keyStr = keyFormatter(e);
                             if (keyStr === "") return;
                             const shortcutsMapped = Object.fromEntries(
-                                shortcuts.map((e) => [e.command, e.keys])
+                                shortcuts.map((e) => [e.command, e.keys]),
                             ) as Record<ShortcutCommands, string[]>;
 
                             // switch (true) {
@@ -125,8 +128,8 @@ const BookmarkTab = () => {
                                               (formatUtils.files.test(window.path.dirname(e.link))
                                                   ? `${window.path.extname(e.link)}`
                                                   : "")
-                                        : e.title + ".epub"
-                                )
+                                        : e.title + ".epub",
+                                ),
                             )
                             .map((e, i, arr) => (
                                 <BookmarkHistoryListItem
@@ -135,7 +138,7 @@ const BookmarkTab = () => {
                                     focused={focused >= 0 && focused % arr.length === i}
                                     link={e.itemLink}
                                     id={e.id}
-                                    key={e.id}
+                                    key={e.id + i}
                                 />
                             ))}
                     </ol>

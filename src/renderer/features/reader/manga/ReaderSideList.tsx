@@ -557,11 +557,9 @@ const ReaderSideList = memo(
                                         addBookmark({
                                             type: "manga",
                                             data: {
-                                                itemLink: window.path.dirname(
-                                                    mangaInReader.progress.itemLink || "",
-                                                ),
+                                                itemLink: mangaInReader.progress.itemLink,
                                                 page: mangaInReader.progress.currentPage || 1,
-                                                link: mangaInReader.progress.itemLink || "",
+                                                link: mangaInReader.link || "",
                                                 note: "",
                                                 title: mangaInReader.progress.chapterName || "",
                                             },

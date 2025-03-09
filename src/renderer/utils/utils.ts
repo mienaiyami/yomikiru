@@ -31,16 +31,6 @@ export const getCSSPath = (el: Element): string => {
 
 window.app.betterSortOrder = Intl.Collator(undefined, { numeric: true, sensitivity: "base" }).compare;
 window.app.deleteDirOnClose = "";
-window.app.currentPageNumber = 1;
-window.app.epubHistorySaveData = null;
-
-// todo: remove dependency on window.app.linkInReader
-window.app.linkInReader = {
-    type: "",
-    link: "",
-    page: 1,
-    chapter: "",
-};
 
 // eslint-disable-next-line @typescript-eslint/ban-ts-comment
 //@ts-ignore

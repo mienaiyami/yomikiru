@@ -55,7 +55,9 @@ const EPubReaderSideList = memo(
         setSideListPinned: React.Dispatch<React.SetStateAction<boolean>>;
         setSideListWidth: React.Dispatch<React.SetStateAction<number>>;
         findInPage: (str: string, forward?: boolean) => void;
-        makeScrollPos: (callback?: ((queryString?: string) => any) | undefined) => void;
+        makeScrollPos: (
+            callback?: (progress: { chapterName: string; chapterId: string; position: string }) => any,
+        ) => void;
         zenMode: boolean;
     }) => {
         const bookInReader = useAppSelector(getReaderBook);
@@ -267,19 +269,18 @@ const EPubReaderSideList = memo(
                                         });
                                 }
                                 if (bookInReader) {
-                                    makeScrollPos(() => {
-                                        if (window.app.epubHistorySaveData)
-                                            dispatch(
-                                                addBookmark({
-                                                    type: "book",
-                                                    data: {
-                                                        ...bookInReader,
-                                                        chapterData: {
-                                                            ...window.app.epubHistorySaveData,
-                                                        },
-                                                    },
-                                                })
-                                            );
+                                    makeScrollPos((progress) => {
+                                        dispatch(
+                                            addBookmark({
+                                                type: "book",
+                                                data: {
+                                                    chapterId: progress.chapterId,
+                                                    position: progress.position,
+                                                    title: progress.chapterName,
+                                                    itemLink: linkInReader,
+                                                },
+                                            }),
+                                        );
                                         setshortcutText("Bookmark Added");
                                         setBookmarked(true);
                                     });
@@ -364,7 +365,7 @@ const EPubReaderSideList = memo(
                                         const href =
                                             epubData.manifest.get(currentChapterFake)?.href || currentChapter.href;
                                         const elem = sideListRef.current.querySelector(
-                                            `a[data-href="${href.replaceAll("\\", "\\\\")}"]`
+                                            `a[data-href="${href.replaceAll("\\", "\\\\")}"]`,
                                         );
                                         //todo : not a good way, state in List stays unchanged
                                         if (elem) {
@@ -436,7 +437,7 @@ const EPubReaderSideList = memo(
                 </div>
             </div>
         );
-    }
+    },
 );
 
 const List = memo(
@@ -521,7 +522,7 @@ const List = memo(
     //todo imp check if need in props
     // focusChapterInList will make sure that it wont rerender when its `false` for performance benefits
     // (prev, next) => !prev.focusChapterInList || prev.currentChapter.href === next.currentChapter.href
-    (prev, next) => prev.currentChapterHref === next.currentChapterHref
+    (prev, next) => prev.currentChapterHref === next.currentChapterHref,
 );
 
 export default EPubReaderSideList;

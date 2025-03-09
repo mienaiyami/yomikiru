@@ -16,7 +16,7 @@ declare global {
         contextMenu: {
             fakeEvent: (
                 elem: HTMLElement | { posX: number; posY: number },
-                focusBackElem?: HTMLElement | null
+                focusBackElem?: HTMLElement | null,
             ) => MouseEvent;
             template: {
                 divider: () => Menu.ListItem;
@@ -45,20 +45,10 @@ declare global {
             // isReaderOpen: boolean;
             clickDelay: number;
             lastClick: number;
-            currentPageNumber: number;
-            //todo remove
-            /**
-             * used in epub reader only
-             */
-            epubHistorySaveData: {
-                chapterName: string;
-                id: string;
-                elementQueryString: string;
-            } | null;
             scrollToPage: (
                 pageNumber_or_percent: number,
                 behavior?: ScrollBehavior,
-                callback?: () => void
+                callback?: () => void,
             ) => void;
             keyRepeated: boolean;
 

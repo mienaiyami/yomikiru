@@ -117,7 +117,19 @@ const handlers: {
         if (existing.length > 0) {
             return existing[0];
         }
-        const data = (await db.db.insert(mangaBookmarks).values(request).returning())?.[0] ?? null;
+        // manually doing this makes sure no extra data is added to the db
+        const data =
+            (
+                await db.db
+                    .insert(mangaBookmarks)
+                    .values({
+                        itemLink: request.itemLink,
+                        link: request.link,
+                        page: request.page,
+                        note: request.note,
+                    })
+                    .returning()
+            )?.[0] ?? null;
         if (data) pingDatabaseChange("db:bookmark:change", await handlers["db:library:getAllBookmarks"](db));
         return data;
     },
@@ -146,8 +158,21 @@ const handlers: {
     "db:book:getBookmarks": async (db, request) => {
         return await db.db.select().from(bookBookmarks).where(eq(bookBookmarks.itemLink, request.itemLink));
     },
+    // manually doing this makes sure no extra data is added to the db
     "db:book:addBookmark": async (db, request) => {
-        const data = (await db.db.insert(bookBookmarks).values(request).returning())?.[0] ?? null;
+        const data =
+            (
+                await db.db
+                    .insert(bookBookmarks)
+                    .values({
+                        itemLink: request.itemLink,
+                        chapterId: request.chapterId,
+                        note: request.note,
+                        position: request.position,
+                        title: request.title,
+                    })
+                    .returning()
+            )?.[0] ?? null;
         if (data) pingDatabaseChange("db:bookmark:change", await handlers["db:library:getAllBookmarks"](db));
         return data;
     },

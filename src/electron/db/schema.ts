@@ -1,5 +1,5 @@
 import { relations, sql } from "drizzle-orm";
-import { sqliteTable, text, integer, unique, uniqueIndex } from "drizzle-orm/sqlite-core";
+import { sqliteTable, text, integer, unique, index } from "drizzle-orm/sqlite-core";
 
 // todo : add relations
 
@@ -60,7 +60,7 @@ export const mangaBookmarks = sqliteTable(
     },
     (t) => [
         unique("uq_manga_bookmarks_link_page").on(t.link, t.page),
-        uniqueIndex("idx_manga_bookmarks_item_link").on(t.itemLink),
+        index("idx_manga_bookmarks_item_link").on(t.itemLink),
     ],
 );
 
@@ -83,7 +83,7 @@ export const bookBookmarks = sqliteTable(
     },
     (t) => [
         unique("uq_book_bookmarks_chapter_id_position").on(t.chapterId, t.position),
-        uniqueIndex("idx_book_bookmarks_item_link").on(t.itemLink),
+        index("idx_book_bookmarks_item_link").on(t.itemLink),
     ],
 );
 
@@ -111,7 +111,7 @@ export const bookNotes = sqliteTable(
     },
     (t) => [
         unique("uq_book_notes_chapter_id_position_selected_text").on(t.chapterId, t.position, t.selectedText),
-        uniqueIndex("idx_book_notes_item_link").on(t.itemLink),
+        index("idx_book_notes_item_link").on(t.itemLink),
     ],
 );
 

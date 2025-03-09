@@ -583,7 +583,6 @@ const Reader = () => {
         setChapterChangerDisplay(false);
         const linkSplitted = link.split(window.path.sep).filter((e) => e !== "");
 
-        //todo test
         const progress: MangaProgress = {
             chapterLink: link,
             currentPage: readerState?.mangaPageNumber || 1,
@@ -603,14 +602,20 @@ const Reader = () => {
             dispatch(updateMangaProgress(progress));
         } else {
             const mangaOpened = {
-                title: linkSplitted[linkSplitted.length - 2],
                 type: "manga",
+                link: window.path.dirname(link),
+                title: linkSplitted[linkSplitted.length - 2],
                 author: null,
                 cover: imgs[0],
                 createdAt: new Date(),
                 updatedAt: new Date(),
-                link: window.path.dirname(link),
             } as const;
+            dispatch(
+                updateReaderContent({
+                    ...mangaOpened,
+                    progress,
+                }),
+            );
             dispatch(
                 addLibraryItem({
                     type: "manga",

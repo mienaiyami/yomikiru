@@ -177,24 +177,23 @@ export const addBookmark = createAsyncThunk(
         type: "manga" | "book";
     }) => {
         const bookmark = await window.electron.invoke(`db:${type}:addBookmark`, data);
-        console.log({ bookmark });
         if (!bookmark) throw new Error("Failed to add bookmark");
         return { bookmark, type };
-    }
+    },
 );
 export const removeBookmark = createAsyncThunk(
     "bookmarks/remove",
     async ({ itemLink, type, ids }: { itemLink: string; type: "manga" | "book"; ids: number[] }) => {
         const res = await window.electron.invoke(`db:${type}:deleteBookmarks`, { itemLink, ids });
         return { itemLink, type, ids };
-    }
+    },
 );
 export const removeAllBookmarks = createAsyncThunk(
     "bookmarks/removeAll",
     async ({ itemLink, type }: { itemLink: string; type: "manga" | "book" }) => {
         await window.electron.invoke(`db:${type}:deleteBookmarks`, { itemLink, ids: [] });
         return { itemLink, type };
-    }
+    },
 );
 
 const bookmarksSlice = createSlice({

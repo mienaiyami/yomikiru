@@ -206,7 +206,6 @@ const readerSlice = createSlice({
             >,
         ) => {
             const { chapterId, position, chapterName } = action.payload;
-            console.log("updateReaderBookProgress", state.content?.progress);
             if (state.type === "book" && state.content?.progress) {
                 state.content.progress.chapterId = chapterId || state.content.progress.chapterId;
                 state.content.progress.position = position || state.content.progress.position;

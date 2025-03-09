@@ -1,0 +1,496 @@
+{
+  "version": "6",
+  "dialect": "sqlite",
+  "id": "ebcdc2ad-f25e-4ed2-b235-17e6d75ee21b",
+  "prevId": "bd347761-f4f2-4d3b-9720-56134be6c738",
+  "tables": {
+    "book_bookmarks": {
+      "name": "book_bookmarks",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "integer",
+          "primaryKey": true,
+          "notNull": true,
+          "autoincrement": true
+        },
+        "itemLink": {
+          "name": "itemLink",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "chapterId": {
+          "name": "chapterId",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "position": {
+          "name": "position",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "title": {
+          "name": "title",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "note": {
+          "name": "note",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        },
+        "createdAt": {
+          "name": "createdAt",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false,
+          "default": "(unixepoch() * 1000)"
+        }
+      },
+      "indexes": {
+        "idx_book_bookmarks_item_link": {
+          "name": "idx_book_bookmarks_item_link",
+          "columns": [
+            "itemLink"
+          ],
+          "isUnique": false
+        },
+        "uq_book_bookmarks_chapter_id_position": {
+          "name": "uq_book_bookmarks_chapter_id_position",
+          "columns": [
+            "chapterId",
+            "position"
+          ],
+          "isUnique": true
+        }
+      },
+      "foreignKeys": {
+        "book_bookmarks_itemLink_library_items_link_fk": {
+          "name": "book_bookmarks_itemLink_library_items_link_fk",
+          "tableFrom": "book_bookmarks",
+          "tableTo": "library_items",
+          "columnsFrom": [
+            "itemLink"
+          ],
+          "columnsTo": [
+            "link"
+          ],
+          "onDelete": "cascade",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "checkConstraints": {}
+    },
+    "book_notes": {
+      "name": "book_notes",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "integer",
+          "primaryKey": true,
+          "notNull": true,
+          "autoincrement": true
+        },
+        "itemLink": {
+          "name": "itemLink",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "chapterId": {
+          "name": "chapterId",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "position": {
+          "name": "position",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "content": {
+          "name": "content",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "selectedText": {
+          "name": "selectedText",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "color": {
+          "name": "color",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "createdAt": {
+          "name": "createdAt",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false,
+          "default": "(unixepoch() * 1000)"
+        },
+        "updatedAt": {
+          "name": "updatedAt",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false,
+          "default": "(unixepoch() * 1000)"
+        }
+      },
+      "indexes": {
+        "idx_book_notes_item_link": {
+          "name": "idx_book_notes_item_link",
+          "columns": [
+            "itemLink"
+          ],
+          "isUnique": false
+        },
+        "uq_book_notes_chapter_id_position_selected_text": {
+          "name": "uq_book_notes_chapter_id_position_selected_text",
+          "columns": [
+            "chapterId",
+            "position",
+            "selectedText"
+          ],
+          "isUnique": true
+        }
+      },
+      "foreignKeys": {
+        "book_notes_itemLink_library_items_link_fk": {
+          "name": "book_notes_itemLink_library_items_link_fk",
+          "tableFrom": "book_notes",
+          "tableTo": "library_items",
+          "columnsFrom": [
+            "itemLink"
+          ],
+          "columnsTo": [
+            "link"
+          ],
+          "onDelete": "cascade",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "checkConstraints": {}
+    },
+    "book_progress": {
+      "name": "book_progress",
+      "columns": {
+        "itemLink": {
+          "name": "itemLink",
+          "type": "text",
+          "primaryKey": true,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "chapterId": {
+          "name": "chapterId",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "chapterName": {
+          "name": "chapterName",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false,
+          "default": "'~'"
+        },
+        "position": {
+          "name": "position",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "lastReadAt": {
+          "name": "lastReadAt",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {
+        "book_progress_itemLink_library_items_link_fk": {
+          "name": "book_progress_itemLink_library_items_link_fk",
+          "tableFrom": "book_progress",
+          "tableTo": "library_items",
+          "columnsFrom": [
+            "itemLink"
+          ],
+          "columnsTo": [
+            "link"
+          ],
+          "onDelete": "cascade",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "checkConstraints": {}
+    },
+    "library_items": {
+      "name": "library_items",
+      "columns": {
+        "link": {
+          "name": "link",
+          "type": "text",
+          "primaryKey": true,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "type": {
+          "name": "type",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "title": {
+          "name": "title",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "updatedAt": {
+          "name": "updatedAt",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false,
+          "default": "(unixepoch() * 1000)"
+        },
+        "createdAt": {
+          "name": "createdAt",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false,
+          "default": "(unixepoch() * 1000)"
+        },
+        "author": {
+          "name": "author",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        },
+        "cover": {
+          "name": "cover",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {},
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "checkConstraints": {}
+    },
+    "manga_bookmarks": {
+      "name": "manga_bookmarks",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "integer",
+          "primaryKey": true,
+          "notNull": true,
+          "autoincrement": true
+        },
+        "itemLink": {
+          "name": "itemLink",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "page": {
+          "name": "page",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "link": {
+          "name": "link",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "note": {
+          "name": "note",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false,
+          "default": "''"
+        },
+        "createdAt": {
+          "name": "createdAt",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false,
+          "default": "(unixepoch() * 1000)"
+        }
+      },
+      "indexes": {
+        "idx_manga_bookmarks_item_link": {
+          "name": "idx_manga_bookmarks_item_link",
+          "columns": [
+            "itemLink"
+          ],
+          "isUnique": false
+        },
+        "uq_manga_bookmarks_link_page": {
+          "name": "uq_manga_bookmarks_link_page",
+          "columns": [
+            "link",
+            "page"
+          ],
+          "isUnique": true
+        }
+      },
+      "foreignKeys": {
+        "manga_bookmarks_itemLink_library_items_link_fk": {
+          "name": "manga_bookmarks_itemLink_library_items_link_fk",
+          "tableFrom": "manga_bookmarks",
+          "tableTo": "library_items",
+          "columnsFrom": [
+            "itemLink"
+          ],
+          "columnsTo": [
+            "link"
+          ],
+          "onDelete": "cascade",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "checkConstraints": {}
+    },
+    "manga_progress": {
+      "name": "manga_progress",
+      "columns": {
+        "itemLink": {
+          "name": "itemLink",
+          "type": "text",
+          "primaryKey": true,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "chapterName": {
+          "name": "chapterName",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "chapterLink": {
+          "name": "chapterLink",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "currentPage": {
+          "name": "currentPage",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false,
+          "default": 1
+        },
+        "chaptersRead": {
+          "name": "chaptersRead",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false,
+          "default": "'[]'"
+        },
+        "totalPages": {
+          "name": "totalPages",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false,
+          "default": 0
+        },
+        "lastReadAt": {
+          "name": "lastReadAt",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false,
+          "default": "(unixepoch() * 1000)"
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {
+        "manga_progress_itemLink_library_items_link_fk": {
+          "name": "manga_progress_itemLink_library_items_link_fk",
+          "tableFrom": "manga_progress",
+          "tableTo": "library_items",
+          "columnsFrom": [
+            "itemLink"
+          ],
+          "columnsTo": [
+            "link"
+          ],
+          "onDelete": "cascade",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "checkConstraints": {}
+    }
+  },
+  "views": {},
+  "enums": {},
+  "_meta": {
+    "schemas": {},
+    "tables": {},
+    "columns": {}
+  },
+  "internal": {
+    "indexes": {}
+  }
+}

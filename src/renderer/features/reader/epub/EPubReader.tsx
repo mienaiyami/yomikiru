@@ -1,16 +1,5 @@
-import React, {
-    useContext,
-    useEffect,
-    useLayoutEffect,
-    useRef,
-    useState,
-    memo,
-    useCallback,
-    useMemo,
-} from "react";
-import * as css from "css";
+import React, { useEffect, useLayoutEffect, useRef, useState, memo, useCallback } from "react";
 
-import { BookHistoryItem } from "@common/types/legacy";
 import { useAppContext } from "src/renderer/App";
 import { useAppDispatch, useAppSelector } from "@store/hooks";
 import { setAppSettings, setEpubReaderSettings, setReaderSettings } from "@store/appSettings";
@@ -22,139 +11,16 @@ import { addLibraryItem, selectLibraryItem, updateBookProgress, updateCurrentIte
 import { dialogUtils } from "@utils/dialog";
 import { getCSSPath } from "@utils/utils";
 import { keyFormatter } from "@utils/keybindings";
-import { getReaderBook, setReaderLoading, setReaderOpen, updateReaderBookProgress } from "@store/reader";
+import {
+    getReaderBook,
+    setReaderLoading,
+    setReaderOpen,
+    updateReaderContent,
+    updateReaderBookProgress,
+} from "@store/reader";
 import { BookProgress } from "@common/types/db";
-
-const StyleSheets = memo(
-    ({ sheets }: { sheets: string[] }) => {
-        return (
-            <div
-                className="stylesheets"
-                ref={(node) => {
-                    if (node) {
-                        // todo check async behavior
-                        sheets.forEach(async (url) => {
-                            try {
-                                const stylesheet = document.createElement("style");
-                                let txt = await window.fs.readFile(url, "utf-8");
-                                const matches = Array.from(txt.matchAll(/url\((.*?)\);/gi));
-                                matches.forEach((e) => {
-                                    // for font
-                                    const url_old = e[1].slice(1, -1);
-                                    txt = txt.replaceAll(
-                                        url_old,
-                                        "file://" +
-                                            window.path
-                                                .join(window.path.dirname(url), url_old)
-                                                .replaceAll("\\", "/"),
-                                    );
-                                });
-                                // to make sure styles don't apply outside
-                                // todo, can use scope in latest version of electron
-                                const ast = css.parse(txt);
-                                ast.stylesheet?.rules.forEach((e) => {
-                                    if (e.type === "rule") {
-                                        (e as css.Rule).selectors = (e as css.Rule).selectors?.map((e) =>
-                                            e.includes("section.main") ? e : "#EPubReader section.main " + e,
-                                        );
-                                    }
-                                });
-                                txt = css.stringify(ast);
-                                stylesheet.innerHTML = txt;
-                                node.appendChild(stylesheet);
-                            } catch (e) {
-                                window.logger.error("Error occurred while loading stylesheet.", e);
-                            }
-                        });
-                    }
-                }}
-            ></div>
-        );
-    },
-    (prev, next) => prev.sheets.length === next.sheets.length && prev.sheets[0] === next.sheets[0],
-);
-const HTMLPart = memo(
-    ({
-        epubManifest,
-        onEpubLinkClick,
-        currentChapter,
-    }: {
-        epubManifest: EPUB.Manifest;
-        //todo ignoring for now, to make it easier, always true
-        // loadOneChapter: boolean;
-        currentChapter: {
-            id: string;
-            /** id of element to scroll to, `#` part of url */
-            fragment: string;
-            /** query string of element to scroll to, take priority over `fragment` */
-            elementQuery: string;
-        };
-        // bookmarkedElem: string;
-        onEpubLinkClick: (ev: MouseEvent | React.MouseEvent<HTMLAnchorElement, MouseEvent>) => void;
-    }) => {
-        const { setContextMenuData } = useAppContext();
-        const [rendered, setRendered] = useState(false);
-        const onContextMenu = (ev: MouseEvent) => {
-            ev.stopPropagation();
-            const target = ev.currentTarget as Element;
-            const url = target.getAttribute("src") || target.getAttribute("data-src") || "";
-            setContextMenuData({
-                clickX: ev.clientX,
-                clickY: ev.clientY,
-                items: [
-                    window.contextMenu.template.copyImage(url),
-                    window.contextMenu.template.showInExplorer(url),
-                    window.contextMenu.template.copyPath(url),
-                ],
-            });
-        };
-        // console.log("rendered", currentChapter);
-        return (
-            <div
-                className="cont htmlCont"
-                key={currentChapter.id + currentChapter.fragment}
-                ref={async (node) => {
-                    if (node && !rendered) {
-                        // to prevent multiple calls
-                        setRendered(true);
-                        const manifestItem = epubManifest.get(currentChapter.id);
-                        if (!manifestItem) {
-                            console.error("Error: manifest item not found for id:", currentChapter.id);
-                            return;
-                        }
-                        const url = manifestItem.href;
-                        const htmlStr = await EPUB.readChapter(url);
-                        node.id = "epub-" + currentChapter.id;
-                        node.innerHTML = htmlStr;
-                        node.querySelectorAll("a").forEach((e) => {
-                            e.addEventListener("click", onEpubLinkClick);
-                        });
-                        node.querySelectorAll("img, image").forEach((e) => {
-                            (e as HTMLElement).oncontextmenu = onContextMenu;
-                        });
-                        if (currentChapter.elementQuery) {
-                            setTimeout(() => {
-                                const el = node.querySelector(currentChapter.elementQuery);
-                                if (el) el.scrollIntoView({ block: "start" });
-                            });
-                        } else if (currentChapter.fragment) {
-                            setTimeout(() => {
-                                const el = node.querySelector(`[data-epub-id="${currentChapter.fragment}"]`);
-                                if (el) el.scrollIntoView({ block: "start" });
-                            });
-                        }
-                    }
-                }}
-            ></div>
-        );
-    },
-    (prev, next) => {
-        const currentChapterId = prev.currentChapter.id === next.currentChapter.id;
-        const currentChapterFragment = prev.currentChapter.fragment === next.currentChapter.fragment;
-        const epubManifest = prev.epubManifest.size === next.epubManifest.size;
-        return currentChapterId && currentChapterFragment && epubManifest;
-    },
-);
+import HTMLPart from "./HTMLPart";
+import StyleSheets from "./StyleSheets";
 
 type EPubData = {
     metadata: EPUB.MetaData;
@@ -196,6 +62,8 @@ const EPubReader = () => {
     /**
      *  css selector of element which was on top of view before changing size,etc.
      *  also used on first load to scroll to last read position
+     *  TODO: remove and use `readerState.content.progress.position`
+     * @deprecated
      */
     const [elemBeforeChange, setElemBeforeChange] = useState(readerState.epubElementQueryString || "");
     const [isSideListPinned, setSideListPinned] = useState(false);
@@ -452,18 +320,33 @@ const EPubReader = () => {
                     lastReadAt: new Date(),
                 };
                 if (libraryItem && libraryItem.type === "book") {
+                    dispatch(
+                        updateReaderContent({
+                            ...libraryItem,
+                            progress,
+                        }),
+                    );
                     await dispatch(updateBookProgress({ data: progress, itemLink: link }));
                 } else {
+                    const bookOpened = {
+                        type: "book",
+                        link,
+                        title: ed.metadata.title,
+                        author: ed.metadata.author,
+                        cover: ed.metadata.cover,
+                        createdAt: new Date(),
+                        updatedAt: new Date(),
+                    } as const;
+                    dispatch(
+                        updateReaderContent({
+                            ...bookOpened,
+                            progress,
+                        }),
+                    );
                     await dispatch(
                         addLibraryItem({
                             type: "book",
-                            data: {
-                                type: "book",
-                                link,
-                                title: ed.metadata.title,
-                                author: ed.metadata.author,
-                                cover: ed.metadata.cover,
-                            },
+                            data: bookOpened,
                             progress,
                         }),
                     );
@@ -489,7 +372,7 @@ const EPubReader = () => {
     };
 
     const makeScrollPos = useCallback(
-        (callback?: (queryString?: string) => void) => {
+        (callback?: (progress: { chapterName: string; chapterId: string; position: string }) => void) => {
             // todo, isn't a great way maybe, sometimes doesn't work, catches wrong element
             // but using % is not good either because height change is not constant if it contains images
             if (mainRef.current) {
@@ -507,14 +390,15 @@ const EPubReader = () => {
                     y += 10;
                 }
                 if (elem) {
-                    const fff = getCSSPath(elem);
-                    window.app.epubHistorySaveData = {
+                    const cssPath = getCSSPath(elem);
+                    const progress = {
                         chapterName: epubData?.manifest.get(currentChapterFake)?.title || "~",
-                        id: epubData?.spine[currentChapter.index].id || "",
-                        elementQueryString: fff,
+                        chapterId: epubData?.spine[currentChapter.index].id || "",
+                        position: cssPath,
                     };
-                    if (callback) callback(fff);
-                    setElemBeforeChange(fff);
+                    if (callback) callback(progress);
+                    dispatch(updateReaderBookProgress(progress));
+                    setElemBeforeChange(cssPath);
                 }
             }
         },

@@ -61,7 +61,6 @@ export const deleteLibraryItem = createAsyncThunk(
     },
 );
 
-// todo: this is temp only, plan to remove window.app.linkInReader and window.app.epubHistorySaveData
 export const updateCurrentItemProgress = createAsyncThunk(
     "library/updateCurrentItemProgress",
     async (_, { getState }) => {
@@ -71,9 +70,6 @@ export const updateCurrentItemProgress = createAsyncThunk(
             console.error("No link in reader");
             return;
         }
-        console.log({
-            readerState,
-        });
         if (readerState.type === "book" && readerState.content?.progress) {
             const res = await window.electron.invoke("db:book:updateProgress", {
                 itemLink: readerState.link,

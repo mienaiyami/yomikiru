@@ -15,6 +15,13 @@
       "when": 1741474819850,
       "tag": "0001_loving_caretaker",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "6",
+      "when": 1741479705343,
+      "tag": "0002_dear_xavin",
+      "breakpoints": true
     }
   ]
 }
