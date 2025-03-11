@@ -1,9 +1,11 @@
-import { useAppSelector } from "@store/hooks";
+import { useAppDispatch, useAppSelector } from "@store/hooks";
 import { dialogUtils } from "@utils/dialog";
 import { formatUtils } from "@utils/file";
 import { useContext, useState, useEffect } from "react";
 import { useAppContext } from "src/renderer/App";
 import { MangaBookmark, BookBookmark } from "@common/types/db";
+import { removeBookmark } from "@store/bookmarks";
+import { deleteLibraryItem } from "@store/library";
 
 // todo: need to update this coz wont work with multiple bookmarks
 const BookmarkHistoryListItem = (props: {
@@ -16,6 +18,7 @@ const BookmarkHistoryListItem = (props: {
     bookmark?: MangaBookmark | BookBookmark;
 }) => {
     const { openInReader, setContextMenuData, contextMenuData } = useAppContext();
+    const dispatch = useAppDispatch();
     const appSettings = useAppSelector((store) => store.appSettings);
     const libraryItem = useAppSelector((store) => store.library.items[props.link]);
 
@@ -56,9 +59,33 @@ const BookmarkHistoryListItem = (props: {
 
     const handleClick = () => {
         if (!window.fs.existsSync(link)) {
-            dialogUtils.customError({
-                message: "File/folder does not exit.",
-            });
+            dialogUtils
+                .confirm({
+                    type: "error",
+                    message: "File/folder does not exit. Remove item from library?",
+                    noOption: false,
+                    defaultId: 0,
+                    cancelId: 1,
+                })
+                .then((res) => {
+                    if (res.response === 0) {
+                        if (props.bookmark) {
+                            dispatch(
+                                removeBookmark({
+                                    itemLink: libraryItem.link,
+                                    ids: [props.id],
+                                    type: libraryItem.type,
+                                }),
+                            );
+                        } else {
+                            dispatch(
+                                deleteLibraryItem({
+                                    link: libraryItem.link,
+                                }),
+                            );
+                        }
+                    }
+                });
             return;
         }
         let options = {};

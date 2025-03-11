@@ -54,7 +54,13 @@ type DialogUtils = {
         title?: string;
         message: string;
         detail?: string;
+        /**
+         * @default true
+         */
         noOption?: boolean;
+        /**
+         * @default ["Yes","No"]
+         */
         buttons?: string[];
         defaultId?: number;
         cancelId?: number;
