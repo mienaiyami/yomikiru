@@ -1,12 +1,11 @@
 import { createSlice, createAsyncThunk, PayloadAction } from "@reduxjs/toolkit";
 import { DatabaseChannels } from "@common/types/ipc";
-import { useAppSelector } from "./hooks";
 import { RootState } from ".";
 
 // todo : add proper error handling
 
 type LibraryState = {
-    items: Record<string, DatabaseChannels["db:library:getAllAndProgress"]["response"][0]>;
+    items: Record<string, DatabaseChannels["db:library:getAllAndProgress"]["response"][0] | null>;
     // mangaProgress: Record<string, MangaProgress>;
     // bookProgress: Record<string, BookProgress>;
     loading: boolean;
@@ -72,21 +71,13 @@ export const updateCurrentItemProgress = createAsyncThunk(
         }
         if (readerState.type === "book" && readerState.content?.progress) {
             const res = await window.electron.invoke("db:book:updateProgress", {
-                itemLink: readerState.link,
-                data: {
-                    chapterId: readerState.content.progress.chapterId,
-                    chapterName: readerState.content.progress.chapterName,
-                    position: readerState.content.progress.position,
-                },
+                ...readerState.content.progress,
             });
             if (!res) throw new Error("Failed to update progress");
             return res;
         } else if (readerState.type === "manga" && readerState.content?.progress) {
             const res = await window.electron.invoke("db:manga:updateProgress", {
-                itemLink: window.path.dirname(readerState.link),
-                chapterLink: readerState.content.progress.chapterLink,
-                currentPage: readerState.content.progress.currentPage,
-                chapterName: readerState.content.progress.chapterName,
+                ...readerState.content.progress,
             });
             if (!res) throw new Error("Failed to update progress");
             return res;
@@ -148,47 +139,6 @@ const librarySlice = createSlice({
                 state.loading = false;
                 state.error = action.error.message || "Failed to load items";
             });
-
-        // for now re fetch all items on change
-
-        // .addCase(addLibraryItem.fulfilled, (state, action: PayloadAction<LibraryItem>) => {
-        //     const items = new Map(state.items);
-        //     items.set(action.payload.link, action.payload);
-        //     state.items = items;
-        //     // todo: add progress
-        // })
-        // .addCase(updateMangaProgress.fulfilled, (state, action) => {
-        //     const mangaProgress = new Map(state.mangaProgress);
-        //     mangaProgress.set(action.payload.itemLink, {
-        //         ...action.payload,
-        //     } as MangaProgress);
-        //     state.mangaProgress = mangaProgress;
-        // })
-        // .addCase(updateBookProgress.fulfilled, (state, action) => {
-        //     const bookProgress = new Map(state.bookProgress);
-        //     bookProgress.set(action.payload.itemLink, {
-        //         ...action.payload,
-        //     } as BookProgress);
-        //     state.bookProgress = bookProgress;
-        // })
-        // .addCase(updateChaptersRead.fulfilled, (state, action) => {
-        //     const { itemLink, chapterRead } = action.payload;
-        //     const mangaProgress = new Map(state.mangaProgress);
-        //     const progress = state.mangaProgress.get(itemLink);
-        //     if (progress) {
-        //         progress.chaptersRead = chapterRead;
-        //     }
-        //     state.mangaProgress = mangaProgress;
-        // })
-        // .addCase(updateChaptersReadAll.fulfilled, (state, action) => {
-        //     const { itemLink, chaptersRead } = action.payload;
-        //     const mangaProgress = new Map(state.mangaProgress);
-        //     const progress = mangaProgress.get(itemLink);
-        //     if (progress) {
-        //         progress.chaptersRead = chaptersRead;
-        //     }
-        //     state.mangaProgress = mangaProgress;
-        // });
     },
 });
 

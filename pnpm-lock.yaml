@@ -53,6 +53,9 @@ importers:
       drizzle-orm:
         specifier: ^0.39.3
         version: 0.39.3(@types/better-sqlite3@7.6.12)(better-sqlite3@11.8.1)
+      drizzle-zod:
+        specifier: ^0.7.0
+        version: 0.7.0(drizzle-orm@0.39.3(@types/better-sqlite3@7.6.12)(better-sqlite3@11.8.1))(zod@3.22.3)
       electron-dl:
         specifier: ^3.5.0
         version: 3.5.0
@@ -2027,6 +2030,12 @@ packages:
         optional: true
       sqlite3:
         optional: true
+
+  drizzle-zod@0.7.0:
+    resolution: {integrity: sha512-xgCRYYVEzRkeXTS33GSMgoowe3vKsMNBjSI+cwG1oLQVEhAWWbqtb/AAMlm7tkmV4fG/uJjEmWzdzlEmTgWOoQ==}
+    peerDependencies:
+      drizzle-orm: '>=0.36.0'
+      zod: '>=3.0.0'
 
   dunder-proto@1.0.1:
     resolution: {integrity: sha512-KIN/nDJBQRcXw0MLVhZE9iQHmG68qAVIBg9CqmUYjmQIhgij9U5MFvrqkUL5FbtyyzZuOeOt0zdeRe4UY7ct+A==}
@@ -6851,6 +6860,11 @@ snapshots:
     optionalDependencies:
       '@types/better-sqlite3': 7.6.12
       better-sqlite3: 11.8.1
+
+  drizzle-zod@0.7.0(drizzle-orm@0.39.3(@types/better-sqlite3@7.6.12)(better-sqlite3@11.8.1))(zod@3.22.3):
+    dependencies:
+      drizzle-orm: 0.39.3(@types/better-sqlite3@7.6.12)(better-sqlite3@11.8.1)
+      zod: 3.22.3
 
   dunder-proto@1.0.1:
     dependencies:

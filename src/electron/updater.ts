@@ -4,7 +4,7 @@ import { IS_PORTABLE } from "./util";
 import { spawn } from "child_process";
 import { app, BrowserWindow, dialog, shell } from "electron";
 import fetch from "electron-fetch";
-import crossZip from "cross-zip";
+import * as crossZip from "cross-zip";
 import logger from "electron-log";
 import { download, File } from "electron-dl";
 import { exec as execSudo } from "@vscode/sudo-prompt";
@@ -53,7 +53,7 @@ const checkForAnnouncements = async () => {
                     if (res.response === 0) newAnnouncements.forEach((e) => shell.openExternal(e));
                     else if (res.response === 1)
                         shell.openExternal(
-                            "https://github.com/mienaiyami/yomikiru/discussions/categories/announcements"
+                            "https://github.com/mienaiyami/yomikiru/discussions/categories/announcements",
                         );
                 });
     } catch (error) {
@@ -71,11 +71,11 @@ const checkForUpdate = async (
     windowId: number,
     skipMinor = false,
     promptAfterCheck = false,
-    autoDownload = false
+    autoDownload = false,
 ) => {
     checkForAnnouncements();
     const rawdata = await fetch("https://api.github.com/repos/mienaiyami/yomikiru/releases").then((data) =>
-        data.json()
+        data.json(),
     );
     const latestVersion: number[] = await rawdata
         .find((e: any) => e.tag_name.charAt(0) === "v")
@@ -200,7 +200,7 @@ const downloadUpdates = (latestVersion: string, windowId: number, silent = false
     const downloadFile = (
         dl: string,
         webContents: Electron.WebContents | false,
-        callback: (file: File) => void
+        callback: (file: File) => void,
     ) => {
         download(window, dl, {
             directory: tempPath,
@@ -248,9 +248,9 @@ const downloadUpdates = (latestVersion: string, windowId: number, silent = false
                                 ` Get-ChildItem * -Recurse -Force | Where-Object { $_.FullName -notmatch 'userdata'} | Remove-Item -Force -Recurse ;` +
                                 ` Write-Output 'Moving extracted files...' ; Start-Sleep -Seconds 1.9;  Move-Item -Path '${extractPath}\\*' -Destination '${appDirName}' ; ` +
                                 ` Write-Output 'Updated, launching app.' ; Start-Sleep -Seconds 2.0 ;  explorer '${app.getPath(
-                                    "exe"
+                                    "exe",
                                 )}' ; ; "`,
-                            { shell: true, cwd: appDirName }
+                            { shell: true, cwd: appDirName },
                         ).on("exit", process.exit);
                         logger.log("Quitting app...");
                     });
@@ -271,7 +271,7 @@ const downloadUpdates = (latestVersion: string, windowId: number, silent = false
                         `cmd.exe /c start powershell.exe "Write-Output 'Starting update...' ; Start-Sleep -Seconds 5.0 ; Start-Process '${file.path}'"`,
                         {
                             shell: true,
-                        }
+                        },
                     ).on("exit", process.exit);
                     logger.log("Quitting app...");
                 });
@@ -301,7 +301,7 @@ const downloadUpdates = (latestVersion: string, windowId: number, silent = false
                             (err) => {
                                 if (err) throw err;
                                 logger.log("Installing updates...");
-                            }
+                            },
                         );
                     } else {
                         app.on("before-quit", () => {
@@ -318,7 +318,7 @@ const downloadUpdates = (latestVersion: string, windowId: number, silent = false
                                     });
                                     if (err) throw err;
                                     logger.log("Installing updates...");
-                                }
+                                },
                             );
                         });
                     }

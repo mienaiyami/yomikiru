@@ -12,11 +12,9 @@ export const libraryItems = sqliteTable("library_items", {
     title: text().notNull(),
     updatedAt: integer({ mode: "timestamp_ms" })
         .notNull()
-        .$defaultFn(() => timeNow)
+        .default(timeNow)
         .$onUpdate(() => timeNow),
-    createdAt: integer({ mode: "timestamp_ms" })
-        .notNull()
-        .$defaultFn(() => timeNow),
+    createdAt: integer({ mode: "timestamp_ms" }).notNull().default(timeNow),
     author: text(),
     cover: text(),
 });
@@ -30,9 +28,8 @@ export const mangaProgress = sqliteTable("manga_progress", {
     currentPage: integer().default(1).notNull(),
     chaptersRead: text({ mode: "json" }).$type<string[]>().notNull().default([]),
     totalPages: integer().default(0).notNull(),
-    lastReadAt: integer({ mode: "timestamp_ms" })
-        .notNull()
-        .$defaultFn(() => timeNow),
+    // cant be onUpdate because not related
+    lastReadAt: integer({ mode: "timestamp_ms" }).notNull().default(timeNow),
 });
 
 export const bookProgress = sqliteTable("book_progress", {
@@ -57,9 +54,7 @@ export const mangaBookmarks = sqliteTable(
         page: integer().notNull(),
         link: text().notNull(),
         note: text().default(""),
-        createdAt: integer({ mode: "timestamp_ms" })
-            .notNull()
-            .$defaultFn(() => timeNow),
+        createdAt: integer({ mode: "timestamp_ms" }).notNull().default(timeNow),
     },
     (t) => [
         unique("uq_manga_bookmarks_link_page").on(t.link, t.page),
@@ -82,9 +77,7 @@ export const bookBookmarks = sqliteTable(
         // removing title in favor of chapterName because its confusing
         // title: text().notNull(),
         note: text(),
-        createdAt: integer({ mode: "timestamp_ms" })
-            .notNull()
-            .$defaultFn(() => timeNow),
+        createdAt: integer({ mode: "timestamp_ms" }).notNull().default(timeNow),
     },
     (t) => [
         unique("uq_book_bookmarks_chapter_id_position").on(t.chapterId, t.position),
@@ -106,12 +99,10 @@ export const bookNotes = sqliteTable(
         content: text().notNull(),
         selectedText: text().notNull(),
         color: text().notNull(),
-        createdAt: integer({ mode: "timestamp_ms" })
-            .notNull()
-            .$defaultFn(() => timeNow),
+        createdAt: integer({ mode: "timestamp_ms" }).notNull().default(timeNow),
         updatedAt: integer({ mode: "timestamp_ms" })
             .notNull()
-            .$defaultFn(() => timeNow)
+            .default(timeNow)
             .$onUpdate(() => timeNow),
     },
     (t) => [

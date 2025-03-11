@@ -5,7 +5,7 @@ CREATE TABLE `book_bookmarks` (
 	`chapterId` text NOT NULL,
 	`position` text NOT NULL,
 	`note` text,
-	`createdAt` integer NOT NULL,
+	`createdAt` integer DEFAULT (unixepoch() * 1000) NOT NULL,
 	FOREIGN KEY (`itemLink`) REFERENCES `library_items`(`link`) ON UPDATE no action ON DELETE cascade
 );
 --> statement-breakpoint
@@ -19,8 +19,8 @@ CREATE TABLE `book_notes` (
 	`content` text NOT NULL,
 	`selectedText` text NOT NULL,
 	`color` text NOT NULL,
-	`createdAt` integer NOT NULL,
-	`updatedAt` integer NOT NULL,
+	`createdAt` integer DEFAULT (unixepoch() * 1000) NOT NULL,
+	`updatedAt` integer DEFAULT (unixepoch() * 1000) NOT NULL,
 	FOREIGN KEY (`itemLink`) REFERENCES `library_items`(`link`) ON UPDATE no action ON DELETE cascade
 );
 --> statement-breakpoint
@@ -39,8 +39,8 @@ CREATE TABLE `library_items` (
 	`link` text PRIMARY KEY NOT NULL,
 	`type` text NOT NULL,
 	`title` text NOT NULL,
-	`updatedAt` integer NOT NULL,
-	`createdAt` integer NOT NULL,
+	`updatedAt` integer DEFAULT (unixepoch() * 1000) NOT NULL,
+	`createdAt` integer DEFAULT (unixepoch() * 1000) NOT NULL,
 	`author` text,
 	`cover` text
 );
@@ -52,7 +52,7 @@ CREATE TABLE `manga_bookmarks` (
 	`page` integer NOT NULL,
 	`link` text NOT NULL,
 	`note` text DEFAULT '',
-	`createdAt` integer NOT NULL,
+	`createdAt` integer DEFAULT (unixepoch() * 1000) NOT NULL,
 	FOREIGN KEY (`itemLink`) REFERENCES `library_items`(`link`) ON UPDATE no action ON DELETE cascade
 );
 --> statement-breakpoint
@@ -65,6 +65,6 @@ CREATE TABLE `manga_progress` (
 	`currentPage` integer DEFAULT 1 NOT NULL,
 	`chaptersRead` text DEFAULT '[]' NOT NULL,
 	`totalPages` integer DEFAULT 0 NOT NULL,
-	`lastReadAt` integer NOT NULL,
+	`lastReadAt` integer DEFAULT (unixepoch() * 1000) NOT NULL,
 	FOREIGN KEY (`itemLink`) REFERENCES `library_items`(`link`) ON UPDATE no action ON DELETE cascade
 );

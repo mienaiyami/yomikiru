@@ -26,7 +26,7 @@ type BookItem = {
     //todo impl
     cover: string;
     date?: string;
-    chapterData: {
+    chapterData?: {
         chapterName: string;
         id: string;
         /**

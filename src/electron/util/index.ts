@@ -53,3 +53,14 @@ export const getWindowFromWebContents = (webContents: Electron.WebContents) => {
     }
     return win;
 };
+
+/**
+ * old formatting used `new Date().toLocaleString("en-UK", { hour12: true })`
+ */
+export const dateFromOldDateString = (localeDate?: string) => {
+    if (!localeDate) return new Date();
+    const [date, time] = localeDate.split(", ");
+    const [day, month, year] = date.split("/");
+    const newString = `${year}-${month}-${day} ${time}`;
+    return new Date(newString);
+};

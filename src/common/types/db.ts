@@ -1,4 +1,5 @@
-import type { InferSelectModel, InferInsertModel } from "drizzle-orm";
+import type { InferSelectModel } from "drizzle-orm";
+import type { z } from "zod";
 import type {
     libraryItems,
     mangaProgress,
@@ -7,6 +8,14 @@ import type {
     bookBookmarks,
     bookNotes,
 } from "../../electron/db/schema";
+import {
+    AddBookBookmarkSchema,
+    AddBookNoteSchema,
+    AddMangaBookmarkSchema,
+    AddToLibrarySchema,
+    UpdateBookProgressSchema,
+    UpdateMangaProgressSchema,
+} from "../../electron/db/validator";
 
 export type LibraryItem = InferSelectModel<typeof libraryItems>;
 export type MangaProgress = InferSelectModel<typeof mangaProgress>;
@@ -22,3 +31,12 @@ export type Bookmark = MangaBookmark | BookBookmark;
 export type LibraryItemWithProgress =
     | (LibraryItem & { type: "book"; progress: BookProgress | null })
     | (LibraryItem & { type: "manga"; progress: MangaProgress | null });
+
+// zod schemas are required for these because even unspecified fields get passed
+// through the typescript type system
+export type AddToLibraryData = z.infer<typeof AddToLibrarySchema>;
+export type AddMangaBookmarkData = z.infer<typeof AddMangaBookmarkSchema>;
+export type AddBookBookmarkData = z.infer<typeof AddBookBookmarkSchema>;
+export type AddBookNoteData = z.infer<typeof AddBookNoteSchema>;
+export type UpdateMangaProgressData = z.infer<typeof UpdateMangaProgressSchema>;
+export type UpdateBookProgressData = z.infer<typeof UpdateBookProgressSchema>;

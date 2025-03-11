@@ -326,7 +326,7 @@ const EPubReader = () => {
                             progress,
                         }),
                     );
-                    await dispatch(updateBookProgress({ data: progress, itemLink: link }));
+                    await dispatch(updateBookProgress(progress));
                 } else {
                     const bookOpened = {
                         type: "book",
@@ -737,42 +737,24 @@ const EPubReader = () => {
                 fontSizePlusRef={fontSizePlusRef}
                 fontSizeMinusRef={fontSizeMinusRef}
             />
-            {
-                epubData && (
-                    <EPubReaderSideList
-                        onEpubLinkClick={onEpubLinkClick}
-                        openNextChapter={openNextChapter}
-                        openPrevChapter={openPrevChapter}
-                        currentChapter={epubData.spine[currentChapter.index]}
-                        currentChapterFake={currentChapterFake}
-                        epubData={epubData}
-                        addToBookmarkRef={addToBookmarkRef}
-                        setShortcutText={setShortcutText}
-                        isBookmarked={isBookmarked}
-                        setBookmarked={setBookmarked}
-                        isSideListPinned={isSideListPinned}
-                        setSideListPinned={setSideListPinned}
-                        setSideListWidth={setSideListWidth}
-                        makeScrollPos={makeScrollPos}
-                        findInPage={findInPage}
-                        zenMode={zenMode}
-                    />
-                )
-                // {nonEPUBFile && (
-                //     <ReaderSideList
-                //         addToBookmarkRef={addToBookmarkRef}
-                //         isBookmarked={isBookmarked}
-                //         setBookmarked={setBookmarked}
-                //         isSideListPinned={isSideListPinned}
-                //         setSideListPinned={setSideListPinned}
-                //         setSideListWidth={setSideListWidth}
-                //         makeScrollPos={makeScrollPos}
-                //         openNextChapterRef={openNextChapterRef}
-                //         openPrevChapterRef={openPrevChapterRef}
-                //         setShortcutText={setShortcutText}
-                //     />
-                // )}
-            }
+            {epubData && (
+                <EPubReaderSideList
+                    onEpubLinkClick={onEpubLinkClick}
+                    openNextChapter={openNextChapter}
+                    openPrevChapter={openPrevChapter}
+                    currentChapter={epubData.spine[currentChapter.index]}
+                    currentChapterFake={currentChapterFake}
+                    epubData={epubData}
+                    addToBookmarkRef={addToBookmarkRef}
+                    setShortcutText={setShortcutText}
+                    isSideListPinned={isSideListPinned}
+                    setSideListPinned={setSideListPinned}
+                    setSideListWidth={setSideListWidth}
+                    makeScrollPos={makeScrollPos}
+                    findInPage={findInPage}
+                    zenMode={zenMode}
+                />
+            )}
             {appSettings.epubReaderSettings.showProgressInZenMode && (
                 <div
                     className={"zenModePageNumber " + " show"}

@@ -6,6 +6,14 @@ import { and, desc, eq, inArray, sql } from "drizzle-orm";
 import { BookProgress, LibraryItem, MangaProgress } from "@common/types/db";
 import { ipc } from "./utils";
 import { log } from "@electron/util";
+import {
+    AddBookBookmarkSchema,
+    AddBookNoteSchema,
+    AddMangaBookmarkSchema,
+    AddToLibrarySchema,
+    UpdateBookProgressSchema,
+    UpdateMangaProgressSchema,
+} from "@electron/db/validator";
 
 /**
  * Sends database change notifications to all open windows
@@ -61,7 +69,7 @@ const handlers: {
         )[];
     },
     "db:library:addItem": async (db, request) => {
-        const data = (await db.addLibraryItem(request)) ?? null;
+        const data = (await db.addLibraryItem(AddToLibrarySchema.parse(request))) ?? null;
         pingDatabaseChange("db:library:change", await handlers["db:library:getAllAndProgress"](db));
         return data;
     },
@@ -92,7 +100,7 @@ const handlers: {
         return progress ?? null;
     },
     "db:manga:updateProgress": async (db, request) => {
-        const data = (await db.updateMangaProgress(request))?.[0] ?? null;
+        const data = (await db.updateMangaProgress(UpdateMangaProgressSchema.parse(request)))?.[0] ?? null;
         pingDatabaseChange("db:library:change", await handlers["db:library:getAllAndProgress"](db));
         return data;
     },
@@ -110,27 +118,9 @@ const handlers: {
         return await db.db.select().from(mangaBookmarks).where(eq(mangaBookmarks.itemLink, request.itemLink));
     },
     "db:manga:addBookmark": async (db, request) => {
-        // const existing = await db.db
-        //     .select()
-        //     .from(mangaBookmarks)
-        //     .where(and(eq(mangaBookmarks.link, request.link), eq(mangaBookmarks.page, request.page)));
-        // if (existing.length > 0) {
-        //     return existing[0];
-        // }
-        // manually doing this makes sure no extra data is added to the db
         const data =
-            (
-                await db.db
-                    .insert(mangaBookmarks)
-                    .values({
-                        itemLink: request.itemLink,
-                        link: request.link,
-                        page: request.page,
-                        note: request.note,
-                        chapterName: request.chapterName,
-                    })
-                    .returning()
-            )?.[0] ?? null;
+            (await db.db.insert(mangaBookmarks).values(AddMangaBookmarkSchema.parse(request)).returning())?.[0] ??
+            null;
         if (data) pingDatabaseChange("db:bookmark:change", await handlers["db:library:getAllBookmarks"](db));
         return data;
     },
@@ -151,7 +141,7 @@ const handlers: {
         return item ?? null;
     },
     "db:book:updateProgress": async (db, request) => {
-        const data = (await db.updateBookProgress(request.itemLink, request.data))?.[0];
+        const data = (await db.updateBookProgress(UpdateBookProgressSchema.parse(request)))?.[0];
 
         pingDatabaseChange("db:library:change", await handlers["db:library:getAllAndProgress"](db));
         return data;
@@ -162,18 +152,8 @@ const handlers: {
     // manually doing this makes sure no extra data is added to the db
     "db:book:addBookmark": async (db, request) => {
         const data =
-            (
-                await db.db
-                    .insert(bookBookmarks)
-                    .values({
-                        itemLink: request.itemLink,
-                        chapterId: request.chapterId,
-                        note: request.note,
-                        position: request.position,
-                        chapterName: request.chapterName,
-                    })
-                    .returning()
-            )?.[0] ?? null;
+            (await db.db.insert(bookBookmarks).values(AddBookBookmarkSchema.parse(request)).returning())?.[0] ??
+            null;
         if (data) pingDatabaseChange("db:bookmark:change", await handlers["db:library:getAllBookmarks"](db));
         return data;
     },
@@ -193,7 +173,7 @@ const handlers: {
         return await db.db.select().from(bookNotes).where(eq(bookNotes.itemLink, request.itemLink));
     },
     "db:book:addNote": async (db, request) => {
-        await db.db.insert(bookNotes).values(request);
+        await db.db.insert(bookNotes).values(AddBookNoteSchema.parse(request));
     },
     "db:book:deleteNotes": async (db, request) => {
         if (request.all) {

@@ -173,35 +173,16 @@ const App = (): ReactElement => {
         // todo: these are temp only
         listeners.push(
             window.electron.on("db:library:change", (data) => {
-                const items = data.reduce((acc, item) => {
-                    acc[item.link] = item;
-                    return acc;
-                }, {} as Record<string, DatabaseChannels["db:library:getAllAndProgress"]["response"][0]>);
-                dispatch(setLibrary(items));
+                // const items = data.reduce((acc, item) => {
+                //     acc[item.link] = item;
+                //     return acc;
+                // }, {} as Record<string, DatabaseChannels["db:library:getAllAndProgress"]["response"][0]>);
+                // dispatch(setLibrary(items));
+                dispatch(fetchAllItemsWithProgress());
             }),
             window.electron.on("db:bookmark:change", (data) => {
                 dispatch(fetchAllBookmarks());
                 // dispatch(setBookmarks(data));
-            }),
-        );
-        listeners.push(
-            // todo: temp only
-            window.electron.on("db:bookmark:change", (data) => {
-                console.log("updating bookmark", data);
-                const manga = {} as Record<string, MangaBookmark[]>;
-                for (const mangaBookmark of data.mangaBookmarks) {
-                    if (!manga[mangaBookmark.itemLink]) {
-                        manga[mangaBookmark.itemLink] = [];
-                    }
-                    manga[mangaBookmark.itemLink].push(mangaBookmark);
-                }
-                const book = {} as Record<string, BookBookmark[]>;
-                for (const bookBookmark of data.bookBookmarks) {
-                    if (!book[bookBookmark.itemLink]) {
-                        book[bookBookmark.itemLink] = [];
-                    }
-                    book[bookBookmark.itemLink].push(bookBookmark);
-                }
             }),
         );
         listeners.push(

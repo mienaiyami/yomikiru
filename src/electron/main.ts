@@ -33,6 +33,7 @@ import { registerExplorerHandlers } from "./ipc/explorer";
 import { registerUpdateHandlers } from "./ipc/update";
 import { registerFSHandlers } from "./ipc/fs";
 import { registerDialogHandlers } from "./ipc/dialog";
+import { checkForJSONMigration } from "./util/migrate";
 
 if (handleSquirrelEvent()) {
     app.quit();
@@ -75,6 +76,8 @@ if (app.isPackaged) {
 }
 
 app.on("ready", async () => {
+    // checkForJSONMigration depends on app ready to use dialog
+    checkForJSONMigration(db);
     /**
      * enables basic shortcut keys such as copy, paste, reload, etc.
      */

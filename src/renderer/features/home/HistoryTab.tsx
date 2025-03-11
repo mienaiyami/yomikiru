@@ -11,21 +11,21 @@ const HistoryTab = () => {
     const appSettings = useAppSelector((store) => store.appSettings);
 
     const historyItems = useMemo(() => {
-        return Object.values(library.items)
-            .filter((item) => item.progress)
-            .sort((a, b) => {
-                const aDate =
-                    a.type === "book"
-                        ? new Date(a.progress?.lastReadAt || 0).getTime()
-                        : new Date(a.progress?.lastReadAt || 0).getTime();
+        return (
+            Object.values(library.items).filter((item) => item && item.progress) as LibraryItemWithProgress[]
+        ).sort((a, b) => {
+            const aDate =
+                a.type === "book"
+                    ? new Date(a.progress?.lastReadAt || 0).getTime()
+                    : new Date(a.progress?.lastReadAt || 0).getTime();
 
-                const bDate =
-                    b.type === "book"
-                        ? new Date(b.progress?.lastReadAt || 0).getTime()
-                        : new Date(b.progress?.lastReadAt || 0).getTime();
+            const bDate =
+                b.type === "book"
+                    ? new Date(b.progress?.lastReadAt || 0).getTime()
+                    : new Date(b.progress?.lastReadAt || 0).getTime();
 
-                return bDate - aDate;
-            });
+            return bDate - aDate;
+        });
     }, [library.items]);
 
     const filterHistoryItem = (filter: string, item: LibraryItemWithProgress | BookBookmark | MangaBookmark) => {

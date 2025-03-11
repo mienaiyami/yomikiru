@@ -1,5 +1,3 @@
-import { dialogUtils } from "./dialog";
-
 const userDataURL = window.electron.app.getPath("userData");
 const settingsPath = window.path.join(userDataURL, "settings.json");
 const bookmarksPath = window.path.join(userDataURL, "bookmarks.json");
@@ -74,7 +72,7 @@ export const promptSelectDir = async (
     cb: (path: string | string[]) => void,
     asFile = false,
     filters?: Electron.FileFilter[],
-    multi = false
+    multi = false,
 ): Promise<void> => {
     const result = await window.electron.invoke("dialog:showOpenDialog", {
         properties: asFile

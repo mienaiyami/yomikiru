@@ -13,12 +13,12 @@ const BookmarkTab = () => {
     const bookmarksArray = useMemo(() => {
         const arr: (BookBookmark | MangaBookmark)[] = [];
         Object.entries(bookmarks.book).forEach(([itemLink, bookmarks]) => {
-            bookmarks.forEach((bookmark) => {
+            bookmarks?.forEach((bookmark) => {
                 arr.push({ ...bookmark, itemLink });
             });
         });
         Object.entries(bookmarks.manga).forEach(([itemLink, bookmarks]) => {
-            bookmarks.forEach((bookmark) => {
+            bookmarks?.forEach((bookmark) => {
                 arr.push({ ...bookmark, itemLink });
             });
         });

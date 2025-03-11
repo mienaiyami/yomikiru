@@ -3,36 +3,23 @@ import { migrate } from "drizzle-orm/better-sqlite3/migrator";
 // libsql wont work because of node/electron version issues
 import path from "path";
 import { app } from "electron";
-import { eq, InferInsertModel } from "drizzle-orm";
+import { eq } from "drizzle-orm";
 import * as schema from "./schema";
 import { libraryItems, mangaProgress, bookProgress, mangaBookmarks, bookBookmarks } from "./schema";
 import { HistoryItem, Manga_BookItem } from "@common/types/legacy";
 import Database from "better-sqlite3";
-import { electronOnly } from "../util";
+import { dateFromOldDateString, electronOnly, log } from "../util";
+import { AddToLibraryData, UpdateBookProgressData, UpdateMangaProgressData } from "@common/types/db";
 
 electronOnly();
 // todo : add proper error handling
 
-export type AddToLibraryData =
-    | {
-          type: "book";
-          data: Omit<InferInsertModel<typeof libraryItems>, "createdAt" | "updatedAt"> & {
-              type: "book";
-          };
-          progress: Omit<InferInsertModel<typeof bookProgress>, "lastReadAt" | "itemLink">;
-      }
-    | {
-          type: "manga";
-          data: Omit<InferInsertModel<typeof libraryItems>, "createdAt" | "updatedAt"> & {
-              type: "manga";
-          };
-          progress: Omit<InferInsertModel<typeof mangaProgress>, "chaptersRead" | "lastReadAt" | "itemLink">;
-      };
+export const DB_PATH = app.isPackaged ? path.join(app.getPath("userData"), "data.db") : "data.db";
 
 export class DatabaseService {
     private _db: ReturnType<typeof drizzle>;
     constructor() {
-        const sqlite = new Database(app.isPackaged ? path.join(app.getPath("userData"), "data.db") : "data.db");
+        const sqlite = new Database(DB_PATH);
         this._db = drizzle({ client: sqlite, schema });
     }
 
@@ -67,20 +54,15 @@ export class DatabaseService {
         });
     }
 
-    async updateMangaProgress(
-        data: Partial<Omit<typeof mangaProgress.$inferInsert, "itemLink" | "lastReadAt">> & {
-            itemLink: string;
-        },
-    ) {
-        // data = Object.fromEntries(Object.entries(data).filter(([_, v]) => Boolean(v)));
-        // todo : check if works fine
+    async updateMangaProgress(data: UpdateMangaProgressData) {
+        const { itemLink, ...updateData } = data;
         return await this._db
             .update(mangaProgress)
             .set({
-                ...data,
+                ...updateData,
                 lastReadAt: new Date(),
             })
-            .where(eq(mangaProgress.itemLink, data.itemLink))
+            .where(eq(mangaProgress.itemLink, itemLink))
             .returning();
     }
 
@@ -107,15 +89,12 @@ export class DatabaseService {
         });
     }
 
-    async updateBookProgress(
-        itemLink: string,
-        data: Partial<Omit<typeof bookProgress.$inferInsert, "itemLink" | "lastReadAt">>,
-    ) {
-        data = Object.fromEntries(Object.entries(data).filter(([_, v]) => v !== undefined));
+    async updateBookProgress(data: UpdateBookProgressData) {
+        const { itemLink, ...updateData } = data;
         return await this._db
             .update(bookProgress)
             .set({
-                ...data,
+                ...updateData,
                 lastReadAt: new Date(),
             })
             .where(eq(bookProgress.itemLink, itemLink))
@@ -125,18 +104,30 @@ export class DatabaseService {
     // todo: review
     // todo: add option in frontend to manually import as well
     async migrateFromJSON(historyData: HistoryItem[], bookmarkData: Manga_BookItem[]) {
+        log.log(
+            "Migrating from JSON " +
+                historyData.length +
+                " history items and " +
+                bookmarkData.length +
+                " bookmark items",
+        );
         return await this._db.transaction(async (tx) => {
             for (const item of historyData) {
-                // todo: use defined addLibraryItem
+                const parentLink = item.type === "image" ? path.dirname(item.data.link) : item.data.link;
+                const [existing] = await tx.select().from(libraryItems).where(eq(libraryItems.link, parentLink));
+                if (existing) {
+                    log.log("Item already exists", parentLink);
+                    continue;
+                }
                 const [newItem] = await tx
                     .insert(libraryItems)
                     .values({
                         type: item.type === "image" ? "manga" : "book",
-                        link: item.type === "image" ? item.data.mangaName : item.data.link,
+                        link: parentLink,
                         title: item.type === "image" ? item.data.mangaName : item.data.title,
                         author: item.type === "image" ? undefined : item.data.author,
                         cover: item.type === "image" ? undefined : item.data.cover,
-                        ...(item.data.date ? { createdAt: new Date(item.data.date) } : {}),
+                        createdAt: dateFromOldDateString(item.data.date),
                     })
                     .returning();
 
@@ -147,57 +138,78 @@ export class DatabaseService {
                         chapterLink: item.data.link,
                         currentPage: item.data.page,
                         totalPages: item.data.pages,
-                        lastReadAt: new Date(item.data.date || 0),
+                        lastReadAt: dateFromOldDateString(item.data.date),
                         chaptersRead: Array.from(new Set(item.data.chaptersRead)) || [],
                     });
                 } else {
                     await tx.insert(bookProgress).values({
                         itemLink: newItem.link,
-                        chapterId: item.data.chapterData.id,
-                        chapterName: item.data.chapterData.chapterName,
-                        position: item.data.chapterData.elementQueryString,
-                        lastReadAt: new Date(item.data.date || 0),
+                        chapterId: item.data.chapterData?.id || "",
+                        position: item.data.chapterData?.elementQueryString || "",
+                        chapterName: item.data.chapterData?.chapterName,
+                        lastReadAt: dateFromOldDateString(item.data.date),
                     });
                 }
+                console.log("Migrated history item", item.data.link);
             }
 
             for (const bookmark of bookmarkData) {
                 const parentLink =
                     bookmark.type === "image" ? path.dirname(bookmark.data.link) : bookmark.data.link;
+
                 let [item] = await tx.select().from(libraryItems).where(eq(libraryItems.link, parentLink));
                 if (!item) {
-                    console.log("Item not found for bookmark", bookmark);
-                    console.log("Creating new item for bookmark");
-                    const [newItem] = await tx
-                        .insert(libraryItems)
-                        .values({
-                            type: bookmark.type === "image" ? "manga" : "book",
-                            link: parentLink,
-                            title: bookmark.type === "image" ? bookmark.data.mangaName : bookmark.data.title,
-                            author: bookmark.type === "image" ? undefined : bookmark.data.author,
-                            cover: bookmark.type === "image" ? undefined : bookmark.data.cover,
-                        })
-                        .returning();
-                    //! todo: use defined addLibraryItem
-                    item = newItem;
+                    log.log("Item not found for bookmark", bookmark);
+                    log.log("Creating new item for bookmark");
+                    if (bookmark.type === "image") {
+                        item = await this.addLibraryItem({
+                            type: "manga",
+                            data: { link: parentLink, title: bookmark.data.mangaName, type: "manga" },
+                            progress: {
+                                chapterLink: bookmark.data.link,
+                                chapterName: bookmark.data.chapterName,
+                                currentPage: 1,
+                                totalPages: bookmark.data.pages,
+                            },
+                        });
+                    } else {
+                        item = await this.addLibraryItem({
+                            type: "book",
+                            data: {
+                                link: parentLink,
+                                title: bookmark.data.title,
+                                type: "book",
+                                author: bookmark.data.author,
+                                cover: bookmark.data.cover,
+                            },
+                            progress: {
+                                chapterId: bookmark.data.chapterData?.id || "",
+                                chapterName: bookmark.data.chapterData?.chapterName,
+                                position: bookmark.data.chapterData?.elementQueryString || "",
+                            },
+                        });
+                    }
                 }
                 if (bookmark.type === "image") {
                     await tx.insert(mangaBookmarks).values({
-                        itemLink: item.link,
+                        itemLink: parentLink,
                         link: bookmark.data.link,
                         page: bookmark.data.page,
-                        createdAt: new Date(bookmark.data.date || 0),
+                        createdAt: dateFromOldDateString(bookmark.data.date),
+                        chapterName: bookmark.data.chapterName,
                     });
                 } else {
                     await tx.insert(bookBookmarks).values({
-                        itemLink: item.link,
-                        chapterId: bookmark.data.chapterData.id,
-                        position: bookmark.data.chapterData.elementQueryString,
-                        chapterName: bookmark.data.chapterData.chapterName,
-                        createdAt: new Date(bookmark.data.date || 0),
+                        itemLink: parentLink,
+                        chapterId: bookmark.data.chapterData?.id || "",
+                        position: bookmark.data.chapterData?.elementQueryString || "",
+                        chapterName: bookmark.data.chapterData?.chapterName,
+                        createdAt: dateFromOldDateString(bookmark.data.date),
                     });
                 }
+                console.log("Migrated bookmark", bookmark.data.link);
             }
+            log.log("Migration complete");
         });
     }
 }

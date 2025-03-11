@@ -6,8 +6,13 @@ import type {
     BookBookmark,
     BookNote,
     LibraryItemWithProgress,
+    AddToLibraryData,
+    AddMangaBookmarkData,
+    AddBookBookmarkData,
+    UpdateBookProgressData,
+    UpdateMangaProgressData,
+    AddBookNoteData,
 } from "./db";
-import { AddToLibraryData } from "@electron/db";
 
 /**
  * m2r: main to renderer
@@ -35,18 +40,7 @@ export type DatabaseChannels = {
         }
     >;
     "db:manga:getProgress": ChannelDefinition<{ itemLink: string }, MangaProgress | null>;
-    "db:manga:updateProgress": ChannelDefinition<
-        {
-            itemLink: string;
-            chapterName?: string;
-            chapterLink?: string;
-            currentPage?: number;
-            chaptersRead?: string[];
-            lastReadAt?: Date;
-            totalPages?: number;
-        },
-        MangaProgress | null
-    >;
+    "db:manga:updateProgress": ChannelDefinition<UpdateMangaProgressData, MangaProgress | null>;
     "db:manga:updateChaptersRead": ChannelDefinition<
         { itemLink: string; chapterName: string; read: boolean },
         string[]
@@ -56,72 +50,35 @@ export type DatabaseChannels = {
         string[]
     >;
     "db:manga:getBookmarks": ChannelDefinition<{ itemLink: string }, MangaBookmark[]>;
-    "db:manga:addBookmark": ChannelDefinition<
-        {
-            itemLink: string;
-            page: number;
-            link: string;
-            chapterName: string;
-            note?: string;
-        },
-        MangaBookmark | null
-    >;
+    "db:manga:addBookmark": ChannelDefinition<AddMangaBookmarkData, MangaBookmark | null>;
     "db:manga:deleteBookmarks": ChannelDefinition<{ itemLink: string; ids: number[]; all?: boolean }, boolean>;
     "db:book:getProgress": ChannelDefinition<{ itemLink: string }, BookProgress | null>;
-    "db:book:updateProgress": ChannelDefinition<
-        {
-            itemLink: string;
-            data: {
-                chapterId?: string;
-                chapterName?: string;
-                position?: string;
-                lastReadAt?: Date;
-            };
-        },
-        BookProgress | null
-    >;
+    "db:book:updateProgress": ChannelDefinition<UpdateBookProgressData, BookProgress | null>;
     "db:book:getBookmarks": ChannelDefinition<{ itemLink: string }, BookBookmark[]>;
-    "db:book:addBookmark": ChannelDefinition<
-        {
-            itemLink: string;
-            chapterId: string;
-            chapterName: string;
-            position: string;
-            note?: string;
-        },
-        BookBookmark | null
-    >;
+    "db:book:addBookmark": ChannelDefinition<AddBookBookmarkData, BookBookmark | null>;
     "db:book:deleteBookmarks": ChannelDefinition<{ itemLink: string; ids: number[]; all?: boolean }, boolean>;
     "db:book:getNotes": ChannelDefinition<{ itemLink: string }, BookNote[]>;
-    "db:book:addNote": ChannelDefinition<
-        {
-            itemLink: string;
-            chapterId: string;
-            position: string;
-            content: string;
-            selectedText: string;
-            color: string;
-        },
-        void
-    >;
+    "db:book:addNote": ChannelDefinition<AddBookNoteData, void>;
     "db:book:deleteNotes": ChannelDefinition<{ itemLink: string; ids: number[]; all?: boolean }, boolean>;
 };
 
 // ! for updating store only, temp only
 export type DatabaseChangeChannels = {
     "db:library:change": ChannelDefinition<
-        (
-            | (LibraryItem & { type: "book"; progress: BookProgress | null })
-            | (LibraryItem & { type: "manga"; progress: MangaProgress | null })
-        )[],
+        // (
+        //     | (LibraryItem & { type: "book"; progress: BookProgress | null })
+        //     | (LibraryItem & { type: "manga"; progress: MangaProgress | null })
+        // )[],
+        void,
         void,
         "m2r"
     >;
     "db:bookmark:change": ChannelDefinition<
-        {
-            mangaBookmarks: MangaBookmark[];
-            bookBookmarks: BookBookmark[];
-        },
+        // {
+        //     mangaBookmarks: MangaBookmark[];
+        //     bookBookmarks: BookBookmark[];
+        // },
+        void,
         void,
         "m2r"
     >;
