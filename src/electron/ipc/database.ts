@@ -20,9 +20,9 @@ import {
  * @param channel The database change channel
  * @param data The data to send
  */
-const pingDatabaseChange = async <T extends keyof DatabaseChangeChannels>(
+export const pingDatabaseChange = async <T extends keyof DatabaseChangeChannels>(
     channel: T,
-    data: DatabaseChangeChannels[T]["request"],
+    // data: DatabaseChangeChannels[T]["request"],
 ) => {
     // todo: maybe send whole data on channel and then update store?
     const windows = BrowserWindow.getAllWindows();
@@ -31,7 +31,7 @@ const pingDatabaseChange = async <T extends keyof DatabaseChangeChannels>(
             try {
                 // Use type assertion to resolve TypeScript error
                 // This is safe because DatabaseChangeChannels should be part of MainToRendererChannels
-                ipc.send(window.webContents, channel as any, data);
+                ipc.send(window.webContents, channel as any);
             } catch (error) {
                 log.error(`Failed to send ${channel} notification to window:`, error);
             }
@@ -70,13 +70,13 @@ const handlers: {
     },
     "db:library:addItem": async (db, request) => {
         const data = (await db.addLibraryItem(AddToLibrarySchema.parse(request))) ?? null;
-        pingDatabaseChange("db:library:change", await handlers["db:library:getAllAndProgress"](db));
+        pingDatabaseChange("db:library:change");
         return data;
     },
     "db:library:deleteItem": async (db, request) => {
         try {
             await db.db.delete(libraryItems).where(eq(libraryItems.link, request.link));
-            pingDatabaseChange("db:library:change", await handlers["db:library:getAllAndProgress"](db));
+            pingDatabaseChange("db:library:change");
             return true;
         } catch (error) {
             console.error(`Error in IPC channel "db:library:deleteItem":`, error);
@@ -96,22 +96,22 @@ const handlers: {
             .select()
             .from(mangaProgress)
             .where(eq(mangaProgress.itemLink, request.itemLink));
-        pingDatabaseChange("db:library:change", await handlers["db:library:getAllAndProgress"](db));
+        pingDatabaseChange("db:library:change");
         return progress ?? null;
     },
     "db:manga:updateProgress": async (db, request) => {
         const data = (await db.updateMangaProgress(UpdateMangaProgressSchema.parse(request)))?.[0] ?? null;
-        pingDatabaseChange("db:library:change", await handlers["db:library:getAllAndProgress"](db));
+        pingDatabaseChange("db:library:change");
         return data;
     },
     "db:manga:updateChaptersRead": async (db, request) => {
         const data = await db.updateMangaChapterRead(request.itemLink, [request.chapterName], request.read);
-        pingDatabaseChange("db:library:change", await handlers["db:library:getAllAndProgress"](db));
+        pingDatabaseChange("db:library:change");
         return data;
     },
     "db:manga:updateChaptersReadAll": async (db, request) => {
         const data = await db.updateMangaChapterRead(request.itemLink, request.chapters, request.read);
-        pingDatabaseChange("db:library:change", await handlers["db:library:getAllAndProgress"](db));
+        pingDatabaseChange("db:library:change");
         return data;
     },
     "db:manga:getBookmarks": async (db, request) => {
@@ -121,7 +121,7 @@ const handlers: {
         const data =
             (await db.db.insert(mangaBookmarks).values(AddMangaBookmarkSchema.parse(request)).returning())?.[0] ??
             null;
-        if (data) pingDatabaseChange("db:bookmark:change", await handlers["db:library:getAllBookmarks"](db));
+        if (data) pingDatabaseChange("db:bookmark:change");
         return data;
     },
     "db:manga:deleteBookmarks": async (db, request) => {
@@ -133,7 +133,7 @@ const handlers: {
             .delete(mangaBookmarks)
             .where(and(eq(mangaBookmarks.itemLink, request.itemLink), inArray(mangaBookmarks.id, request.ids)));
 
-        pingDatabaseChange("db:bookmark:change", await handlers["db:library:getAllBookmarks"](db));
+        pingDatabaseChange("db:bookmark:change");
         return true;
     },
     "db:book:getProgress": async (db, request) => {
@@ -143,7 +143,7 @@ const handlers: {
     "db:book:updateProgress": async (db, request) => {
         const data = (await db.updateBookProgress(UpdateBookProgressSchema.parse(request)))?.[0];
 
-        pingDatabaseChange("db:library:change", await handlers["db:library:getAllAndProgress"](db));
+        pingDatabaseChange("db:library:change");
         return data;
     },
     "db:book:getBookmarks": async (db, request) => {
@@ -154,7 +154,7 @@ const handlers: {
         const data =
             (await db.db.insert(bookBookmarks).values(AddBookBookmarkSchema.parse(request)).returning())?.[0] ??
             null;
-        if (data) pingDatabaseChange("db:bookmark:change", await handlers["db:library:getAllBookmarks"](db));
+        if (data) pingDatabaseChange("db:bookmark:change");
         return data;
     },
     "db:book:deleteBookmarks": async (db, request) => {
@@ -166,7 +166,7 @@ const handlers: {
             .delete(bookBookmarks)
             .where(and(eq(bookBookmarks.itemLink, request.itemLink), inArray(bookBookmarks.id, request.ids)));
 
-        pingDatabaseChange("db:bookmark:change", await handlers["db:library:getAllBookmarks"](db));
+        pingDatabaseChange("db:bookmark:change");
         return true;
     },
     "db:book:getNotes": async (db, request) => {

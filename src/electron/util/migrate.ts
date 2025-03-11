@@ -5,6 +5,7 @@ import path from "path";
 import fs from "fs/promises";
 import { existsSync } from "fs";
 import { log } from ".";
+import { pingDatabaseChange } from "@electron/ipc/database";
 
 // migrate from 2.19.6 to sqlite
 const userDataURL = app.getPath("userData");
@@ -22,6 +23,8 @@ export const migrateToSqlite = async (
         const backupPath = path.join(userDataURL, `data.db-${Date.now()}.backup`);
         await fs.copyFile(DB_PATH, backupPath);
         await db.migrateFromJSON(history, bookmarks);
+        await pingDatabaseChange("db:library:change");
+        await pingDatabaseChange("db:bookmark:change");
         await fs.rename(bookmarksPath, path.join(userDataURL, "bookmarks.json.old"));
         await fs.rename(historyPath, path.join(userDataURL, "history.json.old"));
     } catch (error) {
