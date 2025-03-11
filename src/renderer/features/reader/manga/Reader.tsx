@@ -66,7 +66,6 @@ const Reader = () => {
 
     // todo: extract to hook
     const libraryItem = useAppSelector((store) => selectLibraryItem(store, linkInReader));
-    const pageNumChangeDisabled = useAppSelector((store) => store.pageNumChangeDisabled);
     const prevNextChapter = useAppSelector((store) => store.prevNextChapter);
     const isAniSearchOpen = useAppSelector((store) => store.ui.isOpen.anilist.search);
     const isAniEditOpen = useAppSelector((store) => store.ui.isOpen.anilist.edit);
@@ -496,7 +495,7 @@ const Reader = () => {
     }, [isSideListPinned, imgContRef.current, readerRef.current]);
 
     const changePageNumber = () => {
-        if (!pageNumChangeDisabled && imgContRef.current) {
+        if (imgContRef.current) {
             const elem = document.elementFromPoint(
                 imgContRef.current.clientWidth / 2 + imgContRef.current.offsetLeft,
                 window.innerHeight / (appSettings.readerSettings.readerTypeSelected === 0 ? 4 : 2),

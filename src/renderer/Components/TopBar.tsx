@@ -10,7 +10,6 @@ import {
 } from "@fortawesome/free-solid-svg-icons";
 import { useAppContext } from "../App";
 import { useAppDispatch, useAppSelector } from "@store/hooks";
-import { setPageNumChangeDisabled } from "@store/pageNumChangeDisabled";
 import { setSysBtnColor } from "@store/themes";
 import { formatUtils } from "@utils/file";
 import { setSettingsOpen, toggleSettingsOpen } from "@store/ui";
@@ -20,6 +19,7 @@ const TopBar = (): ReactElement => {
     const [title, setTitle] = useState<string>("Yomikiru");
     const { pageNumberInputRef, bookProgressRef, closeReader } = useAppContext();
     const [isMaximized, setMaximized] = useState(window.electron.currentWindow.isMaximized() || false);
+    const [pageNumberChangeDisabled, setPageNumberChangeDisabled] = useState(false);
     const readerContent = useAppSelector((store) => store.reader.content);
     // todo: move input to separate component
     const currentPageNumber = useAppSelector((store) => {
@@ -94,7 +94,7 @@ const TopBar = (): ReactElement => {
     }, []);
     useEffect(() => {
         console.log("currentPageNumber", currentPageNumber);
-        if (currentPageNumber) {
+        if (!pageNumberChangeDisabled && currentPageNumber) {
             if (pageNumberInputRef.current) {
                 pageNumberInputRef.current.value = currentPageNumber.toString();
             }
@@ -155,7 +155,7 @@ const TopBar = (): ReactElement => {
                                 e.currentTarget.select();
                             }}
                             onBlur={() => {
-                                dispatch(setPageNumChangeDisabled(false));
+                                setPageNumberChangeDisabled(false);
                             }}
                             onKeyDown={(e) => {
                                 e.stopPropagation();
@@ -183,9 +183,9 @@ const TopBar = (): ReactElement => {
                                         pageNumberInputRef.current.value = pagenumber.toString();
                                     }
                                     if (!pagenumber) return;
-                                    dispatch(setPageNumChangeDisabled(true));
+                                    setPageNumberChangeDisabled(true);
                                     window.app.scrollToPage(pagenumber, "smooth", () => {
-                                        dispatch(setPageNumChangeDisabled(false));
+                                        setPageNumberChangeDisabled(false);
                                     });
                                     return;
                                 }
@@ -199,7 +199,7 @@ const TopBar = (): ReactElement => {
                                     if (!pagenumber) return;
                                     setTimeoutID(
                                         setTimeout(() => {
-                                            dispatch(setPageNumChangeDisabled(true));
+                                            setPageNumberChangeDisabled(true);
                                             window.app.scrollToPage(pagenumber);
                                         }, 1000),
                                     );
