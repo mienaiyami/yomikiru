@@ -25,6 +25,7 @@ export const fetchAllItemsWithProgress = createAsyncThunk("library/getAllItemsWi
     const data = await window.electron.invoke("db:library:getAllAndProgress");
     const time = performance.now() - now;
     console.log(`db:library:getAllAndProgress took ${time}ms`);
+    console.log(data);
     return data;
 });
 

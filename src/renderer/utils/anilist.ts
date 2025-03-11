@@ -1,4 +1,5 @@
 import { dialogUtils } from "./dialog";
+import { getStorageItem, setStorageItem, STORAGE_KEYS } from "./localStorage";
 
 export default class AniList {
     static #token = "";
@@ -43,10 +44,10 @@ export default class AniList {
 
     static {
         // for first launch
-        if (localStorage.getItem("anilist_token") === null) localStorage.setItem("anilist_token", "");
-        if (localStorage.getItem("anilist_tracking") === null) localStorage.setItem("anilist_tracking", "[]");
+        if (getStorageItem("ANILIST_TOKEN") === null) setStorageItem("ANILIST_TOKEN", "");
+        if (getStorageItem("ANILIST_TRACKING") === null) setStorageItem("ANILIST_TRACKING", "[]");
 
-        const token = localStorage.getItem("anilist_token") || "";
+        const token = getStorageItem("ANILIST_TOKEN") || "";
         this.#token = token;
         if (token)
             this.checkToken(token).then((e) => {
