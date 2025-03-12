@@ -93,7 +93,6 @@ const TopBar = (): ReactElement => {
         };
     }, []);
     useEffect(() => {
-        console.log("currentPageNumber", currentPageNumber);
         if (!pageNumberChangeDisabled && currentPageNumber) {
             if (pageNumberInputRef.current) {
                 pageNumberInputRef.current.value = currentPageNumber.toString();

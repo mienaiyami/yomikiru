@@ -15,7 +15,7 @@ import { useAppDispatch, useAppSelector } from "@store/hooks";
 import { addBookmark, removeBookmark } from "@store/bookmarks";
 import { setAppSettings, setReaderSettings } from "@store/appSettings";
 import { setPrevNextChapter } from "@store/prevNextChapter";
-import AnilistBar from "../../anilist/AnilistBar";
+import AnilistBar from "../../../anilist/AnilistBar";
 import { formatUtils } from "@utils/file";
 import { dialogUtils } from "@utils/dialog";
 import { keyFormatter } from "@utils/keybindings";

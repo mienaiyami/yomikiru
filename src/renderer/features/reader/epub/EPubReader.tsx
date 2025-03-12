@@ -6,21 +6,15 @@ import { setAppSettings, setEpubReaderSettings, setReaderSettings } from "@store
 import EPUBReaderSettings from "./EPubReaderSettings";
 import EPubReaderSideList from "./EPubReaderSideList";
 import EPUB from "@utils/epub";
-import Modal from "@ui/Modal";
 import { addLibraryItem, selectLibraryItem, updateBookProgress, updateCurrentItemProgress } from "@store/library";
 import { dialogUtils } from "@utils/dialog";
 import { getCSSPath } from "@utils/utils";
 import { keyFormatter } from "@utils/keybindings";
-import {
-    getReaderBook,
-    setReaderLoading,
-    setReaderOpen,
-    updateReaderContent,
-    updateReaderBookProgress,
-} from "@store/reader";
+import { setReaderLoading, setReaderOpen, updateReaderContent, updateReaderBookProgress } from "@store/reader";
 import { BookProgress } from "@common/types/db";
 import HTMLPart from "./HTMLPart";
 import StyleSheets from "./StyleSheets";
+import FootNodeModal from "./components/FootNodeModal";
 
 type EPubData = {
     metadata: EPUB.MetaData;
@@ -31,6 +25,7 @@ type EPubData = {
     styleSheets: string[];
 };
 
+// todo: replace useLayoutEffect that is not needed with useEffect
 const EPubReader = () => {
     const { bookProgressRef, setContextMenuData } = useAppContext();
 
@@ -38,9 +33,7 @@ const EPubReader = () => {
     const shortcuts = useAppSelector((store) => store.shortcuts);
     const isSettingOpen = useAppSelector((store) => store.ui.isOpen.settings);
     const readerState = useAppSelector((store) => store.reader);
-    const bookInReader = useAppSelector(getReaderBook);
     const isLoading = useAppSelector((store) => store.reader.loading !== null);
-    const bookmarks = useAppSelector((store) => store.bookmarks);
 
     const libraryItem = useAppSelector((store) => selectLibraryItem(store, readerState.link));
 
@@ -69,7 +62,6 @@ const EPubReader = () => {
     const [isSideListPinned, setSideListPinned] = useState(false);
     const [sideListWidth, setSideListWidth] = useState(appSettings.readerSettings.sideListWidth || 450);
     const [zenMode, setZenMode] = useState(appSettings.openInZenMode || false);
-    const [isBookmarked, setBookmarked] = useState(false);
     const [wasMaximized, setWasMaximized] = useState(false);
     // display this text when shortcuts clicked
     const [shortcutText, setShortcutText] = useState("");
@@ -903,25 +895,11 @@ const EPubReader = () => {
                     }
                 }}
             >
-                {footnoteModalData && (
-                    <Modal open={true} onClose={() => setFootnoteModalData(null)}>
-                        <span className="title">{footnoteModalData.title}</span>
-                        <div
-                            className="content"
-                            ref={(node) => {
-                                if (node) {
-                                    node.innerHTML = footnoteModalData.content;
-                                    node.querySelectorAll("a").forEach((e) => {
-                                        e.addEventListener("click", (ev) => {
-                                            setFootnoteModalData(null);
-                                            onEpubLinkClick(ev);
-                                        });
-                                    });
-                                }
-                            }}
-                        ></div>
-                    </Modal>
-                )}
+                <FootNodeModal
+                    footnoteModalData={footnoteModalData}
+                    close={() => setFootnoteModalData(null)}
+                    onEpubLinkClick={onEpubLinkClick}
+                />
                 <StyleSheets sheets={epubData?.styleSheets || []} />
                 {nonEPUBFileContent
                     ? // <HTMLSolo

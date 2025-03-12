@@ -1,7 +1,7 @@
-import { useCallback, useContext, useEffect, useLayoutEffect, useRef, useState } from "react";
+import { Fragment, useCallback, useContext, useEffect, useLayoutEffect, useRef, useState } from "react";
 import { useAppContext } from "../../../App";
-import ReaderSideList from "./ReaderSideList";
-import ReaderSettings from "./ReaderSettings";
+import ReaderSideList from "./components/ReaderSideList";
+import ReaderSettings from "./components/ReaderSettings";
 import { useAppDispatch, useAppSelector } from "@store/hooks";
 import { setAppSettings, setReaderSettings } from "@store/appSettings";
 import AnilistSearch from "../../anilist/AnilistSearch";
@@ -139,17 +139,12 @@ const Reader = () => {
             return;
         }
     };
-    //! check if really needed
-    // const pageChangeEvent = new Event("pageNumberChange");
 
     const scrollToPage = (pageNumber: number, behavior: ScrollBehavior = "smooth", callback?: () => void) => {
-        const reader = document.querySelector("#reader");
-        if (reader) {
+        if (readerRef.current) {
             if (pageNumber >= 1 && pageNumber <= (readerState?.content?.progress?.totalPages || 1)) {
-                //! pageNumber no longer in use
-                const imgElem = document.querySelector(
-                    "#reader .imgCont .readerImg[data-pagenumber='" + pageNumber + "']",
-                );
+                const imgElem = document.querySelector("#reader .imgCont [data-pagenumber='" + pageNumber + "']");
+                console.log(imgElem);
                 if ([1, 2].includes(appSettings.readerSettings.readerTypeSelected)) {
                     const rowNumber = parseInt(imgElem?.parentElement?.getAttribute("data-imagerow") || "1");
                     setCurrentImageRow(rowNumber);
@@ -185,6 +180,13 @@ const Reader = () => {
     useEffect(() => {
         readerRef.current?.focus();
     }, [isReaderOpen]);
+    useLayoutEffect(() => {
+        if (!isLoadingManga) {
+            setTimeout(() => {
+                scrollToPage(currentPageNumber, "auto");
+            }, 100);
+        }
+    }, [isLoadingManga]);
     useEffect(() => {
         if ((zenMode && !window.electron.currentWindow.isMaximized()) || (!zenMode && !wasMaximized)) {
             setTimeout(() => {
@@ -500,7 +502,7 @@ const Reader = () => {
                 imgContRef.current.clientWidth / 2 + imgContRef.current.offsetLeft,
                 window.innerHeight / (appSettings.readerSettings.readerTypeSelected === 0 ? 4 : 2),
             );
-            if (elem && (elem.tagName === "IMG" || elem.tagName === "CANVAS")) {
+            if (elem && elem.hasAttribute("data-pagenumber")) {
                 const pageNumber = parseInt(elem.getAttribute("data-pagenumber") || "1");
                 setCurrentPageNumber(pageNumber);
                 const rowNumber = parseInt(elem.parentElement?.getAttribute("data-imagerow") || "1");
@@ -511,7 +513,6 @@ const Reader = () => {
 
     const openPrevPage = () => {
         if (currentImageRow <= 1) {
-            // if (prevNextChapter.prev === "~") return;
             if (
                 chapterChangerDisplay &&
                 (!window.app.keydown || (window.app.keydown && !window.app.keyRepeated))
@@ -527,7 +528,6 @@ const Reader = () => {
     };
     const openNextPage = () => {
         if (currentImageRow >= imageRow.length) {
-            // if (prevNextChapter.next === "~") return;
             if (
                 chapterChangerDisplay &&
                 (!window.app.keydown || (window.app.keydown && !window.app.keyRepeated))
@@ -808,13 +808,7 @@ const Reader = () => {
             page: readerState.mangaPageNumber || 1,
         });
     }, [readerState?.link]);
-    useEffect(() => {
-        if (!isLoadingManga) {
-            setTimeout(() => {
-                scrollToPage(currentPageNumber, "auto");
-            }, 50);
-        }
-    }, [isLoadingManga]);
+
     useLayoutEffect(() => {
         if (isSideListPinned) {
             readerRef.current?.scrollTo(
@@ -1269,7 +1263,7 @@ const Reader = () => {
                                     : "auto",
                         },
                         key: i,
-                    };
+                    } as const;
                     if (appSettings.readerSettings.dynamicLoading)
                         return (
                             <InView
@@ -1280,12 +1274,17 @@ const Reader = () => {
                                         entry.target.querySelectorAll("img").forEach((e) => {
                                             (entry.target as HTMLElement).style.height = "auto";
                                             const src = e.getAttribute("data-load-src");
-                                            if (src) e.src = src;
+                                            if (src) {
+                                                // setTimeout(() => {
+                                                e.setAttribute("data-loading", "false");
+                                                e.src = src;
+                                                // }, 1000 * Math.random());
+                                            }
                                         });
                                         entry.target.setAttribute("data-rendered", "true");
                                     };
-                                    const rendered = entry.target.getAttribute("data-rendered");
-                                    if (rendered) return;
+                                    const rendered = entry.target.querySelectorAll("[data-loading='true']");
+                                    if (rendered.length === 0) return;
                                     if (inView) load();
                                     // unloading image does not free ram
                                 }}
@@ -1294,15 +1293,29 @@ const Reader = () => {
                                 {e.i.map(
                                     (e) =>
                                         typeof imageData[e]?.img === "string" && (
-                                            <img
-                                                className="readerImg"
-                                                draggable={false}
-                                                data-pagenumber={imageData[e]?.index + 1}
-                                                loading="lazy"
-                                                data-load-src={imageData[e].img}
-                                                data-src={images[e]}
-                                                key={imageData[e].img as string}
-                                            />
+                                            <Fragment key={imageData[e].img}>
+                                                <img
+                                                    className="readerImg"
+                                                    draggable={false}
+                                                    data-pagenumber={imageData[e]?.index + 1}
+                                                    loading="lazy"
+                                                    data-load-src={imageData[e].img}
+                                                    data-src={images[e]}
+                                                    alt={`Page ${imageData[e]?.index + 1}`}
+                                                    data-loading="true"
+                                                    src="data:image/svg+xml;charset=utf-8,%3Csvg xmlns='http://www.w3.org/2000/svg'/%3E"
+                                                />
+                                                {
+                                                    <div
+                                                        className="loadingIndicator"
+                                                        data-src={images[e]}
+                                                        // this is needed for scroll to page when img hidden
+                                                        data-pagenumber={imageData[e].index + 1}
+                                                    >
+                                                        LOADING-{e + 1}
+                                                    </div>
+                                                }
+                                            </Fragment>
                                         ),
                                 )}
                             </InView>
