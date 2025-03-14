@@ -66,7 +66,6 @@ const Reader = () => {
 
     // todo: extract to hook
     const libraryItem = useAppSelector((store) => selectLibraryItem(store, linkInReader));
-    const prevNextChapter = useAppSelector((store) => store.prevNextChapter);
     const isAniSearchOpen = useAppSelector((store) => store.ui.isOpen.anilist.search);
     const isAniEditOpen = useAppSelector((store) => store.ui.isOpen.anilist.edit);
 
@@ -101,6 +100,7 @@ const Reader = () => {
     // for grab to scroll
     const [mouseDown, setMouseDown] = useState<null | { top: number; left: number; x: number; y: number }>(null);
     const [updatedAnilistProgress, setUpdatedAnilistProgress] = useState(false);
+    const [prevNextChapter, setPrevNextChapter] = useState<{ prev: string; next: string }>({ prev: "", next: "" });
 
     const readerSettingExtender = useRef<HTMLButtonElement>(null);
     const sizePlusRef = useRef<HTMLButtonElement>(null);
@@ -144,7 +144,6 @@ const Reader = () => {
         if (readerRef.current) {
             if (pageNumber >= 1 && pageNumber <= (readerState?.content?.progress?.totalPages || 1)) {
                 const imgElem = document.querySelector("#reader .imgCont [data-pagenumber='" + pageNumber + "']");
-                console.log(imgElem);
                 if ([1, 2].includes(appSettings.readerSettings.readerTypeSelected)) {
                     const rowNumber = parseInt(imgElem?.parentElement?.getAttribute("data-imagerow") || "1");
                     setCurrentImageRow(rowNumber);
@@ -557,7 +556,11 @@ const Reader = () => {
             window.cachedImageList = { link: "", images: [] };
             return;
         }
-        validateDirectory(options.link).then((result) => {
+        validateDirectory(options.link, {
+            sendImages: true,
+            useCache: true,
+            showLoading: false,
+        }).then((result) => {
             if (result.isValid && result.images) {
                 loadImgs(options.link, result.images);
             }
@@ -1031,6 +1034,8 @@ const Reader = () => {
                 setSideListPinned={setSideListPinned}
                 setSideListWidth={setSideListWidth}
                 makeScrollPos={makeScrollPos}
+                prevNextChapter={prevNextChapter}
+                setPrevNextChapter={setPrevNextChapter}
             />
 
             {isAniSearchOpen && <AnilistSearch />}

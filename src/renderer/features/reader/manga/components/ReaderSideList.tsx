@@ -6,17 +6,14 @@ import {
     faBookmark,
     faThumbtack,
     faLocationDot,
-    faSearch,
-    faTimes,
 } from "@fortawesome/free-solid-svg-icons";
 import { faBookmark as farBookmark } from "@fortawesome/free-regular-svg-icons";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import { memo, useEffect, useLayoutEffect, useRef, useState, useMemo, useCallback } from "react";
+import { memo, useEffect, useLayoutEffect, useRef, useState, useMemo } from "react";
 import { useAppDispatch, useAppSelector } from "@store/hooks";
 // import { updateCurrentHistoryPage } from "../store/history";
 import { addBookmark, removeBookmark } from "@store/bookmarks";
 import { setAppSettings, setReaderSettings } from "@store/appSettings";
-import { setPrevNextChapter } from "@store/prevNextChapter";
 import AnilistBar from "../../../anilist/AnilistBar";
 import { formatUtils } from "@utils/file";
 import { dialogUtils } from "@utils/dialog";
@@ -24,6 +21,7 @@ import { getReaderManga, setReaderState } from "@store/reader";
 import { useAppContext } from "src/renderer/App";
 import ReaderSideListItem from "./ReaderSideListItem";
 import ListNavigator from "src/renderer/components/ListNavigator";
+import { shallowEqual } from "react-redux";
 
 type ChapterData = { name: string; pages: number; link: string; dateModified: number };
 
@@ -37,6 +35,8 @@ const ReaderSideList = memo(
         setSideListPinned,
         setSideListWidth,
         makeScrollPos,
+        prevNextChapter,
+        setPrevNextChapter,
     }: {
         openNextChapterRef: React.RefObject<HTMLButtonElement>;
         openPrevChapterRef: React.RefObject<HTMLButtonElement>;
@@ -46,6 +46,9 @@ const ReaderSideList = memo(
         setSideListPinned: React.Dispatch<React.SetStateAction<boolean>>;
         setSideListWidth: React.Dispatch<React.SetStateAction<number>>;
         makeScrollPos: () => void;
+        // todo: temp solution only, improve
+        prevNextChapter: { prev: string; next: string };
+        setPrevNextChapter: React.Dispatch<React.SetStateAction<{ prev: string; next: string }>>;
     }) => {
         const { contextMenuData, openInReader, setContextMenuData, closeReader } = useAppContext();
 
@@ -55,24 +58,17 @@ const ReaderSideList = memo(
         const library = useAppSelector((store) => store.library);
         const bookmarks = useAppSelector((store) => store.bookmarks);
         const appSettings = useAppSelector((store) => store.appSettings);
-        const prevNextChapter = useAppSelector((store) => store.prevNextChapter);
         // const contextMenu = useAppSelector((store) => store.contextMenu);
         const anilistToken = useAppSelector((store) => store.anilist.token);
-        const shortcuts = useAppSelector((store) => store.shortcuts);
         const dispatch = useAppDispatch();
 
         const sideListRef = useRef<HTMLDivElement>(null);
         const [chapterData, setChapterData] = useState<ChapterData[]>([]);
-        const [filter, setFilter] = useState<string>("");
         const [isListOpen, setListOpen] = useState(false);
         const [preventListClose, setPreventListClose] = useState(false);
 
-        // const prevMangaRef = useRef<string>("");
-
         const [draggingResizer, setDraggingResizer] = useState(false);
 
-        const [focused, setFocused] = useState(-1);
-        const locationContRef = useRef<HTMLDivElement>(null);
         const [bookmarkedId, setBookmarkedId] = useState<number | null>(null);
 
         useEffect(() => {
@@ -105,25 +101,15 @@ const ReaderSideList = memo(
                 setListOpen(true);
             }
         }, [isSideListPinned]);
-        const changePrevNext = () => {
-            if (mangaInReader) {
-                const listDataName = chapterData.map((e) => e.name);
-                const prevIndex = listDataName.indexOf(mangaInReader.progress?.chapterName || "") - 1;
-                const nextIndex = listDataName.indexOf(mangaInReader.progress?.chapterName || "") + 1;
-                const prevCh = prevIndex < 0 ? "~" : chapterData[prevIndex].link;
-                const nextCh = nextIndex >= chapterData.length ? "~" : chapterData[nextIndex].link;
-                dispatch(setPrevNextChapter({ prev: prevCh, next: nextCh }));
-            }
-        };
         useEffect(() => {
-            if (chapterData.length >= 0) changePrevNext();
-        }, [chapterData]);
-        const makeChapterList = async (refresh = false) => {
-            if (!refresh) {
-                setFilter("");
-                setFocused(-1);
+            if (chapterData.length >= 0 && mangaInReader) {
+                const index = chapterData.findIndex((e) => e.link === mangaInReader.progress?.chapterLink);
+                const prevCh = index <= 0 ? "~" : chapterData[index - 1].link;
+                const nextCh = index >= chapterData.length - 1 ? "~" : chapterData[index + 1].link;
+                setPrevNextChapter({ prev: prevCh, next: nextCh });
             }
-            // setFocused(-1);
+        }, [chapterData]);
+        const makeChapterList = async () => {
             if (mangaLink) {
                 const dir = mangaLink;
                 try {
@@ -207,7 +193,7 @@ const ReaderSideList = memo(
                 const refresh = () => {
                     if (timeout) clearTimeout(timeout);
                     timeout = setTimeout(() => {
-                        makeChapterList(true);
+                        makeChapterList();
                     }, 1000);
                 };
                 const closeWatcher = window.chokidar.watch({
@@ -254,22 +240,6 @@ const ReaderSideList = memo(
                 window.removeEventListener("mouseup", handleResizerMouseUp);
             };
         }, [draggingResizer]);
-
-        const temp_prevNextOpener = (link: string) => {
-            if ([".xhtml", ".html", ".txt"].includes(window.path.extname(link).toLowerCase()))
-                return openInReader(link);
-            // todo :temp
-            dispatch(
-                setReaderState({
-                    link: link,
-                    type: "manga",
-                    content: null,
-                    mangaPageNumber: 1,
-                    epubChapterId: undefined,
-                    epubElementQueryString: undefined,
-                }),
-            );
-        };
 
         const sortedLocations = useMemo(() => {
             const qq = (file: string) => {
@@ -490,7 +460,16 @@ const ReaderSideList = memo(
                                             });
                                         return;
                                     }
-                                    temp_prevNextOpener(prevNextChapter.prev);
+                                    dispatch(
+                                        setReaderState({
+                                            link: prevNextChapter.prev,
+                                            type: "manga",
+                                            content: null,
+                                            mangaPageNumber: 1,
+                                            epubChapterId: "",
+                                            epubElementQueryString: "",
+                                        }),
+                                    );
                                 }}
                             >
                                 <FontAwesomeIcon icon={faArrowLeft} />
@@ -561,7 +540,16 @@ const ReaderSideList = memo(
                                             });
                                         return;
                                     }
-                                    temp_prevNextOpener(prevNextChapter.next);
+                                    dispatch(
+                                        setReaderState({
+                                            link: prevNextChapter.next,
+                                            type: "manga",
+                                            content: null,
+                                            mangaPageNumber: 1,
+                                            epubChapterId: "",
+                                            epubElementQueryString: "",
+                                        }),
+                                    );
                                 }}
                             >
                                 <FontAwesomeIcon icon={faArrowRight} />
@@ -631,6 +619,7 @@ const ReaderSideList = memo(
             </div>
         );
     },
+    shallowEqual,
 );
 
 const Button = (props: {
