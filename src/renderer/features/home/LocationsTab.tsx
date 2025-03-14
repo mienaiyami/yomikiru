@@ -8,6 +8,7 @@ import { ReactElement, useEffect, useRef, useState, useMemo, useCallback } from 
 import { useAppContext } from "src/renderer/App";
 import { dialogUtils } from "@utils/dialog";
 import ListNavigator from "../../components/ListNavigator";
+import { keyFormatter } from "@utils/keybindings";
 
 type LocationData = { name: string; link: string; dateModified: number };
 
@@ -176,6 +177,11 @@ const LocationsTab = (): ReactElement => {
     const handleSelect = useCallback((elem: HTMLElement) => {
         elem.click();
     }, []);
+    const handleKeyDown = useCallback((keyStr: string, shortcutsMapped: Record<ShortcutCommands, string[]>) => {
+        if (shortcutsMapped["dirUp"].includes(keyStr)) {
+            setCurrentLink((link) => window.path.dirname(link));
+        }
+    }, []);
     const handleOnChange = useCallback(
         (e: React.ChangeEvent<HTMLInputElement>) => {
             let val = e.target.value;
@@ -223,6 +229,7 @@ const LocationsTab = (): ReactElement => {
                 filterFn={filterLocation}
                 renderItem={renderLocationItem}
                 onContextMenu={handleContextMenu}
+                handleExtraKeyDown={handleKeyDown}
                 onSelect={handleSelect}
                 emptyMessage="No folders found"
             >

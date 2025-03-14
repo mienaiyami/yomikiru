@@ -15,6 +15,8 @@ import { BookProgress } from "@common/types/db";
 import HTMLPart from "./HTMLPart";
 import StyleSheets from "./StyleSheets";
 import FootNodeModal from "./components/FootNodeModal";
+import { getShortcutsMapped } from "@store/shortcuts";
+import { shallowEqual } from "react-redux";
 
 type EPubData = {
     metadata: EPUB.MetaData;
@@ -30,7 +32,7 @@ const EPubReader = () => {
     const { bookProgressRef, setContextMenuData } = useAppContext();
 
     const appSettings = useAppSelector((store) => store.appSettings);
-    const shortcuts = useAppSelector((store) => store.shortcuts);
+    const shortcutsMapped = useAppSelector(getShortcutsMapped, shallowEqual);
     const isSettingOpen = useAppSelector((store) => store.ui.isOpen.settings);
     const readerState = useAppSelector((store) => store.reader);
     const isLoading = useAppSelector((store) => store.reader.loading !== null);
@@ -528,10 +530,6 @@ const EPubReader = () => {
             }
         };
 
-        const shortcutsMapped = Object.fromEntries(shortcuts.map((e) => [e.command, e.keys])) as Record<
-            ShortcutCommands,
-            string[]
-        >;
         const registerShortcuts = (e: KeyboardEvent) => {
             // /&& document.activeElement!.tagName === "BODY"
             window.app.keyRepeated = e.repeat;
@@ -659,7 +657,7 @@ const EPubReader = () => {
             window.removeEventListener("keydown", registerShortcuts);
             window.removeEventListener("keyup", aaa);
         };
-    }, [isSideListPinned, appSettings, isLoading, shortcuts, isSettingOpen, epubData, readerState.active]);
+    }, [isSideListPinned, appSettings, isLoading, shortcutsMapped, isSettingOpen, epubData, readerState.active]);
 
     useLayoutEffect(() => {
         if (elemBeforeChange)

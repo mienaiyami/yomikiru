@@ -42,6 +42,8 @@ import { setAnilistCurrentManga } from "@store/anilist";
 import { resetReaderState, setReaderLoading, setReaderState } from "@store/reader";
 import { useDirectoryValidator } from "@features/reader/hooks/useDirectoryValidator";
 import { electron } from "process";
+import { shallowEqual } from "react-redux";
+import { getShortcutsMapped } from "@store/shortcuts";
 
 interface AppContext {
     pageNumberInputRef: React.RefObject<HTMLInputElement>;
@@ -77,7 +79,7 @@ const App = (): ReactElement => {
     // const isReaderOpen = useAppSelector((state) => state.ui.isOpen.reader);
     const isReaderOpen = useAppSelector((state) => state.reader.active);
     const linkInReader = useAppSelector((state) => state.reader.link);
-    const shortcuts = useAppSelector((store) => store.shortcuts);
+    const shortcutsMapped = useAppSelector(getShortcutsMapped, shallowEqual);
     const theme = useAppSelector((state) => state.theme.name);
 
     const pageNumberInputRef: React.RefObject<HTMLInputElement> = createRef();
@@ -378,10 +380,6 @@ const App = (): ReactElement => {
     }, []);
 
     useEffect(() => {
-        const shortcutsMapped = Object.fromEntries(shortcuts.map((e) => [e.command, e.keys])) as Record<
-            ShortcutCommands,
-            string[]
-        >;
         const eventsOnStart = (e: KeyboardEvent) => {
             const keyStr = keyFormatter(e);
             if (keyStr === "") return;
@@ -428,7 +426,7 @@ const App = (): ReactElement => {
         return () => {
             window.removeEventListener("keydown", eventsOnStart);
         };
-    }, [shortcuts, isReaderOpen]);
+    }, [shortcutsMapped, isReaderOpen]);
 
     useEffect(() => {
         const abortController = new AbortController();

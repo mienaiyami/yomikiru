@@ -40,7 +40,6 @@ const Settings = (): ReactElement => {
     const shortcuts = useAppSelector((store) => store.shortcuts);
     const theme = useAppSelector((store) => store.theme.name);
     const allThemes = useAppSelector((store) => store.theme.allData);
-    const bookmarks = useAppSelector((store) => store.bookmarks);
     const isSettingOpen = useAppSelector((store) => store.ui.isOpen.settings);
     const anilistToken = useAppSelector((store) => store.anilist.token);
     const [currentTab, setCurrentTab] = useState(0);
@@ -68,11 +67,6 @@ const Settings = (): ReactElement => {
     }, [isSettingOpen]);
 
     useEffect(() => {
-        //todo extract to hook?
-        // const shortcutsMapped = Object.fromEntries(shortcuts.map((e) => [e.command, e.keys])) as Record<
-        //     ShortcutCommands,
-        //     string[]
-        // >;
         const keydownEvent = (e: KeyboardEvent) => {
             const keyStr = keyFormatter(e);
             if (keyStr === "") return;

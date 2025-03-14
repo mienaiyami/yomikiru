@@ -4,12 +4,14 @@ import { useAppContext } from "../../App";
 import FocusLock from "react-focus-lock";
 import { useAppSelector } from "../../store/hooks";
 import { keyFormatter } from "@utils/keybindings";
+import { getShortcutsMapped } from "@store/shortcuts";
+import { shallowEqual } from "react-redux";
 
 // ! not indented to be used without `AppContext::optSelectData`
 //todo rename later for select only
 const MenuList = () => {
     const { optSelectData } = useAppContext();
-    const shortcuts = useAppSelector((store) => store.shortcuts);
+    const shortcutsMapped = useAppSelector(getShortcutsMapped, shallowEqual);
 
     //todo, maybe add height,width to it as well.
     const [pos, setPos] = useState({ x: 0, y: 0, width: 1 });
@@ -111,10 +113,6 @@ const MenuList = () => {
 
                         const keyStr = keyFormatter(e, false);
                         if (keyStr === "") return;
-                        //todo: can be turned into memo when shortcuts increases
-                        const shortcutsMapped = Object.fromEntries(
-                            shortcuts.map((e) => [e.command, e.keys]),
-                        ) as Record<ShortcutCommands, string[]>;
 
                         if (shortcutsMapped["contextMenu"].includes(keyStr)) {
                             e.currentTarget.blur();

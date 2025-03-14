@@ -1,6 +1,8 @@
 import React, { createContext, useContext, useState, useRef, useEffect, useCallback, useMemo, memo } from "react";
 import { useAppSelector } from "@store/hooks";
 import { keyFormatter } from "@utils/keybindings";
+import shortcuts, { getShortcutsMapped } from "@store/shortcuts";
+import { shallowEqual } from "react-redux";
 
 type ListNavigatorContextType<T> = {
     items: T[];
@@ -38,6 +40,7 @@ export type ListNavigatorProps<T> = {
     filterFn: (filter: string, item: T) => boolean;
     renderItem: (item: T, index: number, isSelected: boolean) => React.ReactNode;
     onContextMenu?: (element: HTMLElement) => void;
+    handleExtraKeyDown?: (keyStr: string, shortcutsMapped: Record<ShortcutCommands, string[]>) => void;
     onSelect?: (element: HTMLElement) => void;
     emptyMessage?: string;
     children: React.ReactNode;
@@ -48,11 +51,12 @@ function ListNavigatorProviderComponent<T>({
     filterFn,
     renderItem,
     onContextMenu,
+    handleExtraKeyDown,
     onSelect,
     emptyMessage = "No items",
     children,
 }: ListNavigatorProps<T>) {
-    const shortcuts = useAppSelector((store) => store.shortcuts);
+    const shortcutsMapped = useAppSelector(getShortcutsMapped, shallowEqual);
     const [filter, setFilter] = useState<string>("");
     const [focused, setFocused] = useState(-1);
     const inputRef = useRef<HTMLInputElement>(null);
@@ -80,11 +84,6 @@ function ListNavigatorProviderComponent<T>({
 
             const keyStr = keyFormatter(e);
             if (keyStr === "" && e.key !== "Escape") return;
-
-            const shortcutsMapped = Object.fromEntries(shortcuts.map((e) => [e.command, e.keys])) as Record<
-                ShortcutCommands,
-                string[]
-            >;
 
             switch (true) {
                 case shortcutsMapped["listDown"].includes(keyStr):
@@ -131,8 +130,9 @@ function ListNavigatorProviderComponent<T>({
                 default:
                     break;
             }
+            handleExtraKeyDown?.(keyStr, shortcutsMapped);
         },
-        [shortcuts, filteredItems.length, onContextMenu, onSelect],
+        [shortcutsMapped, filteredItems.length, onContextMenu, onSelect, handleExtraKeyDown],
     );
 
     const handleFilterChange = useCallback(

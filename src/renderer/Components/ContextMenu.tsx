@@ -4,9 +4,11 @@ import { faCheck } from "@fortawesome/free-solid-svg-icons";
 import { useAppSelector } from "@store/hooks";
 import { useAppContext } from "../App";
 import { keyFormatter } from "@utils/keybindings";
+import { getShortcutsMapped } from "@store/shortcuts";
+import { shallowEqual } from "react-redux";
 
 const ContextMenu = () => {
-    const shortcuts = useAppSelector((store) => store.shortcuts);
+    const shortcutsMapped = useAppSelector(getShortcutsMapped, shallowEqual);
     const { contextMenuData, setContextMenuData } = useAppContext();
     const [pos, setPos] = useState({ x: 0, y: 0 });
     const [focused, setFocused] = useState(-1);
@@ -71,10 +73,6 @@ const ContextMenu = () => {
                     const keyStr = keyFormatter(e, false);
                     if (keyStr === "") return;
 
-                    const shortcutsMapped = Object.fromEntries(
-                        shortcuts.map((e) => [e.command, e.keys])
-                    ) as Record<ShortcutCommands, string[]>;
-
                     if (shortcutsMapped["contextMenu"].includes(keyStr)) {
                         e.currentTarget.blur();
                         return;
@@ -106,7 +104,7 @@ const ContextMenu = () => {
                         case shortcutsMapped["listSelect"].includes(keyStr):
                         case keyStr === "space": {
                             const elem = ref.current?.querySelector(
-                                '[data-focused="true"]'
+                                '[data-focused="true"]',
                             ) as HTMLLIElement | null;
                             if (elem && !elem.classList.contains("disabled")) elem.click();
                             break;
@@ -138,7 +136,7 @@ const ContextMenu = () => {
                                 {e.selected ? <FontAwesomeIcon icon={faCheck} /> : <span></span>}
                                 {e.label}
                             </li>
-                        )
+                        ),
                     )}
                 </ul>
             </div>

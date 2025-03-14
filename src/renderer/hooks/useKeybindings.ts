@@ -1,6 +1,8 @@
 import { useEffect, useCallback, useState, RefObject, useMemo } from "react";
 import { useAppSelector } from "@store/hooks";
 import { keyFormatter } from "@utils/keybindings";
+import { getShortcutsMapped } from "@store/shortcuts";
+import { shallowEqual } from "react-redux";
 
 export type ShortcutHandler = (e: KeyboardEvent) => void;
 
@@ -57,11 +59,7 @@ export const useKeybindings = (handlers: KeybindHandlerConfig[], options: Keybin
         focusElement,
     } = options;
 
-    const shortcuts = useAppSelector((store) => store.shortcuts);
-
-    const shortcutsMapped = useMemo(() => {
-        return Object.fromEntries(shortcuts.map((e) => [e.command, e.keys])) as Record<ShortcutCommands, string[]>;
-    }, [shortcuts]);
+    const shortcutsMapped = useAppSelector(getShortcutsMapped, shallowEqual);
 
     const isShortcutMatch = useCallback(
         (keyStr: string, command: ShortcutCommands) => {

@@ -2,6 +2,7 @@ import { createSlice, PayloadAction } from "@reduxjs/toolkit";
 import { saveJSONfile, shortcutsPath } from "../utils/file";
 import { SHORTCUT_COMMAND_MAP } from "@utils/keybindings";
 import { dialogUtils } from "@utils/dialog";
+import { RootState } from ".";
 
 const initialState: ShortcutSchema[] = [];
 
@@ -91,5 +92,12 @@ const shortcuts = createSlice({
 });
 
 export const { setShortcuts, resetShortcuts, removeShortcuts } = shortcuts.actions;
+
+export const getShortcutsMapped = (state: RootState) => {
+    return Object.fromEntries(state.shortcuts.map((e) => [e.command, e.keys])) as Record<
+        ShortcutCommands,
+        string[]
+    >;
+};
 
 export default shortcuts.reducer;
