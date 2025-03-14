@@ -2,9 +2,8 @@ import { useAppSelector } from "@store/hooks";
 import { useMemo } from "react";
 import BookmarkHistoryListItem from "./BookmarkHistoryListItem";
 import { formatUtils } from "@utils/file";
-import ListTab from "./ListTab";
-import { useAppContext } from "src/renderer/App";
 import { BookBookmark, LibraryItemWithProgress, MangaBookmark } from "@common/types/db";
+import ListNavigator from "../../components/ListNavigator";
 
 const HistoryTab = () => {
     const library = useAppSelector((store) => store.library);
@@ -57,18 +56,32 @@ const HistoryTab = () => {
             />
         );
 
+    if (!appSettings.showTabs.history) {
+        return null;
+    }
+
     return (
-        <ListTab
-            title="Continue Reading"
-            tabId="historyTab"
-            isCollapsed={!appSettings.showTabs.history}
-            items={historyItems}
-            filterFn={filterHistoryItem}
-            renderItem={renderHistoryItem}
-            emptyMessage="Library Empty"
-            onContextMenu={(elem) => elem.dispatchEvent(window.contextMenu.fakeEvent(elem))}
-            onSelect={(elem) => elem.click()}
-        />
+        <div className="contTab listCont" id="historyTab">
+            <h2>Continue Reading</h2>
+
+            <ListNavigator.Provider
+                items={historyItems}
+                filterFn={filterHistoryItem}
+                renderItem={renderHistoryItem}
+                emptyMessage="Library Empty"
+                onContextMenu={(elem) => elem.dispatchEvent(window.contextMenu.fakeEvent(elem))}
+                onSelect={(elem) => elem.click()}
+            >
+                {appSettings.showSearch && (
+                    <div className="tools">
+                        <ListNavigator.SearchInput />
+                    </div>
+                )}
+                <div className="location-cont">
+                    <ListNavigator.List />
+                </div>
+            </ListNavigator.Provider>
+        </div>
     );
 };
 

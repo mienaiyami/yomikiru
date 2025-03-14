@@ -3,7 +3,7 @@ import { BookBookmark, LibraryItemWithProgress, MangaBookmark } from "@common/ty
 import { useAppSelector } from "@store/hooks";
 import BookmarkHistoryListItem from "./BookmarkHistoryListItem";
 import { formatUtils } from "@utils/file";
-import ListTab from "./ListTab";
+import ListNavigator from "../../components/ListNavigator";
 
 const BookmarkTab = () => {
     const bookmarks = useAppSelector((store) => store.bookmarks);
@@ -56,18 +56,32 @@ const BookmarkTab = () => {
             />
         );
 
+    if (!appSettings.showTabs.bookmark) {
+        return null;
+    }
+
     return (
-        <ListTab
-            title="Bookmarks"
-            tabId="bookmarksTab"
-            isCollapsed={!appSettings.showTabs.bookmark}
-            items={bookmarksArray as (BookBookmark | MangaBookmark)[]}
-            filterFn={filterBookmark}
-            renderItem={renderBookmarkItem}
-            emptyMessage="No Bookmarks..."
-            onContextMenu={(elem) => elem.dispatchEvent(window.contextMenu.fakeEvent(elem))}
-            onSelect={(elem) => elem.click()}
-        />
+        <div className="contTab listCont" id="bookmarksTab">
+            <h2>Bookmarks</h2>
+
+            <ListNavigator.Provider
+                items={bookmarksArray as (BookBookmark | MangaBookmark)[]}
+                filterFn={filterBookmark}
+                renderItem={renderBookmarkItem}
+                emptyMessage="No Bookmarks"
+                onContextMenu={(elem) => elem.dispatchEvent(window.contextMenu.fakeEvent(elem))}
+                onSelect={(elem) => elem.click()}
+            >
+                {appSettings.showSearch && (
+                    <div className="tools">
+                        <ListNavigator.SearchInput />
+                    </div>
+                )}
+                <div className="location-cont">
+                    <ListNavigator.List />
+                </div>
+            </ListNavigator.Provider>
+        </div>
     );
 };
 

@@ -4,19 +4,10 @@ import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { formatUtils, promptSelectDir } from "@utils/file";
 import { setAppSettings } from "@store/appSettings";
 import { useAppDispatch, useAppSelector } from "@store/hooks";
-import {
-    ReactElement,
-    useContext,
-    useEffect,
-    useRef,
-    useState,
-    useLayoutEffect,
-    useMemo,
-    useCallback,
-} from "react";
+import { ReactElement, useEffect, useRef, useState, useMemo, useCallback } from "react";
 import { useAppContext } from "src/renderer/App";
 import { dialogUtils } from "@utils/dialog";
-import { keyFormatter } from "@utils/keybindings";
+import ListNavigator from "../../components/ListNavigator";
 
 type LocationData = { name: string; link: string; dateModified: number };
 
@@ -24,7 +15,6 @@ const LocationsTab = (): ReactElement => {
     const { openInReader, setContextMenuData } = useAppContext();
     const library = useAppSelector((store) => store.library.items);
     const appSettings = useAppSelector((store) => store.appSettings);
-    const shortcuts = useAppSelector((store) => store.shortcuts);
     const dispatch = useAppDispatch();
 
     //todo : use reducer instead and check if exists and is dir
@@ -33,22 +23,13 @@ const LocationsTab = (): ReactElement => {
 
     const [locations, setLocations] = useState<LocationData[]>([]);
     const [isLoadingFile, setIsLoadingFile] = useState(true);
-    const [filter, setFilter] = useState<string>("");
     const [imageCount, setImageCount] = useState(0);
 
-    const [focused, setFocused] = useState(-1);
-
-    const inputRef = useRef<HTMLInputElement>(null);
     const locationContRef = useRef<HTMLDivElement>(null);
 
     const displayList = async (link = currentLink, refresh = false): Promise<void> => {
         try {
-            if (!refresh) {
-                setFilter("");
-                setFocused(-1);
-            }
             if (!window.fs.existsSync(link)) {
-                // todo: does it need to be here?
                 if (!window.fs.existsSync(appSettings.baseDir)) {
                     dialogUtils.customError({ message: "Default Location doesn't exist." });
                     promptSelectDir((path) => dispatch(setAppSettings({ baseDir: path as string })));
@@ -66,7 +47,6 @@ const LocationsTab = (): ReactElement => {
 
                 // order does not matter because it need to be sorted later
                 const dirNames: typeof locations = [];
-                //todo : test this
                 await Promise.all(
                     files.map(async (fileName) => {
                         try {
@@ -91,9 +71,6 @@ const LocationsTab = (): ReactElement => {
                     }),
                 );
 
-                if (inputRef.current && !refresh) {
-                    inputRef.current.value = "";
-                }
                 setImageCount(imgCount);
                 setLocations(dirNames);
                 setIsLoadingFile(false);
@@ -109,6 +86,7 @@ const LocationsTab = (): ReactElement => {
     useEffect(() => {
         if (currentLink !== appSettings.baseDir) setCurrentLink(window.path.resolve(appSettings.baseDir));
     }, [appSettings.baseDir]);
+
     useEffect(() => {
         let timeout: NodeJS.Timeout;
         const refresh = () => {
@@ -132,13 +110,6 @@ const LocationsTab = (): ReactElement => {
             closeWatcher();
         };
     }, [currentLink]);
-
-    // todo move it to ref={}
-    useEffect(() => {
-        if (inputRef.current) {
-            inputRef.current.focus();
-        }
-    }, [inputRef]);
 
     const sortedLocations = useMemo(() => {
         const qq = formatUtils.files.getName;
@@ -173,263 +144,188 @@ const LocationsTab = (): ReactElement => {
         [currentLink],
     );
 
+    const filterLocation = useCallback((filter: string, location: LocationData) => {
+        return new RegExp(filter, "ig").test(location.name);
+    }, []);
+
+    const renderLocationItem = useCallback(
+        (location: LocationData, index: number, isSelected: boolean) => {
+            return (
+                <LocationListItem
+                    name={location.name}
+                    link={location.link}
+                    focused={isSelected}
+                    inHistory={
+                        item?.type === "manga"
+                            ? item.progress?.chaptersRead.includes(location.name) || false
+                            : false
+                    }
+                    onContextMenu={onContextMenu}
+                    key={location.link}
+                    setCurrentLink={setCurrentLink}
+                />
+            );
+        },
+        [item, onContextMenu, setCurrentLink],
+    );
+
+    const handleContextMenu = useCallback((elem: HTMLElement) => {
+        elem.dispatchEvent(window.contextMenu.fakeEvent(elem));
+    }, []);
+
+    const handleSelect = useCallback((elem: HTMLElement) => {
+        elem.click();
+    }, []);
+    const handleOnChange = useCallback(
+        (e: React.ChangeEvent<HTMLInputElement>) => {
+            let val = e.target.value;
+            // for changing drive in windows
+            if (process.platform === "win32")
+                if (/.:\\.*/.test(val)) {
+                    const aa = window.path.normalize(val);
+                    // opens directly if path is a file
+                    if (window.fs.isFile(aa)) {
+                        openInReader(aa);
+                        return "";
+                    }
+                    setCurrentLink(aa);
+                    return "";
+                }
+            // move up one directory
+            if (val === ".." + window.path.sep) {
+                setCurrentLink(window.path.resolve(currentLink, "../"));
+                return "";
+            }
+            // check for exact match and open directly without enter
+            if (val[val.length - 1] === window.path.sep) {
+                const index = locations.findIndex(
+                    (e) => e.name.toUpperCase() === val.replaceAll(window.path.sep, "").toUpperCase(),
+                );
+                if (index >= 0) {
+                    const aa = window.path.normalize(locations[index].link);
+                    if (window.fs.isFile(aa)) {
+                        openInReader(aa);
+                        return val;
+                    }
+                    setCurrentLink(aa);
+                    return "";
+                } else val = val.replaceAll(window.path.sep, "");
+            }
+            return val;
+        },
+        [currentLink, locations, openInReader, setCurrentLink],
+    );
+
     return (
         <div className="contTab listCont" id="locationTab">
-            <h2>Location</h2>
-            <div className="tools">
-                <div className="row1">
-                    <button
-                        data-tooltip={
-                            "Sort: " +
-                            (appSettings.locationListSortType === "normal" ? "▲ " : "▼ ") +
-                            appSettings.locationListSortBy.toUpperCase()
-                        }
-                        // tabIndex={-1}
-                        onClick={(e) => {
-                            const items: Menu.ListItem[] = [
-                                {
-                                    label: "Name",
-                                    action() {
-                                        dispatch(
-                                            setAppSettings({
-                                                locationListSortBy: "name",
-                                            }),
-                                        );
-                                    },
-                                    selected: appSettings.locationListSortBy === "name",
-                                },
-                                {
-                                    label: "Date Modified",
-                                    action() {
-                                        dispatch(
-                                            setAppSettings({
-                                                locationListSortBy: "date",
-                                                locationListSortType: "inverse",
-                                            }),
-                                        );
-                                    },
-                                    selected: appSettings.locationListSortBy === "date",
-                                },
-                                window.contextMenu.template.divider(),
-                                {
-                                    label: "Ascending",
-                                    action() {
-                                        dispatch(
-                                            setAppSettings({
-                                                locationListSortType: "normal",
-                                            }),
-                                        );
-                                    },
-                                    selected: appSettings.locationListSortType === "normal",
-                                },
-                                {
-                                    label: "Descending",
-                                    action() {
-                                        dispatch(
-                                            setAppSettings({
-                                                locationListSortType: "inverse",
-                                            }),
-                                        );
-                                    },
-                                    selected: appSettings.locationListSortType === "inverse",
-                                },
-                            ];
-                            setContextMenuData({
-                                clickX: e.currentTarget.getBoundingClientRect().x,
-                                clickY: e.currentTarget.getBoundingClientRect().bottom + 4,
-                                padLeft: true,
-                                items,
-                                focusBackElem: e.currentTarget,
-                            });
-                        }}
-                    >
-                        <FontAwesomeIcon icon={faSort} />
-                    </button>
-                    <button
-                        // tabIndex={-1}
-                        data-tooltip="Directory Up"
-                        onClick={() => {
-                            setCurrentLink((link) => window.path.dirname(link));
-                        }}
-                    >
-                        <FontAwesomeIcon icon={faAngleUp} />
-                    </button>
-                    <input
-                        type="text"
-                        ref={inputRef}
-                        id="locationInput"
-                        placeholder="Type to Search"
-                        spellCheck="false"
-                        // tabIndex={-1}
-                        onKeyDown={(e) => {
-                            if (!e.ctrlKey) e.stopPropagation();
-                            // if (/\[|\]|\(|\)|\*|\+|\?/gi.test(e.key)) {
-                            //     e.preventDefault();
-                            // }
-                            if (/\*|\?/gi.test(e.key)) {
-                                e.preventDefault();
+            <ListNavigator.Provider
+                items={sortedLocations}
+                filterFn={filterLocation}
+                renderItem={renderLocationItem}
+                onContextMenu={handleContextMenu}
+                onSelect={handleSelect}
+                emptyMessage="No folders found"
+            >
+                <h2>Location</h2>
+                <div className="tools">
+                    <div className="row1">
+                        <button
+                            data-tooltip={
+                                "Sort: " +
+                                (appSettings.locationListSortType === "normal" ? "▲ " : "▼ ") +
+                                appSettings.locationListSortBy.toUpperCase()
                             }
-
-                            const keyStr = keyFormatter(e);
-                            if (keyStr === "") return;
-                            const shortcutsMapped = Object.fromEntries(
-                                shortcuts.map((e) => [e.command, e.keys]),
-                            ) as Record<ShortcutCommands, string[]>;
-
-                            if (shortcutsMapped["dirUp"].includes(keyStr))
-                                return setCurrentLink((link) => window.path.dirname(link));
-                            switch (true) {
-                                case shortcutsMapped["listDown"].includes(keyStr):
-                                    e.preventDefault();
-                                    setFocused((init) => {
-                                        if (init + 1 >= locations.length) return 0;
-                                        return init + 1;
-                                    });
-                                    break;
-                                case shortcutsMapped["listUp"].includes(keyStr):
-                                    e.preventDefault();
-                                    setFocused((init) => {
-                                        //todo fix: when searched, maybe move filter to sortedLocation
-                                        if (init - 1 < 0) return locations.length - 1;
-                                        return init - 1;
-                                    });
-                                    break;
-                                case shortcutsMapped["contextMenu"].includes(keyStr): {
-                                    const elem = locationContRef.current?.querySelector(
-                                        '[data-focused="true"] a',
-                                    ) as HTMLLIElement | null;
-                                    if (elem) {
-                                        e.stopPropagation();
-                                        e.preventDefault();
-                                        e.currentTarget.blur();
-                                        elem.dispatchEvent(window.contextMenu.fakeEvent(elem, inputRef.current));
-                                    }
-                                    break;
-                                }
-                                case shortcutsMapped["listSelect"].includes(keyStr): {
-                                    if (locations.length === 0 && imageCount !== 0)
-                                        return openInReader(currentLink);
-
-                                    const elem = locationContRef.current?.querySelector(
-                                        '[data-focused="true"] a',
-                                    ) as HTMLLIElement | null;
-                                    if (elem) return elem.click();
-                                    const elems = locationContRef.current?.querySelectorAll("a");
-                                    if (elems?.length === 1) elems[0].click();
-                                    break;
-                                }
-                                default:
-                                    break;
-                            }
-                        }}
-                        onBlur={() => {
-                            if (!document.activeElement?.classList.contains("contextMenu")) setFocused(-1);
-                        }}
-                        onContextMenu={(e) => {
-                            e.stopPropagation();
-                            e.preventDefault();
-                        }}
-                        onChange={(e) => {
-                            let val = e.target.value;
-
-                            // for changing drive in windows
-                            if (process.platform === "win32")
-                                if (/.:\\.*/.test(val)) {
-                                    const aa = window.path.normalize(val);
-                                    // opens directly if path is a file
-                                    if (window.fs.isFile(aa)) return openInReader(aa);
-                                    setCurrentLink(aa);
-                                    return;
-                                }
-                            // move up one directory
-                            if (val === ".." + window.path.sep)
-                                return setCurrentLink(window.path.resolve(currentLink, "../"));
-                            // check for exact match and open directly without enter
-                            if (val[val.length - 1] === window.path.sep) {
-                                const index = locations.findIndex(
-                                    (e) =>
-                                        e.name.toUpperCase() === val.replaceAll(window.path.sep, "").toUpperCase(),
-                                );
-                                if (index >= 0) {
-                                    const aa = window.path.normalize(locations[index].link);
-                                    if (window.fs.isFile(aa)) return openInReader(aa);
-                                    return setCurrentLink(aa);
-                                    // need or not?
-                                    // return setCurrentLink(window.path.normalize(locations[index].link + window.path.sep));
-                                } else val = val.replaceAll(window.path.sep, "");
-                            }
-
-                            val = val.replaceAll("[", "\\[");
-                            val = val.replaceAll("]", "\\]");
-                            val = val.replaceAll("(", "\\(");
-                            val = val.replaceAll(")", "\\)");
-                            val = val.replaceAll("*", "\\-");
-                            val = val.replaceAll("+", "\\+");
-
-                            let filter = "";
-                            if (['"', "`", "'"].includes(val[0])) {
-                                filter = "^" + val.replaceAll(/('|"|`)/g, "");
-                            } else
-                                for (let i = 0; i < val.length; i++) {
-                                    if (val[i] === window.path.sep) {
-                                        filter += window.path.sep;
-                                        continue;
-                                    }
-                                    filter += val[i] + ".*";
-                                }
-                            setFocused(-1);
-                            setFilter(filter);
-                        }}
-                    />
+                            onClick={(e) => {
+                                const items: Menu.ListItem[] = [
+                                    {
+                                        label: "Name",
+                                        action() {
+                                            dispatch(
+                                                setAppSettings({
+                                                    locationListSortBy: "name",
+                                                }),
+                                            );
+                                        },
+                                        selected: appSettings.locationListSortBy === "name",
+                                    },
+                                    {
+                                        label: "Date Modified",
+                                        action() {
+                                            dispatch(
+                                                setAppSettings({
+                                                    locationListSortBy: "date",
+                                                    locationListSortType: "inverse",
+                                                }),
+                                            );
+                                        },
+                                        selected: appSettings.locationListSortBy === "date",
+                                    },
+                                    window.contextMenu.template.divider(),
+                                    {
+                                        label: "Ascending",
+                                        action() {
+                                            dispatch(
+                                                setAppSettings({
+                                                    locationListSortType: "normal",
+                                                }),
+                                            );
+                                        },
+                                        selected: appSettings.locationListSortType === "normal",
+                                    },
+                                    {
+                                        label: "Descending",
+                                        action() {
+                                            dispatch(
+                                                setAppSettings({
+                                                    locationListSortType: "inverse",
+                                                }),
+                                            );
+                                        },
+                                        selected: appSettings.locationListSortType === "inverse",
+                                    },
+                                ];
+                                setContextMenuData({
+                                    clickX: e.currentTarget.getBoundingClientRect().x,
+                                    clickY: e.currentTarget.getBoundingClientRect().bottom + 4,
+                                    padLeft: true,
+                                    items,
+                                    focusBackElem: e.currentTarget,
+                                });
+                            }}
+                        >
+                            <FontAwesomeIcon icon={faSort} />
+                        </button>
+                        <button
+                            data-tooltip="Directory Up"
+                            onClick={() => {
+                                setCurrentLink((link) => window.path.dirname(link));
+                            }}
+                        >
+                            <FontAwesomeIcon icon={faAngleUp} />
+                        </button>
+                        <ListNavigator.SearchInput runOriginalOnChange={true} onChange={handleOnChange} />
+                    </div>
+                    <div className="currentPath">
+                        <button
+                            data-tooltip={`${imageCount} Images`}
+                            disabled={imageCount <= 0}
+                            onClick={() => openInReader(currentLink)}
+                        >
+                            Open
+                        </button>
+                        <span>{currentLink}</span>
+                    </div>
                 </div>
-                <div className="currentPath">
-                    <button
-                        data-tooltip={`${imageCount} Images`}
-                        disabled={imageCount <= 0}
-                        onClick={() => openInReader(currentLink)}
-                    >
-                        Open
-                    </button>
-                    <span>{currentLink}</span>
+                <div className="location-cont" ref={locationContRef}>
+                    {isLoadingFile ? (
+                        <p>Loading...</p>
+                    ) : locations.length === 0 ? (
+                        <p>0 Folders, {imageCount} Images</p>
+                    ) : (
+                        <ListNavigator.List />
+                    )}
                 </div>
-                {/* <span className="divider"></span> */}
-                {/* <div className="imageCount">
-                    <p>This folder contains {imageCount} Images.</p>
-                </div> */}
-                {/* <span className="divider"></span> */}
-            </div>
-            <div className="location-cont" ref={locationContRef}>
-                {isLoadingFile ? (
-                    <p>Loading...</p>
-                ) : locations.length === 0 ? (
-                    <p>0 Folders, {imageCount} Images</p>
-                ) : (
-                    <ol>
-                        {sortedLocations
-                            .filter((e) => new RegExp(filter, "ig") && new RegExp(filter, "ig").test(e.name))
-                            .map(
-                                (e, i, arr) =>
-                                    new RegExp(filter, "ig") &&
-                                    new RegExp(filter, "ig").test(e.name) && (
-                                        <LocationListItem
-                                            name={e.name}
-                                            link={e.link}
-                                            focused={focused >= 0 && focused % arr.length === i}
-                                            // todo : improve history
-                                            inHistory={
-                                                item?.type === "manga"
-                                                    ? item.progress?.chaptersRead.includes(e.name) || false
-                                                    : false
-                                            }
-                                            onContextMenu={onContextMenu}
-                                            key={e.link}
-                                            setCurrentLink={setCurrentLink}
-                                        />
-                                    ),
-                            )}
-                    </ol>
-                )}
-            </div>
+            </ListNavigator.Provider>
         </div>
     );
 };

@@ -3,8 +3,9 @@ import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { useAppSelector } from "@store/hooks";
 import { dialogUtils } from "@utils/dialog";
 import { formatUtils } from "@utils/file";
-import { ReactElement, useContext, useState, useEffect } from "react";
+import { ReactElement } from "react";
 import { useAppContext } from "src/renderer/App";
+import ListItem from "../../components/ListItem";
 
 const LocationListItem = ({
     name,
@@ -19,17 +20,12 @@ const LocationListItem = ({
     setCurrentLink: React.Dispatch<React.SetStateAction<string>>;
     inHistory: boolean;
     onContextMenu: (e: React.MouseEvent<HTMLAnchorElement, MouseEvent>, link: string, inHistory: boolean) => void;
-
-    /**
-     * for keyboard navigation
-     */
     focused: boolean;
 }): ReactElement => {
-    const { openInReader, validateDirectory, contextMenuData } = useAppContext();
+    const { openInReader } = useAppContext();
     const appSettings = useAppSelector((store) => store.appSettings);
-    const [contextMenuFocused, setContextMenuFocused] = useState(false);
 
-    const onClickHandle = (a = true) => {
+    const onClickHandle = () => {
         if (!window.fs.existsSync(link)) {
             dialogUtils.customError({ message: "Directory/File doesn't exist." });
             return;
@@ -49,62 +45,47 @@ const LocationListItem = ({
                 }
             });
         }
-        if (a) setCurrentLink(link);
+        setCurrentLink(link);
     };
 
-    useEffect(() => {
-        // try using active instead
-        if (!contextMenuData) setContextMenuFocused(false);
-    }, [contextMenuData]);
+    const handleClick = (e: React.MouseEvent<HTMLAnchorElement>) => {
+        if (appSettings.openOnDblClick) {
+            const elem = e.currentTarget;
+            if (!elem.getAttribute("data-dblClick")) {
+                elem.setAttribute("data-dblClick", "true");
+                setTimeout(() => {
+                    if (elem.getAttribute("data-dblClick") === "true") {
+                        elem.removeAttribute("data-dblClick");
+                        onClickHandle();
+                    }
+                }, 250);
+            } else {
+                elem.removeAttribute("data-dblClick");
+                openInReader(link);
+            }
+        } else onClickHandle();
+    };
+
+    const handleContextMenu = (e: React.MouseEvent<HTMLAnchorElement>) => {
+        onContextMenu(e, link, inHistory);
+    };
+
     return (
-        <li
-            className={`${inHistory ? "alreadyRead" : ""} ${contextMenuFocused ? "focused" : ""}`}
-            data-focused={focused}
-            ref={(node) => {
-                if (node && focused) node.scrollIntoView({ block: "nearest" });
-            }}
+        <ListItem
+            focused={focused}
+            classNameLi={inHistory ? "alreadyRead" : ""}
+            onClick={handleClick}
+            onContextMenu={handleContextMenu}
+            title={name}
         >
-            <a
-                title={name}
-                onClick={(e) => {
-                    if (appSettings.openOnDblClick) {
-                        const elem = e.currentTarget;
-                        if (!elem.getAttribute("data-dblClick")) {
-                            elem.setAttribute("data-dblClick", "true");
-                            setTimeout(() => {
-                                if (elem.getAttribute("data-dblClick") === "true") {
-                                    elem.removeAttribute("data-dblClick");
-                                    onClickHandle();
-                                }
-                            }, 250);
-                        } else {
-                            elem.removeAttribute("data-dblClick");
-                            openInReader(link);
-                        }
-                    } else onClickHandle();
-                }}
-                onContextMenu={(e) => {
-                    setContextMenuFocused(true);
-                    onContextMenu(e, link, inHistory);
-                }}
-            >
-                <span className="text">{formatUtils.files.getName(name)}</span>
-                {formatUtils.files.test(name) && (
-                    <code className="nonFolder">{formatUtils.files.getExt(name)}</code>
-                )}
-            </a>
+            <span className="text">{formatUtils.files.getName(name)}</span>
+            {formatUtils.files.test(name) && <code className="nonFolder">{formatUtils.files.getExt(name)}</code>}
             {!appSettings.hideOpenArrow && !formatUtils.files.test(name) && (
-                <button
-                    title="Open In Reader"
-                    className="open-in-reader-btn"
-                    // onFocus={(e) => e.currentTarget.blur()}
-                    onClick={() => openInReader(link)}
-                    // onclick="makeImg($(this).siblings('a').attr('data-link'))"
-                >
+                <button title="Open In Reader" className="open-in-reader-btn" onClick={() => openInReader(link)}>
                     <FontAwesomeIcon icon={faAngleRight} />
                 </button>
             )}
-        </li>
+        </ListItem>
     );
 };
 

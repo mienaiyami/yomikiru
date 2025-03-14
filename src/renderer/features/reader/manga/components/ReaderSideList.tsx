@@ -6,10 +6,12 @@ import {
     faBookmark,
     faThumbtack,
     faLocationDot,
+    faSearch,
+    faTimes,
 } from "@fortawesome/free-solid-svg-icons";
 import { faBookmark as farBookmark } from "@fortawesome/free-regular-svg-icons";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import { memo, useEffect, useLayoutEffect, useRef, useState, useContext, useMemo } from "react";
+import { memo, useEffect, useLayoutEffect, useRef, useState, useMemo, useCallback } from "react";
 import { useAppDispatch, useAppSelector } from "@store/hooks";
 // import { updateCurrentHistoryPage } from "../store/history";
 import { addBookmark, removeBookmark } from "@store/bookmarks";
@@ -18,10 +20,10 @@ import { setPrevNextChapter } from "@store/prevNextChapter";
 import AnilistBar from "../../../anilist/AnilistBar";
 import { formatUtils } from "@utils/file";
 import { dialogUtils } from "@utils/dialog";
-import { keyFormatter } from "@utils/keybindings";
 import { getReaderManga, setReaderState } from "@store/reader";
 import { useAppContext } from "src/renderer/App";
 import ReaderSideListItem from "./ReaderSideListItem";
+import ListNavigator from "src/renderer/components/ListNavigator";
 
 type ChapterData = { name: string; pages: number; link: string; dateModified: number };
 
@@ -47,9 +49,8 @@ const ReaderSideList = memo(
     }) => {
         const { contextMenuData, openInReader, setContextMenuData, closeReader } = useAppContext();
 
-        const linkInReader = useAppSelector((store) => store.reader.link);
         const mangaLink = useAppSelector((store) => store.reader.content?.link);
-        // mangaInReader.link !== linkInReader
+        /** mangaInReader.link !== linkInReader */
         const mangaInReader = useAppSelector(getReaderManga);
         const library = useAppSelector((store) => store.library);
         const bookmarks = useAppSelector((store) => store.bookmarks);
@@ -64,7 +65,7 @@ const ReaderSideList = memo(
         const [chapterData, setChapterData] = useState<ChapterData[]>([]);
         const [filter, setFilter] = useState<string>("");
         const [isListOpen, setListOpen] = useState(false);
-        const [preventListClose, setpreventListClose] = useState(false);
+        const [preventListClose, setPreventListClose] = useState(false);
 
         // const prevMangaRef = useRef<string>("");
 
@@ -96,7 +97,7 @@ const ReaderSideList = memo(
                 !sideListRef.current?.contains(document.activeElement)
             )
                 return setListOpen(false);
-            setpreventListClose(true);
+            setPreventListClose(true);
         }, [contextMenuData]);
 
         useLayoutEffect(() => {
@@ -281,13 +282,40 @@ const ReaderSideList = memo(
             return appSettings.locationListSortType === "inverse" ? [...sorted].reverse() : sorted;
         }, [chapterData, appSettings.locationListSortBy, appSettings.locationListSortType]);
 
+        const filterChapter = (filter: string, chapter: ChapterData) => {
+            return new RegExp(filter, "ig").test(chapter.name);
+        };
+
+        const renderChapterItem = (chapter: ChapterData, index: number, isSelected: boolean) => {
+            return (
+                <ReaderSideListItem
+                    name={chapter.name}
+                    inHistory={Object.hasOwn(library.items, chapter.link)}
+                    focused={isSelected}
+                    key={chapter.name}
+                    pages={chapter.pages}
+                    current={mangaInReader?.link === chapter.link}
+                    link={chapter.link}
+                    onClick={() => openInReader(chapter.link)}
+                />
+            );
+        };
+
+        const handleContextMenu = (elem: HTMLElement) => {
+            elem.dispatchEvent(window.contextMenu.fakeEvent(elem));
+        };
+
+        const handleSelect = (elem: HTMLElement) => {
+            elem.click();
+        };
+
         return (
             <div
                 className={`readerSideList listCont ${isListOpen ? "open" : ""} ${
                     !appSettings.showTextFileBadge ? "hideTextFileBadge" : ""
                 } ${!appSettings.showPageCountInSideList ? "hidePageCountInSideList" : ""}`}
                 onMouseEnter={() => {
-                    setpreventListClose(true);
+                    setPreventListClose(true);
                     if (!isListOpen) setListOpen(true);
                 }}
                 onMouseLeave={(e) => {
@@ -298,15 +326,15 @@ const ReaderSideList = memo(
                             !e.currentTarget.contains(document.activeElement)
                         )
                             setListOpen(false);
-                        setpreventListClose(false);
+                        setPreventListClose(false);
                     }
                 }}
                 onFocus={() => {
                     setListOpen(true);
-                    setpreventListClose(true);
+                    setPreventListClose(true);
                 }}
                 onMouseDown={(e) => {
-                    if (e.target instanceof Node && e.currentTarget.contains(e.target)) setpreventListClose(true);
+                    if (e.target instanceof Node && e.currentTarget.contains(e.target)) setPreventListClose(true);
                 }}
                 onBlur={(e) => {
                     if (
@@ -315,7 +343,7 @@ const ReaderSideList = memo(
                         !contextMenuData
                     ) {
                         setListOpen(false);
-                        setpreventListClose(false);
+                        setPreventListClose(false);
                     }
                 }}
                 onKeyDown={(e) => {
@@ -354,338 +382,265 @@ const ReaderSideList = memo(
                     }}
                     onMouseUp={handleResizerMouseUp}
                 ></div>
-                <div className="tools">
-                    <div className="row1">
-                        <input
-                            type="text"
-                            name=""
-                            spellCheck={false}
-                            placeholder="Type to Search"
-                            // tabIndex={-1}
-                            onChange={(e) => {
-                                const val = e.target.value;
-                                let filter = "";
-                                for (let i = 0; i < val.length; i++) {
-                                    filter += val[i] + ".*";
-                                }
-                                setFocused(-1);
-                                setFilter(filter);
-                            }}
-                            onBlur={() => {
-                                setFocused(-1);
-                            }}
-                            onKeyDown={(e) => {
-                                e.stopPropagation();
-                                if (/\[|\]|\(|\)|\*|\+|\?/gi.test(e.key)) {
-                                    e.preventDefault();
-                                }
-                                if (e.key === "Escape") {
-                                    e.currentTarget.blur();
-                                }
-                                const keyStr = keyFormatter(e);
-                                if (keyStr === "" && e.key !== "Escape") return;
 
-                                const shortcutsMapped = Object.fromEntries(
-                                    shortcuts.map((e) => [e.command, e.keys]),
-                                ) as Record<ShortcutCommands, string[]>;
-                                switch (true) {
-                                    case shortcutsMapped["contextMenu"].includes(keyStr): {
-                                        const elem = locationContRef.current?.querySelector(
-                                            '[data-focused="true"] a',
-                                        ) as HTMLLIElement | null;
-                                        if (elem) {
-                                            e.currentTarget.blur();
-                                            elem.dispatchEvent(
-                                                window.contextMenu.fakeEvent(elem, e.currentTarget),
-                                            );
-                                        }
-                                        break;
-                                    }
-                                    case shortcutsMapped["listDown"].includes(keyStr):
-                                        e.preventDefault();
-                                        setFocused((init) => {
-                                            if (init + 1 >= chapterData.length) return 0;
-                                            return init + 1;
-                                        });
-                                        break;
-                                    case shortcutsMapped["listUp"].includes(keyStr):
-                                        e.preventDefault();
-                                        setFocused((init) => {
-                                            if (init - 1 < 0) return chapterData.length - 1;
-                                            return init - 1;
-                                        });
-                                        break;
-                                    case shortcutsMapped["listSelect"].includes(keyStr): {
-                                        const elem = locationContRef.current?.querySelector(
-                                            '[data-focused="true"] a',
-                                        ) as HTMLLIElement | null;
-                                        if (elem) return elem.click();
-                                        const elems = locationContRef.current?.querySelectorAll("a");
-                                        if (elems?.length === 1) elems[0].click();
-                                        break;
-                                    }
-                                    default:
-                                        break;
-                                }
-                            }}
-                        />
-                        {!appSettings.autoRefreshSideList && (
+                <ListNavigator.Provider
+                    items={sortedLocations}
+                    filterFn={filterChapter}
+                    renderItem={renderChapterItem}
+                    onContextMenu={handleContextMenu}
+                    onSelect={handleSelect}
+                    emptyMessage="No chapters found"
+                >
+                    <div className="tools">
+                        <div className="row1">
+                            <ListNavigator.SearchInput placeholder="Search chapters..." />
+
+                            {!appSettings.autoRefreshSideList && (
+                                <button data-tooltip="Refresh" onClick={() => makeChapterList()}>
+                                    <FontAwesomeIcon icon={faSyncAlt} />
+                                </button>
+                            )}
+
                             <button
-                                // tabIndex={-1}
-                                data-tooltip="Refresh"
-                                onClick={() => {
-                                    makeChapterList();
-                                }}
-                            >
-                                <FontAwesomeIcon icon={faSyncAlt} />
-                            </button>
-                        )}
-                        <button
-                            data-tooltip={
-                                "Sort: " +
-                                (appSettings.locationListSortType === "normal" ? "▲ " : "▼ ") +
-                                appSettings.locationListSortBy.toUpperCase()
-                            }
-                            // tabIndex={-1}
-                            onClick={(e) => {
-                                const items: Menu.ListItem[] = [
-                                    {
-                                        label: "Name",
-                                        action() {
-                                            dispatch(
-                                                setAppSettings({
-                                                    locationListSortBy: "name",
-                                                }),
-                                            );
-                                        },
-                                        selected: appSettings.locationListSortBy === "name",
-                                    },
-                                    {
-                                        label: "Date Modified",
-                                        action() {
-                                            dispatch(
-                                                setAppSettings({
-                                                    locationListSortBy: "date",
-                                                    locationListSortType: "inverse",
-                                                }),
-                                            );
-                                        },
-                                        selected: appSettings.locationListSortBy === "date",
-                                    },
-                                    window.contextMenu.template.divider(),
-                                    {
-                                        label: "Ascending",
-                                        action() {
-                                            dispatch(
-                                                setAppSettings({
-                                                    locationListSortType: "normal",
-                                                }),
-                                            );
-                                        },
-                                        selected: appSettings.locationListSortType === "normal",
-                                    },
-                                    {
-                                        label: "Descending",
-                                        action() {
-                                            dispatch(
-                                                setAppSettings({
-                                                    locationListSortType: "inverse",
-                                                }),
-                                            );
-                                        },
-                                        selected: appSettings.locationListSortType === "inverse",
-                                    },
-                                ];
-                                setContextMenuData({
-                                    clickX: e.currentTarget.getBoundingClientRect().x,
-                                    clickY: e.currentTarget.getBoundingClientRect().bottom + 4,
-                                    padLeft: true,
-                                    items,
-                                    focusBackElem: e.currentTarget,
-                                });
-                            }}
-                        >
-                            <FontAwesomeIcon icon={faSort} />
-                        </button>
-                    </div>
-                    <div className="row2">
-                        <Button
-                            className="ctrl-menu-item"
-                            btnRef={openPrevChapterRef}
-                            tooltip="Open Previous"
-                            clickAction={() => {
-                                if (prevNextChapter.prev === "~") {
-                                    dialogUtils
-                                        .confirm({
-                                            message: "There's no previous chapter.",
-                                            buttons: ["Ok", "Home"],
-                                            noOption: false,
-                                            noLink: true,
-                                        })
-                                        .then((e) => {
-                                            if (e.response === 1) {
-                                                closeReader();
-                                            }
-                                        });
-                                    return;
+                                data-tooltip={
+                                    "Sort: " +
+                                    (appSettings.locationListSortType === "normal" ? "▲ " : "▼ ") +
+                                    appSettings.locationListSortBy.toUpperCase()
                                 }
-                                temp_prevNextOpener(prevNextChapter.prev);
-                            }}
-                        >
-                            <FontAwesomeIcon icon={faArrowLeft} />
-                        </Button>
-                        <Button
-                            className="ctrl-menu-item bookmarkBtn"
-                            tooltip="Bookmark"
-                            btnRef={addToBookmarkRef}
-                            clickAction={() => {
-                                if (!mangaInReader || !mangaInReader.progress) return;
-                                const itemLink = mangaInReader.link;
-                                if (bookmarkedId !== null) {
-                                    return dialogUtils
-                                        .warn({
-                                            title: "Warning",
-                                            message: "Remove - Remove Bookmark",
-                                            noOption: false,
-                                            buttons: ["Cancel", "Remove"],
-                                            defaultId: 0,
-                                        })
-                                        .then(({ response }) => {
-                                            if (response === 1 && mangaInReader) {
+                                onClick={(e) => {
+                                    const items: Menu.ListItem[] = [
+                                        {
+                                            label: "Name",
+                                            action() {
                                                 dispatch(
-                                                    removeBookmark({
-                                                        itemLink,
-                                                        type: "manga",
-                                                        ids: [bookmarkedId],
+                                                    setAppSettings({
+                                                        locationListSortBy: "name",
                                                     }),
                                                 );
-                                            }
-                                        });
-                                }
-                                dispatch(
-                                    addBookmark({
-                                        type: "manga",
-                                        data: {
-                                            itemLink,
-                                            page: mangaInReader.progress.currentPage || 1,
-                                            link: mangaInReader.progress.chapterLink,
-                                            chapterName: mangaInReader.progress.chapterName,
+                                            },
+                                            selected: appSettings.locationListSortBy === "name",
                                         },
-                                    }),
-                                );
-                                setShortcutText("Bookmark Added");
-                            }}
-                        >
-                            <FontAwesomeIcon icon={bookmarkedId !== null ? faBookmark : farBookmark} />
-                        </Button>
-                        <Button
-                            className="ctrl-menu-item"
-                            btnRef={openNextChapterRef}
-                            tooltip="Open Next"
-                            clickAction={() => {
-                                if (prevNextChapter.next === "~") {
-                                    dialogUtils
-                                        .confirm({
-                                            message: "There's no next chapter.",
-                                            buttons: ["Ok", "Home"],
-                                            noOption: false,
-                                            noLink: true,
-                                        })
-                                        .then((e) => {
-                                            if (e.response === 1) {
-                                                closeReader();
-                                            }
-                                        });
-                                    return;
-                                }
-                                temp_prevNextOpener(prevNextChapter.next);
-                            }}
-                        >
-                            <FontAwesomeIcon icon={faArrowRight} />
-                        </Button>
-                    </div>
-                </div>
-                <div className="in-reader">
-                    <div>
-                        <span className="bold">Manga</span>
-                        <span className="bold"> : </span>
-                        <span>{mangaInReader?.title}</span>
-                    </div>
-                    <div>
-                        <span className="bold">Chapter</span>
-                        <span className="bold"> : </span>
-                        <span>{formatUtils.files.getName(mangaInReader?.progress?.chapterName || "")}</span>
-                    </div>
-                </div>
-                <div className="tools">
-                    <div className="row2">
-                        <button
-                            className="ctrl-menu-item"
-                            data-tooltip="Improves performance"
-                            onClick={() => {
-                                dispatch(
-                                    setReaderSettings({
-                                        hideSideList: !appSettings.readerSettings.hideSideList,
-                                    }),
-                                );
-                            }}
-                        >
-                            {appSettings.readerSettings.hideSideList ? "Show" : "Hide"} List
-                        </button>
-                        <button
-                            className="ctrl-menu-item"
-                            data-tooltip="Locate Current Chapter"
-                            onClick={() => {
-                                if (sideListRef.current) {
-                                    sideListRef.current.querySelectorAll("a").forEach((e) => {
-                                        if (e.getAttribute("data-url") === mangaInReader?.link)
-                                            e.scrollIntoView({ block: "nearest" });
+                                        {
+                                            label: "Date Modified",
+                                            action() {
+                                                dispatch(
+                                                    setAppSettings({
+                                                        locationListSortBy: "date",
+                                                        locationListSortType: "inverse",
+                                                    }),
+                                                );
+                                            },
+                                            selected: appSettings.locationListSortBy === "date",
+                                        },
+                                        window.contextMenu.template.divider(),
+                                        {
+                                            label: "Ascending",
+                                            action() {
+                                                dispatch(
+                                                    setAppSettings({
+                                                        locationListSortType: "normal",
+                                                    }),
+                                                );
+                                            },
+                                            selected: appSettings.locationListSortType === "normal",
+                                        },
+                                        {
+                                            label: "Descending",
+                                            action() {
+                                                dispatch(
+                                                    setAppSettings({
+                                                        locationListSortType: "inverse",
+                                                    }),
+                                                );
+                                            },
+                                            selected: appSettings.locationListSortType === "inverse",
+                                        },
+                                    ];
+                                    setContextMenuData({
+                                        clickX: e.currentTarget.getBoundingClientRect().x,
+                                        clickY: e.currentTarget.getBoundingClientRect().bottom + 4,
+                                        padLeft: true,
+                                        items,
+                                        focusBackElem: e.currentTarget,
                                     });
-                                }
-                            }}
-                        >
-                            <FontAwesomeIcon icon={faLocationDot} />
-                        </button>
+                                }}
+                            >
+                                <FontAwesomeIcon icon={faSort} />
+                            </button>
+                        </div>
+
+                        <div className="row2">
+                            <Button
+                                className="ctrl-menu-item"
+                                btnRef={openPrevChapterRef}
+                                tooltip="Open Previous"
+                                clickAction={() => {
+                                    if (prevNextChapter.prev === "~") {
+                                        dialogUtils
+                                            .confirm({
+                                                message: "There's no previous chapter.",
+                                                buttons: ["Ok", "Home"],
+                                                noOption: false,
+                                                noLink: true,
+                                            })
+                                            .then((e) => {
+                                                if (e.response === 1) {
+                                                    closeReader();
+                                                }
+                                            });
+                                        return;
+                                    }
+                                    temp_prevNextOpener(prevNextChapter.prev);
+                                }}
+                            >
+                                <FontAwesomeIcon icon={faArrowLeft} />
+                            </Button>
+
+                            <Button
+                                className="ctrl-menu-item bookmarkBtn"
+                                tooltip="Bookmark"
+                                btnRef={addToBookmarkRef}
+                                clickAction={() => {
+                                    if (!mangaInReader || !mangaInReader.progress) return;
+                                    const itemLink = mangaInReader.link;
+                                    if (bookmarkedId !== null) {
+                                        return dialogUtils
+                                            .warn({
+                                                title: "Warning",
+                                                message: "Remove - Remove Bookmark",
+                                                noOption: false,
+                                                buttons: ["Cancel", "Remove"],
+                                                defaultId: 0,
+                                            })
+                                            .then(({ response }) => {
+                                                if (response === 1 && mangaInReader) {
+                                                    dispatch(
+                                                        removeBookmark({
+                                                            itemLink,
+                                                            type: "manga",
+                                                            ids: [bookmarkedId],
+                                                        }),
+                                                    );
+                                                }
+                                            });
+                                    }
+                                    dispatch(
+                                        addBookmark({
+                                            type: "manga",
+                                            data: {
+                                                itemLink,
+                                                page: mangaInReader.progress.currentPage || 1,
+                                                link: mangaInReader.progress.chapterLink,
+                                                chapterName: mangaInReader.progress.chapterName,
+                                            },
+                                        }),
+                                    );
+                                    setShortcutText("Bookmark Added");
+                                }}
+                            >
+                                <FontAwesomeIcon icon={bookmarkedId !== null ? faBookmark : farBookmark} />
+                            </Button>
+
+                            <Button
+                                className="ctrl-menu-item"
+                                btnRef={openNextChapterRef}
+                                tooltip="Open Next"
+                                clickAction={() => {
+                                    if (prevNextChapter.next === "~") {
+                                        dialogUtils
+                                            .confirm({
+                                                message: "There's no next chapter.",
+                                                buttons: ["Ok", "Home"],
+                                                noOption: false,
+                                                noLink: true,
+                                            })
+                                            .then((e) => {
+                                                if (e.response === 1) {
+                                                    closeReader();
+                                                }
+                                            });
+                                        return;
+                                    }
+                                    temp_prevNextOpener(prevNextChapter.next);
+                                }}
+                            >
+                                <FontAwesomeIcon icon={faArrowRight} />
+                            </Button>
+                        </div>
                     </div>
-                </div>
-                {anilistToken && <AnilistBar />}
-                <div
-                    className="location-cont"
-                    ref={locationContRef}
-                    style={{
-                        display: appSettings.readerSettings.hideSideList ? "none" : "initial",
-                    }}
-                >
-                    {chapterData.length <= 0 ? (
-                        <p>Loading...</p>
-                    ) : (
-                        <ol>
-                            {sortedLocations
-                                .filter((e) => new RegExp(filter, "ig") && new RegExp(filter, "ig").test(e.name))
-                                .map(
-                                    (e, i, arr) =>
-                                        new RegExp(filter, "ig") &&
-                                        new RegExp(filter, "ig").test(e.name) && (
-                                            <ReaderSideListItem
-                                                name={e.name}
-                                                inHistory={Object.hasOwn(library.items, e.link)}
-                                                focused={focused >= 0 && focused % arr.length === i}
-                                                key={e.name}
-                                                pages={e.pages}
-                                                current={mangaInReader?.link === e.link}
-                                                link={e.link}
-                                            />
-                                        ),
-                                )}
-                        </ol>
-                    )}
-                </div>
+
+                    <div className="in-reader">
+                        <div>
+                            <span className="bold">Manga</span>
+                            <span className="bold"> : </span>
+                            <span>{mangaInReader?.title}</span>
+                        </div>
+                        <div>
+                            <span className="bold">Chapter</span>
+                            <span className="bold"> : </span>
+                            <span>{formatUtils.files.getName(mangaInReader?.progress?.chapterName || "")}</span>
+                        </div>
+                    </div>
+
+                    <div className="tools">
+                        <div className="row2">
+                            <button
+                                className="ctrl-menu-item"
+                                data-tooltip="Improves performance"
+                                onClick={() => {
+                                    dispatch(
+                                        setReaderSettings({
+                                            hideSideList: !appSettings.readerSettings.hideSideList,
+                                        }),
+                                    );
+                                }}
+                            >
+                                {appSettings.readerSettings.hideSideList ? "Show" : "Hide"} List
+                            </button>
+
+                            <button
+                                className="ctrl-menu-item"
+                                data-tooltip="Locate Current Chapter"
+                                onClick={() => {
+                                    if (sideListRef.current) {
+                                        sideListRef.current.querySelectorAll("[data-url]").forEach((e) => {
+                                            if (
+                                                e.getAttribute("data-url") === mangaInReader?.progress?.chapterLink
+                                            )
+                                                e.scrollIntoView({ block: "nearest" });
+                                        });
+                                    }
+                                }}
+                            >
+                                <FontAwesomeIcon icon={faLocationDot} />
+                            </button>
+                        </div>
+                    </div>
+
+                    {anilistToken && <AnilistBar />}
+
+                    <div
+                        className="location-cont"
+                        style={{
+                            display: appSettings.readerSettings.hideSideList ? "none" : "initial",
+                        }}
+                    >
+                        <ListNavigator.List />
+                    </div>
+                </ListNavigator.Provider>
             </div>
         );
     },
 );
 
-const Button = (props: any) => {
+const Button = (props: {
+    className: string;
+    tooltip: string;
+    btnRef: React.RefObject<HTMLButtonElement>;
+    clickAction: () => void;
+    disabled?: boolean;
+    children: React.ReactNode;
+}) => {
     return (
         <button
             className={props.className}
