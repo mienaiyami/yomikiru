@@ -160,7 +160,7 @@ export class DirectoryValidatorService {
             await this.cleanupPreviousTempDir();
 
             if (showLoading) {
-                onProgress({ message: "Validating content..." });
+                onProgress({ message: "VALIDATING CONTENT" });
             }
 
             if (formatUtils.packedManga.test(normalizedLink)) {
@@ -226,8 +226,9 @@ export class DirectoryValidatorService {
                 }
 
                 onProgress({
-                    percent: 0,
-                    message: `Extracting "${linkSplitted.at(-1)?.substring(0, 20)}..."`,
+                    message: `EXTRACTING "${linkSplitted.at(-1)?.substring(0, 10)}・・・${formatUtils.files.getExt(
+                        link,
+                    )}"`,
                 });
 
                 try {
@@ -350,8 +351,7 @@ export class DirectoryValidatorService {
 
             if (sendImages) {
                 onProgress({
-                    percent: 0,
-                    message: `Processing images`,
+                    message: `PROCESSING IMAGES`,
                 });
             }
 
@@ -389,6 +389,7 @@ export class DirectoryValidatorService {
                     });
                 return { isValid: false, error: "No supported images found" };
             }
+            console.log("done");
 
             if (sendImages) {
                 const sortedImages = imgs.sort(window.app.betterSortOrder).map((e) => path.join(link, e));

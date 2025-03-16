@@ -43,20 +43,11 @@ export const useDirectoryValidator = () => {
             const validator = createValidator();
 
             try {
-                // todo: add option to disable loading?
-                // dispatch(
-                //     setReaderLoading({
-                //         percent: 0,
-                //         message: "Validating content...",
-                //     })
-                // );
                 const result = await validator.validateDirectory(link, options);
-
                 // dispatch(setReaderLoading(null));
-
                 return result;
             } catch (error) {
-                // dispatch(setReaderLoading(null));
+                dispatch(setReaderLoading(null));
 
                 return {
                     isValid: false,
@@ -109,7 +100,7 @@ export const useDirectoryValidator = () => {
             window.electron.webFrame.clearCache();
 
             if (formatUtils.book.test(normalizedLink)) {
-                dispatch(setReaderLoading({ percent: 0, message: "Processing EPUB" }));
+                dispatch(setReaderLoading({ message: "PROCESSING EPUB" }));
                 dispatch(
                     setReaderState({
                         type: "book",
@@ -122,14 +113,14 @@ export const useDirectoryValidator = () => {
                 );
                 return true;
             }
-
             const result = await validateDirectory(normalizedLink, {
                 sendImages: true,
                 maxSubdirectoryDepth,
                 useCache: true,
-                showLoading: false,
+                showLoading: true,
                 errorOnInvalid: false,
             });
+            console.log("done2");
 
             if (result.isValid && result.images) {
                 window.cachedImageList = {

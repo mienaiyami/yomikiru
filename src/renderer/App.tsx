@@ -4,44 +4,23 @@ import Main from "./components/Main";
 import TopBar from "./components/TopBar";
 import { refreshAppSettings, setAppSettings } from "@store/appSettings";
 
-import { addBookmark, fetchAllBookmarks, removeBookmark, setBookmarks } from "@store/bookmarks";
+import { addBookmark, fetchAllBookmarks, removeBookmark } from "@store/bookmarks";
 import { refreshThemes, setTheme } from "@store/themes";
-import {
-    bookmarksPath,
-    formatUtils,
-    historyPath,
-    promptSelectDir,
-    settingsPath,
-    themesPath,
-    unzip,
-} from "./utils/file";
+import { bookmarksPath, formatUtils, historyPath, promptSelectDir, settingsPath, themesPath } from "./utils/file";
 
-import { renderPDF } from "@utils/pdf";
 import {
     deleteLibraryItem,
     fetchAllItemsWithProgress,
-    setLibrary,
-    updateBookProgress,
     updateChaptersRead,
     updateChaptersReadAll,
     updateCurrentItemProgress,
-    updateMangaProgress,
 } from "@store/library";
 import { dialogUtils } from "@utils/dialog";
 import { keyFormatter } from "@utils/keybindings";
-import { DatabaseChannels } from "@common/types/ipc";
-import { BookBookmark, MangaBookmark } from "@common/types/db";
-import {
-    setAnilistEditOpen,
-    setAnilistLoginOpen,
-    setAnilistSearchOpen,
-    // setReaderOpen,
-    toggleSettingsOpen,
-} from "@store/ui";
+import { setAnilistEditOpen, setAnilistLoginOpen, setAnilistSearchOpen, toggleSettingsOpen } from "@store/ui";
 import { setAnilistCurrentManga } from "@store/anilist";
-import { resetReaderState, setReaderLoading, setReaderState } from "@store/reader";
+import { resetReaderState } from "@store/reader";
 import { useDirectoryValidator } from "@features/reader/hooks/useDirectoryValidator";
-import { electron } from "process";
 import { shallowEqual } from "react-redux";
 import { getShortcutsMapped } from "@store/shortcuts";
 

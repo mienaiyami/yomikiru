@@ -790,7 +790,7 @@ const Reader = () => {
     ]);
     useEffect(() => {
         if (imagesLoaded !== 0 && images.length !== 0) {
-            dispatch(setReaderLoading({ percent: (100 * imagesLoaded) / images.length }));
+            dispatch(setReaderLoading({ percent: (100 * imagesLoaded) / images.length, message: "" }));
             if (images.length === imagesLoaded) dispatch(setReaderLoading(null));
         }
     }, [imagesLoaded]);

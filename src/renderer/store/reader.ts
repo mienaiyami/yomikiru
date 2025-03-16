@@ -156,7 +156,8 @@ const readerSlice = createSlice({
         },
         setReaderOpen: (state) => {
             state.active = true;
-            state.loading = null;
+            // hide loading screen will cause loading screen to hide only for a moment when show up again when images starts to load.
+            // state.loading = null;
         },
         /**
          * only handles status not other states
