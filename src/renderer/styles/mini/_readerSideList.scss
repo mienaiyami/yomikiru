@@ -130,6 +130,13 @@
         padding: 0;
         a {
             --grid-template: 2.3em;
+            &:has(.date) {
+                grid-template-columns: auto;
+                .date {
+                    font-size: 0.8em;
+                    opacity: 0.7;
+                }
+            }
         }
     }
     .tools {

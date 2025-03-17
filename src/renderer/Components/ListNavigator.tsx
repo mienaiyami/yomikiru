@@ -37,7 +37,7 @@ function useListNavigator<T>() {
 
 export type ListNavigatorProps<T> = {
     items: T[];
-    filterFn: (filter: string, item: T) => boolean;
+    filterFn?: (filter: string, item: T) => boolean;
     renderItem: (item: T, index: number, isSelected: boolean) => React.ReactNode;
     onContextMenu?: (element: HTMLElement) => void;
     handleExtraKeyDown?: (keyStr: string, shortcutsMapped: Record<ShortcutCommands, string[]>) => void;
@@ -63,7 +63,7 @@ function ListNavigatorProviderComponent<T>({
     const listRef = useRef<HTMLOListElement>(null);
 
     const filteredItems = useMemo(() => {
-        return items.filter((item) => filterFn(filter, item));
+        return filterFn ? items.filter((item) => filterFn(filter, item)) : items;
     }, [items, filter, filterFn]);
 
     useEffect(() => {

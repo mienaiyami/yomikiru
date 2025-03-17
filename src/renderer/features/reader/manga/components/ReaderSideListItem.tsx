@@ -72,7 +72,6 @@ const ReaderSideListItem = memo(
                 onContextMenu={handleContextMenu}
                 title={name}
                 dataAttributes={{
-                    // originally it was on anchor element
                     "data-url": link,
                 }}
                 ref={

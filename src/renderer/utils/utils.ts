@@ -72,3 +72,15 @@ export const randomString = (length: number) => {
     }
     return result;
 };
+
+// /**
+//  * scroll to a element
+//  * @param query - element query string of position to scroll to
+//  * @param behavior - `ScrollBehavior`
+//  */
+// export const scrollToElement = (query: string, behavior: ScrollBehavior = "smooth") => {
+//     const element = document.querySelector(query);
+//     if (element) {
+//         element.scrollIntoView({ behavior, block: "start" });
+//     }
+// };

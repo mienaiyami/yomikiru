@@ -22,6 +22,7 @@ import { useAppContext } from "src/renderer/App";
 import ReaderSideListItem from "./ReaderSideListItem";
 import ListNavigator from "src/renderer/components/ListNavigator";
 import { shallowEqual } from "react-redux";
+import BookmarkList from "./BookmarkList";
 
 type ChapterData = { name: string; pages: number; link: string; dateModified: number };
 
@@ -68,6 +69,8 @@ const ReaderSideList = memo(
         const [preventListClose, setPreventListClose] = useState(false);
 
         const [draggingResizer, setDraggingResizer] = useState(false);
+
+        const [displayList, setDisplayList] = useState<"" | "content" | "bookmarks">("content");
 
         const [bookmarkedId, setBookmarkedId] = useState<number | null>(null);
 
@@ -571,50 +574,65 @@ const ReaderSideList = memo(
                     </div>
 
                     <div className="tools">
-                        <div className="row2">
+                        <div className="btnOptions">
                             <button
-                                className="ctrl-menu-item"
-                                data-tooltip="Improves performance"
+                                className={`${displayList === "content" ? "selected" : ""}`}
                                 onClick={() => {
-                                    dispatch(
-                                        setReaderSettings({
-                                            hideSideList: !appSettings.readerSettings.hideSideList,
-                                        }),
-                                    );
+                                    setDisplayList((init) => (init === "content" ? "" : "content"));
                                 }}
+                                data-tooltip="Click again to hide"
                             >
-                                {appSettings.readerSettings.hideSideList ? "Show" : "Hide"} List
+                                Content
                             </button>
-
                             <button
-                                className="ctrl-menu-item"
-                                data-tooltip="Locate Current Chapter"
+                                className={`${displayList === "bookmarks" ? "selected" : ""}`}
                                 onClick={() => {
-                                    if (sideListRef.current) {
-                                        sideListRef.current.querySelectorAll("[data-url]").forEach((e) => {
-                                            if (
-                                                e.getAttribute("data-url") === mangaInReader?.progress?.chapterLink
-                                            )
-                                                e.scrollIntoView({ block: "nearest" });
-                                        });
-                                    }
+                                    setDisplayList((init) => (init === "bookmarks" ? "" : "bookmarks"));
                                 }}
                             >
-                                <FontAwesomeIcon icon={faLocationDot} />
+                                Bookmarks
                             </button>
                         </div>
+                        {displayList === "content" && (
+                            <div className="row2">
+                                <button
+                                    className="ctrl-menu-item"
+                                    data-tooltip="Locate Current Chapter"
+                                    onClick={() => {
+                                        if (sideListRef.current) {
+                                            sideListRef.current.querySelectorAll("[data-url]").forEach((e) => {
+                                                if (
+                                                    e.getAttribute("data-url") ===
+                                                    mangaInReader?.progress?.chapterLink
+                                                )
+                                                    e.scrollIntoView({ block: "nearest" });
+                                            });
+                                        }
+                                    }}
+                                >
+                                    <FontAwesomeIcon icon={faLocationDot} />
+                                </button>
+                            </div>
+                        )}
                     </div>
 
                     {anilistToken && <AnilistBar />}
 
-                    <div
-                        className="location-cont"
-                        style={{
-                            display: appSettings.readerSettings.hideSideList ? "none" : "initial",
-                        }}
-                    >
-                        <ListNavigator.List />
-                    </div>
+                    {displayList === "content" && (
+                        <div
+                            className="location-cont"
+                            style={{
+                                display: appSettings.readerSettings.hideSideList ? "none" : "initial",
+                            }}
+                        >
+                            <ListNavigator.List />
+                        </div>
+                    )}
+                    {displayList === "bookmarks" && (
+                        <div className="location-cont">
+                            <BookmarkList />
+                        </div>
+                    )}
                 </ListNavigator.Provider>
             </div>
         );

@@ -6,7 +6,7 @@ const LoadingScreen = () => {
         <div id="loadingScreen" style={{ display: loading ? "grid" : "none" }}>
             {loading && (
                 <>
-                    <div className="loadingText">{loading.message}</div>
+                    {loading.message && <div className="loadingText">{loading.message}</div>}
                     {loading.percent !== null && (
                         <div className="loadingBarCont">
                             <div

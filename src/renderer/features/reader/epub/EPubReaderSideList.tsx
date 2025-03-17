@@ -5,6 +5,8 @@ import { useAppSelector } from "@store/hooks";
 import List from "./components/List";
 import FindInPage from "./components/FindInPage";
 import BookmarkButton from "./components/BookmarkButton";
+import BookmarkList from "./components/BookmarkList";
+import { useAppContext } from "src/renderer/App";
 
 const EPubReaderSideList = memo(
     ({
@@ -13,6 +15,7 @@ const EPubReaderSideList = memo(
         openPrevChapter,
         currentChapter,
         currentChapterFake,
+        openChapterById,
         addToBookmarkRef,
         setShortcutText,
         findInPage,
@@ -27,6 +30,7 @@ const EPubReaderSideList = memo(
         openPrevChapter: () => void;
         currentChapter: EPUB.Spine[number];
         currentChapterFake: string;
+        openChapterById: (chapterId: string, position?: string) => void;
         epubData: {
             manifest: EPUB.Manifest;
             spine: EPUB.Spine;
@@ -46,6 +50,7 @@ const EPubReaderSideList = memo(
         ) => void;
         zenMode: boolean;
     }) => {
+        const { contextMenuData } = useAppContext();
         const appSettings = useAppSelector((store) => store.appSettings);
         const sideListRef = useRef<HTMLDivElement>(null);
         const [isListOpen, setListOpen] = useState(false);
@@ -55,6 +60,19 @@ const EPubReaderSideList = memo(
         const [displayList, setDisplayList] = useState<"" | "content" | "bookmarks" | "notes">("content");
 
         const currentRef = useRef<HTMLAnchorElement | null>(null);
+
+        useEffect(() => {
+            if (
+                !contextMenuData &&
+                !isSideListPinned &&
+                document.activeElement !== sideListRef.current &&
+                !sideListRef.current?.contains(document.activeElement)
+            )
+                return setListOpen(false);
+
+            setPreventListClose(true);
+        }, [contextMenuData]);
+
         useEffect(() => {
             if (!zenMode && currentRef.current)
                 setTimeout(() => {
@@ -105,7 +123,11 @@ const EPubReaderSideList = memo(
                 }}
                 onMouseLeave={(e) => {
                     if (!isSideListPinned) {
-                        if (preventListClose && !e.currentTarget.contains(document.activeElement))
+                        if (
+                            preventListClose &&
+                            !contextMenuData &&
+                            !e.currentTarget.contains(document.activeElement)
+                        )
                             setListOpen(false);
                         setPreventListClose(false);
                     }
@@ -292,7 +314,6 @@ const EPubReaderSideList = memo(
                                 </p>
                             )}
                             <List
-                                // currentChapter={currentChapter}
                                 currentChapterHref={
                                     epubData.manifest.get(currentChapterFake)?.href || currentChapter.href
                                 }
@@ -303,8 +324,12 @@ const EPubReaderSideList = memo(
                             />
                         </>
                     )}
-                    {displayList === "bookmarks" && <p>To be implemented</p>}
-                    {displayList === "notes" && <p>To be implemented</p>}
+                    {displayList === "bookmarks" && <BookmarkList openChapterById={openChapterById} />}
+                    {displayList === "notes" && (
+                        <div className="location-cont">
+                            <p>To be implemented</p>
+                        </div>
+                    )}
                 </div>
             </div>
         );

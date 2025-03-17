@@ -52,18 +52,22 @@ const ListItem: React.FC<ListItemProps> = ({
     };
 
     const dataProps: Record<string, string> = {
-        "data-focused": focused.toString(),
         ...dataAttributes,
     };
 
     return (
-        <li ref={itemRef} className={`${classNameLi} ${contextMenuFocused ? "focused" : ""}`} {...dataProps}>
+        <li
+            ref={itemRef}
+            className={`${classNameLi} ${contextMenuFocused ? "focused" : ""}`}
+            data-focused={focused}
+        >
             <a
                 ref={anchorRef}
                 onClick={onClick}
                 className={classNameAnchor}
                 onContextMenu={handleContextMenu}
                 title={title}
+                {...dataProps}
             >
                 {children}
             </a>

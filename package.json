@@ -43,6 +43,7 @@
         "color": "^4.2.3",
         "cross-zip": "^4.0.0",
         "css": "^3.0.0",
+        "date-fns": "^4.1.0",
         "dotenv": "^16.4.7",
         "drizzle-orm": "^0.39.3",
         "drizzle-zod": "^0.7.0",

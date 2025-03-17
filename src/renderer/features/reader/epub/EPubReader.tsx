@@ -163,6 +163,35 @@ const EPubReader = () => {
             return prev;
         });
     }, [epubData]);
+
+    /**
+     * @param chapterId - `EPUB.Spine[].id`
+     * @param position - element query string of position to scroll to
+     */
+    const openChapterById = useCallback(
+        (chapterId: string, position?: string) => {
+            if (epubData) {
+                const index = epubData.spine.findIndex((e) => e.id === chapterId);
+                if (index >= 0) {
+                    setCurrentChapter({ index, fragment: "" });
+                    if (position) {
+                        setElemBeforeChange(position);
+                        // backup in case same chapter
+                        const element = mainRef.current?.querySelector(position);
+                        if (element) {
+                            element.scrollIntoView({ behavior: "smooth", block: "start" });
+                        }
+                    }
+                } else {
+                    dialogUtils.customError({
+                        message: "Could not find the chapter for corresponding id.",
+                    });
+                }
+            }
+        },
+        [epubData],
+    );
+
     /**
      * scroll to internal links or open external link
      * * `data-href` - scroll to internal
@@ -171,6 +200,7 @@ const EPubReader = () => {
     const onEpubLinkClick = useCallback(
         (ev: MouseEvent | React.MouseEvent<HTMLAnchorElement, MouseEvent>) => {
             ev.preventDefault();
+            console.log(ev.currentTarget);
             if (!epubData) return;
             const href = (ev.currentTarget as HTMLAnchorElement).getAttribute("data-href");
             if (href) {
@@ -498,6 +528,9 @@ const EPubReader = () => {
     }, [zenMode]);
 
     useLayoutEffect(() => {
+        console.log({
+            elemBeforeChange,
+        });
         if (isSideListPinned) {
             // readerRef.current?.scrollTo(0, scrollPosPercent * readerRef.current.scrollHeight);
             if (elemBeforeChange)
@@ -735,6 +768,7 @@ const EPubReader = () => {
                     currentChapter={epubData.spine[currentChapter.index]}
                     currentChapterFake={currentChapterFake}
                     epubData={epubData}
+                    openChapterById={openChapterById}
                     addToBookmarkRef={addToBookmarkRef}
                     setShortcutText={setShortcutText}
                     isSideListPinned={isSideListPinned}

@@ -21,10 +21,10 @@ declare namespace Menu {
          * leave extra space on left side, useful when have "check" items in list
          */
         padLeft?: boolean;
-        items: MenuListItem[];
+        items: Menu.ListItem[];
     };
     type OptSelectData = {
-        items: MenuListItem[];
+        items: Menu.ListItem[];
         onBlur?: (e: React.FocusEvent<HTMLDivElement, Element>) => void;
         focusBackElem?: HTMLElement | null;
         // display: boolean;
