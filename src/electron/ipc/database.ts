@@ -23,7 +23,7 @@ import {
 export const pingDatabaseChange = async <T extends keyof DatabaseChangeChannels>(
     channel: T,
     // data: DatabaseChangeChannels[T]["request"],
-) => {
+): Promise<void> => {
     // todo: maybe send whole data on channel and then update store?
     const windows = BrowserWindow.getAllWindows();
     windows.forEach((window) => {
@@ -190,13 +190,13 @@ const handlers: {
     // },
 };
 
-export function setupDatabaseHandlers(db: DatabaseService) {
+export function setupDatabaseHandlers(db: DatabaseService): void {
     for (const channel in handlers) {
         ipcMain.handle(channel, async (_, request) => {
             try {
                 return await handlers[channel as keyof DatabaseChannels](db, request);
             } catch (error) {
-                console.error(`Error in IPC channel "${channel}":`, error);
+                console.error(`Error in IPC channel "${channel}":`, error, request);
                 throw error;
             }
         });

@@ -1,6 +1,7 @@
 import { createSlice, createAsyncThunk, PayloadAction } from "@reduxjs/toolkit";
 import { DatabaseChannels } from "@common/types/ipc";
 import { RootState } from ".";
+import { formatUtils } from "@utils/file";
 
 // todo : add proper error handling
 
@@ -130,10 +131,13 @@ const librarySlice = createSlice({
                 state.error = null;
             })
             .addCase(fetchAllItemsWithProgress.fulfilled, (state, action) => {
-                state.items = action.payload.reduce((acc, item) => {
-                    acc[item.link] = item;
-                    return acc;
-                }, {} as LibraryState["items"]);
+                state.items = action.payload.reduce(
+                    (acc, item) => {
+                        acc[item.link] = item;
+                        return acc;
+                    },
+                    {} as LibraryState["items"],
+                );
                 state.loading = false;
             })
             .addCase(fetchAllItemsWithProgress.rejected, (state, action) => {
@@ -148,7 +152,7 @@ export default librarySlice.reducer;
 
 export const selectLibraryItem = (state: RootState, path: string) => {
     try {
-        const dirPath = window.path.dirname(path);
+        const dirPath = formatUtils.book.test(path) ? path : window.path.dirname(path);
         return state.library.items[dirPath] ?? null;
     } catch (error) {
         console.error("Error in selectLibraryItem:", error);
