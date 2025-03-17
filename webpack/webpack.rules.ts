@@ -22,7 +22,7 @@ export const rules: Required<ModuleOptions>["rules"] = [
             loader: "ts-loader",
             // use this or `ForkTsCheckerWebpackPlugin` in `webpack/plugins.ts`
             options: {
-                transpileOnly: true,
+                // transpileOnly: true,
             },
         },
     },

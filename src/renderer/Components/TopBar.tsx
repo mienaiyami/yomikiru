@@ -163,15 +163,15 @@ const TopBar = (): ReactElement => {
                                     !(
                                         /[0-9]/gi.test(e.key) ||
                                         e.key === "Backspace" ||
-                                        e.key == "Enter" ||
-                                        e.key == "Escape"
+                                        e.key === "Enter" ||
+                                        e.key === "Escape"
                                     )
                                 )
                                     e.preventDefault();
                             }}
                             onKeyUp={(e) => {
                                 if (pageScrollTimeoutID) clearTimeout(pageScrollTimeoutID);
-                                if (e.key == "Enter" || e.key == "Escape") {
+                                if (e.key === "Enter" || e.key === "Escape") {
                                     e.currentTarget.blur();
                                 }
                                 if (e.key === "Enter") {
@@ -229,14 +229,14 @@ const TopBar = (): ReactElement => {
                                     !(
                                         /[0-9]/gi.test(e.key) ||
                                         e.key === "Backspace" ||
-                                        e.key == "Enter" ||
-                                        e.key == "Escape"
+                                        e.key === "Enter" ||
+                                        e.key === "Escape"
                                     )
                                 )
                                     e.preventDefault();
                             }}
                             onKeyUp={(e) => {
-                                if (e.key == "Enter" || e.key == "Escape") {
+                                if (e.key === "Enter" || e.key === "Escape") {
                                     e.currentTarget.blur();
                                 }
                                 if (/[0-9]/gi.test(e.key) || e.key === "Backspace") {

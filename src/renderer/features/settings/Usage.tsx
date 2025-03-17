@@ -4,7 +4,7 @@ const Usage = ({
 }: {
     scrollIntoView: (
         elementQuery: string,
-        tab: "settings" | "shortcutKeys" | "makeTheme" | "about" | "extras"
+        tab: "settings" | "shortcutKeys" | "makeTheme" | "about" | "extras",
     ) => void;
 }) => {
     const shortcuts = useAppSelector((store) => store.shortcuts);
@@ -12,11 +12,13 @@ const Usage = ({
     return (
         <div className="content2 features">
             <ul>
-                <li>It is recommended to set "Default Location" to the folder where you usually store manga.</li>
+                <li>
+                    It is recommended to set {'"Default Location"'} to the folder where you usually store manga.
+                </li>
                 <li>
                     <b>Recommended File Arrangement:</b> Though you can open manga from anywhere, it is recommended
-                    to arrange file in way as shown below for better experience and features like "reader
-                    side-list".
+                    to arrange file in way as shown below for better experience and features like &quot;reader
+                    side-list&quot;.
                     <ul className="fileExample">
                         <li>
                             DEFAULT LOCATION\
@@ -25,7 +27,7 @@ const Usage = ({
                                     One Piece\
                                     <ul>
                                         <li>
-                                            Chapter 1\ <code>use "Open" here</code>
+                                            Chapter 1\ <code>use &quot;Open&quot; here</code>
                                             <ul>
                                                 <li>001.png</li>
                                                 <li>002.png</li>
@@ -47,7 +49,7 @@ const Usage = ({
                                     Bleach\
                                     <ul>
                                         <li>
-                                            Chapter 1\ <code>use "Open" here</code>
+                                            Chapter 1\ <code>use &quot;Open&quot; here</code>
                                             <ul>
                                                 <li>001.png</li>
                                             </ul>
@@ -114,7 +116,7 @@ const Usage = ({
                                 }}
                             >
                                 Open chapter in reader directly if chapter is a sub-folder of sub-folder of
-                                "Default Location".
+                                &quot;Default Location&quot;.
                             </a>
                             <br />
                             Example: If the default location is set to{" "}
@@ -128,11 +130,11 @@ const Usage = ({
                             <b>Search:</b>
                             <ul>
                                 <li>
-                                    You don't need to type the whole word in search. (e.g. For{" "}
+                                    You don&apos;t need to type the whole word in search. (e.g. For{" "}
                                     <code>One Piece</code> type <code>op</code>).
                                 </li>
                                 <li>
-                                    For exact search, add <code>"</code> or <code>`</code> in front of search.
+                                    For exact search, add <code>&quot;</code> or <code>`</code> in front of search.
                                     (e.g. For <code>One Piece</code> type <code>`one</code>).
                                 </li>
                                 <li>
@@ -166,24 +168,26 @@ const Usage = ({
                     <b>Reader :</b>
                     <ul>
                         <li>
-                            When using the "vertical Scroll" mode, you can change chapters on the first or last
-                            page by clicking on either side of the screen or by clicking "prevPage" (
+                            When using the &quot;vertical Scroll&quot; mode, you can change chapters on the first
+                            or last page by clicking on either side of the screen or by clicking
+                            &quot;prevPage&quot; (
                             <code>{shortcuts.find((e) => e.command === "prevPage")?.keys.join(", ")}</code>) or
-                            "nextPage" (
+                            &quot;nextPage&quot; (
                             <code>{shortcuts.find((e) => e.command === "nextPage")?.keys.join(", ")}</code>)
                             shortcut keys. No response in center 20% of screen.
                             <ul>
                                 <li>Left &nbsp;&nbsp;= Previous Chapter</li>
                                 <li>Right = Next Chapter</li>
                                 <li>
-                                    Limit width of images in reader. To use "Max Image Width" feature, disable
-                                    "Size:Clamp".
+                                    Limit width of images in reader. To use &quot;Max Image Width&quot; feature,
+                                    disable &quot;Size:Clamp&quot;.
                                 </li>
                             </ul>
                         </li>{" "}
                         <li>
-                            To scroll using mouse while viewing full page, use "Left to Right" or "Right to Left"
-                            reading mode, then "Fit Vertically" option or make image size lower than window height.
+                            To scroll using mouse while viewing full page, use &quot;Left to Right&quot; or
+                            &quot;Right to Left&quot; reading mode, then &quot;Fit Vertically&quot; option or make
+                            image size lower than window height.
                         </li>
                         <li>Middle mouse button for auto scrolling.</li>
                         <li>
@@ -230,10 +234,10 @@ const Usage = ({
                             scrollIntoView("#settings-copyTheme", "settings");
                         }}
                     >
-                        Copy theme using "Copy Current Theme to Clipboard" under theme
+                        Copy theme using &quot;Copy Current Theme to Clipboard&quot; under theme
                     </a>
                     , it will be copied as text and you can share it anywhere. To install the theme, copy whole
-                    text you received and click on "Save Theme from Clipboard".
+                    text you received and click on &quot;Save Theme from Clipboard&quot;.
                 </li>
                 <li>
                     <a
@@ -268,8 +272,8 @@ const Usage = ({
                 </li>
                 <li id="settings-usage-customStylesheet">
                     If you know how to write <code>.css</code>, you can customize style of app, more than just
-                    theme color that is enabled by "Theme Maker, by making your custom <code>.css</code> file and
-                    adding it as{" "}
+                    theme color that is enabled by &quot;Theme Maker&quot;, by making your custom <code>.css</code>
+                    file and adding it as{" "}
                     <a
                         onClick={() => {
                             scrollIntoView("#settings-customStylesheet", "settings");
@@ -279,9 +283,9 @@ const Usage = ({
                     </a>
                     . You can use developer/inspect tool to check the element and existing styles.
                     <br />
-                    NOTE: Do not move <code> .css </code> file in directly under app's folder. If you are using
-                    portable version, everything except <code>userdata</code> folder will be deleted. You can
-                    safely put it inside <code>userdata</code> folder.
+                    NOTE: Do not move <code>&quot; .css &quot;</code> file in directly under app&apos;s folder. If
+                    you are using portable version, everything except <code>userdata</code> folder will be deleted.
+                    You can safely put it inside <code>userdata</code> folder.
                 </li>
             </ul>
         </div>

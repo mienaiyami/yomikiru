@@ -6,7 +6,7 @@ import { app, BrowserWindow, dialog, shell } from "electron";
 import fetch from "electron-fetch";
 import * as crossZip from "cross-zip";
 import logger from "electron-log";
-import { download, File } from "electron-dl";
+import * as electronDl from "electron-dl";
 import { exec as execSudo } from "@vscode/sudo-prompt";
 
 declare const DOWNLOAD_PROGRESS_WEBPACK_ENTRY: string;
@@ -72,7 +72,7 @@ const checkForUpdate = async (
     skipMinor = false,
     promptAfterCheck = false,
     autoDownload = false,
-) => {
+): Promise<void> => {
     checkForAnnouncements();
     const rawdata = await fetch("https://api.github.com/repos/mienaiyami/yomikiru/releases").then((data) =>
         data.json(),
@@ -200,28 +200,31 @@ const downloadUpdates = (latestVersion: string, windowId: number, silent = false
     const downloadFile = (
         dl: string,
         webContents: Electron.WebContents | false,
-        callback: (file: File) => void,
+        callback: (file: electronDl.File) => void,
     ) => {
-        download(window, dl, {
-            directory: tempPath,
-            onStarted: () => {
-                logger.log("Downloading updates...");
-                logger.log(dl, `"${tempPath}"`);
-            },
-            onCancel: () => {
-                logger.log("Download canceled.");
-            },
-            onCompleted: (file) => callback(file),
-            onProgress: (progress) => {
-                webContents && webContents.send("progress", progress);
-            },
-        }).catch((reason) => {
-            dialog.showMessageBox(window, {
-                type: "error",
-                title: "Error while downloading",
-                message: reason + "\n\nPlease check the homepage if persist.",
+        electronDl
+            // eslint-disable-next-line import/namespace
+            .download(window, dl, {
+                directory: tempPath,
+                onStarted: () => {
+                    logger.log("Downloading updates...");
+                    logger.log(dl, `"${tempPath}"`);
+                },
+                onCancel: () => {
+                    logger.log("Download canceled.");
+                },
+                onCompleted: (file) => callback(file),
+                onProgress: (progress) => {
+                    webContents && webContents.send("progress", progress);
+                },
+            })
+            .catch((reason) => {
+                dialog.showMessageBox(window, {
+                    type: "error",
+                    title: "Error while downloading",
+                    message: reason + "\n\nPlease check the homepage if persist.",
+                });
             });
-        });
     };
 
     if (process.platform === "win32")

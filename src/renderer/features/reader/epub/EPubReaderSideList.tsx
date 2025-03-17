@@ -94,8 +94,8 @@ const EPubReaderSideList = memo(
                     e.clientX > (window.innerWidth * 90) / 100
                         ? (window.innerWidth * 90) / 100
                         : e.clientX < 192
-                        ? 192
-                        : e.clientX;
+                          ? 192
+                          : e.clientX;
                 setSideListWidth(width);
             }
         };
@@ -309,8 +309,8 @@ const EPubReaderSideList = memo(
                         <>
                             {epubData.toc.size > 500 && (
                                 <p>
-                                    Too many chapters, click "Content" to hide list to improve performance of
-                                    application.
+                                    Too many chapters, click &quot;Content&quot; to hide list to improve
+                                    performance of application.
                                 </p>
                             )}
                             <List

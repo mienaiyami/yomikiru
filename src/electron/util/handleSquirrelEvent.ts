@@ -20,7 +20,7 @@ const handleSquirrelEvent = () => {
     const squirrelEvent = process.argv[1];
     switch (squirrelEvent) {
         case "--squirrel-install":
-        case "--squirrel-updated":
+        case "--squirrel-updated": {
             // const createShortcutArgs = [
             //     `--createShortcut="${app.getName()}.exe"`,
             //     "--shortcut-locations=Desktop,StartMenu",
@@ -47,15 +47,16 @@ const handleSquirrelEvent = () => {
             // fs.unlinkSync(path.resolve(rootFolder, "shortcut.vbs"));
             app.quit();
             break;
+        }
 
-        case "--squirrel-uninstall":
+        case "--squirrel-uninstall": {
             if (
                 fs.existsSync(
-                    path.resolve(homedir(), "AppData/Roaming/Microsoft/Windows/Start Menu/Programs/Yomikiru.lnk")
+                    path.resolve(homedir(), "AppData/Roaming/Microsoft/Windows/Start Menu/Programs/Yomikiru.lnk"),
                 )
             )
                 fs.unlinkSync(
-                    path.resolve(homedir(), "AppData/Roaming/Microsoft/Windows/Start Menu/Programs/Yomikiru.lnk")
+                    path.resolve(homedir(), "AppData/Roaming/Microsoft/Windows/Start Menu/Programs/Yomikiru.lnk"),
                 );
             deleteOptionInExplorerMenu();
             deleteOptionInExplorerMenu_epub();
@@ -76,7 +77,7 @@ const handleSquirrelEvent = () => {
             });
             app.quit();
             break;
-
+        }
         case "--squirrel-obsolete":
             app.quit();
             break;

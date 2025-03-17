@@ -1,8 +1,8 @@
 {
     "compilerOptions": {
-        "target": "esnext",
+        "target": "es2022",
         "module": "commonjs",
-        "lib": ["dom", "ESNext", "DOM.Iterable"],
+        "lib": ["dom", "es2022", "DOM.Iterable"],
         "allowJs": true,
         "jsx": "react-jsx",
         "sourceMap": true,
@@ -23,9 +23,11 @@
             "@store/*": ["src/renderer/store/*"],
             "@features/*": ["src/renderer/features/*"],
             "@utils/*": ["src/renderer/utils/*"],
-            "@renderer-types/*": ["src/renderer/types/*"]
-            // "@renderer/*": ["src/renderer/*"]
-        }
+            "@renderer-types/*": ["src/renderer/types/*"],
+            "@renderer/*": ["src/renderer/*"]
+        },
+        "useDefineForClassFields": true,
+        "forceConsistentCasingInFileNames": true
     }
     // "include": ["src/**/*"]
 }

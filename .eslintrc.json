@@ -6,11 +6,13 @@
     },
     "extends": [
         "eslint:recommended",
-        "plugin:@typescript-eslint/eslint-recommended",
         "plugin:@typescript-eslint/recommended",
+        "plugin:react/recommended",
+        "plugin:react-hooks/recommended",
         "plugin:import/recommended",
         "plugin:import/electron",
         "plugin:import/typescript"
+        // "plugin:prettier/recommended"
     ],
     "parser": "@typescript-eslint/parser",
     "parserOptions": {
@@ -21,19 +23,190 @@
         "sourceType": "module",
         "project": "./tsconfig.json"
     },
-    "plugins": ["react", "@typescript-eslint", "import"],
+    "plugins": [
+        "react",
+        "react-hooks",
+        "@typescript-eslint",
+        "import"
+        // "prettier"
+    ],
     "rules": {
         "react/prop-types": "off",
-        "@typescript-eslint/no-explicit-any": "warn"
+        "react/react-in-jsx-scope": "off",
+        "react-hooks/rules-of-hooks": "error",
+        "react-hooks/exhaustive-deps": "warn",
+        "react/display-name": "warn",
+
+        "@typescript-eslint/no-explicit-any": "warn",
+        "@typescript-eslint/explicit-module-boundary-types": "warn",
+        "@typescript-eslint/no-unused-vars": [
+            "warn",
+            {
+                "argsIgnorePattern": "^_",
+                "varsIgnorePattern": "^_"
+            }
+        ],
+        "@typescript-eslint/no-non-null-assertion": "warn",
+        // "@typescript-eslint/consistent-type-definitions": ["error", "type"],
+        "@typescript-eslint/no-unnecessary-type-assertion": "warn",
+
+        "import/no-unresolved": "error",
+        "import/named": "warn",
+        "import/default": "error",
+        "import/namespace": "error",
+        "import/no-self-import": "error",
+        // "import/no-cycle": "error",
+        "import/no-useless-path-segments": "error",
+        "import/no-duplicates": "error",
+        // "import/order": [
+        //     "error",
+        //     {
+        //         "groups": ["builtin", "external", "internal", ["parent", "sibling"], "index", "object", "type"],
+        //         "newlines-between": "always",
+        //         "alphabetize": { "order": "asc", "caseInsensitive": true }
+        //     }
+        // ],
+
+        "no-restricted-imports": [
+            "error",
+            {
+                "patterns": ["**/electron/**"],
+                "paths": ["electron"]
+            }
+        ],
+
+        "import/no-restricted-paths": [
+            "error",
+            {
+                "zones": [
+                    {
+                        "target": "src/renderer/**/*",
+                        "from": "src/electron/**/*",
+                        "except": ["src/electron/types/**/*", "src/common/types/**/*"]
+                    },
+                    {
+                        "target": "src/electron/**/*",
+                        "from": "src/renderer/**/*",
+                        "except": ["src/renderer/types/**/*", "src/common/types/**/*"]
+                    }
+                ]
+            }
+        ],
+
+        // "no-console": ["warn", { "allow": ["warn", "error"] }],
+        "no-debugger": "warn",
+        "no-alert": "error",
+        "eqeqeq": ["error", "always"],
+        // "curly": ["error", "all"],
+        "prefer-const": "error",
+        "no-var": "error",
+        "no-throw-literal": "warn",
+        "prefer-promise-reject-errors": "error",
+        "no-duplicate-imports": "error",
+
+        "no-restricted-syntax": [
+            "error",
+            {
+                "selector": "MemberExpression[object.name='Array'][property.name='fromAsync']",
+                "message": "Array.fromAsync is not supported in Chrome 108"
+            },
+            {
+                "selector": "MemberExpression[object.name='Object'][property.name='groupBy']",
+                "message": "Object.groupBy is not supported in Chrome 108"
+            },
+            {
+                "selector": "MemberExpression[object.name='Promise'][property.name='withResolvers']",
+                "message": "Promise.withResolvers is not supported in Chrome 108"
+            },
+            {
+                "selector": "MemberExpression[property.name='findLast']",
+                "message": "findLast method is not supported in Chrome 108"
+            },
+            {
+                "selector": "MemberExpression[property.name='findLastIndex']",
+                "message": "findLastIndex method is not supported in Chrome 108"
+            },
+            {
+                "selector": "MemberExpression[property.name='toReversed']",
+                "message": "toReversed method is not supported in Chrome 108"
+            },
+            {
+                "selector": "MemberExpression[property.name='toSorted']",
+                "message": "toSorted method is not supported in Chrome 108"
+            },
+            {
+                "selector": "MemberExpression[property.name='toSpliced']",
+                "message": "toSpliced method is not supported in Chrome 108"
+            },
+            {
+                "selector": "MemberExpression[property.name='with']",
+                "message": "Array.with method is not supported in Chrome 108"
+            }
+        ]
     },
     "settings": {
+        "react": {
+            "version": "detect"
+        },
         "import/parsers": {
             "@typescript-eslint/parser": [".ts", ".tsx"]
         },
         "import/resolver": {
             "typescript": {
-                "alwaysTryTypes": true
+                "alwaysTryTypes": true,
+                "project": "./tsconfig.json"
+            },
+            "node": {
+                "extensions": [".js", ".jsx", ".ts", ".tsx"]
+            }
+        },
+        "import/internal-regex": "^@(common|utils|store|features|components)/",
+        "targets": ["chrome 108"]
+    },
+    "overrides": [
+        {
+            "files": ["*.d.ts"],
+            "rules": {
+                "no-restricted-imports": "off",
+                "import/no-restricted-paths": "off"
+            }
+        },
+        {
+            "files": ["src/common/types/**/*.ts"],
+            "rules": {
+                "no-restricted-imports": "off",
+                "import/no-restricted-paths": "off"
+            }
+        },
+        {
+            "files": ["src/electron/preload.ts"],
+            "rules": {
+                "no-restricted-imports": "off"
+            }
+        },
+        {
+            "files": ["src/renderer/**/*.tsx", "src/renderer/**/*.ts"],
+            "rules": {
+                "no-restricted-imports": [
+                    "error",
+                    {
+                        "patterns": ["**/electron/**"],
+                        "paths": ["electron"]
+                    }
+                ]
+            }
+        },
+        {
+            "files": ["src/electron/**/*.ts"],
+            "rules": {
+                "no-restricted-imports": [
+                    "error",
+                    {
+                        "patterns": ["**/renderer/**"],
+                        "paths": ["react", "react-dom"]
+                    }
+                ]
             }
         }
-    }
+    ]
 }

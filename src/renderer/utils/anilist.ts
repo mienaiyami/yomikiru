@@ -1,5 +1,5 @@
 import { dialogUtils } from "./dialog";
-import { getStorageItem, setStorageItem, STORAGE_KEYS } from "./localStorage";
+import { getStorageItem, setStorageItem } from "./localStorage";
 
 export default class AniList {
     static #token = "";

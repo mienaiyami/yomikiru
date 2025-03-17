@@ -16,11 +16,11 @@ const List = memo(
         sideListRef: React.RefObject<HTMLDivElement>;
     }) => {
         //todo add button to show toc.xhtml if exist
+        const appSettings = useAppSelector((store) => store.appSettings);
+        const [listShow, setListShow] = useState(new Array(epubTOC.size).fill(false));
+
         if (epubTOC.size === 0) return <p>No TOC found in epub</p>;
 
-        const appSettings = useAppSelector((store) => store.appSettings);
-
-        const [listShow, setListShow] = useState(new Array(epubTOC.size).fill(false));
         const NestedList = ({ ncx }: { ncx: EPUB.NCXTree[] }) => {
             return (
                 <ol>

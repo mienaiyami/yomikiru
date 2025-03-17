@@ -52,8 +52,8 @@ const AniLogin = () => {
                 >
                     <h1>Link AniList</h1>
                     <p>
-                        Click "Proceed" to start authorization process. You will be redirected to your default
-                        browser. <br /> <br />
+                        Click &quot;Proceed&quot; to start authorization process. You will be redirected to your
+                        default browser. <br /> <br />
                         After authorization, anilist will give you a token, copy and paste that below to complete
                         linking.
                         <br /> <br />
@@ -64,7 +64,7 @@ const AniLogin = () => {
                             <button
                                 onClick={() => {
                                     window.electron.openExternal(
-                                        "https://anilist.co/api/v2/oauth/authorize?client_id=13234&response_type=token"
+                                        "https://anilist.co/api/v2/oauth/authorize?client_id=13234&response_type=token",
                                     );
                                     setProceeded(true);
                                 }}

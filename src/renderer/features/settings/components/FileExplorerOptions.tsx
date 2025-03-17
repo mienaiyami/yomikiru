@@ -41,8 +41,8 @@ const FileExplorerOptions = (): ReactElement => {
         <div className="settingItem2" id="settings-fileExplorerOption">
             <h3>File Explorer Option</h3>
             <div className="desc">
-                Add file explorer option (right click menu) to open item in Yomikiru's reader directly from File
-                Explorer.
+                Add file explorer option (right click menu) to open item in Yomikiru&apos;s reader directly from
+                File Explorer.
             </div>
             <div className="main">
                 <InputCheckbox

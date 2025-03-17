@@ -1,4 +1,4 @@
-import { app, shell } from "electron";
+import { app, dialog, shell } from "electron";
 import { ipc } from "./utils";
 import path from "path";
 import fs from "fs/promises";
@@ -6,7 +6,6 @@ import { log, saveFile } from "@electron/util";
 import { exec } from "child_process";
 import * as crossZip from "cross-zip";
 import { promisify } from "util";
-import { dialogUtils } from "@utils/dialog";
 
 export const registerFSHandlers = () => {
     ipc.handle("fs:changeTempPath", async (event, newPath) => {
@@ -32,7 +31,7 @@ export const registerFSHandlers = () => {
                 });
             }
         } catch (err) {
-            if (err instanceof Error) dialogUtils.nodeError(err);
+            if (err instanceof Error) dialog.showErrorBox("Error", err.message);
         }
     });
     ipc.handle("fs:saveFile", async (event, { filePath, data }) => {

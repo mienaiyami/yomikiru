@@ -124,7 +124,7 @@ const Settings = (): ReactElement => {
     const scrollIntoView = (elementQuery: string, tab: keyof typeof TAB_INFO) => {
         setCurrentTab(TAB_INFO[tab][0]);
         const onTimeout = () => {
-            const elem = document.querySelector(elementQuery) as HTMLElement | null;
+            const elem: HTMLElement | null = document.querySelector(elementQuery);
             if (elem) {
                 elem.scrollIntoView({
                     block: "start",
@@ -1070,8 +1070,8 @@ const Settings = (): ReactElement => {
                                         />
                                         <div className="desc">
                                             Mark opened chapters as read. If chapter is already read, it will
-                                            appear with different color in Reader's Side list and Home Locations
-                                            tab.
+                                            appear with different color in Reader&apos;s Side list and Home
+                                            Locations tab.
                                         </div>
                                     </div>
                                     <div className="toggleItem" id="settings-openDirectlyFromManga">
@@ -1127,8 +1127,8 @@ const Settings = (): ReactElement => {
                                             labelAfter="Auto Zen Mode"
                                         />
                                         <div className="desc">
-                                            Open reader in "Zen Mode" by default. Applies to opening from file
-                                            explorer as well.
+                                            Open reader in &quot;Zen Mode&quot; by default. Applies to opening from
+                                            file explorer as well.
                                         </div>
                                     </div>
                                     <div className="toggleItem">
@@ -1230,8 +1230,8 @@ const Settings = (): ReactElement => {
                                             labelAfter="Dynamic Image Loading"
                                         />
                                         <div className="desc">
-                                            Removes Initial loading screen and load Images as you scroll. Doesn't
-                                            work with "Canvas Based Rendering"
+                                            Removes Initial loading screen and load Images as you scroll.
+                                            Doesn&apos;t work with &quot;Canvas Based Rendering&quot;
                                             <br />
                                             Drawbacks : Inconsistent scroll size, no double-span images support,
                                             stuttering while scrolling.
@@ -1387,8 +1387,9 @@ const Settings = (): ReactElement => {
                                             labelAfter="More Info on Bookmark / History Hover"
                                         />
                                         <div className="desc">
-                                            Show more info such as "date", "total pages", "last page number",
-                                            "path" when mouse over items in bookmark / history tab.
+                                            Show more info such as &quot;date&quot;, &quot;total pages&quot;,
+                                            &quot;last page number&quot;, &quot;path&quot; when mouse over items in
+                                            bookmark / history tab.
                                         </div>
                                     </div>
 
@@ -1467,7 +1468,7 @@ const Settings = (): ReactElement => {
                                                         noOption: false,
                                                     })
                                                     .then(({ response }) => {
-                                                        if (response == undefined) return;
+                                                        if (response === undefined) return;
                                                         if (response === 1) return;
                                                         if (response === 0) {
                                                             dialogUtils
@@ -1513,7 +1514,7 @@ const Settings = (): ReactElement => {
                                                         noOption: false,
                                                     })
                                                     .then(({ response }) => {
-                                                        if (response == undefined) return;
+                                                        if (response === undefined) return;
                                                         if (response === 1) return;
                                                         if (response === 0) {
                                                             dialogUtils

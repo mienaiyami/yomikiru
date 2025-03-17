@@ -8,7 +8,7 @@ export const setSysBtnColor = (blurred = false) => {
     const topbarElem = document.querySelector<HTMLDivElement>("body #topBar");
     if (topbarElem) {
         let color = colorUtils.new(
-            window.getComputedStyle(document.body).getPropertyValue("--icon-color") || "#ffffff"
+            window.getComputedStyle(document.body).getPropertyValue("--icon-color") || "#ffffff",
         );
         if (blurred) {
             color = color.alpha(0.3);
@@ -92,13 +92,13 @@ if (window.fs.existsSync(themesPath)) {
                     if (!e.main[prop as ThemeDataMain]) {
                         if (initThemeData.allData.map((t) => t.name).includes(e.name)) {
                             window.logger.log(
-                                `"${prop}" does not exist on default theme - "${e.name}", rewriting it whole.`
+                                `"${prop}" does not exist on default theme - "${e.name}", rewriting it whole.`,
                             );
                             e.main = initThemeData.allData.find((t) => t.name === e.name)!.main;
                             rewriteNeeded = true;
                         } else {
                             window.logger.log(
-                                `"${prop}" does not exist on theme - "${e.name}", adding it with value "#ff0000".`
+                                `"${prop}" does not exist on theme - "${e.name}", adding it with value "#ff0000".`,
                             );
                             addedProp.add('\t"' + themeProps[prop as ThemeDataMain] + '"');
                             rewriteNeeded = true;
@@ -197,7 +197,7 @@ const themes = createSlice({
             if (state.allData.map((e) => e.name).includes(action.payload.name)) {
                 window.logger.error(
                     "Tried to add new theme but theme name already exist. Name:",
-                    action.payload.name
+                    action.payload.name,
                 );
             } else state.allData.push(action.payload);
         },
@@ -216,7 +216,7 @@ const themes = createSlice({
                         if (state.allData.map((e) => e.name).includes(theme.name)) {
                             window.logger.error(
                                 "Tried to add new theme but theme name already exist. Name:",
-                                theme.name
+                                theme.name,
                             );
                         } else state.allData.push(theme);
                     }

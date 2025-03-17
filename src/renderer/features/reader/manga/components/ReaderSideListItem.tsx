@@ -2,7 +2,7 @@ import { memo, useEffect, useState } from "react";
 import { useAppSelector } from "@store/hooks";
 import { useAppContext } from "src/renderer/App";
 import { formatUtils } from "@utils/file";
-import ListItem from "src/renderer/components/ListItem";
+import ListItem from "@renderer/components/ListItem";
 
 type ReaderSideListItemProps = {
     name: string;

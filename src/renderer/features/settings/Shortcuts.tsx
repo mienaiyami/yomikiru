@@ -12,7 +12,7 @@ const ShortcutInput = ({ command }: { command: ShortcutCommands }) => {
     const shortcuts = useAppSelector((store) => store.shortcuts);
     const dispatch = useAppDispatch();
     const shortcut = shortcuts.find((e) => e.command === command);
-    if (!shortcut) return <p>Command "{command}" not found.</p>;
+    if (!shortcut) return <p>Command &quot;{command}&quot; not found.</p>;
     return (
         <>
             {shortcut.keys.map((key, i) => (
@@ -95,7 +95,7 @@ const Shortcuts = ({
     // settingContRef: React.RefObject<HTMLDivElement>;
     scrollIntoView: (
         elementQuery: string,
-        tab: "settings" | "shortcutKeys" | "makeTheme" | "about" | "extras"
+        tab: "settings" | "shortcutKeys" | "makeTheme" | "about" | "extras",
     ) => void;
 }) => {
     return (

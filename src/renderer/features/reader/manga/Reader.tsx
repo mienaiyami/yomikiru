@@ -1298,7 +1298,7 @@ const Reader = () => {
                                 {e.i.map(
                                     (e) =>
                                         typeof imageData[e]?.img === "string" && (
-                                            <Fragment key={imageData[e].img}>
+                                            <Fragment key={imageData[e].img as string}>
                                                 <img
                                                     className="readerImg"
                                                     draggable={false}
@@ -1326,7 +1326,7 @@ const Reader = () => {
                             </InView>
                         );
                     return (
-                        <div {...props}>
+                        <div {...props} key={i}>
                             {e.i.map(
                                 (e) =>
                                     typeof imageData[e]?.img === "string" && (
