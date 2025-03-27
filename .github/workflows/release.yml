@@ -102,7 +102,7 @@ jobs:
             - name: Release
               uses: softprops/action-gh-release@v2
               with:
-                  tag: ${{steps.version.outputs.version}}
+                  tag_name: ${{steps.version.outputs.version}}
                   name: ${{steps.version.outputs.version}}
                   files: |
                       ./out/full/Yomikiru-win32-${{ steps.version.outputs.version }}-Portable.zip
