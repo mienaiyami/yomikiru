@@ -10,12 +10,17 @@ on:
     push:
         tags:
             - "v*"
+    # this is only in case when action fails, and no new release is made
+    # ! this actions only when when no release with same version and tag exists
     workflow_dispatch:
 
 jobs:
     buildDeb:
         runs-on: ubuntu-latest
         steps:
+            - name: Warning
+              if: ${{ github.event_name == 'workflow_dispatch' }}
+              run: echo "This will fail if a release with same version and tag exists"
             - uses: actions/checkout@v3
             - name: Use Node.js
               uses: actions/setup-node@v3
@@ -95,11 +100,10 @@ jobs:
                   path: ./out/full/
 
             - name: Release
-              uses: softprops/action-gh-release@v1
-              if: startsWith(github.ref, 'refs/tags/')
+              uses: softprops/action-gh-release@v2
               with:
-                  tag_name: ${{github.ref}}
-                  name: ${{github.ref_name}}
+                  tag: ${{steps.version.outputs.version}}
+                  name: ${{steps.version.outputs.version}}
                   files: |
                       ./out/full/Yomikiru-win32-${{ steps.version.outputs.version }}-Portable.zip
                       ./out/full/Yomikiru-win32-${{ steps.version.outputs.version }}-Portable-x64.zip
