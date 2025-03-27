@@ -21,6 +21,16 @@ jobs:
               uses: actions/setup-node@v3
               with:
                   node-version: 18.15.0
+            - name: Set version
+              id: version
+              run: |
+                if [[ $GITHUB_REF == refs/tags/v* ]]; then
+                  VERSION=${GITHUB_REF#refs/tags/}
+                else
+                  VERSION="v$(node -p "require('./package.json').version")"
+                fi
+                echo "version=$VERSION" >> $GITHUB_OUTPUT
+
             - name: Install dependencies
               run: yarn ci --network-timeout 1000000
             - name: forge make
@@ -29,7 +39,7 @@ jobs:
             - uses: actions/upload-artifact@v4
               with:
                   name: linux-build-file
-                  path: ./out/full/Yomikiru-${{ github.ref_name }}-amd64.deb
+                  path: ./out/full/Yomikiru-${{ steps.version.outputs.version }}-amd64.deb
 
     build:
         needs: buildDeb
@@ -40,6 +50,17 @@ jobs:
               uses: actions/setup-node@v3
               with:
                   node-version: 18.15.0
+
+            - name: Set version
+              id: version
+              shell: bash
+              run: |
+                if [[ $GITHUB_REF == refs/tags/v* ]]; then
+                  VERSION=${GITHUB_REF#refs/tags/}
+                else
+                  VERSION="v$(node -p "require('./package.json').version")"
+                fi
+                echo "version=$VERSION" >> $GITHUB_OUTPUT
 
             # yarn cache start
             # it does work but take same time (and more sometimes) compared downloading so i dont see any use of it
@@ -80,11 +101,11 @@ jobs:
                   tag_name: ${{github.ref}}
                   name: ${{github.ref_name}}
                   files: |
-                      ./out/full/Yomikiru-win32-${{ github.ref_name }}-Portable.zip
-                      ./out/full/Yomikiru-win32-${{ github.ref_name }}-Portable-x64.zip
-                      ./out/full/Yomikiru-${{ github.ref_name }}-Setup.exe
-                      ./out/full/Yomikiru-${{ github.ref_name }}-Setup-x64.exe
-                      ./out/full/Yomikiru-${{ github.ref_name }}-amd64.deb
+                      ./out/full/Yomikiru-win32-${{ steps.version.outputs.version }}-Portable.zip
+                      ./out/full/Yomikiru-win32-${{ steps.version.outputs.version }}-Portable-x64.zip
+                      ./out/full/Yomikiru-${{ steps.version.outputs.version }}-Setup.exe
+                      ./out/full/Yomikiru-${{ steps.version.outputs.version }}-Setup-x64.exe
+                      ./out/full/Yomikiru-${{ steps.version.outputs.version }}-amd64.deb
                   body_path: changelog-temp.md
                   generate_release_notes: true
                   discussion_category_name: General
