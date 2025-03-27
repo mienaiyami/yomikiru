@@ -1,0 +1,89 @@
+name: make and release
+run-name: Make and Release
+
+permissions:
+    contents: write
+    discussions: write
+
+# on: workflow_dispatch
+on:
+    push:
+        tags:
+            - "v*.*.*"
+
+jobs:
+    buildDeb:
+        runs-on: ubuntu-latest
+        steps:
+            - uses: actions/checkout@v3
+            - name: Use Node.js
+              uses: actions/setup-node@v3
+              with:
+                  node-version: 18.15.0
+            - name: Install dependencies
+              run: yarn ci --network-timeout 1000000
+            - name: forge make
+              run: yarn make:deb
+
+            - uses: actions/upload-artifact@v4
+              with:
+                  name: linux-build-file
+                  path: ./out/full/Yomikiru-${{ github.ref_name }}-amd64.deb
+
+    build:
+        needs: buildDeb
+        runs-on: windows-latest
+        steps:
+            - uses: actions/checkout@v3
+            - name: Use Node.js
+              uses: actions/setup-node@v3
+              with:
+                  node-version: 18.15.0
+
+            # yarn cache start
+            # it does work but take same time (and more sometimes) compared downloading so i dont see any use of it
+
+            # - name: Get yarn cache directory path
+            #   id: yarn-cache-dir-path
+            #   run: echo "::set-output name=dir::$(yarn cache dir)"
+
+            # - uses: actions/cache@v3
+            #   id: yarn-cache
+            #   with:
+            #     path: ${{ steps.yarn-cache-dir-path.outputs.dir }}
+            #     key: ${{ runner.os }}-yarn-${{ hashFiles('**/yarn.lock') }}
+            #     restore-keys: |
+            #       ${{ runner.os }}-yarn-
+
+            # - name: Install dependencies
+            #   run: yarn ci --network-timeout 1000000
+            #   # if: steps.yarn-cache.outputs.cache-hit != 'true'
+
+            #end
+
+            - name: Install dependencies
+              run: yarn ci --network-timeout 1000000
+            - name: forge make
+              run: yarn make
+
+            - uses: actions/download-artifact@v4
+              id: linux-build-file-downloader
+              with:
+                  name: linux-build-file
+                  path: ./out/full/
+
+            - name: Release
+              uses: softprops/action-gh-release@v1
+              if: startsWith(github.ref, 'refs/tags/')
+              with:
+                  tag_name: ${{github.ref}}
+                  name: ${{github.ref_name}}
+                  files: |
+                      ./out/full/Yomikiru-win32-${{ github.ref_name }}-Portable.zip
+                      ./out/full/Yomikiru-win32-${{ github.ref_name }}-Portable-x64.zip
+                      ./out/full/Yomikiru-${{ github.ref_name }}-Setup.exe
+                      ./out/full/Yomikiru-${{ github.ref_name }}-Setup-x64.exe
+                      ./out/full/Yomikiru-${{ github.ref_name }}-amd64.deb
+                  body_path: changelog-temp.md
+                  generate_release_notes: true
+                  discussion_category_name: General
