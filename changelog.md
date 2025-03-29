@@ -11,12 +11,3 @@ Does not follow semver.
 > I had decided to put updates on hold until I finish the refactoring but I decided to release this update because of built up changes on main.
 
 ---
-
-## Fixed
-
-- Fix crash when filtering with regexp characters, @krichbanana (#400).
-- Support dash as delimiter in chapter names, @Rakambda (#402).
-- flatten unpacked archives, madfist (#405).
-- epub: history and bookmark position not saved properly.
-
----
