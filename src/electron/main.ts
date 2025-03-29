@@ -296,13 +296,13 @@ const saveFile = (path: string, data: string, sync = true, retry = 3) => {
     }
 };
 
-const flattenDirectories = (root: string, relativePath = '.') => {
-    const absolutePath = path.resolve(root, relativePath)
+const flattenDirectories = (root: string, relativePath = ".") => {
+    const absolutePath = path.resolve(root, relativePath);
     if (fs.statSync(absolutePath).isDirectory()) {
-        fs.readdirSync(absolutePath).forEach(entry => flattenDirectories(root, path.join(relativePath, entry)))
+        fs.readdirSync(absolutePath).forEach((entry) => flattenDirectories(root, path.join(relativePath, entry)));
     }
-    fs.renameSync(absolutePath, path.resolve(root, relativePath.replace(path.sep, '_')))
-}
+    fs.renameSync(absolutePath, path.resolve(root, relativePath.replace(path.sep, "_")));
+};
 
 // when manga reader opened from context menu "open with manga reader"
 let openFolderOnLaunch = "";
@@ -573,7 +573,7 @@ const registerListener = () => {
                         });
                         unrar.on("close", (code) => {
                             if (code === 0) {
-                                flattenDirectories(extractPath)
+                                flattenDirectories(extractPath);
                                 fs.writeFileSync(path.join(extractPath, "SOURCE"), link);
                                 res({ link, extractPath, status: "ok" });
                             } else rej("WinRAR exited with code " + code);
@@ -586,7 +586,7 @@ const registerListener = () => {
                     crossZip.unzip(link, extractPath, (err) => {
                         if (err) rej(err);
                         else {
-                            flattenDirectories(extractPath)
+                            if (path.extname(link).toLowerCase() !== ".epub") flattenDirectories(extractPath);
                             fs.writeFileSync(path.join(extractPath, "SOURCE"), link);
                             res({ link, extractPath, status: "ok" });
                         }
