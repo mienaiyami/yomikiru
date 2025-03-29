@@ -47,7 +47,7 @@ interface AppContext {
 
 const AppContext = createContext<AppContext | null>(null);
 
-export const useAppContext = () => {
+export const useAppContext = (): AppContext => {
     const context = useContext(AppContext);
     if (!context) throw new Error("AppContext not found");
     return context;

@@ -4,9 +4,9 @@ import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faClose } from "@fortawesome/free-solid-svg-icons";
 import { keyFormatter, SHORTCUT_COMMAND_MAP } from "@utils/keybindings";
 import { dialogUtils } from "@utils/dialog";
-
-const reservedKeys = ["ctrl+shift+i", "escape", "tab", "ctrl+n", "ctrl+w", "ctrl+r", "ctrl+shift+r"];
-const SHORTCUT_LIMIT = 4;
+import { ReactElement } from "react";
+import { useSettingsContext } from "../Settings";
+import { SHORTCUT_LIMIT, reservedKeys } from "../utils/constants";
 
 const ShortcutInput = ({ command }: { command: ShortcutCommands }) => {
     const shortcuts = useAppSelector((store) => store.shortcuts);
@@ -88,16 +88,8 @@ const ShortcutInput = ({ command }: { command: ShortcutCommands }) => {
     );
 };
 
-const Shortcuts = ({
-    // settingContRef,
-    scrollIntoView,
-}: {
-    // settingContRef: React.RefObject<HTMLDivElement>;
-    scrollIntoView: (
-        elementQuery: string,
-        tab: "settings" | "shortcutKeys" | "makeTheme" | "about" | "extras",
-    ) => void;
-}) => {
+const Shortcuts = (): ReactElement => {
+    const { scrollIntoView } = useSettingsContext();
     return (
         <div className="shortcutKey">
             <ul>
@@ -122,7 +114,7 @@ const Shortcuts = ({
                         <th>Function</th>
                         <th>Key</th>
                     </tr>
-                    {SHORTCUT_COMMAND_MAP.map((e, i) => (
+                    {SHORTCUT_COMMAND_MAP.map((e) => (
                         <tr key={e.command}>
                             <td>
                                 {e.name}

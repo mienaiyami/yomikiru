@@ -9,6 +9,9 @@ import { initThemeData, themeProps } from "@utils/theme";
 import { colorUtils } from "@utils/color";
 import { randomString } from "@utils/utils";
 import { dialogUtils } from "@utils/dialog";
+
+// todo: refactor, giving up for now coz too messy
+
 const ThemeElement = ({
     color,
     prop,
@@ -25,7 +28,7 @@ const ThemeElement = ({
     const [firstRendered, setFirstRendered] = useState(false);
     const [realColor, setRealColor] = useState(colorUtils.realColor(color, currentTheme));
     const [variable, setVariable] = useState(
-        colorUtils.cleanVariable(color) ? color : `var(${Object.keys(themeProps)[0]})`
+        colorUtils.cleanVariable(color) ? color : `var(${Object.keys(themeProps)[0]})`,
     );
     const [checked, setChecked] = useState(!!colorUtils.cleanVariable(color));
 
@@ -135,7 +138,7 @@ const ThemeCont = () => {
             prop: e[0] as ThemeDataMain,
             label: e[1],
             value: allThemes.find((e) => e.name === theme)!.main[e[0] as ThemeDataMain],
-        }))
+        })),
     );
     const [firstRendered, setFirstRendered] = useState(false);
     const themeNameInputRef = useRef<HTMLInputElement>(null);
@@ -147,7 +150,7 @@ const ThemeCont = () => {
                     prop: e[0] as ThemeDataMain,
                     label: e[1],
                     value: allThemes.find((e) => e.name === theme)!.main[e[0] as ThemeDataMain],
-                }))
+                })),
             );
         }
     }, [theme]);
@@ -219,7 +222,7 @@ const ThemeCont = () => {
                                 prop: e[0] as ThemeDataMain,
                                 label: e[1],
                                 value: allThemes.find((e) => e.name === theme)!.main[e[0] as ThemeDataMain],
-                            }))
+                            })),
                         );
                     }}
                     title="Reset All"
@@ -279,25 +282,6 @@ const ThemeCont = () => {
                                 />
                             </tr>
                         ))}
-                        {/* <ThemeCont theme={theme} currentTheme={currentTheme} /> */}
-                        {/* {Object.entries(themeProps).map((e) => (
-                                        <tr key={e[0]} className="newThemeMakerRow">
-                                            <td className="newThemeMakerProp" data-prop={e[0]}>
-                                                {e[1]}
-                                            </td>
-                                            <ThemeElement
-                                                color={
-                                                    allThemes.find((e) => e.name === theme)!.main[
-                                                        e[0] as ThemeDataMain
-                                                    ]
-                                                }
-                                                theme={theme}
-                                                prop={e[0] as ThemeDataMain}
-                                                applyThemeTemp={applyThemeTemp}
-                                                currentTheme={currentTheme}
-                                            />
-                                        </tr>
-                                    ))} */}
                     </tbody>
                 </table>
             </div>

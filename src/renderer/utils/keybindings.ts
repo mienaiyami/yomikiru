@@ -197,6 +197,12 @@ export const SHORTCUT_COMMAND_MAP = [
 ];
 Object.freeze(SHORTCUT_COMMAND_MAP);
 
+/**
+ * Format key event to string (e.g. "ctrl+shift+a", "ctrl+shift+numpad_plus")
+ * @param e key event
+ * @param limited Do not include some keys (e.g. "Control", "Shift", "Alt", "Tab", "Escape")
+ * @returns formatted key string
+ */
 export const keyFormatter = (e: KeyboardEvent | React.KeyboardEvent, limited = true): string => {
     if (limited && ["Control", "Shift", "Alt", "Tab", "Escape"].includes(e.key)) return "";
 
@@ -247,6 +253,5 @@ export const keyFormatter = (e: KeyboardEvent | React.KeyboardEvent, limited = t
             keyStr += e.code.toLowerCase();
             break;
     }
-    // console.log(keyStr);
     return keyStr;
 };

@@ -1,12 +1,8 @@
 import { useAppSelector } from "@store/hooks";
-const Usage = ({
-    scrollIntoView,
-}: {
-    scrollIntoView: (
-        elementQuery: string,
-        tab: "settings" | "shortcutKeys" | "makeTheme" | "about" | "extras",
-    ) => void;
-}) => {
+import { useSettingsContext } from "../Settings";
+
+const Usage: React.FC = () => {
+    const { scrollIntoView } = useSettingsContext();
     const shortcuts = useAppSelector((store) => store.shortcuts);
 
     return (
