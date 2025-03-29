@@ -91,6 +91,7 @@ const datePresets = {
     full: "EEEE, dd MMMM yyyy",
     time: "hh:mm a",
     dateTime: "dd/MM/yyyy, hh:mm a",
+    dateTimeFull: "dd/MM/yyyy, hh:mm:ss a",
     iso: "yyyy-MM-dd",
     isoDateTime: "yyyy-MM-dd'T'HH:mm:ss",
     monthYear: "MMMM yyyy",

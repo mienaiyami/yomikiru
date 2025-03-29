@@ -6,6 +6,7 @@ import { MangaBookmark, BookBookmark } from "@common/types/db";
 import { removeBookmark } from "@store/bookmarks";
 import { deleteLibraryItem } from "@store/library";
 import ListItem from "../../components/ListItem";
+import dateUtils from "@utils/date";
 
 const BookmarkHistoryListItem = (props: {
     focused: boolean;
@@ -30,25 +31,31 @@ const BookmarkHistoryListItem = (props: {
         props.bookmark && "page" in props.bookmark
             ? props.bookmark.link
             : libraryItem.type === "book"
-            ? libraryItem.link
-            : libraryItem.progress?.chapterLink;
+              ? libraryItem.link
+              : libraryItem.progress?.chapterLink;
     if (!link) return <p>Error: Link not found</p>;
 
     const title = props.isHistory
         ? libraryItem.type === "book"
             ? `Title       : ${libraryItem.title}\n` +
               `Chapter : ${libraryItem.progress?.chapterName || "~"}\n` +
-              `Date      : ${libraryItem.progress?.lastReadAt}\n` +
+              `Date      : ${dateUtils.format(libraryItem.progress?.lastReadAt, {
+                  format: dateUtils.presets.dateTimeFull,
+              })}\n` +
               `Path      : ${libraryItem.link}`
             : `Manga   : ${libraryItem.title}\n` +
               `Chapter : ${libraryItem.progress?.chapterName}\n` +
               `Pages    : ${libraryItem.progress?.totalPages}\n` +
               `Page      : ${libraryItem.progress?.currentPage}\n` +
-              `Date      : ${libraryItem.progress?.lastReadAt}\n` +
+              `Date      : ${dateUtils.format(libraryItem.progress?.lastReadAt, {
+                  format: dateUtils.presets.dateTimeFull,
+              })}\n` +
               `Path      : ${libraryItem.link}`
         : `Title       : ${libraryItem.title}\n` +
           `Chapter : ${props.bookmark?.chapterName || "~"}\n` +
-          `Date      : ${props.bookmark?.createdAt}\n` +
+          `Date      : ${dateUtils.format(props.bookmark?.createdAt, {
+              format: dateUtils.presets.dateTimeFull,
+          })}\n` +
           `Path      : ${props.bookmark?.itemLink}`;
 
     const handleClick = () => {

@@ -8,7 +8,6 @@ import { ReactElement, useEffect, useRef, useState, useMemo, useCallback } from 
 import { useAppContext } from "src/renderer/App";
 import { dialogUtils } from "@utils/dialog";
 import ListNavigator from "../../components/ListNavigator";
-import { keyFormatter } from "@utils/keybindings";
 
 type LocationData = { name: string; link: string; dateModified: number };
 

@@ -2,12 +2,19 @@ import { z } from "zod";
 import { saveJSONfile, settingsPath } from "./file";
 import { dialogUtils } from "./dialog";
 
+const sortTypeEnum = z.union([z.literal("normal"), z.literal("inverse")]);
+const sortByEnum = z.union([z.literal("name"), z.literal("date")]);
+
 const settingSchema = z
     .object({
         baseDir: z.string(),
         customStylesheet: z.string(),
-        locationListSortType: z.union([z.literal("normal"), z.literal("inverse")]),
-        locationListSortBy: z.union([z.literal("name"), z.literal("date")]),
+        locationListSortType: sortTypeEnum,
+        locationListSortBy: sortByEnum,
+        bookListSortType: sortTypeEnum,
+        bookListSortBy: sortByEnum,
+        historyListSortType: sortTypeEnum,
+        historyListSortBy: sortByEnum,
         /**
          * Check for new update on start of app.
          */
@@ -245,6 +252,10 @@ const settingSchema = z
         customStylesheet: "",
         locationListSortType: "normal",
         locationListSortBy: "name",
+        bookListSortType: "normal",
+        bookListSortBy: "date",
+        historyListSortType: "normal",
+        historyListSortBy: "date",
         updateCheckerEnabled: true,
         askBeforeClosing: false,
         skipMinorUpdate: false,
