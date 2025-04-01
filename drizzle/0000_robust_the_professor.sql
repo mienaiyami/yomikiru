@@ -15,8 +15,9 @@ CREATE TABLE `book_notes` (
 	`id` integer PRIMARY KEY AUTOINCREMENT NOT NULL,
 	`itemLink` text NOT NULL,
 	`chapterId` text NOT NULL,
-	`position` text NOT NULL,
-	`content` text NOT NULL,
+	`chapterName` text NOT NULL,
+	`range` text NOT NULL,
+	`content` text,
 	`selectedText` text NOT NULL,
 	`color` text NOT NULL,
 	`createdAt` integer DEFAULT (unixepoch() * 1000) NOT NULL,
@@ -25,7 +26,7 @@ CREATE TABLE `book_notes` (
 );
 --> statement-breakpoint
 CREATE INDEX `idx_book_notes_item_link` ON `book_notes` (`itemLink`);--> statement-breakpoint
-CREATE UNIQUE INDEX `uq_book_notes_chapter_id_position_selected_text` ON `book_notes` (`chapterId`,`position`,`selectedText`);--> statement-breakpoint
+CREATE UNIQUE INDEX `uq_book_notes_chapter_id_range_selected_text` ON `book_notes` (`chapterId`,`range`,`selectedText`);--> statement-breakpoint
 CREATE TABLE `book_progress` (
 	`itemLink` text PRIMARY KEY NOT NULL,
 	`chapterId` text NOT NULL,

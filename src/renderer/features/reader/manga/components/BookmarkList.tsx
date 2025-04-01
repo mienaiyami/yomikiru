@@ -59,12 +59,6 @@ const BookmarkList = () => {
             }
             const items: Menu.ListItem[] = [
                 window.contextMenu.template.removeBookmark(bookmark.itemLink, bookmark.id, "manga"),
-                {
-                    label: "Add Note",
-                    action() {
-                        console.log("todo: add note");
-                    },
-                },
             ];
             setContextMenuData({
                 clickX: e.clientX,

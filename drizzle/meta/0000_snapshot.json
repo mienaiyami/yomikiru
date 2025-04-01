@@ -1,7 +1,7 @@
 {
   "version": "6",
   "dialect": "sqlite",
-  "id": "d3e501ee-117f-4af7-b3bc-4a1d7f6eeb4c",
+  "id": "9254e6a8-9b28-4d52-98f1-a404b0a4b1dc",
   "prevId": "00000000-0000-0000-0000-000000000000",
   "tables": {
     "book_bookmarks": {
@@ -119,8 +119,15 @@
           "notNull": true,
           "autoincrement": false
         },
-        "position": {
-          "name": "position",
+        "chapterName": {
+          "name": "chapterName",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "range": {
+          "name": "range",
           "type": "text",
           "primaryKey": false,
           "notNull": true,
@@ -130,7 +137,7 @@
           "name": "content",
           "type": "text",
           "primaryKey": false,
-          "notNull": true,
+          "notNull": false,
           "autoincrement": false
         },
         "selectedText": {
@@ -172,11 +179,11 @@
           ],
           "isUnique": false
         },
-        "uq_book_notes_chapter_id_position_selected_text": {
-          "name": "uq_book_notes_chapter_id_position_selected_text",
+        "uq_book_notes_chapter_id_range_selected_text": {
+          "name": "uq_book_notes_chapter_id_range_selected_text",
           "columns": [
             "chapterId",
-            "position",
+            "range",
             "selectedText"
           ],
           "isUnique": true

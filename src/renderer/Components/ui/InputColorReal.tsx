@@ -19,7 +19,7 @@ const VALID_SLIDER = {
 
 type ValidSlider = keyof typeof VALID_SLIDER;
 
-const InputColorReal = () => {
+const InputColorReal: React.FC = () => {
     const { colorSelectData, setColorSelectData } = useAppContext();
     const [pos, setPos] = useState({ x: 0, y: 0 });
     const [formatSelected, setFormatSelected] = useState(0);
@@ -245,19 +245,21 @@ const InputColorReal = () => {
                                     style={{ left: color.hue() / 3.6 + "%" }}
                                 ></span>
                             </div>
-                            <div
-                                className="opacityRange"
-                                ref={alphaRef}
-                                onMouseDown={(e) => {
-                                    setSliding("ALPHA");
-                                    calcAndSetAlpha(e);
-                                }}
-                            >
-                                <span
-                                    className={`slider opacitySlider ${sliding === "ALPHA" ? "sliding" : ""} `}
-                                    style={{ left: color.alpha() * 100 + "%" }}
-                                ></span>
-                            </div>
+                            {colorSelectData.showAlpha && (
+                                <div
+                                    className="opacityRange"
+                                    ref={alphaRef}
+                                    onMouseDown={(e) => {
+                                        setSliding("ALPHA");
+                                        calcAndSetAlpha(e);
+                                    }}
+                                >
+                                    <span
+                                        className={`slider opacitySlider ${sliding === "ALPHA" ? "sliding" : ""} `}
+                                        style={{ left: color.alpha() * 100 + "%" }}
+                                    ></span>
+                                </div>
+                            )}
                         </div>
                     </div>
                     <div className="values">
@@ -269,9 +271,30 @@ const InputColorReal = () => {
                             {/* {COLOR_FORMATS[formatSelected]} */}
                             <FontAwesomeIcon icon={faSort} />
                         </button>
-                        {formatSelected === 0 && <RGBAInput color={color} setColor={setColor} key="rgba" />}
-                        {formatSelected === 1 && <HEXAInput color={color} setColor={setColor} key="hexa" />}
-                        {formatSelected === 2 && <HSLAInput color={color} setColor={setColor} key="hsla" />}
+                        {formatSelected === 0 && (
+                            <RGBAInput
+                                color={color}
+                                setColor={setColor}
+                                key="rgba"
+                                showAlpha={colorSelectData.showAlpha}
+                            />
+                        )}
+                        {formatSelected === 1 && (
+                            <HEXAInput
+                                color={color}
+                                setColor={setColor}
+                                key="hexa"
+                                showAlpha={colorSelectData.showAlpha}
+                            />
+                        )}
+                        {formatSelected === 2 && (
+                            <HSLAInput
+                                color={color}
+                                setColor={setColor}
+                                key="hsla"
+                                showAlpha={colorSelectData.showAlpha}
+                            />
+                        )}
                     </div>
                 </div>
             </FocusLock>
@@ -282,9 +305,11 @@ const InputColorReal = () => {
 const RGBAInput = ({
     color,
     setColor,
+    showAlpha,
 }: {
     color: Color;
     setColor: React.Dispatch<React.SetStateAction<Color>>;
+    showAlpha: boolean;
 }) => {
     return (
         <div className="colorValueInput">
@@ -321,27 +346,31 @@ const RGBAInput = ({
                 labelBefore="B"
                 noSpin
             />
-            <InputNumber
-                onChange={(e) => {
-                    setColor((init) => init.alpha(e.valueAsNumber));
-                }}
-                className="noBG"
-                value={parseFloat(color.alpha().toFixed(2))}
-                min={0}
-                max={1}
-                step={0.05}
-                labelBefore="A"
-                noSpin
-            />
+            {showAlpha && (
+                <InputNumber
+                    onChange={(e) => {
+                        setColor((init) => init.alpha(e.valueAsNumber));
+                    }}
+                    className="noBG"
+                    value={parseFloat(color.alpha().toFixed(2))}
+                    min={0}
+                    max={1}
+                    step={0.05}
+                    labelBefore="A"
+                    noSpin
+                />
+            )}
         </div>
     );
 };
 const HSLAInput = ({
     color,
     setColor,
+    showAlpha,
 }: {
     color: Color;
     setColor: React.Dispatch<React.SetStateAction<Color>>;
+    showAlpha: boolean;
 }) => {
     return (
         <div className="colorValueInput">
@@ -378,36 +407,44 @@ const HSLAInput = ({
                 labelBefore="L%"
                 noSpin
             />
-            <InputNumber
-                onChange={(e) => {
-                    setColor((init) => init.alpha(e.valueAsNumber));
-                }}
-                className="noBG"
-                value={parseFloat(color.alpha().toFixed(2))}
-                min={0}
-                max={1}
-                step={0.1}
-                labelBefore="A"
-                noSpin
-            />
+            {showAlpha && (
+                <InputNumber
+                    onChange={(e) => {
+                        setColor((init) => init.alpha(e.valueAsNumber));
+                    }}
+                    className="noBG"
+                    value={parseFloat(color.alpha().toFixed(2))}
+                    min={0}
+                    max={1}
+                    step={0.1}
+                    labelBefore="A"
+                    noSpin
+                />
+            )}
         </div>
     );
 };
 const HEXAInput = ({
     color,
     setColor,
+    showAlpha,
 }: {
     color: Color;
     setColor: React.Dispatch<React.SetStateAction<Color>>;
+    showAlpha: boolean;
 }) => {
     const [value, setValue] = useState(color.hexa());
     useLayoutEffect(() => {
         const timeout = setTimeout(() => {
             try {
                 const newColor = colorUtils.new(value);
-                setColor(newColor);
-            } catch {
-                //
+                if (showAlpha) {
+                    setColor(newColor);
+                } else {
+                    setColor(newColor.alpha(1));
+                }
+            } catch (err) {
+                console.error(err);
             }
         }, 1000);
         return () => {
@@ -429,12 +466,6 @@ const HEXAInput = ({
                     }}
                     onChange={(e) => {
                         setValue(e.currentTarget.value);
-                        // try {
-                        // const newColor = colorUtils.new(e.currentTarget.value);
-                        // setColor(newColor);
-                        // } catch {
-                        //     //
-                        // }
                     }}
                 />
             </label>

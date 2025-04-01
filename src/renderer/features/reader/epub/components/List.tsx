@@ -85,5 +85,6 @@ const List = memo(
     // (prev, next) => !prev.focusChapterInList || prev.currentChapter.href === next.currentChapter.href
     (prev, next) => prev.currentChapterHref === next.currentChapterHref,
 );
+List.displayName = "List";
 
 export default List;

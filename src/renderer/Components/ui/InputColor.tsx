@@ -1,19 +1,7 @@
 import React, { useState, useLayoutEffect, useContext } from "react";
 import { useAppContext } from "../../App";
 
-const InputColor = ({
-    onChange,
-    value,
-    labelAfter,
-    labelBefore,
-    paraAfter,
-    paraBefore,
-    className = "",
-    labeled = false,
-    disabled = false,
-    timeout,
-    title,
-}: {
+const InputColor: React.FC<{
     labeled?: boolean;
     labelAfter?: string;
     labelBefore?: string;
@@ -29,6 +17,20 @@ const InputColor = ({
      * `fn_on_timeout` is called after time had passed after `onChange` and active element is event target
      */
     timeout?: [number, (color: Color) => void];
+    showAlpha?: boolean;
+}> = ({
+    onChange,
+    value,
+    labelAfter,
+    labelBefore,
+    paraAfter,
+    paraBefore,
+    className = "",
+    labeled = false,
+    disabled = false,
+    timeout,
+    title,
+    showAlpha = true,
 }) => {
     const { setColorSelectData } = useAppContext();
     const [valueProxy, setValueProxy] = useState(value);
@@ -62,6 +64,7 @@ const InputColor = ({
                 }
             },
             focusBackElem: e.currentTarget,
+            showAlpha,
         });
     };
     if (labeled) {
@@ -74,6 +77,12 @@ const InputColor = ({
                     className="colorPickerBtn"
                     style={{ "--color": value.hsl().string() }}
                     onClick={onClickHandler}
+                    onKeyDown={(e) => {
+                        if (e.key === " ") {
+                            e.preventDefault();
+                            e.currentTarget.click();
+                        }
+                    }}
                 >
                     <span className="colorShow"></span>
                 </button>

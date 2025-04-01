@@ -7,6 +7,7 @@ import FindInPage from "./components/FindInPage";
 import BookmarkButton from "./components/BookmarkButton";
 import BookmarkList from "./components/BookmarkList";
 import { useAppContext } from "src/renderer/App";
+import NotesList from "./components/NotesList";
 
 const EPubReaderSideList = memo(
     ({
@@ -50,7 +51,7 @@ const EPubReaderSideList = memo(
         ) => void;
         zenMode: boolean;
     }) => {
-        const { contextMenuData } = useAppContext();
+        const { contextMenuData, colorSelectData } = useAppContext();
         const appSettings = useAppSelector((store) => store.appSettings);
         const sideListRef = useRef<HTMLDivElement>(null);
         const [isListOpen, setListOpen] = useState(false);
@@ -65,13 +66,16 @@ const EPubReaderSideList = memo(
             if (
                 !contextMenuData &&
                 !isSideListPinned &&
+                !(
+                    colorSelectData?.focusBackElem && sideListRef.current?.contains(colorSelectData?.focusBackElem)
+                ) &&
                 document.activeElement !== sideListRef.current &&
                 !sideListRef.current?.contains(document.activeElement)
             )
                 return setListOpen(false);
 
             setPreventListClose(true);
-        }, [contextMenuData]);
+        }, [contextMenuData, colorSelectData]);
 
         useEffect(() => {
             if (!zenMode && currentRef.current)
@@ -126,6 +130,10 @@ const EPubReaderSideList = memo(
                         if (
                             preventListClose &&
                             !contextMenuData &&
+                            !(
+                                colorSelectData?.focusBackElem &&
+                                sideListRef.current?.contains(colorSelectData?.focusBackElem)
+                            ) &&
                             !e.currentTarget.contains(document.activeElement)
                         )
                             setListOpen(false);
@@ -299,41 +307,37 @@ const EPubReaderSideList = memo(
                 </div>
                 {/* //todo remove  appSettings.epubReaderSettings.hideSideList */}
                 {/* {!appSettings.epubReaderSettings.hideSideList && ( */}
-                <div
-                    className="location-cont"
-                    // style={{
-                    //     display: appSettings.epubReaderSettings.hideSideList ? "none" : "initial",
-                    // }}
-                >
-                    {displayList === "content" && (
-                        <>
-                            {epubData.toc.size > 500 && (
-                                <p>
-                                    Too many chapters, click &quot;Content&quot; to hide list to improve
-                                    performance of application.
-                                </p>
-                            )}
-                            <List
-                                currentChapterHref={
-                                    epubData.manifest.get(currentChapterFake)?.href || currentChapter.href
-                                }
-                                onEpubLinkClick={onEpubLinkClick}
-                                epubNCX={epubData.ncx}
-                                epubTOC={epubData.toc}
-                                sideListRef={sideListRef}
-                            />
-                        </>
-                    )}
-                    {displayList === "bookmarks" && <BookmarkList openChapterById={openChapterById} />}
-                    {displayList === "notes" && (
-                        <div className="location-cont">
-                            <p>To be implemented</p>
-                        </div>
-                    )}
-                </div>
+                {displayList === "content" && (
+                    <div
+                        className="location-cont"
+                        // style={{
+                        //     display: appSettings.epubReaderSettings.hideSideList ? "none" : "initial",
+                        // }}
+                    >
+                        {epubData.toc.size > 500 && (
+                            <p>
+                                Too many chapters, click &quot;Content&quot; to hide list to improve performance of
+                                application.
+                            </p>
+                        )}
+                        <List
+                            currentChapterHref={
+                                epubData.manifest.get(currentChapterFake)?.href || currentChapter.href
+                            }
+                            onEpubLinkClick={onEpubLinkClick}
+                            epubNCX={epubData.ncx}
+                            epubTOC={epubData.toc}
+                            sideListRef={sideListRef}
+                        />
+                    </div>
+                )}
+                {displayList === "bookmarks" && <BookmarkList openChapterById={openChapterById} />}
+                {displayList === "notes" && <NotesList openChapterById={openChapterById} />}
             </div>
         );
     },
 );
+
+EPubReaderSideList.displayName = "EPubReaderSideList";
 
 export default EPubReaderSideList;

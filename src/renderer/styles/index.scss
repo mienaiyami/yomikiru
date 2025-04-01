@@ -220,7 +220,14 @@
             padding: 2px 4px;
             border-radius: 4px;
             white-space: nowrap;
-            font-family: ui-monospace, SFMono-Regular, SF Mono, Menlo, Consolas, Liberation Mono, monospace;
+            font-family:
+                ui-monospace,
+                SFMono-Regular,
+                SF Mono,
+                Menlo,
+                Consolas,
+                Liberation Mono,
+                monospace;
             font-size: 90%;
             align-self: center;
             cursor: inherit;
@@ -374,7 +381,9 @@
                 border-radius: 10px;
                 transition: 0.3s cubic-bezier(0, 1.15, 1, 1) transform;
                 width: min(500px, 60%);
-                box-shadow: rgba(0, 0, 0, 0.3) 0px 19px 38px, rgba(0, 0, 0, 0.22) 0px 15px 12px;
+                box-shadow:
+                    rgba(0, 0, 0, 0.3) 0px 19px 38px,
+                    rgba(0, 0, 0, 0.22) 0px 15px 12px;
                 overflow: auto;
                 gap: 10px;
                 overflow: hidden;
@@ -688,8 +697,14 @@
                                     line-height: 1.2em;
                                     list-style: none;
                                     &::before {
-                                        font-family: ui-monospace, SFMono-Regular, SF Mono, Menlo, Consolas,
-                                            Liberation Mono, monospace;
+                                        font-family:
+                                            ui-monospace,
+                                            SFMono-Regular,
+                                            SF Mono,
+                                            Menlo,
+                                            Consolas,
+                                            Liberation Mono,
+                                            monospace;
                                     }
                                 }
                                 > li {
@@ -736,12 +751,14 @@
                                 box-shadow: inset 0 0 0px 1px var(--divider-color);
                                 &:first-child {
                                     border-radius: 8px 8px 0 0;
-                                    box-shadow: inset 0 0 0px 1px var(--divider-color),
+                                    box-shadow:
+                                        inset 0 0 0px 1px var(--divider-color),
                                         inset 0 1px 0px 1px var(--divider-color);
                                 }
                                 &:last-child {
                                     border-radius: 0 0 8px 8px;
-                                    box-shadow: inset 0 0 0px 1px var(--divider-color),
+                                    box-shadow:
+                                        inset 0 0 0px 1px var(--divider-color),
                                         inset 0 -1px 0px 1px var(--divider-color);
                                 }
                             }
@@ -1188,6 +1205,20 @@
                         mask-size: cover;
                         margin: 0 2px;
                         vertical-align: middle;
+                    }
+                    [data-tooltip] {
+                        &::before {
+                            left: 50%;
+                            top: 0;
+                            --translate: -50%, calc(-100% - 0.5em);
+                            box-shadow: currentColor 0 0 0 0.5px;
+                            white-space: unset;
+                            max-width: 20em;
+                            padding: 0.4em;
+                        }
+                    }
+                    .text-highlight {
+                        background-color: var(--highlight-color);
                     }
                     .modal-element {
                         .modal-overlayCont {

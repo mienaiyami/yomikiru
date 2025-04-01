@@ -17,7 +17,6 @@ const initialState: BookmarksState = {
 };
 export const fetchAllBookmarks = createAsyncThunk("bookmarks/fetchAll", async () => {
     const bookmarks = await window.electron.invoke("db:library:getAllBookmarks");
-    console.log({ bookmarks });
     return bookmarks;
 });
 

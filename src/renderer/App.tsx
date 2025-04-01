@@ -23,6 +23,7 @@ import { resetReaderState } from "@store/reader";
 import { useDirectoryValidator } from "@features/reader/hooks/useDirectoryValidator";
 import { shallowEqual } from "react-redux";
 import { getShortcutsMapped } from "@store/shortcuts";
+import { fetchAllNotes } from "@store/bookNotes";
 
 interface AppContext {
     pageNumberInputRef: React.RefObject<HTMLInputElement>;
@@ -139,6 +140,7 @@ const App = (): ReactElement => {
         setFirstRendered(true);
         dispatch(fetchAllItemsWithProgress());
         dispatch(fetchAllBookmarks());
+        dispatch(fetchAllNotes());
         listeners.push(
             window.electron.on("reader:loadLink", ({ link }) => {
                 if (link)
@@ -153,17 +155,14 @@ const App = (): ReactElement => {
         );
         // todo: these are temp only
         listeners.push(
-            window.electron.on("db:library:change", (data) => {
-                // const items = data.reduce((acc, item) => {
-                //     acc[item.link] = item;
-                //     return acc;
-                // }, {} as Record<string, DatabaseChannels["db:library:getAllAndProgress"]["response"][0]>);
-                // dispatch(setLibrary(items));
+            window.electron.on("db:library:change", () => {
                 dispatch(fetchAllItemsWithProgress());
             }),
-            window.electron.on("db:bookmark:change", (data) => {
+            window.electron.on("db:bookmark:change", () => {
                 dispatch(fetchAllBookmarks());
-                // dispatch(setBookmarks(data));
+            }),
+            window.electron.on("db:bookNote:change", () => {
+                dispatch(fetchAllNotes());
             }),
         );
         listeners.push(

@@ -6,7 +6,7 @@ import React, { useState, useRef, useEffect } from "react";
 
 import FocusLock from "react-focus-lock";
 
-const AniLogin = () => {
+const AniLogin: React.FC = () => {
     const [proceeded, setProceeded] = useState(false);
     const inputRef = useRef<HTMLInputElement>(null);
 

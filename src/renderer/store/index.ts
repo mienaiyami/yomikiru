@@ -6,6 +6,7 @@ import themesReducer from "./themes";
 import anilistReducer from "./anilist";
 import libraryReducer from "./library";
 import bookmarksReducer from "./bookmarks";
+import bookNotesReducer from "./bookNotes";
 import uiReducer from "./ui";
 import readerReducer from "./reader";
 
@@ -14,6 +15,7 @@ const store = configureStore({
         appSettings: appSettingsReducer,
         theme: themesReducer,
         bookmarks: bookmarksReducer,
+        bookNotes: bookNotesReducer,
         library: libraryReducer,
         prevNextChapter: prevNextChapterReducer,
         shortcuts: shortcutsReducer,

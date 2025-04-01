@@ -169,11 +169,26 @@ const handlers: {
         pingDatabaseChange("db:bookmark:change");
         return true;
     },
+    "db:book:getAllNotes": async (db) => {
+        return (await db.db.select().from(bookNotes)) || [];
+    },
     "db:book:getNotes": async (db, request) => {
         return await db.db.select().from(bookNotes).where(eq(bookNotes.itemLink, request.itemLink));
     },
     "db:book:addNote": async (db, request) => {
-        await db.db.insert(bookNotes).values(AddBookNoteSchema.parse(request));
+        const data =
+            (await db.db.insert(bookNotes).values(AddBookNoteSchema.parse(request)).returning())?.[0] ?? null;
+        pingDatabaseChange("db:bookNote:change");
+        return data;
+    },
+    "db:book:updateNote": async (db, request) => {
+        const data = await db.db
+            .update(bookNotes)
+            .set({ content: request.content, color: request.color })
+            .where(eq(bookNotes.id, request.id))
+            .returning();
+        pingDatabaseChange("db:bookNote:change");
+        return data?.[0] ?? null;
     },
     "db:book:deleteNotes": async (db, request) => {
         if (request.all) {
@@ -183,6 +198,7 @@ const handlers: {
         await db.db
             .delete(bookNotes)
             .where(and(eq(bookNotes.itemLink, request.itemLink), inArray(bookNotes.id, request.ids)));
+        pingDatabaseChange("db:bookNote:change");
         return true;
     },
     // "db:migrateFromJSON": async (db, request) => {
@@ -197,7 +213,7 @@ export function setupDatabaseHandlers(db: DatabaseService): void {
                 return await handlers[channel as keyof DatabaseChannels](db, request);
             } catch (error) {
                 console.error(`Error in IPC channel "${channel}":`, error, request);
-                throw error;
+                return null;
             }
         });
     }

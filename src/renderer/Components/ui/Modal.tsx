@@ -1,54 +1,57 @@
-import { ReactNode } from "react";
+import { memo, ReactNode } from "react";
 import FocusLock from "react-focus-lock";
 type PropsBase = {
     open: boolean;
     onClose: () => void;
+    noFocusLock?: boolean;
+    className?: string;
 };
 type Props1 = PropsBase & { children: ReactNode; asHTML?: false };
 type Props2 = PropsBase & { children: string; asHTML: true };
-const Modal = (props: Props1 | Props2) => {
+const Modal = memo((props: Props1 | Props2) => {
     //todo impl
     return (
-        props.open && (
-            <FocusLock>
+        <FocusLock disabled={!!props.noFocusLock}>
+            <div
+                className={`modal-element ${props.className || ""}`}
+                data-state="closed"
+                ref={(node) => {
+                    if (node) {
+                        setTimeout(() => {
+                            if (node) node.setAttribute("data-state", "open");
+                        });
+                    }
+                }}
+            >
+                <div className="clickClose" onClick={() => props.onClose()}></div>
                 <div
-                    className="modal-element"
-                    data-state="closed"
+                    className="modal-overlayCont"
                     ref={(node) => {
                         if (node) {
-                            setTimeout(() => {
-                                if (node) node.setAttribute("data-state", "open");
-                            });
+                            if (props.asHTML) node.innerHTML = props.children;
                         }
                     }}
+                    onBlur={(e) => {
+                        if (!e.currentTarget.contains(e.target)) {
+                            props.onClose();
+                        }
+                    }}
+                    onKeyDown={(e) => {
+                        if (e.key === "Escape") props.onClose();
+                        if (e.key === " ") {
+                            e.preventDefault();
+                            e.currentTarget.click();
+                        }
+                    }}
+                    tabIndex={-1}
                 >
-                    <div className="clickClose" onClick={() => props.onClose()}></div>
-                    <div
-                        className="modal-overlayCont"
-                        ref={(node) => {
-                            if (node) {
-                                setTimeout(() => {
-                                    node.focus();
-                                });
-                                if (props.asHTML) node.innerHTML = props.children;
-                            }
-                        }}
-                        onBlur={(e) => {
-                            if (!e.currentTarget.contains(e.target)) {
-                                props.onClose();
-                            }
-                        }}
-                        onKeyDown={(e) => {
-                            if (e.key === "Escape") props.onClose();
-                        }}
-                        tabIndex={-1}
-                    >
-                        {!props.asHTML && props.children}
-                    </div>
+                    {!props.asHTML && props.children}
                 </div>
-            </FocusLock>
-        )
+            </div>
+        </FocusLock>
     );
-};
+});
+
+Modal.displayName = "Modal";
 
 export default Modal;

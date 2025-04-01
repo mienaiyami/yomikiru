@@ -28,7 +28,7 @@ type EPubData = {
 };
 
 // todo: replace useLayoutEffect that is not needed with useEffect
-const EPubReader = () => {
+const EPubReader: React.FC = () => {
     const { bookProgressRef, setContextMenuData } = useAppContext();
 
     const appSettings = useAppSelector((store) => store.appSettings);
@@ -69,8 +69,6 @@ const EPubReader = () => {
     const [shortcutText, setShortcutText] = useState("");
     // [0-100]
     const [bookProgress, setBookProgress] = useState(0);
-    /** for use when opened file is txt,html,xhtml */
-    const [nonEPUBFileContent, setNonEPUBFileContent] = useState<null | string>(null);
     const [footnoteModalData, setFootnoteModalData] = useState<{
         title: string;
         content: string;
@@ -200,7 +198,6 @@ const EPubReader = () => {
     const onEpubLinkClick = useCallback(
         (ev: MouseEvent | React.MouseEvent<HTMLAnchorElement, MouseEvent>) => {
             ev.preventDefault();
-            console.log(ev.currentTarget);
             if (!epubData) return;
             const href = (ev.currentTarget as HTMLAnchorElement).getAttribute("data-href");
             if (href) {
@@ -267,67 +264,6 @@ const EPubReader = () => {
                 .catch((err) => window.logger.error("Error while deleting temp dir", err));
 
         link = window.path.normalize(link);
-
-        //todo
-        if ([".xhtml", ".html", ".txt"].includes(window.path.extname(link).toLowerCase())) {
-            // const ext = window.path.extname(link).toLowerCase();
-            // try {
-            //     let content=""
-            //     const parser = new DOMParser();
-            //     if (ext === ".xhtml" || ext === "html") {
-            //         const raw = window.fs.readFile()
-            //     } else if (ext === ".txt") {
-            //         const raw = window.fs.readFileSync(link, "utf-8");
-            //         if (!raw) throw Error();
-            //         const paras = raw.split("\r\n");
-            //         const html = `
-            //         <!DOCTYPE html>
-            //         <html>
-            //         <head>
-            //         <title></title>
-            //         </head>
-            //         <body>
-            //         ${paras.map((e) => `<p>${e}</p>`).join("")}
-            //         </body>
-            //         </html>
-            //         `;
-            //         doc = parser.parseFromString(html, "text/html");
-            //     }
-            //     if (doc) {
-            //         setNonEPUBFile(doc);
-            //         const mangaOpened = {
-            //             chapterName: linkSplitted.at(-1) || "~",
-            //             link,
-            //             pages: 0,
-            //             mangaName: linkSplitted.at(-2) || "~",
-            //         };
-            //         if (readerRef.current) readerRef.current.scrollTop = 0;
-            //         dispatch(
-            //             newHistory({
-            //                 type: "image",
-            //                 data: {
-            //                     mangaOpened,
-            //                     page: 0,
-            //                     recordChapter: appSettings.recordChapterRead,
-            //                 },
-            //             })
-            //         );
-
-            //         dispatch(setMangaInReader(mangaOpened));
-            //         dispatch(setReaderOpen(true));
-            //     }
-            // } catch (reason) {
-            //     console.error(reason);
-            //     dialogUtils.customError({
-            //         message: "Error while reading file.",
-            //     });
-            // }
-            dialogUtils.customError({
-                message: "This mode is not supported yet, will be implemented in future.",
-            });
-            dispatch(setReaderLoading(null));
-            return;
-        }
         EPUB.readEpubFile(link, appSettings.keepExtractedFiles)
             .then(async (ed) => {
                 // todo : When current chapter is not top level(level=0), make BookItem.chapter concat of all parent chapters.
@@ -528,9 +464,6 @@ const EPubReader = () => {
     }, [zenMode]);
 
     useLayoutEffect(() => {
-        console.log({
-            elemBeforeChange,
-        });
         if (isSideListPinned) {
             // readerRef.current?.scrollTo(0, scrollPosPercent * readerRef.current.scrollHeight);
             if (elemBeforeChange)
@@ -739,8 +672,7 @@ const EPubReader = () => {
             className={
                 (isSideListPinned ? "sideListPinned " : "") +
                 "reader " +
-                (zenMode && appSettings.hideCursorInZenMode ? "noCursor " : "") +
-                (nonEPUBFileContent ? "fake " : "")
+                (zenMode && appSettings.hideCursorInZenMode ? "noCursor " : "")
             }
             style={{
                 gridTemplateColumns: sideListWidth + "px auto",
@@ -933,27 +865,20 @@ const EPubReader = () => {
                     onEpubLinkClick={onEpubLinkClick}
                 />
                 <StyleSheets sheets={epubData?.styleSheets || []} />
-                {nonEPUBFileContent
-                    ? // <HTMLSolo
-                      //     content={nonEPUBFileContent}
-                      //     epubLinkClick={onEpubLinkClick}
-                      //     url={linkInReader.link}
-                      // />
-                      ""
-                    : epubData && (
-                          <HTMLPart
-                              // loadOneChapter={appSettings.epubReaderSettings.loadOneChapter}
-                              key={"epub" + currentChapter.index}
-                              onEpubLinkClick={onEpubLinkClick}
-                              currentChapter={{
-                                  id: epubData.spine[currentChapter.index].id,
-                                  fragment: currentChapter.fragment,
-                                  elementQuery: elemBeforeChange,
-                              }}
-                              epubManifest={epubData.manifest}
-                              // bookmarkedElem={bookmarkedElem}
-                          />
-                      )}
+                {epubData && (
+                    <HTMLPart
+                        // loadOneChapter={appSettings.epubReaderSettings.loadOneChapter}
+                        key={"epub" + currentChapter.index}
+                        onEpubLinkClick={onEpubLinkClick}
+                        currentChapter={{
+                            id: epubData.spine[currentChapter.index].id,
+                            fragment: currentChapter.fragment,
+                            elementQuery: elemBeforeChange,
+                        }}
+                        epubManifest={epubData.manifest}
+                        // bookmarkedElem={bookmarkedElem}
+                    />
+                )}
             </section>
         </div>
     );

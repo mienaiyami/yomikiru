@@ -13,7 +13,7 @@ export const libraryItems = sqliteTable("library_items", {
     updatedAt: integer({ mode: "timestamp_ms" })
         .notNull()
         .default(timeNow)
-        .$onUpdate(() => timeNow),
+        .$onUpdate(() => new Date()),
     createdAt: integer({ mode: "timestamp_ms" }).notNull().default(timeNow),
     author: text(),
     cover: text(),
@@ -94,19 +94,29 @@ export const bookNotes = sqliteTable(
             .notNull(),
         /** this is id of chapter in the epub file */
         chapterId: text().notNull(),
-        /** CSS selector, elementQueryString */
-        position: text().notNull(),
-        content: text().notNull(),
+        /** for display purposes */
+        chapterName: text().notNull(),
+        range: text({
+            mode: "json",
+        })
+            .$type<{
+                startPath: string;
+                startOffset: number;
+                endPath: string;
+                endOffset: number;
+            }>()
+            .notNull(),
+        content: text(),
         selectedText: text().notNull(),
         color: text().notNull(),
         createdAt: integer({ mode: "timestamp_ms" }).notNull().default(timeNow),
         updatedAt: integer({ mode: "timestamp_ms" })
             .notNull()
             .default(timeNow)
-            .$onUpdate(() => timeNow),
+            .$onUpdate(() => new Date()),
     },
     (t) => [
-        unique("uq_book_notes_chapter_id_position_selected_text").on(t.chapterId, t.position, t.selectedText),
+        unique("uq_book_notes_chapter_id_range_selected_text").on(t.chapterId, t.range, t.selectedText),
         index("idx_book_notes_item_link").on(t.itemLink),
     ],
 );

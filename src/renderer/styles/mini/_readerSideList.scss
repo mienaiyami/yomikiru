@@ -125,6 +125,31 @@
             display: none;
         }
     }
+
+    .actions {
+        display: flex;
+        flex-direction: column;
+        gap: 6px;
+        margin-top: 5px;
+        border: solid var(--reader-sidelist-divider-color);
+        border-width: 0 0 4px 0;
+        padding-bottom: 5px;
+        button {
+            width: 100%;
+        }
+        .add-note-input {
+            width: 100%;
+        }
+        .color-buttons {
+            display: flex;
+            flex-direction: row;
+            gap: 6px;
+            button {
+                height: 2.2em;
+                background-color: var(--highlight-color);
+            }
+        }
+    }
     .location-cont {
         margin-top: 5px;
         padding: 0;
@@ -135,6 +160,27 @@
                 .date {
                     font-size: 0.8em;
                     opacity: 0.7;
+                }
+            }
+            // to increase specificity
+            &.note-item:not(#dummy) {
+                grid-template-columns: 4px auto;
+                // display: none;
+                .note-selected-text {
+                    font-size: 0.8em;
+                    opacity: 0.7;
+                    overflow: hidden;
+                    text-overflow: ellipsis;
+                    display: -webkit-box;
+                    word-break: break-all;
+                    -webkit-line-clamp: 1;
+                    /* number of lines to show */
+                    -webkit-box-orient: vertical;
+                }
+                .highlight-color {
+                    width: 4px;
+                    height: 100%;
+                    border-radius: 2px;
                 }
             }
         }
@@ -193,6 +239,56 @@
                 &:focus {
                     z-index: 2;
                 }
+            }
+        }
+    }
+    .note-modal {
+        .modal-overlayCont {
+            width: 90%;
+            max-width: 400px;
+            box-shadow: currentColor 0 0 0 0.5px;
+            gap: 20px;
+            display: flex;
+            flex-direction: column;
+            align-items: stretch;
+            .selected-text {
+                width: 100%;
+                overflow: hidden;
+                text-overflow: ellipsis;
+                display: -webkit-box;
+                word-break: break-all;
+                -webkit-line-clamp: 1;
+                /* number of lines to show */
+                -webkit-box-orient: vertical;
+            }
+            .note-input {
+                textarea {
+                    margin-top: 0.5em;
+                    width: 100%;
+                    max-height: 10em;
+                    resize: none;
+                    background: var(--text-input-bg);
+                    color: var(--text-input-color);
+                    border: none;
+                    border-radius: 4px;
+                    padding: 10px;
+                    font-size: 16px;
+                    font-family: var(--font-family);
+
+                    &:focus {
+                        box-shadow: var(--text-input-bg-focus) 0 0 0px 2px;
+                        outline: transparent;
+                    }
+                }
+                .colorPickerBtn {
+                    height: 3em;
+                }
+            }
+            .modal-actions {
+                display: flex;
+                flex-direction: row;
+                gap: 10px;
+                justify-content: flex-end;
             }
         }
     }

@@ -8,7 +8,7 @@ import { deleteLibraryItem } from "@store/library";
 import ListItem from "../../components/ListItem";
 import dateUtils from "@utils/date";
 
-const BookmarkHistoryListItem = (props: {
+const BookmarkHistoryListItem: React.FC<{
     focused: boolean;
     isHistory: boolean;
     isBookmark: boolean;
@@ -16,7 +16,7 @@ const BookmarkHistoryListItem = (props: {
     // id from db
     id: number;
     bookmark?: MangaBookmark | BookBookmark;
-}) => {
+}> = (props) => {
     const { openInReader, setContextMenuData } = useAppContext();
     const dispatch = useAppDispatch();
     const appSettings = useAppSelector((store) => store.appSettings);

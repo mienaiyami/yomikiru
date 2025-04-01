@@ -42,5 +42,9 @@ declare namespace Menu {
         onBlur?: (e: React.FocusEvent<HTMLDivElement, Element>) => void;
         focusBackElem?: HTMLElement | null;
         elemBox: HTMLElement | { x: number; y: number } | null;
+        /**
+         * @default true
+         */
+        showAlpha: boolean;
     };
 }

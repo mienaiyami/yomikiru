@@ -7,7 +7,7 @@ const registerHandler = <T extends keyof RendererToMainChannels>(
         event: Electron.IpcMainInvokeEvent,
         request: RendererToMainChannels[T]["request"],
     ) => Promise<RendererToMainChannels[T]["response"]> | RendererToMainChannels[T]["response"],
-) => {
+): void => {
     ipcMain.handle(channel, async (event, request) => {
         return handler(event, request);
     });
@@ -17,14 +17,14 @@ const sendToRenderer = <T extends keyof MainToRendererChannels>(
     webContents: Electron.WebContents,
     channel: T,
     ...args: MainToRendererChannels[T]["request"] extends void ? [] : [MainToRendererChannels[T]["request"]]
-) => {
+): void => {
     webContents.send(channel, ...args);
 };
 
 const handleOn = <T extends keyof RendererToMainChannels>(
     channel: T,
     handler: (event: Electron.IpcMainEvent, request: RendererToMainChannels[T]["request"]) => void,
-) => {
+): void => {
     ipcMain.on(channel, (event, request) => {
         handler(event, request);
     });

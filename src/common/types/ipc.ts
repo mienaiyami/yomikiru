@@ -57,31 +57,18 @@ export type DatabaseChannels = {
     "db:book:getBookmarks": ChannelDefinition<{ itemLink: string }, BookBookmark[]>;
     "db:book:addBookmark": ChannelDefinition<AddBookBookmarkData, BookBookmark | null>;
     "db:book:deleteBookmarks": ChannelDefinition<{ itemLink: string; ids: number[]; all?: boolean }, boolean>;
+    "db:book:getAllNotes": ChannelDefinition<void, BookNote[]>;
     "db:book:getNotes": ChannelDefinition<{ itemLink: string }, BookNote[]>;
-    "db:book:addNote": ChannelDefinition<AddBookNoteData, void>;
+    "db:book:addNote": ChannelDefinition<AddBookNoteData, BookNote | null>;
+    "db:book:updateNote": ChannelDefinition<{ id: number; content: string; color?: string }, BookNote | null>;
     "db:book:deleteNotes": ChannelDefinition<{ itemLink: string; ids: number[]; all?: boolean }, boolean>;
 };
 
 // ! for updating store only, temp only
 export type DatabaseChangeChannels = {
-    "db:library:change": ChannelDefinition<
-        // (
-        //     | (LibraryItem & { type: "book"; progress: BookProgress | null })
-        //     | (LibraryItem & { type: "manga"; progress: MangaProgress | null })
-        // )[],
-        void,
-        void,
-        "m2r"
-    >;
-    "db:bookmark:change": ChannelDefinition<
-        // {
-        //     mangaBookmarks: MangaBookmark[];
-        //     bookBookmarks: BookBookmark[];
-        // },
-        void,
-        void,
-        "m2r"
-    >;
+    "db:library:change": ChannelDefinition<void, void, "m2r">;
+    "db:bookmark:change": ChannelDefinition<void, void, "m2r">;
+    "db:bookNote:change": ChannelDefinition<void, void, "m2r">;
 };
 
 export type WindowManagementChannels = {

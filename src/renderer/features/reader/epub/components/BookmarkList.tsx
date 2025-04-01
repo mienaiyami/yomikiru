@@ -9,11 +9,9 @@ import { useAppContext } from "src/renderer/App";
 import ListItem from "src/renderer/components/ListItem";
 import ListNavigator from "src/renderer/components/ListNavigator";
 
-const BookmarkList = ({
-    openChapterById,
-}: {
+const BookmarkList: React.FC<{
     openChapterById: (chapterId: string, position?: string) => void;
-}) => {
+}> = ({ openChapterById }) => {
     const { setContextMenuData } = useAppContext();
     const bookInReader = useAppSelector(getReaderBook);
     const bookmarksArray: BookBookmark[] = useAppSelector(
@@ -57,12 +55,6 @@ const BookmarkList = ({
             }
             const items: Menu.ListItem[] = [
                 window.contextMenu.template.removeBookmark(bookmark.itemLink, bookmark.id, "book"),
-                {
-                    label: "Add Note",
-                    action() {
-                        console.log("todo: add note");
-                    },
-                },
             ];
             setContextMenuData({
                 clickX: e.clientX,

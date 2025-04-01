@@ -52,7 +52,7 @@ const processChapterNumber = (chapterName: string): number | undefined => {
     return chapterNumber;
 };
 
-const Reader = () => {
+const Reader: React.FC = () => {
     const { pageNumberInputRef, validateDirectory, setContextMenuData } = useAppContext();
 
     const appSettings = useAppSelector((store) => store.appSettings);

@@ -1,19 +1,7 @@
 import React, { useState, useLayoutEffect, useContext } from "react";
 import { useAppContext } from "../../App";
 
-const InputCheckboxColor = ({
-    onChangeColor,
-    onChangeCheck,
-    value,
-    labelAfter,
-    labelBefore,
-    paraAfter,
-    paraBefore,
-    checked,
-    className = "",
-    disabled = false,
-    timeout,
-}: {
+const InputCheckboxColor: React.FC<{
     labelAfter?: string;
     labelBefore?: string;
     paraAfter?: string;
@@ -29,6 +17,20 @@ const InputCheckboxColor = ({
      * `fn_on_timeout` is called after time had passed after `onChange` and active element is event target
      */
     timeout?: [number, (color: Color) => void];
+    showAlpha?: boolean;
+}> = ({
+    onChangeColor,
+    onChangeCheck,
+    value,
+    labelAfter,
+    labelBefore,
+    paraAfter,
+    paraBefore,
+    checked,
+    className = "",
+    disabled = false,
+    timeout,
+    showAlpha = true,
 }) => {
     const { setColorSelectData } = useAppContext();
     const [valueProxy, setValueProxy] = useState(value);
@@ -92,13 +94,14 @@ const InputCheckboxColor = ({
                                 if (onChangeColor) {
                                     if (aaa === undefined)
                                         return console.error(
-                                            "InputCheckboxColor:onChangeColor function must return."
+                                            "InputCheckboxColor:onChangeColor function must return.",
                                         );
                                     setValueProxy(aaa);
                                 } else setValueProxy(color);
                             }
                         },
                         focusBackElem: e.currentTarget,
+                        showAlpha,
                     });
                 }}
             >
