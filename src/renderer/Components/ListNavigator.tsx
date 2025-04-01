@@ -144,12 +144,9 @@ function ListNavigatorProviderComponent<T>({
             }
             let val = typeof e === "string" ? e : e.target.value;
 
-            val = val.replaceAll("[", "\\[");
-            val = val.replaceAll("]", "\\]");
-            val = val.replaceAll("(", "\\(");
-            val = val.replaceAll(")", "\\)");
-            val = val.replaceAll("*", "\\*");
-            val = val.replaceAll("+", "\\+");
+            const mustEscape = "[]()*+";
+            for (const c of mustEscape) val = val.replaceAll(c, "\\" + c);
+            val = val.replaceAll("*", "-");
 
             let filter = "";
             if (['"', "`", "'"].includes(val[0])) {
@@ -157,15 +154,8 @@ function ListNavigatorProviderComponent<T>({
             } else
                 for (let i = 0; i < val.length; i++) {
                     //todo: test in linux
-                    if (val[i] === "\\") {
-                        filter += "\\\\";
-                        continue;
-                    }
-                    // if (val[i] === window.path.sep) {
-                    //     filter += window.path.sep;
-                    //     continue;
-                    // }
-                    filter += val[i] + ".*";
+                    if (val[i] === "\\" && i + 1 < val.length && mustEscape.includes(val[i + 1])) filter += val[i];
+                    else filter += val[i] + ".*";
                 }
 
             setFocused(-1);

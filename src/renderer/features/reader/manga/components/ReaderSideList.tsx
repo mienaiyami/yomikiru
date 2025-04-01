@@ -20,7 +20,7 @@ import { dialogUtils } from "@utils/dialog";
 import { getReaderManga, setReaderState } from "@store/reader";
 import { useAppContext } from "src/renderer/App";
 import ReaderSideListItem from "./ReaderSideListItem";
-import ListNavigator from "src/renderer/components/ListNavigator";
+import ListNavigator from "@renderer/components/ListNavigator";
 import { shallowEqual } from "react-redux";
 import BookmarkList from "./BookmarkList";
 
@@ -223,8 +223,8 @@ const ReaderSideList = memo(
                     e.clientX > (window.innerWidth * 90) / 100
                         ? (window.innerWidth * 90) / 100
                         : e.clientX < 192
-                        ? 192
-                        : e.clientX;
+                          ? 192
+                          : e.clientX;
                 setSideListWidth(width);
             }
         };

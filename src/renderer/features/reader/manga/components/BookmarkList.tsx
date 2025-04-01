@@ -6,8 +6,8 @@ import { dialogUtils } from "@utils/dialog";
 import { useCallback } from "react";
 import { shallowEqual } from "react-redux";
 import { useAppContext } from "src/renderer/App";
-import ListItem from "src/renderer/components/ListItem";
-import ListNavigator from "src/renderer/components/ListNavigator";
+import ListItem from "@renderer/components/ListItem";
+import ListNavigator from "@renderer/components/ListNavigator";
 
 const BookmarkList = () => {
     const { setContextMenuData, openInReader } = useAppContext();

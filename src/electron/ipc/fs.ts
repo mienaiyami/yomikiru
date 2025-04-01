@@ -7,6 +7,17 @@ import { exec } from "child_process";
 import * as crossZip from "cross-zip";
 import { promisify } from "util";
 
+// manual merge from https://github.com/mienaiyami/yomikiru/commit/b1b6acbf18ff4eac5d352d91fafd511223cc8ad0
+const flattenDirectories = async (root: string, relativePath = "."): Promise<void> => {
+    const absolutePath = path.resolve(root, relativePath);
+    if ((await fs.stat(absolutePath)).isDirectory()) {
+        (await fs.readdir(absolutePath)).forEach((entry) =>
+            flattenDirectories(root, path.join(relativePath, entry)),
+        );
+    }
+    await fs.rename(absolutePath, path.resolve(root, relativePath.replace(path.sep, "_")));
+};
+
 export const registerFSHandlers = () => {
     ipc.handle("fs:changeTempPath", async (event, newPath) => {
         app.setPath("temp", newPath);
@@ -71,12 +82,21 @@ export const registerFSHandlers = () => {
                         }
                     });
                 });
-
+                try {
+                    await flattenDirectories(destination);
+                } catch (e) {
+                    log.error("electron:fs:unzip:", e);
+                }
                 await fs.writeFile(path.join(destination, "SOURCE"), source);
                 return { source, destination, ok: true };
             } else {
                 //todo test;
                 await promisify(crossZip.unzip)(source, destination);
+                try {
+                    if (path.extname(source).toLowerCase() !== ".epub") await flattenDirectories(destination);
+                } catch (e) {
+                    log.error("electron:fs:unzip:", e);
+                }
                 await fs.writeFile(path.join(destination, "SOURCE"), source);
                 return { source, destination, ok: true };
             }
