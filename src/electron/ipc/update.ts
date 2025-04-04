@@ -21,15 +21,19 @@ export const registerUpdateHandlers = () => {
     ipc.on("update:check:response", (e, args) => {
         if (args.enabled) {
             const windowId = getWindowFromWebContents(e.sender).id;
-            checkForUpdate(windowId, args.skipMinor, false, args.autoDownload);
-            setInterval(() => {
-                checkForUpdate(windowId, args.skipMinor, false, args.autoDownload);
-            }, 1000 * 60 * 60 * 1);
+            const channel = args.channel || "stable";
+            checkForUpdate(windowId, args.skipMinor, false, args.autoDownload, channel);
+            setInterval(
+                () => {
+                    checkForUpdate(windowId, args.skipMinor, false, args.autoDownload, channel);
+                },
+                1000 * 60 * 60 * 1,
+            );
         }
         clearTimeout(errorCheckTimeout);
     });
-    ipc.on("update:check:manual", (e, { promptAfterCheck = true }) => {
+    ipc.on("update:check:manual", (e, { promptAfterCheck = true, channel = "stable" }) => {
         const windowId = getWindowFromWebContents(e.sender).id;
-        checkForUpdate(windowId, false, promptAfterCheck);
+        checkForUpdate(windowId, false, promptAfterCheck, false, channel);
     });
 };

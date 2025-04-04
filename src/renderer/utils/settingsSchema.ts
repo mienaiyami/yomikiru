@@ -23,6 +23,10 @@ const settingSchema = z
         skipMinorUpdate: z.boolean(),
         autoDownloadUpdate: z.boolean(),
         /**
+         * Update channel to use
+         */
+        updateChannel: z.union([z.literal("stable"), z.literal("beta")]).default("stable"),
+        /**
          * Open chapter in reader directly, one folder inside of base manga dir.
          */
         openDirectlyFromManga: z.boolean(),
@@ -260,6 +264,7 @@ const settingSchema = z
         askBeforeClosing: false,
         skipMinorUpdate: false,
         autoDownloadUpdate: false,
+        updateChannel: "stable",
         openDirectlyFromManga: false,
         showTabs: {
             bookmark: true,

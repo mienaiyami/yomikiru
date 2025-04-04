@@ -4,10 +4,30 @@ import { setAppSettings } from "@store/appSettings";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faGithub } from "@fortawesome/free-brands-svg-icons";
 import { faHeart } from "@fortawesome/free-solid-svg-icons";
+import { AppUpdateChannel } from "@common/types/ipc";
+import InputSelect from "@ui/InputSelect";
 
 const About: React.FC = () => {
     const appSettings = useAppSelector((store) => store.appSettings);
     const dispatch = useAppDispatch();
+
+    const handleChannelChange = async (newChannel: AppUpdateChannel) => {
+        if (newChannel === "beta") {
+            const result = await window.electron.invoke("dialog:confirm", {
+                title: "Warning: Beta Channel",
+                message: "Are you sure you want to switch to beta channel?",
+                detail: "Beta releases may be unstable and could contain bugs. Use at your own risk.",
+                buttons: ["Switch to Beta", "Cancel"],
+                cancelId: 1,
+            });
+            if (result.response === 1) return;
+        } else {
+            window.electron.invoke("dialog:confirm", {
+                message: "You will only receive update after stable version crosses your current version.",
+            });
+        }
+        dispatch(setAppSettings({ ...appSettings, updateChannel: newChannel }));
+    };
     return (
         <div className="content2">
             <div className="settingItem2">
@@ -78,6 +98,16 @@ const About: React.FC = () => {
                     >
                         Changelogs
                     </button>
+                    <InputSelect
+                        options={["stable", "beta"].map((e) => ({
+                            label: e,
+                            value: e,
+                        }))}
+                        onChange={(e) => handleChannelChange(e as AppUpdateChannel)}
+                        value={appSettings.updateChannel}
+                        labeled={true}
+                        labelBefore="Update Channel"
+                    />
                 </div>
             </div>
             <div className="settingItem2">

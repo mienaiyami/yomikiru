@@ -8,6 +8,7 @@ import * as crossZip from "cross-zip";
 import logger from "electron-log";
 import * as electronDl from "electron-dl";
 import { exec as execSudo } from "@vscode/sudo-prompt";
+import { AppUpdateChannel } from "@common/types/ipc";
 
 declare const DOWNLOAD_PROGRESS_WEBPACK_ENTRY: string;
 
@@ -72,14 +73,36 @@ const checkForUpdate = async (
     skipMinor = false,
     promptAfterCheck = false,
     autoDownload = false,
+    channel: AppUpdateChannel,
 ): Promise<void> => {
     checkForAnnouncements();
     const rawdata = await fetch("https://api.github.com/repos/mienaiyami/yomikiru/releases").then((data) =>
         data.json(),
     );
-    const latestVersion: number[] = await rawdata
-        .find((e: any) => e.tag_name.charAt(0) === "v")
-        .tag_name.substr(1)
+
+    const releases = rawdata.filter((release: any) => {
+        if (channel === "stable") {
+            return !release.prerelease && release.tag_name.charAt(0) === "v";
+        } else {
+            return release.prerelease && release.tag_name.charAt(0) === "v";
+        }
+    });
+    if (releases.length === 0) {
+        logger.log(`No ${channel} releases found.`);
+        if (promptAfterCheck) {
+            const window = BrowserWindow.fromId(windowId ?? 1)!;
+            dialog.showMessageBox(window, {
+                type: "info",
+                title: "Yomikiru",
+                message: `No ${channel} releases available.`,
+                buttons: [],
+            });
+        }
+        return;
+    }
+
+    const latestVersion: number[] = releases[0].tag_name
+        .substr(1)
         .split(".")
         .map((e: string) => parseInt(e));
     logger.log("checking for update...");
@@ -87,7 +110,7 @@ const checkForUpdate = async (
         .getVersion()
         .split(".")
         .map((e) => parseInt(e));
-    logger.log("Latest version ", latestVersion.join("."));
+    logger.log(`Latest ${channel} version `, latestVersion.join("."));
     logger.log("Current version ", currentAppVersion.join("."));
     if (skipMinor) {
         if (latestVersion[0] === currentAppVersion[0] && latestVersion[1] === currentAppVersion[1]) {

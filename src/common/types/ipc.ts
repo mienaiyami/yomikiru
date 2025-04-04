@@ -94,10 +94,13 @@ export type FileSystemChannels = {
     "fs:saveFile": ChannelDefinition<{ filePath: string; data: string }, void>;
 };
 
+export type AppUpdateChannel = "stable" | "beta";
+
 export type UpdateChannels = {
     "update:check:manual": ChannelDefinition<
         {
             promptAfterCheck?: boolean;
+            channel?: AppUpdateChannel;
         },
         void
     >;
@@ -108,6 +111,7 @@ export type UpdateChannels = {
             enabled: boolean;
             skipMinor: boolean;
             autoDownload: boolean;
+            channel?: AppUpdateChannel;
         },
         void
     >;

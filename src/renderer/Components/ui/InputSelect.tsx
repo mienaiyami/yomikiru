@@ -1,20 +1,9 @@
-import React, { ReactNode, useRef, useState, useLayoutEffect, useContext } from "react";
+import React, { useState, useLayoutEffect } from "react";
 import { useAppContext } from "../../App";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faChevronDown } from "@fortawesome/free-solid-svg-icons";
 
-const InputSelect = ({
-    onChange,
-    value,
-    labelAfter,
-    labelBefore,
-    paraAfter,
-    paraBefore,
-    labeled = false,
-    className = "",
-    options = [],
-    disabled = false,
-}: {
+const InputSelect: React.FC<{
     labeled?: boolean;
     labelAfter?: string;
     labelBefore?: string;
@@ -26,6 +15,17 @@ const InputSelect = ({
     //string | JSX.Element | JSX.Element[] |( () => JSX.Element)
     options: Menu.OptSelectOption[];
     disabled?: boolean;
+}> = ({
+    onChange,
+    value,
+    labelAfter,
+    labelBefore,
+    paraAfter,
+    paraBefore,
+    labeled = false,
+    className = "",
+    options = [],
+    disabled = false,
 }) => {
     const [btnLabel, setBtnLabel] = useState(".");
 
@@ -42,7 +42,7 @@ const InputSelect = ({
         // }
     }, [value, options]);
 
-    // making it a component will cause re-render and issuess
+    // making it a component will cause re-render and issues
 
     // const SelectButton = ({ solo = true }: { solo?: boolean }) => (
     //     <button
