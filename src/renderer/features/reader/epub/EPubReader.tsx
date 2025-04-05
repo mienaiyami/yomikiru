@@ -64,13 +64,6 @@ const EPubReader: React.FC = () => {
      */
     const [currentChapterFake, setCurrentChapterFake] = useState("");
 
-    /**
-     *  css selector of element which was on top of view before changing size,etc.
-     *  also used on first load to scroll to last read position
-     *  TODO: remove and use `readerState.content.progress.position`
-     * @deprecated
-     */
-    const [elemBeforeChange, setElemBeforeChange] = useState(readerState.epubElementQueryString || "");
     const [isSideListPinned, setSideListPinned] = useState(false);
     const [sideListWidth, setSideListWidth] = useState(appSettings.readerSettings.sideListWidth || 450);
     const [zenMode, setZenMode] = useState(appSettings.openInZenMode || false);
@@ -97,6 +90,21 @@ const EPubReader: React.FC = () => {
     const fontSizeMinusRef = useRef<HTMLButtonElement>(null);
     const shortcutTextRef = useRef<HTMLDivElement>(null);
     const addToBookmarkRef = useRef<HTMLButtonElement>(null);
+
+    /**
+     *  uses: css selector of element which was on top of view before changing size,etc.
+     *  also used on first load to scroll to last read position
+     */
+    const setProgressPosition = useCallback(
+        (queryString: string) => {
+            dispatch(
+                updateReaderBookProgress({
+                    position: queryString,
+                }),
+            );
+        },
+        [dispatch],
+    );
 
     useLayoutEffect(() => {
         if (readerState.link) {
@@ -187,7 +195,7 @@ const EPubReader: React.FC = () => {
                 if (index >= 0) {
                     setCurrentChapter({ index, fragment: "" });
                     if (position) {
-                        setElemBeforeChange(position);
+                        setProgressPosition(position);
                         // backup in case same chapter
                         const element = mainRef.current?.querySelector(position);
                         if (element) {
@@ -226,7 +234,7 @@ const EPubReader: React.FC = () => {
                             if (res.response === 0) window.electron.openExternal(href);
                         });
                 } else {
-                    setElemBeforeChange("");
+                    setProgressPosition("");
                     if (appSettings.epubReaderSettings.loadOneChapter) {
                         const fragment = href.split("#")[1] || "";
                         if (
@@ -330,7 +338,6 @@ const EPubReader: React.FC = () => {
                     fragment: "",
                 });
                 setEpubData(ed);
-                setElemBeforeChange(readerState.epubElementQueryString || "");
                 // if (ed.toc.length > 200 && !appSettings.epubReaderSettings.loadOneChapter)
                 //     dialogUtils.warn({
                 //         message: "Too many chapters in book.",
@@ -372,7 +379,7 @@ const EPubReader: React.FC = () => {
                     };
                     if (callback) callback(progress);
                     dispatch(updateReaderBookProgress(progress));
-                    setElemBeforeChange(cssPath);
+                    setProgressPosition(cssPath);
                 }
             }
         },
@@ -505,8 +512,8 @@ const EPubReader: React.FC = () => {
     useEffect(() => {
         if ((zenMode && !window.electron.currentWindow.isMaximized()) || (!zenMode && !wasMaximized)) {
             setTimeout(() => {
-                if (elemBeforeChange)
-                    document.querySelector(elemBeforeChange)?.scrollIntoView({
+                if (bookInReader?.progress?.position)
+                    document.querySelector(bookInReader.progress.position)?.scrollIntoView({
                         behavior: "auto",
                         block: "start",
                     });
@@ -526,9 +533,9 @@ const EPubReader: React.FC = () => {
 
     useLayoutEffect(() => {
         if (isSideListPinned) {
-            // readerRef.current?.scrollTo(0, scrollPosPercent * readerRef.current.scrollHeight);
-            if (elemBeforeChange)
-                document.querySelector(elemBeforeChange)?.scrollIntoView({
+            const position = bookInReader?.progress?.position;
+            if (position)
+                document.querySelector(position)?.scrollIntoView({
                     behavior: "auto",
                     block: "start",
                 });
@@ -687,8 +694,9 @@ const EPubReader: React.FC = () => {
     }, [isSideListPinned, appSettings, isLoading, shortcutsMapped, isSettingOpen, epubData, readerState.active]);
 
     useLayoutEffect(() => {
-        if (elemBeforeChange)
-            document.querySelector(elemBeforeChange)?.scrollIntoView({
+        const position = bookInReader?.progress?.position;
+        if (position)
+            document.querySelector(position)?.scrollIntoView({
                 behavior: "auto",
                 block: "start",
             });
@@ -952,7 +960,7 @@ const EPubReader: React.FC = () => {
                         currentChapter={{
                             id: epubData.spine[currentChapter.index].id,
                             fragment: currentChapter.fragment,
-                            elementQuery: elemBeforeChange,
+                            elementQuery: bookInReader?.progress?.position || "",
                         }}
                         epubManifest={epubData.manifest}
                         // bookmarkedElem={bookmarkedElem}
