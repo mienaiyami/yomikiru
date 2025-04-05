@@ -4,6 +4,7 @@ import fs from "fs/promises";
 import * as remote from "@electron/remote/main";
 import { getWindowFromWebContents, log } from ".";
 import { ipc } from "@electron/ipc/utils";
+import { MainSettings } from "./mainSettings";
 
 declare const HOME_WEBPACK_ENTRY: string;
 declare const HOME_PRELOAD_WEBPACK_ENTRY: string;
@@ -81,23 +82,23 @@ export class WindowManager {
                 ipc.send(window.webContents, "update:check:query");
                 this.isFirstWindow = false;
             }
-            ipc.send(window.webContents, "window:askBeforeClose:query");
             if (link)
                 ipc.send(window.webContents, "reader:loadLink", {
                     link,
                 });
+            this.handleWindowClose(window);
         });
 
         window.webContents.setWindowOpenHandler(() => ({ action: "deny" }));
     }
 
-    static async handleWindowClose(window: BrowserWindow, ask = false) {
+    static async handleWindowClose(window: BrowserWindow): Promise<void> {
         const currentWindowIndex = this.windows.findIndex((w) => w && w.id === window.id);
 
         const closeEvent = async (e: Electron.Event) => {
             e.preventDefault();
             let res = 1;
-            if (ask) {
+            if (MainSettings.getSettings().askBeforeClosing) {
                 res = dialog.showMessageBoxSync(window, {
                     message: "Close this window?",
                     title: "Yomikiru",
@@ -146,7 +147,7 @@ export class WindowManager {
             log.error("Could not delete temp files:", reason);
         }
     }
-    static addDirToDelete(window: Electron.WebContents | number, dir: string) {
+    static addDirToDelete(window: Electron.WebContents | number, dir: string): void {
         try {
             const index = this.windows.findIndex(
                 (w) => w && w.id === (typeof window === "number" ? window : getWindowFromWebContents(window).id),
@@ -159,7 +160,7 @@ export class WindowManager {
         }
     }
 
-    static destroyWindow(window: BrowserWindow) {
+    static destroyWindow(window: BrowserWindow): void {
         if (!window.isDestroyed()) {
             window.destroy();
         }
@@ -168,7 +169,7 @@ export class WindowManager {
     static getAllWindows(): BrowserWindow[] {
         return this.windows.filter((w): w is BrowserWindow => w !== null);
     }
-    static registerListeners() {
+    static registerListeners(): void {
         ipc.on("window:openLinkInNewWindow", (_, link) => {
             this.createWindow(link);
         });
@@ -177,9 +178,6 @@ export class WindowManager {
         });
         ipc.on("window:destroy", (e) => {
             this.destroyWindow(getWindowFromWebContents(e.sender));
-        });
-        ipc.on("window:askBeforeClose:response", (e, res = false) => {
-            this.handleWindowClose(getWindowFromWebContents(e.sender), res);
         });
     }
 }

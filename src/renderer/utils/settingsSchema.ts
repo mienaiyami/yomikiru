@@ -19,7 +19,8 @@ const settingSchema = z
          * Check for new update on start of app.
          */
         updateCheckerEnabled: z.boolean(),
-        askBeforeClosing: z.boolean(),
+        // moved to main settings
+        // askBeforeClosing: z.boolean(),
         skipMinorUpdate: z.boolean(),
         autoDownloadUpdate: z.boolean(),
         /**
@@ -261,7 +262,6 @@ const settingSchema = z
         historyListSortType: "normal",
         historyListSortBy: "date",
         updateCheckerEnabled: true,
-        askBeforeClosing: false,
         skipMinorUpdate: false,
         autoDownloadUpdate: false,
         updateChannel: "stable",

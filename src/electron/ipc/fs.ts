@@ -18,20 +18,7 @@ const flattenDirectories = async (root: string, relativePath = "."): Promise<voi
     await fs.rename(absolutePath, path.resolve(root, relativePath.replace(path.sep, "_")));
 };
 
-export const registerFSHandlers = () => {
-    ipc.handle("fs:changeTempPath", async (event, newPath) => {
-        app.setPath("temp", newPath);
-        const lockFile = path.join(app.getPath("userData"), "TEMP_PATH");
-        // todo : test
-        if (newPath === process.env.TEMP) {
-            await fs.rm(lockFile, {
-                // no error if file doesn't exist
-                force: true,
-            });
-            return;
-        }
-        await fs.writeFile(lockFile, newPath);
-    });
+export const registerFSHandlers = (): void => {
     // todo: check if its still needed in linux
     ipc.handle("fs:showInExplorer", async (event, filePath) => {
         try {

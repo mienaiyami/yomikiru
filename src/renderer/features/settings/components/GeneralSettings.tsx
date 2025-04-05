@@ -3,7 +3,7 @@ import { useAppDispatch, useAppSelector } from "@store/hooks";
 import { resetAllTheme } from "@store/themes";
 import { dialogUtils } from "@utils/dialog";
 import { promptSelectDir } from "@utils/file";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import FileExplorerOptions from "./FileExplorerOptions";
 import InputCheckbox from "@ui/InputCheckbox";
 import { resetShortcuts } from "@store/shortcuts";
@@ -16,15 +16,23 @@ import GeneralPDFSettings from "./GeneralPDFSettings";
 const GeneralSettings: React.FC = () => {
     const { scrollIntoView } = useSettingsContext();
     const appSettings = useAppSelector((store) => store.appSettings);
-
     const dispatch = useAppDispatch();
 
-    //todo make a better way to do this
-    const [HAValue, setHAValue] = useState(
-        window.fs.existsSync(
-            window.path.join(window.electron.app.getPath("userData"), "DISABLE_HARDWARE_ACCELERATION"),
-        ) || false,
+    const [mainSettings, setMainSettings] = useState<{ hardwareAcceleration: boolean; askBeforeClosing: boolean }>(
+        {
+            hardwareAcceleration: true,
+            askBeforeClosing: false,
+        },
     );
+
+    useEffect(() => {
+        window.electron.invoke("mainSettings:get").then((settings) => {
+            setMainSettings({
+                hardwareAcceleration: settings.hardwareAcceleration,
+                askBeforeClosing: settings.askBeforeClosing,
+            });
+        });
+    }, []);
 
     return (
         <div className="content2">
@@ -226,6 +234,39 @@ const GeneralSettings: React.FC = () => {
                 <h3>Other Settings</h3>
                 <div className="toggleItem">
                     <InputCheckbox
+                        checked={mainSettings.hardwareAcceleration}
+                        className="noBG"
+                        onChange={async (e) => {
+                            await window.electron
+                                .invoke("mainSettings:update", {
+                                    hardwareAcceleration: e.currentTarget.checked,
+                                })
+                                .then(setMainSettings);
+                        }}
+                        labelAfter="Hardware Acceleration"
+                    />
+                    <div className="desc">
+                        Use GPU to accelerate rendering. Prevents reader stuttering.{" "}
+                        <code>App Restart Needed</code>
+                    </div>
+                </div>
+                <div className="toggleItem">
+                    <InputCheckbox
+                        checked={mainSettings.askBeforeClosing}
+                        className="noBG"
+                        onChange={async (e) => {
+                            await window.electron
+                                .invoke("mainSettings:update", {
+                                    askBeforeClosing: e.currentTarget.checked,
+                                })
+                                .then(setMainSettings);
+                        }}
+                        labelAfter="Confirm Close Window"
+                    />
+                    <div className="desc">Ask for confirmation before closing a window.</div>
+                </div>
+                <div className="toggleItem">
+                    <InputCheckbox
                         checked={appSettings.openOnDblClick}
                         className="noBG"
                         onChange={(e) => {
@@ -245,19 +286,6 @@ const GeneralSettings: React.FC = () => {
                         labelAfter="Open In Reader Arrow / Button"
                     />
                     <div className="desc">Show the button beside items in home location list.</div>
-                </div>
-                <div className="toggleItem">
-                    <InputCheckbox
-                        checked={appSettings.askBeforeClosing}
-                        className="noBG"
-                        onChange={(e) => {
-                            dispatch(setAppSettings({ askBeforeClosing: e.currentTarget.checked }));
-                        }}
-                        labelAfter="Confirm Close Window"
-                    />
-                    <div className="desc">
-                        Ask for conformation before closing a window. <code>App Restart Needed</code>
-                    </div>
                 </div>
                 <div className="toggleItem">
                     <InputCheckbox
@@ -520,29 +548,6 @@ const GeneralSettings: React.FC = () => {
                     />
                     <div className="desc">
                         Removes ability to select text in epub reader and enabled double-click zen mode.
-                    </div>
-                </div>
-                <div className="toggleItem">
-                    <InputCheckbox
-                        checked={!HAValue}
-                        className="noBG"
-                        onChange={(e) => {
-                            const fileName = window.path.join(
-                                window.electron.app.getPath("userData"),
-                                "DISABLE_HARDWARE_ACCELERATION",
-                            );
-                            if (e.currentTarget.checked) {
-                                if (window.fs.existsSync(fileName)) window.fs.rm(fileName);
-                            } else {
-                                window.fs.writeFile(fileName, " ");
-                            }
-                            setHAValue((init) => !init);
-                        }}
-                        labelAfter="Hardware Acceleration"
-                    />
-                    <div className="desc">
-                        Use GPU to accelerate rendering. Prevents reader stuttering.{" "}
-                        <code>App Restart Needed</code>
                     </div>
                 </div>
             </div>

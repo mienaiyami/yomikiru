@@ -1,31 +1,15 @@
 /* eslint-disable no-case-declarations */
-import { app, BrowserWindow, Menu, shell, ipcMain, MenuItemConstructorOptions, dialog } from "electron";
-import path from "path";
+import { app, BrowserWindow, Menu, shell, MenuItemConstructorOptions } from "electron";
 import fs from "fs";
-import { IS_PORTABLE, log, saveFile } from "./util";
+import { log } from "./util";
 
 import * as remote from "@electron/remote/main";
 remote.initialize();
 
 if (require("electron-squirrel-startup")) app.quit();
 
-//// disabling hardware acceleration because it causes reader to stutter when scrolling
-////18/05/23 - decided to not use it anymore as it make scrolling laggy
-//todo better way to do this
-if (fs.existsSync(path.join(app.getPath("userData"), "DISABLE_HARDWARE_ACCELERATION")))
-    app.disableHardwareAcceleration();
-if (fs.existsSync(path.join(app.getPath("userData"), "TEMP_PATH"))) {
-    const tempPath = fs.readFileSync(path.join(app.getPath("userData"), "TEMP_PATH"), "utf-8");
-    app.setPath("temp", tempPath);
-    if (!fs.existsSync(tempPath)) {
-        log.log("Set tempPath does not exist, creating,", tempPath);
-        fs.mkdirSync(tempPath);
-    }
-}
-let OPEN_IN_EXISTING_WINDOW = false;
-if (fs.existsSync(path.join(app.getPath("userData"), "OPEN_IN_EXISTING_WINDOW"))) OPEN_IN_EXISTING_WINDOW = true;
-
 import handleSquirrelEvent from "./util/handleSquirrelEvent";
+import { MainSettings } from "./util/mainSettings";
 import { DatabaseService } from "./db";
 import { setupDatabaseHandlers } from "./ipc/database";
 import { WindowManager } from "./util/window";
@@ -59,7 +43,7 @@ if (app.isPackaged) {
     app.on("second-instance", (event, commandLine) => {
         if (commandLine.length >= 3) {
             // for file explorer option
-            if (OPEN_IN_EXISTING_WINDOW) {
+            if (MainSettings.getSettings().openInExistingWindow) {
                 const window = BrowserWindow.getAllWindows().at(-1);
                 if (window) {
                     window.webContents.send("loadMangaFromLink", { link: commandLine[2] });

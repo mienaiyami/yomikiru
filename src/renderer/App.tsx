@@ -174,11 +174,6 @@ const App = (): ReactElement => {
                 });
             }),
         );
-        listeners.push(
-            window.electron.on("window:askBeforeClose:query", () => {
-                window.electron.send("window:askBeforeClose:response", appSettings.askBeforeClosing);
-            }),
-        );
         //todo update
         listeners.push(
             window.electron.on("reader:recordPage", async () => {

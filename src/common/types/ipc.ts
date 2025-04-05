@@ -13,6 +13,7 @@ import type {
     UpdateMangaProgressData,
     AddBookNoteData,
 } from "./db";
+import type { MainSettingsType } from "@electron/util/mainSettings";
 
 /**
  * m2r: main to renderer
@@ -75,13 +76,12 @@ export type WindowManagementChannels = {
     "window:openLinkInNewWindow": ChannelDefinition<string, void>;
     "window:destroy": ChannelDefinition<void, void>;
     // "window:askBeforeClose": ChannelDefinition<boolean, void>;
-    "window:askBeforeClose:query": ChannelDefinition<void, void, "m2r">;
-    "window:askBeforeClose:response": ChannelDefinition<boolean, void, "r2m">;
+    // "window:askBeforeClose:query": ChannelDefinition<void, void, "m2r">;
+    // "window:askBeforeClose:response": ChannelDefinition<boolean, void, "r2m">;
     "window:addDirToDelete": ChannelDefinition<string, void>;
 };
 
 export type FileSystemChannels = {
-    "fs:changeTempPath": ChannelDefinition<string, void>;
     "fs:unzip": ChannelDefinition<
         { source: string; destination: string },
         | { source: string; destination: string; ok: true }
@@ -181,6 +181,11 @@ export type DialogChannels = {
     "dialog:showSaveDialog": ChannelDefinition<Electron.SaveDialogOptions, Electron.SaveDialogReturnValue>;
 };
 
+export type MainSettingsChannels = {
+    "mainSettings:get": ChannelDefinition<void, MainSettingsType>;
+    "mainSettings:update": ChannelDefinition<Partial<MainSettingsType>, MainSettingsType>;
+};
+
 export type IPCChannels = DatabaseChannels &
     DatabaseChangeChannels &
     WindowManagementChannels &
@@ -188,7 +193,8 @@ export type IPCChannels = DatabaseChannels &
     UpdateChannels &
     ExplorerMenuChannels &
     ReaderChannels &
-    DialogChannels;
+    DialogChannels &
+    MainSettingsChannels;
 
 export type MainToRendererChannels = {
     [K in keyof IPCChannels as IPCChannels[K] extends ChannelDefinition<unknown, unknown, "m2r">

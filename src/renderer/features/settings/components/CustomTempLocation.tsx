@@ -1,21 +1,23 @@
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { dialogUtils } from "@utils/dialog";
 import { promptSelectDir } from "@utils/file";
 
 const CustomTempLocation: React.FC = () => {
     const [tempFolder, setTempFolder] = useState(window.electron.app.getPath("temp"));
-    useEffect(() => {
-        if (tempFolder !== window.electron.app.getPath("temp"))
-            try {
-                if (window.fs.existsSync(tempFolder)) {
-                    window.electron.invoke("fs:changeTempPath", tempFolder).then(() => {
-                        window.logger.log("Temp path changed to", tempFolder);
-                    });
-                } else throw new Error("Folder does not exist : " + tempFolder);
-            } catch (reason) {
-                window.logger.error("Unable to change temp path.", reason);
+
+    const updateTempPath = async (newPath?: string) => {
+        try {
+            if (newPath === undefined || window.fs.existsSync(newPath)) {
+                const newSettings = await window.electron.invoke("mainSettings:update", { tempPath: newPath });
+                setTempFolder(newSettings.tempPath);
+            } else {
+                throw new Error("Folder does not exist : " + newPath);
             }
-    }, [tempFolder]);
+        } catch (reason) {
+            window.logger.error("Unable to change temp path.", reason);
+        }
+    };
+
     return (
         <div className="settingItem2" id="settings-customTempFolder">
             <h3>Custom Temp Folder</h3>
@@ -29,7 +31,7 @@ const CustomTempLocation: React.FC = () => {
                 <button
                     onClick={() => {
                         promptSelectDir((path) => {
-                            setTempFolder(path as string);
+                            updateTempPath(path as string);
                         });
                     }}
                 >
@@ -39,11 +41,7 @@ const CustomTempLocation: React.FC = () => {
             <div className="main row">
                 <button
                     onClick={() => {
-                        if (process.env.TEMP) setTempFolder(process.env.TEMP);
-                        else
-                            dialogUtils.customError({
-                                message: "Unable to get default temp path.",
-                            });
+                        updateTempPath();
                     }}
                 >
                     Use Default
