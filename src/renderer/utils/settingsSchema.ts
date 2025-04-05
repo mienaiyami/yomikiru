@@ -46,7 +46,6 @@ const settingSchema = z
 
         openInZenMode: z.boolean(),
         hideCursorInZenMode: z.boolean(),
-        hideOpenArrow: z.boolean(),
         /**
          * Show more data in title attr in bookmark/history tab items
          */
@@ -279,7 +278,6 @@ const settingSchema = z
         showSearch: true,
         openInZenMode: false,
         hideCursorInZenMode: false,
-        hideOpenArrow: true,
         showMoreDataOnItemHover: true,
         autoRefreshSideList: false,
         keepExtractedFiles: true,

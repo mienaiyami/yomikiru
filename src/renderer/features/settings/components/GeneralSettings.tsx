@@ -278,17 +278,6 @@ const GeneralSettings: React.FC = () => {
                 </div>
                 <div className="toggleItem">
                     <InputCheckbox
-                        checked={!appSettings.hideOpenArrow}
-                        className="noBG"
-                        onChange={(e) => {
-                            dispatch(setAppSettings({ hideOpenArrow: !e.currentTarget.checked }));
-                        }}
-                        labelAfter="Open In Reader Arrow / Button"
-                    />
-                    <div className="desc">Show the button beside items in home location list.</div>
-                </div>
-                <div className="toggleItem">
-                    <InputCheckbox
                         checked={appSettings.syncSettings}
                         className="noBG"
                         onChange={(e) => {

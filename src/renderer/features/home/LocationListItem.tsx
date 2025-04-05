@@ -80,11 +80,6 @@ const LocationListItem = ({
         >
             <span className="text">{formatUtils.files.getName(name)}</span>
             {formatUtils.files.test(name) && <code className="nonFolder">{formatUtils.files.getExt(name)}</code>}
-            {!appSettings.hideOpenArrow && !formatUtils.files.test(name) && (
-                <button title="Open In Reader" className="open-in-reader-btn" onClick={() => openInReader(link)}>
-                    <FontAwesomeIcon icon={faAngleRight} />
-                </button>
-            )}
         </ListItem>
     );
 };
