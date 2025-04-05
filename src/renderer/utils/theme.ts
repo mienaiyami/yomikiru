@@ -39,7 +39,7 @@ export const themeProps = {
 
 export const initThemeData = {
     // default theme
-    name: "dark2",
+    name: "dark1",
     allData: [
         {
             name: "dark1",
