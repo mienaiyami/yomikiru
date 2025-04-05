@@ -26,6 +26,11 @@ const EPubReaderSideList = memo(
         setSideListWidth,
         makeScrollPos,
         zenMode,
+        addNote,
+        editNoteId,
+        setEditNoteId,
+        displayList,
+        setDisplayList,
     }: {
         openNextChapter: () => void;
         openPrevChapter: () => void;
@@ -50,6 +55,11 @@ const EPubReaderSideList = memo(
             callback?: (progress: { chapterName: string; chapterId: string; position: string }) => any,
         ) => void;
         zenMode: boolean;
+        addNote: (color?: string) => void;
+        editNoteId: number | null;
+        setEditNoteId: (noteId: number | null) => void;
+        displayList: "" | "content" | "bookmarks" | "notes";
+        setDisplayList: React.Dispatch<React.SetStateAction<"" | "content" | "bookmarks" | "notes">>;
     }) => {
         const { contextMenuData, colorSelectData } = useAppContext();
         const appSettings = useAppSelector((store) => store.appSettings);
@@ -57,8 +67,6 @@ const EPubReaderSideList = memo(
         const [isListOpen, setListOpen] = useState(false);
         const [preventListClose, setPreventListClose] = useState(false);
         const [draggingResizer, setDraggingResizer] = useState(false);
-        // when "", will hide all lists
-        const [displayList, setDisplayList] = useState<"" | "content" | "bookmarks" | "notes">("content");
 
         const currentRef = useRef<HTMLAnchorElement | null>(null);
 
@@ -332,7 +340,14 @@ const EPubReaderSideList = memo(
                     </div>
                 )}
                 {displayList === "bookmarks" && <BookmarkList openChapterById={openChapterById} />}
-                {displayList === "notes" && <NotesList openChapterById={openChapterById} />}
+                {displayList === "notes" && (
+                    <NotesList
+                        openChapterById={openChapterById}
+                        addNote={addNote}
+                        editNoteId={editNoteId}
+                        setEditNoteId={setEditNoteId}
+                    />
+                )}
             </div>
         );
     },

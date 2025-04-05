@@ -16,6 +16,19 @@ export type HighlightInfo = {
 
 const defaultHighlightClass = "text-highlight";
 
+export const DEFAULT_HIGHLIGHT_COLORS = [
+    "#FFEB3B",
+    // "#FFC107",
+    // "#FF9800",
+    "#FF5722",
+    "#03A9F4",
+    // "#2196F3",
+    "#4CAF50",
+    "#8BC34A",
+    "#9C27B0",
+    "#E91E63",
+];
+
 export const highlightUtils = {
     /**
      * This path wont work with querySelector directly

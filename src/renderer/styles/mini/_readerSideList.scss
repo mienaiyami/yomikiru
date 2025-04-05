@@ -262,8 +262,10 @@
                 -webkit-box-orient: vertical;
             }
             .note-input {
+                display: flex;
+                flex-direction: column;
+                gap: 6px;
                 textarea {
-                    margin-top: 0.5em;
                     width: 100%;
                     max-height: 10em;
                     resize: none;
@@ -282,6 +284,22 @@
                 }
                 .colorPickerBtn {
                     height: 3em;
+                }
+                .color-buttons {
+                    display: flex;
+                    flex-direction: row;
+                    gap: 6px;
+                    padding-inline: 4px;
+                    button {
+                        height: 2.2em;
+                        width: 100%;
+                        background-color: var(--highlight-color);
+                    }
+                    &:has(button:focus) {
+                        button:not(:focus) {
+                            opacity: 0.5;
+                        }
+                    }
                 }
             }
             .modal-actions {

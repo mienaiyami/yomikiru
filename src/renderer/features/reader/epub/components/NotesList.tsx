@@ -4,7 +4,7 @@ import { getReaderBook } from "@store/reader";
 import { addNote, removeNote, updateNote } from "@store/bookNotes";
 import dateUtils from "@utils/date";
 import { dialogUtils } from "@utils/dialog";
-import { memo, useCallback, useEffect, useRef, useState } from "react";
+import { memo, useCallback, useEffect, useLayoutEffect, useRef, useState } from "react";
 import { shallowEqual } from "react-redux";
 import { useAppContext } from "src/renderer/App";
 import ListItem from "@renderer/components/ListItem";
@@ -12,20 +12,7 @@ import ListNavigator from "@renderer/components/ListNavigator";
 import Modal from "@ui/Modal";
 import InputColor from "@ui/InputColor";
 import { colorUtils } from "@utils/color";
-import { highlightUtils } from "@utils/highlight";
-
-const COLORS = [
-    "#FFEB3B",
-    // "#FFC107",
-    // "#FF9800",
-    "#FF5722",
-    "#03A9F4",
-    // "#2196F3",
-    "#4CAF50",
-    "#8BC34A",
-    "#9C27B0",
-    "#E91E63",
-];
+import { DEFAULT_HIGHLIGHT_COLORS } from "@utils/highlight";
 
 const NoteModal: React.FC<{
     noteId: number;
@@ -37,7 +24,18 @@ const NoteModal: React.FC<{
         store.bookNotes.book[bookInReader?.link || ""]?.find((n) => n.id === noteId),
     );
     const inputRef = useRef<HTMLTextAreaElement>(null);
-    const [color, setColor] = useState(colorUtils.new(note?.color || "yellow"));
+    const [color, setColor] = useState(colorUtils.new(DEFAULT_HIGHLIGHT_COLORS[0]));
+
+    useEffect(() => {
+        if (note) {
+            try {
+                setColor(colorUtils.new(note.color));
+            } catch (error) {
+                console.error(error);
+                setColor(colorUtils.new(DEFAULT_HIGHLIGHT_COLORS[0]));
+            }
+        }
+    }, [note]);
 
     useEffect(() => {
         if (noteId) {
@@ -86,6 +84,15 @@ const NoteModal: React.FC<{
                     title="Color"
                     showAlpha={false}
                 />
+                <div className="color-buttons">
+                    {DEFAULT_HIGHLIGHT_COLORS.map((color) => (
+                        <button
+                            key={color}
+                            onClick={() => setColor(colorUtils.new(color))}
+                            style={{ "--highlight-color": color }}
+                        ></button>
+                    ))}
+                </div>
             </div>
 
             <div className="modal-actions">
@@ -113,12 +120,13 @@ NoteModal.displayName = "NoteModal";
 
 const NotesList: React.FC<{
     openChapterById: (chapterId: string, position?: string) => void;
-}> = ({ openChapterById }) => {
+    addNote: (color?: string) => void;
+    editNoteId: number | null;
+    setEditNoteId: (noteId: number | null) => void;
+}> = ({ openChapterById, addNote, editNoteId, setEditNoteId }) => {
     const { setContextMenuData } = useAppContext();
     const dispatch = useAppDispatch();
     const bookInReader = useAppSelector(getReaderBook);
-    const [editNoteId, setEditNoteId] = useState<number | null>(null);
-    // const [newNoteText, setNewNoteText] = useState("");
 
     const notesArray: BookNote[] = useAppSelector(
         (store) =>
@@ -126,49 +134,6 @@ const NotesList: React.FC<{
                 (b, a) => a.createdAt.getTime() - b.createdAt.getTime(),
             ),
         shallowEqual,
-    );
-
-    const handleAddNote = useCallback(
-        (color: string) => {
-            const epubReader = document.querySelector("#EPubReader");
-            if (!epubReader || !bookInReader?.progress?.chapterId) return;
-
-            const selection = window.getSelection();
-            if (!selection || selection.isCollapsed) {
-                dialogUtils.customError({
-                    message: "Please select some text first",
-                });
-                return;
-            }
-
-            const range = highlightUtils.getCurrentSelection();
-            if (!range) {
-                dialogUtils.customError({
-                    message: "Could not get selection range",
-                });
-                return;
-            }
-
-            const text = selection.toString();
-            selection.removeAllRanges();
-            try {
-                color = colorUtils.new(color).hexa();
-            } catch (err) {
-                console.error(err);
-                color = COLORS[0];
-            }
-            dispatch(
-                addNote({
-                    itemLink: bookInReader.link,
-                    chapterId: bookInReader.progress.chapterId,
-                    chapterName: bookInReader.progress.chapterName,
-                    range,
-                    selectedText: text,
-                    color,
-                }),
-            );
-        },
-        [bookInReader, dispatch],
     );
 
     const handleNoteClick = useCallback(
@@ -234,6 +199,12 @@ const NotesList: React.FC<{
         [notesArray, setContextMenuData, bookInReader],
     );
 
+    useLayoutEffect(() => {
+        if (notesArray.length > 0 && notesArray[0].color === "OPEN_EDIT") {
+            setEditNoteId(notesArray[0].id);
+        }
+    }, [notesArray, setEditNoteId]);
+
     const renderNoteItem = useCallback(
         (note: BookNote, index: number, isSelected: boolean) => {
             return (
@@ -281,10 +252,10 @@ const NotesList: React.FC<{
                     onChange={(e) => setNewNoteText(e.target.value)}
                 /> */}
                 <div className="color-buttons">
-                    {COLORS.map((color) => (
+                    {DEFAULT_HIGHLIGHT_COLORS.map((color) => (
                         <button
                             key={color}
-                            onClick={() => handleAddNote(color)}
+                            onClick={() => addNote(color)}
                             style={{ "--highlight-color": color }}
                         ></button>
                     ))}

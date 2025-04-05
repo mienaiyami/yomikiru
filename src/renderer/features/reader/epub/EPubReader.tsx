@@ -10,13 +10,22 @@ import { addLibraryItem, selectLibraryItem, updateBookProgress, updateCurrentIte
 import { dialogUtils } from "@utils/dialog";
 import { getCSSPath } from "@utils/utils";
 import { keyFormatter } from "@utils/keybindings";
-import { setReaderLoading, setReaderOpen, updateReaderContent, updateReaderBookProgress } from "@store/reader";
+import {
+    setReaderLoading,
+    setReaderOpen,
+    updateReaderContent,
+    updateReaderBookProgress,
+    getReaderBook,
+} from "@store/reader";
 import { BookProgress } from "@common/types/db";
 import HTMLPart from "./HTMLPart";
 import StyleSheets from "./StyleSheets";
 import FootNodeModal from "./components/FootNodeModal";
 import { getShortcutsMapped } from "@store/shortcuts";
 import { shallowEqual } from "react-redux";
+import { DEFAULT_HIGHLIGHT_COLORS, highlightUtils } from "@utils/highlight";
+import { addNote } from "@store/bookNotes";
+import { colorUtils } from "@utils/color";
 
 type EPubData = {
     metadata: EPUB.MetaData;
@@ -38,6 +47,7 @@ const EPubReader: React.FC = () => {
     const isLoading = useAppSelector((store) => store.reader.loading !== null);
 
     const libraryItem = useAppSelector((store) => selectLibraryItem(store, readerState.link));
+    const bookInReader = useAppSelector(getReaderBook);
 
     const dispatch = useAppDispatch();
     const [epubData, setEpubData] = useState<EPubData | null>(null);
@@ -73,6 +83,10 @@ const EPubReader: React.FC = () => {
         title: string;
         content: string;
     } | null>(null);
+
+    const [editNoteId, setEditNoteId] = useState<number | null>(null);
+    // when "", will hide all lists
+    const [displayList, setDisplayList] = useState<"" | "content" | "bookmarks" | "notes">("content");
 
     const readerRef = useRef<HTMLDivElement>(null);
     const mainRef = useRef<HTMLSelectElement>(null);
@@ -432,6 +446,53 @@ const EPubReader: React.FC = () => {
         setBookProgress(progress);
         makeScrollPos();
     };
+
+    const handleAddNote = useCallback(
+        (color?: string) => {
+            const epubReader = document.querySelector("#EPubReader");
+            if (!epubReader || !bookInReader?.progress?.chapterId) return;
+
+            const selection = window.getSelection();
+            if (!selection || selection.isCollapsed || !mainRef.current?.contains(selection.anchorNode)) {
+                dialogUtils.customError({
+                    message: "Please select some text first",
+                });
+                return;
+            }
+
+            const range = highlightUtils.getCurrentSelection();
+            if (!range) {
+                dialogUtils.customError({
+                    message: "Could not get selection range",
+                });
+                return;
+            }
+
+            const text = selection.toString();
+            selection.removeAllRanges();
+            try {
+                if (!color) {
+                    color = "OPEN_EDIT";
+                    setDisplayList("notes");
+                } else color = colorUtils.new(color).hexa();
+            } catch (err) {
+                console.error(err);
+                color = DEFAULT_HIGHLIGHT_COLORS[0];
+            }
+            dispatch(
+                addNote({
+                    itemLink: bookInReader.link,
+                    chapterId: bookInReader.progress.chapterId,
+                    chapterName: bookInReader.progress.chapterName,
+                    range,
+                    selectedText: text,
+                    color,
+                }),
+            );
+        },
+        [bookInReader, dispatch],
+    );
+
     //todo remove behavior
     const scrollToPage = (percent: number, behavior: ScrollBehavior = "smooth", callback?: () => void) => {
         const reader = document.querySelector("#EPubReader") as HTMLDivElement;
@@ -709,6 +770,11 @@ const EPubReader: React.FC = () => {
                     makeScrollPos={makeScrollPos}
                     findInPage={findInPage}
                     zenMode={zenMode}
+                    addNote={handleAddNote}
+                    editNoteId={editNoteId}
+                    setEditNoteId={setEditNoteId}
+                    displayList={displayList}
+                    setDisplayList={setDisplayList}
                 />
             )}
             {appSettings.epubReaderSettings.showProgressInZenMode && (
@@ -812,17 +878,30 @@ const EPubReader: React.FC = () => {
                             },
                         },
                         window.contextMenu.template.divider(),
-                        {
-                            label: "Bookmark",
-                            action() {
-                                addToBookmarkRef.current?.click();
-                            },
-                        },
-                        window.contextMenu.template.divider(),
-                        window.contextMenu.template.openInNewWindow(readerState.link),
-                        window.contextMenu.template.showInExplorer(readerState.link),
-                        window.contextMenu.template.copyPath(readerState.link),
                     ];
+                    const selection = window.getSelection();
+                    if (selection && !selection.isCollapsed && mainRef.current?.contains(selection.anchorNode)) {
+                        items.push({
+                            label: "Add Note",
+                            action() {
+                                handleAddNote();
+                            },
+                        });
+                    }
+                    items.push(
+                        ...[
+                            {
+                                label: "Bookmark",
+                                action() {
+                                    addToBookmarkRef.current?.click();
+                                },
+                            },
+                            window.contextMenu.template.divider(),
+                            window.contextMenu.template.openInNewWindow(readerState.link),
+                            window.contextMenu.template.showInExplorer(readerState.link),
+                            window.contextMenu.template.copyPath(readerState.link),
+                        ],
+                    );
                     setContextMenuData({
                         clickX: e.clientX,
                         clickY: e.clientY,
