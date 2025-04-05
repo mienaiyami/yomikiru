@@ -29,7 +29,7 @@ const NoteModal: React.FC<{
     useEffect(() => {
         if (note) {
             try {
-                setColor(colorUtils.new(note.color));
+                note.color !== "OPEN_EDIT" && setColor(colorUtils.new(note.color));
             } catch (error) {
                 console.error(error);
                 setColor(colorUtils.new(DEFAULT_HIGHLIGHT_COLORS[0]));
