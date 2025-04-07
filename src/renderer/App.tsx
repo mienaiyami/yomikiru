@@ -85,7 +85,6 @@ const App = (): ReactElement => {
     }, [firstRendered]);
 
     const closeReader = async () => {
-        console.log("closeReader");
         await dispatch(updateCurrentItemProgress());
         dispatch(resetReaderState());
         dispatch(setAnilistCurrentManga(null));
@@ -93,10 +92,9 @@ const App = (): ReactElement => {
         dispatch(setAnilistLoginOpen(false));
         dispatch(setAnilistSearchOpen(false));
 
-        if (window.fs.existsSync(window.app.deleteDirOnClose))
-            window.fs.rm(window.app.deleteDirOnClose, {
-                recursive: true,
-            });
+        window.fs.access(window.app.deleteDirOnClose).then(() => {
+            window.fs.rm(window.app.deleteDirOnClose, { recursive: true });
+        });
 
         document.body.classList.remove("zenMode");
         if (window.electron.currentWindow.isFullScreen()) window.electron.currentWindow.setFullScreen(false);
@@ -108,7 +106,9 @@ const App = (): ReactElement => {
 
     const openInNewWindow = (link: string) => {
         // new window will be opened, if link is invalid then it will be forced closed.
-        if (window.fs.existsSync(link)) window.electron.send("window:openLinkInNewWindow", link);
+        window.fs.access(link).then(() => {
+            window.electron.send("window:openLinkInNewWindow", link);
+        });
     };
 
     useLayoutEffect(() => {
@@ -119,16 +119,14 @@ const App = (): ReactElement => {
     useLayoutEffect(() => {
         const elem = document.head.querySelector("#customStylesheet");
         if (appSettings.customStylesheet && !elem) {
-            if (window.fs.existsSync(appSettings.customStylesheet)) {
-                {
-                    window.logger.log("Loading custom stylesheet from ", appSettings.customStylesheet);
-                    const stylesheet = document.createElement("link");
-                    stylesheet.rel = "stylesheet";
-                    stylesheet.href = appSettings.customStylesheet;
-                    stylesheet.id = "customStylesheet";
-                    document.head.appendChild(stylesheet);
-                }
-            }
+            window.fs.access(appSettings.customStylesheet).then(() => {
+                window.logger.log("Loading custom stylesheet from ", appSettings.customStylesheet);
+                const stylesheet = document.createElement("link");
+                stylesheet.rel = "stylesheet";
+                stylesheet.href = appSettings.customStylesheet;
+                stylesheet.id = "customStylesheet";
+                document.head.appendChild(stylesheet);
+            });
         } else if (elem) {
             window.logger.log("Removing custom stylesheet.");
             document.head.removeChild(elem);

@@ -1,5 +1,3 @@
-import { faAngleRight } from "@fortawesome/free-solid-svg-icons";
-import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { useAppSelector } from "@store/hooks";
 import { dialogUtils } from "@utils/dialog";
 import { formatUtils } from "@utils/file";
