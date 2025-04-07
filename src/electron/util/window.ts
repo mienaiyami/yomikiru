@@ -1,5 +1,4 @@
-import { app, BrowserWindow, dialog } from "electron";
-import path from "path";
+import { app, BrowserWindow, dialog, shell } from "electron";
 import fs from "fs/promises";
 import * as remote from "@electron/remote/main";
 import { getWindowFromWebContents, log } from ".";
@@ -13,11 +12,28 @@ export class WindowManager {
     private static windows: (BrowserWindow | null)[] = [];
     private static deleteDirsOnClose: (string | null)[] = [];
     private static isFirstWindow = true;
+    /**
+     * for checking if window opened and loaded App without crashing
+     */
+    private static errorCheckTimeout: NodeJS.Timeout | null = null;
 
     static {
         if (process.platform === "win32") {
             this.setupWindowsTasks();
         }
+
+        this.errorCheckTimeout = setTimeout(() => {
+            dialog
+                .showMessageBox({
+                    type: "info",
+                    message:
+                        "If you are seeing blank window then check the github page for new version or create an issue if no new version is available.",
+                    buttons: ["Ok", "Home Page"],
+                })
+                .then((e) => {
+                    if (e.response === 1) shell.openExternal("https://github.com/mienaiyami/yomikiru");
+                });
+        }, 1000 * 10);
     }
     private constructor() {
         console.error("This class should not be instantiated.");
@@ -79,7 +95,7 @@ export class WindowManager {
             // maximize also unhide window
             window.maximize();
             if (this.isFirstWindow) {
-                ipc.send(window.webContents, "update:check:query");
+                ipc.send(window.webContents, "window:statusCheck");
                 this.isFirstWindow = false;
             }
             if (link)
@@ -87,6 +103,19 @@ export class WindowManager {
                     link,
                 });
             this.handleWindowClose(window);
+            window.webContents.on("render-process-gone", (detail) => {
+                log.error("Render process gone:", detail);
+                dialog
+                    .showMessageBox({
+                        type: "error",
+                        message:
+                            "App crashed. Please check the github page for new version or create an issue if no new version is available.",
+                        buttons: ["Ok", "Home Page"],
+                    })
+                    .then((e) => {
+                        if (e.response === 1) shell.openExternal("https://github.com/mienaiyami/yomikiru");
+                    });
+            });
         });
 
         window.webContents.setWindowOpenHandler(() => ({ action: "deny" }));
@@ -178,6 +207,12 @@ export class WindowManager {
         });
         ipc.on("window:destroy", (e) => {
             this.destroyWindow(getWindowFromWebContents(e.sender));
+        });
+        ipc.on("window:statusCheck:response", () => {
+            if (this.errorCheckTimeout) {
+                clearTimeout(this.errorCheckTimeout);
+                this.errorCheckTimeout = null;
+            }
         });
     }
 }

@@ -16,18 +16,6 @@ const settingSchema = z
         historyListSortType: sortTypeEnum,
         historyListSortBy: sortByEnum,
         /**
-         * Check for new update on start of app.
-         */
-        updateCheckerEnabled: z.boolean(),
-        // moved to main settings
-        // askBeforeClosing: z.boolean(),
-        skipMinorUpdate: z.boolean(),
-        autoDownloadUpdate: z.boolean(),
-        /**
-         * Update channel to use
-         */
-        updateChannel: z.union([z.literal("stable"), z.literal("beta")]).default("stable"),
-        /**
          * Open chapter in reader directly, one folder inside of base manga dir.
          */
         openDirectlyFromManga: z.boolean(),
@@ -260,10 +248,6 @@ const settingSchema = z
         bookListSortBy: "date",
         historyListSortType: "normal",
         historyListSortBy: "date",
-        updateCheckerEnabled: true,
-        skipMinorUpdate: false,
-        autoDownloadUpdate: false,
-        updateChannel: "stable",
         openDirectlyFromManga: false,
         showTabs: {
             bookmark: true,
@@ -271,9 +255,7 @@ const settingSchema = z
         },
         useCanvasBasedReader: false,
         openOnDblClick: true,
-        // disableCachingCanvas: false,
         recordChapterRead: true,
-        // showPageNumOnHome: true,
         disableListNumbering: true,
         showSearch: true,
         openInZenMode: false,

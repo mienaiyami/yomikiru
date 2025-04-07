@@ -165,16 +165,13 @@ const App = (): ReactElement => {
                 dispatch(fetchAllNotes());
             }),
         );
+
         listeners.push(
-            window.electron.on("update:check:query", () => {
-                window.electron.send("update:check:response", {
-                    autoDownload: appSettings.autoDownloadUpdate,
-                    enabled: appSettings.updateCheckerEnabled,
-                    skipMinor: appSettings.skipMinorUpdate,
-                });
+            window.electron.on("window:statusCheck", () => {
+                window.electron.send("window:statusCheck:response");
             }),
         );
-        //todo update
+
         listeners.push(
             window.electron.on("reader:recordPage", async () => {
                 // window.logger.log("received recordPageNumber");

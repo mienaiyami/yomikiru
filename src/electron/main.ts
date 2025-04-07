@@ -120,12 +120,13 @@ app.on("ready", async () => {
 
     WindowManager.registerListeners();
 
-    registerUpdateHandlers();
     registerExplorerHandlers();
     registerFSHandlers();
     registerDialogHandlers();
 
     WindowManager.createWindow(openFolderOnLaunch);
+    // need to be after window is created
+    registerUpdateHandlers();
 });
 
 app.on("before-quit", () => {

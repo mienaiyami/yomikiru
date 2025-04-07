@@ -10,6 +10,12 @@ const mainSettingsSchema = z
         tempPath: z.string().default(app.getPath("temp")),
         openInExistingWindow: z.boolean().default(false),
         askBeforeClosing: z.boolean().default(false),
+
+        //app updates
+        checkForUpdates: z.boolean().default(true),
+        skipMinor: z.boolean().default(false),
+        autoDownload: z.boolean().default(false),
+        channel: z.enum(["stable", "beta"]).default("stable"),
     })
     .strip();
 

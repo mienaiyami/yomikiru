@@ -75,10 +75,12 @@ export type DatabaseChangeChannels = {
 export type WindowManagementChannels = {
     "window:openLinkInNewWindow": ChannelDefinition<string, void>;
     "window:destroy": ChannelDefinition<void, void>;
-    // "window:askBeforeClose": ChannelDefinition<boolean, void>;
-    // "window:askBeforeClose:query": ChannelDefinition<void, void, "m2r">;
-    // "window:askBeforeClose:response": ChannelDefinition<boolean, void, "r2m">;
     "window:addDirToDelete": ChannelDefinition<string, void>;
+    /**
+     * for checking if window opened and loaded App without crashing
+     */
+    "window:statusCheck": ChannelDefinition<void, void, "m2r">;
+    "window:statusCheck:response": ChannelDefinition<void, void, "r2m">;
 };
 
 export type FileSystemChannels = {
@@ -100,17 +102,6 @@ export type UpdateChannels = {
     "update:check:manual": ChannelDefinition<
         {
             promptAfterCheck?: boolean;
-            channel?: AppUpdateChannel;
-        },
-        void
-    >;
-    // from main to renderer, update check on interval settings is on
-    "update:check:query": ChannelDefinition<void, void, "m2r">;
-    "update:check:response": ChannelDefinition<
-        {
-            enabled: boolean;
-            skipMinor: boolean;
-            autoDownload: boolean;
             channel?: AppUpdateChannel;
         },
         void

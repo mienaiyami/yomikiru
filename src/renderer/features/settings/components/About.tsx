@@ -1,15 +1,30 @@
 import InputCheckbox from "@ui/InputCheckbox";
-import { useAppDispatch, useAppSelector } from "@store/hooks";
-import { setAppSettings } from "@store/appSettings";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faGithub } from "@fortawesome/free-brands-svg-icons";
 import { faHeart } from "@fortawesome/free-solid-svg-icons";
 import { AppUpdateChannel } from "@common/types/ipc";
 import InputSelect from "@ui/InputSelect";
+import { useState, useEffect } from "react";
+import type { MainSettingsType } from "@electron/util/mainSettings";
+import { dialogUtils } from "@utils/dialog";
 
 const About: React.FC = () => {
-    const appSettings = useAppSelector((store) => store.appSettings);
-    const dispatch = useAppDispatch();
+    const [mainSettings, setMainSettings] = useState<MainSettingsType | null>(null);
+
+    useEffect(() => {
+        window.electron.invoke("mainSettings:get").then((settings) => {
+            setMainSettings(settings);
+        });
+    }, []);
+
+    const updateMainSettings = async (settings: Partial<MainSettingsType>) => {
+        const updatedSettings = await window.electron.invoke("mainSettings:update", settings);
+        if (!updatedSettings)
+            return dialogUtils.customError({
+                message: "Failed to update settings",
+            });
+        setMainSettings(updatedSettings);
+    };
 
     const handleChannelChange = async (newChannel: AppUpdateChannel) => {
         if (newChannel === "beta") {
@@ -26,8 +41,9 @@ const About: React.FC = () => {
                 message: "You will only receive update after stable version crosses your current version.",
             });
         }
-        dispatch(setAppSettings({ ...appSettings, updateChannel: newChannel }));
+        updateMainSettings({ channel: newChannel });
     };
+
     return (
         <div className="content2">
             <div className="settingItem2">
@@ -46,37 +62,31 @@ const About: React.FC = () => {
                     <InputCheckbox
                         className="noBG"
                         paraAfter="Check for updates every 1 hour"
-                        checked={appSettings.updateCheckerEnabled}
+                        checked={mainSettings?.checkForUpdates ?? false}
                         onChange={(e) => {
-                            dispatch(
-                                setAppSettings({
-                                    updateCheckerEnabled: e.currentTarget.checked,
-                                }),
-                            );
+                            updateMainSettings({
+                                checkForUpdates: e.currentTarget.checked,
+                            });
                         }}
                     />
                     <InputCheckbox
-                        checked={appSettings.skipMinorUpdate}
+                        checked={mainSettings?.skipMinor ?? false}
                         className="noBG"
                         onChange={(e) => {
-                            dispatch(
-                                setAppSettings({
-                                    skipMinorUpdate: e.currentTarget.checked,
-                                }),
-                            );
+                            updateMainSettings({
+                                skipMinor: e.currentTarget.checked,
+                            });
                         }}
                         title="Mostly just frequent updates rather than minor."
                         paraAfter="Skip minor updates"
                     />
                     <InputCheckbox
-                        checked={appSettings.autoDownloadUpdate}
+                        checked={mainSettings?.autoDownload ?? false}
                         className="noBG"
                         onChange={(e) => {
-                            dispatch(
-                                setAppSettings({
-                                    autoDownloadUpdate: e.currentTarget.checked,
-                                }),
-                            );
+                            updateMainSettings({
+                                autoDownload: e.currentTarget.checked,
+                            });
                         }}
                         paraAfter="Auto download updates"
                     />
@@ -104,7 +114,7 @@ const About: React.FC = () => {
                             value: e,
                         }))}
                         onChange={(e) => handleChannelChange(e as AppUpdateChannel)}
-                        value={appSettings.updateChannel}
+                        value={mainSettings?.channel ?? "stable"}
                         labeled={true}
                         labelBefore="Update Channel"
                     />

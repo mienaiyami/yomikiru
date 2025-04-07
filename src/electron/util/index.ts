@@ -22,7 +22,7 @@ _log.transports.file.resolvePath = () => path.join(app.getPath("userData"), "log
 
 export const log = _log;
 
-export const saveFile = (path: string, data: string, sync = true, retry = 3) => {
+export const saveFile = (path: string, data: string, sync = true, retry = 3): void => {
     try {
         if (sync) {
             fs.writeFileSync(path, data);
@@ -41,11 +41,11 @@ export const saveFile = (path: string, data: string, sync = true, retry = 3) => 
     }
 };
 
-export const electronOnly = () => {
+export const electronOnly = (): void => {
     if (process.type === "renderer") throw new Error("This function is only available in the main process.");
 };
 
-export const getWindowFromWebContents = (webContents: Electron.WebContents) => {
+export const getWindowFromWebContents = (webContents: Electron.WebContents): BrowserWindow => {
     const win = BrowserWindow.fromWebContents(webContents);
     // to avoid typescript errors because in most cases it will never be null
     if (!win) {
@@ -57,7 +57,7 @@ export const getWindowFromWebContents = (webContents: Electron.WebContents) => {
 /**
  * old formatting used `new Date().toLocaleString("en-UK", { hour12: true })`
  */
-export const dateFromOldDateString = (localeDate?: string) => {
+export const dateFromOldDateString = (localeDate?: string): Date => {
     if (!localeDate) return new Date();
     const [date, time] = localeDate.split(", ");
     const [day, month, year] = date.split("/");
