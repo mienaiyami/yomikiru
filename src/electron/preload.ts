@@ -2,7 +2,7 @@ import { contextBridge, ipcRenderer, shell, webFrame } from "electron";
 import { app, clipboard, nativeImage, getCurrentWindow } from "@electron/remote";
 import path from "path";
 import fs from "fs/promises";
-import { existsSync, lstatSync, rmSync, accessSync, mkdir, read, readFileSync } from "fs";
+import { existsSync, lstatSync, accessSync, readFileSync } from "fs";
 import type { IPCChannels } from "@common/types/ipc";
 import * as chokidar from "chokidar";
 import { getFonts } from "font-list";
@@ -31,9 +31,7 @@ const fsAPI = {
     },
     access: fs.access,
     accessSync,
-    // lstatSync,
     existsSync,
-    // rmSync,
     rm: fs.rm,
     mkdir: fs.mkdir,
     // todo make async version of these
@@ -86,16 +84,12 @@ const electronAPI = {
         getName: app.getName,
         isPackaged: app.isPackaged,
     },
-    // clipboard: clipboard,
-    //todo temp only
     readText: clipboard.readText,
     writeText: clipboard.writeText,
     copyImage: (imagePath: string) => clipboard.writeImage(nativeImage.createFromPath(imagePath)),
     openExternal: (url: string) => shell.openExternal(url),
     showItemInFolder: (path: string) => shell.showItemInFolder(path),
     webFrame: {
-        // setZoomLevel: (level: number) => webFrame.setZoomLevel(level),
-        // getZoomLevel: () => webFrame.getZoomLevel(),
         getZoomFactor: () => webFrame.getZoomFactor(),
         setZoomFactor: (factor: number) => webFrame.setZoomFactor(factor),
         clearCache: () => webFrame.clearCache(),
