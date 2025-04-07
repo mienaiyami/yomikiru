@@ -92,9 +92,10 @@ const App = (): ReactElement => {
         dispatch(setAnilistLoginOpen(false));
         dispatch(setAnilistSearchOpen(false));
 
-        window.fs.access(window.app.deleteDirOnClose).then(() => {
-            window.fs.rm(window.app.deleteDirOnClose, { recursive: true });
-        });
+        window.app.deleteDirOnClose &&
+            window.fs.access(window.app.deleteDirOnClose).then(() => {
+                window.fs.rm(window.app.deleteDirOnClose, { recursive: true });
+            });
 
         document.body.classList.remove("zenMode");
         if (window.electron.currentWindow.isFullScreen()) window.electron.currentWindow.setFullScreen(false);
@@ -106,9 +107,10 @@ const App = (): ReactElement => {
 
     const openInNewWindow = (link: string) => {
         // new window will be opened, if link is invalid then it will be forced closed.
-        window.fs.access(link).then(() => {
-            window.electron.send("window:openLinkInNewWindow", link);
-        });
+        link &&
+            window.fs.access(link).then(() => {
+                window.electron.send("window:openLinkInNewWindow", link);
+            });
     };
 
     useLayoutEffect(() => {
