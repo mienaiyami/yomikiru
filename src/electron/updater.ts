@@ -246,11 +246,17 @@ const downloadUpdates = (latestVersion: string, windowId: number, silent = false
             },
             maximizable: false,
         });
+
+    let downloadItem: Electron.DownloadItem | null = null;
     if (newWindow) {
         newWindow.loadURL(DOWNLOAD_PROGRESS_WEBPACK_ENTRY);
         newWindow.setMenuBarVisibility(false);
         newWindow.webContents.once("dom-ready", () => {
             newWindow.webContents.send("version", latestVersion);
+        });
+        newWindow.on("close", () => {
+            logger.log("Download window closed, canceling update download...");
+            downloadItem?.cancel();
         });
     }
 
@@ -286,26 +292,40 @@ const downloadUpdates = (latestVersion: string, windowId: number, silent = false
         callback: (file: electronDl.File) => void,
     ) => {
         electronDl
-            // eslint-disable-next-line import/namespace
             .download(window, dl, {
                 directory: tempPath,
-                onStarted: () => {
+                onStarted: (e) => {
+                    downloadItem = e;
                     logger.log("Downloading updates...");
                     logger.log(dl, `"${tempPath}"`);
+                    e.once("done", (_, state) => {
+                        if (state != "completed") {
+                            dialog.showMessageBox(window, {
+                                type: "error",
+                                title: "Error while downloading",
+                                message: state === "cancelled" ? "Download canceled." : "Download failed.",
+                            });
+                        }
+                    });
                 },
                 onCancel: () => {
+                    downloadItem = null;
                     logger.log("Download canceled.");
                 },
-                onCompleted: (file) => callback(file),
+                onCompleted: (file) => {
+                    downloadItem = null;
+                    callback(file);
+                },
                 onProgress: (progress) => {
-                    webContents && webContents.send("progress", progress);
+                    webContents && !webContents.isDestroyed() && webContents.send("progress", progress);
                 },
             })
-            .catch((reason) => {
+            .catch((e) => {
+                downloadItem = null;
                 dialog.showMessageBox(window, {
                     type: "error",
                     title: "Error while downloading",
-                    message: reason + "\n\nPlease check the homepage if persist.",
+                    message: e + "\n\nPlease check the homepage if persist.",
                 });
             });
     };
