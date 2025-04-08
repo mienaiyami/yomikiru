@@ -155,6 +155,7 @@ const electronAPI = {
 const processObj = {
     versions: process.versions,
     platform: process.platform,
+    arch: process.arch,
 };
 
 const chokidarAPI = {

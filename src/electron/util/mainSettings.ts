@@ -13,7 +13,7 @@ const mainSettingsSchema = z
 
         //app updates
         checkForUpdates: z.boolean().default(true),
-        skipMinor: z.boolean().default(false),
+        skipPatch: z.boolean().default(false),
         autoDownload: z.boolean().default(false),
         channel: z.enum(["stable", "beta"]).default("stable"),
     })

@@ -9,12 +9,24 @@ import logger from "electron-log";
 import * as electronDl from "electron-dl";
 import { exec as execSudo } from "@vscode/sudo-prompt";
 import { AppUpdateChannel } from "@common/types/ipc";
+import * as semver from "semver";
 
 declare const DOWNLOAD_PROGRESS_WEBPACK_ENTRY: string;
 
+const argReleaseUrl = process.argv.find((e) => e.startsWith("--release-url="))?.split("=")[1];
+const argReleasePage = process.argv.find((e) => e.startsWith("--release-page="))?.split("=")[1];
+
+const REPO = "mienaiyami/yomikiru";
+
+const ANNOUNCEMENTS_URL = `https://raw.githubusercontent.com/${REPO}/master/announcements.txt`;
+const ANNOUNCEMENTS_DISCUSSION_URL = `https://github.com/${REPO}/discussions/categories/announcements`;
+const RELEASES_URL = argReleaseUrl || `https://api.github.com/repos/${REPO}/releases`;
+const RELEASES_PAGE = argReleasePage || `https://github.com/${REPO}/releases`;
+const DOWNLOAD_LINK = `${RELEASES_PAGE}/download`;
+
 const checkForAnnouncements = async () => {
     try {
-        const raw = await fetch("https://raw.githubusercontent.com/mienaiyami/yomikiru/master/announcements.txt")
+        const raw = await fetch(ANNOUNCEMENTS_URL)
             .then((data) => data.text())
             .then((data) => data.split("\n").filter((e) => e !== ""));
         const existingPath = path.join(app.getPath("userData"), "announcements.txt");
@@ -52,122 +64,170 @@ const checkForAnnouncements = async () => {
                 })
                 .then((res) => {
                     if (res.response === 0) newAnnouncements.forEach((e) => shell.openExternal(e));
-                    else if (res.response === 1)
-                        shell.openExternal(
-                            "https://github.com/mienaiyami/yomikiru/discussions/categories/announcements",
-                        );
+                    else if (res.response === 1) shell.openExternal(ANNOUNCEMENTS_DISCUSSION_URL);
                 });
     } catch (error) {
         logger.error("checkForAnnouncements:", error);
     }
 };
 
-const downloadLink = "https://github.com/mienaiyami/yomikiru/releases/download/v";
 /**
- *
+ * Check for updates and handle version comparison properly using semver
  * @param windowId id of window in which message box should be shown
- * @param promptAfterCheck (false by default) Show message box if current version is same as latest version.
+ * @param skipPatch skip patch updates for stable channel (e.g. 1.2.x to 1.2.y)
+ * @param promptAfterCheck show message box if current version is same as latest version
+ * @param autoDownload automatically download updates if available
+ * @param channel update channel to check (stable or beta)
  */
 const checkForUpdate = async (
     windowId: number,
-    skipMinor = false,
+    skipPatch = false,
     promptAfterCheck = false,
     autoDownload = false,
     channel: AppUpdateChannel,
 ): Promise<void> => {
     checkForAnnouncements();
-    const rawdata = await fetch("https://api.github.com/repos/mienaiyami/yomikiru/releases").then((data) =>
-        data.json(),
-    );
 
-    const releases = rawdata.filter((release: any) => {
-        if (channel === "stable") {
-            return !release.prerelease && release.tag_name.charAt(0) === "v";
-        } else {
-            return release.prerelease && release.tag_name.charAt(0) === "v";
+    try {
+        const rawdata = await fetch(RELEASES_URL).then((data) => data.json());
+
+        if (!Array.isArray(rawdata) || rawdata.length === 0) {
+            logger.log("No releases found or invalid response");
+            if (promptAfterCheck) {
+                showNoReleasesMessage(windowId, channel);
+            }
+            return;
         }
-    });
-    if (releases.length === 0) {
-        logger.log(`No ${channel} releases found.`);
+
+        const currentVersion = app.getVersion();
+        logger.log("Current version:", currentVersion);
+
+        const releases = rawdata
+            .filter((release: any) => {
+                const hasValidTagName =
+                    typeof release.tag_name === "string" && semver.clean(release.tag_name, { loose: true });
+                if (!hasValidTagName) return false;
+
+                if (channel === "stable") {
+                    return !release.prerelease;
+                } else if (channel === "beta") {
+                    // include all releases, the highest version will be selected later
+                    return true;
+                }
+                return false;
+            })
+            .sort((a: any, b: any) => {
+                const versionA = semver.clean(a.tag_name, { loose: true }) || "";
+                const versionB = semver.clean(b.tag_name, { loose: true }) || "";
+                return semver.rcompare(versionA, versionB);
+            });
+
+        if (releases.length === 0) {
+            logger.log(`No ${channel} releases found.`);
+            if (promptAfterCheck) {
+                showNoReleasesMessage(windowId, channel);
+            }
+            return;
+        }
+
+        const latestRelease = releases[0];
+        const latestVersion = semver.clean(latestRelease.tag_name, { loose: true }) || "";
+
+        logger.log(`Latest ${channel} version:`, latestVersion);
+
+        const versionDiff = semver.diff(currentVersion, latestVersion);
+        const isNewer = semver.gt(latestVersion, currentVersion);
+
+        if (skipPatch && channel === "stable" && versionDiff === "patch") {
+            logger.log(`${versionDiff} update available, skipping due to settings.`);
+            return;
+        }
+
+        if (isNewer) {
+            if (autoDownload) {
+                downloadUpdates(latestVersion, windowId, true);
+            } else {
+                showUpdateAvailableMessage(windowId, currentVersion, latestVersion, versionDiff);
+            }
+            return;
+        }
+
+        logger.log("Running latest version.");
         if (promptAfterCheck) {
             const window = BrowserWindow.fromId(windowId ?? 1)!;
             dialog.showMessageBox(window, {
                 type: "info",
                 title: "Yomikiru",
-                message: `No ${channel} releases available.`,
+                message: "Running latest version",
                 buttons: [],
             });
         }
-        return;
-    }
-
-    const latestVersion: number[] = releases[0].tag_name
-        .substr(1)
-        .split(".")
-        .map((e: string) => parseInt(e));
-    logger.log("checking for update...");
-    const currentAppVersion = app
-        .getVersion()
-        .split(".")
-        .map((e) => parseInt(e));
-    logger.log(`Latest ${channel} version `, latestVersion.join("."));
-    logger.log("Current version ", currentAppVersion.join("."));
-    if (skipMinor) {
-        if (latestVersion[0] === currentAppVersion[0] && latestVersion[1] === currentAppVersion[1]) {
-            logger.log("Minor update available, skipping update.");
-            return;
+    } catch (error) {
+        logger.error("Error checking for updates:", error);
+        if (promptAfterCheck) {
+            const window = BrowserWindow.fromId(windowId ?? 1)!;
+            dialog.showMessageBox(window, {
+                type: "error",
+                title: "Update Check Failed",
+                message: "Failed to check for updates.",
+                detail: error instanceof Error ? error.message : String(error),
+            });
         }
     }
-    const window = BrowserWindow.fromId(windowId ?? 1)!;
-    if (
-        latestVersion[0] > currentAppVersion[0] ||
-        (latestVersion[0] === currentAppVersion[0] && latestVersion[1] > currentAppVersion[1]) ||
-        (latestVersion[0] === currentAppVersion[0] &&
-            latestVersion[1] === currentAppVersion[1] &&
-            latestVersion[2] > currentAppVersion[2])
-    ) {
-        if (autoDownload) {
-            downloadUpdates(latestVersion.join("."), windowId, true);
-        } else
-            dialog
-                .showMessageBox(window, {
-                    type: "info",
-                    title: "New Version Available",
-                    message:
-                        `Current Version : ${currentAppVersion.join(".")}\n` +
-                        `Latest Version   : ${latestVersion.join(".")}` +
-                        (latestVersion[0] === currentAppVersion[0] && latestVersion[1] === currentAppVersion[1]
-                            ? `\n\nTo skip check for minor updates, enable "skip minor update" in settings.\nYou can also enable "auto download".`
-                            : ""),
-                    buttons: ["Download Now", "Download and show Changelog", "Show Changelog", "Download Later"],
-                    cancelId: 3,
-                })
-                .then((response) => {
-                    if (response.response === 0) downloadUpdates(latestVersion.join("."), windowId);
-                    if (response.response === 1) {
-                        downloadUpdates(latestVersion.join("."), windowId);
-                        shell.openExternal("https://github.com/mienaiyami/yomikiru/releases");
-                    }
-                    if (response.response === 2) {
-                        shell.openExternal("https://github.com/mienaiyami/yomikiru/releases");
-                    }
-                });
-        return;
-    }
-    logger.log("Running latest version.");
-    if (promptAfterCheck) {
-        dialog.showMessageBox(window, {
-            type: "info",
-            title: "Yomikiru",
-            message: "Running latest version",
-            buttons: [],
-        });
-    }
 };
+
 /**
- *
+ * Show message when no releases are found
+ */
+const showNoReleasesMessage = (windowId: number, channel: string) => {
+    const window = BrowserWindow.fromId(windowId ?? 1)!;
+    dialog.showMessageBox(window, {
+        type: "info",
+        title: "Yomikiru",
+        message: `No ${channel} releases available.`,
+        buttons: [],
+    });
+};
+
+const showUpdateAvailableMessage = (
+    windowId: number,
+    currentVersion: string,
+    latestVersion: string,
+    versionDiff: string | null,
+) => {
+    const window = BrowserWindow.fromId(windowId ?? 1)!;
+
+    const skipPatchHint =
+        versionDiff === "patch"
+            ? `To skip check for patch updates, enable "skip patch update" in settings.\nYou can also enable "auto download".`
+            : "";
+
+    dialog
+        .showMessageBox(window, {
+            type: "info",
+            title: "New Version Available",
+            message: `Current Version : ${currentVersion}\n` + `Latest Version   : ${latestVersion}`,
+            detail: skipPatchHint,
+            buttons: ["Download Now", "Download and show Changelog", "Show Changelog", "Download Later"],
+            cancelId: 3,
+        })
+        .then((response) => {
+            if (response.response === 0) downloadUpdates(latestVersion, windowId);
+            if (response.response === 1) {
+                downloadUpdates(latestVersion, windowId);
+                shell.openExternal(RELEASES_PAGE);
+            }
+            if (response.response === 2) {
+                shell.openExternal(RELEASES_PAGE);
+            }
+        });
+};
+
+/**
+ * Download and prepare updates for installation
  * @param latestVersion latest version ex. "2.3.8"
  * @param windowId id of window in which message box should be shown
+ * @param silent if true, don't show download progress window
  */
 const downloadUpdates = (latestVersion: string, windowId: number, silent = false) => {
     const newWindow =
@@ -215,7 +275,7 @@ const downloadUpdates = (latestVersion: string, windowId: number, silent = false
                     app.quit();
                 }
                 if (res.response === 2) {
-                    shell.openExternal("https://github.com/mienaiyami/yomikiru/releases");
+                    shell.openExternal(RELEASES_PAGE);
                     app.quit();
                 }
             });
@@ -254,8 +314,8 @@ const downloadUpdates = (latestVersion: string, windowId: number, silent = false
         if (IS_PORTABLE) {
             const dl =
                 process.arch === "ia32"
-                    ? downloadLink + latestVersion + "/" + `Yomikiru-win32-v${latestVersion}-Portable.zip`
-                    : downloadLink + latestVersion + "/" + `Yomikiru-win32-v${latestVersion}-Portable-x64.zip`;
+                    ? `${DOWNLOAD_LINK}/v${latestVersion}/Yomikiru-win32-v${latestVersion}-Portable.zip`
+                    : `${DOWNLOAD_LINK}/v${latestVersion}/Yomikiru-win32-v${latestVersion}-Portable-x64.zip`;
             const extractPath = path.join(tempPath, "updates");
             if (!fs.existsSync(extractPath)) fs.mkdirSync(extractPath);
 
@@ -287,8 +347,8 @@ const downloadUpdates = (latestVersion: string, windowId: number, silent = false
         } else {
             const dl =
                 process.arch === "ia32"
-                    ? downloadLink + latestVersion + "/" + `Yomikiru-v${latestVersion}-Setup.exe`
-                    : downloadLink + latestVersion + "/" + `Yomikiru-v${latestVersion}-Setup-x64.exe`;
+                    ? `${DOWNLOAD_LINK}/v${latestVersion}/Yomikiru-v${latestVersion}-Setup.exe`
+                    : `${DOWNLOAD_LINK}/v${latestVersion}/Yomikiru-v${latestVersion}-Setup-x64.exe`;
             downloadFile(dl, newWindow && newWindow.webContents, (file) => {
                 logger.log(`${file.filename} downloaded.`);
                 app.on("quit", () => {
@@ -306,7 +366,7 @@ const downloadUpdates = (latestVersion: string, windowId: number, silent = false
             });
         }
     else if (process.platform === "linux") {
-        const dl = downloadLink + latestVersion + "/" + `Yomikiru-v${latestVersion}-amd64.deb`;
+        const dl = `${DOWNLOAD_LINK}/v${latestVersion}/Yomikiru-v${latestVersion}-amd64.deb`;
         downloadFile(dl, newWindow && newWindow.webContents, (file) => {
             logger.log(`${file.filename} downloaded.`);
             dialog
@@ -352,4 +412,5 @@ const downloadUpdates = (latestVersion: string, windowId: number, silent = false
         });
     }
 };
+
 export default checkForUpdate;

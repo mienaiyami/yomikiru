@@ -10,7 +10,7 @@ export const registerUpdateHandlers = (): void => {
         if (mainWindow) {
             const check = () => {
                 const settings = MainSettings.getSettings();
-                checkForUpdate(mainWindow.id, settings.skipMinor, false, settings.autoDownload, settings.channel);
+                checkForUpdate(mainWindow.id, settings.skipPatch, false, settings.autoDownload, settings.channel);
             };
             check();
             setInterval(check, 1000 * 60 * 60 * 1);

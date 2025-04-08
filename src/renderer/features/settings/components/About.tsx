@@ -70,15 +70,15 @@ const About: React.FC = () => {
                         }}
                     />
                     <InputCheckbox
-                        checked={mainSettings?.skipMinor ?? false}
+                        checked={mainSettings?.skipPatch ?? false}
                         className="noBG"
                         onChange={(e) => {
                             updateMainSettings({
-                                skipMinor: e.currentTarget.checked,
+                                skipPatch: e.currentTarget.checked,
                             });
                         }}
-                        title="Mostly just frequent updates rather than minor."
-                        paraAfter="Skip minor updates"
+                        title="Mostly just frequent updates rather than patch."
+                        paraAfter="Skip patch updates"
                     />
                     <InputCheckbox
                         checked={mainSettings?.autoDownload ?? false}
