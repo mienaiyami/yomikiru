@@ -57,6 +57,7 @@ const About: React.FC = () => {
                     {window.electron.app.getVersion()}
                     {" | "}
                     {process.arch === "x64" ? "64-bit" : "32-bit"}
+                    {window.process.isPortable ? " | Portable" : ""}
                 </div>
                 <div className="main col">
                     <InputCheckbox

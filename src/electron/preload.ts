@@ -156,6 +156,10 @@ const processObj = {
     versions: process.versions,
     platform: process.platform,
     arch: process.arch,
+    isPortable:
+        app.isPackaged &&
+        process.platform === "win32" &&
+        !app.getAppPath().includes(path.dirname(app.getPath("appData"))),
 };
 
 const chokidarAPI = {
