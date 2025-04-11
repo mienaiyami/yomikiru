@@ -292,6 +292,7 @@ const downloadUpdates = (latestVersion: string, windowId: number, silent = false
         callback: (file: electronDl.File) => void,
     ) => {
         electronDl
+            // eslint-disable-next-line import/namespace
             .download(window, dl, {
                 directory: tempPath,
                 onStarted: (e) => {
@@ -299,7 +300,7 @@ const downloadUpdates = (latestVersion: string, windowId: number, silent = false
                     logger.log("Downloading updates...");
                     logger.log(dl, `"${tempPath}"`);
                     e.once("done", (_, state) => {
-                        if (state != "completed") {
+                        if (state !== "completed") {
                             dialog.showMessageBox(window, {
                                 type: "error",
                                 title: "Error while downloading",
