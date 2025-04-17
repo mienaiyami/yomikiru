@@ -377,7 +377,7 @@ const makeSettingsJson = () => {
 };
 let settingNotFound = false;
 if (!window.fs.existsSync(settingsPath)) {
-    dialogUtils.warn({ message: "No settings found, Select manga folder to make default in settings" });
+    // dialogUtils.warn({ message: "No settings found, Select manga folder to make default in settings" });
     settingNotFound = true;
     makeSettingsJson();
 }
