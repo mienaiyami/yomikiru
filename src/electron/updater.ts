@@ -26,6 +26,7 @@ const DOWNLOAD_LINK = `${RELEASES_PAGE}/download`;
 
 const checkForAnnouncements = async () => {
     try {
+        await new Promise((resolve) => setTimeout(resolve, 5000));
         const raw = await fetch(ANNOUNCEMENTS_URL)
             .then((data) => data.text())
             .then((data) => data.split("\n").filter((e) => e !== ""));

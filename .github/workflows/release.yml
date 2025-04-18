@@ -106,7 +106,7 @@ jobs:
               shell: bash
               run: |
                   cat download-btns.txt >> changelog-temp.md
-                  echo $'---\n\n' >> changelog-temp.md
+                  echo $'\n---\n\n' >> changelog-temp.md
                   cat changelog.md >> changelog-temp.md
 
             - name: Release
