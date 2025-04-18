@@ -8,11 +8,13 @@ import crossZip from "cross-zip";
 import logger from "electron-log";
 import { download, File } from "electron-dl";
 import { exec as execSudo } from "@vscode/sudo-prompt";
+import semver from "semver";
 
 declare const DOWNLOAD_PROGRESS_WEBPACK_ENTRY: string;
 
 const checkForAnnouncements = async () => {
     try {
+        await new Promise((resolve) => setTimeout(resolve, 5000));
         const raw = await fetch("https://raw.githubusercontent.com/mienaiyami/yomikiru/master/announcements.txt")
             .then((data) => data.text())
             .then((data) => data.split("\n").filter((e) => e !== ""));
@@ -77,11 +79,34 @@ const checkForUpdate = async (
     const rawdata = await fetch("https://api.github.com/repos/mienaiyami/yomikiru/releases").then((data) =>
         data.json()
     );
-    const latestVersion: number[] = await rawdata
-        .find((e: any) => e.tag_name.charAt(0) === "v")
-        .tag_name.substr(1)
+    const releases = rawdata
+        .filter((release: any) => {
+            const hasValidTagName =
+                typeof release.tag_name === "string" && semver.clean(release.tag_name, { loose: true });
+            if (!hasValidTagName) return false;
+            return !release.prerelease;
+        })
+        .sort((a: any, b: any) => {
+            const versionA = semver.clean(a.tag_name, { loose: true }) || "";
+            const versionB = semver.clean(b.tag_name, { loose: true }) || "";
+            return semver.rcompare(versionA, versionB);
+        });
+
+    const window = BrowserWindow.fromId(windowId ?? 1)!;
+
+    const latestVersion = releases[0]?.tag_name
+        .replace("v", "")
         .split(".")
         .map((e: string) => parseInt(e));
+
+    if (!latestVersion) {
+        dialog.showMessageBox(window, {
+            type: "error",
+            title: "Error",
+            message: "No version found.",
+        });
+        return;
+    }
     logger.log("checking for update...");
     const currentAppVersion = app
         .getVersion()
@@ -95,7 +120,6 @@ const checkForUpdate = async (
             return;
         }
     }
-    const window = BrowserWindow.fromId(windowId ?? 1)!;
     if (
         latestVersion[0] > currentAppVersion[0] ||
         (latestVersion[0] === currentAppVersion[0] && latestVersion[1] > currentAppVersion[1]) ||
