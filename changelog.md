@@ -20,6 +20,7 @@
 
 1. **Package Manager**: Migrated from Yarn to PNPM
 2. **Library Data Format**: Changed library data storage format (automatic migration included)/ Any bookmarks.json, history.json will be migrated to new format, if present in userData folder.
+3. **EPUB Reader**: txt and single html files now not supported (temporary?).
 
 ### Future Plans
 

@@ -98,6 +98,11 @@ const config: ForgeConfig = {
                     text: "Download 64-bit Setup (exe)",
                     icon: "windows&logoColor=blue",
                 },
+                "linux+deb+x64": {
+                    name: `${appName}-v${appVersion}-amd64.deb`,
+                    text: "Download 64-bit Linux (Debian)",
+                    icon: "debian&logoColor=red",
+                },
                 "linux+deb+amd64": {
                     name: `${appName}-v${appVersion}-amd64.deb`,
                     text: "Download 64-bit Linux (Debian)",
@@ -125,7 +130,7 @@ const config: ForgeConfig = {
 
             const mainOutDir = path.resolve("./out/all");
 
-            const filesToUploadTxt = "files-to-upload.txt";
+            // const filesToUploadTxt = "files-to-upload.txt";
             const downloadBtnsTxt = "download-btns.txt";
             const initialDownloadBtns =
                 `## Downloads\n\n` +
@@ -137,12 +142,12 @@ const config: ForgeConfig = {
                 "\n";
 
             if (!fs.existsSync(downloadBtnsTxt)) fs.writeFileSync(downloadBtnsTxt, initialDownloadBtns, "utf-8");
-            if (!fs.existsSync(filesToUploadTxt))
-                fs.writeFileSync(
-                    filesToUploadTxt,
-                    path.join(mainOutDir, MAP["linux+deb+amd64"].name.replace(/\\/g, "/")) + " ",
-                    "utf-8",
-                );
+            // if (!fs.existsSync(filesToUploadTxt))
+            //     fs.writeFileSync(
+            //         filesToUploadTxt,
+            //         path.join(mainOutDir, MAP["linux+deb+amd64"].name.replace(/\\/g, "/")) + " ",
+            //         "utf-8",
+            //     );
 
             if (!fs.existsSync(mainOutDir)) fs.mkdirSync(mainOutDir);
 
@@ -153,7 +158,7 @@ const config: ForgeConfig = {
                     `${res.platform}+${path.extname(res.artifacts[mainIdx]).replace(".", "")}+${res.arch}` as keyof typeof MAP;
                 if (!MAP[key]) {
                     console.error(`Unknown artifact: ${key}`);
-                    return;
+                    process.exit(1);
                 }
                 const { name, text, icon } = MAP[key];
 
@@ -162,7 +167,7 @@ const config: ForgeConfig = {
 
                 makeResults[idx].artifacts[mainIdx] = newPath;
 
-                fs.appendFileSync(filesToUploadTxt, newPath.replace(/\\/g, "/") + " ", "utf-8");
+                // fs.appendFileSync(filesToUploadTxt, newPath.replace(/\\/g, "/") + " ", "utf-8");
 
                 const downloadBtn = makeDlBtn({
                     text,
@@ -171,7 +176,7 @@ const config: ForgeConfig = {
                     url: res.packageJSON.author.url,
                 });
 
-                fs.appendFileSync(downloadBtnsTxt, downloadBtn + "\n", "utf-8");
+                fs.appendFileSync(downloadBtnsTxt, downloadBtn, "utf-8");
             });
 
             return makeResults;

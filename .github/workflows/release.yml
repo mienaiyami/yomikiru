@@ -23,7 +23,6 @@ jobs:
             - uses: pnpm/action-setup@v4
               name: Setup pnpm
               with:
-                  version: 10
                   run_install: false
 
             - name: Use Node.js
@@ -51,7 +50,8 @@ jobs:
             - uses: actions/upload-artifact@v4
               with:
                   name: linux-build-file
-                  path: ./out/full/Yomikiru-${{ steps.version.outputs.version }}-amd64.deb
+                  path: ./out/all/Yomikiru-${{ steps.version.outputs.version }}-amd64.deb
+                  if-no-files-found: error
 
     build:
         needs: buildDeb
@@ -62,7 +62,6 @@ jobs:
             - uses: pnpm/action-setup@v4
               name: Setup pnpm
               with:
-                  version: 10
                   run_install: false
 
             - name: Use Node.js
@@ -78,14 +77,12 @@ jobs:
               id: linux-build-file-downloader
               with:
                   name: linux-build-file
-                  path: ./out/full/
+                  path: ./out/all/
 
             - name: Build for windows
               run: |
-                  pnpm make:exe32
-                  pnpm make:exe64
-                  pnpm make:zip32
-                  pnpm make:zip64
+                  pnpm make:win32
+                  pnpm make:win64
 
             - name: Set version
               id: version
@@ -109,7 +106,7 @@ jobs:
               shell: bash
               run: |
                   cat download-btns.txt >> changelog-temp.md
-                  echo "---\n\n" >> changelog-temp.md
+                  echo $'---\n\n' >> changelog-temp.md
                   cat changelog.md >> changelog-temp.md
 
             - name: Release
@@ -117,7 +114,7 @@ jobs:
               with:
                   tag_name: ${{steps.version.outputs.version}}
                   name: ${{steps.version.outputs.version}}
-                  files: ${{ steps.files-to-upload.outputs.files }}
+                  files: ./out/all/*
                   body_path: changelog-temp.md
                   generate_release_notes: true
                   discussion_category_name: General
