@@ -31,6 +31,7 @@ export const getCSSPath = (el: Element): string => {
 
 window.app.betterSortOrder = Intl.Collator(undefined, { numeric: true, sensitivity: "base" }).compare;
 window.app.deleteDirOnClose = "";
+window.sleep = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
 
 // eslint-disable-next-line @typescript-eslint/ban-ts-comment
 //@ts-ignore

@@ -8,6 +8,7 @@ import BookmarkButton from "./components/BookmarkButton";
 import BookmarkList from "./components/BookmarkList";
 import { useAppContext } from "src/renderer/App";
 import NotesList from "./components/NotesList";
+import { EPubData } from "@utils/epub";
 
 const EPubReaderSideList = memo(
     ({
@@ -37,13 +38,7 @@ const EPubReaderSideList = memo(
         currentChapter: EPUB.Spine[number];
         currentChapterFake: string;
         openChapterById: (chapterId: string, position?: string) => void;
-        epubData: {
-            manifest: EPUB.Manifest;
-            spine: EPUB.Spine;
-            metadata: EPUB.MetaData;
-            ncx: EPUB.NCXTree[];
-            toc: EPUB.TOC;
-        };
+        epubData: EPubData;
         onEpubLinkClick: (ev: MouseEvent | React.MouseEvent<HTMLAnchorElement, MouseEvent>) => void;
         addToBookmarkRef: React.RefObject<HTMLButtonElement>;
         setShortcutText: React.Dispatch<React.SetStateAction<string>>;
@@ -322,21 +317,27 @@ const EPubReaderSideList = memo(
                         //     display: appSettings.epubReaderSettings.hideSideList ? "none" : "initial",
                         // }}
                     >
+                        {/* //todo virtualize list */}
                         {epubData.toc.size > 500 && (
                             <p>
                                 Too many chapters, click &quot;Content&quot; to hide list to improve performance of
                                 application.
                             </p>
                         )}
-                        <List
-                            currentChapterHref={
-                                epubData.manifest.get(currentChapterFake)?.href || currentChapter.href
-                            }
-                            onEpubLinkClick={onEpubLinkClick}
-                            epubNCX={epubData.ncx}
-                            epubTOC={epubData.toc}
-                            sideListRef={sideListRef}
-                        />
+                        {epubData.ncx.length > 0 && (
+                            <List
+                                currentChapterHref={
+                                    epubData.manifest.get(currentChapterFake)?.href || currentChapter.href
+                                }
+                                onEpubLinkClick={onEpubLinkClick}
+                                epubNCX={epubData.ncx}
+                                epubTOC={epubData.toc}
+                                sideListRef={sideListRef}
+                            />
+                        )}
+                        {epubData.ncx.length === 0 && (
+                            <p>No NCX found in epub, use &quot;Show in-book TOC&quot; to for Table of Contents.</p>
+                        )}
                     </div>
                 )}
                 {displayList === "bookmarks" && <BookmarkList openChapterById={openChapterById} />}

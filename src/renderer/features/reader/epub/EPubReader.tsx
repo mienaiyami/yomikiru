@@ -5,7 +5,7 @@ import { useAppDispatch, useAppSelector } from "@store/hooks";
 import { setAppSettings, setEpubReaderSettings, setReaderSettings } from "@store/appSettings";
 import EPUBReaderSettings from "./EPubReaderSettings";
 import EPubReaderSideList from "./EPubReaderSideList";
-import EPUB from "@utils/epub";
+import EPUB, { EPubData } from "@utils/epub";
 import { addLibraryItem, selectLibraryItem, updateBookProgress, updateCurrentItemProgress } from "@store/library";
 import { dialogUtils } from "@utils/dialog";
 import { getCSSPath } from "@utils/utils";
@@ -26,15 +26,6 @@ import { shallowEqual } from "react-redux";
 import { DEFAULT_HIGHLIGHT_COLORS, highlightUtils } from "@utils/highlight";
 import { addNote } from "@store/bookNotes";
 import { colorUtils } from "@utils/color";
-
-type EPubData = {
-    metadata: EPUB.MetaData;
-    manifest: EPUB.Manifest;
-    spine: EPUB.Spine;
-    toc: EPUB.TOC;
-    ncx: EPUB.NCXTree[];
-    styleSheets: string[];
-};
 
 // todo: replace useLayoutEffect that is not needed with useEffect
 const EPubReader: React.FC = () => {

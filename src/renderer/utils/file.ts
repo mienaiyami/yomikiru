@@ -27,21 +27,21 @@ export { userDataURL, settingsPath, bookmarksPath, historyPath, themesPath, shor
 export const formatUtils = {
     image: {
         list: [".jpg", ".jpeg", ".png", ".webp", ".svg", ".apng", ".gif", ".avif"],
-        test: (str: string) => {
+        test: (str: string): boolean => {
             return !!str && formatUtils.image.list.includes(window.path.extname(str).toLowerCase());
         },
     },
     files: {
         list: [".zip", ".cbz", ".7z", ".cb7", ".rar", ".cbr", ".pdf", ".epub", ".xhtml", ".html", ".txt"],
-        test: (str: string) => {
+        test: (str: string): boolean => {
             return !!str && formatUtils.files.list.includes(window.path.extname(str).toLowerCase());
         },
-        getName: (str: string) => {
+        getName: (str: string): string => {
             const ext = window.path.extname(str);
             if (!formatUtils.files.list.includes(ext)) return str;
             return window.path.basename(str, ext);
         },
-        getExt: (str: string) => {
+        getExt: (str: string): string => {
             const ext = window.path.extname(str);
             if (!formatUtils.files.list.includes(ext)) return "";
             return ext.replace(".", "").toUpperCase();
@@ -49,14 +49,14 @@ export const formatUtils = {
     },
     packedManga: {
         list: [".zip", ".cbz", ".7z", ".cb7", ".rar", ".cbr"],
-        test: (str: string) => {
-            return str && formatUtils.packedManga.list.includes(window.path.extname(str).toLowerCase());
+        test: (str: string): boolean => {
+            return !!str && formatUtils.packedManga.list.includes(window.path.extname(str).toLowerCase());
         },
     },
     book: {
         list: [".epub", ".xhtml", ".html", ".txt"],
-        test: (str: string) => {
-            return str && formatUtils.book.list.includes(window.path.extname(str).toLowerCase());
+        test: (str: string): boolean => {
+            return !!str && formatUtils.book.list.includes(window.path.extname(str).toLowerCase());
         },
     },
 };

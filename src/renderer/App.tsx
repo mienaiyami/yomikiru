@@ -92,10 +92,19 @@ const App = (): ReactElement => {
         dispatch(setAnilistLoginOpen(false));
         dispatch(setAnilistSearchOpen(false));
 
-        window.app.deleteDirOnClose &&
-            window.fs.access(window.app.deleteDirOnClose).then(() => {
-                window.fs.rm(window.app.deleteDirOnClose, { recursive: true });
-            });
+        // this is needed coz it is async and by the time it executes, deleteDirOnClose changes to current dir
+        const deleteDir = window.app.deleteDirOnClose;
+        deleteDir &&
+            window.fs
+                .access(deleteDir)
+                .then(() => {
+                    window.fs.rm(deleteDir, { recursive: true }).catch((err) => {
+                        console.error("Error while deleting directory", err);
+                    });
+                })
+                .catch((err) => {
+                    console.error("Error while deleting directory", err);
+                });
 
         document.body.classList.remove("zenMode");
         if (window.electron.currentWindow.isFullScreen()) window.electron.currentWindow.setFullScreen(false);
@@ -404,28 +413,38 @@ const App = (): ReactElement => {
         document.addEventListener("dragover", (e) => e.preventDefault(), { signal });
         document.addEventListener(
             "drop",
-            (e) => {
+            async (e) => {
                 e.preventDefault();
-                if (e.dataTransfer) {
-                    const data = e.dataTransfer.files;
-                    if (data.length > 0) {
-                        if (!window.fs.existsSync(data[0].path)) return;
-                        if (linkInReader === data[0].path) return;
-                        if (data.length > 1)
-                            dialogUtils.customError({
-                                message: "More than one file/folder dropped. Only first in list will be loaded.",
-                            });
-                        if (window.fs.isDir(data[0].path)) {
-                            closeReader();
-                            openInReaderIfValid(data[0].path);
-                        } else if (formatUtils.files.test(data[0].path)) {
-                            closeReader();
-                            openInReaderIfValid(data[0].path);
-                        } else if (formatUtils.image.test(data[0].path.toLowerCase())) {
-                            closeReader();
-                            openInReaderIfValid(window.path.dirname(data[0].path));
+                try {
+                    if (e.dataTransfer) {
+                        const data = e.dataTransfer.files;
+                        if (data.length > 0) {
+                            if (!window.fs.existsSync(data[0].path)) return;
+                            if (linkInReader === data[0].path) return;
+                            if (data.length > 1)
+                                dialogUtils.customError({
+                                    message:
+                                        "More than one file/folder dropped. Only first in list will be loaded.",
+                                });
+                            await window.fs.access(data[0].path);
+                            if (window.fs.isDir(data[0].path)) {
+                                await closeReader();
+                                await openInReaderIfValid(data[0].path);
+                            } else if (formatUtils.files.test(data[0].path)) {
+                                await closeReader();
+                                await openInReaderIfValid(data[0].path);
+                            } else if (formatUtils.image.test(data[0].path.toLowerCase())) {
+                                await closeReader();
+                                await openInReaderIfValid(window.path.dirname(data[0].path));
+                            }
                         }
                     }
+                } catch (err) {
+                    console.error("Error while dropping file", err);
+                    dialogUtils.customError({
+                        message: "Error while dropping file",
+                        detail: err instanceof Error ? err.message : String(err),
+                    });
                 }
             },
             { signal },

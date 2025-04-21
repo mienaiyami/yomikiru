@@ -1218,7 +1218,7 @@
                         }
                     }
                     .text-highlight {
-                        background-color: var(--highlight-color);
+                        background-color: var(--highlight-color) !important;
                     }
                     .modal-element {
                         .modal-overlayCont {

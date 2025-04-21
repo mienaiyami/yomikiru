@@ -78,6 +78,7 @@ declare global {
          */
         cachedImageList: { link: string; images: string[] };
         temp: unknown;
+        sleep: (ms: number) => Promise<void>;
     }
 
     //
