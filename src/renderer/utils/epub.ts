@@ -200,7 +200,7 @@ export default class EPUB {
         const parser = new DOMParser();
         const tocRaw = (await window.fs.readFile(tocPath, "utf-8")).trim();
         const tocXML = parser.parseFromString(tocRaw, "application/xhtml+xml");
-        const nav = tocXML.querySelector("nav[epub\\:type='toc'], nav[role='doc-toc']");
+        const nav = tocXML.querySelector("nav");
         if (!nav) throw new Error("parseEpubV3TOC: No TOC nav found.");
 
         const toc: EPUB.TOC = new Map();
@@ -402,7 +402,13 @@ export default class EPUB {
             el.setAttribute("data-epub-id", id);
             el.removeAttribute("id");
         });
-        let txt = doc.body.innerHTML;
+        let txt = "";
+        if (doc.documentElement.nodeName.toLowerCase() === "svg") {
+            txt = doc.documentElement.outerHTML;
+        } else {
+            txt = doc.body.innerHTML;
+        }
+
         //todo check if something like this can be done, test "[*|href]"
         // doc.querySelectorAll("[on*]").forEach((el) => el.removeAttribute("on*"));
         //remove all on* attributes

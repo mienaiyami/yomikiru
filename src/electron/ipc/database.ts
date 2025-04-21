@@ -1,6 +1,6 @@
-import { BrowserWindow, ipcMain } from "electron";
+import { app, BrowserWindow, ipcMain } from "electron";
 import type { DatabaseChangeChannels, DatabaseChannels } from "@common/types/ipc";
-import { DatabaseService } from "../db";
+import { DatabaseService, DB_PATH } from "../db";
 import { bookBookmarks, bookNotes, bookProgress, libraryItems, mangaBookmarks, mangaProgress } from "../db/schema";
 import { and, desc, eq, inArray, sql } from "drizzle-orm";
 import { BookProgress, LibraryItem, MangaProgress } from "@common/types/db";
@@ -14,6 +14,8 @@ import {
     UpdateBookProgressSchema,
     UpdateMangaProgressSchema,
 } from "@electron/db/validator";
+import path from "path";
+import { copyFile } from "fs/promises";
 
 /**
  * Sends database change notifications to all open windows
@@ -90,6 +92,18 @@ const handlers: {
             mangaBookmarks: mangaBk,
             bookBookmarks: bookBk,
         };
+    },
+    "db:library:reset": async (db) => {
+        try {
+            const backupPath = path.join(app.getPath("userData"), `data_backup-${Date.now()}.db`);
+            await copyFile(DB_PATH, backupPath);
+            // cascade delete
+            await db.db.delete(libraryItems);
+            return true;
+        } catch (err) {
+            console.error(`Error in IPC channel "db:library:reset":`, err);
+            return false;
+        }
     },
     "db:manga:getProgress": async (db, request) => {
         const [progress] = await db.db

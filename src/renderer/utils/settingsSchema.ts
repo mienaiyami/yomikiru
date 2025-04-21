@@ -25,7 +25,6 @@ const settingSchema = z
         }),
         useCanvasBasedReader: z.boolean(),
         openOnDblClick: z.boolean(),
-        recordChapterRead: z.boolean(),
         disableListNumbering: z.boolean(),
         /**
          * show search input for history and bookmark
@@ -255,7 +254,6 @@ const settingSchema = z
         },
         useCanvasBasedReader: false,
         openOnDblClick: true,
-        recordChapterRead: true,
         disableListNumbering: true,
         showSearch: true,
         openInZenMode: false,

@@ -63,6 +63,9 @@ export type DatabaseChannels = {
     "db:book:addNote": ChannelDefinition<AddBookNoteData, BookNote | null>;
     "db:book:updateNote": ChannelDefinition<{ id: number; content: string; color?: string }, BookNote | null>;
     "db:book:deleteNotes": ChannelDefinition<{ itemLink: string; ids: number[]; all?: boolean }, boolean>;
+
+    //
+    "db:library:reset": ChannelDefinition<void, boolean>;
 };
 
 // ! for updating store only, temp only

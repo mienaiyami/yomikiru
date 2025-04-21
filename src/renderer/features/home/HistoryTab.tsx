@@ -9,7 +9,7 @@ import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { setAppSettings } from "@store/appSettings";
 import { useAppContext } from "src/renderer/App";
 
-const HistoryTab = () => {
+const HistoryTab: React.FC = () => {
     const library = useAppSelector((store) => store.library);
     const appSettings = useAppSelector((store) => store.appSettings);
     const dispatch = useAppDispatch();

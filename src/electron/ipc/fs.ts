@@ -77,7 +77,6 @@ export const registerFSHandlers = (): void => {
                 await fs.writeFile(path.join(destination, "SOURCE"), source);
                 return { source, destination, ok: true };
             } else {
-                //todo test;
                 await promisify(crossZip.unzip)(source, destination);
                 try {
                     if (path.extname(source).toLowerCase() !== ".epub") await flattenDirectories(destination);

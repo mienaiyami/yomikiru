@@ -275,11 +275,22 @@ const App = (): ReactElement => {
                     label: "Remove",
                     disabled: url ? false : true,
                     action() {
-                        dispatch(
-                            deleteLibraryItem({
-                                link: url,
-                            }),
-                        );
+                        dialogUtils
+                            .warn({
+                                title: "Remove History",
+                                message: "This will also remove all related bookmarks. Continue?",
+                                noOption: false,
+                                buttons: ["Cancel", "Remove"],
+                                defaultId: 0,
+                            })
+                            .then(({ response }) => {
+                                if (!response) return;
+                                dispatch(
+                                    deleteLibraryItem({
+                                        link: url,
+                                    }),
+                                );
+                            });
                     },
                 };
             },

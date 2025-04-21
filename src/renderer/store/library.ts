@@ -61,6 +61,10 @@ export const deleteLibraryItem = createAsyncThunk(
     },
 );
 
+export const resetLibrary = createAsyncThunk("library/reset", async () => {
+    return await window.electron.invoke("db:library:reset");
+});
+
 export const updateCurrentItemProgress = createAsyncThunk(
     "library/updateCurrentItemProgress",
     async (_, { getState }) => {

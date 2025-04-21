@@ -12,6 +12,7 @@ import AnilistSetting from "./AnilistSetting";
 import CustomTempLocation from "./CustomTempLocation";
 import GeneralThemeSettings from "./GeneralThemeSettings";
 import GeneralPDFSettings from "./GeneralPDFSettings";
+import { resetLibrary } from "@store/library";
 
 const GeneralSettings: React.FC = () => {
     const { scrollIntoView } = useSettingsContext();
@@ -302,20 +303,6 @@ const GeneralSettings: React.FC = () => {
                         Sync themes across all opened windows. <code>App Restart Needed</code>
                     </div>
                 </div>
-                <div className="toggleItem">
-                    <InputCheckbox
-                        checked={appSettings.recordChapterRead}
-                        className="noBG"
-                        onChange={(e) => {
-                            dispatch(setAppSettings({ recordChapterRead: e.currentTarget.checked }));
-                        }}
-                        labelAfter="Record chapter read"
-                    />
-                    <div className="desc">
-                        Mark opened chapters as read. If chapter is already read, it will appear with different
-                        color in Reader&apos;s Side list and Home Locations tab.
-                    </div>
-                </div>
                 <div className="toggleItem" id="settings-openDirectlyFromManga">
                     <InputCheckbox
                         checked={appSettings.openDirectlyFromManga}
@@ -397,34 +384,6 @@ const GeneralSettings: React.FC = () => {
                     <div className="desc">
                         Automatically refresh reader-side-list when change in files is detected. It can be heavy
                         task if you have slow storage and chapter+page count is high.
-                    </div>
-                </div>
-                <div className="toggleItem" id="settings-keepExtractedFiles">
-                    <InputCheckbox
-                        checked={appSettings.keepExtractedFiles}
-                        className="noBG"
-                        onChange={(e) => {
-                            dispatch(
-                                setAppSettings({
-                                    keepExtractedFiles: e.currentTarget.checked,
-                                }),
-                            );
-                        }}
-                        labelAfter="Keep Temp Files"
-                    />
-                    <div className="desc">
-                        Keep temporary files, mainly extracted archives, pdf and epub. Skip extracting part when
-                        opening same title again. <br />
-                        NOTE: If{" "}
-                        <a
-                            onClick={() => {
-                                scrollIntoView("#settings-customTempFolder", "settings");
-                            }}
-                        >
-                            temp folder
-                        </a>{" "}
-                        is set to default then there is a possibility that your system might delete those files
-                        after each power on.
                     </div>
                 </div>
                 <div className="toggleItem">
@@ -646,20 +605,36 @@ const GeneralSettings: React.FC = () => {
                 <div className="main row">
                     <button
                         onClick={() => {
-                            throw new Error("Not implemented");
-                            // dialogUtils
-                            //     .warn({
-                            //         title: "Warning",
-                            //         message: "Are you sure you want to clear history?",
-                            //         noOption: false,
-                            //     })
-                            //     .then((res) => {
-                            //         if (res && res.response === 0)
-                            //             dispatch(deleteAllHistory());
-                            //     });
+                            dialogUtils
+                                .warn({
+                                    title: "Reset library",
+                                    message:
+                                        "This will delete all entries from library including bookmarks. Continue?",
+                                    noOption: false,
+                                    defaultId: 0,
+                                })
+                                .then(({ response }) => {
+                                    if (response === undefined) return;
+                                    if (response === 1) return;
+                                    if (response === 0) {
+                                        dialogUtils
+                                            .warn({
+                                                title: "Reset library",
+                                                message:
+                                                    "This will delete all entries from library including bookmarks. Continue?",
+                                                noOption: false,
+                                                buttons: ["Cancel", "Reset"],
+                                                defaultId: 0,
+                                            })
+                                            .then(({ response }) => {
+                                                if (!response) return;
+                                                dispatch(resetLibrary());
+                                            });
+                                    }
+                                });
                         }}
                     >
-                        Clear History
+                        Reset Library
                     </button>
                     <button
                         onClick={() => {

@@ -1217,6 +1217,14 @@
                             padding: 0.4em;
                         }
                     }
+                    pre {
+                        code {
+                            white-space: pre-wrap;
+                            background: initial;
+                            box-shadow: initial;
+                            text-shadow: initial;
+                        }
+                    }
                     .text-highlight {
                         background-color: var(--highlight-color) !important;
                     }

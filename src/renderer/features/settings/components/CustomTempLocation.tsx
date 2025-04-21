@@ -1,8 +1,13 @@
 import { useState } from "react";
 import { dialogUtils } from "@utils/dialog";
 import { promptSelectDir } from "@utils/file";
+import InputCheckbox from "@ui/InputCheckbox";
+import { useAppDispatch, useAppSelector } from "@store/hooks";
+import { setAppSettings } from "@store/appSettings";
 
 const CustomTempLocation: React.FC = () => {
+    const dispatch = useAppDispatch();
+    const appSettings = useAppSelector((state) => state.appSettings);
     const [tempFolder, setTempFolder] = useState(window.electron.app.getPath("temp"));
 
     const updateTempPath = async (newPath?: string) => {
@@ -84,6 +89,26 @@ const CustomTempLocation: React.FC = () => {
                 >
                     Delete all File Cache
                 </button>
+            </div>
+            <div className="toggleItem" id="settings-keepExtractedFiles">
+                <InputCheckbox
+                    checked={appSettings.keepExtractedFiles}
+                    className="noBG"
+                    onChange={(e) => {
+                        dispatch(
+                            setAppSettings({
+                                keepExtractedFiles: e.currentTarget.checked,
+                            }),
+                        );
+                    }}
+                    labelAfter="Keep Temp Files"
+                />
+                <div className="desc">
+                    Keep temporary files, mainly extracted archives, pdf and epub. Skip extracting part when
+                    opening same title again. <br />
+                    NOTE: If temp folder is set to default then there is a possibility that your system might
+                    delete those files after each power on.
+                </div>
             </div>
         </div>
     );
