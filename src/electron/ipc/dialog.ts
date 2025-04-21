@@ -27,7 +27,7 @@ export const registerDialogHandlers = () => {
             title: args.title,
             message: args.message,
             detail: args.detail,
-            buttons: args.noOption ? [] : args.buttons,
+            buttons: args.noOption && args.buttons?.length === 0 ? [] : args.buttons,
             defaultId: args.defaultId,
         });
     });
@@ -35,7 +35,7 @@ export const registerDialogHandlers = () => {
     ipc.handle("dialog:confirm", (event, args) => {
         return dialog.showMessageBox(getWindowFromWebContents(event.sender), {
             ...args,
-            buttons: args.noOption ? [] : args.buttons,
+            buttons: args.noOption && args.buttons?.length === 0 ? [] : args.buttons,
         });
     });
     ipc.handle("dialog:showOpenDialog", (event, args) => {
