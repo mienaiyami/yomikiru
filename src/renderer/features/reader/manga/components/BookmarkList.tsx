@@ -9,7 +9,7 @@ import { useAppContext } from "src/renderer/App";
 import ListItem from "@renderer/components/ListItem";
 import ListNavigator from "@renderer/components/ListNavigator";
 
-const BookmarkList = () => {
+const BookmarkList: React.FC = () => {
     const { setContextMenuData, openInReader } = useAppContext();
     const mangaInReader = useAppSelector(getReaderManga);
     const bookmarksArray: MangaBookmark[] = useAppSelector(
@@ -58,7 +58,7 @@ const BookmarkList = () => {
                 return;
             }
             const items: Menu.ListItem[] = [
-                window.contextMenu.template.removeBookmark(bookmark.itemLink, bookmark.id, "manga"),
+                window.contextMenu.template.removeBookmark(bookmark.itemLink, bookmark.id, "manga", true),
             ];
             setContextMenuData({
                 clickX: e.clientX,

@@ -866,7 +866,9 @@ const Reader: React.FC = () => {
     }, [currentImageRow]);
 
     useEffect(() => {
+        if (shortcutText === "") return;
         let timeOutId: NodeJS.Timeout;
+        let timeOutId2: NodeJS.Timeout;
         const e = shortcutTextRef.current;
         if (shortcutText !== "") {
             if (e) {
@@ -874,11 +876,15 @@ const Reader: React.FC = () => {
                 e.classList.remove("faded");
                 timeOutId = setTimeout(() => {
                     e.classList.add("faded");
+                    timeOutId2 = setTimeout(() => {
+                        setShortcutText("");
+                    }, 500);
                 }, 500);
             }
         }
         return () => {
             clearTimeout(timeOutId);
+            clearTimeout(timeOutId2);
             e?.classList.add("faded");
         };
     }, [shortcutText]);

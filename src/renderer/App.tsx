@@ -211,6 +211,13 @@ const App = (): ReactElement => {
             },
         });
 
+        return () => {
+            closeWatcher();
+            listeners.forEach((e) => e());
+        };
+    }, []);
+
+    useEffect(() => {
         // todo: use radix ui
         window.contextMenu.template = {
             divider() {
@@ -270,42 +277,70 @@ const App = (): ReactElement => {
                     },
                 };
             },
-            removeHistory(url) {
+            removeHistory(url, isInSideList = false) {
                 return {
                     label: "Remove",
                     disabled: url ? false : true,
                     action() {
-                        dialogUtils
-                            .warn({
-                                title: "Remove History",
-                                message: "This will also remove all related bookmarks. Continue?",
-                                noOption: false,
-                                buttons: ["Cancel", "Remove"],
-                                defaultId: 0,
-                            })
-                            .then(({ response }) => {
-                                if (!response) return;
-                                dispatch(
-                                    deleteLibraryItem({
-                                        link: url,
-                                    }),
-                                );
-                            });
+                        if (isInSideList && !appSettings.confirmDeleteItem) {
+                            dispatch(
+                                deleteLibraryItem({
+                                    link: url,
+                                }),
+                            );
+                        } else {
+                            dialogUtils
+                                .warn({
+                                    title: "Remove History",
+                                    message: "This will also remove all related bookmarks. Continue?",
+                                    noOption: false,
+                                    buttons: ["Cancel", "Yes"],
+                                    defaultId: 0,
+                                })
+                                .then(({ response }) => {
+                                    if (!response) return;
+                                    dispatch(
+                                        deleteLibraryItem({
+                                            link: url,
+                                        }),
+                                    );
+                                });
+                        }
                     },
                 };
             },
-            removeBookmark(itemLink, bookmarkId, type) {
+            removeBookmark(itemLink, bookmarkId, type, isInSideList = false) {
                 return {
                     label: "Remove Bookmark",
-                    // disabled:  ? false : true,
                     action() {
-                        dispatch(
-                            removeBookmark({
-                                itemLink,
-                                ids: [bookmarkId],
-                                type,
-                            }),
-                        );
+                        if (isInSideList && !appSettings.confirmDeleteItem) {
+                            dispatch(
+                                removeBookmark({
+                                    itemLink,
+                                    ids: [bookmarkId],
+                                    type,
+                                }),
+                            );
+                        } else {
+                            dialogUtils
+                                .warn({
+                                    title: "Remove Bookmark",
+                                    message: "Only this bookmark will be removed. Continue?",
+                                    noOption: false,
+                                    buttons: ["Cancel", "Yes"],
+                                    defaultId: 0,
+                                })
+                                .then(({ response }) => {
+                                    if (!response) return;
+                                    dispatch(
+                                        removeBookmark({
+                                            itemLink,
+                                            ids: [bookmarkId],
+                                            type,
+                                        }),
+                                    );
+                                });
+                        }
                     },
                 };
             },
@@ -348,7 +383,18 @@ const App = (): ReactElement => {
                     label: "Mark All as Read",
                     // disabled: mangaIndex >= 0 && chapters.length > 0 ? false : true,
                     action() {
-                        dispatch(updateChaptersReadAll({ itemLink: mangaIndex, chapters, read: true }));
+                        dialogUtils
+                            .warn({
+                                title: "Mark All as Read",
+                                message: "This will also mark all Chapters in this manga as read. Continue?",
+                                noOption: false,
+                                buttons: ["Cancel", "Yes"],
+                                defaultId: 0,
+                            })
+                            .then(({ response }) => {
+                                if (!response) return;
+                                dispatch(updateChaptersReadAll({ itemLink: mangaIndex, chapters, read: true }));
+                            });
                     },
                 };
             },
@@ -357,17 +403,25 @@ const App = (): ReactElement => {
                     label: "Mark All as Unread",
                     // disabled: mangaIndex >= 0 ? false : true,
                     action() {
-                        dispatch(updateChaptersReadAll({ itemLink: mangaIndex, chapters: [], read: false }));
+                        dialogUtils
+                            .warn({
+                                title: "Mark All as Unread",
+                                message: "This will remove all Chapters in this manga from history. Continue?",
+                                noOption: false,
+                                buttons: ["Cancel", "Yes"],
+                                defaultId: 0,
+                            })
+                            .then(({ response }) => {
+                                if (!response) return;
+                                dispatch(
+                                    updateChaptersReadAll({ itemLink: mangaIndex, chapters: [], read: false }),
+                                );
+                            });
                     },
                 };
             },
         };
-
-        return () => {
-            closeWatcher();
-            listeners.forEach((e) => e());
-        };
-    }, []);
+    }, [appSettings, openInReaderIfValid]);
 
     useEffect(() => {
         const eventsOnStart = (e: KeyboardEvent) => {

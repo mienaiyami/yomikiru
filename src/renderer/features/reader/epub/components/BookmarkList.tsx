@@ -54,7 +54,7 @@ const BookmarkList: React.FC<{
                 return;
             }
             const items: Menu.ListItem[] = [
-                window.contextMenu.template.removeBookmark(bookmark.itemLink, bookmark.id, "book"),
+                window.contextMenu.template.removeBookmark(bookmark.itemLink, bookmark.id, "book", true),
             ];
             setContextMenuData({
                 clickX: e.clientX,

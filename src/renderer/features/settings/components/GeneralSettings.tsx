@@ -341,6 +341,25 @@ const GeneralSettings: React.FC = () => {
                 </div>
                 <div className="toggleItem">
                     <InputCheckbox
+                        checked={appSettings.confirmDeleteItem}
+                        className="noBG"
+                        onChange={(e) => {
+                            dispatch(
+                                setAppSettings({
+                                    confirmDeleteItem: e.currentTarget.checked,
+                                }),
+                            );
+                        }}
+                        labelAfter="Confirm Side-List Item Delete"
+                    />
+                    <div className="desc">
+                        Confirm before deleting item from history/bookmark/note in side list.
+                        <br />
+                        Always true on home page.
+                    </div>
+                </div>
+                <div className="toggleItem">
+                    <InputCheckbox
                         checked={appSettings.openInZenMode}
                         className="noBG"
                         onChange={(e) => {

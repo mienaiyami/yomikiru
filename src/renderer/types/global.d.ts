@@ -26,8 +26,13 @@ declare global {
                 copyPath: (url: string) => Menu.ListItem;
                 copyImage: (url: string) => Menu.ListItem;
                 addToBookmark: (args: Parameters<typeof addBookmark>["0"]) => Menu.ListItem;
-                removeHistory: (url: string) => Menu.ListItem;
-                removeBookmark: (itemLink: string, bookmarkId: number, type: "manga" | "book") => Menu.ListItem;
+                removeHistory: (url: string, isInSideList?: boolean) => Menu.ListItem;
+                removeBookmark: (
+                    itemLink: string,
+                    bookmarkId: number,
+                    type: "manga" | "book",
+                    isInSideList?: boolean,
+                ) => Menu.ListItem;
                 unreadChapter: (itemLink: string, chapterName: string) => Menu.ListItem;
                 unreadAllChapter: (itemLink: string) => Menu.ListItem;
                 readChapter: (itemLink: string, chapterName: string) => Menu.ListItem;

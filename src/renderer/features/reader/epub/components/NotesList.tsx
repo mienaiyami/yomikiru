@@ -125,6 +125,7 @@ const NotesList: React.FC<{
     setEditNoteId: (noteId: number | null) => void;
 }> = ({ openChapterById, addNote, editNoteId, setEditNoteId }) => {
     const { setContextMenuData } = useAppContext();
+    const confirmDeleteItem = useAppSelector((store) => store.appSettings.confirmDeleteItem, shallowEqual);
     const dispatch = useAppDispatch();
     const bookInReader = useAppSelector(getReaderBook);
 
@@ -184,7 +185,22 @@ const NotesList: React.FC<{
                     label: "Delete Note",
                     action() {
                         if (!bookInReader) return;
-                        dispatch(removeNote({ itemLink: bookInReader.link, ids: [note.id] }));
+                        if (!confirmDeleteItem) {
+                            dispatch(removeNote({ itemLink: bookInReader.link, ids: [note.id] }));
+                        } else {
+                            dialogUtils
+                                .warn({
+                                    title: "Delete Note",
+                                    message: "Only this note will be removed. Continue?",
+                                    noOption: false,
+                                    buttons: ["Cancel", "Yes"],
+                                    defaultId: 0,
+                                })
+                                .then(({ response }) => {
+                                    if (!response) return;
+                                    dispatch(removeNote({ itemLink: bookInReader.link, ids: [note.id] }));
+                                });
+                        }
                     },
                 },
             ];
@@ -196,7 +212,7 @@ const NotesList: React.FC<{
                 items,
             });
         },
-        [notesArray, setContextMenuData, bookInReader],
+        [notesArray, setContextMenuData, bookInReader, confirmDeleteItem],
     );
 
     useLayoutEffect(() => {

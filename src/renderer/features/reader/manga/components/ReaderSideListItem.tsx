@@ -96,5 +96,6 @@ const ReaderSideListItem = memo(
         );
     },
 );
+ReaderSideListItem.displayName = "ReaderSideListItem";
 
 export default ReaderSideListItem;

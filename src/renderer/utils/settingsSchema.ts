@@ -42,6 +42,12 @@ const settingSchema = z
         checkboxReaderSetting: z.boolean(),
         syncSettings: z.boolean(),
         syncThemes: z.boolean(),
+        /**
+         * Confirm before deleting item from history/bookmark/note
+         * only in side list
+         * always true on home page
+         */
+        confirmDeleteItem: z.boolean(),
 
         //styles
 
@@ -264,6 +270,7 @@ const settingSchema = z
         checkboxReaderSetting: false,
         syncSettings: true,
         syncThemes: true,
+        confirmDeleteItem: true,
         showPageCountInSideList: true,
         showTextFileBadge: true,
         readerSettings: {
