@@ -95,6 +95,10 @@ const Usage: React.FC = () => {
                             <code>{shortcuts.find((e) => e.command === "contextMenu")?.keys.join(", ")}</code>{" "}
                             buttons to get right click menu of focused item.
                         </li>
+                        <li>
+                            Search by type: Type <code>manga|manhua|manhwa|webtoon|webcomic|comic</code> to search
+                            for manga/manhua/manhwa/webtoon/webcomic/comic or <code>epub</code> for epub.
+                        </li>
                     </ul>
                 </li>
                 <li>

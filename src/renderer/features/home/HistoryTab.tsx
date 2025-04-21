@@ -50,7 +50,8 @@ const HistoryTab: React.FC = () => {
                 ? item.title +
                   (formatUtils.files.test(item.progress?.chapterName || "")
                       ? `${window.path.extname(item.progress?.chapterName || "")}`
-                      : "")
+                      : "") +
+                  "manga|manhua|manhwa|webtoon|webcomic|comic"
                 : item.title + ".epub";
 
         return new RegExp(filter, "ig").test(searchText);

@@ -50,9 +50,12 @@ const BookmarkTab: React.FC = () => {
         const item = library.items[bookmark.itemLink];
         if (!item) return false;
 
+        //"page" in bookmark means it's a manga bookmark not epub
+
         const searchText =
             item.title +
             (item.progress?.chapterName ? ` ${item.progress.chapterName}` : "") +
+            ("page" in bookmark ? "manga|manhua|manhwa|webtoon|webcomic|comic" : "") +
             ` ${formatUtils.files.getExt("page" in bookmark ? bookmark.link : bookmark.itemLink)}`;
 
         return new RegExp(filter, "ig").test(searchText);
