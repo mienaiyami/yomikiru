@@ -2,7 +2,7 @@ import { faArrowLeft, faArrowRight, faThumbtack, faLocationDot } from "@fortawes
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { memo, useEffect, useLayoutEffect, useRef, useState } from "react";
 import { useAppSelector } from "@store/hooks";
-import List from "./components/List";
+import ContentList from "./components/ContentList";
 import FindInPage from "./components/FindInPage";
 import BookmarkButton from "./components/BookmarkButton";
 import BookmarkList from "./components/BookmarkList";
@@ -325,7 +325,7 @@ const EPubReaderSideList = memo(
                             </p>
                         )}
                         {epubData.ncx.length > 0 && (
-                            <List
+                            <ContentList
                                 currentChapterHref={
                                     epubData.manifest.get(currentChapterFake)?.href || currentChapter.href
                                 }

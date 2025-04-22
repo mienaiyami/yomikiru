@@ -1,7 +1,7 @@
 import { useAppSelector } from "@store/hooks";
 import { memo, useState, Fragment } from "react";
 
-const List = memo(
+const ContentList = memo(
     ({
         epubNCX,
         epubTOC,
@@ -85,6 +85,6 @@ const List = memo(
     // (prev, next) => !prev.focusChapterInList || prev.currentChapter.href === next.currentChapter.href
     (prev, next) => prev.currentChapterHref === next.currentChapterHref,
 );
-List.displayName = "List";
+ContentList.displayName = "ContentList";
 
-export default List;
+export default ContentList;

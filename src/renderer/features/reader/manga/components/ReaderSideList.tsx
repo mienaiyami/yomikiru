@@ -267,7 +267,7 @@ const ReaderSideList = memo(
                     focused={isSelected}
                     key={chapter.name}
                     pages={chapter.pages}
-                    current={mangaInReader?.link === chapter.link}
+                    current={mangaInReader?.progress?.chapterLink === chapter.link}
                     link={chapter.link}
                     onClick={() => openInReader(chapter.link)}
                 />
