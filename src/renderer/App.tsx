@@ -181,18 +181,6 @@ const App = (): ReactElement => {
             }),
         );
 
-        listeners.push(
-            window.electron.on("reader:recordPage", async () => {
-                // window.logger.log("received recordPageNumber");
-                if (isReaderOpen) closeReader();
-                // else if (window.app.linkInReader.link !== "") {
-                //     //todo
-                //     if (window.app.linkInReader.type === "image") dispatch();
-                //     else dispatch(updateCurrentItemProgress());
-                // }
-                window.electron.send("window:destroy");
-            }),
-        );
         window.app.titleBarHeight = parseFloat(
             window.getComputedStyle(document.body).getPropertyValue("--titleBar-height"),
         );
@@ -216,6 +204,15 @@ const App = (): ReactElement => {
             listeners.forEach((e) => e());
         };
     }, []);
+    useEffect(() => {
+        const listener = window.electron.on("reader:recordPage", async () => {
+            if (isReaderOpen) await closeReader();
+            window.electron.send("window:destroy");
+        });
+        return () => {
+            listener();
+        };
+    }, [isReaderOpen, closeReader]);
 
     useEffect(() => {
         // todo: use radix ui
