@@ -24,6 +24,7 @@ import { useDirectoryValidator } from "@features/reader/hooks/useDirectoryValida
 import { shallowEqual } from "react-redux";
 import { getShortcutsMapped } from "@store/shortcuts";
 import { fetchAllNotes } from "@store/bookNotes";
+import { getMainSettings, setMainSettings } from "@store/mainSettings";
 
 interface AppContext {
     pageNumberInputRef: React.RefObject<HTMLInputElement>;
@@ -150,6 +151,7 @@ const App = (): ReactElement => {
         dispatch(fetchAllItemsWithProgress());
         dispatch(fetchAllBookmarks());
         dispatch(fetchAllNotes());
+        dispatch(getMainSettings());
         listeners.push(
             window.electron.on("reader:loadLink", ({ link }) => {
                 if (link)
@@ -172,6 +174,10 @@ const App = (): ReactElement => {
             }),
             window.electron.on("db:bookNote:change", () => {
                 dispatch(fetchAllNotes());
+            }),
+            window.electron.on("mainSettings:sync", (settings) => {
+                console.log("mainSettings:sync", settings);
+                dispatch(setMainSettings(settings));
             }),
         );
 

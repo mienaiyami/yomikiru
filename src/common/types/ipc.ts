@@ -177,7 +177,8 @@ export type DialogChannels = {
 
 export type MainSettingsChannels = {
     "mainSettings:get": ChannelDefinition<void, MainSettingsType>;
-    "mainSettings:update": ChannelDefinition<Partial<MainSettingsType>, MainSettingsType>;
+    "mainSettings:update": ChannelDefinition<Partial<MainSettingsType>, void>;
+    "mainSettings:sync": ChannelDefinition<MainSettingsType, void, "m2r">;
 };
 
 export type IPCChannels = DatabaseChannels &

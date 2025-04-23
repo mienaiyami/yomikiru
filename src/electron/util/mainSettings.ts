@@ -1,8 +1,10 @@
-import { app, dialog, ipcMain as ipc } from "electron";
+import { app } from "electron";
 import fs from "fs";
 import path from "path";
 import { z } from "zod";
 import { log } from ".";
+import { ipc } from "@electron/ipc/utils";
+import { WindowManager } from "./window";
 
 const mainSettingsSchema = z
     .object({
@@ -103,7 +105,11 @@ export class MainSettings {
         ipc.handle("mainSettings:get", () => this.getSettings());
         ipc.handle("mainSettings:update", async (_, newSettings: Partial<MainSettingsType>) => {
             await this.updateSettings(newSettings);
-            return this.getSettings();
+            const windows = WindowManager.getAllWindows();
+            windows.forEach((window) => {
+                ipc.send(window.webContents, "mainSettings:sync", this.getSettings());
+            });
+            // return this.getSettings();
         });
     }
 }

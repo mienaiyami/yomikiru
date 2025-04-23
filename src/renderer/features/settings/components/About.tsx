@@ -4,27 +4,12 @@ import { faGithub } from "@fortawesome/free-brands-svg-icons";
 import { faHeart } from "@fortawesome/free-solid-svg-icons";
 import { AppUpdateChannel } from "@common/types/ipc";
 import InputSelect from "@ui/InputSelect";
-import { useState, useEffect } from "react";
-import type { MainSettingsType } from "@electron/util/mainSettings";
-import { dialogUtils } from "@utils/dialog";
+import { useAppDispatch, useAppSelector } from "@store/hooks";
+import { updateMainSettings } from "@store/mainSettings";
 
 const About: React.FC = () => {
-    const [mainSettings, setMainSettings] = useState<MainSettingsType | null>(null);
-
-    useEffect(() => {
-        window.electron.invoke("mainSettings:get").then((settings) => {
-            setMainSettings(settings);
-        });
-    }, []);
-
-    const updateMainSettings = async (settings: Partial<MainSettingsType>) => {
-        const updatedSettings = await window.electron.invoke("mainSettings:update", settings);
-        if (!updatedSettings)
-            return dialogUtils.customError({
-                message: "Failed to update settings",
-            });
-        setMainSettings(updatedSettings);
-    };
+    const mainSettings = useAppSelector((state) => state.mainSettings);
+    const dispatch = useAppDispatch();
 
     const handleChannelChange = async (newChannel: AppUpdateChannel) => {
         if (newChannel === "beta") {
@@ -41,7 +26,7 @@ const About: React.FC = () => {
                 message: "You will only receive update after stable version crosses your current version.",
             });
         }
-        updateMainSettings({ channel: newChannel });
+        dispatch(updateMainSettings({ channel: newChannel }));
     };
 
     return (
@@ -65,18 +50,22 @@ const About: React.FC = () => {
                         paraAfter="Check for updates every 1 hour"
                         checked={mainSettings?.checkForUpdates ?? false}
                         onChange={(e) => {
-                            updateMainSettings({
-                                checkForUpdates: e.currentTarget.checked,
-                            });
+                            dispatch(
+                                updateMainSettings({
+                                    checkForUpdates: e.currentTarget.checked,
+                                }),
+                            );
                         }}
                     />
                     <InputCheckbox
                         checked={mainSettings?.skipPatch ?? false}
                         className="noBG"
                         onChange={(e) => {
-                            updateMainSettings({
-                                skipPatch: e.currentTarget.checked,
-                            });
+                            dispatch(
+                                updateMainSettings({
+                                    skipPatch: e.currentTarget.checked,
+                                }),
+                            );
                         }}
                         title="Mostly just frequent updates rather than patch."
                         paraAfter="Skip patch updates"
@@ -85,9 +74,11 @@ const About: React.FC = () => {
                         checked={mainSettings?.autoDownload ?? false}
                         className="noBG"
                         onChange={(e) => {
-                            updateMainSettings({
-                                autoDownload: e.currentTarget.checked,
-                            });
+                            dispatch(
+                                updateMainSettings({
+                                    autoDownload: e.currentTarget.checked,
+                                }),
+                            );
                         }}
                         paraAfter="Auto download updates"
                     />

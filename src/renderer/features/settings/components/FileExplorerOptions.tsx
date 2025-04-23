@@ -1,24 +1,20 @@
-import { ReactElement, useState } from "react";
+import { ReactElement } from "react";
 import InputCheckbox from "@ui/InputCheckbox";
 import { useExplorerOptions } from "../hooks/useExplorerOptions";
+import { useAppDispatch, useAppSelector } from "@store/hooks";
+import { updateMainSettings } from "@store/mainSettings";
 
 const FileExplorerOptions = (): ReactElement => {
-    const [openInSameWindow, setOpenInSameWindow] = useState(
-        window.fs.existsSync(
-            window.path.join(window.electron.app.getPath("userData"), "OPEN_IN_EXISTING_WINDOW"),
-        ) || false,
-    );
+    const dispatch = useAppDispatch();
+    const { openInExistingWindow } = useAppSelector((state) => state.mainSettings);
     const { isUpdating, handleInvoke } = useExplorerOptions();
 
     const handleOpenInSameWindowChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-        //todo handle it in electron
-        const fileName = window.path.join(window.electron.app.getPath("userData"), "OPEN_IN_EXISTING_WINDOW");
-        if (!e.currentTarget.checked) {
-            if (window.fs.existsSync(fileName)) window.fs.rm(fileName);
-        } else {
-            window.fs.writeFile(fileName, " ");
-        }
-        setOpenInSameWindow((init) => !init);
+        dispatch(
+            updateMainSettings({
+                openInExistingWindow: e.currentTarget.checked,
+            }),
+        );
     };
 
     const handleAddOption = () => {
@@ -46,7 +42,7 @@ const FileExplorerOptions = (): ReactElement => {
             </div>
             <div className="main">
                 <InputCheckbox
-                    checked={openInSameWindow}
+                    checked={openInExistingWindow}
                     className="noBG"
                     onChange={handleOpenInSameWindowChange}
                     labelAfter="Open In Existing Window"

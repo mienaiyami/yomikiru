@@ -67,7 +67,6 @@ const ShortcutInput = ({ command }: { command: ShortcutCommands }) => {
                         }
 
                         if (reservedKeys.includes(newKey)) {
-                            //todo make a simple alert
                             dialogUtils.warn({
                                 message: "Can't use reserved key combination.",
                             });

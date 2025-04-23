@@ -9,6 +9,7 @@ import bookmarksReducer from "./bookmarks";
 import bookNotesReducer from "./bookNotes";
 import uiReducer from "./ui";
 import readerReducer from "./reader";
+import mainSettingsReducer from "./mainSettings";
 
 const store = configureStore({
     reducer: {
@@ -22,6 +23,7 @@ const store = configureStore({
         anilist: anilistReducer,
         ui: uiReducer,
         reader: readerReducer,
+        mainSettings: mainSettingsReducer,
     },
     middleware: (getDefaultMiddleware) =>
         getDefaultMiddleware({

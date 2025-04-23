@@ -3,7 +3,6 @@ import { useAppDispatch, useAppSelector } from "@store/hooks";
 import { resetAllTheme } from "@store/themes";
 import { dialogUtils } from "@utils/dialog";
 import { promptSelectDir } from "@utils/file";
-import { useEffect, useState } from "react";
 import FileExplorerOptions from "./FileExplorerOptions";
 import InputCheckbox from "@ui/InputCheckbox";
 import { resetShortcuts } from "@store/shortcuts";
@@ -13,27 +12,13 @@ import CustomTempLocation from "./CustomTempLocation";
 import GeneralThemeSettings from "./GeneralThemeSettings";
 import GeneralPDFSettings from "./GeneralPDFSettings";
 import { resetLibrary } from "@store/library";
+import { updateMainSettings } from "@store/mainSettings";
 
 const GeneralSettings: React.FC = () => {
     const { scrollIntoView } = useSettingsContext();
     const appSettings = useAppSelector((store) => store.appSettings);
+    const mainSettings = useAppSelector((store) => store.mainSettings);
     const dispatch = useAppDispatch();
-
-    const [mainSettings, setMainSettings] = useState<{ hardwareAcceleration: boolean; askBeforeClosing: boolean }>(
-        {
-            hardwareAcceleration: true,
-            askBeforeClosing: false,
-        },
-    );
-
-    useEffect(() => {
-        window.electron.invoke("mainSettings:get").then((settings) => {
-            setMainSettings({
-                hardwareAcceleration: settings.hardwareAcceleration,
-                askBeforeClosing: settings.askBeforeClosing,
-            });
-        });
-    }, []);
 
     return (
         <div className="content2">
@@ -55,132 +40,6 @@ const GeneralSettings: React.FC = () => {
                 </div>
             </div>
             <GeneralThemeSettings />
-            <div className="settingItem2">
-                <h3>Bookmarks</h3>
-                <div className="main row">
-                    <button
-                        onClick={() => {
-                            throw new Error("Not implemented");
-                            // if (bookmarks === 0) {
-                            //     dialogUtils.customError({
-                            //         message: "No bookmarks detected.",
-                            //         log: false,
-                            //     });
-                            //     return;
-                            // }
-                            // const opt = window.electron.dialog.showSaveDialogSync(
-                            //     window.electron.getCurrentWindow(),
-                            //     {
-                            //         title: "Export Bookmarks",
-                            //         defaultPath: "yomikiru-bookmarks.json",
-                            //         filters: [
-                            //             {
-                            //                 name: "json",
-                            //                 extensions: ["json"],
-                            //             },
-                            //         ],
-                            //     }
-                            // );
-                            // if (opt == undefined) return;
-                            // window.fs.writeFileSync(
-                            //     opt,
-                            //     JSON.stringify(bookmarks, null, "\t") || JSON.stringify([])
-                            // );
-                        }}
-                    >
-                        Export
-                    </button>
-                    <button
-                        onClick={() => {
-                            throw new Error("Not implemented");
-                            // const opt = window.electron.dialog.showOpenDialogSync(
-                            //     window.electron.getCurrentWindow(),
-                            //     {
-                            //         properties: ["openFile"],
-                            //         filters: [
-                            //             {
-                            //                 name: "Json",
-                            //                 extensions: ["json"],
-                            //             },
-                            //         ],
-                            //     }
-                            // );
-                            // if (opt == undefined) return;
-                            // const data: Manga_BookItem[] = JSON.parse(
-                            //     window.fs.readFileSync(opt[0], "utf8")
-                            // );
-                            // const dataToAdd: Manga_BookItem[] = [];
-                            // let similarFound = 0;
-                            // let importedCount = 0;
-                            // if (!(data instanceof Array)) {
-                            //     dialogUtils.customError({
-                            //         message:
-                            //             "Data is not in correct format. To make sure it is correct, compare it with existing bookmark.json and fix.",
-                            //         log: false,
-                            //     });
-                            //     return;
-                            // }
-                            // data.forEach((item) => {
-                            //     if ("type" in item && "data" in item) {
-                            //         if (
-                            //             !bookmarks
-                            //                 .map((e) => e.data.link)
-                            //                 .includes(item.data.link)
-                            //         ) {
-                            //             dataToAdd.push(item);
-                            //             importedCount++;
-                            //         } else {
-                            //             similarFound++;
-                            //         }
-                            //     }
-                            // });
-                            // if (similarFound > 0)
-                            //     dialogUtils.warn({
-                            //         title: "warning",
-                            //         message: "Found " + similarFound + " with same link",
-                            //     });
-                            // dialogUtils.confirm({
-                            //     title: "Imported",
-                            //     message: "Imported " + importedCount + " bookmarks.",
-                            //     noOption: true,
-                            // });
-                            // dispatch(addBookmark(dataToAdd));
-                        }}
-                    >
-                        Import
-                    </button>
-                    <button
-                        onClick={() => {
-                            throw new Error("Not implemented");
-                            // dialogUtils
-                            //     .warn({
-                            //         title: "Delete BookMarks",
-                            //         message: "Are you sure you want to clear bookmarks?",
-                            //         noOption: false,
-                            //     })
-                            //     .then(({ response }) => {
-                            //         if (response == undefined) return;
-                            //         if (response === 1) return;
-                            //         if (response === 0) {
-                            //             dialogUtils
-                            //                 .warn({
-                            //                     title: "Delete Bookmarks",
-                            //                     noOption: false,
-                            //                     message:
-                            //                         "Are you really sure you want to clear bookmarks?\nThis process is irreversible.",
-                            //                 })
-                            //                 .then((res) => {
-                            //                     if (res.response === 1) return;
-                            //                     dispatch(removeAllBookmarks());
-                            //                 });
-                            //         }
-                            //     });
-                        }}
-                    >
-                        Delete All Bookmarks
-                    </button>
-                </div>
-            </div>
             {process.platform === "win32" && <FileExplorerOptions />}
             <AnilistSetting />
             <GeneralPDFSettings />
@@ -238,11 +97,7 @@ const GeneralSettings: React.FC = () => {
                         checked={mainSettings.hardwareAcceleration}
                         className="noBG"
                         onChange={async (e) => {
-                            await window.electron
-                                .invoke("mainSettings:update", {
-                                    hardwareAcceleration: e.currentTarget.checked,
-                                })
-                                .then(setMainSettings);
+                            dispatch(updateMainSettings({ hardwareAcceleration: e.currentTarget.checked }));
                         }}
                         labelAfter="Hardware Acceleration"
                     />
@@ -256,11 +111,7 @@ const GeneralSettings: React.FC = () => {
                         checked={mainSettings.askBeforeClosing}
                         className="noBG"
                         onChange={async (e) => {
-                            await window.electron
-                                .invoke("mainSettings:update", {
-                                    askBeforeClosing: e.currentTarget.checked,
-                                })
-                                .then(setMainSettings);
+                            dispatch(updateMainSettings({ askBeforeClosing: e.currentTarget.checked }));
                         }}
                         labelAfter="Confirm Close Window"
                     />

@@ -4,17 +4,17 @@ import { promptSelectDir } from "@utils/file";
 import InputCheckbox from "@ui/InputCheckbox";
 import { useAppDispatch, useAppSelector } from "@store/hooks";
 import { setAppSettings } from "@store/appSettings";
+import { updateMainSettings } from "@store/mainSettings";
 
 const CustomTempLocation: React.FC = () => {
     const dispatch = useAppDispatch();
     const appSettings = useAppSelector((state) => state.appSettings);
-    const [tempFolder, setTempFolder] = useState(window.electron.app.getPath("temp"));
+    const { tempPath } = useAppSelector((state) => state.mainSettings);
 
     const updateTempPath = async (newPath?: string) => {
         try {
             if (newPath === undefined || window.fs.existsSync(newPath)) {
-                const newSettings = await window.electron.invoke("mainSettings:update", { tempPath: newPath });
-                setTempFolder(newSettings.tempPath);
+                dispatch(updateMainSettings({ tempPath: newPath }));
             } else {
                 throw new Error("Folder does not exist : " + newPath);
             }
@@ -32,7 +32,7 @@ const CustomTempLocation: React.FC = () => {
                 <br /> Defaults to temp folder provided by OS.
             </div>
             <div className="main row">
-                <input type="text" placeholder="No path Selected" value={tempFolder} readOnly />
+                <input type="text" placeholder="No path Selected" value={tempPath} readOnly />
                 <button
                     onClick={() => {
                         promptSelectDir((path) => {
@@ -72,11 +72,11 @@ const CustomTempLocation: React.FC = () => {
                                 if (res.checkboxChecked) {
                                     window.electron.clearAppCache();
                                 }
-                                const files = await window.fs.readdir(tempFolder);
+                                const files = await window.fs.readdir(tempPath);
                                 files
                                     .filter((e) => e.startsWith("yomikiru"))
                                     .forEach((e) =>
-                                        window.fs.rm(window.path.join(tempFolder, e), {
+                                        window.fs.rm(window.path.join(tempPath, e), {
                                             force: true,
                                             recursive: true,
                                         }),
