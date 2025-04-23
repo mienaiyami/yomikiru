@@ -16,7 +16,7 @@ export const migrateToSqlite = async (
     db: DatabaseService,
     history: HistoryItem[],
     bookmarks: Manga_BookItem[],
-) => {
+): Promise<void> => {
     try {
         log.log("Backing up db");
         await fs.access(DB_PATH);
@@ -37,7 +37,7 @@ export const migrateToSqlite = async (
     }
 };
 
-export const checkForJSONMigration = async (db: DatabaseService) => {
+export const checkForJSONMigration = async (db: DatabaseService): Promise<void> => {
     const bookmarks: Manga_BookItem[] = [];
     const history: HistoryItem[] = [];
     try {

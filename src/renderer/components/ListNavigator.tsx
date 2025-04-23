@@ -224,12 +224,12 @@ type SearchInputProps = {
       }
 );
 
-const SearchInputComponent = ({
+const SearchInputComponent: React.FC<SearchInputProps> = ({
     placeholder = "Type to search",
     className = "search-input",
     onChange,
     runOriginalOnChange = false,
-}: SearchInputProps) => {
+}) => {
     const { inputRef, handleFilterChange, handleKeyDown, setFocused } = useListNavigator();
 
     useEffect(() => {

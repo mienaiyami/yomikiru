@@ -1,8 +1,6 @@
 import { relations, sql } from "drizzle-orm";
 import { sqliteTable, text, integer, unique, index } from "drizzle-orm/sqlite-core";
 
-// todo : add relations
-
 const timeNow = sql`(unixepoch() * 1000)`;
 
 export const libraryItems = sqliteTable("library_items", {

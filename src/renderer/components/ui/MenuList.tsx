@@ -9,7 +9,7 @@ import { shallowEqual } from "react-redux";
 
 // ! not indented to be used without `AppContext::optSelectData`
 //todo rename later for select only
-const MenuList = () => {
+const MenuList: React.FC = () => {
     const { optSelectData } = useAppContext();
     const shortcutsMapped = useAppSelector(getShortcutsMapped, shallowEqual);
 

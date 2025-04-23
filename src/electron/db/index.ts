@@ -9,10 +9,16 @@ import { libraryItems, mangaProgress, bookProgress, mangaBookmarks, bookBookmark
 import { HistoryItem, Manga_BookItem } from "@common/types/legacy";
 import Database from "better-sqlite3";
 import { dateFromOldDateString, electronOnly, log } from "../util";
-import { AddToLibraryData, UpdateBookProgressData, UpdateMangaProgressData } from "@common/types/db";
+import {
+    AddToLibraryData,
+    BookProgress,
+    LibraryItem,
+    MangaProgress,
+    UpdateBookProgressData,
+    UpdateMangaProgressData,
+} from "@common/types/db";
 
 electronOnly();
-// todo : add proper error handling
 
 export const DB_PATH = app.isPackaged ? path.join(app.getPath("userData"), "data.db") : "data.db";
 
@@ -23,17 +29,17 @@ export class DatabaseService {
         this._db = drizzle({ client: sqlite, schema });
     }
 
-    get db() {
+    get db(): ReturnType<typeof drizzle> {
         return this._db;
     }
-    async initialize() {
+    async initialize(): Promise<void> {
         console.log("Migrating database");
-        migrate(this._db, {
+        await migrate(this._db, {
             migrationsFolder: app.isPackaged ? path.join(path.dirname(app.getAppPath()), "drizzle") : "drizzle",
         });
         console.log(this._db.all(`select unixepoch() as time`));
     }
-    async addLibraryItem(data: AddToLibraryData) {
+    async addLibraryItem(data: AddToLibraryData): Promise<LibraryItem> {
         return await this._db.transaction(async (tx) => {
             const [item] = await tx.insert(libraryItems).values(data.data).returning();
             if (data.type === "manga") {
@@ -54,7 +60,7 @@ export class DatabaseService {
         });
     }
 
-    async updateMangaProgress(data: UpdateMangaProgressData) {
+    async updateMangaProgress(data: UpdateMangaProgressData): Promise<MangaProgress[]> {
         const { itemLink, ...updateData } = data;
         return await this._db
             .update(mangaProgress)
@@ -66,7 +72,7 @@ export class DatabaseService {
             .returning();
     }
 
-    async updateMangaChapterRead(itemLink: string, chapterNames: string[], read: boolean) {
+    async updateMangaChapterRead(itemLink: string, chapterNames: string[], read: boolean): Promise<string[]> {
         return await this._db.transaction(async (tx) => {
             const [progress] = await tx.select().from(mangaProgress).where(eq(mangaProgress.itemLink, itemLink));
             if (!progress) {
@@ -89,7 +95,7 @@ export class DatabaseService {
         });
     }
 
-    async updateBookProgress(data: UpdateBookProgressData) {
+    async updateBookProgress(data: UpdateBookProgressData): Promise<BookProgress[]> {
         const { itemLink, ...updateData } = data;
         return await this._db
             .update(bookProgress)
@@ -101,9 +107,7 @@ export class DatabaseService {
             .returning();
     }
 
-    // todo: review
-    // todo: add option in frontend to manually import as well
-    async migrateFromJSON(historyData: HistoryItem[], bookmarkData: Manga_BookItem[]) {
+    async migrateFromJSON(historyData: HistoryItem[], bookmarkData: Manga_BookItem[]): Promise<void> {
         log.log(
             "Migrating from JSON " +
                 historyData.length +

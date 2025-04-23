@@ -65,8 +65,6 @@ const shortcuts = createSlice({
     initialState,
     reducers: {
         setShortcuts: (state, action: PayloadAction<{ command: ShortcutCommands; key: string }>) => {
-            // todo: why did i do this?
-            // if (action.payload instanceof Array) state = action.payload;
             const { command, key } = action.payload;
             const index = state.findIndex((e) => e.command === command);
             if (index > -1) {

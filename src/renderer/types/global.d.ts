@@ -46,8 +46,6 @@ declare global {
              */
             deleteDirOnClose: string;
             titleBarHeight: number;
-            // todo remove
-            // isReaderOpen: boolean;
             clickDelay: number;
             lastClick: number;
             scrollToPage: (
@@ -56,24 +54,6 @@ declare global {
                 callback?: () => void,
             ) => void;
             keyRepeated: boolean;
-
-            //todo try to remove if possible, or modify for better use
-            /**
-             * why did i add this? bcoz linkInReader state is showing initial only in App.tsx
-             */
-            // linkInReader: {
-            //     type: "image" | "book" | "";
-            //     link: string;
-            //     page: number;
-            //     chapter: string;
-            //     /** for epub */
-            //     chapterId?: string;
-            //     /**
-            //      * elem query string for epub auto scroll
-            //      */
-            //     queryStr?: string;
-            // };
-
             // to remove later
             keydown: boolean;
         };

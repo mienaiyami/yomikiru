@@ -85,10 +85,6 @@ app.on("ready", async () => {
                 { role: "forceReload" },
                 { role: "toggleDevTools" },
                 { type: "separator" },
-                // ! moving to App.tsx
-                // { role: "resetZoom" },
-                // { role: "zoomIn", accelerator: "CommandOrControl+=" },
-                // { role: "zoomOut" },
             ],
         },
         {

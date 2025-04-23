@@ -23,7 +23,6 @@ type BookItem = {
     title: string;
     author: string;
     link: string;
-    //todo impl
     cover: string;
     date?: string;
     chapterData?: {

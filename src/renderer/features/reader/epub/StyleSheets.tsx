@@ -8,7 +8,6 @@ const StyleSheets = memo(
                 className="stylesheets"
                 ref={(node) => {
                     if (node) {
-                        // todo check async behavior
                         sheets.forEach(async (url) => {
                             try {
                                 const stylesheet = document.createElement("style");
@@ -16,13 +15,14 @@ const StyleSheets = memo(
                                 const matches = Array.from(txt.matchAll(/url\((.*?)\);/gi));
                                 matches.forEach((e) => {
                                     // for font
-                                    const url_old = e[1].slice(1, -1);
+                                    let originalURL = e[1];
+                                    if (originalURL.startsWith(`'`) || originalURL.startsWith(`"`))
+                                        originalURL = originalURL.slice(1, -1);
                                     txt = txt.replaceAll(
-                                        url_old,
-                                        "file://" +
-                                            window.path
-                                                .join(window.path.dirname(url), url_old)
-                                                .replaceAll("\\", "/"),
+                                        e[1],
+                                        `"file://${window.path
+                                            .join(window.path.dirname(url), originalURL)
+                                            .replaceAll("\\", "/")}"`,
                                     );
                                 });
                                 // to make sure styles don't apply outside
@@ -49,5 +49,6 @@ const StyleSheets = memo(
     },
     (prev, next) => prev.sheets.length === next.sheets.length && prev.sheets[0] === next.sheets[0],
 );
+StyleSheets.displayName = "StyleSheets";
 
 export default StyleSheets;

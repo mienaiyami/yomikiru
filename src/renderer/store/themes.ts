@@ -203,10 +203,12 @@ const themes = createSlice({
         },
         refreshThemes: () => {
             try {
-                //todo validate
                 return JSON.parse(window.fs.readFileSync(themesPath, "utf8"));
             } catch {
-                //
+                dialogUtils.customError({
+                    title: "Error",
+                    message: "Unable to parse " + themesPath + "\nMaking new themes.json...",
+                });
             }
         },
         addThemes: (state, action: PayloadAction<ThemeData[]>) => {

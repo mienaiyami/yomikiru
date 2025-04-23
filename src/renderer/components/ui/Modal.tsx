@@ -9,7 +9,6 @@ type PropsBase = {
 type Props1 = PropsBase & { children: ReactNode; asHTML?: false };
 type Props2 = PropsBase & { children: string; asHTML: true };
 const Modal = memo((props: Props1 | Props2) => {
-    //todo impl
     return (
         <FocusLock disabled={!!props.noFocusLock}>
             <div

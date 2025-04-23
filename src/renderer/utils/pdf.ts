@@ -5,7 +5,6 @@ import worker from "pdfjs-dist/build/pdf.worker.js";
 import { dialogUtils } from "./dialog";
 pdfjsLib.GlobalWorkerOptions.workerSrc = worker;
 
-// todo improve and make
 const renderPDF = async (
     link: string,
     renderPath: string,

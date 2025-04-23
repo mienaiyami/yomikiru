@@ -415,7 +415,6 @@ const parseAppSettings = (): z.infer<typeof settingSchema> => {
     };
 
     try {
-        //todo test for empty;
         const parsedJSON = JSON.parse(window.fs.readFileSync(settingsPath, "utf-8"));
         return settingSchema
             .catch(({ error, input }) => {
