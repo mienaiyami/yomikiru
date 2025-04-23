@@ -493,7 +493,7 @@ window.getCSSPath = (el) => {
     while (elem.nodeType === Node.ELEMENT_NODE) {
         let selector = elem.nodeName.toLowerCase();
         if (elem.id) {
-            selector += "#" + elem.id.trim();
+            selector += "#" + elem.id.trim().replaceAll(".", "\\.");
             path.unshift(selector);
             break;
         } else {

@@ -1,5 +1,11 @@
 # Contribute Guide
 
+> [!IMPORTANT]  
+> I wrote this app when I was learning to code, so the code is far from good. I have been trying to refactor the code and implement better storage methods considering future updates.
+> So there will be lot of changes in the codebase. If you are planning to contribute on something big, please contact me first or wait for the next update.
+>
+> Check wip branch for the latest changes.
+
 ## Introduction
 
 Welcome to the contribute guide for the project. This guide will help you understand how to contribute to the project effectively.

@@ -2,9 +2,10 @@ Does not follow semver.
 
 ---
 
-## Fixed
-
-- images not showing on linux, #376.
-- epub: toggle progress in zen mode with keybinding, #368.
+> [!Important]  
+>
+> This version is to prevent users from receiving beta/pre-release versions which will be released soon.
+>
+> Some additional context : <https://github.com/mienaiyami/yomikiru/discussions/384#discussioncomment-9852596>
 
 ---

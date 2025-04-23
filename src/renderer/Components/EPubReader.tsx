@@ -792,7 +792,7 @@ const EPubReader = () => {
     const makeScrollPos = useCallback(
         (callback?: (queryString?: string) => void) => {
             if (mainRef.current) {
-                let y = (zenMode ? window.window.app.titleBarHeight : 0) + 10;
+                let y = (zenMode ? 0 : window.app.titleBarHeight) + 10;
                 let x = mainRef.current.offsetLeft + mainRef.current.offsetWidth / 3;
                 let elem: Element | null = null;
                 const sectionMain = document.querySelector("#EPubReader > section");

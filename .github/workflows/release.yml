@@ -1,0 +1,115 @@
+name: make and release
+run-name: Make and Release
+
+permissions:
+    contents: write
+    discussions: write
+
+# on: workflow_dispatch
+on:
+    push:
+        tags:
+            - "v*"
+    # this is only in case when action fails, and no new release is made
+    # ! this actions only when when no release with same version and tag exists
+    workflow_dispatch:
+
+jobs:
+    buildDeb:
+        runs-on: ubuntu-latest
+        steps:
+            - name: Warning
+              if: ${{ github.event_name == 'workflow_dispatch' }}
+              run: echo "This will fail if a release with same version and tag exists"
+            - uses: actions/checkout@v3
+            - name: Use Node.js
+              uses: actions/setup-node@v3
+              with:
+                  node-version: 18.15.0
+            - name: Set version
+              id: version
+              run: |
+                if [[ $GITHUB_REF == refs/tags/v* ]]; then
+                  VERSION=${GITHUB_REF#refs/tags/}
+                else
+                  VERSION="v$(node -p "require('./package.json').version")"
+                fi
+                echo "version=$VERSION" >> $GITHUB_OUTPUT
+
+            - name: Install dependencies
+              run: yarn ci --network-timeout 1000000
+            - name: forge make
+              run: yarn make:deb
+
+            - uses: actions/upload-artifact@v4
+              with:
+                  name: linux-build-file
+                  path: ./out/full/Yomikiru-${{ steps.version.outputs.version }}-amd64.deb
+
+    build:
+        needs: buildDeb
+        runs-on: windows-latest
+        steps:
+            - uses: actions/checkout@v3
+            - name: Use Node.js
+              uses: actions/setup-node@v3
+              with:
+                  node-version: 18.15.0
+
+            - name: Set version
+              id: version
+              shell: bash
+              run: |
+                if [[ $GITHUB_REF == refs/tags/v* ]]; then
+                  VERSION=${GITHUB_REF#refs/tags/}
+                else
+                  VERSION="v$(node -p "require('./package.json').version")"
+                fi
+                echo "version=$VERSION" >> $GITHUB_OUTPUT
+
+            # yarn cache start
+            # it does work but take same time (and more sometimes) compared downloading so i dont see any use of it
+
+            # - name: Get yarn cache directory path
+            #   id: yarn-cache-dir-path
+            #   run: echo "::set-output name=dir::$(yarn cache dir)"
+
+            # - uses: actions/cache@v3
+            #   id: yarn-cache
+            #   with:
+            #     path: ${{ steps.yarn-cache-dir-path.outputs.dir }}
+            #     key: ${{ runner.os }}-yarn-${{ hashFiles('**/yarn.lock') }}
+            #     restore-keys: |
+            #       ${{ runner.os }}-yarn-
+
+            # - name: Install dependencies
+            #   run: yarn ci --network-timeout 1000000
+            #   # if: steps.yarn-cache.outputs.cache-hit != 'true'
+
+            #end
+
+            - name: Install dependencies
+              run: yarn ci --network-timeout 1000000
+            - name: forge make
+              run: yarn make
+
+            - uses: actions/download-artifact@v4
+              id: linux-build-file-downloader
+              with:
+                  name: linux-build-file
+                  path: ./out/full/
+
+            - name: Release
+              uses: softprops/action-gh-release@v2
+              with:
+                  tag_name: ${{steps.version.outputs.version}}
+                  name: ${{steps.version.outputs.version}}
+                  files: |
+                      ./out/full/Yomikiru-win32-${{ steps.version.outputs.version }}-Portable.zip
+                      ./out/full/Yomikiru-win32-${{ steps.version.outputs.version }}-Portable-x64.zip
+                      ./out/full/Yomikiru-${{ steps.version.outputs.version }}-Setup.exe
+                      ./out/full/Yomikiru-${{ steps.version.outputs.version }}-Setup-x64.exe
+                      ./out/full/Yomikiru-${{ steps.version.outputs.version }}-amd64.deb
+                  body_path: changelog-temp.md
+                  generate_release_notes: true
+                  discussion_category_name: General
