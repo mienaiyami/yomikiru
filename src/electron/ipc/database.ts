@@ -79,6 +79,8 @@ const handlers: {
         try {
             await db.db.delete(libraryItems).where(eq(libraryItems.link, request.link));
             pingDatabaseChange("db:library:change");
+            pingDatabaseChange("db:bookmark:change");
+            pingDatabaseChange("db:bookNote:change");
             return true;
         } catch (error) {
             console.error(`Error in IPC channel "db:library:deleteItem":`, error);
