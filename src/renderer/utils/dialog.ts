@@ -58,9 +58,6 @@ type DialogUtils = {
          * @default true
          */
         noOption?: boolean;
-        /**
-         * @default ["Yes","No"]
-         */
         buttons?: string[];
         defaultId?: number;
         cancelId?: number;
@@ -91,7 +88,11 @@ export const dialogUtils: DialogUtils = {
             log,
         });
     },
-    warn: ({ title = "Warning", message, detail, noOption = true, buttons = ["Yes", "No"], defaultId = 1 }) => {
+    warn: ({ title = "Warning", message, detail, noOption = true, buttons, defaultId }) => {
+        if (!noOption && !buttons) {
+            buttons = ["Yes", "No"];
+            if (typeof defaultId !== "number") defaultId = 1;
+        }
         return window.electron.invoke("dialog:warn", {
             title,
             message,
@@ -106,13 +107,17 @@ export const dialogUtils: DialogUtils = {
         message,
         detail,
         noOption = true,
-        buttons = ["Yes", "No"],
-        defaultId = 1,
+        buttons,
+        defaultId,
         noLink,
         cancelId,
         checkboxLabel,
         type = "info",
     }) => {
+        if (!noOption && !buttons) {
+            buttons = ["Yes", "No"];
+            if (typeof defaultId !== "number") defaultId = 1;
+        }
         return window.electron.invoke("dialog:confirm", {
             title,
             message,
