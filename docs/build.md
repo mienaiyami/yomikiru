@@ -1,6 +1,10 @@
 # Build Guide
 
-Require `git`, `node@v18.15.0` and `yarn`.
+> [!IMPORTANT]
+> If you are planning to build this and use yourself, I recommend using beta branch instead of master.
+> There are many issues in master branch which will soon be fixed by merging beta branch.
+
+Require `git`, `node@v18` and `yarn`.
 
 ```bash
 
