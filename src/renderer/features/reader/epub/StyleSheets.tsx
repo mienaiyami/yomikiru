@@ -47,7 +47,7 @@ const StyleSheets = memo(
             ></div>
         );
     },
-    (prev, next) => prev.sheets.length === next.sheets.length && prev.sheets[0] === next.sheets[0],
+    (prev, next) => JSON.stringify(prev.sheets) === JSON.stringify(next.sheets),
 );
 StyleSheets.displayName = "StyleSheets";
 

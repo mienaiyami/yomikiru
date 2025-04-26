@@ -15,7 +15,7 @@ on:
     workflow_dispatch:
 
 jobs:
-    buildDeb:
+    buildLinux:
         runs-on: ubuntu-latest
         steps:
             - uses: actions/checkout@v4
@@ -34,7 +34,7 @@ jobs:
             - name: Install dependencies
               run: pnpm install
 
-            - name: forge make
+            - name: forge make deb
               run: pnpm make:deb
 
             - name: Set version
@@ -49,12 +49,12 @@ jobs:
 
             - uses: actions/upload-artifact@v4
               with:
-                  name: linux-build-file
-                  path: ./out/all/Yomikiru-${{ steps.version.outputs.version }}-amd64.deb
+                  name: linux-build-files
+                  path: ./out/all/*
                   if-no-files-found: error
 
     build:
-        needs: buildDeb
+        needs: buildLinux
         runs-on: windows-latest
         steps:
             - uses: actions/checkout@v4
@@ -74,9 +74,9 @@ jobs:
               run: pnpm install
 
             - uses: actions/download-artifact@v4
-              id: linux-build-file-downloader
+              id: linux-build-files-downloader
               with:
-                  name: linux-build-file
+                  name: linux-build-files
                   path: ./out/all/
 
             - name: Build for windows
