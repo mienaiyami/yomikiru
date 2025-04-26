@@ -35,15 +35,15 @@ To contribute to the project, follow these steps:
 6. Test your changes thoroughly.
 7. Commit your changes with descriptive commit messages.
 8. Push your changes to your forked repository.
-9. Open a pull request to the main repository.
+9. Open a pull request to the `beta` branch.
 
 ## Filing Pull Requests
 
 Here are some things to keep in mind as you file pull requests to fix bugs, add new features, etc.:
 
 - Remember to always test your code changes before pushing them to ensure they are working as expected.
-<!-- - If your PR changes the behavior of an existing feature, or adds a new feature, please add/edit the package's documentation. -->
+- If your PR changes the behavior of an existing feature, or adds a new feature, please add/edit the package's documentation. Also add some description to do `Usage.tsx` file in settings page.
 - All commits commits and PR title must be descriptive and follow a proper format.
-- Please do not bump the version number in your pull requests, the maintainers will do that. Feel free to indicate whether the changes are a breaking change in behavior.
+- Please do not bump the version number in your pull requests, the maintainers will do that. Indicate whether the changes are a breaking change in behavior.
 - Make sure that your code will not disrupt working of this app on other supported OS.
 - Do not include any content that may result in copyright issues.
