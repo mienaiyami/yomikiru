@@ -137,7 +137,7 @@ const config: ForgeConfig = {
                 // linux is built in another job and downloaded here as artifact
                 makeDlBtn({
                     ...MAP["linux+deb+amd64"],
-                    url: `${makeResults[0].packageJSON.author.url}/releases/download/v${appVersion}`,
+                    url: makeResults[0].packageJSON.author.url,
                 }) +
                 "\n";
 
