@@ -63,6 +63,7 @@ function ListNavigatorProviderComponent<T>({
     const listRef = useRef<HTMLOListElement>(null);
 
     const filteredItems = useMemo(() => {
+        console.log({ filter, items });
         return filterFn ? items.filter((item) => filterFn(filter, item)) : items;
     }, [items, filter, filterFn]);
 
@@ -77,10 +78,6 @@ function ListNavigatorProviderComponent<T>({
     const handleKeyDown = useCallback(
         (e: React.KeyboardEvent) => {
             e.stopPropagation();
-
-            if (/\[|\]|\(|\)|\*|\+|\?/gi.test(e.key)) {
-                e.preventDefault();
-            }
 
             const keyStr = keyFormatter(e);
             if (keyStr === "" && e.key !== "Escape") return;
@@ -142,24 +139,76 @@ function ListNavigatorProviderComponent<T>({
                 setFilter(typeof e === "string" ? e : e.target.value);
                 return;
             }
-            let val = typeof e === "string" ? e : e.target.value;
+            const val = typeof e === "string" ? e : e.target.value;
 
-            const mustEscape = "[]()*+";
-            for (const c of mustEscape) val = val.replaceAll(c, "\\" + c);
-            val = val.replaceAll("*", "-");
+            if (!val.trim()) {
+                setFocused(-1);
+                setFilter("");
+                return;
+            }
 
-            let filter = "";
-            if (['"', "`", "'"].includes(val[0])) {
-                filter = "^" + val.replaceAll(/('|"|`)/g, "");
-            } else
-                for (let i = 0; i < val.length; i++) {
-                    //todo: test in linux
-                    if (val[i] === "\\" && i + 1 < val.length && mustEscape.includes(val[i + 1])) filter += val[i];
-                    else filter += val[i] + ".*";
+            try {
+                const mustEscape = "[]().*+?^$|{}";
+
+                const escapeRegex = (text: string): string => {
+                    for (const c of mustEscape) text = text.replaceAll(c, `\\${c}`);
+                    return text;
+                };
+
+                const quoteChars = ['"', "`", "'"];
+
+                let filter = "";
+
+                if (quoteChars.includes(val[0])) {
+                    const searchText = val.slice(1).trim();
+
+                    if (!searchText) {
+                        filter = "";
+                    } else {
+                        const escapedText = escapeRegex(searchText);
+                        filter = escapedText;
+                    }
+                } else {
+                    const terms = val
+                        .split(/\s+/)
+                        .filter(Boolean)
+                        .map((term) => escapeRegex(term));
+
+                    console.log(terms);
+
+                    if (terms.length === 0) {
+                        filter = "";
+                    } else if (terms.length === 1) {
+                        filter = terms[0]
+                            .split("")
+                            .map((char) => escapeRegex(char))
+                            .join(".*");
+                    } else {
+                        // Multi-term search - all terms should appear in the result
+                        // Using positive lookahead assertions for each term
+                        // This makes the search order-independent but requires all terms
+                        filter = terms
+                            .map((term) => {
+                                return `(?=.*${term})`;
+                            })
+                            .join("");
+
+                        filter += ".*";
+                    }
                 }
 
-            setFocused(-1);
-            setFilter(filter);
+                // to check for error before applying
+                new RegExp(filter);
+
+                setFocused(-1);
+                setFilter(filter);
+            } catch (error) {
+                console.error("Error in search processing:", error);
+                setFocused(-1);
+
+                const safeFilter = val.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+                setFilter(safeFilter);
+            }
         },
         [],
     );
