@@ -1294,22 +1294,25 @@ const Reader: React.FC = () => {
                                 as="div"
                                 initialInView={false}
                                 onChange={(inView, entry) => {
-                                    const load = () => {
-                                        entry.target.querySelectorAll("img").forEach((e) => {
-                                            (entry.target as HTMLElement).style.height = "auto";
-                                            const src = e.getAttribute("data-load-src");
-                                            if (src) {
-                                                // setTimeout(() => {
-                                                e.setAttribute("data-loading", "false");
-                                                e.src = src;
-                                                // }, 1000 * Math.random());
-                                            }
-                                        });
+                                    if (!inView) return;
+                                    const onImgLoad = (e: HTMLImageElement) => {
+                                        (entry.target as HTMLElement).style.height = "auto";
+                                        const src = e.getAttribute("data-load-src");
+                                        if (src) {
+                                            e.setAttribute("data-loading", "false");
+                                            e.src = src;
+                                        }
                                         entry.target.setAttribute("data-rendered", "true");
                                     };
                                     const rendered = entry.target.querySelectorAll("[data-loading='true']");
                                     if (rendered.length === 0) return;
-                                    if (inView) load();
+
+                                    entry.target.querySelectorAll("img").forEach((e) => {
+                                        const tempImg = new Image();
+                                        tempImg.onload = () => onImgLoad(e);
+                                        tempImg.src = e.getAttribute("data-load-src") as string;
+                                    });
+
                                     // unloading image does not free ram
                                 }}
                                 {...props}
