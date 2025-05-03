@@ -84,7 +84,6 @@ const Reader: React.FC = () => {
             i: number[];
         }[]
     >([]);
-    const [imagesLoaded, setImagesLoaded] = useState(0);
     const [isSideListPinned, setSideListPinned] = useState(false);
     const [sideListWidth, setSideListWidth] = useState(appSettings.readerSettings.sideListWidth || 450);
     //not called on scroll but manually
@@ -575,13 +574,14 @@ const Reader: React.FC = () => {
         setCurrentPageNumber(1);
         if (pageNumberInputRef.current) pageNumberInputRef.current.value = "1";
         setCurrentImageRow(1);
-        setImagesLoaded(0);
         setImageData([]);
         setImageRow([]);
         setImageDecodeQueue([]);
         setUpdatedAnilistProgress(false);
         setCurrentlyDecoding(false);
         setChapterChangerDisplay(false);
+        // dispatch(setReaderLoading(null));
+
         const linkSplitted = link.split(window.path.sep).filter((e) => e !== "");
 
         const progress: MangaProgress = {
@@ -636,11 +636,23 @@ const Reader: React.FC = () => {
     useLayoutEffect(() => {
         // window.electron.webFrame.clearCache();
         const dynamic = appSettings.readerSettings.dynamicLoading;
+
+        const onProgress = (loaded: number) => {
+            if (loaded === images.length) dispatch(setReaderLoading(null));
+            else
+                dispatch(
+                    setReaderLoading({
+                        percent: 10 + Math.round((loaded / images.length) * 90),
+                    }),
+                );
+        };
+        let imagesLoaded = 0;
         images.forEach((imgURL, i) => {
             const img = document.createElement("img");
             let imageSafeURL = "file://" + imgURL.replaceAll("#", "%23");
             const loaded = (success = false) => {
-                setImagesLoaded((init) => init + 1);
+                imagesLoaded++;
+                onProgress(imagesLoaded);
                 setImageData((init) => [
                     ...init,
                     {
@@ -662,7 +674,10 @@ const Reader: React.FC = () => {
                     canvas.width = img.width;
                     canvas.height = img.height;
                     ctx?.drawImage(img, 0, 0);
-                    setImagesLoaded((init) => init + 1);
+
+                    imagesLoaded++;
+                    onProgress(imagesLoaded);
+
                     setImageData((init) => [
                         ...init,
                         {
@@ -678,7 +693,10 @@ const Reader: React.FC = () => {
                     canvas.height = 100;
                     ctx.fillStyle = window.getComputedStyle(document.body).color || "black";
                     ctx.fillText("Error occurred while loading image.", 10, 10);
-                    setImagesLoaded((init) => init + 1);
+
+                    imagesLoaded++;
+                    onProgress(imagesLoaded);
+
                     setImageData((init) => [...init, { img: canvas, index: i, isWide: false }]);
                 };
                 img.onerror = () => {
@@ -789,12 +807,6 @@ const Reader: React.FC = () => {
         appSettings.readerSettings.fitOption,
         appSettings.readerSettings.pagesPerRowSelected,
     ]);
-    useEffect(() => {
-        if (imagesLoaded !== 0 && images.length !== 0) {
-            dispatch(setReaderLoading({ percent: (100 * imagesLoaded) / images.length, message: "" }));
-            if (images.length === imagesLoaded) dispatch(setReaderLoading(null));
-        }
-    }, [imagesLoaded]);
     useLayoutEffect(() => {
         readerRef.current?.scrollTo(
             scrollPosPercent.x * readerRef.current.scrollWidth,

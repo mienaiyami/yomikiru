@@ -153,14 +153,23 @@ export class DirectoryValidatorService {
             }
         }
 
+        // only showing loading when it takes some time
+        // let loadingTimeout: NodeJS.Timeout | null = null;
+        // const loadingTimeoutWait = 200;
         try {
             const normalizedLink = path.normalize(link);
             const linkSplitted = normalizedLink.split(path.sep);
 
-            await this.cleanupPreviousTempDir();
+            this.cleanupPreviousTempDir();
 
             if (showLoading) {
-                onProgress({ message: "VALIDATING CONTENT" });
+                // loadingTimeout = setTimeout(() => {
+                onProgress({
+                    // message: "VALIDATING CONTENT",
+                    message: "",
+                    percent: 1,
+                });
+                // }, loadingTimeoutWait);
             }
 
             if (formatUtils.packedManga.test(normalizedLink)) {
@@ -176,6 +185,10 @@ export class DirectoryValidatorService {
                 isValid: false,
                 error: error instanceof Error ? error : new Error(String(error)),
             };
+        } finally {
+            // if (loadingTimeout) {
+            //     clearTimeout(loadingTimeout);
+            // }
         }
     }
     /**
@@ -183,10 +196,10 @@ export class DirectoryValidatorService {
      */
     private async cleanupPreviousTempDir(): Promise<void> {
         const { fs, logger, app } = this.dependencies;
-
-        if (fs.existsSync(app.deleteDirOnClose)) {
+        const deleteDirOnClose = app.deleteDirOnClose;
+        if (deleteDirOnClose && fs.existsSync(deleteDirOnClose)) {
             try {
-                await fs.rm(app.deleteDirOnClose, { recursive: true });
+                await fs.rm(deleteDirOnClose, { recursive: true });
             } catch (err) {
                 logger.error("Failed to remove previous temp directory:", err);
             }
@@ -301,7 +314,6 @@ export class DirectoryValidatorService {
                 }
 
                 onProgress({
-                    percent: 0,
                     message: `Rendering "${linkSplitted.at(-1)?.substring(0, 20)}..."`,
                 });
 
@@ -336,6 +348,8 @@ export class DirectoryValidatorService {
         const { fs, path, logger, onProgress } = this.dependencies;
         const { sendImages = false } = options;
 
+        // let loadingTimeout: NodeJS.Timeout | null = null;
+        // const loadingTimeoutWait = 100;
         try {
             const files = await fs.readdir(link);
 
@@ -350,13 +364,16 @@ export class DirectoryValidatorService {
             }
 
             if (sendImages) {
+                //     loadingTimeout = setTimeout(() => {
                 onProgress({
-                    message: `PROCESSING IMAGES`,
+                    // message: `PROCESSING IMAGES`,
+                    percent: 5,
                 });
+                //     }, loadingTimeoutWait);
             }
 
             const imgs = files.filter((e) => formatUtils.image.test(e));
-
+            let processed = 0;
             if (imgs.length <= 0) {
                 if (maxDepth > 0) {
                     const dirOnlyPromises = files.map(async (e) => {
@@ -371,6 +388,11 @@ export class DirectoryValidatorService {
                         } catch (err) {
                             logger.error(`Error checking directory ${fullPath}:`, err);
                             return { path: fullPath, isEmpty: true };
+                        } finally {
+                            processed++;
+                            onProgress({
+                                percent: Math.round((processed / imgs.length) * 100) / 20,
+                            });
                         }
                     });
 
@@ -389,21 +411,27 @@ export class DirectoryValidatorService {
                     });
                 return { isValid: false, error: "No supported images found" };
             }
-            console.log("done");
 
             if (sendImages) {
                 const sortedImages = imgs.sort(window.app.betterSortOrder).map((e) => path.join(link, e));
+
+                onProgress({
+                    percent: 10,
+                });
 
                 return {
                     isValid: true,
                     images: sortedImages,
                 };
             }
-
             return { isValid: true };
         } catch (err) {
             logger.error("Error processing directory:", err);
             return { isValid: false, error: err instanceof Error ? err : new Error(String(err)) };
+        } finally {
+            // if (loadingTimeout) {
+            //     clearTimeout(loadingTimeout);
+            // }
         }
     }
 }

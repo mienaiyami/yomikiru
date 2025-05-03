@@ -120,7 +120,6 @@ export const useDirectoryValidator = () => {
                 showLoading: true,
                 errorOnInvalid: false,
             });
-            console.log("done2");
 
             if (result.isValid && result.images) {
                 window.cachedImageList = {

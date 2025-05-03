@@ -63,7 +63,6 @@ function ListNavigatorProviderComponent<T>({
     const listRef = useRef<HTMLOListElement>(null);
 
     const filteredItems = useMemo(() => {
-        console.log({ filter, items });
         return filterFn ? items.filter((item) => filterFn(filter, item)) : items;
     }, [items, filter, filterFn]);
 
@@ -173,8 +172,6 @@ function ListNavigatorProviderComponent<T>({
                         .split(/\s+/)
                         .filter(Boolean)
                         .map((term) => escapeRegex(term));
-
-                    console.log(terms);
 
                     if (terms.length === 0) {
                         filter = "";
