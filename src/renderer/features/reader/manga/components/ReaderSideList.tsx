@@ -258,12 +258,11 @@ const ReaderSideList = memo(
         const filterChapter = (filter: string, chapter: ChapterData) => {
             return new RegExp(filter, "ig").test(chapter.name);
         };
-
         const renderChapterItem = (chapter: ChapterData, index: number, isSelected: boolean) => {
             return (
                 <ReaderSideListItem
                     name={chapter.name}
-                    inHistory={Object.hasOwn(library.items, chapter.link)}
+                    inHistory={!!mangaInReader?.progress?.chaptersRead.includes(chapter.name)}
                     focused={isSelected}
                     key={chapter.name}
                     pages={chapter.pages}

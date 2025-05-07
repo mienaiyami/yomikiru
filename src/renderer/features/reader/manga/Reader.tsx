@@ -53,6 +53,8 @@ const processChapterNumber = (chapterName: string): number | undefined => {
     return chapterNumber;
 };
 
+// todo : split and improve
+
 const Reader: React.FC = () => {
     const { pageNumberInputRef, validateDirectory, setContextMenuData } = useAppContext();
 
@@ -65,7 +67,6 @@ const Reader: React.FC = () => {
     const anilistCurrentManga = useAppSelector((store) => store.anilist.currentManga);
     const isLoadingManga = useAppSelector((store) => store.reader.loading !== null);
 
-    // todo: extract to hook
     const libraryItem = useAppSelector((store) => selectLibraryItem(store, linkInReader));
     const isAniSearchOpen = useAppSelector((store) => store.ui.isOpen.anilist.search);
     const isAniEditOpen = useAppSelector((store) => store.ui.isOpen.anilist.edit);
@@ -594,6 +595,9 @@ const Reader: React.FC = () => {
             chaptersRead: [],
         };
         if (libraryItem && libraryItem.type === "manga") {
+            progress.chaptersRead = Array.from(libraryItem.progress?.chaptersRead || []);
+            progress.chaptersRead.push(window.path.basename(link));
+
             dispatch(
                 updateReaderContent({
                     ...libraryItem,
