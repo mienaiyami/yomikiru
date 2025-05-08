@@ -98,6 +98,14 @@
                         -webkit-line-clamp: 1;
                         /* number of lines to show */
                         -webkit-box-orient: vertical;
+
+                        &:has(.page) {
+                            width: 100%;
+                            display: flex;
+                            flex-direction: row;
+                            justify-content: space-between;
+                            align-items: center;
+                        }
                     }
 
                     &::before {

@@ -81,7 +81,13 @@ const BookmarkList: React.FC = () => {
                     "data-bookmark-id": bookmark.id.toString(),
                 }}
             >
-                <span className="text">{bookmark.chapterName}</span>
+                <span className="text">
+                    <span className="chapterName">{bookmark.chapterName}</span>
+
+                    <span className="page" title="Bookmarked Page / Total Pages">
+                        {bookmark.page}/{mangaInReader?.progress?.totalPages}
+                    </span>
+                </span>
                 <span className="date" title={bookmark.createdAt.toString()}>
                     {dateUtils.format(bookmark.createdAt, {
                         format: dateUtils.presets.dateTime,
