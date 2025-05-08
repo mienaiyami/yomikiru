@@ -3,7 +3,7 @@ import { dialogUtils } from "@utils/dialog";
 import { formatUtils } from "@utils/file";
 import { useAppContext } from "src/renderer/App";
 import { MangaBookmark, BookBookmark } from "@common/types/db";
-import { removeBookmark } from "@store/bookmarks";
+import { addBookmark, removeBookmark } from "@store/bookmarks";
 import { deleteLibraryItem } from "@store/library";
 import ListItem from "../../components/ListItem";
 import dateUtils from "@utils/date";
@@ -116,11 +116,42 @@ const BookmarkHistoryListItem: React.FC<{
 
     const handleContextMenu = (e: React.MouseEvent<HTMLAnchorElement>) => {
         const items = [
-            //todo: instead of open, just click on item?
             window.contextMenu.template.open(link),
             window.contextMenu.template.openInNewWindow(link),
             window.contextMenu.template.showInExplorer(link),
             window.contextMenu.template.copyPath(link),
+            {
+                label: "Bookmark",
+                action() {
+                    const type = formatUtils.book.test(link) ? "book" : "manga";
+                    if (type === "book" && libraryItem.progress && "chapterId" in libraryItem.progress) {
+                        dispatch(
+                            addBookmark({
+                                type,
+                                data: {
+                                    chapterId: libraryItem.progress?.chapterId,
+                                    position: libraryItem.progress?.position,
+                                    chapterName: libraryItem.progress?.chapterName,
+                                    itemLink: libraryItem.link,
+                                },
+                            }),
+                        );
+                    }
+                    if (type === "manga" && libraryItem.progress && "currentPage" in libraryItem.progress) {
+                        dispatch(
+                            addBookmark({
+                                type,
+                                data: {
+                                    link: libraryItem.progress?.chapterLink,
+                                    itemLink: libraryItem.link,
+                                    page: libraryItem.progress?.currentPage,
+                                    chapterName: libraryItem.progress?.chapterName,
+                                },
+                            }),
+                        );
+                    }
+                },
+            },
             window.contextMenu.template.divider(),
         ];
 
