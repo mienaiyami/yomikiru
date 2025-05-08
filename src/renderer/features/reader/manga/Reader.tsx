@@ -167,7 +167,7 @@ const Reader: React.FC = () => {
     window.app.scrollToPage = scrollToPage;
     const [imageDecodeQueue, setImageDecodeQueue] = useState<HTMLImageElement[]>([]);
     const [currentlyDecoding, setCurrentlyDecoding] = useState(false);
-    useLayoutEffect(() => {
+    useEffect(() => {
         if (!currentlyDecoding && imageDecodeQueue.length > 0) {
             setCurrentlyDecoding(true);
             imageDecodeQueue
@@ -186,7 +186,7 @@ const Reader: React.FC = () => {
     useEffect(() => {
         readerRef.current?.focus();
     }, [isReaderOpen]);
-    useLayoutEffect(() => {
+    useEffect(() => {
         if (!isLoadingManga) {
             setTimeout(() => {
                 scrollToPage(currentPageNumber, "auto");
@@ -557,9 +557,8 @@ const Reader: React.FC = () => {
     const checkForImgsAndLoad = (options: { link: string; page: number }) => {
         if (window.cachedImageList?.link === options.link && window.cachedImageList.images) {
             // console.log("using cached image list for " + link);
-            loadImgs(options.link, window.cachedImageList.images);
-
             setCurrentPageNumber(options.page || 1);
+            loadImgs(options.link, window.cachedImageList.images);
             window.cachedImageList = { link: "", images: [] };
             return;
         }
@@ -569,6 +568,7 @@ const Reader: React.FC = () => {
             showLoading: false,
         }).then((result) => {
             if (result.isValid && result.images) {
+                setCurrentPageNumber(options.page || 1);
                 loadImgs(options.link, result.images);
             }
         });
@@ -578,7 +578,6 @@ const Reader: React.FC = () => {
         if (link[link.length - 1] === window.path.sep) link = link.substring(0, link.length - 1);
         //mark, reset
         setImages([]);
-        setCurrentPageNumber(1);
         if (pageNumberInputRef.current) pageNumberInputRef.current.value = "1";
         setCurrentImageRow(1);
         setImageData([]);
@@ -587,7 +586,15 @@ const Reader: React.FC = () => {
         setUpdatedAnilistProgress(false);
         setCurrentlyDecoding(false);
         setChapterChangerDisplay(false);
-        // dispatch(setReaderLoading(null));
+        /**
+         * adding this here will make options.page work even when dynamic loading is enabled
+         * check useLayoutEffect [isLoadingManga] above
+         */
+        dispatch(
+            setReaderLoading({
+                percent: 0.1,
+            }),
+        );
 
         const linkSplitted = link.split(window.path.sep).filter((e) => e !== "");
 
