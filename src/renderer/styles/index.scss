@@ -1012,6 +1012,8 @@
                         display: flex;
                         flex-direction: column;
                         gap: 4em;
+                        max-width: 90%;
+                        text-align: center;
                         > div {
                             display: flex;
                             flex-direction: column;

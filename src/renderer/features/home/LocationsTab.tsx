@@ -176,11 +176,19 @@ const LocationsTab = (): ReactElement => {
     const handleSelect = useCallback((elem: HTMLElement) => {
         elem.click();
     }, []);
-    const handleKeyDown = useCallback((keyStr: string, shortcutsMapped: Record<ShortcutCommands, string[]>) => {
-        if (shortcutsMapped["dirUp"].includes(keyStr)) {
-            setCurrentLink((link) => window.path.dirname(link));
-        }
-    }, []);
+    const handleKeyDown = useCallback(
+        (keyStr: string, shortcutsMapped: Record<ShortcutCommands, string[]>) => {
+            if (shortcutsMapped["dirUp"].includes(keyStr)) {
+                setCurrentLink((link) => window.path.dirname(link));
+            }
+            if (shortcutsMapped["listSelect"].includes(keyStr)) {
+                if (locations.length === 0 && imageCount > 0) {
+                    openInReader(currentLink);
+                }
+            }
+        },
+        [imageCount, locations, currentLink],
+    );
     const handleOnChange = useCallback(
         (e: React.ChangeEvent<HTMLInputElement>) => {
             let val = e.target.value;
@@ -197,8 +205,8 @@ const LocationsTab = (): ReactElement => {
                     return "";
                 }
             // move up one directory
-            if (val === ".." + window.path.sep) {
-                setCurrentLink(window.path.resolve(currentLink, "../"));
+            if (["../", "..\\"].includes(val)) {
+                setCurrentLink(window.path.dirname(currentLink));
                 return "";
             }
             // check for exact match and open directly without enter
