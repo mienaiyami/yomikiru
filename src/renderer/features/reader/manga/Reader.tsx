@@ -151,8 +151,14 @@ const Reader: React.FC = () => {
                     if (callback) setTimeout(callback, 1500);
                 } else {
                     if (imgElem) {
-                        imgElem.scrollIntoView({ behavior, block: "start" });
-                        if (callback) setTimeout(callback, 1500);
+                        // when lazy loading, imgElem is not visible
+                        if (imgElem.checkVisibility()) {
+                            imgElem.scrollIntoView({ behavior, block: "start" });
+                            if (callback) setTimeout(callback, 1500);
+                        } else {
+                            imgElem.parentElement?.scrollIntoView({ behavior, block: "start" });
+                            if (callback) setTimeout(callback, 1500);
+                        }
                     }
                 }
             }
