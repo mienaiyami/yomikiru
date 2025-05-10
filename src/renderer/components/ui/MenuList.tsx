@@ -7,6 +7,8 @@ import { keyFormatter } from "@utils/keybindings";
 import { getShortcutsMapped } from "@store/shortcuts";
 import { shallowEqual } from "react-redux";
 
+// todo: replace with radix ui
+
 // ! not indented to be used without `AppContext::optSelectData`
 //todo rename later for select only
 const MenuList: React.FC = () => {

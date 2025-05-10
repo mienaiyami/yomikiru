@@ -191,7 +191,7 @@ const BookmarkHistoryListItem: React.FC<{
             {libraryItem.type === "book" ? (
                 <span className="double">
                     <span className="text">{libraryItem.title}</span>
-                    <span className="text chapter">
+                    <span className="chapter">
                         <span className="text">
                             {props.bookmark?.chapterName || libraryItem.progress?.chapterName || "~"}
                         </span>

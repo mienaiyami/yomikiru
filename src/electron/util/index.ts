@@ -13,7 +13,6 @@ if (IS_PORTABLE) {
     if (!fs.existsSync(folderPath)) {
         fs.mkdirSync(folderPath);
     }
-    console.log("folderPath", folderPath);
     app.setPath("userData", folderPath);
 }
 

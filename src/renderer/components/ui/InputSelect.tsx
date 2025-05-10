@@ -3,6 +3,8 @@ import { useAppContext } from "../../App";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faChevronDown } from "@fortawesome/free-solid-svg-icons";
 
+// todo: replace with radix ui
+
 const InputSelect: React.FC<{
     labeled?: boolean;
     labelAfter?: string;

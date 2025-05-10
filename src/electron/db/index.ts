@@ -33,11 +33,11 @@ export class DatabaseService {
         return this._db;
     }
     async initialize(): Promise<void> {
-        console.log("Migrating database");
+        // console.log("Migrating database");
         await migrate(this._db, {
             migrationsFolder: app.isPackaged ? path.join(path.dirname(app.getAppPath()), "drizzle") : "drizzle",
         });
-        console.log(this._db.all(`select unixepoch() as time`));
+        // console.log(this._db.all(`select unixepoch() as time`));
     }
     async addLibraryItem(data: AddToLibraryData): Promise<LibraryItem> {
         return await this._db.transaction(async (tx) => {
