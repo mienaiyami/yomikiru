@@ -6,14 +6,14 @@ import {
     faBookmark,
     faThumbtack,
     faLocationDot,
+    faRandom,
 } from "@fortawesome/free-solid-svg-icons";
 import { faBookmark as farBookmark } from "@fortawesome/free-regular-svg-icons";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { memo, useEffect, useLayoutEffect, useRef, useState, useMemo } from "react";
 import { useAppDispatch, useAppSelector } from "@store/hooks";
-// import { updateCurrentHistoryPage } from "../store/history";
 import { addBookmark, removeBookmark } from "@store/bookmarks";
-import { setAppSettings, setReaderSettings } from "@store/appSettings";
+import { setAppSettings } from "@store/appSettings";
 import AnilistBar from "../../../anilist/AnilistBar";
 import { formatUtils } from "@utils/file";
 import { dialogUtils } from "@utils/dialog";
@@ -56,10 +56,8 @@ const ReaderSideList = memo(
         const mangaLink = useAppSelector((store) => store.reader.content?.link);
         /** mangaInReader.link !== linkInReader */
         const mangaInReader = useAppSelector(getReaderManga);
-        const library = useAppSelector((store) => store.library);
         const bookmarks = useAppSelector((store) => store.bookmarks);
         const appSettings = useAppSelector((store) => store.appSettings);
-        // const contextMenu = useAppSelector((store) => store.contextMenu);
         const anilistToken = useAppSelector((store) => store.anilist.token);
         const dispatch = useAppDispatch();
 
@@ -476,52 +474,6 @@ const ReaderSideList = memo(
                             >
                                 <FontAwesomeIcon icon={faArrowLeft} />
                             </Button>
-
-                            <Button
-                                className="ctrl-menu-item bookmarkBtn"
-                                tooltip="Bookmark"
-                                btnRef={addToBookmarkRef}
-                                clickAction={() => {
-                                    if (!mangaInReader || !mangaInReader.progress) return;
-                                    const itemLink = mangaInReader.link;
-                                    if (bookmarkedId !== null) {
-                                        return dialogUtils
-                                            .warn({
-                                                title: "Warning",
-                                                message: "Remove - Remove Bookmark",
-                                                noOption: false,
-                                                buttons: ["Cancel", "Remove"],
-                                                defaultId: 0,
-                                            })
-                                            .then(({ response }) => {
-                                                if (response === 1 && mangaInReader) {
-                                                    dispatch(
-                                                        removeBookmark({
-                                                            itemLink,
-                                                            type: "manga",
-                                                            ids: [bookmarkedId],
-                                                        }),
-                                                    );
-                                                }
-                                            });
-                                    }
-                                    dispatch(
-                                        addBookmark({
-                                            type: "manga",
-                                            data: {
-                                                itemLink,
-                                                page: mangaInReader.progress.currentPage || 1,
-                                                link: mangaInReader.progress.chapterLink,
-                                                chapterName: mangaInReader.progress.chapterName,
-                                            },
-                                        }),
-                                    );
-                                    setShortcutText("Bookmark Added");
-                                }}
-                            >
-                                <FontAwesomeIcon icon={bookmarkedId !== null ? faBookmark : farBookmark} />
-                            </Button>
-
                             <Button
                                 className="ctrl-menu-item"
                                 btnRef={openNextChapterRef}
@@ -613,6 +565,62 @@ const ReaderSideList = memo(
                                 >
                                     <FontAwesomeIcon icon={faLocationDot} />
                                 </button>
+                                <button
+                                    className="ctrl-menu-item"
+                                    data-tooltip="Open Random Chapter"
+                                    onClick={() => {
+                                        if (chapterData.length === 0) return;
+                                        const randomChapter =
+                                            chapterData[Math.floor(Math.random() * chapterData.length)];
+                                        openInReader(randomChapter.link);
+                                    }}
+                                >
+                                    <FontAwesomeIcon icon={faRandom} />
+                                </button>
+                                <Button
+                                    className="ctrl-menu-item"
+                                    tooltip="Bookmark"
+                                    btnRef={addToBookmarkRef}
+                                    clickAction={() => {
+                                        if (!mangaInReader || !mangaInReader.progress) return;
+                                        const itemLink = mangaInReader.link;
+                                        if (bookmarkedId !== null) {
+                                            return dialogUtils
+                                                .warn({
+                                                    title: "Warning",
+                                                    message: "Remove - Remove Bookmark",
+                                                    noOption: false,
+                                                    buttons: ["Cancel", "Remove"],
+                                                    defaultId: 0,
+                                                })
+                                                .then(({ response }) => {
+                                                    if (response === 1 && mangaInReader) {
+                                                        dispatch(
+                                                            removeBookmark({
+                                                                itemLink,
+                                                                type: "manga",
+                                                                ids: [bookmarkedId],
+                                                            }),
+                                                        );
+                                                    }
+                                                });
+                                        }
+                                        dispatch(
+                                            addBookmark({
+                                                type: "manga",
+                                                data: {
+                                                    itemLink,
+                                                    page: mangaInReader.progress.currentPage || 1,
+                                                    link: mangaInReader.progress.chapterLink,
+                                                    chapterName: mangaInReader.progress.chapterName,
+                                                },
+                                            }),
+                                        );
+                                        setShortcutText("Bookmark Added");
+                                    }}
+                                >
+                                    <FontAwesomeIcon icon={bookmarkedId !== null ? faBookmark : farBookmark} />
+                                </Button>
                             </div>
                         )}
                     </div>

@@ -17,7 +17,6 @@ const initialState: BookNotesState = {
 
 export const fetchAllNotes = createAsyncThunk("bookNotes/fetchAll", async () => {
     const notes = await window.electron.invoke("db:book:getAllNotes");
-    console.log({ notes });
     return { bookNotes: notes };
 });
 
