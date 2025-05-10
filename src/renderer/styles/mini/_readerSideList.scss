@@ -56,7 +56,6 @@
         border: solid var(--reader-sidelist-divider-color);
         border-width: 4px 0;
         margin-top: 7px;
-        margin-bottom: 5px;
         padding: 5px;
         padding-right: 10px;
         display: flex;
@@ -187,6 +186,7 @@
     }
     .tools {
         margin-bottom: 0;
+        margin-top: 5px;
         button,
         .btn {
             &::before {

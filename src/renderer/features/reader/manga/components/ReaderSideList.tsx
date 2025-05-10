@@ -572,6 +572,8 @@ const ReaderSideList = memo(
                         </div>
                     </div>
 
+                    {anilistToken && <AnilistBar />}
+
                     <div className="tools">
                         <div className="btnOptions">
                             <button
@@ -614,8 +616,6 @@ const ReaderSideList = memo(
                             </div>
                         )}
                     </div>
-
-                    {anilistToken && <AnilistBar />}
 
                     {displayList === "content" && (
                         <div
