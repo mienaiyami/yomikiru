@@ -134,8 +134,8 @@ const ReaderSettings = memo(
                                         appSettings.readerSettings.readerWidth - steps > maxWidth
                                             ? maxWidth
                                             : appSettings.readerSettings.readerWidth - steps < 1
-                                            ? 1
-                                            : appSettings.readerSettings.readerWidth - steps;
+                                              ? 1
+                                              : appSettings.readerSettings.readerWidth - steps;
                                     if (document.activeElement !== e.currentTarget)
                                         setShortcutText(readerWidth + "%");
                                     dispatch(setReaderSettings({ readerWidth }));
@@ -154,8 +154,8 @@ const ReaderSettings = memo(
                                         appSettings.readerSettings.readerWidth + steps > maxWidth
                                             ? maxWidth
                                             : appSettings.readerSettings.readerWidth + steps < 1
-                                            ? 1
-                                            : appSettings.readerSettings.readerWidth + steps;
+                                              ? 1
+                                              : appSettings.readerSettings.readerWidth + steps;
 
                                     if (document.activeElement !== e.currentTarget)
                                         setShortcutText(readerWidth + "%");
@@ -534,6 +534,38 @@ const ReaderSettings = memo(
                                 // })()}
                                 // className="tooltip-top-start"
                             />
+                            <InputCheckboxNumber
+                                min={0.1}
+                                max={10}
+                                step={0.1}
+                                checked={appSettings.readerSettings.overrideMouseWheelSpeed}
+                                onChangeCheck={(e) => {
+                                    dispatch(
+                                        setReaderSettings({
+                                            overrideMouseWheelSpeed: e.target.checked,
+                                        }),
+                                    );
+                                }}
+                                value={appSettings.readerSettings.mouseWheelScrollSpeed}
+                                timeout={[
+                                    1000,
+                                    (value) => dispatch(setReaderSettings({ mouseWheelScrollSpeed: value })),
+                                ]}
+                                paraBefore="Mouse Wheel Speed&nbsp;:"
+                                paraAfter="screen"
+                            />
+                            <InputNumber
+                                min={0}
+                                max={1000}
+                                disabled={!appSettings.readerSettings.overrideMouseWheelSpeed}
+                                value={appSettings.readerSettings.mouseWheelScrollDuration}
+                                timeout={[
+                                    1000,
+                                    (value) => dispatch(setReaderSettings({ mouseWheelScrollDuration: value })),
+                                ]}
+                                paraBefore="Mouse Wheel Scroll Duration&nbsp;:"
+                                paraAfter="ms"
+                            />
                             <InputNumber
                                 min={0.1}
                                 max={100}
@@ -852,5 +884,7 @@ const ReaderSettings = memo(
         );
     },
 );
+
+ReaderSettings.displayName = "MangaReaderSettings";
 
 export default ReaderSettings;

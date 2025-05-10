@@ -21,6 +21,7 @@ import {
     updateReaderMangaCurrentPage,
 } from "@store/reader";
 import { MangaProgress } from "@common/types/db";
+import useSmoothScroll from "../hooks/useSmoothScroll";
 
 const processChapterNumber = (chapterName: string): number | undefined => {
     /*
@@ -115,6 +116,8 @@ const Reader: React.FC = () => {
     const readerRef = useRef<HTMLDivElement>(null);
     const imgContRef = useRef<HTMLDivElement>(null);
     const shortcutTextRef = useRef<HTMLDivElement>(null);
+
+    useSmoothScroll(isSideListPinned ? imgContRef : readerRef);
 
     const scrollReader = (intensity: number) => {
         if (readerRef.current) {

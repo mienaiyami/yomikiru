@@ -81,6 +81,15 @@ const settingSchema = z
             showPageNumberInZenMode: z.boolean(),
             scrollSpeedA: z.number(),
             scrollSpeedB: z.number(),
+            overrideMouseWheelSpeed: z.boolean(),
+            /**
+             * duration of mouse wheel scroll in ms
+             */
+            mouseWheelScrollDuration: z.number(),
+            /**
+             * multiplier for mouse wheel scroll speed
+             */
+            mouseWheelScrollSpeed: z.number(),
             /**
              * reading direction in two pages per row
              * * `0` - ltr
@@ -285,6 +294,9 @@ const settingSchema = z
             showPageNumberInZenMode: true,
             scrollSpeedA: 5,
             scrollSpeedB: 15,
+            overrideMouseWheelSpeed: false,
+            mouseWheelScrollSpeed: 0.5,
+            mouseWheelScrollDuration: 300,
             readingSide: 1,
             fitOption: 0,
             disableChapterTransitionScreen: false,
