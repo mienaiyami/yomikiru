@@ -11,6 +11,20 @@ It is a offline desktop app to read locally stored manga or epub with great read
 > Beta Version available now!
 > If you are using version < 2.20.0, please update to the latest version as soon as possible to avoid getting beta versions auto installed.
 
+## Main todo
+
+- Implement gallery view for home page.
+- Change in UI components to use custom Radix UI for better accessibility and maintainability.
+  - modal
+  - dialog
+  - dropdown
+  - context menu
+  - select??
+- Redo of whole styling system in app for better maintainability.
+- Replace IPC redux slices with Tanstack Query based hooks??.
+- Move from webpack to Vite??.
+- Windows 7 deprecation. Current version of electron is causing many issues and I have planned to migrate to a newer version of electron which is not supported by Windows 7. It will be done after gallery view is implemented and main issues are fixed.
+
 ## What it does not do
 
 - Host any content or provide a way to read any online content.
