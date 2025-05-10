@@ -1252,6 +1252,7 @@ const Reader: React.FC = () => {
                     }
                 }}
                 onMouseDown={(e) => {
+                    if (!appSettings.readerSettings.enableTouchScroll) return;
                     if (e.button === 0 && readerRef.current && imgContRef.current)
                         setMouseDown({
                             left: (isSideListPinned ? imgContRef.current : readerRef.current).scrollLeft,
@@ -1264,20 +1265,20 @@ const Reader: React.FC = () => {
                 //     setMouseDown(null);
                 // }}
                 onMouseLeave={() => {
+                    if (!appSettings.readerSettings.enableTouchScroll) return;
                     setMouseDown(null);
                 }}
                 onMouseMove={(e) => {
-                    if (mouseDown) {
-                        const elem = isSideListPinned ? imgContRef.current : readerRef.current;
-                        if (elem) {
-                            elem.scrollLeft =
-                                mouseDown.left -
-                                (e.clientX - mouseDown.x) * appSettings.readerSettings.touchScrollMultiplier;
-                            elem.scrollTop =
-                                mouseDown.top -
-                                (e.clientY - mouseDown.y) * appSettings.readerSettings.touchScrollMultiplier;
-                        }
-                    }
+                    if (!appSettings.readerSettings.enableTouchScroll) return;
+                    if (!mouseDown) return;
+                    const elem = isSideListPinned ? imgContRef.current : readerRef.current;
+                    if (!elem) return;
+                    elem.scrollLeft =
+                        mouseDown.left -
+                        (e.clientX - mouseDown.x) * appSettings.readerSettings.touchScrollMultiplier;
+                    elem.scrollTop =
+                        mouseDown.top -
+                        (e.clientY - mouseDown.y) * appSettings.readerSettings.touchScrollMultiplier;
                 }}
             >
                 {imageRow.map((e, i) => {

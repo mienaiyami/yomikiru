@@ -175,6 +175,7 @@ const settingSchema = z
             focusChapterInList: z.boolean(),
             hideSideList: z.boolean(),
             autoUpdateAnilistProgress: z.boolean(),
+            enableTouchScroll: z.boolean(),
             touchScrollMultiplier: z.number(),
         }),
         epubReaderSettings: z.object({
@@ -336,6 +337,7 @@ const settingSchema = z
             focusChapterInList: true,
             hideSideList: false,
             autoUpdateAnilistProgress: false,
+            enableTouchScroll: false,
             touchScrollMultiplier: 5,
         },
         epubReaderSettings: {

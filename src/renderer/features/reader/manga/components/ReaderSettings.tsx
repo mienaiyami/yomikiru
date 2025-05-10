@@ -566,17 +566,20 @@ const ReaderSettings = memo(
                                 paraBefore="Mouse Wheel Scroll Duration&nbsp;:"
                                 paraAfter="ms"
                             />
-                            <InputNumber
+                            <InputCheckboxNumber
                                 min={0.1}
                                 max={100}
                                 step={0.1}
+                                checked={appSettings.readerSettings.enableTouchScroll}
+                                onChangeCheck={(e) => {
+                                    dispatch(setReaderSettings({ enableTouchScroll: e.target.checked }));
+                                }}
                                 value={appSettings.readerSettings.touchScrollMultiplier}
                                 timeout={[
                                     1000,
                                     (value) => dispatch(setReaderSettings({ touchScrollMultiplier: value })),
                                 ]}
                                 labelBefore="Drag&nbsp;Multiplier&nbsp;:"
-                                // labelAfter="x"
                             />
                         </div>
                     </div>
