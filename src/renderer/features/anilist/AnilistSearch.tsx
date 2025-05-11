@@ -50,8 +50,8 @@ const AnilistSearch = () => {
                             dispatch(
                                 addAnilistTracker({
                                     anilistMediaId: id,
-                                    localURL: window.path.dirname(mangaInReader.link),
-                                })
+                                    localURL: mangaInReader.link,
+                                }),
                             );
                             dispatch(setAnilistSearchOpen(false));
                         }
@@ -120,7 +120,7 @@ const AnilistSearch = () => {
                                 setSearchTimeout(
                                     setTimeout(() => {
                                         setSearch(value);
-                                    }, 1000)
+                                    }, 1000),
                                 );
                             }}
                         />

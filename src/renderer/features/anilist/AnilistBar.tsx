@@ -3,15 +3,14 @@ import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { dialogUtils } from "@utils/dialog";
 import { useAppDispatch, useAppSelector } from "@store/hooks";
 import InputNumber from "@ui/InputNumber";
-import React, { useLayoutEffect, useState, memo } from "react";
+import React, { useLayoutEffect, useState, memo, useEffect } from "react";
 import AniList from "@utils/anilist";
 import { setAnilistCurrentManga } from "@store/anilist";
 import { setAnilistEditOpen, setAnilistSearchOpen } from "@store/ui";
-import { getReaderManga } from "@store/reader";
 
 const AnilistBar = memo(() => {
     const anilistTracking = useAppSelector((store) => store.anilist.tracking);
-    const mangaInReader = useAppSelector(getReaderManga);
+    const mangaInReader = useAppSelector((store) => store.reader.content?.link);
     const anilistCurrentManga = useAppSelector((store) => store.anilist.currentManga);
     const isAniEditOpen = useAppSelector((store) => store.ui.isOpen.anilist.edit);
 
@@ -19,18 +18,17 @@ const AnilistBar = memo(() => {
     const [progress, setProgress] = useState(anilistCurrentManga?.progress || 0);
     const dispatch = useAppDispatch();
 
-    useLayoutEffect(() => {
-        if (mangaInReader && anilistTracking.find((e) => e.localURL === window.path.dirname(mangaInReader.link)))
-            setTracking(true);
+    useEffect(() => {
+        if (mangaInReader && anilistTracking.find((e) => e.localURL === mangaInReader)) setTracking(true);
         else {
             setTracking(false);
             dispatch(setAnilistEditOpen(false));
         }
     }, [anilistTracking, mangaInReader]);
-    useLayoutEffect(() => {
+    useEffect(() => {
         setProgress(anilistCurrentManga?.progress || 0);
     }, [anilistCurrentManga]);
-    useLayoutEffect(() => {
+    useEffect(() => {
         const timeout = setTimeout(() => {
             anilistCurrentManga &&
                 anilistCurrentManga.progress !== progress &&
@@ -48,9 +46,10 @@ const AnilistBar = memo(() => {
         };
     }, [progress]);
 
-    useLayoutEffect(() => {
-        if (isTracking && mangaInReader) {
-            const found = anilistTracking.find((e) => e.localURL === window.path.dirname(mangaInReader.link));
+    useEffect(() => {
+        if (!mangaInReader) return;
+        if (isTracking) {
+            const found = anilistTracking.find((e) => e.localURL === mangaInReader);
             if (found) {
                 AniList.getMangaData(found.anilistMediaId).then((e) => {
                     if (e) {
@@ -58,6 +57,8 @@ const AnilistBar = memo(() => {
                     }
                 });
             }
+        } else {
+            dispatch(setAnilistCurrentManga(null));
         }
     }, [isTracking, mangaInReader, isAniEditOpen]);
 
@@ -93,5 +94,7 @@ const AnilistBar = memo(() => {
         </div>
     );
 });
+
+AnilistBar.displayName = "AnilistBar";
 
 export default AnilistBar;
