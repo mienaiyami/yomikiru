@@ -24,7 +24,7 @@ const AnilistEdit = () => {
     const dispatch = useAppDispatch();
     const contRef = useRef<HTMLDivElement>(null);
     const anilistCurrentManga = useAppSelector((store) => store.anilist.currentManga);
-    const mangaInReader = useAppSelector(getReaderManga);
+    const mangaInReader = useAppSelector((store) => store.reader.content?.link);
 
     const [tempData, setTempData] = useState(anilistCurrentManga);
 
@@ -293,8 +293,7 @@ const AnilistEdit = () => {
                                 <div className="last">
                                     <button
                                         onClick={() =>
-                                            mangaInReader &&
-                                            dispatch(removeAnilistTracker(window.path.dirname(mangaInReader.link)))
+                                            mangaInReader && dispatch(removeAnilistTracker(mangaInReader))
                                         }
                                         title="This only remove tracking locally. Anilist entry is not deleted."
                                     >
