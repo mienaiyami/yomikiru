@@ -27,7 +27,8 @@ import { DEFAULT_HIGHLIGHT_COLORS, highlightUtils } from "@utils/highlight";
 import { addNote } from "@store/bookNotes";
 import { colorUtils } from "@utils/color";
 
-// todo: replace useLayoutEffect that is not needed with useEffect
+// todo: planning major refactor similar to manga Reader.tsx
+
 const EPubReader: React.FC = () => {
     const { bookProgressRef, setContextMenuData } = useAppContext();
 

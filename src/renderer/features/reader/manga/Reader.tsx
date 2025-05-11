@@ -54,10 +54,17 @@ const processChapterNumber = (chapterName: string): number | undefined => {
     return chapterNumber;
 };
 
-// todo : split and improve
-
 const Reader: React.FC = () => {
     const { pageNumberInputRef, validateDirectory, setContextMenuData } = useAppContext();
+
+    // todo: create a slice for reader state and actions,
+    // add things like sideList-states, scrollpos%, zenMode, prevNextChapter, currentPageNumber, currentImageRow,
+    // then convert scrollToPage to hook
+    // todo: convert whole useLayoutEffect for keybindings to hook
+
+    // todo: remove most refs by defining functions+state in Reader and passing down as props
+
+    // todo: convert checkForImgsAndLoad and related states to hook returning imageData and rows
 
     const appSettings = useAppSelector((store) => store.appSettings);
     const shortcuts = useAppSelector((store) => store.shortcuts);
@@ -75,6 +82,8 @@ const Reader: React.FC = () => {
     const dispatch = useAppDispatch();
 
     const [images, setImages] = useState<string[]>([]);
+    // todo: instead of storing isWide, store width and height and calc while rendering
+    // so dont need to remake array, and allow dynamic boundaries for wide images
     const [imageData, setImageData] = useState<
         { index: number; isWide: boolean; img: HTMLCanvasElement | HTMLImageElement | string }[]
     >([]);
@@ -657,6 +666,16 @@ const Reader: React.FC = () => {
         // window.electron.webFrame.clearCache();
         const dynamic = appSettings.readerSettings.dynamicLoading;
 
+        const isWide = (width: number, height: number) => {
+            const ratio = height / width;
+            /**
+             * some images are too wide or too narrow,
+             * e.g. author name below strip between pages
+             * issue #412
+             */
+            return ratio <= 1.2 && ratio >= 0.2;
+        };
+
         const onProgress = (loaded: number) => {
             if (loaded === images.length) dispatch(setReaderLoading(null));
             else
@@ -678,7 +697,7 @@ const Reader: React.FC = () => {
                     {
                         img: imageSafeURL,
                         index: i,
-                        isWide: success ? img.height / img.width <= 1.2 : false,
+                        isWide: success ? isWide(img.width, img.height) : false,
                     },
                 ]);
             };
@@ -703,7 +722,7 @@ const Reader: React.FC = () => {
                         {
                             img: canvas,
                             index: i,
-                            isWide: img.height / img.width <= 1.2,
+                            isWide: isWide(img.width, img.height),
                         },
                     ]);
                 };
