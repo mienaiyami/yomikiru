@@ -3,7 +3,7 @@ import { dialogUtils } from "@utils/dialog";
 import { formatUtils } from "@utils/file";
 import { ReactElement } from "react";
 import { useAppContext } from "src/renderer/App";
-import ListItem from "../../components/ListItem";
+import ListItem from "../../../components/ListItem";
 
 const LocationListItem = ({
     name,

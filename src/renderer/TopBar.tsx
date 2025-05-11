@@ -8,7 +8,7 @@ import {
     faWindowMaximize,
     faTimes,
 } from "@fortawesome/free-solid-svg-icons";
-import { useAppContext } from "../App";
+import { useAppContext } from "./App";
 import { useAppDispatch, useAppSelector } from "@store/hooks";
 import { setSysBtnColor } from "@store/themes";
 import { formatUtils } from "@utils/file";

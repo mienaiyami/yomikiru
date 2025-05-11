@@ -5,7 +5,7 @@ import { useAppContext } from "src/renderer/App";
 import { MangaBookmark, BookBookmark } from "@common/types/db";
 import { addBookmark, removeBookmark } from "@store/bookmarks";
 import { deleteLibraryItem } from "@store/library";
-import ListItem from "../../components/ListItem";
+import ListItem from "../../../components/ListItem";
 import dateUtils from "@utils/date";
 
 const BookmarkHistoryListItem: React.FC<{

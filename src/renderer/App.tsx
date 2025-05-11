@@ -1,7 +1,7 @@
 import { createContext, createRef, ReactElement, useContext, useEffect, useLayoutEffect, useState } from "react";
 import { useAppDispatch, useAppSelector } from "@store/hooks";
-import Main from "./components/Main";
-import TopBar from "./components/TopBar";
+import Main from "./Main";
+import TopBar from "./TopBar";
 import { refreshAppSettings, setAppSettings } from "@store/appSettings";
 
 import { addBookmark, fetchAllBookmarks, removeBookmark } from "@store/bookmarks";

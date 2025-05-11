@@ -84,6 +84,7 @@ const Reader: React.FC = () => {
     const [images, setImages] = useState<string[]>([]);
     // todo: instead of storing isWide, store width and height and calc while rendering
     // so dont need to remake array, and allow dynamic boundaries for wide images
+    // todo: add 2 readerSettings for defining bounds of wide images
     const [imageData, setImageData] = useState<
         { index: number; isWide: boolean; img: HTMLCanvasElement | HTMLImageElement | string }[]
     >([]);

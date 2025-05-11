@@ -1,96 +1,91 @@
-import { useMemo } from "react";
-import { BookBookmark, LibraryItemWithProgress, MangaBookmark } from "@common/types/db";
 import { useAppSelector, useAppDispatch } from "@store/hooks";
+import { useMemo } from "react";
 import BookmarkHistoryListItem from "./BookmarkHistoryListItem";
 import { formatUtils } from "@utils/file";
-import ListNavigator from "../../components/ListNavigator";
-import { setAppSettings } from "@store/appSettings";
+import { BookBookmark, LibraryItemWithProgress, MangaBookmark } from "@common/types/db";
 import { faSort } from "@fortawesome/free-solid-svg-icons";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
+import { setAppSettings } from "@store/appSettings";
 import { useAppContext } from "src/renderer/App";
+import ListNavigator from "@renderer/components/ListNavigator";
 
-const BookmarkTab: React.FC = () => {
-    const bookmarks = useAppSelector((store) => store.bookmarks);
+const HistoryTab: React.FC = () => {
     const library = useAppSelector((store) => store.library);
     const appSettings = useAppSelector((store) => store.appSettings);
     const dispatch = useAppDispatch();
     const { setContextMenuData } = useAppContext();
 
-    const bookmarksArray = useMemo(() => {
-        const arr: (BookBookmark | MangaBookmark)[] = [];
-        Object.entries(bookmarks.book).forEach(([itemLink, bookmarks]) => {
-            bookmarks?.forEach((bookmark) => {
-                arr.push({ ...bookmark, itemLink });
-            });
-        });
-        Object.entries(bookmarks.manga).forEach(([itemLink, bookmarks]) => {
-            bookmarks?.forEach((bookmark) => {
-                arr.push({ ...bookmark, itemLink });
-            });
-        });
+    const historyItems = useMemo(() => {
+        const items = Object.values(library.items).filter(
+            (item) => item && item.progress,
+        ) as LibraryItemWithProgress[];
 
-        let sorted = [...arr];
+        let sorted = [...items];
 
-        if (appSettings.bookListSortBy === "name") {
-            sorted = sorted.sort((a, b) => {
-                const itemA = library.items[a.itemLink];
-                const itemB = library.items[b.itemLink];
-                if (!itemA || !itemB) return 0;
-                return window.app.betterSortOrder(itemA.title, itemB.title);
-            });
+        if (appSettings.historyListSortBy === "name") {
+            sorted = sorted.sort((a, b) => window.app.betterSortOrder(a.title, b.title));
         } else {
-            sorted = sorted.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
+            sorted = sorted.sort((a, b) => {
+                const aDate =
+                    a.type === "book"
+                        ? new Date(a.progress?.lastReadAt || 0).getTime()
+                        : new Date(a.progress?.lastReadAt || 0).getTime();
+
+                const bDate =
+                    b.type === "book"
+                        ? new Date(b.progress?.lastReadAt || 0).getTime()
+                        : new Date(b.progress?.lastReadAt || 0).getTime();
+
+                return bDate - aDate;
+            });
         }
 
-        return appSettings.bookListSortType === "inverse" ? [...sorted].reverse() : sorted;
-    }, [bookmarks, library.items, appSettings.bookListSortBy, appSettings.bookListSortType]);
+        return appSettings.historyListSortType === "inverse" ? [...sorted].reverse() : sorted;
+    }, [library.items, appSettings.historyListSortBy, appSettings.historyListSortType]);
 
-    const filterBookmark = (filter: string, bookmark: LibraryItemWithProgress | BookBookmark | MangaBookmark) => {
-        if ("type" in bookmark) return false;
-        const item = library.items[bookmark.itemLink];
-        if (!item) return false;
-
-        //"page" in bookmark means it's a manga bookmark not epub
-
+    const filterHistoryItem = (filter: string, item: LibraryItemWithProgress | BookBookmark | MangaBookmark) => {
+        if (!("type" in item)) return false;
         const searchText =
-            item.title +
-            (item.progress?.chapterName ? ` ${item.progress.chapterName}` : "") +
-            ("page" in bookmark ? "manga|manhua|manhwa|webtoon|webcomic|comic" : "") +
-            ` ${formatUtils.files.getExt("page" in bookmark ? bookmark.link : bookmark.itemLink)}`;
+            item.type === "manga"
+                ? item.title +
+                  (formatUtils.files.test(item.progress?.chapterName || "")
+                      ? `${window.path.extname(item.progress?.chapterName || "")}`
+                      : "") +
+                  "manga|manhua|manhwa|webtoon|webcomic|comic"
+                : item.title + ".epub";
 
         return new RegExp(filter, "ig").test(searchText);
     };
 
-    const renderBookmarkItem = (
-        bookmark: LibraryItemWithProgress | BookBookmark | MangaBookmark,
+    const renderHistoryItem = (
+        item: LibraryItemWithProgress | BookBookmark | MangaBookmark,
         index: number,
         isSelected: boolean,
     ) =>
-        "chapterName" in bookmark && (
+        "type" in item && (
             <BookmarkHistoryListItem
-                isHistory={false}
-                isBookmark={true}
+                isHistory={true}
+                isBookmark={false}
                 focused={isSelected}
-                link={bookmark.itemLink}
-                id={bookmark.id}
-                bookmark={bookmark}
-                key={`${bookmark.id}-${bookmark.itemLink}`}
+                link={item.link}
+                id={index}
+                key={`${item.updatedAt}-${index}`}
             />
         );
 
-    if (!appSettings.showTabs.bookmark) {
+    if (!appSettings.showTabs.history) {
         return null;
     }
 
     return (
-        <div className="contTab listCont" id="bookmarksTab">
-            <h2>Bookmarks</h2>
+        <div className="contTab listCont" id="historyTab">
+            <h2>Continue Reading</h2>
 
             <ListNavigator.Provider
-                items={bookmarksArray as (BookBookmark | MangaBookmark)[]}
-                filterFn={filterBookmark}
-                renderItem={renderBookmarkItem}
-                emptyMessage="No Bookmarks"
+                items={historyItems}
+                filterFn={filterHistoryItem}
+                renderItem={renderHistoryItem}
+                emptyMessage="Library Empty"
                 onContextMenu={(elem) => elem.dispatchEvent(window.contextMenu.fakeEvent(elem))}
                 onSelect={(elem) => elem.click()}
             >
@@ -100,8 +95,8 @@ const BookmarkTab: React.FC = () => {
                             <button
                                 data-tooltip={
                                     "Sort: " +
-                                    (appSettings.bookListSortType === "normal" ? "▲ " : "▼ ") +
-                                    appSettings.bookListSortBy.toUpperCase()
+                                    (appSettings.historyListSortType === "normal" ? "▲ " : "▼ ") +
+                                    appSettings.historyListSortBy.toUpperCase()
                                 }
                                 onClick={(e) => {
                                     const items: Menu.ListItem[] = [
@@ -110,22 +105,22 @@ const BookmarkTab: React.FC = () => {
                                             action() {
                                                 dispatch(
                                                     setAppSettings({
-                                                        bookListSortBy: "name",
+                                                        historyListSortBy: "name",
                                                     }),
                                                 );
                                             },
-                                            selected: appSettings.bookListSortBy === "name",
+                                            selected: appSettings.historyListSortBy === "name",
                                         },
                                         {
-                                            label: "Date Added",
+                                            label: "Date Updated",
                                             action() {
                                                 dispatch(
                                                     setAppSettings({
-                                                        bookListSortBy: "date",
+                                                        historyListSortBy: "date",
                                                     }),
                                                 );
                                             },
-                                            selected: appSettings.bookListSortBy === "date",
+                                            selected: appSettings.historyListSortBy === "date",
                                         },
                                         window.contextMenu.template.divider(),
                                         {
@@ -133,22 +128,22 @@ const BookmarkTab: React.FC = () => {
                                             action() {
                                                 dispatch(
                                                     setAppSettings({
-                                                        bookListSortType: "normal",
+                                                        historyListSortType: "normal",
                                                     }),
                                                 );
                                             },
-                                            selected: appSettings.bookListSortType === "normal",
+                                            selected: appSettings.historyListSortType === "normal",
                                         },
                                         {
                                             label: "Descending",
                                             action() {
                                                 dispatch(
                                                     setAppSettings({
-                                                        bookListSortType: "inverse",
+                                                        historyListSortType: "inverse",
                                                     }),
                                                 );
                                             },
-                                            selected: appSettings.bookListSortType === "inverse",
+                                            selected: appSettings.historyListSortType === "inverse",
                                         },
                                     ];
                                     setContextMenuData({
@@ -174,4 +169,4 @@ const BookmarkTab: React.FC = () => {
     );
 };
 
-export default BookmarkTab;
+export default HistoryTab;
