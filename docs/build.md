@@ -1,6 +1,6 @@
 # Build Guide
 
-Require `git`, `node@v18.15.0` and `pnpm`.
+Require `git`, `node@v21` and `pnpm`.
 
 ```bash
 
