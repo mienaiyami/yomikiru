@@ -1,73 +1,168 @@
 # Yomikiru
 
-Manga/Manhwa/Comic/Novel Reader for desktop (not a downloader/host).
-It is a offline desktop app to read locally stored manga or epub with great reading experience.
+**A powerful offline manga, manhwa, comic, and novel reader for desktop**
+
+Yomikiru is a feature-rich desktop application designed for reading locally stored manga, comics, webtoons, and EPUB novels. Built with Electron and React, it offers a customizable and distraction-free reading experience.
 
 [![Github Latest Release](https://img.shields.io/github/v/tag/mienaiyami/yomikiru?label=release&style=flat-square&logo=github)](https://github.com/mienaiyami/yomikiru/releases/latest) |
-[![Github All Releases](https://img.shields.io/github/downloads/mienaiyami/yomikiru/total.svg?style=flat-square&logo=github)](https://github.com/mienaiyami/yomikiru/releases)
+[![Github All Releases](https://img.shields.io/github/downloads/mienaiyami/yomikiru/total.svg?style=flat-square&logo=github)](https://github.com/mienaiyami/yomikiru/releases) |
+[![License](https://img.shields.io/github/license/mienaiyami/yomikiru?style=flat-square)](LICENSE)
 
-<!-- > [!Important]   -->
-<!-- > <https://github.com/mienaiyami/yomikiru/discussions/416> -->
-<!-- > Beta Version available now! -->
-<!-- > If you are using version < 2.20.0, please update to the latest version as soon as possible to avoid getting beta versions auto installed. -->
+## Features
 
-## Main todo
+### Reading Experience
 
-- Implement gallery view for home page.
-- Change in UI components to use custom Radix UI for better accessibility and maintainability.
-  - modal
-  - dialog
-  - dropdown
-  - context menu
-  - select??
-- Redo of whole styling system in app for better maintainability.
-- Replace IPC redux slices with Tanstack Query based hooks??.
-- Move from webpack to Vite??.
-- Windows 7 deprecation. Current version of electron is causing many issues and I have planned to migrate to a newer version of electron which is not supported by Windows 7. It will be done after gallery view is implemented and main issues are fixed.
+- **Multiple Reading Modes**: Vertical scroll, left-to-right, right-to-left navigation
+- **Zen Mode**: Distraction-free fullscreen reading
+- **Custom Scrolling**: Adjustable scroll speed with keyboard navigation
+- **Dual Page View**: Side-by-side page display for manga/comics
+- **Webtoon Support**: Seamless vertical scrolling with no gaps
 
-## What it does not do
+### Customization
 
-- Host any content or provide a way to read any online content.
-- Provide any sort of downloader.
+- **Multiple Themes**: Choose from various built-in themes
+- **Custom Themes**: Create and share your own themes
+- **Font Customization**: Adjust font size, family, and margins (EPUB)
+- **Layout Options**: Customize gaps, margins, and page arrangements
+- **Keyboard Shortcuts**: Fully customizable key bindings
 
-## Who is this app for?
+### Library Management
 
-- For people who prefer to download and read manga/comics/webtoons.
-- For people who download manga in batch.
-- For people who have a lot of manga and want to read them in organized way.
-- For people who want better reading experience, be it webtoons (vertical scroll with no gap), manga/comics (2 pages per row, custom gap between rows, click mode with left-to-right or right-to-left and more), or epubs (custom font size, margins, font family and more).
-- For people who want keep bookmarks and history with page number.
+- **Bookmarks**: Save progress with page numbers
+- **Reading History**: Track your reading progress
+- **Search & Filter**: Find content quickly in large libraries
+- **Multiple Instances**: Open multiple reading windows
 
-## Features(not limited to)
+### Technical Features
 
-- Lightweight, takes low CPU and RAM.
-- Supports most image formats (`".jpg", ".jpeg", ".png", ".webp", ".svg", ".apng", ".gif", ".avif"`) and archive (`.zip`, `.cbz`, `.7z`, `.rar`) and `.pdf`  (only as images, non-clickable). **It is recommended to use folder as chapters instead of archives like `.zip`, `.cbz` for better experience**
-- Anilist support.
-- Create multiple instances of reader.
-- Multiple useful and customizable shortcuts.
-- Scroll with keys and two available custom scrolling speed.
-- Multiple themes to choose from.
-- Customizable themes, easy to share themes.
-- Multiple Reading modes - Vertical Scroll, Left to Right, Right to left.
-- Bookmark chapters with page number.
-- Keep history with page number.
-- Portable version available.
-- Zen mode - read without any UI in full screen without any distraction.
-- Open in reader directly from the file explorer.
-- Drag and Drop support.
+- **Lightweight**: Low CPU and RAM usage
+- **Offline First**: No internet connection required
+- **Cross-Platform**: Windows, macOS, and Linux support
+- **Portable Mode**: Run from USB drives or external storage
+- **Drag & Drop**: Easy file management
+- **File Explorer Integration**: Open files directly from system explorer
 
-## [Guides](docs/GUIDE.md)
+### Integrations
 
-## [Screenshots](docs/SCREENSHOTS.md)
+- **Anilist Support**: Sync reading progress with your Anilist account
+- **TachiDesk Compatible**: Works with TachiDesk download structure
+- **Archive Support**: CBZ, CBR, ZIP, RAR, and 7Z files
+- **Multiple Formats**: Images, PDFs, and EPUB files
 
-## [Build and Compile](docs/build.md)
+## Installation
 
-## [Contributing](docs/contribute.md)
+### Quick Install
 
-## Thank you for Supporting the project
+1. **Download** the latest version from [Releases](https://github.com/mienaiyami/yomikiru/releases/latest)
+2. **Choose your platform**:
+   - Windows: Download `.exe` (installer) or `.zip` (portable)
+   - Linux: Download `.deb` (Debian/Ubuntu)
+3. **Install and launch** the application
 
-Past Supporters:
+## Beta Version
+
+Beta versions are available for users who want to try the latest features before they're released to the stable channel. Beta versions may contain bugs and are not recommended for production use.
+
+### Accessing Beta Releases
+
+- **Beta Releases**: Available on the [Releases page](https://github.com/mienaiyami/yomikiru/releases) (marked as "Pre-release")
+- **Beta Branch**: Check the `beta` branch for the latest development code
+
+### Beta vs Stable
+
+- **Stable**: Recommended for regular use, thoroughly tested
+- **Beta**: Latest features, may have bugs, suitable for testing and feedback
+
+> [!WARNING]
+> Beta versions may have database schema changes that are not backward compatible. Always backup your data before using beta versions.
+
+> [!NOTE]
+> If you're using a version older than 2.20.0, please update to the latest stable version to avoid automatic beta installations.
+
+## Supported Formats
+
+### Images & Comics
+
+- **Image Formats**: `.jpg`, `.jpeg`, `.png`, `.webp`, `.svg`, `.apng`, `.gif`, `.avif`
+- **Archive Formats**: `.zip`, `.cbz`, `.7z`, `.rar`, `.cbr`
+- **Document Formats**: `.pdf` (image-based reading)
+
+### Books & Novels
+
+- **EPUB**: Full support with bookmarks, notes, and customization
+- **PDF**: Basic reading support
+
+> [!TIP]
+> **Recommended**: Use folders with images instead of archives for the best performance and experience.
+
+## Who Is This App For?
+
+- **Manga Enthusiasts**: Read downloaded manga with optimal page layout and navigation
+- **Comic Readers**: Enjoy comics with customizable viewing modes
+- **Webtoon Fans**: Seamless vertical scrolling experience
+- **Novel Readers**: EPUB support with extensive customization
+- **Collectors**: Organize and manage large digital libraries
+- **Offline Users**: No internet connection required for reading
+
+## What It Doesn't Do
+
+- **No Content Hosting**: Doesn't host or provide access to online content
+- **No Downloader**: Doesn't download content from the internet
+- **No Streaming**: Works only with locally stored files
+
+## Development Roadmap
+
+### Current Focus
+
+- **Gallery View**: Implement gallery view for home page
+- **UI Components**: Migrate to custom Radix UI components for better accessibility
+- **Styling System**: Complete redesign of the styling system
+- **Modern Stack**: Consider migration to Vite and Tanstack Query
+
+### Future Plans
+
+- **Windows 7 Deprecation**: Moving to newer Electron version (post-gallery view)
+- **Enhanced Performance**: Optimization for large collections
+- **Additional Formats**: Expand supported file types
+
+## Documentation
+
+- **[User Guide](docs/GUIDE.md)**: Complete user manual and tips
+- **[Screenshots](docs/SCREENSHOTS.md)**: Visual overview of features
+- **[Build Guide](docs/build.md)**: Development setup and compilation
+- **[Contributing](docs/contribute.md)**: How to contribute to the project
+
+## Support & Issues
+
+- **Bug Reports**: [GitHub Issues](https://github.com/mienaiyami/yomikiru/issues)
+- **Feature Requests**: [GitHub Issues](https://github.com/mienaiyami/yomikiru/issues)
+- **Discussions**: [GitHub Discussions](https://github.com/mienaiyami/yomikiru/discussions)
+- **Documentation**: Check the `docs/` folder for detailed guides
+
+## License
+
+This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
+
+## Acknowledgments
+
+### Past Supporters
 
 - @Tpztan
 
+### Built With
+
+- [Electron](https://www.electronjs.org/) - Cross-platform desktop apps
+- [React](https://reactjs.org/) - User interface library
+- [TypeScript](https://www.typescriptlang.org/) - Type-safe JavaScript
+- [Drizzle ORM](https://orm.drizzle.team/) - Database management
+- [Redux Toolkit](https://redux-toolkit.js.org/) - State management
+
+---
+
 ![info](https://github.com/mienaiyami/mienaiyami/blob/main/metrics.plugin.people.repository.svg)
+
+<div align="center">
+
+**[Download Now](https://github.com/mienaiyami/yomikiru/releases/latest)** • **[Documentation](docs/GUIDE.md)** • **[Screenshots](docs/SCREENSHOTS.md)**
+
+</div>
