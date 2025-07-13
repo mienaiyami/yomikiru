@@ -1,19 +1,20 @@
 import { z } from "zod";
-import { saveJSONfile, settingsPath } from "./paths";
+import { saveJSONfile, settingsPath } from "./file";
+import { dialogUtils } from "./dialog";
+
+const sortTypeEnum = z.union([z.literal("normal"), z.literal("inverse")]);
+const sortByEnum = z.union([z.literal("name"), z.literal("date")]);
 
 const settingSchema = z
     .object({
         baseDir: z.string(),
         customStylesheet: z.string(),
-        locationListSortType: z.union([z.literal("normal"), z.literal("inverse")]),
-        locationListSortBy: z.union([z.literal("name"), z.literal("date")]),
-        /**
-         * Check for new update on start of app.
-         */
-        updateCheckerEnabled: z.boolean(),
-        askBeforeClosing: z.boolean(),
-        skipMinorUpdate: z.boolean(),
-        autoDownloadUpdate: z.boolean(),
+        locationListSortType: sortTypeEnum,
+        locationListSortBy: sortByEnum,
+        bookListSortType: sortTypeEnum,
+        bookListSortBy: sortByEnum,
+        historyListSortType: sortTypeEnum,
+        historyListSortBy: sortByEnum,
         /**
          * Open chapter in reader directly, one folder inside of base manga dir.
          */
@@ -24,7 +25,6 @@ const settingSchema = z
         }),
         useCanvasBasedReader: z.boolean(),
         openOnDblClick: z.boolean(),
-        recordChapterRead: z.boolean(),
         disableListNumbering: z.boolean(),
         /**
          * show search input for history and bookmark
@@ -33,7 +33,6 @@ const settingSchema = z
 
         openInZenMode: z.boolean(),
         hideCursorInZenMode: z.boolean(),
-        hideOpenArrow: z.boolean(),
         /**
          * Show more data in title attr in bookmark/history tab items
          */
@@ -43,6 +42,12 @@ const settingSchema = z
         checkboxReaderSetting: z.boolean(),
         syncSettings: z.boolean(),
         syncThemes: z.boolean(),
+        /**
+         * Confirm before deleting item from history/bookmark/note
+         * only in side list
+         * always true on home page
+         */
+        confirmDeleteItem: z.boolean(),
 
         //styles
 
@@ -76,6 +81,15 @@ const settingSchema = z
             showPageNumberInZenMode: z.boolean(),
             scrollSpeedA: z.number(),
             scrollSpeedB: z.number(),
+            overrideMouseWheelSpeed: z.boolean(),
+            /**
+             * duration of mouse wheel scroll in ms
+             */
+            mouseWheelScrollDuration: z.number(),
+            /**
+             * multiplier for mouse wheel scroll speed
+             */
+            mouseWheelScrollSpeed: z.number(),
             /**
              * reading direction in two pages per row
              * * `0` - ltr
@@ -161,6 +175,7 @@ const settingSchema = z
             focusChapterInList: z.boolean(),
             hideSideList: z.boolean(),
             autoUpdateAnilistProgress: z.boolean(),
+            enableTouchScroll: z.boolean(),
             touchScrollMultiplier: z.number(),
         }),
         epubReaderSettings: z.object({
@@ -238,15 +253,16 @@ const settingSchema = z
         }),
     })
     .strip()
+    // it is separate do i dont leave default-less value
     .default({
         baseDir: window.electron.app.getPath("home"),
         customStylesheet: "",
         locationListSortType: "normal",
         locationListSortBy: "name",
-        updateCheckerEnabled: true,
-        askBeforeClosing: false,
-        skipMinorUpdate: false,
-        autoDownloadUpdate: false,
+        bookListSortType: "normal",
+        bookListSortBy: "date",
+        historyListSortType: "normal",
+        historyListSortBy: "date",
         openDirectlyFromManga: false,
         showTabs: {
             bookmark: true,
@@ -254,20 +270,17 @@ const settingSchema = z
         },
         useCanvasBasedReader: false,
         openOnDblClick: true,
-        // disableCachingCanvas: false,
-        recordChapterRead: true,
-        // showPageNumOnHome: true,
         disableListNumbering: true,
-        showSearch: false,
+        showSearch: true,
         openInZenMode: false,
         hideCursorInZenMode: false,
-        hideOpenArrow: false,
         showMoreDataOnItemHover: true,
         autoRefreshSideList: false,
-        keepExtractedFiles: false,
+        keepExtractedFiles: true,
         checkboxReaderSetting: false,
         syncSettings: true,
         syncThemes: true,
+        confirmDeleteItem: true,
         showPageCountInSideList: true,
         showTextFileBadge: true,
         readerSettings: {
@@ -282,6 +295,9 @@ const settingSchema = z
             showPageNumberInZenMode: true,
             scrollSpeedA: 5,
             scrollSpeedB: 15,
+            overrideMouseWheelSpeed: false,
+            mouseWheelScrollSpeed: 0.5,
+            mouseWheelScrollDuration: 300,
             readingSide: 1,
             fitOption: 0,
             disableChapterTransitionScreen: false,
@@ -321,7 +337,8 @@ const settingSchema = z
             focusChapterInList: true,
             hideSideList: false,
             autoUpdateAnilistProgress: false,
-            touchScrollMultiplier: 1,
+            enableTouchScroll: false,
+            touchScrollMultiplier: 5,
         },
         epubReaderSettings: {
             loadOneChapter: true,
@@ -377,13 +394,19 @@ const settingSchema = z
 const makeSettingsJson = () => {
     saveJSONfile(settingsPath, settingSchema.parse(undefined));
 };
+let settingNotFound = false;
 if (!window.fs.existsSync(settingsPath)) {
-    window.dialog.warn({ message: "No settings found, Select manga folder to make default in settings" });
+    // dialogUtils.warn({ message: "No settings found, Select manga folder to make default in settings" });
+    settingNotFound = true;
     makeSettingsJson();
 }
 
 const parseAppSettings = (): z.infer<typeof settingSchema> => {
     const defaultSettings = settingSchema.parse(undefined);
+    if (settingNotFound) {
+        settingNotFound = false;
+        return defaultSettings;
+    }
 
     const getValueFromDeepObject = (obj: any, keys: (string | number)[]) => {
         let result = obj;
@@ -406,7 +429,6 @@ const parseAppSettings = (): z.infer<typeof settingSchema> => {
     };
 
     try {
-        //todo test for empty;
         const parsedJSON = JSON.parse(window.fs.readFileSync(settingsPath, "utf-8"));
         return settingSchema
             .catch(({ error, input }) => {
@@ -417,7 +439,7 @@ const parseAppSettings = (): z.infer<typeof settingSchema> => {
                     location.push(e.path.join("."));
                     setValueFromDeepObject(fixed, e.path, getValueFromDeepObject(defaultSettings, e.path));
                 });
-                window.dialog.warn({
+                dialogUtils.warn({
                     message: `Some settings are invalid or new settings added. Re-writing settings.`,
                 });
                 window.logger.log("appSettings invalid at :", location);
@@ -428,7 +450,7 @@ const parseAppSettings = (): z.infer<typeof settingSchema> => {
     } catch (err) {
         window.logger.error(err);
         window.logger.log(window.fs.readFileSync(settingsPath, "utf-8"));
-        window.dialog.customError({ message: "Unable to parse settings.json. Remaking." });
+        dialogUtils.customError({ message: "Unable to parse settings.json. Remaking." });
         makeSettingsJson();
         return defaultSettings;
     }

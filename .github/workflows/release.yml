@@ -15,101 +15,107 @@ on:
     workflow_dispatch:
 
 jobs:
-    buildDeb:
+    buildLinux:
         runs-on: ubuntu-latest
         steps:
-            - name: Warning
-              if: ${{ github.event_name == 'workflow_dispatch' }}
-              run: echo "This will fail if a release with same version and tag exists"
-            - uses: actions/checkout@v3
+            - uses: actions/checkout@v4
+
+            - uses: pnpm/action-setup@v4
+              name: Setup pnpm
+              with:
+                  run_install: false
+
             - name: Use Node.js
-              uses: actions/setup-node@v3
+              uses: actions/setup-node@v4
               with:
                   node-version: 18.15.0
+                  cache: pnpm
+
+            - name: Install dependencies
+              run: pnpm install
+
+            - name: forge make deb
+              run: pnpm make:deb
+
             - name: Set version
               id: version
               run: |
-                if [[ $GITHUB_REF == refs/tags/v* ]]; then
-                  VERSION=${GITHUB_REF#refs/tags/}
-                else
-                  VERSION="v$(node -p "require('./package.json').version")"
-                fi
-                echo "version=$VERSION" >> $GITHUB_OUTPUT
-
-            - name: Install dependencies
-              run: yarn ci --network-timeout 1000000
-            - name: forge make
-              run: yarn make:deb
+                  if [[ $GITHUB_REF == refs/tags/v* ]]; then
+                    VERSION=${GITHUB_REF#refs/tags/}
+                  else
+                    VERSION="v$(node -p "require('./package.json').version")"
+                  fi
+                  echo "version=$VERSION" >> $GITHUB_OUTPUT
 
             - uses: actions/upload-artifact@v4
               with:
-                  name: linux-build-file
-                  path: ./out/full/Yomikiru-${{ steps.version.outputs.version }}-amd64.deb
+                  name: linux-build-files
+                  path: ./out/all/*
+                  if-no-files-found: error
 
     build:
-        needs: buildDeb
+        needs: buildLinux
         runs-on: windows-latest
         steps:
-            - uses: actions/checkout@v3
+            - uses: actions/checkout@v4
+
+            - uses: pnpm/action-setup@v4
+              name: Setup pnpm
+              with:
+                  run_install: false
+
             - name: Use Node.js
-              uses: actions/setup-node@v3
+              uses: actions/setup-node@v4
               with:
                   node-version: 18.15.0
+                  cache: pnpm
+
+            - name: Install dependencies
+              run: pnpm install
+
+            - uses: actions/download-artifact@v4
+              id: linux-build-files-downloader
+              with:
+                  name: linux-build-files
+                  path: ./out/all/
+
+            - name: Build for windows
+              run: |
+                  pnpm make:win32
+                  pnpm make:win64
 
             - name: Set version
               id: version
               shell: bash
               run: |
-                if [[ $GITHUB_REF == refs/tags/v* ]]; then
-                  VERSION=${GITHUB_REF#refs/tags/}
-                else
-                  VERSION="v$(node -p "require('./package.json').version")"
-                fi
-                echo "version=$VERSION" >> $GITHUB_OUTPUT
+                  if [[ $GITHUB_REF == refs/tags/v* ]]; then
+                    VERSION=${GITHUB_REF#refs/tags/}
+                  else
+                    VERSION="v$(node -p "require('./package.json').version")"
+                  fi
+                  echo "version=$VERSION" >> $GITHUB_OUTPUT
 
-            # yarn cache start
-            # it does work but take same time (and more sometimes) compared downloading so i dont see any use of it
+            - name: Read files-to-upload.txt
+              id: files-to-upload
+              shell: bash
+              run: |
+                  echo "files=$(cat files-to-upload.txt)" >> $GITHUB_OUTPUT
 
-            # - name: Get yarn cache directory path
-            #   id: yarn-cache-dir-path
-            #   run: echo "::set-output name=dir::$(yarn cache dir)"
-
-            # - uses: actions/cache@v3
-            #   id: yarn-cache
-            #   with:
-            #     path: ${{ steps.yarn-cache-dir-path.outputs.dir }}
-            #     key: ${{ runner.os }}-yarn-${{ hashFiles('**/yarn.lock') }}
-            #     restore-keys: |
-            #       ${{ runner.os }}-yarn-
-
-            # - name: Install dependencies
-            #   run: yarn ci --network-timeout 1000000
-            #   # if: steps.yarn-cache.outputs.cache-hit != 'true'
-
-            #end
-
-            - name: Install dependencies
-              run: yarn ci --network-timeout 1000000
-            - name: forge make
-              run: yarn make
-
-            - uses: actions/download-artifact@v4
-              id: linux-build-file-downloader
-              with:
-                  name: linux-build-file
-                  path: ./out/full/
+            - name: Make changelog
+              id: changelog
+              shell: bash
+              run: |
+                  cat download-btns.txt >> changelog-temp.md
+                  echo $'\n---\n\n' >> changelog-temp.md
+                  cat changelog.md >> changelog-temp.md
 
             - name: Release
               uses: softprops/action-gh-release@v2
               with:
                   tag_name: ${{steps.version.outputs.version}}
                   name: ${{steps.version.outputs.version}}
-                  files: |
-                      ./out/full/Yomikiru-win32-${{ steps.version.outputs.version }}-Portable.zip
-                      ./out/full/Yomikiru-win32-${{ steps.version.outputs.version }}-Portable-x64.zip
-                      ./out/full/Yomikiru-${{ steps.version.outputs.version }}-Setup.exe
-                      ./out/full/Yomikiru-${{ steps.version.outputs.version }}-Setup-x64.exe
-                      ./out/full/Yomikiru-${{ steps.version.outputs.version }}-amd64.deb
+                  files: ./out/all/*
                   body_path: changelog-temp.md
                   generate_release_notes: true
                   discussion_category_name: General
+                  prerelease: ${{ contains(steps.version.outputs.version, 'beta') || contains(steps.version.outputs.version, 'alpha') }}

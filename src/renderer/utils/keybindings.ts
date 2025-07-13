@@ -1,4 +1,4 @@
-const SHORTCUT_COMMAND_MAP = [
+export const SHORTCUT_COMMAND_MAP = [
     {
         command: "navToPage" as const,
         name: "Search Page Number",
@@ -112,12 +112,12 @@ const SHORTCUT_COMMAND_MAP = [
     {
         command: "fontSizePlus" as const,
         name: "Increase font size (epub)",
-        defaultKeys: [],
+        defaultKeys: ["shift+equal"],
     },
     {
         command: "fontSizeMinus" as const,
         name: "Decrease font size (epub)",
-        defaultKeys: [],
+        defaultKeys: ["shift+minus"],
     },
     {
         command: "navToHome" as const,
@@ -197,7 +197,13 @@ const SHORTCUT_COMMAND_MAP = [
 ];
 Object.freeze(SHORTCUT_COMMAND_MAP);
 
-const keyFormatter = (e: KeyboardEvent | React.KeyboardEvent, limited = true): string => {
+/**
+ * Format key event to string (e.g. "ctrl+shift+a", "ctrl+shift+numpad_plus")
+ * @param e key event
+ * @param limited Do not include some keys (e.g. "Control", "Shift", "Alt", "Tab", "Escape")
+ * @returns formatted key string
+ */
+export const keyFormatter = (e: KeyboardEvent | React.KeyboardEvent, limited = true): string => {
     if (limited && ["Control", "Shift", "Alt", "Tab", "Escape"].includes(e.key)) return "";
 
     // using lowercase because more readable
@@ -247,8 +253,5 @@ const keyFormatter = (e: KeyboardEvent | React.KeyboardEvent, limited = true): s
             keyStr += e.code.toLowerCase();
             break;
     }
-    // console.log(keyStr);
     return keyStr;
 };
-
-export { SHORTCUT_COMMAND_MAP, keyFormatter };

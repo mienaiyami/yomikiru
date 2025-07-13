@@ -65,6 +65,9 @@
                         gap: 5px;
                         .chapter {
                             display: flex;
+                            flex-direction: row;
+                            justify-content: space-between;
+                            align-items: center;
                             .text,
                             .page {
                                 color: var(--font-color-secondary);
@@ -89,7 +92,8 @@
                         }
                     }
 
-                    .text {
+                    .text,
+                    .text span {
                         overflow: hidden;
                         text-overflow: ellipsis;
                         display: -webkit-box;
@@ -99,6 +103,11 @@
                         /* number of lines to show */
                         -webkit-box-orient: vertical;
                     }
+                    .text:has(.page) {
+                        display: grid;
+                        gap: 5px;
+                        grid-template-columns: 1fr auto;
+                    }
 
                     &::before {
                         counter-increment: countList;
@@ -107,7 +116,8 @@
                     }
                 }
 
-                button {
+                button,
+                .btn {
                     margin: 0;
                     cursor: pointer;
                     user-select: none;
@@ -186,7 +196,8 @@
             // padding: 0 10px;
         }
 
-        button {
+        button,
+        .btn {
             // padding: 0;
             width: var(--button-width);
             height: 100%;

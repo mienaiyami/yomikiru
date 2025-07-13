@@ -56,7 +56,6 @@
         border: solid var(--reader-sidelist-divider-color);
         border-width: 4px 0;
         margin-top: 7px;
-        margin-bottom: 5px;
         padding: 5px;
         padding-right: 10px;
         display: flex;
@@ -125,16 +124,71 @@
             display: none;
         }
     }
+
+    .actions {
+        display: flex;
+        flex-direction: column;
+        gap: 6px;
+        margin-top: 5px;
+        border: solid var(--reader-sidelist-divider-color);
+        border-width: 0 0 4px 0;
+        padding-bottom: 5px;
+        button {
+            width: 100%;
+        }
+        .add-note-input {
+            width: 100%;
+        }
+        .color-buttons {
+            display: flex;
+            flex-direction: row;
+            gap: 6px;
+            button {
+                height: 2.2em;
+                background-color: var(--highlight-color);
+            }
+        }
+    }
     .location-cont {
         margin-top: 5px;
         padding: 0;
         a {
             --grid-template: 2.3em;
+            &:has(.date) {
+                grid-template-columns: auto;
+                .date {
+                    font-size: 0.8em;
+                    opacity: 0.7;
+                }
+            }
+            // to increase specificity
+            &.note-item:not(#dummy) {
+                grid-template-columns: 4px auto;
+                // display: none;
+                .note-selected-text {
+                    font-size: 0.8em;
+                    opacity: 0.7;
+                    overflow: hidden;
+                    text-overflow: ellipsis;
+                    display: -webkit-box;
+                    word-break: break-all;
+                    -webkit-line-clamp: 1;
+                    /* number of lines to show */
+                    -webkit-box-orient: vertical;
+                }
+                .highlight-color {
+                    width: 4px;
+                    height: 100%;
+                    border-radius: 2px;
+                }
+            }
         }
     }
     .tools {
         margin-bottom: 0;
-        button {
+        margin-top: 5px;
+        button,
+        .btn {
             &::before {
                 left: 50%;
                 top: 100%;
@@ -148,7 +202,9 @@
             height: 44px;
             gap: 6px;
             justify-content: stretch;
-            button {
+            // font-size: 0.8em;
+            button,
+            .btn {
                 width: 100%;
                 &::before {
                     left: 50%;
@@ -156,8 +212,98 @@
                     --translate: -50%, calc(-100% - 10px);
                 }
             }
-            button.bookmarkBtn {
-                width: auto;
+        }
+        .btnOptions {
+            display: flex;
+            flex-direction: row;
+            gap: 0;
+            align-items: center;
+            width: 100%;
+            > button {
+                width: 100%;
+                border-radius: 0;
+                &:first-child {
+                    border-top-left-radius: 4px;
+                    border-bottom-left-radius: 4px;
+                }
+                &:last-child {
+                    border-top-right-radius: 4px;
+                    border-bottom-right-radius: 4px;
+                }
+                &.selected {
+                    background: var(--btn-color-focus);
+                }
+                &:focus {
+                    z-index: 2;
+                }
+            }
+        }
+    }
+    .note-modal {
+        .modal-overlayCont {
+            width: 90%;
+            max-width: 400px;
+            box-shadow: currentColor 0 0 0 0.5px;
+            gap: 20px;
+            display: flex;
+            flex-direction: column;
+            align-items: stretch;
+            .selected-text {
+                width: 100%;
+                overflow: hidden;
+                text-overflow: ellipsis;
+                display: -webkit-box;
+                word-break: break-all;
+                -webkit-line-clamp: 1;
+                /* number of lines to show */
+                -webkit-box-orient: vertical;
+            }
+            .note-input {
+                display: flex;
+                flex-direction: column;
+                gap: 6px;
+                textarea {
+                    width: 100%;
+                    max-height: 10em;
+                    resize: none;
+                    background: var(--text-input-bg);
+                    color: var(--text-input-color);
+                    border: none;
+                    border-radius: 4px;
+                    padding: 10px;
+                    font-size: 16px;
+                    font-family: var(--font-family);
+
+                    &:focus {
+                        box-shadow: var(--text-input-bg-focus) 0 0 0px 2px;
+                        outline: transparent;
+                    }
+                }
+                .colorPickerBtn {
+                    height: 3em;
+                }
+                .color-buttons {
+                    display: flex;
+                    flex-direction: row;
+                    gap: 6px;
+                    padding-inline: 4px;
+                    button {
+                        height: 2.2em;
+                        width: 100%;
+                        background-color: var(--highlight-color);
+                    }
+                    &:has(button:focus) {
+                        button:not(:focus) {
+                            opacity: 0.5;
+                        }
+                    }
+                }
+            }
+            .modal-actions {
+                display: flex;
+                flex-direction: row;
+                gap: 10px;
+                justify-content: flex-end;
             }
         }
     }

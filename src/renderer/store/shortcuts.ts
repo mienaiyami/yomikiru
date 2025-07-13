@@ -1,9 +1,12 @@
 import { createSlice, PayloadAction } from "@reduxjs/toolkit";
-import { saveJSONfile, shortcutsPath } from "../utils/paths";
+import { saveJSONfile, shortcutsPath } from "../utils/file";
+import { SHORTCUT_COMMAND_MAP } from "@utils/keybindings";
+import { dialogUtils } from "@utils/dialog";
+import { RootState } from ".";
 
 const initialState: ShortcutSchema[] = [];
 
-const defaultShortcuts: ShortcutSchema[] = window.SHORTCUT_COMMANDS.map((e) => ({
+const defaultShortcuts: ShortcutSchema[] = SHORTCUT_COMMAND_MAP.map((e) => ({
     command: e.command,
     keys: e.defaultKeys,
 }));
@@ -14,7 +17,6 @@ if (window.fs.existsSync(shortcutsPath)) {
     if (raw) {
         try {
             let data: ShortcutSchema[] = JSON.parse(raw);
-
             // check if shortcut.json is pre version 2.18.5
             if (Object.keys(data[0]).includes("key1")) {
                 throw Error("old shortcuts.json detected");
@@ -22,9 +24,9 @@ if (window.fs.existsSync(shortcutsPath)) {
 
             // check if shortcut key is missing in shortcuts.json, if so then add
             const shortcutKeyEntries = data.map((e) => e.command);
-            const shortcutKeyOriginal = window.SHORTCUT_COMMANDS.map((e) => e.command);
+            const shortcutKeyOriginal = SHORTCUT_COMMAND_MAP.map((e) => e.command);
             data = data.filter((e) => shortcutKeyOriginal.includes(e.command));
-            window.SHORTCUT_COMMANDS.forEach((e) => {
+            SHORTCUT_COMMAND_MAP.forEach((e) => {
                 if (!shortcutKeyEntries.includes(e.command)) {
                     window.logger.log(`Function ${e} does not exist in shortcuts.json. Adding it.`);
                     data.push({
@@ -33,25 +35,28 @@ if (window.fs.existsSync(shortcutsPath)) {
                     });
                 }
             });
-            window.fs.writeFileSync(shortcutsPath, JSON.stringify(data, null, "\t"));
+            window.fs.writeFile(shortcutsPath, JSON.stringify(data, null, "\t"));
             initialState.push(...data);
         } catch (err) {
             if (err instanceof Error && err.message.includes("old shortcuts")) {
-                window.dialog.warn({
+                dialogUtils.warn({
                     message:
                         "Shortcut system is updating to support advanced key combinations. This will replace the old shortcut system and result in the loss of your current shortcuts. Sorry for the inconvenience.",
                 });
             } else
-                window.dialog.customError({
+                dialogUtils.customError({
                     message: "Unable to parse " + shortcutsPath + "\nMaking new shortcuts.json...",
                 });
             window.logger.error(err);
-            window.fs.writeFileSync(shortcutsPath, JSON.stringify(defaultShortcuts, null, "\t"));
+            window.fs.writeFile(shortcutsPath, JSON.stringify(defaultShortcuts, null, "\t"));
             initialState.push(...defaultShortcuts);
         }
+    } else {
+        window.fs.writeFile(shortcutsPath, JSON.stringify(defaultShortcuts, null, "\t"));
+        initialState.push(...defaultShortcuts);
     }
 } else {
-    window.fs.writeFileSync(shortcutsPath, JSON.stringify(defaultShortcuts, null, "\t"));
+    window.fs.writeFile(shortcutsPath, JSON.stringify(defaultShortcuts, null, "\t"));
     initialState.push(...defaultShortcuts);
 }
 
@@ -60,8 +65,6 @@ const shortcuts = createSlice({
     initialState,
     reducers: {
         setShortcuts: (state, action: PayloadAction<{ command: ShortcutCommands; key: string }>) => {
-            // todo: why did i do this?
-            // if (action.payload instanceof Array) state = action.payload;
             const { command, key } = action.payload;
             const index = state.findIndex((e) => e.command === command);
             if (index > -1) {
@@ -87,5 +90,12 @@ const shortcuts = createSlice({
 });
 
 export const { setShortcuts, resetShortcuts, removeShortcuts } = shortcuts.actions;
+
+export const getShortcutsMapped = (state: RootState) => {
+    return Object.fromEntries(state.shortcuts.map((e) => [e.command, e.keys])) as Record<
+        ShortcutCommands,
+        string[]
+    >;
+};
 
 export default shortcuts.reducer;

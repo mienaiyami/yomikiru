@@ -1,133 +1,104 @@
-import { createSlice, current, PayloadAction } from "@reduxjs/toolkit";
-import { bookmarksPath, saveJSONfile } from "../utils/paths";
+import { createSlice, createAsyncThunk, PayloadAction } from "@reduxjs/toolkit";
+import type { MangaBookmark, BookBookmark } from "@common/types/db";
+import { DatabaseChannels } from "@common/types/ipc";
 
-const initialState: Manga_BookItem[] = [];
-/**
- * updating from old schema to new to support epub
- */
-const updateBookmarks = (data: any): Manga_BookItem[] => {
-    window.logger.log("Upadting bookmark to support EPUB.", data);
-    const newBk: Manga_BookItem[] = [];
-    data.forEach((e: any) => {
-        if (e.type) newBk.push(e);
-        else
-            newBk.push({
-                type: "image",
-                data: e,
-            });
-    });
-    saveJSONfile(bookmarksPath, newBk);
-    return newBk;
+type BookmarksState = {
+    // map of key:itemLink value: bookmarks
+    manga: Record<string, MangaBookmark[] | null>;
+    book: Record<string, BookBookmark[] | null>;
+    loading: boolean;
+    error: string | null;
 };
-
-const readBookmark = (): Manga_BookItem[] => {
-    if (window.fs.existsSync(bookmarksPath)) {
-        const raw = window.fs.readFileSync(bookmarksPath, "utf8");
-        if (raw) {
-            try {
-                const data = JSON.parse(raw);
-                if (data.length === 0 || data[0].type) return data;
-                else return updateBookmarks(data);
-            } catch (err) {
-                window.dialog.customError({
-                    message: "Unable to parse " + bookmarksPath + "\nMaking new bookmarks.json.",
-                });
-                window.logger.error(err);
-                window.fs.writeFileSync(bookmarksPath, "[]");
-                return [];
-            }
-        } else return [];
-    } else {
-        window.fs.writeFileSync(bookmarksPath, "[]");
-        return [];
-    }
+const initialState: BookmarksState = {
+    manga: {},
+    book: {},
+    loading: false,
+    error: null,
 };
+export const fetchAllBookmarks = createAsyncThunk("bookmarks/fetchAll", async () => {
+    const bookmarks = await window.electron.invoke("db:library:getAllBookmarks");
+    return bookmarks;
+});
 
-const bookmarkData = readBookmark();
-// if (bookmarkData.length === 0) window.fs.writeFileSync(bookmarksPath, "[]");
-initialState.push(...bookmarkData);
+// export const fetchBookmarks = createAsyncThunk(
+//     "bookmarks/fetch",
+//     async ({ itemLink, type }: { itemLink: string; type: "manga" | "book" }) => {
+//         const bookmarks = await ipc.invoke(`db:${type}:getBookmarks`, { itemLink });
+//         return bookmarks;
+//     }
+// );
 
-const bookmarks = createSlice({
+export const addBookmark = createAsyncThunk(
+    "bookmarks/add",
+    async ({
+        data,
+        type,
+    }:
+        | {
+              data: DatabaseChannels["db:manga:addBookmark"]["request"];
+              type: "manga";
+          }
+        | {
+              data: DatabaseChannels["db:book:addBookmark"]["request"];
+              type: "book";
+          }) => {
+        const bookmark = await window.electron.invoke(`db:${type}:addBookmark`, data);
+        if (!bookmark) throw new Error("Failed to add bookmark");
+        return { bookmark, type };
+    },
+);
+export const removeBookmark = createAsyncThunk(
+    "bookmarks/remove",
+    async ({ itemLink, type, ids }: { itemLink: string; type: "manga" | "book"; ids: number[] }) => {
+        const res = await window.electron.invoke(`db:${type}:deleteBookmarks`, { itemLink, ids });
+        return { itemLink, type, ids };
+    },
+);
+export const removeAllBookmarks = createAsyncThunk(
+    "bookmarks/removeAll",
+    async ({ itemLink, type }: { itemLink: string; type: "manga" | "book" }) => {
+        await window.electron.invoke(`db:${type}:deleteBookmarks`, { itemLink, ids: [] });
+        return { itemLink, type };
+    },
+);
+
+const bookmarksSlice = createSlice({
     name: "bookmarks",
     initialState,
     reducers: {
-        addBookmark: (state, action: PayloadAction<Manga_BookItem | Manga_BookItem[]>) => {
-            if (action.payload instanceof Array) {
-                const newBks = action.payload.reverse();
-                newBks.forEach((newBk) => {
-                    const existingBookmark = state.findIndex((e) => e.data.link === newBk.data.link);
-                    if (existingBookmark > -1) state.splice(existingBookmark, 1);
-                    state.unshift(newBk);
-                });
-                // state.unshift(...action.payload);
-            } else {
-                const newBk = action.payload;
+        clearError: (state) => {
+            state.error = null;
+        },
+        setBookmarks: (state, action: PayloadAction<BookmarksState>) => {
+            return action.payload;
+        },
+    },
 
-                const existingBookmark = state.findIndex((e) => e.data.link === newBk.data.link);
-                if (existingBookmark > -1) {
-                    // if (state[existingBookmark].page === newBk.page){
-                    //     window.dialog.warn({
-                    //         title: "Bookmark Already Exist",
-                    //         message: "Bookmark Already Exist",
-                    //     });
-                    // }
-                    // else
-                    state.splice(existingBookmark, 1);
+    extraReducers: (builder) => {
+        builder
+            .addCase(fetchAllBookmarks.pending, (state) => {
+                state.loading = true;
+            })
+            .addCase(fetchAllBookmarks.fulfilled, (state, action) => {
+                state.manga = {};
+                for (const mangaBookmark of action.payload.mangaBookmarks) {
+                    if (!state.manga[mangaBookmark.itemLink]) {
+                        state.manga[mangaBookmark.itemLink] = [];
+                    }
+                    state.manga[mangaBookmark.itemLink]?.push(mangaBookmark);
                 }
-                state.unshift(newBk);
-            }
-            saveJSONfile(bookmarksPath, current(state));
-        },
-
-        updateBookmark: (state, action: PayloadAction<{ link: string; page: number }>) => {
-            const index = state.findIndex((e) => e.data.link === action.payload.link);
-            if (index > -1) {
-                if (
-                    window.fs.lstatSync(action.payload.link).isFile() &&
-                    window.path.extname(action.payload.link).toLowerCase() === ".epub"
-                ) {
-                    console.error("Use `updateEPUBBookmark`");
-                } else {
-                    (state[index].data as ChapterItem).page = action.payload.page;
+                state.book = {};
+                for (const bookBookmark of action.payload.bookBookmarks) {
+                    if (!state.book[bookBookmark.itemLink]) {
+                        state.book[bookBookmark.itemLink] = [];
+                    }
+                    state.book[bookBookmark.itemLink]?.push(bookBookmark);
                 }
-                saveJSONfile(bookmarksPath, current(state));
-            }
-            return state;
-        },
-        updateEPUBBookmark: (state, action: PayloadAction<{ link: string }>) => {
-            const index = state.findIndex((e) => e.data.link === action.payload.link);
-            if (index > -1 && window.app.epubHistorySaveData) {
-                (state[index].data as BookBookmarkItem).chapter = window.app.epubHistorySaveData.chapter;
-                (state[index].data as BookBookmarkItem).chapterURL = window.app.epubHistorySaveData.chapterURL;
-                (state[index].data as BookBookmarkItem).elementQueryString =
-                    window.app.epubHistorySaveData.queryString;
-                saveJSONfile(bookmarksPath, current(state));
-            }
-            return state;
-        },
-        refreshBookmark: () => {
-            return readBookmark();
-        },
-        // action.payload : link of chapter
-        removeBookmark: (state, action: PayloadAction<string>) => {
-            const newState = state.filter((e) => e.data.link !== action.payload);
-            saveJSONfile(bookmarksPath, newState);
-            return newState;
-        },
-        removeAllBookmarks: () => {
-            saveJSONfile(bookmarksPath, []);
-            return [];
-        },
+                state.loading = false;
+            });
     },
 });
 
-export const {
-    addBookmark,
-    removeAllBookmarks,
-    removeBookmark,
-    updateEPUBBookmark,
-    updateBookmark,
-    refreshBookmark,
-} = bookmarks.actions;
+export const { clearError: clearError_bookmark, setBookmarks } = bookmarksSlice.actions;
 
-export default bookmarks.reducer;
+export default bookmarksSlice.reducer;

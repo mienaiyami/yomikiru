@@ -13,6 +13,7 @@
             margin: 0;
             cursor: inherit;
             box-sizing: border-box;
+            forced-color-adjust: none;
         }
     }
 }
@@ -188,7 +189,8 @@
                 }
             }
         }
-        button {
+        button,
+        .btn {
             font-family: inherit;
 
             &:disabled {
@@ -219,7 +221,14 @@
             padding: 2px 4px;
             border-radius: 4px;
             white-space: nowrap;
-            font-family: ui-monospace, SFMono-Regular, SF Mono, Menlo, Consolas, Liberation Mono, monospace;
+            font-family:
+                ui-monospace,
+                SFMono-Regular,
+                SF Mono,
+                Menlo,
+                Consolas,
+                Liberation Mono,
+                monospace;
             font-size: 90%;
             align-self: center;
             cursor: inherit;
@@ -296,7 +305,8 @@
                     }
                 }
             }
-            button {
+            button,
+            .btn {
                 background: var(--btn-color);
 
                 &:hover {
@@ -372,7 +382,9 @@
                 border-radius: 10px;
                 transition: 0.3s cubic-bezier(0, 1.15, 1, 1) transform;
                 width: min(500px, 60%);
-                box-shadow: rgba(0, 0, 0, 0.3) 0px 19px 38px, rgba(0, 0, 0, 0.22) 0px 15px 12px;
+                box-shadow:
+                    rgba(0, 0, 0, 0.3) 0px 19px 38px,
+                    rgba(0, 0, 0, 0.22) 0px 15px 12px;
                 overflow: auto;
                 gap: 10px;
                 overflow: hidden;
@@ -686,8 +698,14 @@
                                     line-height: 1.2em;
                                     list-style: none;
                                     &::before {
-                                        font-family: ui-monospace, SFMono-Regular, SF Mono, Menlo, Consolas,
-                                            Liberation Mono, monospace;
+                                        font-family:
+                                            ui-monospace,
+                                            SFMono-Regular,
+                                            SF Mono,
+                                            Menlo,
+                                            Consolas,
+                                            Liberation Mono,
+                                            monospace;
                                     }
                                 }
                                 > li {
@@ -734,12 +752,14 @@
                                 box-shadow: inset 0 0 0px 1px var(--divider-color);
                                 &:first-child {
                                     border-radius: 8px 8px 0 0;
-                                    box-shadow: inset 0 0 0px 1px var(--divider-color),
+                                    box-shadow:
+                                        inset 0 0 0px 1px var(--divider-color),
                                         inset 0 1px 0px 1px var(--divider-color);
                                 }
                                 &:last-child {
                                     border-radius: 0 0 8px 8px;
-                                    box-shadow: inset 0 0 0px 1px var(--divider-color),
+                                    box-shadow:
+                                        inset 0 0 0px 1px var(--divider-color),
                                         inset 0 -1px 0px 1px var(--divider-color);
                                 }
                             }
@@ -873,7 +893,8 @@
                 z-index: 100000;
                 background: var(--body-bg-color);
                 display: grid;
-                place-content: center;
+                place-items: center;
+                gap: 1em;
                 display: none;
                 width: 100%;
                 height: 100%;
@@ -898,8 +919,9 @@
                     }
                 }
 
-                .unzipping {
+                .loadingText {
                     font-size: 4em;
+                    text-align: center;
                     animation: 2s linear fadeInOut infinite;
                 }
 
@@ -912,7 +934,7 @@
                     height: 30px;
                     border: 1px solid var(--btn-color-focus);
 
-                    .loadingbar {
+                    .loadingBar {
                         position: relative;
                         width: 0;
                         height: 100%;
@@ -991,6 +1013,8 @@
                         display: flex;
                         flex-direction: column;
                         gap: 4em;
+                        max-width: 90%;
+                        text-align: center;
                         > div {
                             display: flex;
                             flex-direction: column;
@@ -1021,6 +1045,7 @@
                 .shortcutClicked {
                     position: fixed;
                     display: flex;
+                    text-align: center;
                     background-color: var(--topBar-color);
                     font-size: 3em;
                     top: 40%;
@@ -1056,8 +1081,8 @@
                     .readerSideList {
                         .location-cont {
                             li {
-                                --depth: 0;
-                                font-size: calc(1rem + calc(calc(var(--depth) / 3) * 1em));
+                                // --level-top: 0;
+                                // font-size: calc(1rem + calc(calc(var(--level-top) / 3) * 1em));
                                 a {
                                     grid-template-columns: auto;
 
@@ -1065,10 +1090,10 @@
                                         display: none;
                                     }
                                 }
-                                &.collapsed {
-                                    display: none;
-                                }
-                                &.collapse {
+                                // &.collapsed {
+                                //     display: none;
+                                // }
+                                &.collapsible {
                                     &::before {
                                         content: "▼";
                                         display: inline-block;
@@ -1083,6 +1108,9 @@
                                         &::before {
                                             transform: rotate(-90deg);
                                             margin-top: 0;
+                                        }
+                                        & + ol {
+                                            display: none;
                                         }
                                     }
                                 }
@@ -1160,6 +1188,68 @@
                             }
                         }
                     }
+                    a {
+                        cursor: pointer;
+                        color: var(--epub-link-color);
+                        &:hover {
+                            text-decoration-line: underline;
+                            text-decoration-style: solid;
+                        }
+                    }
+                    a[data-href^="http"]::before {
+                        content: "";
+                        width: 1rem;
+                        height: 1rem;
+                        display: inline-block;
+                        background: currentColor;
+                        -webkit-mask: url("./external.svg") no-repeat 50% 50%;
+                        -webkit-mask-size: cover;
+                        mask: url("./external.svg") no-repeat 50% 50%;
+                        mask-size: cover;
+                        margin: 0 2px;
+                        vertical-align: middle;
+                    }
+                    [data-tooltip] {
+                        &::before {
+                            left: 50%;
+                            top: 0;
+                            --translate: -50%, calc(-100% - 0.5em);
+                            box-shadow: currentColor 0 0 0 0.5px;
+                            white-space: unset;
+                            max-width: 20em;
+                            padding: 0.4em;
+                        }
+                    }
+                    pre {
+                        code {
+                            white-space: pre-wrap;
+                            background: initial;
+                            box-shadow: initial;
+                            text-shadow: initial;
+                        }
+                    }
+                    .text-highlight {
+                        background-color: var(--highlight-color) !important;
+                    }
+                    .modal-element {
+                        .modal-overlayCont {
+                            user-select: text;
+                            max-width: var(--width);
+                            box-shadow: currentColor 0 0 0 0.5px;
+                            gap: 20px;
+                            color: var(--epub-font-color);
+                            .title {
+                                font-size: 2em;
+                                padding-bottom: 10px;
+                                font-weight: bold;
+                                box-shadow: inset 0 -1px 0 0 currentColor;
+                            }
+                            .content {
+                                max-height: 50%;
+                                overflow: auto;
+                            }
+                        }
+                    }
                     > .cont {
                         display: flex;
                         flex-direction: column;
@@ -1169,6 +1259,15 @@
                         width: var(--width);
                         background-color: var(--epub-background-color);
                         margin: 20px 0;
+                        .findInPage-highlight {
+                            color: var(--font-select-color);
+                            background: var(--font-select-bg-color);
+                            &.current {
+                                background: none;
+                                color: currentColor;
+                                outline: 2px solid var(--font-select-bg-color);
+                            }
+                        }
                         * {
                             line-height: var(--line-height);
                             word-spacing: var(--word-spacing);
@@ -1178,33 +1277,6 @@
                         }
                         fieldset {
                             border-color: var(--epub-font-color);
-                        }
-                        a {
-                            cursor: pointer;
-                            color: var(--epub-link-color);
-                            &:hover {
-                                text-decoration-line: underline;
-                                text-decoration-style: solid;
-                            }
-                        }
-                        a[href]::before {
-                            content: "";
-                            width: 1rem;
-                            height: 1rem;
-                            display: inline-block;
-                            background: currentColor;
-                            -webkit-mask: url("./external.svg") no-repeat 50% 50%;
-                            -webkit-mask-size: cover;
-                            mask: url("./external.svg") no-repeat 50% 50%;
-                            mask-size: cover;
-                            margin: 0 2px;
-                            vertical-align: middle;
-                        }
-                        p {
-                            &.findInPage {
-                                box-shadow: var(--font-color) 0 0 0 2px;
-                                scroll-margin-top: 30px;
-                            }
                         }
                     }
                 }

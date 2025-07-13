@@ -106,48 +106,81 @@
                 max-width: min(100%, var(--max-width));
             }
         }
-
-        .readerImg {
+        .readerImg,
+        .loadingIndicator {
             max-height: var(--max-height);
             width: var(--varWidth);
-            transform: translate3d(0, 0, 0);
-            image-orientation: none;
             max-width: var(--max-width);
-            &::not([src]) {
-                width: calc(100vh - 50px);
-                height: calc(100vh / 1.5);
-                opacity: 0;
-            }
+            transform: translate3d(0, 0, 0);
+        }
+        .readerImg {
+            image-orientation: none;
             opacity: 1;
+            &[data-loading="true"] {
+                display: none;
+                // opacity: 0;
+                transition: opacity 0.3s ease;
+                + .loadingIndicator {
+                    display: grid;
+                }
+            }
+
+            + .loadingIndicator {
+                @keyframes loading {
+                    0% {
+                        opacity: 0.3;
+                    }
+                    100% {
+                        opacity: 1;
+                    }
+                }
+                aspect-ratio: 2/3;
+                height: auto;
+                display: none;
+                place-items: center;
+                min-height: 50vh;
+                border: 1px solid gray;
+                font-size: 20px;
+                font-weight: bold;
+                text-align: center;
+                vertical-align: middle;
+                text-justify: center;
+                animation: loading 1s linear infinite alternate;
+            }
         }
         //todo check if it is even needed
         &.widthClamped {
             max-width: 100%;
-            .readerImg {
+            .readerImg,
+            .loadingIndicator {
                 max-width: 100%;
             }
         }
         &.twoPagePerRow {
             width: calc((100% + calc(max(0%, calc(var(--varWidth) - 100%))) * 1));
-            .readerImg {
+            .readerImg,
+            .loadingIndicator {
                 width: calc(var(--varWidth) / 2);
                 max-width: min(50%, calc(var(--max-width) / 2));
             }
             &.wide {
-                .readerImg {
+                .readerImg,
+                .loadingIndicator {
                     width: var(--varWidth);
                     max-width: min(100%, var(--max-width));
                 }
             }
 
             &.widthClamped {
-                .readerImg {
+                .readerImg,
+                .loadingIndicator {
                     max-width: 50%;
                     // width: calc(var(--varWidth) / 2);
                 }
 
                 &.wide {
-                    .readerImg {
+                    .readerImg,
+                    .loadingIndicator {
                         max-width: 100%;
                         // width: var(--varWidth);
                     }

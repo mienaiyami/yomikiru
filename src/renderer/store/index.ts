@@ -1,52 +1,34 @@
 import { configureStore } from "@reduxjs/toolkit";
 import appSettingsReducer from "./appSettings";
-import bookmarksReducer from "./bookmarks";
-// import contextMenuReducer from "./contextMenu";
-import historyReducer from "./history";
-import isLoadingMangaReducer from "./isLoadingManga";
-import isReaderOpenReducer from "./isReaderOpen";
-import isSettingOpenReducer from "./isSettingOpen";
-import linkInReaderReducer from "./linkInReader";
-import loadingMangaPercentReducer from "./loadingMangaPercent";
-import mangaInReaderReducer from "./mangaInReader";
-import pageNumChangeDisabledReducer from "./pageNumChangeDisabled";
 import prevNextChapterReducer from "./prevNextChapter";
 import shortcutsReducer from "./shortcuts";
 import themesReducer from "./themes";
-import unzippingReducer from "./unzipping";
-import bookInReaderReducer from "./bookInReader";
-import anilistTokenReducer from "./anilistToken";
-import isAniLoginOpenReducer from "./isAniLoginOpen";
-import anilistTrackingReducer from "./anilistTracking";
-import isAniSearchOpenReducer from "./isAniSearchOpen";
-import anilistCurrentMangaReducer from "./anilistCurrentManga";
-import isAniEditOpenReducer from "./isAniEditOpen";
+import anilistReducer from "./anilist";
+import libraryReducer from "./library";
+import bookmarksReducer from "./bookmarks";
+import bookNotesReducer from "./bookNotes";
+import uiReducer from "./ui";
+import readerReducer from "./reader";
+import mainSettingsReducer from "./mainSettings";
 
 const store = configureStore({
     reducer: {
         appSettings: appSettingsReducer,
         theme: themesReducer,
         bookmarks: bookmarksReducer,
-        isSettingOpen: isSettingOpenReducer,
-        isReaderOpen: isReaderOpenReducer,
-        isLoadingManga: isLoadingMangaReducer,
-        unzipping: unzippingReducer,
-        pageNumChangeDisabled: pageNumChangeDisabledReducer,
-        loadingMangaPercent: loadingMangaPercentReducer,
-        linkInReader: linkInReaderReducer,
+        bookNotes: bookNotesReducer,
+        library: libraryReducer,
         prevNextChapter: prevNextChapterReducer,
-        mangaInReader: mangaInReaderReducer,
-        history: historyReducer,
         shortcuts: shortcutsReducer,
-        // contextMenu: contextMenuReducer,
-        bookInReader: bookInReaderReducer,
-        anilistToken: anilistTokenReducer,
-        isAniLoginOpen: isAniLoginOpenReducer,
-        anilistTracking: anilistTrackingReducer,
-        isAniSearchOpen: isAniSearchOpenReducer,
-        anilistCurrentManga: anilistCurrentMangaReducer,
-        isAniEditOpen: isAniEditOpenReducer,
+        anilist: anilistReducer,
+        ui: uiReducer,
+        reader: readerReducer,
+        mainSettings: mainSettingsReducer,
     },
+    middleware: (getDefaultMiddleware) =>
+        getDefaultMiddleware({
+            serializableCheck: false,
+        }),
 });
 
 export default store;

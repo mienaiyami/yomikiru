@@ -1,5 +1,5 @@
 import { createSlice, PayloadAction } from "@reduxjs/toolkit";
-import { settingsPath, saveJSONfile } from "../utils/paths";
+import { settingsPath, saveJSONfile } from "../utils/file";
 import { makeSettingsJson, parseAppSettings } from "../utils/settingsSchema";
 
 const settings = parseAppSettings();

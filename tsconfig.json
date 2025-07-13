@@ -1,8 +1,8 @@
 {
     "compilerOptions": {
-        "target": "esnext",
+        "target": "es2022",
         "module": "commonjs",
-        "lib": ["dom", "ESNext", "DOM.Iterable"],
+        "lib": ["dom", "es2022", "DOM.Iterable"],
         "allowJs": true,
         "jsx": "react-jsx",
         "sourceMap": true,
@@ -10,7 +10,24 @@
         "strict": true,
         "resolveJsonModule": true,
         "esModuleInterop": true,
-        "typeRoots": ["./node_modules/@types"],
-        "skipLibCheck": true
+        "typeRoots": ["./node_modules/@types", "./src/common/types"],
+        "skipLibCheck": true,
+        "baseUrl": "./",
+        "paths": {
+            "@common/*": ["src/common/*"],
+            //
+            "@electron/*": ["src/electron/*"],
+            //
+            "@ui/*": ["src/renderer/components/ui/*"],
+            "@hooks/*": ["src/renderer/hooks/*"],
+            "@store/*": ["src/renderer/store/*"],
+            "@features/*": ["src/renderer/features/*"],
+            "@utils/*": ["src/renderer/utils/*"],
+            "@renderer-types/*": ["src/renderer/types/*"],
+            "@renderer/*": ["src/renderer/*"]
+        },
+        "useDefineForClassFields": true,
+        "forceConsistentCasingInFileNames": true
     }
+    // "include": ["src/**/*"]
 }
