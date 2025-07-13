@@ -7,6 +7,13 @@ It is a offline desktop app to read locally stored manga or epub with great read
 [![Github All Releases](https://img.shields.io/github/downloads/mienaiyami/yomikiru/total.svg?style=flat-square&logo=github)](https://github.com/mienaiyami/yomikiru/releases)
 
 > [!Important]  
+> If you are just checking this out the code or planning to contribute, only look at [`beta` branch](https://github.com/mienaiyami/yomikiru/tree/beta).
+>
+> `master` branch has been stagnant for a long time and contains older messy and unoptimized code.
+
+---
+
+> [!Important]  
 > <https://github.com/mienaiyami/yomikiru/discussions/416>
 > Beta Version available now!
 > If you are using version < 2.20.0, please update to the latest version as soon as possible to avoid getting beta versions auto installed.
