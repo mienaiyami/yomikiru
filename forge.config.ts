@@ -58,7 +58,7 @@ const config: ForgeConfig = {
     ],
     makers: [
         new MakerSquirrel({}, ["win32"]),
-        new MakerZIP({}, ["win32"]),
+        new MakerZIP({}, ["win32", "darwin"]),
         new MakerDeb(
             {
                 options: {
@@ -107,6 +107,11 @@ const config: ForgeConfig = {
                     name: `${appName}-v${appVersion}-amd64.deb`,
                     text: "Download 64-bit Linux (Debian)",
                     icon: "debian&logoColor=red",
+                },
+                "darwin+zip+x64": {
+                    name: `${appName}-v${appVersion}-macOS-x64.zip`,
+                    text: "Download 64-bit macOS (zip)",
+                    icon: "apple&logoColor=black",
                 },
             };
 
