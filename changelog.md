@@ -4,7 +4,11 @@
 >
 > **Please report any issues you encounter with the beta tag so stable version can be released faster.** -->
 
-# 2.21.0
+# 2.21.1
+
+- Fixed migration of history and bookmarks from JSON to SQLite, #448.
+
+## 2.21.0
 
 All changes are from beta. To join beta, check `Settings -> About -> Update Channel` after downloading this version.
 
