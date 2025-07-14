@@ -2,7 +2,7 @@ import { drizzle } from "drizzle-orm/better-sqlite3";
 import { migrate } from "drizzle-orm/better-sqlite3/migrator";
 // libsql wont work because of node/electron version issues
 import path from "path";
-import { app } from "electron";
+import { app, dialog } from "electron";
 import { eq } from "drizzle-orm";
 import * as schema from "./schema";
 import { libraryItems, mangaProgress, bookProgress, mangaBookmarks, bookBookmarks } from "./schema";
@@ -115,104 +115,183 @@ export class DatabaseService {
                 bookmarkData.length +
                 " bookmark items",
         );
+
+        let historySuccess = 0;
+        let historyFailed = 0;
+        let bookmarkSuccess = 0;
+        let bookmarkFailed = 0;
+        const errors: Array<{ type: string; item: any; error: string }> = [];
+
+        // Ensure title is never null/undefined/empty
+        const getTitle = (title: string | undefined | null, fallback: string): string => {
+            return title && title.trim().length > 0 ? title.trim() : fallback;
+        };
+
         return await this._db.transaction(async (tx) => {
             for (const item of historyData) {
-                const parentLink = item.type === "image" ? path.dirname(item.data.link) : item.data.link;
-                const [existing] = await tx.select().from(libraryItems).where(eq(libraryItems.link, parentLink));
-                if (existing) {
-                    log.log("Item already exists", parentLink);
-                    continue;
-                }
-                const [newItem] = await tx
-                    .insert(libraryItems)
-                    .values({
-                        type: item.type === "image" ? "manga" : "book",
-                        link: parentLink,
-                        title: item.type === "image" ? item.data.mangaName : item.data.title,
-                        author: item.type === "image" ? undefined : item.data.author,
-                        cover: item.type === "image" ? undefined : item.data.cover,
-                        createdAt: dateFromOldDateString(item.data.date),
-                    })
-                    .returning();
+                try {
+                    const parentLink = item.type === "image" ? path.dirname(item.data.link) : item.data.link;
 
-                if (item.type === "image") {
-                    await tx.insert(mangaProgress).values({
-                        itemLink: newItem.link,
-                        chapterName: item.data.chapterName,
-                        chapterLink: item.data.link,
-                        currentPage: item.data.page,
-                        totalPages: item.data.pages,
-                        lastReadAt: dateFromOldDateString(item.data.date),
-                        chaptersRead: Array.from(new Set(item.data.chaptersRead)) || [],
-                    });
-                } else {
-                    await tx.insert(bookProgress).values({
-                        itemLink: newItem.link,
-                        chapterId: item.data.chapterData?.id || "",
-                        position: item.data.chapterData?.elementQueryString || "",
-                        chapterName: item.data.chapterData?.chapterName,
-                        lastReadAt: dateFromOldDateString(item.data.date),
+                    const [existing] = await tx
+                        .select()
+                        .from(libraryItems)
+                        .where(eq(libraryItems.link, parentLink));
+                    if (existing) {
+                        log.log("Item already exists", parentLink);
+                        historySuccess++;
+                        continue;
+                    }
+
+                    // Validate required fields
+                    if (!parentLink || !item.data.link) {
+                        throw new Error("Missing required link data");
+                    }
+
+                    const title =
+                        item.type === "image"
+                            ? getTitle(item.data.mangaName, path.basename(parentLink))
+                            : getTitle(item.data.title, path.basename(parentLink));
+
+                    const [newItem] = await tx
+                        .insert(libraryItems)
+                        .values({
+                            type: item.type === "image" ? "manga" : "book",
+                            link: parentLink,
+                            title: item.type === "image" ? item.data.mangaName : item.data.title,
+                            author: item.type === "image" ? undefined : item.data.author,
+                            cover: item.type === "image" ? undefined : item.data.cover,
+                            createdAt: dateFromOldDateString(item.data.date),
+                        })
+                        .returning();
+
+                    if (item.type === "image") {
+                        await tx.insert(mangaProgress).values({
+                            itemLink: newItem.link,
+                            chapterName: item.data.chapterName || "Chapter 1",
+                            chapterLink: item.data.link,
+                            currentPage: Math.max(1, item.data.page || 1),
+                            totalPages: Math.max(1, item.data.pages || 1),
+                            lastReadAt: dateFromOldDateString(item.data.date),
+                            chaptersRead: Array.from(new Set(item.data.chaptersRead)) || [],
+                        });
+                    } else {
+                        await tx.insert(bookProgress).values({
+                            itemLink: newItem.link,
+                            chapterId: item.data.chapterData?.id || "chapter-1",
+                            position: item.data.chapterData?.elementQueryString || "body",
+                            chapterName: item.data.chapterData?.chapterName || "Chapter 1",
+                            lastReadAt: dateFromOldDateString(item.data.date),
+                        });
+                    }
+
+                    historySuccess++;
+                    log.log("Migrated history item", item.data.link);
+                } catch (error) {
+                    historyFailed++;
+                    const errorMsg = error instanceof Error ? error.message : String(error);
+                    log.error("Failed to migrate history item:", item.data?.link || "unknown", errorMsg);
+                    errors.push({
+                        type: "history",
+                        item,
+                        error: errorMsg,
                     });
                 }
-                console.log("Migrated history item", item.data.link);
             }
 
             for (const bookmark of bookmarkData) {
-                const parentLink =
-                    bookmark.type === "image" ? path.dirname(bookmark.data.link) : bookmark.data.link;
+                try {
+                    const parentLink =
+                        bookmark.type === "image" ? path.dirname(bookmark.data.link) : bookmark.data.link;
 
-                let [item] = await tx.select().from(libraryItems).where(eq(libraryItems.link, parentLink));
-                if (!item) {
-                    log.log("Item not found for bookmark", bookmark);
-                    log.log("Creating new item for bookmark");
+                    if (!parentLink || !bookmark.data.link) {
+                        throw new Error("Missing required link data");
+                    }
+
+                    let [item] = await tx.select().from(libraryItems).where(eq(libraryItems.link, parentLink));
+                    if (!item) {
+                        log.log("Item not found for bookmark", bookmark.data.link);
+                        log.log("Creating new item for bookmark");
+
+                        if (bookmark.type === "image") {
+                            const title = getTitle(bookmark.data.mangaName, path.basename(parentLink));
+                            item = await this.addLibraryItem({
+                                type: "manga",
+                                data: { link: parentLink, title: title, type: "manga" },
+                                progress: {
+                                    chapterLink: bookmark.data.link,
+                                    chapterName: bookmark.data.chapterName || "Chapter 1",
+                                    currentPage: Math.max(1, bookmark.data.page || 1),
+                                    totalPages: Math.max(1, bookmark.data.pages || 1),
+                                },
+                            });
+                        } else {
+                            const title = getTitle(bookmark.data.title, path.basename(parentLink));
+                            item = await this.addLibraryItem({
+                                type: "book",
+                                data: {
+                                    link: parentLink,
+                                    title: title,
+                                    type: "book",
+                                    author: bookmark.data.author,
+                                    cover: bookmark.data.cover,
+                                },
+                                progress: {
+                                    chapterId: bookmark.data.chapterData?.id || "chapter-1",
+                                    chapterName: bookmark.data.chapterData?.chapterName || "Chapter 1",
+                                    position: bookmark.data.chapterData?.elementQueryString || "body",
+                                },
+                            });
+                        }
+                    }
+
                     if (bookmark.type === "image") {
-                        item = await this.addLibraryItem({
-                            type: "manga",
-                            data: { link: parentLink, title: bookmark.data.mangaName, type: "manga" },
-                            progress: {
-                                chapterLink: bookmark.data.link,
-                                chapterName: bookmark.data.chapterName,
-                                currentPage: 1,
-                                totalPages: bookmark.data.pages,
-                            },
+                        await tx.insert(mangaBookmarks).values({
+                            itemLink: parentLink,
+                            link: bookmark.data.link,
+                            page: Math.max(1, bookmark.data.page || 1),
+                            createdAt: dateFromOldDateString(bookmark.data.date),
+                            chapterName: bookmark.data.chapterName || "Chapter 1",
                         });
                     } else {
-                        item = await this.addLibraryItem({
-                            type: "book",
-                            data: {
-                                link: parentLink,
-                                title: bookmark.data.title,
-                                type: "book",
-                                author: bookmark.data.author,
-                                cover: bookmark.data.cover,
-                            },
-                            progress: {
-                                chapterId: bookmark.data.chapterData?.id || "",
-                                chapterName: bookmark.data.chapterData?.chapterName,
-                                position: bookmark.data.chapterData?.elementQueryString || "",
-                            },
+                        await tx.insert(bookBookmarks).values({
+                            itemLink: parentLink,
+                            chapterId: bookmark.data.chapterData?.id || "chapter-1",
+                            position: bookmark.data.chapterData?.elementQueryString || "body",
+                            chapterName: bookmark.data.chapterData?.chapterName || "Chapter 1",
+                            createdAt: dateFromOldDateString(bookmark.data.date),
                         });
                     }
-                }
-                if (bookmark.type === "image") {
-                    await tx.insert(mangaBookmarks).values({
-                        itemLink: parentLink,
-                        link: bookmark.data.link,
-                        page: bookmark.data.page,
-                        createdAt: dateFromOldDateString(bookmark.data.date),
-                        chapterName: bookmark.data.chapterName,
-                    });
-                } else {
-                    await tx.insert(bookBookmarks).values({
-                        itemLink: parentLink,
-                        chapterId: bookmark.data.chapterData?.id || "",
-                        position: bookmark.data.chapterData?.elementQueryString || "",
-                        chapterName: bookmark.data.chapterData?.chapterName,
-                        createdAt: dateFromOldDateString(bookmark.data.date),
+
+                    bookmarkSuccess++;
+                    log.log("Migrated bookmark", bookmark.data.link);
+                } catch (error) {
+                    bookmarkFailed++;
+                    const errorMsg = error instanceof Error ? error.message : String(error);
+                    log.error("Failed to migrate bookmark:", bookmark.data?.link || "unknown", errorMsg);
+                    errors.push({
+                        type: "bookmark",
+                        item: bookmark,
+                        error: errorMsg,
                     });
                 }
-                console.log("Migrated bookmark", bookmark.data.link);
             }
+
+            log.log("Migration Summary:");
+            log.log(`History Items - Success: ${historySuccess}, Failed: ${historyFailed}`);
+            log.log(`Bookmarks - Success: ${bookmarkSuccess}, Failed: ${bookmarkFailed}`);
+
+            if (errors.length > 0) {
+                log.log("Migration Errors:");
+                errors.forEach((err, index) => {
+                    log.log(`${index + 1}. ${err.type}: ${err.error} : ${JSON.stringify(err.item)}`);
+                });
+                dialog.showMessageBox({
+                    type: "error",
+                    message: "There were errors during migration.",
+                    detail: `Items skipped : ${errors.length}.\nPlease check the logs.`,
+                });
+            }
+
             log.log("Migration complete");
         });
     }
