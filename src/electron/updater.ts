@@ -267,25 +267,62 @@ const downloadUpdates = (latestVersion: string, windowId: number, silent = false
     fs.mkdirSync(tempPath);
     const promptInstall = () => {
         newWindow && newWindow.close();
-        const buttons = ["Install Now", "Install on Quit"];
-        if (silent) buttons.push("Install and Show Changelog");
-        dialog
-            .showMessageBox(window, {
-                type: "info",
-                title: "Updates downloaded",
-                message: "Updates downloaded.",
-                buttons,
-                cancelId: 1,
-            })
-            .then((res) => {
-                if (res.response === 0) {
-                    app.quit();
-                }
-                if (res.response === 2) {
-                    shell.openExternal(RELEASES_PAGE);
-                    app.quit();
-                }
-            });
+
+        const showMainPrompt = () => {
+            const buttons = ["Install Now", "Install on Quit"];
+            if (silent) buttons.push("Install and Show Changelog");
+            dialog
+                .showMessageBox(window, {
+                    type: "info",
+                    title: "Updates downloaded",
+                    message: "Updates downloaded.",
+                    buttons,
+                    cancelId: 1,
+                })
+                .then((res) => {
+                    if (res.response === 0) {
+                        app.quit();
+                    }
+                    if (res.response === 2) {
+                        shell.openExternal(RELEASES_PAGE);
+                        app.quit();
+                    }
+                });
+        };
+
+        // https://github.com/mienaiyami/yomikiru/discussions/451#discussioncomment-13778852
+        if (process.platform === "win32" && !IS_PORTABLE) {
+            dialog
+                .showMessageBox(window, {
+                    type: "warning",
+                    title: "Update Installation Notice",
+                    message: "Due to recent Windows security changes, auto-updates might fail.",
+                    detail: "You can either proceed with normal installation (which might fail) or install manually (just run the downloaded file).",
+                    buttons: [
+                        "Try Normal Installation",
+                        "Install Manually (Recommended, show downloaded file)",
+                        "Install Manually and Show Changelog",
+                        "More Info",
+                    ],
+                    cancelId: 1,
+                })
+                .then((res) => {
+                    if (res.response === 0) {
+                        showMainPrompt();
+                    } else if (res.response === 1) {
+                        shell.openPath(tempPath);
+                    } else if (res.response === 2) {
+                        shell.openPath(tempPath);
+                        shell.openExternal(RELEASES_PAGE);
+                    } else if (res.response === 3) {
+                        shell.openExternal(
+                            "https://github.com/mienaiyami/yomikiru/discussions/451#discussioncomment-13778852",
+                        );
+                    }
+                });
+        } else {
+            showMainPrompt();
+        }
     };
     const downloadFile = (
         dl: string,
