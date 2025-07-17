@@ -4,7 +4,22 @@
 >
 > **Please report any issues you encounter with the beta tag so stable version can be released faster.** -->
 
-# 2.21.1
+> [!Important]
+> **Known Issue with Updates (July 2025)**: Due to recent Windows security policy changes, some users may experience crashes during the auto-update process. If updates fail, please:
+>
+> 1. Download the latest version manually from the releases page
+> 2. Install it over your existing installation
+>
+> Issue is only present to users using "Setup" version.
+>
+> We are actively working on a permanent solution to this issue. For more information, see <https://github.com/mienaiyami/yomikiru/discussions/451>
+
+# 2.21.2
+
+- fix: add file exists check for each old settings file, #453.
+- fix(test): update GitHub Actions runner to ubuntu-22.04 (GLIBC version 2.35), #452.
+
+## 2.21.1
 
 - Fixed migration of history and bookmarks from JSON to SQLite, #448.
 
