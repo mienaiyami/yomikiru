@@ -84,26 +84,30 @@ export class MainSettings {
      * Migrate from old file per settings based settings
      */
     public static migrate(): void {
-        const newSettings = this.makeMainSettingsJson();
+        try {
+            const newSettings = this.makeMainSettingsJson();
 
-        if (fs.existsSync(oldHWAPath)) {
-            newSettings.hardwareAcceleration = false;
-            fs.rmSync(oldHWAPath, { force: true });
+            if (fs.existsSync(oldHWAPath)) {
+                newSettings.hardwareAcceleration = false;
+                fs.rmSync(oldHWAPath, { force: true });
+            }
+
+            if (fs.existsSync(oldTempPath)) {
+                newSettings.tempPath = fs.readFileSync(oldTempPath, "utf-8");
+                fs.rmSync(oldTempPath, { force: true });
+            } else {
+                newSettings.tempPath = app.getPath("temp");
+            }
+
+            if (fs.existsSync(oldOpenInExistingWindowPath)) {
+                newSettings.openInExistingWindow = true;
+                fs.rmSync(oldOpenInExistingWindowPath, { force: true });
+            }
+
+            this.updateSettings(newSettings);
+        } catch (err) {
+            log.error("Error migrating main settings:", err);
         }
-
-        if (fs.existsSync(oldTempPath)) {
-            newSettings.tempPath = fs.readFileSync(oldTempPath, "utf-8");
-            fs.rmSync(oldTempPath, { force: true });
-        } else {
-            newSettings.tempPath = app.getPath("temp");
-        }
-
-        if (fs.existsSync(oldOpenInExistingWindowPath)) {
-            newSettings.openInExistingWindow = true;
-            fs.rmSync(oldOpenInExistingWindowPath, { force: true });
-        }
-
-        this.updateSettings(newSettings);
     }
 
     private static registerIpcHandlers(): void {
