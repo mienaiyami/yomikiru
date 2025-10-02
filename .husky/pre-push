@@ -17,7 +17,7 @@ case "$current_branch" in
     *)
         echo "Feature branch detected - running lightweight checks..."
         
-        if ! pnpm run check; then
+        if ! pnpm run tslint; then
             echo "❌ Type checking failed!"
             exit 1
         fi
