@@ -265,27 +265,37 @@ const downloadUpdates = (latestVersion: string, windowId: number, silent = false
     const tempPath = path.join(app.getPath("temp"), "yomikiru updates " + new Date().toDateString());
     if (fs.existsSync(tempPath)) fs.rmSync(tempPath, { recursive: true, force: true });
     fs.mkdirSync(tempPath);
+    let setupInstallOnQuit: (() => void) | null = null;
+    let performInstallNow: (() => void) | null = null;
+
     const promptInstall = () => {
         newWindow && newWindow.close();
 
         const showMainPrompt = () => {
             const buttons = ["Install Now", "Install on Quit"];
             if (silent) buttons.push("Install and Show Changelog");
+            const isPortableMsg = IS_PORTABLE
+                ? "NOTE: If your installation directory contains square brackets '[]', updates may fail. Consider moving the app to a different location."
+                : "";
             dialog
                 .showMessageBox(window, {
                     type: "info",
                     title: "Updates downloaded",
                     message: "Updates downloaded.",
+                    detail: isPortableMsg,
                     buttons,
                     cancelId: 1,
                 })
                 .then((res) => {
                     if (res.response === 0) {
-                        app.quit();
+                        performInstallNow?.();
+                    }
+                    if (res.response === 1) {
+                        setupInstallOnQuit?.();
                     }
                     if (res.response === 2) {
                         shell.openExternal(RELEASES_PAGE);
-                        app.quit();
+                        performInstallNow?.();
                     }
                 });
         };
@@ -297,7 +307,7 @@ const downloadUpdates = (latestVersion: string, windowId: number, silent = false
                     type: "warning",
                     title: "Update Installation Notice",
                     message: "Due to recent Windows security changes, auto-updates might fail.",
-                    detail: "You can either proceed with normal installation (which might fail) or install manually (just run the downloaded file).",
+                    detail: `You can either proceed with normal installation (which might fail) or install manually (just run the downloaded file).`,
                     buttons: [
                         "Try Normal Installation",
                         "Install Manually (Recommended, show downloaded file)",
@@ -385,21 +395,31 @@ const downloadUpdates = (latestVersion: string, windowId: number, silent = false
                     logger.log(`Successfully extracted at "${extractPath}"`);
                     const appPath = path.join(app.getAppPath(), "../../");
                     const appDirName = path.join(app.getPath("exe"), "../");
-                    app.on("quit", () => {
-                        logger.log("Installing updates...");
-                        logger.log(`Moving files to "${appPath}"`);
-                        spawn(
-                            `cmd.exe /c start powershell.exe " Write-Output 'Starting update...' ; Start-Sleep -Seconds 5.0 ;` +
-                                ` Get-ChildItem * -Recurse -Force | Where-Object { $_.FullName -notmatch 'userdata'} | Remove-Item -Force -Recurse ;` +
-                                ` Write-Output 'Moving extracted files...' ; Start-Sleep -Seconds 1.9;  Move-Item -Path '${extractPath}\\*' -Destination '${appDirName}' ; ` +
-                                ` Write-Output 'Updated, launching app.' ; Start-Sleep -Seconds 2.0 ;  explorer '${app.getPath(
-                                    "exe",
-                                )}' ; ; "`,
-                            { shell: true, cwd: appDirName },
-                        ).on("exit", process.exit);
-                        logger.log("Quitting app...");
-                    });
-                    logger.log("Preparing to install updates...");
+                    setupInstallOnQuit = () => {
+                        app.once("quit", () => {
+                            logger.log("Installing updates...");
+                            logger.log(`Moving files to "${appPath}"`);
+                            spawn(
+                                `cmd.exe /c start powershell.exe " Write-Output 'Starting update...' ; Start-Sleep -Seconds 5.0 ;` +
+                                    ` $sourcePath = Join-Path '${extractPath}' '*' ; ` +
+                                    ` $destPath = '${appDirName}' ; ` +
+                                    ` Get-ChildItem -Path $destPath -Recurse -Force | Where-Object { $_.FullName -notmatch 'userdata'} | Remove-Item -Force -Recurse ; ` +
+                                    ` Write-Output 'Moving extracted files...' ; Start-Sleep -Seconds 1.9 ; ` +
+                                    ` Copy-Item -Path $sourcePath -Destination $destPath -Force -Recurse ; ` +
+                                    ` Write-Output 'Updated, launching app.' ; Start-Sleep -Seconds 2.0 ; ` +
+                                    ` & '${app.getPath("exe")}' ; "`,
+                                { shell: true, cwd: appDirName },
+                            ).on("exit", process.exit);
+                            logger.log("Quitting app...");
+                        });
+                        logger.log("Will install updates on quit.");
+                    };
+                    performInstallNow = () => {
+                        setupInstallOnQuit?.();
+                        logger.log("Preparing to install updates now...");
+                        app.quit();
+                    };
+                    logger.log("Updates ready. Waiting for user choice.");
                     promptInstall();
                 });
             });
@@ -410,17 +430,25 @@ const downloadUpdates = (latestVersion: string, windowId: number, silent = false
                     : `${DOWNLOAD_LINK}/v${latestVersion}/Yomikiru-v${latestVersion}-Setup-x64.exe`;
             downloadFile(dl, newWindow && newWindow.webContents, (file) => {
                 logger.log(`${file.filename} downloaded.`);
-                app.on("quit", () => {
-                    logger.log("Installing updates...");
-                    spawn(
-                        `cmd.exe /c start powershell.exe "Write-Output 'Starting update...' ; Start-Sleep -Seconds 5.0 ; Start-Process '${file.path}'"`,
-                        {
-                            shell: true,
-                        },
-                    ).on("exit", process.exit);
-                    logger.log("Quitting app...");
-                });
-                logger.log("Preparing to install updates...");
+                setupInstallOnQuit = () => {
+                    app.once("quit", () => {
+                        logger.log("Installing updates...");
+                        spawn(
+                            `cmd.exe /c start powershell.exe "Write-Output 'Starting update...' ; Start-Sleep -Seconds 5.0 ; Start-Process '${file.path}'"`,
+                            {
+                                shell: true,
+                            },
+                        ).on("exit", process.exit);
+                        logger.log("Quitting app...");
+                    });
+                    logger.log("Will install updates on quit.");
+                };
+                performInstallNow = () => {
+                    setupInstallOnQuit?.();
+                    logger.log("Preparing to install updates now...");
+                    app.quit();
+                };
+                logger.log("Updates ready. Waiting for user choice.");
                 promptInstall();
             });
         }
