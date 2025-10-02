@@ -1,7 +1,7 @@
 import { useAppSelector } from "@store/hooks";
 import { dialogUtils } from "@utils/dialog";
 import { formatUtils } from "@utils/file";
-import { ReactElement } from "react";
+import type { ReactElement } from "react";
 import { useAppContext } from "src/renderer/App";
 import ListItem from "../../../components/ListItem";
 

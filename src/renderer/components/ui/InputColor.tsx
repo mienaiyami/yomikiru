@@ -1,4 +1,5 @@
-import React, { useState, useLayoutEffect, useContext } from "react";
+import type React from "react";
+import { useContext, useLayoutEffect, useState } from "react";
 import { useAppContext } from "../../App";
 
 const InputColor: React.FC<{

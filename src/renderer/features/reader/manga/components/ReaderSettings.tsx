@@ -1,11 +1,11 @@
 import {
+    faArrowsAltH,
+    faArrowsAltV,
     faBars,
+    faExpandArrowsAlt,
     faMinus,
     faPlus,
     faTimes,
-    faArrowsAltV,
-    faArrowsAltH,
-    faExpandArrowsAlt,
 } from "@fortawesome/free-solid-svg-icons";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { setReaderSettings } from "@store/appSettings";

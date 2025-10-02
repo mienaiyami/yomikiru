@@ -1,10 +1,10 @@
-import { useState } from "react";
+import { setAppSettings } from "@store/appSettings";
+import { useAppDispatch, useAppSelector } from "@store/hooks";
+import { updateMainSettings } from "@store/mainSettings";
+import InputCheckbox from "@ui/InputCheckbox";
 import { dialogUtils } from "@utils/dialog";
 import { promptSelectDir } from "@utils/file";
-import InputCheckbox from "@ui/InputCheckbox";
-import { useAppDispatch, useAppSelector } from "@store/hooks";
-import { setAppSettings } from "@store/appSettings";
-import { updateMainSettings } from "@store/mainSettings";
+import { useState } from "react";
 
 const CustomTempLocation: React.FC = () => {
     const dispatch = useAppDispatch();

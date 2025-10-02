@@ -1,8 +1,8 @@
-import { ReactElement } from "react";
-import InputCheckbox from "@ui/InputCheckbox";
-import { useExplorerOptions } from "../hooks/useExplorerOptions";
 import { useAppDispatch, useAppSelector } from "@store/hooks";
 import { updateMainSettings } from "@store/mainSettings";
+import InputCheckbox from "@ui/InputCheckbox";
+import type { ReactElement } from "react";
+import { useExplorerOptions } from "../hooks/useExplorerOptions";
 
 const FileExplorerOptions = (): ReactElement => {
     const dispatch = useAppDispatch();

@@ -1,31 +1,31 @@
-import React, { useEffect, useLayoutEffect, useRef, useState, memo, useCallback } from "react";
-
-import { useAppContext } from "src/renderer/App";
-import { useAppDispatch, useAppSelector } from "@store/hooks";
+import type { BookProgress } from "@common/types/db";
 import { setAppSettings, setEpubReaderSettings, setReaderSettings } from "@store/appSettings";
-import EPUBReaderSettings from "./EPubReaderSettings";
-import EPubReaderSideList from "./EPubReaderSideList";
-import EPUB, { EPubData } from "@utils/epub";
+import { addNote } from "@store/bookNotes";
+import { useAppDispatch, useAppSelector } from "@store/hooks";
 import { addLibraryItem, selectLibraryItem, updateBookProgress, updateCurrentItemProgress } from "@store/library";
-import { dialogUtils } from "@utils/dialog";
-import { getCSSPath } from "@utils/utils";
-import { keyFormatter } from "@utils/keybindings";
 import {
+    getReaderBook,
     setReaderLoading,
     setReaderOpen,
-    updateReaderContent,
     updateReaderBookProgress,
-    getReaderBook,
+    updateReaderContent,
 } from "@store/reader";
-import { BookProgress } from "@common/types/db";
+import { getShortcutsMapped } from "@store/shortcuts";
+import { colorUtils } from "@utils/color";
+import { dialogUtils } from "@utils/dialog";
+import EPUB, { type EPubData } from "@utils/epub";
+import { DEFAULT_HIGHLIGHT_COLORS, highlightUtils } from "@utils/highlight";
+import { keyFormatter } from "@utils/keybindings";
+import { getCSSPath } from "@utils/utils";
+import type React from "react";
+import { memo, useCallback, useEffect, useLayoutEffect, useRef, useState } from "react";
+import { shallowEqual } from "react-redux";
+import { useAppContext } from "src/renderer/App";
+import FootNodeModal from "./components/FootNodeModal";
+import EPUBReaderSettings from "./EPubReaderSettings";
+import EPubReaderSideList from "./EPubReaderSideList";
 import HTMLPart from "./HTMLPart";
 import StyleSheets from "./StyleSheets";
-import FootNodeModal from "./components/FootNodeModal";
-import { getShortcutsMapped } from "@store/shortcuts";
-import { shallowEqual } from "react-redux";
-import { DEFAULT_HIGHLIGHT_COLORS, highlightUtils } from "@utils/highlight";
-import { addNote } from "@store/bookNotes";
-import { colorUtils } from "@utils/color";
 
 // todo: planning major refactor similar to manga Reader.tsx
 
@@ -106,7 +106,7 @@ const EPubReader: React.FC = () => {
     useLayoutEffect(() => {
         if (appSettings.epubReaderSettings.loadOneChapter && readerRef.current) readerRef.current.scrollTop = 0;
         const abortController = new AbortController();
-        (async function () {
+        (async () => {
             if (epubData) {
                 let index = currentChapter.index;
                 let id = "";

@@ -1,11 +1,11 @@
+import { faEdit, faPlus, faTrash } from "@fortawesome/free-solid-svg-icons";
+import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { useAppDispatch, useAppSelector } from "@store/hooks";
 import { addThemes, deleteTheme, newTheme, setTheme } from "@store/themes";
+import { dialogUtils } from "@utils/dialog";
 import { initThemeData } from "@utils/theme";
 import { useSettingsContext } from "../Settings";
 import { TAB_INFO } from "../utils/constants";
-import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import { faEdit, faPlus, faTrash } from "@fortawesome/free-solid-svg-icons";
-import { dialogUtils } from "@utils/dialog";
 
 const GeneralThemeSettings: React.FC = () => {
     const { scrollIntoView, setCurrentTab } = useSettingsContext();

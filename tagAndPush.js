@@ -1,5 +1,3 @@
-/* eslint-disable @typescript-eslint/no-var-requires */
-// /* eslint-disable @typescript-eslint/no-var-requires */
 const readline = require("readline");
 
 const rl = readline.createInterface({
@@ -36,5 +34,5 @@ rl.question(
     (e) => {
         if (e === "") tagAndPush();
         rl.close();
-    }
+    },
 );

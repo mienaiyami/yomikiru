@@ -1,11 +1,11 @@
-import { useEffect, useRef, useState, useLayoutEffect } from "react";
-import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faCheck } from "@fortawesome/free-solid-svg-icons";
+import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { useAppSelector } from "@store/hooks";
-import { useAppContext } from "../App";
-import { keyFormatter } from "@utils/keybindings";
 import { getShortcutsMapped } from "@store/shortcuts";
+import { keyFormatter } from "@utils/keybindings";
+import { useEffect, useLayoutEffect, useRef, useState } from "react";
 import { shallowEqual } from "react-redux";
+import { useAppContext } from "../App";
 
 const ContextMenu = () => {
     const shortcutsMapped = useAppSelector(getShortcutsMapped, shallowEqual);

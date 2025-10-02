@@ -1,14 +1,14 @@
-import { ReactElement, useEffect, useLayoutEffect, useRef, useState } from "react";
-import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faLink, faSync, faUnlink } from "@fortawesome/free-solid-svg-icons";
-import { newTheme, updateTheme, setTheme, setSysBtnColor } from "@store/themes";
+import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { useAppDispatch, useAppSelector } from "@store/hooks";
-import InputSelect from "@ui/InputSelect";
+import { newTheme, setSysBtnColor, setTheme, updateTheme } from "@store/themes";
 import InputColor from "@ui/InputColor";
-import { initThemeData, themeProps } from "@utils/theme";
+import InputSelect from "@ui/InputSelect";
 import { colorUtils } from "@utils/color";
-import { randomString } from "@utils/utils";
 import { dialogUtils } from "@utils/dialog";
+import { initThemeData, themeProps } from "@utils/theme";
+import { randomString } from "@utils/utils";
+import { type ReactElement, useEffect, useLayoutEffect, useRef, useState } from "react";
 
 // todo: refactor, giving up for now coz too messy
 

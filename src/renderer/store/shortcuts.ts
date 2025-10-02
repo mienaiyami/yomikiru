@@ -1,8 +1,8 @@
-import { createSlice, PayloadAction } from "@reduxjs/toolkit";
-import { saveJSONfile, shortcutsPath } from "../utils/file";
-import { SHORTCUT_COMMAND_MAP } from "@utils/keybindings";
+import { createSlice, type PayloadAction } from "@reduxjs/toolkit";
 import { dialogUtils } from "@utils/dialog";
-import { RootState } from ".";
+import { SHORTCUT_COMMAND_MAP } from "@utils/keybindings";
+import { saveJSONfile, shortcutsPath } from "../utils/file";
+import type { RootState } from ".";
 
 const initialState: ShortcutSchema[] = [];
 

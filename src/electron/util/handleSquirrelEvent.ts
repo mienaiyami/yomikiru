@@ -1,9 +1,9 @@
-import path from "path";
-import { IS_PORTABLE } from ".";
+import { spawn, spawnSync } from "child_process";
 import { app } from "electron";
 import fs from "fs";
-import { spawn, spawnSync } from "child_process";
 import { homedir, tmpdir } from "os";
+import path from "path";
+import { IS_PORTABLE } from ".";
 import { deleteOptionInExplorerMenu, deleteOptionInExplorerMenu_epub } from "./shelloptions";
 
 const handleSquirrelEvent = () => {

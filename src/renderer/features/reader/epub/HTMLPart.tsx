@@ -1,9 +1,9 @@
-import { memo, useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
-import { useAppContext } from "src/renderer/App";
+import { useAppSelector } from "@store/hooks";
 import EPUB from "@utils/epub";
 import { HighlightRange, highlightUtils } from "@utils/highlight";
-import { useAppSelector } from "@store/hooks";
+import { memo, useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
 import { shallowEqual } from "react-redux";
+import { useAppContext } from "src/renderer/App";
 
 type ChapterEvents = {
     link: (ev: MouseEvent | React.MouseEvent<HTMLAnchorElement>) => void;

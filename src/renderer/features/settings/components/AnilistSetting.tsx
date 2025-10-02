@@ -1,11 +1,11 @@
-import { useSettingsContext } from "../Settings";
-import { setAnilistLoginOpen } from "@store/ui";
 import { setAnilistToken } from "@store/anilist";
-import { useEffect, useState } from "react";
-import { useAppDispatch, useAppSelector } from "@store/hooks";
-import AniList from "@utils/anilist";
-import InputCheckbox from "@ui/InputCheckbox";
 import { setReaderSettings } from "@store/appSettings";
+import { useAppDispatch, useAppSelector } from "@store/hooks";
+import { setAnilistLoginOpen } from "@store/ui";
+import InputCheckbox from "@ui/InputCheckbox";
+import AniList from "@utils/anilist";
+import { useEffect, useState } from "react";
+import { useSettingsContext } from "../Settings";
 
 const AnilistSetting: React.FC = () => {
     const { scrollIntoView } = useSettingsContext();

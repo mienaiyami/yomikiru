@@ -1,18 +1,18 @@
-import { BookNote } from "@common/types/db";
+import type { BookNote } from "@common/types/db";
+import ListItem from "@renderer/components/ListItem";
+import ListNavigator from "@renderer/components/ListNavigator";
+import { addNote, removeNote, updateNote } from "@store/bookNotes";
 import { useAppDispatch, useAppSelector } from "@store/hooks";
 import { getReaderBook } from "@store/reader";
-import { addNote, removeNote, updateNote } from "@store/bookNotes";
+import InputColor from "@ui/InputColor";
+import Modal from "@ui/Modal";
+import { colorUtils } from "@utils/color";
 import dateUtils from "@utils/date";
 import { dialogUtils } from "@utils/dialog";
+import { DEFAULT_HIGHLIGHT_COLORS } from "@utils/highlight";
 import { memo, useCallback, useEffect, useLayoutEffect, useRef, useState } from "react";
 import { shallowEqual } from "react-redux";
 import { useAppContext } from "src/renderer/App";
-import ListItem from "@renderer/components/ListItem";
-import ListNavigator from "@renderer/components/ListNavigator";
-import Modal from "@ui/Modal";
-import InputColor from "@ui/InputColor";
-import { colorUtils } from "@utils/color";
-import { DEFAULT_HIGHLIGHT_COLORS } from "@utils/highlight";
 
 const NoteModal: React.FC<{
     noteId: number;

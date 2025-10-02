@@ -1,7 +1,7 @@
-import { useEffect, useCallback, useState, RefObject, useMemo } from "react";
 import { useAppSelector } from "@store/hooks";
-import { keyFormatter } from "@utils/keybindings";
 import { getShortcutsMapped } from "@store/shortcuts";
+import { keyFormatter } from "@utils/keybindings";
+import { type RefObject, useCallback, useEffect } from "react";
 import { shallowEqual } from "react-redux";
 
 export type ShortcutHandler = (e: KeyboardEvent) => void;

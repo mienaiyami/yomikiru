@@ -1,11 +1,11 @@
-import React, { useRef, useState, useEffect, useLayoutEffect, useContext } from "react";
-import { useAppContext } from "../../App";
-
-import FocusLock from "react-focus-lock";
-import { useAppSelector } from "../../store/hooks";
-import { keyFormatter } from "@utils/keybindings";
 import { getShortcutsMapped } from "@store/shortcuts";
+import { keyFormatter } from "@utils/keybindings";
+import type React from "react";
+import { useContext, useEffect, useLayoutEffect, useRef, useState } from "react";
+import FocusLock from "react-focus-lock";
 import { shallowEqual } from "react-redux";
+import { useAppContext } from "../../App";
+import { useAppSelector } from "../../store/hooks";
 
 // todo: replace with radix ui
 

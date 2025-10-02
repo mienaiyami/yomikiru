@@ -1,6 +1,6 @@
+import { faBookmark as farBookmark } from "@fortawesome/free-regular-svg-icons";
 import { faBookmark } from "@fortawesome/free-solid-svg-icons";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import { faBookmark as farBookmark } from "@fortawesome/free-regular-svg-icons";
 import { addBookmark, removeBookmark } from "@store/bookmarks";
 import { useAppDispatch, useAppSelector } from "@store/hooks";
 import { getReaderBook } from "@store/reader";

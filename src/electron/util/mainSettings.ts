@@ -1,9 +1,9 @@
+import { ipc } from "@electron/ipc/utils";
 import { app } from "electron";
 import fs from "fs";
 import path from "path";
 import { z } from "zod";
 import { log } from ".";
-import { ipc } from "@electron/ipc/utils";
 import { WindowManager } from "./window";
 
 const mainSettingsSchema = z
@@ -33,21 +33,21 @@ export class MainSettings {
 
     private static makeMainSettingsJson(): MainSettingsType {
         const defaultSettings = mainSettingsSchema.parse({});
-        fs.writeFileSync(this.settingsPath, JSON.stringify(defaultSettings, null, 2));
+        fs.writeFileSync(MainSettings.settingsPath, JSON.stringify(defaultSettings, null, 2));
         return defaultSettings;
     }
 
     private static parseMainSettings(): MainSettingsType {
         try {
-            if (!fs.existsSync(this.settingsPath)) {
-                return this.makeMainSettingsJson();
+            if (!fs.existsSync(MainSettings.settingsPath)) {
+                return MainSettings.makeMainSettingsJson();
             }
 
-            const parsedJSON = JSON.parse(fs.readFileSync(this.settingsPath, "utf-8"));
+            const parsedJSON = JSON.parse(fs.readFileSync(MainSettings.settingsPath, "utf-8"));
             return mainSettingsSchema.parse(parsedJSON);
         } catch (err) {
             console.error("Error parsing main settings:", err);
-            return this.makeMainSettingsJson();
+            return MainSettings.makeMainSettingsJson();
         }
     }
 
@@ -65,19 +65,19 @@ export class MainSettings {
     }
 
     public static getSettings(): MainSettingsType {
-        return { ...this.settings };
+        return { ...MainSettings.settings };
     }
 
     public static async updateSettings(newSettings: Partial<MainSettingsType>): Promise<void> {
-        this.settings = mainSettingsSchema.parse({ ...this.settings, ...newSettings });
-        await fs.promises.writeFile(this.settingsPath, JSON.stringify(this.settings, null, 2));
-        this.applySettings(this.settings);
+        MainSettings.settings = mainSettingsSchema.parse({ ...MainSettings.settings, ...newSettings });
+        await fs.promises.writeFile(MainSettings.settingsPath, JSON.stringify(MainSettings.settings, null, 2));
+        MainSettings.applySettings(MainSettings.settings);
     }
 
     public static initialize(): void {
-        this.settings = this.parseMainSettings();
-        this.applySettings(this.settings);
-        this.registerIpcHandlers();
+        MainSettings.settings = MainSettings.parseMainSettings();
+        MainSettings.applySettings(MainSettings.settings);
+        MainSettings.registerIpcHandlers();
     }
 
     /**
@@ -85,7 +85,7 @@ export class MainSettings {
      */
     public static migrate(): void {
         try {
-            const newSettings = this.makeMainSettingsJson();
+            const newSettings = MainSettings.makeMainSettingsJson();
 
             if (fs.existsSync(oldHWAPath)) {
                 newSettings.hardwareAcceleration = false;
@@ -104,19 +104,19 @@ export class MainSettings {
                 fs.rmSync(oldOpenInExistingWindowPath, { force: true });
             }
 
-            this.updateSettings(newSettings);
+            MainSettings.updateSettings(newSettings);
         } catch (err) {
             log.error("Error migrating main settings:", err);
         }
     }
 
     private static registerIpcHandlers(): void {
-        ipc.handle("mainSettings:get", () => this.getSettings());
+        ipc.handle("mainSettings:get", () => MainSettings.getSettings());
         ipc.handle("mainSettings:update", async (_, newSettings: Partial<MainSettingsType>) => {
-            await this.updateSettings(newSettings);
+            await MainSettings.updateSettings(newSettings);
             const windows = WindowManager.getAllWindows();
             windows.forEach((window) => {
-                ipc.send(window.webContents, "mainSettings:sync", this.getSettings());
+                ipc.send(window.webContents, "mainSettings:sync", MainSettings.getSettings());
             });
             // return this.getSettings();
         });

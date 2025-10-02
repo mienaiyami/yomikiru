@@ -1,6 +1,6 @@
 import { z } from "zod";
-import { saveJSONfile, settingsPath } from "./file";
 import { dialogUtils } from "./dialog";
+import { saveJSONfile, settingsPath } from "./file";
 
 const sortTypeEnum = z.union([z.literal("normal"), z.literal("inverse")]);
 const sortByEnum = z.union([z.literal("name"), z.literal("date")]);

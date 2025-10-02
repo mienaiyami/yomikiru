@@ -1,18 +1,8 @@
-import { Fragment, useCallback, useContext, useEffect, useLayoutEffect, useRef, useState } from "react";
-import { useAppContext } from "../../../App";
-import ReaderSideList from "./components/ReaderSideList";
-import ReaderSettings from "./components/ReaderSettings";
-import { useAppDispatch, useAppSelector } from "@store/hooks";
-import { setAppSettings, setReaderSettings } from "@store/appSettings";
-import AnilistSearch from "../../anilist/AnilistSearch";
-import AnilistEdit from "../../anilist/AnilistEdit";
-import { InView } from "react-intersection-observer";
-
-import { addLibraryItem, selectLibraryItem, updateChaptersRead, updateMangaProgress } from "@store/library";
-import { formatUtils } from "@utils/file";
-import { keyFormatter } from "@utils/keybindings";
-import AniList from "@utils/anilist";
+import type { MangaProgress } from "@common/types/db";
 import { setAnilistCurrentManga } from "@store/anilist";
+import { setAppSettings, setReaderSettings } from "@store/appSettings";
+import { useAppDispatch, useAppSelector } from "@store/hooks";
+import { addLibraryItem, selectLibraryItem, updateChaptersRead, updateMangaProgress } from "@store/library";
 import {
     getReaderMangaState,
     setReaderLoading,
@@ -20,8 +10,17 @@ import {
     updateReaderContent,
     updateReaderMangaCurrentPage,
 } from "@store/reader";
-import { MangaProgress } from "@common/types/db";
+import AniList from "@utils/anilist";
+import { formatUtils } from "@utils/file";
+import { keyFormatter } from "@utils/keybindings";
+import { Fragment, useCallback, useContext, useEffect, useLayoutEffect, useRef, useState } from "react";
+import { InView } from "react-intersection-observer";
+import { useAppContext } from "../../../App";
+import AnilistEdit from "../../anilist/AnilistEdit";
+import AnilistSearch from "../../anilist/AnilistSearch";
 import useSmoothScroll from "../hooks/useSmoothScroll";
+import ReaderSettings from "./components/ReaderSettings";
+import ReaderSideList from "./components/ReaderSideList";
 
 const processChapterNumber = (chapterName: string): number | undefined => {
     /*

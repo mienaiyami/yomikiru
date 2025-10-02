@@ -1,4 +1,6 @@
-import { BookBookmark } from "@common/types/db";
+import type { BookBookmark } from "@common/types/db";
+import ListItem from "@renderer/components/ListItem";
+import ListNavigator from "@renderer/components/ListNavigator";
 import { useAppSelector } from "@store/hooks";
 import { getReaderBook } from "@store/reader";
 import dateUtils from "@utils/date";
@@ -6,8 +8,6 @@ import { dialogUtils } from "@utils/dialog";
 import { useCallback } from "react";
 import { shallowEqual } from "react-redux";
 import { useAppContext } from "src/renderer/App";
-import ListItem from "@renderer/components/ListItem";
-import ListNavigator from "@renderer/components/ListNavigator";
 
 const BookmarkList: React.FC<{
     openChapterById: (chapterId: string, position?: string) => void;

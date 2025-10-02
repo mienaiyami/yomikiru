@@ -1,28 +1,28 @@
+import { faBookmark as farBookmark } from "@fortawesome/free-regular-svg-icons";
 import {
-    faSort,
-    faSyncAlt,
     faArrowLeft,
     faArrowRight,
     faBookmark,
-    faThumbtack,
     faLocationDot,
     faRandom,
+    faSort,
+    faSyncAlt,
+    faThumbtack,
 } from "@fortawesome/free-solid-svg-icons";
-import { faBookmark as farBookmark } from "@fortawesome/free-regular-svg-icons";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import { memo, useEffect, useLayoutEffect, useRef, useState, useMemo } from "react";
-import { useAppDispatch, useAppSelector } from "@store/hooks";
-import { addBookmark, removeBookmark } from "@store/bookmarks";
-import { setAppSettings } from "@store/appSettings";
-import AnilistBar from "../../../anilist/AnilistBar";
-import { formatUtils } from "@utils/file";
-import { dialogUtils } from "@utils/dialog";
-import { getReaderManga, setReaderState } from "@store/reader";
-import { useAppContext } from "src/renderer/App";
-import ReaderSideListItem from "./ReaderSideListItem";
 import ListNavigator from "@renderer/components/ListNavigator";
+import { setAppSettings } from "@store/appSettings";
+import { addBookmark, removeBookmark } from "@store/bookmarks";
+import { useAppDispatch, useAppSelector } from "@store/hooks";
+import { getReaderManga, setReaderState } from "@store/reader";
+import { dialogUtils } from "@utils/dialog";
+import { formatUtils } from "@utils/file";
+import { memo, useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
 import { shallowEqual } from "react-redux";
+import { useAppContext } from "src/renderer/App";
+import AnilistBar from "../../../anilist/AnilistBar";
 import BookmarkList from "./BookmarkList";
+import ReaderSideListItem from "./ReaderSideListItem";
 
 type ChapterData = { name: string; pages: number; link: string; dateModified: number };
 

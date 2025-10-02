@@ -1,19 +1,19 @@
-import { app, dialog, shell } from "electron";
-import { ipc } from "./utils";
-import path from "path";
-import fs from "fs/promises";
 import { log, saveFile } from "@electron/util";
 import { exec } from "child_process";
 import * as crossZip from "cross-zip";
+import { app, dialog, shell } from "electron";
+import fs from "fs/promises";
+import path from "path";
 import { promisify } from "util";
+import { ipc } from "./utils";
 
 // manual merge from https://github.com/mienaiyami/yomikiru/commit/b1b6acbf18ff4eac5d352d91fafd511223cc8ad0
 const flattenDirectories = async (root: string, relativePath = "."): Promise<void> => {
     const absolutePath = path.resolve(root, relativePath);
     if ((await fs.stat(absolutePath)).isDirectory()) {
-        (await fs.readdir(absolutePath)).forEach((entry) =>
-            flattenDirectories(root, path.join(relativePath, entry)),
-        );
+        (await fs.readdir(absolutePath)).forEach((entry) => {
+            flattenDirectories(root, path.join(relativePath, entry));
+        });
     }
     await fs.rename(absolutePath, path.resolve(root, relativePath.replace(path.sep, "_")));
 };
@@ -65,7 +65,7 @@ export const registerFSHandlers = (): void => {
                         if (code === 0) {
                             resolve(code);
                         } else {
-                            reject(new Error("WinRAR exited with code " + code));
+                            reject(new Error(`WinRAR exited with code ${code}`));
                         }
                     });
                 });

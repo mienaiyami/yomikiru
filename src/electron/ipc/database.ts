@@ -1,11 +1,5 @@
-import { app, BrowserWindow, ipcMain } from "electron";
+import type { BookProgress, LibraryItem, MangaProgress } from "@common/types/db";
 import type { DatabaseChangeChannels, DatabaseChannels } from "@common/types/ipc";
-import { DatabaseService, DB_PATH } from "../db";
-import { bookBookmarks, bookNotes, bookProgress, libraryItems, mangaBookmarks, mangaProgress } from "../db/schema";
-import { and, desc, eq, inArray, sql } from "drizzle-orm";
-import { BookProgress, LibraryItem, MangaProgress } from "@common/types/db";
-import { ipc } from "./utils";
-import { log } from "@electron/util";
 import {
     AddBookBookmarkSchema,
     AddBookNoteSchema,
@@ -14,8 +8,14 @@ import {
     UpdateBookProgressSchema,
     UpdateMangaProgressSchema,
 } from "@electron/db/validator";
-import path from "path";
+import { log } from "@electron/util";
+import { and, desc, eq, inArray, sql } from "drizzle-orm";
+import { app, BrowserWindow, ipcMain } from "electron";
 import { copyFile } from "fs/promises";
+import path from "path";
+import { type DatabaseService, DB_PATH } from "../db";
+import { bookBookmarks, bookNotes, bookProgress, libraryItems, mangaBookmarks, mangaProgress } from "../db/schema";
+import { ipc } from "./utils";
 
 /**
  * Sends database change notifications to all open windows

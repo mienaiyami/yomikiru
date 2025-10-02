@@ -1,15 +1,15 @@
+import type { AppUpdateChannel } from "@common/types/ipc";
+import { exec as execSudo } from "@vscode/sudo-prompt";
+import { spawn } from "child_process";
+import * as crossZip from "cross-zip";
+import { app, BrowserWindow, dialog, shell } from "electron";
+import * as electronDl from "electron-dl";
+import fetch from "electron-fetch";
+import logger from "electron-log";
 import fs from "fs";
 import path from "path";
-import { IS_PORTABLE } from "./util";
-import { spawn } from "child_process";
-import { app, BrowserWindow, dialog, shell } from "electron";
-import fetch from "electron-fetch";
-import * as crossZip from "cross-zip";
-import logger from "electron-log";
-import * as electronDl from "electron-dl";
-import { exec as execSudo } from "@vscode/sudo-prompt";
-import { AppUpdateChannel } from "@common/types/ipc";
 import * as semver from "semver";
+import { IS_PORTABLE } from "./util";
 
 declare const DOWNLOAD_PROGRESS_WEBPACK_ENTRY: string;
 

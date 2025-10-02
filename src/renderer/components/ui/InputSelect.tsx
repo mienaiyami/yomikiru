@@ -1,7 +1,8 @@
-import React, { useState, useLayoutEffect } from "react";
-import { useAppContext } from "../../App";
-import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faChevronDown } from "@fortawesome/free-solid-svg-icons";
+import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
+import type React from "react";
+import { useLayoutEffect, useState } from "react";
+import { useAppContext } from "../../App";
 
 // todo: replace with radix ui
 

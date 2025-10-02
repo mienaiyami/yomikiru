@@ -1,6 +1,6 @@
-import { createSlice, createAsyncThunk, PayloadAction } from "@reduxjs/toolkit";
-import type { MangaBookmark, BookBookmark } from "@common/types/db";
-import { DatabaseChannels } from "@common/types/ipc";
+import type { BookBookmark, MangaBookmark } from "@common/types/db";
+import type { DatabaseChannels } from "@common/types/ipc";
+import { createAsyncThunk, createSlice, type PayloadAction } from "@reduxjs/toolkit";
 
 type BookmarksState = {
     // map of key:itemLink value: bookmarks

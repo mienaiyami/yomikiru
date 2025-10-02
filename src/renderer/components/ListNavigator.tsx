@@ -1,7 +1,7 @@
-import React, { createContext, useContext, useState, useRef, useEffect, useCallback, useMemo, memo } from "react";
 import { useAppSelector } from "@store/hooks";
-import { keyFormatter } from "@utils/keybindings";
 import shortcuts, { getShortcutsMapped } from "@store/shortcuts";
+import { keyFormatter } from "@utils/keybindings";
+import React, { createContext, memo, useCallback, useContext, useEffect, useMemo, useRef, useState } from "react";
 import { shallowEqual } from "react-redux";
 
 type ListNavigatorContextType<T> = {

@@ -1,11 +1,11 @@
-import React, { useRef, useState, useEffect, useLayoutEffect, useContext } from "react";
+import { faEyeDropper, faSort } from "@fortawesome/free-solid-svg-icons";
+import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
+import { colorUtils } from "@utils/color";
+import type React from "react";
+import { useContext, useEffect, useLayoutEffect, useRef, useState } from "react";
+import FocusLock, { MoveFocusInside } from "react-focus-lock";
 import { useAppContext } from "../../App";
 import InputNumber from "./InputNumber";
-import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import { faEyeDropper, faSort } from "@fortawesome/free-solid-svg-icons";
-
-import FocusLock, { MoveFocusInside } from "react-focus-lock";
-import { colorUtils } from "@utils/color";
 
 // ! not indented to be used without `AppContext::colorSelectData`
 
@@ -220,7 +220,7 @@ const InputColorReal: React.FC = () => {
                             <button
                                 className="eyeDropper"
                                 onClick={() => {
-                                    //@ts-ignore
+                                    //@ts-expect-error
                                     const eyeDropper = new EyeDropper();
                                     eyeDropper.open().then((result: any) => {
                                         setColor((init) => init.hex(result.sRGBHex));

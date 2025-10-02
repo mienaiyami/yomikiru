@@ -1,5 +1,5 @@
-import { dialog } from "electron";
 import { getWindowFromWebContents } from "@electron/util";
+import { dialog } from "electron";
 import { ipc } from "./utils";
 
 export const registerDialogHandlers = () => {
@@ -7,7 +7,7 @@ export const registerDialogHandlers = () => {
         return dialog.showMessageBox(getWindowFromWebContents(event.sender), {
             type: "error",
             title: args.name,
-            message: "Error no.: " + args.errno,
+            message: `Error no.: ${args.errno}`,
             detail: args.message,
         });
     });

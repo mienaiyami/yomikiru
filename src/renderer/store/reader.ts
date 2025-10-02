@@ -1,6 +1,6 @@
-import { createSlice, PayloadAction } from "@reduxjs/toolkit";
 import type { LibraryItemWithProgress } from "@common/types/db";
-import { RootState } from ".";
+import { createSlice, type PayloadAction } from "@reduxjs/toolkit";
+import type { RootState } from ".";
 
 // ! ReaderState.content.progress is not linked to libraryItem.progress
 // ! both are independent to prevent issues with multiple windows

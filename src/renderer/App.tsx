@@ -1,13 +1,9 @@
-import { createContext, createRef, ReactElement, useContext, useEffect, useLayoutEffect, useState } from "react";
-import { useAppDispatch, useAppSelector } from "@store/hooks";
-import Main from "./Main";
-import TopBar from "./TopBar";
+import { useDirectoryValidator } from "@features/reader/hooks/useDirectoryValidator";
+import { setAnilistCurrentManga } from "@store/anilist";
 import { refreshAppSettings, setAppSettings } from "@store/appSettings";
-
 import { addBookmark, fetchAllBookmarks, removeBookmark } from "@store/bookmarks";
-import { refreshThemes, setTheme } from "@store/themes";
-import { bookmarksPath, formatUtils, historyPath, promptSelectDir, settingsPath, themesPath } from "./utils/file";
-
+import { fetchAllNotes } from "@store/bookNotes";
+import { useAppDispatch, useAppSelector } from "@store/hooks";
 import {
     deleteLibraryItem,
     fetchAllItemsWithProgress,
@@ -15,16 +11,26 @@ import {
     updateChaptersReadAll,
     updateCurrentItemProgress,
 } from "@store/library";
+import { getMainSettings, setMainSettings } from "@store/mainSettings";
+import { resetReaderState } from "@store/reader";
+import { getShortcutsMapped } from "@store/shortcuts";
+import { refreshThemes, setTheme } from "@store/themes";
+import { setAnilistEditOpen, setAnilistLoginOpen, setAnilistSearchOpen, toggleSettingsOpen } from "@store/ui";
 import { dialogUtils } from "@utils/dialog";
 import { keyFormatter } from "@utils/keybindings";
-import { setAnilistEditOpen, setAnilistLoginOpen, setAnilistSearchOpen, toggleSettingsOpen } from "@store/ui";
-import { setAnilistCurrentManga } from "@store/anilist";
-import { resetReaderState } from "@store/reader";
-import { useDirectoryValidator } from "@features/reader/hooks/useDirectoryValidator";
+import {
+    createContext,
+    createRef,
+    type ReactElement,
+    useContext,
+    useEffect,
+    useLayoutEffect,
+    useState,
+} from "react";
 import { shallowEqual } from "react-redux";
-import { getShortcutsMapped } from "@store/shortcuts";
-import { fetchAllNotes } from "@store/bookNotes";
-import { getMainSettings, setMainSettings } from "@store/mainSettings";
+import Main from "./Main";
+import TopBar from "./TopBar";
+import { bookmarksPath, formatUtils, historyPath, promptSelectDir, settingsPath, themesPath } from "./utils/file";
 
 interface AppContext {
     pageNumberInputRef: React.RefObject<HTMLInputElement>;

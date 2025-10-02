@@ -1,8 +1,8 @@
-import { createSlice, current, PayloadAction } from "@reduxjs/toolkit";
-import { saveJSONfile, themesPath } from "../utils/file";
-import { initThemeData, themeProps } from "../utils/theme";
+import { createSlice, current, type PayloadAction } from "@reduxjs/toolkit";
 import { colorUtils } from "@utils/color";
 import { dialogUtils } from "@utils/dialog";
+import { saveJSONfile, themesPath } from "../utils/file";
+import { initThemeData, themeProps } from "../utils/theme";
 
 export const setSysBtnColor = (blurred = false) => {
     const topbarElem = document.querySelector<HTMLDivElement>("body #topBar");
@@ -73,7 +73,7 @@ if (window.fs.existsSync(themesPath)) {
             // validate theme data
             let changed = false;
             // todo remove in later version
-            if (data instanceof Array || !Object.prototype.hasOwnProperty.call(data, "name")) {
+            if (data instanceof Array || !Object.hasOwn(data, "name")) {
                 data = {
                     name: "theme2",
                     allData: data,

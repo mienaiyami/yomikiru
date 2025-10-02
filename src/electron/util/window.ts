@@ -1,8 +1,8 @@
+import { ipc } from "@electron/ipc/utils";
+import * as remote from "@electron/remote/main";
 import { app, BrowserWindow, dialog, shell } from "electron";
 import fs from "fs/promises";
-import * as remote from "@electron/remote/main";
 import { getWindowFromWebContents, log } from ".";
-import { ipc } from "@electron/ipc/utils";
 import { MainSettings } from "./mainSettings";
 
 declare const HOME_WEBPACK_ENTRY: string;
@@ -19,10 +19,10 @@ export class WindowManager {
 
     static {
         if (process.platform === "win32") {
-            this.setupWindowsTasks();
+            WindowManager.setupWindowsTasks();
         }
 
-        this.errorCheckTimeout = setTimeout(() => {
+        WindowManager.errorCheckTimeout = setTimeout(() => {
             dialog
                 .showMessageBox({
                     type: "info",
@@ -79,10 +79,10 @@ export class WindowManager {
             },
         });
 
-        this.windows.push(newWindow);
-        this.deleteDirsOnClose.push(null);
+        WindowManager.windows.push(newWindow);
+        WindowManager.deleteDirsOnClose.push(null);
 
-        this.setupWindow(newWindow, link);
+        WindowManager.setupWindow(newWindow, link);
         return newWindow;
     }
 
@@ -94,15 +94,15 @@ export class WindowManager {
         window.webContents.once("dom-ready", () => {
             // maximize also unhide window
             window.maximize();
-            if (this.isFirstWindow) {
+            if (WindowManager.isFirstWindow) {
                 ipc.send(window.webContents, "window:statusCheck");
-                this.isFirstWindow = false;
+                WindowManager.isFirstWindow = false;
             }
             if (link)
                 ipc.send(window.webContents, "reader:loadLink", {
                     link,
                 });
-            this.handleWindowClose(window);
+            WindowManager.handleWindowClose(window);
             window.webContents.on("render-process-gone", (detail) => {
                 log.error("Render process gone:", detail);
                 dialog
@@ -122,7 +122,7 @@ export class WindowManager {
     }
 
     static async handleWindowClose(window: BrowserWindow): Promise<void> {
-        const currentWindowIndex = this.windows.findIndex((w) => w && w.id === window.id);
+        const currentWindowIndex = WindowManager.windows.findIndex((w) => w && w.id === window.id);
 
         const closeEvent = async (e: Electron.Event) => {
             e.preventDefault();
@@ -148,13 +148,13 @@ export class WindowManager {
                 }
             }, 5000);
 
-            await this.cleanupTempDir(currentWindowIndex);
+            await WindowManager.cleanupTempDir(currentWindowIndex);
         };
 
         const onClosed = () => {
-            this.windows[currentWindowIndex] = null;
-            this.deleteDirsOnClose[currentWindowIndex] = null;
-            if (this.windows.filter((w) => w !== null).length === 0) {
+            WindowManager.windows[currentWindowIndex] = null;
+            WindowManager.deleteDirsOnClose[currentWindowIndex] = null;
+            if (WindowManager.windows.filter((w) => w !== null).length === 0) {
                 app.quit();
             }
         };
@@ -166,7 +166,7 @@ export class WindowManager {
     }
 
     private static async cleanupTempDir(windowIndex: number) {
-        const dirToDlt = this.deleteDirsOnClose[windowIndex];
+        const dirToDlt = WindowManager.deleteDirsOnClose[windowIndex];
         if (!dirToDlt) return;
 
         try {
@@ -178,11 +178,11 @@ export class WindowManager {
     }
     static addDirToDelete(window: Electron.WebContents | number, dir: string): void {
         try {
-            const index = this.windows.findIndex(
+            const index = WindowManager.windows.findIndex(
                 (w) => w && w.id === (typeof window === "number" ? window : getWindowFromWebContents(window).id),
             );
             if (index > -1) {
-                this.deleteDirsOnClose[index] = dir;
+                WindowManager.deleteDirsOnClose[index] = dir;
             }
         } catch (error) {
             log.error("Could not add dir to delete:", error);
@@ -196,22 +196,22 @@ export class WindowManager {
     }
 
     static getAllWindows(): BrowserWindow[] {
-        return this.windows.filter((w): w is BrowserWindow => w !== null);
+        return WindowManager.windows.filter((w): w is BrowserWindow => w !== null);
     }
     static registerListeners(): void {
         ipc.on("window:openLinkInNewWindow", (_, link) => {
-            this.createWindow(link);
+            WindowManager.createWindow(link);
         });
         ipc.on("window:addDirToDelete", (e, dir) => {
-            this.addDirToDelete(e.sender, dir);
+            WindowManager.addDirToDelete(e.sender, dir);
         });
         ipc.on("window:destroy", (e) => {
-            this.destroyWindow(getWindowFromWebContents(e.sender));
+            WindowManager.destroyWindow(getWindowFromWebContents(e.sender));
         });
         ipc.on("window:statusCheck:response", () => {
-            if (this.errorCheckTimeout) {
-                clearTimeout(this.errorCheckTimeout);
-                this.errorCheckTimeout = null;
+            if (WindowManager.errorCheckTimeout) {
+                clearTimeout(WindowManager.errorCheckTimeout);
+                WindowManager.errorCheckTimeout = null;
             }
         });
     }

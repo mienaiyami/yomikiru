@@ -1,23 +1,22 @@
-/* eslint-disable no-case-declarations */
-import { app, BrowserWindow, Menu, shell, MenuItemConstructorOptions } from "electron";
+import * as remote from "@electron/remote/main";
+import { app, BrowserWindow, Menu, type MenuItemConstructorOptions, shell } from "electron";
 import fs from "fs";
 import { log } from "./util";
 
-import * as remote from "@electron/remote/main";
 remote.initialize();
 
 if (require("electron-squirrel-startup")) app.quit();
 
-import handleSquirrelEvent from "./util/handleSquirrelEvent";
-import { MainSettings } from "./util/mainSettings";
 import { DatabaseService } from "./db";
 import { setupDatabaseHandlers } from "./ipc/database";
-import { WindowManager } from "./util/window";
-import { registerExplorerHandlers } from "./ipc/explorer";
-import { registerUpdateHandlers } from "./ipc/update";
-import { registerFSHandlers } from "./ipc/fs";
 import { registerDialogHandlers } from "./ipc/dialog";
+import { registerExplorerHandlers } from "./ipc/explorer";
+import { registerFSHandlers } from "./ipc/fs";
+import { registerUpdateHandlers } from "./ipc/update";
+import handleSquirrelEvent from "./util/handleSquirrelEvent";
+import { MainSettings } from "./util/mainSettings";
 import { checkForJSONMigration } from "./util/migrate";
+import { WindowManager } from "./util/window";
 
 if (handleSquirrelEvent()) {
     app.quit();

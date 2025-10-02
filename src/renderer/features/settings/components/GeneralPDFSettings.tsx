@@ -1,12 +1,11 @@
-import { useAppDispatch, useAppSelector } from "@store/hooks";
-
-import { useSettingsContext } from "../Settings";
 import { setReaderSettings } from "@store/appSettings";
-import InputNumber from "@ui/InputNumber";
-import { promptSelectDir } from "@utils/file";
+import { useAppDispatch, useAppSelector } from "@store/hooks";
 import { setReaderLoading } from "@store/reader";
+import InputNumber from "@ui/InputNumber";
 import { dialogUtils } from "@utils/dialog";
+import { promptSelectDir } from "@utils/file";
 import { renderPDF } from "@utils/pdf";
+import { useSettingsContext } from "../Settings";
 
 const GeneralPDFSettings: React.FC = () => {
     const { scrollIntoView } = useSettingsContext();

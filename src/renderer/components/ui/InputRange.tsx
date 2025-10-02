@@ -1,4 +1,5 @@
-import React, { useState, useLayoutEffect } from "react";
+import type React from "react";
+import { useLayoutEffect, useState } from "react";
 
 const InputRange = ({
     labeled = false,

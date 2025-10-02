@@ -1,14 +1,14 @@
 import type { InferSelectModel } from "drizzle-orm";
 import type { z } from "zod";
 import type {
-    libraryItems,
-    mangaProgress,
-    bookProgress,
-    mangaBookmarks,
     bookBookmarks,
     bookNotes,
+    bookProgress,
+    libraryItems,
+    mangaBookmarks,
+    mangaProgress,
 } from "../../electron/db/schema";
-import {
+import type {
     AddBookBookmarkSchema,
     AddBookNoteSchema,
     AddMangaBookmarkSchema,

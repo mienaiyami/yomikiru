@@ -1,8 +1,8 @@
-import { ipc } from "./utils";
 import checkForUpdate from "@electron/updater";
 import { getWindowFromWebContents } from "@electron/util";
 import { MainSettings } from "@electron/util/mainSettings";
 import { WindowManager } from "../util/window";
+import { ipc } from "./utils";
 
 export const registerUpdateHandlers = (): void => {
     if (MainSettings.getSettings().checkForUpdates) {

@@ -48,9 +48,9 @@ export default class AniList {
         if (getStorageItem("ANILIST_TRACKING") === null) setStorageItem("ANILIST_TRACKING", "[]");
 
         const token = getStorageItem("ANILIST_TOKEN") || "";
-        this.#token = token;
+        AniList.#token = token;
         if (token)
-            this.checkToken(token).then((e) => {
+            AniList.checkToken(token).then((e) => {
                 if (!e && e !== undefined)
                     dialogUtils.customError({
                         message:
@@ -62,10 +62,10 @@ export default class AniList {
         throw new Error("Cannot instantiate static class");
     }
     static setToken(token: string) {
-        this.#token = token;
+        AniList.#token = token;
     }
     static setCurrentMangaListId(id: null | number) {
-        this.#currentMangaListId = id;
+        AniList.#currentMangaListId = id;
     }
     static async checkToken(token: string) {
         const query = `#graphql
@@ -93,7 +93,7 @@ export default class AniList {
             });
             if (raw.ok) {
                 const json = await raw.json();
-                this.displayAdultContent = json.data.Viewer.options.displayAdultContent;
+                AniList.displayAdultContent = json.data.Viewer.options.displayAdultContent;
             }
             return raw.ok;
         } catch (reason) {
@@ -101,7 +101,7 @@ export default class AniList {
         }
     }
     static async fetch(query: string, variables = {}) {
-        if (!this.#token) {
+        if (!AniList.#token) {
             window.logger.error("AniList::fetch: user not logged in.");
             return;
         }
@@ -114,7 +114,7 @@ export default class AniList {
             const raw = await fetch("https://graphql.anilist.co", {
                 method: "POST",
                 headers: {
-                    Authorization: "Bearer " + this.#token,
+                    Authorization: "Bearer " + AniList.#token,
                     "Content-Type": "application/json",
                     Accept: "application/json",
                 },
@@ -147,12 +147,12 @@ export default class AniList {
             }
         }
         `;
-        const data = await this.fetch(query);
+        const data = await AniList.fetch(query);
         if (data) return data.Viewer.name;
         else return "Error";
     }
     static getVariables(variables: object) {
-        return this.displayAdultContent ? { ...variables } : { ...variables, displayAdultContent: false };
+        return AniList.displayAdultContent ? { ...variables } : { ...variables, displayAdultContent: false };
     }
     /**
      *
@@ -185,10 +185,10 @@ export default class AniList {
             }
         }
         `;
-        const variables = this.getVariables({
+        const variables = AniList.getVariables({
             search: name,
         });
-        const data = await this.fetch(query, variables);
+        const data = await AniList.fetch(query, variables);
         if (data)
             return data.Page.media.filter((e: any) => e.format !== "NOVEL") as {
                 id: number;
@@ -210,30 +210,30 @@ export default class AniList {
         return [];
     }
     static async getMangaData(mediaId: number) {
-        const variables = this.getVariables({ mediaId });
-        const data = await this.fetch(this.#mutation, variables);
+        const variables = AniList.getVariables({ mediaId });
+        const data = await AniList.fetch(AniList.#mutation, variables);
         if (data) {
             return data.SaveMediaListEntry as Anilist.MangaData;
         }
     }
     static async setCurrentMangaData(newData: Omit<Anilist.MangaData, "id" | "mediaId" | "media">) {
-        if (!this.#currentMangaListId) {
+        if (!AniList.#currentMangaListId) {
             window.logger.error("AniList::setCurrentMangaStatus: currentMangaListId not defined.");
             return;
         }
-        const variables = this.getVariables({ id: this.#currentMangaListId, ...newData });
-        const data = await this.fetch(this.#mutation, variables);
+        const variables = AniList.getVariables({ id: AniList.#currentMangaListId, ...newData });
+        const data = await AniList.fetch(AniList.#mutation, variables);
         if (data) {
             return data.SaveMediaListEntry as Anilist.MangaData;
         }
     }
     static async setCurrentMangaProgress(progress: Anilist.MangaData["progress"]) {
-        if (!this.#currentMangaListId) {
+        if (!AniList.#currentMangaListId) {
             window.logger.error("AniList::setCurrentMangaProgress: currentMangaListId not defined.");
             return;
         }
-        const variables = this.getVariables({ id: this.#currentMangaListId, progress });
-        const data = await this.fetch(this.#mutation, variables);
+        const variables = AniList.getVariables({ id: AniList.#currentMangaListId, progress });
+        const data = await AniList.fetch(AniList.#mutation, variables);
         if (data) {
             return data.SaveMediaListEntry as Anilist.MangaData;
         }

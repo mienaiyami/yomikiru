@@ -1,19 +1,19 @@
-import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import { ReactElement, useEffect, useLayoutEffect, useState } from "react";
 import {
-    faHome,
     faCog,
+    faHome,
     faMinus,
-    faWindowRestore,
-    faWindowMaximize,
     faTimes,
+    faWindowMaximize,
+    faWindowRestore,
 } from "@fortawesome/free-solid-svg-icons";
-import { useAppContext } from "./App";
+import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { useAppDispatch, useAppSelector } from "@store/hooks";
 import { setSysBtnColor } from "@store/themes";
-import { formatUtils } from "@utils/file";
 import { setSettingsOpen, toggleSettingsOpen } from "@store/ui";
+import { formatUtils } from "@utils/file";
+import { type ReactElement, useEffect, useLayoutEffect, useState } from "react";
 import { shallowEqual } from "react-redux";
+import { useAppContext } from "./App";
 
 const TopBar = (): ReactElement => {
     const [title, setTitle] = useState<string>("Yomikiru");

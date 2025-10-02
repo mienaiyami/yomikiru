@@ -1,10 +1,10 @@
+import { useAppDispatch, useAppSelector } from "@store/hooks";
+import { setReaderLoading, setReaderState } from "@store/reader";
+import { dialogUtils } from "@utils/dialog";
+import { formatUtils } from "@utils/file";
 import { useCallback } from "react";
 import { DirectoryValidatorService } from "../services/directoryValidator";
-import { setReaderLoading, setReaderState } from "@store/reader";
-import { ValidationResult, DirectoryValidatorOptions } from "../types";
-import { useAppDispatch, useAppSelector } from "@store/hooks";
-import { formatUtils } from "@utils/file";
-import { dialogUtils } from "@utils/dialog";
+import type { DirectoryValidatorOptions, ValidationResult } from "../types";
 
 export const useDirectoryValidator = () => {
     const dispatch = useAppDispatch();

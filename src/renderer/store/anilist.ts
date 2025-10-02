@@ -1,6 +1,6 @@
-import { createSlice, PayloadAction } from "@reduxjs/toolkit";
+import { createSlice, type PayloadAction } from "@reduxjs/toolkit";
 import AniList from "@utils/anilist";
-import { getStorageItem, setStorageItem, STORAGE_KEYS } from "@utils/localStorage";
+import { getStorageItem, STORAGE_KEYS, setStorageItem } from "@utils/localStorage";
 
 type AnilistState = {
     token: string | null;

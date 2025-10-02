@@ -1,11 +1,11 @@
-import { contextBridge, ipcRenderer, shell, webFrame } from "electron";
-import { app, clipboard, nativeImage, getCurrentWindow } from "@electron/remote";
-import path from "path";
-import fs from "fs/promises";
-import { existsSync, lstatSync, accessSync, readFileSync } from "fs";
 import type { IPCChannels } from "@common/types/ipc";
+import { app, clipboard, getCurrentWindow, nativeImage } from "@electron/remote";
 import * as chokidar from "chokidar";
+import { contextBridge, ipcRenderer, shell, webFrame } from "electron";
 import { getFonts } from "font-list";
+import { accessSync, existsSync, lstatSync, readFileSync } from "fs";
+import fs from "fs/promises";
+import path from "path";
 
 type FunctionLess<T> = {
     [K in keyof T as T[K] extends () => any ? never : K]: T[K];

@@ -1,7 +1,7 @@
+import { dialogUtils } from "@utils/dialog";
 import { formatUtils, unzip } from "@utils/file";
 import { renderPDF } from "@utils/pdf";
-import { dialogUtils } from "@utils/dialog";
-import { ValidationResult, ValidationProgressCallback, DirectoryValidatorOptions } from "../types";
+import type { DirectoryValidatorOptions, ValidationProgressCallback, ValidationResult } from "../types";
 
 export class DirectoryValidatorService {
     /**
