@@ -70,7 +70,7 @@ const ShortcutInput = ({ command }: { command: ShortcutCommands }) => {
                             dialogUtils.warn({
                                 message: "Can't use reserved key combination.",
                             });
-                            window.logger.warn(`"${newKey}"` + " is reserved key combination.");
+                            window.logger.warn(`"${newKey}" is reserved key combination.`);
 
                             e.currentTarget.focus();
                             return;

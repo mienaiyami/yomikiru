@@ -7,7 +7,7 @@ import { useAppContext } from "@renderer/App";
 import { useAppSelector } from "@store/hooks";
 import InputColorReal from "@ui/InputColorReal";
 import MenuList from "@ui/MenuList";
-import { type ReactElement, useContext } from "react";
+import type { ReactElement } from "react";
 import { shallowEqual } from "react-redux";
 import ContextMenu from "./components/ContextMenu";
 import LoadingScreen from "./components/LoadingScreen";

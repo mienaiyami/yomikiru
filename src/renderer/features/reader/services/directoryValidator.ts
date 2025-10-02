@@ -31,7 +31,7 @@ export class DirectoryValidatorService {
             };
         },
     ) {}
-    private abortController: AbortController | null = null;
+    // private abortController: AbortController | null = null;
     public cancel(): void {
         throw new Error("Not implemented");
         // if (this.abortController) {
@@ -177,7 +177,7 @@ export class DirectoryValidatorService {
             } else if (path.extname(normalizedLink).toLowerCase() === ".pdf") {
                 return await this.handlePDF(normalizedLink, linkSplitted, options);
             } else {
-                return await this.processDirectory(normalizedLink, maxSubdirectoryDepth, options);
+                return await this.processDirectory(normalizedLink, maxSubdirectoryDepth || 0, options);
             }
         } catch (error) {
             logger.error("Directory validation failed:", error);
@@ -342,7 +342,7 @@ export class DirectoryValidatorService {
      */
     private async processDirectory(
         link: string,
-        maxDepth = 0,
+        maxDepth: number,
         options: DirectoryValidatorOptions,
     ): Promise<ValidationResult> {
         const { fs, path, logger, onProgress } = this.dependencies;

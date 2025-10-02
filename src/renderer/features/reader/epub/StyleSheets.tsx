@@ -31,7 +31,7 @@ const StyleSheets = memo(
                                 ast.stylesheet?.rules.forEach((e) => {
                                     if (e.type === "rule") {
                                         (e as css.Rule).selectors = (e as css.Rule).selectors?.map((e) =>
-                                            e.includes("section.main") ? e : "#EPubReader section.main " + e,
+                                            e.includes("section.main") ? e : `#EPubReader section.main ${e}`,
                                         );
                                     }
                                 });

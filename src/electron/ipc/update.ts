@@ -10,7 +10,7 @@ export const registerUpdateHandlers = (): void => {
         if (mainWindow) {
             const check = () => {
                 const settings = MainSettings.getSettings();
-                checkForUpdate(mainWindow.id, settings.skipPatch, false, settings.autoDownload, settings.channel);
+                checkForUpdate(mainWindow.id, settings.channel, settings.skipPatch, false, settings.autoDownload);
             };
             check();
             setInterval(check, 1000 * 60 * 60 * 1);
@@ -19,6 +19,6 @@ export const registerUpdateHandlers = (): void => {
 
     ipc.on("update:check:manual", (e, { promptAfterCheck = true }) => {
         const windowId = getWindowFromWebContents(e.sender).id;
-        checkForUpdate(windowId, false, promptAfterCheck, false, MainSettings.getSettings().channel);
+        checkForUpdate(windowId, MainSettings.getSettings().channel, false, promptAfterCheck, false);
     });
 };

@@ -1,8 +1,8 @@
-import { spawn, spawnSync } from "child_process";
+import { spawn, spawnSync } from "node:child_process";
+import fs from "node:fs";
+import { homedir, tmpdir } from "node:os";
+import path from "node:path";
 import { app } from "electron";
-import fs from "fs";
-import { homedir, tmpdir } from "os";
-import path from "path";
 import { IS_PORTABLE } from ".";
 import { deleteOptionInExplorerMenu, deleteOptionInExplorerMenu_epub } from "./shelloptions";
 

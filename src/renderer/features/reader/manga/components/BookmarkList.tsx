@@ -1,8 +1,8 @@
-import { BookBookmark, type MangaBookmark } from "@common/types/db";
+import type { MangaBookmark } from "@common/types/db";
 import ListItem from "@renderer/components/ListItem";
 import ListNavigator from "@renderer/components/ListNavigator";
 import { useAppSelector } from "@store/hooks";
-import { getReaderBook, getReaderManga } from "@store/reader";
+import { getReaderManga } from "@store/reader";
 import dateUtils from "@utils/date";
 import { dialogUtils } from "@utils/dialog";
 import { useCallback } from "react";
@@ -69,7 +69,7 @@ const BookmarkList: React.FC = () => {
         },
         [bookmarksArray, setContextMenuData],
     );
-    const renderBookmarkItem = (bookmark: MangaBookmark, index: number, isSelected: boolean) => {
+    const renderBookmarkItem = (bookmark: MangaBookmark, _index: number, isSelected: boolean) => {
         return (
             <ListItem
                 focused={isSelected}

@@ -65,7 +65,7 @@ const BookmarkList: React.FC<{
         },
         [bookmarksArray, setContextMenuData],
     );
-    const renderBookmarkItem = (bookmark: BookBookmark, index: number, isSelected: boolean) => {
+    const renderBookmarkItem = (bookmark: BookBookmark, _index: number, isSelected: boolean) => {
         return (
             <ListItem
                 focused={isSelected}

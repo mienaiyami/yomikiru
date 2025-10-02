@@ -1,10 +1,10 @@
+import { exec } from "node:child_process";
+import fs from "node:fs/promises";
+import path from "node:path";
+import { promisify } from "node:util";
 import { log, saveFile } from "@electron/util";
-import { exec } from "child_process";
 import * as crossZip from "cross-zip";
-import { app, dialog, shell } from "electron";
-import fs from "fs/promises";
-import path from "path";
-import { promisify } from "util";
+import { dialog } from "electron";
 import { ipc } from "./utils";
 
 // manual merge from https://github.com/mienaiyami/yomikiru/commit/b1b6acbf18ff4eac5d352d91fafd511223cc8ad0
@@ -20,7 +20,7 @@ const flattenDirectories = async (root: string, relativePath = "."): Promise<voi
 
 export const registerFSHandlers = (): void => {
     // todo: check if its still needed in linux
-    ipc.handle("fs:showInExplorer", async (event, filePath) => {
+    ipc.handle("fs:showInExplorer", async (_event, filePath) => {
         try {
             if (process.platform === "linux") {
                 await fs.access(filePath);
@@ -32,14 +32,14 @@ export const registerFSHandlers = (): void => {
             if (err instanceof Error) dialog.showErrorBox("Error", err.message);
         }
     });
-    ipc.handle("fs:saveFile", async (event, { filePath, data }) => {
+    ipc.handle("fs:saveFile", async (_event, { filePath, data }) => {
         try {
             saveFile(filePath, data);
         } catch (error) {
             log.error("electron:fs:saveFile:", error);
         }
     });
-    ipc.handle("fs:unzip", async (event, { source, destination }) => {
+    ipc.handle("fs:unzip", async (_event, { source, destination }) => {
         try {
             await fs.access(source);
             await fs.rm(destination, {

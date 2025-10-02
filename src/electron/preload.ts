@@ -1,11 +1,11 @@
+import { accessSync, existsSync, lstatSync, readFileSync } from "node:fs";
+import fs from "node:fs/promises";
+import path from "node:path";
 import type { IPCChannels } from "@common/types/ipc";
 import { app, clipboard, getCurrentWindow, nativeImage } from "@electron/remote";
 import * as chokidar from "chokidar";
 import { contextBridge, ipcRenderer, shell, webFrame } from "electron";
 import { getFonts } from "font-list";
-import { accessSync, existsSync, lstatSync, readFileSync } from "fs";
-import fs from "fs/promises";
-import path from "path";
 
 type FunctionLess<T> = {
     [K in keyof T as T[K] extends () => any ? never : K]: T[K];
@@ -38,14 +38,14 @@ const fsAPI = {
     isDir: (path: string) => {
         try {
             return lstatSync(path).isDirectory();
-        } catch (error) {
+        } catch (_error) {
             return false;
         }
     },
     isFile: (path: string) => {
         try {
             return lstatSync(path).isFile();
-        } catch (error) {
+        } catch (_error) {
             return false;
         }
     },
@@ -134,7 +134,7 @@ const electronAPI = {
         channel: T,
         callback: (data: IPCChannels[T]["request"]) => void,
     ): (() => void) => {
-        const handler = (event: Electron.IpcRendererEvent, data: IPCChannels[T]["request"]) => callback(data);
+        const handler = (_event: Electron.IpcRendererEvent, data: IPCChannels[T]["request"]) => callback(data);
         ipcRenderer.on(channel, handler);
         return () => ipcRenderer.off(channel, handler);
     },

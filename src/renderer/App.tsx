@@ -213,7 +213,7 @@ const App = (): ReactElement => {
 
         return () => {
             closeWatcher();
-            listeners.forEach((e) => e());
+            listeners.forEach((e) => void e());
         };
     }, []);
     useEffect(() => {
@@ -224,6 +224,7 @@ const App = (): ReactElement => {
         return () => {
             listener();
         };
+        // todo
     }, [isReaderOpen, closeReader]);
 
     useEffect(() => {
@@ -241,7 +242,7 @@ const App = (): ReactElement => {
             open(url) {
                 return {
                     label: "Open",
-                    disabled: url ? false : true,
+                    disabled: !url,
                     action() {
                         openInReaderIfValid(url);
                     },
@@ -250,7 +251,7 @@ const App = (): ReactElement => {
             openInNewWindow(url) {
                 return {
                     label: "Open in new Window",
-                    disabled: url ? false : true,
+                    disabled: !url,
                     action() {
                         openInNewWindow(url);
                     },
@@ -259,7 +260,7 @@ const App = (): ReactElement => {
             showInExplorer(url) {
                 return {
                     label: "Show in File Explorer",
-                    disabled: url ? false : true,
+                    disabled: !url,
                     action() {
                         if (process.platform === "win32") window.electron.showItemInFolder(url || "");
                         //todo
@@ -271,7 +272,7 @@ const App = (): ReactElement => {
             copyPath(url) {
                 return {
                     label: "Copy Path",
-                    disabled: url ? false : true,
+                    disabled: !url,
                     action() {
                         window.electron.writeText(url);
                     },
@@ -280,7 +281,7 @@ const App = (): ReactElement => {
             copyImage(url) {
                 return {
                     label: "Copy Image",
-                    disabled: url ? false : true,
+                    disabled: !url,
                     action() {
                         window.electron.copyImage(url.replace("file://", ""));
                     },
@@ -289,7 +290,7 @@ const App = (): ReactElement => {
             removeHistory(url, isInSideList = false) {
                 return {
                     label: "Remove",
-                    disabled: url ? false : true,
+                    disabled: !url,
                     action() {
                         if (isInSideList && !appSettings.confirmDeleteItem) {
                             dispatch(
@@ -450,24 +451,24 @@ const App = (): ReactElement => {
                 }px`;
             };
             switch (true) {
-                case i(shortcutsMapped["navToHome"]):
+                case i(shortcutsMapped.navToHome):
                     if (window.electron.currentWindow.isFullScreen())
                         window.electron.currentWindow.setFullScreen(false);
                     if (isReaderOpen) return closeReader();
                     window.location.reload();
                     break;
-                case i(shortcutsMapped["openSettings"]):
+                case i(shortcutsMapped.openSettings):
                     dispatch(toggleSettingsOpen());
                     break;
-                case i(shortcutsMapped["uiSizeReset"]):
+                case i(shortcutsMapped.uiSizeReset):
                     window.electron.webFrame.setZoomFactor(1);
                     afterUIScale();
                     break;
-                case i(shortcutsMapped["uiSizeDown"]):
+                case i(shortcutsMapped.uiSizeDown):
                     window.electron.webFrame.setZoomFactor(window.electron.webFrame.getZoomFactor() - 0.1);
                     afterUIScale();
                     break;
-                case i(shortcutsMapped["uiSizeUp"]):
+                case i(shortcutsMapped.uiSizeUp):
                     window.electron.webFrame.setZoomFactor(window.electron.webFrame.getZoomFactor() + 0.1);
                     afterUIScale();
                     break;

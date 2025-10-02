@@ -163,7 +163,6 @@ const EPubReaderSideList = memo(
             >
                 <div
                     className="indicator"
-                    tabIndex={0}
                     onClick={(e) => {
                         makeScrollPos();
                         if (isSideListPinned) {

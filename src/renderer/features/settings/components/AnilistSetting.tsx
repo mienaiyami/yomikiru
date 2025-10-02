@@ -38,7 +38,7 @@ const AnilistSetting: React.FC = () => {
             </div>
             <div className="main row">
                 <button
-                    disabled={anilistToken ? true : false}
+                    disabled={!!anilistToken}
                     onClick={() => {
                         dispatch(setAnilistLoginOpen(true));
                     }}

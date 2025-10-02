@@ -91,10 +91,7 @@ const ReaderSettings = memo(
                 <div className="main">
                     <div className={"settingItem "}>
                         <div
-                            className={
-                                "name " + (!appSettings.readerSettings.settingsCollapsed.size ? "expanded " : "")
-                            }
-                            tabIndex={0}
+                            className={`name ${!appSettings.readerSettings.settingsCollapsed.size ? "expanded " : ""}`}
                             onKeyDown={(e) => {
                                 if (e.key === " " || e.key === "Enter") e.currentTarget.click();
                             }}
@@ -137,7 +134,7 @@ const ReaderSettings = memo(
                                               ? 1
                                               : appSettings.readerSettings.readerWidth - steps;
                                     if (document.activeElement !== e.currentTarget)
-                                        setShortcutText(readerWidth + "%");
+                                        setShortcutText(`${readerWidth}%`);
                                     dispatch(setReaderSettings({ readerWidth }));
                                     // e.currentTarget.dispatchEvent(new MouseEvent(type:"")))
                                 }}
@@ -158,7 +155,7 @@ const ReaderSettings = memo(
                                               : appSettings.readerSettings.readerWidth + steps;
 
                                     if (document.activeElement !== e.currentTarget)
-                                        setShortcutText(readerWidth + "%");
+                                        setShortcutText(`${readerWidth}%`);
                                     dispatch(setReaderSettings({ readerWidth }));
                                 }}
                             >
@@ -792,9 +789,7 @@ const ReaderSettings = memo(
                     </div>
                     <div className={"settingItem "}>
                         <div
-                            className={
-                                "name " + (!appSettings.readerSettings.settingsCollapsed.others ? "expanded " : "")
-                            }
+                            className={`name ${!appSettings.readerSettings.settingsCollapsed.others ? "expanded " : ""}`}
                             tabIndex={0}
                             onKeyDown={(e) => {
                                 if (e.key === " " || e.key === "Enter") e.currentTarget.click();

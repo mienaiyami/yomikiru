@@ -39,7 +39,14 @@
         "rules": {
             "recommended": true,
             "a11y": {
-                "recommended": true
+                "recommended": true,
+                "useButtonType": "off",
+                // todo: improve this
+                "noStaticElementInteractions": "off",
+                "noNoninteractiveTabindex": "off",
+                "useKeyWithClickEvents": "off",
+                // todo: make a btn component with anchor like style
+                "useValidAnchor": "off"
             },
             "complexity": {
                 "recommended": true,
@@ -74,7 +81,12 @@
                 "useValidForDirection": "error",
                 "useYield": "error",
                 "noInvalidBuiltinInstantiation": "error",
-                "useValidTypeof": "error"
+                "useValidTypeof": "error",
+                "useParseIntRadix": "off",
+                // todo remove later
+                "useUniqueElementIds": "off",
+                // todo remove later
+                "useExhaustiveDependencies": "warn"
             },
             "security": {
                 "recommended": true,
@@ -134,7 +146,9 @@
                 "noUnsafeNegation": "error",
                 "useGetterReturn": "error",
                 "noWith": "error",
-                "noVar": "error"
+                "noVar": "error",
+                // todo : remove later
+                "noGlobalIsNan": "off"
             },
             "nursery": {
                 "useSortedClasses": "off"

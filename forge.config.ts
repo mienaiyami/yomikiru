@@ -1,12 +1,11 @@
+import fs from "node:fs";
+import path from "node:path";
 import { MakerDeb } from "@electron-forge/maker-deb";
-import { MakerRpm } from "@electron-forge/maker-rpm";
 import { MakerSquirrel } from "@electron-forge/maker-squirrel";
 import { MakerZIP } from "@electron-forge/maker-zip";
 import { AutoUnpackNativesPlugin } from "@electron-forge/plugin-auto-unpack-natives";
 import { WebpackPlugin } from "@electron-forge/plugin-webpack";
 import type { ForgeConfig } from "@electron-forge/shared-types";
-import fs from "fs";
-import path from "path";
 import { mainConfig } from "./webpack/webpack.main.config";
 import { preloadConfig } from "./webpack/webpack.preload.config";
 import { rendererConfig } from "./webpack/webpack.renderer.config";
@@ -70,7 +69,7 @@ const config: ForgeConfig = {
         ),
     ],
     hooks: {
-        postMake: async (config, makeResults) => {
+        postMake: async (_config, makeResults) => {
             // const appName = config.packagerConfig.name;
             const appName = "Yomikiru";
             const appVersion = makeResults[0].packageJSON.version;

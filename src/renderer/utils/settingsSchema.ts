@@ -421,7 +421,7 @@ const parseAppSettings = (): z.infer<typeof settingSchema> => {
     };
     const setValueFromDeepObject = (obj: any, keys: (string | number)[], value: any) => {
         let main = obj;
-        let i;
+        let i: number;
         for (i = 0; i < keys.length - 1; i++) {
             main = main[keys[i]];
         }

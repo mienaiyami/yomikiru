@@ -61,7 +61,7 @@ const bookNotesSlice = createSlice({
         clearError: (state) => {
             state.error = null;
         },
-        setNotes: (state, action: PayloadAction<BookNotesState>) => {
+        setNotes: (_state, action: PayloadAction<BookNotesState>) => {
             return action.payload;
         },
     },

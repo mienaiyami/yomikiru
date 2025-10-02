@@ -1,7 +1,7 @@
 import { getShortcutsMapped } from "@store/shortcuts";
 import { keyFormatter } from "@utils/keybindings";
 import type React from "react";
-import { useContext, useEffect, useLayoutEffect, useRef, useState } from "react";
+import { useEffect, useLayoutEffect, useRef, useState } from "react";
 import FocusLock from "react-focus-lock";
 import { shallowEqual } from "react-redux";
 import { useAppContext } from "../../App";
@@ -50,7 +50,7 @@ const MenuList: React.FC = () => {
                     else y -= ref.current.offsetHeight;
                     if (y <= window.app.titleBarHeight && optSelectData.elemBox instanceof HTMLElement) {
                         y = window.app.titleBarHeight;
-                        ref.current.style.maxHeight = optSelectData.elemBox.getBoundingClientRect().top + "px";
+                        ref.current.style.maxHeight = `${optSelectData.elemBox.getBoundingClientRect().top}px`;
                     }
                 }
                 setFocused(optSelectData.items.findIndex((e) => e.selected));
@@ -86,7 +86,7 @@ const MenuList: React.FC = () => {
         optSelectData && (
             <FocusLock
                 onDeactivation={() => {
-                    optSelectData.focusBackElem && optSelectData.focusBackElem.focus();
+                    optSelectData.focusBackElem?.focus();
                 }}
             >
                 <div
@@ -94,7 +94,7 @@ const MenuList: React.FC = () => {
                     tabIndex={-1}
                     onBlur={(e) => {
                         // optSelectData.focusBackElem && optSelectData.focusBackElem.focus();
-                        optSelectData.onBlur && optSelectData.onBlur(e);
+                        optSelectData.onBlur?.(e);
                     }}
                     onClick={onClick}
                     onContextMenu={onClick}
@@ -106,7 +106,7 @@ const MenuList: React.FC = () => {
                         left: pos.x,
                         top: pos.y,
                         // display: display ? "block" : "none",
-                        "--min-width": pos.width === 0 ? "fit-content" : pos.width + "px",
+                        "--min-width": pos.width === 0 ? "fit-content" : `${pos.width}px`,
                         visibility: optSelectData.items.length > 0 ? "visible" : "hidden",
                     }}
                     onKeyDown={(e) => {
@@ -116,7 +116,7 @@ const MenuList: React.FC = () => {
                         const keyStr = keyFormatter(e, false);
                         if (keyStr === "") return;
 
-                        if (shortcutsMapped["contextMenu"].includes(keyStr)) {
+                        if (shortcutsMapped.contextMenu.includes(keyStr)) {
                             e.currentTarget.blur();
                             return;
                         }
@@ -145,21 +145,21 @@ const MenuList: React.FC = () => {
                             case keyStr === "escape":
                                 e.currentTarget.blur();
                                 break;
-                            case shortcutsMapped["listDown"].includes(keyStr):
+                            case shortcutsMapped.listDown.includes(keyStr):
                             case keyStr === "right":
                                 setFocused((init) => {
                                     if (init + 1 >= optSelectData.items.length) return 0;
                                     return init + 1;
                                 });
                                 break;
-                            case shortcutsMapped["listUp"].includes(keyStr):
+                            case shortcutsMapped.listUp.includes(keyStr):
                             case keyStr === "left":
                                 setFocused((init) => {
                                     if (init - 1 < 0) return optSelectData.items.length - 1;
                                     return init - 1;
                                 });
                                 break;
-                            case shortcutsMapped["listSelect"].includes(keyStr):
+                            case shortcutsMapped.listSelect.includes(keyStr):
                             case keyStr === "space": {
                                 const elem = ref.current?.querySelector(
                                     '[data-focused="true"]',
@@ -175,7 +175,6 @@ const MenuList: React.FC = () => {
                     <ul>
                         {optSelectData.items.map((e, i) => (
                             <li
-                                role="menuitem"
                                 key={e.label}
                                 onClick={e.action}
                                 onContextMenu={e.action}

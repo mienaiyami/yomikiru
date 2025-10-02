@@ -63,7 +63,7 @@ const BookmarkTab: React.FC = () => {
 
     const renderBookmarkItem = (
         bookmark: LibraryItemWithProgress | BookBookmark | MangaBookmark,
-        index: number,
+        _index: number,
         isSelected: boolean,
     ) =>
         "chapterName" in bookmark && (

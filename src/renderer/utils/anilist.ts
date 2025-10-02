@@ -85,7 +85,7 @@ export default class AniList {
             const raw = await fetch("https://graphql.anilist.co", {
                 method: "POST",
                 headers: {
-                    Authorization: "Bearer " + token,
+                    Authorization: `Bearer ${token}`,
                     "Content-Type": "application/json",
                     Accept: "application/json",
                 },
@@ -98,6 +98,7 @@ export default class AniList {
             return raw.ok;
         } catch (reason) {
             dialogUtils.customError({ message: "Unable to make request to AniList server." });
+            window.logger.error(`AniList::checkToken:\n${reason}`);
         }
     }
     static async fetch(query: string, variables = {}) {
@@ -114,7 +115,7 @@ export default class AniList {
             const raw = await fetch("https://graphql.anilist.co", {
                 method: "POST",
                 headers: {
-                    Authorization: "Bearer " + AniList.#token,
+                    Authorization: `Bearer ${AniList.#token}`,
                     "Content-Type": "application/json",
                     Accept: "application/json",
                 },
@@ -136,7 +137,7 @@ export default class AniList {
                 }
             }
         } catch (reason) {
-            window.logger.error("AniList::fetch:\n" + reason);
+            window.logger.error(`AniList::fetch:\n${reason}`);
         }
     }
     static async getUserName() {

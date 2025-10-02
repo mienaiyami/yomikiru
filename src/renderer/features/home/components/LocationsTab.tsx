@@ -149,7 +149,7 @@ const LocationsTab = (): ReactElement => {
     }, []);
 
     const renderLocationItem = useCallback(
-        (location: LocationData, index: number, isSelected: boolean) => {
+        (location: LocationData, _index: number, isSelected: boolean) => {
             return (
                 <LocationListItem
                     name={location.name}
@@ -178,10 +178,10 @@ const LocationsTab = (): ReactElement => {
     }, []);
     const handleKeyDown = useCallback(
         (keyStr: string, shortcutsMapped: Record<ShortcutCommands, string[]>) => {
-            if (shortcutsMapped["dirUp"].includes(keyStr)) {
+            if (shortcutsMapped.dirUp.includes(keyStr)) {
                 setCurrentLink((link) => window.path.dirname(link));
             }
-            if (shortcutsMapped["listSelect"].includes(keyStr)) {
+            if (shortcutsMapped.listSelect.includes(keyStr)) {
                 if (locations.length === 0 && imageCount > 0) {
                     openInReader(currentLink);
                 }

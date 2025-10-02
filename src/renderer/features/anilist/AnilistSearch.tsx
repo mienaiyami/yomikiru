@@ -3,7 +3,7 @@ import { useAppDispatch, useAppSelector } from "@store/hooks";
 import { getReaderManga } from "@store/reader";
 import { setAnilistSearchOpen } from "@store/ui";
 import AniList from "@utils/anilist";
-import React, { useEffect, useState } from "react";
+import { useEffect, useState } from "react";
 
 import FocusLock from "react-focus-lock";
 
@@ -17,67 +17,23 @@ const AnilistSearch = () => {
     const dispatch = useAppDispatch();
     useEffect(() => {
         setSearch(mangaInReader?.title || "");
-    }, []);
+    }, [mangaInReader?.title]);
     useEffect(() => {
         AniList.searchManga(search).then((e) => {
             setResult(e);
         });
     }, [search]);
 
-    const ResultListItem = ({
-        english,
-        romaji,
-        native,
-        cover,
-        startDate,
-        id,
-        status,
-    }: {
-        english: string;
-        romaji: string;
-        native: string;
-        cover: string;
-        startDate: string;
-        id: number;
-        status: "FINISHED" | "RELEASING" | "CANCELLED" | "HIATUS";
-    }) => {
-        return (
-            <li>
-                <button
-                    className="row"
-                    onClick={() => {
-                        if (mangaInReader) {
-                            dispatch(
-                                addAnilistTracker({
-                                    anilistMediaId: id,
-                                    localURL: mangaInReader.link,
-                                }),
-                            );
-                            dispatch(setAnilistSearchOpen(false));
-                        }
-                    }}
-                >
-                    <div className="cover" style={{ backgroundImage: `url(${cover})` }}>
-                        {/* <img src={cover} alt="cover" draggable={false} /> */}
-                    </div>
-                    <div className="col">
-                        <span title={english || romaji || native}>{english || romaji || native}</span>
-                        <span title={romaji || "~"}>{romaji || "~"}</span>
-                        <span title={native || "~"}>{native || "~"}</span>
-                        <div className="row">
-                            <span className="row">
-                                <span>Started</span>
-                                <span>{startDate}</span>
-                            </span>
-                            <span className="row">
-                                <span>Status</span>
-                                <span>{status}</span>
-                            </span>
-                        </div>
-                    </div>
-                </button>
-            </li>
-        );
+    const handleItemClick = (anilistMediaId: number) => {
+        if (mangaInReader) {
+            dispatch(
+                addAnilistTracker({
+                    anilistMediaId,
+                    localURL: mangaInReader.link,
+                }),
+            );
+            dispatch(setAnilistSearchOpen(false));
+        }
     };
 
     return (
@@ -140,6 +96,7 @@ const AnilistSearch = () => {
                                         status={e.status}
                                         startDate={`${e.startDate.year}-${e.startDate.month}-${e.startDate.day}`}
                                         key={e.title.romaji + i}
+                                        onClick={() => handleItemClick(e.id)}
                                     />
                                 ))}
                             </ol>
@@ -148,6 +105,50 @@ const AnilistSearch = () => {
                 </div>
             </div>
         </FocusLock>
+    );
+};
+
+const ResultListItem = ({
+    english,
+    romaji,
+    native,
+    cover,
+    startDate,
+    status,
+    onClick,
+}: {
+    english: string;
+    romaji: string;
+    native: string;
+    cover: string;
+    startDate: string;
+    id: number;
+    status: "FINISHED" | "RELEASING" | "CANCELLED" | "HIATUS";
+    onClick: () => void;
+}) => {
+    return (
+        <li>
+            <button className="row" onClick={onClick}>
+                <div className="cover" style={{ backgroundImage: `url(${cover})` }}>
+                    {/* <img src={cover} alt="cover" draggable={false} /> */}
+                </div>
+                <div className="col">
+                    <span title={english || romaji || native}>{english || romaji || native}</span>
+                    <span title={romaji || "~"}>{romaji || "~"}</span>
+                    <span title={native || "~"}>{native || "~"}</span>
+                    <div className="row">
+                        <span className="row">
+                            <span>Started</span>
+                            <span>{startDate}</span>
+                        </span>
+                        <span className="row">
+                            <span>Status</span>
+                            <span>{status}</span>
+                        </span>
+                    </div>
+                </div>
+            </button>
+        </li>
     );
 };
 

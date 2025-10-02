@@ -16,9 +16,7 @@ const HistoryTab: React.FC = () => {
     const { setContextMenuData } = useAppContext();
 
     const historyItems = useMemo(() => {
-        const items = Object.values(library.items).filter(
-            (item) => item && item.progress,
-        ) as LibraryItemWithProgress[];
+        const items = Object.values(library.items).filter((item) => item?.progress) as LibraryItemWithProgress[];
 
         let sorted = [...items];
 
@@ -52,7 +50,7 @@ const HistoryTab: React.FC = () => {
                       ? `${window.path.extname(item.progress?.chapterName || "")}`
                       : "") +
                   "manga|manhua|manhwa|webtoon|webcomic|comic"
-                : item.title + ".epub";
+                : `${item.title}.epub`;
 
         return new RegExp(filter, "ig").test(searchText);
     };

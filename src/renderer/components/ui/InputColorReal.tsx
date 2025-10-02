@@ -2,7 +2,7 @@ import { faEyeDropper, faSort } from "@fortawesome/free-solid-svg-icons";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { colorUtils } from "@utils/color";
 import type React from "react";
-import { useContext, useEffect, useLayoutEffect, useRef, useState } from "react";
+import { useEffect, useLayoutEffect, useRef, useState } from "react";
 import FocusLock, { MoveFocusInside } from "react-focus-lock";
 import { useAppContext } from "../../App";
 import InputNumber from "./InputNumber";
@@ -58,7 +58,7 @@ const InputColorReal: React.FC = () => {
                     else y -= ref.current.offsetHeight;
                     if (y <= window.app.titleBarHeight && colorSelectData.elemBox instanceof HTMLElement) {
                         y = window.app.titleBarHeight;
-                        ref.current.style.maxHeight = colorSelectData.elemBox.getBoundingClientRect().top + "px";
+                        ref.current.style.maxHeight = `${colorSelectData.elemBox.getBoundingClientRect().top}px`;
                     }
                 }
                 setPos({ x, y });
@@ -79,7 +79,7 @@ const InputColorReal: React.FC = () => {
 
     useLayoutEffect(() => {
         if (colorSelectData) {
-            colorSelectData.onChange && colorSelectData.onChange(color);
+            colorSelectData.onChange?.(color);
         }
     }, [color]);
 
@@ -95,7 +95,7 @@ const InputColorReal: React.FC = () => {
             if (x > target.getBoundingClientRect().width) x = target.getBoundingClientRect().width;
             const percent = parseFloat((x / target.getBoundingClientRect().width).toFixed(2));
             setColor((init) => init.hue(Math.round(percent * 360)));
-            slider.style.left = (percent * 100).toFixed(2) + "%";
+            slider.style.left = `${(percent * 100).toFixed(2)}%`;
         }
     };
     const calcAndSetAlpha = (e: MouseEvent | React.MouseEvent) => {
@@ -107,7 +107,7 @@ const InputColorReal: React.FC = () => {
             if (x > target.getBoundingClientRect().width) x = target.getBoundingClientRect().width;
             const percent = parseFloat((x / target.getBoundingClientRect().width).toFixed(2));
             setColor((init) => init.alpha(percent));
-            slider.style.left = (percent * 100).toFixed(2) + "%";
+            slider.style.left = `${(percent * 100).toFixed(2)}%`;
         }
     };
     const calcAndSetSL = (e: MouseEvent | React.MouseEvent) => {
@@ -123,8 +123,8 @@ const InputColorReal: React.FC = () => {
             if (y > target.getBoundingClientRect().height) y = target.getBoundingClientRect().height;
             const percentY = parseFloat((y / target.getBoundingClientRect().height).toFixed(2));
             setColor((init) => init.saturationv(percentX * 100).value(100 - percentY * 100));
-            slider.style.left = percentX * 100 + "%";
-            slider.style.top = percentY * 100 + "%";
+            slider.style.left = `${percentX * 100}%`;
+            slider.style.top = `${percentY * 100}%`;
         }
     };
     const handleMouseMove = (e: MouseEvent) => {
@@ -149,7 +149,7 @@ const InputColorReal: React.FC = () => {
         colorSelectData && (
             <FocusLock
                 onDeactivation={() => {
-                    colorSelectData.focusBackElem && colorSelectData.focusBackElem.focus();
+                    colorSelectData.focusBackElem?.focus();
                     // setColorSelectData(null);
                 }}
             >
@@ -162,7 +162,7 @@ const InputColorReal: React.FC = () => {
                             (e.relatedTarget && e.relatedTarget.getAttribute("data-focus-guard") === "true")
                         )
                             return;
-                        colorSelectData.onBlur && colorSelectData.onBlur(e);
+                        colorSelectData.onBlur?.(e);
                         setColorSelectData(null);
                     }}
                     onWheel={(e) => {
@@ -174,7 +174,7 @@ const InputColorReal: React.FC = () => {
                         top: pos.y,
                         // display: display ? "block" : "none",
                         visibility: colorSelectData ? "visible" : "hidden",
-                        "--hue": color.hue() + "deg",
+                        "--hue": `${color.hue()}deg`,
                         "--color": color.hsl().string(),
                         "--color-noAlpha": colorUtils.new(color).alpha(1).hsl().string(),
                     }}
@@ -212,7 +212,7 @@ const InputColorReal: React.FC = () => {
                     >
                         <span
                             className={`slider SLSlider ${sliding === "SL" ? "sliding" : ""} `}
-                            style={{ left: color.saturationv() + "%", top: 100 - color.value() + "%" }}
+                            style={{ left: `${color.saturationv()}%`, top: `${100 - color.value()}%` }}
                         ></span>
                     </div>
                     <div className="block2">
@@ -241,7 +241,7 @@ const InputColorReal: React.FC = () => {
                             >
                                 <span
                                     className={`slider hueSlider ${sliding === "HUE" ? "sliding" : ""} `}
-                                    style={{ left: color.hue() / 3.6 + "%" }}
+                                    style={{ left: `${color.hue() / 3.6}%` }}
                                 ></span>
                             </div>
                             {colorSelectData.showAlpha && (
@@ -255,7 +255,7 @@ const InputColorReal: React.FC = () => {
                                 >
                                     <span
                                         className={`slider opacitySlider ${sliding === "ALPHA" ? "sliding" : ""} `}
-                                        style={{ left: color.alpha() * 100 + "%" }}
+                                        style={{ left: `${color.alpha() * 100}%` }}
                                     ></span>
                                 </div>
                             )}

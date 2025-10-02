@@ -129,15 +129,18 @@ export const highlightUtils = {
                         const span = document.createElement("span");
                         span.classList.add(defaultHighlightClass);
                         span.dataset.highlightId = id;
-                        info.content && (span.dataset.tooltip = info.content);
+                        if (info.content) {
+                            span.dataset.tooltip = info.content;
+                        }
                         span.style.setProperty("--highlight-color", colorUtils.new(color).alpha(0.5).hexa());
 
                         try {
                             nodeRange.surroundContents(span);
-                        } catch (e) {
+                        } catch (_e) {
                             const fragment = nodeRange.extractContents();
                             span.appendChild(fragment);
                             nodeRange.insertNode(span);
+                            console.warn("Failed to highlight text node:", _e);
                         }
                     } catch (e) {
                         console.warn("Failed to highlight text node:", e);
@@ -183,10 +186,10 @@ export const highlightUtils = {
                 return NodeFilter.FILTER_ACCEPT;
             },
         });
-
-        let node;
-        while ((node = nodeIterator.nextNode())) {
+        let node = nodeIterator.nextNode();
+        while (node) {
             nodes.push(node);
+            node = nodeIterator.nextNode();
         }
 
         return nodes;

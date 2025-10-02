@@ -34,7 +34,7 @@ const LocationListItem = ({
         }
         if (
             appSettings.openDirectlyFromManga &&
-            window.path.normalize(window.path.resolve(link + "../../../") + window.path.sep) ===
+            window.path.normalize(window.path.resolve(`${link}../../../`) + window.path.sep) ===
                 window.path.normalize(appSettings.baseDir + window.path.sep)
         ) {
             openInReader(link).then((isValid) => {

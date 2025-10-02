@@ -43,7 +43,7 @@ const ReaderSideListItem = memo(
             } else {
                 items.push(window.contextMenu.template.readChapter(window.path.dirname(link), name));
             }
-            if (e.currentTarget.parentElement && e.currentTarget.parentElement.parentElement) {
+            if (e.currentTarget.parentElement?.parentElement) {
                 const chapters = [...e.currentTarget.parentElement.parentElement.querySelectorAll("a")].map(
                     (e) => e.title,
                 );

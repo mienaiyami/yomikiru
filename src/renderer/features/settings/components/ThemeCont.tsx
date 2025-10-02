@@ -109,18 +109,16 @@ const ThemeElement = ({
                         }}
                     ></InputSelect>
                 ) : (
-                    <>
-                        <InputColor
-                            value={realColor}
-                            timeout={[
-                                500,
-                                (value) => {
-                                    setRealColor(colorUtils.new(value));
-                                },
-                            ]}
-                            title="Color"
-                        />
-                    </>
+                    <InputColor
+                        value={realColor}
+                        timeout={[
+                            500,
+                            (value) => {
+                                setRealColor(colorUtils.new(value));
+                            },
+                        ]}
+                        title="Color"
+                    />
                 )}
             </td>
         </>

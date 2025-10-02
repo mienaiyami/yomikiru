@@ -43,7 +43,7 @@ const setBodyTheme = ({ allData, name }: Themes) => {
         } else {
             dialogUtils.customError({
                 title: "Error",
-                message: '"' + name + '" Theme does not exist or is corrupted.\nRewriting theme',
+                message: `"${name}" Theme does not exist or is corrupted.\nRewriting theme`,
             });
             window.fs.rm(window.path.join(window.electron.app.getPath("userData"), "themes.json"));
             window.location.reload();
@@ -73,7 +73,7 @@ if (window.fs.existsSync(themesPath)) {
             // validate theme data
             let changed = false;
             // todo remove in later version
-            if (data instanceof Array || !Object.hasOwn(data, "name")) {
+            if (Array.isArray(data) || !Object.hasOwn(data, "name")) {
                 data = {
                     name: "theme2",
                     allData: data,
@@ -100,7 +100,7 @@ if (window.fs.existsSync(themesPath)) {
                             window.logger.log(
                                 `"${prop}" does not exist on theme - "${e.name}", adding it with value "#ff0000".`,
                             );
-                            addedProp.add('\t"' + themeProps[prop as ThemeDataMain] + '"');
+                            addedProp.add(`\t"${themeProps[prop as ThemeDataMain]}"`);
                             rewriteNeeded = true;
                             changed = true;
                             e.main[prop as ThemeDataMain] = "#ff0000";
@@ -150,7 +150,7 @@ if (window.fs.existsSync(themesPath)) {
                 });
             else
                 dialogUtils.customError({
-                    message: "Unable to parse " + themesPath + "\nMaking new themes.json..." + "\n" + err,
+                    message: `Unable to parse ${themesPath}\nMaking new themes.json...\n${err}`,
                 });
             window.logger.error(err);
             initialState.name = initThemeData.name;
@@ -207,12 +207,12 @@ const themes = createSlice({
             } catch {
                 dialogUtils.customError({
                     title: "Error",
-                    message: "Unable to parse " + themesPath + "\nMaking new themes.json...",
+                    message: `Unable to parse ${themesPath}\nMaking new themes.json...`,
                 });
             }
         },
         addThemes: (state, action: PayloadAction<ThemeData[]>) => {
-            if (action.payload instanceof Array) {
+            if (Array.isArray(action.payload)) {
                 action.payload.forEach((theme) => {
                     if ("name" in theme) {
                         if (state.allData.map((e) => e.name).includes(theme.name)) {

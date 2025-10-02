@@ -1,3 +1,4 @@
+import path from "node:path";
 import type {
     AddToLibraryData,
     BookProgress,
@@ -13,7 +14,6 @@ import { eq } from "drizzle-orm";
 import { drizzle } from "drizzle-orm/better-sqlite3";
 import { migrate } from "drizzle-orm/better-sqlite3/migrator";
 import { app, dialog } from "electron";
-import path from "path";
 import { dateFromOldDateString, electronOnly, log } from "../util";
 import * as schema from "./schema";
 import { bookBookmarks, bookProgress, libraryItems, mangaBookmarks, mangaProgress } from "./schema";
@@ -146,11 +146,6 @@ export class DatabaseService {
                     if (!parentLink || !item.data.link) {
                         throw new Error("Missing required link data");
                     }
-
-                    const title =
-                        item.type === "image"
-                            ? getTitle(item.data.mangaName, path.basename(parentLink))
-                            : getTitle(item.data.title, path.basename(parentLink));
 
                     const [newItem] = await tx
                         .insert(libraryItems)

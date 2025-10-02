@@ -6,7 +6,7 @@ import { setAnilistEditOpen, setAnilistSearchOpen } from "@store/ui";
 import InputNumber from "@ui/InputNumber";
 import AniList from "@utils/anilist";
 import { dialogUtils } from "@utils/dialog";
-import React, { memo, useEffect, useLayoutEffect, useState } from "react";
+import { memo, useEffect, useState } from "react";
 
 const AnilistBar = memo(() => {
     const anilistTracking = useAppSelector((store) => store.anilist.tracking);
@@ -18,6 +18,7 @@ const AnilistBar = memo(() => {
     const [progress, setProgress] = useState(anilistCurrentManga?.progress || 0);
     const dispatch = useAppDispatch();
 
+    // todo refactor
     useEffect(() => {
         if (mangaInReader && anilistTracking.find((e) => e.localURL === mangaInReader)) setTracking(true);
         else {

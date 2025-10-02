@@ -64,7 +64,7 @@ const GeneralPDFSettings: React.FC = () => {
                         promptSelectDir(
                             (paths) => {
                                 (async () => {
-                                    if (!(paths instanceof Array && paths.length > 0)) return;
+                                    if (!(Array.isArray(paths) && paths.length > 0)) return;
                                     // dispatch(setLoadingManga(true));
                                     // dispatch(setLoadingMangaPercent(0));
                                     for (let i = 0; i < paths.length; i++) {
@@ -93,7 +93,7 @@ const GeneralPDFSettings: React.FC = () => {
                                             await renderPDF(path, renderPath, appSettings.readerSettings.pdfScale);
                                         } catch (reason: any) {
                                             console.error(reason);
-                                            if (reason && reason.message && !reason.message.includes("password"))
+                                            if (reason?.message && !reason.message.includes("password"))
                                                 dialogUtils.customError({
                                                     message: "Error in rendering PDF",
                                                     detail: path,

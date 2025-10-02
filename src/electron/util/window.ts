@@ -1,7 +1,7 @@
+import fs from "node:fs/promises";
 import { ipc } from "@electron/ipc/utils";
 import * as remote from "@electron/remote/main";
 import { app, BrowserWindow, dialog, shell } from "electron";
-import fs from "fs/promises";
 import { getWindowFromWebContents, log } from ".";
 import { MainSettings } from "./mainSettings";
 

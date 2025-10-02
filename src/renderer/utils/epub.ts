@@ -370,7 +370,7 @@ export default class EPUB {
 
         const domP = new DOMParser();
         const doc = domP.parseFromString(str.trim(), "application/xhtml+xml");
-        doc.querySelectorAll("script").forEach((el) => el.remove());
+        doc.querySelectorAll("script").forEach((el) => void el.remove());
         doc.querySelectorAll("[src]").forEach((el) => {
             const src = el.getAttribute("src") as string;
             if (src.startsWith("http")) return;

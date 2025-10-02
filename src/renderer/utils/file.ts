@@ -89,7 +89,7 @@ export const promptSelectDir = async (
             ? result.filePaths[0]
             : result.filePaths[0]
         : window.path.normalize(result.filePaths[0]);
-    cb && cb(path);
+    cb?.(path);
 };
 
 export const unzip = (source: string, destination: string) => {

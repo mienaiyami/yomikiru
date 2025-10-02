@@ -1,7 +1,7 @@
 import type { BookNote } from "@common/types/db";
 import ListItem from "@renderer/components/ListItem";
 import ListNavigator from "@renderer/components/ListNavigator";
-import { addNote, removeNote, updateNote } from "@store/bookNotes";
+import { removeNote, updateNote } from "@store/bookNotes";
 import { useAppDispatch, useAppSelector } from "@store/hooks";
 import { getReaderBook } from "@store/reader";
 import InputColor from "@ui/InputColor";
@@ -222,7 +222,7 @@ const NotesList: React.FC<{
     }, [notesArray, setEditNoteId]);
 
     const renderNoteItem = useCallback(
-        (note: BookNote, index: number, isSelected: boolean) => {
+        (note: BookNote, _index: number, isSelected: boolean) => {
             return (
                 <ListItem
                     focused={isSelected}

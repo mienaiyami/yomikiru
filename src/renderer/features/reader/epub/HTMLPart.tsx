@@ -1,7 +1,7 @@
 import { useAppSelector } from "@store/hooks";
 import EPUB from "@utils/epub";
-import { HighlightRange, highlightUtils } from "@utils/highlight";
-import { memo, useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
+import { highlightUtils } from "@utils/highlight";
+import { memo, useEffect, useLayoutEffect, useRef, useState } from "react";
 import { shallowEqual } from "react-redux";
 import { useAppContext } from "src/renderer/App";
 
@@ -54,7 +54,7 @@ const HTMLPart = memo(
                 const manifestItem = epubManifest.get(currentChapter.id);
                 if (!manifestItem) {
                     console.error("Error: manifest item not found for id:", currentChapter.id);
-                    return "Error: manifest item not found for id: " + currentChapter.id;
+                    return `Error: manifest item not found for id: ${currentChapter.id}`;
                 }
                 setHtmlContent(await EPUB.readChapter(manifestItem.href));
             };

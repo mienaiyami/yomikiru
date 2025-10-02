@@ -220,7 +220,7 @@ export const keyFormatter = (e: KeyboardEvent | React.KeyboardEvent, limited = t
             keyStr += e.code.slice(5);
             break;
         case /^Numpad[0-9]$/.test(e.code):
-            keyStr += "numpad_" + e.code.slice(6);
+            keyStr += `numpad_${e.code.slice(6)}`;
             break;
         case e.code === "NumpadAdd":
             keyStr += "numpad_plus";

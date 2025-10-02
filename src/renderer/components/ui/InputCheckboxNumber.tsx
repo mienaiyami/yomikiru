@@ -73,7 +73,7 @@ const InputCheckboxNumber = ({
             return;
         }
         if (!currentTarget.value) currentTarget.value = "0";
-        const aaa = onChangeNum && onChangeNum(currentTarget);
+        const aaa = onChangeNum?.(currentTarget);
         if (aaa !== undefined) currentTarget.value = aaa.toString();
         if (timeout) {
             if (aaa === undefined) {
@@ -91,65 +91,27 @@ const InputCheckboxNumber = ({
         }
         repeater.current = null;
     };
-    const ButtonUp = () => {
-        const valueUp = () => {
-            if (inputRef.current) {
-                const value = inputRef.current.valueAsNumber ?? parseFloat(min.toString());
-                inputRef.current.value = parseFloat((value + step).toFixed(3)).toString();
-                if (max !== undefined && value + step > parseFloat(max.toString()))
-                    inputRef.current.value = max.toString();
-                changeHandler();
-            }
-        };
-        return (
-            <button
-                className="spin"
-                onMouseLeave={stopRepeater}
-                onMouseUp={stopRepeater}
-                onMouseDown={() => {
-                    mouseDownRef.current = true;
-                    if (repeater.current) clearInterval(repeater.current);
-                    valueUp();
-                    setTimeout(() => {
-                        if (repeater.current) clearInterval(repeater.current);
-                        if (mouseDownRef.current) repeater.current = setInterval(valueUp, 100);
-                    }, 500);
-                }}
-            >
-                <FontAwesomeIcon icon={faCaretUp} />
-            </button>
-        );
+
+    const valueUp = () => {
+        if (inputRef.current) {
+            const value = inputRef.current.valueAsNumber ?? parseFloat(min.toString());
+            inputRef.current.value = parseFloat((value + step).toFixed(3)).toString();
+            if (max !== undefined && value + step > parseFloat(max.toString()))
+                inputRef.current.value = max.toString();
+            changeHandler();
+        }
     };
 
-    const ButtonDown = () => {
-        const valueDown = () => {
-            if (inputRef.current) {
-                const value = inputRef.current.valueAsNumber ?? parseFloat(min.toString());
-                inputRef.current.value = parseFloat((value - step).toFixed(3)).toString();
-                if (min !== undefined && value - step < parseFloat(min.toString()))
-                    inputRef.current.value = min.toString();
-                changeHandler();
-            }
-        };
-        return (
-            <button
-                className="spin"
-                onMouseLeave={stopRepeater}
-                onMouseUp={stopRepeater}
-                onMouseDown={() => {
-                    mouseDownRef.current = true;
-                    if (repeater.current) clearInterval(repeater.current);
-                    valueDown();
-                    setTimeout(() => {
-                        if (repeater.current) clearInterval(repeater.current);
-                        if (mouseDownRef.current) repeater.current = setInterval(valueDown, 100);
-                    }, 500);
-                }}
-            >
-                <FontAwesomeIcon icon={faCaretDown} />
-            </button>
-        );
+    const valueDown = () => {
+        if (inputRef.current) {
+            const value = inputRef.current.valueAsNumber ?? parseFloat(min.toString());
+            inputRef.current.value = parseFloat((value - step).toFixed(3)).toString();
+            if (min !== undefined && value - step < parseFloat(min.toString()))
+                inputRef.current.value = min.toString();
+            changeHandler();
+        }
     };
+
     return (
         <label
             className={(disabled ? "disabled " : "") + (checked ? "optionSelected " : "") + className}
@@ -163,7 +125,7 @@ const InputCheckboxNumber = ({
             <input type="checkbox" checked={checked} disabled={disabled} onChange={onChangeCheck} />
             {labelBefore}
             {paraBefore && <p>{paraBefore}</p>}
-            <span className={"input " + (disabled || !checked ? "disabled " : "")}>
+            <span className={`input ${disabled || !checked ? "disabled " : ""}`}>
                 <input
                     type="number"
                     ref={inputRef}
@@ -186,8 +148,42 @@ const InputCheckboxNumber = ({
                         changeHandler();
                     }}
                 />
-                {!noSpin && <ButtonUp />}
-                {!noSpin && <ButtonDown />}
+                {!noSpin && (
+                    <button
+                        className="spin"
+                        onMouseLeave={stopRepeater}
+                        onMouseUp={stopRepeater}
+                        onMouseDown={() => {
+                            mouseDownRef.current = true;
+                            if (repeater.current) clearInterval(repeater.current);
+                            valueUp();
+                            setTimeout(() => {
+                                if (repeater.current) clearInterval(repeater.current);
+                                if (mouseDownRef.current) repeater.current = setInterval(valueUp, 100);
+                            }, 500);
+                        }}
+                    >
+                        <FontAwesomeIcon icon={faCaretUp} />
+                    </button>
+                )}
+                {!noSpin && (
+                    <button
+                        className="spin"
+                        onMouseLeave={stopRepeater}
+                        onMouseUp={stopRepeater}
+                        onMouseDown={() => {
+                            mouseDownRef.current = true;
+                            if (repeater.current) clearInterval(repeater.current);
+                            valueDown();
+                            setTimeout(() => {
+                                if (repeater.current) clearInterval(repeater.current);
+                                if (mouseDownRef.current) repeater.current = setInterval(valueDown, 100);
+                            }, 500);
+                        }}
+                    >
+                        <FontAwesomeIcon icon={faCaretDown} />
+                    </button>
+                )}
             </span>
             {paraAfter && <p>{paraAfter}</p>}
             {labelAfter}

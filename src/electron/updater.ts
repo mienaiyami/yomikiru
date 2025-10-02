@@ -1,13 +1,13 @@
+import { spawn } from "node:child_process";
+import fs from "node:fs";
+import path from "node:path";
 import type { AppUpdateChannel } from "@common/types/ipc";
 import { exec as execSudo } from "@vscode/sudo-prompt";
-import { spawn } from "child_process";
 import * as crossZip from "cross-zip";
 import { app, BrowserWindow, dialog, shell } from "electron";
 import * as electronDl from "electron-dl";
 import fetch from "electron-fetch";
 import logger from "electron-log";
-import fs from "fs";
-import path from "path";
 import * as semver from "semver";
 import { IS_PORTABLE } from "./util";
 
@@ -64,7 +64,7 @@ const checkForAnnouncements = async () => {
                     cancelId: 2,
                 })
                 .then((res) => {
-                    if (res.response === 0) newAnnouncements.forEach((e) => shell.openExternal(e));
+                    if (res.response === 0) newAnnouncements.forEach((e) => void shell.openExternal(e));
                     else if (res.response === 1) shell.openExternal(ANNOUNCEMENTS_DISCUSSION_URL);
                 });
     } catch (error) {
@@ -82,10 +82,10 @@ const checkForAnnouncements = async () => {
  */
 const checkForUpdate = async (
     windowId: number,
+    channel: AppUpdateChannel,
     skipPatch = false,
     promptAfterCheck = false,
     autoDownload = false,
-    channel: AppUpdateChannel,
 ): Promise<void> => {
     checkForAnnouncements();
 
@@ -262,14 +262,14 @@ const downloadUpdates = (latestVersion: string, windowId: number, silent = false
     }
 
     const window = BrowserWindow.fromId(windowId ?? 1)!;
-    const tempPath = path.join(app.getPath("temp"), "yomikiru updates " + new Date().toDateString());
+    const tempPath = path.join(app.getPath("temp"), `yomikiru updates ${new Date().toDateString()}`);
     if (fs.existsSync(tempPath)) fs.rmSync(tempPath, { recursive: true, force: true });
     fs.mkdirSync(tempPath);
     let setupInstallOnQuit: (() => void) | null = null;
     let performInstallNow: (() => void) | null = null;
 
     const promptInstall = () => {
-        newWindow && newWindow.close();
+        if (newWindow instanceof BrowserWindow) newWindow.close();
 
         const showMainPrompt = () => {
             const buttons = ["Install Now", "Install on Quit"];
@@ -373,11 +373,12 @@ const downloadUpdates = (latestVersion: string, windowId: number, silent = false
                 dialog.showMessageBox(window, {
                     type: "error",
                     title: "Error while downloading",
-                    message: e + "\n\nPlease check the homepage if persist.",
+                    message: `${e}\n\nPlease check the homepage if persist.`,
                 });
             });
     };
 
+    const webContents = newWindow instanceof BrowserWindow ? newWindow.webContents : false;
     if (process.platform === "win32")
         if (IS_PORTABLE) {
             const dl =
@@ -387,7 +388,7 @@ const downloadUpdates = (latestVersion: string, windowId: number, silent = false
             const extractPath = path.join(tempPath, "updates");
             if (!fs.existsSync(extractPath)) fs.mkdirSync(extractPath);
 
-            downloadFile(dl, newWindow && newWindow.webContents, (file) => {
+            downloadFile(dl, webContents, (file) => {
                 logger.log(`${file.filename} downloaded.`);
                 crossZip.unzip(file.path, extractPath, (err) => {
                     if (err) return logger.error(err);
@@ -427,7 +428,7 @@ const downloadUpdates = (latestVersion: string, windowId: number, silent = false
                 process.arch === "ia32"
                     ? `${DOWNLOAD_LINK}/v${latestVersion}/Yomikiru-v${latestVersion}-Setup.exe`
                     : `${DOWNLOAD_LINK}/v${latestVersion}/Yomikiru-v${latestVersion}-Setup-x64.exe`;
-            downloadFile(dl, newWindow && newWindow.webContents, (file) => {
+            downloadFile(dl, webContents, (file) => {
                 logger.log(`${file.filename} downloaded.`);
                 setupInstallOnQuit = () => {
                     app.once("quit", () => {
@@ -453,7 +454,7 @@ const downloadUpdates = (latestVersion: string, windowId: number, silent = false
         }
     else if (process.platform === "linux") {
         const dl = `${DOWNLOAD_LINK}/v${latestVersion}/Yomikiru-v${latestVersion}-amd64.deb`;
-        downloadFile(dl, newWindow && newWindow.webContents, (file) => {
+        downloadFile(dl, webContents, (file) => {
             logger.log(`${file.filename} downloaded.`);
             dialog
                 .showMessageBox(window, {

@@ -1,9 +1,9 @@
+import { existsSync } from "node:fs";
+import fs from "node:fs/promises";
+import path from "node:path";
 import type { HistoryItem, Manga_BookItem } from "@common/types/legacy";
 import { pingDatabaseChange } from "@electron/ipc/database";
 import { app, dialog } from "electron";
-import { existsSync } from "fs";
-import fs from "fs/promises";
-import path from "path";
 import { type DatabaseService, DB_PATH } from "../db";
 import { log } from ".";
 

@@ -1,5 +1,5 @@
 import { useAppSelector } from "@store/hooks";
-import shortcuts, { getShortcutsMapped } from "@store/shortcuts";
+import { getShortcutsMapped } from "@store/shortcuts";
 import { keyFormatter } from "@utils/keybindings";
 import React, { createContext, memo, useCallback, useContext, useEffect, useMemo, useRef, useState } from "react";
 import { shallowEqual } from "react-redux";
@@ -82,7 +82,7 @@ function ListNavigatorProviderComponent<T>({
             if (keyStr === "" && e.key !== "Escape") return;
 
             switch (true) {
-                case shortcutsMapped["listDown"].includes(keyStr):
+                case shortcutsMapped.listDown.includes(keyStr):
                     e.preventDefault();
                     setFocused((init) => {
                         if (init + 1 >= filteredItems.length) return 0;
@@ -90,7 +90,7 @@ function ListNavigatorProviderComponent<T>({
                     });
                     break;
 
-                case shortcutsMapped["listUp"].includes(keyStr):
+                case shortcutsMapped.listUp.includes(keyStr):
                     e.preventDefault();
                     setFocused((init) => {
                         if (init - 1 < 0) return filteredItems.length - 1;
@@ -98,7 +98,7 @@ function ListNavigatorProviderComponent<T>({
                     });
                     break;
 
-                case shortcutsMapped["contextMenu"].includes(keyStr): {
+                case shortcutsMapped.contextMenu.includes(keyStr): {
                     const elem = listRef.current?.querySelector('[data-focused="true"] a') as HTMLElement | null;
                     if (elem) {
                         e.stopPropagation();
@@ -111,7 +111,7 @@ function ListNavigatorProviderComponent<T>({
                     break;
                 }
 
-                case shortcutsMapped["listSelect"].includes(keyStr): {
+                case shortcutsMapped.listSelect.includes(keyStr): {
                     const elem = listRef.current?.querySelector('[data-focused="true"] a') as HTMLElement | null;
                     if (elem) return onSelect?.(elem);
                     const elems = listRef.current?.querySelectorAll("a");

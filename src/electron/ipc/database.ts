@@ -1,3 +1,5 @@
+import { copyFile } from "node:fs/promises";
+import path from "node:path";
 import type { BookProgress, LibraryItem, MangaProgress } from "@common/types/db";
 import type { DatabaseChangeChannels, DatabaseChannels } from "@common/types/ipc";
 import {
@@ -9,10 +11,8 @@ import {
     UpdateMangaProgressSchema,
 } from "@electron/db/validator";
 import { log } from "@electron/util";
-import { and, desc, eq, inArray, sql } from "drizzle-orm";
+import { and, desc, eq, inArray } from "drizzle-orm";
 import { app, BrowserWindow, ipcMain } from "electron";
-import { copyFile } from "fs/promises";
-import path from "path";
 import { type DatabaseService, DB_PATH } from "../db";
 import { bookBookmarks, bookNotes, bookProgress, libraryItems, mangaBookmarks, mangaProgress } from "../db/schema";
 import { ipc } from "./utils";

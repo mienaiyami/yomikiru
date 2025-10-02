@@ -4,7 +4,6 @@ import { updateMainSettings } from "@store/mainSettings";
 import InputCheckbox from "@ui/InputCheckbox";
 import { dialogUtils } from "@utils/dialog";
 import { promptSelectDir } from "@utils/file";
-import { useState } from "react";
 
 const CustomTempLocation: React.FC = () => {
     const dispatch = useAppDispatch();
@@ -16,7 +15,7 @@ const CustomTempLocation: React.FC = () => {
             if (newPath === undefined || window.fs.existsSync(newPath)) {
                 dispatch(updateMainSettings({ tempPath: newPath }));
             } else {
-                throw new Error("Folder does not exist : " + newPath);
+                throw new Error(`Folder does not exist : ${newPath}`);
             }
         } catch (reason) {
             window.logger.error("Unable to change temp path.", reason);
@@ -75,11 +74,12 @@ const CustomTempLocation: React.FC = () => {
                                 const files = await window.fs.readdir(tempPath);
                                 files
                                     .filter((e) => e.startsWith("yomikiru"))
-                                    .forEach((e) =>
-                                        window.fs.rm(window.path.join(tempPath, e), {
-                                            force: true,
-                                            recursive: true,
-                                        }),
+                                    .forEach(
+                                        (e) =>
+                                            void window.fs.rm(window.path.join(tempPath, e), {
+                                                force: true,
+                                                recursive: true,
+                                            }),
                                     );
                             }
                         } catch (err) {

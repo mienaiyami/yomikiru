@@ -1,5 +1,5 @@
 import type React from "react";
-import { useContext, useLayoutEffect, useState } from "react";
+import { useLayoutEffect, useState } from "react";
 import { useAppContext } from "../../App";
 
 const InputColor: React.FC<{
@@ -56,7 +56,7 @@ const InputColor: React.FC<{
             elemBox: e.currentTarget,
             onChange(color) {
                 // setValueProxy(color.hex());
-                const aaa = onChange && onChange(color);
+                const aaa = onChange?.(color);
                 if (timeout) {
                     if (onChange) {
                         if (aaa === undefined) return console.error("InputColor:onChange function must return.");

@@ -12,7 +12,7 @@ const LoadingScreen = () => {
                             <div
                                 className="loadingBar"
                                 style={{
-                                    width: loading.percent > 100 ? 100 : loading.percent + "%",
+                                    width: loading.percent > 100 ? 100 : `${loading.percent}%`,
                                 }}
                             ></div>
                         </div>

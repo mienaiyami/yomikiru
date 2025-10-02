@@ -73,7 +73,7 @@ const ContextMenu = () => {
                     const keyStr = keyFormatter(e, false);
                     if (keyStr === "") return;
 
-                    if (shortcutsMapped["contextMenu"].includes(keyStr)) {
+                    if (shortcutsMapped.contextMenu.includes(keyStr)) {
                         e.currentTarget.blur();
                         return;
                     }
@@ -81,7 +81,7 @@ const ContextMenu = () => {
                         case keyStr === "escape":
                             e.currentTarget.blur();
                             break;
-                        case shortcutsMapped["listDown"].includes(keyStr):
+                        case shortcutsMapped.listDown.includes(keyStr):
                         case keyStr === "right":
                             setFocused((init) => {
                                 let f = init + 1;
@@ -91,7 +91,7 @@ const ContextMenu = () => {
                                 return f;
                             });
                             break;
-                        case shortcutsMapped["listUp"].includes(keyStr):
+                        case shortcutsMapped.listUp.includes(keyStr):
                         case keyStr === "left":
                             setFocused((init) => {
                                 let f = init - 1;
@@ -101,7 +101,7 @@ const ContextMenu = () => {
                                 return f;
                             });
                             break;
-                        case shortcutsMapped["listSelect"].includes(keyStr):
+                        case shortcutsMapped.listSelect.includes(keyStr):
                         case keyStr === "space": {
                             const elem = ref.current?.querySelector(
                                 '[data-focused="true"]',
@@ -117,10 +117,9 @@ const ContextMenu = () => {
                 <ul className={contextMenuData.padLeft ? "padLeft" : ""}>
                     {contextMenuData.items.map((e, i) =>
                         e.divider ? (
-                            <li role="menuitem" key={"divider" + i} className="menu-divider"></li>
+                            <li key={`divider${i}`} className="menu-divider"></li>
                         ) : (
                             <li
-                                role="menuitem"
                                 key={e.label}
                                 onClick={e.action}
                                 onContextMenu={e.action}

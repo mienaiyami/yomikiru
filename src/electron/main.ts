@@ -1,6 +1,6 @@
+import fs from "node:fs";
 import * as remote from "@electron/remote/main";
 import { app, BrowserWindow, Menu, type MenuItemConstructorOptions, shell } from "electron";
-import fs from "fs";
 import { log } from "./util";
 
 remote.initialize();
@@ -39,7 +39,7 @@ if (app.isPackaged) {
         app.quit();
     }
     // todo: improve
-    app.on("second-instance", (event, commandLine) => {
+    app.on("second-instance", (_event, commandLine) => {
         if (commandLine.length >= 3) {
             // for file explorer option
             if (MainSettings.getSettings().openInExistingWindow) {

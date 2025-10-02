@@ -1,7 +1,7 @@
+import fs from "node:fs";
+import path from "node:path";
 import { ipc } from "@electron/ipc/utils";
 import { app } from "electron";
-import fs from "fs";
-import path from "path";
 import { z } from "zod";
 import { log } from ".";
 import { WindowManager } from "./window";

@@ -1,11 +1,11 @@
-const readline = require("readline");
+const readline = require("node:readline");
 
 const rl = readline.createInterface({
     input: process.stdin,
     output: process.stdout,
 });
 
-const { exec } = require("child_process");
+const { exec } = require("node:child_process");
 const pkgJSON = require("./package.json");
 
 const tagAndPush = () => {

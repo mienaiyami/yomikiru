@@ -45,7 +45,7 @@ if (window.fs.existsSync(shortcutsPath)) {
                 });
             } else
                 dialogUtils.customError({
-                    message: "Unable to parse " + shortcutsPath + "\nMaking new shortcuts.json...",
+                    message: `Unable to parse ${shortcutsPath}\nMaking new shortcuts.json...`,
                 });
             window.logger.error(err);
             window.fs.writeFile(shortcutsPath, JSON.stringify(defaultShortcuts, null, "\t"));

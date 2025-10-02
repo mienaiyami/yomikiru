@@ -1,13 +1,12 @@
 import { removeAnilistTracker, setAnilistCurrentManga } from "@store/anilist";
 import { useAppDispatch, useAppSelector } from "@store/hooks";
-import { getReaderManga } from "@store/reader";
 import { setAnilistEditOpen } from "@store/ui";
 import InputCheckbox from "@ui/InputCheckbox";
 import InputNumber from "@ui/InputNumber";
 import InputSelect from "@ui/InputSelect";
 import Link from "@ui/Link";
 import AniList from "@utils/anilist";
-import React, { useEffect, useLayoutEffect, useRef, useState } from "react";
+import { useEffect, useLayoutEffect, useRef, useState } from "react";
 
 import FocusLock from "react-focus-lock";
 

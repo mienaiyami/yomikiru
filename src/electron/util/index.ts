@@ -1,7 +1,7 @@
+import fs from "node:fs";
+import path from "node:path";
 import { app, BrowserWindow } from "electron";
 import _log from "electron-log";
-import fs from "fs";
-import path from "path";
 
 export const IS_PORTABLE =
     app.isPackaged &&

@@ -152,7 +152,7 @@ const About: React.FC = () => {
                     <button
                         onClick={(e) => {
                             const target = e.currentTarget;
-                            target.innerText = "\u00a0".repeat(16) + "Copied!" + "\u00a0".repeat(16);
+                            target.innerText = `${"\u00a0".repeat(16)}Copied!${"\u00a0".repeat(16)}`;
                             window.electron.writeText("mienaiyami0@gmail.com");
                             target.disabled = true;
                             setTimeout(() => {

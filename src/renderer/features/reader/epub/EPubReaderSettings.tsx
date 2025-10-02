@@ -141,7 +141,7 @@ const EPUBReaderSettings = memo(
                                               ? 1
                                               : appSettings.epubReaderSettings.readerWidth - steps;
                                     if (document.activeElement !== e.currentTarget)
-                                        setShortcutText(readerWidth + "%");
+                                        setShortcutText(`${readerWidth}%`);
                                     dispatch(setEpubReaderSettings({ readerWidth }));
                                     // e.currentTarget.dispatchEvent(new MouseEvent(type:"")))
                                 }}
@@ -161,7 +161,7 @@ const EPUBReaderSettings = memo(
                                               : appSettings.epubReaderSettings.readerWidth + steps;
 
                                     if (document.activeElement !== e.currentTarget)
-                                        setShortcutText(readerWidth + "%");
+                                        setShortcutText(`${readerWidth}%`);
                                     dispatch(setEpubReaderSettings({ readerWidth }));
                                 }}
                             >
@@ -229,7 +229,7 @@ const EPUBReaderSettings = memo(
 
                                         newSize = newSize < 1 ? 1 : newSize;
                                         if (document.activeElement !== e.currentTarget)
-                                            setShortcutText(newSize + "px");
+                                            setShortcutText(`${newSize}px`);
                                         dispatch(setEpubReaderSettings({ fontSize: newSize }));
                                     }}
                                 >
@@ -243,7 +243,7 @@ const EPUBReaderSettings = memo(
 
                                         newSize = newSize > 100 ? 100 : newSize;
                                         if (document.activeElement !== e.currentTarget)
-                                            setShortcutText(newSize + "px");
+                                            setShortcutText(`${newSize}px`);
                                         dispatch(setEpubReaderSettings({ fontSize: newSize }));
                                     }}
                                 >
@@ -463,7 +463,6 @@ const EPUBReaderSettings = memo(
                                 "name " +
                                 (!appSettings.epubReaderSettings.settingsCollapsed.styles ? "expanded " : "")
                             }
-                            tabIndex={0}
                             onKeyDown={(e) => {
                                 if (e.key === " " || e.key === "Enter") e.currentTarget.click();
                             }}
@@ -625,7 +624,6 @@ const EPUBReaderSettings = memo(
                                 "name " +
                                 (!appSettings.epubReaderSettings.settingsCollapsed.scrollSpeed ? "expanded " : "")
                             }
-                            tabIndex={0}
                             onKeyDown={(e) => {
                                 if (e.key === " " || e.key === "Enter") e.currentTarget.click();
                             }}

@@ -18,7 +18,7 @@ import { DEFAULT_HIGHLIGHT_COLORS, highlightUtils } from "@utils/highlight";
 import { keyFormatter } from "@utils/keybindings";
 import { getCSSPath } from "@utils/utils";
 import type React from "react";
-import { memo, useCallback, useEffect, useLayoutEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useLayoutEffect, useRef, useState } from "react";
 import { shallowEqual } from "react-redux";
 import { useAppContext } from "src/renderer/App";
 import FootNodeModal from "./components/FootNodeModal";
@@ -411,7 +411,7 @@ const EPubReader: React.FC = () => {
                     let index = findInPageRefs.current.currentIndex + (forward ? 0 : -2);
                     if (findInPageRefs.current.prevStr !== str) index = 0;
                     const foundElems = mainRef.current.querySelectorAll(".findInPage-highlight");
-                    foundElems.forEach((e) => e.classList.remove("current"));
+                    foundElems.forEach((e) => void e.classList.remove("current"));
                     if (index < 0) index = foundElems.length - 1;
                     else if (index >= foundElems.length) index = 0;
                     const currentElem = foundElems[index];
@@ -493,7 +493,7 @@ const EPubReader: React.FC = () => {
     );
 
     //todo remove behavior
-    const scrollToPage = (percent: number, behavior: ScrollBehavior = "smooth", callback?: () => void) => {
+    const scrollToPage = (percent: number, _behavior: ScrollBehavior = "smooth", callback?: () => void) => {
         const reader = document.querySelector("#EPubReader") as HTMLDivElement;
         if (reader) {
             reader.scrollTo(0, (percent / 100) * (reader.scrollHeight - reader.offsetHeight));
@@ -565,7 +565,7 @@ const EPubReader: React.FC = () => {
             const is = (keys: string[]) => {
                 return keys.includes(keyStr);
             };
-            if (is(shortcutsMapped["contextMenu"])) {
+            if (is(shortcutsMapped.contextMenu)) {
                 e.stopPropagation();
                 e.preventDefault();
                 if (mainRef.current)
@@ -590,11 +590,11 @@ const EPubReader: React.FC = () => {
                 if ([" ", "ArrowUp", "ArrowDown"].includes(e.key)) e.preventDefault();
                 if (!e.repeat) {
                     switch (true) {
-                        case is(shortcutsMapped["readerSettings"]):
+                        case is(shortcutsMapped.readerSettings):
                             readerSettingExtender.current?.click();
                             readerSettingExtender.current?.focus();
                             break;
-                        case is(shortcutsMapped["toggleZenMode"]):
+                        case is(shortcutsMapped.toggleZenMode):
                             // makeScrollPos();
                             setZenMode((prev) => !prev);
                             break;
@@ -603,58 +603,58 @@ const EPubReader: React.FC = () => {
                             setZenMode(false);
                             break;
 
-                        case is(shortcutsMapped["nextPage"]):
+                        case is(shortcutsMapped.nextPage):
                             if (topBottomLogic) openNextChapter();
                             break;
-                        case is(shortcutsMapped["prevPage"]):
+                        case is(shortcutsMapped.prevPage):
                             if (topBottomLogic) openPrevChapter();
                             break;
-                        case is(shortcutsMapped["nextChapter"]):
+                        case is(shortcutsMapped.nextChapter):
                             if (!e.repeat) openNextChapter();
                             break;
-                        case is(shortcutsMapped["prevChapter"]):
+                        case is(shortcutsMapped.prevChapter):
                             if (!e.repeat) openPrevChapter();
                             break;
-                        case is(shortcutsMapped["bookmark"]):
+                        case is(shortcutsMapped.bookmark):
                             if (!e.repeat) addToBookmarkRef.current?.click();
                             break;
-                        case is(shortcutsMapped["sizePlus"]):
+                        case is(shortcutsMapped.sizePlus):
                             sizePlusRef.current?.click();
                             break;
-                        case is(shortcutsMapped["sizeMinus"]):
+                        case is(shortcutsMapped.sizeMinus):
                             sizeMinusRef.current?.click();
                             break;
-                        case is(shortcutsMapped["fontSizePlus"]):
+                        case is(shortcutsMapped.fontSizePlus):
                             fontSizePlusRef.current?.click();
                             break;
-                        case is(shortcutsMapped["fontSizeMinus"]):
+                        case is(shortcutsMapped.fontSizeMinus):
                             fontSizeMinusRef.current?.click();
                             break;
                         default:
                             break;
                     }
                     if (
-                        document.activeElement!.tagName === "BODY" ||
+                        document.activeElement?.tagName === "BODY" ||
                         document.activeElement === readerRef.current
                     ) {
                         window.app.keydown = true;
 
                         switch (true) {
-                            case is(shortcutsMapped["largeScrollReverse"]):
+                            case is(shortcutsMapped.largeScrollReverse):
                                 e.preventDefault();
                                 scrollReader(0 - appSettings.epubReaderSettings.scrollSpeedB);
                                 break;
-                            case is(shortcutsMapped["largeScroll"]):
+                            case is(shortcutsMapped.largeScroll):
                                 e.preventDefault();
                                 scrollReader(appSettings.epubReaderSettings.scrollSpeedB);
                                 break;
-                            case is(shortcutsMapped["scrollDown"]):
+                            case is(shortcutsMapped.scrollDown):
                                 scrollReader(appSettings.epubReaderSettings.scrollSpeedA);
                                 break;
-                            case is(shortcutsMapped["scrollUp"]):
+                            case is(shortcutsMapped.scrollUp):
                                 scrollReader(0 - appSettings.epubReaderSettings.scrollSpeedA);
                                 break;
-                            case is(shortcutsMapped["showHidePageNumberInZen"]):
+                            case is(shortcutsMapped.showHidePageNumberInZen):
                                 setShortcutText(
                                     (!appSettings.epubReaderSettings.showProgressInZenMode ? "Show" : "Hide") +
                                         " progress in Zen Mode",
@@ -742,9 +742,9 @@ const EPubReader: React.FC = () => {
                 (zenMode && appSettings.hideCursorInZenMode ? "noCursor " : "")
             }
             style={{
-                gridTemplateColumns: sideListWidth + "px auto",
+                gridTemplateColumns: `${sideListWidth}px auto`,
                 display: readerState.active ? (isSideListPinned ? "grid" : "block") : "none",
-                "--sideListWidth": sideListWidth + "px",
+                "--sideListWidth": `${sideListWidth}px`,
             }}
             onScroll={updateProgress}
             tabIndex={-1}
@@ -821,7 +821,7 @@ const EPubReader: React.FC = () => {
                 }
                 ref={mainRef}
                 style={{
-                    fontSize: appSettings.epubReaderSettings.fontSize + "px",
+                    fontSize: `${appSettings.epubReaderSettings.fontSize}px`,
                     "--font-family": appSettings.epubReaderSettings.useDefault_fontFamily
                         ? "inherit"
                         : appSettings.epubReaderSettings.fontFamily,
@@ -830,17 +830,17 @@ const EPubReader: React.FC = () => {
                         : appSettings.epubReaderSettings.fontWeight,
                     "--line-height": appSettings.epubReaderSettings.useDefault_lineSpacing
                         ? "normal"
-                        : appSettings.epubReaderSettings.lineSpacing + "em",
+                        : `${appSettings.epubReaderSettings.lineSpacing}em`,
                     "--word-spacing": appSettings.epubReaderSettings.useDefault_wordSpacing
                         ? "normal"
-                        : appSettings.epubReaderSettings.wordSpacing + "em",
+                        : `${appSettings.epubReaderSettings.wordSpacing}em`,
                     "--letter-spacing": appSettings.epubReaderSettings.useDefault_letterSpacing
                         ? "normal"
-                        : appSettings.epubReaderSettings.letterSpacing + "em",
+                        : `${appSettings.epubReaderSettings.letterSpacing}em`,
                     "--paragraph-gap": appSettings.epubReaderSettings.useDefault_paragraphSpacing
                         ? "auto"
-                        : appSettings.epubReaderSettings.paragraphSpacing / 2 + "em 0",
-                    "--width": appSettings.epubReaderSettings.readerWidth + "%",
+                        : `${appSettings.epubReaderSettings.paragraphSpacing / 2}em 0`,
+                    "--width": `${appSettings.epubReaderSettings.readerWidth}%`,
                     "--epub-font-color": appSettings.epubReaderSettings.useDefault_fontColor
                         ? "none"
                         : appSettings.epubReaderSettings.fontColor,
@@ -953,7 +953,7 @@ const EPubReader: React.FC = () => {
                 {epubData && (
                     <HTMLPart
                         // loadOneChapter={appSettings.epubReaderSettings.loadOneChapter}
-                        key={"epub" + currentChapter.index}
+                        key={`epub${currentChapter.index}`}
                         onEpubLinkClick={onEpubLinkClick}
                         currentChapter={{
                             id: epubData.spine[currentChapter.index].id,
