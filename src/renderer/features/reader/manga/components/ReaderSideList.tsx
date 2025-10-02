@@ -26,6 +26,18 @@ import ReaderSideListItem from "./ReaderSideListItem";
 
 type ChapterData = { name: string; pages: number; link: string; dateModified: number };
 
+const filterChapter = (filter: string, chapter: ChapterData) => {
+    return new RegExp(filter, "ig").test(chapter.name);
+};
+
+const handleContextMenu = (elem: HTMLElement) => {
+    elem.dispatchEvent(window.contextMenu.fakeEvent(elem));
+};
+
+const handleSelect = (elem: HTMLElement) => {
+    elem.click();
+};
+
 const ReaderSideList = memo(
     ({
         openNextChapterRef,
@@ -72,6 +84,17 @@ const ReaderSideList = memo(
 
         const [bookmarkedId, setBookmarkedId] = useState<number | null>(null);
 
+        const sortedLocations = useMemo(() => {
+            if (chapterData.length === 0) return [];
+            const sorted = [...chapterData].sort((a, b) => {
+                // chapterData is already sorted by name
+                if (appSettings.locationListSortBy === "date") return a.dateModified - b.dateModified;
+                return 0;
+            });
+
+            return appSettings.locationListSortType === "inverse" ? sorted.reverse() : sorted;
+        }, [chapterData, appSettings.locationListSortBy, appSettings.locationListSortType]);
+
         useEffect(() => {
             if (mangaInReader?.link) {
                 setBookmarkedId(
@@ -102,89 +125,85 @@ const ReaderSideList = memo(
                 setListOpen(true);
             }
         }, [isSideListPinned]);
-        useEffect(() => {
-            if (chapterData.length >= 0 && mangaInReader) {
-                const index = chapterData.findIndex((e) => e.link === mangaInReader.progress?.chapterLink);
-                const prevCh = index <= 0 ? "~" : chapterData[index - 1].link;
-                const nextCh = index >= chapterData.length - 1 ? "~" : chapterData[index + 1].link;
-                setPrevNextChapter({ prev: prevCh, next: nextCh });
-            }
-        }, [chapterData]);
-        const makeChapterList = async () => {
-            if (mangaLink) {
-                const dir = mangaLink;
-                try {
-                    const files = await window.fs.readdir(dir);
-                    const listData: ChapterData[] = [];
-                    let validFile = 0;
-                    let responseCompleted = 0;
-                    files.forEach(async (e) => {
-                        try {
-                            const filePath = window.path.join(dir, e);
 
-                            const stat = await window.fs.stat(filePath);
-                            //todo refactor
-                            if (stat.isDir) {
-                                validFile++;
-                                window.fs
-                                    .readdir(filePath)
-                                    .then((data) => {
-                                        responseCompleted++;
-                                        data = data.filter((e) => formatUtils.image.test(e));
-                                        if (data.length > 0) {
-                                            listData.push({
-                                                name: e,
-                                                pages: data.length,
-                                                link: filePath,
-                                                dateModified: stat.mtimeMs,
-                                            });
-                                        }
-                                        if (responseCompleted >= validFile) {
-                                            setChapterData(
-                                                listData.sort((a, b) =>
-                                                    window.app.betterSortOrder(a.name, b.name),
-                                                ),
-                                            );
-                                        }
-                                    })
-                                    .catch((err) => {
-                                        window.logger.error(err);
-                                        responseCompleted++;
-                                        if (responseCompleted >= validFile) {
-                                            setChapterData(
-                                                listData.sort((a, b) =>
-                                                    window.app.betterSortOrder(a.name, b.name),
-                                                ),
-                                            );
-                                        }
-                                    });
-                            } else if (formatUtils.files.test(filePath)) {
-                                validFile++;
-                                //todo why?
-                                setTimeout(() => {
-                                    responseCompleted++;
-                                    listData.push({
-                                        name: e,
-                                        pages: 0,
+        useEffect(() => {
+            if (sortedLocations.length >= 0 && mangaInReader) {
+                const index = sortedLocations.findIndex((e) => e.link === mangaInReader.progress?.chapterLink);
+                const prevCh = index <= 0 ? "~" : sortedLocations[index - 1].link;
+                const nextCh = index >= sortedLocations.length - 1 ? "~" : sortedLocations[index + 1].link;
+                if (appSettings.locationListSortType === "inverse") {
+                    setPrevNextChapter({ prev: nextCh, next: prevCh });
+                } else {
+                    setPrevNextChapter({ prev: prevCh, next: nextCh });
+                }
+            }
+        }, [sortedLocations, appSettings.locationListSortType]);
+
+        const makeChapterList = async () => {
+            if (!mangaLink) return;
+
+            try {
+                const files = await window.fs.readdir(mangaLink);
+                const chapterPromises = files.map(async (fileName): Promise<ChapterData | null> => {
+                    try {
+                        const filePath = window.path.join(mangaLink, fileName);
+                        const stat = await window.fs.stat(filePath);
+
+                        if (stat.isDir) {
+                            try {
+                                const dirContents = await window.fs.readdir(filePath);
+                                const imageFiles = dirContents.filter((file) => formatUtils.image.test(file));
+
+                                if (imageFiles.length > 0) {
+                                    return {
+                                        name: fileName,
+                                        pages: imageFiles.length,
                                         link: filePath,
                                         dateModified: stat.mtimeMs,
-                                    });
-                                    if (responseCompleted >= validFile) {
-                                        setChapterData(
-                                            listData.sort((a, b) => window.app.betterSortOrder(a.name, b.name)),
-                                        );
-                                    }
-                                }, 1000);
+                                    };
+                                }
+                            } catch (err) {
+                                window.logger.error(`Failed to read directory "${filePath}":`, err);
                             }
-                        } catch (err) {
-                            if (err instanceof Error) dialogUtils.nodeError(err);
-                            else console.error(err);
+                        } else if (formatUtils.files.test(filePath)) {
+                            return {
+                                name: fileName,
+                                pages: 0,
+                                link: filePath,
+                                dateModified: stat.mtimeMs,
+                            };
                         }
-                    });
-                } catch (err) {
-                    if (err instanceof Error) dialogUtils.nodeError(err);
-                    else console.error(err);
+
+                        return null;
+                    } catch (err) {
+                        window.logger.error(`Failed to process file "${fileName}":`, err);
+                        return null;
+                    }
+                });
+
+                const results = await Promise.allSettled(chapterPromises);
+                const validChapters = results
+                    .filter(
+                        (result): result is PromiseFulfilledResult<ChapterData> =>
+                            result.status === "fulfilled" && result.value !== null,
+                    )
+                    .map((result) => result.value);
+
+                setChapterData(
+                    validChapters.sort((a, b) =>
+                        window.app.betterSortOrder(
+                            formatUtils.files.getName(a.name),
+                            formatUtils.files.getName(b.name),
+                        ),
+                    ),
+                );
+            } catch (err) {
+                if (err instanceof Error) {
+                    dialogUtils.nodeError(err);
+                } else {
+                    console.error("Failed to read manga directory:", err);
                 }
+                setChapterData([]);
             }
         };
         useLayoutEffect(() => {
@@ -212,6 +231,7 @@ const ReaderSideList = memo(
                 };
             }
         }, [mangaLink]);
+
         const handleResizerDrag = (e: MouseEvent) => {
             if (draggingResizer) {
                 if (isSideListPinned) {
@@ -229,6 +249,7 @@ const ReaderSideList = memo(
         const handleResizerMouseUp = () => {
             setDraggingResizer(false);
         };
+
         useLayoutEffect(() => {
             document.body.style.cursor = "auto";
             if (draggingResizer) {
@@ -242,20 +263,6 @@ const ReaderSideList = memo(
             };
         }, [draggingResizer]);
 
-        const sortedLocations = useMemo(() => {
-            const qq = (file: string) => {
-                return formatUtils.files.getName(file);
-            };
-            const sorted =
-                appSettings.locationListSortBy === "name"
-                    ? chapterData.sort((a, b) => window.app.betterSortOrder(qq(a.name), qq(b.name)))
-                    : chapterData.sort((a, b) => (a.dateModified < b.dateModified ? -1 : 1));
-            return appSettings.locationListSortType === "inverse" ? [...sorted].reverse() : sorted;
-        }, [chapterData, appSettings.locationListSortBy, appSettings.locationListSortType]);
-
-        const filterChapter = (filter: string, chapter: ChapterData) => {
-            return new RegExp(filter, "ig").test(chapter.name);
-        };
         const renderChapterItem = (chapter: ChapterData, _index: number, isSelected: boolean) => {
             return (
                 <ReaderSideListItem
@@ -269,14 +276,6 @@ const ReaderSideList = memo(
                     onClick={() => openInReader(chapter.link)}
                 />
             );
-        };
-
-        const handleContextMenu = (elem: HTMLElement) => {
-            elem.dispatchEvent(window.contextMenu.fakeEvent(elem));
-        };
-
-        const handleSelect = (elem: HTMLElement) => {
-            elem.click();
         };
 
         return (
@@ -568,6 +567,7 @@ const ReaderSideList = memo(
                                 <button
                                     className="ctrl-menu-item"
                                     data-tooltip="Open Random Chapter"
+                                    disabled={chapterData.length === 0}
                                     onClick={() => {
                                         if (chapterData.length === 0) return;
                                         const randomChapter =
