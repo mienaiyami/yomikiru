@@ -46,7 +46,9 @@
                 "noNoninteractiveTabindex": "off",
                 "useKeyWithClickEvents": "off",
                 // todo: make a btn component with anchor like style
-                "useValidAnchor": "off"
+                "useValidAnchor": "off",
+                "useFocusableInteractive": "off",
+                "noNoninteractiveElementToInteractiveRole": "off"
             },
             "complexity": {
                 "recommended": true,
@@ -54,7 +56,8 @@
                 "noUselessCatch": "error",
                 "noUselessTypeConstraint": "error",
                 "noAdjacentSpacesInRegex": "error",
-                "noArguments": "error"
+                "noArguments": "error",
+                "noStaticOnlyClass": "off"
             },
             "correctness": {
                 "recommended": true,
