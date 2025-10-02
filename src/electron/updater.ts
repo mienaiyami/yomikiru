@@ -340,7 +340,6 @@ const downloadUpdates = (latestVersion: string, windowId: number, silent = false
         callback: (file: electronDl.File) => void,
     ) => {
         electronDl
-            // eslint-disable-next-line import/namespace
             .download(window, dl, {
                 directory: tempPath,
                 onStarted: (e) => {

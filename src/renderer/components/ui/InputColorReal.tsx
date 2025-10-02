@@ -220,7 +220,6 @@ const InputColorReal: React.FC = () => {
                             <button
                                 className="eyeDropper"
                                 onClick={() => {
-                                    // eslint-disable-next-line @typescript-eslint/ban-ts-comment
                                     //@ts-ignore
                                     const eyeDropper = new EyeDropper();
                                     eyeDropper.open().then((result: any) => {

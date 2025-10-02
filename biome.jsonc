@@ -1,0 +1,246 @@
+{
+    "$schema": "https://biomejs.dev/schemas/2.2.5/schema.json",
+    "vcs": {
+        "enabled": true,
+        "clientKind": "git",
+        "useIgnoreFile": true
+    },
+    "files": {
+        "ignoreUnknown": false,
+        "includes": [
+            "**",
+            "!**/node_modules",
+            "!**/out",
+            "!**/dist",
+            "!**/.webpack",
+            "!**/*.d.ts",
+            "!**/drizzle",
+            "!**/public"
+        ]
+    },
+    "formatter": {
+        "enabled": true,
+        "formatWithErrors": true,
+        "indentStyle": "space",
+        "indentWidth": 4,
+        "lineWidth": 115,
+        "attributePosition": "auto"
+    },
+    "assist": {
+        "actions": {
+            "source": {
+                "organizeImports": "on"
+            }
+        }
+    },
+    "linter": {
+        "enabled": true,
+        "rules": {
+            "recommended": true,
+            "a11y": {
+                "recommended": true
+            },
+            "complexity": {
+                "recommended": true,
+                "noExtraBooleanCast": "error",
+                "noUselessCatch": "error",
+                "noUselessTypeConstraint": "error",
+                "noAdjacentSpacesInRegex": "error",
+                "noArguments": "error"
+            },
+            "correctness": {
+                "recommended": true,
+                "noConstAssign": "error",
+                "noConstantCondition": "error",
+                "noEmptyCharacterClassInRegex": "error",
+                "noEmptyPattern": "error",
+                "noGlobalObjectCalls": "error",
+                "noInvalidConstructorSuper": "error",
+                "noNonoctalDecimalEscape": "error",
+                "noPrecisionLoss": "error",
+                "noSelfAssign": "error",
+                "noSetterReturn": "error",
+                "noSwitchDeclarations": "error",
+                "noUndeclaredVariables": "error",
+                "noUnreachable": "error",
+                "noUnreachableSuper": "error",
+                "noUnsafeFinally": "error",
+                "noUnsafeOptionalChaining": "error",
+                "noUnusedLabels": "error",
+                "noUnusedPrivateClassMembers": "warn",
+                "noUnusedVariables": "warn",
+                "useIsNan": "error",
+                "useValidForDirection": "error",
+                "useYield": "error",
+                "noInvalidBuiltinInstantiation": "error",
+                "useValidTypeof": "error"
+            },
+            "security": {
+                "recommended": true,
+                "noDangerouslySetInnerHtml": "error",
+                "noGlobalEval": "error"
+            },
+            "style": {
+                "recommended": true,
+                "useConst": "error",
+                "useDefaultParameterLast": "error",
+                "useExponentiationOperator": "error",
+                "useTemplate": "error",
+                "noRestrictedImports": {
+                    "level": "error",
+                    "options": {
+                        "paths": {
+                            "electron": {
+                                "message": "Direct electron imports are not allowed. Use IPC or preload context instead."
+                            }
+                        },
+                        "patterns": [
+                            {
+                                "group": ["**/electron/**"],
+                                "message": "Importing from electron modules is restricted to prevent renderer/main process mixing."
+                            }
+                        ]
+                    }
+                }
+            },
+            "suspicious": {
+                "recommended": true,
+                "noArrayIndexKey": "warn",
+                "noAssignInExpressions": "error",
+                "noAsyncPromiseExecutor": "error",
+                "noCatchAssign": "error",
+                "noClassAssign": "error",
+                "noCommentText": "error",
+                "noCompareNegZero": "error",
+                "noControlCharactersInRegex": "error",
+                "noDebugger": "warn",
+                "noDoubleEquals": "error",
+                "noDuplicateCase": "error",
+                "noDuplicateClassMembers": "error",
+                "noDuplicateObjectKeys": "error",
+                "noDuplicateParameters": "error",
+                "noEmptyBlockStatements": "error",
+                "noExplicitAny": "warn",
+                "noExtraNonNullAssertion": "warn",
+                "noFallthroughSwitchClause": "error",
+                "noFunctionAssign": "error",
+                "noGlobalAssign": "error",
+                "noImportAssign": "error",
+                "noMisleadingCharacterClass": "error",
+                "noPrototypeBuiltins": "error",
+                "noRedeclare": "error",
+                "noShadowRestrictedNames": "error",
+                "noUnsafeNegation": "error",
+                "useGetterReturn": "error",
+                "noWith": "error",
+                "noVar": "error"
+            },
+            "nursery": {
+                "useSortedClasses": "off"
+            }
+        }
+    },
+    "javascript": {
+        "formatter": {
+            "jsxQuoteStyle": "double",
+            "quoteProperties": "asNeeded",
+            "trailingCommas": "all",
+            "semicolons": "always",
+            "arrowParentheses": "always",
+            "bracketSpacing": true,
+            "bracketSameLine": false,
+            "quoteStyle": "double",
+            "attributePosition": "auto"
+        },
+        "globals": ["chrome", "process", "__dirname", "__filename", "global", "Buffer"]
+    },
+    "json": {
+        "formatter": {
+            "trailingCommas": "none"
+        }
+    },
+    "overrides": [
+        {
+            "includes": ["**/src/renderer/**/*.ts", "**/src/renderer/**/*.tsx"],
+            "linter": {
+                "rules": {
+                    "correctness": {
+                        "noNodejsModules": "error"
+                    },
+                    "style": {
+                        "noRestrictedImports": {
+                            "level": "error",
+                            "options": {
+                                "paths": {
+                                    "electron": {
+                                        "message": "Direct electron imports are not allowed in renderer process."
+                                    }
+                                },
+                                "patterns": [
+                                    {
+                                        "group": ["**/electron/**"],
+                                        "message": "Importing from electron modules is not allowed in renderer process."
+                                    }
+                                ]
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        {
+            "includes": ["**/src/electron/**/*.ts"],
+            "linter": {
+                "rules": {
+                    "correctness": {
+                        "noUndeclaredVariables": "off"
+                    },
+                    "style": {
+                        "noRestrictedImports": {
+                            "level": "error",
+                            "options": {
+                                "paths": {
+                                    "react": {
+                                        "message": "React imports are not allowed in electron main process."
+                                    },
+                                    "react-dom": {
+                                        "message": "React-dom imports are not allowed in electron main process."
+                                    }
+                                },
+                                "patterns": [
+                                    {
+                                        "group": ["**/renderer/**"],
+                                        "message": "Importing from renderer modules is not allowed in electron main process."
+                                    }
+                                ]
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        {
+            "includes": ["**/*.d.ts", "**/src/common/types/**/*.ts"],
+            "linter": {
+                "rules": {
+                    "correctness": {
+                        "noUnusedVariables": "off"
+                    },
+                    "style": {
+                        "noRestrictedImports": "off"
+                    }
+                }
+            }
+        },
+        {
+            "includes": ["**/src/electron/preload.ts"],
+            "linter": {
+                "rules": {
+                    "style": {
+                        "noRestrictedImports": "off"
+                    }
+                }
+            }
+        }
+    ]
+}
