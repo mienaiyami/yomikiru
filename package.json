@@ -34,7 +34,8 @@
         "make:win32": "electron-forge make --targets=@electron-forge/maker-squirrel,@electron-forge/maker-zip --arch=ia32",
         "make:win64": "electron-forge make --targets=@electron-forge/maker-squirrel,@electron-forge/maker-zip --arch=x64",
         "make:deb": "electron-forge make --targets=@electron-forge/maker-deb",
-        "release": "node tagAndPush.js"
+        "release": "node tagAndPush.js",
+        "prepare": "husky"
     },
     "license": "MIT",
     "dependencies": {
@@ -108,6 +109,8 @@
         "eslint-plugin-react-hooks": "^5.2.0",
         "file-loader": "^6.2.0",
         "fork-ts-checker-webpack-plugin": "^7.2.13",
+        "husky": "^9.1.7",
+        "lint-staged": "^16.2.3",
         "node-loader": "^2.0.0",
         "npm-run-all": "4.1.5",
         "prettier": "^3.5.3",
@@ -123,6 +126,14 @@
         "wait-on": "5.3.0",
         "webpack": "^5.98.0",
         "worker-loader": "^3.0.8"
+    },
+    "lint-staged": {
+        "*.{js,jsx,ts,tsx}": [
+            "biome check --write --files-ignore-unknown=true --no-errors-on-unmatched"
+        ],
+        "*.{json,css,md}": [
+            "biome format --write"
+        ]
     },
     "pnpm": {
         "onlyBuiltDependencies": [
