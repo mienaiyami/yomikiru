@@ -1,11 +1,11 @@
-import { useMemo } from "react";
-import { BookBookmark, LibraryItemWithProgress, MangaBookmark } from "@common/types/db";
-import { useAppSelector, useAppDispatch } from "@store/hooks";
-import { formatUtils } from "@utils/file";
-import ListNavigator from "@renderer/components/ListNavigator";
-import { setAppSettings } from "@store/appSettings";
+import type { BookBookmark, LibraryItemWithProgress, MangaBookmark } from "@common/types/db";
 import { faSort } from "@fortawesome/free-solid-svg-icons";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
+import ListNavigator from "@renderer/components/ListNavigator";
+import { setAppSettings } from "@store/appSettings";
+import { useAppDispatch, useAppSelector } from "@store/hooks";
+import { formatUtils } from "@utils/file";
+import { useMemo } from "react";
 import { useAppContext } from "src/renderer/App";
 import BookmarkHistoryListItem from "./BookmarkHistoryListItem";
 
@@ -63,7 +63,7 @@ const BookmarkTab: React.FC = () => {
 
     const renderBookmarkItem = (
         bookmark: LibraryItemWithProgress | BookBookmark | MangaBookmark,
-        index: number,
+        _index: number,
         isSelected: boolean,
     ) =>
         "chapterName" in bookmark && (

@@ -1,15 +1,5 @@
-import { drizzle } from "drizzle-orm/better-sqlite3";
-import { migrate } from "drizzle-orm/better-sqlite3/migrator";
-// libsql wont work because of node/electron version issues
-import path from "path";
-import { app, dialog } from "electron";
-import { eq } from "drizzle-orm";
-import * as schema from "./schema";
-import { libraryItems, mangaProgress, bookProgress, mangaBookmarks, bookBookmarks } from "./schema";
-import { HistoryItem, Manga_BookItem } from "@common/types/legacy";
-import Database from "better-sqlite3";
-import { dateFromOldDateString, electronOnly, log } from "../util";
-import {
+import path from "node:path";
+import type {
     AddToLibraryData,
     BookProgress,
     LibraryItem,
@@ -17,6 +7,16 @@ import {
     UpdateBookProgressData,
     UpdateMangaProgressData,
 } from "@common/types/db";
+import type { HistoryItem, Manga_BookItem } from "@common/types/legacy";
+import Database from "better-sqlite3";
+import { eq } from "drizzle-orm";
+// libsql wont work because of node/electron version issues
+import { drizzle } from "drizzle-orm/better-sqlite3";
+import { migrate } from "drizzle-orm/better-sqlite3/migrator";
+import { app, dialog } from "electron";
+import { dateFromOldDateString, electronOnly, log } from "../util";
+import * as schema from "./schema";
+import { bookBookmarks, bookProgress, libraryItems, mangaBookmarks, mangaProgress } from "./schema";
 
 electronOnly();
 
@@ -146,11 +146,6 @@ export class DatabaseService {
                     if (!parentLink || !item.data.link) {
                         throw new Error("Missing required link data");
                     }
-
-                    const title =
-                        item.type === "image"
-                            ? getTitle(item.data.mangaName, path.basename(parentLink))
-                            : getTitle(item.data.title, path.basename(parentLink));
 
                     const [newItem] = await tx
                         .insert(libraryItems)

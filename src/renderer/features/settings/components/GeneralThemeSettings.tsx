@@ -1,11 +1,11 @@
+import { faEdit, faPlus, faTrash } from "@fortawesome/free-solid-svg-icons";
+import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { useAppDispatch, useAppSelector } from "@store/hooks";
 import { addThemes, deleteTheme, newTheme, setTheme } from "@store/themes";
+import { dialogUtils } from "@utils/dialog";
 import { initThemeData } from "@utils/theme";
 import { useSettingsContext } from "../Settings";
 import { TAB_INFO } from "../utils/constants";
-import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import { faEdit, faPlus, faTrash } from "@fortawesome/free-solid-svg-icons";
-import { dialogUtils } from "@utils/dialog";
 
 const GeneralThemeSettings: React.FC = () => {
     const { scrollIntoView, setCurrentTab } = useSettingsContext();
@@ -107,7 +107,7 @@ const GeneralThemeSettings: React.FC = () => {
                             const dataToAdd: ThemeData[] = [];
                             let importedCount = 0;
                             const existingThemeNames = allThemes.map((e) => e.name);
-                            if (!(data instanceof Array)) {
+                            if (!Array.isArray(data)) {
                                 if ("name" in data && "allData" in data) {
                                     data.allData.forEach((e, i) => {
                                         if ("name" in e && "main" in e) {
@@ -141,8 +141,7 @@ const GeneralThemeSettings: React.FC = () => {
                                             dataToAdd.map((a) => a.name).includes(e.name)
                                         ) {
                                             dialogUtils.warn({
-                                                message:
-                                                    "Same theme name detected. Wont be imported.\nName: " + e.name,
+                                                message: `Same theme name detected. Wont be imported.\nName: ${e.name}`,
                                             });
                                         } else {
                                             dataToAdd.push(e);
@@ -152,7 +151,7 @@ const GeneralThemeSettings: React.FC = () => {
                                 });
                             dialogUtils.confirm({
                                 title: "Imported",
-                                message: "Imported " + importedCount + " themes.",
+                                message: `Imported ${importedCount} themes.`,
                                 noOption: true,
                             });
                             dispatch(addThemes(dataToAdd));
@@ -204,6 +203,7 @@ const GeneralThemeSettings: React.FC = () => {
                                             });
                                     }
                                 } catch (reason) {
+                                    window.logger.error(reason);
                                     dialogUtils.customError({
                                         title: "Failed",
                                         message: `Invalid theme data. Please note that data must be similar to the result of "Copy Current Theme to Clipboard"`,
@@ -222,7 +222,7 @@ const GeneralThemeSettings: React.FC = () => {
                                     window.electron.writeText(JSON.stringify(currentTheme, null, "\t"));
                                     const target = e.currentTarget;
                                     const oldText = target.innerText;
-                                    target.innerText = "\u00a0".repeat(23) + "Copied!" + "\u00a0".repeat(23);
+                                    target.innerText = `${"\u00a0".repeat(23)}Copied!${"\u00a0".repeat(23)}`;
                                     target.disabled = true;
                                     setTimeout(() => {
                                         target.disabled = false;
@@ -230,7 +230,7 @@ const GeneralThemeSettings: React.FC = () => {
                                     }, 3000);
                                 } catch (reason) {
                                     dialogUtils.customError({
-                                        message: "Failed to copy theme: " + reason,
+                                        message: `Failed to copy theme: ${reason}`,
                                     });
                                 }
                             }

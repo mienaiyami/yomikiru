@@ -1,7 +1,7 @@
+import fs from "node:fs/promises";
+import path from "node:path";
 import * as sudo from "@vscode/sudo-prompt";
 import { app } from "electron";
-import fs from "fs/promises";
-import path from "path";
 import { IS_PORTABLE, log } from ".";
 
 const op = {
@@ -72,7 +72,7 @@ export const addOptionToExplorerMenu = async (): Promise<boolean> => {
         await fs.writeFile(regFilePath, regInit);
 
         return await new Promise<boolean>((resolve, reject) => {
-            sudo.exec("regedit.exe /S " + regFilePath, op, function (error) {
+            sudo.exec(`regedit.exe /S ${regFilePath}`, op, (error) => {
                 if (error) {
                     log.error("Failed to add explorer menu option:", error);
                     reject(new Error(`Failed to add explorer menu option: ${error.message}`));
@@ -120,7 +120,7 @@ export const addOptionToExplorerMenu_epub = async (): Promise<boolean> => {
         await fs.writeFile(regFilePath, regInit);
 
         return await new Promise<boolean>((resolve, reject) => {
-            sudo.exec("regedit.exe /S " + regFilePath, op, function (error) {
+            sudo.exec(`regedit.exe /S ${regFilePath}`, op, (error) => {
                 if (error) {
                     log.error("Failed to add epub explorer menu option:", error);
                     reject(new Error(`Failed to add epub explorer menu option: ${error.message}`));
@@ -161,7 +161,7 @@ export const deleteOptionInExplorerMenu = async (): Promise<boolean> => {
         await fs.writeFile(regFilePath, regDelete);
 
         return await new Promise<boolean>((resolve, reject) => {
-            sudo.exec("regedit.exe /S " + regFilePath, op, function (error) {
+            sudo.exec(`regedit.exe /S ${regFilePath}`, op, (error) => {
                 if (error) {
                     log.error("Failed to delete explorer menu option:", error);
                     reject(new Error(`Failed to delete explorer menu option: ${error.message}`));
@@ -190,7 +190,7 @@ export const deleteOptionInExplorerMenu_epub = async (): Promise<boolean> => {
         await fs.writeFile(regFilePath, regDelete);
 
         return await new Promise<boolean>((resolve, reject) => {
-            sudo.exec("regedit.exe /S " + regFilePath, op, function (error) {
+            sudo.exec(`regedit.exe /S ${regFilePath}`, op, (error) => {
                 if (error) {
                     log.error("Failed to delete epub explorer menu option:", error);
                     reject(new Error(`Failed to delete epub explorer menu option: ${error.message}`));

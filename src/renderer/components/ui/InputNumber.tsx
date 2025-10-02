@@ -1,6 +1,6 @@
 import { faCaretDown, faCaretUp } from "@fortawesome/free-solid-svg-icons";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import React, { useState, useLayoutEffect, useRef } from "react";
+import { useLayoutEffect, useRef, useState } from "react";
 
 const InputNumber = ({
     onChange,
@@ -74,7 +74,7 @@ const InputNumber = ({
             return;
         }
         if (!currentTarget.value) currentTarget.value = "0";
-        const aaa = onChange && onChange(currentTarget);
+        const aaa = onChange?.(currentTarget);
         if (aaa !== undefined) currentTarget.value = aaa.toString();
         if (timeout) {
             if (aaa === undefined) {
@@ -92,6 +92,9 @@ const InputNumber = ({
         }
         repeater.current = null;
     };
+
+    // todo : refactor, remove component from inside
+    // biome-ignore lint/correctness/noNestedComponentDefinitions: <creating this outside doesnt bring any benefits in perf, over creating it inside>
     const ButtonUp = () => {
         const valueUp = () => {
             if (inputRef.current) {
@@ -124,6 +127,7 @@ const InputNumber = ({
         );
     };
 
+    // biome-ignore lint/correctness/noNestedComponentDefinitions: <creating this outside doesnt bring any benefits in perf, over creating it inside>
     const ButtonDown = () => {
         const valueDown = () => {
             if (inputRef.current) {
@@ -160,7 +164,7 @@ const InputNumber = ({
             <label className={(disabled ? "disabled " : "") + className} title={title} data-tooltip={tooltip}>
                 {labelBefore}
                 {paraBefore && <p>{paraBefore}</p>}{" "}
-                <span className={"input " + (disabled ? "disabled " : "")}>
+                <span className={`input ${disabled ? "disabled " : ""}`}>
                     <input
                         type="number"
                         ref={inputRef}
@@ -192,7 +196,7 @@ const InputNumber = ({
         );
     } else
         return (
-            <span className={"input " + (disabled ? "disabled " : "")} data-tooltip={tooltip}>
+            <span className={`input ${disabled ? "disabled " : ""}`} data-tooltip={tooltip}>
                 <input
                     type="number"
                     ref={inputRef}

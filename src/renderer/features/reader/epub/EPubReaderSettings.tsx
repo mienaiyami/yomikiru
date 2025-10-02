@@ -1,15 +1,15 @@
 import { faBars, faMinus, faPlus, faTimes } from "@fortawesome/free-solid-svg-icons";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import { memo, useEffect, useLayoutEffect, useState } from "react";
-import { useAppDispatch, useAppSelector } from "@store/hooks";
 import { setEpubReaderSettings } from "@store/appSettings";
-import InputNumber from "@ui/InputNumber";
+import { useAppDispatch, useAppSelector } from "@store/hooks";
 import InputCheckbox from "@ui/InputCheckbox";
-import InputSelect from "@ui/InputSelect";
-import InputRange from "@ui/InputRange";
-import InputCheckboxNumber from "@ui/InputCheckboxNumber";
 import InputCheckboxColor from "@ui/InputCheckboxColor";
+import InputCheckboxNumber from "@ui/InputCheckboxNumber";
+import InputNumber from "@ui/InputNumber";
+import InputRange from "@ui/InputRange";
+import InputSelect from "@ui/InputSelect";
 import { colorUtils } from "@utils/color";
+import { memo, useEffect, useLayoutEffect, useState } from "react";
 
 const EPUBReaderSettings = memo(
     ({
@@ -138,10 +138,10 @@ const EPUBReaderSettings = memo(
                                         appSettings.epubReaderSettings.readerWidth - steps > maxWidth
                                             ? maxWidth
                                             : appSettings.epubReaderSettings.readerWidth - steps < 1
-                                            ? 1
-                                            : appSettings.epubReaderSettings.readerWidth - steps;
+                                              ? 1
+                                              : appSettings.epubReaderSettings.readerWidth - steps;
                                     if (document.activeElement !== e.currentTarget)
-                                        setShortcutText(readerWidth + "%");
+                                        setShortcutText(`${readerWidth}%`);
                                     dispatch(setEpubReaderSettings({ readerWidth }));
                                     // e.currentTarget.dispatchEvent(new MouseEvent(type:"")))
                                 }}
@@ -157,11 +157,11 @@ const EPUBReaderSettings = memo(
                                         appSettings.epubReaderSettings.readerWidth + steps > maxWidth
                                             ? maxWidth
                                             : appSettings.epubReaderSettings.readerWidth + steps < 1
-                                            ? 1
-                                            : appSettings.epubReaderSettings.readerWidth + steps;
+                                              ? 1
+                                              : appSettings.epubReaderSettings.readerWidth + steps;
 
                                     if (document.activeElement !== e.currentTarget)
-                                        setShortcutText(readerWidth + "%");
+                                        setShortcutText(`${readerWidth}%`);
                                     dispatch(setEpubReaderSettings({ readerWidth }));
                                 }}
                             >
@@ -229,7 +229,7 @@ const EPUBReaderSettings = memo(
 
                                         newSize = newSize < 1 ? 1 : newSize;
                                         if (document.activeElement !== e.currentTarget)
-                                            setShortcutText(newSize + "px");
+                                            setShortcutText(`${newSize}px`);
                                         dispatch(setEpubReaderSettings({ fontSize: newSize }));
                                     }}
                                 >
@@ -243,7 +243,7 @@ const EPUBReaderSettings = memo(
 
                                         newSize = newSize > 100 ? 100 : newSize;
                                         if (document.activeElement !== e.currentTarget)
-                                            setShortcutText(newSize + "px");
+                                            setShortcutText(`${newSize}px`);
                                         dispatch(setEpubReaderSettings({ fontSize: newSize }));
                                     }}
                                 >
@@ -281,7 +281,7 @@ const EPUBReaderSettings = memo(
                                                     label: `★ ${e.replaceAll('"', "")}`,
                                                     value: e,
                                                     style: { fontFamily: e, fontSize: "1.2em" },
-                                                } as Menu.OptSelectOption),
+                                                }) as Menu.OptSelectOption,
                                         ),
                                         ...fontList.map(
                                             (e) =>
@@ -289,7 +289,7 @@ const EPUBReaderSettings = memo(
                                                     label: e.replaceAll('"', ""),
                                                     value: e,
                                                     style: { fontFamily: e, fontSize: "1.2em" },
-                                                } as Menu.OptSelectOption),
+                                                }) as Menu.OptSelectOption,
                                         ),
                                     ]}
                                 />
@@ -463,7 +463,6 @@ const EPUBReaderSettings = memo(
                                 "name " +
                                 (!appSettings.epubReaderSettings.settingsCollapsed.styles ? "expanded " : "")
                             }
-                            tabIndex={0}
                             onKeyDown={(e) => {
                                 if (e.key === " " || e.key === "Enter") e.currentTarget.click();
                             }}
@@ -625,7 +624,6 @@ const EPUBReaderSettings = memo(
                                 "name " +
                                 (!appSettings.epubReaderSettings.settingsCollapsed.scrollSpeed ? "expanded " : "")
                             }
-                            tabIndex={0}
                             onKeyDown={(e) => {
                                 if (e.key === " " || e.key === "Enter") e.currentTarget.click();
                             }}

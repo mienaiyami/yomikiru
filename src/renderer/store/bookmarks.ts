@@ -1,6 +1,6 @@
-import { createSlice, createAsyncThunk, PayloadAction } from "@reduxjs/toolkit";
-import type { MangaBookmark, BookBookmark } from "@common/types/db";
-import { DatabaseChannels } from "@common/types/ipc";
+import type { BookBookmark, MangaBookmark } from "@common/types/db";
+import type { DatabaseChannels } from "@common/types/ipc";
+import { createAsyncThunk, createSlice, type PayloadAction } from "@reduxjs/toolkit";
 
 type BookmarksState = {
     // map of key:itemLink value: bookmarks
@@ -50,7 +50,7 @@ export const addBookmark = createAsyncThunk(
 export const removeBookmark = createAsyncThunk(
     "bookmarks/remove",
     async ({ itemLink, type, ids }: { itemLink: string; type: "manga" | "book"; ids: number[] }) => {
-        const res = await window.electron.invoke(`db:${type}:deleteBookmarks`, { itemLink, ids });
+        const _res = await window.electron.invoke(`db:${type}:deleteBookmarks`, { itemLink, ids });
         return { itemLink, type, ids };
     },
 );
@@ -69,7 +69,7 @@ const bookmarksSlice = createSlice({
         clearError: (state) => {
             state.error = null;
         },
-        setBookmarks: (state, action: PayloadAction<BookmarksState>) => {
+        setBookmarks: (_state, action: PayloadAction<BookmarksState>) => {
             return action.payload;
         },
     },

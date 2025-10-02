@@ -1,13 +1,13 @@
-import { useAppSelector, useAppDispatch } from "@store/hooks";
-import { useMemo } from "react";
-import BookmarkHistoryListItem from "./BookmarkHistoryListItem";
-import { formatUtils } from "@utils/file";
-import { BookBookmark, LibraryItemWithProgress, MangaBookmark } from "@common/types/db";
+import type { BookBookmark, LibraryItemWithProgress, MangaBookmark } from "@common/types/db";
 import { faSort } from "@fortawesome/free-solid-svg-icons";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import { setAppSettings } from "@store/appSettings";
-import { useAppContext } from "src/renderer/App";
 import ListNavigator from "@renderer/components/ListNavigator";
+import { setAppSettings } from "@store/appSettings";
+import { useAppDispatch, useAppSelector } from "@store/hooks";
+import { formatUtils } from "@utils/file";
+import { useMemo } from "react";
+import { useAppContext } from "src/renderer/App";
+import BookmarkHistoryListItem from "./BookmarkHistoryListItem";
 
 const HistoryTab: React.FC = () => {
     const library = useAppSelector((store) => store.library);
@@ -16,9 +16,7 @@ const HistoryTab: React.FC = () => {
     const { setContextMenuData } = useAppContext();
 
     const historyItems = useMemo(() => {
-        const items = Object.values(library.items).filter(
-            (item) => item && item.progress,
-        ) as LibraryItemWithProgress[];
+        const items = Object.values(library.items).filter((item) => item?.progress) as LibraryItemWithProgress[];
 
         let sorted = [...items];
 
@@ -52,7 +50,7 @@ const HistoryTab: React.FC = () => {
                       ? `${window.path.extname(item.progress?.chapterName || "")}`
                       : "") +
                   "manga|manhua|manhwa|webtoon|webcomic|comic"
-                : item.title + ".epub";
+                : `${item.title}.epub`;
 
         return new RegExp(filter, "ig").test(searchText);
     };

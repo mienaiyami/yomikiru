@@ -1,6 +1,6 @@
-import { createSlice, createAsyncThunk, PayloadAction } from "@reduxjs/toolkit";
-import { DatabaseChannels } from "@common/types/ipc";
 import type { BookNote } from "@common/types/db";
+import type { DatabaseChannels } from "@common/types/ipc";
+import { createAsyncThunk, createSlice, type PayloadAction } from "@reduxjs/toolkit";
 
 type BookNotesState = {
     // map of key:itemLink value: notes
@@ -61,7 +61,7 @@ const bookNotesSlice = createSlice({
         clearError: (state) => {
             state.error = null;
         },
-        setNotes: (state, action: PayloadAction<BookNotesState>) => {
+        setNotes: (_state, action: PayloadAction<BookNotesState>) => {
             return action.payload;
         },
     },

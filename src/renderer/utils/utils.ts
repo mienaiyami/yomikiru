@@ -11,7 +11,7 @@ export const getCSSPath = (el: Element): string => {
     while (elem.nodeType === Node.ELEMENT_NODE) {
         let selector = elem.nodeName.toLowerCase();
         if (elem.id) {
-            selector += "#" + elem.id.trim().replaceAll(".", "\\.");
+            selector += `#${elem.id.trim().replaceAll(".", "\\.")}`;
             path.unshift(selector);
             break;
         } else {
@@ -21,7 +21,7 @@ export const getCSSPath = (el: Element): string => {
                 sib = sib.previousElementSibling;
                 if (sib.nodeName.toLowerCase() === selector) nth++;
             }
-            if (nth !== 1) selector += ":nth-of-type(" + nth + ")";
+            if (nth !== 1) selector += `:nth-of-type(${nth})`;
         }
         path.unshift(selector);
         elem = elem.parentNode as Element;
@@ -33,8 +33,7 @@ window.app.betterSortOrder = Intl.Collator(undefined, { numeric: true, sensitivi
 window.app.deleteDirOnClose = "";
 window.sleep = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
 
-// eslint-disable-next-line @typescript-eslint/ban-ts-comment
-//@ts-ignore
+//@ts-expect-error
 window.contextMenu = {
     /**
      * using this to fake right click event on element, for easier management

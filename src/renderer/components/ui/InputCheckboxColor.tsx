@@ -1,4 +1,5 @@
-import React, { useState, useLayoutEffect, useContext } from "react";
+import type React from "react";
+import { useLayoutEffect, useState } from "react";
 import { useAppContext } from "../../App";
 
 const InputCheckboxColor: React.FC<{
@@ -89,7 +90,7 @@ const InputCheckboxColor: React.FC<{
                         elemBox: e.currentTarget,
                         onChange(color) {
                             // setValueProxy(color.hex());
-                            const aaa = onChangeColor && onChangeColor(color);
+                            const aaa = onChangeColor?.(color);
                             if (timeout) {
                                 if (onChangeColor) {
                                     if (aaa === undefined)

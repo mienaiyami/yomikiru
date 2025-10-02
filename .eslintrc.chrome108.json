@@ -1,0 +1,53 @@
+{
+    "env": {
+        "browser": true,
+        "es2021": true,
+        "node": true
+    },
+    "parser": "@typescript-eslint/parser",
+    "parserOptions": {
+        "ecmaVersion": 12,
+        "sourceType": "module"
+    },
+    "rules": {
+        "no-restricted-syntax": [
+            "error",
+            {
+                "selector": "MemberExpression[object.name='Array'][property.name='fromAsync']",
+                "message": "Array.fromAsync is not supported in Chrome 108"
+            },
+            {
+                "selector": "MemberExpression[object.name='Object'][property.name='groupBy']",
+                "message": "Object.groupBy is not supported in Chrome 108"
+            },
+            {
+                "selector": "MemberExpression[object.name='Promise'][property.name='withResolvers']",
+                "message": "Promise.withResolvers is not supported in Chrome 108"
+            },
+            {
+                "selector": "MemberExpression[property.name='findLast']",
+                "message": "findLast method is not supported in Chrome 108"
+            },
+            {
+                "selector": "MemberExpression[property.name='findLastIndex']",
+                "message": "findLastIndex method is not supported in Chrome 108"
+            },
+            {
+                "selector": "MemberExpression[property.name='toReversed']",
+                "message": "toReversed method is not supported in Chrome 108"
+            },
+            {
+                "selector": "MemberExpression[property.name='toSorted']",
+                "message": "toSorted method is not supported in Chrome 108"
+            },
+            {
+                "selector": "MemberExpression[property.name='toSpliced']",
+                "message": "toSpliced method is not supported in Chrome 108"
+            },
+            {
+                "selector": "MemberExpression[property.name='with']",
+                "message": "Array.with method is not supported in Chrome 108"
+            }
+        ]
+    }
+}

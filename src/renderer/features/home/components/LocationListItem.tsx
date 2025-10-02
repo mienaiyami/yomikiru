@@ -1,7 +1,7 @@
 import { useAppSelector } from "@store/hooks";
 import { dialogUtils } from "@utils/dialog";
 import { formatUtils } from "@utils/file";
-import { ReactElement } from "react";
+import type { ReactElement } from "react";
 import { useAppContext } from "src/renderer/App";
 import ListItem from "../../../components/ListItem";
 
@@ -34,7 +34,7 @@ const LocationListItem = ({
         }
         if (
             appSettings.openDirectlyFromManga &&
-            window.path.normalize(window.path.resolve(link + "../../../") + window.path.sep) ===
+            window.path.normalize(window.path.resolve(`${link}../../../`) + window.path.sep) ===
                 window.path.normalize(appSettings.baseDir + window.path.sep)
         ) {
             openInReader(link).then((isValid) => {

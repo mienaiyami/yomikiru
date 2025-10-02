@@ -1,5 +1,5 @@
 import { useAppSelector } from "@store/hooks";
-import { memo, useState, Fragment } from "react";
+import { Fragment, memo, useState } from "react";
 
 const ContentList = memo(
     ({

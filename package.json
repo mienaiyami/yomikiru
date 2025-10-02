@@ -17,9 +17,15 @@
         "drizzle:studio": "pnpm drizzle studio",
         "drizzle:generate": "pnpm drizzle generate",
         "drizzle:migrate": "pnpm drizzle migrate",
-        "eslint": "eslint .",
+        "biome": "biome check .",
+        "biome:fix": "biome check --write .",
+        "format": "biome format --write .",
+        "lint": "biome lint .",
+        "lint:fix": "biome lint --write .",
+        "check": "biome check . && tsc --noemit",
+        "check:chrome108": "eslint src --ext .js,.jsx,.ts,.tsx --config .eslintrc.chrome108.json",
+        "check:full": "biome check . && eslint src --config .eslintrc.chrome108.json && tsc --noemit",
         "tslint": "tsc --noemit",
-        "lint": "eslint . && tsc --noemit",
         "package": "electron-forge package",
         "make:exe32": "electron-forge make --targets=@electron-forge/maker-squirrel --arch=ia32",
         "make:exe64": "electron-forge make --targets=@electron-forge/maker-squirrel --arch=x64",
@@ -28,7 +34,8 @@
         "make:win32": "electron-forge make --targets=@electron-forge/maker-squirrel,@electron-forge/maker-zip --arch=ia32",
         "make:win64": "electron-forge make --targets=@electron-forge/maker-squirrel,@electron-forge/maker-zip --arch=x64",
         "make:deb": "electron-forge make --targets=@electron-forge/maker-deb",
-        "release": "node tagAndPush.js"
+        "release": "node tagAndPush.js",
+        "prepare": "husky"
     },
     "license": "MIT",
     "dependencies": {
@@ -65,6 +72,7 @@
         "zod": "^3.22.3"
     },
     "devDependencies": {
+        "@biomejs/biome": "2.2.5",
         "@electron-forge/cli": "^6.4.1",
         "@electron-forge/maker-deb": "^6.4.1",
         "@electron-forge/maker-rpm": "^6.4.1",
@@ -101,6 +109,8 @@
         "eslint-plugin-react-hooks": "^5.2.0",
         "file-loader": "^6.2.0",
         "fork-ts-checker-webpack-plugin": "^7.2.13",
+        "husky": "^9.1.7",
+        "lint-staged": "^16.2.3",
         "node-loader": "^2.0.0",
         "npm-run-all": "4.1.5",
         "prettier": "^3.5.3",
@@ -117,6 +127,14 @@
         "webpack": "^5.98.0",
         "worker-loader": "^3.0.8"
     },
+    "lint-staged": {
+        "*.{js,jsx,ts,tsx}": [
+            "biome check --write --files-ignore-unknown=true --no-errors-on-unmatched"
+        ],
+        "*.{json,css,md}": [
+            "biome format --write"
+        ]
+    },
     "pnpm": {
         "onlyBuiltDependencies": [
             "@fortawesome/fontawesome-common-types",
@@ -130,6 +148,5 @@
             "electron-winstaller",
             "esbuild"
         ]
-    },
-    "packageManager": "pnpm@10.8.1+sha512.c50088ba998c67b8ca8c99df8a5e02fd2ae2e2b29aaf238feaa9e124248d3f48f9fb6db2424949ff901cffbb5e0f0cc1ad6aedb602cd29450751d11c35023677"
+    }
 }

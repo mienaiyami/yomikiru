@@ -1,0 +1,25 @@
+# Dependencies
+node_modules/
+pnpm-lock.yaml
+
+# Build outputs
+out/
+dist/
+.webpack/
+
+# Generated files
+drizzle/
+*.d.ts
+
+# Public assets
+public/
+
+# Logs
+*.log
+
+# Database
+*.db
+
+# OS generated files
+.DS_Store
+Thumbs.db

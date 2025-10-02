@@ -1,19 +1,19 @@
+import type { MainSettingsType } from "@electron/util/mainSettings";
 import type {
-    LibraryItem,
-    MangaProgress,
-    BookProgress,
-    MangaBookmark,
+    AddBookBookmarkData,
+    AddBookNoteData,
+    AddMangaBookmarkData,
+    AddToLibraryData,
     BookBookmark,
     BookNote,
+    BookProgress,
+    LibraryItem,
     LibraryItemWithProgress,
-    AddToLibraryData,
-    AddMangaBookmarkData,
-    AddBookBookmarkData,
+    MangaBookmark,
+    MangaProgress,
     UpdateBookProgressData,
     UpdateMangaProgressData,
-    AddBookNoteData,
 } from "./db";
-import type { MainSettingsType } from "@electron/util/mainSettings";
 
 /**
  * m2r: main to renderer

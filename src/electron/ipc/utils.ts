@@ -1,4 +1,4 @@
-import { MainToRendererChannels, RendererToMainChannels } from "@common/types/ipc";
+import type { MainToRendererChannels, RendererToMainChannels } from "@common/types/ipc";
 import { ipcMain } from "electron";
 
 const registerHandler = <T extends keyof RendererToMainChannels>(

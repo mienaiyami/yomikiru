@@ -1,5 +1,6 @@
-import { memo, ReactNode } from "react";
+import { memo, type ReactNode } from "react";
 import FocusLock from "react-focus-lock";
+
 type PropsBase = {
     open: boolean;
     onClose: () => void;

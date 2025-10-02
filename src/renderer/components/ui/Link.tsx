@@ -1,5 +1,5 @@
 import { dialogUtils } from "@utils/dialog";
-import React from "react";
+import type React from "react";
 
 const Link = ({
     href,

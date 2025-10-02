@@ -33,12 +33,12 @@ const mainSettings = createSlice({
     name: "mainSettings",
     initialState,
     reducers: {
-        setMainSettings: (state, action) => {
+        setMainSettings: (_state, action) => {
             return action.payload;
         },
     },
     extraReducers: (builder) => {
-        builder.addCase(getMainSettings.fulfilled, (state, action) => {
+        builder.addCase(getMainSettings.fulfilled, (_state, action) => {
             return action.payload;
         });
     },

@@ -1,8 +1,8 @@
 import * as pdfjsLib from "pdfjs-dist/build/pdf.js";
-// eslint-disable-next-line @typescript-eslint/ban-ts-comment
-//@ts-ignore
+//@ts-expect-error
 import worker from "pdfjs-dist/build/pdf.worker.js";
 import { dialogUtils } from "./dialog";
+
 pdfjsLib.GlobalWorkerOptions.workerSrc = worker;
 
 const renderPDF = async (

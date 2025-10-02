@@ -1,11 +1,11 @@
-import InputCheckbox from "@ui/InputCheckbox";
-import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
+import type { AppUpdateChannel } from "@common/types/ipc";
 import { faGithub } from "@fortawesome/free-brands-svg-icons";
 import { faHeart } from "@fortawesome/free-solid-svg-icons";
-import { AppUpdateChannel } from "@common/types/ipc";
-import InputSelect from "@ui/InputSelect";
+import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { useAppDispatch, useAppSelector } from "@store/hooks";
 import { updateMainSettings } from "@store/mainSettings";
+import InputCheckbox from "@ui/InputCheckbox";
+import InputSelect from "@ui/InputSelect";
 
 const About: React.FC = () => {
     const mainSettings = useAppSelector((state) => state.mainSettings);
@@ -152,7 +152,7 @@ const About: React.FC = () => {
                     <button
                         onClick={(e) => {
                             const target = e.currentTarget;
-                            target.innerText = "\u00a0".repeat(16) + "Copied!" + "\u00a0".repeat(16);
+                            target.innerText = `${"\u00a0".repeat(16)}Copied!${"\u00a0".repeat(16)}`;
                             window.electron.writeText("mienaiyami0@gmail.com");
                             target.disabled = true;
                             setTimeout(() => {

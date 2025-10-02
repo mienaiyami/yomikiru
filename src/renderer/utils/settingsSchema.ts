@@ -1,6 +1,6 @@
 import { z } from "zod";
-import { saveJSONfile, settingsPath } from "./file";
 import { dialogUtils } from "./dialog";
+import { saveJSONfile, settingsPath } from "./file";
 
 const sortTypeEnum = z.union([z.literal("normal"), z.literal("inverse")]);
 const sortByEnum = z.union([z.literal("name"), z.literal("date")]);
@@ -421,7 +421,7 @@ const parseAppSettings = (): z.infer<typeof settingSchema> => {
     };
     const setValueFromDeepObject = (obj: any, keys: (string | number)[], value: any) => {
         let main = obj;
-        let i;
+        let i: number;
         for (i = 0; i < keys.length - 1; i++) {
             main = main[keys[i]];
         }

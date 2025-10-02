@@ -1,5 +1,5 @@
+import { faArrowDown, faArrowUp } from "@fortawesome/free-solid-svg-icons";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import { faArrowUp, faArrowDown } from "@fortawesome/free-solid-svg-icons";
 import { memo, useState } from "react";
 
 const FindInPage = memo(({ findInPage }: { findInPage: (str: string, forward?: boolean) => void }) => {

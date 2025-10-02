@@ -1,18 +1,8 @@
-import { Fragment, useCallback, useContext, useEffect, useLayoutEffect, useRef, useState } from "react";
-import { useAppContext } from "../../../App";
-import ReaderSideList from "./components/ReaderSideList";
-import ReaderSettings from "./components/ReaderSettings";
-import { useAppDispatch, useAppSelector } from "@store/hooks";
-import { setAppSettings, setReaderSettings } from "@store/appSettings";
-import AnilistSearch from "../../anilist/AnilistSearch";
-import AnilistEdit from "../../anilist/AnilistEdit";
-import { InView } from "react-intersection-observer";
-
-import { addLibraryItem, selectLibraryItem, updateChaptersRead, updateMangaProgress } from "@store/library";
-import { formatUtils } from "@utils/file";
-import { keyFormatter } from "@utils/keybindings";
-import AniList from "@utils/anilist";
+import type { MangaProgress } from "@common/types/db";
 import { setAnilistCurrentManga } from "@store/anilist";
+import { setAppSettings, setReaderSettings } from "@store/appSettings";
+import { useAppDispatch, useAppSelector } from "@store/hooks";
+import { addLibraryItem, selectLibraryItem, updateChaptersRead, updateMangaProgress } from "@store/library";
 import {
     getReaderMangaState,
     setReaderLoading,
@@ -20,8 +10,17 @@ import {
     updateReaderContent,
     updateReaderMangaCurrentPage,
 } from "@store/reader";
-import { MangaProgress } from "@common/types/db";
+import AniList from "@utils/anilist";
+import { formatUtils } from "@utils/file";
+import { keyFormatter } from "@utils/keybindings";
+import { Fragment, useCallback, useEffect, useLayoutEffect, useRef, useState } from "react";
+import { InView } from "react-intersection-observer";
+import { useAppContext } from "../../../App";
+import AnilistEdit from "../../anilist/AnilistEdit";
+import AnilistSearch from "../../anilist/AnilistSearch";
 import useSmoothScroll from "../hooks/useSmoothScroll";
+import ReaderSettings from "./components/ReaderSettings";
+import ReaderSideList from "./components/ReaderSideList";
 
 const processChapterNumber = (chapterName: string): number | undefined => {
     /*
@@ -157,7 +156,7 @@ const Reader: React.FC = () => {
     const scrollToPage = (pageNumber: number, behavior: ScrollBehavior = "smooth", callback?: () => void) => {
         if (readerRef.current) {
             if (pageNumber >= 1 && pageNumber <= (readerState?.content?.progress?.totalPages || 1)) {
-                const imgElem = document.querySelector("#reader .imgCont [data-pagenumber='" + pageNumber + "']");
+                const imgElem = document.querySelector(`#reader .imgCont [data-pagenumber='${pageNumber}']`);
                 if ([1, 2].includes(appSettings.readerSettings.readerTypeSelected)) {
                     const rowNumber = parseInt(imgElem?.parentElement?.getAttribute("data-imagerow") || "1");
                     setCurrentImageRow(rowNumber);
@@ -280,7 +279,7 @@ const Reader: React.FC = () => {
             const is = (keys: string[]) => {
                 return keys.includes(keyStr);
             };
-            if (is(shortcutsMapped["contextMenu"])) {
+            if (is(shortcutsMapped.contextMenu)) {
                 e.stopPropagation();
                 e.preventDefault();
                 if (imgContRef.current)
@@ -292,43 +291,43 @@ const Reader: React.FC = () => {
                     );
                 return;
             }
-            if (is(shortcutsMapped["readerSize_50"])) {
+            if (is(shortcutsMapped.readerSize_50)) {
                 makeScrollPos();
                 dispatch(setReaderSettings({ fitOption: 0 }));
-                setShortcutText(50 + "%");
+                setShortcutText(`${50}%`);
                 dispatch(setReaderSettings({ readerWidth: 50 }));
                 return;
-            } else if (is(shortcutsMapped["readerSize_100"])) {
+            } else if (is(shortcutsMapped.readerSize_100)) {
                 makeScrollPos();
                 dispatch(setReaderSettings({ fitOption: 0 }));
-                setShortcutText(100 + "%");
+                setShortcutText(`${100}%`);
                 dispatch(setReaderSettings({ readerWidth: 100 }));
                 return;
-            } else if (is(shortcutsMapped["readerSize_150"])) {
+            } else if (is(shortcutsMapped.readerSize_150)) {
                 makeScrollPos();
                 dispatch(setReaderSettings({ widthClamped: false, fitOption: 0 }));
-                setShortcutText(150 + "%");
+                setShortcutText(`${150}%`);
                 dispatch(setReaderSettings({ readerWidth: 150 }));
                 return;
-            } else if (is(shortcutsMapped["readerSize_200"])) {
+            } else if (is(shortcutsMapped.readerSize_200)) {
                 makeScrollPos();
                 dispatch(setReaderSettings({ widthClamped: false, fitOption: 0 }));
-                setShortcutText(200 + "%");
+                setShortcutText(`${200}%`);
                 dispatch(setReaderSettings({ readerWidth: 200 }));
                 return;
-            } else if (is(shortcutsMapped["readerSize_250"])) {
+            } else if (is(shortcutsMapped.readerSize_250)) {
                 makeScrollPos();
                 dispatch(setReaderSettings({ widthClamped: false, fitOption: 0 }));
-                setShortcutText(250 + "%");
+                setShortcutText(`${250}%`);
                 dispatch(setReaderSettings({ readerWidth: 250 }));
                 return;
             }
             // todo, check need to isLoadingManga
             if (!isSettingOpen && isReaderOpen && !isLoadingManga) {
                 if ([" ", "ArrowUp", "ArrowDown"].includes(e.key)) e.preventDefault();
-                if (document.activeElement!.tagName === "BODY" || document.activeElement === readerRef.current)
+                if (document.activeElement?.tagName === "BODY" || document.activeElement === readerRef.current)
                     switch (true) {
-                        case is(shortcutsMapped["nextPage"]): {
+                        case is(shortcutsMapped.nextPage): {
                             const abc = prevNextDeciderLogic();
                             if (abc === 1) openNextChapterRef.current?.click();
                             else if (abc === 2) openNextChapterRef.current?.click();
@@ -341,7 +340,7 @@ const Reader: React.FC = () => {
                             break;
                         }
 
-                        case is(shortcutsMapped["prevPage"]): {
+                        case is(shortcutsMapped.prevPage): {
                             const abc = prevNextDeciderLogic();
                             if (abc === 1) openPrevChapterRef.current?.click();
                             else if (abc === 2) openPrevChapterRef.current?.click();
@@ -356,56 +355,56 @@ const Reader: React.FC = () => {
                     }
                 if (!e.repeat) {
                     switch (true) {
-                        case is(shortcutsMapped["navToPage"]):
+                        case is(shortcutsMapped.navToPage):
                             navToPageButtonRef.current?.click();
                             break;
-                        case is(shortcutsMapped["toggleZenMode"]):
+                        case is(shortcutsMapped.toggleZenMode):
                             setZenMode((prev) => !prev);
                             break;
                         case e.key === "Escape":
                             setZenMode(false);
                             break;
-                        case is(shortcutsMapped["readerSettings"]):
+                        case is(shortcutsMapped.readerSettings):
                             readerSettingExtender.current?.click();
                             readerSettingExtender.current?.focus();
                             break;
-                        case is(shortcutsMapped["nextChapter"]):
+                        case is(shortcutsMapped.nextChapter):
                             openNextChapterRef.current?.click();
                             break;
-                        case is(shortcutsMapped["prevChapter"]):
+                        case is(shortcutsMapped.prevChapter):
                             openPrevChapterRef.current?.click();
                             break;
-                        case is(shortcutsMapped["bookmark"]):
+                        case is(shortcutsMapped.bookmark):
                             addToBookmarkRef.current?.click();
                             break;
-                        case is(shortcutsMapped["sizePlus"]):
+                        case is(shortcutsMapped.sizePlus):
                             sizePlusRef.current?.click();
                             break;
-                        case is(shortcutsMapped["sizeMinus"]):
+                        case is(shortcutsMapped.sizeMinus):
                             sizeMinusRef.current?.click();
                             break;
                         default:
                             break;
                     }
                     if (
-                        document.activeElement!.tagName === "BODY" ||
+                        document.activeElement?.tagName === "BODY" ||
                         document.activeElement === readerRef.current
                     ) {
                         window.app.keydown = true;
                         switch (true) {
-                            case is(shortcutsMapped["largeScrollReverse"]):
+                            case is(shortcutsMapped.largeScrollReverse):
                                 scrollReader(-appSettings.readerSettings.scrollSpeedB);
                                 break;
-                            case is(shortcutsMapped["largeScroll"]):
+                            case is(shortcutsMapped.largeScroll):
                                 scrollReader(appSettings.readerSettings.scrollSpeedB);
                                 break;
-                            case is(shortcutsMapped["scrollDown"]):
+                            case is(shortcutsMapped.scrollDown):
                                 scrollReader(appSettings.readerSettings.scrollSpeedA);
                                 break;
-                            case is(shortcutsMapped["scrollUp"]):
+                            case is(shortcutsMapped.scrollUp):
                                 scrollReader(0 - appSettings.readerSettings.scrollSpeedA);
                                 break;
-                            case is(shortcutsMapped["showHidePageNumberInZen"]):
+                            case is(shortcutsMapped.showHidePageNumberInZen):
                                 setShortcutText(
                                     (!appSettings.readerSettings.showPageNumberInZenMode ? "Show" : "Hide") +
                                         " page-number in Zen Mode",
@@ -417,7 +416,7 @@ const Reader: React.FC = () => {
                                     }),
                                 );
                                 break;
-                            case is(shortcutsMapped["cycleFitOptions"]): {
+                            case is(shortcutsMapped.cycleFitOptions): {
                                 let fitOption = appSettings.readerSettings.fitOption + (e.shiftKey ? -1 : 1);
                                 if (fitOption < 0) fitOption = 3;
                                 fitOption %= 4;
@@ -432,19 +431,19 @@ const Reader: React.FC = () => {
                                 );
                                 break;
                             }
-                            case is(shortcutsMapped["selectReaderMode0"]):
+                            case is(shortcutsMapped.selectReaderMode0):
                                 setShortcutText("Reading Mode - Vertical Scroll");
                                 dispatch(setReaderSettings({ readerTypeSelected: 0 }));
                                 break;
-                            case is(shortcutsMapped["selectReaderMode1"]):
+                            case is(shortcutsMapped.selectReaderMode1):
                                 setShortcutText("Reading Mode - Left to Right");
                                 dispatch(setReaderSettings({ readerTypeSelected: 1 }));
                                 break;
-                            case is(shortcutsMapped["selectReaderMode2"]):
+                            case is(shortcutsMapped.selectReaderMode2):
                                 setShortcutText("Reading Mode - Right to Left");
                                 dispatch(setReaderSettings({ readerTypeSelected: 2 }));
                                 break;
-                            case is(shortcutsMapped["selectPagePerRow1"]):
+                            case is(shortcutsMapped.selectPagePerRow1):
                                 if (appSettings.readerSettings.pagesPerRowSelected !== 0) {
                                     const pagesPerRowSelected = 0;
                                     let readerWidth = appSettings.readerSettings.readerWidth / 2;
@@ -456,7 +455,7 @@ const Reader: React.FC = () => {
                                     dispatch(setReaderSettings({ pagesPerRowSelected, readerWidth }));
                                 }
                                 break;
-                            case is(shortcutsMapped["selectPagePerRow2"]): {
+                            case is(shortcutsMapped.selectPagePerRow2): {
                                 const pagesPerRowSelected = 1;
                                 let readerWidth = appSettings.readerSettings.readerWidth;
                                 if (appSettings.readerSettings.pagesPerRowSelected === 0) {
@@ -469,7 +468,7 @@ const Reader: React.FC = () => {
                                 dispatch(setReaderSettings({ pagesPerRowSelected, readerWidth }));
                                 break;
                             }
-                            case is(shortcutsMapped["selectPagePerRow2odd"]): {
+                            case is(shortcutsMapped.selectPagePerRow2odd): {
                                 const pagesPerRowSelected = 2;
                                 let readerWidth = appSettings.readerSettings.readerWidth;
                                 if (appSettings.readerSettings.pagesPerRowSelected === 0) {
@@ -521,7 +520,7 @@ const Reader: React.FC = () => {
                 imgContRef.current.clientWidth / 2 + imgContRef.current.offsetLeft,
                 window.innerHeight / (appSettings.readerSettings.readerTypeSelected === 0 ? 4 : 2),
             );
-            if (elem && elem.hasAttribute("data-pagenumber")) {
+            if (elem?.hasAttribute("data-pagenumber")) {
                 const pageNumber = parseInt(elem.getAttribute("data-pagenumber") || "1");
                 setCurrentPageNumber(pageNumber);
                 const rowNumber = parseInt(elem.parentElement?.getAttribute("data-imagerow") || "1");
@@ -689,7 +688,7 @@ const Reader: React.FC = () => {
         let imagesLoaded = 0;
         images.forEach((imgURL, i) => {
             const img = document.createElement("img");
-            let imageSafeURL = "file://" + imgURL.replaceAll("#", "%23");
+            let imageSafeURL = `file://${imgURL.replaceAll("#", "%23")}`;
             const loaded = (success = false) => {
                 imagesLoaded++;
                 onProgress(imagesLoaded);
@@ -750,7 +749,7 @@ const Reader: React.FC = () => {
                 img.setAttribute("data-pagenumber", JSON.stringify(i + 1));
                 img.classList.add("readerImg");
 
-                img.onload = (e) => {
+                img.onload = (_e) => {
                     setImageDecodeQueue((init) => {
                         return [...init, img];
                     });
@@ -941,6 +940,8 @@ const Reader: React.FC = () => {
         };
     }, [shortcutText]);
 
+    // todo : refactor, remove component from inside
+    // biome-ignore lint/correctness/noNestedComponentDefinitions: <creating this outside doesnt bring any benefits in perf, over creating it inside>
     const ChapterChanger = () => (
         <div
             className={
@@ -1066,10 +1067,10 @@ const Reader: React.FC = () => {
                     : "")
             }
             style={{
-                gridTemplateColumns: sideListWidth + "px auto",
+                gridTemplateColumns: `${sideListWidth}px auto`,
 
                 display: isReaderOpen ? (isSideListPinned ? "grid" : "block") : "none",
-                "--sideListWidth": sideListWidth + "px",
+                "--sideListWidth": `${sideListWidth}px`,
             }}
             onScroll={() => {
                 if (appSettings.readerSettings.readerTypeSelected === 0 && !isSideListPinned) changePageNumber();
@@ -1140,8 +1141,8 @@ const Reader: React.FC = () => {
                     (appSettings.readerSettings.grayscale ? "grayscale " : "")
                 }
                 style={{
-                    "--varWidth": appSettings.readerSettings.readerWidth + "%",
-                    "--gapSize": appSettings.readerSettings.gapSize + "px",
+                    "--varWidth": `${appSettings.readerSettings.readerWidth}%`,
+                    "--gapSize": `${appSettings.readerSettings.gapSize}px`,
                     display:
                         !chapterChangerDisplay || appSettings.readerSettings.readerTypeSelected === 0
                             ? "flex"
@@ -1319,12 +1320,12 @@ const Reader: React.FC = () => {
                             "--max-width":
                                 appSettings.readerSettings.maxHeightWidthSelector === "width" &&
                                 !appSettings.readerSettings.widthClamped
-                                    ? appSettings.readerSettings.maxWidth + "px"
+                                    ? `${appSettings.readerSettings.maxWidth}px`
                                     : "500%",
                             "--max-height":
                                 appSettings.readerSettings.maxHeightWidthSelector === "height" &&
                                 !appSettings.readerSettings.widthClamped
-                                    ? appSettings.readerSettings.maxHeight + "px"
+                                    ? `${appSettings.readerSettings.maxHeight}px`
                                     : "auto",
                         },
                         key: i,
@@ -1401,6 +1402,7 @@ const Reader: React.FC = () => {
                                             // data-src is real file path
                                             data-src={images[e]}
                                             key={imageData[e].img as string}
+                                            alt={`Page ${imageData[e].index + 1}`}
                                         />
                                     ),
                             )}

@@ -1,15 +1,15 @@
 import { configureStore } from "@reduxjs/toolkit";
-import appSettingsReducer from "./appSettings";
-import prevNextChapterReducer from "./prevNextChapter";
-import shortcutsReducer from "./shortcuts";
-import themesReducer from "./themes";
 import anilistReducer from "./anilist";
-import libraryReducer from "./library";
+import appSettingsReducer from "./appSettings";
 import bookmarksReducer from "./bookmarks";
 import bookNotesReducer from "./bookNotes";
-import uiReducer from "./ui";
-import readerReducer from "./reader";
+import libraryReducer from "./library";
 import mainSettingsReducer from "./mainSettings";
+import prevNextChapterReducer from "./prevNextChapter";
+import readerReducer from "./reader";
+import shortcutsReducer from "./shortcuts";
+import themesReducer from "./themes";
+import uiReducer from "./ui";
 
 const store = configureStore({
     reducer: {

@@ -1,6 +1,9 @@
+import { useAppDispatch, useAppSelector } from "@store/hooks";
+import { setSettingsOpen } from "@store/ui";
+import { keyFormatter } from "@utils/keybindings";
 import {
     createContext,
-    ReactElement,
+    type ReactElement,
     useCallback,
     useContext,
     useEffect,
@@ -8,17 +11,13 @@ import {
     useRef,
     useState,
 } from "react";
-import { useAppDispatch, useAppSelector } from "@store/hooks";
-
 import FocusLock from "react-focus-lock";
-import ThemeCont from "./components/ThemeCont";
-import Shortcuts from "./components/Shortcuts";
-import Usage from "./components/Usage";
-import { keyFormatter } from "@utils/keybindings";
-import GeneralSettings from "./components/GeneralSettings";
-import { setSettingsOpen } from "@store/ui";
-import { TAB_INFO } from "./utils/constants";
 import About from "./components/About";
+import GeneralSettings from "./components/GeneralSettings";
+import Shortcuts from "./components/Shortcuts";
+import ThemeCont from "./components/ThemeCont";
+import Usage from "./components/Usage";
+import { TAB_INFO } from "./utils/constants";
 
 type SettingsContext = {
     currentTab: number;

@@ -1,17 +1,14 @@
-import type { ForgeConfig } from "@electron-forge/shared-types";
+import fs from "node:fs";
+import path from "node:path";
+import { MakerDeb } from "@electron-forge/maker-deb";
 import { MakerSquirrel } from "@electron-forge/maker-squirrel";
 import { MakerZIP } from "@electron-forge/maker-zip";
-import { MakerDeb } from "@electron-forge/maker-deb";
-import { MakerRpm } from "@electron-forge/maker-rpm";
 import { AutoUnpackNativesPlugin } from "@electron-forge/plugin-auto-unpack-natives";
 import { WebpackPlugin } from "@electron-forge/plugin-webpack";
-
+import type { ForgeConfig } from "@electron-forge/shared-types";
 import { mainConfig } from "./webpack/webpack.main.config";
-import { rendererConfig } from "./webpack/webpack.renderer.config";
 import { preloadConfig } from "./webpack/webpack.preload.config";
-
-import fs from "fs";
-import path from "path";
+import { rendererConfig } from "./webpack/webpack.renderer.config";
 
 // ! its not possible to build all targets at once anymore, because of `better-sqlite3` rebuild
 
@@ -72,7 +69,7 @@ const config: ForgeConfig = {
         ),
     ],
     hooks: {
-        postMake: async (config, makeResults) => {
+        postMake: async (_config, makeResults) => {
             // const appName = config.packagerConfig.name;
             const appName = "Yomikiru";
             const appVersion = makeResults[0].packageJSON.version;

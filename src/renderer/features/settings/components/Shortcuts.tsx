@@ -1,12 +1,12 @@
+import { faClose } from "@fortawesome/free-solid-svg-icons";
+import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { useAppDispatch, useAppSelector } from "@store/hooks";
 import { removeShortcuts, setShortcuts } from "@store/shortcuts";
-import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import { faClose } from "@fortawesome/free-solid-svg-icons";
-import { keyFormatter, SHORTCUT_COMMAND_MAP } from "@utils/keybindings";
 import { dialogUtils } from "@utils/dialog";
-import { ReactElement } from "react";
+import { keyFormatter, SHORTCUT_COMMAND_MAP } from "@utils/keybindings";
+import type { ReactElement } from "react";
 import { useSettingsContext } from "../Settings";
-import { SHORTCUT_LIMIT, reservedKeys } from "../utils/constants";
+import { reservedKeys, SHORTCUT_LIMIT } from "../utils/constants";
 
 const ShortcutInput = ({ command }: { command: ShortcutCommands }) => {
     const shortcuts = useAppSelector((store) => store.shortcuts);
@@ -70,7 +70,7 @@ const ShortcutInput = ({ command }: { command: ShortcutCommands }) => {
                             dialogUtils.warn({
                                 message: "Can't use reserved key combination.",
                             });
-                            window.logger.warn(`"${newKey}"` + " is reserved key combination.");
+                            window.logger.warn(`"${newKey}" is reserved key combination.`);
 
                             e.currentTarget.focus();
                             return;

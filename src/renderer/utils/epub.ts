@@ -163,7 +163,7 @@ export default class EPUB {
             let ncx: EPUB.NCXTree[] = [];
             let toc: EPUB.TOC = new Map();
             if (ncxPathRelative) {
-                const parsed = await this.parseNCX(
+                const parsed = await EPUB.parseNCX(
                     window.path.join(window.path.dirname(opfPath), ncxPathRelative),
                     spine,
                     manifest,
@@ -172,7 +172,7 @@ export default class EPUB {
                 toc = parsed.toc;
                 metadata.ncx_depth = parsed.ncx_depth;
             } else if (tocPath) {
-                const parsed = await this.parseEpubV3TOC(tocPath, spine, manifest);
+                const parsed = await EPUB.parseEpubV3TOC(tocPath, spine, manifest);
                 ncx = parsed.ncx;
                 toc = parsed.toc;
                 metadata.ncx_depth = parsed.ncx_depth;
@@ -370,7 +370,7 @@ export default class EPUB {
 
         const domP = new DOMParser();
         const doc = domP.parseFromString(str.trim(), "application/xhtml+xml");
-        doc.querySelectorAll("script").forEach((el) => el.remove());
+        doc.querySelectorAll("script").forEach((el) => void el.remove());
         doc.querySelectorAll("[src]").forEach((el) => {
             const src = el.getAttribute("src") as string;
             if (src.startsWith("http")) return;
@@ -429,7 +429,7 @@ export default class EPUB {
             chapterPath = window.decodeURI(chapterPath);
             if (!window.fs.existsSync(chapterPath)) throw new Error("EPUB::readChapter: Chapter file not found.");
             const raw = await window.fs.readFile(chapterPath, "utf-8");
-            return await this.parseChapter(raw, chapterPath);
+            return await EPUB.parseChapter(raw, chapterPath);
         } catch (e) {
             if (e instanceof Error || typeof e === "string") window.logger.error(e);
             else window.logger.error("EPUB::readChapter: Error while reading chapter:", e);

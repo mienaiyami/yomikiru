@@ -1,5 +1,5 @@
 import { useAppSelector } from "@store/hooks";
-import { useEffect, RefObject } from "react";
+import { type RefObject, useEffect } from "react";
 import { shallowEqual } from "react-redux";
 
 /**

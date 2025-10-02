@@ -1,8 +1,8 @@
+import { setAppSettings } from "@store/appSettings";
 import { useAppDispatch, useAppSelector } from "@store/hooks";
-import LocationsTab from "./components/LocationsTab";
 import BookmarkTab from "./components/BookmarkTab";
 import HistoryTab from "./components/HistoryTab";
-import { setAppSettings } from "@store/appSettings";
+import LocationsTab from "./components/LocationsTab";
 
 const ClassicView: React.FC = () => {
     const dispatch = useAppDispatch();

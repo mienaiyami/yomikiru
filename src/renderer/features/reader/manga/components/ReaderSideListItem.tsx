@@ -1,8 +1,8 @@
-import { memo, useEffect, useState } from "react";
-import { useAppSelector } from "@store/hooks";
-import { useAppContext } from "src/renderer/App";
-import { formatUtils } from "@utils/file";
 import ListItem from "@renderer/components/ListItem";
+import { useAppSelector } from "@store/hooks";
+import { formatUtils } from "@utils/file";
+import { memo, useEffect, useState } from "react";
+import { useAppContext } from "src/renderer/App";
 
 type ReaderSideListItemProps = {
     name: string;
@@ -43,7 +43,7 @@ const ReaderSideListItem = memo(
             } else {
                 items.push(window.contextMenu.template.readChapter(window.path.dirname(link), name));
             }
-            if (e.currentTarget.parentElement && e.currentTarget.parentElement.parentElement) {
+            if (e.currentTarget.parentElement?.parentElement) {
                 const chapters = [...e.currentTarget.parentElement.parentElement.querySelectorAll("a")].map(
                     (e) => e.title,
                 );

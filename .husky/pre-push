@@ -1,0 +1,28 @@
+current_branch=$(git symbolic-ref --short HEAD 2>/dev/null || git describe --tags --exact-match 2>/dev/null || git rev-parse --short HEAD 2>/dev/null)
+
+echo "Current branch: $current_branch"
+
+case "$current_branch" in
+    main|master|develop|staging)
+        echo "Running full checks for protected branch..."
+        
+        echo "Running full code quality and type checking..."
+        if ! pnpm run check:full; then
+            echo "❌ Code quality and type checking failed!"
+            exit 1
+        fi
+        
+        echo "✅ All pre-push checks passed for protected branch!"
+        ;;
+    *)
+        # # avoiding this for now
+        # echo "Feature branch detected - running lightweight checks..."
+        
+        # if ! pnpm run tslint; then
+        #     echo "❌ Type checking failed!"
+        #     exit 1
+        # fi
+        
+        # echo "✅ Lightweight checks passed for feature branch!"
+        # ;;
+esac

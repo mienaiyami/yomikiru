@@ -1,4 +1,4 @@
-import React from "react";
+import type React from "react";
 
 const InputCheckbox = ({
     onChange,
@@ -42,6 +42,7 @@ const InputCheckbox = ({
                 <span className={`toggle-state`}></span>
             </span>
             <input type="checkbox" checked={checked} disabled={disabled} onChange={onChange} />
+            {/** biome-ignore lint/security/noDangerouslySetInnerHtml: <this is to make things like bold, italic work inside the para> */}
             {paraAfter && <p dangerouslySetInnerHTML={{ __html: paraAfter }}></p>}
             {labelAfter}
         </label>

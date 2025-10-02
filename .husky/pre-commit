@@ -1,0 +1,11 @@
+echo "Running lint-staged on changed files..."
+pnpm exec lint-staged
+
+if git diff --cached --name-only | grep -E '\.(ts|tsx)$' > /dev/null; then
+    echo "Type checking TypeScript files..."
+    pnpm run tslint
+else
+    echo "No TypeScript files staged, skipping type check"
+fi
+
+echo "Pre-commit checks completed successfully!"

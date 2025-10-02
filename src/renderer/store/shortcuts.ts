@@ -1,8 +1,8 @@
-import { createSlice, PayloadAction } from "@reduxjs/toolkit";
-import { saveJSONfile, shortcutsPath } from "../utils/file";
-import { SHORTCUT_COMMAND_MAP } from "@utils/keybindings";
+import { createSlice, type PayloadAction } from "@reduxjs/toolkit";
 import { dialogUtils } from "@utils/dialog";
-import { RootState } from ".";
+import { SHORTCUT_COMMAND_MAP } from "@utils/keybindings";
+import { saveJSONfile, shortcutsPath } from "../utils/file";
+import type { RootState } from ".";
 
 const initialState: ShortcutSchema[] = [];
 
@@ -45,7 +45,7 @@ if (window.fs.existsSync(shortcutsPath)) {
                 });
             } else
                 dialogUtils.customError({
-                    message: "Unable to parse " + shortcutsPath + "\nMaking new shortcuts.json...",
+                    message: `Unable to parse ${shortcutsPath}\nMaking new shortcuts.json...`,
                 });
             window.logger.error(err);
             window.fs.writeFile(shortcutsPath, JSON.stringify(defaultShortcuts, null, "\t"));

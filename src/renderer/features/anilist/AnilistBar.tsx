@@ -1,12 +1,12 @@
 import { faMinus, faPlus, faSlidersH } from "@fortawesome/free-solid-svg-icons";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import { dialogUtils } from "@utils/dialog";
-import { useAppDispatch, useAppSelector } from "@store/hooks";
-import InputNumber from "@ui/InputNumber";
-import React, { useLayoutEffect, useState, memo, useEffect } from "react";
-import AniList from "@utils/anilist";
 import { setAnilistCurrentManga } from "@store/anilist";
+import { useAppDispatch, useAppSelector } from "@store/hooks";
 import { setAnilistEditOpen, setAnilistSearchOpen } from "@store/ui";
+import InputNumber from "@ui/InputNumber";
+import AniList from "@utils/anilist";
+import { dialogUtils } from "@utils/dialog";
+import { memo, useEffect, useState } from "react";
 
 const AnilistBar = memo(() => {
     const anilistTracking = useAppSelector((store) => store.anilist.tracking);
@@ -18,6 +18,7 @@ const AnilistBar = memo(() => {
     const [progress, setProgress] = useState(anilistCurrentManga?.progress || 0);
     const dispatch = useAppDispatch();
 
+    // todo refactor
     useEffect(() => {
         if (mangaInReader && anilistTracking.find((e) => e.localURL === mangaInReader)) setTracking(true);
         else {

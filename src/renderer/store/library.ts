@@ -1,7 +1,7 @@
-import { createSlice, createAsyncThunk, PayloadAction } from "@reduxjs/toolkit";
-import { DatabaseChannels } from "@common/types/ipc";
-import { RootState } from ".";
+import type { DatabaseChannels } from "@common/types/ipc";
+import { createAsyncThunk, createSlice, type PayloadAction } from "@reduxjs/toolkit";
 import { formatUtils } from "@utils/file";
+import type { RootState } from ".";
 
 // todo : add proper error handling
 

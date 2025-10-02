@@ -1,11 +1,11 @@
-import { HistoryItem, Manga_BookItem } from "@common/types/legacy";
-import { DatabaseService, DB_PATH } from "../db";
-import { app, dialog } from "electron";
-import path from "path";
-import fs from "fs/promises";
-import { existsSync } from "fs";
-import { log } from ".";
+import { existsSync } from "node:fs";
+import fs from "node:fs/promises";
+import path from "node:path";
+import type { HistoryItem, Manga_BookItem } from "@common/types/legacy";
 import { pingDatabaseChange } from "@electron/ipc/database";
+import { app, dialog } from "electron";
+import { type DatabaseService, DB_PATH } from "../db";
+import { log } from ".";
 
 // migrate from 2.19.6 to sqlite
 const userDataURL = app.getPath("userData");

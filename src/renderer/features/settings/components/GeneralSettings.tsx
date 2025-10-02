@@ -1,18 +1,18 @@
 import { makeNewSettings, setAppSettings, setEpubReaderSettings, setReaderSettings } from "@store/appSettings";
 import { useAppDispatch, useAppSelector } from "@store/hooks";
+import { resetLibrary } from "@store/library";
+import { updateMainSettings } from "@store/mainSettings";
+import { resetShortcuts } from "@store/shortcuts";
 import { resetAllTheme } from "@store/themes";
+import InputCheckbox from "@ui/InputCheckbox";
 import { dialogUtils } from "@utils/dialog";
 import { promptSelectDir } from "@utils/file";
-import FileExplorerOptions from "./FileExplorerOptions";
-import InputCheckbox from "@ui/InputCheckbox";
-import { resetShortcuts } from "@store/shortcuts";
 import { useSettingsContext } from "../Settings";
 import AnilistSetting from "./AnilistSetting";
 import CustomTempLocation from "./CustomTempLocation";
-import GeneralThemeSettings from "./GeneralThemeSettings";
+import FileExplorerOptions from "./FileExplorerOptions";
 import GeneralPDFSettings from "./GeneralPDFSettings";
-import { resetLibrary } from "@store/library";
-import { updateMainSettings } from "@store/mainSettings";
+import GeneralThemeSettings from "./GeneralThemeSettings";
 
 const GeneralSettings: React.FC = () => {
     const { scrollIntoView } = useSettingsContext();

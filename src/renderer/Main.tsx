@@ -1,16 +1,16 @@
-import { ReactElement, useContext } from "react";
+import AniLogin from "@features/anilist/AniLogin";
+import ClassicView from "@features/home/ClassicView";
+import EPubReader from "@features/reader/epub/EPubReader";
+import Reader from "@features/reader/manga/Reader";
+import Settings from "@features/settings/Settings";
+import { useAppContext } from "@renderer/App";
+import { useAppSelector } from "@store/hooks";
+import InputColorReal from "@ui/InputColorReal";
+import MenuList from "@ui/MenuList";
+import type { ReactElement } from "react";
+import { shallowEqual } from "react-redux";
 import ContextMenu from "./components/ContextMenu";
 import LoadingScreen from "./components/LoadingScreen";
-import Settings from "@features/settings/Settings";
-import MenuList from "@ui/MenuList";
-import InputColorReal from "@ui/InputColorReal";
-import AniLogin from "@features/anilist/AniLogin";
-import Reader from "@features/reader/manga/Reader";
-import EPubReader from "@features/reader/epub/EPubReader";
-import { shallowEqual } from "react-redux";
-import { useAppSelector } from "@store/hooks";
-import { useAppContext } from "@renderer/App";
-import ClassicView from "@features/home/ClassicView";
 
 const Main = (): ReactElement => {
     const appSettings = useAppSelector((store) => store.appSettings);

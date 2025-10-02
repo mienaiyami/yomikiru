@@ -1,4 +1,4 @@
-import { createSlice, PayloadAction } from "@reduxjs/toolkit";
+import { createSlice, type PayloadAction } from "@reduxjs/toolkit";
 
 const initialState = {
     prev: "",
@@ -9,7 +9,7 @@ const prevNextChapter = createSlice({
     name: "prevNextChapter",
     initialState,
     reducers: {
-        setPrevNextChapter: (state, action: PayloadAction<{ prev: string; next: string }>) => {
+        setPrevNextChapter: (_state, action: PayloadAction<{ prev: string; next: string }>) => {
             return action.payload;
         },
     },

@@ -1,12 +1,12 @@
 import LocationListItem from "@features/home/components/LocationListItem";
 import { faAngleUp, faSort } from "@fortawesome/free-solid-svg-icons";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import { formatUtils, promptSelectDir } from "@utils/file";
 import { setAppSettings } from "@store/appSettings";
 import { useAppDispatch, useAppSelector } from "@store/hooks";
-import { ReactElement, useEffect, useRef, useState, useMemo, useCallback } from "react";
-import { useAppContext } from "src/renderer/App";
 import { dialogUtils } from "@utils/dialog";
+import { formatUtils, promptSelectDir } from "@utils/file";
+import { type ReactElement, useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useAppContext } from "src/renderer/App";
 import ListNavigator from "../../../components/ListNavigator";
 
 type LocationData = { name: string; link: string; dateModified: number };
@@ -149,7 +149,7 @@ const LocationsTab = (): ReactElement => {
     }, []);
 
     const renderLocationItem = useCallback(
-        (location: LocationData, index: number, isSelected: boolean) => {
+        (location: LocationData, _index: number, isSelected: boolean) => {
             return (
                 <LocationListItem
                     name={location.name}
@@ -178,10 +178,10 @@ const LocationsTab = (): ReactElement => {
     }, []);
     const handleKeyDown = useCallback(
         (keyStr: string, shortcutsMapped: Record<ShortcutCommands, string[]>) => {
-            if (shortcutsMapped["dirUp"].includes(keyStr)) {
+            if (shortcutsMapped.dirUp.includes(keyStr)) {
                 setCurrentLink((link) => window.path.dirname(link));
             }
-            if (shortcutsMapped["listSelect"].includes(keyStr)) {
+            if (shortcutsMapped.listSelect.includes(keyStr)) {
                 if (locations.length === 0 && imageCount > 0) {
                     openInReader(currentLink);
                 }

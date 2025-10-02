@@ -1,4 +1,5 @@
-import React, { useState, useLayoutEffect } from "react";
+import type React from "react";
+import { useLayoutEffect, useState } from "react";
 
 const InputRange = ({
     labeled = false,
@@ -52,7 +53,7 @@ const InputRange = ({
                     type="range"
                     disabled={disabled}
                     onChange={(e) => {
-                        const aaa = onChange && onChange(e);
+                        const aaa = onChange?.(e);
                         if (timeout) {
                             if (onChange) {
                                 if (aaa === undefined)
@@ -65,7 +66,7 @@ const InputRange = ({
                     max={max}
                     step={step}
                     style={{
-                        "--value": ((valueProxy / max) * 100).toFixed() + "%",
+                        "--value": `${((valueProxy / max) * 100).toFixed()}%`,
                     }}
                     value={valueProxy}
                     onKeyDown={(e) => {
@@ -83,7 +84,7 @@ const InputRange = ({
             type="range"
             disabled={disabled}
             onChange={(e) => {
-                const aaa = onChange && onChange(e);
+                const aaa = onChange?.(e);
                 if (timeout) {
                     if (onChange) {
                         if (aaa === undefined) return console.error("InputRange:onChange function must return.");

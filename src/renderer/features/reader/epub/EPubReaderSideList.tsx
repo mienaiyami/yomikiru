@@ -1,14 +1,14 @@
-import { faArrowLeft, faArrowRight, faThumbtack, faLocationDot } from "@fortawesome/free-solid-svg-icons";
+import { faArrowLeft, faArrowRight, faLocationDot, faThumbtack } from "@fortawesome/free-solid-svg-icons";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import { memo, useEffect, useLayoutEffect, useRef, useState } from "react";
 import { useAppSelector } from "@store/hooks";
-import ContentList from "./components/ContentList";
-import FindInPage from "./components/FindInPage";
+import type { EPubData } from "@utils/epub";
+import { memo, useEffect, useLayoutEffect, useRef, useState } from "react";
+import { useAppContext } from "src/renderer/App";
 import BookmarkButton from "./components/BookmarkButton";
 import BookmarkList from "./components/BookmarkList";
-import { useAppContext } from "src/renderer/App";
+import ContentList from "./components/ContentList";
+import FindInPage from "./components/FindInPage";
 import NotesList from "./components/NotesList";
-import { EPubData } from "@utils/epub";
 
 const EPubReaderSideList = memo(
     ({
@@ -163,7 +163,6 @@ const EPubReaderSideList = memo(
             >
                 <div
                     className="indicator"
-                    tabIndex={0}
                     onClick={(e) => {
                         makeScrollPos();
                         if (isSideListPinned) {
