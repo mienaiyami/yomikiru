@@ -41,7 +41,14 @@ export class DatabaseService {
     }
     async addLibraryItem(data: AddToLibraryData): Promise<LibraryItem> {
         return await this._db.transaction(async (tx) => {
-            const [item] = await tx.insert(libraryItems).values(data.data).returning();
+            const [item] = await tx
+                .insert(libraryItems)
+                .values(data.data)
+                .onConflictDoUpdate({
+                    target: [libraryItems.link],
+                    set: data.data,
+                })
+                .returning();
             if (data.type === "manga") {
                 await tx.insert(mangaProgress).values({
                     itemLink: item.link,

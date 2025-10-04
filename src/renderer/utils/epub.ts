@@ -100,15 +100,40 @@ export default class EPUB {
             const opfRaw = (await window.fs.readFile(opfPath, "utf-8")).trim();
             const opf = parser.parseFromString(opfRaw, "application/xml");
 
+            //
             const coverId = opf.querySelector("meta[name='cover']")?.getAttribute("content");
-            const coverSrc = coverId
-                ? opf.querySelector(`manifest > item[id='${coverId}']`)?.getAttribute("href") || ""
-                : "";
+            let coverSrc = "";
+            if (coverId) {
+                coverSrc = opf.querySelector(`manifest > item[id='${coverId}']`)?.getAttribute("href") || "";
+            }
+            /**
+             * epub v3 doesn't have cover id
+             * some v3 might not even have this property
+             */
+            if (!coverSrc) {
+                coverSrc =
+                    opf.querySelector("manifest > item[properties='cover-image']")?.getAttribute("href") || "";
+            }
+            if (!coverSrc) {
+                // edge case, some epub v3 might not have cover id or properties
+                const coverItem = Array.from(
+                    opf.querySelectorAll("manifest > item[media-type='image/jpeg']"),
+                ).find((el) => el.getAttribute("id")?.startsWith("cover"));
+                if (coverItem) {
+                    coverSrc = coverItem.getAttribute("href") || "";
+                }
+            }
+            if (coverSrc) {
+                coverSrc = window.path.join(window.path.dirname(opfPath), coverSrc);
+                if (!window.fs.isFile(coverSrc)) coverSrc = "";
+            }
+            //
+
             const metadata: EPUB.MetaData = {
                 title: opf.getElementsByTagName("dc:title")[0]?.textContent || "No Title",
                 author: [...opf.getElementsByTagName("dc:creator")].map((el) => el.textContent).join(", "),
                 // description: opf.querySelector("dc:description")?.textContent || "No Description",
-                cover: window.path.join(window.path.dirname(opfPath), coverSrc),
+                cover: coverSrc,
                 opfDir: window.path.dirname(opfPath),
                 ncx_depth: 0,
                 //! navId wont work if it is not present in spine

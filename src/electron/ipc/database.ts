@@ -8,6 +8,7 @@ import {
     AddMangaBookmarkSchema,
     AddToLibrarySchema,
     UpdateBookProgressSchema,
+    UpdateLibraryItemSchema,
     UpdateMangaProgressSchema,
 } from "@electron/db/validator";
 import { log } from "@electron/util";
@@ -74,6 +75,17 @@ const handlers: {
         const data = (await db.addLibraryItem(AddToLibrarySchema.parse(request))) ?? null;
         pingDatabaseChange("db:library:change");
         return data;
+    },
+    "db:library:updateItem": async (db, request) => {
+        const { link, author, cover, title } = UpdateLibraryItemSchema.parse(request);
+        const data = await db.db
+            .update(libraryItems)
+            .set({ author, cover, title })
+            .where(eq(libraryItems.link, link))
+            .returning();
+
+        pingDatabaseChange("db:library:change");
+        return data?.[0] ?? null;
     },
     "db:library:deleteItem": async (db, request) => {
         try {

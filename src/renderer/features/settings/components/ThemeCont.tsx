@@ -135,6 +135,7 @@ const ThemeCont = () => {
         Object.entries(themeProps).map((e) => ({
             prop: e[0] as ThemeDataMain,
             label: e[1],
+            // biome-ignore lint/style/noNonNullAssertion: <themeData is guaranteed to be defined>
             value: allThemes.find((e) => e.name === theme)!.main[e[0] as ThemeDataMain],
         })),
     );
@@ -147,6 +148,7 @@ const ThemeCont = () => {
                 Object.entries(themeProps).map((e) => ({
                     prop: e[0] as ThemeDataMain,
                     label: e[1],
+                    // biome-ignore lint/style/noNonNullAssertion: <themeData is guaranteed to be defined>
                     value: allThemes.find((e) => e.name === theme)!.main[e[0] as ThemeDataMain],
                 })),
             );
@@ -219,6 +221,7 @@ const ThemeCont = () => {
                             Object.entries(themeProps).map((e) => ({
                                 prop: e[0] as ThemeDataMain,
                                 label: e[1],
+                                // biome-ignore lint/style/noNonNullAssertion: <themeData is guaranteed to be defined>
                                 value: allThemes.find((e) => e.name === theme)!.main[e[0] as ThemeDataMain],
                             })),
                         );
@@ -275,6 +278,7 @@ const ThemeCont = () => {
                                 <ThemeElement
                                     color={e.value}
                                     prop={e.prop}
+                                    // biome-ignore lint/style/noNonNullAssertion: <themeData is guaranteed to be defined>
                                     currentTheme={allThemes.find((e) => e.name === theme)!.main}
                                     changeValue={changeValue}
                                 />

@@ -27,6 +27,7 @@ const setBodyTheme = ({ allData, name }: Themes) => {
     if (allData.map((e) => e.name).includes(name)) {
         let themeStr = "";
         if (allData.find((e) => e.name)) {
+            // biome-ignore lint/style/noNonNullAssertion: <themeData is guaranteed to be defined>
             const themeData: { [key: string]: string } = allData.find((e) => e.name === name)!.main;
             for (const key in themeData) {
                 themeStr += `${key}:${themeData[key]};`;
@@ -94,6 +95,7 @@ if (window.fs.existsSync(themesPath)) {
                             window.logger.log(
                                 `"${prop}" does not exist on default theme - "${e.name}", rewriting it whole.`,
                             );
+                            // biome-ignore lint/style/noNonNullAssertion: <themeData is guaranteed to be defined>
                             e.main = initThemeData.allData.find((t) => t.name === e.name)!.main;
                             rewriteNeeded = true;
                         } else {

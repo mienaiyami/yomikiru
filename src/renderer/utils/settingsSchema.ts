@@ -4,17 +4,40 @@ import { saveJSONfile, settingsPath } from "./file";
 
 const sortTypeEnum = z.union([z.literal("normal"), z.literal("inverse")]);
 const sortByEnum = z.union([z.literal("name"), z.literal("date")]);
+const viewModeEnum = z.union([z.literal("classic"), z.literal("gallery")]);
 
 const settingSchema = z
     .object({
         baseDir: z.string(),
         customStylesheet: z.string(),
+        /**
+         * Home view mode: classic or gallery
+         */
+        homeViewMode: viewModeEnum,
         locationListSortType: sortTypeEnum,
         locationListSortBy: sortByEnum,
         bookListSortType: sortTypeEnum,
         bookListSortBy: sortByEnum,
         historyListSortType: sortTypeEnum,
         historyListSortBy: sortByEnum,
+        gallerySortType: sortTypeEnum,
+        gallerySortBy: z.union([z.literal("name"), z.literal("date"), z.literal("lastRead")]),
+        /**
+         * `normal` - normal grid view with title and cover
+         * `compact` - compact grid view with title and cover (title overlapped on cover)
+         * `cover-only` - compact grid view with only cover
+         * `list` - list view with title and cover
+         */
+        galleryDisplayMode: z.union([
+            z.literal("normal"),
+            z.literal("compact"),
+            z.literal("cover-only"),
+            z.literal("list"),
+        ]),
+        /**
+         * width of gallery item in em
+         */
+        galleryItemWidth: z.number().min(10).max(30),
         /**
          * Open chapter in reader directly, one folder inside of base manga dir.
          */
@@ -257,12 +280,17 @@ const settingSchema = z
     .default({
         baseDir: window.electron.app.getPath("home"),
         customStylesheet: "",
+        homeViewMode: "classic",
         locationListSortType: "normal",
         locationListSortBy: "name",
         bookListSortType: "normal",
         bookListSortBy: "date",
         historyListSortType: "normal",
         historyListSortBy: "date",
+        gallerySortType: "normal",
+        gallerySortBy: "name",
+        galleryDisplayMode: "normal",
+        galleryItemWidth: 16,
         openDirectlyFromManga: false,
         showTabs: {
             bookmark: true,

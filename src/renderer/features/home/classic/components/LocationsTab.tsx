@@ -1,13 +1,13 @@
-import LocationListItem from "@features/home/components/LocationListItem";
+import LocationListItem from "@features/home/classic/components/LocationListItem";
 import { faAngleUp, faSort } from "@fortawesome/free-solid-svg-icons";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
+import ListNavigator from "@renderer/components/ListNavigator";
 import { setAppSettings } from "@store/appSettings";
 import { useAppDispatch, useAppSelector } from "@store/hooks";
 import { dialogUtils } from "@utils/dialog";
 import { formatUtils, promptSelectDir } from "@utils/file";
 import { type ReactElement, useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useAppContext } from "src/renderer/App";
-import ListNavigator from "../../../components/ListNavigator";
 
 type LocationData = { name: string; link: string; dateModified: number };
 

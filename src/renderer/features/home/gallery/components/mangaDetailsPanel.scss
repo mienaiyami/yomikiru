@@ -1,0 +1,484 @@
+.manga-details-panel {
+    width: 100%;
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+    background-color: var(--body-bg-color);
+    color: var(--font-color);
+    overflow: hidden;
+
+    .top-bar {
+        height: 60px;
+        display: flex;
+        align-items: center;
+        padding: 0 20px;
+        background-color: var(--topBar-color);
+        border-bottom: 1px solid var(--divider-color);
+
+        .back-button {
+            background: none;
+            border: none;
+            font-size: 1.2rem;
+            color: var(--font-color);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            width: 36px;
+            aspect-ratio: 1;
+            border-radius: 50%;
+            cursor: pointer;
+
+            &:hover {
+                background-color: var(--topBar-btn-hover);
+            }
+        }
+
+        .manga-title {
+            margin-left: 15px;
+            font-size: 1.5rem;
+            font-weight: 500;
+            flex: 1;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+    }
+
+    .panel-content {
+        display: flex;
+        flex: 1;
+        overflow: hidden;
+
+        // Left panel with manga info
+        .left-panel {
+            width: 50%;
+            height: 100%;
+            display: flex;
+            flex-direction: column;
+            overflow-y: auto;
+            border-right: 1px solid var(--divider-color);
+            background-color: var(--listItem-bg-color);
+            padding: 0;
+
+            .manga-meta {
+                display: grid;
+                grid-template-columns: 1fr 1fr;
+                padding: 20px;
+                place-items: center;
+                .cover-container {
+                    width: 100%;
+                    height: 100%;
+                    display: flex;
+                    align-items: center;
+                    justify-content: center;
+                    margin-bottom: 0;
+
+                    .manga-cover {
+                        // max-width: 180px;
+                        max-height: min(50vh, 500px);
+                        width: auto;
+                        // height: auto;
+                        object-fit: cover;
+                        border-radius: 6px;
+                        box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+                    }
+
+                    .cover-placeholder {
+                        // width: 180px;
+                        // height: 260px;
+                        background-color: var(--listItem-bg-color-hover);
+                        border-radius: 6px;
+                        display: flex;
+                        align-items: center;
+                        justify-content: center;
+                        font-size: 72px;
+                        color: var(--font-color);
+                        box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+                    }
+                }
+
+                .manga-info {
+                    display: flex;
+                    flex-direction: column;
+                    width: 100%;
+                    margin: 0;
+                    padding: 15px;
+                    font-size: 1.2rem;
+
+                    .info-row {
+                        display: flex;
+                        padding: 8px 0;
+                        border-bottom: 1px solid var(--divider-color);
+
+                        &:last-child {
+                            border-bottom: none;
+                        }
+
+                        .info-label {
+                            font-weight: 500;
+                            min-width: 110px;
+                            color: var(--font-color-secondary);
+                        }
+
+                        .info-value {
+                            flex: 1;
+                            text-align: right;
+                        }
+                    }
+                }
+            }
+            .manga-actions-container {
+                display: grid;
+                grid-template-columns: 1fr 1fr;
+                gap: 10px;
+                border-top: 1px solid var(--divider-color);
+
+                .manga-actions {
+                    display: flex;
+                    flex-direction: column;
+                    gap: 8px;
+                    margin: 0;
+                    padding: 15px;
+
+                    .action-button {
+                        border: none;
+                        border-radius: 4px;
+                        padding: 10px 15px;
+                        font-size: 0.95rem;
+                        cursor: pointer;
+                        display: flex;
+                        align-items: center;
+                        justify-content: center;
+                        gap: 8px;
+                        background-color: var(--btn-color);
+                        color: var(--font-color);
+                        height: 40px;
+
+                        &:hover {
+                            background-color: var(--btn-color-hover);
+                        }
+
+                        &.continue-reading {
+                            font-weight: 500;
+                            background-color: var(--btn-color-focus);
+                        }
+                    }
+                }
+
+                .manga-note {
+                    margin-top: 0;
+                    padding: 15px;
+                    flex: 1;
+                    display: flex;
+                    flex-direction: column;
+
+                    h3 {
+                        font-size: 1.1rem;
+                        margin-bottom: 10px;
+                    }
+
+                    .note-text {
+                        white-space: pre-wrap;
+                        flex: 1;
+                        overflow-y: auto;
+                        line-height: 1.5;
+                        font-size: 0.9rem;
+                    }
+
+                    .note-editor {
+                        width: 100%;
+                        flex: 1;
+                        min-height: 150px;
+                        padding: 10px;
+                        border: 1px solid var(--divider-color);
+                        border-radius: 4px;
+                        resize: none;
+                        font-family: inherit;
+                        font-size: 0.9rem;
+                        background-color: var(--text-input-bg);
+                        color: var(--font-color);
+
+                        &:focus {
+                            outline: none;
+                            border-color: var(--btn-color);
+                            background-color: var(--text-input-bg-focus);
+                        }
+                    }
+                }
+            }
+        }
+
+        // Right panel with chapters and bookmarks
+        .right-panel {
+            width: 50%;
+            height: 100%;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+
+            .panel-tabs {
+                display: flex;
+                background-color: var(--topBar-color);
+                border-bottom: 1px solid var(--divider-color);
+
+                .tab-button {
+                    flex: 1;
+                    border: none;
+                    background: none;
+                    font-size: 1rem;
+                    padding: 15px;
+                    cursor: pointer;
+                    color: var(--font-color);
+                    transition: all 0.2s ease-in-out;
+
+                    &:hover {
+                        background-color: var(--topBar-btn-hover);
+                    }
+
+                    &.active {
+                        font-weight: 500;
+                        box-shadow: inset 0 -3px 0 var(--btn-color);
+                    }
+                }
+            }
+
+            .chapters-header {
+                padding: 15px 20px;
+                background-color: var(--body-bg-color);
+                border-bottom: 1px solid var(--divider-color);
+
+                .chapters-title {
+                    font-size: 1.1rem;
+                    font-weight: 500;
+                }
+            }
+
+            .chapters-toolbar {
+                display: flex;
+                gap: 8px;
+                align-items: center;
+                padding: 8px;
+                background-color: var(--topBar-color);
+                border-bottom: 1px solid var(--divider-color);
+
+                .search-input {
+                    flex: 1;
+                    // max-width: 300px;
+                    margin-left: auto;
+                    padding: 8px 12px;
+                    border: 1px solid var(--divider-color);
+                    border-radius: 4px;
+                    font-size: 1.3rem;
+                    background-color: var(--text-input-bg);
+                    color: var(--font-color);
+
+                    &:focus {
+                        outline: none;
+                        border-color: var(--btn-color);
+                        background-color: var(--text-input-bg-focus);
+                    }
+                }
+
+                .toolbar-actions {
+                    display: flex;
+                    gap: 8px;
+
+                    button {
+                        background: none;
+                        border: none;
+                        border-radius: 4px;
+                        height: 100%;
+                        width: 3rem;
+                        aspect-ratio: 1;
+                        display: flex;
+                        align-items: center;
+                        justify-content: center;
+                        cursor: pointer;
+                        color: var(--font-color);
+
+                        &:hover {
+                            background-color: var(--topBar-btn-hover);
+                        }
+                    }
+                }
+            }
+
+            .chapters-list {
+                flex: 1;
+                overflow-y: auto;
+                padding: 0;
+
+                .empty-message {
+                    padding: 20px;
+                    text-align: center;
+                    color: var(--font-color-secondary);
+                }
+
+                // Chapter item styling
+                .chapter-item {
+                    display: flex;
+                    align-items: center;
+                    justify-content: space-between;
+                    padding: 14px 20px;
+                    border-bottom: 1px solid var(--divider-color);
+                    cursor: pointer;
+
+                    &:hover {
+                        background-color: var(--listItem-bg-color-hover);
+                    }
+
+                    &.selected {
+                        background-color: var(--listItem-bg-color-hover);
+                    }
+
+                    &.read > * {
+                        // color: var(--font-color-secondary);
+                        opacity: 0.3;
+
+                        // &:hover {
+                        //     background-color: var(--listItem-bg-color-hover);
+                        //     opacity: 1;
+                        // }
+                    }
+
+                    &.current {
+                        font-weight: 500;
+                        background-color: var(--listItem-bg-color-current);
+
+                        &:hover {
+                            background-color: var(--listItem-bg-color-hover);
+                        }
+                    }
+
+                    .chapter-name {
+                        flex: 1;
+                        white-space: nowrap;
+                        overflow: hidden;
+                        text-overflow: ellipsis;
+                        margin-right: 10px;
+                    }
+
+                    .chapter-meta {
+                        display: flex;
+                        align-items: center;
+                        gap: 12px;
+                        min-width: 60px;
+                        justify-content: flex-end;
+
+                        .file-ext {
+                            background-color: var(--code-bg-color);
+                            color: var(--code-text-color);
+                            padding: 2px 6px;
+                            border-radius: 4px;
+                            font-size: 12px;
+                        }
+
+                        .page-count {
+                            font-size: 14px;
+                            color: var(--font-color-secondary);
+                            min-width: 18px;
+                            text-align: right;
+                        }
+
+                        .read-indicator,
+                        .current-indicator {
+                            font-size: 14px;
+                            width: 18px;
+                            text-align: center;
+
+                            svg {
+                                vertical-align: middle;
+                            }
+                        }
+
+                        .read-indicator {
+                            color: var(--font-color-secondary);
+                        }
+
+                        .current-indicator {
+                            color: var(--btn-color);
+                        }
+                    }
+                }
+
+                // Bookmark item styling
+                .bookmark-item {
+                    padding: 14px 20px;
+                    border-bottom: 1px solid var(--divider-color);
+                    cursor: pointer;
+                    transition: background-color 0.15s;
+
+                    &:hover {
+                        background-color: var(--listItem-bg-color-hover);
+                    }
+
+                    &.selected {
+                        background-color: var(--listItem-bg-color-hover);
+                    }
+
+                    .bookmark-content {
+                        display: flex;
+                        flex-direction: column;
+                        gap: 5px;
+
+                        .bookmark-header {
+                            display: flex;
+                            align-items: center;
+
+                            .bookmark-icon {
+                                color: var(--btn-color);
+                                margin-right: 10px;
+                            }
+
+                            .bookmark-chapter {
+                                flex: 1;
+                                font-weight: 500;
+                            }
+
+                            .bookmark-page {
+                                font-size: 0.9em;
+                                color: var(--font-color-secondary);
+                            }
+                        }
+
+                        .bookmark-date {
+                            font-size: 0.8em;
+                            color: var(--font-color-secondary);
+                        }
+
+                        .bookmark-note {
+                            margin-top: 5px;
+                            font-size: 0.9em;
+                            color: var(--font-color);
+                            white-space: pre-wrap;
+                            line-height: 1.4;
+                            padding-left: 24px;
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    @media (max-width: 1024px) {
+        .panel-content {
+            flex-direction: column;
+
+            .left-panel,
+            .right-panel {
+                width: 100%;
+                height: auto;
+            }
+
+            .left-panel {
+                max-height: 50%;
+                border-right: none;
+                border-bottom: 1px solid var(--divider-color);
+            }
+
+            .right-panel {
+                height: 50%;
+            }
+        }
+    }
+}

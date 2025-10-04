@@ -7,14 +7,8 @@ import LocationsTab from "./components/LocationsTab";
 const ClassicView: React.FC = () => {
     const dispatch = useAppDispatch();
     const showTabs = useAppSelector((store) => store.appSettings.showTabs);
-    const isReaderActive = useAppSelector((store) => store.reader.active);
     return (
-        <div
-            className="tabCont"
-            style={{
-                display: isReaderActive ? "none" : "flex",
-            }}
-        >
+        <div className="tabCont">
             <LocationsTab />
             <div
                 className="divider"

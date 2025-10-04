@@ -4,6 +4,8 @@
 
 // window.logger = log;
 
+import { formatUtils } from "./file";
+
 export const getCSSPath = (el: Element): string => {
     if (!(el instanceof Element)) return "";
     const path = [] as string[];
@@ -32,6 +34,28 @@ export const getCSSPath = (el: Element): string => {
 window.app.betterSortOrder = Intl.Collator(undefined, { numeric: true, sensitivity: "base" }).compare;
 window.app.deleteDirOnClose = "";
 window.sleep = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
+
+/**
+ * Finds a cover image in the given manga directory
+ * @param dirPath The path to the manga directory
+ * @returns The path to the cover image if found, empty string otherwise
+ */
+export const findCover = (dirPath: string): string => {
+    let realCover = "";
+    const possibleCoverNames = formatUtils.image.list.map((e) => `cover${e}`).concat("cover");
+    try {
+        for (const file of possibleCoverNames) {
+            const filePath = window.path.join(dirPath, file);
+            if (window.fs.isFile(filePath)) {
+                realCover = filePath;
+                break;
+            }
+        }
+    } catch (e) {
+        console.error(e);
+    }
+    return realCover;
+};
 
 //@ts-expect-error
 window.contextMenu = {

@@ -2,7 +2,13 @@ import type { BookProgress } from "@common/types/db";
 import { setAppSettings, setEpubReaderSettings, setReaderSettings } from "@store/appSettings";
 import { addNote } from "@store/bookNotes";
 import { useAppDispatch, useAppSelector } from "@store/hooks";
-import { addLibraryItem, selectLibraryItem, updateBookProgress, updateCurrentItemProgress } from "@store/library";
+import {
+    addLibraryItem,
+    selectLibraryItem,
+    updateBookProgress,
+    updateCurrentItemProgress,
+    updateLibraryItem,
+} from "@store/library";
 import {
     getReaderBook,
     setReaderLoading,
@@ -298,6 +304,15 @@ const EPubReader: React.FC = () => {
                         updateReaderContent({
                             ...libraryItem,
                             progress,
+                        }),
+                    );
+                    // updating in case cover,title,author detection logic changes
+                    await dispatch(
+                        updateLibraryItem({
+                            link,
+                            author: ed.metadata.author,
+                            cover: ed.metadata.cover,
+                            title: ed.metadata.title,
                         }),
                     );
                     await dispatch(updateBookProgress(progress));

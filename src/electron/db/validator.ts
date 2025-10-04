@@ -31,6 +31,13 @@ export const AddToLibrarySchema = z.discriminatedUnion("type", [
     }),
 ]);
 
+export const UpdateLibraryItemSchema = z.object({
+    link: z.string(),
+    title: z.string().optional(),
+    cover: z.string().optional(),
+    author: z.string().optional(),
+});
+
 export const AddMangaBookmarkSchema = createInsertSchema(mangaBookmarks).omit({
     id: true,
     createdAt: true,

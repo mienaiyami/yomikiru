@@ -2,7 +2,13 @@ import type { MangaProgress } from "@common/types/db";
 import { setAnilistCurrentManga } from "@store/anilist";
 import { setAppSettings, setReaderSettings } from "@store/appSettings";
 import { useAppDispatch, useAppSelector } from "@store/hooks";
-import { addLibraryItem, selectLibraryItem, updateChaptersRead, updateMangaProgress } from "@store/library";
+import {
+    addLibraryItem,
+    selectLibraryItem,
+    updateChaptersRead,
+    updateLibraryItem,
+    updateMangaProgress,
+} from "@store/library";
 import {
     getReaderMangaState,
     setReaderLoading,
@@ -13,6 +19,7 @@ import {
 import AniList from "@utils/anilist";
 import { formatUtils } from "@utils/file";
 import { keyFormatter } from "@utils/keybindings";
+import { findCover } from "@utils/utils";
 import { Fragment, useCallback, useEffect, useLayoutEffect, useRef, useState } from "react";
 import { InView } from "react-intersection-observer";
 import { useAppContext } from "../../../App";
@@ -619,10 +626,27 @@ const Reader: React.FC = () => {
             totalPages: imgs.length,
             chaptersRead: [],
         };
-        if (libraryItem && libraryItem.type === "manga") {
+
+        // Find cover using the utility function
+        const mangaDir = window.path.dirname(link);
+        const realCover = findCover(mangaDir);
+
+        // libraryItem.progress is not null when manga is opened from library
+        // this is just a guard to prevent errors when somehow this is null
+        // because it result in manga opening properly but not showing in history/bookmarks
+        if (libraryItem && libraryItem.type === "manga" && libraryItem.progress) {
             progress.chaptersRead = Array.from(libraryItem.progress?.chaptersRead || []);
             progress.chaptersRead.push(window.path.basename(link));
 
+            // in case original cover deleted
+            if (realCover || !window.fs.isFile(libraryItem.cover || "")) {
+                dispatch(
+                    updateLibraryItem({
+                        link: window.path.dirname(link),
+                        cover: realCover || imgs[0],
+                    }),
+                );
+            }
             dispatch(
                 updateReaderContent({
                     ...libraryItem,
@@ -636,7 +660,7 @@ const Reader: React.FC = () => {
                 link: window.path.dirname(link),
                 title: linkSplitted[linkSplitted.length - 2],
                 author: null,
-                cover: imgs[0],
+                cover: realCover || imgs[0],
                 createdAt: new Date(),
                 updatedAt: new Date(),
             } as const;
@@ -786,6 +810,7 @@ const Reader: React.FC = () => {
     useEffect(() => {
         //todo use just src for image and canvas, add canvas using element outside
         appSettings.useCanvasBasedReader &&
+            // biome-ignore lint/style/noNonNullAssertion: <section.imgCont is guaranteed to be defined>
             [...document.querySelector("section.imgCont")!.children].forEach((e, i) => {
                 imageRow[i].i.forEach((canvasIndex) => {
                     const elem = imageData[canvasIndex].img;
@@ -1213,6 +1238,17 @@ const Reader: React.FC = () => {
                                 window.contextMenu.template.copyImage(src),
                                 window.contextMenu.template.copyPath(src),
                                 window.contextMenu.template.showInExplorer(src),
+                                {
+                                    label: "Make Cover",
+                                    action() {
+                                        dispatch(
+                                            updateLibraryItem({
+                                                link: window.path.dirname(linkInReader),
+                                                cover: src || "",
+                                            }),
+                                        );
+                                    },
+                                },
                             );
                         else
                             items.push(

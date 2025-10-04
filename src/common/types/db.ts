@@ -14,6 +14,7 @@ import type {
     AddMangaBookmarkSchema,
     AddToLibrarySchema,
     UpdateBookProgressSchema,
+    UpdateLibraryItemSchema,
     UpdateMangaProgressSchema,
 } from "../../electron/db/validator";
 
@@ -35,6 +36,7 @@ export type LibraryItemWithProgress =
 // zod schemas are required for these because even unspecified fields get passed
 // through the typescript type system
 export type AddToLibraryData = z.infer<typeof AddToLibrarySchema>;
+export type UpdateLibraryItemData = z.infer<typeof UpdateLibraryItemSchema>;
 export type AddMangaBookmarkData = z.infer<typeof AddMangaBookmarkSchema>;
 export type AddBookBookmarkData = z.infer<typeof AddBookBookmarkSchema>;
 export type AddBookNoteData = z.infer<typeof AddBookNoteSchema>;
