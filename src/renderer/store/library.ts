@@ -38,6 +38,12 @@ export const addLibraryItem = createAsyncThunk(
         return await window.electron.invoke("db:library:addItem", args);
     },
 );
+export const updateLibraryItem = createAsyncThunk(
+    "library/updateItem",
+    async (args: DatabaseChannels["db:library:updateItem"]["request"]) => {
+        return await window.electron.invoke("db:library:updateItem", args);
+    },
+);
 
 export const updateMangaProgress = createAsyncThunk(
     "library/updateMangaProgress",

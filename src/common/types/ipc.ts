@@ -12,6 +12,7 @@ import type {
     MangaBookmark,
     MangaProgress,
     UpdateBookProgressData,
+    UpdateLibraryItemData,
     UpdateMangaProgressData,
 } from "./db";
 
@@ -32,6 +33,7 @@ export type DatabaseChannels = {
     "db:library:getItem": ChannelDefinition<{ link: string }, LibraryItem | null>;
     "db:library:getAllAndProgress": ChannelDefinition<void, LibraryItemWithProgress[]>;
     "db:library:addItem": ChannelDefinition<AddToLibraryData, LibraryItem>;
+    "db:library:updateItem": ChannelDefinition<UpdateLibraryItemData, LibraryItem | null>;
     "db:library:deleteItem": ChannelDefinition<{ link: string }, boolean>;
     "db:library:getAllBookmarks": ChannelDefinition<
         void,

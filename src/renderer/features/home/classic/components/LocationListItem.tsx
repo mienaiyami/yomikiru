@@ -1,9 +1,9 @@
+import ListItem from "@renderer/components/ListItem";
 import { useAppSelector } from "@store/hooks";
 import { dialogUtils } from "@utils/dialog";
 import { formatUtils } from "@utils/file";
 import type { ReactElement } from "react";
 import { useAppContext } from "src/renderer/App";
-import ListItem from "../../../components/ListItem";
 
 const LocationListItem = ({
     name,

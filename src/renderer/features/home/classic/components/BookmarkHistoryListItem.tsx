@@ -1,4 +1,5 @@
 import type { BookBookmark, MangaBookmark } from "@common/types/db";
+import ListItem from "@renderer/components/ListItem";
 import { addBookmark, removeBookmark } from "@store/bookmarks";
 import { useAppDispatch, useAppSelector } from "@store/hooks";
 import { deleteLibraryItem } from "@store/library";
@@ -6,7 +7,6 @@ import dateUtils from "@utils/date";
 import { dialogUtils } from "@utils/dialog";
 import { formatUtils } from "@utils/file";
 import { useAppContext } from "src/renderer/App";
-import ListItem from "../../../components/ListItem";
 
 const BookmarkHistoryListItem: React.FC<{
     focused: boolean;

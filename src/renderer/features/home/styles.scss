@@ -1,0 +1,356 @@
+.homeContainer {
+    width: 100%;
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+}
+
+.galleryView {
+    width: 100%;
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+
+    // feed in react
+    --galleryItemWidth: 16em;
+
+    .galleryToolbar {
+        position: absolute;
+        z-index: 100000000000;
+        -webkit-app-region: no-drag;
+        // width: 100%;
+        height: var(--titleBar-height);
+        left: 50%;
+        transform: translateX(-50%);
+        top: calc(var(--titleBar-height) * -1);
+
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        gap: 8px;
+        background-color: var(--topBar-color);
+
+        > div {
+            display: flex;
+            // gap: 8px;
+            align-items: center;
+            height: 100%;
+        }
+
+        button {
+            background: none;
+            border: none;
+            padding: 0;
+            cursor: pointer;
+            border-radius: 4px;
+            aspect-ratio: 1/1;
+            height: 100%;
+            color: var(--font-color);
+            border-radius: 0;
+
+            &:hover {
+                background-color: var(--topBar-btn-hover);
+            }
+        }
+
+        .search-input {
+            width: 500px;
+            padding: 6px 10px;
+            font-size: 1.2em;
+            border-radius: 4px;
+            // border: 1px solid var(--divider-color);
+            // background-color: var(--text-input-bg);
+            color: var(--font-color);
+
+            &:focus {
+                outline: transparent;
+                // border-color: var(--btn-color);
+                // background-color: var(--text-input-bg-focus);
+            }
+        }
+
+        &.hidden {
+            display: none;
+        }
+    }
+
+    .galleryContent {
+        display: flex;
+        // height: calc(100% - 52px); // Account for the toolbar
+        height: 100%;
+        overflow: hidden;
+        &.with-details {
+            .libraryGrid {
+                display: none;
+            }
+        }
+        .libraryGrid {
+            flex: 1;
+            overflow-y: auto;
+            padding: 16px;
+            .empty-message {
+                font-size: 2em;
+                text-align: center;
+                margin-top: 100px;
+            }
+
+            .galleryList {
+                display: grid;
+                grid-template-columns: repeat(auto-fill, minmax(var(--galleryItemWidth), 1fr));
+                gap: 16px;
+                list-style-type: none;
+                &.list {
+                    display: flex;
+                    flex-direction: column;
+                    padding-inline: 4em;
+                    .galleryItem {
+                        height: 6em;
+                        display: grid;
+                        grid-template-columns: 4em 1fr;
+                        gap: 1em;
+                        text-align: left;
+                        padding: 0.5em;
+                        &:hover {
+                            scale: 1;
+                            background-color: var(--listItem-bg-color-hover);
+                        }
+                        .epubBadge,
+                        .continueReadingBtn {
+                            display: none;
+                        }
+                        .mangaTitle {
+                            align-items: center;
+                            font-size: 1.2em;
+                            justify-content: start;
+                            -webkit-line-clamp: 1;
+                        }
+                    }
+                }
+            }
+
+            .galleryItem {
+                cursor: pointer;
+                border-radius: 8px;
+                overflow: hidden;
+                transition:
+                    transform 0.2s,
+                    box-shadow 0.2s;
+                box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+                position: relative;
+
+                transition: scale 0.1s ease-in-out;
+                transform-style: preserve-3d;
+                &:hover {
+                    // transform: translateY(-4px);
+                    scale: 1.01;
+                    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+                }
+
+                &.selected {
+                    box-shadow: 0 0 0 4px var(--btn-color);
+                    outline: 4px transparent;
+                    scale: 1.01;
+                }
+
+                .coverContainer {
+                    position: relative;
+                    aspect-ratio: 2/3;
+                    border-radius: 8px;
+                    overflow: hidden;
+                    background-color: var(--listItem-bg-color);
+
+                    img {
+                        width: 100%;
+                        height: 100%;
+                        object-fit: cover;
+                    }
+
+                    .blankCover {
+                        display: flex;
+                        align-items: center;
+                        justify-content: center;
+                        width: 100%;
+                        height: 100%;
+                        font-size: 32px;
+                        color: var(--font-color);
+                        background-color: var(--listItem-bg-color-hover);
+                    }
+                }
+
+                .mangaTitle {
+                    padding: 0.4em;
+                    padding-bottom: 0.2em;
+                    display: flex;
+                    align-items: end;
+                    text-align: center;
+                    justify-content: center;
+                    &.compact {
+                        position: absolute;
+                        bottom: 0;
+                        left: 0;
+                        right: 0;
+                        height: 50%;
+                        padding: 0.6em;
+                        .bg {
+                            position: absolute;
+                            inset: 0;
+                            z-index: 1;
+                            background: linear-gradient(to bottom, transparent 0%, var(--divider-color) 100%);
+                            // opacity: 0.9;
+                        }
+                        span:not(.bg) {
+                            z-index: 2;
+                        }
+                    }
+                    span {
+                        // text-overflow: ellipsis;
+                        /* white-space: nowrap; */
+                        -webkit-line-clamp: 2;
+                        display: -webkit-box;
+                        // word-break: break-all;
+                        -webkit-box-orient: vertical;
+                        overflow: hidden;
+                        font-size: 1em;
+                        // background-color: var(--listItem-bg-color);
+                    }
+                }
+
+                .readStatus {
+                    position: absolute;
+                    top: 8px;
+                    right: 8px;
+
+                    .readIndicator {
+                        display: flex;
+                        align-items: center;
+                        justify-content: center;
+                        width: 24px;
+                        height: 24px;
+                        border-radius: 50%;
+                        background-color: var(--btn-color);
+                        color: var(--btn-color-hover);
+                        font-size: 12px;
+                    }
+                }
+                .epubBadge {
+                    position: absolute;
+                    top: 2%;
+                    left: 2%;
+                    background-color: var(--btn-color);
+                    color: var(--icon-color);
+                    z-index: 10;
+                    font-size: 12px;
+                    padding: 0.4em;
+                    border-radius: 4px;
+                }
+                &:hover {
+                    .continueReadingBtn {
+                        display: flex;
+                    }
+                }
+                .continueReadingBtn {
+                    display: none;
+                    position: absolute;
+                    top: 2%;
+                    right: 2%;
+                    border-radius: 100%;
+                    aspect-ratio: 1/1;
+                    // using % is better coz item size is dynamic
+                    width: 20%;
+                    padding: 1em;
+                    font-size: 1.2em;
+                    align-items: center;
+                    justify-content: center;
+                }
+            }
+        }
+
+        .mangaDetailsPanel {
+            width: 300px;
+            height: 100%;
+            border-left: 1px solid var(--divider-color);
+            overflow-y: auto;
+            background-color: var(--listItem-bg-color);
+
+            .mangaInfo {
+                padding: 16px;
+                border-bottom: 1px solid var(--divider-color);
+
+                h3 {
+                    margin-bottom: 8px;
+                    font-size: 18px;
+                }
+
+                p {
+                    color: var(--font-color);
+                    font-size: 14px;
+                }
+            }
+
+            .detailTabs {
+                display: flex;
+                border-bottom: 1px solid var(--divider-color);
+
+                button {
+                    flex: 1;
+                    padding: 12px;
+                    background: none;
+                    border: none;
+                    cursor: pointer;
+                    color: var(--font-color);
+
+                    &.active {
+                        font-weight: bold;
+                        border-bottom: 2px solid var(--btn-color);
+                    }
+                }
+            }
+
+            .tabContent {
+                height: calc(100% - 150px);
+                overflow-y: auto;
+
+                .emptyState {
+                    padding: 16px;
+                    text-align: center;
+                    color: var(--font-color);
+                    opacity: 0.5;
+                }
+
+                .chapterItem {
+                    display: flex;
+                    justify-content: space-between;
+                    align-items: center;
+                    padding: 10px 16px;
+                    cursor: pointer;
+                    border-bottom: 1px solid var(--divider-color);
+
+                    &:hover {
+                        background-color: var(--listItem-bg-color-hover);
+                    }
+
+                    &.read {
+                        background-color: var(--listItem-bg-color-read);
+                    }
+
+                    .chapterName {
+                        flex: 1;
+                        text-overflow: ellipsis;
+                        white-space: nowrap;
+                        overflow: hidden;
+                    }
+
+                    .chapterExt {
+                        flex-shrink: 0;
+                        padding: 2px 6px;
+                        margin-left: 8px;
+                        border-radius: 4px;
+                        background-color: var(--code-bg-color);
+                        color: var(--code-text-color);
+                        font-size: 12px;
+                    }
+                }
+            }
+        }
+    }
+}

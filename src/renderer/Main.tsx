@@ -1,7 +1,7 @@
 import AniLogin from "@features/anilist/AniLogin";
 import AnilistEdit from "@features/anilist/AnilistEdit";
 import AnilistSearch from "@features/anilist/AnilistSearch";
-import ClassicView from "@features/home/ClassicView";
+import HomeView from "@features/home";
 import EPubReader from "@features/reader/epub/EPubReader";
 import Reader from "@features/reader/manga/Reader";
 import Settings from "@features/settings/Settings";
@@ -34,7 +34,7 @@ const Main = (): ReactElement => {
 
     return (
         <div id="app" className={appSettings.disableListNumbering ? "noListNumbering " : ""}>
-            <ClassicView />
+            <HomeView />
             <Settings />
             <LoadingScreen />
             {contextMenuData && <ContextMenu />}

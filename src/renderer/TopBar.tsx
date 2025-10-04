@@ -1,12 +1,15 @@
 import {
     faCog,
+    faGrip,
     faHome,
+    faList,
     faMinus,
     faTimes,
     faWindowMaximize,
     faWindowRestore,
 } from "@fortawesome/free-solid-svg-icons";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
+import { setAppSettings } from "@store/appSettings";
 import { useAppDispatch, useAppSelector } from "@store/hooks";
 import { setSysBtnColor } from "@store/themes";
 import { setSettingsOpen, toggleSettingsOpen } from "@store/ui";
@@ -103,6 +106,16 @@ const TopBar = (): ReactElement => {
         setTitleWithSize();
     }, [readerContent]);
 
+    const viewMode = useAppSelector((store) => store.appSettings.homeViewMode);
+    // todo: temp only, extract to component
+    const toggleViewMode = () => {
+        dispatch(
+            setAppSettings({
+                homeViewMode: viewMode === "classic" ? "gallery" : "classic",
+            }),
+        );
+    };
+
     return (
         <div id="topBar">
             <div className="titleDragable"></div>
@@ -130,6 +143,27 @@ const TopBar = (): ReactElement => {
                 >
                     <FontAwesomeIcon icon={faCog} />
                 </button>
+                <div className="viewToggle">
+                    {viewMode === "gallery" ? (
+                        <button
+                            onClick={toggleViewMode}
+                            tabIndex={-1}
+                            onFocus={(e) => e.currentTarget.blur()}
+                            data-tooltip="List View"
+                        >
+                            <FontAwesomeIcon icon={faList} />
+                        </button>
+                    ) : (
+                        <button
+                            onClick={toggleViewMode}
+                            tabIndex={-1}
+                            onFocus={(e) => e.currentTarget.blur()}
+                            data-tooltip="Gallery View (Experimental)"
+                        >
+                            <FontAwesomeIcon icon={faGrip} />
+                        </button>
+                    )}
+                </div>
             </div>
             <div className="mainTitleCont">
                 <div className="title">{title}</div>
