@@ -14,7 +14,17 @@
 >
 > We are actively working on a permanent solution to this issue. For more information, see <https://github.com/mienaiyami/yomikiru/discussions/451>
 
-# 2.21.2
+# 2.22.0
+
+- feat: improve directory flattening and error handling for unrar command, fix: #465 & #352.
+- fix: #464.
+- fix: #460, fix chapter data fetching and sorting logic, fix prev/next chapter selection logic.
+- refactor: enhance update installation process with user prompts and improved handling of installation on quit.
+- fix: temporary fix for #450, #451.
+- chore(dev): migrate to biomejs.
+- feat(dev): implement global error handling and reporting system.
+
+## 2.21.2
 
 - fix: add file exists check for each old settings file, #453.
 - fix(test): update GitHub Actions runner to ubuntu-22.04 (GLIBC version 2.35), #452.
