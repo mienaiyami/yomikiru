@@ -2,120 +2,142 @@ name: make and release
 run-name: Make and Release
 
 permissions:
-    contents: write
-    discussions: write
+  contents: write
+  discussions: write
 
 # on: workflow_dispatch
 on:
-    push:
-        tags:
-            - "v*"
-    # this is only in case when action fails, and no new release is made
-    # ! this actions only when when no release with same version and tag exists
-    workflow_dispatch:
+  push:
+    tags:
+      - "v*"
+  # this is only in case when action fails, and no new release is made
+  # ! this actions only when when no release with same version and tag exists
+  workflow_dispatch:
 
 jobs:
-    buildLinux:
-        runs-on: ubuntu-22.04
-        steps:
-            - uses: actions/checkout@v4
+  wait-for-ci:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Wait for CI to complete
+        uses: lewagon/wait-on-check-action@v1.3.4
+        with:
+          ref: ${{ github.ref }}
+          check-name: "lint-and-type-check"
+          repo-token: ${{ secrets.GITHUB_TOKEN }}
+          wait-interval: 10
 
-            - uses: pnpm/action-setup@v4
-              name: Setup pnpm
-              with:
-                  run_install: false
+      - name: Wait for CodeQL to complete
+        uses: lewagon/wait-on-check-action@v1.3.4
+        with:
+          ref: ${{ github.ref }}
+          check-name: "codeql"
+          repo-token: ${{ secrets.GITHUB_TOKEN }}
+          wait-interval: 10
 
-            - name: Use Node.js
-              uses: actions/setup-node@v4
-              with:
-                  node-version: 18.15.0
-                  cache: pnpm
+  buildLinux:
+    needs: wait-for-ci
+    runs-on: ubuntu-22.04
+    steps:
+      - uses: actions/checkout@v4
 
-            - name: Install dependencies
-              run: pnpm install
+      - uses: pnpm/action-setup@v4
+        name: Setup pnpm
+        with:
+          version: 10
+          run_install: false
 
-            - name: forge make deb
-              run: pnpm make:deb
+      - name: Use Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 18.15.0
+          cache: pnpm
 
-            - name: Set version
-              id: version
-              run: |
-                  if [[ $GITHUB_REF == refs/tags/v* ]]; then
-                    VERSION=${GITHUB_REF#refs/tags/}
-                  else
-                    VERSION="v$(node -p "require('./package.json').version")"
-                  fi
-                  echo "version=$VERSION" >> $GITHUB_OUTPUT
+      - name: Install dependencies
+        run: pnpm install
 
-            - uses: actions/upload-artifact@v4
-              with:
-                  name: linux-build-files
-                  path: ./out/all/*
-                  if-no-files-found: error
+      - name: forge make deb
+        run: pnpm make:deb
 
-    build:
-        needs: buildLinux
-        runs-on: windows-latest
-        steps:
-            - uses: actions/checkout@v4
+      - name: Set version
+        id: version
+        run: |
+          if [[ $GITHUB_REF == refs/tags/v* ]]; then
+            VERSION=${GITHUB_REF#refs/tags/}
+          else
+            VERSION="v$(node -p "require('./package.json').version")"
+          fi
+          echo "version=$VERSION" >> $GITHUB_OUTPUT
 
-            - uses: pnpm/action-setup@v4
-              name: Setup pnpm
-              with:
-                  run_install: false
+      - uses: actions/upload-artifact@v4
+        with:
+          name: linux-build-files
+          path: ./out/all/*
+          if-no-files-found: error
 
-            - name: Use Node.js
-              uses: actions/setup-node@v4
-              with:
-                  node-version: 18.15.0
-                  cache: pnpm
+  build:
+    needs: buildLinux
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
 
-            - name: Install dependencies
-              run: pnpm install
+      - uses: pnpm/action-setup@v4
+        name: Setup pnpm
+        with:
+          version: 10
+          run_install: false
 
-            - uses: actions/download-artifact@v4
-              id: linux-build-files-downloader
-              with:
-                  name: linux-build-files
-                  path: ./out/all/
+      - name: Use Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 18.15.0
+          cache: pnpm
 
-            - name: Build for windows
-              run: |
-                  pnpm make:win32
-                  pnpm make:win64
+      - name: Install dependencies
+        run: pnpm install
 
-            - name: Set version
-              id: version
-              shell: bash
-              run: |
-                  if [[ $GITHUB_REF == refs/tags/v* ]]; then
-                    VERSION=${GITHUB_REF#refs/tags/}
-                  else
-                    VERSION="v$(node -p "require('./package.json').version")"
-                  fi
-                  echo "version=$VERSION" >> $GITHUB_OUTPUT
+      - uses: actions/download-artifact@v4
+        id: linux-build-files-downloader
+        with:
+          name: linux-build-files
+          path: ./out/all/
 
-            - name: Read files-to-upload.txt
-              id: files-to-upload
-              shell: bash
-              run: |
-                  echo "files=$(cat files-to-upload.txt)" >> $GITHUB_OUTPUT
+      - name: Build for windows
+        run: |
+          pnpm make:win32
+          pnpm make:win64
 
-            - name: Make changelog
-              id: changelog
-              shell: bash
-              run: |
-                  cat download-btns.txt >> changelog-temp.md
-                  echo $'\n---\n\n' >> changelog-temp.md
-                  cat changelog.md >> changelog-temp.md
+      - name: Set version
+        id: version
+        shell: bash
+        run: |
+          if [[ $GITHUB_REF == refs/tags/v* ]]; then
+            VERSION=${GITHUB_REF#refs/tags/}
+          else
+            VERSION="v$(node -p "require('./package.json').version")"
+          fi
+          echo "version=$VERSION" >> $GITHUB_OUTPUT
 
-            - name: Release
-              uses: softprops/action-gh-release@v2
-              with:
-                  tag_name: ${{steps.version.outputs.version}}
-                  name: ${{steps.version.outputs.version}}
-                  files: ./out/all/*
-                  body_path: changelog-temp.md
-                  generate_release_notes: true
-                  discussion_category_name: General
-                  prerelease: ${{ contains(steps.version.outputs.version, 'beta') || contains(steps.version.outputs.version, 'alpha') }}
+      - name: Read files-to-upload.txt
+        id: files-to-upload
+        shell: bash
+        run: |
+          echo "files=$(cat files-to-upload.txt)" >> $GITHUB_OUTPUT
+
+      - name: Make changelog
+        id: changelog
+        shell: bash
+        run: |
+          cat download-btns.txt >> changelog-temp.md
+          echo $'\n---\n\n' >> changelog-temp.md
+          cat changelog.md >> changelog-temp.md
+
+      - name: Release
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: ${{steps.version.outputs.version}}
+          name: ${{steps.version.outputs.version}}
+          files: ./out/all/*
+          body_path: changelog-temp.md
+          generate_release_notes: true
+          discussion_category_name: General
+          prerelease: ${{ contains(steps.version.outputs.version, 'beta') || contains(steps.version.outputs.version, 'alpha') }}
