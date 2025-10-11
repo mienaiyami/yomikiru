@@ -42,7 +42,7 @@ if (app.isPackaged) {
     app.on("second-instance", (_event, commandLine) => {
         if (commandLine.length >= 3) {
             // for file explorer option
-            if (MainSettings.getSettings().openInExistingWindow) {
+            if (MainSettings.settings.openInExistingWindow) {
                 const window = BrowserWindow.getAllWindows().at(-1);
                 if (window) {
                     window.webContents.send("loadMangaFromLink", { link: commandLine[2] });

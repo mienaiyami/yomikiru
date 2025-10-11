@@ -28,7 +28,7 @@ const oldTempPath = path.join(app.getPath("userData"), "TEMP_PATH");
 const oldOpenInExistingWindowPath = path.join(app.getPath("userData"), "OPEN_IN_EXISTING_WINDOW");
 
 export class MainSettings {
-    private static settings: MainSettingsType;
+    private static _settings: MainSettingsType;
     private static readonly settingsPath = path.join(app.getPath("userData"), "main-settings.json");
 
     private static makeMainSettingsJson(): MainSettingsType {
@@ -64,19 +64,19 @@ export class MainSettings {
         }
     }
 
-    public static getSettings(): MainSettingsType {
-        return { ...MainSettings.settings };
+    public static get settings(): MainSettingsType {
+        return { ...MainSettings._settings };
     }
 
     public static async updateSettings(newSettings: Partial<MainSettingsType>): Promise<void> {
-        MainSettings.settings = mainSettingsSchema.parse({ ...MainSettings.settings, ...newSettings });
-        await fs.promises.writeFile(MainSettings.settingsPath, JSON.stringify(MainSettings.settings, null, 2));
-        MainSettings.applySettings(MainSettings.settings);
+        MainSettings._settings = mainSettingsSchema.parse({ ...MainSettings._settings, ...newSettings });
+        await fs.promises.writeFile(MainSettings.settingsPath, JSON.stringify(MainSettings._settings, null, 2));
+        MainSettings.applySettings(MainSettings._settings);
     }
 
     public static initialize(): void {
-        MainSettings.settings = MainSettings.parseMainSettings();
-        MainSettings.applySettings(MainSettings.settings);
+        MainSettings._settings = MainSettings.parseMainSettings();
+        MainSettings.applySettings(MainSettings._settings);
         MainSettings.registerIpcHandlers();
     }
 
@@ -111,12 +111,12 @@ export class MainSettings {
     }
 
     private static registerIpcHandlers(): void {
-        ipc.handle("mainSettings:get", () => MainSettings.getSettings());
+        ipc.handle("mainSettings:get", () => MainSettings.settings);
         ipc.handle("mainSettings:update", async (_, newSettings: Partial<MainSettingsType>) => {
             await MainSettings.updateSettings(newSettings);
             const windows = WindowManager.getAllWindows();
             windows.forEach((window) => {
-                ipc.send(window.webContents, "mainSettings:sync", MainSettings.getSettings());
+                ipc.send(window.webContents, "mainSettings:sync", MainSettings.settings);
             });
             // return this.getSettings();
         });
