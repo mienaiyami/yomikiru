@@ -47,7 +47,6 @@ const FileExplorerOptions = (): ReactElement => {
                     onChange={handleOpenInSameWindowChange}
                     labelAfter="Open In Existing Window"
                 />
-                <code>App Restart Needed</code>
             </div>
             <ul>
                 <li>

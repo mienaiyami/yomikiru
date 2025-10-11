@@ -127,7 +127,7 @@ export class WindowManager {
         const closeEvent = async (e: Electron.Event) => {
             e.preventDefault();
             let res = 1;
-            if (MainSettings.getSettings().askBeforeClosing) {
+            if (MainSettings.settings.askBeforeClosing) {
                 res = dialog.showMessageBoxSync(window, {
                     message: "Close this window?",
                     title: "Yomikiru",
