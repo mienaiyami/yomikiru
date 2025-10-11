@@ -85,7 +85,7 @@ jobs:
         run: pnpm run tslint
 
       - name: Lint and Format Check
-        run: pnpm run biome
+        run: pnpm run biome:check
 
       - name: ESLint chrome 108 check
         run: pnpm run check:chrome108
