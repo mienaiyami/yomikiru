@@ -45,7 +45,7 @@ if (app.isPackaged) {
             if (MainSettings.settings.openInExistingWindow) {
                 const window = BrowserWindow.getAllWindows().at(-1);
                 if (window) {
-                    window.webContents.send("loadMangaFromLink", { link: commandLine[2] });
+                    window.webContents.send("reader:loadLink", { link: commandLine[2] });
                     window.show();
                 } else {
                     log.error("Could not get the window.");
