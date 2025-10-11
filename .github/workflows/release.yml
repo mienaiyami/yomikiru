@@ -18,21 +18,36 @@ jobs:
   wait-for-ci:
     runs-on: ubuntu-latest
     steps:
-      - name: Wait for CI to complete
+      - name: Wait for CI workflow to complete
         uses: lewagon/wait-on-check-action@v1.3.4
         with:
           ref: ${{ github.ref }}
-          check-name: "lint-and-type-check"
+          check-name: "Pre-check"
           repo-token: ${{ secrets.GITHUB_TOKEN }}
           wait-interval: 10
+          allowed-conclusions: success,skipped
 
-      - name: Wait for CodeQL to complete
+      - name: Wait for Lint and Type Check
         uses: lewagon/wait-on-check-action@v1.3.4
         with:
           ref: ${{ github.ref }}
-          check-name: "codeql"
+          check-name: "Lint and Type Check"
           repo-token: ${{ secrets.GITHUB_TOKEN }}
           wait-interval: 10
+          allowed-conclusions: success,skipped
+        continue-on-error: false
+        if: always()
+
+      - name: Wait for CodeQL Analysis
+        uses: lewagon/wait-on-check-action@v1.3.4
+        with:
+          ref: ${{ github.ref }}
+          check-name: "CodeQL Analysis"
+          repo-token: ${{ secrets.GITHUB_TOKEN }}
+          wait-interval: 10
+          allowed-conclusions: success,skipped
+        continue-on-error: false
+        if: always()
 
   buildLinux:
     needs: wait-for-ci
