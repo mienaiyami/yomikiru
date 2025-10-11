@@ -5,11 +5,11 @@ import { WindowManager } from "../util/window";
 import { ipc } from "./utils";
 
 export const registerUpdateHandlers = (): void => {
-    if (MainSettings.getSettings().checkForUpdates) {
+    if (MainSettings.settings.checkForUpdates) {
         const mainWindow = WindowManager.getAllWindows()[0];
         if (mainWindow) {
             const check = () => {
-                const settings = MainSettings.getSettings();
+                const settings = MainSettings.settings;
                 checkForUpdate(mainWindow.id, settings.channel, settings.skipPatch, false, settings.autoDownload);
             };
             check();
@@ -19,6 +19,6 @@ export const registerUpdateHandlers = (): void => {
 
     ipc.on("update:check:manual", (e, { promptAfterCheck = true }) => {
         const windowId = getWindowFromWebContents(e.sender).id;
-        checkForUpdate(windowId, MainSettings.getSettings().channel, false, promptAfterCheck, false);
+        checkForUpdate(windowId, MainSettings.settings.channel, false, promptAfterCheck, false);
     });
 };
