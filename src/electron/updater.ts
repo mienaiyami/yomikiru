@@ -274,15 +274,11 @@ const downloadUpdates = (latestVersion: string, windowId: number, silent = false
         const showMainPrompt = () => {
             const buttons = ["Install Now", "Install on Quit"];
             if (silent) buttons.push("Install and Show Changelog");
-            const isPortableMsg = IS_PORTABLE
-                ? "NOTE: If your installation directory contains square brackets '[]', updates may fail. Consider moving the app to a different location."
-                : "";
             dialog
                 .showMessageBox(window, {
                     type: "info",
                     title: "Updates downloaded",
                     message: "Updates downloaded.",
-                    detail: isPortableMsg,
                     buttons,
                     cancelId: 1,
                 })
