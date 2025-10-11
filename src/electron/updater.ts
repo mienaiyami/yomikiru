@@ -9,7 +9,7 @@ import * as electronDl from "electron-dl";
 import fetch from "electron-fetch";
 import logger from "electron-log";
 import * as semver from "semver";
-import { IS_PORTABLE } from "./util";
+import { IS_PORTABLE, sleep } from "./util";
 
 declare const DOWNLOAD_PROGRESS_WEBPACK_ENTRY: string;
 
@@ -26,7 +26,7 @@ const DOWNLOAD_LINK = `${RELEASES_PAGE}/download`;
 
 const checkForAnnouncements = async () => {
     try {
-        await new Promise((resolve) => setTimeout(resolve, 5000));
+        await sleep(5000);
         const raw = await fetch(ANNOUNCEMENTS_URL)
             .then((data) => data.text())
             .then((data) => data.split("\n").filter((e) => e !== ""));

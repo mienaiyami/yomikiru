@@ -175,6 +175,18 @@ export type DialogChannels = {
     "dialog:showSaveDialog": ChannelDefinition<Electron.SaveDialogOptions, Electron.SaveDialogReturnValue>;
 };
 
+export type ErrorReportingChannels = {
+    "error:report": ChannelDefinition<
+        {
+            error: string;
+            stack?: string;
+            context?: Record<string, unknown>;
+            severity?: "low" | "medium" | "high" | "critical";
+        },
+        void
+    >;
+};
+
 export type MainSettingsChannels = {
     "mainSettings:get": ChannelDefinition<void, MainSettingsType>;
     "mainSettings:update": ChannelDefinition<Partial<MainSettingsType>, void>;
@@ -189,6 +201,7 @@ export type IPCChannels = DatabaseChannels &
     ExplorerMenuChannels &
     ReaderChannels &
     DialogChannels &
+    ErrorReportingChannels &
     MainSettingsChannels;
 
 export type MainToRendererChannels = {

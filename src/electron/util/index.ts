@@ -63,3 +63,5 @@ export const dateFromOldDateString = (localeDate?: string): Date => {
     const newString = `${year}-${month}-${day} ${time}`;
     return new Date(newString);
 };
+
+export const sleep = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));

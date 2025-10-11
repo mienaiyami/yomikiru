@@ -2,6 +2,7 @@ import fs from "node:fs";
 import * as remote from "@electron/remote/main";
 import { app, BrowserWindow, Menu, type MenuItemConstructorOptions, shell } from "electron";
 import { log } from "./util";
+import { getErrorHandler } from "./util/errorHandler";
 
 remote.initialize();
 
@@ -10,6 +11,7 @@ if (require("electron-squirrel-startup")) app.quit();
 import { DatabaseService } from "./db";
 import { setupDatabaseHandlers } from "./ipc/database";
 import { registerDialogHandlers } from "./ipc/dialog";
+import { registerErrorReportingHandlers } from "./ipc/errorReporting";
 import { registerExplorerHandlers } from "./ipc/explorer";
 import { registerFSHandlers } from "./ipc/fs";
 import { registerUpdateHandlers } from "./ipc/update";
@@ -21,6 +23,15 @@ import { WindowManager } from "./util/window";
 if (handleSquirrelEvent()) {
     app.quit();
 }
+
+// initialize global error handler early
+const errorHandler = getErrorHandler({
+    showDialogs: true,
+    logToFile: true,
+    collectSystemInfo: true,
+    maxReports: 50,
+    enableCrashReporting: true,
+});
 
 const db = new DatabaseService();
 
@@ -59,69 +70,81 @@ if (app.isPackaged) {
 }
 
 app.on("ready", async () => {
-    // checkForJSONMigration depends on app ready to use dialog
-    checkForJSONMigration(db);
-    /**
-     * enables basic shortcut keys such as copy, paste, reload, etc.
-     */
-    const template: MenuItemConstructorOptions[] = [
-        {
-            label: "Edit",
-            submenu: [
-                { role: "undo" },
-                { role: "redo" },
-                { role: "cut" },
-                { role: "copy" },
-                { role: "paste" },
-                { role: "pasteAndMatchStyle" },
-                { role: "selectAll" },
-            ],
-        },
-        {
-            label: "View",
-            submenu: [
-                { role: "reload" },
-                { role: "forceReload" },
-                { role: "toggleDevTools" },
-                { type: "separator" },
-            ],
-        },
-        {
-            label: "Others",
-            submenu: [
-                {
-                    role: "help",
-                    accelerator: "F1",
-                    click: () => shell.openExternal("https://github.com/mienaiyami/yomikiru"),
-                },
-                {
-                    label: "New Window",
-                    accelerator: process.platform === "darwin" ? "Cmd+N" : "Ctrl+N",
-                    click: () => WindowManager.createWindow(),
-                },
-                {
-                    label: "Close",
-                    accelerator: process.platform === "darwin" ? "Cmd+W" : "Ctrl+W",
-                    click: (_, window) => window?.close(),
-                },
-            ],
-        },
-    ];
-    const menu = Menu.buildFromTemplate(template);
-    Menu.setApplicationMenu(menu);
+    try {
+        // checkForJSONMigration depends on app ready to use dialog
+        checkForJSONMigration(db);
+        /**
+         * enables basic shortcut keys such as copy, paste, reload, etc.
+         */
+        const template: MenuItemConstructorOptions[] = [
+            {
+                label: "Edit",
+                submenu: [
+                    { role: "undo" },
+                    { role: "redo" },
+                    { role: "cut" },
+                    { role: "copy" },
+                    { role: "paste" },
+                    { role: "pasteAndMatchStyle" },
+                    { role: "selectAll" },
+                ],
+            },
+            {
+                label: "View",
+                submenu: [
+                    { role: "reload" },
+                    { role: "forceReload" },
+                    { role: "toggleDevTools" },
+                    { type: "separator" },
+                ],
+            },
+            {
+                label: "Others",
+                submenu: [
+                    {
+                        role: "help",
+                        accelerator: "F1",
+                        click: () => shell.openExternal("https://github.com/mienaiyami/yomikiru"),
+                    },
+                    {
+                        label: "New Window",
+                        accelerator: process.platform === "darwin" ? "Cmd+N" : "Ctrl+N",
+                        click: () => WindowManager.createWindow(),
+                    },
+                    {
+                        label: "Close",
+                        accelerator: process.platform === "darwin" ? "Cmd+W" : "Ctrl+W",
+                        click: (_, window) => window?.close(),
+                    },
+                    {
+                        label: "Report Issue",
+                        click: () => errorHandler.showIssueReportDialog(),
+                    },
+                ],
+            },
+        ];
+        const menu = Menu.buildFromTemplate(template);
+        Menu.setApplicationMenu(menu);
 
-    await db.initialize();
-    setupDatabaseHandlers(db);
+        await db.initialize();
+        setupDatabaseHandlers(db);
 
-    WindowManager.registerListeners();
+        WindowManager.registerListeners();
 
-    registerExplorerHandlers();
-    registerFSHandlers();
-    registerDialogHandlers();
+        registerExplorerHandlers();
+        registerFSHandlers();
+        registerDialogHandlers();
+        registerErrorReportingHandlers();
 
-    WindowManager.createWindow(openFolderOnLaunch);
-    // need to be after window is created
-    registerUpdateHandlers();
+        WindowManager.createWindow(openFolderOnLaunch);
+        // need to be after window is created
+        registerUpdateHandlers();
+    } catch (error) {
+        errorHandler.handleError(error as Error, "critical", {
+            source: "App Ready Handler",
+            action: "Initialize application",
+        });
+    }
 });
 
 app.on("before-quit", () => {
