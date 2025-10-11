@@ -1,3 +1,6 @@
+> This branch is checked out from tag `v2.20.0`, which was before migration to drizzle and other major changes.
+> This branch is only for loop-up/comparison convenience purposes.
+
 # Yomikiru
 
 Manga/Manhwa/Comic/Novel Reader for desktop (not a downloader/host).
