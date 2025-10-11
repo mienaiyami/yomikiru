@@ -10,50 +10,99 @@ on:
   push:
     tags:
       - "v*"
-  # this is only in case when action fails, and no new release is made
-  # ! this actions only when when no release with same version and tag exists
-  workflow_dispatch:
 
 jobs:
-  # wait-for-ci:
-  #   runs-on: ubuntu-latest
-  #   steps:
-  #     - name: Wait for CI workflow to complete
-  #       uses: lewagon/wait-on-check-action@v1.3.4
-  #       with:
-  #         ref: ${{ github.ref }}
-  #         check-name: "Pre-check"
-  #         repo-token: ${{ secrets.GITHUB_TOKEN }}
-  #         wait-interval: 10
-  #         allowed-conclusions: success,skipped
+  check-ci-status:
+    runs-on: ubuntu-latest
+    outputs:
+      version: ${{ steps.get-version.outputs.version }}
+      commit-sha: ${{ steps.get-version.outputs.commit-sha }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
 
-  #     - name: Wait for Lint and Type Check
-  #       uses: lewagon/wait-on-check-action@v1.3.4
-  #       with:
-  #         ref: ${{ github.ref }}
-  #         check-name: "Lint and Type Check"
-  #         repo-token: ${{ secrets.GITHUB_TOKEN }}
-  #         wait-interval: 10
-  #         allowed-conclusions: success,skipped
-  #       continue-on-error: false
-  #       if: always()
+      - name: Get version and commit from tag
+        id: get-version
+        run: |
+          VERSION=${GITHUB_REF#refs/tags/}
+          COMMIT_SHA=$(git rev-list -n 1 $GITHUB_REF)
+          echo "version=$VERSION" >> $GITHUB_OUTPUT
+          echo "commit-sha=$COMMIT_SHA" >> $GITHUB_OUTPUT
+          echo "Tag version: $VERSION"
+          echo "Tag points to commit: $COMMIT_SHA"
 
-  #     - name: Wait for CodeQL Analysis
-  #       uses: lewagon/wait-on-check-action@v1.3.4
-  #       with:
-  #         ref: ${{ github.ref }}
-  #         check-name: "CodeQL Analysis"
-  #         repo-token: ${{ secrets.GITHUB_TOKEN }}
-  #         wait-interval: 10
-  #         allowed-conclusions: success,skipped
-  #       continue-on-error: false
-  #       if: always()
+      - name: Check if commit is on master or beta branch
+        run: |
+          COMMIT_SHA="${{ steps.get-version.outputs.commit-sha }}"
+          BRANCHES=$(git branch -r --contains $COMMIT_SHA | grep -E 'origin/(master|beta)' || true)
+          if [ -z "$BRANCHES" ]; then
+            echo "Error: Tag commit $COMMIT_SHA is not on master or beta branch"
+            echo "CI only runs on master/beta branches"
+            exit 1
+          fi
+          echo "Commit is on branch(es): $BRANCHES"
+
+      - name: Wait for CI to pass
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const { owner, repo } = context.repo;
+            const taggedCommit = '${{ steps.get-version.outputs.commit-sha }}';
+
+            console.log('Checking CI status for tagged commit:', taggedCommit);
+
+            // Wait for CI workflow to complete (max 30 minutes)
+            const maxAttempts = 180; // 30 minutes with 10 second intervals
+            let attempts = 0;
+
+            while (attempts < maxAttempts) {
+              const runs = await github.rest.actions.listWorkflowRuns({
+                owner,
+                repo,
+                workflow_id: 'ci.yml',
+                head_sha: taggedCommit,
+                per_page: 5
+              });
+              
+              if (runs.data.workflow_runs.length > 0) {
+                // Find the CI run that matches our commit exactly
+                const matchingRun = runs.data.workflow_runs.find(run => run.head_sha === taggedCommit);
+                
+                if (matchingRun) {
+                  console.log(`CI workflow status: ${matchingRun.status}, conclusion: ${matchingRun.conclusion}`);
+                  console.log(`CI run URL: ${matchingRun.html_url}`);
+                  
+                  if (matchingRun.status === 'completed') {
+                    if (matchingRun.conclusion === 'success') {
+                      console.log('CI passed successfully!');
+                      return;
+                    } else {
+                      core.setFailed(`CI failed with conclusion: ${matchingRun.conclusion}\nSee: ${matchingRun.html_url}`);
+                      return;
+                    }
+                  }
+                } else {
+                  console.log(`No CI run found yet for commit ${taggedCommit}`);
+                }
+              }
+              
+              console.log(`Waiting for CI... (attempt ${attempts + 1}/${maxAttempts})`);
+              await new Promise(resolve => setTimeout(resolve, 10000)); // Wait 10 seconds
+              attempts++;
+            }
+
+            core.setFailed(`Timeout waiting for CI to complete for commit ${taggedCommit}\nMake sure CI ran on master/beta branch for this commit`);
 
   buildLinux:
-    # needs: wait-for-ci
+    needs: check-ci-status
     runs-on: ubuntu-22.04
     steps:
       - uses: actions/checkout@v4
+        with:
+          ref: ${{ needs.check-ci-status.outputs.commit-sha }}
+          fetch-depth: 0
 
       - uses: pnpm/action-setup@v4
         name: Setup pnpm
@@ -76,12 +125,9 @@ jobs:
       - name: Set version
         id: version
         run: |
-          if [[ $GITHUB_REF == refs/tags/v* ]]; then
-            VERSION=${GITHUB_REF#refs/tags/}
-          else
-            VERSION="v$(node -p "require('./package.json').version")"
-          fi
+          VERSION="${{ needs.check-ci-status.outputs.version }}"
           echo "version=$VERSION" >> $GITHUB_OUTPUT
+          echo "Building version: $VERSION"
 
       - uses: actions/upload-artifact@v4
         with:
@@ -90,10 +136,13 @@ jobs:
           if-no-files-found: error
 
   build:
-    needs: buildLinux
+    needs: [check-ci-status, buildLinux]
     runs-on: windows-latest
     steps:
       - uses: actions/checkout@v4
+        with:
+          ref: ${{ needs.check-ci-status.outputs.commit-sha }}
+          fetch-depth: 0
 
       - uses: pnpm/action-setup@v4
         name: Setup pnpm
@@ -125,12 +174,9 @@ jobs:
         id: version
         shell: bash
         run: |
-          if [[ $GITHUB_REF == refs/tags/v* ]]; then
-            VERSION=${GITHUB_REF#refs/tags/}
-          else
-            VERSION="v$(node -p "require('./package.json').version")"
-          fi
+          VERSION="${{ needs.check-ci-status.outputs.version }}"
           echo "version=$VERSION" >> $GITHUB_OUTPUT
+          echo "Building version: $VERSION"
 
       - name: Read files-to-upload.txt
         id: files-to-upload
