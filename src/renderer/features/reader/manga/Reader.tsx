@@ -22,6 +22,8 @@ import useSmoothScroll from "../hooks/useSmoothScroll";
 import ReaderSettings from "./components/ReaderSettings";
 import ReaderSideList from "./components/ReaderSideList";
 
+const SCROLLBAR_THRESHOLD = 20;
+
 const processChapterNumber = (chapterName: string): number | undefined => {
     /*
     possible chapter name formats
@@ -1274,13 +1276,21 @@ const Reader: React.FC = () => {
                 }}
                 onMouseDown={(e) => {
                     if (!appSettings.readerSettings.enableTouchScroll) return;
-                    if (e.button === 0 && readerRef.current && imgContRef.current)
+                    if (e.button === 0 && readerRef.current && imgContRef.current) {
+                        const target = e.currentTarget;
+                        const isScrollbarClick =
+                            (target.scrollHeight > target.clientHeight &&
+                                e.clientX > target.getBoundingClientRect().right - SCROLLBAR_THRESHOLD) ||
+                            (target.scrollWidth > target.clientWidth &&
+                                e.clientY > target.getBoundingClientRect().bottom - SCROLLBAR_THRESHOLD);
+                        if (isScrollbarClick) return;
                         setMouseDown({
                             left: (isSideListPinned ? imgContRef.current : readerRef.current).scrollLeft,
                             top: (isSideListPinned ? imgContRef.current : readerRef.current).scrollTop,
                             x: e.clientX,
                             y: e.clientY,
                         });
+                    }
                 }}
                 // onMouseUp={() => {
                 //     setMouseDown(null);
