@@ -3,6 +3,7 @@ import { ipc } from "@electron/ipc/utils";
 import * as remote from "@electron/remote/main";
 import { app, BrowserWindow, dialog, shell } from "electron";
 import { getWindowFromWebContents, log } from ".";
+import { handleError } from "./errorHandler";
 import { MainSettings } from "./mainSettings";
 
 declare const HOME_WEBPACK_ENTRY: string;
@@ -136,15 +137,26 @@ export class WindowManager {
                 });
             }
             if (res === 0) return;
+            try {
+                /**
+                 * reader:recordPage goes to UI -> UI saves progress -> UI emits "window:destroy" -> window is destroyed
+                 */
+                if (window && !window.isDestroyed() && window.webContents && !window.webContents.isDestroyed()) {
+                    ipc.send(window.webContents, "reader:recordPage");
+                }
+            } catch (err) {
+                log.error("Error sending reader:recordPage:", err);
+                handleError(err instanceof Error ? err : new Error(String(err)), "medium");
+            }
 
-            // it also destroys current window.
-            // window closes before receiving message to save history, so it is needed
-            ipc.send(window.webContents, "reader:recordPage");
-            //backup in case window is stuck
             setTimeout(() => {
-                if (!window.isDestroyed()) {
-                    log.log("No response from window. Force closing app.");
-                    window.destroy();
+                try {
+                    if (!window?.isDestroyed()) {
+                        log.log("No response from window. Force closing app.");
+                        window.destroy();
+                    }
+                } catch (err) {
+                    log.error("Error during forced close:", err);
                 }
             }, 5000);
 
@@ -154,9 +166,7 @@ export class WindowManager {
         const onClosed = () => {
             WindowManager.windows[currentWindowIndex] = null;
             WindowManager.deleteDirsOnClose[currentWindowIndex] = null;
-            if (WindowManager.windows.filter((w) => w !== null).length === 0) {
-                app.quit();
-            }
+            if (WindowManager.windows.every((w) => !w)) app.quit();
         };
 
         window.removeAllListeners("closed");
