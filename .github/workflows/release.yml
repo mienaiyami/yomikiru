@@ -45,6 +45,7 @@ jobs:
           echo "Commit is on branch(es): $BRANCHES"
 
       - name: Wait for CI to pass
+        if: ${{ !contains(steps.get-version.outputs.version, 'test') }}
         uses: actions/github-script@v7
         with:
           script: |
