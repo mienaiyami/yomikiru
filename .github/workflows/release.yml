@@ -179,9 +179,9 @@ jobs:
       - name: Move Linux artifacts and build artifacts
         shell: bash
         run: |
-          if [ -d "./linux-artifacts/out/all" ]; then
-            mkdir -p ./out/all
-            cp -r ./linux-artifacts/out/all/* ./out/all/ || true
+          if [ -d "./linux-artifacts/out" ]; then
+            mkdir -p ./out
+            cp -r ./linux-artifacts/out/* ./out/ || true
           fi
           if [ -d "./linux-artifacts/build-artifacts" ]; then
             mkdir -p ./build-artifacts
