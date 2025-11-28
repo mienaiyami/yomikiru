@@ -35,7 +35,8 @@
         "make:win32": "electron-forge make --targets=@electron-forge/maker-squirrel,@electron-forge/maker-zip --arch=ia32",
         "make:win64": "electron-forge make --targets=@electron-forge/maker-squirrel,@electron-forge/maker-zip --arch=x64",
         "make:deb": "electron-forge make --targets=@electron-forge/maker-deb",
-        "release": "node tagAndPush.js",
+        "generate:release": "tsx scripts/generate-release.ts",
+        "release": "tsx scripts/tag-and-push.ts",
         "prepare": "husky"
     },
     "license": "MIT",

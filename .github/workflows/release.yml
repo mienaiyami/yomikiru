@@ -119,6 +119,11 @@ jobs:
       - name: Install dependencies
         run: pnpm install
 
+      - name: Install dpkg-deb for pacman package creation
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y dpkg-dev
+
       - name: forge make deb
         run: pnpm make:deb
 
@@ -132,7 +137,9 @@ jobs:
       - uses: actions/upload-artifact@v4
         with:
           name: linux-build-files
-          path: ./out/all/*
+          path: |
+            ./out/all/*
+            ./build-artifacts/*
           if-no-files-found: error
 
   build:
@@ -163,12 +170,28 @@ jobs:
         id: linux-build-files-downloader
         with:
           name: linux-build-files
-          path: ./out/all/
+          path: ./linux-artifacts/
+          merge-multiple: true
+
+      - name: Move Linux artifacts and build artifacts
+        shell: bash
+        run: |
+          if [ -d "./linux-artifacts/out/all" ]; then
+            mkdir -p ./out/all
+            cp -r ./linux-artifacts/out/all/* ./out/all/ || true
+          fi
+          if [ -d "./linux-artifacts/build-artifacts" ]; then
+            mkdir -p ./build-artifacts
+            cp -r ./linux-artifacts/build-artifacts/* ./build-artifacts/ || true
+          fi
 
       - name: Build for windows
         run: |
           pnpm make:win32
           pnpm make:win64
+
+      - name: Generate release artifacts
+        run: pnpm generate:release
 
       - name: Set version
         id: version
@@ -197,8 +220,11 @@ jobs:
         with:
           tag_name: ${{steps.version.outputs.version}}
           name: ${{steps.version.outputs.version}}
-          files: ./out/all/*
+          files: |
+            ./out/all/*
+            ./artifacts.json
+            ./checksums.txt
           body_path: changelog-temp.md
           generate_release_notes: true
           discussion_category_name: General
-          prerelease: ${{ contains(steps.version.outputs.version, 'beta') || contains(steps.version.outputs.version, 'alpha') }}
+          prerelease: ${{ contains(steps.version.outputs.version, 'beta') || contains(steps.version.outputs.version, 'alpha') || contains(steps.version.outputs.version, 'test') }}
