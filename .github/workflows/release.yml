@@ -34,6 +34,7 @@ jobs:
           echo "Tag points to commit: $COMMIT_SHA"
 
       - name: Check if commit is on master or beta branch
+        if: ${{ !contains(steps.get-version.outputs.version, 'test') }}
         run: |
           COMMIT_SHA="${{ steps.get-version.outputs.commit-sha }}"
           BRANCHES=$(git branch -r --contains $COMMIT_SHA | grep -E 'origin/(master|beta)' || true)
