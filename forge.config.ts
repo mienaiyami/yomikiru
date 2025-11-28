@@ -1,3 +1,4 @@
+import { execSync } from "node:child_process";
 import fs from "node:fs";
 import path from "node:path";
 import { MakerDeb } from "@electron-forge/maker-deb";
@@ -5,25 +6,26 @@ import { MakerSquirrel } from "@electron-forge/maker-squirrel";
 import { MakerZIP } from "@electron-forge/maker-zip";
 import { AutoUnpackNativesPlugin } from "@electron-forge/plugin-auto-unpack-natives";
 import { WebpackPlugin } from "@electron-forge/plugin-webpack";
-import type { ForgeConfig } from "@electron-forge/shared-types";
+import type { ForgeConfig, ForgeMakeResult } from "@electron-forge/shared-types";
+import packageJSON from "./package.json";
 import { mainConfig } from "./webpack/webpack.main.config";
 import { preloadConfig } from "./webpack/webpack.preload.config";
 import { rendererConfig } from "./webpack/webpack.renderer.config";
 
-// ! its not possible to build all targets at once anymore, because of `better-sqlite3` rebuild
+// ! its not possible to build all targets arch at once for windows anymore, because of `better-sqlite3` rebuild
+
+const MAIN_OUT_DIR = path.resolve("./out/all");
+
+const { productName: appName } = packageJSON;
 
 const config: ForgeConfig = {
     packagerConfig: {
-        name: "Yomikiru",
+        name: appName,
         asar: true,
         // needed for migrating better-sqlite3
         extraResource: ["./drizzle"],
-        executableName: process.platform === "win32" ? "Yomikiru" : "yomikiru",
+        executableName: process.platform === "win32" ? appName : appName.toLowerCase(),
     },
-    // rebuildConfig: {
-    //     extraModules: ["better-sqlite3"],
-    //     force: true,
-    // },
     plugins: [
         new AutoUnpackNativesPlugin({}),
         new WebpackPlugin({
@@ -69,117 +71,102 @@ const config: ForgeConfig = {
         ),
     ],
     hooks: {
-        postMake: async (_config, makeResults) => {
-            // const appName = config.packagerConfig.name;
-            const appName = "Yomikiru";
-            const appVersion = makeResults[0].packageJSON.version;
+        postMake: async (_config: unknown, makeResults: ForgeMakeResult[]) => {
+            const BUILD_ARTIFACTS_DIR = path.resolve("./build-artifacts");
 
-            const MAP = {
-                "win32+zip+ia32": {
-                    name: `${appName}-win32-v${appVersion}-Portable.zip`,
-                    text: "Download 32-bit Portable (zip)",
-                    icon: "windows&logoColor=blue",
-                },
-                "win32+zip+x64": {
-                    name: `${appName}-win32-v${appVersion}-Portable-x64.zip`,
-                    text: "Download 64-bit Portable (zip)",
-                    icon: "windows&logoColor=blue",
-                },
-                "win32+exe+ia32": {
-                    name: `${appName}-v${appVersion}-Setup.exe`,
-                    text: "Download 32-bit Setup (exe)",
-                    icon: "windows&logoColor=blue",
-                },
-                "win32+exe+x64": {
-                    name: `${appName}-v${appVersion}-Setup-x64.exe`,
-                    text: "Download 64-bit Setup (exe)",
-                    icon: "windows&logoColor=blue",
-                },
-                "linux+deb+x64": {
-                    name: `${appName}-v${appVersion}-amd64.deb`,
-                    text: "Download 64-bit Linux (Debian)",
-                    icon: "debian&logoColor=red",
-                },
-                "linux+deb+amd64": {
-                    name: `${appName}-v${appVersion}-amd64.deb`,
-                    text: "Download 64-bit Linux (Debian)",
-                    icon: "debian&logoColor=red",
-                },
-                "darwin+zip+x64": {
-                    name: `${appName}-v${appVersion}-macOS-x64.zip`,
-                    text: "Download 64-bit macOS (zip)",
-                    icon: "apple&logoColor=black",
-                },
+            if (!fs.existsSync(BUILD_ARTIFACTS_DIR)) {
+                fs.mkdirSync(BUILD_ARTIFACTS_DIR, { recursive: true });
+            }
+
+            if (!fs.existsSync(MAIN_OUT_DIR)) {
+                fs.mkdirSync(MAIN_OUT_DIR, { recursive: true });
+            }
+
+            const platform = makeResults[0].platform;
+            const arch = makeResults[0].arch;
+            const timestamp = Date.now();
+            const filename = `${platform}-${arch}-${timestamp}.json`;
+            const filePath = path.join(BUILD_ARTIFACTS_DIR, filename);
+
+            // normalize paths to be relative to process.cwd() for cross-platform compatibility
+            const normalizePath = (filePath: string): string => {
+                const cwd = process.cwd();
+                if (path.isAbsolute(filePath)) {
+                    const relative = path.relative(cwd, filePath);
+                    return relative.startsWith("..") ? filePath : relative;
+                }
+                return filePath;
             };
 
-            const makeDlBtn = ({
-                text,
-                name,
-                icon,
-                url,
-            }: {
-                text: string;
-                name: string;
-                icon: string;
-                url: string;
-            }) =>
-                `[![${text}](https://img.shields.io/badge/${encodeURIComponent(text).replace(
-                    /-/g,
-                    "--",
-                )}-${encodeURIComponent(name).replace(/-/g, "--")}-brightgreen?logo=${icon})](${
-                    url
-                }/releases/download/v${appVersion}/${name})\n`;
+            const artifactsToSave = makeResults.map((result) => ({
+                platform: result.platform,
+                arch: result.arch,
+                artifacts: result.artifacts.map(normalizePath),
+            }));
 
-            const mainOutDir = path.resolve("./out/all");
+            let pacmanArtifactPath: string | null = null;
+            if (platform === "linux") {
+                const appName = makeResults[0].packageJSON.productName;
+                const appVersion = makeResults[0].packageJSON.version;
+                const expectedPkgName = `${appName}-v${appVersion}-x86_64.pkg.tar.xz`;
+                const pkgFile = path.join(MAIN_OUT_DIR, expectedPkgName);
 
-            // const filesToUploadTxt = "files-to-upload.txt";
-            const downloadBtnsTxt = "download-btns.txt";
-            const initialDownloadBtns =
-                `## Downloads\n\n` +
-                // linux is built in another job and downloaded here as artifact
-                makeDlBtn({
-                    ...MAP["linux+deb+amd64"],
-                    url: makeResults[0].packageJSON.author.url,
-                }) +
-                "\n";
+                const debArtifact = makeResults[0].artifacts.find((a: string) => a.endsWith(".deb"));
+                if (debArtifact && fs.existsSync(debArtifact) && !fs.existsSync(pkgFile)) {
+                    try {
+                        const tempDir = path.join(MAIN_OUT_DIR, `temp-pacman-${Date.now()}`);
+                        fs.mkdirSync(tempDir, { recursive: true });
 
-            if (!fs.existsSync(downloadBtnsTxt)) fs.writeFileSync(downloadBtnsTxt, initialDownloadBtns, "utf-8");
-            // if (!fs.existsSync(filesToUploadTxt))
-            //     fs.writeFileSync(
-            //         filesToUploadTxt,
-            //         path.join(mainOutDir, MAP["linux+deb+amd64"].name.replace(/\\/g, "/")) + " ",
-            //         "utf-8",
-            //     );
+                        execSync(`dpkg-deb -x "${debArtifact}" "${tempDir}/extracted"`, { stdio: "inherit" });
+                        execSync(`dpkg-deb -e "${debArtifact}" "${tempDir}/control"`, { stdio: "inherit" });
 
-            if (!fs.existsSync(mainOutDir)) fs.mkdirSync(mainOutDir);
+                        const pkgDir = path.join(tempDir, "pkg");
+                        const extractedDir = path.join(tempDir, "extracted");
+                        if (fs.existsSync(extractedDir)) {
+                            fs.mkdirSync(pkgDir, { recursive: true });
+                            const usrDir = path.join(pkgDir, "usr");
+                            fs.cpSync(extractedDir, usrDir, { recursive: true });
+                        }
 
-            makeResults.forEach((res, idx) => {
-                // on windows squirrel, there are 3 artifacts and 2nd is the executable
-                const mainIdx = res.artifacts.length === 1 ? 0 : 1;
-                const key =
-                    `${res.platform}+${path.extname(res.artifacts[mainIdx]).replace(".", "")}+${res.arch}` as keyof typeof MAP;
-                if (!MAP[key]) {
-                    console.error(`Unknown artifact: ${key}`);
-                    process.exit(1);
+                        const pkgInfoPath = path.join(pkgDir, ".PKGINFO");
+                        const stats = fs.statSync(debArtifact);
+                        const pkgInfo = `pkgname = ${appName.toLowerCase()}
+pkgver = ${appVersion}
+pkgdesc = ${packageJSON.description}
+url = ${packageJSON.author.url}
+packager = ${packageJSON.author.name}
+arch = x86_64
+size = ${stats.size}
+license = ${packageJSON.license}
+`;
+                        fs.writeFileSync(pkgInfoPath, pkgInfo);
+
+                        const mtreePath = path.join(pkgDir, ".MTREE");
+                        fs.writeFileSync(mtreePath, "#mtree\n");
+
+                        execSync(
+                            `cd "${pkgDir}" && tar -cJf "${pkgFile}" .PKGINFO .MTREE usr 2>/dev/null || (tar -cf - .PKGINFO .MTREE usr | xz > "${pkgFile}")`,
+                            { stdio: "inherit" },
+                        );
+
+                        console.log(`Created pacman package: ${pkgFile}`);
+                        pacmanArtifactPath = normalizePath(pkgFile);
+
+                        fs.rmSync(tempDir, { recursive: true, force: true });
+                    } catch (error) {
+                        console.warn(`Failed to create pacman package: ${error}`);
+                    }
+                } else if (fs.existsSync(pkgFile)) {
+                    pacmanArtifactPath = normalizePath(pkgFile);
                 }
-                const { name, text, icon } = MAP[key];
+            }
 
-                const newPath = path.join(mainOutDir, name);
-                fs.renameSync(res.artifacts[mainIdx], newPath);
+            if (pacmanArtifactPath) {
+                artifactsToSave[0].artifacts.push(pacmanArtifactPath);
+            }
 
-                makeResults[idx].artifacts[mainIdx] = newPath;
-
-                // fs.appendFileSync(filesToUploadTxt, newPath.replace(/\\/g, "/") + " ", "utf-8");
-
-                const downloadBtn = makeDlBtn({
-                    text,
-                    name,
-                    icon,
-                    url: res.packageJSON.author.url,
-                });
-
-                fs.appendFileSync(downloadBtnsTxt, downloadBtn, "utf-8");
-            });
+            fs.writeFileSync(filePath, JSON.stringify(artifactsToSave, null, 2), "utf-8");
+            console.log(`Saved build artifacts to: ${filePath}`);
 
             return makeResults;
         },
