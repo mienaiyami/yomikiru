@@ -86,9 +86,9 @@ type ArtifactKey = keyof ReturnType<typeof createArtifactMap>;
  * Calculates SHA256 hash of a file
  */
 const calculateSHA256 = (filePath: string): string => {
-    const fileBuffer = fs.readFileSync(filePath, "binary");
+    const fileBuffer = fs.readFileSync(filePath);
     const hashSum = createHash("sha256");
-    hashSum.update(fileBuffer);
+    hashSum.update(new Uint8Array(fileBuffer));
     return hashSum.digest("hex");
 };
 

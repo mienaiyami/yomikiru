@@ -141,6 +141,7 @@ jobs:
           name: linux-build-files
           path: |
             ./out/all/*
+            ./out/make/*
             ./build-artifacts/*
           if-no-files-found: error
 
