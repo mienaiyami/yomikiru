@@ -12,43 +12,14 @@
 >
 > Issue is only present to users using "Setup" version.
 >
-> We are actively working on a permanent solution to this issue. For more information, see <https://github.com/mienaiyami/yomikiru/discussions/451>
+> I'm actively working on a permanent solution to this issue. For more information, see <https://github.com/mienaiyami/yomikiru/discussions/451>
 
-# 2.22.0
+# 2.23.0
 
-- feat: improve directory flattening and error handling for unrar command, fix: #465 & #352.
-- fix: #464.
-- fix: #460, fix chapter data fetching and sorting logic, fix prev/next chapter selection logic.
-- refactor: enhance update installation process with user prompts and improved handling of installation on quit.
-- fix: temporary fix for #450, #451.
-- chore(dev): migrate to biomejs.
-- feat(dev): implement global error handling and reporting system.
+- fix: #260, disable drag to scroll for right and bottom edge in reader.
+- fix: #458, improve error handling during window destruction process.
+- feat(dev): setup arch linux build workflow and better release artifacts generation and files for release.
 
-## 2.21.2
+## 2.22.5
 
-- fix: add file exists check for each old settings file, #453.
-- fix(test): update GitHub Actions runner to ubuntu-22.04 (GLIBC version 2.35), #452.
-
-## 2.21.1
-
-- Fixed migration of history and bookmarks from JSON to SQLite, #448.
-
-## 2.21.0
-
-All changes are from beta. To join beta, check `Settings -> About -> Update Channel` after downloading this version.
-
-## 2.21.0-beta.4
-
-<https://github.com/mienaiyami/yomikiru/releases/tag/v2.21.0-beta.4>
-
-## 2.21.0-beta.3
-
-<https://github.com/mienaiyami/yomikiru/releases/tag/v2.21.0-beta.3>
-
-## 2.21.0-beta.2
-
-<https://github.com/mienaiyami/yomikiru/releases/tag/v2.21.0-beta.2>
-
-## 2.21.0-beta.1
-
-<https://github.com/mienaiyami/yomikiru/releases/tag/v2.21.0-beta.1>
+<https://github.com/mienaiyami/yomikiru/releases/tag/v2.22.5>
