@@ -14,4 +14,8 @@ export const mainConfig: Configuration = {
         rules,
     },
     plugins,
+    optimization: {
+        minimize: false,
+    },
+    devtool: "source-map",
 };
