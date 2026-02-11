@@ -31,11 +31,19 @@ jobs:
                   node-version: 18.15.0
                   cache: pnpm
 
+            - name: Install rpm for package creation
+              run: |
+                sudo apt-get update
+                sudo apt-get install -y rpm
+
             - name: Install dependencies
               run: pnpm install
 
             - name: forge make deb
               run: pnpm make:deb
+
+            - name: forge make rpm
+              run: pnpm make:rpm
 
             - name: Set version
               id: version
