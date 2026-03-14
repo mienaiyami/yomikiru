@@ -25,20 +25,24 @@ const StyleSheets = memo(
                                             .replaceAll("\\", "/")}"`,
                                     );
                                 });
-                                // to make sure styles don't apply outside
-                                // todo, can use scope in latest version of electron
-                                const ast = css.parse(txt);
-                                const scopeRule = (e: css.Node) => {
-                                    if (e.type === "rule") {
-                                        (e as css.Rule).selectors = (e as css.Rule).selectors?.map((s) =>
-                                            s.includes("section.main") ? s : `#EPubReader section.main ${s}`,
-                                        );
-                                    } else if (e.type === "media") {
-                                        (e as css.Media).rules?.forEach(scopeRule);
-                                    }
-                                };
-                                ast.stylesheet?.rules.forEach(scopeRule);
-                                txt = css.stringify(ast);
+                                try {
+                                    // to make sure styles don't apply outside
+                                    // todo, can use scope in latest version of electron
+                                    const ast = css.parse(txt);
+                                    const scopeRule = (e: css.Node) => {
+                                        if (e.type === "rule") {
+                                            (e as css.Rule).selectors = (e as css.Rule).selectors?.map((s) =>
+                                                s.includes("section.main") ? s : `#EPubReader section.main ${s}`,
+                                            );
+                                        } else if (e.type === "media") {
+                                            (e as css.Media).rules?.forEach(scopeRule);
+                                        }
+                                    };
+                                    ast.stylesheet?.rules.forEach(scopeRule);
+                                    txt = css.stringify(ast);
+                                } catch (e) {
+                                    window.logger.warn("Failed to scope stylesheet, using raw content.", e);
+                                }
                                 stylesheet.innerHTML = txt;
                                 node.appendChild(stylesheet);
                             } catch (e) {
