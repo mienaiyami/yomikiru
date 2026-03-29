@@ -1,4 +1,4 @@
-import { accessSync, existsSync, lstatSync, readFileSync } from "node:fs";
+import { accessSync, existsSync, lstatSync, readFileSync, statSync } from "node:fs";
 import fs from "node:fs/promises";
 import os from "node:os";
 import path from "node:path";
@@ -39,8 +39,11 @@ const fsAPI = {
     rm: fs.rm,
     mkdir: fs.mkdir,
     // todo make async version of these
-    isDir: (path: string) => {
+    isDir: (path: string, acceptSymbolicLink = true) => {
         try {
+            if (acceptSymbolicLink && lstatSync(path).isSymbolicLink()) {
+                return statSync(path).isDirectory();
+            }
             return lstatSync(path).isDirectory();
         } catch (_error) {
             return false;

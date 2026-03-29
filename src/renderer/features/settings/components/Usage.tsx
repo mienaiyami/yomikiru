@@ -131,6 +131,11 @@ const Usage: React.FC = () => {
                             <b>Search:</b>
                             <ul>
                                 <li>
+                                    Symbolic links (symlinks) to directories are treated as directories in
+                                    Locations/Home Location, so you can browse and open content through linked
+                                    folders.
+                                </li>
+                                <li>
                                     You don&apos;t need to type the whole word in search. (e.g. For{" "}
                                     <code>One Piece</code> type <code>op</code>).
                                 </li>
