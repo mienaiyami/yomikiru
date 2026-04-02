@@ -17,7 +17,7 @@ If you have questions, ideas, or want to stay updated with development, join our
 - Discuss new ideas and upcoming updates  
 - Connect with other users
 
-**Join the Discord:** <https://discord.gg/kCpm9hDj5v>
+**Join the Discord:** <https://discord.gg/UHwBN9g22e>
 
 ## Features
 
