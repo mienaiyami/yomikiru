@@ -401,6 +401,81 @@
                     }
                 }
 
+                .note-item {
+                    padding: 14px 20px;
+                    border-bottom: 1px solid var(--divider-color);
+                    cursor: pointer;
+                    transition: background-color 0.15s;
+
+                    &:hover {
+                        background-color: var(--listItem-bg-color-hover);
+                    }
+
+                    &.selected {
+                        background-color: var(--listItem-bg-color-hover);
+                    }
+
+                    .note-item-row {
+                        display: flex;
+                        gap: 10px;
+                        align-items: flex-start;
+                    }
+
+                    .note-color-dot {
+                        width: 6px;
+                        min-width: 6px;
+                        min-height: 2.5rem;
+                        border-radius: 3px;
+                        background-color: var(--btn-color);
+                    }
+
+                    .note-item-body {
+                        flex: 1;
+                        min-width: 0;
+                        display: flex;
+                        flex-direction: column;
+                        gap: 4px;
+                    }
+
+                    .note-item-header {
+                        display: flex;
+                        align-items: baseline;
+                        justify-content: space-between;
+                        gap: 8px;
+                    }
+
+                    .note-chapter {
+                        font-weight: 500;
+                        white-space: nowrap;
+                        overflow: hidden;
+                        text-overflow: ellipsis;
+                    }
+
+                    .note-date {
+                        font-size: 0.8em;
+                        color: var(--font-color-secondary);
+                        flex-shrink: 0;
+                    }
+
+                    .note-content-text {
+                        margin: 0;
+                        font-size: 0.9em;
+                        line-height: 1.35;
+                        white-space: pre-wrap;
+                    }
+
+                    .note-selected-preview {
+                        margin: 0;
+                        font-size: 0.85em;
+                        color: var(--font-color-secondary);
+                        line-height: 1.35;
+                        display: -webkit-box;
+                        -webkit-line-clamp: 3;
+                        -webkit-box-orient: vertical;
+                        overflow: hidden;
+                    }
+                }
+
                 // Bookmark item styling
                 .bookmark-item {
                     padding: 14px 20px;

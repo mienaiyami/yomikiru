@@ -171,6 +171,11 @@ const Usage: React.FC = () => {
                     home screen.
                 </li>
                 <li>
+                    <b>Gallery:</b> Click a book to open its details panel (bookmarks and notes from the reader;
+                    click an entry to open the book at that place). Click manga for chapters and bookmarks as
+                    before.
+                </li>
+                <li>
                     <b>Reader :</b>
                     <ul>
                         <li>

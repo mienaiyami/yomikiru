@@ -7,6 +7,7 @@ import { useAppDispatch, useAppSelector } from "@store/hooks";
 import { formatUtils } from "@utils/file";
 import { useCallback, useMemo, useState } from "react";
 import ListNavigator from "../../../components/ListNavigator";
+import BookDetailsPanel from "./components/BookDetailsPanel";
 import MangaDetailsPanel from "./components/MangaDetailsPanel";
 
 const GalleryDisplayMode: Record<AppSettings["galleryDisplayMode"], string> = {
@@ -23,6 +24,7 @@ const GalleryView: React.FC = () => {
     const dispatch = useAppDispatch();
 
     const [selectedManga, setSelectedManga] = useState<string | null>(null);
+    const [selectedBook, setSelectedBook] = useState<string | null>(null);
 
     // Convert library object to array for easier manipulation
     const mangaList = useMemo(() => {
@@ -64,12 +66,11 @@ const GalleryView: React.FC = () => {
 
     const handleMangaSelect = useCallback((libraryItem: LibraryItemWithProgress) => {
         if (libraryItem.type === "book") {
-            openInReader(libraryItem.link, {
-                epubElementQueryString: libraryItem.progress?.position,
-                epubChapterId: libraryItem.progress?.chapterId,
-            });
+            setSelectedBook(libraryItem.link);
+            setSelectedManga(null);
         } else {
             setSelectedManga(libraryItem.link);
+            setSelectedBook(null);
         }
     }, []);
     const handleContinueReading = useCallback((item: LibraryItemWithProgress) => {
@@ -274,6 +275,7 @@ const GalleryView: React.FC = () => {
 
     const handleCloseMangaDetails = useCallback(() => {
         setSelectedManga(null);
+        setSelectedBook(null);
     }, []);
 
     return (
@@ -284,7 +286,7 @@ const GalleryView: React.FC = () => {
                 renderItem={renderMangaItem}
                 emptyMessage="No items"
             >
-                <div className={`galleryToolbar ${selectedManga ? "hidden" : ""}`}>
+                <div className={`galleryToolbar ${selectedManga || selectedBook ? "hidden" : ""}`}>
                     <div>
                         <ListNavigator.SearchInput placeholder="Type to Search" />
                     </div>
@@ -305,7 +307,7 @@ const GalleryView: React.FC = () => {
                     </div>
                 </div>
 
-                <div className={`galleryContent ${selectedManga ? "with-details" : ""}`}>
+                <div className={`galleryContent ${selectedManga || selectedBook ? "with-details" : ""}`}>
                     <div className="libraryGrid">
                         <ListNavigator.List
                             className={`galleryList ${appSettings.galleryDisplayMode === "list" ? "list" : ""}`}
@@ -314,6 +316,9 @@ const GalleryView: React.FC = () => {
 
                     {selectedManga && (
                         <MangaDetailsPanel mangaLink={selectedManga} onClose={handleCloseMangaDetails} />
+                    )}
+                    {selectedBook && (
+                        <BookDetailsPanel bookLink={selectedBook} onClose={handleCloseMangaDetails} />
                     )}
                 </div>
             </ListNavigator.Provider>
