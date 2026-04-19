@@ -140,6 +140,7 @@ export class DirectoryValidatorService {
             useCache: options.useCache ?? true,
             showLoading: options.showLoading ?? false,
             sendImages: options.sendImages ?? false,
+            firstImageOnly: options.firstImageOnly ?? false,
             errorOnInvalid: options.errorOnInvalid ?? true,
         };
         const { maxSubdirectoryDepth, useCache, showLoading } = options;
@@ -346,7 +347,7 @@ export class DirectoryValidatorService {
         options: DirectoryValidatorOptions,
     ): Promise<ValidationResult> {
         const { fs, path, logger, onProgress } = this.dependencies;
-        const { sendImages = false } = options;
+        const { sendImages = false, firstImageOnly = false } = options;
 
         // let loadingTimeout: NodeJS.Timeout | null = null;
         // const loadingTimeoutWait = 100;
@@ -363,7 +364,7 @@ export class DirectoryValidatorService {
                 return { isValid: false, error: "Directory is empty" };
             }
 
-            if (sendImages) {
+            if (sendImages && !firstImageOnly) {
                 //     loadingTimeout = setTimeout(() => {
                 onProgress({
                     // message: `PROCESSING IMAGES`,
@@ -412,8 +413,18 @@ export class DirectoryValidatorService {
                 return { isValid: false, error: "No supported images found" };
             }
 
+            const sortedNames = [...imgs].sort(window.app.betterSortOrder);
+
+            if (firstImageOnly) {
+                return {
+                    isValid: true,
+                    images: [path.join(link, sortedNames[0])],
+                    imageCount: sortedNames.length,
+                };
+            }
+
             if (sendImages) {
-                const sortedImages = imgs.sort(window.app.betterSortOrder).map((e) => path.join(link, e));
+                const sortedImages = sortedNames.map((e) => path.join(link, e));
 
                 onProgress({
                     percent: 10,
@@ -422,6 +433,7 @@ export class DirectoryValidatorService {
                 return {
                     isValid: true,
                     images: sortedImages,
+                    imageCount: sortedImages.length,
                 };
             }
             return { isValid: true };

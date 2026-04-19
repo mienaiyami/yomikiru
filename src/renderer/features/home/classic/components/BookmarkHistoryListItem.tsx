@@ -6,6 +6,7 @@ import { deleteLibraryItem } from "@store/library";
 import dateUtils from "@utils/date";
 import { dialogUtils } from "@utils/dialog";
 import { formatUtils } from "@utils/file";
+import { resolveMangaChapterPath } from "@utils/mangaChapterPath";
 import { useAppContext } from "src/renderer/App";
 
 const BookmarkHistoryListItem: React.FC<{
@@ -29,10 +30,12 @@ const BookmarkHistoryListItem: React.FC<{
     if (libraryItem.type === "manga" && !libraryItem.progress) return <p>Error: Item not found</p>;
     const link =
         props.bookmark && "page" in props.bookmark
-            ? props.bookmark.link
+            ? resolveMangaChapterPath(props.bookmark.itemLink, props.bookmark.chapterName)
             : libraryItem.type === "book"
               ? libraryItem.link
-              : libraryItem.progress?.chapterLink;
+              : libraryItem.progress && "chapterName" in libraryItem.progress
+                ? resolveMangaChapterPath(libraryItem.progress.itemLink, libraryItem.progress.chapterName)
+                : "";
     if (!link) return <p>Error: Link not found</p>;
 
     const title = props.isHistory
@@ -142,7 +145,6 @@ const BookmarkHistoryListItem: React.FC<{
                             addBookmark({
                                 type,
                                 data: {
-                                    link: libraryItem.progress?.chapterLink,
                                     itemLink: libraryItem.link,
                                     page: libraryItem.progress?.currentPage,
                                     chapterName: libraryItem.progress?.chapterName,

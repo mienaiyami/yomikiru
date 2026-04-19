@@ -26,6 +26,7 @@ const Main = (): ReactElement => {
 
     // todo: move anilist login to Settings component
     const anilistToken = useAppSelector((store) => store.anilist.token);
+    const galleryAnilistCtx = useAppSelector((store) => store.anilist.galleryTrackContext);
     const isAniLoginOpen = useAppSelector((store) => store.ui.isOpen.anilist.login);
     const isAniSearchOpen = useAppSelector((store) => store.ui.isOpen.anilist.search);
     const isAniEditOpen = useAppSelector((store) => store.ui.isOpen.anilist.edit);
@@ -41,8 +42,8 @@ const Main = (): ReactElement => {
             {optSelectData && <MenuList />}
             {colorSelectData && <InputColorReal />}
             {!anilistToken && isAniLoginOpen && <AniLogin />}
-            {reader.link && isAniSearchOpen && <AnilistSearch />}
-            {reader.link && isAniEditOpen && <AnilistEdit />}
+            {(reader.link || galleryAnilistCtx) && isAniSearchOpen && <AnilistSearch />}
+            {(reader.link || galleryAnilistCtx) && isAniEditOpen && <AnilistEdit />}
             {reader.link && (reader.type === "manga" ? <Reader /> : reader.type === "book" ? <EPubReader /> : "")}
         </div>
     );

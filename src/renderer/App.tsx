@@ -1,5 +1,5 @@
 import { useDirectoryValidator } from "@features/reader/hooks/useDirectoryValidator";
-import { setAnilistCurrentManga } from "@store/anilist";
+import { setAnilistCurrentManga, setGalleryTrackContext } from "@store/anilist";
 import { refreshAppSettings, setAppSettings } from "@store/appSettings";
 import { addBookmark, fetchAllBookmarks, removeBookmark } from "@store/bookmarks";
 import { fetchAllNotes } from "@store/bookNotes";
@@ -111,6 +111,7 @@ const App = (): ReactElement => {
         dispatch(setAnilistEditOpen(false));
         dispatch(setAnilistLoginOpen(false));
         dispatch(setAnilistSearchOpen(false));
+        dispatch(setGalleryTrackContext(null));
 
         // this is needed coz it is async and by the time it executes, deleteDirOnClose changes to current dir
         const deleteDir = window.app.deleteDirOnClose;
@@ -288,10 +289,7 @@ const App = (): ReactElement => {
                     label: "Show in File Explorer",
                     disabled: !url,
                     action() {
-                        if (process.platform === "win32") window.electron.showItemInFolder(url || "");
-                        //todo
-                        // else if (process.platform === "linux")
-                        //     window.electron.send("showInExplorer", url);
+                        window.electron.showItemInFolder(url || "");
                     },
                 };
             },

@@ -49,6 +49,7 @@
         "@fortawesome/free-solid-svg-icons": "^6.2.1",
         "@fortawesome/react-fontawesome": "^0.2.0",
         "@reduxjs/toolkit": "^1.9.3",
+        "@tanstack/react-virtual": "^3.13.23",
         "@vscode/sudo-prompt": "^9.3.1",
         "better-sqlite3": "^11.8.1",
         "chokidar": "^3.5.3",
@@ -72,6 +73,7 @@
         "react-intersection-observer": "^9.5.2",
         "react-redux": "^8.0.5",
         "semver": "^7.7.1",
+        "sharp": "^0.34.5",
         "zod": "^3.22.3"
     },
     "devDependencies": {

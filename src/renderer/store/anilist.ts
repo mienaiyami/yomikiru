@@ -5,12 +5,15 @@ type AnilistState = {
     token: string | null;
     tracking: Anilist.TrackStore;
     currentManga: Anilist.MangaData | null;
+    /** When set, AniList search / track UI uses this library path instead of `reader.content` (e.g. gallery). */
+    galleryTrackContext: { link: string; title: string } | null;
 };
 
 const initialState: AnilistState = {
     token: AniList.getStorageToken(),
     tracking: AniList.loadTrackingFromStorage(),
     currentManga: null,
+    galleryTrackContext: null,
 };
 
 const anilistSlice = createSlice({
@@ -47,10 +50,19 @@ const anilistSlice = createSlice({
             }
             state.currentManga = action.payload;
         },
+
+        setGalleryTrackContext: (state, action: PayloadAction<{ link: string; title: string } | null>) => {
+            state.galleryTrackContext = action.payload;
+        },
     },
 });
 
-export const { setAnilistToken, addAnilistTracker, removeAnilistTracker, setAnilistCurrentManga } =
-    anilistSlice.actions;
+export const {
+    setAnilistToken,
+    addAnilistTracker,
+    removeAnilistTracker,
+    setAnilistCurrentManga,
+    setGalleryTrackContext,
+} = anilistSlice.actions;
 
 export default anilistSlice.reducer;

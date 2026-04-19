@@ -1,16 +1,24 @@
 import { faMinus, faPlus, faSlidersH } from "@fortawesome/free-solid-svg-icons";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import { setAnilistCurrentManga } from "@store/anilist";
+import { setAnilistCurrentManga, setGalleryTrackContext } from "@store/anilist";
 import { useAppDispatch, useAppSelector } from "@store/hooks";
 import { setAnilistEditOpen, setAnilistSearchOpen } from "@store/ui";
 import InputNumber from "@ui/InputNumber";
 import AniList from "@utils/anilist";
 import { dialogUtils } from "@utils/dialog";
-import { memo, useEffect, useState } from "react";
+import { memo, useCallback, useEffect, useState } from "react";
 
-const AnilistBar = memo(() => {
+export type AnilistBarProps = {
+    /** When set (e.g. gallery detail panel), tracking uses this path instead of the open reader item. */
+    localLibraryLink?: string;
+    libraryTitle?: string;
+};
+
+const AnilistBar = memo((props: AnilistBarProps) => {
+    const { localLibraryLink, libraryTitle } = props;
     const anilistTracking = useAppSelector((store) => store.anilist.tracking);
-    const mangaInReader = useAppSelector((store) => store.reader.content?.link);
+    const readerLink = useAppSelector((store) => store.reader.content?.link);
+    const trackLink = localLibraryLink ?? readerLink ?? undefined;
     const anilistCurrentManga = useAppSelector((store) => store.anilist.currentManga);
     const isAniEditOpen = useAppSelector((store) => store.ui.isOpen.anilist.edit);
 
@@ -18,14 +26,13 @@ const AnilistBar = memo(() => {
     const [progress, setProgress] = useState(anilistCurrentManga?.progress || 0);
     const dispatch = useAppDispatch();
 
-    // todo refactor
     useEffect(() => {
-        if (mangaInReader && anilistTracking.find((e) => e.localURL === mangaInReader)) setTracking(true);
+        if (trackLink && anilistTracking.find((e) => e.localURL === trackLink)) setTracking(true);
         else {
             setTracking(false);
             dispatch(setAnilistEditOpen(false));
         }
-    }, [anilistTracking, mangaInReader]);
+    }, [anilistTracking, trackLink, dispatch]);
     useEffect(() => {
         setProgress(anilistCurrentManga?.progress || 0);
     }, [anilistCurrentManga]);
@@ -48,9 +55,9 @@ const AnilistBar = memo(() => {
     }, [progress]);
 
     useEffect(() => {
-        if (!mangaInReader) return;
+        if (!trackLink) return;
         if (isTracking) {
-            const found = anilistTracking.find((e) => e.localURL === mangaInReader);
+            const found = anilistTracking.find((e) => e.localURL === trackLink);
             if (found) {
                 AniList.getMangaData(found.anilistMediaId).then((e) => {
                     if (e) {
@@ -61,7 +68,27 @@ const AnilistBar = memo(() => {
         } else {
             dispatch(setAnilistCurrentManga(null));
         }
-    }, [isTracking, mangaInReader, isAniEditOpen]);
+    }, [isTracking, trackLink, isAniEditOpen, anilistTracking, dispatch]);
+
+    const openAnilistFlow = useCallback(
+        (mode: "search" | "edit") => {
+            dispatch(setGalleryTrackContext(null));
+            if (localLibraryLink) {
+                dispatch(
+                    setGalleryTrackContext({
+                        link: localLibraryLink,
+                        title: libraryTitle ?? "",
+                    }),
+                );
+            }
+            if (mode === "search") {
+                dispatch(setAnilistSearchOpen(true));
+            } else {
+                dispatch(setAnilistEditOpen(true));
+            }
+        },
+        [dispatch, libraryTitle, localLibraryLink],
+    );
 
     return (
         <div className="anilistBar">
@@ -70,7 +97,7 @@ const AnilistBar = memo(() => {
             {isTracking ? (
                 anilistCurrentManga ? (
                     <div className="btns">
-                        <button onClick={() => setProgress((init) => init - 1)}>
+                        <button type="button" onClick={() => setProgress((init) => init - 1)}>
                             <FontAwesomeIcon icon={faMinus} />
                         </button>
                         <InputNumber
@@ -79,10 +106,10 @@ const AnilistBar = memo(() => {
                             min={0}
                             timeout={[2000, (value) => setProgress(value)]}
                         />
-                        <button onClick={() => setProgress((init) => init + 1)}>
+                        <button type="button" onClick={() => setProgress((init) => init + 1)}>
                             <FontAwesomeIcon icon={faPlus} />
                         </button>
-                        <button data-tooltip="More Options" onClick={() => dispatch(setAnilistEditOpen(true))}>
+                        <button type="button" data-tooltip="More Options" onClick={() => openAnilistFlow("edit")}>
                             <FontAwesomeIcon icon={faSlidersH} />
                         </button>
                     </div>
@@ -90,7 +117,9 @@ const AnilistBar = memo(() => {
                     <span>Network Error</span>
                 )
             ) : (
-                <button onClick={() => dispatch(setAnilistSearchOpen(true))}>Track</button>
+                <button type="button" onClick={() => openAnilistFlow("search")}>
+                    Track
+                </button>
             )}
         </div>
     );

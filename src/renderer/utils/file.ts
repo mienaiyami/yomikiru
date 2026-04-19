@@ -113,3 +113,13 @@ export const unzip = (source: string, destination: string) => {
         source,
     });
 };
+
+/**
+ * Converts an `<img src="file://...">` value (or similar) to a local filesystem path (Windows-safe).
+ */
+export const fileSrcToImagePath = (src: string): string => {
+    let p = src.replace(/^file:\/\//i, "");
+    p = p.replaceAll("%23", "#");
+    if (p.startsWith("/") && /^\/[A-Za-z]:/.test(p)) p = p.slice(1);
+    return p;
+};

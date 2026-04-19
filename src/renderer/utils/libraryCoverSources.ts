@@ -1,0 +1,71 @@
+import type { DirectoryValidatorOptions, ValidationResult } from "@features/reader/types";
+import EPUB from "@utils/epub";
+import { findCover } from "@utils/utils";
+
+/**
+ * Path for `library_items.cover` when persisting a path: only a `cover.*` in the series root.
+ * First-page / chapter images are never written here; they are materialized to userData/covers only.
+ */
+export const mangaDedicatedCoverPathForDb = (mangaDir: string): string | null => {
+    const c = findCover(mangaDir);
+    return c ? c : null;
+};
+
+/**
+ * Manga folder: `cover.*` if present, otherwise first page image from the open chapter when provided.
+ * The first-page path is for materialize input only, not for DB `cover` (see {@link mangaDedicatedCoverPathForDb}).
+ */
+export const resolveMangaCoverSourcePath = (
+    mangaDir: string,
+    firstPageImage?: string | null,
+): { realCover: string; sourceForCover: string } => {
+    const realCover = findCover(mangaDir);
+    const sourceForCover =
+        realCover ||
+        (firstPageImage && typeof firstPageImage === "string" && window.fs.isFile(firstPageImage)
+            ? firstPageImage
+            : "");
+    return { realCover, sourceForCover };
+};
+
+/** Shared options for scanning a manga series folder for the first page image (matches bulk-import behavior). */
+export const mangaSeriesFirstImageScanOptions = (): DirectoryValidatorOptions => ({
+    showLoading: false,
+    sendImages: false,
+    firstImageOnly: true,
+    maxSubdirectoryDepth: 1,
+    errorOnInvalid: false,
+    useCache: true,
+});
+
+export type ValidateDirectoryFn = (link: string, options?: DirectoryValidatorOptions) => Promise<ValidationResult>;
+
+/**
+ * Resolves an image path for `covers:materialize`: `cover.*` in the series root if present, else first sorted image under the series (via directory scan).
+ */
+export const fetchMangaCoverMaterializeSource = async (
+    mangaDir: string,
+    validateDirectory: ValidateDirectoryFn,
+): Promise<string | undefined> => {
+    const dedicated = mangaDedicatedCoverPathForDb(mangaDir);
+    if (dedicated && window.fs.isFile(dedicated)) return dedicated;
+
+    const result = await validateDirectory(mangaDir, mangaSeriesFirstImageScanOptions());
+    const first = result.images?.[0];
+    if (first && window.fs.isFile(first)) return first;
+    return undefined;
+};
+
+/**
+ * Loads EPUB metadata and returns absolute cover image path if the file exists (extracts to a temp dir when needed).
+ */
+export const resolveBookCoverAbsolutePath = async (epubPath: string): Promise<string | undefined> => {
+    try {
+        const ed = await EPUB.readEpubFile(epubPath, false);
+        const c = ed.metadata.cover;
+        if (c && window.fs.isFile(c)) return c;
+        return undefined;
+    } catch {
+        return undefined;
+    }
+};

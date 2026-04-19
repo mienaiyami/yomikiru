@@ -12,6 +12,7 @@ remote.initialize();
 if (require("electron-squirrel-startup")) app.quit();
 
 import { DatabaseService } from "./db";
+import { registerCoverHandlers } from "./ipc/covers";
 import { setupDatabaseHandlers } from "./ipc/database";
 import { registerDialogHandlers } from "./ipc/dialog";
 import { registerErrorReportingHandlers } from "./ipc/errorReporting";
@@ -132,6 +133,7 @@ app.on("ready", async () => {
 
         await db.initialize();
         setupDatabaseHandlers(db);
+        registerCoverHandlers();
 
         WindowManager.registerListeners();
 

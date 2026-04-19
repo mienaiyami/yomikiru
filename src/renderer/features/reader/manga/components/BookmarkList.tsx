@@ -6,6 +6,7 @@ import { getReaderManga } from "@store/reader";
 import dateUtils from "@utils/date";
 import { dialogUtils } from "@utils/dialog";
 import { createRendererLogger } from "@utils/logger";
+import { resolveMangaChapterPath } from "@utils/mangaChapterPath";
 import { useCallback } from "react";
 
 const log = createRendererLogger("manga/BookmarkList");
@@ -32,10 +33,18 @@ const BookmarkList: React.FC = () => {
                 if (isNaN(bookmarkId)) throw new Error("Invalid bookmark id");
                 const bookmark = bookmarksArray.find((b) => b.id === bookmarkId);
                 if (!bookmark) throw new Error("Bookmark not found");
-                if (mangaInReader?.progress?.chapterLink === bookmark.link) {
+                const bookmarkPath = resolveMangaChapterPath(bookmark.itemLink, bookmark.chapterName);
+                const progressPath =
+                    mangaInReader?.progress?.itemLink && mangaInReader?.progress?.chapterName
+                        ? resolveMangaChapterPath(
+                              mangaInReader.progress.itemLink,
+                              mangaInReader.progress.chapterName,
+                          )
+                        : "";
+                if (progressPath && bookmarkPath === progressPath) {
                     window.app.scrollToPage(bookmark.page, "smooth");
                 } else {
-                    openInReader(bookmark.link, {
+                    openInReader(bookmarkPath, {
                         mangaPageNumber: bookmark.page,
                     });
                 }

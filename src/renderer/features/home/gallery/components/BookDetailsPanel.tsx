@@ -1,14 +1,15 @@
 import type { BookBookmark, BookNote, LibraryItemWithProgress } from "@common/types/db";
+import AnilistBar from "@features/anilist/AnilistBar";
 import { faArrowLeft, faBookmark, faImage } from "@fortawesome/free-solid-svg-icons";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { useAppContext } from "@renderer/App";
 import ListNavigator from "@renderer/components/ListNavigator";
 import { removeNote } from "@store/bookNotes";
 import { useAppDispatch, useAppSelector } from "@store/hooks";
-import { updateLibraryItem } from "@store/library";
 import dateUtils from "@utils/date";
 import { dialogUtils } from "@utils/dialog";
-import { formatUtils } from "@utils/file";
+import { libraryCoverSrc } from "@utils/libraryCover";
+import { pickAndApplyCustomCover } from "@utils/libraryCoverService";
 import { createRendererLogger } from "@utils/logger";
 import { useCallback, useState } from "react";
 import { shallowEqual } from "react-redux";
@@ -30,6 +31,7 @@ const BookDetailsPanel: React.FC<BookDetailsPanelProps> = ({ bookLink, onClose }
     const dispatch = useAppDispatch();
     const library = useAppSelector((store) => store.library.items);
     const confirmDeleteItem = useAppSelector((store) => store.appSettings.confirmDeleteItem);
+    const anilistToken = useAppSelector((store) => store.anilist.token);
 
     const [activeTab, setActiveTab] = useState<"bookmarks" | "notes">("bookmarks");
 
@@ -234,27 +236,45 @@ const BookDetailsPanel: React.FC<BookDetailsPanelProps> = ({ bookLink, onClose }
     /** Sets a custom cover image for this library item. */
     const handleSelectCover = useCallback(async () => {
         if (!book) return;
-        try {
-            const result = await dialogUtils.showOpenDialog({
-                title: "Select Cover",
-                filters: [{ name: "Images", extensions: formatUtils.image.list.map((ext) => ext.slice(1)) }],
-                defaultPath: window.path.dirname(bookLink),
-            });
-            if (result) {
-                dispatch(updateLibraryItem({ link: bookLink, cover: result.filePaths[0] }));
-            }
-        } catch (error) {
-            log.error("select cover failed", error);
-        }
+        await pickAndApplyCustomCover({
+            dispatch,
+            libraryId: book.id,
+            link: bookLink,
+            defaultPath: window.path.dirname(bookLink),
+            errorLogLabel: "BookDetailsPanel cover picker",
+        });
     }, [book, bookLink, dispatch]);
 
     const handleContinueReading = useCallback(() => {
-        if (!book?.progress) return;
-        openInReader(bookLink, {
-            epubChapterId: book.progress.chapterId,
-            epubElementQueryString: book.progress.position,
-        });
+        openInReader(
+            bookLink,
+            book?.progress
+                ? {
+                      epubChapterId: book.progress.chapterId,
+                      epubElementQueryString: book.progress.position,
+                  }
+                : undefined,
+        );
     }, [book, bookLink, openInReader]);
+
+    /** Context menu for the library `.epub` path (same entries as gallery grid). */
+    const handleLibraryRootContextMenu = useCallback(
+        (e: React.MouseEvent) => {
+            e.preventDefault();
+            e.stopPropagation();
+            setContextMenuData({
+                clickX: e.clientX,
+                clickY: e.clientY,
+                items: [
+                    window.contextMenu.template.openInNewWindow(bookLink),
+                    window.contextMenu.template.showInExplorer(bookLink),
+                    window.contextMenu.template.copyPath(bookLink),
+                ],
+                focusBackElem: e.currentTarget,
+            });
+        },
+        [bookLink, setContextMenuData],
+    );
 
     if (!book || book.type !== "book") {
         return (
@@ -269,6 +289,8 @@ const BookDetailsPanel: React.FC<BookDetailsPanelProps> = ({ bookLink, onClose }
         );
     }
 
+    const coverArtSrc = libraryCoverSrc(book);
+
     return (
         <div className="manga-details-panel">
             <div className="top-bar">
@@ -281,9 +303,14 @@ const BookDetailsPanel: React.FC<BookDetailsPanelProps> = ({ bookLink, onClose }
             <div className="panel-content">
                 <div className="left-panel">
                     <div className="manga-meta">
-                        <div className="cover-container">
-                            {book.cover ? (
-                                <img src={book.cover} alt={book.title} className="manga-cover" draggable={false} />
+                        <div className="cover-container" onContextMenu={handleLibraryRootContextMenu}>
+                            {coverArtSrc ? (
+                                <img
+                                    src={coverArtSrc}
+                                    alt={book.title}
+                                    className="manga-cover"
+                                    draggable={false}
+                                />
                             ) : (
                                 <div className="cover-placeholder">
                                     <span>{book.title[0] || "?"}</span>
@@ -315,6 +342,11 @@ const BookDetailsPanel: React.FC<BookDetailsPanelProps> = ({ bookLink, onClose }
                     </div>
 
                     <div className="manga-actions-container">
+                        {anilistToken ? (
+                            <div className="gallery-anilist-bar">
+                                <AnilistBar localLibraryLink={bookLink} libraryTitle={book.title} />
+                            </div>
+                        ) : null}
                         <div className="manga-actions">
                             {book.progress ? (
                                 <button
@@ -324,7 +356,15 @@ const BookDetailsPanel: React.FC<BookDetailsPanelProps> = ({ bookLink, onClose }
                                 >
                                     Continue Reading
                                 </button>
-                            ) : null}
+                            ) : (
+                                <button
+                                    type="button"
+                                    className="action-button continue-reading"
+                                    onClick={handleContinueReading}
+                                >
+                                    Start Reading
+                                </button>
+                            )}
                             <button
                                 type="button"
                                 className="action-button select-cover"

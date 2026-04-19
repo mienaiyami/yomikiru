@@ -1,9 +1,10 @@
 import type { LibraryItemWithProgress, MangaBookmark } from "@common/types/db";
+import AnilistBar from "@features/anilist/AnilistBar";
+import { useDirectoryValidator } from "@features/reader/hooks/useDirectoryValidator";
 import {
     faArrowLeft,
     faBookmark,
     faEdit,
-    faExternalLinkAlt,
     faImage,
     faSave,
     faSort,
@@ -12,7 +13,6 @@ import {
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { useAppContext } from "@renderer/App";
 import { useAppDispatch, useAppSelector } from "@store/hooks";
-import { updateLibraryItem } from "@store/library";
 import { formatUtils } from "@utils/file";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { shallowEqual } from "react-redux";
@@ -20,8 +20,12 @@ import "./mangaDetailsPanel.scss";
 import ListNavigator from "@renderer/components/ListNavigator";
 import { setAppSettings } from "@store/appSettings";
 import dateUtils from "@utils/date";
-import { dialogUtils } from "@utils/dialog";
-import { findCover } from "@utils/utils";
+import { libraryCoverSrc } from "@utils/libraryCover";
+import { materializeMangaLibraryThumbnail, pickAndApplyCustomCover } from "@utils/libraryCoverService";
+import { createRendererLogger } from "@utils/logger";
+import { resolveMangaChapterPath } from "@utils/mangaChapterPath";
+
+const log = createRendererLogger("gallery/MangaDetailsPanel");
 
 type MangaDetailsPanelProps = {
     mangaLink: string;
@@ -56,23 +60,20 @@ const MangaDetailsPanel: React.FC<MangaDetailsPanelProps> = ({ mangaLink, onClos
         shallowEqual,
     );
     const { setContextMenuData, openInReader } = useAppContext();
+    const { validateDirectory } = useDirectoryValidator();
 
     const placeholderNote = "No description available.";
 
     useEffect(() => {
-        if (manga && window.fs.existsSync(mangaLink) && window.fs.isDir(mangaLink)) {
-            const coverImage = findCover(mangaLink);
-
-            if (coverImage || !window.fs.isFile(manga.cover || "")) {
-                dispatch(
-                    updateLibraryItem({
-                        link: mangaLink,
-                        cover: coverImage,
-                    }),
-                );
+        if (!manga?.id || !window.fs.existsSync(mangaLink) || !window.fs.isDir(mangaLink)) return;
+        void (async () => {
+            try {
+                await materializeMangaLibraryThumbnail(dispatch, manga.id, mangaLink, validateDirectory);
+            } catch (err) {
+                log.error("covers:materialize from details panel failed", err);
             }
-        }
-    }, [mangaLink]);
+        })();
+    }, [mangaLink, manga?.id, dispatch, validateDirectory]);
 
     useEffect(() => {
         setNote(placeholderNote);
@@ -295,7 +296,11 @@ const MangaDetailsPanel: React.FC<MangaDetailsPanelProps> = ({ mangaLink, onClos
     const renderChapterItem = useCallback(
         (chapter: ChapterData, _index: number, isSelected: boolean) => {
             const isRead = manga?.type === "manga" && manga.progress?.chaptersRead.includes(chapter.name);
-            const isCurrent = manga?.progress?.chapterLink === chapter.link;
+            const progressPath =
+                manga?.progress?.itemLink && manga?.progress?.chapterName
+                    ? resolveMangaChapterPath(manga.progress.itemLink, manga.progress.chapterName)
+                    : "";
+            const isCurrent = progressPath === chapter.link;
 
             return (
                 <div
@@ -340,10 +345,15 @@ const MangaDetailsPanel: React.FC<MangaDetailsPanelProps> = ({ mangaLink, onClos
 
     const handleBookmarkClick = useCallback(
         (bookmark: MangaBookmark) => {
-            if (manga?.progress?.chapterLink === bookmark.link) {
+            const bookmarkPath = resolveMangaChapterPath(bookmark.itemLink, bookmark.chapterName);
+            const progressPath =
+                manga?.progress?.itemLink && manga?.progress?.chapterName
+                    ? resolveMangaChapterPath(manga.progress.itemLink, manga.progress.chapterName)
+                    : "";
+            if (progressPath && bookmarkPath === progressPath) {
                 window.app.scrollToPage(bookmark.page, "smooth");
             } else {
-                openInReader(bookmark.link, {
+                openInReader(bookmarkPath, {
                     mangaPageNumber: bookmark.page,
                 });
             }
@@ -421,20 +431,35 @@ const MangaDetailsPanel: React.FC<MangaDetailsPanelProps> = ({ mangaLink, onClos
 
     const handleSelectCover = useCallback(async () => {
         if (!manga) return;
+        await pickAndApplyCustomCover({
+            dispatch,
+            libraryId: manga.id,
+            link: mangaLink,
+            defaultPath: mangaLink,
+            errorLogLabel: "MangaDetailsPanel cover picker",
+        });
+    }, [manga, mangaLink, dispatch]);
 
-        try {
-            const result = await dialogUtils.showOpenDialog({
-                title: "Select Cover",
-                filters: [{ name: "Images", extensions: formatUtils.image.list.map((ext) => ext.slice(1)) }],
-                defaultPath: mangaLink,
+    /** Context menu for the library manga folder (same entries as gallery grid). */
+    const handleLibraryRootContextMenu = useCallback(
+        (e: React.MouseEvent) => {
+            e.preventDefault();
+            e.stopPropagation();
+            setContextMenuData({
+                clickX: e.clientX,
+                clickY: e.clientY,
+                items: [
+                    window.contextMenu.template.openInNewWindow(mangaLink),
+                    window.contextMenu.template.showInExplorer(mangaLink),
+                    window.contextMenu.template.copyPath(mangaLink),
+                ],
+                focusBackElem: e.currentTarget,
             });
-            if (result) {
-                dispatch(updateLibraryItem({ link: mangaLink, cover: result.filePaths[0] }));
-            }
-        } catch (error) {
-            console.error("Error selecting cover:", error);
-        }
-    }, [manga, mangaLink]);
+        },
+        [mangaLink, setContextMenuData],
+    );
+
+    const coverArtSrc = manga ? libraryCoverSrc(manga) : "";
 
     return (
         <div className="manga-details-panel">
@@ -448,10 +473,10 @@ const MangaDetailsPanel: React.FC<MangaDetailsPanelProps> = ({ mangaLink, onClos
             <div className="panel-content">
                 <div className="left-panel">
                     <div className="manga-meta">
-                        <div className="cover-container">
-                            {manga?.cover ? (
+                        <div className="cover-container" onContextMenu={handleLibraryRootContextMenu}>
+                            {coverArtSrc ? (
                                 <img
-                                    src={manga.cover}
+                                    src={coverArtSrc}
                                     alt={manga.title}
                                     className="manga-cover"
                                     draggable={false}
@@ -491,15 +516,27 @@ const MangaDetailsPanel: React.FC<MangaDetailsPanelProps> = ({ mangaLink, onClos
                     </div>
 
                     <div className="manga-actions-container">
+                        {anilistToken && manga ? (
+                            <div className="gallery-anilist-bar">
+                                <AnilistBar localLibraryLink={mangaLink} libraryTitle={manga.title} />
+                            </div>
+                        ) : null}
                         <div className="manga-actions">
                             {manga?.type === "manga" && manga.progress && (
                                 <button
                                     className="action-button continue-reading"
-                                    onClick={() =>
-                                        openInReader(manga?.progress?.chapterLink || "", {
+                                    onClick={() => {
+                                        const p =
+                                            manga?.progress?.itemLink && manga?.progress?.chapterName
+                                                ? resolveMangaChapterPath(
+                                                      manga.progress.itemLink,
+                                                      manga.progress.chapterName,
+                                                  )
+                                                : "";
+                                        openInReader(p, {
                                             mangaPageNumber: manga?.progress?.currentPage || 0,
-                                        })
-                                    }
+                                        });
+                                    }}
                                 >
                                     Continue Reading
                                 </button>
@@ -517,12 +554,6 @@ const MangaDetailsPanel: React.FC<MangaDetailsPanelProps> = ({ mangaLink, onClos
                                 <button className="action-button edit-note" onClick={() => setIsEditingNote(true)}>
                                     <FontAwesomeIcon icon={faEdit} />
                                     <span>Edit Note (Not implemented)</span>
-                                </button>
-                            )}
-                            {anilistToken && (
-                                <button className="action-button track-anilist">
-                                    <FontAwesomeIcon icon={faExternalLinkAlt} />
-                                    <span>Track with AniList (Not implemented)</span>
                                 </button>
                             )}
                         </div>

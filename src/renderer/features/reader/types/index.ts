@@ -1,6 +1,8 @@
 export type ValidationResult = {
     isValid: boolean;
     images?: string[];
+    /** When `firstImageOnly` is used, total image files in the scanned folder (same as `images.length` for full `sendImages`). */
+    imageCount?: number;
     error?: Error | string;
 };
 
@@ -11,6 +13,11 @@ export type DirectoryValidatorOptions = {
      * default: false
      */
     sendImages?: boolean;
+    /**
+     * When true, returns only the first sorted image path and `imageCount`, without building the full path array.
+     * Use for cover/materialize flows; keep `sendImages` false to avoid allocating huge lists.
+     */
+    firstImageOnly?: boolean;
     /**
      * How many levels of subdirectories to check for images
      * 0 means no subdirectories will be checked

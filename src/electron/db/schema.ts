@@ -4,8 +4,9 @@ import { index, integer, sqliteTable, text, unique } from "drizzle-orm/sqlite-co
 const timeNow = sql`(unixepoch() * 1000)`;
 
 export const libraryItems = sqliteTable("library_items", {
-    /** link of manga/epub , not a chapter */
-    link: text().primaryKey(),
+    id: integer({ mode: "number" }).primaryKey({ autoIncrement: true }),
+    /** link of manga/book file or folder, not a chapter */
+    link: text().notNull().unique(),
     type: text({ enum: ["manga", "book"] }).notNull(),
     title: text().notNull(),
     updatedAt: integer({ mode: "timestamp_ms" })
@@ -22,7 +23,6 @@ export const mangaProgress = sqliteTable("manga_progress", {
         .references(() => libraryItems.link, { onDelete: "cascade" })
         .primaryKey(),
     chapterName: text().notNull(),
-    chapterLink: text().notNull(),
     currentPage: integer().default(1).notNull(),
     chaptersRead: text({ mode: "json" }).$type<string[]>().notNull().default([]),
     totalPages: integer().default(0).notNull(),
@@ -50,12 +50,11 @@ export const mangaBookmarks = sqliteTable(
             .notNull(),
         chapterName: text().notNull().default("~"),
         page: integer().notNull(),
-        link: text().notNull(),
         note: text().default(""),
         createdAt: integer({ mode: "timestamp_ms" }).notNull().default(timeNow),
     },
     (t) => [
-        unique("uq_manga_bookmarks_link_page").on(t.link, t.page),
+        unique("uq_manga_bookmarks_item_chapter_page").on(t.itemLink, t.chapterName, t.page),
         index("idx_manga_bookmarks_item_link").on(t.itemLink),
     ],
 );
@@ -68,7 +67,7 @@ export const bookBookmarks = sqliteTable(
             .references(() => libraryItems.link, { onDelete: "cascade" })
             .notNull(),
         chapterName: text().notNull().default("~"),
-        /** this is id of chapter in the epub file */
+        /** this is id of chapter in the book file */
         chapterId: text().notNull(),
         /** CSS selector, elementQueryString */
         position: text().notNull(),
@@ -90,7 +89,7 @@ export const bookNotes = sqliteTable(
         itemLink: text()
             .references(() => libraryItems.link, { onDelete: "cascade" })
             .notNull(),
-        /** this is id of chapter in the epub file */
+        /** this is id of chapter in the book file */
         chapterId: text().notNull(),
         /** for display purposes */
         chapterName: text().notNull(),

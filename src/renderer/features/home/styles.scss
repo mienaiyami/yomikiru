@@ -86,7 +86,9 @@
         }
         .libraryGrid {
             flex: 1;
+            min-height: 0;
             overflow-y: auto;
+            scrollbar-gutter: stable;
             padding: 16px;
             .empty-message {
                 font-size: 2em;
@@ -191,6 +193,9 @@
                         right: 0;
                         height: 50%;
                         padding: 0.6em;
+                        z-index: 2;
+                        /** Clicks should hit the card / cover like the rest of the tile. */
+                        pointer-events: none;
                         .bg {
                             position: absolute;
                             inset: 0;

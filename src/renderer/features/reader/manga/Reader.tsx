@@ -1,4 +1,8 @@
 import type { MangaProgress } from "@common/types/db";
+import {
+    applyMakeCoverFromPageImage,
+    applyMangaCoverAfterChapterLoad,
+} from "@features/reader/services/readerCoverFlows";
 import { setAnilistCurrentManga } from "@store/anilist";
 import { setAppSettings, setReaderSettings } from "@store/appSettings";
 import { useAppDispatch, useAppSelector } from "@store/hooks";
@@ -13,10 +17,11 @@ import { setReaderLoading, setReaderOpen, updateReaderContent, updateReaderManga
 import { cyclePresetNext, cyclePresetPrev, selectPresetSlot } from "@store/readerPresets";
 import AniList from "@utils/anilist";
 import { processChapterNumber } from "@utils/chapterUtils";
-import { formatUtils } from "@utils/file";
+import { fileSrcToImagePath, formatUtils } from "@utils/file";
 import { keyFormatter, mouseEventFormatter } from "@utils/keybindings";
+import { materializeMangaRootAfterAdd } from "@utils/libraryCoverService";
+import { mangaDedicatedCoverPathForDb } from "@utils/libraryCoverSources";
 import { createRendererLogger } from "@utils/logger";
-import { findCover } from "@utils/utils";
 import { Fragment, useCallback, useEffect, useLayoutEffect, useRef, useState } from "react";
 import { InView } from "react-intersection-observer";
 import { useAppContext } from "../../../App";
@@ -685,7 +690,6 @@ const Reader: React.FC = () => {
         const linkSplitted = link.split(window.path.sep).filter((e) => e !== "");
 
         const progress: MangaProgress = {
-            chapterLink: link,
             currentPage: mangaOpenPage || 1,
             lastReadAt: new Date(),
             chapterName: linkSplitted.at(-1) || "",
@@ -694,25 +698,21 @@ const Reader: React.FC = () => {
             chaptersRead: [],
         };
 
-        // Find cover using the utility function
         const mangaDir = window.path.dirname(link);
-        const realCover = findCover(mangaDir);
 
-        // libraryItem.progress is not null when manga is opened from library
-        // this is just a guard to prevent errors when somehow this is null
-        // because it result in manga opening properly but not showing in history/bookmarks
         if (libraryItem && libraryItem.type === "manga" && libraryItem.progress) {
             progress.chaptersRead = Array.from(libraryItem.progress?.chaptersRead || []);
             progress.chaptersRead.push(window.path.basename(link));
 
-            // in case original cover deleted
-            if (realCover || !window.fs.isFile(libraryItem.cover || "")) {
-                dispatch(
-                    updateLibraryItem({
-                        link: window.path.dirname(link),
-                        cover: realCover || imgs[0],
-                    }),
-                );
+            try {
+                await applyMangaCoverAfterChapterLoad({
+                    dispatch,
+                    libraryItem,
+                    mangaDir,
+                    imgs,
+                });
+            } catch (err) {
+                log.error("covers:materialize failed", err);
             }
             dispatch(
                 updateReaderContent({
@@ -723,32 +723,42 @@ const Reader: React.FC = () => {
             dispatch(updateMangaProgress(progress));
         } else {
             const mangaOpened = {
-                type: "manga",
+                type: "manga" as const,
                 link: window.path.dirname(link),
                 title: linkSplitted[linkSplitted.length - 2],
                 author: null,
-                cover: realCover || imgs[0],
+                cover: mangaDedicatedCoverPathForDb(mangaDir),
                 createdAt: new Date(),
                 updatedAt: new Date(),
-            } as const;
-            dispatch(
-                updateReaderContent({
-                    ...mangaOpened,
-                    progress,
-                }),
-            );
-            dispatch(
-                addLibraryItem({
-                    type: "manga",
-                    data: mangaOpened,
-                    progress: {
-                        chapterLink: link,
-                        currentPage: 1,
-                        totalPages: imgs.length,
-                        chapterName: linkSplitted.at(-1) || "",
-                    },
-                }),
-            );
+            };
+            try {
+                const added = await dispatch(
+                    addLibraryItem({
+                        type: "manga",
+                        data: mangaOpened,
+                        progress: {
+                            currentPage: 1,
+                            totalPages: imgs.length,
+                            chapterName: linkSplitted.at(-1) || "",
+                        },
+                    }),
+                ).unwrap();
+                dispatch(
+                    updateReaderContent({
+                        ...added,
+                        type: "manga",
+                        progress,
+                    }),
+                );
+                await materializeMangaRootAfterAdd({
+                    dispatch,
+                    libraryId: added?.id,
+                    mangaDir,
+                    firstPageImage: imgs[0],
+                });
+            } catch (err) {
+                log.error("addLibraryItem or cover materialize failed", err);
+            }
         }
         setImages(imgs);
         dispatch(setReaderOpen());
@@ -1308,12 +1318,20 @@ const Reader: React.FC = () => {
                                 {
                                     label: "Make Cover",
                                     action() {
-                                        dispatch(
-                                            updateLibraryItem({
-                                                link: window.path.dirname(linkInReader),
-                                                cover: src || "",
-                                            }),
-                                        );
+                                        void (async () => {
+                                            const fsPath = fileSrcToImagePath(src || "");
+                                            const mangaRoot = window.path.dirname(linkInReader);
+                                            try {
+                                                await applyMakeCoverFromPageImage({
+                                                    dispatch,
+                                                    libraryId: libraryItem?.id,
+                                                    mangaRoot,
+                                                    fsPath,
+                                                });
+                                            } catch (err) {
+                                                log.error("Make Cover materialize failed", err);
+                                            }
+                                        })();
                                     },
                                 },
                             );

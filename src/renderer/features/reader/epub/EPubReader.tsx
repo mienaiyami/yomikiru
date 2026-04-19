@@ -26,6 +26,7 @@ import { dialogUtils } from "@utils/dialog";
 import EPUB, { type EPubData } from "@utils/epub";
 import { DEFAULT_HIGHLIGHT_COLORS, highlightUtils } from "@utils/highlight";
 import { keyFormatter, mouseEventFormatter } from "@utils/keybindings";
+import { materializeBookCoverFromExtractedPath } from "@utils/libraryCoverService";
 import { createRendererLogger } from "@utils/logger";
 import { getCSSPath } from "@utils/utils";
 import type React from "react";
@@ -317,39 +318,48 @@ const EPubReader: React.FC = () => {
                             progress,
                         }),
                     );
-                    // updating in case cover,title,author detection logic changes
                     await dispatch(
                         updateLibraryItem({
                             link,
                             author: ed.metadata.author,
-                            cover: ed.metadata.cover,
                             title: ed.metadata.title,
                         }),
                     );
                     await dispatch(updateBookProgress(progress));
                 } else {
                     const bookOpened = {
-                        type: "book",
+                        type: "book" as const,
                         link,
                         title: ed.metadata.title,
                         author: ed.metadata.author,
-                        cover: ed.metadata.cover,
+                        /** EPUB extract cover lives under temp; gallery uses materialized WebP or user-picked `cover` only. */
+                        cover: null,
                         createdAt: new Date(),
                         updatedAt: new Date(),
-                    } as const;
-                    dispatch(
-                        updateReaderContent({
-                            ...bookOpened,
-                            progress,
-                        }),
-                    );
-                    await dispatch(
-                        addLibraryItem({
-                            type: "book",
-                            data: bookOpened,
-                            progress,
-                        }),
-                    );
+                    };
+                    try {
+                        const added = await dispatch(
+                            addLibraryItem({
+                                type: "book",
+                                data: bookOpened,
+                                progress,
+                            }),
+                        ).unwrap();
+                        dispatch(
+                            updateReaderContent({
+                                ...added,
+                                type: "book",
+                                progress,
+                            }),
+                        );
+                        await materializeBookCoverFromExtractedPath({
+                            dispatch,
+                            libraryId: added.id,
+                            coverAbsolutePath: ed.metadata.cover,
+                        });
+                    } catch (err) {
+                        log.error("addLibraryItem or book cover materialize failed", err);
+                    }
                 }
                 setCurrentChapter({
                     index: currentChapterIndex,

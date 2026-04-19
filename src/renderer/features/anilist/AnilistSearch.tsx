@@ -1,38 +1,47 @@
-import { addAnilistTracker } from "@store/anilist";
+import { addAnilistTracker, setGalleryTrackContext } from "@store/anilist";
 import { useAppDispatch, useAppSelector } from "@store/hooks";
 import { getReaderContent } from "@store/reader";
 import { setAnilistSearchOpen } from "@store/ui";
 import AniList, { ANILIST_FORMAT_LABEL, ANILIST_STATUS_LABEL } from "@utils/anilist";
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import FocusLock from "react-focus-lock";
 
 const AnilistSearch = () => {
+    const galleryCtx = useAppSelector((s) => s.anilist.galleryTrackContext);
     const contentInReader = useAppSelector(getReaderContent);
+    const effectiveTitle = galleryCtx?.title || contentInReader?.title || "";
+    const effectiveLink = galleryCtx?.link || contentInReader?.link;
 
     const [search, setSearch] = useState("");
     const [result, setResult] = useState<Anilist.SearchMediaItem[]>([]);
     const [searchTimeout, setSearchTimeout] = useState<NodeJS.Timeout | null>(null);
 
     const dispatch = useAppDispatch();
+
+    const closeSearch = useCallback(() => {
+        dispatch(setGalleryTrackContext(null));
+        dispatch(setAnilistSearchOpen(false));
+    }, [dispatch]);
+
     useEffect(() => {
-        setSearch(contentInReader?.title || "");
-    }, [contentInReader?.title]);
+        setSearch(effectiveTitle);
+    }, [effectiveTitle]);
+
     useEffect(() => {
-        AniList.searchMedia(search).then((e) => {
+        void AniList.searchMedia(search).then((e) => {
             setResult(e);
         });
     }, [search]);
 
     const handleItemClick = (anilistMediaId: number) => {
-        if (contentInReader) {
-            dispatch(
-                addAnilistTracker({
-                    anilistMediaId,
-                    localURL: contentInReader.link,
-                }),
-            );
-            dispatch(setAnilistSearchOpen(false));
-        }
+        if (!effectiveLink) return;
+        dispatch(
+            addAnilistTracker({
+                anilistMediaId,
+                localURL: effectiveLink,
+            }),
+        );
+        closeSearch();
     };
 
     return (
@@ -48,17 +57,18 @@ const AnilistSearch = () => {
                     }
                 }}
             >
-                <div className="clickClose" onClick={() => dispatch(setAnilistSearchOpen(false))}></div>
+                <div className="clickClose" onClick={() => closeSearch()}></div>
                 <div
                     className="overlayCont"
                     onKeyDown={(e) => {
-                        if (e.key === "Escape") dispatch(setAnilistSearchOpen(false));
+                        if (e.key === "Escape") closeSearch();
                     }}
                     tabIndex={-1}
                 >
                     <h1>Add Tracking</h1>
                     <div className="searchBar">
                         <input
+                            key={`${effectiveLink ?? ""}|${effectiveTitle}`}
                             type="text"
                             placeholder="Search on Anilist"
                             onKeyDown={(e) => {
@@ -67,7 +77,7 @@ const AnilistSearch = () => {
                             ref={(node) => {
                                 if (node) node.focus();
                             }}
-                            defaultValue={contentInReader?.title || ""}
+                            defaultValue={effectiveTitle}
                             onChange={(e) => {
                                 if (searchTimeout) clearTimeout(searchTimeout);
                                 const value = e.currentTarget.value;
@@ -110,7 +120,7 @@ const ResultListItem = ({ item, onClick }: ResultListItemProps) => {
 
     return (
         <li>
-            <button className="row" onClick={onClick}>
+            <button type="button" className="row" onClick={onClick}>
                 <div className="cover" style={{ backgroundImage: `url(${coverImage.medium})` }} />
                 <div className="col">
                     <span title={displayTitle}>{displayTitle}</span>

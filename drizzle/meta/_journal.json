@@ -8,6 +8,20 @@
       "when": 1743453080504,
       "tag": "0000_robust_the_professor",
       "breakpoints": true
+    },
+    {
+      "idx": 1,
+      "version": "6",
+      "when": 1775941894742,
+      "tag": "0001_redundant_sentinel",
+      "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "6",
+      "when": 1775941910044,
+      "tag": "0002_null_library_covers",
+      "breakpoints": true
     }
   ]
 }

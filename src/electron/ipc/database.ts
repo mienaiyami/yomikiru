@@ -1,3 +1,4 @@
+import fs from "node:fs";
 import { copyFile } from "node:fs/promises";
 import path from "node:path";
 import type { BookProgress, LibraryItem, MangaProgress } from "@common/types/db";
@@ -89,9 +90,18 @@ const handlers: {
         pingDatabaseChange("db:library:change");
         return data?.[0] ?? null;
     },
-    "db:library:deleteItem": async (db, request) => {
+    "db:library:deleteItem": async ({ db }, request) => {
         try {
-            await db.db.delete(libraryItems).where(eq(libraryItems.link, request.link));
+            const [row] = await db.select().from(libraryItems).where(eq(libraryItems.link, request.link));
+            if (row?.id != null) {
+                const coverFile = path.join(app.getPath("userData"), "covers", `${row.id}.webp`);
+                try {
+                    if (fs.existsSync(coverFile)) fs.unlinkSync(coverFile);
+                } catch (err) {
+                    logger.warn(`"db:library:deleteItem": could not remove cover file for id=${row.id}`, err);
+                }
+            }
+            await db.delete(libraryItems).where(eq(libraryItems.link, request.link));
             pingDatabaseChange("db:library:change");
             pingDatabaseChange("db:bookmark:change");
             pingDatabaseChange("db:bookNote:change");
@@ -126,7 +136,6 @@ const handlers: {
             .select()
             .from(mangaProgress)
             .where(eq(mangaProgress.itemLink, request.itemLink));
-        pingDatabaseChange("db:library:change");
         return progress ?? null;
     },
     "db:manga:updateProgress": async (db, request) => {
@@ -236,7 +245,7 @@ const handlers: {
     // },
 };
 
-export function setupDatabaseHandlers(db: DatabaseService): void {
+export const setupDatabaseHandlers = (db: DatabaseService): void => {
     for (const channel in handlers) {
         ipcMain.handle(channel, async (_, request) => {
             try {
@@ -247,4 +256,4 @@ export function setupDatabaseHandlers(db: DatabaseService): void {
             }
         });
     }
-}
+};

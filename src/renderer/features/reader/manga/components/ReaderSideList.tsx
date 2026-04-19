@@ -19,6 +19,7 @@ import { getReaderManga, setReaderState } from "@store/reader";
 import { dialogUtils } from "@utils/dialog";
 import { formatUtils } from "@utils/file";
 import { createRendererLogger } from "@utils/logger";
+import { resolveMangaChapterPath } from "@utils/mangaChapterPath";
 import { memo, useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
 
 const log = createRendererLogger("manga/ReaderSideList");
@@ -118,6 +119,11 @@ const ReaderSideList = memo(
         const [filterActive, setFilterActive] = useState(false);
         const recentChaptersRef = useRef<string[]>([]);
 
+        const currentChapterPath = useMemo(() => {
+            if (!mangaInReader?.progress?.itemLink || !mangaInReader?.progress?.chapterName) return "";
+            return resolveMangaChapterPath(mangaInReader.progress.itemLink, mangaInReader.progress.chapterName);
+        }, [mangaInReader?.progress?.itemLink, mangaInReader?.progress?.chapterName]);
+
         const sortedLocations = useMemo(() => {
             if (chapterData.length === 0) return [];
             const sorted = [...chapterData].sort((a, b) => {
@@ -144,21 +150,21 @@ const ReaderSideList = memo(
         }, [isShuffleMode, sortedLocations]);
 
         useEffect(() => {
-            if (mangaInReader?.progress?.chapterLink) {
-                const link = mangaInReader.progress.chapterLink;
+            if (currentChapterPath) {
+                const link = currentChapterPath;
                 recentChaptersRef.current = [link, ...recentChaptersRef.current.filter((l) => l !== link)].slice(
                     0,
                     RECENT_CHAPTERS_SIZE,
                 );
             }
-        }, [mangaInReader?.progress?.chapterLink]);
+        }, [currentChapterPath]);
 
         useEffect(() => {
             if (mangaInReader?.link) {
                 setBookmarkedId(
                     bookmarks.manga[mangaInReader.link]?.find(
                         (b) =>
-                            b.link === mangaInReader.progress?.chapterLink &&
+                            b.chapterName === mangaInReader.progress?.chapterName &&
                             b.page === mangaInReader.progress?.currentPage,
                     )?.id || null,
                 );
@@ -186,7 +192,7 @@ const ReaderSideList = memo(
 
         useEffect(() => {
             if (effectiveListForNav.length >= 0 && mangaInReader) {
-                const index = effectiveListForNav.findIndex((e) => e.link === mangaInReader.progress?.chapterLink);
+                const index = effectiveListForNav.findIndex((e) => e.link === currentChapterPath);
                 const prevCh = index <= 0 ? "~" : effectiveListForNav[index - 1].link;
                 const nextCh = index >= effectiveListForNav.length - 1 ? "~" : effectiveListForNav[index + 1].link;
                 if (appSettings.locationListSortType === "inverse" && !isShuffleMode) {
@@ -195,7 +201,13 @@ const ReaderSideList = memo(
                     setPrevNextChapter({ prev: prevCh, next: nextCh });
                 }
             }
-        }, [effectiveListForNav, appSettings.locationListSortType, isShuffleMode, mangaInReader]);
+        }, [
+            effectiveListForNav,
+            appSettings.locationListSortType,
+            isShuffleMode,
+            mangaInReader,
+            currentChapterPath,
+        ]);
 
         const makeChapterList = async () => {
             if (!mangaLink) return;
@@ -460,7 +472,6 @@ const ReaderSideList = memo(
                     data: {
                         itemLink,
                         page: mangaInReader.progress.currentPage || 1,
-                        link: mangaInReader.progress.chapterLink,
                         chapterName: mangaInReader.progress.chapterName,
                     },
                 }),
@@ -499,7 +510,7 @@ const ReaderSideList = memo(
         const handleLocateClick = () => {
             if (sideListRef.current) {
                 sideListRef.current.querySelectorAll("[data-url]").forEach((elem) => {
-                    if (elem.getAttribute("data-url") === mangaInReader?.progress?.chapterLink)
+                    if (elem.getAttribute("data-url") === currentChapterPath)
                         elem.scrollIntoView({ block: "nearest" });
                 });
             }
@@ -561,7 +572,7 @@ const ReaderSideList = memo(
                     focused={isSelected}
                     key={chapter.name}
                     pages={chapter.pages}
-                    current={mangaInReader?.progress?.chapterLink === chapter.link}
+                    current={currentChapterPath === chapter.link}
                     link={chapter.link}
                     onClick={handleChapterItemClick.bind(null, chapter.link)}
                 />

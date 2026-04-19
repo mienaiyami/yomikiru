@@ -14,6 +14,7 @@ import FileExplorerOptions from "./FileExplorerOptions";
 import GeneralPDFSettings from "./GeneralPDFSettings";
 import GeneralReaderPresetsSettings from "./GeneralReaderPresetsSettings";
 import GeneralThemeSettings from "./GeneralThemeSettings";
+import LibrarySettings from "./LibrarySettings";
 
 const GeneralSettings: React.FC = () => {
     const { scrollIntoView } = useSettingsContext();
@@ -23,7 +24,7 @@ const GeneralSettings: React.FC = () => {
 
     return (
         <div className="content2">
-            <div className="settingItem2">
+            <div className="settingItem2" id="settings-default-location">
                 <h3>Default Location</h3>
                 {/* <div className="desc">
                                     Default location of home screen Locations tab. Set this to folder where you
@@ -44,6 +45,7 @@ const GeneralSettings: React.FC = () => {
             <GeneralReaderPresetsSettings />
             {process.platform === "win32" && <FileExplorerOptions />}
             <AnilistSetting />
+            <LibrarySettings />
             <GeneralPDFSettings />
             <div className="settingItem2" id="settings-customStylesheet">
                 <h3>Custom Stylesheet</h3>

@@ -2,9 +2,15 @@ import type { LibraryItemWithProgress } from "@common/types/db";
 import { faGrip, faPlay, faSort } from "@fortawesome/free-solid-svg-icons";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { useAppContext } from "@renderer/App";
+import { useResizeObserverRafWidth } from "@renderer/hooks/useResizeObserverRafWidth";
+import { setGalleryTrackContext } from "@store/anilist";
 import { setAppSettings } from "@store/appSettings";
 import { useAppDispatch, useAppSelector } from "@store/hooks";
+import { setAnilistSearchOpen } from "@store/ui";
 import { formatUtils } from "@utils/file";
+import { libraryCoverSrc } from "@utils/libraryCover";
+import { resolveMangaChapterPath } from "@utils/mangaChapterPath";
+import type { RefObject } from "react";
 import { useCallback, useMemo, useState } from "react";
 import ListNavigator from "../../../components/ListNavigator";
 import BookDetailsPanel from "./components/BookDetailsPanel";
@@ -18,13 +24,36 @@ const GalleryDisplayMode: Record<AppSettings["galleryDisplayMode"], string> = {
 } as const;
 
 const GalleryView: React.FC = () => {
+    const dispatch = useAppDispatch();
     const library = useAppSelector((store) => store.library.items);
     const appSettings = useAppSelector((store) => store.appSettings);
+    const anilistToken = useAppSelector((store) => store.anilist.token);
     const { openInReader, setContextMenuData } = useAppContext();
-    const dispatch = useAppDispatch();
 
     const [selectedManga, setSelectedManga] = useState<string | null>(null);
     const [selectedBook, setSelectedBook] = useState<string | null>(null);
+    const [libraryGridRef, containerWidth] = useResizeObserverRafWidth<HTMLDivElement>();
+
+    const rootFontSizePx = useMemo(
+        () => Number.parseFloat(getComputedStyle(document.documentElement).fontSize) || 16,
+        [],
+    );
+
+    const galleryColumnCount = useMemo(() => {
+        if (appSettings.galleryDisplayMode === "list") return 1;
+        if (!containerWidth) return 1;
+        const itemWidthPx = appSettings.galleryItemWidth * rootFontSizePx;
+        return Math.max(1, Math.floor(containerWidth / itemWidthPx));
+    }, [appSettings.galleryDisplayMode, appSettings.galleryItemWidth, containerWidth, rootFontSizePx]);
+
+    const galleryEstimatedRowSize = useMemo(() => {
+        if (appSettings.galleryDisplayMode === "list") {
+            return 6 * rootFontSizePx;
+        }
+        if (!containerWidth || !galleryColumnCount) return 300;
+        const colWidth = (containerWidth - 32) / galleryColumnCount;
+        return colWidth * 1.5 + 48;
+    }, [appSettings.galleryDisplayMode, containerWidth, galleryColumnCount, rootFontSizePx]);
 
     // Convert library object to array for easier manipulation
     const mangaList = useMemo(() => {
@@ -74,8 +103,12 @@ const GalleryView: React.FC = () => {
         }
     }, []);
     const handleContinueReading = useCallback((item: LibraryItemWithProgress) => {
+        const mangaTarget =
+            item.type === "manga" && item.progress && "chapterName" in item.progress
+                ? resolveMangaChapterPath(item.progress.itemLink, item.progress.chapterName)
+                : "";
         openInReader(
-            item.type === "book" ? item.link : item.progress?.chapterLink || "",
+            item.type === "book" ? item.link : mangaTarget,
             item.type === "book"
                 ? {
                       epubElementQueryString: item.progress?.position,
@@ -103,6 +136,20 @@ const GalleryView: React.FC = () => {
                 window.contextMenu.template.showInExplorer(item.link),
                 window.contextMenu.template.copyPath(item.link),
             ];
+            if (anilistToken) {
+                items.push({
+                    label: "Track with AniList…",
+                    action() {
+                        dispatch(
+                            setGalleryTrackContext({
+                                link: item.link,
+                                title: item.title,
+                            }),
+                        );
+                        dispatch(setAnilistSearchOpen(true));
+                    },
+                });
+            }
 
             setContextMenuData({
                 clickX: e.clientX,
@@ -111,7 +158,7 @@ const GalleryView: React.FC = () => {
                 focusBackElem: e.currentTarget,
             });
         },
-        [setContextMenuData],
+        [anilistToken, dispatch, setContextMenuData],
     );
 
     const filterManga = useCallback((filter: string, item: LibraryItemWithProgress) => {
@@ -128,40 +175,38 @@ const GalleryView: React.FC = () => {
 
     const renderMangaItem = useCallback(
         (item: LibraryItemWithProgress, _index: number, isSelected: boolean) => {
+            const coverSrc = libraryCoverSrc(item);
             return (
                 <div
                     key={item.link}
                     className={`galleryItem ${isSelected ? "selected" : ""}`}
                     onClick={() => handleMangaSelect(item)}
                     onContextMenu={(e) => handleContextMenu(item, e)}
-                    ref={(node) => {
-                        if (node && isSelected) {
-                            node.scrollIntoView({ behavior: "smooth", block: "nearest" });
-                        }
-                    }}
                     data-focused={isSelected}
                 >
                     {item.type === "book" && <span className="epubBadge">EPUB</span>}
                     <div className="coverContainer">
-                        {item.cover ? (
-                            <img src={item.cover} alt={item.title} draggable={false} loading="lazy" />
+                        {coverSrc ? (
+                            <img src={coverSrc} alt={item.title} draggable={false} loading="lazy" />
                         ) : (
                             <div className="blankCover">{item.title[0]}</div>
                         )}
+                        {appSettings.galleryDisplayMode === "compact" && (
+                            <div className="mangaTitle compact" title={item.title}>
+                                <span>{item.title}</span>
+                                {/* temp solution coz cant make background opacity work */}
+                                <span className="bg"></span>
+                            </div>
+                        )}
                     </div>
 
-                    {appSettings.galleryDisplayMode !== "cover-only" && (
-                        <div
-                            className={`mangaTitle ${
-                                appSettings.galleryDisplayMode === "compact" ? "compact" : ""
-                            }`}
-                            title={item.title}
-                        >
-                            <span>{item.title}</span>
-                            {/* temp solution coz cant make background opacity work */}
-                            <span className="bg"></span>
-                        </div>
-                    )}
+                    {appSettings.galleryDisplayMode !== "cover-only" &&
+                        appSettings.galleryDisplayMode !== "compact" && (
+                            <div className="mangaTitle" title={item.title}>
+                                <span>{item.title}</span>
+                                <span className="bg"></span>
+                            </div>
+                        )}
                     <button
                         className="continueReadingBtn"
                         onClick={() => handleContinueReading(item)}
@@ -308,9 +353,14 @@ const GalleryView: React.FC = () => {
                 </div>
 
                 <div className={`galleryContent ${selectedManga || selectedBook ? "with-details" : ""}`}>
-                    <div className="libraryGrid">
-                        <ListNavigator.List
+                    <div className="libraryGrid" ref={libraryGridRef as RefObject<HTMLDivElement>}>
+                        <ListNavigator.VirtualList
                             className={`galleryList ${appSettings.galleryDisplayMode === "list" ? "list" : ""}`}
+                            scrollContainerRef={libraryGridRef as RefObject<HTMLElement>}
+                            estimatedItemSize={galleryEstimatedRowSize}
+                            columnCount={galleryColumnCount}
+                            rowGapPx={appSettings.galleryDisplayMode === "list" ? 0 : 16}
+                            overscan={0}
                         />
                     </div>
 

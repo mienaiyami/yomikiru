@@ -34,7 +34,7 @@ export const AddToLibrarySchema = z.discriminatedUnion("type", [
 export const UpdateLibraryItemSchema = z.object({
     link: z.string(),
     title: z.string().optional(),
-    cover: z.string().optional(),
+    cover: z.string().nullable().optional(),
     author: z.string().optional(),
 });
 

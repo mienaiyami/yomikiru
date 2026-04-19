@@ -4,6 +4,9 @@ import { plugins } from "./webpack.plugins";
 import { rules } from "./webpack.rules";
 
 export const mainConfig: Configuration = {
+    externals: {
+        sharp: "commonjs sharp",
+    },
     resolve: {
         extensions: [".ts", ".js"],
 

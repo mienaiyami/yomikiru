@@ -23,7 +23,10 @@ const AnilistEdit = () => {
     const dispatch = useAppDispatch();
     const contRef = useRef<HTMLDivElement>(null);
     const anilistCurrentManga = useAppSelector((store) => store.anilist.currentManga);
-    const mangaInReader = useAppSelector((store) => store.reader.content?.link);
+    /** Local path for AniList tracking: gallery context when opened from home, otherwise the open reader item. */
+    const trackLocalLink = useAppSelector(
+        (store) => store.anilist.galleryTrackContext?.link ?? store.reader.content?.link,
+    );
 
     const [tempData, setTempData] = useState(anilistCurrentManga);
 
@@ -292,7 +295,7 @@ const AnilistEdit = () => {
                                 <div className="last">
                                     <button
                                         onClick={() =>
-                                            mangaInReader && dispatch(removeAnilistTracker(mangaInReader))
+                                            trackLocalLink && dispatch(removeAnilistTracker(trackLocalLink))
                                         }
                                         title="This only remove tracking locally. Anilist entry is not deleted."
                                     >

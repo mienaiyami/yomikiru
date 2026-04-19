@@ -1,5 +1,6 @@
 import { useAppSelector } from "@store/hooks";
 import { getShortcutsMapped } from "@store/shortcuts";
+import { useVirtualizer } from "@tanstack/react-virtual";
 import { keyFormatter } from "@utils/keybindings";
 import { createRendererLogger } from "@utils/logger";
 import React, { createContext, memo, useCallback, useContext, useEffect, useMemo, useRef, useState } from "react";
@@ -364,10 +365,147 @@ const ListComponent = ({ className = "list-container" }: ListProps) => {
 
 const List = ListComponent;
 
+export type VirtualListProps = {
+    className?: string;
+    /** Ref to the element that has overflow-y: auto/scroll */
+    scrollContainerRef: React.RefObject<HTMLElement | null>;
+    /**
+     * Estimated row height in px. Used by useVirtualizer as the initial size;
+     * row elements are measured to refine height.
+     */
+    estimatedItemSize: number;
+    /** Items per row for grid layouts; 1 for single-column list. @default 1 */
+    columnCount?: number;
+    /** Extra rows rendered above and below visible area. @default 5 */
+    overscan?: number;
+    /**
+     * Horizontal gap between cells inside a row (CSS `gap` on the row grid). @default 16
+     */
+    gapPx?: number;
+    /**
+     * Vertical gap between virtual rows, passed to TanStack as `gap` (scroll-axis spacing).
+     * Use `0` for layouts that stack without inter-row gap (e.g. gallery list mode).
+     * @default 16
+     */
+    rowGapPx?: number;
+};
+
+/**
+ * Optional virtualized list: same context as {@link List}, but only visible items mount.
+ *
+ * **Why virtual “rows” instead of TanStack `lanes`:** In v3, `lanes` implements a
+ * masonry-style column fill (shortest column gets the next item), i.e. column-major order.
+ * A CSS Grid gallery is row-major (fill the row, then the next). For uniform grids, one
+ * virtual item per logical row matches that layout and keeps `gap` predictable: `rowGapPx`
+ * is the library’s scroll-axis `gap`; `gapPx` is the per-row CSS grid gap (columns, and row
+ * internal spacing inside that strip).
+ */
+const VirtualListComponent = ({
+    className = "list-container",
+    scrollContainerRef,
+    estimatedItemSize,
+    columnCount: columnCountProp = 1,
+    overscan = 5,
+    gapPx = 16,
+    rowGapPx = 16,
+}: VirtualListProps) => {
+    const { filteredItems, focused, listRef, renderItem, emptyMessage } = useListNavigator();
+
+    const cols = Math.max(1, columnCountProp);
+    const rowCount = Math.ceil(filteredItems.length / cols);
+
+    const virtualizer = useVirtualizer({
+        count: rowCount,
+        getScrollElement: () => scrollContainerRef.current,
+        estimateSize: (_index: number) => estimatedItemSize,
+        gap: rowGapPx,
+        overscan,
+        useAnimationFrameWithResizeObserver: true,
+    });
+
+    useEffect(() => {
+        const id = requestAnimationFrame(() => {
+            virtualizer.measure();
+        });
+        return () => {
+            cancelAnimationFrame(id);
+        };
+    }, [cols, estimatedItemSize, filteredItems.length, rowGapPx, virtualizer]);
+
+    useEffect(() => {
+        if (focused < 0 || filteredItems.length === 0) return;
+        const rowIndex = Math.floor(focused / cols);
+        virtualizer.scrollToIndex(rowIndex, { align: "auto", behavior: "smooth" });
+    }, [cols, focused, filteredItems.length, virtualizer]);
+
+    if (filteredItems.length === 0) {
+        return <p className="empty-message">{emptyMessage}</p>;
+    }
+
+    const vItems = virtualizer.getVirtualItems();
+
+    return (
+        <ol
+            ref={listRef}
+            className={className}
+            style={{
+                display: "block",
+                position: "relative",
+                width: "100%",
+                height: `${virtualizer.getTotalSize()}px`,
+                listStyle: "none",
+                margin: 0,
+                padding: 0,
+            }}
+        >
+            {vItems.map((virtualRow) => {
+                const startIndex = virtualRow.index * cols;
+                const cells: React.ReactNode[] = [];
+                for (let c = 0; c < cols; c += 1) {
+                    const index = startIndex + c;
+                    if (index >= filteredItems.length) break;
+                    const item = filteredItems[index];
+                    cells.push(
+                        <React.Fragment key={index}>{renderItem(item, index, focused === index)}</React.Fragment>,
+                    );
+                }
+                return (
+                    <li
+                        key={String(virtualRow.key)}
+                        data-index={virtualRow.index}
+                        ref={virtualizer.measureElement}
+                        style={{
+                            position: "absolute",
+                            top: 0,
+                            left: 0,
+                            right: 0,
+                            display: "grid",
+                            gridTemplateColumns: `repeat(${cols}, minmax(0, 1fr))`,
+                            gap: `${gapPx}px`,
+                            transform: `translateY(${virtualRow.start}px)`,
+                            /**
+                             * Do not set `minHeight` to `virtualRow.size`: that value is only an
+                             * estimate. Forcing it makes rows taller than their content (visible gap
+                             * under tiles when grid items use `align-items: start`).
+                             */
+                            alignItems: "start",
+                        }}
+                    >
+                        {cells}
+                    </li>
+                );
+            })}
+        </ol>
+    );
+};
+
+const VirtualList = VirtualListComponent;
+
 const ListNavigator = {
     Provider: ListNavigatorProvider,
     SearchInput,
     List,
+    VirtualList,
 };
 
 export default ListNavigator;

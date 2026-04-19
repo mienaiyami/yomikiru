@@ -19,6 +19,7 @@ import { createMainLogger } from "../util/logger";
 
 const logger = createMainLogger("db");
 
+import { normalizeLegacyMangaDataBeforeMigration } from "./legacyNormalize";
 import * as schema from "./schema";
 import { bookBookmarks, bookProgress, libraryItems, mangaBookmarks, mangaProgress } from "./schema";
 
@@ -27,21 +28,53 @@ electronOnly();
 export const DB_PATH = app.isPackaged ? path.join(app.getPath("userData"), "data.db") : "data.db";
 
 export class DatabaseService {
-    private _db: ReturnType<typeof drizzle>;
-    constructor() {
-        const sqlite = new Database(DB_PATH);
-        this._db = drizzle({ client: sqlite, schema });
-    }
+    private readonly sqlite = new Database(DB_PATH);
+    private readonly _db = drizzle({ client: this.sqlite, schema });
 
     get db(): ReturnType<typeof drizzle> {
         return this._db;
     }
     async initialize(): Promise<void> {
-        // console.log("Migrating database");
-        await migrate(this._db, {
-            migrationsFolder: app.isPackaged ? path.join(path.dirname(app.getAppPath()), "drizzle") : "drizzle",
-        });
-        // console.log(this._db.all(`select unixepoch() as time`));
+        try {
+            normalizeLegacyMangaDataBeforeMigration(this.sqlite);
+        } catch (e) {
+            logger.error("Legacy manga normalization failed; aborting migration", e);
+            throw e;
+        }
+
+        /**
+         * Migration `0001` rebuilds `library_items` via DROP + RENAME. Drizzle wraps every
+         * `migrate()` call in BEGIN/COMMIT, and SQLite ignores `PRAGMA foreign_keys` inside a
+         * transaction (https://www.sqlite.org/pragma.html#pragma_foreign_keys). So the PRAGMA in
+         * the SQL file is a no-op and `DROP TABLE library_items` fires `ON DELETE CASCADE` on all
+         * child tables (progress, bookmarks, notes), wiping user data.
+         *
+         * Fix: detect whether 0001 still needs to run (library_items lacks the `id` column) and
+         * toggle FKs on the connection before Drizzle opens its transaction. After migrate()
+         * FKs are unconditionally restored so every subsequent migration runs with full checking.
+         *
+         * See: https://www.sqlite.org/lang_altertable.html#making_other_kinds_of_table_schema_changes
+         */
+        const libCols = this.sqlite.prepare("PRAGMA table_info(library_items)").all() as { name: string }[];
+        const needs0001 = libCols.length > 0 && !libCols.some((c) => c.name === "id");
+
+        if (needs0001) {
+            logger.log("migration 0001 pending: disabling FK enforcement for table-rebuild");
+            this.sqlite.pragma("foreign_keys = OFF");
+        }
+
+        try {
+            await migrate(this._db, {
+                migrationsFolder: app.isPackaged
+                    ? path.join(path.dirname(app.getAppPath()), "drizzle")
+                    : "drizzle",
+            });
+        } finally {
+            if (needs0001) {
+                this.sqlite.pragma("foreign_keys = ON");
+                logger.log("migration 0001 complete: FK enforcement restored");
+            }
+        }
     }
     async addLibraryItem(data: AddToLibraryData): Promise<LibraryItem> {
         return await this._db.transaction(async (tx) => {
@@ -167,10 +200,10 @@ export class DatabaseService {
                         .returning();
 
                     if (item.type === "image") {
+                        const chapterName = item.data.chapterName?.trim() || path.basename(item.data.link);
                         await tx.insert(mangaProgress).values({
                             itemLink: newItem.link,
-                            chapterName: item.data.chapterName || "Chapter 1",
-                            chapterLink: item.data.link,
+                            chapterName,
                             currentPage: Math.max(1, item.data.page || 1),
                             totalPages: Math.max(1, item.data.pages || 1),
                             lastReadAt: dateFromOldDateString(item.data.date),
@@ -217,12 +250,13 @@ export class DatabaseService {
 
                         if (bookmark.type === "image") {
                             const title = getTitle(bookmark.data.mangaName, path.basename(parentLink));
+                            const chapterName =
+                                bookmark.data.chapterName?.trim() || path.basename(bookmark.data.link);
                             item = await this.addLibraryItem({
                                 type: "manga",
                                 data: { link: parentLink, title: title, type: "manga" },
                                 progress: {
-                                    chapterLink: bookmark.data.link,
-                                    chapterName: bookmark.data.chapterName || "Chapter 1",
+                                    chapterName,
                                     currentPage: Math.max(1, bookmark.data.page || 1),
                                     totalPages: Math.max(1, bookmark.data.pages || 1),
                                 },
@@ -248,12 +282,12 @@ export class DatabaseService {
                     }
 
                     if (bookmark.type === "image") {
+                        const chapterName = bookmark.data.chapterName?.trim() || path.basename(bookmark.data.link);
                         await tx.insert(mangaBookmarks).values({
                             itemLink: parentLink,
-                            link: bookmark.data.link,
                             page: Math.max(1, bookmark.data.page || 1),
                             createdAt: dateFromOldDateString(bookmark.data.date),
-                            chapterName: bookmark.data.chapterName || "Chapter 1",
+                            chapterName,
                         });
                     } else {
                         await tx.insert(bookBookmarks).values({

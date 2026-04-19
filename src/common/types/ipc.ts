@@ -29,6 +29,18 @@ type ChannelDefinition<Req = unknown, Res = unknown, Dir extends "m2r" | "r2m" =
 
 // todo: move types beside their implementation as .d.ts
 
+/**
+ * Shared result shape for all `covers:*` IPC channels and the main-process helpers that back them.
+ */
+export type CoverOpResult = { ok: true } | { ok: false; message: string };
+
+export type CoverChannels = {
+    "covers:materialize": ChannelDefinition<{ libraryId: number; sourceAbsolutePath: string }, CoverOpResult>;
+    "covers:deleteForLibraryId": ChannelDefinition<{ libraryId: number }, CoverOpResult>;
+    /** Removes all files under `userData/covers` and recreates the directory. */
+    "covers:clearCache": ChannelDefinition<void, CoverOpResult>;
+};
+
 export type DatabaseChannels = {
     "db:library:getItem": ChannelDefinition<{ link: string }, LibraryItem | null>;
     "db:library:getAllAndProgress": ChannelDefinition<void, LibraryItemWithProgress[]>;
@@ -205,7 +217,8 @@ export type IPCChannels = DatabaseChannels &
     ReaderChannels &
     DialogChannels &
     ErrorReportingChannels &
-    MainSettingsChannels;
+    MainSettingsChannels &
+    CoverChannels;
 
 export type MainToRendererChannels = {
     [K in keyof IPCChannels as IPCChannels[K] extends ChannelDefinition<unknown, unknown, "m2r">

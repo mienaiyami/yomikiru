@@ -133,6 +133,26 @@
                 gap: 10px;
                 border-top: 1px solid var(--divider-color);
 
+                .gallery-anilist-bar {
+                    grid-column: 1 / -1;
+                    padding: 10px 15px 0;
+
+                    .anilistBar {
+                        font-size: 14px;
+                        display: flex;
+                        flex-wrap: wrap;
+                        align-items: center;
+                        gap: 6px;
+
+                        div.btns {
+                            display: inline-flex;
+                            flex-wrap: wrap;
+                            align-items: center;
+                            gap: 6px;
+                        }
+                    }
+                }
+
                 .manga-actions {
                     display: flex;
                     flex-direction: column;

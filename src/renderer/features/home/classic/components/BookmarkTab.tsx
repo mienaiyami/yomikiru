@@ -56,7 +56,7 @@ const BookmarkTab: React.FC = () => {
             item.title +
             (item.progress?.chapterName ? ` ${item.progress.chapterName}` : "") +
             ("page" in bookmark ? "manga|manhua|manhwa|webtoon|webcomic|comic" : "") +
-            ` ${formatUtils.files.getExt("page" in bookmark ? bookmark.link : bookmark.itemLink)}`;
+            ` ${formatUtils.files.getExt("page" in bookmark ? bookmark.chapterName : bookmark.itemLink)}`;
 
         return new RegExp(filter, "ig").test(searchText);
     };

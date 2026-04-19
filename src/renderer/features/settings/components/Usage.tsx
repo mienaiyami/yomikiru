@@ -173,7 +173,25 @@ const Usage: React.FC = () => {
                 <li>
                     <b>Gallery:</b> Click a book to open its details panel (bookmarks and notes from the reader;
                     click an entry to open the book at that place). Click manga for chapters and bookmarks as
-                    before.
+                    before. Right-click a tile for <b>Show in File Explorer</b>, copy path, and (with AniList
+                    connected) <b>Track with AniList</b>. In the details panel, right-click the cover for the
+                    library folder or <code>.epub</code> path; use the AniList bar under the cover when logged in.
+                </li>
+                <li>
+                    <b>Covers:</b> Generated thumbnails are saved under user data <code>covers</code> as{" "}
+                    <code>&lt;library id&gt;.webp</code>. The gallery uses that file when present. If you use{" "}
+                    <b>Select Cover</b> in the details panel, the app stores that image&apos;s absolute path on the
+                    library entry and shows it when the file still exists; otherwise it falls back to the cached
+                    WebP.{" "}
+                    <a
+                        id="settings-usage-library"
+                        onClick={() => {
+                            scrollIntoView("#settings-library", "settings");
+                        }}
+                    >
+                        <b>Library</b>
+                    </a>{" "}
+                    in Settings can clear thumbnails, regenerate them, or bulk-import from your default folder.
                 </li>
                 <li>
                     <b>Reader :</b>
@@ -356,8 +374,8 @@ const Usage: React.FC = () => {
                     <b>AniList Tracking : </b>
                     <ul>
                         <li>
-                            After logging in successfully you can enable tracking by opening a manga and checking
-                            side-list (moving mouse to left most part of app).
+                            After logging in you can add tracking from the reader side list, the gallery details
+                            panel (AniList bar), a gallery tile context menu, or the open manga side list.
                         </li>
                         <li>
                             Tracker are managed according to the folder of manga. If manga folder is
