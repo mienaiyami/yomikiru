@@ -5,8 +5,12 @@ Feel free to ask any questions regarding building using issues.
 ## Prerequisites
 
 - **Git**: Version control system
-- **Node.js**: `v21` (recommended)
-- **pnpm**: Package manager - Install with `npm install -g pnpm` or `corepack enable`
+- **Node.js**: `v21` (required)
+- **pnpm**: Package manager - Install with `npm install -g pnpm@v10` or
+  ```
+  corepack enable
+  corepack prepare pnpm@10 --activate
+  ```
 
 ### Platform-Specific Requirements
 
