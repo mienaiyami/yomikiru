@@ -1,27 +1,27 @@
 import type { LibraryItemWithProgress } from "@common/types/db";
-import { faGrip, faPlay, faSort } from "@fortawesome/free-solid-svg-icons";
+import { faPlay } from "@fortawesome/free-solid-svg-icons";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { useAppContext } from "@renderer/App";
+import SelectionCheckbox from "@renderer/components/ui/SelectionCheckbox";
+import { useMultiSelect } from "@renderer/hooks/useMultiSelect";
 import { useResizeObserverRafWidth } from "@renderer/hooks/useResizeObserverRafWidth";
+import { useSelectionShortcuts } from "@renderer/hooks/useSelectionShortcuts";
 import { setGalleryTrackContext } from "@store/anilist";
 import { setAppSettings } from "@store/appSettings";
 import { useAppDispatch, useAppSelector } from "@store/hooks";
+import { deleteLibraryItem } from "@store/library";
 import { setAnilistSearchOpen } from "@store/ui";
+import { dialogUtils } from "@utils/dialog";
 import { formatUtils } from "@utils/file";
+import { sortContinueReadingItems, sortGalleryItems } from "@utils/gallerySort";
 import { libraryCoverSrc } from "@utils/libraryCover";
 import { resolveMangaChapterPath } from "@utils/mangaChapterPath";
 import type { RefObject } from "react";
-import { useCallback, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import ListNavigator from "../../../components/ListNavigator";
 import BookDetailsPanel from "./components/BookDetailsPanel";
+import GalleryToolbar, { type GalleryTabId } from "./components/GalleryToolbar";
 import MangaDetailsPanel from "./components/MangaDetailsPanel";
-
-const GalleryDisplayMode: Record<AppSettings["galleryDisplayMode"], string> = {
-    normal: "Normal",
-    "cover-only": "Cover Only",
-    compact: "Compact",
-    list: "List",
-} as const;
 
 const GalleryView: React.FC = () => {
     const dispatch = useAppDispatch();
@@ -33,6 +33,14 @@ const GalleryView: React.FC = () => {
     const [selectedManga, setSelectedManga] = useState<string | null>(null);
     const [selectedBook, setSelectedBook] = useState<string | null>(null);
     const [libraryGridRef, containerWidth] = useResizeObserverRafWidth<HTMLDivElement>();
+
+    const activeTab = appSettings.galleryActiveTab;
+    const setActiveTab = useCallback(
+        (tab: GalleryTabId) => {
+            dispatch(setAppSettings({ galleryActiveTab: tab }));
+        },
+        [dispatch],
+    );
 
     const rootFontSizePx = useMemo(
         () => Number.parseFloat(getComputedStyle(document.documentElement).fontSize) || 16,
@@ -55,43 +63,47 @@ const GalleryView: React.FC = () => {
         return colWidth * 1.5 + 48;
     }, [appSettings.galleryDisplayMode, containerWidth, galleryColumnCount, rootFontSizePx]);
 
-    // Convert library object to array for easier manipulation
-    const mangaList = useMemo(() => {
-        const items = Object.values(library);
-        // console.log(items.filter((item) => item?.type === "book").map((item) => item?.cover));
+    /**
+     * Items shown for the active tab. Each tab has its own slice of the library
+     * and (for sortable tabs) its own sort settings.
+     */
+    const tabItems = useMemo<LibraryItemWithProgress[]>(() => {
+        const all = Object.values(library).filter((item): item is LibraryItemWithProgress => item !== null);
 
-        // Sort the items based on selected criteria
-        let sorted: (LibraryItemWithProgress | null)[];
-        switch (appSettings.gallerySortBy) {
-            case "name":
-                sorted = items.sort((a, b) => {
-                    if (!a || !b) return 0;
-                    return window.app.betterSortOrder(a.title, b.title);
-                });
-                break;
-            case "lastRead":
-                sorted = items.sort((a, b) => {
-                    const aTime = a?.progress?.lastReadAt.getTime() || 0;
-                    const bTime = b?.progress?.lastReadAt.getTime() || 0;
-                    return bTime - aTime; // Most recent first
-                });
-                break;
-            case "date":
-                // todo:
-                sorted = items.sort((a, b) => {
-                    const aTime = a?.updatedAt.getTime() || 0;
-                    const bTime = b?.updatedAt.getTime() || 0;
-                    return bTime - aTime; // Most recent first
-                });
-                break;
-            default:
-                sorted = items;
+        if (activeTab === "continue-reading") {
+            const withProgress = all.filter((item) => Boolean(item.progress));
+            return sortContinueReadingItems(
+                withProgress,
+                appSettings.continueReadingSortBy,
+                appSettings.continueReadingSortType,
+            );
         }
-        sorted = sorted.filter((manga) => manga !== null);
-        return (
-            appSettings.gallerySortType === "inverse" ? sorted.reverse() : sorted
-        ) as LibraryItemWithProgress[];
-    }, [library, appSettings.gallerySortBy, appSettings.gallerySortType]);
+        if (activeTab === "favourites") {
+            // todo: hook up real favourites once the schema lands.
+            return [];
+        }
+        return sortGalleryItems(all, appSettings.gallerySortBy, appSettings.gallerySortType);
+    }, [
+        library,
+        activeTab,
+        appSettings.continueReadingSortBy,
+        appSettings.continueReadingSortType,
+        appSettings.gallerySortBy,
+        appSettings.gallerySortType,
+    ]);
+
+    const tabIds = useMemo(() => tabItems.map((it) => it.link), [tabItems]);
+    /** Visible order for range select / Select All (tracks ListNavigator filter). */
+    const [orderedIds, setOrderedIds] = useState<readonly string[]>(tabIds);
+    useEffect(() => {
+        setOrderedIds(tabIds);
+    }, [tabIds]);
+
+    const selection = useMultiSelect<string>(orderedIds);
+
+    useEffect(() => {
+        selection.clearSelection();
+    }, [activeTab, selection.clearSelection]);
 
     const handleMangaSelect = useCallback((libraryItem: LibraryItemWithProgress) => {
         if (libraryItem.type === "book") {
@@ -102,23 +114,26 @@ const GalleryView: React.FC = () => {
             setSelectedBook(null);
         }
     }, []);
-    const handleContinueReading = useCallback((item: LibraryItemWithProgress) => {
-        const mangaTarget =
-            item.type === "manga" && item.progress && "chapterName" in item.progress
-                ? resolveMangaChapterPath(item.progress.itemLink, item.progress.chapterName)
-                : "";
-        openInReader(
-            item.type === "book" ? item.link : mangaTarget,
-            item.type === "book"
-                ? {
-                      epubElementQueryString: item.progress?.position,
-                      epubChapterId: item.progress?.chapterId,
-                  }
-                : {
-                      mangaPageNumber: item.progress?.currentPage,
-                  },
-        );
-    }, []);
+    const handleContinueReading = useCallback(
+        (item: LibraryItemWithProgress) => {
+            const mangaTarget =
+                item.type === "manga" && item.progress && "chapterName" in item.progress
+                    ? resolveMangaChapterPath(item.progress.itemLink, item.progress.chapterName)
+                    : "";
+            openInReader(
+                item.type === "book" ? item.link : mangaTarget,
+                item.type === "book"
+                    ? {
+                          epubElementQueryString: item.progress?.position,
+                          epubChapterId: item.progress?.chapterId,
+                      }
+                    : {
+                          mangaPageNumber: item.progress?.currentPage,
+                      },
+            );
+        },
+        [openInReader],
+    );
 
     const handleContextMenu = useCallback(
         (item: LibraryItemWithProgress, e: React.MouseEvent) => {
@@ -158,7 +173,7 @@ const GalleryView: React.FC = () => {
                 focusBackElem: e.currentTarget,
             });
         },
-        [anilistToken, dispatch, setContextMenuData],
+        [anilistToken, dispatch, setContextMenuData, handleContinueReading],
     );
 
     const filterManga = useCallback((filter: string, item: LibraryItemWithProgress) => {
@@ -176,15 +191,34 @@ const GalleryView: React.FC = () => {
     const renderMangaItem = useCallback(
         (item: LibraryItemWithProgress, _index: number, isSelected: boolean) => {
             const coverSrc = libraryCoverSrc(item);
+            const isChecked = selection.isSelected(item.link);
+            const inSelectionMode = selection.isSelectionMode;
             return (
                 <div
                     key={item.link}
-                    className={`galleryItem ${isSelected ? "selected" : ""}`}
-                    onClick={() => handleMangaSelect(item)}
+                    className={`galleryItem ${isSelected ? "selected" : ""} ${
+                        inSelectionMode ? "selectionMode" : ""
+                    } ${isChecked ? "multiSelected" : ""}`}
+                    onClick={(e) => {
+                        if (inSelectionMode) {
+                            e.preventDefault();
+                            e.stopPropagation();
+                            selection.toggleItem(item.link, { shiftKey: e.shiftKey });
+                            return;
+                        }
+                        handleMangaSelect(item);
+                    }}
                     onContextMenu={(e) => handleContextMenu(item, e)}
                     data-focused={isSelected}
                 >
                     {item.type === "book" && <span className="epubBadge">EPUB</span>}
+                    <SelectionCheckbox
+                        className="galleryCheckbox"
+                        boxClassName="checkBox"
+                        checked={isChecked}
+                        onToggle={({ shiftKey }) => selection.toggleItem(item.link, { shiftKey })}
+                        ariaLabel={`Select ${item.title}`}
+                    />
                     <div className="coverContainer">
                         {coverSrc ? (
                             <img src={coverSrc} alt={item.title} draggable={false} loading="lazy" />
@@ -209,7 +243,10 @@ const GalleryView: React.FC = () => {
                         )}
                     <button
                         className="continueReadingBtn"
-                        onClick={() => handleContinueReading(item)}
+                        onClick={(e) => {
+                            e.stopPropagation();
+                            handleContinueReading(item);
+                        }}
                         data-tooltip="Continue Reading"
                         tabIndex={-1}
                         onFocus={(e) => e.currentTarget.blur()}
@@ -219,103 +256,7 @@ const GalleryView: React.FC = () => {
                 </div>
             );
         },
-        [handleMangaSelect, handleContextMenu, appSettings.galleryDisplayMode],
-    );
-
-    const handleSortClick = useCallback(
-        (e: React.MouseEvent) => {
-            const items = [
-                {
-                    label: "Title",
-                    action() {
-                        dispatch(setAppSettings({ gallerySortBy: "name" }));
-                    },
-                    selected: appSettings.gallerySortBy === "name",
-                },
-                {
-                    label: "Last Read",
-                    action() {
-                        dispatch(setAppSettings({ gallerySortBy: "lastRead" }));
-                    },
-                    selected: appSettings.gallerySortBy === "lastRead",
-                },
-                {
-                    label: "Date Modified",
-                    action() {
-                        dispatch(setAppSettings({ gallerySortBy: "date" }));
-                    },
-                    selected: appSettings.gallerySortBy === "date",
-                },
-                window.contextMenu.template.divider(),
-                {
-                    label: "Ascending",
-                    action() {
-                        dispatch(setAppSettings({ gallerySortType: "normal" }));
-                    },
-                    selected: appSettings.gallerySortType === "normal",
-                },
-                {
-                    label: "Descending",
-                    action() {
-                        dispatch(setAppSettings({ gallerySortType: "inverse" }));
-                    },
-                    selected: appSettings.gallerySortType === "inverse",
-                },
-            ];
-
-            setContextMenuData({
-                clickX: e.currentTarget.getBoundingClientRect().x,
-                clickY: e.currentTarget.getBoundingClientRect().bottom + 4,
-                padLeft: true,
-                items,
-                focusBackElem: e.currentTarget,
-            });
-        },
-        [setContextMenuData, appSettings.gallerySortBy, appSettings.gallerySortType],
-    );
-
-    const handleViewClick = useCallback(
-        (e: React.MouseEvent) => {
-            const items = [
-                {
-                    label: "Cover + Title",
-                    action() {
-                        dispatch(setAppSettings({ galleryDisplayMode: "normal" }));
-                    },
-                    selected: appSettings.galleryDisplayMode === "normal",
-                },
-                {
-                    label: "Cover Only",
-                    action() {
-                        dispatch(setAppSettings({ galleryDisplayMode: "cover-only" }));
-                    },
-                    selected: appSettings.galleryDisplayMode === "cover-only",
-                },
-                {
-                    label: "Compact",
-                    action() {
-                        dispatch(setAppSettings({ galleryDisplayMode: "compact" }));
-                    },
-                    selected: appSettings.galleryDisplayMode === "compact",
-                },
-                {
-                    label: "List",
-                    action() {
-                        dispatch(setAppSettings({ galleryDisplayMode: "list" }));
-                    },
-                    selected: appSettings.galleryDisplayMode === "list",
-                },
-            ];
-
-            setContextMenuData({
-                clickX: e.currentTarget.getBoundingClientRect().x,
-                clickY: e.currentTarget.getBoundingClientRect().bottom + 4,
-                padLeft: true,
-                items,
-                focusBackElem: e.currentTarget,
-            });
-        },
-        [setContextMenuData, appSettings.galleryDisplayMode],
+        [handleMangaSelect, handleContextMenu, handleContinueReading, appSettings.galleryDisplayMode, selection],
     );
 
     const handleCloseMangaDetails = useCallback(() => {
@@ -323,36 +264,86 @@ const GalleryView: React.FC = () => {
         setSelectedBook(null);
     }, []);
 
+    /**
+     * Bulk-delete the currently selected library items. Behaviour matches the
+     * single-item context menu remove flow, with one confirmation covering the
+     * whole batch.
+     */
+    const handleRemoveSelectedFromLibrary = useCallback(() => {
+        const links = Array.from(selection.selectedIds);
+        if (links.length === 0) return;
+        dialogUtils
+            .warn({
+                title: "Remove from Library",
+                message: `Remove ${links.length} item${links.length === 1 ? "" : "s"} from library? Files on disk are not deleted.`,
+                noOption: false,
+                buttons: ["Cancel", "Yes"],
+                defaultId: 0,
+            })
+            .then(({ response }) => {
+                if (!response) return;
+                for (const link of links) {
+                    dispatch(deleteLibraryItem({ link }));
+                }
+                selection.clearSelection();
+            });
+    }, [dispatch, selection]);
+
+    const detailsOpen = Boolean(selectedManga || selectedBook);
+    useSelectionShortcuts({
+        selection,
+        ids: orderedIds,
+        enabled: !detailsOpen,
+    });
+
+    const selectionToolbarProps = selection.isSelectionMode
+        ? {
+              count: selection.count,
+              onSelectAll: () => selection.selectAll(orderedIds),
+              onInvertSelection: () => selection.invertSelection(orderedIds),
+              onCancel: selection.clearSelection,
+              extraMenuItems:
+                  activeTab === "favourites"
+                      ? []
+                      : [
+                            {
+                                label: `Remove ${selection.count} from Library`,
+                                action: handleRemoveSelectedFromLibrary,
+                            },
+                        ],
+          }
+        : undefined;
+
+    const emptyMessage =
+        activeTab === "favourites"
+            ? "No favourites yet"
+            : activeTab === "continue-reading"
+              ? "Nothing in progress"
+              : "No items";
+
     return (
-        <div className="galleryView" style={{ "--galleryItemWidth": `${appSettings.galleryItemWidth}em` }}>
+        <div
+            className={`galleryView ${detailsOpen ? "details-open" : ""}`}
+            style={{ "--galleryItemWidth": `${appSettings.galleryItemWidth}em` }}
+        >
             <ListNavigator.Provider
-                items={mangaList}
+                items={tabItems}
                 filterFn={filterManga}
                 renderItem={renderMangaItem}
-                emptyMessage="No items"
+                emptyMessage={emptyMessage}
+                onFilteredItemsChange={(items) => {
+                    setOrderedIds(items.map((it) => it.link));
+                }}
             >
-                <div className={`galleryToolbar ${selectedManga || selectedBook ? "hidden" : ""}`}>
-                    <div>
-                        <ListNavigator.SearchInput placeholder="Type to Search" />
-                    </div>
-                    <div>
-                        <button
-                            data-tooltip={`Sort: ${appSettings.gallerySortType === "normal" ? "▲ " : "▼ "}${appSettings.gallerySortBy.toUpperCase()}`}
-                            onClick={handleSortClick}
-                        >
-                            <FontAwesomeIcon icon={faSort} />
-                        </button>
+                <GalleryToolbar
+                    activeTab={activeTab}
+                    onTabChange={setActiveTab}
+                    hidden={detailsOpen}
+                    hideSearch={activeTab === "favourites"}
+                    selection={selectionToolbarProps}
+                />
 
-                        <button
-                            data-tooltip={`View: ${GalleryDisplayMode[appSettings.galleryDisplayMode]}`}
-                            onClick={handleViewClick}
-                        >
-                            <FontAwesomeIcon icon={faGrip} />
-                        </button>
-                    </div>
-                </div>
-
-                <div className={`galleryContent ${selectedManga || selectedBook ? "with-details" : ""}`}>
+                <div className={`galleryContent ${detailsOpen ? "with-details" : ""}`}>
                     <div className="libraryGrid" ref={libraryGridRef as RefObject<HTMLDivElement>}>
                         <ListNavigator.VirtualList
                             className={`galleryList ${appSettings.galleryDisplayMode === "list" ? "list" : ""}`}

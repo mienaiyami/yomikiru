@@ -10,62 +10,163 @@
     height: 100%;
     display: flex;
     flex-direction: column;
+    position: relative;
 
     // feed in react
     --galleryItemWidth: 16em;
 
     .galleryToolbar {
-        position: absolute;
-        z-index: 100000000000;
+        flex: 0 0 auto;
+        z-index: 50;
         -webkit-app-region: no-drag;
-        // width: 100%;
-        height: var(--titleBar-height);
-        left: 50%;
-        transform: translateX(-50%);
-        top: calc(var(--titleBar-height) * -1);
+        min-height: 40px;
 
         display: flex;
-        justify-content: center;
         align-items: center;
         gap: 8px;
+        padding: 4px 10px;
         background-color: var(--topBar-color);
+        border-bottom: 1px solid var(--divider-color);
 
-        > div {
-            display: flex;
-            // gap: 8px;
+        .galleryTabBar {
+            flex: 0 0 auto;
+            display: inline-flex;
             align-items: center;
-            height: 100%;
+            gap: 1px;
+            padding: 2px;
+            border-radius: 6px;
+            background-color: var(--text-input-bg);
+
+            .galleryTab {
+                display: inline-flex;
+                align-items: center;
+                gap: 5px;
+                height: 28px;
+                padding: 0 8px;
+                border: none;
+                border-radius: 4px;
+                background: none;
+                cursor: pointer;
+                color: var(--font-color);
+                opacity: 0.72;
+                white-space: nowrap;
+                font-size: 0.86em;
+
+                &:hover {
+                    opacity: 1;
+                    background-color: var(--topBar-btn-hover);
+                }
+
+                &.active {
+                    opacity: 1;
+                    background-color: var(--btn-color-focus);
+                }
+
+                .galleryTabIcon {
+                    font-size: 0.95em;
+                }
+
+                .galleryTabLabel {
+                    line-height: 1;
+                }
+
+                @media (max-width: 720px) {
+                    .galleryTabLabel {
+                        display: none;
+                    }
+                    padding: 0 8px;
+                }
+            }
         }
 
-        button {
+        .search {
+            flex: 1 1 auto;
+            display: flex;
+            align-items: center;
+            min-width: 8rem;
+        }
+
+        .actions {
+            flex: 0 0 auto;
+            display: flex;
+            align-items: center;
+            gap: 2px;
+        }
+
+        .actions button,
+        &.selection button {
             background: none;
             border: none;
             padding: 0;
             cursor: pointer;
-            border-radius: 4px;
-            aspect-ratio: 1/1;
-            height: 100%;
+            border-radius: 6px;
+            width: 32px;
+            height: 32px;
             color: var(--font-color);
-            border-radius: 0;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 0.95em;
 
-            &:hover {
+            &:hover:not(:disabled) {
                 background-color: var(--topBar-btn-hover);
+            }
+
+            &:disabled {
+                opacity: 0.4;
+                cursor: not-allowed;
             }
         }
 
+        .popover-wrapper:has(.gridSizeTrigger) {
+            height: 100%;
+        }
+        .gridSizeTrigger[aria-expanded="true"] {
+            background-color: var(--topBar-btn-hover);
+        }
+
         .search-input {
-            width: 500px;
-            padding: 6px 10px;
-            font-size: 1.2em;
-            border-radius: 4px;
-            // border: 1px solid var(--divider-color);
-            // background-color: var(--text-input-bg);
+            width: 100%;
+            height: 32px;
+            padding: 6px 12px;
+            font-size: 0.95em;
+            border-radius: 6px;
             color: var(--font-color);
+            background-color: var(--text-input-bg);
 
             &:focus {
                 outline: transparent;
-                // border-color: var(--btn-color);
-                // background-color: var(--text-input-bg-focus);
+                box-shadow: 0 0 0 2px var(--btn-color);
+            }
+        }
+
+        &.selection {
+            display: flex;
+            justify-content: space-between;
+            background-color: var(--btn-color-hover);
+            color: var(--font-color);
+            box-shadow: inset 0 -1px 0 var(--btn-color-focus);
+
+            .selectionInfo {
+                display: flex;
+                align-items: center;
+                gap: 10px;
+                .selectionCount {
+                    font-weight: 600;
+                }
+            }
+
+            .selectionActions {
+                display: flex;
+                align-items: center;
+                gap: 4px;
+            }
+
+            button {
+                color: var(--font-color);
+                &:hover:not(:disabled) {
+                    background-color: rgba(255, 255, 255, 0.2);
+                }
             }
         }
 
@@ -76,8 +177,8 @@
 
     .galleryContent {
         display: flex;
-        // height: calc(100% - 52px); // Account for the toolbar
-        height: 100%;
+        flex: 1;
+        min-height: 0;
         overflow: hidden;
         &.with-details {
             .libraryGrid {
@@ -146,12 +247,100 @@
                     // transform: translateY(-4px);
                     scale: 1.01;
                     box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+
+                    .galleryCheckbox {
+                        opacity: 1;
+                    }
                 }
 
                 &.selected {
                     box-shadow: 0 0 0 4px var(--btn-color);
                     outline: 4px transparent;
                     scale: 1.01;
+                }
+
+                &.multiSelected {
+                    box-shadow: 0 0 0 3px var(--btn-color);
+                    outline: 3px transparent;
+
+                    .coverContainer img {
+                        filter: brightness(0.92);
+                    }
+                }
+
+                &.selectionMode {
+                    .galleryCheckbox {
+                        opacity: 1;
+                    }
+                    .continueReadingBtn {
+                        display: none !important;
+                    }
+                }
+
+                .galleryCheckbox {
+                    position: absolute;
+                    top: 8px;
+                    left: 8px;
+                    z-index: 11;
+                    width: 32px;
+                    height: 32px;
+                    border-radius: 8px;
+                    cursor: pointer;
+                    opacity: 0;
+                    transition:
+                        opacity 0.15s ease,
+                        transform 0.12s ease;
+                    display: flex;
+                    align-items: center;
+                    justify-content: center;
+                    background-color: transparent;
+                    backdrop-filter: none;
+
+                    &:hover {
+                        transform: scale(1.05);
+                    }
+
+                    input {
+                        position: absolute;
+                        opacity: 0;
+                        pointer-events: none;
+                    }
+
+                    .checkBox {
+                        width: 20px;
+                        height: 20px;
+                        border-radius: 4px;
+                        border: 2px solid #fff;
+                        background-color: transparent;
+                        position: relative;
+                        transition:
+                            background-color 0.12s ease,
+                            border-color 0.12s ease;
+                    }
+
+                    input:checked + .checkBox {
+                        background-color: #fff;
+                        border-color: #fff;
+
+                        &::after {
+                            content: "";
+                            position: absolute;
+                            left: 5px;
+                            top: 1px;
+                            width: 5px;
+                            height: 11px;
+                            border: solid #000;
+                            border-width: 0 2px 2px 0;
+                            transform: rotate(45deg);
+                        }
+                    }
+                }
+
+                &:hover .galleryCheckbox,
+                &.selectionMode .galleryCheckbox,
+                &.multiSelected .galleryCheckbox {
+                    background-color: rgba(0, 0, 0, 0.55);
+                    backdrop-filter: blur(8px);
                 }
 
                 .coverContainer {
@@ -357,5 +546,220 @@
                 }
             }
         }
+    }
+}
+
+/**
+ * Selection-mode toolbar reused above classic-view list tabs and detail-panel
+ * sub-tabs. Uses the brighter hover background + full-strength font color so
+ * the bar reads as an active state, not a greyed-out one.
+ */
+.listSelectionToolbar {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    width: 100%;
+    padding: 6px 10px;
+    background-color: var(--btn-color-hover);
+    color: var(--font-color);
+    border-radius: 6px;
+    box-shadow: inset 0 0 0 1px var(--btn-color-focus);
+
+    .listSelectionCount {
+        font-weight: 600;
+        font-size: 0.95em;
+    }
+
+    .spacer {
+        flex: 1;
+    }
+
+    button {
+        background: none;
+        border: none;
+        cursor: pointer;
+        padding: 6px 8px;
+        border-radius: 4px;
+        color: var(--font-color);
+        min-width: 32px;
+        height: 32px;
+
+        &:hover {
+            background-color: rgba(255, 255, 255, 0.2);
+        }
+    }
+}
+
+/**
+ * Reusable per-row checkbox affordance. Rendered as a `<label>` so the entire
+ * pill (including extra hit padding) is clickable; the visible square is
+ * `.checkBox`, the native input is hidden but stays accessible.
+ *
+ * Sizing (20×20) and explicit colors (independent of `currentColor`) make the
+ * box readable on any row state including `.read` rows that fade their text.
+ */
+.rowSelectCheck {
+    flex-shrink: 0;
+    align-self: stretch;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    user-select: none;
+    /* Defaults — overridden by row-specific rules below to extend the click
+       strip to the row's left edge. */
+    padding: 0 10px;
+
+    input {
+        position: absolute;
+        opacity: 0;
+        pointer-events: none;
+    }
+
+    .checkBox {
+        width: 20px;
+        height: 20px;
+        border-radius: 4px;
+        border: 2px solid var(--font-color);
+        background-color: transparent;
+        opacity: 0.6;
+        position: relative;
+        transition:
+            background-color 0.12s ease,
+            border-color 0.12s ease,
+            opacity 0.12s ease,
+            transform 0.12s ease;
+    }
+
+    &:hover .checkBox {
+        opacity: 1;
+        transform: scale(1.05);
+    }
+
+    input:checked + .checkBox {
+        background-color: var(--font-color);
+        border-color: var(--font-color);
+        opacity: 1;
+
+        &::after {
+            content: "";
+            position: absolute;
+            left: 5px;
+            top: 1px;
+            width: 5px;
+            height: 11px;
+            border: solid var(--body-bg-color);
+            border-width: 0 2px 2px 0;
+            transform: rotate(45deg);
+        }
+    }
+}
+
+/**
+ * Selection state for bookmark / history list rows in the classic view. The
+ * `<li>` carries the multiSelected class so the accent strip + tint cover the
+ * full row including the leading checkbox slot.
+ */
+.listCont li.multiSelected {
+    background-color: var(--listItem-bg-color-hover) !important;
+    box-shadow: inset 3px 0 0 var(--btn-color);
+}
+
+/**
+ * Leading checkbox slot inside each `<li>` (classic list rows). The label is
+ * a sibling of the row's `<a>`; we make it span the full row height with
+ * generous horizontal padding for a forgiving hit target.
+ */
+.listCont li > .rowSelectCheck {
+    align-self: stretch;
+    padding: 0 14px;
+    margin: 0;
+}
+
+/* Chapter / bookmark / note rows in details panels. */
+.chapter-item.multiSelected,
+.bookmark-item.multiSelected,
+.note-item.multiSelected {
+    background-color: var(--listItem-bg-color-hover);
+    box-shadow: inset 3px 0 0 var(--btn-color);
+}
+
+/**
+ * Inside details-panel rows, ensure the parent is a flex container so the
+ * rowSelectCheck can stretch full height for a generous click target.
+ */
+.bookmark-item,
+.note-item {
+    display: flex;
+    align-items: stretch;
+
+    > .bookmark-content,
+    > .note-item-row {
+        flex: 1;
+        min-width: 0;
+    }
+}
+
+/**
+ * Pull the row checkbox to the absolute left edge of the row by absorbing the
+ * parent's left padding (14px top/bottom, 20px left/right). The label keeps
+ * its visible square centred while the hit area extends from the row's edge.
+ *
+ * Also force full opacity so `.chapter-item.read > *` (which fades read rows)
+ * doesn't make the checkbox disappear.
+ */
+.chapter-item .rowSelectCheck,
+.bookmark-item .rowSelectCheck,
+.note-item .rowSelectCheck {
+    align-self: stretch;
+    margin: -14px 0 -14px -20px;
+    padding: 14px 14px 14px 20px;
+    opacity: 1 !important;
+}
+
+/**
+ * `.chapter-item.read > *` applies opacity 0.3 to dim read chapters; restore
+ * it on the rowSelectCheck so the checkbox stays usable on read rows.
+ */
+.chapter-item.read > .rowSelectCheck {
+    opacity: 1 !important;
+}
+
+/**
+ * Variant styling for the grid-size popover. The generic `.popover` provides
+ * positioning + shell; we just style the inner content layout.
+ */
+.popover.gridSizePopover {
+    width: 320px;
+    padding: 16px 18px;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    font-size: 1.02em;
+
+    .gridSizePopoverHeader {
+        display: flex;
+        justify-content: space-between;
+        align-items: baseline;
+        font-size: 1em;
+
+        .gridSizeValue {
+            font-variant-numeric: tabular-nums;
+            font-weight: 600;
+            color: var(--font-color);
+        }
+    }
+
+    .gridSizeSlider {
+        width: 100%;
+        height: 28px;
+    }
+
+    .gridSizeBounds {
+        display: flex;
+        justify-content: space-between;
+        font-size: 0.88em;
+        opacity: 0.6;
+        font-variant-numeric: tabular-nums;
     }
 }

@@ -182,14 +182,17 @@ const LocationsTab = (): ReactElement => {
         (keyStr: string, shortcutsMapped: Record<ShortcutCommands, string[]>) => {
             if (shortcutsMapped.dirUp.includes(keyStr)) {
                 setCurrentLink((link) => window.path.dirname(link));
+                return true;
             }
             if (shortcutsMapped.listSelect.includes(keyStr)) {
                 if (locations.length === 0 && imageCount > 0) {
                     openInReader(currentLink);
+                    return true;
                 }
             }
+            return false;
         },
-        [imageCount, locations, currentLink],
+        [imageCount, locations, currentLink, openInReader],
     );
     const handleOnChange = useCallback(
         (e: React.ChangeEvent<HTMLInputElement>) => {

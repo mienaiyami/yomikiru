@@ -45,7 +45,12 @@ export type ListNavigatorProps<T> = {
     filterFn?: (filter: string, item: T) => boolean;
     renderItem: (item: T, index: number, isSelected: boolean) => React.ReactNode;
     onContextMenu?: (element: HTMLElement) => void;
-    handleExtraKeyDown?: (keyStr: string, shortcutsMapped: Record<ShortcutCommands, string[]>) => void;
+    /**
+     * Extra key handling hook layered on top of built-in list controls.
+     * Return `true` to mark the key as handled (ListNavigator will call
+     * `preventDefault` for that key).
+     */
+    handleExtraKeyDown?: (keyStr: string, shortcutsMapped: Record<ShortcutCommands, string[]>) => boolean;
     onSelect?: (element: HTMLElement) => void;
     emptyMessage?: string;
     /** When provided, assigned to the search input for external focus etc. */
@@ -147,7 +152,10 @@ function ListNavigatorProviderComponent<T>({
                 default:
                     break;
             }
-            handleExtraKeyDown?.(keyStr, shortcutsMapped);
+            const handledByExtra = handleExtraKeyDown?.(keyStr, shortcutsMapped);
+            if (handledByExtra) {
+                e.preventDefault();
+            }
         },
         [shortcutsMapped, filteredItems.length, onContextMenu, onSelect, handleExtraKeyDown],
     );

@@ -178,6 +178,40 @@ const Usage: React.FC = () => {
                     library folder or <code>.epub</code> path; use the AniList bar under the cover when logged in.
                 </li>
                 <li>
+                    <b>Gallery toolbar:</b> One bar above the grid with section tabs (<b>Continue</b> /{" "}
+                    <b>Library</b> / <b>Favourites</b>), search, sort, view mode (Cover + Title / Cover Only /
+                    Compact / List), and a grid-size control that opens a slider for cover width.
+                    <ul>
+                        <li>
+                            <b>Continue Reading</b> shows items with progress, sorted by last read by default.
+                        </li>
+                        <li>
+                            <b>Library</b> shows everything; sort by title, date, or last read in either direction.
+                        </li>
+                        <li>
+                            <b>Favourites</b> is reserved for a future favourites feature.
+                        </li>
+                    </ul>
+                </li>
+                <li>
+                    <b>Multi-select:</b> Tick the checkbox on a gallery tile, chapter, bookmark, or note to enter
+                    selection mode. Hold <code>Shift</code> and click another item to select the range between
+                    them. The toolbar swaps to show <b>Select All</b>, <b>Invert Selection</b>, a 3-dot menu with
+                    bulk actions (e.g. <i>Remove from Library</i>, <i>Delete Bookmarks</i>,{" "}
+                    <i>Mark as Read/Unread</i>, <i>Delete Notes</i>), and a cancel button. In gallery / details,
+                    use <code>Ctrl+A</code> (or <code>Cmd+A</code>) to select all and <code>Esc</code> to clear —
+                    these shortcuts do not run while typing in a search field, and they are not used on classic
+                    home lists. Classic Bookmark / History checkboxes can be toggled under{" "}
+                    <a
+                        onClick={() => {
+                            scrollIntoView("#settings-classicListCheckboxes", "settings");
+                        }}
+                    >
+                        <b>Other Settings</b>
+                    </a>{" "}
+                    (<i>Classic List Checkboxes</i>).
+                </li>
+                <li>
                     <b>Covers:</b> Generated thumbnails are saved under user data <code>covers</code> as{" "}
                     <code>&lt;library id&gt;.webp</code>. The gallery uses that file when present. If you use{" "}
                     <b>Select Cover</b> in the details panel, the app stores that image&apos;s absolute path on the

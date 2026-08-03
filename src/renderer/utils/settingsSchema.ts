@@ -36,6 +36,18 @@ const settingSchema = z
         gallerySortType: sortTypeEnum,
         gallerySortBy: z.union([z.literal("name"), z.literal("date"), z.literal("lastRead")]),
         /**
+         * Sort field for the gallery "Continue Reading" tab. Persisted separately
+         * from the main library sort so the two tabs can have independent ordering.
+         */
+        continueReadingSortBy: z.union([z.literal("name"), z.literal("lastRead")]),
+        /** Sort direction for the gallery "Continue Reading" tab. */
+        continueReadingSortType: sortTypeEnum,
+        /**
+         * Last active tab in the gallery home view. Persisted so the app reopens
+         * to the same section between launches.
+         */
+        galleryActiveTab: z.union([z.literal("continue-reading"), z.literal("library"), z.literal("favourites")]),
+        /**
          * `normal` - normal grid view with title and cover
          * `compact` - compact grid view with title and cover (title overlapped on cover)
          * `cover-only` - compact grid view with only cover
@@ -66,6 +78,10 @@ const settingSchema = z
          * show search input for history and bookmark
          */
         showSearch: z.boolean(),
+        /**
+         * Show multi-select checkboxes on classic home Bookmark / History rows.
+         */
+        enableClassicListCheckboxes: z.boolean(),
 
         openInZenMode: z.boolean(),
         hideCursorInZenMode: z.boolean(),
@@ -111,6 +127,9 @@ const settingSchema = z
         historyListSortBy: "date",
         gallerySortType: "normal",
         gallerySortBy: "name",
+        continueReadingSortBy: "lastRead",
+        continueReadingSortType: "normal",
+        galleryActiveTab: "continue-reading",
         galleryDisplayMode: "normal",
         galleryItemWidth: 16,
         openDirectlyFromManga: false,
@@ -122,6 +141,7 @@ const settingSchema = z
         openOnDblClick: true,
         disableListNumbering: true,
         showSearch: true,
+        enableClassicListCheckboxes: true,
         openInZenMode: false,
         hideCursorInZenMode: false,
         showMoreDataOnItemHover: true,
