@@ -16,6 +16,12 @@ export interface ListItemProps {
     dataAttributes?: Record<`data-${string}`, string>;
     /** react reference to the anchor element */
     ref?: React.LegacyRef<HTMLAnchorElement>;
+    /**
+     * Optional content rendered as a sibling of the inner `<a>` (inside the
+     * `<li>`). Used for per-row selection checkboxes that need their own click
+     * target separate from the row's primary action.
+     */
+    leadingSlot?: React.ReactNode;
 }
 
 const ListItem: React.FC<ListItemProps> = ({
@@ -28,6 +34,7 @@ const ListItem: React.FC<ListItemProps> = ({
     title,
     dataAttributes = {},
     ref: anchorRef,
+    leadingSlot,
 }) => {
     const { contextMenuData } = useAppContext();
     const [contextMenuFocused, setContextMenuFocused] = useState(false);
@@ -62,6 +69,7 @@ const ListItem: React.FC<ListItemProps> = ({
             className={`${classNameLi} ${contextMenuFocused ? "focused" : ""}`}
             data-focused={focused}
         >
+            {leadingSlot}
             <a
                 ref={anchorRef}
                 onClick={onClick}

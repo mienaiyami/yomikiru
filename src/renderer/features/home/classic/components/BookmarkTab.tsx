@@ -2,12 +2,16 @@ import type { BookBookmark, LibraryItemWithProgress, MangaBookmark } from "@comm
 import { faSort } from "@fortawesome/free-solid-svg-icons";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import ListNavigator from "@renderer/components/ListNavigator";
+import { useMultiSelect } from "@renderer/hooks/useMultiSelect";
 import { setAppSettings } from "@store/appSettings";
+import { removeBookmark } from "@store/bookmarks";
 import { useAppDispatch, useAppSelector } from "@store/hooks";
+import { dialogUtils } from "@utils/dialog";
 import { formatUtils } from "@utils/file";
-import { useMemo } from "react";
+import { useCallback, useEffect, useMemo } from "react";
 import { useAppContext } from "src/renderer/App";
 import BookmarkHistoryListItem from "./BookmarkHistoryListItem";
+import ListSelectionToolbar from "./ListSelectionToolbar";
 
 const BookmarkTab: React.FC = () => {
     const bookmarks = useAppSelector((store) => store.bookmarks);
@@ -15,6 +19,7 @@ const BookmarkTab: React.FC = () => {
     const appSettings = useAppSelector((store) => store.appSettings);
     const dispatch = useAppDispatch();
     const { setContextMenuData } = useAppContext();
+    const checkboxesEnabled = appSettings.enableClassicListCheckboxes;
 
     const bookmarksArray = useMemo(() => {
         const arr: (BookBookmark | MangaBookmark)[] = [];
@@ -44,6 +49,13 @@ const BookmarkTab: React.FC = () => {
 
         return appSettings.bookListSortType === "inverse" ? [...sorted].reverse() : sorted;
     }, [bookmarks, library.items, appSettings.bookListSortBy, appSettings.bookListSortType]);
+
+    const visibleIds = useMemo(() => bookmarksArray.map((b) => b.id), [bookmarksArray]);
+    const selection = useMultiSelect<number>(visibleIds);
+
+    useEffect(() => {
+        if (!checkboxesEnabled) selection.clearSelection();
+    }, [checkboxesEnabled, selection]);
 
     const filterBookmark = (filter: string, bookmark: LibraryItemWithProgress | BookBookmark | MangaBookmark) => {
         if ("type" in bookmark) return false;
@@ -75,8 +87,54 @@ const BookmarkTab: React.FC = () => {
                 id={bookmark.id}
                 bookmark={bookmark}
                 key={`${bookmark.id}-${bookmark.itemLink}`}
+                selectionMode={checkboxesEnabled && selection.isSelectionMode}
+                isChecked={checkboxesEnabled ? selection.isSelected(bookmark.id) : false}
+                onToggleSelected={
+                    checkboxesEnabled
+                        ? ({ shiftKey }) => selection.toggleItem(bookmark.id, { shiftKey })
+                        : undefined
+                }
             />
         );
+
+    /**
+     * Bulk-deletes every bookmark whose id is in the current selection,
+     * grouped by `(itemLink, type)` so we issue one IPC call per parent item.
+     */
+    const handleDeleteSelected = useCallback(() => {
+        const ids = Array.from(selection.selectedIds);
+        if (ids.length === 0) return;
+
+        const bookmarkById = new Map<number, BookBookmark | MangaBookmark>();
+        for (const b of bookmarksArray) bookmarkById.set(b.id, b);
+
+        dialogUtils
+            .warn({
+                title: "Delete Bookmarks",
+                message: `Delete ${ids.length} bookmark${ids.length === 1 ? "" : "s"}?`,
+                noOption: false,
+                buttons: ["Cancel", "Yes"],
+                defaultId: 0,
+            })
+            .then(({ response }) => {
+                if (!response) return;
+                const grouped = new Map<string, { type: "manga" | "book"; ids: number[] }>();
+                for (const id of ids) {
+                    const b = bookmarkById.get(id);
+                    if (!b) continue;
+                    const type: "manga" | "book" = "page" in b ? "manga" : "book";
+                    const key = `${type}::${b.itemLink}`;
+                    const existing = grouped.get(key);
+                    if (existing) existing.ids.push(id);
+                    else grouped.set(key, { type, ids: [id] });
+                }
+                for (const [key, value] of grouped) {
+                    const itemLink = key.slice(value.type.length + 2);
+                    dispatch(removeBookmark({ itemLink, type: value.type, ids: value.ids }));
+                }
+                selection.clearSelection();
+            });
+    }, [bookmarksArray, dispatch, selection]);
 
     if (!appSettings.showTabs.bookmark) {
         return null;
@@ -94,7 +152,23 @@ const BookmarkTab: React.FC = () => {
                 onContextMenu={(elem) => elem.dispatchEvent(window.contextMenu.fakeEvent(elem))}
                 onSelect={(elem) => elem.click()}
             >
-                {appSettings.showSearch && (
+                {checkboxesEnabled && selection.isSelectionMode && (
+                    <div className="tools">
+                        <ListSelectionToolbar
+                            count={selection.count}
+                            onSelectAll={() => selection.selectAll(visibleIds)}
+                            onInvertSelection={() => selection.invertSelection(visibleIds)}
+                            onCancel={selection.clearSelection}
+                            extraMenuItems={[
+                                {
+                                    label: `Delete ${selection.count} Bookmark${selection.count === 1 ? "" : "s"}`,
+                                    action: handleDeleteSelected,
+                                },
+                            ]}
+                        />
+                    </div>
+                )}
+                {!selection.isSelectionMode && appSettings.showSearch && (
                     <div className="tools">
                         <div className="row1">
                             <button

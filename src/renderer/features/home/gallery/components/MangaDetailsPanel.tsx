@@ -12,18 +12,25 @@ import {
 } from "@fortawesome/free-solid-svg-icons";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { useAppContext } from "@renderer/App";
-import { useAppDispatch, useAppSelector } from "@store/hooks";
-import { formatUtils } from "@utils/file";
-import { useCallback, useEffect, useMemo, useState } from "react";
-import { shallowEqual } from "react-redux";
-import "./mangaDetailsPanel.scss";
 import ListNavigator from "@renderer/components/ListNavigator";
+import SelectionCheckbox from "@renderer/components/ui/SelectionCheckbox";
+import { useMultiSelect } from "@renderer/hooks/useMultiSelect";
+import { useSelectionShortcuts } from "@renderer/hooks/useSelectionShortcuts";
 import { setAppSettings } from "@store/appSettings";
+import { removeBookmark } from "@store/bookmarks";
+import { useAppDispatch, useAppSelector } from "@store/hooks";
+import { updateChaptersReadAll } from "@store/library";
 import dateUtils from "@utils/date";
+import { dialogUtils } from "@utils/dialog";
+import { formatUtils } from "@utils/file";
 import { libraryCoverSrc } from "@utils/libraryCover";
 import { materializeMangaLibraryThumbnail, pickAndApplyCustomCover } from "@utils/libraryCoverService";
 import { createRendererLogger } from "@utils/logger";
 import { resolveMangaChapterPath } from "@utils/mangaChapterPath";
+import { useCallback, useEffect, useMemo, useState } from "react";
+import { shallowEqual } from "react-redux";
+import ListSelectionToolbar from "../../classic/components/ListSelectionToolbar";
+import "./mangaDetailsPanel.scss";
 
 const log = createRendererLogger("gallery/MangaDetailsPanel");
 
@@ -141,6 +148,11 @@ const MangaDetailsPanel: React.FC<MangaDetailsPanelProps> = ({ mangaLink, onClos
 
         return sortOrder === "inverse" ? sorted.reverse() : sorted;
     }, [chapters, sortBy, sortOrder]);
+
+    const visibleChapterIds = useMemo(() => sortedChapters.map((c) => c.name), [sortedChapters]);
+    const visibleBookmarkIds = useMemo(() => bookmarksArray.map((b) => b.id), [bookmarksArray]);
+    const chapterSelection = useMultiSelect<string>(visibleChapterIds);
+    const bookmarkSelection = useMultiSelect<number>(visibleBookmarkIds);
 
     const handleChapterClick = useCallback(
         (chapterLink: string) => {
@@ -301,12 +313,22 @@ const MangaDetailsPanel: React.FC<MangaDetailsPanelProps> = ({ mangaLink, onClos
                     ? resolveMangaChapterPath(manga.progress.itemLink, manga.progress.chapterName)
                     : "";
             const isCurrent = progressPath === chapter.link;
+            const inSelectionMode = chapterSelection.isSelectionMode;
+            const isChecked = chapterSelection.isSelected(chapter.name);
 
             return (
                 <div
                     key={chapter.link}
-                    className={`chapter-item ${isRead ? "read" : ""} ${isCurrent ? "current" : ""} ${isSelected ? "selected" : ""}`}
-                    onClick={() => handleChapterClick(chapter.link)}
+                    className={`chapter-item ${isRead ? "read" : ""} ${isCurrent ? "current" : ""} ${
+                        isSelected ? "selected" : ""
+                    } ${inSelectionMode ? "selectionMode" : ""} ${isChecked ? "multiSelected" : ""}`}
+                    onClick={(e) => {
+                        if (inSelectionMode) {
+                            chapterSelection.toggleItem(chapter.name, { shiftKey: e.shiftKey });
+                            return;
+                        }
+                        handleChapterClick(chapter.link);
+                    }}
                     onContextMenu={(e) => handleChapterContextMenu(e, chapter.link, chapter.name)}
                     data-url={chapter.link}
                     data-focused={isSelected}
@@ -316,6 +338,13 @@ const MangaDetailsPanel: React.FC<MangaDetailsPanelProps> = ({ mangaLink, onClos
                         }
                     }}
                 >
+                    <SelectionCheckbox
+                        className="rowSelectCheck"
+                        boxClassName="checkBox"
+                        checked={isChecked}
+                        onToggle={({ shiftKey }) => chapterSelection.toggleItem(chapter.name, { shiftKey })}
+                        ariaLabel={`Select ${chapter.name}`}
+                    />
                     <span className="chapter-name">{formatUtils.files.getName(chapter.name)}</span>
 
                     <div className="chapter-meta">
@@ -324,12 +353,6 @@ const MangaDetailsPanel: React.FC<MangaDetailsPanelProps> = ({ mangaLink, onClos
                         ) : (
                             <span className="page-count">{chapter.pages}</span>
                         )}
-
-                        {/* {isRead && (
-                            <span className="read-indicator">
-                                <FontAwesomeIcon icon={faEye} />
-                            </span>
-                        )} */}
 
                         {isCurrent && (
                             <span className="current-indicator">
@@ -340,7 +363,7 @@ const MangaDetailsPanel: React.FC<MangaDetailsPanelProps> = ({ mangaLink, onClos
                 </div>
             );
         },
-        [manga, handleChapterClick, handleChapterContextMenu],
+        [manga, handleChapterClick, handleChapterContextMenu, chapterSelection],
     );
 
     const handleBookmarkClick = useCallback(
@@ -383,15 +406,32 @@ const MangaDetailsPanel: React.FC<MangaDetailsPanelProps> = ({ mangaLink, onClos
 
     const renderBookmarkItem = useCallback(
         (bookmark: MangaBookmark, _index: number, isSelected: boolean) => {
+            const inSelectionMode = bookmarkSelection.isSelectionMode;
+            const isChecked = bookmarkSelection.isSelected(bookmark.id);
             return (
                 <div
                     key={bookmark.id}
-                    className={`bookmark-item ${isSelected ? "selected" : ""}`}
-                    onClick={() => handleBookmarkClick(bookmark)}
+                    className={`bookmark-item ${isSelected ? "selected" : ""} ${
+                        inSelectionMode ? "selectionMode" : ""
+                    } ${isChecked ? "multiSelected" : ""}`}
+                    onClick={(e) => {
+                        if (inSelectionMode) {
+                            bookmarkSelection.toggleItem(bookmark.id, { shiftKey: e.shiftKey });
+                            return;
+                        }
+                        handleBookmarkClick(bookmark);
+                    }}
                     onContextMenu={(e) => handleBookmarkContextMenu(e, bookmark)}
                     data-focused={isSelected}
                     data-bookmark-id={bookmark.id}
                 >
+                    <SelectionCheckbox
+                        className="rowSelectCheck"
+                        boxClassName="checkBox"
+                        checked={isChecked}
+                        onToggle={({ shiftKey }) => bookmarkSelection.toggleItem(bookmark.id, { shiftKey })}
+                        ariaLabel={`Select bookmark ${bookmark.id}`}
+                    />
                     <div className="bookmark-content">
                         <div className="bookmark-header">
                             {/* <span className="bookmark-icon">
@@ -414,7 +454,7 @@ const MangaDetailsPanel: React.FC<MangaDetailsPanelProps> = ({ mangaLink, onClos
                 </div>
             );
         },
-        [handleBookmarkClick, handleBookmarkContextMenu],
+        [handleBookmarkClick, handleBookmarkContextMenu, bookmarkSelection],
     );
 
     const filterBookmark = useCallback((filter: string, bookmark: MangaBookmark) => {
@@ -428,6 +468,58 @@ const MangaDetailsPanel: React.FC<MangaDetailsPanelProps> = ({ mangaLink, onClos
     const handleSelect = useCallback((elem: HTMLElement) => {
         elem.click();
     }, []);
+
+    useSelectionShortcuts({
+        selection: chapterSelection,
+        ids: visibleChapterIds,
+        enabled: activeTab === "content",
+    });
+    useSelectionShortcuts({
+        selection: bookmarkSelection,
+        ids: visibleBookmarkIds,
+        enabled: activeTab === "bookmarks",
+    });
+
+    /**
+     * Marks every chapter in the current selection as read (or unread). A
+     * single batched IPC call updates the manga progress so the UI refreshes
+     * once.
+     */
+    const handleBulkMarkChapters = useCallback(
+        (read: boolean) => {
+            const names = Array.from(chapterSelection.selectedIds);
+            if (names.length === 0 || !manga) return;
+            const existing = new Set(manga.progress?.chaptersRead || []);
+            const next = read
+                ? Array.from(new Set([...existing, ...names]))
+                : Array.from(existing).filter((n) => !chapterSelection.isSelected(n));
+            dispatch(updateChaptersReadAll({ itemLink: mangaLink, chapters: next, read: true }))
+                .unwrap()
+                .catch((err: unknown) => {
+                    log.error("updateChaptersReadAll failed", err);
+                });
+            chapterSelection.clearSelection();
+        },
+        [chapterSelection, manga, mangaLink, dispatch],
+    );
+
+    const handleBulkDeleteBookmarks = useCallback(() => {
+        const ids = Array.from(bookmarkSelection.selectedIds);
+        if (ids.length === 0) return;
+        dialogUtils
+            .warn({
+                title: "Delete Bookmarks",
+                message: `Delete ${ids.length} bookmark${ids.length === 1 ? "" : "s"}?`,
+                noOption: false,
+                buttons: ["Cancel", "Yes"],
+                defaultId: 0,
+            })
+            .then(({ response }) => {
+                if (!response) return;
+                dispatch(removeBookmark({ itemLink: mangaLink, type: "manga", ids }));
+                bookmarkSelection.clearSelection();
+            });
+    }, [bookmarkSelection, mangaLink, dispatch]);
 
     const handleSelectCover = useCallback(async () => {
         if (!manga) return;
@@ -603,21 +695,44 @@ const MangaDetailsPanel: React.FC<MangaDetailsPanelProps> = ({ mangaLink, onClos
                                 onSelect={handleSelect}
                                 emptyMessage="No chapters found"
                             >
-                                <div className="chapters-toolbar">
-                                    <div className="toolbar-actions">
-                                        <button data-tooltip="Refresh" onClick={refreshChapters}>
-                                            <FontAwesomeIcon icon={faSyncAlt} />
-                                        </button>
-
-                                        <button
-                                            data-tooltip={`Sort: ${sortOrder === "normal" ? "▲ " : "▼ "}${sortBy.toUpperCase()}`}
-                                            onClick={handleSortClick}
-                                        >
-                                            <FontAwesomeIcon icon={faSort} />
-                                        </button>
+                                {chapterSelection.isSelectionMode ? (
+                                    <div className="chapters-toolbar">
+                                        <ListSelectionToolbar
+                                            count={chapterSelection.count}
+                                            onSelectAll={() => chapterSelection.selectAll(visibleChapterIds)}
+                                            onInvertSelection={() =>
+                                                chapterSelection.invertSelection(visibleChapterIds)
+                                            }
+                                            onCancel={chapterSelection.clearSelection}
+                                            extraMenuItems={[
+                                                {
+                                                    label: `Mark ${chapterSelection.count} as Read`,
+                                                    action: () => handleBulkMarkChapters(true),
+                                                },
+                                                {
+                                                    label: `Mark ${chapterSelection.count} as Unread`,
+                                                    action: () => handleBulkMarkChapters(false),
+                                                },
+                                            ]}
+                                        />
                                     </div>
-                                    <ListNavigator.SearchInput placeholder="Search chapters..." />
-                                </div>
+                                ) : (
+                                    <div className="chapters-toolbar">
+                                        <div className="toolbar-actions">
+                                            <button data-tooltip="Refresh" onClick={refreshChapters}>
+                                                <FontAwesomeIcon icon={faSyncAlt} />
+                                            </button>
+
+                                            <button
+                                                data-tooltip={`Sort: ${sortOrder === "normal" ? "▲ " : "▼ "}${sortBy.toUpperCase()}`}
+                                                onClick={handleSortClick}
+                                            >
+                                                <FontAwesomeIcon icon={faSort} />
+                                            </button>
+                                        </div>
+                                        <ListNavigator.SearchInput placeholder="Search chapters..." />
+                                    </div>
+                                )}
 
                                 <div className="chapters-list">
                                     <ListNavigator.List />
@@ -640,9 +755,30 @@ const MangaDetailsPanel: React.FC<MangaDetailsPanelProps> = ({ mangaLink, onClos
                                 onSelect={handleSelect}
                                 emptyMessage="No bookmarks found"
                             >
-                                <div className="chapters-toolbar">
-                                    <ListNavigator.SearchInput placeholder="Search bookmarks..." />
-                                </div>
+                                {bookmarkSelection.isSelectionMode ? (
+                                    <div className="chapters-toolbar">
+                                        <ListSelectionToolbar
+                                            count={bookmarkSelection.count}
+                                            onSelectAll={() => bookmarkSelection.selectAll(visibleBookmarkIds)}
+                                            onInvertSelection={() =>
+                                                bookmarkSelection.invertSelection(visibleBookmarkIds)
+                                            }
+                                            onCancel={bookmarkSelection.clearSelection}
+                                            extraMenuItems={[
+                                                {
+                                                    label: `Delete ${bookmarkSelection.count} Bookmark${
+                                                        bookmarkSelection.count === 1 ? "" : "s"
+                                                    }`,
+                                                    action: handleBulkDeleteBookmarks,
+                                                },
+                                            ]}
+                                        />
+                                    </div>
+                                ) : (
+                                    <div className="chapters-toolbar">
+                                        <ListNavigator.SearchInput placeholder="Search bookmarks..." />
+                                    </div>
+                                )}
 
                                 <div className="chapters-list">
                                     <ListNavigator.List />

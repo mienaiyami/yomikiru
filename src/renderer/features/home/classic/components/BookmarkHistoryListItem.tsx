@@ -1,5 +1,6 @@
 import type { BookBookmark, MangaBookmark } from "@common/types/db";
 import ListItem from "@renderer/components/ListItem";
+import SelectionCheckbox from "@renderer/components/ui/SelectionCheckbox";
 import { addBookmark, removeBookmark } from "@store/bookmarks";
 import { useAppDispatch, useAppSelector } from "@store/hooks";
 import { deleteLibraryItem } from "@store/library";
@@ -17,6 +18,12 @@ const BookmarkHistoryListItem: React.FC<{
     // id from db
     id: number;
     bookmark?: MangaBookmark | BookBookmark;
+    /** When `true`, the item shows a checkbox and clicks toggle selection instead of opening. */
+    selectionMode?: boolean;
+    /** Whether this item is currently part of the selection. Required when `selectionMode` is true. */
+    isChecked?: boolean;
+    /** Toggles selection for this row. Receives click modifiers for Shift+range select. */
+    onToggleSelected?: (opts: { shiftKey: boolean }) => void;
 }> = (props) => {
     const { openInReader, setContextMenuData } = useAppContext();
     const dispatch = useAppDispatch();
@@ -61,7 +68,11 @@ const BookmarkHistoryListItem: React.FC<{
           })}\n` +
           `Path      : ${props.bookmark?.itemLink}`;
 
-    const handleClick = () => {
+    const handleClick = (e: React.MouseEvent<HTMLAnchorElement>) => {
+        if (props.selectionMode) {
+            props.onToggleSelected?.({ shiftKey: e.shiftKey });
+            return;
+        }
         if (!window.fs.existsSync(link)) {
             dialogUtils
                 .confirm({
@@ -182,13 +193,27 @@ const BookmarkHistoryListItem: React.FC<{
         });
     };
 
+    const checkbox = props.onToggleSelected ? (
+        <SelectionCheckbox
+            className="rowSelectCheck"
+            boxClassName="checkBox"
+            checked={props.isChecked ?? false}
+            onToggle={({ shiftKey }) => props.onToggleSelected?.({ shiftKey })}
+            ariaLabel={`Select ${libraryItem.title}`}
+        />
+    ) : null;
+
     return (
         <ListItem
             focused={props.focused}
             title={appSettings.showMoreDataOnItemHover ? title : undefined}
             onClick={handleClick}
             onContextMenu={handleContextMenu}
-            classNameAnchor="big"
+            classNameLi={props.isChecked ? "multiSelected" : ""}
+            classNameAnchor={`big ${props.selectionMode ? "selectionMode" : ""} ${
+                props.isChecked ? "multiSelected" : ""
+            }`}
+            leadingSlot={checkbox}
         >
             {libraryItem.type === "book" ? (
                 <span className="double">

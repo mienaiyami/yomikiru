@@ -223,6 +223,23 @@ const GeneralSettings: React.FC = () => {
                     />
                     <div className="desc">Show search bar over bookmarks and history list.</div>
                 </div>
+                <div className="toggleItem" id="settings-classicListCheckboxes">
+                    <InputCheckbox
+                        checked={appSettings.enableClassicListCheckboxes}
+                        className="noBG"
+                        onChange={(e) => {
+                            dispatch(
+                                setAppSettings({
+                                    enableClassicListCheckboxes: e.currentTarget.checked,
+                                }),
+                            );
+                        }}
+                        labelAfter="Classic List Checkboxes"
+                    />
+                    <div className="desc">
+                        Show multi-select checkboxes on home Bookmark / History rows (classic view).
+                    </div>
+                </div>
                 <div className="toggleItem">
                     <InputCheckbox
                         checked={appSettings.confirmDeleteItem}

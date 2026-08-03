@@ -2,18 +2,23 @@ import type { BookBookmark, LibraryItemWithProgress, MangaBookmark } from "@comm
 import { faSort } from "@fortawesome/free-solid-svg-icons";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import ListNavigator from "@renderer/components/ListNavigator";
+import { useMultiSelect } from "@renderer/hooks/useMultiSelect";
 import { setAppSettings } from "@store/appSettings";
 import { useAppDispatch, useAppSelector } from "@store/hooks";
+import { deleteLibraryItem } from "@store/library";
+import { dialogUtils } from "@utils/dialog";
 import { formatUtils } from "@utils/file";
-import { useMemo } from "react";
+import { useCallback, useEffect, useMemo } from "react";
 import { useAppContext } from "src/renderer/App";
 import BookmarkHistoryListItem from "./BookmarkHistoryListItem";
+import ListSelectionToolbar from "./ListSelectionToolbar";
 
 const HistoryTab: React.FC = () => {
     const library = useAppSelector((store) => store.library);
     const appSettings = useAppSelector((store) => store.appSettings);
     const dispatch = useAppDispatch();
     const { setContextMenuData } = useAppContext();
+    const checkboxesEnabled = appSettings.enableClassicListCheckboxes;
 
     const historyItems = useMemo(() => {
         const items = Object.values(library.items).filter((item) => item?.progress) as LibraryItemWithProgress[];
@@ -40,6 +45,13 @@ const HistoryTab: React.FC = () => {
 
         return appSettings.historyListSortType === "inverse" ? [...sorted].reverse() : sorted;
     }, [library.items, appSettings.historyListSortBy, appSettings.historyListSortType]);
+
+    const visibleIds = useMemo(() => historyItems.map((it) => it.link), [historyItems]);
+    const selection = useMultiSelect<string>(visibleIds);
+
+    useEffect(() => {
+        if (!checkboxesEnabled) selection.clearSelection();
+    }, [checkboxesEnabled, selection]);
 
     const filterHistoryItem = (filter: string, item: LibraryItemWithProgress | BookBookmark | MangaBookmark) => {
         if (!("type" in item)) return false;
@@ -68,8 +80,37 @@ const HistoryTab: React.FC = () => {
                 link={item.link}
                 id={index}
                 key={`${item.updatedAt}-${index}`}
+                selectionMode={checkboxesEnabled && selection.isSelectionMode}
+                isChecked={checkboxesEnabled ? selection.isSelected(item.link) : false}
+                onToggleSelected={
+                    checkboxesEnabled ? ({ shiftKey }) => selection.toggleItem(item.link, { shiftKey }) : undefined
+                }
             />
         );
+
+    /**
+     * Removes selected history items from the library (mirrors the
+     * `removeHistory` context-menu action, in batch). Files on disk remain.
+     */
+    const handleRemoveSelected = useCallback(() => {
+        const links = Array.from(selection.selectedIds);
+        if (links.length === 0) return;
+        dialogUtils
+            .warn({
+                title: "Remove History",
+                message: `Remove ${links.length} item${links.length === 1 ? "" : "s"}? This will also remove all related bookmarks.`,
+                noOption: false,
+                buttons: ["Cancel", "Yes"],
+                defaultId: 0,
+            })
+            .then(({ response }) => {
+                if (!response) return;
+                for (const link of links) {
+                    dispatch(deleteLibraryItem({ link }));
+                }
+                selection.clearSelection();
+            });
+    }, [dispatch, selection]);
 
     if (!appSettings.showTabs.history) {
         return null;
@@ -87,7 +128,23 @@ const HistoryTab: React.FC = () => {
                 onContextMenu={(elem) => elem.dispatchEvent(window.contextMenu.fakeEvent(elem))}
                 onSelect={(elem) => elem.click()}
             >
-                {appSettings.showSearch && (
+                {checkboxesEnabled && selection.isSelectionMode && (
+                    <div className="tools">
+                        <ListSelectionToolbar
+                            count={selection.count}
+                            onSelectAll={() => selection.selectAll(visibleIds)}
+                            onInvertSelection={() => selection.invertSelection(visibleIds)}
+                            onCancel={selection.clearSelection}
+                            extraMenuItems={[
+                                {
+                                    label: `Remove ${selection.count} from History`,
+                                    action: handleRemoveSelected,
+                                },
+                            ]}
+                        />
+                    </div>
+                )}
+                {!selection.isSelectionMode && appSettings.showSearch && (
                     <div className="tools">
                         <div className="row1">
                             <button

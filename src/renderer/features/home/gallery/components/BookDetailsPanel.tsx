@@ -4,6 +4,10 @@ import { faArrowLeft, faBookmark, faImage } from "@fortawesome/free-solid-svg-ic
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { useAppContext } from "@renderer/App";
 import ListNavigator from "@renderer/components/ListNavigator";
+import SelectionCheckbox from "@renderer/components/ui/SelectionCheckbox";
+import { useMultiSelect } from "@renderer/hooks/useMultiSelect";
+import { useSelectionShortcuts } from "@renderer/hooks/useSelectionShortcuts";
+import { removeBookmark } from "@store/bookmarks";
 import { removeNote } from "@store/bookNotes";
 import { useAppDispatch, useAppSelector } from "@store/hooks";
 import dateUtils from "@utils/date";
@@ -11,8 +15,9 @@ import { dialogUtils } from "@utils/dialog";
 import { libraryCoverSrc } from "@utils/libraryCover";
 import { pickAndApplyCustomCover } from "@utils/libraryCoverService";
 import { createRendererLogger } from "@utils/logger";
-import { useCallback, useState } from "react";
+import { useCallback, useMemo, useState } from "react";
 import { shallowEqual } from "react-redux";
+import ListSelectionToolbar from "../../classic/components/ListSelectionToolbar";
 import "./mangaDetailsPanel.scss";
 
 const log = createRendererLogger("gallery/BookDetailsPanel");
@@ -54,6 +59,11 @@ const BookDetailsPanel: React.FC<BookDetailsPanelProps> = ({ bookLink, onClose }
     );
 
     const { setContextMenuData, openInReader } = useAppContext();
+
+    const visibleBookmarkIds = useMemo(() => bookmarksArray.map((b) => b.id), [bookmarksArray]);
+    const visibleNoteIds = useMemo(() => notesArray.map((n) => n.id), [notesArray]);
+    const bookmarkSelection = useMultiSelect<number>(visibleBookmarkIds);
+    const noteSelection = useMultiSelect<number>(visibleNoteIds);
 
     /**
      * Opens the reader at the bookmark’s chapter and saved element position.
@@ -147,15 +157,32 @@ const BookDetailsPanel: React.FC<BookDetailsPanelProps> = ({ bookLink, onClose }
 
     const renderBookmarkItem = useCallback(
         (bookmark: BookBookmark, _index: number, isSelected: boolean) => {
+            const inSelectionMode = bookmarkSelection.isSelectionMode;
+            const isChecked = bookmarkSelection.isSelected(bookmark.id);
             return (
                 <div
                     key={bookmark.id}
-                    className={`bookmark-item ${isSelected ? "selected" : ""}`}
-                    onClick={() => openBookmarkInReader(bookmark)}
+                    className={`bookmark-item ${isSelected ? "selected" : ""} ${
+                        inSelectionMode ? "selectionMode" : ""
+                    } ${isChecked ? "multiSelected" : ""}`}
+                    onClick={(e) => {
+                        if (inSelectionMode) {
+                            bookmarkSelection.toggleItem(bookmark.id, { shiftKey: e.shiftKey });
+                            return;
+                        }
+                        openBookmarkInReader(bookmark);
+                    }}
                     onContextMenu={(e) => handleBookmarkContextMenu(e, bookmark)}
                     data-focused={isSelected}
                     data-bookmark-id={bookmark.id}
                 >
+                    <SelectionCheckbox
+                        className="rowSelectCheck"
+                        boxClassName="checkBox"
+                        checked={isChecked}
+                        onToggle={({ shiftKey }) => bookmarkSelection.toggleItem(bookmark.id, { shiftKey })}
+                        ariaLabel={`Select bookmark ${bookmark.id}`}
+                    />
                     <div className="bookmark-content">
                         <div className="bookmark-header">
                             <span className="bookmark-chapter">{bookmark.chapterName}</span>
@@ -173,20 +200,37 @@ const BookDetailsPanel: React.FC<BookDetailsPanelProps> = ({ bookLink, onClose }
                 </div>
             );
         },
-        [handleBookmarkContextMenu, openBookmarkInReader],
+        [handleBookmarkContextMenu, openBookmarkInReader, bookmarkSelection],
     );
 
     const renderNoteItem = useCallback(
         (note: BookNote, _index: number, isSelected: boolean) => {
+            const inSelectionMode = noteSelection.isSelectionMode;
+            const isChecked = noteSelection.isSelected(note.id);
             return (
                 <div
                     key={note.id}
-                    className={`note-item ${isSelected ? "selected" : ""}`}
-                    onClick={() => openNoteInReader(note)}
+                    className={`note-item ${isSelected ? "selected" : ""} ${
+                        inSelectionMode ? "selectionMode" : ""
+                    } ${isChecked ? "multiSelected" : ""}`}
+                    onClick={(e) => {
+                        if (inSelectionMode) {
+                            noteSelection.toggleItem(note.id, { shiftKey: e.shiftKey });
+                            return;
+                        }
+                        openNoteInReader(note);
+                    }}
                     onContextMenu={(e) => handleNoteContextMenu(e, note)}
                     data-focused={isSelected}
                     data-note-id={note.id}
                 >
+                    <SelectionCheckbox
+                        className="rowSelectCheck"
+                        boxClassName="checkBox"
+                        checked={isChecked}
+                        onToggle={({ shiftKey }) => noteSelection.toggleItem(note.id, { shiftKey })}
+                        ariaLabel={`Select note ${note.id}`}
+                    />
                     <div className="note-item-row">
                         <span
                             className="note-color-dot"
@@ -210,8 +254,59 @@ const BookDetailsPanel: React.FC<BookDetailsPanelProps> = ({ bookLink, onClose }
                 </div>
             );
         },
-        [handleNoteContextMenu, openNoteInReader],
+        [handleNoteContextMenu, openNoteInReader, noteSelection],
     );
+
+    useSelectionShortcuts({
+        selection: bookmarkSelection,
+        ids: visibleBookmarkIds,
+        enabled: activeTab === "bookmarks",
+    });
+    useSelectionShortcuts({
+        selection: noteSelection,
+        ids: visibleNoteIds,
+        enabled: activeTab === "notes",
+    });
+
+    const handleBulkDeleteBookmarks = useCallback(() => {
+        const ids = Array.from(bookmarkSelection.selectedIds);
+        if (ids.length === 0) return;
+        dialogUtils
+            .warn({
+                title: "Delete Bookmarks",
+                message: `Delete ${ids.length} bookmark${ids.length === 1 ? "" : "s"}?`,
+                noOption: false,
+                buttons: ["Cancel", "Yes"],
+                defaultId: 0,
+            })
+            .then(({ response }) => {
+                if (!response) return;
+                dispatch(removeBookmark({ itemLink: bookLink, type: "book", ids }));
+                bookmarkSelection.clearSelection();
+            });
+    }, [bookmarkSelection, bookLink, dispatch]);
+
+    const handleBulkDeleteNotes = useCallback(() => {
+        const ids = Array.from(noteSelection.selectedIds);
+        if (ids.length === 0) return;
+        dialogUtils
+            .warn({
+                title: "Delete Notes",
+                message: `Delete ${ids.length} note${ids.length === 1 ? "" : "s"}?`,
+                noOption: false,
+                buttons: ["Cancel", "Yes"],
+                defaultId: 0,
+            })
+            .then(({ response }) => {
+                if (!response) return;
+                dispatch(removeNote({ itemLink: bookLink, ids }))
+                    .unwrap()
+                    .catch((err: unknown) => {
+                        log.error("removeNote (bulk) failed", err);
+                    });
+                noteSelection.clearSelection();
+            });
+    }, [noteSelection, bookLink, dispatch]);
 
     const filterBookmark = useCallback((filter: string, bookmark: BookBookmark) => {
         return new RegExp(filter, "ig").test(
@@ -408,9 +503,30 @@ const BookDetailsPanel: React.FC<BookDetailsPanelProps> = ({ bookLink, onClose }
                                 onSelect={handleSelect}
                                 emptyMessage="No bookmarks"
                             >
-                                <div className="chapters-toolbar">
-                                    <ListNavigator.SearchInput placeholder="Search bookmarks..." />
-                                </div>
+                                {bookmarkSelection.isSelectionMode ? (
+                                    <div className="chapters-toolbar">
+                                        <ListSelectionToolbar
+                                            count={bookmarkSelection.count}
+                                            onSelectAll={() => bookmarkSelection.selectAll(visibleBookmarkIds)}
+                                            onInvertSelection={() =>
+                                                bookmarkSelection.invertSelection(visibleBookmarkIds)
+                                            }
+                                            onCancel={bookmarkSelection.clearSelection}
+                                            extraMenuItems={[
+                                                {
+                                                    label: `Delete ${bookmarkSelection.count} Bookmark${
+                                                        bookmarkSelection.count === 1 ? "" : "s"
+                                                    }`,
+                                                    action: handleBulkDeleteBookmarks,
+                                                },
+                                            ]}
+                                        />
+                                    </div>
+                                ) : (
+                                    <div className="chapters-toolbar">
+                                        <ListNavigator.SearchInput placeholder="Search bookmarks..." />
+                                    </div>
+                                )}
                                 <div className="chapters-list">
                                     <ListNavigator.List />
                                 </div>
@@ -429,9 +545,28 @@ const BookDetailsPanel: React.FC<BookDetailsPanelProps> = ({ bookLink, onClose }
                                 onSelect={handleSelect}
                                 emptyMessage="No notes"
                             >
-                                <div className="chapters-toolbar">
-                                    <ListNavigator.SearchInput placeholder="Search notes..." />
-                                </div>
+                                {noteSelection.isSelectionMode ? (
+                                    <div className="chapters-toolbar">
+                                        <ListSelectionToolbar
+                                            count={noteSelection.count}
+                                            onSelectAll={() => noteSelection.selectAll(visibleNoteIds)}
+                                            onInvertSelection={() => noteSelection.invertSelection(visibleNoteIds)}
+                                            onCancel={noteSelection.clearSelection}
+                                            extraMenuItems={[
+                                                {
+                                                    label: `Delete ${noteSelection.count} Note${
+                                                        noteSelection.count === 1 ? "" : "s"
+                                                    }`,
+                                                    action: handleBulkDeleteNotes,
+                                                },
+                                            ]}
+                                        />
+                                    </div>
+                                ) : (
+                                    <div className="chapters-toolbar">
+                                        <ListNavigator.SearchInput placeholder="Search notes..." />
+                                    </div>
+                                )}
                                 <div className="chapters-list">
                                     <ListNavigator.List />
                                 </div>
