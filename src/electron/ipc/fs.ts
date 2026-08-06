@@ -63,7 +63,11 @@ export const registerFSHandlers = (): void => {
         try {
             saveFile(filePath, data);
             const sourceWindowId = BrowserWindow.fromWebContents(_event.sender)?.id;
+            /* skip the saving window - it already has in-memory state; notifying it caused
+             * refresh <-> normalize <-> re-save loops (reader presets parse spam / open jank)
+             */
             WindowManager.getAllWindows().forEach((window) => {
+                if (sourceWindowId !== undefined && window.id === sourceWindowId) return;
                 ipc.send(window.webContents, "fs:fileChanged", {
                     filePath,
                     sourceWindowId,

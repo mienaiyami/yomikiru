@@ -134,6 +134,8 @@ const electronAPI = {
             window.on(event as any, handler);
             return () => window.off(event, handler);
         },
+        /** BrowserWindow id - used to ignore own `fs:fileChanged` echoes when needed */
+        id: () => getCurrentWindow().id,
         // self: () => getCurrentWindow(),
     },
     //

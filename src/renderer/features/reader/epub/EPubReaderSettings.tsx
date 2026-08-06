@@ -1,9 +1,9 @@
-import ReaderPresetSection from "@features/reader/components/ReaderPresetSection";
+import { BookReaderPresetSection } from "@features/reader/components/ReaderPresetSection";
 import { faBars, faMinus, faPlus, faTimes } from "@fortawesome/free-solid-svg-icons";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { setEpubReaderSettings } from "@store/appSettings";
 import { useAppDispatch, useAppSelector } from "@store/hooks";
-import { updateBookPreset } from "@store/readerPresets";
+import { getActiveBookPresetName, updateBookPreset } from "@store/readerPresets";
 import { getShortcutsMapped } from "@store/shortcuts";
 import InputCheckbox from "@ui/InputCheckbox";
 import InputCheckboxColor from "@ui/InputCheckboxColor";
@@ -43,10 +43,7 @@ const EPUBReaderSettings = memo(
     }) => {
         const appSettings = useAppSelector((store) => store.appSettings);
         const shortcutsMapped = useAppSelector(getShortcutsMapped);
-        const currentPresetName = useAppSelector((s) => {
-            const id = s.appSettings.bookReaderPresetId;
-            return id ? s.readerPresets.presets.find((p) => p.id === id)?.name : null;
-        });
+        const currentPresetName = useAppSelector(getActiveBookPresetName);
         const dispatch = useAppDispatch();
 
         const [isReaderSettingsOpen, setReaderSettingOpen] = useState(false);
@@ -121,7 +118,7 @@ const EPUBReaderSettings = memo(
                     <FontAwesomeIcon icon={isReaderSettingsOpen ? faTimes : faBars} />
                 </button>
                 <div className="main">
-                    <ReaderPresetSection type="book" />
+                    <BookReaderPresetSection />
                     <div className="settingItem">
                         <div
                             className={

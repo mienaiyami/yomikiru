@@ -1,4 +1,4 @@
-import ReaderPresetSection from "@features/reader/components/ReaderPresetSection";
+import { MangaReaderPresetSection } from "@features/reader/components/ReaderPresetSection";
 import {
     faArrowsAltH,
     faArrowsAltV,
@@ -11,7 +11,7 @@ import {
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { setReaderSettings } from "@store/appSettings";
 import { useAppDispatch, useAppSelector } from "@store/hooks";
-import { updateMangaPreset } from "@store/readerPresets";
+import { getActiveMangaPresetName, updateMangaPreset } from "@store/readerPresets";
 import { getShortcutsMapped } from "@store/shortcuts";
 import InputCheckbox from "@ui/InputCheckbox";
 import InputCheckboxColor from "@ui/InputCheckboxColor";
@@ -42,10 +42,7 @@ const ReaderSettings = memo(
     }) => {
         const appSettings = useAppSelector((store) => store.appSettings);
         const shortcutsMapped = useAppSelector(getShortcutsMapped);
-        const currentPresetName = useAppSelector((s) => {
-            const id = s.appSettings.mangaReaderPresetId;
-            return id ? s.readerPresets.presets.find((p) => p.id === id)?.name : null;
-        });
+        const currentPresetName = useAppSelector(getActiveMangaPresetName);
         const dispatch = useAppDispatch();
         const [isReaderSettingsOpen, setReaderSettingOpen] = useState(false);
         const [maxWidth, setMaxWidth] = useState<number>(appSettings.readerSettings.widthClamped ? 100 : 500);
@@ -114,7 +111,7 @@ const ReaderSettings = memo(
                     <FontAwesomeIcon icon={isReaderSettingsOpen ? faTimes : faBars} />
                 </button>
                 <div className="main">
-                    <ReaderPresetSection type="manga" />
+                    <MangaReaderPresetSection />
                     <div className={"settingItem "}>
                         <div
                             className={`name ${!appSettings.readerSettings.settingsCollapsed.size ? "expanded " : ""}`}

@@ -72,6 +72,8 @@ const EPubReader: React.FC = () => {
     const [shortcutText, setShortcutText] = useState("");
     // [0-100]
     const [bookProgress, setBookProgress] = useState(0);
+    // last progress % flushed to React / makeScrollPos; scroll hot path only updates refs until this changes
+    const flushedBookProgressRef = useRef(-1);
     const [footnoteModalData, setFootnoteModalData] = useState<{
         title: string;
         content: string;
@@ -441,6 +443,12 @@ const EPubReader: React.FC = () => {
         [findInPageRefs.current, mainRef.current],
     );
 
+    /**
+     * Scroll hot path: update the progress input from a ref; flush React state
+     * only when the displayed integer % changes.
+     * Redux CSS position still flushes on % change; call {@link makeScrollPos} directly
+     * for bookmarks, and {@link window.app.flushEpubScrollPos} before close/save.
+     */
     const updateProgress = () => {
         let progress = 0;
         if (readerRef.current)
@@ -451,12 +459,25 @@ const EPubReader: React.FC = () => {
                         100,
                 ) || 0;
         if (bookProgressRef.current) bookProgressRef.current.value = progress.toString();
+        if (progress === flushedBookProgressRef.current) return;
+        flushedBookProgressRef.current = progress;
         setBookProgress(progress);
         makeScrollPos();
     };
 
     useEffect(() => {
+        window.app.flushEpubScrollPos = () => {
+            makeScrollPos();
+        };
+        return () => {
+            delete window.app.flushEpubScrollPos;
+        };
+    }, [makeScrollPos]);
+
+    useEffect(() => {
         setUpdatedAnilistProgress(false);
+        flushedBookProgressRef.current = -1;
+        setBookProgress(0);
     }, [currentChapter.index]);
 
     useLayoutEffect(() => {

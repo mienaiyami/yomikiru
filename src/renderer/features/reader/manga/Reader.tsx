@@ -3,13 +3,7 @@ import { setAnilistCurrentManga } from "@store/anilist";
 import { setAppSettings, setReaderSettings } from "@store/appSettings";
 import { useAppDispatch, useAppSelector } from "@store/hooks";
 import { addLibraryItem, selectLibraryItem, updateChaptersRead, updateMangaProgress } from "@store/library";
-import {
-    getReaderMangaState,
-    setReaderLoading,
-    setReaderOpen,
-    updateReaderContent,
-    updateReaderMangaCurrentPage,
-} from "@store/reader";
+import { setReaderLoading, setReaderOpen, updateReaderContent, updateReaderMangaCurrentPage } from "@store/reader";
 import { cyclePresetNext, cyclePresetPrev, selectPresetSlot } from "@store/readerPresets";
 import AniList from "@utils/anilist";
 import { processChapterNumber } from "@utils/chapterUtils";
@@ -44,7 +38,22 @@ const Reader: React.FC = () => {
     const isReaderOpen = useAppSelector((store) => store.reader.active);
     const isSettingOpen = useAppSelector((store) => store.ui.isOpen.settings);
     const linkInReader = useAppSelector((store) => store.reader.link);
-    const readerState = useAppSelector(getReaderMangaState);
+    // primitives only - avoid selecting whole reader slice so page ticks do not reconcile the image tree
+    const mangaOpenPage = useAppSelector((store) =>
+        store.reader.type === "manga" ? store.reader.mangaPageNumber : undefined,
+    );
+    const mangaChapterName = useAppSelector((store) =>
+        store.reader.type === "manga" ? store.reader.content?.progress?.chapterName : undefined,
+    );
+    const mangaTotalPages = useAppSelector((store) =>
+        store.reader.type === "manga" ? store.reader.content?.progress?.totalPages : undefined,
+    );
+    const mangaProgressItemLink = useAppSelector((store) =>
+        store.reader.type === "manga" ? store.reader.content?.progress?.itemLink : undefined,
+    );
+    const mangaHasProgress = useAppSelector((store) =>
+        store.reader.type === "manga" ? !!store.reader.content?.progress : false,
+    );
     const anilistCurrentManga = useAppSelector((store) => store.anilist.currentManga);
     const isLoadingManga = useAppSelector((store) => store.reader.loading !== null);
 
@@ -74,6 +83,8 @@ const Reader: React.FC = () => {
     // todo: maybe can remove now?
     const [currentPageNumber, setCurrentPageNumber] = useState(1);
     const [currentImageRow, setCurrentImageRow] = useState(1);
+    const currentPageNumberRef = useRef(1);
+    const currentImageRowRef = useRef(1);
 
     const [chapterChangerDisplay, setChapterChangerDisplay] = useState(false);
     const [wasMaximized, setWasMaximized] = useState(false);
@@ -128,10 +139,11 @@ const Reader: React.FC = () => {
 
     const scrollToPage = (pageNumber: number, behavior: ScrollBehavior = "smooth", callback?: () => void) => {
         if (readerRef.current) {
-            if (pageNumber >= 1 && pageNumber <= (readerState?.content?.progress?.totalPages || 1)) {
+            if (pageNumber >= 1 && pageNumber <= (mangaTotalPages || 1)) {
                 const imgElem = document.querySelector(`#reader .imgCont [data-pagenumber='${pageNumber}']`);
                 if ([1, 2].includes(appSettings.readerSettings.readerTypeSelected)) {
                     const rowNumber = parseInt(imgElem?.parentElement?.getAttribute("data-imagerow") || "1");
+                    currentImageRowRef.current = rowNumber;
                     setCurrentImageRow(rowNumber);
                     if (callback) setTimeout(callback, 1500);
                 } else {
@@ -166,8 +178,13 @@ const Reader: React.FC = () => {
     }, [currentlyDecoding, imageDecodeQueue]);
 
     useEffect(() => {
+        currentPageNumberRef.current = currentPageNumber;
         dispatch(updateReaderMangaCurrentPage(currentPageNumber));
     }, [currentPageNumber]);
+    useLayoutEffect(() => {
+        currentImageRowRef.current = currentImageRow;
+        changePageNumber();
+    }, [currentImageRow]);
     useEffect(() => {
         readerRef.current?.focus();
     }, [isReaderOpen]);
@@ -538,6 +555,10 @@ const Reader: React.FC = () => {
             });
     }, [isSideListPinned, imgContRef.current, readerRef.current]);
 
+    /**
+     * Reads page/row under the viewport center. Only flushes React state when values change
+     * so mid-page scroll does not re-render the reader image tree.
+     */
     const changePageNumber = () => {
         if (imgContRef.current) {
             const elem = document.elementFromPoint(
@@ -546,9 +567,15 @@ const Reader: React.FC = () => {
             );
             if (elem?.hasAttribute("data-pagenumber")) {
                 const pageNumber = parseInt(elem.getAttribute("data-pagenumber") || "1");
-                setCurrentPageNumber(pageNumber);
                 const rowNumber = parseInt(elem.parentElement?.getAttribute("data-imagerow") || "1");
-                setCurrentImageRow(rowNumber);
+                if (pageNumber !== currentPageNumberRef.current) {
+                    currentPageNumberRef.current = pageNumber;
+                    setCurrentPageNumber(pageNumber);
+                }
+                if (rowNumber !== currentImageRowRef.current) {
+                    currentImageRowRef.current = rowNumber;
+                    setCurrentImageRow(rowNumber);
+                }
             }
         }
     };
@@ -568,7 +595,11 @@ const Reader: React.FC = () => {
             return;
         }
         if (chapterChangerDisplay) return setChapterChangerDisplay(false);
-        setCurrentImageRow((init) => init - 1);
+        setCurrentImageRow((init) => {
+            const next = init - 1;
+            currentImageRowRef.current = next;
+            return next;
+        });
         if (readerRef.current) readerRef.current.scrollTop = 0;
     };
     const openNextPage = () => {
@@ -583,7 +614,11 @@ const Reader: React.FC = () => {
             return;
         }
         if (chapterChangerDisplay) return setChapterChangerDisplay(false);
-        setCurrentImageRow((init) => init + 1);
+        setCurrentImageRow((init) => {
+            const next = init + 1;
+            currentImageRowRef.current = next;
+            return next;
+        });
         if (readerRef.current) readerRef.current.scrollTop = 0;
     };
     /**
@@ -596,7 +631,9 @@ const Reader: React.FC = () => {
     const checkForImgsAndLoad = (options: { link: string; page: number }) => {
         if (window.cachedImageList?.link === options.link && window.cachedImageList.images) {
             // console.log("using cached image list for " + link);
-            setCurrentPageNumber(options.page || 1);
+            const page = options.page || 1;
+            currentPageNumberRef.current = page;
+            setCurrentPageNumber(page);
             loadImgs(options.link, window.cachedImageList.images);
             window.cachedImageList = { link: "", images: [] };
             return;
@@ -607,7 +644,9 @@ const Reader: React.FC = () => {
             showLoading: false,
         }).then((result) => {
             if (result.isValid && result.images) {
-                setCurrentPageNumber(options.page || 1);
+                const page = options.page || 1;
+                currentPageNumberRef.current = page;
+                setCurrentPageNumber(page);
                 loadImgs(options.link, result.images);
             }
         });
@@ -618,6 +657,7 @@ const Reader: React.FC = () => {
         //mark, reset
         setImages([]);
         if (pageNumberInputRef.current) pageNumberInputRef.current.value = "1";
+        currentImageRowRef.current = 1;
         setCurrentImageRow(1);
         setImageData([]);
         setImageRow([]);
@@ -639,7 +679,7 @@ const Reader: React.FC = () => {
 
         const progress: MangaProgress = {
             chapterLink: link,
-            currentPage: readerState?.mangaPageNumber || 1,
+            currentPage: mangaOpenPage || 1,
             lastReadAt: new Date(),
             chapterName: linkSplitted.at(-1) || "",
             itemLink: window.path.dirname(link),
@@ -884,12 +924,12 @@ const Reader: React.FC = () => {
         );
     }, [appSettings.readerSettings.readerWidth, isSideListPinned]);
     useEffect(() => {
-        if (!readerState?.link) return;
+        if (!linkInReader) return;
         checkForImgsAndLoad({
-            link: readerState.link,
-            page: readerState.mangaPageNumber || 1,
+            link: linkInReader,
+            page: mangaOpenPage || 1,
         });
-    }, [readerState?.link]);
+    }, [linkInReader]);
 
     useLayoutEffect(() => {
         if (isSideListPinned) {
@@ -910,22 +950,22 @@ const Reader: React.FC = () => {
         // anilist auto update progress
         if (updatedAnilistProgress || !appSettings.readerSettings.autoUpdateAnilistProgress) return;
         if (currentPageNumber / images.length > (images.length <= 4 ? 0.5 : 0.7)) {
-            if (!anilistCurrentManga || !readerState?.content?.progress) {
+            if (!anilistCurrentManga || !mangaHasProgress || !mangaChapterName || !mangaProgressItemLink) {
                 // console.error("anilistCurrentManga is null, this should not happen");
                 return;
             }
-            const chapterNumber = processChapterNumber(readerState?.content?.progress?.chapterName);
+            const chapterNumber = processChapterNumber(mangaChapterName);
             if (!chapterNumber) {
                 log.log(
                     "AniList auto-progress: skipped (could not parse chapter number from chapter title)",
-                    readerState?.content?.progress?.chapterName,
+                    mangaChapterName,
                 );
                 return;
             }
             dispatch(
                 updateChaptersRead({
-                    itemLink: readerState?.content?.progress?.itemLink,
-                    chapterName: readerState?.content?.progress?.chapterName,
+                    itemLink: mangaProgressItemLink,
+                    chapterName: mangaChapterName,
                     read: true,
                 }),
             );
@@ -944,9 +984,6 @@ const Reader: React.FC = () => {
                 });
         }
     }, [currentPageNumber, appSettings.readerSettings.autoUpdateAnilistProgress]);
-    useLayoutEffect(() => {
-        changePageNumber();
-    }, [currentImageRow]);
 
     useEffect(() => {
         if (shortcutText === "") return;
@@ -1046,11 +1083,9 @@ const Reader: React.FC = () => {
                 <div className="c">
                     <span className="a">Current :</span>
                     <span className="b">
-                        {window.path.basename(readerState?.content?.progress?.chapterName || "")}
-                        {formatUtils.files.test(readerState?.content?.progress?.chapterName || "") && (
-                            <code>
-                                {formatUtils.files.getExt(readerState?.content?.progress?.chapterName || "")}
-                            </code>
+                        {window.path.basename(mangaChapterName || "")}
+                        {formatUtils.files.test(mangaChapterName || "") && (
+                            <code>{formatUtils.files.getExt(mangaChapterName || "")}</code>
                         )}
                     </span>
                 </div>
@@ -1145,7 +1180,7 @@ const Reader: React.FC = () => {
             </div>
             {appSettings.readerSettings.showPageNumberInZenMode && (
                 <div className={"zenModePageNumber " + "show"}>
-                    {currentPageNumber}/{readerState?.content?.progress?.totalPages}
+                    {currentPageNumber}/{mangaTotalPages}
                 </div>
             )}
             <ChapterChanger />

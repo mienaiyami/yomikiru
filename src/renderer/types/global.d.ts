@@ -56,6 +56,11 @@ declare global {
             keyRepeated: boolean;
             // to remove later
             keydown: boolean;
+            /**
+             * Sync EPUB scroll CSS position into Redux before progress is persisted (e.g. close reader).
+             * Set by {@link EPubReader} while mounted.
+             */
+            flushEpubScrollPos?: () => void;
         };
         /**
          * TODO: refactor

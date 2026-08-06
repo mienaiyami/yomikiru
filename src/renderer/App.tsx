@@ -103,6 +103,8 @@ const App = (): ReactElement => {
     }, [firstRendered]);
 
     const closeReader = async () => {
+        // may leave Redux book position behind the viewport until % changes; flush before DB write
+        window.app.flushEpubScrollPos?.();
         await dispatch(updateCurrentItemProgress());
         dispatch(resetReaderState());
         dispatch(setAnilistCurrentManga(null));
@@ -195,8 +197,9 @@ const App = (): ReactElement => {
             window.electron.on("mainSettings:sync", (settings) => {
                 dispatch(setMainSettings(settings));
             }),
-            window.electron.on("fs:fileChanged", ({ filePath }) => {
-                // log.log("fs:fileChanged sync", filePath, sourceWindowId);
+            window.electron.on("fs:fileChanged", ({ filePath, sourceWindowId }) => {
+                // saving window already has in-memory state (main also skips self-notify)
+                if (sourceWindowId !== undefined && sourceWindowId === window.electron.currentWindow.id()) return;
                 if (filePath === settingsPath && appSettings.syncSettings) dispatch(refreshAppSettings());
                 if (filePath === shortcutsPath && appSettings.syncSettings) dispatch(refreshShortcuts());
                 if (filePath === themesPath && appSettings.syncThemes) dispatch(refreshThemes());

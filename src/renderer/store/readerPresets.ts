@@ -1,4 +1,4 @@
-import { createSlice, current, type PayloadAction } from "@reduxjs/toolkit";
+import { createSelector, createSlice, current, type PayloadAction } from "@reduxjs/toolkit";
 import { dialogUtils } from "@utils/dialog";
 import { readerPresetsPath, saveJSONfile } from "../utils/file";
 import { createRendererLogger } from "../utils/logger";
@@ -228,6 +228,8 @@ const readerPresets = createSlice({
         },
         /**
          * NOTE: prefer using refreshReaderPresetsWithReconcile instead.
+         * Applies in-memory normalization only - does not re-save on normalize, to avoid
+         * fs:fileChanged <-> refresh loops when another window (or self) already wrote the file.
          */
         refreshReaderPresets: (state) => {
             try {
@@ -237,8 +239,7 @@ const readerPresets = createSlice({
                         log.log(`readerPresets.json refresh retry ${attempt}/8`, error);
                     },
                 });
-                const { state: next, didNormalize } = parseReaderPresetsStateWithMeta(data);
-                if (didNormalize) saveJSONfile(readerPresetsPath, next);
+                const { state: next } = parseReaderPresetsStateWithMeta(data);
                 return next;
             } catch {
                 log.error("refreshReaderPresets: could not read readerPresets.json; keeping in-memory state");
@@ -415,3 +416,39 @@ export const refreshReaderPresetsWithReconcile =
     };
 
 export default readerPresets.reducer;
+
+/**
+ * Manga reader presets only. Memoized so `.filter` does not force settings UI re-renders on unrelated updates.
+ */
+export const getMangaPresets = createSelector([(state: RootState) => state.readerPresets.presets], (presets) =>
+    presets.filter((p): p is MangaReaderPreset => p.type === "manga"),
+);
+
+/**
+ * Book/EPUB reader presets only. Memoized counterpart of {@link getMangaPresets}.
+ */
+export const getBookPresets = createSelector([(state: RootState) => state.readerPresets.presets], (presets) =>
+    presets.filter((p): p is BookReaderPreset => p.type === "book"),
+);
+
+/**
+ * Display name of the active manga reader preset, or null if none.
+ */
+export const getActiveMangaPresetName = createSelector(
+    [
+        (state: RootState) => state.appSettings.mangaReaderPresetId,
+        (state: RootState) => state.readerPresets.presets,
+    ],
+    (id, presets) => (id ? (presets.find((p) => p.id === id)?.name ?? null) : null),
+);
+
+/**
+ * Display name of the active book reader preset, or null if none.
+ */
+export const getActiveBookPresetName = createSelector(
+    [
+        (state: RootState) => state.appSettings.bookReaderPresetId,
+        (state: RootState) => state.readerPresets.presets,
+    ],
+    (id, presets) => (id ? (presets.find((p) => p.id === id)?.name ?? null) : null),
+);

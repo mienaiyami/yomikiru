@@ -1,4 +1,4 @@
-import { createSlice, type PayloadAction } from "@reduxjs/toolkit";
+import { createSelector, createSlice, type PayloadAction } from "@reduxjs/toolkit";
 import { dialogUtils } from "@utils/dialog";
 import { SHORTCUT_COMMAND_MAP } from "@utils/keybindings";
 import { saveJSONfile, shortcutsPath } from "../utils/file";
@@ -109,11 +109,12 @@ const shortcuts = createSlice({
 
 export const { setShortcuts, resetShortcuts, removeShortcuts, refreshShortcuts } = shortcuts.actions;
 
-export const getShortcutsMapped = (state: RootState) => {
-    return Object.fromEntries(state.shortcuts.map((e) => [e.command, e.keys])) as Record<
-        ShortcutCommands,
-        string[]
-    >;
-};
+/**
+ * Command -> keys map for keybinding UI. Memoized so callers do not re-render when
+ * unrelated store slices change (avoids unstable `Object.fromEntries` identity).
+ */
+export const getShortcutsMapped = createSelector([(state: RootState) => state.shortcuts], (shortcutsList) => {
+    return Object.fromEntries(shortcutsList.map((e) => [e.command, e.keys])) as Record<ShortcutCommands, string[]>;
+});
 
 export default shortcuts.reducer;
