@@ -14,6 +14,11 @@ export type ListSelectionToolbarProps = {
     onCancel: () => void;
     /** Tab-specific bulk actions surfaced under the 3-dot menu. */
     extraMenuItems?: Menu.ListItem[];
+    /**
+     * When false, hides the Invert Selection icon button on the toolbar.
+     * Invert remains available under the 3-dot menu. @default true
+     */
+    showInvertButton?: boolean;
 };
 
 /**
@@ -26,6 +31,7 @@ const ListSelectionToolbar: React.FC<ListSelectionToolbarProps> = ({
     onInvertSelection,
     onCancel,
     extraMenuItems,
+    showInvertButton = true,
 }) => {
     const { setContextMenuData } = useAppContext();
 
@@ -55,9 +61,11 @@ const ListSelectionToolbar: React.FC<ListSelectionToolbarProps> = ({
             <button data-tooltip="Select All" onClick={onSelectAll}>
                 <FontAwesomeIcon icon={faCheck} />
             </button>
-            <button data-tooltip="Invert Selection" onClick={onInvertSelection}>
-                <FontAwesomeIcon icon={faSort} rotation={90} />
-            </button>
+            {showInvertButton && (
+                <button data-tooltip="Invert Selection" onClick={onInvertSelection}>
+                    <FontAwesomeIcon icon={faSort} rotation={90} />
+                </button>
+            )}
             <button data-tooltip="More" onClick={handleMore}>
                 <FontAwesomeIcon icon={faEllipsisV} />
             </button>

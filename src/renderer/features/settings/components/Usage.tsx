@@ -196,12 +196,12 @@ const Usage: React.FC = () => {
                 <li>
                     <b>Multi-select:</b> Tick the checkbox on a gallery tile, chapter, bookmark, or note to enter
                     selection mode. Hold <code>Shift</code> and click another item to select the range between
-                    them. The toolbar swaps to show <b>Select All</b>, <b>Invert Selection</b>, a 3-dot menu with
-                    bulk actions (e.g. <i>Remove from Library</i>, <i>Delete Bookmarks</i>,{" "}
-                    <i>Mark as Read/Unread</i>, <i>Delete Notes</i>), and a cancel button. In gallery / details,
-                    use <code>Ctrl+A</code> (or <code>Cmd+A</code>) to select all and <code>Esc</code> to clear —
-                    these shortcuts do not run while typing in a search field, and they are not used on classic
-                    home lists. Classic Bookmark / History checkboxes can be toggled under{" "}
+                    them. The toolbar swaps to show <b>Select All</b>, <b>Invert Selection</b> (gallery / details),
+                    a 3-dot menu with bulk actions (e.g. <i>Copy Path</i>, <i>Bookmark</i>, <i>Remove Bookmark</i>,{" "}
+                    <i>Remove from History</i>, <i>Mark as Read/Unread</i>, <i>Delete Notes</i>), and a cancel
+                    button. In gallery / details, use <code>Ctrl+A</code> (or <code>Cmd+A</code>) to select all and{" "}
+                    <code>Esc</code> to clear — these shortcuts do not run while typing in a search field, and they
+                    are not used on classic home lists. Classic Bookmark / History checkboxes can be toggled under{" "}
                     <a
                         onClick={() => {
                             scrollIntoView("#settings-classicListCheckboxes", "settings");

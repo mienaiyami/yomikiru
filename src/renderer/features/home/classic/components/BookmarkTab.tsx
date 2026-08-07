@@ -4,12 +4,18 @@ import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import ListNavigator from "@renderer/components/ListNavigator";
 import { useMultiSelect } from "@renderer/hooks/useMultiSelect";
 import { setAppSettings } from "@store/appSettings";
-import { removeBookmark } from "@store/bookmarks";
 import { useAppDispatch, useAppSelector } from "@store/hooks";
 import { dialogUtils } from "@utils/dialog";
 import { formatUtils } from "@utils/file";
 import { useCallback, useEffect, useMemo } from "react";
 import { useAppContext } from "src/renderer/App";
+import {
+    bookmarkLibraryItemsAtProgress,
+    copyPathsToClipboard,
+    getBookmarkItemPath,
+    getBookmarksByIds,
+    removeBookmarksGrouped,
+} from "../listSelectionActions";
 import BookmarkHistoryListItem from "./BookmarkHistoryListItem";
 import ListSelectionToolbar from "./ListSelectionToolbar";
 
@@ -97,41 +103,39 @@ const BookmarkTab: React.FC = () => {
             />
         );
 
+    const handleCopySelected = useCallback(() => {
+        copyPathsToClipboard(getBookmarksByIds(bookmarksArray, selection.selectedIds).map(getBookmarkItemPath));
+    }, [bookmarksArray, selection.selectedIds]);
+
+    const handleBookmarkSelected = useCallback(() => {
+        bookmarkLibraryItemsAtProgress(
+            dispatch,
+            getBookmarksByIds(bookmarksArray, selection.selectedIds).map(
+                (bookmark) => library.items[bookmark.itemLink],
+            ),
+        );
+        selection.clearSelection();
+    }, [bookmarksArray, dispatch, library.items, selection]);
+
     /**
-     * Bulk-deletes every bookmark whose id is in the current selection,
+     * Removes every bookmark whose id is in the current selection,
      * grouped by `(itemLink, type)` so we issue one IPC call per parent item.
      */
-    const handleDeleteSelected = useCallback(() => {
-        const ids = Array.from(selection.selectedIds);
-        if (ids.length === 0) return;
-
-        const bookmarkById = new Map<number, BookBookmark | MangaBookmark>();
-        for (const b of bookmarksArray) bookmarkById.set(b.id, b);
+    const handleRemoveSelected = useCallback(() => {
+        const selected = getBookmarksByIds(bookmarksArray, selection.selectedIds);
+        if (selected.length === 0) return;
 
         dialogUtils
             .warn({
-                title: "Delete Bookmarks",
-                message: `Delete ${ids.length} bookmark${ids.length === 1 ? "" : "s"}?`,
+                title: "Remove Bookmark",
+                message: `Remove ${selected.length} bookmark${selected.length === 1 ? "" : "s"}?`,
                 noOption: false,
                 buttons: ["Cancel", "Yes"],
                 defaultId: 0,
             })
             .then(({ response }) => {
                 if (!response) return;
-                const grouped = new Map<string, { type: "manga" | "book"; ids: number[] }>();
-                for (const id of ids) {
-                    const b = bookmarkById.get(id);
-                    if (!b) continue;
-                    const type: "manga" | "book" = "page" in b ? "manga" : "book";
-                    const key = `${type}::${b.itemLink}`;
-                    const existing = grouped.get(key);
-                    if (existing) existing.ids.push(id);
-                    else grouped.set(key, { type, ids: [id] });
-                }
-                for (const [key, value] of grouped) {
-                    const itemLink = key.slice(value.type.length + 2);
-                    dispatch(removeBookmark({ itemLink, type: value.type, ids: value.ids }));
-                }
+                removeBookmarksGrouped(dispatch, selected);
                 selection.clearSelection();
             });
     }, [bookmarksArray, dispatch, selection]);
@@ -159,10 +163,19 @@ const BookmarkTab: React.FC = () => {
                             onSelectAll={() => selection.selectAll(visibleIds)}
                             onInvertSelection={() => selection.invertSelection(visibleIds)}
                             onCancel={selection.clearSelection}
+                            showInvertButton={false}
                             extraMenuItems={[
                                 {
-                                    label: `Delete ${selection.count} Bookmark${selection.count === 1 ? "" : "s"}`,
-                                    action: handleDeleteSelected,
+                                    label: "Copy Path",
+                                    action: handleCopySelected,
+                                },
+                                {
+                                    label: "Bookmark",
+                                    action: handleBookmarkSelected,
+                                },
+                                {
+                                    label: `Remove ${selection.count} Bookmark${selection.count === 1 ? "" : "s"}`,
+                                    action: handleRemoveSelected,
                                 },
                             ]}
                         />

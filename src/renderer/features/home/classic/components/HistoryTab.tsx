@@ -10,6 +10,7 @@ import { dialogUtils } from "@utils/dialog";
 import { formatUtils } from "@utils/file";
 import { useCallback, useEffect, useMemo } from "react";
 import { useAppContext } from "src/renderer/App";
+import { bookmarkLibraryItemsAtProgress, copyPathsToClipboard, getHistoryItemPath } from "../listSelectionActions";
 import BookmarkHistoryListItem from "./BookmarkHistoryListItem";
 import ListSelectionToolbar from "./ListSelectionToolbar";
 
@@ -88,6 +89,24 @@ const HistoryTab: React.FC = () => {
             />
         );
 
+    const handleCopySelected = useCallback(() => {
+        // Fall back to the library link when the item is missing or has no progress.
+        copyPathsToClipboard(
+            Array.from(selection.selectedIds).map((link) => {
+                const item = library.items[link];
+                return item?.progress ? getHistoryItemPath(item) : link;
+            }),
+        );
+    }, [library.items, selection.selectedIds]);
+
+    const handleBookmarkSelected = useCallback(() => {
+        bookmarkLibraryItemsAtProgress(
+            dispatch,
+            Array.from(selection.selectedIds).map((link) => library.items[link]),
+        );
+        selection.clearSelection();
+    }, [dispatch, library.items, selection]);
+
     /**
      * Removes selected history items from the library (mirrors the
      * `removeHistory` context-menu action, in batch). Files on disk remain.
@@ -135,7 +154,16 @@ const HistoryTab: React.FC = () => {
                             onSelectAll={() => selection.selectAll(visibleIds)}
                             onInvertSelection={() => selection.invertSelection(visibleIds)}
                             onCancel={selection.clearSelection}
+                            showInvertButton={false}
                             extraMenuItems={[
+                                {
+                                    label: "Copy Path",
+                                    action: handleCopySelected,
+                                },
+                                {
+                                    label: "Bookmark",
+                                    action: handleBookmarkSelected,
+                                },
                                 {
                                     label: `Remove ${selection.count} from History`,
                                     action: handleRemoveSelected,

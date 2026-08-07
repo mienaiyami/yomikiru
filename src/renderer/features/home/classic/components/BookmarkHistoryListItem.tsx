@@ -1,7 +1,7 @@
 import type { BookBookmark, MangaBookmark } from "@common/types/db";
 import ListItem from "@renderer/components/ListItem";
 import SelectionCheckbox from "@renderer/components/ui/SelectionCheckbox";
-import { addBookmark, removeBookmark } from "@store/bookmarks";
+import { removeBookmark } from "@store/bookmarks";
 import { useAppDispatch, useAppSelector } from "@store/hooks";
 import { deleteLibraryItem } from "@store/library";
 import dateUtils from "@utils/date";
@@ -9,6 +9,7 @@ import { dialogUtils } from "@utils/dialog";
 import { formatUtils } from "@utils/file";
 import { resolveMangaChapterPath } from "@utils/mangaChapterPath";
 import { useAppContext } from "src/renderer/App";
+import { bookmarkLibraryItemsAtProgress } from "../listSelectionActions";
 
 const BookmarkHistoryListItem: React.FC<{
     focused: boolean;
@@ -137,32 +138,7 @@ const BookmarkHistoryListItem: React.FC<{
             {
                 label: "Bookmark",
                 action() {
-                    const type = formatUtils.book.test(link) ? "book" : "manga";
-                    if (type === "book" && libraryItem.progress && "chapterId" in libraryItem.progress) {
-                        dispatch(
-                            addBookmark({
-                                type,
-                                data: {
-                                    chapterId: libraryItem.progress?.chapterId,
-                                    position: libraryItem.progress?.position,
-                                    chapterName: libraryItem.progress?.chapterName,
-                                    itemLink: libraryItem.link,
-                                },
-                            }),
-                        );
-                    }
-                    if (type === "manga" && libraryItem.progress && "currentPage" in libraryItem.progress) {
-                        dispatch(
-                            addBookmark({
-                                type,
-                                data: {
-                                    itemLink: libraryItem.link,
-                                    page: libraryItem.progress?.currentPage,
-                                    chapterName: libraryItem.progress?.chapterName,
-                                },
-                            }),
-                        );
-                    }
+                    bookmarkLibraryItemsAtProgress(dispatch, [libraryItem]);
                 },
             },
             window.contextMenu.template.divider(),
