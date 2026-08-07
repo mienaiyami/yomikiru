@@ -217,6 +217,13 @@
                             scale: 1;
                             background-color: var(--listItem-bg-color-hover);
                         }
+                        &.multiSelected {
+                            background-color: var(--listItem-bg-color-hover);
+                            /* List rows are short — keep a light inset ring instead of the cover tint. */
+                            .coverContainer::after {
+                                display: none;
+                            }
+                        }
                         .epubBadge,
                         .continueReadingBtn {
                             display: none;
@@ -234,10 +241,13 @@
             .galleryItem {
                 cursor: pointer;
                 border-radius: 8px;
-                overflow: hidden;
+                /* Keep overflow visible so multi-select outline/offset is not clipped;
+                   cover rounding is handled on `.coverContainer`. */
+                overflow: visible;
                 transition:
                     transform 0.2s,
-                    box-shadow 0.2s;
+                    box-shadow 0.2s,
+                    outline-color 0.12s ease;
                 box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
                 position: relative;
 
@@ -260,11 +270,24 @@
                 }
 
                 &.multiSelected {
-                    box-shadow: 0 0 0 3px var(--btn-color);
-                    outline: 3px transparent;
+                    outline: 2px solid var(--btn-color);
+                    outline-offset: 2px;
+                    box-shadow: 0 0 0 3px var(--btn-color-focus);
+
+                    .coverContainer {
+                        &::after {
+                            content: "";
+                            position: absolute;
+                            inset: 0;
+                            z-index: 2;
+                            pointer-events: none;
+                            background-color: var(--btn-color);
+                            opacity: 0.22;
+                        }
+                    }
 
                     .coverContainer img {
-                        filter: brightness(0.92);
+                        filter: brightness(0.82);
                     }
                 }
 
@@ -300,9 +323,12 @@
                         transform: scale(1.05);
                     }
 
-                    input {
+                    input[type="checkbox"] {
                         position: absolute;
-                        opacity: 0;
+                        inset: 0;
+                        margin: 0;
+                        opacity: 0 !important;
+                        appearance: none;
                         pointer-events: none;
                     }
 
@@ -592,8 +618,8 @@
 
 /**
  * Reusable per-row checkbox affordance. Rendered as a `<label>` so the entire
- * pill (including extra hit padding) is clickable; the visible square is
- * `.checkBox`, the native input is hidden but stays accessible.
+ * hit area is clickable; the visible square is `.checkBox`. The native input
+ * is visually hidden (must beat global `input[type="checkbox"]` opacity).
  *
  * Sizing (20×20) and explicit colors (independent of `currentColor`) make the
  * box readable on any row state including `.read` rows that fade their text.
@@ -606,13 +632,21 @@
     justify-content: center;
     cursor: pointer;
     user-select: none;
+    /* Match the list row — no separate chip/bg behind the unchecked box. */
+    background-color: transparent;
     /* Defaults — overridden by row-specific rules below to extend the click
        strip to the row's left edge. */
     padding: 0 10px;
 
-    input {
+    /* Beat global `input[type="checkbox"]` opacity so the native control never shows. */
+    input[type="checkbox"] {
         position: absolute;
-        opacity: 0;
+        width: 1px;
+        height: 1px;
+        margin: 0;
+        padding: 0;
+        opacity: 0 !important;
+        appearance: none;
         pointer-events: none;
     }
 
@@ -621,9 +655,11 @@
         height: 20px;
         border-radius: 4px;
         border: 2px solid var(--font-color);
+        /* Transparent so the list-item background shows through when unchecked. */
         background-color: transparent;
-        opacity: 0.6;
+        opacity: 0.75;
         position: relative;
+        box-shadow: none;
         transition:
             background-color 0.12s ease,
             border-color 0.12s ease,
@@ -634,6 +670,7 @@
     &:hover .checkBox {
         opacity: 1;
         transform: scale(1.05);
+        background-color: transparent;
     }
 
     input:checked + .checkBox {
