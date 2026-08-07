@@ -9,3 +9,7 @@ yarn.lock
 
 _github assets
 *.db
+
+# Dev-only demo library (populated by `pnpm demo:setup`; never ship)
+/demo/**
+!/demo/.gitkeep

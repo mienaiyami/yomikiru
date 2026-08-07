@@ -136,12 +136,23 @@ Beta versions are available for users who want to try the latest features before
 - **Enhanced Performance**: Optimization for large collections
 - **Additional Formats**: Expand supported file types
 
+## Development
+
+For local UI and format testing, populate a **dev-only** demo library (public-domain EPUBs, open comic pages, and generated fake chapters). It is **not** shipped with installs.
+
+```powershell
+pnpm demo:setup
+```
+
+Add the printed `demo/` path as a library location in Settings. Details: [Demo fixtures](docs/demo-fixtures.md).
+
 ## Documentation
 
 - **[User Guide](docs/GUIDE.md)**: Complete user manual and tips
 - **[Screenshots](docs/SCREENSHOTS.md)**: Visual overview of features
 - **[Build Guide](docs/build.md)**: Development setup and compilation
 - **[Contributing](docs/contribute.md)**: How to contribute to the project
+- **[Demo fixtures](docs/demo-fixtures.md)**: Dev-only sample library (not in releases)
 
 ## Support & Issues
 

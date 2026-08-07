@@ -1,0 +1,217 @@
+{
+    "version": 1,
+    "description": "Dev-only demo fixtures for Yomikiru. Not shipped with the app. EPUBs from IDPF/W3C epub3-samples (clear open licenses only); comics are PD/CC0 or generated.",
+    "epubs": [
+        {
+            "id": "idpf-moby-dick",
+            "title": "Moby-Dick",
+            "url": "https://github.com/IDPF/epub3-samples/releases/download/20230704/moby-dick.epub",
+            "dest": "books/moby-dick.epub",
+            "license": "CC-BY-SA 3.0 (IDPF/W3C EPUB 3 Samples)",
+            "sourceUrl": "https://idpf.github.io/epub3-samples/30/samples.html",
+            "notes": "Long well-structured novel; package asserts CC-BY-SA 3.0"
+        },
+        {
+            "id": "idpf-childrens-literature",
+            "title": "Children's Literature",
+            "url": "https://github.com/IDPF/epub3-samples/releases/download/20230704/childrens-literature.epub",
+            "dest": "books/childrens-literature.epub",
+            "license": "CC-BY-SA 3.0 (IDPF/W3C EPUB 3 Samples)",
+            "sourceUrl": "https://idpf.github.io/epub3-samples/30/samples.html",
+            "notes": "Textbook / deep TOC"
+        },
+        {
+            "id": "idpf-epub30-spec",
+            "title": "EPUB 3.0 Specification",
+            "url": "https://github.com/IDPF/epub3-samples/releases/download/20230704/epub30-spec.epub",
+            "dest": "books/epub30-spec.epub",
+            "license": "CC-BY-SA 3.0 (IDPF/W3C EPUB 3 Samples)",
+            "sourceUrl": "https://idpf.github.io/epub3-samples/30/samples.html",
+            "notes": "Technical / deep nav"
+        },
+        {
+            "id": "idpf-cole-voyage-tol",
+            "title": "Thomas Cole - The Voyage of Life",
+            "url": "https://github.com/IDPF/epub3-samples/releases/download/20230704/cole-voyage-of-life-tol.epub",
+            "dest": "books/cole-voyage-of-life-tol.epub",
+            "license": "CC-BY-SA 3.0 (IDPF/W3C EPUB 3 Samples)",
+            "sourceUrl": "https://idpf.github.io/epub3-samples/30/samples.html",
+            "notes": "Image-heavy art sample"
+        },
+        {
+            "id": "idpf-figure-gallery",
+            "title": "Figure Gallery Bindings",
+            "url": "https://github.com/IDPF/epub3-samples/releases/download/20230704/figure-gallery-bindings.epub",
+            "dest": "books/figure-gallery-bindings.epub",
+            "license": "CC-BY-SA 3.0 (IDPF/W3C EPUB 3 Samples)",
+            "sourceUrl": "https://idpf.github.io/epub3-samples/30/samples.html",
+            "notes": "Figures / bindings"
+        },
+        {
+            "id": "idpf-haruko-html-jpeg",
+            "title": "Haruko (HTML+JPEG)",
+            "url": "https://github.com/IDPF/epub3-samples/releases/download/20230704/haruko-html-jpeg.epub",
+            "dest": "books/haruko-html-jpeg.epub",
+            "license": "CC-BY-SA 3.0 (IDPF/W3C EPUB 3 Samples)",
+            "sourceUrl": "https://idpf.github.io/epub3-samples/30/samples.html",
+            "notes": "Fixed-layout / image pages"
+        },
+        {
+            "id": "idpf-georgia-pls-ssml",
+            "title": "Georgia (PLS/SSML)",
+            "url": "https://github.com/IDPF/epub3-samples/releases/download/20230704/georgia-pls-ssml.epub",
+            "dest": "books/georgia-pls-ssml.epub",
+            "license": "CC-BY-SA 3.0 (IDPF/W3C EPUB 3 Samples)",
+            "sourceUrl": "https://idpf.github.io/epub3-samples/30/samples.html",
+            "notes": "Speech / pronunciation markup"
+        },
+        {
+            "id": "idpf-internallinks",
+            "title": "Internal Links",
+            "url": "https://github.com/IDPF/epub3-samples/releases/download/20230704/internallinks.epub",
+            "dest": "books/internallinks.epub",
+            "license": "CC-BY-SA 3.0 (IDPF/W3C EPUB 3 Samples)",
+            "sourceUrl": "https://idpf.github.io/epub3-samples/30/samples.html",
+            "notes": "Internal hyperlink stress"
+        },
+        {
+            "id": "idpf-linear-algebra",
+            "title": "Linear Algebra",
+            "url": "https://github.com/IDPF/epub3-samples/releases/download/20230704/linear-algebra.epub",
+            "dest": "books/linear-algebra.epub",
+            "license": "GNU Free Documentation License 1.2 (per sample table / package)",
+            "sourceUrl": "https://idpf.github.io/epub3-samples/30/samples.html",
+            "notes": "Math / MathML layout"
+        },
+        {
+            "id": "idpf-svg-in-spine",
+            "title": "SVG in Spine",
+            "url": "https://github.com/IDPF/epub3-samples/releases/download/20230704/svg-in-spine.epub",
+            "dest": "books/svg-in-spine.epub",
+            "license": "CC-BY-SA 3.0 (IDPF/W3C EPUB 3 Samples)",
+            "sourceUrl": "https://idpf.github.io/epub3-samples/30/samples.html",
+            "notes": "SVG content documents"
+        },
+        {
+            "id": "idpf-trees",
+            "title": "Trees",
+            "url": "https://github.com/IDPF/epub3-samples/releases/download/20230704/trees.epub",
+            "dest": "books/trees.epub",
+            "license": "CC-BY-SA 3.0 (IDPF/W3C EPUB 3 Samples)",
+            "sourceUrl": "https://idpf.github.io/epub3-samples/30/samples.html",
+            "notes": "Small simple sample (canvas / multi-column)"
+        },
+        {
+            "id": "idpf-vert-scroll-manga",
+            "title": "Vertically Scrollable Manga",
+            "url": "https://github.com/IDPF/epub3-samples/releases/download/20230704/vertically-scrollable-manga.epub",
+            "dest": "books/vertically-scrollable-manga.epub",
+            "license": "CC-BY-SA 3.0 (IDPF/W3C EPUB 3 Samples)",
+            "sourceUrl": "https://idpf.github.io/epub3-samples/30/samples.html",
+            "notes": "Vertical scroll manga-style EPUB"
+        },
+        {
+            "id": "idpf-quiz-bindings",
+            "title": "Quiz Bindings",
+            "url": "https://github.com/IDPF/epub3-samples/releases/download/20230704/quiz-bindings.epub",
+            "dest": "books/quiz-bindings.epub",
+            "license": "CC-BY-SA 3.0 (IDPF/W3C EPUB 3 Samples)",
+            "sourceUrl": "https://idpf.github.io/epub3-samples/30/samples.html",
+            "notes": "Bindings / interactive fallback"
+        },
+        {
+            "id": "idpf-hefty-water",
+            "title": "Hefty Water",
+            "url": "https://github.com/IDPF/epub3-samples/releases/download/20230704/hefty-water.epub",
+            "dest": "books/hefty-water.epub",
+            "license": "CC-BY-SA 3.0 (IDPF/W3C EPUB 3 Samples)",
+            "sourceUrl": "https://idpf.github.io/epub3-samples/30/samples.html",
+            "notes": "epub:switch / ruby (tiny)"
+        }
+    ],
+    "images": [
+        {
+            "id": "commons-little-nemo-1905-10-15",
+            "title": "Little Nemo 1905-10-15 (Winsor McCay)",
+            "url": "https://commons.wikimedia.org/wiki/Special:FilePath/Little_Nemo_1905-10-15.jpg",
+            "dest": "comics/_sources/open_paged/nemo_1905-10-15.jpg",
+            "license": "Public Domain (US; published 1905)",
+            "sourceUrl": "https://commons.wikimedia.org/wiki/File:Little_Nemo_1905-10-15.jpg",
+            "notes": "Paged comic strip page"
+        },
+        {
+            "id": "commons-little-nemo-1905-10-22",
+            "title": "Little Nemo 1905-10-22 (Winsor McCay)",
+            "url": "https://commons.wikimedia.org/wiki/Special:FilePath/Little_Nemo_in_Slumberland_(1905-10-22).jpeg",
+            "dest": "comics/_sources/open_paged/nemo_1905-10-22.jpeg",
+            "license": "Public Domain (US; published 1905)",
+            "sourceUrl": "https://commons.wikimedia.org/wiki/File:Little_Nemo_in_Slumberland_(1905-10-22).jpeg",
+            "notes": "Paged comic strip page"
+        },
+        {
+            "id": "commons-little-nemo-1905-10-29",
+            "title": "Little Nemo 1905-10-29 (Winsor McCay)",
+            "url": "https://commons.wikimedia.org/wiki/Special:FilePath/Little_Nemo_1905-10-29.jpg",
+            "dest": "comics/_sources/open_paged/nemo_1905-10-29.jpg",
+            "license": "Public Domain (US; published 1905)",
+            "sourceUrl": "https://commons.wikimedia.org/wiki/File:Little_Nemo_1905-10-29.jpg",
+            "notes": "Paged comic strip page"
+        },
+        {
+            "id": "commons-little-nemo-1905-11-05",
+            "title": "Little Nemo 1905-11-05 (Winsor McCay)",
+            "url": "https://commons.wikimedia.org/wiki/Special:FilePath/Little_Nemo_1905-11-05.jpg",
+            "dest": "comics/_sources/open_paged/nemo_1905-11-05.jpg",
+            "license": "Public Domain (US; published 1905)",
+            "sourceUrl": "https://commons.wikimedia.org/wiki/File:Little_Nemo_1905-11-05.jpg",
+            "notes": "Paged comic strip page"
+        },
+        {
+            "id": "commons-nemo-03-tall",
+            "title": "Little Nemo tall panel strip (Nemo-03)",
+            "url": "https://commons.wikimedia.org/wiki/Special:FilePath/Nemo-03.jpg",
+            "dest": "comics/_sources/open_longstrip/nemo_03.jpg",
+            "license": "Public Domain (US; Winsor McCay era strip art)",
+            "sourceUrl": "https://commons.wikimedia.org/wiki/File:Nemo-03.jpg",
+            "notes": "Tall image for long-strip chapter testing"
+        },
+        {
+            "id": "commons-nemo-04-tall",
+            "title": "Little Nemo tall panel strip (Nemo-04)",
+            "url": "https://commons.wikimedia.org/wiki/Special:FilePath/Nemo-04-26cm.jpg",
+            "dest": "comics/_sources/open_longstrip/nemo_04.jpg",
+            "license": "Public Domain (US; Winsor McCay era strip art)",
+            "sourceUrl": "https://commons.wikimedia.org/wiki/File:Nemo-04-26cm.jpg",
+            "notes": "Tall image for long-strip chapter testing"
+        },
+        {
+            "id": "commons-nemo-mars-tall",
+            "title": "Little Nemo on Mars tall strip",
+            "url": "https://commons.wikimedia.org/wiki/Special:FilePath/Nemo-on-mars.jpg",
+            "dest": "comics/_sources/open_longstrip/nemo_on_mars.jpg",
+            "license": "Public Domain (US; Winsor McCay era strip art)",
+            "sourceUrl": "https://commons.wikimedia.org/wiki/File:Nemo-on-mars.jpg",
+            "notes": "Tall image for long-strip chapter testing"
+        },
+        {
+            "id": "commons-nemo-dirigeable",
+            "title": "Little Nemo Dirigeable (tall)",
+            "url": "https://commons.wikimedia.org/wiki/Special:FilePath/Little_Nemo_Dirigeable1.jpg",
+            "dest": "comics/_sources/open_longstrip/nemo_dirigeable.jpg",
+            "license": "Public Domain (US; Winsor McCay era strip art)",
+            "sourceUrl": "https://commons.wikimedia.org/wiki/File:Little_Nemo_Dirigeable1.jpg",
+            "notes": "Tall image for long-strip chapter testing"
+        }
+    ],
+    "archives": [
+        {
+            "id": "ia-real-funnies-3-cbr",
+            "title": "Real Funnies #3 (1943) CBR",
+            "url": "https://archive.org/download/RealFunnies3/Real_Funnies_003_1943.cbr",
+            "dest": "comics/MixedFormats_OneTitle/Ch03.cbr",
+            "license": "Public Domain (US; published 1943, Nedor / public domain Golden Age comic on Internet Archive)",
+            "sourceUrl": "https://archive.org/details/RealFunnies3",
+            "notes": "RAR-based CBR sample for archive testing (requires unrar on the host OS)"
+        }
+    ]
+}

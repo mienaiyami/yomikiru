@@ -37,6 +37,7 @@
         "make:deb": "electron-forge make --targets=@electron-forge/maker-deb,@electron-forge/maker-zip",
         "generate:release": "tsx scripts/generate-release.ts",
         "release": "tsx scripts/tag-and-push.ts",
+        "demo:setup": "tsx scripts/fetch-demo-fixtures.ts",
         "prepare": "husky"
     },
     "license": "MIT",

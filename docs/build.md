@@ -24,6 +24,10 @@ cd yomikiru
 # install dependencies
 pnpm install
 
+# optional: local demo library for format / gallery testing (dev-only, not shipped)
+# see docs/demo-fixtures.md — then add the printed demo/ path as a library location
+pnpm demo:setup
+
 # run dev build
 pnpm dev
 
