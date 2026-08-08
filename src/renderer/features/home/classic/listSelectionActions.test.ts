@@ -1,0 +1,148 @@
+import path from "node:path";
+import type { BookBookmark, MangaBookmark } from "@common/types/db";
+import { makeBookItem, makeMangaItem, SAMPLE_BOOK_LINK, SAMPLE_MANGA_LINK } from "@test/fixtures/libraryItem";
+import { describe, expect, it, vi } from "vitest";
+import {
+    bookmarkLibraryItemsAtProgress,
+    copyPathsToClipboard,
+    getAddBookmarkArgsFromProgress,
+    getBookmarkItemPath,
+    getBookmarksByIds,
+    getHistoryItemPath,
+    removeBookmarksGrouped,
+} from "./listSelectionActions";
+
+describe("getAddBookmarkArgsFromProgress", () => {
+    it("builds book bookmark args from progress", () => {
+        const item = makeBookItem();
+        expect(getAddBookmarkArgsFromProgress(item)).toEqual({
+            type: "book",
+            data: {
+                chapterId: "chap-1",
+                position: "body>p:nth-child(1)",
+                chapterName: "Chapter 1",
+                itemLink: item.link,
+            },
+        });
+    });
+
+    it("builds manga bookmark args from progress", () => {
+        const item = makeMangaItem();
+        expect(getAddBookmarkArgsFromProgress(item)).toEqual({
+            type: "manga",
+            data: {
+                itemLink: item.link,
+                page: 3,
+                chapterName: "ch1",
+            },
+        });
+    });
+
+    it("returns null without progress", () => {
+        expect(getAddBookmarkArgsFromProgress(makeMangaItem({}, null))).toBeNull();
+    });
+});
+
+describe("bookmarkLibraryItemsAtProgress", () => {
+    it("dispatches once per unique link and skips items without progress", () => {
+        const dispatch = vi.fn();
+        const a = makeMangaItem({ link: SAMPLE_MANGA_LINK });
+        const dup = makeMangaItem({ link: SAMPLE_MANGA_LINK, id: 9 });
+        const noProgress = makeMangaItem({ link: path.join("testdata", "manga", "other"), id: 3 }, null);
+        bookmarkLibraryItemsAtProgress(dispatch, [null, a, dup, noProgress]);
+        expect(dispatch).toHaveBeenCalledTimes(1);
+    });
+});
+
+describe("getHistoryItemPath / getBookmarkItemPath", () => {
+    it("returns book link / manga chapter path for history", () => {
+        expect(getHistoryItemPath(makeBookItem())).toBe(SAMPLE_BOOK_LINK);
+        expect(getHistoryItemPath(makeMangaItem())).toBe(window.path.join(SAMPLE_MANGA_LINK, "ch1"));
+    });
+
+    it("resolves bookmark paths", () => {
+        const mangaBm: MangaBookmark = {
+            id: 1,
+            itemLink: SAMPLE_MANGA_LINK,
+            page: 2,
+            chapterName: "ch2",
+            note: "",
+            createdAt: new Date(),
+        };
+        const bookBm: BookBookmark = {
+            id: 2,
+            itemLink: SAMPLE_BOOK_LINK,
+            chapterId: "c1",
+            chapterName: "One",
+            position: "p",
+            note: null,
+            createdAt: new Date(),
+        };
+        expect(getBookmarkItemPath(mangaBm)).toBe(window.path.join(SAMPLE_MANGA_LINK, "ch2"));
+        expect(getBookmarkItemPath(bookBm)).toBe(SAMPLE_BOOK_LINK);
+    });
+});
+
+describe("getBookmarksByIds", () => {
+    it("resolves known ids and skips stale ones", () => {
+        const bookmarks: MangaBookmark[] = [
+            {
+                id: 1,
+                itemLink: "a",
+                page: 1,
+                chapterName: "c",
+                note: "",
+                createdAt: new Date(),
+            },
+            {
+                id: 2,
+                itemLink: "b",
+                page: 2,
+                chapterName: "c",
+                note: "",
+                createdAt: new Date(),
+            },
+        ];
+        expect(getBookmarksByIds(bookmarks, [2, 99, 1]).map((b) => b.id)).toEqual([2, 1]);
+    });
+});
+
+describe("copyPathsToClipboard / removeBookmarksGrouped", () => {
+    it("writes newline-joined paths", () => {
+        copyPathsToClipboard(["a", "", "b"]);
+        expect(window.electron.readText()).toBe("a\nb");
+    });
+
+    it("groups bookmark removals by type+itemLink", () => {
+        const dispatch = vi.fn();
+        const bookmarks: (MangaBookmark | BookBookmark)[] = [
+            {
+                id: 1,
+                itemLink: "manga-a",
+                page: 1,
+                chapterName: "c",
+                note: "",
+                createdAt: new Date(),
+            },
+            {
+                id: 2,
+                itemLink: "manga-a",
+                page: 2,
+                chapterName: "c",
+                note: "",
+                createdAt: new Date(),
+            },
+            {
+                id: 3,
+                itemLink: "book-a",
+                chapterId: "x",
+                chapterName: "n",
+                position: "p",
+                note: null,
+                createdAt: new Date(),
+            },
+        ];
+        removeBookmarksGrouped(dispatch, bookmarks);
+        expect(dispatch).toHaveBeenCalledTimes(2);
+    });
+});

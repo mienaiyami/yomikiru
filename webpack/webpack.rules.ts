@@ -17,7 +17,7 @@ export const rules: Required<ModuleOptions>["rules"] = [
     },
     {
         test: /\.tsx?$/,
-        exclude: /(node_modules|\.webpack)/,
+        exclude: /(node_modules|\.webpack|\.test\.tsx?$|[\\/]e2e[\\/]|[\\/]src[\\/]test[\\/])/,
         use: {
             loader: "ts-loader",
             // use this or `ForkTsCheckerWebpackPlugin` in `webpack/plugins.ts`

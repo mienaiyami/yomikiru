@@ -10,6 +10,11 @@ yarn.lock
 _github assets
 *.db
 
+# Test / coverage artifacts
+coverage
+playwright-report
+test-results
+
 # Dev-only demo library (populated by `pnpm demo:setup`; never ship)
 /demo/**
 !/demo/.gitkeep
