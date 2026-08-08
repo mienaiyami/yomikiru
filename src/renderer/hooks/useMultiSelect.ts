@@ -1,5 +1,5 @@
 import { getIdsInRange } from "@utils/multiSelectRange";
-import { useCallback, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 
 /**
  * Identifier type accepted by {@link useMultiSelect}. Items are tracked by a
@@ -7,12 +7,12 @@ import { useCallback, useMemo, useRef, useState } from "react";
  */
 export type MultiSelectId = string | number;
 
-/** Shared empty ordered-id list so the default arg is referentially stable. */
-const EMPTY_ORDERED_IDS: readonly never[] = [];
+/** Shared empty id list so the default arg is referentially stable. */
+const EMPTY_IDS: readonly never[] = [];
 
 /** Options for {@link UseMultiSelectReturn.toggleItem}. */
 export type ToggleItemOptions = {
-    /** When true with a prior anchor, selects the contiguous range in the hook's ordered ids. */
+    /** When true with a prior anchor, selects the contiguous range in the visible order. */
     shiftKey?: boolean;
 };
 
@@ -22,8 +22,15 @@ export type ToggleItemOptions = {
  * Selection mode is implicit: it is "on" whenever the selection set is
  * non-empty. {@link UseMultiSelectReturn.clearSelection} both empties the set
  * and exits selection mode in a single action.
+ *
+ * Pass the unfiltered id list as `sourceIds`. When a ListNavigator filter
+ * changes, call {@link UseMultiSelectReturn.setVisibleOrder} with the filtered
+ * ids so Shift-range / Select All / bulk actions stay scoped to what the user
+ * can see.
  */
 export type UseMultiSelectReturn<T extends MultiSelectId> = {
+    /** Visible id order (source list, or the current filter subset). */
+    readonly orderedIds: readonly T[];
     /** Currently selected ids (read-only set view). */
     readonly selectedIds: ReadonlySet<T>;
     /** Number of currently selected ids. */
@@ -34,44 +41,104 @@ export type UseMultiSelectReturn<T extends MultiSelectId> = {
     readonly isSelected: (id: T) => boolean;
     /**
      * Toggles selection for the given id. With `shiftKey` and a prior anchor,
-     * selects every id between the anchor and this id in the current
-     * `orderedIds` (inclusive). Entering selection mode happens automatically
-     * when the set becomes non-empty.
+     * selects every id between the anchor and this id in {@link orderedIds}
+     * (inclusive).
      */
     readonly toggleItem: (id: T, opts?: ToggleItemOptions) => void;
-    /** Replaces the selection with all the provided ids. */
-    readonly selectAll: (ids: readonly T[]) => void;
-    /**
-     * Inverts the selection across the provided id universe: ids currently
-     * selected are removed, ids not selected are added.
-     */
-    readonly invertSelection: (ids: readonly T[]) => void;
+    /** Replaces the selection with every id in {@link orderedIds}. */
+    readonly selectAll: () => void;
+    /** Inverts selection across {@link orderedIds}. */
+    readonly invertSelection: () => void;
     /** Clears all selected ids and exits selection mode. */
     readonly clearSelection: () => void;
+    /**
+     * Updates the visible order (e.g. from ListNavigator's filtered items).
+     * Pass the full source list (or equal contents) to clear a filter override.
+     * Ids that leave the visible list are dropped from the selection.
+     */
+    readonly setVisibleOrder: (ids: readonly T[]) => void;
 };
 
 /**
- * Lightweight, generic multi-selection state for list / grid UIs.
+ * Returns `next` unless it matches `prev` element-wise (keeps `prev` reference).
+ */
+const keepIfSameOrder = <T>(prev: readonly T[], next: readonly T[]): readonly T[] => {
+    if (prev.length === next.length && prev.every((id, i) => Object.is(id, next[i]))) return prev;
+    return next;
+};
+
+const isSameOrder = <T>(a: readonly T[], b: readonly T[]): boolean =>
+    a.length === b.length && a.every((id, i) => Object.is(id, b[i]));
+
+/**
+ * Lightweight multi-selection for list / grid UIs, with optional visible-order
+ * override for search filters.
  *
- * Holds an internal `Set` of ids and exposes stable callbacks that are safe
- * to pass to memoized children. Selection mode is derived from `set.size > 0`.
- * Pass the current visual order as `orderedIds` so Shift+click can select ranges.
+ * `orderedIds` is `sourceIds` until {@link UseMultiSelectReturn.setVisibleOrder}
+ * narrows it; clearing the filter (passing the full list again) drops the
+ * override so new source items appear automatically.
  *
  * @example
  * ```tsx
- * const sel = useMultiSelect<string>(itemIds);
- * sel.toggleItem(item.link, { shiftKey: e.shiftKey });
- * if (sel.isSelectionMode) showToolbar();
+ * const sel = useMultiSelect(itemIds);
+ * // ListNavigator onFilteredItemsChange:
+ * sel.setVisibleOrder(filtered.map((it) => it.link));
+ * sel.selectAll();
  * ```
  */
 export const useMultiSelect = <T extends MultiSelectId = string>(
-    orderedIds: readonly T[] = EMPTY_ORDERED_IDS as readonly T[],
+    sourceIds: readonly T[] = EMPTY_IDS as readonly T[],
 ): UseMultiSelectReturn<T> => {
+    /* null = showing full sourceIds; array = active filter (including empty). */
+    const [visibleOverride, setVisibleOverride] = useState<readonly T[] | null>(null);
     const [selectedIds, setSelectedIds] = useState<Set<T>>(() => new Set<T>());
+
+    const sourceIdsRef = useRef(sourceIds);
+    sourceIdsRef.current = sourceIds;
+
+    const orderedIds = visibleOverride ?? sourceIds;
     const orderedIdsRef = useRef(orderedIds);
     orderedIdsRef.current = orderedIds;
-    /** Last id toggled without Shift — range select anchor. */
+    /** Last id toggled without Shift - range select anchor. */
     const anchorIdRef = useRef<T | null>(null);
+
+    /* Drop override ids that left the source list; clear override when it matches source. */
+    useEffect(() => {
+        setVisibleOverride((prev) => {
+            if (prev == null) return null;
+            const sourceSet = new Set(sourceIds);
+            const next = prev.filter((id) => sourceSet.has(id));
+            if (isSameOrder(next, sourceIds)) return null;
+            return keepIfSameOrder(prev, next);
+        });
+    }, [sourceIds]);
+
+    /* Drop selection ids that left the visible list so bulk actions cannot touch hidden rows. */
+    useEffect(() => {
+        const allowed = new Set(orderedIds);
+        if (anchorIdRef.current != null && !allowed.has(anchorIdRef.current)) {
+            anchorIdRef.current = null;
+        }
+        setSelectedIds((prev) => {
+            if (prev.size === 0) return prev;
+            let removed = false;
+            const next = new Set<T>();
+            for (const id of prev) {
+                if (allowed.has(id)) next.add(id);
+                else removed = true;
+            }
+            return removed ? next : prev;
+        });
+    }, [orderedIds]);
+
+    const setVisibleOrder = useCallback((ids: readonly T[]) => {
+        const source = sourceIdsRef.current;
+        if (isSameOrder(ids, source)) {
+            setVisibleOverride(null);
+            return;
+        }
+        setVisibleOverride((prev) => (prev != null && isSameOrder(prev, ids) ? prev : ids));
+    }, []);
 
     const isSelected = useCallback((id: T) => selectedIds.has(id), [selectedIds]);
 
@@ -98,12 +165,14 @@ export const useMultiSelect = <T extends MultiSelectId = string>(
         });
     }, []);
 
-    const selectAll = useCallback((ids: readonly T[]) => {
+    const selectAll = useCallback(() => {
+        const ids = orderedIdsRef.current;
         setSelectedIds(new Set(ids));
         anchorIdRef.current = ids.length > 0 ? ids[ids.length - 1]! : null;
     }, []);
 
-    const invertSelection = useCallback((ids: readonly T[]) => {
+    const invertSelection = useCallback(() => {
+        const ids = orderedIdsRef.current;
         setSelectedIds((prev) => {
             const next = new Set<T>();
             for (const id of ids) {
@@ -118,9 +187,10 @@ export const useMultiSelect = <T extends MultiSelectId = string>(
         setSelectedIds((prev) => (prev.size === 0 ? prev : new Set<T>()));
     }, []);
 
-    /* Keep a stable object while the selection set is unchanged (callers may put `selection` in dep arrays). */
+    /* Keep a stable object while selection + order are unchanged (callers may put `selection` in deps). */
     return useMemo(
         () => ({
+            orderedIds,
             selectedIds,
             count: selectedIds.size,
             isSelectionMode: selectedIds.size > 0,
@@ -129,8 +199,18 @@ export const useMultiSelect = <T extends MultiSelectId = string>(
             selectAll,
             invertSelection,
             clearSelection,
+            setVisibleOrder,
         }),
-        [selectedIds, isSelected, toggleItem, selectAll, invertSelection, clearSelection],
+        [
+            orderedIds,
+            selectedIds,
+            isSelected,
+            toggleItem,
+            selectAll,
+            invertSelection,
+            clearSelection,
+            setVisibleOrder,
+        ],
     );
 };
 

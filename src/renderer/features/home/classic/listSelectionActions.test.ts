@@ -7,7 +7,8 @@ import {
     copyPathsToClipboard,
     getAddBookmarkArgsFromProgress,
     getBookmarkItemPath,
-    getBookmarksByIds,
+    getBookmarkSelectionKey,
+    getBookmarksBySelectionKeys,
     getHistoryItemPath,
     removeBookmarksGrouped,
 } from "./listSelectionActions";
@@ -83,8 +84,33 @@ describe("getHistoryItemPath / getBookmarkItemPath", () => {
     });
 });
 
-describe("getBookmarksByIds", () => {
-    it("resolves known ids and skips stale ones", () => {
+describe("getBookmarkSelectionKey / getBookmarksBySelectionKeys", () => {
+    it("disambiguates manga vs book bookmarks that share a numeric id", () => {
+        const mangaBm: MangaBookmark = {
+            id: 1,
+            itemLink: "manga-a",
+            page: 1,
+            chapterName: "c",
+            note: "",
+            createdAt: new Date(),
+        };
+        const bookBm: BookBookmark = {
+            id: 1,
+            itemLink: "book-a",
+            chapterId: "x",
+            chapterName: "n",
+            position: "p",
+            note: null,
+            createdAt: new Date(),
+        };
+        expect(getBookmarkSelectionKey(mangaBm)).toBe("manga:1");
+        expect(getBookmarkSelectionKey(bookBm)).toBe("book:1");
+
+        const resolved = getBookmarksBySelectionKeys([mangaBm, bookBm], ["book:1", "manga:1", "manga:99"]);
+        expect(resolved).toEqual([bookBm, mangaBm]);
+    });
+
+    it("resolves known keys and skips stale ones", () => {
         const bookmarks: MangaBookmark[] = [
             {
                 id: 1,
@@ -103,7 +129,9 @@ describe("getBookmarksByIds", () => {
                 createdAt: new Date(),
             },
         ];
-        expect(getBookmarksByIds(bookmarks, [2, 99, 1]).map((b) => b.id)).toEqual([2, 1]);
+        expect(
+            getBookmarksBySelectionKeys(bookmarks, ["manga:2", "manga:99", "manga:1"]).map((b) => b.id),
+        ).toEqual([2, 1]);
     });
 });
 

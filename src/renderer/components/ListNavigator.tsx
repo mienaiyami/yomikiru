@@ -86,6 +86,11 @@ function ListNavigatorProviderComponent<T>({
         return filterFn ? items.filter((item) => filterFn(filter, item)) : items;
     }, [items, filter, filterFn]);
 
+    /* Keep latest callback without putting it in effect deps - parent often
+     * passes an inline function; depending on identity re-fires setState loops. */
+    const onFilteredItemsChangeRef = useRef(onFilteredItemsChange);
+    onFilteredItemsChangeRef.current = onFilteredItemsChange;
+
     useEffect(() => {
         setFocused(-1);
         if (!persistFilterOnItemsChange) {
@@ -97,8 +102,8 @@ function ListNavigatorProviderComponent<T>({
     }, [items, inputRef, persistFilterOnItemsChange]);
 
     useEffect(() => {
-        onFilteredItemsChange?.(filteredItems, filter !== "");
-    }, [filteredItems, filter, onFilteredItemsChange]);
+        onFilteredItemsChangeRef.current?.(filteredItems, filter !== "");
+    }, [filteredItems, filter]);
 
     const handleKeyDown = useCallback(
         (e: React.KeyboardEvent) => {

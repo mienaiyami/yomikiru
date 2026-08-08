@@ -47,12 +47,12 @@ const HistoryTab: React.FC = () => {
         return appSettings.historyListSortType === "inverse" ? [...sorted].reverse() : sorted;
     }, [library.items, appSettings.historyListSortBy, appSettings.historyListSortType]);
 
-    const visibleIds = useMemo(() => historyItems.map((it) => it.link), [historyItems]);
-    const selection = useMultiSelect<string>(visibleIds);
+    const sourceIds = useMemo(() => historyItems.map((it) => it.link), [historyItems]);
+    const selection = useMultiSelect(sourceIds);
 
     useEffect(() => {
         if (!checkboxesEnabled) selection.clearSelection();
-    }, [checkboxesEnabled, selection]);
+    }, [checkboxesEnabled, selection.clearSelection]);
 
     const filterHistoryItem = (filter: string, item: LibraryItemWithProgress | BookBookmark | MangaBookmark) => {
         if (!("type" in item)) return false;
@@ -144,6 +144,7 @@ const HistoryTab: React.FC = () => {
                 filterFn={filterHistoryItem}
                 renderItem={renderHistoryItem}
                 emptyMessage="Library Empty"
+                onFilteredItemsChange={(items) => selection.setVisibleOrder(items.map((it) => it.link))}
                 onContextMenu={(elem) => elem.dispatchEvent(window.contextMenu.fakeEvent(elem))}
                 onSelect={(elem) => elem.click()}
             >
@@ -151,8 +152,8 @@ const HistoryTab: React.FC = () => {
                     <div className="tools">
                         <ListSelectionToolbar
                             count={selection.count}
-                            onSelectAll={() => selection.selectAll(visibleIds)}
-                            onInvertSelection={() => selection.invertSelection(visibleIds)}
+                            onSelectAll={selection.selectAll}
+                            onInvertSelection={selection.invertSelection}
                             onCancel={selection.clearSelection}
                             showInvertButton={false}
                             extraMenuItems={[

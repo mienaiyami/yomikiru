@@ -15,7 +15,7 @@ import { dialogUtils } from "@utils/dialog";
 import { libraryCoverSrc } from "@utils/libraryCover";
 import { pickAndApplyCustomCover } from "@utils/libraryCoverService";
 import { createRendererLogger } from "@utils/logger";
-import { useCallback, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { shallowEqual } from "react-redux";
 import ListSelectionToolbar from "../../classic/components/ListSelectionToolbar";
 import "./mangaDetailsPanel.scss";
@@ -60,10 +60,15 @@ const BookDetailsPanel: React.FC<BookDetailsPanelProps> = ({ bookLink, onClose }
 
     const { setContextMenuData, openInReader } = useAppContext();
 
-    const visibleBookmarkIds = useMemo(() => bookmarksArray.map((b) => b.id), [bookmarksArray]);
-    const visibleNoteIds = useMemo(() => notesArray.map((n) => n.id), [notesArray]);
-    const bookmarkSelection = useMultiSelect<number>(visibleBookmarkIds);
-    const noteSelection = useMultiSelect<number>(visibleNoteIds);
+    const bookmarkSourceIds = useMemo(() => bookmarksArray.map((b) => b.id), [bookmarksArray]);
+    const noteSourceIds = useMemo(() => notesArray.map((n) => n.id), [notesArray]);
+    const bookmarkSelection = useMultiSelect<number>(bookmarkSourceIds);
+    const noteSelection = useMultiSelect<number>(noteSourceIds);
+
+    useEffect(() => {
+        bookmarkSelection.clearSelection();
+        noteSelection.clearSelection();
+    }, [activeTab, bookmarkSelection.clearSelection, noteSelection.clearSelection]);
 
     /**
      * Opens the reader at the bookmark’s chapter and saved element position.
@@ -259,12 +264,10 @@ const BookDetailsPanel: React.FC<BookDetailsPanelProps> = ({ bookLink, onClose }
 
     useSelectionShortcuts({
         selection: bookmarkSelection,
-        ids: visibleBookmarkIds,
         enabled: activeTab === "bookmarks",
     });
     useSelectionShortcuts({
         selection: noteSelection,
-        ids: visibleNoteIds,
         enabled: activeTab === "notes",
     });
 
@@ -501,16 +504,17 @@ const BookDetailsPanel: React.FC<BookDetailsPanelProps> = ({ bookLink, onClose }
                                 renderItem={renderBookmarkItem}
                                 onContextMenu={handleContextMenu}
                                 onSelect={handleSelect}
+                                onFilteredItemsChange={(items) =>
+                                    bookmarkSelection.setVisibleOrder(items.map((b) => b.id))
+                                }
                                 emptyMessage="No bookmarks"
                             >
                                 {bookmarkSelection.isSelectionMode ? (
                                     <div className="chapters-toolbar">
                                         <ListSelectionToolbar
                                             count={bookmarkSelection.count}
-                                            onSelectAll={() => bookmarkSelection.selectAll(visibleBookmarkIds)}
-                                            onInvertSelection={() =>
-                                                bookmarkSelection.invertSelection(visibleBookmarkIds)
-                                            }
+                                            onSelectAll={bookmarkSelection.selectAll}
+                                            onInvertSelection={bookmarkSelection.invertSelection}
                                             onCancel={bookmarkSelection.clearSelection}
                                             extraMenuItems={[
                                                 {
@@ -543,14 +547,17 @@ const BookDetailsPanel: React.FC<BookDetailsPanelProps> = ({ bookLink, onClose }
                                 renderItem={renderNoteItem}
                                 onContextMenu={handleContextMenu}
                                 onSelect={handleSelect}
+                                onFilteredItemsChange={(items) =>
+                                    noteSelection.setVisibleOrder(items.map((n) => n.id))
+                                }
                                 emptyMessage="No notes"
                             >
                                 {noteSelection.isSelectionMode ? (
                                     <div className="chapters-toolbar">
                                         <ListSelectionToolbar
                                             count={noteSelection.count}
-                                            onSelectAll={() => noteSelection.selectAll(visibleNoteIds)}
-                                            onInvertSelection={() => noteSelection.invertSelection(visibleNoteIds)}
+                                            onSelectAll={noteSelection.selectAll}
+                                            onInvertSelection={noteSelection.invertSelection}
                                             onCancel={noteSelection.clearSelection}
                                             extraMenuItems={[
                                                 {

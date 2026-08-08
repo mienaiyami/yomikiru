@@ -149,10 +149,15 @@ const MangaDetailsPanel: React.FC<MangaDetailsPanelProps> = ({ mangaLink, onClos
         return sortOrder === "inverse" ? sorted.reverse() : sorted;
     }, [chapters, sortBy, sortOrder]);
 
-    const visibleChapterIds = useMemo(() => sortedChapters.map((c) => c.name), [sortedChapters]);
-    const visibleBookmarkIds = useMemo(() => bookmarksArray.map((b) => b.id), [bookmarksArray]);
-    const chapterSelection = useMultiSelect<string>(visibleChapterIds);
-    const bookmarkSelection = useMultiSelect<number>(visibleBookmarkIds);
+    const chapterSourceIds = useMemo(() => sortedChapters.map((c) => c.name), [sortedChapters]);
+    const bookmarkSourceIds = useMemo(() => bookmarksArray.map((b) => b.id), [bookmarksArray]);
+    const chapterSelection = useMultiSelect<string>(chapterSourceIds);
+    const bookmarkSelection = useMultiSelect<number>(bookmarkSourceIds);
+
+    useEffect(() => {
+        chapterSelection.clearSelection();
+        bookmarkSelection.clearSelection();
+    }, [activeTab, chapterSelection.clearSelection, bookmarkSelection.clearSelection]);
 
     const handleChapterClick = useCallback(
         (chapterLink: string) => {
@@ -471,29 +476,24 @@ const MangaDetailsPanel: React.FC<MangaDetailsPanelProps> = ({ mangaLink, onClos
 
     useSelectionShortcuts({
         selection: chapterSelection,
-        ids: visibleChapterIds,
         enabled: activeTab === "content",
     });
     useSelectionShortcuts({
         selection: bookmarkSelection,
-        ids: visibleBookmarkIds,
         enabled: activeTab === "bookmarks",
     });
 
     /**
      * Marks every chapter in the current selection as read (or unread). A
      * single batched IPC call updates the manga progress so the UI refreshes
-     * once.
+     * once. Pass selected names and the read flag - the DB adds or removes by
+     * that flag (do not pre-merge into an absolute chaptersRead list).
      */
     const handleBulkMarkChapters = useCallback(
         (read: boolean) => {
             const names = Array.from(chapterSelection.selectedIds);
-            if (names.length === 0 || !manga) return;
-            const existing = new Set(manga.progress?.chaptersRead || []);
-            const next = read
-                ? Array.from(new Set([...existing, ...names]))
-                : Array.from(existing).filter((n) => !chapterSelection.isSelected(n));
-            dispatch(updateChaptersReadAll({ itemLink: mangaLink, chapters: next, read: true }))
+            if (names.length === 0 || !manga?.progress) return;
+            dispatch(updateChaptersReadAll({ itemLink: mangaLink, chapters: names, read }))
                 .unwrap()
                 .catch((err: unknown) => {
                     log.error("updateChaptersReadAll failed", err);
@@ -693,16 +693,17 @@ const MangaDetailsPanel: React.FC<MangaDetailsPanelProps> = ({ mangaLink, onClos
                                 renderItem={renderChapterItem}
                                 onContextMenu={handleContextMenu}
                                 onSelect={handleSelect}
+                                onFilteredItemsChange={(items) =>
+                                    chapterSelection.setVisibleOrder(items.map((c) => c.name))
+                                }
                                 emptyMessage="No chapters found"
                             >
                                 {chapterSelection.isSelectionMode ? (
                                     <div className="chapters-toolbar">
                                         <ListSelectionToolbar
                                             count={chapterSelection.count}
-                                            onSelectAll={() => chapterSelection.selectAll(visibleChapterIds)}
-                                            onInvertSelection={() =>
-                                                chapterSelection.invertSelection(visibleChapterIds)
-                                            }
+                                            onSelectAll={chapterSelection.selectAll}
+                                            onInvertSelection={chapterSelection.invertSelection}
                                             onCancel={chapterSelection.clearSelection}
                                             extraMenuItems={[
                                                 {
@@ -753,16 +754,17 @@ const MangaDetailsPanel: React.FC<MangaDetailsPanelProps> = ({ mangaLink, onClos
                                 renderItem={renderBookmarkItem}
                                 onContextMenu={handleContextMenu}
                                 onSelect={handleSelect}
+                                onFilteredItemsChange={(items) =>
+                                    bookmarkSelection.setVisibleOrder(items.map((b) => b.id))
+                                }
                                 emptyMessage="No bookmarks found"
                             >
                                 {bookmarkSelection.isSelectionMode ? (
                                     <div className="chapters-toolbar">
                                         <ListSelectionToolbar
                                             count={bookmarkSelection.count}
-                                            onSelectAll={() => bookmarkSelection.selectAll(visibleBookmarkIds)}
-                                            onInvertSelection={() =>
-                                                bookmarkSelection.invertSelection(visibleBookmarkIds)
-                                            }
+                                            onSelectAll={bookmarkSelection.selectAll}
+                                            onInvertSelection={bookmarkSelection.invertSelection}
                                             onCancel={bookmarkSelection.clearSelection}
                                             extraMenuItems={[
                                                 {

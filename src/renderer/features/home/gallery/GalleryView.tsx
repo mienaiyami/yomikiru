@@ -93,13 +93,7 @@ const GalleryView: React.FC = () => {
     ]);
 
     const tabIds = useMemo(() => tabItems.map((it) => it.link), [tabItems]);
-    /** Visible order for range select / Select All (tracks ListNavigator filter). */
-    const [orderedIds, setOrderedIds] = useState<readonly string[]>(tabIds);
-    useEffect(() => {
-        setOrderedIds(tabIds);
-    }, [tabIds]);
-
-    const selection = useMultiSelect<string>(orderedIds);
+    const selection = useMultiSelect<string>(tabIds);
 
     useEffect(() => {
         selection.clearSelection();
@@ -292,15 +286,14 @@ const GalleryView: React.FC = () => {
     const detailsOpen = Boolean(selectedManga || selectedBook);
     useSelectionShortcuts({
         selection,
-        ids: orderedIds,
         enabled: !detailsOpen,
     });
 
     const selectionToolbarProps = selection.isSelectionMode
         ? {
               count: selection.count,
-              onSelectAll: () => selection.selectAll(orderedIds),
-              onInvertSelection: () => selection.invertSelection(orderedIds),
+              onSelectAll: selection.selectAll,
+              onInvertSelection: selection.invertSelection,
               onCancel: selection.clearSelection,
               extraMenuItems:
                   activeTab === "favourites"
@@ -331,9 +324,7 @@ const GalleryView: React.FC = () => {
                 filterFn={filterManga}
                 renderItem={renderMangaItem}
                 emptyMessage={emptyMessage}
-                onFilteredItemsChange={(items) => {
-                    setOrderedIds(items.map((it) => it.link));
-                }}
+                onFilteredItemsChange={(items) => selection.setVisibleOrder(items.map((it) => it.link))}
             >
                 <GalleryToolbar
                     activeTab={activeTab}

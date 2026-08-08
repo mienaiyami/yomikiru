@@ -13,7 +13,8 @@ import {
     bookmarkLibraryItemsAtProgress,
     copyPathsToClipboard,
     getBookmarkItemPath,
-    getBookmarksByIds,
+    getBookmarkSelectionKey,
+    getBookmarksBySelectionKeys,
     removeBookmarksGrouped,
 } from "../listSelectionActions";
 import BookmarkHistoryListItem from "./BookmarkHistoryListItem";
@@ -56,12 +57,12 @@ const BookmarkTab: React.FC = () => {
         return appSettings.bookListSortType === "inverse" ? [...sorted].reverse() : sorted;
     }, [bookmarks, library.items, appSettings.bookListSortBy, appSettings.bookListSortType]);
 
-    const visibleIds = useMemo(() => bookmarksArray.map((b) => b.id), [bookmarksArray]);
-    const selection = useMultiSelect<number>(visibleIds);
+    const sourceIds = useMemo(() => bookmarksArray.map(getBookmarkSelectionKey), [bookmarksArray]);
+    const selection = useMultiSelect(sourceIds);
 
     useEffect(() => {
         if (!checkboxesEnabled) selection.clearSelection();
-    }, [checkboxesEnabled, selection]);
+    }, [checkboxesEnabled, selection.clearSelection]);
 
     const filterBookmark = (filter: string, bookmark: LibraryItemWithProgress | BookBookmark | MangaBookmark) => {
         if ("type" in bookmark) return false;
@@ -94,23 +95,25 @@ const BookmarkTab: React.FC = () => {
                 bookmark={bookmark}
                 key={`${bookmark.id}-${bookmark.itemLink}`}
                 selectionMode={checkboxesEnabled && selection.isSelectionMode}
-                isChecked={checkboxesEnabled ? selection.isSelected(bookmark.id) : false}
+                isChecked={checkboxesEnabled ? selection.isSelected(getBookmarkSelectionKey(bookmark)) : false}
                 onToggleSelected={
                     checkboxesEnabled
-                        ? ({ shiftKey }) => selection.toggleItem(bookmark.id, { shiftKey })
+                        ? ({ shiftKey }) => selection.toggleItem(getBookmarkSelectionKey(bookmark), { shiftKey })
                         : undefined
                 }
             />
         );
 
     const handleCopySelected = useCallback(() => {
-        copyPathsToClipboard(getBookmarksByIds(bookmarksArray, selection.selectedIds).map(getBookmarkItemPath));
+        copyPathsToClipboard(
+            getBookmarksBySelectionKeys(bookmarksArray, selection.selectedIds).map(getBookmarkItemPath),
+        );
     }, [bookmarksArray, selection.selectedIds]);
 
     const handleBookmarkSelected = useCallback(() => {
         bookmarkLibraryItemsAtProgress(
             dispatch,
-            getBookmarksByIds(bookmarksArray, selection.selectedIds).map(
+            getBookmarksBySelectionKeys(bookmarksArray, selection.selectedIds).map(
                 (bookmark) => library.items[bookmark.itemLink],
             ),
         );
@@ -118,11 +121,11 @@ const BookmarkTab: React.FC = () => {
     }, [bookmarksArray, dispatch, library.items, selection]);
 
     /**
-     * Removes every bookmark whose id is in the current selection,
+     * Removes every bookmark whose selection key is in the current selection,
      * grouped by `(itemLink, type)` so we issue one IPC call per parent item.
      */
     const handleRemoveSelected = useCallback(() => {
-        const selected = getBookmarksByIds(bookmarksArray, selection.selectedIds);
+        const selected = getBookmarksBySelectionKeys(bookmarksArray, selection.selectedIds);
         if (selected.length === 0) return;
 
         dialogUtils
@@ -153,6 +156,7 @@ const BookmarkTab: React.FC = () => {
                 filterFn={filterBookmark}
                 renderItem={renderBookmarkItem}
                 emptyMessage="No Bookmarks"
+                onFilteredItemsChange={(items) => selection.setVisibleOrder(items.map(getBookmarkSelectionKey))}
                 onContextMenu={(elem) => elem.dispatchEvent(window.contextMenu.fakeEvent(elem))}
                 onSelect={(elem) => elem.click()}
             >
@@ -160,8 +164,8 @@ const BookmarkTab: React.FC = () => {
                     <div className="tools">
                         <ListSelectionToolbar
                             count={selection.count}
-                            onSelectAll={() => selection.selectAll(visibleIds)}
-                            onInvertSelection={() => selection.invertSelection(visibleIds)}
+                            onSelectAll={selection.selectAll}
+                            onInvertSelection={selection.invertSelection}
                             onCancel={selection.clearSelection}
                             showInvertButton={false}
                             extraMenuItems={[

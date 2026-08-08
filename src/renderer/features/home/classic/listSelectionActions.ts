@@ -7,6 +7,19 @@ type AddBookmarkArgs = Parameters<typeof addBookmark>[0];
 type LibraryBookmark = BookBookmark | MangaBookmark;
 
 /**
+ * Selection key for a bookmark row. Manga and book bookmarks use separate
+ * autoincrement tables, so bare numeric `id` is not unique across the merged
+ * classic Bookmark list.
+ */
+export type BookmarkSelectionKey = `manga:${number}` | `book:${number}`;
+
+/**
+ * Stable multi-select id for a manga or book bookmark.
+ */
+export const getBookmarkSelectionKey = (bookmark: LibraryBookmark): BookmarkSelectionKey =>
+    "page" in bookmark ? `manga:${bookmark.id}` : `book:${bookmark.id}`;
+
+/**
  * Builds the {@link addBookmark} payload for an item's current reading progress.
  * Returns `null` when the item has no usable progress.
  */
@@ -78,17 +91,17 @@ export const copyPathsToClipboard = (paths: readonly string[]): void => {
 };
 
 /**
- * Resolves selected bookmark ids against the current bookmark list.
- * Unknown / stale ids are skipped.
+ * Resolves selected bookmark keys against the current bookmark list.
+ * Unknown / stale keys are skipped.
  */
-export const getBookmarksByIds = (
+export const getBookmarksBySelectionKeys = (
     bookmarks: readonly LibraryBookmark[],
-    ids: Iterable<number>,
+    keys: Iterable<string>,
 ): LibraryBookmark[] => {
-    const byId = new Map(bookmarks.map((b) => [b.id, b]));
+    const byKey = new Map(bookmarks.map((b) => [getBookmarkSelectionKey(b), b]));
     const out: LibraryBookmark[] = [];
-    for (const id of ids) {
-        const bookmark = byId.get(id);
+    for (const key of keys) {
+        const bookmark = byKey.get(key as BookmarkSelectionKey);
         if (bookmark) out.push(bookmark);
     }
     return out;

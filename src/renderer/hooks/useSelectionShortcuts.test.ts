@@ -7,7 +7,7 @@ describe("useSelectionShortcuts", () => {
     it("selects all on Ctrl+A and clears on Escape while in selection mode", () => {
         const { result } = renderHook(() => {
             const selection = useMultiSelect(["a", "b", "c"]);
-            useSelectionShortcuts({ selection, ids: ["a", "b", "c"] });
+            useSelectionShortcuts({ selection });
             return selection;
         });
 
@@ -28,8 +28,8 @@ describe("useSelectionShortcuts", () => {
         renderHook(() => {
             useSelectionShortcuts({
                 enabled: false,
-                ids: ["a"],
                 selection: {
+                    orderedIds: ["a"],
                     selectedIds: new Set<string>(),
                     count: 0,
                     isSelectionMode: false,
@@ -38,6 +38,7 @@ describe("useSelectionShortcuts", () => {
                     selectAll,
                     invertSelection: vi.fn(),
                     clearSelection,
+                    setVisibleOrder: vi.fn(),
                 },
             });
         });

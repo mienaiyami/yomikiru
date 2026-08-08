@@ -4,8 +4,6 @@ import { useEffect, useRef } from "react";
 
 type UseSelectionShortcutsArgs<T extends MultiSelectId> = {
     selection: UseMultiSelectReturn<T>;
-    /** Ids currently available for Select All (usually the visible/filtered list). */
-    ids: readonly T[];
     /** When false, the window listener is not attached. @default true */
     enabled?: boolean;
 };
@@ -13,17 +11,15 @@ type UseSelectionShortcutsArgs<T extends MultiSelectId> = {
 /**
  * Window-level Ctrl/Cmd+A (select all) and Esc (clear) for multi-select UIs.
  * Skips editable targets so search inputs keep native text-editing shortcuts.
+ * Select All uses {@link UseMultiSelectReturn.orderedIds} (visible / filtered list).
  *
- * Listener attachment depends only on `enabled` — selection/ids are read from
- * refs so toggles do not rebind the window handler.
+ * Listener attachment depends only on `enabled` — selection is read from refs
+ * so toggles do not rebind the window handler.
  */
 export const useSelectionShortcuts = <T extends MultiSelectId>({
     selection,
-    ids,
     enabled = true,
 }: UseSelectionShortcutsArgs<T>): void => {
-    const idsRef = useRef(ids);
-    idsRef.current = ids;
     const selectAllRef = useRef(selection.selectAll);
     selectAllRef.current = selection.selectAll;
     const clearSelectionRef = useRef(selection.clearSelection);
@@ -40,7 +36,7 @@ export const useSelectionShortcuts = <T extends MultiSelectId>({
 
             if (action === "selectAll") {
                 e.preventDefault();
-                selectAllRef.current(idsRef.current);
+                selectAllRef.current();
                 return;
             }
 
