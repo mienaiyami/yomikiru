@@ -45,7 +45,7 @@ Features:
 - Sort by name or date (`locationListSortBy` / `locationListSortType`).
 - `openDirectlyFromManga`: when enabled, single-clicking a manga series root opens the first chapter directly, skipping the sub-folder list.
 - Double-click (or single-click when `openOnDblClick = false`) opens the item in the reader.
-- Context menu: Open, Open in New Window, Show in File Explorer, Copy Path, Remove History, Mark All Read/Unread.
+- Context menu: Open, Open in New Window, Show in File Explorer, Copy Path, Remove from Library, Mark All Read/Unread.
 - List numbering can be disabled via `disableListNumbering`.
 - Multi-select with `enableClassicListCheckboxes` — shows checkboxes on hover; bulk operations via a toolbar.
 
@@ -251,7 +251,7 @@ The global `window.contextMenu.template` factory (defined in `App.tsx`) provides
 | `showInExplorer(url)` | `shell.showItemInFolder` |
 | `copyPath(url)` | Clipboard write |
 | `copyImage(url)` | Clipboard write image |
-| `removeHistory(url)` | Delete library item (with confirmation) |
+| `removeHistory(url)` | Remove from library (with confirmation; files on disk stay) |
 | `removeBookmark(...)` | Delete bookmark (with confirmation) |
 | `addToBookmark(args)` | Add bookmark |
 | `readChapter / unreadChapter` | Toggle single chapter read state |

@@ -544,11 +544,13 @@ const MangaDetailsPanel: React.FC<MangaDetailsPanelProps> = ({ mangaLink, onClos
                     window.contextMenu.template.openInNewWindow(mangaLink),
                     window.contextMenu.template.showInExplorer(mangaLink),
                     window.contextMenu.template.copyPath(mangaLink),
+                    window.contextMenu.template.divider(),
+                    window.contextMenu.template.removeHistory(mangaLink, false, onClose),
                 ],
                 focusBackElem: e.currentTarget,
             });
         },
-        [mangaLink, setContextMenuData],
+        [mangaLink, onClose, setContextMenuData],
     );
 
     const coverArtSrc = manga ? libraryCoverSrc(manga) : "";

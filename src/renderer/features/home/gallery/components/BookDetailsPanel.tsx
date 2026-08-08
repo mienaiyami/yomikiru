@@ -367,11 +367,13 @@ const BookDetailsPanel: React.FC<BookDetailsPanelProps> = ({ bookLink, onClose }
                     window.contextMenu.template.openInNewWindow(bookLink),
                     window.contextMenu.template.showInExplorer(bookLink),
                     window.contextMenu.template.copyPath(bookLink),
+                    window.contextMenu.template.divider(),
+                    window.contextMenu.template.removeHistory(bookLink, false, onClose),
                 ],
                 focusBackElem: e.currentTarget,
             });
         },
-        [bookLink, setContextMenuData],
+        [bookLink, onClose, setContextMenuData],
     );
 
     if (!book || book.type !== "book") {

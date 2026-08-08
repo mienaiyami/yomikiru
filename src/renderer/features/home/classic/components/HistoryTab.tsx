@@ -116,8 +116,8 @@ const HistoryTab: React.FC = () => {
         if (links.length === 0) return;
         dialogUtils
             .warn({
-                title: "Remove History",
-                message: `Remove ${links.length} item${links.length === 1 ? "" : "s"}? This will also remove all related bookmarks.`,
+                title: "Remove from Library",
+                message: `Remove ${links.length} item${links.length === 1 ? "" : "s"} from library? Related bookmarks will also be removed. Files on disk are not deleted.`,
                 noOption: false,
                 buttons: ["Cancel", "Yes"],
                 defaultId: 0,
@@ -166,7 +166,7 @@ const HistoryTab: React.FC = () => {
                                     action: handleBookmarkSelected,
                                 },
                                 {
-                                    label: `Remove ${selection.count} from History`,
+                                    label: `Remove ${selection.count} from Library`,
                                     action: handleRemoveSelected,
                                 },
                             ]}

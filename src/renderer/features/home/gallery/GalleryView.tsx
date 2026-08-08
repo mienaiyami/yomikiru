@@ -160,6 +160,13 @@ const GalleryView: React.FC = () => {
                 });
             }
 
+            if (activeTab !== "favourites") {
+                items.push(
+                    window.contextMenu.template.divider(),
+                    window.contextMenu.template.removeHistory(item.link),
+                );
+            }
+
             setContextMenuData({
                 clickX: e.clientX,
                 clickY: e.clientY,
@@ -167,7 +174,7 @@ const GalleryView: React.FC = () => {
                 focusBackElem: e.currentTarget,
             });
         },
-        [anilistToken, dispatch, setContextMenuData, handleContinueReading],
+        [activeTab, anilistToken, dispatch, setContextMenuData, handleContinueReading],
     );
 
     const filterManga = useCallback((filter: string, item: LibraryItemWithProgress) => {
@@ -269,7 +276,7 @@ const GalleryView: React.FC = () => {
         dialogUtils
             .warn({
                 title: "Remove from Library",
-                message: `Remove ${links.length} item${links.length === 1 ? "" : "s"} from library? Files on disk are not deleted.`,
+                message: `Remove ${links.length} item${links.length === 1 ? "" : "s"} from library? Related bookmarks will also be removed. Files on disk are not deleted.`,
                 noOption: false,
                 buttons: ["Cancel", "Yes"],
                 defaultId: 0,

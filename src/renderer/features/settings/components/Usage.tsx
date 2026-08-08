@@ -173,9 +173,10 @@ const Usage: React.FC = () => {
                 <li>
                     <b>Gallery:</b> Click a book to open its details panel (bookmarks and notes from the reader;
                     click an entry to open the book at that place). Click manga for chapters and bookmarks as
-                    before. Right-click a tile for <b>Show in File Explorer</b>, copy path, and (with AniList
-                    connected) <b>Track with AniList</b>. In the details panel, right-click the cover for the
-                    library folder or <code>.epub</code> path; use the AniList bar under the cover when logged in.
+                    before. Right-click a tile for <b>Continue Reading</b>, <b>Show in File Explorer</b>, copy path,{" "}
+                    <b>Remove from Library</b> (files on disk stay), and (with AniList connected){" "}
+                    <b>Track with AniList</b>. In the details panel, right-click the cover for the same library
+                    path actions; use the AniList bar under the cover when logged in.
                 </li>
                 <li>
                     <b>Gallery toolbar:</b> One bar above the grid with section tabs (<b>Continue</b> /{" "}
@@ -198,7 +199,7 @@ const Usage: React.FC = () => {
                     selection mode. Hold <code>Shift</code> and click another item to select the range between
                     them. The toolbar swaps to show <b>Select All</b>, <b>Invert Selection</b> (gallery / details),
                     a 3-dot menu with bulk actions (e.g. <i>Copy Path</i>, <i>Bookmark</i>, <i>Remove Bookmark</i>,{" "}
-                    <i>Remove from History</i>, <i>Mark as Read/Unread</i>, <i>Delete Notes</i>), and a cancel
+                    <i>Remove from Library</i>, <i>Mark as Read/Unread</i>, <i>Delete Notes</i>), and a cancel
                     button. In gallery / details, use <code>Ctrl+A</code> (or <code>Cmd+A</code>) to select all and{" "}
                     <code>Esc</code> to clear — these shortcuts do not run while typing in a search field, and they
                     are not used on classic home lists. Classic Bookmark / History checkboxes can be toggled under{" "}

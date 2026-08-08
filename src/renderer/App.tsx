@@ -311,33 +311,34 @@ const App = (): ReactElement => {
                     },
                 };
             },
-            removeHistory(url, isInSideList = false) {
+            removeHistory(url, isInSideList = false, onRemoved) {
                 return {
-                    label: "Remove",
+                    label: "Remove from Library",
                     disabled: !url,
                     action() {
-                        if (isInSideList && !appSettings.confirmDeleteItem) {
+                        const runRemove = () => {
                             dispatch(
                                 deleteLibraryItem({
                                     link: url,
                                 }),
                             );
+                            onRemoved?.();
+                        };
+                        if (isInSideList && !appSettings.confirmDeleteItem) {
+                            runRemove();
                         } else {
                             dialogUtils
                                 .warn({
-                                    title: "Remove History",
-                                    message: "This will also remove all related bookmarks. Continue?",
+                                    title: "Remove from Library",
+                                    message:
+                                        "Remove this item from library? Related bookmarks will also be removed. Files on disk are not deleted.",
                                     noOption: false,
                                     buttons: ["Cancel", "Yes"],
                                     defaultId: 0,
                                 })
                                 .then(({ response }) => {
                                     if (!response) return;
-                                    dispatch(
-                                        deleteLibraryItem({
-                                            link: url,
-                                        }),
-                                    );
+                                    runRemove();
                                 });
                         }
                     },
