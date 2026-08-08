@@ -21,19 +21,27 @@ const viewModeEnum = z.union([z.literal("classic"), z.literal("gallery")]);
 
 const settingSchema = z
     .object({
+        /** Root directory shown in the LocationsTab file browser. */
         baseDir: z.string(),
+        /** Absolute path to a user CSS file injected into document.head. Empty string = disabled. */
         customStylesheet: z.string(),
-        /**
-         * Home view mode: classic or gallery
-         */
+        /** Home view mode: classic (three-panel list) or gallery (cover grid). */
         homeViewMode: viewModeEnum,
+        /** Sort direction for the classic Locations list. */
         locationListSortType: sortTypeEnum,
+        /** Sort field for the classic Locations list. */
         locationListSortBy: sortByEnum,
+        /** Sort direction for the classic Book list. */
         bookListSortType: sortTypeEnum,
+        /** Sort field for the classic Book list. */
         bookListSortBy: sortByEnum,
+        /** Sort direction for the classic History list. */
         historyListSortType: sortTypeEnum,
+        /** Sort field for the classic History list. */
         historyListSortBy: sortByEnum,
+        /** Sort direction for the gallery Library tab. */
         gallerySortType: sortTypeEnum,
+        /** Sort field for the gallery Library tab. `"lastRead"` orders by most-recently-opened. */
         gallerySortBy: z.union([z.literal("name"), z.literal("date"), z.literal("lastRead")]),
         /**
          * Sort field for the gallery "Continue Reading" tab. Persisted separately
@@ -67,50 +75,60 @@ const settingSchema = z
          * Open chapter in reader directly, one folder inside of base manga dir.
          */
         openDirectlyFromManga: z.boolean(),
+        /** Whether each collapsible classic-view panel is expanded. */
         showTabs: z.object({
             bookmark: z.boolean(),
             history: z.boolean(),
         }),
+        /**
+         * Render images onto `<canvas>` elements instead of `<img>`.
+         * Produces sharper output on HiDPI displays at the cost of higher memory usage.
+         */
         useCanvasBasedReader: z.boolean(),
+        /** Require double-click to open items in classic lists. False = single-click opens. */
         openOnDblClick: z.boolean(),
+        /** Hide the numeric row-index prefix on classic list items. */
         disableListNumbering: z.boolean(),
-        /**
-         * show search input for history and bookmark
-         */
+        /** Show the search input bar in classic History and Bookmark lists. */
         showSearch: z.boolean(),
-        /**
-         * Show multi-select checkboxes on classic home Bookmark / History rows.
-         */
+        /** Show multi-select checkboxes on classic home Bookmark / History rows. */
         enableClassicListCheckboxes: z.boolean(),
 
+        /** Open the reader in zen / fullscreen mode automatically on every launch. */
         openInZenMode: z.boolean(),
+        /** Hide the cursor after it becomes idle while zen mode is active. */
         hideCursorInZenMode: z.boolean(),
-        /**
-         * Show more data in title attr in bookmark/history tab items
-         */
+        /** Show extended tooltip (date, note) on classic list bookmark/history rows. */
         showMoreDataOnItemHover: z.boolean(),
+        /** Re-scan the chapter list each time the reader window gains focus. */
         autoRefreshSideList: z.boolean(),
+        /**
+         * Cache extracted EPUB/ZIP content in the temp directory between sessions.
+         * When false, the temp folder is deleted when the reader closes.
+         */
         keepExtractedFiles: z.boolean(),
+        /** Render reader setting toggles as checkboxes instead of toggle switches. */
         checkboxReaderSetting: z.boolean(),
+        /** Reload settings.json and shortcuts.json when changed by another window. */
         syncSettings: z.boolean(),
+        /** Reload themes.json when changed by another window. */
         syncThemes: z.boolean(),
         /**
-         * Confirm before deleting item from history/bookmark/note
-         * only in side list
-         * always true on home page
+         * Confirm before deleting item from history/bookmark/note in the reader side list.
+         * Deletion from the home page always confirms regardless of this setting.
          */
         confirmDeleteItem: z.boolean(),
 
-        //styles
-
+        /** Show page count badge on chapter rows in the manga reader side-list. */
         showPageCountInSideList: z.boolean(),
+        /** Show the "EPUB" type badge on book items in classic lists. */
         showTextFileBadge: z.boolean(),
-
-        //styles end
 
         readerSettings: mangaReaderSettingsSchema,
         epubReaderSettings: bookReaderSettingsSchema,
+        /** Id of the active manga reader preset; applied to `readerSettings` on selection. */
         mangaReaderPresetId: z.string(),
+        /** Id of the active book reader preset; applied to `epubReaderSettings` on selection. */
         bookReaderPresetId: z.string(),
     })
     .strip()
