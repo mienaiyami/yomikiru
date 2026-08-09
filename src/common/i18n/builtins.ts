@@ -68,6 +68,9 @@ export const bundledI18nResources: Record<string, PackOverlayMap> = Object.fromE
  * Deep-clones {@link bundledI18nResources} for i18next `init({ resources })`.
  * i18next's ResourceStore keeps the map by reference and `addResourceBundle` deep-merges
  * into those objects; without a clone, installing a pack permanently corrupts builtin seeds.
+ *
+ * Uses JSON round-trip (not `structuredClone`) — Electron's main webpack target has no
+ * global `structuredClone`.
  */
 export const cloneBundledI18nResources = (): Record<string, PackOverlayMap> =>
-    structuredClone(bundledI18nResources);
+    JSON.parse(JSON.stringify(bundledI18nResources)) as Record<string, PackOverlayMap>;

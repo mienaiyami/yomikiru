@@ -33,7 +33,9 @@ export const clearPackOverlays = (
             host.removeResourceBundle(locale, ns);
         }
         const nsBase = base?.[ns];
-        host.addResourceBundle(locale, ns, nsBase ? structuredClone(nsBase) : {}, true, true);
+        /* JSON clone: same reason as cloneBundledI18nResources (no structuredClone in main). */
+        const seed = nsBase ? (JSON.parse(JSON.stringify(nsBase)) as Record<string, unknown>) : {};
+        host.addResourceBundle(locale, ns, seed, true, true);
     }
 };
 
