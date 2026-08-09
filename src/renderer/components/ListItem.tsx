@@ -2,9 +2,14 @@ import type React from "react";
 import { useEffect, useRef, useState } from "react";
 import { useAppContext } from "src/renderer/App";
 
-export interface ListItemProps {
+export type ListItemProps = {
     /** whether the item is currently focused via keyboard navigation */
     focused: boolean;
+    /**
+     * When true, scroll this row into view (e.g. current chapter when
+     * manga reader `focusChapterInList` is enabled).
+     */
+    scrollIntoView?: boolean;
     classNameLi?: string;
     classNameAnchor?: string;
     children: React.ReactNode;
@@ -14,18 +19,20 @@ export interface ListItemProps {
     title?: string;
     /** additional data attributes to add to the item */
     dataAttributes?: Record<`data-${string}`, string>;
-    /** react reference to the anchor element */
-    ref?: React.LegacyRef<HTMLAnchorElement>;
     /**
      * Optional content rendered as a sibling of the inner `<a>` (inside the
      * `<li>`). Used for per-row selection checkboxes that need their own click
      * target separate from the row's primary action.
      */
     leadingSlot?: React.ReactNode;
-}
+};
 
+/**
+ * Shared list row (`<li>` + `<a>`) used by home lists and reader side lists.
+ */
 const ListItem: React.FC<ListItemProps> = ({
     focused,
+    scrollIntoView = false,
     classNameLi = "",
     classNameAnchor = "",
     children,
@@ -33,7 +40,6 @@ const ListItem: React.FC<ListItemProps> = ({
     onContextMenu,
     title,
     dataAttributes = {},
-    ref: anchorRef,
     leadingSlot,
 }) => {
     const { contextMenuData } = useAppContext();
@@ -47,10 +53,10 @@ const ListItem: React.FC<ListItemProps> = ({
     }, [contextMenuData]);
 
     useEffect(() => {
-        if (focused && itemRef.current) {
+        if ((focused || scrollIntoView) && itemRef.current) {
             itemRef.current.scrollIntoView({ block: "nearest" });
         }
-    }, [focused]);
+    }, [focused, scrollIntoView]);
 
     const handleContextMenu = (e: React.MouseEvent<HTMLAnchorElement>) => {
         if (onContextMenu) {
@@ -71,7 +77,6 @@ const ListItem: React.FC<ListItemProps> = ({
         >
             {leadingSlot}
             <a
-                ref={anchorRef}
                 onClick={onClick}
                 className={classNameAnchor}
                 onContextMenu={handleContextMenu}

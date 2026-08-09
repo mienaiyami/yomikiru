@@ -1,5 +1,10 @@
 import type { LanguageSource } from "@common/i18n";
-import { BUILTIN_EN_SOURCE_ID, isBuiltinSourceId, parsePackSourceId } from "@common/i18n";
+import {
+    BUILTIN_EN_SOURCE_ID,
+    BUILTIN_SOURCES,
+    isBuiltinSourceId,
+    parsePackSourceId,
+} from "@common/i18n";
 import { useAppDispatch } from "@store/hooks";
 import { getMainSettings } from "@store/mainSettings";
 import InputSelect from "@ui/InputSelect";
@@ -19,7 +24,8 @@ const sourceOptionLabel = (source: LanguageSource): string => `${source.locale} 
 const LanguageSettings = (): ReactElement => {
     const { t } = useTranslation("settings");
     const dispatch = useAppDispatch();
-    const [sources, setSources] = useState<LanguageSource[]>([]);
+    /* seed builtins so InputSelect has options before i18n:getState resolves */
+    const [sources, setSources] = useState<LanguageSource[]>(() => [...BUILTIN_SOURCES]);
     const [sourceId, setSourceId] = useState(BUILTIN_EN_SOURCE_ID);
     const [busy, setBusy] = useState(false);
 

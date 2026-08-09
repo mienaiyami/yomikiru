@@ -1,7 +1,7 @@
 import ListItem from "@renderer/components/ListItem";
 import { useAppSelector } from "@store/hooks";
 import { formatUtils } from "@utils/file";
-import { memo, useEffect, useState } from "react";
+import { memo } from "react";
 import { useTranslation } from "react-i18next";
 import { useAppContext } from "src/renderer/App";
 
@@ -18,13 +18,10 @@ type ReaderSideListItemProps = {
 const ReaderSideListItem = memo(
     ({ name, pages, link, inHistory, current, focused, onClick }: ReaderSideListItemProps) => {
         const { t } = useTranslation("reader");
-        const appSettings = useAppSelector((state) => state.appSettings);
-        const { openInReader, setContextMenuData, contextMenuData } = useAppContext();
-        const [contextMenuFocused, setContextMenuFocused] = useState(false);
-
-        useEffect(() => {
-            if (!contextMenuData && contextMenuFocused) setContextMenuFocused(false);
-        }, [contextMenuData]);
+        const focusChapterInList = useAppSelector(
+            (state) => state.appSettings.readerSettings?.focusChapterInList,
+        );
+        const { openInReader, setContextMenuData } = useAppContext();
 
         const handleClick = () => {
             if (onClick) {
@@ -55,7 +52,6 @@ const ReaderSideListItem = memo(
             items.push(window.contextMenu.template.divider());
             items.push(window.contextMenu.template.copyPath(link));
             items.push(window.contextMenu.template.showInExplorer(link));
-            setContextMenuFocused(true);
             setContextMenuData({
                 clickX: e.clientX,
                 clickY: e.clientY,
@@ -69,6 +65,7 @@ const ReaderSideListItem = memo(
         return (
             <ListItem
                 focused={focused}
+                scrollIntoView={Boolean(focusChapterInList && current)}
                 classNameLi={`${inHistory ? "alreadyRead" : ""} ${current ? "current" : ""}`}
                 onClick={handleClick}
                 onContextMenu={handleContextMenu}
@@ -76,13 +73,6 @@ const ReaderSideListItem = memo(
                 dataAttributes={{
                     "data-url": link,
                 }}
-                ref={
-                    appSettings.readerSettings?.focusChapterInList
-                        ? (node) => {
-                              if (current && node !== null) node.scrollIntoView({ block: "nearest" });
-                          }
-                        : undefined
-                }
             >
                 <span className="text">{formatUtils.files.getName(name)}</span>
                 {formatUtils.files.test(name) ? (

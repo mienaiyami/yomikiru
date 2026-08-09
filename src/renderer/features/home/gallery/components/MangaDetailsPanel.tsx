@@ -362,21 +362,10 @@ const MangaDetailsPanel: React.FC<MangaDetailsPanelProps> = ({ mangaLink, onClos
         (bookmark: MangaBookmark) => {
             if (pathMissing || !manga) return;
             const bookmarkPath = resolveMangaChapterPath(bookmark.itemLink, bookmark.chapterName);
-            const progressPath =
-                manga.progress?.itemLink && manga.progress?.chapterName
-                    ? resolveMangaChapterPath(manga.progress.itemLink, manga.progress.chapterName)
-                    : "";
-
-            const openBookmark = (openPath: string, page: number) => {
-                if (progressPath && openPath === progressPath) {
-                    window.app.scrollToPage(page, "smooth");
-                    return;
-                }
-                openInReader(openPath, { mangaPageNumber: page });
-            };
+            /* home hides while reader is active, so window.app.scrollToPage is unset */
 
             if (window.fs.existsSync(bookmarkPath)) {
-                openBookmark(bookmarkPath, bookmark.page);
+                openInReader(bookmarkPath, { mangaPageNumber: bookmark.page });
                 return;
             }
 
@@ -400,7 +389,9 @@ const MangaDetailsPanel: React.FC<MangaDetailsPanelProps> = ({ mangaLink, onClos
                         updateMangaBookmarkChapterFromPath(dispatch, bookmark.id, chapterPath),
                 });
                 if (!resolved) return;
-                openBookmark(resolved.openPath, mangaPageForMissingKind(resolved.kind, bookmark.page) ?? 0);
+                openInReader(resolved.openPath, {
+                    mangaPageNumber: mangaPageForMissingKind(resolved.kind, bookmark.page) ?? 0,
+                });
             })();
         },
         [dispatch, manga, openInReader, pathMissing, t, tCommon],
