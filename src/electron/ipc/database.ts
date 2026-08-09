@@ -9,8 +9,10 @@ import {
     AddMangaBookmarkSchema,
     AddToLibrarySchema,
     RelocateLibraryItemSchema,
+    UpdateBookBookmarkSchema,
     UpdateBookProgressSchema,
     UpdateLibraryItemSchema,
+    UpdateMangaBookmarkSchema,
     UpdateMangaProgressSchema,
 } from "@electron/db/validator";
 import { createMainLogger } from "@electron/util/logger";
@@ -178,6 +180,14 @@ const handlers: {
         if (data) pingDatabaseChange("db:bookmark:change");
         return data;
     },
+    "db:manga:updateBookmark": async (db, request) => {
+        const { id, ...patch } = UpdateMangaBookmarkSchema.parse(request);
+        const data =
+            (await db.db.update(mangaBookmarks).set(patch).where(eq(mangaBookmarks.id, id)).returning())?.[0] ??
+            null;
+        if (data) pingDatabaseChange("db:bookmark:change");
+        return data;
+    },
     "db:manga:deleteBookmarks": async (db, request) => {
         if (request.all) {
             await db.db.delete(mangaBookmarks).where(eq(mangaBookmarks.itemLink, request.itemLink));
@@ -207,6 +217,14 @@ const handlers: {
     "db:book:addBookmark": async (db, request) => {
         const data =
             (await db.db.insert(bookBookmarks).values(AddBookBookmarkSchema.parse(request)).returning())?.[0] ??
+            null;
+        if (data) pingDatabaseChange("db:bookmark:change");
+        return data;
+    },
+    "db:book:updateBookmark": async (db, request) => {
+        const { id, ...patch } = UpdateBookBookmarkSchema.parse(request);
+        const data =
+            (await db.db.update(bookBookmarks).set(patch).where(eq(bookBookmarks.id, id)).returning())?.[0] ??
             null;
         if (data) pingDatabaseChange("db:bookmark:change");
         return data;

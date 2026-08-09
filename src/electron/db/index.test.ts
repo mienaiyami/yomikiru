@@ -163,4 +163,39 @@ describe("DatabaseService", () => {
         expect(await dbService.relocateLibraryItem(oldLink, path.join("testdata", "manga", "gone"))).toBeNull();
         expect(await dbService.relocateLibraryItem(newLink, MANGA_LINK)).toBeNull();
     });
+
+    it("updates a manga bookmark chapterName in place (locate-chapter rewrite)", async () => {
+        const itemLink = path.join("testdata", "manga", "bookmark-update");
+        await dbService.addLibraryItem({
+            type: "manga",
+            data: {
+                type: "manga",
+                link: itemLink,
+                title: "Bookmark Update",
+            },
+            progress: {
+                chapterName: "old-ch",
+                currentPage: 1,
+                totalPages: 5,
+            },
+        });
+        const [bookmark] = await dbService.db
+            .insert(mangaBookmarks)
+            .values({
+                itemLink,
+                chapterName: "old-ch",
+                page: 2,
+            })
+            .returning();
+
+        const [updated] = await dbService.db
+            .update(mangaBookmarks)
+            .set({ chapterName: "new-ch" })
+            .where(eq(mangaBookmarks.id, bookmark.id))
+            .returning();
+
+        expect(updated?.chapterName).toBe("new-ch");
+        expect(updated?.page).toBe(2);
+        expect(updated?.itemLink).toBe(itemLink);
+    });
 });

@@ -50,11 +50,44 @@ export const AddMangaBookmarkSchema = createInsertSchema(mangaBookmarks).omit({
     updatedAt: true,
 });
 
+/**
+ * Partial manga bookmark update. `id` is required; every other column is optional.
+ * At least one mutable field must be present.
+ */
+export const UpdateMangaBookmarkSchema = createUpdateSchema(mangaBookmarks)
+    .omit({ createdAt: true })
+    .required({ id: true })
+    .refine(
+        (data) =>
+            data.itemLink !== undefined ||
+            data.chapterName !== undefined ||
+            data.page !== undefined ||
+            data.note !== undefined,
+        { message: "At least one field besides id is required" },
+    );
+
 export const AddBookBookmarkSchema = createInsertSchema(bookBookmarks).omit({
     id: true,
     createdAt: true,
     updatedAt: true,
 });
+
+/**
+ * Partial book bookmark update. `id` is required; every other column is optional.
+ * At least one mutable field must be present.
+ */
+export const UpdateBookBookmarkSchema = createUpdateSchema(bookBookmarks)
+    .omit({ createdAt: true })
+    .required({ id: true })
+    .refine(
+        (data) =>
+            data.itemLink !== undefined ||
+            data.chapterName !== undefined ||
+            data.chapterId !== undefined ||
+            data.position !== undefined ||
+            data.note !== undefined,
+        { message: "At least one field besides id is required" },
+    );
 
 export const AddBookNoteSchema = createInsertSchema(bookNotes).omit({
     id: true,

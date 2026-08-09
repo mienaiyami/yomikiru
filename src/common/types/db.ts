@@ -13,8 +13,10 @@ import type {
     AddBookNoteSchema,
     AddMangaBookmarkSchema,
     AddToLibrarySchema,
+    UpdateBookBookmarkSchema,
     UpdateBookProgressSchema,
     UpdateLibraryItemSchema,
+    UpdateMangaBookmarkSchema,
     UpdateMangaProgressSchema,
 } from "../../electron/db/validator";
 
@@ -40,5 +42,7 @@ export type UpdateLibraryItemData = z.infer<typeof UpdateLibraryItemSchema>;
 export type AddMangaBookmarkData = z.infer<typeof AddMangaBookmarkSchema>;
 export type AddBookBookmarkData = z.infer<typeof AddBookBookmarkSchema>;
 export type AddBookNoteData = z.infer<typeof AddBookNoteSchema>;
+export type UpdateMangaBookmarkData = z.infer<typeof UpdateMangaBookmarkSchema>;
+export type UpdateBookBookmarkData = z.infer<typeof UpdateBookBookmarkSchema>;
 export type UpdateMangaProgressData = z.infer<typeof UpdateMangaProgressSchema>;
 export type UpdateBookProgressData = z.infer<typeof UpdateBookProgressSchema>;

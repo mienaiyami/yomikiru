@@ -171,7 +171,7 @@ Slides in from the right when a manga item is selected in the grid. Shows:
 - Mark All Read / Mark All Unread.
 - AniList tracking bar (if logged in).
 - Per-item note (editable inline).
-- Missing on-disk path: [`MissingLibraryPathPanel`](gallery/components/MissingLibraryPathPanel.tsx) replaces the actions area only (**Locate on disk** / Remove); cover, metadata, and bookmark lists stay visible.
+- Missing on-disk path: [`MissingLibraryPathPanel`](gallery/components/MissingLibraryPathPanel.tsx) replaces the actions area only (**Locate on disk** / Remove); cover, metadata, and bookmark lists stay visible. Classic History / Continue Reading (manga only): if the series folder exists but a chapter path is missing, the dialog offers **Open first chapter** / **Locate chapter** (pick renamed/moved chapter) — never open the series root (cover-only) and never relocate the library link to a chapter.
 
 ### BookDetailsPanel
 

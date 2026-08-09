@@ -38,6 +38,10 @@ CI uses system Node, so db tests need no rebuild there.
 - Harness: `src/test/mocks/preload.ts` (`onInvoke`, `stubFs` / `createTestFs`), `renderWithProviders`, `fixtures/libraryItem.ts`
 - E2E: [`e2e/`](../e2e/), [`playwright.config.ts`](../playwright.config.ts)
 
+## Prefer Vitest flow tests (dialogs / IPC glue)
+
+For recovery flows that combine `stubFs` + native dialogs + IPC/callbacks (missing library path, locate chapter, relocate, bookmark rewrite), add **co-located Vitest flow tests** that stub `dialog:*` via `onInvoke` and assert the composed result. Prefer that over Playwright e2e (native folder pickers are awkward; `e2e/` stays smoke). Persist FK/bookmark updates with `pnpm test:db`. See `.cursor/rules/testing.mdc`.
+
 ## Cross-platform paths
 
 Use `path.join` / `window.path.join`. See `.cursor/rules/testing.mdc`.

@@ -2,8 +2,10 @@ import path from "node:path";
 import { describe, expect, it } from "vitest";
 import {
     AddToLibrarySchema,
+    UpdateBookBookmarkSchema,
     UpdateBookProgressSchema,
     UpdateLibraryItemSchema,
+    UpdateMangaBookmarkSchema,
     UpdateMangaProgressSchema,
 } from "./validator";
 
@@ -71,5 +73,15 @@ describe("Update* schemas", () => {
         expect(UpdateMangaProgressSchema.safeParse({ itemLink: "a", currentPage: 2 }).success).toBe(true);
         expect(UpdateBookProgressSchema.safeParse({ position: "p" }).success).toBe(false);
         expect(UpdateBookProgressSchema.safeParse({ itemLink: "a", position: "p" }).success).toBe(true);
+    });
+
+    it("accepts partial bookmark updates with required id", () => {
+        expect(UpdateMangaBookmarkSchema.safeParse({ id: 1 }).success).toBe(false);
+        expect(UpdateMangaBookmarkSchema.safeParse({ id: 1, chapterName: "ch2" }).success).toBe(true);
+        expect(UpdateMangaBookmarkSchema.safeParse({ id: 1, page: 3, note: "x" }).success).toBe(true);
+        expect(UpdateBookBookmarkSchema.safeParse({ id: 1 }).success).toBe(false);
+        expect(UpdateBookBookmarkSchema.safeParse({ id: 1, chapterId: "c2", position: "body" }).success).toBe(
+            true,
+        );
     });
 });

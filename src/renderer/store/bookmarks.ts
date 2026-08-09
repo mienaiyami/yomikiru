@@ -1,4 +1,9 @@
-import type { BookBookmark, MangaBookmark } from "@common/types/db";
+import type {
+    BookBookmark,
+    MangaBookmark,
+    UpdateBookBookmarkData,
+    UpdateMangaBookmarkData,
+} from "@common/types/db";
 import type { DatabaseChannels } from "@common/types/ipc";
 import { createAsyncThunk, createSlice, type PayloadAction } from "@reduxjs/toolkit";
 import { relocateLibraryItem } from "./library";
@@ -16,18 +21,30 @@ const initialState: BookmarksState = {
     loading: false,
     error: null,
 };
+
+/**
+ * Replaces a bookmark in a link-keyed map, moving it when `itemLink` changed.
+ */
+const upsertBookmarkById = <T extends { id: number; itemLink: string }>(
+    map: Record<string, T[] | null>,
+    updated: T,
+): void => {
+    for (const [link, list] of Object.entries(map)) {
+        if (!list) continue;
+        const next = list.filter((b) => b.id !== updated.id);
+        if (next.length === list.length) continue;
+        if (next.length === 0) delete map[link];
+        else map[link] = next;
+    }
+    const dest = map[updated.itemLink] ?? [];
+    dest.push(updated);
+    map[updated.itemLink] = dest;
+};
+
 export const fetchAllBookmarks = createAsyncThunk("bookmarks/fetchAll", async () => {
     const bookmarks = await window.electron.invoke("db:library:getAllBookmarks");
     return bookmarks;
 });
-
-// export const fetchBookmarks = createAsyncThunk(
-//     "bookmarks/fetch",
-//     async ({ itemLink, type }: { itemLink: string; type: "manga" | "book" }) => {
-//         const bookmarks = await ipc.invoke(`db:${type}:getBookmarks`, { itemLink });
-//         return bookmarks;
-//     }
-// );
 
 export const addBookmark = createAsyncThunk(
     "bookmarks/add",
@@ -55,6 +72,31 @@ export const removeBookmark = createAsyncThunk(
         return { itemLink, type, ids };
     },
 );
+
+/**
+ * Partial update for a manga bookmark (`id` required; other fields optional).
+ */
+export const updateMangaBookmark = createAsyncThunk(
+    "bookmarks/updateManga",
+    async (args: UpdateMangaBookmarkData) => {
+        const bookmark = await window.electron.invoke("db:manga:updateBookmark", args);
+        if (!bookmark) throw new Error("Failed to update bookmark");
+        return bookmark;
+    },
+);
+
+/**
+ * Partial update for a book bookmark (`id` required; other fields optional).
+ */
+export const updateBookBookmark = createAsyncThunk(
+    "bookmarks/updateBook",
+    async (args: UpdateBookBookmarkData) => {
+        const bookmark = await window.electron.invoke("db:book:updateBookmark", args);
+        if (!bookmark) throw new Error("Failed to update bookmark");
+        return bookmark;
+    },
+);
+
 export const removeAllBookmarks = createAsyncThunk(
     "bookmarks/removeAll",
     async ({ itemLink, type }: { itemLink: string; type: "manga" | "book" }) => {
@@ -111,6 +153,12 @@ const bookmarksSlice = createSlice({
                     delete state.book[oldLink];
                     state.book[newLink] = bookList.map((b) => ({ ...b, itemLink: newLink }));
                 }
+            })
+            .addCase(updateMangaBookmark.fulfilled, (state, action) => {
+                upsertBookmarkById(state.manga, action.payload);
+            })
+            .addCase(updateBookBookmark.fulfilled, (state, action) => {
+                upsertBookmarkById(state.book, action.payload);
             });
     },
 });

@@ -142,9 +142,9 @@ const App = (): ReactElement => {
         void (async () => {
             let target = link;
             if (!window.fs.existsSync(target)) {
-                const remapped = await resolveMissingOpenPath(dispatch, target);
-                if (!remapped) return;
-                target = remapped;
+                const resolved = await resolveMissingOpenPath(dispatch, target);
+                if (!resolved) return;
+                target = resolved.openPath;
             }
             // new window will be opened; main forces close if the link is still invalid
             window.fs.access(target).then(() => {

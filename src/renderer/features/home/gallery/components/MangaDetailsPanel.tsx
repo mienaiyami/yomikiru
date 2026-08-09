@@ -25,6 +25,12 @@ import { dialogUtils } from "@utils/dialog";
 import { formatUtils } from "@utils/file";
 import { libraryCoverSrc } from "@utils/libraryCover";
 import { materializeMangaLibraryThumbnail, pickAndApplyCustomCover } from "@utils/libraryCoverService";
+import {
+    mangaPageForMissingKind,
+    resolveMissingOpenPath,
+    shouldOfferLibraryRelocate,
+    updateMangaBookmarkChapterFromPath,
+} from "@utils/libraryMissingPath";
 import { createRendererLogger } from "@utils/logger";
 import { resolveMangaChapterPath } from "@utils/mangaChapterPath";
 import { useCallback, useEffect, useMemo, useState } from "react";
@@ -354,21 +360,50 @@ const MangaDetailsPanel: React.FC<MangaDetailsPanelProps> = ({ mangaLink, onClos
 
     const handleBookmarkClick = useCallback(
         (bookmark: MangaBookmark) => {
-            if (pathMissing) return;
+            if (pathMissing || !manga) return;
             const bookmarkPath = resolveMangaChapterPath(bookmark.itemLink, bookmark.chapterName);
             const progressPath =
-                manga?.progress?.itemLink && manga?.progress?.chapterName
+                manga.progress?.itemLink && manga.progress?.chapterName
                     ? resolveMangaChapterPath(manga.progress.itemLink, manga.progress.chapterName)
                     : "";
-            if (progressPath && bookmarkPath === progressPath) {
-                window.app.scrollToPage(bookmark.page, "smooth");
-            } else {
-                openInReader(bookmarkPath, {
-                    mangaPageNumber: bookmark.page,
-                });
+
+            const openBookmark = (openPath: string, page: number) => {
+                if (progressPath && openPath === progressPath) {
+                    window.app.scrollToPage(page, "smooth");
+                    return;
+                }
+                openInReader(openPath, { mangaPageNumber: page });
+            };
+
+            if (window.fs.existsSync(bookmarkPath)) {
+                openBookmark(bookmarkPath, bookmark.page);
+                return;
             }
+
+            void (async () => {
+                const resolved = await resolveMissingOpenPath(dispatch, bookmarkPath, {
+                    libraryItem: manga,
+                    offerLocate: shouldOfferLibraryRelocate(manga.link),
+                    offerRemove: true,
+                    removeLabel: tCommon("contextMenu.removeBookmark"),
+                    detail: t("classic.listItem.missing.chapterMissingKeepBookmark"),
+                    onRemove: () => {
+                        dispatch(
+                            removeBookmark({
+                                itemLink: bookmark.itemLink,
+                                ids: [bookmark.id],
+                                type: "manga",
+                            }),
+                        );
+                    },
+                    onLocateChapter: (chapterPath) =>
+                        updateMangaBookmarkChapterFromPath(dispatch, bookmark.id, chapterPath),
+                });
+                if (!resolved) return;
+                openBookmark(resolved.openPath, mangaPageForMissingKind(resolved.kind, bookmark.page) ?? 0);
+            })();
         },
-        [manga, openInReader, pathMissing],
+        [dispatch, manga, openInReader, pathMissing, t, tCommon],
     );
 
     const handleBookmarkContextMenu = useCallback(

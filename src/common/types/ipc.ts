@@ -12,8 +12,10 @@ import type {
     LibraryItemWithProgress,
     MangaBookmark,
     MangaProgress,
+    UpdateBookBookmarkData,
     UpdateBookProgressData,
     UpdateLibraryItemData,
+    UpdateMangaBookmarkData,
     UpdateMangaProgressData,
 } from "./db";
 
@@ -69,11 +71,13 @@ export type DatabaseChannels = {
     >;
     "db:manga:getBookmarks": ChannelDefinition<{ itemLink: string }, MangaBookmark[]>;
     "db:manga:addBookmark": ChannelDefinition<AddMangaBookmarkData, MangaBookmark | null>;
+    "db:manga:updateBookmark": ChannelDefinition<UpdateMangaBookmarkData, MangaBookmark | null>;
     "db:manga:deleteBookmarks": ChannelDefinition<{ itemLink: string; ids: number[]; all?: boolean }, boolean>;
     "db:book:getProgress": ChannelDefinition<{ itemLink: string }, BookProgress | null>;
     "db:book:updateProgress": ChannelDefinition<UpdateBookProgressData, BookProgress | null>;
     "db:book:getBookmarks": ChannelDefinition<{ itemLink: string }, BookBookmark[]>;
     "db:book:addBookmark": ChannelDefinition<AddBookBookmarkData, BookBookmark | null>;
+    "db:book:updateBookmark": ChannelDefinition<UpdateBookBookmarkData, BookBookmark | null>;
     "db:book:deleteBookmarks": ChannelDefinition<{ itemLink: string; ids: number[]; all?: boolean }, boolean>;
     "db:book:getAllNotes": ChannelDefinition<void, BookNote[]>;
     "db:book:getNotes": ChannelDefinition<{ itemLink: string }, BookNote[]>;

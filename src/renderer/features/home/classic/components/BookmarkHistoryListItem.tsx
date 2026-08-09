@@ -6,7 +6,12 @@ import { useAppDispatch, useAppSelector } from "@store/hooks";
 import { deleteLibraryItem } from "@store/library";
 import dateUtils from "@utils/date";
 import { formatUtils } from "@utils/file";
-import { resolveMissingOpenPath, shouldOfferLibraryRelocate } from "@utils/libraryMissingPath";
+import {
+    mangaPageForMissingKind,
+    resolveMissingOpenPath,
+    shouldOfferLibraryRelocate,
+    updateMangaBookmarkChapterFromPath,
+} from "@utils/libraryMissingPath";
 import { resolveMangaChapterPath } from "@utils/mangaChapterPath";
 import { useTranslation } from "react-i18next";
 import { useAppContext } from "src/renderer/App";
@@ -100,50 +105,63 @@ const BookmarkHistoryListItem: React.FC<{
           : { mangaPageNumber: props.bookmark?.page };
 
     /**
-     * Shared by row click and context Open / Open in new Window so bookmark rows
-     * keep Remove Bookmark (not delete whole library) when the path is missing.
+     * Shared by row click and context Open / Open in new Window.
+     * Missing manga chapters: Open first chapter / Locate chapter (not library relocate).
      */
     const openFromList = (target: "reader" | "newWindow") => {
-        const go = (openPath: string) => {
-            if (target === "reader") openInReader(openPath, readerOptions);
+        const go = (openPath: string, opts = readerOptions) => {
+            if (target === "reader") openInReader(openPath, opts);
             else openInNewWindow(openPath);
         };
 
-        if (!window.fs.existsSync(link)) {
-            void (async () => {
-                const offerLocate = shouldOfferLibraryRelocate(libraryItem.link);
-                const remapped = await resolveMissingOpenPath(dispatch, link, {
-                    libraryItem,
-                    offerLocate,
-                    removeLabel: props.bookmark ? t("classic.listItem.removeBookmark") : undefined,
-                    detail: props.bookmark
-                        ? offerLocate
-                            ? t("classic.listItem.missing.locateKeepProgress")
-                            : t("classic.listItem.missing.chapterMissingKeepBookmark")
-                        : offerLocate
-                          ? undefined
-                          : t("classic.listItem.missing.chapterMissingRemoveEntry"),
-                    onRemove: () => {
-                        if (props.bookmark) {
-                            dispatch(
-                                removeBookmark({
-                                    itemLink: libraryItem.link,
-                                    ids: [props.id],
-                                    type: libraryItem.type,
-                                }),
-                            );
-                            return;
-                        }
-                        dispatch(deleteLibraryItem({ link: libraryItem.link }));
-                    },
-                });
-                if (!remapped) return;
-                go(remapped);
-            })();
+        if (window.fs.existsSync(link)) {
+            go(link);
             return;
         }
 
-        go(link);
+        void (async () => {
+            const offerLocate = shouldOfferLibraryRelocate(libraryItem.link);
+            const mangaBookmark = props.bookmark && "page" in props.bookmark ? props.bookmark : undefined;
+            const isBookmarkRow = Boolean(props.bookmark);
+
+            const missingDetail = (() => {
+                if (offerLocate) {
+                    return isBookmarkRow ? t("classic.listItem.missing.locateKeepProgress") : undefined;
+                }
+                return isBookmarkRow
+                    ? t("classic.listItem.missing.chapterMissingKeepBookmark")
+                    : t("classic.listItem.missing.chapterMissingLocate");
+            })();
+
+            const resolved = await resolveMissingOpenPath(dispatch, link, {
+                libraryItem,
+                offerLocate,
+                /* history chapter-miss: no delete-library; remove stays on context menu */
+                offerRemove: offerLocate || isBookmarkRow,
+                removeLabel: isBookmarkRow ? t("classic.listItem.removeBookmark") : undefined,
+                detail: missingDetail,
+                onRemove: () => {
+                    if (mangaBookmark) {
+                        dispatch(
+                            removeBookmark({
+                                itemLink: libraryItem.link,
+                                ids: [mangaBookmark.id],
+                                type: libraryItem.type,
+                            }),
+                        );
+                        return;
+                    }
+                    dispatch(deleteLibraryItem({ link: libraryItem.link }));
+                },
+                onLocateChapter: mangaBookmark
+                    ? (chapterPath) => updateMangaBookmarkChapterFromPath(dispatch, mangaBookmark.id, chapterPath)
+                    : undefined,
+            });
+            if (!resolved) return;
+
+            const page = mangaPageForMissingKind(resolved.kind, mangaBookmark?.page);
+            go(resolved.openPath, page === undefined ? readerOptions : { mangaPageNumber: page });
+        })();
     };
 
     const handleClick = (e: React.MouseEvent<HTMLAnchorElement>) => {

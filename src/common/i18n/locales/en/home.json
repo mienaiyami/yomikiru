@@ -78,8 +78,9 @@
             },
             "missing": {
                 "locateKeepProgress": "Locate the library item on disk to keep progress, or remove this bookmark.",
-                "chapterMissingKeepBookmark": "This chapter path is missing, but the library item is still on disk. Remove this bookmark or cancel.",
-                "chapterMissingRemoveEntry": "This chapter path is missing, but the library item is still on disk. Remove the library entry or cancel."
+                "chapterMissingKeepBookmark": "This chapter is missing, but the manga folder is still on disk. Open the first chapter, locate the chapter, remove this bookmark, or cancel.",
+                "chapterMissingLocate": "This chapter is missing, but the manga folder is still on disk. Open the first chapter, locate the renamed chapter, or cancel.",
+                "bookmarkUpdateFailed": "Could not update the bookmark to the new chapter. Another bookmark may already use that chapter and page."
             }
         }
     },
