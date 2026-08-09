@@ -9,12 +9,15 @@ import { deleteLibraryItem } from "@store/library";
 import { dialogUtils } from "@utils/dialog";
 import { formatUtils } from "@utils/file";
 import { useCallback, useEffect, useMemo } from "react";
+import { useTranslation } from "react-i18next";
 import { useAppContext } from "src/renderer/App";
 import { bookmarkLibraryItemsAtProgress, copyPathsToClipboard, getHistoryItemPath } from "../listSelectionActions";
 import BookmarkHistoryListItem from "./BookmarkHistoryListItem";
 import ListSelectionToolbar from "./ListSelectionToolbar";
 
 const HistoryTab: React.FC = () => {
+    const { t } = useTranslation("home");
+    const { t: tCommon } = useTranslation("common");
     const library = useAppSelector((store) => store.library);
     const appSettings = useAppSelector((store) => store.appSettings);
     const dispatch = useAppDispatch();
@@ -116,10 +119,10 @@ const HistoryTab: React.FC = () => {
         if (links.length === 0) return;
         dialogUtils
             .warn({
-                title: "Remove from Library",
-                message: `Remove ${links.length} item${links.length === 1 ? "" : "s"} from library? Related bookmarks will also be removed. Files on disk are not deleted.`,
+                title: t("shared.removeFromLibrary.title"),
+                message: t("shared.removeFromLibrary.message", { count: links.length }),
                 noOption: false,
-                buttons: ["Cancel", "Yes"],
+                buttons: [tCommon("actions.cancel"), tCommon("actions.yes")],
                 defaultId: 0,
             })
             .then(({ response }) => {
@@ -129,7 +132,7 @@ const HistoryTab: React.FC = () => {
                 }
                 selection.clearSelection();
             });
-    }, [dispatch, selection]);
+    }, [dispatch, selection, t, tCommon]);
 
     if (!appSettings.showTabs.history) {
         return null;
@@ -137,13 +140,13 @@ const HistoryTab: React.FC = () => {
 
     return (
         <div className="contTab listCont" id="historyTab">
-            <h2>Continue Reading</h2>
+            <h2>{t("classic.history.title")}</h2>
 
             <ListNavigator.Provider
                 items={historyItems}
                 filterFn={filterHistoryItem}
                 renderItem={renderHistoryItem}
-                emptyMessage="Library Empty"
+                emptyMessage={t("classic.history.empty")}
                 onFilteredItemsChange={(items) => selection.setVisibleOrder(items.map((it) => it.link))}
                 onContextMenu={(elem) => elem.dispatchEvent(window.contextMenu.fakeEvent(elem))}
                 onSelect={(elem) => elem.click()}
@@ -158,15 +161,15 @@ const HistoryTab: React.FC = () => {
                             showInvertButton={false}
                             extraMenuItems={[
                                 {
-                                    label: "Copy Path",
+                                    label: t("shared.selection.copyPath"),
                                     action: handleCopySelected,
                                 },
                                 {
-                                    label: "Bookmark",
+                                    label: t("shared.selection.bookmark"),
                                     action: handleBookmarkSelected,
                                 },
                                 {
-                                    label: `Remove ${selection.count} from Library`,
+                                    label: t("shared.removeFromLibrary.menu", { count: selection.count }),
                                     action: handleRemoveSelected,
                                 },
                             ]}
@@ -177,15 +180,14 @@ const HistoryTab: React.FC = () => {
                     <div className="tools">
                         <div className="row1">
                             <button
-                                data-tooltip={
-                                    "Sort: " +
-                                    (appSettings.historyListSortType === "normal" ? "▲ " : "▼ ") +
-                                    appSettings.historyListSortBy.toUpperCase()
-                                }
+                                data-tooltip={t("shared.sort.tooltip", {
+                                    arrow: appSettings.historyListSortType === "normal" ? "▲ " : "▼ ",
+                                    by: appSettings.historyListSortBy.toUpperCase(),
+                                })}
                                 onClick={(e) => {
                                     const items: Menu.ListItem[] = [
                                         {
-                                            label: "Name",
+                                            label: t("shared.sort.name"),
                                             action() {
                                                 dispatch(
                                                     setAppSettings({
@@ -196,7 +198,7 @@ const HistoryTab: React.FC = () => {
                                             selected: appSettings.historyListSortBy === "name",
                                         },
                                         {
-                                            label: "Date Updated",
+                                            label: t("shared.sort.dateUpdated"),
                                             action() {
                                                 dispatch(
                                                     setAppSettings({
@@ -208,7 +210,7 @@ const HistoryTab: React.FC = () => {
                                         },
                                         window.contextMenu.template.divider(),
                                         {
-                                            label: "Ascending",
+                                            label: t("shared.sort.ascending"),
                                             action() {
                                                 dispatch(
                                                     setAppSettings({
@@ -219,7 +221,7 @@ const HistoryTab: React.FC = () => {
                                             selected: appSettings.historyListSortType === "normal",
                                         },
                                         {
-                                            label: "Descending",
+                                            label: t("shared.sort.descending"),
                                             action() {
                                                 dispatch(
                                                     setAppSettings({

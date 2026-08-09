@@ -1,3 +1,4 @@
+import i18n from "@renderer/i18n";
 import { useAppDispatch, useAppSelector } from "@store/hooks";
 import { setReaderLoading, setReaderState } from "@store/reader";
 import { dialogUtils } from "@utils/dialog";
@@ -114,7 +115,7 @@ export const useDirectoryValidator = () => {
             window.electron.webFrame.clearCache();
 
             if (formatUtils.book.test(normalizedLink)) {
-                dispatch(setReaderLoading({ message: "PROCESSING EPUB" }));
+                dispatch(setReaderLoading({ message: i18n.t("loading.processingEpub", { ns: "reader" }) }));
                 dispatch(
                     setReaderState({
                         type: "book",
@@ -154,8 +155,8 @@ export const useDirectoryValidator = () => {
             dispatch(setReaderLoading(null));
             if (errorOnInvalid) {
                 await dialogUtils.customError({
-                    title: "Invalid Folder",
-                    message: "The folder is not valid. Please check the folder and try again.",
+                    title: i18n.t("errors.invalidFolderTitle", { ns: "reader" }),
+                    message: i18n.t("errors.invalidFolderMessage", { ns: "reader" }),
                     detail: result.error instanceof Error ? result.error.message : String(result.error),
                 });
             }

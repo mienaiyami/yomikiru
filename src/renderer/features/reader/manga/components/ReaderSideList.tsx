@@ -21,6 +21,7 @@ import { formatUtils } from "@utils/file";
 import { createRendererLogger } from "@utils/logger";
 import { resolveMangaChapterPath } from "@utils/mangaChapterPath";
 import { memo, useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
+import { useTranslation } from "react-i18next";
 
 const log = createRendererLogger("manga/ReaderSideList");
 
@@ -108,6 +109,9 @@ const ReaderSideList = memo(
 
         const [draggingResizer, setDraggingResizer] = useState(false);
 
+        const { t } = useTranslation("reader");
+        const { t: tDialogs } = useTranslation("dialogs");
+        const { t: tCommon } = useTranslation("common");
         const [displayList, setDisplayList] = useState<"" | "content" | "bookmarks">("content");
 
         const [bookmarkedId, setBookmarkedId] = useState<number | null>(null);
@@ -377,14 +381,14 @@ const ReaderSideList = memo(
         const handleSortClick = (e: React.MouseEvent<HTMLButtonElement>) => {
             const items: Menu.ListItem[] = [
                 {
-                    label: "Name",
+                    label: t("sideList.sortName"),
                     action() {
                         dispatch(setAppSettings({ locationListSortBy: "name" }));
                     },
                     selected: appSettings.locationListSortBy === "name",
                 },
                 {
-                    label: "Date Modified",
+                    label: t("sideList.sortDateModified"),
                     action() {
                         dispatch(
                             setAppSettings({
@@ -397,14 +401,14 @@ const ReaderSideList = memo(
                 },
                 window.contextMenu.template.divider(),
                 {
-                    label: "Ascending",
+                    label: t("sideList.sortAscending"),
                     action() {
                         dispatch(setAppSettings({ locationListSortType: "normal" }));
                     },
                     selected: appSettings.locationListSortType === "normal",
                 },
                 {
-                    label: "Descending",
+                    label: t("sideList.sortDescending"),
                     action() {
                         dispatch(setAppSettings({ locationListSortType: "inverse" }));
                     },
@@ -424,8 +428,8 @@ const ReaderSideList = memo(
             if (prevNextChapter.prev === "~") {
                 dialogUtils
                     .confirm({
-                        message: "There's no previous chapter.",
-                        buttons: ["Ok", "Home"],
+                        message: t("dialogs.noPreviousChapter"),
+                        buttons: [tDialogs("buttons.okAlt"), t("dialogs.home")],
                         noOption: false,
                         noLink: true,
                     })
@@ -454,10 +458,10 @@ const ReaderSideList = memo(
             if (bookmarkedId !== null) {
                 return dialogUtils
                     .warn({
-                        title: "Warning",
-                        message: "Remove - Remove Bookmark",
+                        title: tDialogs("titles.warning"),
+                        message: t("dialogs.removeBookmarkManga"),
                         noOption: false,
-                        buttons: ["Cancel", "Remove"],
+                        buttons: [tDialogs("buttons.cancel"), tCommon("actions.remove")],
                         defaultId: 0,
                     })
                     .then(({ response }) => {
@@ -476,15 +480,15 @@ const ReaderSideList = memo(
                     },
                 }),
             );
-            setShortcutText("Bookmark Added");
+            setShortcutText(t("hud.bookmarkAdded"));
         };
 
         const handleNextChapterClick = () => {
             if (prevNextChapter.next === "~") {
                 dialogUtils
                     .confirm({
-                        message: "There's no next chapter.",
-                        buttons: ["Ok", "Home"],
+                        message: t("dialogs.noNextChapter"),
+                        buttons: [tDialogs("buttons.okAlt"), t("dialogs.home")],
                         noOption: false,
                         noLink: true,
                     })
@@ -616,7 +620,7 @@ const ReaderSideList = memo(
                     renderItem={renderChapterItem}
                     onContextMenu={handleContextMenu}
                     onSelect={handleSelect}
-                    emptyMessage="No chapters found"
+                    emptyMessage={t("sideList.noChaptersFound")}
                     inputRef={sideListSearchRef}
                     onFilteredItemsChange={handleFilteredItemsChange}
                     persistFilterOnItemsChange={isSearchFixed}
@@ -624,13 +628,11 @@ const ReaderSideList = memo(
                     <div className="tools">
                         <div className="row1">
                             <div className="search-with-pin">
-                                <ListNavigator.SearchInput placeholder="Search chapters..." />
+                                <ListNavigator.SearchInput placeholder={t("sideList.searchChapters")} />
                                 <button
                                     className={`pin-filter-toggle ${isSearchFixed ? "selected" : ""}`}
                                     data-tooltip={
-                                        isSearchFixed
-                                            ? "Filter pinned - search persists on list refresh; click to unpin"
-                                            : "Filter unpinned - search clears on list refresh; click to pin"
+                                        isSearchFixed ? t("sideList.filterPinned") : t("sideList.filterUnpinned")
                                     }
                                     onClick={handleSearchFixedToggle}
                                 >
@@ -643,7 +645,9 @@ const ReaderSideList = memo(
 
                             {(isShuffleMode || !appSettings.autoRefreshSideList) && (
                                 <button
-                                    data-tooltip={isShuffleMode ? "Refresh and reshuffle" : "Refresh"}
+                                    data-tooltip={
+                                        isShuffleMode ? t("sideList.refreshAndReshuffle") : t("sideList.refresh")
+                                    }
                                     onClick={makeChapterList}
                                 >
                                     <FontAwesomeIcon icon={faSyncAlt} />
@@ -651,11 +655,10 @@ const ReaderSideList = memo(
                             )}
 
                             <button
-                                data-tooltip={
-                                    "Sort: " +
-                                    (appSettings.locationListSortType === "normal" ? "▲ " : "▼ ") +
-                                    appSettings.locationListSortBy.toUpperCase()
-                                }
+                                data-tooltip={t("sideList.sortTooltip", {
+                                    arrow: appSettings.locationListSortType === "normal" ? "▲ " : "▼ ",
+                                    by: appSettings.locationListSortBy.toUpperCase(),
+                                })}
                                 onClick={handleSortClick}
                             >
                                 <FontAwesomeIcon icon={faSort} />
@@ -666,14 +669,14 @@ const ReaderSideList = memo(
                             <Button
                                 className="ctrl-menu-item"
                                 btnRef={openPrevChapterRef}
-                                tooltip="Open Previous"
+                                tooltip={t("sideList.openPrevious")}
                                 clickAction={handlePrevChapterClick}
                             >
                                 <FontAwesomeIcon icon={faArrowLeft} />
                             </Button>
                             <Button
                                 className="ctrl-menu-item"
-                                tooltip="Bookmark"
+                                tooltip={t("sideList.bookmark")}
                                 btnRef={addToBookmarkRef}
                                 clickAction={handleBookmarkClick}
                             >
@@ -682,7 +685,7 @@ const ReaderSideList = memo(
                             <Button
                                 className="ctrl-menu-item"
                                 btnRef={openNextChapterRef}
-                                tooltip="Open Next"
+                                tooltip={t("sideList.openNext")}
                                 clickAction={handleNextChapterClick}
                             >
                                 <FontAwesomeIcon icon={faArrowRight} />
@@ -692,12 +695,12 @@ const ReaderSideList = memo(
 
                     <div className="in-reader">
                         <div>
-                            <span className="bold">Manga</span>
+                            <span className="bold">{t("sideList.manga")}</span>
                             <span className="bold"> : </span>
                             <span>{mangaInReader?.title}</span>
                         </div>
                         <div>
-                            <span className="bold">Chapter</span>
+                            <span className="bold">{t("sideList.chapter")}</span>
                             <span className="bold"> : </span>
                             <span>{formatUtils.files.getName(mangaInReader?.progress?.chapterName || "")}</span>
                         </div>
@@ -710,22 +713,22 @@ const ReaderSideList = memo(
                             <button
                                 className={`${displayList === "content" ? "selected" : ""}`}
                                 onClick={handleContentToggle}
-                                data-tooltip="Click again to hide"
+                                data-tooltip={t("sideList.clickAgainToHide")}
                             >
-                                Content
+                                {t("sideList.content")}
                             </button>
                             <button
                                 className={`${displayList === "bookmarks" ? "selected" : ""}`}
                                 onClick={handleBookmarksToggle}
                             >
-                                Bookmarks
+                                {t("sideList.bookmarks")}
                             </button>
                         </div>
                         {displayList === "content" && (
                             <div className="row2">
                                 <button
                                     className="ctrl-menu-item"
-                                    data-tooltip="Locate Current Chapter"
+                                    data-tooltip={t("sideList.locateCurrentChapter")}
                                     onClick={handleLocateClick}
                                 >
                                     <FontAwesomeIcon icon={faLocationDot} />
@@ -734,21 +737,23 @@ const ReaderSideList = memo(
                                 <button
                                     className={`shuffle-mode-toggle ${isShuffleMode ? "selected" : ""}`}
                                     data-tooltip={
-                                        isShuffleMode
-                                            ? "Shuffle ON - list order randomized; click to use sorted"
-                                            : "Shuffle OFF - click to randomize chapter order"
+                                        isShuffleMode ? t("sideList.shuffleOn") : t("sideList.shuffleOff")
                                     }
                                     onClick={handleShuffleToggle}
                                     aria-pressed={isShuffleMode}
                                     type="button"
                                 >
                                     <FontAwesomeIcon icon={faShuffle} />
-                                    <span className="shuffle-label">{isShuffleMode ? "ON" : "Off"}</span>
+                                    <span className="shuffle-label">
+                                        {isShuffleMode
+                                            ? t("sideList.shuffleLabelOn")
+                                            : t("sideList.shuffleLabelOff")}
+                                    </span>
                                 </button>
                                 <Button
                                     className="ctrl-menu-item"
                                     btnRef={openRandomChapterRef}
-                                    tooltip="Open Random Chapter"
+                                    tooltip={t("sideList.openRandomChapter")}
                                     disabled={effectiveListForNav.length === 0}
                                     clickAction={handleRandomChapterClick}
                                 >

@@ -8,6 +8,7 @@ import dateUtils from "@utils/date";
 import { formatUtils } from "@utils/file";
 import { resolveMissingOpenPath, shouldOfferLibraryRelocate } from "@utils/libraryMissingPath";
 import { resolveMangaChapterPath } from "@utils/mangaChapterPath";
+import { useTranslation } from "react-i18next";
 import { useAppContext } from "src/renderer/App";
 import { bookmarkLibraryItemsAtProgress } from "../listSelectionActions";
 
@@ -26,16 +27,17 @@ const BookmarkHistoryListItem: React.FC<{
     /** Toggles selection for this row. Receives click modifiers for Shift+range select. */
     onToggleSelected?: (opts: { shiftKey: boolean }) => void;
 }> = (props) => {
+    const { t } = useTranslation("home");
     const { openInReader, openInNewWindow, setContextMenuData } = useAppContext();
     const dispatch = useAppDispatch();
     const appSettings = useAppSelector((store) => store.appSettings);
     const libraryItem = useAppSelector((store) => store.library.items[props.link]);
 
-    if (props.isBookmark && !props.bookmark) return <p>Error: Bookmark not found</p>;
+    if (props.isBookmark && !props.bookmark) return <p>{t("classic.listItem.bookmarkNotFound")}</p>;
 
     // todo: this is temp only until properly implemented
-    if (!libraryItem) return <p>Error: Item not found</p>;
-    if (libraryItem.type === "manga" && !libraryItem.progress) return <p>Error: Item not found</p>;
+    if (!libraryItem) return <p>{t("classic.listItem.itemNotFound")}</p>;
+    if (libraryItem.type === "manga" && !libraryItem.progress) return <p>{t("classic.listItem.itemNotFound")}</p>;
     const link =
         props.bookmark && "page" in props.bookmark
             ? resolveMangaChapterPath(props.bookmark.itemLink, props.bookmark.chapterName)
@@ -44,30 +46,44 @@ const BookmarkHistoryListItem: React.FC<{
               : libraryItem.progress && "chapterName" in libraryItem.progress
                 ? resolveMangaChapterPath(libraryItem.progress.itemLink, libraryItem.progress.chapterName)
                 : "";
-    if (!link) return <p>Error: Link not found</p>;
+    if (!link) return <p>{t("classic.listItem.linkNotFound")}</p>;
 
     const title = props.isHistory
         ? libraryItem.type === "book"
-            ? `Title       : ${libraryItem.title}\n` +
-              `Chapter : ${libraryItem.progress?.chapterName || "~"}\n` +
-              `Date      : ${dateUtils.format(libraryItem.progress?.lastReadAt, {
-                  format: dateUtils.presets.dateTimeFull,
-              })}\n` +
-              `Path      : ${libraryItem.link}`
-            : `Manga   : ${libraryItem.title}\n` +
-              `Chapter : ${libraryItem.progress?.chapterName}\n` +
-              `Pages    : ${libraryItem.progress?.totalPages}\n` +
-              `Page      : ${libraryItem.progress?.currentPage}\n` +
-              `Date      : ${dateUtils.format(libraryItem.progress?.lastReadAt, {
-                  format: dateUtils.presets.dateTimeFull,
-              })}\n` +
-              `Path      : ${libraryItem.link}`
-        : `Title       : ${libraryItem.title}\n` +
-          `Chapter : ${props.bookmark?.chapterName || "~"}\n` +
-          `Date      : ${dateUtils.format(props.bookmark?.createdAt, {
-              format: dateUtils.presets.dateTimeFull,
-          })}\n` +
-          `Path      : ${props.bookmark?.itemLink}`;
+            ? [
+                  t("classic.listItem.tooltip.title", { value: libraryItem.title }),
+                  t("classic.listItem.tooltip.chapter", {
+                      value: libraryItem.progress?.chapterName || "~",
+                  }),
+                  t("classic.listItem.tooltip.date", {
+                      value: dateUtils.format(libraryItem.progress?.lastReadAt, {
+                          format: dateUtils.presets.dateTimeFull,
+                      }),
+                  }),
+                  t("classic.listItem.tooltip.path", { value: libraryItem.link }),
+              ].join("\n")
+            : [
+                  t("classic.listItem.tooltip.manga", { value: libraryItem.title }),
+                  t("classic.listItem.tooltip.chapter", { value: libraryItem.progress?.chapterName }),
+                  t("classic.listItem.tooltip.pages", { value: libraryItem.progress?.totalPages }),
+                  t("classic.listItem.tooltip.page", { value: libraryItem.progress?.currentPage }),
+                  t("classic.listItem.tooltip.date", {
+                      value: dateUtils.format(libraryItem.progress?.lastReadAt, {
+                          format: dateUtils.presets.dateTimeFull,
+                      }),
+                  }),
+                  t("classic.listItem.tooltip.path", { value: libraryItem.link }),
+              ].join("\n")
+        : [
+              t("classic.listItem.tooltip.title", { value: libraryItem.title }),
+              t("classic.listItem.tooltip.chapter", { value: props.bookmark?.chapterName || "~" }),
+              t("classic.listItem.tooltip.date", {
+                  value: dateUtils.format(props.bookmark?.createdAt, {
+                      format: dateUtils.presets.dateTimeFull,
+                  }),
+              }),
+              t("classic.listItem.tooltip.path", { value: props.bookmark?.itemLink }),
+          ].join("\n");
 
     const readerOptions = props.isHistory
         ? libraryItem.type === "book"
@@ -99,14 +115,14 @@ const BookmarkHistoryListItem: React.FC<{
                 const remapped = await resolveMissingOpenPath(dispatch, link, {
                     libraryItem,
                     offerLocate,
-                    removeLabel: props.bookmark ? "Remove Bookmark" : undefined,
+                    removeLabel: props.bookmark ? t("classic.listItem.removeBookmark") : undefined,
                     detail: props.bookmark
                         ? offerLocate
-                            ? "Locate the library item on disk to keep progress, or remove this bookmark."
-                            : "This chapter path is missing, but the library item is still on disk. Remove this bookmark or cancel."
+                            ? t("classic.listItem.missing.locateKeepProgress")
+                            : t("classic.listItem.missing.chapterMissingKeepBookmark")
                         : offerLocate
                           ? undefined
-                          : "This chapter path is missing, but the library item is still on disk. Remove the library entry or cancel.",
+                          : t("classic.listItem.missing.chapterMissingRemoveEntry"),
                     onRemove: () => {
                         if (props.bookmark) {
                             dispatch(
@@ -141,14 +157,14 @@ const BookmarkHistoryListItem: React.FC<{
     const handleContextMenu = (e: React.MouseEvent<HTMLAnchorElement>) => {
         const items = [
             {
-                label: "Open",
+                label: t("classic.listItem.open"),
                 disabled: !link,
                 action() {
                     openFromList("reader");
                 },
             },
             {
-                label: "Open in new Window",
+                label: t("classic.listItem.openInNewWindow"),
                 disabled: !link,
                 action() {
                     openFromList("newWindow");
@@ -157,7 +173,7 @@ const BookmarkHistoryListItem: React.FC<{
             window.contextMenu.template.showInExplorer(link),
             window.contextMenu.template.copyPath(link),
             {
-                label: "Bookmark",
+                label: t("classic.listItem.bookmark"),
                 action() {
                     bookmarkLibraryItemsAtProgress(dispatch, [libraryItem]);
                 },
@@ -196,7 +212,7 @@ const BookmarkHistoryListItem: React.FC<{
             boxClassName="checkBox"
             checked={props.isChecked ?? false}
             onToggle={({ shiftKey }) => props.onToggleSelected?.({ shiftKey })}
-            ariaLabel={`Select ${libraryItem.title}`}
+            ariaLabel={t("shared.selectAria", { title: libraryItem.title })}
         />
     ) : null;
 
@@ -221,7 +237,7 @@ const BookmarkHistoryListItem: React.FC<{
                         </span>
                         &nbsp;&nbsp;&nbsp;
                         <span className="page">
-                            <code className="nonFolder">EPUB</code>
+                            <code className="nonFolder">{t("shared.epub")}</code>
                         </span>
                     </span>
                 </span>

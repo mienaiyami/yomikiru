@@ -16,6 +16,7 @@ import { libraryCoverSrc } from "@utils/libraryCover";
 import { pickAndApplyCustomCover } from "@utils/libraryCoverService";
 import { createRendererLogger } from "@utils/logger";
 import { useCallback, useEffect, useMemo, useState } from "react";
+import { useTranslation } from "react-i18next";
 import { shallowEqual } from "react-redux";
 import ListSelectionToolbar from "../../classic/components/ListSelectionToolbar";
 import MissingLibraryPathPanel from "./MissingLibraryPathPanel";
@@ -36,6 +37,8 @@ type BookDetailsPanelProps = {
  * Opening a bookmark or note launches the reader at the stored chapter and scroll position.
  */
 const BookDetailsPanel: React.FC<BookDetailsPanelProps> = ({ bookLink, onClose, onRelocated }) => {
+    const { t } = useTranslation("home");
+    const { t: tCommon } = useTranslation("common");
     const dispatch = useAppDispatch();
     const library = useAppSelector((store) => store.library.items);
     const confirmDeleteItem = useAppSelector((store) => store.appSettings.confirmDeleteItem);
@@ -138,7 +141,7 @@ const BookDetailsPanel: React.FC<BookDetailsPanelProps> = ({ bookLink, onClose, 
 
             const items: Menu.ListItem[] = [
                 {
-                    label: "Delete Note",
+                    label: t("gallery.details.deleteNote"),
                     action() {
                         if (!confirmDeleteItem) {
                             runDelete();
@@ -146,10 +149,10 @@ const BookDetailsPanel: React.FC<BookDetailsPanelProps> = ({ bookLink, onClose, 
                         }
                         dialogUtils
                             .warn({
-                                title: "Delete Note",
-                                message: "Only this note will be removed. Continue?",
+                                title: t("gallery.details.deleteNote"),
+                                message: t("gallery.details.deleteNoteMessage"),
                                 noOption: false,
-                                buttons: ["Cancel", "Yes"],
+                                buttons: [tCommon("actions.cancel"), tCommon("actions.yes")],
                                 defaultId: 0,
                             })
                             .then(({ response }) => {
@@ -166,7 +169,7 @@ const BookDetailsPanel: React.FC<BookDetailsPanelProps> = ({ bookLink, onClose, 
                 focusBackElem: e.currentTarget,
             });
         },
-        [bookLink, confirmDeleteItem, dispatch, setContextMenuData],
+        [bookLink, confirmDeleteItem, dispatch, setContextMenuData, t, tCommon],
     );
 
     const renderBookmarkItem = useCallback(
@@ -195,7 +198,7 @@ const BookDetailsPanel: React.FC<BookDetailsPanelProps> = ({ bookLink, onClose, 
                         boxClassName="checkBox"
                         checked={isChecked}
                         onToggle={({ shiftKey }) => bookmarkSelection.toggleItem(bookmark.id, { shiftKey })}
-                        ariaLabel={`Select bookmark ${bookmark.id}`}
+                        ariaLabel={t("gallery.details.selectBookmarkAria", { id: bookmark.id })}
                     />
                     <div className="bookmark-content">
                         <div className="bookmark-header">
@@ -214,7 +217,7 @@ const BookDetailsPanel: React.FC<BookDetailsPanelProps> = ({ bookLink, onClose, 
                 </div>
             );
         },
-        [handleBookmarkContextMenu, openBookmarkInReader, bookmarkSelection, pathMissing],
+        [handleBookmarkContextMenu, openBookmarkInReader, bookmarkSelection, pathMissing, t],
     );
 
     const renderNoteItem = useCallback(
@@ -243,7 +246,7 @@ const BookDetailsPanel: React.FC<BookDetailsPanelProps> = ({ bookLink, onClose, 
                         boxClassName="checkBox"
                         checked={isChecked}
                         onToggle={({ shiftKey }) => noteSelection.toggleItem(note.id, { shiftKey })}
-                        ariaLabel={`Select note ${note.id}`}
+                        ariaLabel={t("gallery.details.selectNoteAria", { id: note.id })}
                     />
                     <div className="note-item-row">
                         <span
@@ -268,7 +271,7 @@ const BookDetailsPanel: React.FC<BookDetailsPanelProps> = ({ bookLink, onClose, 
                 </div>
             );
         },
-        [handleNoteContextMenu, openNoteInReader, noteSelection, pathMissing],
+        [handleNoteContextMenu, openNoteInReader, noteSelection, pathMissing, t],
     );
 
     useSelectionShortcuts({
@@ -285,10 +288,10 @@ const BookDetailsPanel: React.FC<BookDetailsPanelProps> = ({ bookLink, onClose, 
         if (ids.length === 0) return;
         dialogUtils
             .warn({
-                title: "Delete Bookmarks",
-                message: `Delete ${ids.length} bookmark${ids.length === 1 ? "" : "s"}?`,
+                title: t("gallery.details.deleteBookmarksTitle"),
+                message: t("gallery.details.deleteBookmarksMessage", { count: ids.length }),
                 noOption: false,
-                buttons: ["Cancel", "Yes"],
+                buttons: [tCommon("actions.cancel"), tCommon("actions.yes")],
                 defaultId: 0,
             })
             .then(({ response }) => {
@@ -296,17 +299,17 @@ const BookDetailsPanel: React.FC<BookDetailsPanelProps> = ({ bookLink, onClose, 
                 dispatch(removeBookmark({ itemLink: bookLink, type: "book", ids }));
                 bookmarkSelection.clearSelection();
             });
-    }, [bookmarkSelection, bookLink, dispatch]);
+    }, [bookmarkSelection, bookLink, dispatch, t, tCommon]);
 
     const handleBulkDeleteNotes = useCallback(() => {
         const ids = Array.from(noteSelection.selectedIds);
         if (ids.length === 0) return;
         dialogUtils
             .warn({
-                title: "Delete Notes",
-                message: `Delete ${ids.length} note${ids.length === 1 ? "" : "s"}?`,
+                title: t("gallery.details.deleteNotesTitle"),
+                message: t("gallery.details.deleteNotesMessage", { count: ids.length }),
                 noOption: false,
-                buttons: ["Cancel", "Yes"],
+                buttons: [tCommon("actions.cancel"), tCommon("actions.yes")],
                 defaultId: 0,
             })
             .then(({ response }) => {
@@ -318,7 +321,7 @@ const BookDetailsPanel: React.FC<BookDetailsPanelProps> = ({ bookLink, onClose, 
                     });
                 noteSelection.clearSelection();
             });
-    }, [noteSelection, bookLink, dispatch]);
+    }, [noteSelection, bookLink, dispatch, t, tCommon]);
 
     const filterBookmark = useCallback((filter: string, bookmark: BookBookmark) => {
         return new RegExp(filter, "ig").test(
@@ -399,7 +402,7 @@ const BookDetailsPanel: React.FC<BookDetailsPanelProps> = ({ bookLink, onClose, 
                     <button type="button" className="back-button" onClick={onClose}>
                         <FontAwesomeIcon icon={faArrowLeft} />
                     </button>
-                    <h1 className="manga-title">Item not found</h1>
+                    <h1 className="manga-title">{t("gallery.details.itemNotFound")}</h1>
                 </div>
             </div>
         );
@@ -435,17 +438,17 @@ const BookDetailsPanel: React.FC<BookDetailsPanelProps> = ({ bookLink, onClose, 
                         </div>
                         <div className="manga-info">
                             <div className="info-row">
-                                <span className="info-label">Author</span>
-                                <span className="info-value">{book.author || "Unknown"}</span>
+                                <span className="info-label">{t("gallery.details.author")}</span>
+                                <span className="info-value">{book.author || t("shared.unknown")}</span>
                             </div>
                             {book.progress ? (
                                 <>
                                     <div className="info-row">
-                                        <span className="info-label">Last read</span>
+                                        <span className="info-label">{t("gallery.details.lastRead")}</span>
                                         <span className="info-value">{book.progress.chapterName}</span>
                                     </div>
                                     <div className="info-row">
-                                        <span className="info-label">Last read at</span>
+                                        <span className="info-label">{t("gallery.details.lastReadAt")}</span>
                                         <span className="info-value">
                                             {dateUtils.format(book.progress.lastReadAt, {
                                                 format: dateUtils.presets.dateTime,
@@ -480,7 +483,7 @@ const BookDetailsPanel: React.FC<BookDetailsPanelProps> = ({ bookLink, onClose, 
                                             className="action-button continue-reading"
                                             onClick={handleContinueReading}
                                         >
-                                            Continue Reading
+                                            {t("shared.continueReading")}
                                         </button>
                                     ) : (
                                         <button
@@ -488,7 +491,7 @@ const BookDetailsPanel: React.FC<BookDetailsPanelProps> = ({ bookLink, onClose, 
                                             className="action-button continue-reading"
                                             onClick={handleContinueReading}
                                         >
-                                            Start Reading
+                                            {t("shared.startReading")}
                                         </button>
                                     )}
                                     <button
@@ -497,7 +500,7 @@ const BookDetailsPanel: React.FC<BookDetailsPanelProps> = ({ bookLink, onClose, 
                                         onClick={handleSelectCover}
                                     >
                                         <FontAwesomeIcon icon={faImage} />
-                                        <span>Select Cover</span>
+                                        <span>{t("shared.selectCover")}</span>
                                     </button>
                                 </div>
                             </>
@@ -512,21 +515,23 @@ const BookDetailsPanel: React.FC<BookDetailsPanelProps> = ({ bookLink, onClose, 
                             className={`tab-button ${activeTab === "bookmarks" ? "active" : ""}`}
                             onClick={() => setActiveTab("bookmarks")}
                         >
-                            Bookmarks
+                            {t("gallery.details.bookmarks")}
                         </button>
                         <button
                             type="button"
                             className={`tab-button ${activeTab === "notes" ? "active" : ""}`}
                             onClick={() => setActiveTab("notes")}
                         >
-                            Notes
+                            {t("gallery.details.notes")}
                         </button>
                     </div>
 
                     {activeTab === "bookmarks" ? (
                         <>
                             <div className="chapters-header">
-                                <h2 className="chapters-title">{bookmarksArray.length} Bookmarks</h2>
+                                <h2 className="chapters-title">
+                                    {t("gallery.details.bookmarksCount", { count: bookmarksArray.length })}
+                                </h2>
                             </div>
                             <ListNavigator.Provider
                                 items={bookmarksArray}
@@ -537,7 +542,7 @@ const BookDetailsPanel: React.FC<BookDetailsPanelProps> = ({ bookLink, onClose, 
                                 onFilteredItemsChange={(items) =>
                                     bookmarkSelection.setVisibleOrder(items.map((b) => b.id))
                                 }
-                                emptyMessage="No bookmarks"
+                                emptyMessage={t("gallery.details.noBookmarks")}
                             >
                                 {bookmarkSelection.isSelectionMode ? (
                                     <div className="chapters-toolbar">
@@ -548,9 +553,9 @@ const BookDetailsPanel: React.FC<BookDetailsPanelProps> = ({ bookLink, onClose, 
                                             onCancel={bookmarkSelection.clearSelection}
                                             extraMenuItems={[
                                                 {
-                                                    label: `Delete ${bookmarkSelection.count} Bookmark${
-                                                        bookmarkSelection.count === 1 ? "" : "s"
-                                                    }`,
+                                                    label: t("gallery.details.deleteBookmarksMenu", {
+                                                        count: bookmarkSelection.count,
+                                                    }),
                                                     action: handleBulkDeleteBookmarks,
                                                 },
                                             ]}
@@ -558,7 +563,9 @@ const BookDetailsPanel: React.FC<BookDetailsPanelProps> = ({ bookLink, onClose, 
                                     </div>
                                 ) : (
                                     <div className="chapters-toolbar">
-                                        <ListNavigator.SearchInput placeholder="Search bookmarks..." />
+                                        <ListNavigator.SearchInput
+                                            placeholder={t("gallery.details.searchBookmarks")}
+                                        />
                                     </div>
                                 )}
                                 <div className="chapters-list">
@@ -569,7 +576,9 @@ const BookDetailsPanel: React.FC<BookDetailsPanelProps> = ({ bookLink, onClose, 
                     ) : (
                         <>
                             <div className="chapters-header">
-                                <h2 className="chapters-title">{notesArray.length} Notes</h2>
+                                <h2 className="chapters-title">
+                                    {t("gallery.details.notesCount", { count: notesArray.length })}
+                                </h2>
                             </div>
                             <ListNavigator.Provider
                                 items={notesArray}
@@ -580,7 +589,7 @@ const BookDetailsPanel: React.FC<BookDetailsPanelProps> = ({ bookLink, onClose, 
                                 onFilteredItemsChange={(items) =>
                                     noteSelection.setVisibleOrder(items.map((n) => n.id))
                                 }
-                                emptyMessage="No notes"
+                                emptyMessage={t("gallery.details.noNotes")}
                             >
                                 {noteSelection.isSelectionMode ? (
                                     <div className="chapters-toolbar">
@@ -591,9 +600,9 @@ const BookDetailsPanel: React.FC<BookDetailsPanelProps> = ({ bookLink, onClose, 
                                             onCancel={noteSelection.clearSelection}
                                             extraMenuItems={[
                                                 {
-                                                    label: `Delete ${noteSelection.count} Note${
-                                                        noteSelection.count === 1 ? "" : "s"
-                                                    }`,
+                                                    label: t("gallery.details.deleteNotesMenu", {
+                                                        count: noteSelection.count,
+                                                    }),
                                                     action: handleBulkDeleteNotes,
                                                 },
                                             ]}
@@ -601,7 +610,9 @@ const BookDetailsPanel: React.FC<BookDetailsPanelProps> = ({ bookLink, onClose, 
                                     </div>
                                 ) : (
                                     <div className="chapters-toolbar">
-                                        <ListNavigator.SearchInput placeholder="Search notes..." />
+                                        <ListNavigator.SearchInput
+                                            placeholder={t("gallery.details.searchNotes")}
+                                        />
                                     </div>
                                 )}
                                 <div className="chapters-list">

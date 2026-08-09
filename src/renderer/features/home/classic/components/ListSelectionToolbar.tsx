@@ -1,6 +1,7 @@
 import { faCheck, faEllipsisV, faSort, faTimes } from "@fortawesome/free-solid-svg-icons";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { useAppContext } from "@renderer/App";
+import { useTranslation } from "react-i18next";
 
 /** Props for {@link ListSelectionToolbar}. */
 export type ListSelectionToolbarProps = {
@@ -33,14 +34,15 @@ const ListSelectionToolbar: React.FC<ListSelectionToolbarProps> = ({
     extraMenuItems,
     showInvertButton = true,
 }) => {
+    const { t } = useTranslation("home");
     const { setContextMenuData } = useAppContext();
 
     const handleMore = (e: React.MouseEvent) => {
         const items: Menu.ListItem[] = [
             ...(extraMenuItems ?? []),
             ...(extraMenuItems?.length ? [window.contextMenu.template.divider()] : []),
-            { label: "Invert Selection", action: onInvertSelection },
-            { label: "Clear Selection", action: onCancel },
+            { label: t("shared.selection.invert"), action: onInvertSelection },
+            { label: t("shared.selection.clear"), action: onCancel },
         ];
         setContextMenuData({
             clickX: e.currentTarget.getBoundingClientRect().x,
@@ -53,20 +55,20 @@ const ListSelectionToolbar: React.FC<ListSelectionToolbarProps> = ({
 
     return (
         <div className="listSelectionToolbar">
-            <button data-tooltip="Cancel selection" onClick={onCancel} className="listSelectionCancel">
+            <button data-tooltip={t("shared.selection.cancel")} onClick={onCancel} className="listSelectionCancel">
                 <FontAwesomeIcon icon={faTimes} />
             </button>
-            <span className="listSelectionCount">{count} selected</span>
+            <span className="listSelectionCount">{t("shared.selection.count", { count })}</span>
             <span className="spacer" />
-            <button data-tooltip="Select All" onClick={onSelectAll}>
+            <button data-tooltip={t("shared.selection.selectAll")} onClick={onSelectAll}>
                 <FontAwesomeIcon icon={faCheck} />
             </button>
             {showInvertButton && (
-                <button data-tooltip="Invert Selection" onClick={onInvertSelection}>
+                <button data-tooltip={t("shared.selection.invert")} onClick={onInvertSelection}>
                     <FontAwesomeIcon icon={faSort} rotation={90} />
                 </button>
             )}
-            <button data-tooltip="More" onClick={handleMore}>
+            <button data-tooltip={t("shared.selection.more")} onClick={handleMore}>
                 <FontAwesomeIcon icon={faEllipsisV} />
             </button>
         </div>

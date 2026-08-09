@@ -1,3 +1,4 @@
+import i18n from "@renderer/i18n";
 import { createRendererLogger } from "./logger";
 
 const dialogLog = createRendererLogger("dialogUtils");
@@ -28,6 +29,7 @@ type DialogUtils = {
         noOption,
         buttons,
         defaultId,
+        cancelId,
     }: {
         title?: string;
         message: string;
@@ -35,6 +37,7 @@ type DialogUtils = {
         noOption?: boolean;
         buttons?: string[];
         defaultId?: number;
+        cancelId?: number;
     }) => Promise<Electron.MessageBoxReturnValue>;
 
     /**
@@ -74,6 +77,16 @@ type DialogUtils = {
     showSaveDialog: (options: Electron.SaveDialogOptions) => Promise<Electron.SaveDialogReturnValue>;
 };
 
+/**
+ * Default dialog titles/buttons from the `dialogs` / `common` catalogs (exact English preserved).
+ */
+const dialogDefaults = {
+    errorTitle: () => i18n.t("titles.error", { ns: "dialogs" }),
+    warningTitle: () => i18n.t("titles.warning", { ns: "dialogs" }),
+    confirmTitle: () => i18n.t("titles.confirm", { ns: "dialogs" }),
+    yesNo: () => [i18n.t("buttons.yes", { ns: "dialogs" }), i18n.t("buttons.no", { ns: "dialogs" })] as string[],
+};
+
 export const dialogUtils: DialogUtils = {
     nodeError: (err: NodeJS.ErrnoException) => {
         dialogLog.error("nodeError dialog: forwarding OS error to main", err);
@@ -83,31 +96,34 @@ export const dialogUtils: DialogUtils = {
             message: err.message,
         });
     },
-    customError: ({ title = "Error", message, detail, log = true }) => {
+    customError: ({ title, message, detail, log = true }) => {
         if (log) dialogLog.error(`customError: ${message}`, detail || "");
         return window.electron.invoke("dialog:error", {
-            title,
+            title: title ?? dialogDefaults.errorTitle(),
             message,
             detail,
             log,
         });
     },
-    warn: ({ title = "Warning", message, detail, noOption = true, buttons, defaultId }) => {
+    warn: ({ title, message, detail, noOption = true, buttons, defaultId, cancelId }) => {
         if (!noOption && !buttons) {
-            buttons = ["Yes", "No"];
+            buttons = dialogDefaults.yesNo();
+            // Esc/close must hit No; Electron only auto-maps English "No"/"Cancel" labels.
             if (typeof defaultId !== "number") defaultId = 1;
+            if (typeof cancelId !== "number") cancelId = 1;
         }
         return window.electron.invoke("dialog:warn", {
-            title,
+            title: title ?? dialogDefaults.warningTitle(),
             message,
             detail,
             noOption,
             buttons,
             defaultId,
+            cancelId,
         });
     },
     confirm: ({
-        title = "Confirm",
+        title,
         message,
         detail,
         noOption = true,
@@ -119,11 +135,13 @@ export const dialogUtils: DialogUtils = {
         type = "info",
     }) => {
         if (!noOption && !buttons) {
-            buttons = ["Yes", "No"];
+            buttons = dialogDefaults.yesNo();
+            // Esc/close must hit No; Electron only auto-maps English "No"/"Cancel" labels.
             if (typeof defaultId !== "number") defaultId = 1;
+            if (typeof cancelId !== "number") cancelId = 1;
         }
         return window.electron.invoke("dialog:confirm", {
-            title,
+            title: title ?? dialogDefaults.confirmTitle(),
             message,
             detail,
             noOption,

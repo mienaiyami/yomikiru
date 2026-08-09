@@ -1,5 +1,6 @@
 import fs from "node:fs";
 import path from "node:path";
+import { BUILTIN_EN_SOURCE_ID } from "@common/i18n";
 import { ipc } from "@electron/ipc/utils";
 import { app } from "electron";
 import { z } from "zod";
@@ -25,6 +26,12 @@ const mainSettingsSchema = z
         skipPatch: z.boolean().default(false),
         autoDownload: z.boolean().default(false),
         channel: z.enum(["stable", "beta"]).default("stable"),
+
+        /**
+         * Active language source id (`builtin:en` or `pack:<packId>`).
+         * Mutate only via `i18n:setSource` so menus and both i18n instances stay in sync.
+         */
+        languageSourceId: z.string().default(BUILTIN_EN_SOURCE_ID),
     })
     .strip();
 
@@ -120,7 +127,9 @@ export class MainSettings {
     private static registerIpcHandlers(): void {
         ipc.handle("mainSettings:get", () => MainSettings.settings);
         ipc.handle("mainSettings:update", async (_, newSettings: Partial<MainSettingsType>) => {
-            await MainSettings.updateSettings(newSettings);
+            /* languageSourceId is owned by i18n:setSource — ignore if sent here */
+            const { languageSourceId: _ignored, ...rest } = newSettings;
+            await MainSettings.updateSettings(rest);
             const windows = WindowManager.getAllWindows();
             windows.forEach((window) => {
                 ipc.send(window.webContents, "mainSettings:sync", MainSettings.settings);

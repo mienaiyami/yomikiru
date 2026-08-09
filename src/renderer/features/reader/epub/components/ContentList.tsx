@@ -1,5 +1,6 @@
 import { useAppSelector } from "@store/hooks";
 import { Fragment, memo, useState } from "react";
+import { useTranslation } from "react-i18next";
 
 const ContentList = memo(
     ({
@@ -16,10 +17,11 @@ const ContentList = memo(
         sideListRef: React.RefObject<HTMLDivElement>;
     }) => {
         //todo add button to show toc.xhtml if exist
+        const { t } = useTranslation("reader");
         const appSettings = useAppSelector((store) => store.appSettings);
         const [listShow, setListShow] = useState(new Array(epubTOC.size).fill(false));
 
-        if (epubTOC.size === 0) return <p>No TOC found in epub</p>;
+        if (epubTOC.size === 0) return <p>{t("sideList.noToc")}</p>;
 
         const NestedList = ({ ncx }: { ncx: EPUB.NCXTree[] }) => {
             return (

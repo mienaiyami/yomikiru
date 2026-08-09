@@ -472,6 +472,9 @@ html{
                     p {
                         padding: 10px 20px;
                     }
+                    p.loginDesc {
+                        white-space: pre-line;
+                    }
                     .btns {
                         display: flex;
                         flex-direction: column;

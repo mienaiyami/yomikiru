@@ -1,12 +1,12 @@
 /**
- * [index, name]
+ * [index, settings i18n key under `tabs.*`]
  */
 const TAB_INFO = {
-    settings: [0, "Settings"],
-    shortcutKeys: [1, "Shortcut Keys"],
-    makeTheme: [2, "Theme Maker"],
-    about: [3, "About"],
-    extras: [4, "Extras"],
+    settings: [0, "tabs.settings"],
+    shortcutKeys: [1, "tabs.shortcutKeys"],
+    makeTheme: [2, "tabs.makeTheme"],
+    about: [3, "tabs.about"],
+    extras: [4, "tabs.extras"],
 } as const;
 
 Object.freeze(TAB_INFO);

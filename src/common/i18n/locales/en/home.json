@@ -1,0 +1,195 @@
+{
+    "shared": {
+        "sort": {
+            "tooltip": "Sort: {{arrow}}{{by}}",
+            "name": "Name",
+            "title": "Title",
+            "lastRead": "Last Read",
+            "dateModified": "Date Modified",
+            "dateAdded": "Date Added",
+            "dateUpdated": "Date Updated",
+            "ascending": "Ascending",
+            "descending": "Descending"
+        },
+        "selection": {
+            "cancel": "Cancel selection",
+            "count": "{{count}} selected",
+            "selectAll": "Select All",
+            "invert": "Invert Selection",
+            "clear": "Clear Selection",
+            "more": "More",
+            "copyPath": "Copy Path",
+            "bookmark": "Bookmark"
+        },
+        "continueReading": "Continue Reading",
+        "startReading": "Start Reading",
+        "selectCover": "Select Cover",
+        "removeFromLibrary": {
+            "title": "Remove from Library",
+            "message_one": "Remove {{count}} item from library? Related bookmarks will also be removed. Files on disk are not deleted.",
+            "message_other": "Remove {{count}} items from library? Related bookmarks will also be removed. Files on disk are not deleted.",
+            "menu": "Remove {{count}} from Library"
+        },
+        "epub": "EPUB",
+        "unknown": "Unknown",
+        "selectAria": "Select {{title}}"
+    },
+    "classic": {
+        "location": {
+            "title": "Location",
+            "empty": "No folders found",
+            "loading": "Loading...",
+            "open": "Open",
+            "directoryUp": "Directory Up",
+            "folderImageCount": "0 Folders, {{count}} Images",
+            "imagesTooltip": "{{count}} Images",
+            "defaultLocationMissing": "Default Location doesn't exist.",
+            "pathMissing": "Directory/File doesn't exist."
+        },
+        "bookmarks": {
+            "title": "Bookmarks",
+            "empty": "No Bookmarks",
+            "removeTitle": "Remove Bookmark",
+            "removeMessage_one": "Remove {{count}} bookmark?",
+            "removeMessage_other": "Remove {{count}} bookmarks?",
+            "removeMenu_one": "Remove {{count}} Bookmark",
+            "removeMenu_other": "Remove {{count}} Bookmarks"
+        },
+        "history": {
+            "title": "Continue Reading",
+            "empty": "Library Empty"
+        },
+        "listItem": {
+            "bookmarkNotFound": "Error: Bookmark not found",
+            "itemNotFound": "Error: Item not found",
+            "linkNotFound": "Error: Link not found",
+            "open": "Open",
+            "openInNewWindow": "Open in new Window",
+            "bookmark": "Bookmark",
+            "removeBookmark": "Remove Bookmark",
+            "tooltip": {
+                "title": "Title       : {{value}}",
+                "manga": "Manga   : {{value}}",
+                "chapter": "Chapter : {{value}}",
+                "pages": "Pages    : {{value}}",
+                "page": "Page      : {{value}}",
+                "date": "Date      : {{value}}",
+                "path": "Path      : {{value}}"
+            },
+            "missing": {
+                "locateKeepProgress": "Locate the library item on disk to keep progress, or remove this bookmark.",
+                "chapterMissingKeepBookmark": "This chapter path is missing, but the library item is still on disk. Remove this bookmark or cancel.",
+                "chapterMissingRemoveEntry": "This chapter path is missing, but the library item is still on disk. Remove the library entry or cancel."
+            }
+        }
+    },
+    "gallery": {
+        "tabs": {
+            "ariaLabel": "Home sections",
+            "continue": {
+                "label": "Continue",
+                "title": "Continue Reading"
+            },
+            "library": {
+                "label": "Library",
+                "title": "Library"
+            },
+            "favourites": {
+                "label": "Favourites",
+                "title": "Favourites"
+            }
+        },
+        "typeFilter": {
+            "ariaLabel": "Item type filter",
+            "all": {
+                "label": "All",
+                "title": "All items in this section"
+            },
+            "manga": {
+                "label": "Manga/Webcomic",
+                "title": "Includes manga, manhwa, manhua, comics, webtoons and other image-based series"
+            },
+            "book": {
+                "label": "eBook",
+                "title": "Includes EPUB books. PDF is not included."
+            }
+        },
+        "toolbar": {
+            "searchPlaceholder": "Type to Search",
+            "viewTooltip": "View: {{mode}}",
+            "displayMode": {
+                "normal": "Normal",
+                "coverOnly": "Cover Only",
+                "compact": "Compact",
+                "list": "List"
+            },
+            "viewMenu": {
+                "coverAndTitle": "Cover + Title",
+                "coverOnly": "Cover Only",
+                "compact": "Compact",
+                "list": "List"
+            },
+            "gridSize": "Grid size",
+            "gridSizeTooltip": "Grid size: {{size}}em"
+        },
+        "empty": {
+            "favourites": "No favourites yet",
+            "continueReading": "Nothing in progress"
+        },
+        "trackWithAnilist": "Track with AniList…",
+        "details": {
+            "itemNotFound": "Item not found",
+            "unknownManga": "Unknown Manga",
+            "coverAlt": "cover",
+            "author": "Author",
+            "lastRead": "Last read",
+            "lastReadAt": "Last read at",
+            "currentPage": "Current page",
+            "chaptersRead": "Chapters read",
+            "about": "About",
+            "noDescription": "No description available.",
+            "editNote": "Edit Note (Not implemented)",
+            "saveNote": "Save Note",
+            "notePlaceholder": "Add notes about this manga...",
+            "content": "Content",
+            "bookmarks": "Bookmarks",
+            "notes": "Notes",
+            "chaptersCount": "{{count}} Chapters",
+            "bookmarksCount": "{{count}} Bookmarks",
+            "notesCount": "{{count}} Notes",
+            "noChapters": "No chapters found",
+            "noBookmarks": "No bookmarks",
+            "noBookmarksFound": "No bookmarks found",
+            "noNotes": "No notes",
+            "searchChapters": "Search chapters...",
+            "searchBookmarks": "Search bookmarks...",
+            "searchNotes": "Search notes...",
+            "refresh": "Refresh",
+            "page": "Page {{page}}",
+            "selectBookmarkAria": "Select bookmark {{id}}",
+            "selectNoteAria": "Select note {{id}}",
+            "markAsRead": "Mark {{count}} as Read",
+            "markAsUnread": "Mark {{count}} as Unread",
+            "deleteBookmarksTitle": "Delete Bookmarks",
+            "deleteBookmarksMessage_one": "Delete {{count}} bookmark?",
+            "deleteBookmarksMessage_other": "Delete {{count}} bookmarks?",
+            "deleteBookmarksMenu_one": "Delete {{count}} Bookmark",
+            "deleteBookmarksMenu_other": "Delete {{count}} Bookmarks",
+            "deleteNotesTitle": "Delete Notes",
+            "deleteNotesMessage_one": "Delete {{count}} note?",
+            "deleteNotesMessage_other": "Delete {{count}} notes?",
+            "deleteNotesMenu_one": "Delete {{count}} Note",
+            "deleteNotesMenu_other": "Delete {{count}} Notes",
+            "deleteNote": "Delete Note",
+            "deleteNoteMessage": "Only this note will be removed. Continue?"
+        },
+        "missing": {
+            "title": "Missing from disk",
+            "wasDeletedBook": "This EPUB was deleted or moved.",
+            "wasDeletedManga": "This manga folder or file was deleted or moved.",
+            "locateHint": "Locate it on disk to keep progress and bookmarks, or remove the library entry.",
+            "locateOnDisk": "Locate on disk",
+            "relocateFailed": "Could not update library path. The new location may already be in the library."
+        }
+    }
+}

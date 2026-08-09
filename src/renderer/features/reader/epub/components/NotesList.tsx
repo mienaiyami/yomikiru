@@ -12,6 +12,7 @@ import { dialogUtils } from "@utils/dialog";
 import { DEFAULT_HIGHLIGHT_COLORS } from "@utils/highlight";
 import { createRendererLogger } from "@utils/logger";
 import { memo, useCallback, useEffect, useLayoutEffect, useRef, useState } from "react";
+import { useTranslation } from "react-i18next";
 import { shallowEqual } from "react-redux";
 import { useAppContext } from "src/renderer/App";
 
@@ -21,6 +22,8 @@ const NoteModal: React.FC<{
     noteId: number;
     clear: () => void;
 }> = memo(({ noteId, clear }) => {
+    const { t } = useTranslation("reader");
+    const { t: tCommon } = useTranslation("common");
     const bookInReader = useAppSelector(getReaderBook);
     const dispatch = useAppDispatch();
     const note = useAppSelector((store) =>
@@ -50,7 +53,7 @@ const NoteModal: React.FC<{
         clear();
         log.error(`bookInReader missing while editing note id ${noteId}`);
         dialogUtils.customError({
-            message: "Unknown error",
+            message: t("errors.unknownError"),
         });
         return null;
     }
@@ -58,33 +61,33 @@ const NoteModal: React.FC<{
     if (!note) {
         clear();
         dialogUtils.customError({
-            message: "Note not found",
+            message: t("errors.noteNotFound"),
         });
         return null;
     }
 
     return (
         <Modal open onClose={clear} className="note-modal">
-            <h3>Edit Note</h3>
+            <h3>{t("notes.editNote")}</h3>
 
             <p className="selected-text">{note.selectedText}</p>
 
             <div className="note-input">
-                <h4>Note:</h4>
+                <h4>{t("notes.noteLabel")}</h4>
                 <textarea
                     ref={inputRef}
                     defaultValue={note.content || ""}
                     onKeyDown={(e) => {
                         e.stopPropagation();
                     }}
-                    placeholder="Enter your notes"
+                    placeholder={t("notes.placeholder")}
                 />
                 <InputColor
                     value={color}
                     onChange={(color) => {
                         setColor(color);
                     }}
-                    title="Color"
+                    title={t("notes.color")}
                     showAlpha={false}
                 />
                 <div className="color-buttons">
@@ -99,7 +102,7 @@ const NoteModal: React.FC<{
             </div>
 
             <div className="modal-actions">
-                <button onClick={clear}>Cancel</button>
+                <button onClick={clear}>{tCommon("actions.cancel")}</button>
                 <button
                     onClick={() => {
                         if (!inputRef.current) return;
@@ -113,7 +116,7 @@ const NoteModal: React.FC<{
                         clear();
                     }}
                 >
-                    Save
+                    {tCommon("actions.save")}
                 </button>
             </div>
         </Modal>
@@ -127,6 +130,8 @@ const NotesList: React.FC<{
     editNoteId: number | null;
     setEditNoteId: (noteId: number | null) => void;
 }> = ({ openChapterById, addNote, editNoteId, setEditNoteId }) => {
+    const { t } = useTranslation("reader");
+    const { t: tDialogs } = useTranslation("dialogs");
     const { setContextMenuData } = useAppContext();
     const confirmDeleteItem = useAppSelector((store) => store.appSettings.confirmDeleteItem, shallowEqual);
     const dispatch = useAppDispatch();
@@ -154,11 +159,11 @@ const NotesList: React.FC<{
             } catch (error) {
                 log.error("navigate to note chapter failed", error);
                 dialogUtils.customError({
-                    message: "Could not find the note",
+                    message: t("errors.couldNotFindNote"),
                 });
             }
         },
-        [notesArray, openChapterById],
+        [notesArray, openChapterById, t],
     );
 
     const handleNoteContextMenu = useCallback(
@@ -171,21 +176,21 @@ const NotesList: React.FC<{
             const note = notesArray.find((n) => n.id === noteId);
             if (!note) {
                 dialogUtils.customError({
-                    message: "Could not find the note",
+                    message: t("errors.couldNotFindNote"),
                 });
                 return;
             }
 
             const items: Menu.ListItem[] = [
                 {
-                    label: "Edit Note",
+                    label: t("contextMenu.editNote"),
                     action() {
                         if (!bookInReader) return;
                         setEditNoteId(note.id);
                     },
                 },
                 {
-                    label: "Delete Note",
+                    label: t("contextMenu.deleteNote"),
                     action() {
                         if (!bookInReader) return;
                         if (!confirmDeleteItem) {
@@ -193,10 +198,10 @@ const NotesList: React.FC<{
                         } else {
                             dialogUtils
                                 .warn({
-                                    title: "Delete Note",
-                                    message: "Only this note will be removed. Continue?",
+                                    title: t("dialogs.deleteNoteTitle"),
+                                    message: t("dialogs.deleteNoteMessage"),
                                     noOption: false,
-                                    buttons: ["Cancel", "Yes"],
+                                    buttons: [tDialogs("buttons.cancel"), tDialogs("buttons.yes")],
                                     defaultId: 0,
                                 })
                                 .then(({ response }) => {
@@ -215,7 +220,7 @@ const NotesList: React.FC<{
                 items,
             });
         },
-        [notesArray, setContextMenuData, bookInReader, confirmDeleteItem],
+        [notesArray, setContextMenuData, bookInReader, confirmDeleteItem, t, tDialogs, dispatch],
     );
 
     useLayoutEffect(() => {
@@ -241,7 +246,9 @@ const NotesList: React.FC<{
                     <span className="highlight-color" style={{ backgroundColor: note.color }}></span>
                     <div>
                         <span className="text">{note.chapterName}</span>
-                        {note.content && <span className="text">Note: {note.content}</span>}
+                        {note.content && (
+                            <span className="text">{t("notes.noteWithContent", { content: note.content })}</span>
+                        )}
                         <span
                             className={note.content === "" ? "text" : "note-selected-text"}
                             title={note.selectedText}
@@ -257,7 +264,7 @@ const NotesList: React.FC<{
                 </ListItem>
             );
         },
-        [handleNoteClick, handleNoteContextMenu],
+        [handleNoteClick, handleNoteContextMenu, t],
     );
 
     return (
@@ -281,7 +288,11 @@ const NotesList: React.FC<{
                 </div>
             </div>
             <div className="location-cont">
-                <ListNavigator.Provider items={notesArray} renderItem={renderNoteItem} emptyMessage="No Notes">
+                <ListNavigator.Provider
+                    items={notesArray}
+                    renderItem={renderNoteItem}
+                    emptyMessage={t("sideList.noNotes")}
+                >
                     <ListNavigator.List />
                 </ListNavigator.Provider>
 

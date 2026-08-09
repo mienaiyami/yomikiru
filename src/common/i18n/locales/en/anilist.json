@@ -1,0 +1,72 @@
+{
+    "login": {
+        "title": "Link AniList",
+        "desc": "Click \"Proceed\" to start authorization process. You will be redirected to your default browser.\n\nAfter authorization, anilist will give you a token, copy and paste that below to complete linking.\n\nCheck Usage & Features in settings for more info or ask on the github page.",
+        "proceed": "Proceed",
+        "tokenPlaceholder": "Paste your token here",
+        "submit": "Submit",
+        "checking": "Checking...",
+        "linked": "Linked!",
+        "invalidToken": "Invalid Token / Error"
+    },
+    "bar": {
+        "brand": "AniList",
+        "separator": " : ",
+        "track": "Track",
+        "networkError": "Network Error",
+        "moreOptions": "More Options",
+        "syncFailed": "Failed to sync AniList progress."
+    },
+    "search": {
+        "title": "Add Tracking",
+        "placeholder": "Search on Anilist",
+        "noResult": "No Result",
+        "started": "Started: {{date}}"
+    },
+    "edit": {
+        "coverAlt": "Cover",
+        "status": "Status",
+        "chapters": "Chapters",
+        "volumes": "Volumes",
+        "score": "Score",
+        "startDate": "Start Date",
+        "finishDate": "Finish Date",
+        "repeat": "Repeat",
+        "private": "Private",
+        "saving": "Saving...",
+        "saved": "Saved!",
+        "failed": "Failed!",
+        "untrack": "Untrack",
+        "untrackTitle": "This only remove tracking locally. Anilist entry is not deleted.",
+        "statusReading": "Reading",
+        "statusPlanToRead": "Plan to Read",
+        "statusCompleted": "Completed",
+        "statusDropped": "Dropped",
+        "statusPaused": "Paused",
+        "statusRepeating": "Repeating"
+    },
+    "format": {
+        "MANGA": "Manga",
+        "NOVEL": "Novel",
+        "LIGHT_NOVEL": "Light Novel",
+        "ONE_SHOT": "One Shot",
+        "MANHWA": "Manhwa",
+        "MANHUA": "Manhua",
+        "DOUJINSHI": "Doujinshi",
+        "OEL": "OEL"
+    },
+    "status": {
+        "FINISHED": "Finished",
+        "RELEASING": "Releasing",
+        "CANCELLED": "Cancelled",
+        "HIATUS": "Hiatus",
+        "NOT_YET_RELEASED": "Not Yet Released"
+    },
+    "errors": {
+        "loginFailed": "Unable to login to AniList. If persists, try logging in again using different token.",
+        "requestFailed": "Unable to make request to AniList server.",
+        "invalidToken": "AniList: Invalid token",
+        "invalidTokenDetail": "Try logging out and in again.",
+        "username": "Error"
+    }
+}

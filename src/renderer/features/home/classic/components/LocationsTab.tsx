@@ -8,6 +8,7 @@ import { dialogUtils } from "@utils/dialog";
 import { formatUtils, promptSelectDir } from "@utils/file";
 import { createRendererLogger } from "@utils/logger";
 import { type ReactElement, useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useTranslation } from "react-i18next";
 import { useAppContext } from "src/renderer/App";
 
 const log = createRendererLogger("home/LocationsTab");
@@ -15,6 +16,7 @@ const log = createRendererLogger("home/LocationsTab");
 type LocationData = { name: string; link: string; dateModified: number };
 
 const LocationsTab = (): ReactElement => {
+    const { t } = useTranslation("home");
     const { openInReader, setContextMenuData } = useAppContext();
     const library = useAppSelector((store) => store.library.items);
     const appSettings = useAppSelector((store) => store.appSettings);
@@ -34,11 +36,11 @@ const LocationsTab = (): ReactElement => {
         try {
             if (!window.fs.existsSync(link)) {
                 if (!window.fs.existsSync(appSettings.baseDir)) {
-                    dialogUtils.customError({ message: "Default Location doesn't exist." });
+                    dialogUtils.customError({ message: t("classic.location.defaultLocationMissing") });
                     promptSelectDir((path) => dispatch(setAppSettings({ baseDir: path as string })));
                     return;
                 }
-                dialogUtils.customError({ message: "Directory/File doesn't exist." });
+                dialogUtils.customError({ message: t("classic.location.pathMissing") });
                 setCurrentLink(window.path.resolve(appSettings.baseDir));
                 return;
             }
@@ -243,21 +245,20 @@ const LocationsTab = (): ReactElement => {
                 onContextMenu={handleContextMenu}
                 handleExtraKeyDown={handleKeyDown}
                 onSelect={handleSelect}
-                emptyMessage="No folders found"
+                emptyMessage={t("classic.location.empty")}
             >
-                <h2>Location</h2>
+                <h2>{t("classic.location.title")}</h2>
                 <div className="tools">
                     <div className="row1">
                         <button
-                            data-tooltip={
-                                "Sort: " +
-                                (appSettings.locationListSortType === "normal" ? "▲ " : "▼ ") +
-                                appSettings.locationListSortBy.toUpperCase()
-                            }
+                            data-tooltip={t("shared.sort.tooltip", {
+                                arrow: appSettings.locationListSortType === "normal" ? "▲ " : "▼ ",
+                                by: appSettings.locationListSortBy.toUpperCase(),
+                            })}
                             onClick={(e) => {
                                 const items: Menu.ListItem[] = [
                                     {
-                                        label: "Name",
+                                        label: t("shared.sort.name"),
                                         action() {
                                             dispatch(
                                                 setAppSettings({
@@ -268,7 +269,7 @@ const LocationsTab = (): ReactElement => {
                                         selected: appSettings.locationListSortBy === "name",
                                     },
                                     {
-                                        label: "Date Modified",
+                                        label: t("shared.sort.dateModified"),
                                         action() {
                                             dispatch(
                                                 setAppSettings({
@@ -281,7 +282,7 @@ const LocationsTab = (): ReactElement => {
                                     },
                                     window.contextMenu.template.divider(),
                                     {
-                                        label: "Ascending",
+                                        label: t("shared.sort.ascending"),
                                         action() {
                                             dispatch(
                                                 setAppSettings({
@@ -292,7 +293,7 @@ const LocationsTab = (): ReactElement => {
                                         selected: appSettings.locationListSortType === "normal",
                                     },
                                     {
-                                        label: "Descending",
+                                        label: t("shared.sort.descending"),
                                         action() {
                                             dispatch(
                                                 setAppSettings({
@@ -315,7 +316,7 @@ const LocationsTab = (): ReactElement => {
                             <FontAwesomeIcon icon={faSort} />
                         </button>
                         <button
-                            data-tooltip="Directory Up"
+                            data-tooltip={t("classic.location.directoryUp")}
                             onClick={() => {
                                 setCurrentLink((link) => window.path.dirname(link));
                             }}
@@ -326,20 +327,20 @@ const LocationsTab = (): ReactElement => {
                     </div>
                     <div className="currentPath">
                         <button
-                            data-tooltip={`${imageCount} Images`}
+                            data-tooltip={t("classic.location.imagesTooltip", { count: imageCount })}
                             disabled={imageCount <= 0}
                             onClick={() => openInReader(currentLink)}
                         >
-                            Open
+                            {t("classic.location.open")}
                         </button>
                         <span>{currentLink}</span>
                     </div>
                 </div>
                 <div className="location-cont" ref={locationContRef}>
                     {isLoadingFile ? (
-                        <p>Loading...</p>
+                        <p>{t("classic.location.loading")}</p>
                     ) : locations.length === 0 ? (
-                        <p>0 Folders, {imageCount} Images</p>
+                        <p>{t("classic.location.folderImageCount", { count: imageCount })}</p>
                     ) : (
                         <ListNavigator.List />
                     )}

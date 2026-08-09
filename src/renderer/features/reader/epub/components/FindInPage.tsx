@@ -1,8 +1,10 @@
 import { faArrowDown, faArrowUp } from "@fortawesome/free-solid-svg-icons";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { memo, useState } from "react";
+import { useTranslation } from "react-i18next";
 
 const FindInPage = memo(({ findInPage }: { findInPage: (str: string, forward?: boolean) => void }) => {
+    const { t } = useTranslation("reader");
     const [findInPageStr, setFindInPageStr] = useState<string>("");
     return (
         <div className="row1">
@@ -10,7 +12,7 @@ const FindInPage = memo(({ findInPage }: { findInPage: (str: string, forward?: b
                 type="text"
                 name=""
                 spellCheck={false}
-                placeholder="Find In Page (regexp allowed)"
+                placeholder={t("findInPage.placeholder")}
                 onChange={(e) => {
                     setFindInPageStr(e.currentTarget.value);
                 }}
@@ -30,7 +32,7 @@ const FindInPage = memo(({ findInPage }: { findInPage: (str: string, forward?: b
                 }}
             />
             <button
-                data-tooltip="Previous"
+                data-tooltip={t("findInPage.previous")}
                 onClick={() => {
                     findInPage(findInPageStr, false);
                 }}
@@ -38,7 +40,7 @@ const FindInPage = memo(({ findInPage }: { findInPage: (str: string, forward?: b
                 <FontAwesomeIcon icon={faArrowUp} />
             </button>
             <button
-                data-tooltip="Next"
+                data-tooltip={t("findInPage.next")}
                 onClick={() => {
                     findInPage(findInPageStr);
                 }}

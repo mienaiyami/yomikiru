@@ -12,6 +12,7 @@ import {
 } from "@utils/librarySettingsImport";
 import { createRendererLogger } from "@utils/logger";
 import { useCallback, useState } from "react";
+import { useTranslation } from "react-i18next";
 
 const log = createRendererLogger("settings/LibrarySettings");
 
@@ -21,6 +22,7 @@ type LibrarySettingsBusy = "clear" | "regen" | "importChildren" | "importEpubsRe
  * Library-related settings: thumbnail cache, bulk import from the default folder (Settings → Default Location).
  */
 const LibrarySettings: React.FC = () => {
+    const { t } = useTranslation("settings");
     const dispatch = useAppDispatch();
     const appSettings = useAppSelector((s) => s.appSettings);
     const libraryItems = useAppSelector((s) => s.library.items);
@@ -57,35 +59,35 @@ const LibrarySettings: React.FC = () => {
 
     const handleClearCache = useCallback(async () => {
         const { response } = await dialogUtils.warn({
-            title: "Clear cover cache",
-            message: "Remove all generated thumbnail files in the app data covers folder?",
-            detail: "Gallery will show placeholders until thumbnails are created again (open items or regenerate).",
+            title: t("library.clearCacheTitle"),
+            message: t("library.clearCacheMessage"),
+            detail: t("library.clearCacheDetail"),
             noOption: false,
-            buttons: ["Cancel", "Clear"],
+            buttons: [t("shared.cancel"), t("shared.clear")],
             defaultId: 0,
         });
         if (!response) return;
-        await runBusy("clear", "Could not clear cover cache.", async () => {
+        await runBusy("clear", t("library.clearCacheError"), async () => {
             const res = await window.electron.invoke("covers:clearCache");
             if (!res.ok) {
-                dialogUtils.customError({ message: res.message || "Could not clear cover cache." });
+                dialogUtils.customError({ message: res.message || t("library.clearCacheError") });
                 return;
             }
             await dispatch(fetchAllItemsWithProgress());
         });
-    }, [dispatch, runBusy]);
+    }, [dispatch, runBusy, t]);
 
     const handleRegenerateAll = useCallback(async () => {
         const { response } = await dialogUtils.warn({
-            title: "Regenerate all covers",
-            message: "Rebuild WebP thumbnails for every library item? This may take several minutes.",
-            detail: "Manga uses folder cover images when present; books require reading each EPUB. You can cancel by closing the app.",
+            title: t("library.regenTitle"),
+            message: t("library.regenMessage"),
+            detail: t("library.regenDetail"),
             noOption: false,
-            buttons: ["Cancel", "Regenerate"],
+            buttons: [t("shared.cancel"), t("library.regenerate")],
             defaultId: 0,
         });
         if (!response) return;
-        await runBusy("regen", "Regenerate stopped due to an error.", async () => {
+        await runBusy("regen", t("library.regenError"), async () => {
             const list = Object.values(libraryItems).filter(
                 (item): item is NonNullable<typeof item> => item != null,
             );
@@ -102,7 +104,7 @@ const LibrarySettings: React.FC = () => {
             }
             await dispatch(fetchAllItemsWithProgress());
         });
-    }, [dispatch, libraryItems, validateDirectory, runBusy]);
+    }, [dispatch, libraryItems, validateDirectory, runBusy, t]);
 
     /**
      * Adds one immediate child of the default folder: a manga folder if it validates as a packed series,
@@ -135,21 +137,18 @@ const LibrarySettings: React.FC = () => {
     const handleImportDefaultFolderChildren = useCallback(async () => {
         const baseDir = getExistingBaseDir(appSettings.baseDir);
         if (!baseDir) {
-            dialogUtils.customError({ message: "Set a valid Default Location first." });
+            dialogUtils.customError({ message: t("library.setDefaultFirst") });
             return;
         }
         const { response } = await dialogUtils.warn({
-            title: "Import from default folder",
-            message:
-                "Add library entries for each immediate file or folder in your default location: " +
-                "folders as manga (when they look like packed series), .epub files as books. " +
-                "Existing entries are skipped.",
+            title: t("library.importTitle"),
+            message: t("library.importMessage"),
             noOption: false,
-            buttons: ["Cancel", "Import"],
+            buttons: [t("shared.cancel"), t("library.importBtn")],
             defaultId: 0,
         });
         if (!response) return;
-        await runBusy("importChildren", "Import stopped due to an error.", async () => {
+        await runBusy("importChildren", t("library.importError"), async () => {
             let added = 0;
             let skipped = 0;
             let failed = 0;
@@ -169,7 +168,7 @@ const LibrarySettings: React.FC = () => {
             log.info("import default folder children", { added, skipped, failed });
             await showImportFinishedSummary(added, skipped, failed, "folderChildren");
         });
-    }, [appSettings.baseDir, dispatch, tryAddImmediateChild, runBusy]);
+    }, [appSettings.baseDir, dispatch, tryAddImmediateChild, runBusy, t]);
 
     /**
      * Walks `baseDir` recursively and adds every `.epub` file not already in the library.
@@ -177,20 +176,18 @@ const LibrarySettings: React.FC = () => {
     const handleImportAllEpubsRecursive = useCallback(async () => {
         const baseDir = getExistingBaseDir(appSettings.baseDir);
         if (!baseDir) {
-            dialogUtils.customError({ message: "Set a valid Default Location first." });
+            dialogUtils.customError({ message: t("library.setDefaultFirst") });
             return;
         }
         const { response } = await dialogUtils.warn({
-            title: "Import all EPUBs",
-            message:
-                "Scan your default folder recursively and add every .epub file as a book. " +
-                "This can take a long time on large trees. Existing entries are skipped.",
+            title: t("library.importAllEpubsTitle"),
+            message: t("library.importAllEpubsMessage"),
             noOption: false,
-            buttons: ["Cancel", "Scan"],
+            buttons: [t("shared.cancel"), t("library.scan")],
             defaultId: 0,
         });
         if (!response) return;
-        await runBusy("importEpubsRecursive", "Scan stopped due to an error.", async () => {
+        await runBusy("importEpubsRecursive", t("library.scanError"), async () => {
             const queue: string[] = [baseDir];
             let added = 0;
             let skipped = 0;
@@ -207,7 +204,7 @@ const LibrarySettings: React.FC = () => {
                         queue.push(full);
                     } else if (name.toLowerCase().endsWith(".epub")) {
                         scanned += 1;
-                        setImportLabel(`EPUBs: ${scanned} scanned, +${added} added`);
+                        setImportLabel(t("library.epubsProgress", { scanned, added }));
                         const norm = window.path.normalize(full);
                         if (store.getState().library.items[norm]) {
                             skipped += 1;
@@ -226,15 +223,17 @@ const LibrarySettings: React.FC = () => {
             log.info("import all epubs recursive", { added, skipped, failed, scanned });
             await showImportFinishedSummary(added, skipped, failed, "recursiveEpubs");
         });
-    }, [appSettings.baseDir, appSettings.keepExtractedFiles, dispatch, runBusy]);
+    }, [appSettings.baseDir, appSettings.keepExtractedFiles, dispatch, runBusy, t]);
 
     const disabled = busy !== null;
 
     return (
         <div className="settingItem2" id="settings-library">
-            <h3>Library</h3>
+            <h3>{t("library.title")}</h3>
             <div className="desc">
-                Thumbnails live under app user data <code>covers</code>. Bulk import uses your{" "}
+                {t("library.thumbnailsDescBefore")}
+                <code>covers</code>
+                {t("library.thumbnailsDescMid")}
                 <a
                     onClick={() => {
                         document.getElementById("settings-default-location")?.scrollIntoView({
@@ -243,41 +242,45 @@ const LibrarySettings: React.FC = () => {
                         });
                     }}
                 >
-                    Default Location
-                </a>{" "}
-                (top of this page).
+                    {t("defaultLocation.title")}
+                </a>
+                {t("library.thumbnailsDescAfter")}
             </div>
 
             <div className="desc" style={{ marginTop: "1rem" }}>
-                <b>Thumbnails</b>
+                <b>{t("library.thumbnails")}</b>
             </div>
-            <div className="desc">
-                Clear generated files to free space, or rebuild WebP thumbnails for every library item.
-            </div>
+            <div className="desc">{t("library.clearRegenDesc")}</div>
             <div className="main row" style={{ gap: "0.5rem", flexWrap: "wrap" }}>
                 <button type="button" disabled={disabled} onClick={() => void handleClearCache()}>
-                    {busy === "clear" ? "Clearing…" : "Clear cached thumbnails"}
+                    {busy === "clear" ? t("library.clearing") : t("library.clearCached")}
                 </button>
                 <button type="button" disabled={disabled} onClick={() => void handleRegenerateAll()}>
-                    {busy === "regen" ? `Regenerating… ${regenLabel}` : "Regenerate all thumbnails"}
+                    {busy === "regen"
+                        ? t("library.regenerating", { label: regenLabel })
+                        : t("library.regenerateAll")}
                 </button>
             </div>
 
             <div className="desc" style={{ marginTop: "1.25rem" }}>
-                <b>Import from default folder</b>
+                <b>{t("library.importFromDefault")}</b>
             </div>
             <div className="desc">
-                <b>Immediate children:</b> each subfolder is checked as manga (packed layout); each{" "}
-                <code>.epub</code> in that folder becomes a book. Invalid or unrecognized entries are skipped.
+                <b>{t("library.immediateChildren")}</b>
+                {t("library.importPackedDescBefore")}
+                <code>.epub</code>
+                {t("library.importPackedDescAfter")}
             </div>
             <div className="main row" style={{ gap: "0.5rem", flexWrap: "wrap" }}>
                 <button type="button" disabled={disabled} onClick={() => void handleImportDefaultFolderChildren()}>
                     {busy === "importChildren"
-                        ? `Importing… ${importLabel}`
-                        : "Add valid items from default folder"}
+                        ? t("library.importing", { label: importLabel })
+                        : t("library.addValidItems")}
                 </button>
                 <button type="button" disabled={disabled} onClick={() => void handleImportAllEpubsRecursive()}>
-                    {busy === "importEpubsRecursive" ? `Scanning… ${importLabel}` : "Add all EPUBs recursively"}
+                    {busy === "importEpubsRecursive"
+                        ? t("library.scanning", { label: importLabel })
+                        : t("library.addAllEpubs")}
                 </button>
             </div>
         </div>

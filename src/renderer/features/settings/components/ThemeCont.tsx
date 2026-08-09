@@ -9,6 +9,7 @@ import { dialogUtils } from "@utils/dialog";
 import { initThemeData, themeProps } from "@utils/theme";
 import { randomString } from "@utils/utils";
 import { type ReactElement, useEffect, useLayoutEffect, useRef, useState } from "react";
+import { useTranslation } from "react-i18next";
 
 // todo: refactor, giving up for now coz too messy
 
@@ -23,6 +24,7 @@ const ThemeElement = ({
     currentTheme: ThemeData["main"];
     changeValue: (prop: ThemeDataMain, value: string) => void;
 }): ReactElement => {
+    const { t } = useTranslation("settings");
     const ref = useRef<HTMLInputElement>(null);
     const originalColor = useRef<string | null>(null);
     const [firstRendered, setFirstRendered] = useState(false);
@@ -71,13 +73,13 @@ const ThemeElement = ({
                     onClick={() => {
                         if (originalColor.current) changeValue(prop, originalColor.current);
                     }}
-                    title="Reset"
+                    title={t("themeMaker.reset")}
                 >
                     <FontAwesomeIcon icon={faSync} />
                 </button>
                 <label
                     className={`${variable === `var(${prop})` ? "disabled" : ""} ${checked ? "selected" : ""}`}
-                    title="Link to variable"
+                    title={t("themeMaker.linkToVariable")}
                     onKeyDown={(e) => {
                         if ([" ", "Enter"].includes(e.key)) {
                             e.preventDefault();
@@ -117,7 +119,7 @@ const ThemeElement = ({
                                 setRealColor(colorUtils.new(value));
                             },
                         ]}
-                        title="Color"
+                        title={t("themeMaker.color")}
                     />
                 )}
             </td>
@@ -126,6 +128,7 @@ const ThemeElement = ({
 };
 
 const ThemeCont = () => {
+    const { t } = useTranslation("settings");
     const theme = useAppSelector((store) => store.theme.name);
     const allThemes = useAppSelector((store) => store.theme.allData);
 
@@ -170,15 +173,15 @@ const ThemeCont = () => {
             if (saveAndReplace) name = theme;
             if (initThemeData.allData.map((e) => e.name).includes(name)) {
                 dialogUtils.customError({
-                    title: "Error",
-                    message: `Can't edit default themes, save as new instead.`,
+                    title: t("themeMaker.errorTitle"),
+                    message: t("themeMaker.cantEditDefault"),
                 });
                 return;
             }
             if (!saveAndReplace && allThemes.map((e) => e.name).includes(nameInput.value)) {
                 dialogUtils.customError({
-                    title: "Error",
-                    message: `Theme name "${nameInput.value}" already exist, choose something else.`,
+                    title: t("themeMaker.errorTitle"),
+                    message: t("themeMaker.nameExists", { name: nameInput.value }),
                 });
                 return;
             }
@@ -226,7 +229,7 @@ const ThemeCont = () => {
                             })),
                         );
                     }}
-                    title="Reset All"
+                    title={t("themeMaker.resetAll")}
                 >
                     <FontAwesomeIcon icon={faSync} />
                 </button>
@@ -245,30 +248,31 @@ const ThemeCont = () => {
                         saveTheme();
                     }}
                 >
-                    Save as New
+                    {t("themeMaker.saveAsNew")}
                 </button>
                 <button
                     onClick={() => {
                         saveTheme(true);
                     }}
                 >
-                    Save
+                    {t("themeMaker.save")}
                 </button>
             </h1>
             <div className="themeMaker">
                 <ul>
-                    <li>
-                        To use previously defined color, click on link button and select property from dropdown
-                        options.
-                    </li>
-                    <li>Some changes may require refresh.</li>
+                    <li>{t("themeMaker.hintLink")}</li>
+                    <li>{t("themeMaker.hintRefresh")}</li>
                 </ul>
                 <table>
                     <tbody>
                         <tr>
-                            <th>Property</th>
-                            <th>Reset &nbsp;&nbsp;&nbsp;&nbsp;&nbsp; Link</th>
-                            <th>Color / Variable</th>
+                            <th>{t("themeMaker.property")}</th>
+                            <th>
+                                {t("themeMaker.reset")}
+                                {"\u00a0\u00a0\u00a0\u00a0\u00a0"}
+                                {t("themeMaker.link")}
+                            </th>
+                            <th>{t("themeMaker.colorVariable")}</th>
                         </tr>
                         {fakeCurrentTheme.map((e) => (
                             <tr key={e.prop} className="newThemeMakerRow">

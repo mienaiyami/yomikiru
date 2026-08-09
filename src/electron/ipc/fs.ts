@@ -2,6 +2,7 @@ import { exec } from "node:child_process";
 import fs from "node:fs/promises";
 import path from "node:path";
 import { promisify } from "node:util";
+import { mainT } from "@electron/i18n/mainI18n";
 import { saveFile } from "@electron/util";
 import { createMainLogger } from "@electron/util/logger";
 import { WindowManager } from "@electron/util/window";
@@ -56,7 +57,7 @@ export const registerFSHandlers = (): void => {
                 });
             }
         } catch (err) {
-            if (err instanceof Error) dialog.showErrorBox("Error", err.message);
+            if (err instanceof Error) dialog.showErrorBox(mainT("titles.error", { ns: "dialogs" }), err.message);
         }
     });
     ipc.handle("fs:saveFile", async (_event, { filePath, data }) => {

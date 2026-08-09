@@ -30,6 +30,7 @@ import {
     useState,
 } from "react";
 import { shallowEqual } from "react-redux";
+import i18n from "./i18n";
 import Main from "./Main";
 import TopBar from "./TopBar";
 import {
@@ -95,7 +96,7 @@ const App = (): ReactElement => {
     useEffect(() => {
         if (firstRendered) {
             if (appSettings.baseDir === "") {
-                dialogUtils.customError({ message: "No settings found, Select manga folder" });
+                dialogUtils.customError({ message: i18n.t("app.noSettingsSelectFolder", { ns: "common" }) });
                 promptSelectDir((path) => dispatch(setAppSettings({ baseDir: path as string })));
             }
         } else {
@@ -277,7 +278,7 @@ const App = (): ReactElement => {
             },
             open(url) {
                 return {
-                    label: "Open",
+                    label: i18n.t("contextMenu.open", { ns: "common" }),
                     disabled: !url,
                     action() {
                         openInReaderIfValid(url);
@@ -286,7 +287,7 @@ const App = (): ReactElement => {
             },
             openInNewWindow(url) {
                 return {
-                    label: "Open in new Window",
+                    label: i18n.t("contextMenu.openInNewWindow", { ns: "common" }),
                     disabled: !url,
                     action() {
                         openInNewWindow(url);
@@ -295,7 +296,7 @@ const App = (): ReactElement => {
             },
             showInExplorer(url) {
                 return {
-                    label: "Show in File Explorer",
+                    label: i18n.t("contextMenu.showInExplorer", { ns: "common" }),
                     disabled: !url,
                     action() {
                         window.electron.showItemInFolder(url || "");
@@ -304,7 +305,7 @@ const App = (): ReactElement => {
             },
             copyPath(url) {
                 return {
-                    label: "Copy Path",
+                    label: i18n.t("contextMenu.copyPath", { ns: "common" }),
                     disabled: !url,
                     action() {
                         window.electron.writeText(url);
@@ -313,16 +314,16 @@ const App = (): ReactElement => {
             },
             copyImage(url) {
                 return {
-                    label: "Copy Image",
+                    label: i18n.t("contextMenu.copyImage", { ns: "common" }),
                     disabled: !url,
                     action() {
                         window.electron.copyImage(url.replace("file://", ""));
                     },
                 };
             },
-            removeHistory(url, isInSideList = false, onRemoved) {
+            removeHistory(url, isInSideList = false, onRemoved?) {
                 return {
-                    label: "Remove from Library",
+                    label: i18n.t("contextMenu.removeFromLibrary", { ns: "common" }),
                     disabled: !url,
                     action() {
                         const runRemove = () => {
@@ -338,11 +339,13 @@ const App = (): ReactElement => {
                         } else {
                             dialogUtils
                                 .warn({
-                                    title: "Remove from Library",
-                                    message:
-                                        "Remove this item from library? Related bookmarks will also be removed. Files on disk are not deleted.",
+                                    title: i18n.t("contextMenu.removeFromLibrary", { ns: "common" }),
+                                    message: i18n.t("contextMenu.removeFromLibraryMessage", { ns: "common" }),
                                     noOption: false,
-                                    buttons: ["Cancel", "Yes"],
+                                    buttons: [
+                                        i18n.t("actions.cancel", { ns: "common" }),
+                                        i18n.t("actions.yes", { ns: "common" }),
+                                    ],
                                     defaultId: 0,
                                 })
                                 .then(({ response }) => {
@@ -355,7 +358,7 @@ const App = (): ReactElement => {
             },
             removeBookmark(itemLink, bookmarkId, type, isInSideList = false) {
                 return {
-                    label: "Remove Bookmark",
+                    label: i18n.t("contextMenu.removeBookmark", { ns: "common" }),
                     action() {
                         if (isInSideList && !appSettings.confirmDeleteItem) {
                             dispatch(
@@ -368,10 +371,13 @@ const App = (): ReactElement => {
                         } else {
                             dialogUtils
                                 .warn({
-                                    title: "Remove Bookmark",
-                                    message: "Only this bookmark will be removed. Continue?",
+                                    title: i18n.t("contextMenu.removeBookmark", { ns: "common" }),
+                                    message: i18n.t("contextMenu.removeBookmarkMessage", { ns: "common" }),
                                     noOption: false,
-                                    buttons: ["Cancel", "Yes"],
+                                    buttons: [
+                                        i18n.t("actions.cancel", { ns: "common" }),
+                                        i18n.t("actions.yes", { ns: "common" }),
+                                    ],
                                     defaultId: 0,
                                 })
                                 .then(({ response }) => {
@@ -390,7 +396,7 @@ const App = (): ReactElement => {
             },
             addToBookmark(args) {
                 return {
-                    label: "Add to Bookmarks",
+                    label: i18n.t("contextMenu.addToBookmarks", { ns: "common" }),
                     // disabled: args ? false : true,
                     action() {
                         dispatch(addBookmark(args));
@@ -399,7 +405,7 @@ const App = (): ReactElement => {
             },
             unreadChapter(itemLink: string, chapterName: string) {
                 return {
-                    label: "Mark as Unread",
+                    label: i18n.t("contextMenu.markAsUnread", { ns: "common" }),
                     // todo check why i added these
                     // disabled: mangaIndex >= 0 && chapterIndex >= 0 ? false : true,
                     action() {
@@ -415,7 +421,7 @@ const App = (): ReactElement => {
             },
             readChapter(itemLink: string, chapterName: string) {
                 return {
-                    label: "Mark as Read",
+                    label: i18n.t("contextMenu.markAsRead", { ns: "common" }),
                     // disabled: mangaIndex >= 0 && chapter ? false : true,
                     action() {
                         dispatch(updateChaptersRead({ itemLink, chapterName, read: true }));
@@ -424,15 +430,18 @@ const App = (): ReactElement => {
             },
             readAllChapter(mangaIndex, chapters) {
                 return {
-                    label: "Mark All as Read",
+                    label: i18n.t("contextMenu.markAllAsRead", { ns: "common" }),
                     // disabled: mangaIndex >= 0 && chapters.length > 0 ? false : true,
                     action() {
                         dialogUtils
                             .warn({
-                                title: "Mark All as Read",
-                                message: "This will also mark all Chapters in this manga as read. Continue?",
+                                title: i18n.t("contextMenu.markAllAsRead", { ns: "common" }),
+                                message: i18n.t("contextMenu.markAllAsReadMessage", { ns: "common" }),
                                 noOption: false,
-                                buttons: ["Cancel", "Yes"],
+                                buttons: [
+                                    i18n.t("actions.cancel", { ns: "common" }),
+                                    i18n.t("actions.yes", { ns: "common" }),
+                                ],
                                 defaultId: 0,
                             })
                             .then(({ response }) => {
@@ -444,15 +453,18 @@ const App = (): ReactElement => {
             },
             unreadAllChapter(mangaIndex) {
                 return {
-                    label: "Mark All as Unread",
+                    label: i18n.t("contextMenu.markAllAsUnread", { ns: "common" }),
                     // disabled: mangaIndex >= 0 ? false : true,
                     action() {
                         dialogUtils
                             .warn({
-                                title: "Mark All as Unread",
-                                message: "This will remove all Chapters in this manga from history. Continue?",
+                                title: i18n.t("contextMenu.markAllAsUnread", { ns: "common" }),
+                                message: i18n.t("contextMenu.markAllAsUnreadMessage", { ns: "common" }),
                                 noOption: false,
-                                buttons: ["Cancel", "Yes"],
+                                buttons: [
+                                    i18n.t("actions.cancel", { ns: "common" }),
+                                    i18n.t("actions.yes", { ns: "common" }),
+                                ],
                                 defaultId: 0,
                             })
                             .then(({ response }) => {
@@ -545,8 +557,7 @@ const App = (): ReactElement => {
                             if (linkInReader === data[0].path) return;
                             if (data.length > 1)
                                 dialogUtils.customError({
-                                    message:
-                                        "More than one file/folder dropped. Only first in list will be loaded.",
+                                    message: i18n.t("app.dropMultipleOnlyFirst", { ns: "common" }),
                                 });
                             await window.fs.access(data[0].path);
                             if (window.fs.isDir(data[0].path)) {
@@ -564,7 +575,7 @@ const App = (): ReactElement => {
                 } catch (err) {
                     log.error("Drop handler: failed to open dropped path", err);
                     dialogUtils.customError({
-                        message: "Error while dropping file",
+                        message: i18n.t("app.dropError", { ns: "common" }),
                         detail: err instanceof Error ? err.message : String(err),
                     });
                 }

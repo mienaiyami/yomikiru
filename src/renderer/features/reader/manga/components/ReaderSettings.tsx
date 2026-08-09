@@ -23,6 +23,7 @@ import { colorUtils } from "@utils/color";
 import { keyFormatter } from "@utils/keybindings";
 import { defaultMangaReaderSettings } from "@utils/readerSettingsSchema";
 import { memo, useEffect, useState } from "react";
+import { useTranslation } from "react-i18next";
 
 const ReaderSettings = memo(
     ({
@@ -40,6 +41,8 @@ const ReaderSettings = memo(
         sizePlusRef: React.RefObject<HTMLButtonElement>;
         sizeMinusRef: React.RefObject<HTMLButtonElement>;
     }) => {
+        const { t } = useTranslation("reader");
+        const { t: tSettings } = useTranslation("settings");
         const appSettings = useAppSelector((store) => store.appSettings);
         const shortcutsMapped = useAppSelector(getShortcutsMapped);
         const currentPresetName = useAppSelector(getActiveMangaPresetName);
@@ -60,7 +63,11 @@ const ReaderSettings = memo(
                     const id = appSettings.mangaReaderPresetId;
                     if (id) {
                         dispatch(updateMangaPreset({ id, data: appSettings.readerSettings }));
-                        setShortcutText(`Saved to preset "${currentPresetName ?? "Unknown"}"`);
+                        setShortcutText(
+                            t("hud.savedToPreset", {
+                                name: currentPresetName ?? t("hud.unknownPreset"),
+                            }),
+                        );
                     }
                 }
             };
@@ -75,6 +82,7 @@ const ReaderSettings = memo(
             dispatch,
             setShortcutText,
             readerRef,
+            t,
         ]);
         useEffect(() => {
             setMaxWidth(appSettings.readerSettings.widthClamped ? 100 : 500);
@@ -106,7 +114,7 @@ const ReaderSettings = memo(
                     onKeyDown={(e) => {
                         if (e.key === "Escape" || e.key === "q") e.currentTarget.blur();
                     }}
-                    {...(!isReaderSettingsOpen ? { "data-tooltip": "Reader Settings" } : {})}
+                    {...(!isReaderSettingsOpen ? { "data-tooltip": t("settings.readerSettingsTooltip") } : {})}
                 >
                     <FontAwesomeIcon icon={isReaderSettingsOpen ? faTimes : faBars} />
                 </button>
@@ -129,7 +137,7 @@ const ReaderSettings = memo(
                                 );
                             }}
                         >
-                            Size
+                            {t("settings.size")}
                         </div>
                         <div className="options">
                             <InputNumber
@@ -141,7 +149,7 @@ const ReaderSettings = memo(
                                 }}
                                 timeout={[1000, (value) => dispatch(setReaderSettings({ readerWidth: value }))]}
                                 disabled={appSettings.readerSettings.fitOption !== 0}
-                                labelAfter="%"
+                                labelAfter={t("settings.percentUnit")}
                             />
                             <button
                                 ref={sizeMinusRef}
@@ -190,7 +198,7 @@ const ReaderSettings = memo(
                                     onChange={(e) =>
                                         dispatch(setReaderSettings({ widthClamped: e.target.checked }))
                                     }
-                                    paraAfter="Clamp size to window width"
+                                    paraAfter={t("settings.clampSize")}
                                 />
                             </div>
                         </div>
@@ -216,7 +224,7 @@ const ReaderSettings = memo(
                                 );
                             }}
                         >
-                            Fit Options
+                            {t("settings.fitOptions")}
                         </div>
                         <div className="options">
                             <div className="row">
@@ -227,7 +235,7 @@ const ReaderSettings = memo(
                                     onClick={() => {
                                         dispatch(setReaderSettings({ fitOption: 0 }));
                                     }}
-                                    title="Free"
+                                    title={t("settings.free")}
                                 >
                                     <FontAwesomeIcon icon={faExpandArrowsAlt} />
                                 </button>
@@ -242,7 +250,7 @@ const ReaderSettings = memo(
                                             }),
                                         );
                                     }}
-                                    title="Fit Vertically"
+                                    title={t("settings.fitVertically")}
                                 >
                                     <FontAwesomeIcon icon={faArrowsAltV} />
                                 </button>
@@ -257,7 +265,7 @@ const ReaderSettings = memo(
                                             }),
                                         );
                                     }}
-                                    title="Fit Horizontally"
+                                    title={t("settings.fitHorizontally")}
                                 >
                                     <FontAwesomeIcon icon={faArrowsAltH} />
                                 </button>
@@ -272,7 +280,7 @@ const ReaderSettings = memo(
                                             }),
                                         );
                                     }}
-                                    title="Original"
+                                    title={t("settings.original")}
                                     style={{ fontWeight: "bold" }}
                                 >
                                     1:1
@@ -299,8 +307,8 @@ const ReaderSettings = memo(
                                         appSettings.readerSettings.fitOption !== 0
                                     }
                                     timeout={[1000, (value) => dispatch(setReaderSettings({ maxWidth: value }))]}
-                                    paraBefore="Max Image Width&nbsp;&nbsp;:"
-                                    paraAfter="px"
+                                    paraBefore={t("settings.maxImageWidth")}
+                                    paraAfter={t("settings.pxUnit")}
                                 />
                                 <InputCheckboxNumber
                                     checked={appSettings.readerSettings.maxHeightWidthSelector === "height"}
@@ -322,8 +330,8 @@ const ReaderSettings = memo(
                                         appSettings.readerSettings.fitOption !== 0
                                     }
                                     timeout={[1000, (value) => dispatch(setReaderSettings({ maxHeight: value }))]}
-                                    paraBefore="Max Image Height&nbsp;:"
-                                    paraAfter="px"
+                                    paraBefore={t("settings.maxImageHeight")}
+                                    paraAfter={t("settings.pxUnit")}
                                 />
                             </div>
                         </div>
@@ -349,7 +357,7 @@ const ReaderSettings = memo(
                                 );
                             }}
                         >
-                            Reading Mode
+                            {t("settings.readingMode")}
                         </div>
                         <div className="options">
                             <button
@@ -358,7 +366,7 @@ const ReaderSettings = memo(
                                 }
                                 onClick={() => dispatch(setReaderSettings({ readerTypeSelected: 0 }))}
                             >
-                                Vertical Scroll
+                                {t("settings.verticalScroll")}
                             </button>
                             <button
                                 className={
@@ -366,7 +374,7 @@ const ReaderSettings = memo(
                                 }
                                 onClick={() => dispatch(setReaderSettings({ readerTypeSelected: 1 }))}
                             >
-                                Left to Right
+                                {t("settings.leftToRight")}
                             </button>
                             <button
                                 className={
@@ -374,7 +382,7 @@ const ReaderSettings = memo(
                                 }
                                 onClick={() => dispatch(setReaderSettings({ readerTypeSelected: 2 }))}
                             >
-                                Right to Left
+                                {t("settings.rightToLeft")}
                             </button>
                         </div>
                     </div>
@@ -399,7 +407,7 @@ const ReaderSettings = memo(
                                 );
                             }}
                         >
-                            Pages Per Row
+                            {t("settings.pagesPerRow")}
                         </div>
                         <div className="options">
                             <button
@@ -453,7 +461,7 @@ const ReaderSettings = memo(
                                     dispatch(setReaderSettings({ pagesPerRowSelected, readerWidth }));
                                 }}
                             >
-                                2 odd
+                                {t("settings.pagePerRow2odd")}
                             </button>
                         </div>
                     </div>
@@ -478,7 +486,7 @@ const ReaderSettings = memo(
                                 );
                             }}
                         >
-                            Reading Side
+                            {t("settings.readingSide")}
                         </div>
                         <div className="options">
                             <button
@@ -488,7 +496,7 @@ const ReaderSettings = memo(
                                     dispatch(setReaderSettings({ readingSide: 0 }));
                                 }}
                             >
-                                LTR
+                                {t("settings.ltr")}
                             </button>
                             <button
                                 className={appSettings.readerSettings.readingSide === 1 ? "optionSelected" : ""}
@@ -497,7 +505,7 @@ const ReaderSettings = memo(
                                     dispatch(setReaderSettings({ readingSide: 1 }));
                                 }}
                             >
-                                RTL
+                                {t("settings.rtl")}
                             </button>
                         </div>
                     </div>
@@ -521,9 +529,9 @@ const ReaderSettings = memo(
                                     }),
                                 );
                             }}
-                            title={`Scrolling speed with keys.\nCheck Settings->Shortcut for more.`}
+                            title={t("settings.scrollSpeedTitle")}
                         >
-                            Scroll Speed
+                            {t("settings.scrollSpeed")}
                         </div>
                         <div className="options">
                             <InputNumber
@@ -531,8 +539,8 @@ const ReaderSettings = memo(
                                 max={500}
                                 value={appSettings.readerSettings.scrollSpeedA}
                                 timeout={[1000, (value) => dispatch(setReaderSettings({ scrollSpeedA: value }))]}
-                                labelBefore="Scroll&nbsp;A&nbsp;(key)&nbsp;:"
-                                labelAfter="px"
+                                labelBefore={t("settings.scrollAKey")}
+                                labelAfter={t("settings.pxUnit")}
                                 // tooltip={(() => {
                                 //     const index1 = shortcuts.findIndex((e) => e.command === "scrollDown");
                                 //     const index2 = shortcuts.findIndex((e) => e.command === "scrollUp");
@@ -545,8 +553,8 @@ const ReaderSettings = memo(
                                 max={500}
                                 value={appSettings.readerSettings.scrollSpeedB}
                                 timeout={[1000, (value) => dispatch(setReaderSettings({ scrollSpeedB: value }))]}
-                                labelBefore="Scroll&nbsp;B&nbsp;(key)&nbsp;:"
-                                labelAfter="px"
+                                labelBefore={t("settings.scrollBKey")}
+                                labelAfter={t("settings.pxUnit")}
                                 // tooltip={(() => {
                                 //     const index = shortcuts.findIndex((e) => e.command === "largeScroll");
                                 //     return `Keys: "${shortcuts[index].key1}" "${shortcuts[index].key2}"`;
@@ -570,8 +578,8 @@ const ReaderSettings = memo(
                                     1000,
                                     (value) => dispatch(setReaderSettings({ mouseWheelScrollSpeed: value })),
                                 ]}
-                                paraBefore="Mouse Wheel Speed&nbsp;:"
-                                paraAfter="screen"
+                                paraBefore={t("settings.mouseWheelSpeed")}
+                                paraAfter={t("settings.screenUnit")}
                             />
                             <InputNumber
                                 min={0}
@@ -582,8 +590,8 @@ const ReaderSettings = memo(
                                     1000,
                                     (value) => dispatch(setReaderSettings({ mouseWheelScrollDuration: value })),
                                 ]}
-                                paraBefore="Mouse Wheel Scroll Duration&nbsp;:"
-                                paraAfter="ms"
+                                paraBefore={t("settings.mouseWheelDuration")}
+                                paraAfter={t("settings.msUnit")}
                             />
                             <InputCheckboxNumber
                                 min={0.1}
@@ -598,7 +606,7 @@ const ReaderSettings = memo(
                                     1000,
                                     (value) => dispatch(setReaderSettings({ touchScrollMultiplier: value })),
                                 ]}
-                                labelBefore="Drag&nbsp;Multiplier&nbsp;:"
+                                labelBefore={t("settings.dragMultiplier")}
                             />
                         </div>
                     </div>
@@ -626,7 +634,7 @@ const ReaderSettings = memo(
                                 );
                             }}
                         >
-                            Color Filters
+                            {t("settings.colorFilters")}
                         </div>
                         <div className="options col">
                             <InputCheckboxColor
@@ -641,7 +649,7 @@ const ReaderSettings = memo(
                                         }),
                                     );
                                 }}
-                                paraBefore="Use Custom Color Filter"
+                                paraBefore={t("settings.useCustomColorFilter")}
                                 value={colorUtils.new([
                                     appSettings.readerSettings.customColorFilter.r,
                                     appSettings.readerSettings.customColorFilter.g,
@@ -670,7 +678,7 @@ const ReaderSettings = memo(
                                 disabled={!appSettings.readerSettings.customColorFilter.enabled}
                                 value={appSettings.readerSettings.customColorFilter.blendMode}
                                 labeled={true}
-                                paraBefore="Blend&nbsp;Mode:"
+                                paraBefore={t("settings.blendMode")}
                                 onChange={(value) => {
                                     dispatch(
                                         setReaderSettings({
@@ -703,7 +711,7 @@ const ReaderSettings = memo(
                                 ].map((e) => ({ label: e, value: e }))}
                             />
                             <InputRange
-                                labelText="Hue: "
+                                labelText={t("settings.hue")}
                                 min={0}
                                 max={360}
                                 value={appSettings.readerSettings.customColorFilter.hue}
@@ -723,7 +731,7 @@ const ReaderSettings = memo(
                                 ]}
                             />
                             <InputRange
-                                labelText="Contrast: "
+                                labelText={t("settings.contrast")}
                                 min={-1}
                                 max={1}
                                 step={0.1}
@@ -744,7 +752,7 @@ const ReaderSettings = memo(
                                 ]}
                             />
                             <InputRange
-                                labelText="Saturation: "
+                                labelText={t("settings.saturation")}
                                 min={-1}
                                 max={1}
                                 step={0.1}
@@ -765,7 +773,7 @@ const ReaderSettings = memo(
                                 ]}
                             />
                             <InputRange
-                                labelText="Brightness: "
+                                labelText={t("settings.brightness")}
                                 min={-1}
                                 max={1}
                                 step={0.1}
@@ -798,7 +806,7 @@ const ReaderSettings = memo(
                                     );
                                 }}
                             >
-                                Reset
+                                {tSettings("shared.reset")}
                             </button>
                             <InputCheckbox
                                 checked={appSettings.readerSettings.invertImage}
@@ -809,7 +817,7 @@ const ReaderSettings = memo(
                                         }),
                                     );
                                 }}
-                                paraAfter="Invert Image"
+                                paraAfter={t("settings.invertImage")}
                             />
                             <InputCheckbox
                                 checked={appSettings.readerSettings.grayscale}
@@ -820,7 +828,7 @@ const ReaderSettings = memo(
                                         }),
                                     );
                                 }}
-                                paraAfter="Grayscale"
+                                paraAfter={t("settings.grayscale")}
                             />
                         </div>
                     </div>
@@ -842,7 +850,7 @@ const ReaderSettings = memo(
                                 );
                             }}
                         >
-                            Other Settings
+                            {t("settings.otherSettings")}
                         </div>
 
                         <div className="options col">
@@ -852,7 +860,7 @@ const ReaderSettings = memo(
                                 onChange={(e) => {
                                     dispatch(setReaderSettings({ variableImageSize: e.currentTarget.checked }));
                                 }}
-                                paraAfter="Double size for double spread pages."
+                                paraAfter={t("settings.doubleSizeSpread")}
                             />
                             <InputCheckboxNumber
                                 disabled={appSettings.readerSettings.readerTypeSelected !== 0}
@@ -864,8 +872,8 @@ const ReaderSettings = memo(
                                 min={0}
                                 max={2000}
                                 timeout={[1000, (value) => dispatch(setReaderSettings({ gapSize: value }))]}
-                                paraBefore="Gap between rows&nbsp;:"
-                                paraAfter="px"
+                                paraBefore={t("settings.gapBetweenRows")}
+                                paraAfter={t("settings.pxUnit")}
                             />
                             <InputCheckbox
                                 checked={appSettings.readerSettings.showPageNumberInZenMode}
@@ -876,7 +884,7 @@ const ReaderSettings = memo(
                                         }),
                                     );
                                 }}
-                                paraAfter="Show Page Number in Zen Mode"
+                                paraAfter={t("settings.showPageNumberInZen")}
                             />
                             <InputCheckbox
                                 checked={appSettings.readerSettings.forceLowBrightness.enabled}
@@ -890,7 +898,7 @@ const ReaderSettings = memo(
                                         }),
                                     );
                                 }}
-                                paraAfter="Force Low brightness"
+                                paraAfter={t("settings.forceLowBrightness")}
                             />
                             <InputRange
                                 className={"colorRange"}

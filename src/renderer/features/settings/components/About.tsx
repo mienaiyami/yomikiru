@@ -8,8 +8,10 @@ import { updateMainSettings } from "@store/mainSettings";
 import InputCheckbox from "@ui/InputCheckbox";
 import InputSelect from "@ui/InputSelect";
 import { useEffect, useState } from "react";
+import { useTranslation } from "react-i18next";
 
 const About: React.FC = () => {
+    const { t } = useTranslation("settings");
     const [showDetailedInfo, setShowDetailedInfo] = useState(false);
     const isSettingOpen = useAppSelector((state) => state.ui.isOpen.settings);
     const mainSettings = useAppSelector((state) => state.mainSettings);
@@ -18,16 +20,16 @@ const About: React.FC = () => {
     const handleChannelChange = async (newChannel: AppUpdateChannel) => {
         if (newChannel === "beta") {
             const result = await window.electron.invoke("dialog:confirm", {
-                title: "Warning: Beta Channel",
-                message: "Are you sure you want to switch to beta channel?",
-                detail: "Beta releases may be unstable and could contain bugs. Use at your own risk.",
-                buttons: ["Switch to Beta", "Cancel"],
+                title: t("about.betaWarningTitle"),
+                message: t("about.betaWarningMessage"),
+                detail: t("about.betaWarningDetail"),
+                buttons: [t("about.switchToBeta"), t("shared.cancel")],
                 cancelId: 1,
             });
             if (result.response === 1) return;
         } else {
             window.electron.invoke("dialog:confirm", {
-                message: "You will only receive update after stable version crosses your current version.",
+                message: t("about.stableOnlyNote"),
             });
         }
         dispatch(updateMainSettings({ channel: newChannel }));
@@ -40,7 +42,7 @@ const About: React.FC = () => {
     return (
         <div className="content2" id="settings-about">
             <div className="settingItem2">
-                <h3>Version</h3>
+                <h3>{t("about.version")}</h3>
                 <div
                     className="desc"
                     style={{
@@ -49,13 +51,13 @@ const About: React.FC = () => {
                 >
                     {window.electron.app.getVersion()}
                     {" | "}
-                    {process.arch === "x64" ? "64-bit" : "32-bit"}
-                    {window.process.isPortable ? " | Portable" : ""}
+                    {process.arch === "x64" ? t("about.bit64") : t("about.bit32")}
+                    {window.process.isPortable ? t("about.portable") : ""}
                 </div>
                 <div className="main col">
                     <InputCheckbox
                         className="noBG"
-                        paraAfter="Check for updates every 1 hour"
+                        paraAfter={t("about.checkHourly")}
                         checked={mainSettings?.checkForUpdates ?? false}
                         onChange={(e) => {
                             dispatch(
@@ -75,8 +77,8 @@ const About: React.FC = () => {
                                 }),
                             );
                         }}
-                        title="Mostly just frequent updates rather than patch."
-                        paraAfter="Skip patch updates"
+                        title={t("about.betaTitle")}
+                        paraAfter={t("about.skipPatch")}
                     />
                     <InputCheckbox
                         checked={mainSettings?.autoDownload ?? false}
@@ -88,7 +90,7 @@ const About: React.FC = () => {
                                 }),
                             );
                         }}
-                        paraAfter="Auto download updates"
+                        paraAfter={t("about.autoDownload")}
                     />
                 </div>
                 <div className="main row">
@@ -99,31 +101,31 @@ const About: React.FC = () => {
                             });
                         }}
                     >
-                        Check for Update Now
+                        {t("about.checkNow")}
                     </button>
-                    <button onClick={() => setShowDetailedInfo(true)}>Detailed Info</button>
+                    <button onClick={() => setShowDetailedInfo(true)}>{t("about.detailedInfo")}</button>
                     <button
                         onClick={() =>
                             window.electron.openExternal("https://github.com/mienaiyami/yomikiru/releases")
                         }
                     >
-                        Changelogs
+                        {t("about.changelogs")}
                     </button>
                     <InputSelect
                         options={["stable", "beta"].map((e) => ({
-                            label: e,
+                            label: t(`about.${e}`),
                             value: e,
                         }))}
                         onChange={(e) => handleChannelChange(e as AppUpdateChannel)}
                         value={mainSettings?.channel ?? "stable"}
                         labeled={true}
-                        labelBefore="Update Channel"
+                        labelBefore={t("about.updateChannel")}
                     />
                 </div>
                 <DetailedInfoModal open={showDetailedInfo} onClose={() => setShowDetailedInfo(false)} />
             </div>
             <div className="settingItem2">
-                <h3>Others</h3>
+                <h3>{t("about.others")}</h3>
                 {/* <div className="desc"></div> */}
                 <div className="main col">
                     <button
@@ -132,12 +134,12 @@ const About: React.FC = () => {
                         }
                         style={{ border: "2px solid #5865F2" }}
                     >
-                        <FontAwesomeIcon icon={faDiscord} /> Join Discord
+                        <FontAwesomeIcon icon={faDiscord} /> {t("about.joinDiscord")}
                     </button>
                     <button
                         onClick={() => window.electron.openExternal("https://github.com/mienaiyami/yomikiru/")}
                     >
-                        <FontAwesomeIcon icon={faGithub} /> Home Page
+                        <FontAwesomeIcon icon={faGithub} /> {t("about.homePage")}
                     </button>
                     <button
                         onClick={() =>
@@ -146,14 +148,14 @@ const About: React.FC = () => {
                             )
                         }
                     >
-                        <FontAwesomeIcon icon={faGithub} /> Announcements
+                        <FontAwesomeIcon icon={faGithub} /> {t("about.announcements")}
                     </button>
                     <button
                         onClick={() =>
                             window.electron.openExternal("https://github.com/mienaiyami/yomikiru/issues")
                         }
                     >
-                        <FontAwesomeIcon icon={faGithub} /> Submit Issue, Feature Request, Ask Question
+                        <FontAwesomeIcon icon={faGithub} /> {t("about.submitIssue")}
                     </button>
                     <button
                         onClick={() => window.electron.openExternal("https://github.com/sponsors/mienaiyami")}
@@ -163,7 +165,7 @@ const About: React.FC = () => {
                         }}
                     >
                         <FontAwesomeIcon icon={faHeart} />
-                        Support
+                        {t("about.support")}
                     </button>
                 </div>
                 <hr className="mini" />
@@ -171,7 +173,7 @@ const About: React.FC = () => {
                     <button
                         onClick={(e) => {
                             const target = e.currentTarget;
-                            target.innerText = `${"\u00a0".repeat(16)}Copied!${"\u00a0".repeat(16)}`;
+                            target.innerText = `${"\u00a0".repeat(16)}${t("shared.copied")}${"\u00a0".repeat(16)}`;
                             window.electron.writeText("mienaiyami0@gmail.com");
                             target.disabled = true;
                             setTimeout(() => {
@@ -193,7 +195,7 @@ const About: React.FC = () => {
                                 window.electron.invoke("fs:showInExplorer", filePath);
                         }}
                     >
-                        Show Local Logs
+                        {t("about.showLocalLogs")}
                     </button>
                 </div>
             </div>

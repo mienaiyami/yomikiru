@@ -1,3 +1,4 @@
+import type { I18nChangedPayload, I18nState, LanguageSource } from "@common/i18n";
 import type { MainSettingsType } from "@electron/util/mainSettings";
 import type {
     AddBookBookmarkData,
@@ -159,6 +160,7 @@ export type DialogChannels = {
             noOption?: boolean;
             buttons?: string[];
             defaultId?: number;
+            cancelId?: number;
         },
         Electron.MessageBoxReturnValue
     >;
@@ -210,6 +212,22 @@ export type MainSettingsChannels = {
     "mainSettings:sync": ChannelDefinition<MainSettingsType, void, "m2r">;
 };
 
+export type I18nChannels = {
+    "i18n:getState": ChannelDefinition<void, I18nState>;
+    "i18n:listSources": ChannelDefinition<void, LanguageSource[]>;
+    "i18n:setSource": ChannelDefinition<{ sourceId: string }, I18nState>;
+    "i18n:installPack": ChannelDefinition<
+        { archivePath: string },
+        { ok: true; source: LanguageSource } | { ok: false; message: string }
+    >;
+    "i18n:removePack": ChannelDefinition<{ packId: string }, { ok: true } | { ok: false; message: string }>;
+    "i18n:exportPack": ChannelDefinition<
+        { sourceId: string; destinationPath: string },
+        { ok: true } | { ok: false; message: string }
+    >;
+    "i18n:changed": ChannelDefinition<I18nChangedPayload, void, "m2r">;
+};
+
 export type IPCChannels = DatabaseChannels &
     DatabaseChangeChannels &
     WindowManagementChannels &
@@ -220,7 +238,8 @@ export type IPCChannels = DatabaseChannels &
     DialogChannels &
     ErrorReportingChannels &
     MainSettingsChannels &
-    CoverChannels;
+    CoverChannels &
+    I18nChannels;
 
 export type MainToRendererChannels = {
     [K in keyof IPCChannels as IPCChannels[K] extends ChannelDefinition<unknown, unknown, "m2r">

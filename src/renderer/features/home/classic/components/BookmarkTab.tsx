@@ -8,6 +8,7 @@ import { useAppDispatch, useAppSelector } from "@store/hooks";
 import { dialogUtils } from "@utils/dialog";
 import { formatUtils } from "@utils/file";
 import { useCallback, useEffect, useMemo } from "react";
+import { useTranslation } from "react-i18next";
 import { useAppContext } from "src/renderer/App";
 import {
     bookmarkLibraryItemsAtProgress,
@@ -21,6 +22,8 @@ import BookmarkHistoryListItem from "./BookmarkHistoryListItem";
 import ListSelectionToolbar from "./ListSelectionToolbar";
 
 const BookmarkTab: React.FC = () => {
+    const { t } = useTranslation("home");
+    const { t: tCommon } = useTranslation("common");
     const bookmarks = useAppSelector((store) => store.bookmarks);
     const library = useAppSelector((store) => store.library);
     const appSettings = useAppSelector((store) => store.appSettings);
@@ -130,10 +133,10 @@ const BookmarkTab: React.FC = () => {
 
         dialogUtils
             .warn({
-                title: "Remove Bookmark",
-                message: `Remove ${selected.length} bookmark${selected.length === 1 ? "" : "s"}?`,
+                title: t("classic.bookmarks.removeTitle"),
+                message: t("classic.bookmarks.removeMessage", { count: selected.length }),
                 noOption: false,
-                buttons: ["Cancel", "Yes"],
+                buttons: [tCommon("actions.cancel"), tCommon("actions.yes")],
                 defaultId: 0,
             })
             .then(({ response }) => {
@@ -141,7 +144,7 @@ const BookmarkTab: React.FC = () => {
                 removeBookmarksGrouped(dispatch, selected);
                 selection.clearSelection();
             });
-    }, [bookmarksArray, dispatch, selection]);
+    }, [bookmarksArray, dispatch, selection, t, tCommon]);
 
     if (!appSettings.showTabs.bookmark) {
         return null;
@@ -149,13 +152,13 @@ const BookmarkTab: React.FC = () => {
 
     return (
         <div className="contTab listCont" id="bookmarksTab">
-            <h2>Bookmarks</h2>
+            <h2>{t("classic.bookmarks.title")}</h2>
 
             <ListNavigator.Provider
                 items={bookmarksArray as (BookBookmark | MangaBookmark)[]}
                 filterFn={filterBookmark}
                 renderItem={renderBookmarkItem}
-                emptyMessage="No Bookmarks"
+                emptyMessage={t("classic.bookmarks.empty")}
                 onFilteredItemsChange={(items) => selection.setVisibleOrder(items.map(getBookmarkSelectionKey))}
                 onContextMenu={(elem) => elem.dispatchEvent(window.contextMenu.fakeEvent(elem))}
                 onSelect={(elem) => elem.click()}
@@ -170,15 +173,15 @@ const BookmarkTab: React.FC = () => {
                             showInvertButton={false}
                             extraMenuItems={[
                                 {
-                                    label: "Copy Path",
+                                    label: t("shared.selection.copyPath"),
                                     action: handleCopySelected,
                                 },
                                 {
-                                    label: "Bookmark",
+                                    label: t("shared.selection.bookmark"),
                                     action: handleBookmarkSelected,
                                 },
                                 {
-                                    label: `Remove ${selection.count} Bookmark${selection.count === 1 ? "" : "s"}`,
+                                    label: t("classic.bookmarks.removeMenu", { count: selection.count }),
                                     action: handleRemoveSelected,
                                 },
                             ]}
@@ -189,15 +192,14 @@ const BookmarkTab: React.FC = () => {
                     <div className="tools">
                         <div className="row1">
                             <button
-                                data-tooltip={
-                                    "Sort: " +
-                                    (appSettings.bookListSortType === "normal" ? "▲ " : "▼ ") +
-                                    appSettings.bookListSortBy.toUpperCase()
-                                }
+                                data-tooltip={t("shared.sort.tooltip", {
+                                    arrow: appSettings.bookListSortType === "normal" ? "▲ " : "▼ ",
+                                    by: appSettings.bookListSortBy.toUpperCase(),
+                                })}
                                 onClick={(e) => {
                                     const items: Menu.ListItem[] = [
                                         {
-                                            label: "Name",
+                                            label: t("shared.sort.name"),
                                             action() {
                                                 dispatch(
                                                     setAppSettings({
@@ -208,7 +210,7 @@ const BookmarkTab: React.FC = () => {
                                             selected: appSettings.bookListSortBy === "name",
                                         },
                                         {
-                                            label: "Date Added",
+                                            label: t("shared.sort.dateAdded"),
                                             action() {
                                                 dispatch(
                                                     setAppSettings({
@@ -220,7 +222,7 @@ const BookmarkTab: React.FC = () => {
                                         },
                                         window.contextMenu.template.divider(),
                                         {
-                                            label: "Ascending",
+                                            label: t("shared.sort.ascending"),
                                             action() {
                                                 dispatch(
                                                     setAppSettings({
@@ -231,7 +233,7 @@ const BookmarkTab: React.FC = () => {
                                             selected: appSettings.bookListSortType === "normal",
                                         },
                                         {
-                                            label: "Descending",
+                                            label: t("shared.sort.descending"),
                                             action() {
                                                 dispatch(
                                                     setAppSettings({

@@ -2,11 +2,13 @@ import { addAnilistTracker, setGalleryTrackContext } from "@store/anilist";
 import { useAppDispatch, useAppSelector } from "@store/hooks";
 import { getReaderContent } from "@store/reader";
 import { setAnilistSearchOpen } from "@store/ui";
-import AniList, { ANILIST_FORMAT_LABEL, ANILIST_STATUS_LABEL } from "@utils/anilist";
+import AniList, { anilistFormatLabel, anilistStatusLabel } from "@utils/anilist";
 import { useCallback, useEffect, useState } from "react";
 import FocusLock from "react-focus-lock";
+import { useTranslation } from "react-i18next";
 
 const AnilistSearch = () => {
+    const { t } = useTranslation("anilist");
     const galleryCtx = useAppSelector((s) => s.anilist.galleryTrackContext);
     const contentInReader = useAppSelector(getReaderContent);
     const effectiveTitle = galleryCtx?.title || contentInReader?.title || "";
@@ -65,12 +67,12 @@ const AnilistSearch = () => {
                     }}
                     tabIndex={-1}
                 >
-                    <h1>Add Tracking</h1>
+                    <h1>{t("search.title")}</h1>
                     <div className="searchBar">
                         <input
                             key={`${effectiveLink ?? ""}|${effectiveTitle}`}
                             type="text"
-                            placeholder="Search on Anilist"
+                            placeholder={t("search.placeholder")}
                             onKeyDown={(e) => {
                                 e.stopPropagation();
                             }}
@@ -91,7 +93,7 @@ const AnilistSearch = () => {
                     </div>
                     <div className="results">
                         {result.length <= 0 ? (
-                            <p>No Result</p>
+                            <p>{t("search.noResult")}</p>
                         ) : (
                             <ol>
                                 {result.map((e) => (
@@ -112,11 +114,12 @@ type ResultListItemProps = {
 };
 
 const ResultListItem = ({ item, onClick }: ResultListItemProps) => {
+    const { t } = useTranslation("anilist");
     const { title, coverImage, startDate, status, format } = item;
     const displayTitle = title.english || title.romaji || title.native || "~";
     const startDateStr = `${startDate.year ?? "?"}-${startDate.month ?? "?"}-${startDate.day ?? "?"}`;
-    const formatStr = ANILIST_FORMAT_LABEL[format] ?? format;
-    const statusStr = ANILIST_STATUS_LABEL[status] ?? status;
+    const formatStr = anilistFormatLabel(format);
+    const statusStr = anilistStatusLabel(status);
 
     return (
         <li>
@@ -131,7 +134,7 @@ const ResultListItem = ({ item, onClick }: ResultListItemProps) => {
                             <span className="badge">{formatStr}</span>
                         </span>
                         <span className="row">
-                            <span className="badge">Started: {startDateStr}</span>
+                            <span className="badge">{t("search.started", { date: startDateStr })}</span>
                         </span>
                         <span className="row">
                             <span className="badge">{statusStr}</span>

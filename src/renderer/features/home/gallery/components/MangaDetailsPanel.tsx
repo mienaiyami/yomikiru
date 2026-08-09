@@ -28,6 +28,7 @@ import { materializeMangaLibraryThumbnail, pickAndApplyCustomCover } from "@util
 import { createRendererLogger } from "@utils/logger";
 import { resolveMangaChapterPath } from "@utils/mangaChapterPath";
 import { useCallback, useEffect, useMemo, useState } from "react";
+import { useTranslation } from "react-i18next";
 import { shallowEqual } from "react-redux";
 import ListSelectionToolbar from "../../classic/components/ListSelectionToolbar";
 import MissingLibraryPathPanel from "./MissingLibraryPathPanel";
@@ -56,6 +57,8 @@ const isListableMangaChapterChild = (chapter: { name: string; pages: number }): 
 };
 
 const MangaDetailsPanel: React.FC<MangaDetailsPanelProps> = ({ mangaLink, onClose, onRelocated }) => {
+    const { t } = useTranslation("home");
+    const { t: tCommon } = useTranslation("common");
     const dispatch = useAppDispatch();
     const library = useAppSelector((store) => store.library.items);
     const anilistToken = useAppSelector((store) => store.anilist.token);
@@ -79,7 +82,7 @@ const MangaDetailsPanel: React.FC<MangaDetailsPanelProps> = ({ mangaLink, onClos
     const { setContextMenuData, openInReader } = useAppContext();
     const { validateDirectory } = useDirectoryValidator();
 
-    const placeholderNote = "No description available.";
+    const placeholderNote = t("gallery.details.noDescription");
 
     useEffect(() => {
         if (!manga?.id || !window.fs.existsSync(mangaLink) || !window.fs.isDir(mangaLink)) return;
@@ -148,7 +151,7 @@ const MangaDetailsPanel: React.FC<MangaDetailsPanelProps> = ({ mangaLink, onClos
 
     useEffect(() => {
         setNote(placeholderNote);
-    }, [mangaLink, manga]);
+    }, [mangaLink, manga, placeholderNote]);
 
     useEffect(() => {
         refreshChapters();
@@ -241,14 +244,14 @@ const MangaDetailsPanel: React.FC<MangaDetailsPanelProps> = ({ mangaLink, onClos
         (e: React.MouseEvent) => {
             const items = [
                 {
-                    label: "Name",
+                    label: t("shared.sort.name"),
                     action() {
                         dispatch(setAppSettings({ locationListSortBy: "name" }));
                     },
                     selected: sortBy === "name",
                 },
                 {
-                    label: "Date Modified",
+                    label: t("shared.sort.dateModified"),
                     action() {
                         dispatch(setAppSettings({ locationListSortBy: "date" }));
                     },
@@ -256,14 +259,14 @@ const MangaDetailsPanel: React.FC<MangaDetailsPanelProps> = ({ mangaLink, onClos
                 },
                 window.contextMenu.template.divider(),
                 {
-                    label: "Ascending",
+                    label: t("shared.sort.ascending"),
                     action() {
                         dispatch(setAppSettings({ locationListSortType: "normal" }));
                     },
                     selected: sortOrder === "normal",
                 },
                 {
-                    label: "Descending",
+                    label: t("shared.sort.descending"),
                     action() {
                         dispatch(setAppSettings({ locationListSortType: "inverse" }));
                     },
@@ -279,7 +282,7 @@ const MangaDetailsPanel: React.FC<MangaDetailsPanelProps> = ({ mangaLink, onClos
                 focusBackElem: e.currentTarget,
             });
         },
-        [sortBy, sortOrder, setContextMenuData],
+        [sortBy, sortOrder, setContextMenuData, t, dispatch],
     );
 
     const filterChapter = useCallback((filter: string, chapter: ChapterData) => {
@@ -326,7 +329,7 @@ const MangaDetailsPanel: React.FC<MangaDetailsPanelProps> = ({ mangaLink, onClos
                         boxClassName="checkBox"
                         checked={isChecked}
                         onToggle={({ shiftKey }) => chapterSelection.toggleItem(chapter.name, { shiftKey })}
-                        ariaLabel={`Select ${chapter.name}`}
+                        ariaLabel={t("shared.selectAria", { title: chapter.name })}
                     />
                     <span className="chapter-name">{formatUtils.files.getName(chapter.name)}</span>
 
@@ -346,7 +349,7 @@ const MangaDetailsPanel: React.FC<MangaDetailsPanelProps> = ({ mangaLink, onClos
                 </div>
             );
         },
-        [manga, handleChapterClick, handleChapterContextMenu, chapterSelection, pathMissing],
+        [manga, handleChapterClick, handleChapterContextMenu, chapterSelection, pathMissing, t],
     );
 
     const handleBookmarkClick = useCallback(
@@ -417,7 +420,7 @@ const MangaDetailsPanel: React.FC<MangaDetailsPanelProps> = ({ mangaLink, onClos
                         boxClassName="checkBox"
                         checked={isChecked}
                         onToggle={({ shiftKey }) => bookmarkSelection.toggleItem(bookmark.id, { shiftKey })}
-                        ariaLabel={`Select bookmark ${bookmark.id}`}
+                        ariaLabel={t("gallery.details.selectBookmarkAria", { id: bookmark.id })}
                     />
                     <div className="bookmark-content">
                         <div className="bookmark-header">
@@ -427,7 +430,9 @@ const MangaDetailsPanel: React.FC<MangaDetailsPanelProps> = ({ mangaLink, onClos
                             <span className="bookmark-chapter">
                                 {formatUtils.files.getName(bookmark.chapterName || "")}
                             </span>
-                            <span className="bookmark-page">Page {bookmark.page}</span>
+                            <span className="bookmark-page">
+                                {t("gallery.details.page", { page: bookmark.page })}
+                            </span>
                         </div>
 
                         <div className="bookmark-date" title={bookmark.createdAt.toString()}>
@@ -441,7 +446,7 @@ const MangaDetailsPanel: React.FC<MangaDetailsPanelProps> = ({ mangaLink, onClos
                 </div>
             );
         },
-        [handleBookmarkClick, handleBookmarkContextMenu, bookmarkSelection, pathMissing],
+        [handleBookmarkClick, handleBookmarkContextMenu, bookmarkSelection, pathMissing, t],
     );
 
     const filterBookmark = useCallback((filter: string, bookmark: MangaBookmark) => {
@@ -490,10 +495,10 @@ const MangaDetailsPanel: React.FC<MangaDetailsPanelProps> = ({ mangaLink, onClos
         if (ids.length === 0) return;
         dialogUtils
             .warn({
-                title: "Delete Bookmarks",
-                message: `Delete ${ids.length} bookmark${ids.length === 1 ? "" : "s"}?`,
+                title: t("gallery.details.deleteBookmarksTitle"),
+                message: t("gallery.details.deleteBookmarksMessage", { count: ids.length }),
                 noOption: false,
-                buttons: ["Cancel", "Yes"],
+                buttons: [tCommon("actions.cancel"), tCommon("actions.yes")],
                 defaultId: 0,
             })
             .then(({ response }) => {
@@ -501,7 +506,7 @@ const MangaDetailsPanel: React.FC<MangaDetailsPanelProps> = ({ mangaLink, onClos
                 dispatch(removeBookmark({ itemLink: mangaLink, type: "manga", ids }));
                 bookmarkSelection.clearSelection();
             });
-    }, [bookmarkSelection, mangaLink, dispatch]);
+    }, [bookmarkSelection, mangaLink, dispatch, t, tCommon]);
 
     const handleSelectCover = useCallback(async () => {
         if (!manga) return;
@@ -549,7 +554,7 @@ const MangaDetailsPanel: React.FC<MangaDetailsPanelProps> = ({ mangaLink, onClos
                 <button className="back-button" onClick={onClose}>
                     <FontAwesomeIcon icon={faArrowLeft} />
                 </button>
-                <h1 className="manga-title">{manga?.title || "Unknown Manga"}</h1>
+                <h1 className="manga-title">{manga?.title || t("gallery.details.unknownManga")}</h1>
             </div>
 
             <div className="panel-content">
@@ -559,7 +564,7 @@ const MangaDetailsPanel: React.FC<MangaDetailsPanelProps> = ({ mangaLink, onClos
                             {coverArtSrc ? (
                                 <img
                                     src={coverArtSrc}
-                                    alt={manga?.title || "cover"}
+                                    alt={manga?.title || t("gallery.details.coverAlt")}
                                     className="manga-cover"
                                     draggable={false}
                                 />
@@ -571,25 +576,25 @@ const MangaDetailsPanel: React.FC<MangaDetailsPanelProps> = ({ mangaLink, onClos
                         </div>
                         <div className="manga-info">
                             <div className="info-row">
-                                <span className="info-label">Author</span>
-                                <span className="info-value">{manga?.author || "Unknown"}</span>
+                                <span className="info-label">{t("gallery.details.author")}</span>
+                                <span className="info-value">{manga?.author || t("shared.unknown")}</span>
                             </div>
                             {manga?.type === "manga" && manga.progress && (
                                 <>
                                     <div className="info-row">
-                                        <span className="info-label">Last read</span>
+                                        <span className="info-label">{t("gallery.details.lastRead")}</span>
                                         <span className="info-value">
                                             {formatUtils.files.getName(manga.progress.chapterName || "")}
                                         </span>
                                     </div>
                                     <div className="info-row">
-                                        <span className="info-label">Current page</span>
+                                        <span className="info-label">{t("gallery.details.currentPage")}</span>
                                         <span className="info-value">
                                             {manga.progress.currentPage} / {manga.progress.totalPages || "?"}
                                         </span>
                                     </div>
                                     <div className="info-row">
-                                        <span className="info-label">Chapters read</span>
+                                        <span className="info-label">{t("gallery.details.chaptersRead")}</span>
                                         <span className="info-value">{manga.progress.chaptersRead.length}</span>
                                     </div>
                                 </>
@@ -630,17 +635,17 @@ const MangaDetailsPanel: React.FC<MangaDetailsPanelProps> = ({ mangaLink, onClos
                                                 });
                                             }}
                                         >
-                                            Continue Reading
+                                            {t("shared.continueReading")}
                                         </button>
                                     )}
                                     <button className="action-button select-cover" onClick={handleSelectCover}>
                                         <FontAwesomeIcon icon={faImage} />
-                                        <span>Select Cover</span>
+                                        <span>{t("shared.selectCover")}</span>
                                     </button>
                                     {isEditingNote ? (
                                         <button className="action-button save-note" onClick={handleSaveNote}>
                                             <FontAwesomeIcon icon={faSave} />
-                                            <span>Save Note</span>
+                                            <span>{t("gallery.details.saveNote")}</span>
                                         </button>
                                     ) : (
                                         <button
@@ -648,21 +653,23 @@ const MangaDetailsPanel: React.FC<MangaDetailsPanelProps> = ({ mangaLink, onClos
                                             onClick={() => setIsEditingNote(true)}
                                         >
                                             <FontAwesomeIcon icon={faEdit} />
-                                            <span>Edit Note (Not implemented)</span>
+                                            <span>{t("gallery.details.editNote")}</span>
                                         </button>
                                     )}
                                 </div>
                                 <div className="manga-note">
-                                    <h3>About</h3>
+                                    <h3>{t("gallery.details.about")}</h3>
                                     {isEditingNote ? (
                                         <textarea
                                             className="note-editor"
                                             value={note}
                                             onChange={(e) => setNote(e.target.value)}
-                                            placeholder="Add notes about this manga..."
+                                            placeholder={t("gallery.details.notePlaceholder")}
                                         />
                                     ) : (
-                                        <div className="note-text">{note || "No description available."}</div>
+                                        <div className="note-text">
+                                            {note || t("gallery.details.noDescription")}
+                                        </div>
                                     )}
                                 </div>
                             </>
@@ -676,20 +683,22 @@ const MangaDetailsPanel: React.FC<MangaDetailsPanelProps> = ({ mangaLink, onClos
                             className={`tab-button ${activeTab === "content" ? "active" : ""}`}
                             onClick={() => setActiveTab("content")}
                         >
-                            Content
+                            {t("gallery.details.content")}
                         </button>
                         <button
                             className={`tab-button ${activeTab === "bookmarks" ? "active" : ""}`}
                             onClick={() => setActiveTab("bookmarks")}
                         >
-                            Bookmarks
+                            {t("gallery.details.bookmarks")}
                         </button>
                     </div>
 
                     {activeTab === "content" && (
                         <>
                             <div className="chapters-header">
-                                <h2 className="chapters-title">{chapters.length} Chapters</h2>
+                                <h2 className="chapters-title">
+                                    {t("gallery.details.chaptersCount", { count: chapters.length })}
+                                </h2>
                             </div>
 
                             <ListNavigator.Provider
@@ -701,7 +710,7 @@ const MangaDetailsPanel: React.FC<MangaDetailsPanelProps> = ({ mangaLink, onClos
                                 onFilteredItemsChange={(items) =>
                                     chapterSelection.setVisibleOrder(items.map((c) => c.name))
                                 }
-                                emptyMessage="No chapters found"
+                                emptyMessage={t("gallery.details.noChapters")}
                             >
                                 {chapterSelection.isSelectionMode ? (
                                     <div className="chapters-toolbar">
@@ -712,11 +721,15 @@ const MangaDetailsPanel: React.FC<MangaDetailsPanelProps> = ({ mangaLink, onClos
                                             onCancel={chapterSelection.clearSelection}
                                             extraMenuItems={[
                                                 {
-                                                    label: `Mark ${chapterSelection.count} as Read`,
+                                                    label: t("gallery.details.markAsRead", {
+                                                        count: chapterSelection.count,
+                                                    }),
                                                     action: () => handleBulkMarkChapters(true),
                                                 },
                                                 {
-                                                    label: `Mark ${chapterSelection.count} as Unread`,
+                                                    label: t("gallery.details.markAsUnread", {
+                                                        count: chapterSelection.count,
+                                                    }),
                                                     action: () => handleBulkMarkChapters(false),
                                                 },
                                             ]}
@@ -725,18 +738,26 @@ const MangaDetailsPanel: React.FC<MangaDetailsPanelProps> = ({ mangaLink, onClos
                                 ) : (
                                     <div className="chapters-toolbar">
                                         <div className="toolbar-actions">
-                                            <button data-tooltip="Refresh" onClick={refreshChapters}>
+                                            <button
+                                                data-tooltip={t("gallery.details.refresh")}
+                                                onClick={refreshChapters}
+                                            >
                                                 <FontAwesomeIcon icon={faSyncAlt} />
                                             </button>
 
                                             <button
-                                                data-tooltip={`Sort: ${sortOrder === "normal" ? "▲ " : "▼ "}${sortBy.toUpperCase()}`}
+                                                data-tooltip={t("shared.sort.tooltip", {
+                                                    arrow: sortOrder === "normal" ? "▲ " : "▼ ",
+                                                    by: sortBy.toUpperCase(),
+                                                })}
                                                 onClick={handleSortClick}
                                             >
                                                 <FontAwesomeIcon icon={faSort} />
                                             </button>
                                         </div>
-                                        <ListNavigator.SearchInput placeholder="Search chapters..." />
+                                        <ListNavigator.SearchInput
+                                            placeholder={t("gallery.details.searchChapters")}
+                                        />
                                     </div>
                                 )}
 
@@ -750,7 +771,9 @@ const MangaDetailsPanel: React.FC<MangaDetailsPanelProps> = ({ mangaLink, onClos
                     {activeTab === "bookmarks" && (
                         <>
                             <div className="chapters-header">
-                                <h2 className="chapters-title">{bookmarksArray.length} Bookmarks</h2>
+                                <h2 className="chapters-title">
+                                    {t("gallery.details.bookmarksCount", { count: bookmarksArray.length })}
+                                </h2>
                             </div>
 
                             <ListNavigator.Provider
@@ -762,7 +785,7 @@ const MangaDetailsPanel: React.FC<MangaDetailsPanelProps> = ({ mangaLink, onClos
                                 onFilteredItemsChange={(items) =>
                                     bookmarkSelection.setVisibleOrder(items.map((b) => b.id))
                                 }
-                                emptyMessage="No bookmarks found"
+                                emptyMessage={t("gallery.details.noBookmarksFound")}
                             >
                                 {bookmarkSelection.isSelectionMode ? (
                                     <div className="chapters-toolbar">
@@ -773,9 +796,9 @@ const MangaDetailsPanel: React.FC<MangaDetailsPanelProps> = ({ mangaLink, onClos
                                             onCancel={bookmarkSelection.clearSelection}
                                             extraMenuItems={[
                                                 {
-                                                    label: `Delete ${bookmarkSelection.count} Bookmark${
-                                                        bookmarkSelection.count === 1 ? "" : "s"
-                                                    }`,
+                                                    label: t("gallery.details.deleteBookmarksMenu", {
+                                                        count: bookmarkSelection.count,
+                                                    }),
                                                     action: handleBulkDeleteBookmarks,
                                                 },
                                             ]}
@@ -783,7 +806,9 @@ const MangaDetailsPanel: React.FC<MangaDetailsPanelProps> = ({ mangaLink, onClos
                                     </div>
                                 ) : (
                                     <div className="chapters-toolbar">
-                                        <ListNavigator.SearchInput placeholder="Search bookmarks..." />
+                                        <ListNavigator.SearchInput
+                                            placeholder={t("gallery.details.searchBookmarks")}
+                                        />
                                     </div>
                                 )}
 

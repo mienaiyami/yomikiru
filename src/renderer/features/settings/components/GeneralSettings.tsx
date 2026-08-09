@@ -7,6 +7,7 @@ import { resetAllTheme } from "@store/themes";
 import InputCheckbox from "@ui/InputCheckbox";
 import { dialogUtils } from "@utils/dialog";
 import { promptSelectDir } from "@utils/file";
+import { useTranslation } from "react-i18next";
 import { useSettingsContext } from "../Settings";
 import AnilistSetting from "./AnilistSetting";
 import CustomTempLocation from "./CustomTempLocation";
@@ -14,9 +15,11 @@ import FileExplorerOptions from "./FileExplorerOptions";
 import GeneralPDFSettings from "./GeneralPDFSettings";
 import GeneralReaderPresetsSettings from "./GeneralReaderPresetsSettings";
 import GeneralThemeSettings from "./GeneralThemeSettings";
+import LanguageSettings from "./LanguageSettings";
 import LibrarySettings from "./LibrarySettings";
 
 const GeneralSettings: React.FC = () => {
+    const { t } = useTranslation("settings");
     const { scrollIntoView } = useSettingsContext();
     const appSettings = useAppSelector((store) => store.appSettings);
     const mainSettings = useAppSelector((store) => store.mainSettings);
@@ -25,7 +28,7 @@ const GeneralSettings: React.FC = () => {
     return (
         <div className="content2">
             <div className="settingItem2" id="settings-default-location">
-                <h3>Default Location</h3>
+                <h3>{t("defaultLocation.title")}</h3>
                 {/* <div className="desc">
                                     Default location of home screen Locations tab. Set this to folder where you
                                     store your manga.
@@ -37,32 +40,33 @@ const GeneralSettings: React.FC = () => {
                             promptSelectDir((path) => dispatch(setAppSettings({ baseDir: path as string })));
                         }}
                     >
-                        Change Default
+                        {t("defaultLocation.changeDefault")}
                     </button>
                 </div>
             </div>
             <GeneralThemeSettings />
+            <LanguageSettings />
             <GeneralReaderPresetsSettings />
             {process.platform === "win32" && <FileExplorerOptions />}
             <AnilistSetting />
             <LibrarySettings />
             <GeneralPDFSettings />
             <div className="settingItem2" id="settings-customStylesheet">
-                <h3>Custom Stylesheet</h3>
+                <h3>{t("customStylesheet.title")}</h3>
                 <div className="desc">
-                    You can include your custom css stylesheet to change style of app more than what theme can do.{" "}
+                    {t("customStylesheet.desc")}{" "}
                     <a
                         onClick={() => {
                             scrollIntoView("#settings-usage-customStylesheet", "extras");
                         }}
                     >
-                        More Info
+                        {t("shared.moreInfo")}
                     </a>
                 </div>
                 <div className="main row">
                     <input
                         type="text"
-                        placeholder="No File Selected"
+                        placeholder={t("customStylesheet.placeholder")}
                         value={appSettings.customStylesheet}
                         readOnly
                     />
@@ -76,26 +80,26 @@ const GeneralSettings: React.FC = () => {
                                 [
                                     {
                                         extensions: ["css"],
-                                        name: "Cascading Style Sheets",
+                                        name: t("customStylesheet.filterName"),
                                     },
                                 ],
                             );
                         }}
                     >
-                        Select
+                        {t("shared.select")}
                     </button>
                     <button
                         onClick={() => {
                             dispatch(setAppSettings({ customStylesheet: "" }));
                         }}
                     >
-                        Clear
+                        {t("shared.clear")}
                     </button>
                 </div>
             </div>
             <CustomTempLocation />
             <div className="settingItem2 otherSettings" id="settings-otherSettings">
-                <h3>Other Settings</h3>
+                <h3>{t("otherSettings.title")}</h3>
                 <div className="toggleItem">
                     <InputCheckbox
                         checked={mainSettings.hardwareAcceleration}
@@ -103,11 +107,10 @@ const GeneralSettings: React.FC = () => {
                         onChange={async (e) => {
                             dispatch(updateMainSettings({ hardwareAcceleration: e.currentTarget.checked }));
                         }}
-                        labelAfter="Hardware Acceleration"
+                        labelAfter={t("otherSettings.hardwareAcceleration")}
                     />
                     <div className="desc">
-                        Use GPU to accelerate rendering. Prevents reader stuttering.{" "}
-                        <code>App Restart Needed</code>
+                        {t("otherSettings.hardwareAccelerationDesc")} <code>{t("shared.appRestartNeeded")}</code>
                     </div>
                 </div>
                 <div className="toggleItem">
@@ -117,9 +120,9 @@ const GeneralSettings: React.FC = () => {
                         onChange={async (e) => {
                             dispatch(updateMainSettings({ askBeforeClosing: e.currentTarget.checked }));
                         }}
-                        labelAfter="Confirm Close Window"
+                        labelAfter={t("otherSettings.confirmCloseWindow")}
                     />
-                    <div className="desc">Ask for confirmation before closing a window.</div>
+                    <div className="desc">{t("otherSettings.confirmCloseWindowDesc")}</div>
                 </div>
                 <div className="toggleItem">
                     <InputCheckbox
@@ -128,13 +131,9 @@ const GeneralSettings: React.FC = () => {
                         onChange={async (e) => {
                             dispatch(updateMainSettings({ minimizeToTray: e.currentTarget.checked }));
                         }}
-                        labelAfter="Minimize to Tray"
+                        labelAfter={t("otherSettings.minimizeToTray")}
                     />
-                    <div className="desc">
-                        When enabled, minimize sends the window to the system tray instead of the taskbar. One
-                        window: left-click tray toggles show/hide. Multiple windows: left-click restores or
-                        focuses. Right-click: window list, Hide all Windows, Exit.
-                    </div>
+                    <div className="desc">{t("otherSettings.minimizeToTrayDesc")}</div>
                 </div>
                 <div className="toggleItem">
                     <InputCheckbox
@@ -143,11 +142,10 @@ const GeneralSettings: React.FC = () => {
                         onChange={async (e) => {
                             dispatch(updateMainSettings({ openInExistingWindow: e.currentTarget.checked }));
                         }}
-                        labelAfter="Use Existing Window"
+                        labelAfter={t("otherSettings.useExistingWindow")}
                     />
                     <div className="desc">
-                        Open files in current window and focus it when launching the app again. Disabled: open in
-                        new window. <code>App Restart Needed</code>
+                        {t("otherSettings.useExistingWindowDesc")} <code>{t("shared.appRestartNeeded")}</code>
                     </div>
                 </div>
                 <div className="toggleItem">
@@ -157,9 +155,9 @@ const GeneralSettings: React.FC = () => {
                         onChange={(e) => {
                             dispatch(setAppSettings({ openOnDblClick: e.currentTarget.checked }));
                         }}
-                        labelAfter="Open on double-click"
+                        labelAfter={t("otherSettings.openOnDblClick")}
                     />
-                    <div className="desc">Open items from home location list in reader on double click.</div>
+                    <div className="desc">{t("otherSettings.openOnDblClickDesc")}</div>
                 </div>
                 <div className="toggleItem">
                     <InputCheckbox
@@ -168,10 +166,10 @@ const GeneralSettings: React.FC = () => {
                         onChange={(e) => {
                             dispatch(setAppSettings({ syncSettings: e.currentTarget.checked }));
                         }}
-                        labelAfter="Sync Settings"
+                        labelAfter={t("otherSettings.syncSettings")}
                     />
                     <div className="desc">
-                        Sync app settings across all opened windows. <code>App Restart Needed</code>
+                        {t("otherSettings.syncSettingsDesc")} <code>{t("shared.appRestartNeeded")}</code>
                     </div>
                 </div>
                 <div className="toggleItem">
@@ -181,10 +179,10 @@ const GeneralSettings: React.FC = () => {
                         onChange={(e) => {
                             dispatch(setAppSettings({ syncThemes: e.currentTarget.checked }));
                         }}
-                        labelAfter="Sync Themes"
+                        labelAfter={t("otherSettings.syncThemes")}
                     />
                     <div className="desc">
-                        Sync themes across all opened windows. <code>App Restart Needed</code>
+                        {t("otherSettings.syncThemesDesc")} <code>{t("shared.appRestartNeeded")}</code>
                     </div>
                 </div>
                 <div className="toggleItem" id="settings-openDirectlyFromManga">
@@ -198,17 +196,16 @@ const GeneralSettings: React.FC = () => {
                                 }),
                             );
                         }}
-                        labelAfter="Chapter Opening Shortcut"
+                        labelAfter={t("otherSettings.chapterOpeningShortcut")}
                     />
                     <div className="desc">
-                        Open chapter directly by clicking name instead of arrow in reader if chapter folder is in
-                        manga folder inside default location.{" "}
+                        {t("otherSettings.chapterOpeningShortcutDesc")}{" "}
                         <a
                             onClick={() => {
                                 scrollIntoView("#settings-usage-openDirectlyFromManga", "extras");
                             }}
                         >
-                            More Info
+                            {t("shared.moreInfo")}
                         </a>
                     </div>
                 </div>
@@ -219,9 +216,9 @@ const GeneralSettings: React.FC = () => {
                         onChange={(e) => {
                             dispatch(setAppSettings({ showSearch: e.currentTarget.checked }));
                         }}
-                        labelAfter="Bookmark / History Search"
+                        labelAfter={t("otherSettings.bookmarkHistorySearch")}
                     />
-                    <div className="desc">Show search bar over bookmarks and history list.</div>
+                    <div className="desc">{t("otherSettings.bookmarkHistorySearchDesc")}</div>
                 </div>
                 <div className="toggleItem" id="settings-classicListCheckboxes">
                     <InputCheckbox
@@ -234,11 +231,9 @@ const GeneralSettings: React.FC = () => {
                                 }),
                             );
                         }}
-                        labelAfter="Classic List Checkboxes"
+                        labelAfter={t("otherSettings.classicListCheckboxes")}
                     />
-                    <div className="desc">
-                        Show multi-select checkboxes on home Bookmark / History rows (classic view).
-                    </div>
+                    <div className="desc">{t("otherSettings.classicListCheckboxesDesc")}</div>
                 </div>
                 <div className="toggleItem">
                     <InputCheckbox
@@ -251,12 +246,12 @@ const GeneralSettings: React.FC = () => {
                                 }),
                             );
                         }}
-                        labelAfter="Confirm Side-List Item Delete"
+                        labelAfter={t("otherSettings.confirmSideListDelete")}
                     />
                     <div className="desc">
-                        Confirm before deleting item from history/bookmark/note in side list.
+                        {t("otherSettings.confirmSideListDeleteDesc1")}
                         <br />
-                        Always true on home page.
+                        {t("otherSettings.confirmSideListDeleteDesc2")}
                     </div>
                 </div>
                 <div className="toggleItem">
@@ -266,12 +261,9 @@ const GeneralSettings: React.FC = () => {
                         onChange={(e) => {
                             dispatch(setAppSettings({ openInZenMode: e.currentTarget.checked }));
                         }}
-                        labelAfter="Auto Zen Mode"
+                        labelAfter={t("otherSettings.autoZenMode")}
                     />
-                    <div className="desc">
-                        Open reader in &quot;Zen Mode&quot; by default. Applies to opening from file explorer as
-                        well.
-                    </div>
+                    <div className="desc">{t("otherSettings.autoZenModeDesc")}</div>
                 </div>
                 <div className="toggleItem">
                     <InputCheckbox
@@ -284,9 +276,9 @@ const GeneralSettings: React.FC = () => {
                                 }),
                             );
                         }}
-                        labelAfter="Zen Mode Cursor"
+                        labelAfter={t("otherSettings.zenModeCursor")}
                     />
-                    <div className="desc">Hide cursor in Zen Mode.</div>
+                    <div className="desc">{t("otherSettings.zenModeCursorDesc")}</div>
                 </div>
                 <div className="toggleItem">
                     <InputCheckbox
@@ -299,12 +291,9 @@ const GeneralSettings: React.FC = () => {
                                 }),
                             );
                         }}
-                        labelAfter="Auto Refresh Side-list"
+                        labelAfter={t("otherSettings.autoRefreshSideList")}
                     />
-                    <div className="desc">
-                        Automatically refresh reader-side-list when change in files is detected. It can be heavy
-                        task if you have slow storage and chapter+page count is high.
-                    </div>
+                    <div className="desc">{t("otherSettings.autoRefreshSideListDesc")}</div>
                 </div>
                 <div className="toggleItem">
                     <InputCheckbox
@@ -317,13 +306,13 @@ const GeneralSettings: React.FC = () => {
                                 }),
                             );
                         }}
-                        labelAfter="Canvas Based Rendering"
+                        labelAfter={t("otherSettings.canvasBasedRendering")}
                     />
                     <div className="desc">
-                        Make scrolling smooth and prevent stuttering when reading high res images.
+                        {t("otherSettings.canvasBasedRenderingDesc1")}
                         <br />
-                        Drawbacks : high RAM usage and less sharp images when size is set to a low value.
-                        <code>Experimental</code>
+                        {t("otherSettings.canvasBasedRenderingDesc2")}
+                        <code>{t("shared.experimental")}</code>
                     </div>
                 </div>
                 <div className="toggleItem">
@@ -338,14 +327,12 @@ const GeneralSettings: React.FC = () => {
                             );
                         }}
                         disabled={appSettings.useCanvasBasedReader}
-                        labelAfter="Dynamic Image Loading"
+                        labelAfter={t("otherSettings.dynamicImageLoading")}
                     />
                     <div className="desc">
-                        Removes Initial loading screen and load Images as you scroll. Doesn&apos;t work with
-                        &quot;Canvas Based Rendering&quot;
+                        {t("otherSettings.dynamicImageLoadingDesc1")}
                         <br />
-                        Drawbacks : Inconsistent scroll size, no double-span images support, stuttering while
-                        scrolling.
+                        {t("otherSettings.dynamicImageLoadingDesc2")}
                     </div>
                 </div>
 
@@ -360,12 +347,9 @@ const GeneralSettings: React.FC = () => {
                                 }),
                             );
                         }}
-                        labelAfter="Auto-Focus current chapter in side-list "
+                        labelAfter={t("otherSettings.autoFocusChapter")}
                     />
-                    <div className="desc">
-                        Automatically focus/scroll to current chapter entry in side-list when changing chapter. Can
-                        cause huge performance loss in case of epub with large number (&gt; 500) of chapters.
-                    </div>
+                    <div className="desc">{t("otherSettings.autoFocusChapterDesc")}</div>
                 </div>
                 <div className="toggleItem">
                     <InputCheckbox
@@ -378,7 +362,7 @@ const GeneralSettings: React.FC = () => {
                                 }),
                             );
                         }}
-                        labelAfter="EPUB: Auto-Focus current chapter in side-list "
+                        labelAfter={t("otherSettings.epubAutoFocusChapter")}
                     />
                 </div>
                 <div className="toggleItem">
@@ -392,13 +376,12 @@ const GeneralSettings: React.FC = () => {
                                 }),
                             );
                         }}
-                        labelAfter="EPUB: Load By Chapter"
+                        labelAfter={t("otherSettings.epubLoadByChapter")}
                     />
                     <div className="desc">
-                        Load and show one chapter at a time (from TOC). If disabled whole epub file will be
-                        displayed (high RAM usage).
+                        {t("otherSettings.epubLoadByChapterDesc1")}
                         <br />
-                        Drawback : Content outside of TOC will not be accessible.
+                        {t("otherSettings.epubLoadByChapterDesc2")}
                     </div>
                 </div>
                 <div className="toggleItem">
@@ -412,16 +395,14 @@ const GeneralSettings: React.FC = () => {
                                 }),
                             );
                         }}
-                        labelAfter="EPUB: Disable Text Select / Enable double-click zen mode"
+                        labelAfter={t("otherSettings.epubDisableTextSelect")}
                     />
-                    <div className="desc">
-                        Removes ability to select text in epub reader and enabled double-click zen mode.
-                    </div>
+                    <div className="desc">{t("otherSettings.epubDisableTextSelectDesc")}</div>
                 </div>
             </div>
 
             <div className="settingItem2 otherSettings">
-                <h3>Style Settings</h3>
+                <h3>{t("styleSettings.title")}</h3>
 
                 <div className="toggleItem">
                     <InputCheckbox
@@ -434,9 +415,9 @@ const GeneralSettings: React.FC = () => {
                                 }),
                             );
                         }}
-                        labelAfter="Location List Numbering"
+                        labelAfter={t("styleSettings.locationListNumbering")}
                     />
-                    <div className="desc">Enabled Location List Numbering. This will be applied to all lists.</div>
+                    <div className="desc">{t("styleSettings.locationListNumberingDesc")}</div>
                 </div>
                 <div className="toggleItem">
                     <InputCheckbox
@@ -449,12 +430,9 @@ const GeneralSettings: React.FC = () => {
                                 }),
                             );
                         }}
-                        labelAfter="Chapter Transition screen"
+                        labelAfter={t("styleSettings.chapterTransition")}
                     />
-                    <div className="desc">
-                        Show the chapter transition screen that show up at start and end of chapter (only in
-                        vertical scroll Reading mode).
-                    </div>
+                    <div className="desc">{t("styleSettings.chapterTransitionDesc")}</div>
                 </div>
 
                 <div className="toggleItem">
@@ -468,12 +446,9 @@ const GeneralSettings: React.FC = () => {
                                 }),
                             );
                         }}
-                        labelAfter="More Info on Bookmark / History Hover"
+                        labelAfter={t("styleSettings.moreInfoOnHover")}
                     />
-                    <div className="desc">
-                        Show more info such as &quot;date&quot;, &quot;total pages&quot;, &quot;last page
-                        number&quot;, &quot;path&quot; when mouse over items in bookmark / history tab.
-                    </div>
+                    <div className="desc">{t("styleSettings.moreInfoOnHoverDesc")}</div>
                 </div>
 
                 <div className="toggleItem">
@@ -487,9 +462,9 @@ const GeneralSettings: React.FC = () => {
                                 }),
                             );
                         }}
-                        labelAfter="Reader Settings Checkbox"
+                        labelAfter={t("styleSettings.readerSettingsCheckbox")}
                     />
-                    <div className="desc">Show checkbox instead of toggle in reader settings.</div>
+                    <div className="desc">{t("styleSettings.readerSettingsCheckboxDesc")}</div>
                 </div>
                 <div className="toggleItem">
                     <InputCheckbox
@@ -502,7 +477,7 @@ const GeneralSettings: React.FC = () => {
                                 }),
                             );
                         }}
-                        labelAfter="Show Page Count in Side-List"
+                        labelAfter={t("styleSettings.showPageCountInSideList")}
                     />
                 </div>
                 <div className="toggleItem">
@@ -516,20 +491,19 @@ const GeneralSettings: React.FC = () => {
                                 }),
                             );
                         }}
-                        labelAfter="Show text files badge in Side-List"
+                        labelAfter={t("styleSettings.showTextFileBadge")}
                     />
                 </div>
             </div>
             <div className="settingItem2 dangerZone">
-                <h3>Reset</h3>
+                <h3>{t("reset.title")}</h3>
                 <div className="main row">
                     <button
                         onClick={() => {
                             dialogUtils
                                 .warn({
-                                    title: "Reset library",
-                                    message:
-                                        "This will delete all entries from library including bookmarks. Continue?",
+                                    title: t("reset.libraryTitle"),
+                                    message: t("reset.libraryMessage"),
                                     noOption: false,
                                     defaultId: 0,
                                 })
@@ -539,11 +513,10 @@ const GeneralSettings: React.FC = () => {
                                     if (response === 0) {
                                         dialogUtils
                                             .warn({
-                                                title: "Reset library",
-                                                message:
-                                                    "This will delete all entries from library including bookmarks. Continue?",
+                                                title: t("reset.libraryTitle"),
+                                                message: t("reset.libraryMessage"),
                                                 noOption: false,
-                                                buttons: ["Cancel", "Reset"],
+                                                buttons: [t("shared.cancel"), t("shared.reset")],
                                                 defaultId: 0,
                                             })
                                             .then(({ response }) => {
@@ -554,14 +527,14 @@ const GeneralSettings: React.FC = () => {
                                 });
                         }}
                     >
-                        Reset Library
+                        {t("reset.resetLibrary")}
                     </button>
                     <button
                         onClick={() => {
                             dialogUtils
                                 .warn({
-                                    title: "Reset themes",
-                                    message: "This will delete all Themes. Continue?",
+                                    title: t("reset.themesTitleLower"),
+                                    message: t("reset.themesMessage"),
                                     noOption: false,
                                 })
                                 .then(({ response }) => {
@@ -570,10 +543,9 @@ const GeneralSettings: React.FC = () => {
                                     if (response === 0) {
                                         dialogUtils
                                             .warn({
-                                                title: "Reset Themes",
+                                                title: t("reset.themesTitle"),
                                                 noOption: false,
-                                                message:
-                                                    "Are you really sure you want to delete all Themes?\nThis process is irreversible.",
+                                                message: t("reset.themesConfirm"),
                                             })
                                             .then((res) => {
                                                 if (res.response === 1) return;
@@ -583,14 +555,14 @@ const GeneralSettings: React.FC = () => {
                                 });
                         }}
                     >
-                        Reset Themes
+                        {t("reset.resetThemes")}
                     </button>
                     <button
                         onClick={() => {
                             dialogUtils
                                 .warn({
-                                    title: "Warning",
-                                    message: "Reset Shortcuts to default?",
+                                    title: t("shared.warning"),
+                                    message: t("reset.shortcutsMessage"),
                                     noOption: false,
                                 })
                                 .then((res) => {
@@ -600,14 +572,14 @@ const GeneralSettings: React.FC = () => {
                                 });
                         }}
                     >
-                        Reset Shortcuts
+                        {t("reset.resetShortcuts")}
                     </button>
                     <button
                         onClick={() => {
                             dialogUtils
                                 .warn({
-                                    title: "Reset Settings",
-                                    message: "This will reset all Settings. Continue?",
+                                    title: t("reset.settingsTitle"),
+                                    message: t("reset.settingsMessage"),
                                     noOption: false,
                                 })
                                 .then(({ response }) => {
@@ -616,10 +588,9 @@ const GeneralSettings: React.FC = () => {
                                     if (response === 0) {
                                         dialogUtils
                                             .warn({
-                                                title: "Reset Settings",
+                                                title: t("reset.settingsTitle"),
                                                 noOption: false,
-                                                message:
-                                                    "Are you really sure you want to reset settings?\nThis process is irreversible.",
+                                                message: t("reset.settingsConfirm"),
                                             })
                                             .then((res) => {
                                                 if (res.response === 1) return;
@@ -630,7 +601,7 @@ const GeneralSettings: React.FC = () => {
                                 });
                         }}
                     >
-                        Reset Settings
+                        {t("reset.resetSettings")}
                     </button>
                 </div>
             </div>

@@ -17,6 +17,7 @@ import TextInputModal from "@ui/TextInputModal";
 import { dialogUtils } from "@utils/dialog";
 import { type BookReaderPreset, isUserPresetId, type MangaReaderPreset } from "@utils/readerPresets";
 import { memo, useState } from "react";
+import { useTranslation } from "react-i18next";
 
 type PresetRow = {
     id: string;
@@ -51,6 +52,7 @@ const ReaderPresetSectionView = memo(
         onUpdateSelected,
         onDeleteSelected,
     }: ReaderPresetSectionViewProps) => {
+        const { t } = useTranslation("reader");
         const [showPresetNameModal, setShowPresetNameModal] = useState(false);
         const preset = presets.find((p) => p.id === presetId);
 
@@ -65,7 +67,7 @@ const ReaderPresetSectionView = memo(
                         }}
                         onClick={onToggleCollapsed}
                     >
-                        Preset
+                        {t("settings.preset")}
                     </div>
                     <div className="options">
                         <div className="col">
@@ -92,7 +94,7 @@ const ReaderPresetSectionView = memo(
                             <div className="row stretch-content">
                                 <button
                                     onClick={() => setShowPresetNameModal(true)}
-                                    title="Save current settings as new preset"
+                                    title={t("presets.saveAsNew")}
                                 >
                                     <FontAwesomeIcon icon={faPlus} />
                                 </button>
@@ -101,18 +103,19 @@ const ReaderPresetSectionView = memo(
                                         <button
                                             className={preset.autosave ? "optionSelected" : ""}
                                             onClick={() => onToggleAutosave(preset.id, !preset.autosave)}
-                                            title={preset.autosave ? "Disable autosave" : "Enable autosave"}
+                                            title={
+                                                preset.autosave
+                                                    ? t("presets.disableAutosave")
+                                                    : t("presets.enableAutosave")
+                                            }
                                         >
                                             <FontAwesomeIcon icon={faSync} />
                                         </button>
-                                        <button
-                                            onClick={onUpdateSelected}
-                                            title="Update selected preset with current settings"
-                                        >
+                                        <button onClick={onUpdateSelected} title={t("presets.updateSelected")}>
                                             <FontAwesomeIcon icon={faSave} />
                                         </button>
                                         {presets.length > 1 && presetId && !isUserPresetId(presetId) && (
-                                            <button onClick={onDeleteSelected} title="Delete preset">
+                                            <button onClick={onDeleteSelected} title={t("presets.deletePreset")}>
                                                 <FontAwesomeIcon icon={faTrash} />
                                             </button>
                                         )}
@@ -124,8 +127,8 @@ const ReaderPresetSectionView = memo(
                 </div>
                 {showPresetNameModal && (
                     <TextInputModal
-                        title="Preset name"
-                        placeholder="Enter preset name"
+                        title={t("presets.nameTitle")}
+                        placeholder={t("presets.namePlaceholder")}
                         onClose={() => setShowPresetNameModal(false)}
                         onSave={(name) => {
                             onAdd(name);
@@ -144,6 +147,7 @@ ReaderPresetSectionView.displayName = "ReaderPresetSectionView";
  * Manga reader preset section - subscribes only to {@link getMangaPresets}.
  */
 export const MangaReaderPresetSection = memo(() => {
+    const { t } = useTranslation("reader");
     const dispatch = useAppDispatch();
     const presets = useAppSelector(getMangaPresets);
     const presetId = useAppSelector((s) => s.appSettings.mangaReaderPresetId);
@@ -183,11 +187,11 @@ export const MangaReaderPresetSection = memo(() => {
                 const selected = presets.find((p) => p.id === presetId);
                 if (!selected) return;
                 dispatch(updateMangaPreset({ id: selected.id, data: readerSettings }));
-                dialogUtils.confirm({ message: "Preset updated.", noOption: true });
+                dialogUtils.confirm({ message: t("dialogs.presetUpdated"), noOption: true });
             }}
             onDeleteSelected={() => {
                 if (!presetId) return;
-                dialogUtils.confirm({ message: "Delete preset?", noOption: false }).then((res) => {
+                dialogUtils.confirm({ message: t("dialogs.deletePreset"), noOption: false }).then((res) => {
                     if (res.response === 0) dispatch(deleteReaderPresetWithFallback(presetId));
                 });
             }}
@@ -201,6 +205,7 @@ MangaReaderPresetSection.displayName = "MangaReaderPresetSection";
  * Book/EPUB reader preset section - subscribes only to {@link getBookPresets}.
  */
 export const BookReaderPresetSection = memo(() => {
+    const { t } = useTranslation("reader");
     const dispatch = useAppDispatch();
     const presets = useAppSelector(getBookPresets);
     const presetId = useAppSelector((s) => s.appSettings.bookReaderPresetId);
@@ -240,11 +245,11 @@ export const BookReaderPresetSection = memo(() => {
                 const selected = presets.find((p) => p.id === presetId);
                 if (!selected) return;
                 dispatch(updateBookPreset({ id: selected.id, data: epubReaderSettings }));
-                dialogUtils.confirm({ message: "Preset updated.", noOption: true });
+                dialogUtils.confirm({ message: t("dialogs.presetUpdated"), noOption: true });
             }}
             onDeleteSelected={() => {
                 if (!presetId) return;
-                dialogUtils.confirm({ message: "Delete preset?", noOption: false }).then((res) => {
+                dialogUtils.confirm({ message: t("dialogs.deletePreset"), noOption: false }).then((res) => {
                     if (res.response === 0) dispatch(deleteReaderPresetWithFallback(presetId));
                 });
             }}

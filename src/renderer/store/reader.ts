@@ -1,5 +1,6 @@
 import type { LibraryItemWithProgress } from "@common/types/db";
 import { createSlice, type PayloadAction } from "@reduxjs/toolkit";
+import i18n from "../i18n";
 import type { RootState } from ".";
 import { updateChaptersRead, updateChaptersReadAll } from "./library";
 
@@ -116,7 +117,10 @@ const readerSlice = createSlice({
             } else {
                 state.loading = {
                     percent: null,
-                    message: action.payload.message ?? state.loading?.message ?? "Loading...",
+                    message:
+                        action.payload.message ??
+                        state.loading?.message ??
+                        i18n.t("loading.default", { ns: "reader" }),
                 };
             }
         },

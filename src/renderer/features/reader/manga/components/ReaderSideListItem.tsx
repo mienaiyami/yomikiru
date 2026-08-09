@@ -2,6 +2,7 @@ import ListItem from "@renderer/components/ListItem";
 import { useAppSelector } from "@store/hooks";
 import { formatUtils } from "@utils/file";
 import { memo, useEffect, useState } from "react";
+import { useTranslation } from "react-i18next";
 import { useAppContext } from "src/renderer/App";
 
 type ReaderSideListItemProps = {
@@ -16,6 +17,7 @@ type ReaderSideListItemProps = {
 
 const ReaderSideListItem = memo(
     ({ name, pages, link, inHistory, current, focused, onClick }: ReaderSideListItemProps) => {
+        const { t } = useTranslation("reader");
         const appSettings = useAppSelector((state) => state.appSettings);
         const { openInReader, setContextMenuData, contextMenuData } = useAppContext();
         const [contextMenuFocused, setContextMenuFocused] = useState(false);
@@ -88,7 +90,7 @@ const ReaderSideListItem = memo(
                         {formatUtils.files.getExt(name)}
                     </code>
                 ) : (
-                    <span className="pageNum" title="Total Pages">
+                    <span className="pageNum" title={t("sideList.totalPages")}>
                         {pages}
                     </span>
                 )}

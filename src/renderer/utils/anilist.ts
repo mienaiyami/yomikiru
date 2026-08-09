@@ -1,8 +1,15 @@
+import i18n from "@renderer/i18n";
+
 import { dialogUtils } from "./dialog";
 import { getStorageItem, setStorageItem } from "./localStorage";
 import { createRendererLogger } from "./logger";
 
 const log = createRendererLogger("AniList");
+
+/** Ensures the lazy `anilist` catalog is available before util dialogs / labels run. */
+const ensureAnilistNs = (): void => {
+    void i18n.loadNamespaces("anilist");
+};
 
 export default class AniList {
     static #token = "";
@@ -46,6 +53,7 @@ export default class AniList {
     `;
 
     static {
+        ensureAnilistNs();
         // for first launch
         if (AniList.getStorageToken() === null) AniList.setStorageToken("");
         if (AniList.loadTrackingFromStorage().length === 0) AniList.setStorageTracking([]);
@@ -56,8 +64,7 @@ export default class AniList {
             AniList.checkToken(token).then((e) => {
                 if (!e && e !== undefined)
                     dialogUtils.customError({
-                        message:
-                            "Unable to login to AniList. If persists, try logging in again using different token.",
+                        message: i18n.t("errors.loginFailed", { ns: "anilist" }),
                     });
             });
     }
@@ -123,7 +130,7 @@ export default class AniList {
             }
             return raw.ok;
         } catch (reason) {
-            dialogUtils.customError({ message: "Unable to make request to AniList server." });
+            dialogUtils.customError({ message: i18n.t("errors.requestFailed", { ns: "anilist" }) });
             log.error("checkToken: request failed", reason);
         }
     }
@@ -157,8 +164,8 @@ export default class AniList {
                     log.error("fetch: error payload from API", json);
                     if (json.errors.message === "Invalid token")
                         dialogUtils.customError({
-                            message: "AniList: Invalid token",
-                            detail: "Try logging out and in again.",
+                            message: i18n.t("errors.invalidToken", { ns: "anilist" }),
+                            detail: i18n.t("errors.invalidTokenDetail", { ns: "anilist" }),
                         });
                 }
             }
@@ -176,7 +183,7 @@ export default class AniList {
         `;
         const data = await AniList.fetch(query);
         if (data) return data.Viewer.name;
-        else return "Error";
+        else return i18n.t("errors.username", { ns: "anilist" });
     }
     static getVariables(variables: object) {
         return AniList.displayAdultContent ? { ...variables } : { ...variables, displayAdultContent: false };
@@ -250,23 +257,18 @@ export default class AniList {
     }
 }
 
-/** Human-readable labels for Anilist media format values. */
-export const ANILIST_FORMAT_LABEL: Record<Anilist.MediaFormat, string> = {
-    MANGA: "Manga",
-    NOVEL: "Novel",
-    LIGHT_NOVEL: "Light Novel",
-    ONE_SHOT: "One Shot",
-    MANHWA: "Manhwa",
-    MANHUA: "Manhua",
-    DOUJINSHI: "Doujinshi",
-    OEL: "OEL",
-};
+/**
+ * Human-readable label for an Anilist media format value.
+ *
+ * @param format Anilist GraphQL media format enum
+ */
+export const anilistFormatLabel = (format: Anilist.MediaFormat): string =>
+    i18n.t(`format.${format}`, { ns: "anilist", defaultValue: format });
 
-/** Human-readable labels for Anilist media status values. */
-export const ANILIST_STATUS_LABEL: Record<Anilist.MediaStatus, string> = {
-    FINISHED: "Finished",
-    RELEASING: "Releasing",
-    CANCELLED: "Cancelled",
-    HIATUS: "Hiatus",
-    NOT_YET_RELEASED: "Not Yet Released",
-};
+/**
+ * Human-readable label for an Anilist media status value.
+ *
+ * @param status Anilist GraphQL media status enum
+ */
+export const anilistStatusLabel = (status: Anilist.MediaStatus): string =>
+    i18n.t(`status.${status}`, { ns: "anilist", defaultValue: status });

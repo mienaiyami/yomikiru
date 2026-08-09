@@ -1,4 +1,5 @@
 import type { Logger } from "@common/logger";
+import i18n from "@renderer/i18n";
 import { dialogUtils } from "@utils/dialog";
 import { formatUtils, unzip } from "@utils/file";
 import { renderPDF } from "@utils/pdf";
@@ -240,9 +241,11 @@ export class DirectoryValidatorService {
                 }
 
                 onProgress({
-                    message: `EXTRACTING "${linkSplitted.at(-1)?.substring(0, 10)}・・・${formatUtils.files.getExt(
-                        link,
-                    )}"`,
+                    message: i18n.t("loading.extracting", {
+                        ns: "reader",
+                        prefix: linkSplitted.at(-1)?.substring(0, 10),
+                        ext: formatUtils.files.getExt(link),
+                    }),
                 });
 
                 try {
@@ -256,12 +259,12 @@ export class DirectoryValidatorService {
                     if (options.errorOnInvalid) {
                         if (err instanceof Error && err.message?.includes("spawn unzip ENOENT")) {
                             dialogUtils.customError({
-                                message: "Error while extracting.",
-                                detail: '"unzip" not found. Please install by using\n"sudo apt install unzip"',
+                                message: i18n.t("errors.extractError", { ns: "reader" }),
+                                detail: i18n.t("errors.unzipNotFound", { ns: "reader" }),
                             });
                         } else {
                             dialogUtils.customError({
-                                message: "Error while extracting.",
+                                message: i18n.t("errors.extractError", { ns: "reader" }),
                                 detail: err instanceof Error ? err.message : String(err),
                                 log: false,
                             });
@@ -315,14 +318,22 @@ export class DirectoryValidatorService {
                 }
 
                 onProgress({
-                    message: `Rendering "${linkSplitted.at(-1)?.substring(0, 20)}..."`,
+                    message: i18n.t("loading.rendering", {
+                        ns: "reader",
+                        name: linkSplitted.at(-1)?.substring(0, 20),
+                    }),
                 });
 
                 try {
                     await renderPDF(link, tempExtractPath, appSettings.pdfScale, (total, done) => {
                         onProgress({
                             percent: Math.round((done / total) * 100),
-                            message: `[${done}/${total}] Rendering "${linkSplitted.at(-1)?.substring(0, 20)}..."`,
+                            message: i18n.t("loading.renderingProgress", {
+                                ns: "reader",
+                                done,
+                                total,
+                                name: linkSplitted.at(-1)?.substring(0, 20),
+                            }),
                         });
                     });
                     return await this.processDirectory(tempExtractPath, 1, options);
@@ -357,8 +368,8 @@ export class DirectoryValidatorService {
             if (files.length <= 0) {
                 if (options.errorOnInvalid)
                     dialogUtils.customError({
-                        title: "No images found",
-                        message: "Directory is empty.",
+                        title: i18n.t("errors.noImagesFoundTitle", { ns: "reader" }),
+                        message: i18n.t("errors.directoryEmpty", { ns: "reader" }),
                         detail: link,
                     });
                 return { isValid: false, error: "Directory is empty" };
@@ -407,8 +418,8 @@ export class DirectoryValidatorService {
 
                 if (options.errorOnInvalid)
                     dialogUtils.customError({
-                        title: "No images found",
-                        message: "Directory doesn't contain any supported image format.",
+                        title: i18n.t("errors.noImagesFoundTitle", { ns: "reader" }),
+                        message: i18n.t("errors.noSupportedImages", { ns: "reader" }),
                     });
                 return { isValid: false, error: "No supported images found" };
             }

@@ -1,13 +1,35 @@
+import home from "@common/i18n/locales/en/home.json";
 import { fireEvent, render } from "@testing-library/react";
-import { describe, expect, it, vi } from "vitest";
+import i18n from "i18next";
+import { I18nextProvider, initReactI18next } from "react-i18next";
+import { beforeAll, describe, expect, it, vi } from "vitest";
 import GalleryTypeFilterBar, { type GalleryTypeFilterId } from "./GalleryTypeFilterBar";
+
+beforeAll(async () => {
+    if (!i18n.isInitialized) {
+        await i18n.use(initReactI18next).init({
+            lng: "en",
+            resources: { en: { home } },
+            ns: ["home"],
+            defaultNS: "home",
+            interpolation: { escapeValue: false },
+            react: { useSuspense: false },
+        });
+    } else if (!i18n.hasResourceBundle("en", "home")) {
+        i18n.addResourceBundle("en", "home", home, true, true);
+    }
+});
 
 /**
  * Renders {@link GalleryTypeFilterBar} with a mock `onFilterChange` for assertions.
  */
 const renderBar = (activeFilter: GalleryTypeFilterId = "all") => {
     const onFilterChange = vi.fn();
-    const utils = render(<GalleryTypeFilterBar activeFilter={activeFilter} onFilterChange={onFilterChange} />);
+    const utils = render(
+        <I18nextProvider i18n={i18n}>
+            <GalleryTypeFilterBar activeFilter={activeFilter} onFilterChange={onFilterChange} />
+        </I18nextProvider>,
+    );
     return { ...utils, onFilterChange };
 };
 

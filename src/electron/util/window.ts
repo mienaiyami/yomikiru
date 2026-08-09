@@ -1,4 +1,5 @@
 import fs from "node:fs/promises";
+import { mainT } from "@electron/i18n/mainI18n";
 import { ipc } from "@electron/ipc/utils";
 import * as remote from "@electron/remote/main";
 import { app, BrowserWindow, dialog, shell } from "electron";
@@ -24,17 +25,13 @@ export class WindowManager {
     private static errorCheckTimeout: NodeJS.Timeout | null = null;
 
     static {
-        if (process.platform === "win32") {
-            WindowManager.setupWindowsTasks();
-        }
-
         WindowManager.errorCheckTimeout = setTimeout(() => {
+            const t = mainT;
             dialog
                 .showMessageBox({
                     type: "info",
-                    message:
-                        "If you are seeing blank window then check the github page for new version or create an issue if no new version is available.",
-                    buttons: ["Ok", "Home Page"],
+                    message: t("window.blankWindow", { ns: "electron" }),
+                    buttons: [t("buttons.okAlt", { ns: "dialogs" }), t("buttons.homePage", { ns: "dialogs" })],
                 })
                 .then((e) => {
                     if (e.response === 1) shell.openExternal("https://github.com/mienaiyami/yomikiru");
@@ -45,16 +42,20 @@ export class WindowManager {
         logger.error("WindowManager must not be instantiated (static API only)");
     }
 
-    // taskbar right click option
-    private static setupWindowsTasks() {
+    /**
+     * Windows jump-list tasks. Call after main i18n is ready (and again on language change).
+     */
+    static setupWindowsTasks(): void {
+        if (process.platform !== "win32") return;
+        const t = mainT;
         app.setUserTasks([
             {
                 program: process.execPath,
                 arguments: "--new-window",
                 iconPath: process.execPath,
                 iconIndex: 0,
-                title: "New Window",
-                description: "Create a new window",
+                title: t("window.jumpListNewWindow", { ns: "electron" }),
+                description: t("window.jumpListNewWindowDesc", { ns: "electron" }),
             },
         ]);
     }
@@ -112,12 +113,12 @@ export class WindowManager {
             WindowManager.handleWindowClose(window);
             window.webContents.on("render-process-gone", (detail) => {
                 logger.error("Renderer process terminated unexpectedly", detail);
+                const t = mainT;
                 dialog
                     .showMessageBox({
                         type: "error",
-                        message:
-                            "App crashed. Please check the github page for new version or create an issue if no new version is available.",
-                        buttons: ["Ok", "Home Page"],
+                        message: t("window.crashed", { ns: "electron" }),
+                        buttons: [t("buttons.okAlt", { ns: "dialogs" }), t("buttons.homePage", { ns: "dialogs" })],
                     })
                     .then((e) => {
                         if (e.response === 1) shell.openExternal("https://github.com/mienaiyami/yomikiru");
@@ -135,10 +136,11 @@ export class WindowManager {
             e.preventDefault();
             let res = 1;
             if (MainSettings.settings.askBeforeClosing) {
+                const t = mainT;
                 res = dialog.showMessageBoxSync(window, {
-                    message: "Close this window?",
-                    title: "Yomikiru",
-                    buttons: ["No", "Yes"],
+                    message: t("window.closeConfirm", { ns: "electron" }),
+                    title: t("window.closeTitle", { ns: "electron" }),
+                    buttons: [t("buttons.no", { ns: "dialogs" }), t("buttons.yes", { ns: "dialogs" })],
                     type: "question",
                 });
             }

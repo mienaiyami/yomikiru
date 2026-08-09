@@ -1,6 +1,8 @@
 import { useAppSelector } from "@store/hooks";
 import TextDisplayModal from "@ui/TextDisplayModal";
+import type { TFunction } from "i18next";
 import { memo } from "react";
+import { useTranslation } from "react-i18next";
 
 type DetailedInfoModalProps = {
     open: boolean;
@@ -10,31 +12,34 @@ type DetailedInfoModalProps = {
 /**
  * Formats detailed build info for display and copy, matching Cursor-style About dialog.
  */
-const formatBuildInfo = (channel: string | undefined): string => {
+const formatBuildInfo = (channel: string | undefined, t: TFunction<"settings">): string => {
     const p = window.process;
     const app = window.electron.app;
     const versions = p.versions;
     const platformDisplay = p.platform === "win32" ? "Windows_NT" : p.platform;
-    const releaseTrack = channel === "beta" ? "Beta" : "Default";
+    const releaseTrack = channel === "beta" ? t("detailedInfo.trackBeta") : t("detailedInfo.trackDefault");
+    const unknown = t("detailedInfo.unknown");
 
     return [
-        `Version: ${app.getVersion()}`,
-        `Product Name: ${app.getName()}`,
-        `Commit: ${p.buildCommit ?? "unknown"}`,
-        `Date: ${p.buildDate ?? "unknown"}`,
-        `Build Type: ${p.buildType ?? "development"}`,
-        `Release Track: ${releaseTrack}`,
-        `Electron: ${versions.electron ?? "unknown"}`,
-        `Chromium: ${versions.chrome ?? "unknown"}`,
-        `Node.js: ${versions.node ?? "unknown"}`,
-        `V8: ${versions.v8 ?? "unknown"}`,
-        `OS: ${platformDisplay} ${p.arch} ${p.osRelease ?? ""}`,
+        `${t("detailedInfo.version")}${app.getVersion()}`,
+        `${t("detailedInfo.productName")}${app.getName()}`,
+        `${t("detailedInfo.commit")}${p.buildCommit ?? unknown}`,
+        `${t("detailedInfo.date")}${p.buildDate ?? unknown}`,
+        `${t("detailedInfo.buildType")}${p.buildType ?? "development"}`,
+        `${t("detailedInfo.releaseTrack")}${releaseTrack}`,
+        `${t("detailedInfo.electron")}${versions.electron ?? unknown}`,
+        `${t("detailedInfo.chromium")}${versions.chrome ?? unknown}`,
+        `${t("detailedInfo.nodejs")}${versions.node ?? unknown}`,
+        `${t("detailedInfo.v8")}${versions.v8 ?? unknown}`,
+        `${t("detailedInfo.os")}${platformDisplay} ${p.arch} ${p.osRelease ?? ""}`,
     ].join("\n");
 };
 
 const DetailedInfoModal = memo(({ open, onClose }: DetailedInfoModalProps) => {
+    const { t } = useTranslation("settings");
+    const { t: tCommon } = useTranslation("common");
     const mainSettings = useAppSelector((state) => state.mainSettings);
-    const text = formatBuildInfo(mainSettings?.channel);
+    const text = formatBuildInfo(mainSettings?.channel, t);
 
     return (
         <TextDisplayModal
@@ -44,14 +49,14 @@ const DetailedInfoModal = memo(({ open, onClose }: DetailedInfoModalProps) => {
             onClose={onClose}
             buttons={[
                 {
-                    label: "Copy",
+                    label: t("detailedInfo.copy"),
                     onClick: () => {
                         window.electron.writeText(text);
                         onClose();
                     },
                 },
                 {
-                    label: "OK",
+                    label: tCommon("actions.ok"),
                     onClick: onClose,
                 },
             ]}

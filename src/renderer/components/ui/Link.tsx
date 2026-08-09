@@ -1,3 +1,4 @@
+import i18n from "@renderer/i18n";
 import { dialogUtils } from "@utils/dialog";
 import type React from "react";
 
@@ -25,7 +26,7 @@ const Link = ({
                 if (confirmOpen)
                     dialogUtils
                         .confirm({
-                            message: "Open URL in Browser?",
+                            message: i18n.t("link.openUrlInBrowser"),
                             detail: href,
                             noOption: false,
                         })

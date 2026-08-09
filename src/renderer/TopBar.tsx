@@ -15,10 +15,12 @@ import { setSysBtnColor } from "@store/themes";
 import { setSettingsOpen, toggleSettingsOpen } from "@store/ui";
 import { formatUtils } from "@utils/file";
 import { type ReactElement, useEffect, useLayoutEffect, useState } from "react";
+import { useTranslation } from "react-i18next";
 import { shallowEqual } from "react-redux";
 import { useAppContext } from "./App";
 
 const TopBar = (): ReactElement => {
+    const { t } = useTranslation("common");
     const [title, setTitle] = useState<string>("Yomikiru");
     const { pageNumberInputRef, bookProgressRef, closeReader } = useAppContext();
     const [isMaximized, setMaximized] = useState(window.electron.currentWindow.isMaximized() || false);
@@ -128,7 +130,7 @@ const TopBar = (): ReactElement => {
                         dispatch(setSettingsOpen(false));
                     }}
                     tabIndex={-1}
-                    data-tooltip="Home"
+                    data-tooltip={t("topBar.home")}
                 >
                     <FontAwesomeIcon icon={faHome} />
                 </button>
@@ -139,7 +141,7 @@ const TopBar = (): ReactElement => {
                         dispatch(toggleSettingsOpen());
                     }}
                     tabIndex={-1}
-                    data-tooltip="Settings"
+                    data-tooltip={t("topBar.settings")}
                 >
                     <FontAwesomeIcon icon={faCog} />
                 </button>
@@ -149,7 +151,7 @@ const TopBar = (): ReactElement => {
                             onClick={toggleViewMode}
                             tabIndex={-1}
                             onFocus={(e) => e.currentTarget.blur()}
-                            data-tooltip="List View"
+                            data-tooltip={t("topBar.listView")}
                         >
                             <FontAwesomeIcon icon={faList} />
                         </button>
@@ -158,7 +160,7 @@ const TopBar = (): ReactElement => {
                             onClick={toggleViewMode}
                             tabIndex={-1}
                             onFocus={(e) => e.currentTarget.blur()}
-                            data-tooltip="Gallery View (Experimental)"
+                            data-tooltip={t("topBar.galleryView")}
                         >
                             <FontAwesomeIcon icon={faGrip} />
                         </button>
@@ -173,14 +175,14 @@ const TopBar = (): ReactElement => {
                     <label
                         className="pageNumber noBG"
                         htmlFor="NavigateToPageInput"
-                        data-tooltip="Navigate To Page Number"
+                        data-tooltip={t("topBar.navigateToPage")}
                     >
                         <input
                             type="number"
                             id="NavigateToPageInput"
                             className="pageNumberInput"
                             defaultValue={1}
-                            placeholder="Page Num."
+                            placeholder={t("topBar.pageNumPlaceholder")}
                             ref={pageNumberInputRef}
                             min="1"
                             max={readerContent.progress?.totalPages || 0}
@@ -295,7 +297,7 @@ const TopBar = (): ReactElement => {
                         <button
                             tabIndex={-1}
                             id="minimizeBtn"
-                            title="Minimize"
+                            title={t("topBar.minimize")}
                             onFocus={(e) => e.currentTarget.blur()}
                             onClick={() => window.electron.currentWindow.minimize()}
                         >
@@ -305,7 +307,7 @@ const TopBar = (): ReactElement => {
                             tabIndex={-1}
                             id="maximizeRestoreBtn"
                             onFocus={(e) => e.currentTarget.blur()}
-                            title={isMaximized ? "Restore" : "Maximize"}
+                            title={isMaximized ? t("topBar.restore") : t("topBar.maximize")}
                             onClick={() => {
                                 if (isMaximized) return window.electron.currentWindow.restore();
                                 window.electron.currentWindow.maximize();
@@ -316,7 +318,7 @@ const TopBar = (): ReactElement => {
                         <button
                             tabIndex={-1}
                             id="closeBtn"
-                            title="Close"
+                            title={t("topBar.close")}
                             onFocus={(e) => e.currentTarget.blur()}
                             onClick={() => window.electron.currentWindow.close()}
                         >

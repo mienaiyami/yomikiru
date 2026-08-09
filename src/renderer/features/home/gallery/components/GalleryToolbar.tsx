@@ -13,6 +13,7 @@ import InputRange from "@renderer/components/ui/InputRange";
 import Popover from "@renderer/components/ui/Popover";
 import { setAppSettings } from "@store/appSettings";
 import { useAppDispatch, useAppSelector } from "@store/hooks";
+import { useTranslation } from "react-i18next";
 import GalleryTabBar, { type GalleryTabId } from "./GalleryTabBar";
 import GalleryTypeFilterBar, { type GalleryTypeFilterId } from "./GalleryTypeFilterBar";
 
@@ -22,13 +23,6 @@ export type { GalleryTabId, GalleryTypeFilterId };
 const GALLERY_ITEM_WIDTH_MIN = 10;
 const GALLERY_ITEM_WIDTH_MAX = 30;
 const GALLERY_ITEM_WIDTH_STEP = 1;
-
-const GalleryDisplayModeLabel: Record<AppSettings["galleryDisplayMode"], string> = {
-    normal: "Normal",
-    "cover-only": "Cover Only",
-    compact: "Compact",
-    list: "List",
-} as const;
 
 /** Props for {@link GalleryToolbar}. */
 export type GalleryToolbarProps = {
@@ -78,60 +72,74 @@ const GalleryToolbar: React.FC<GalleryToolbarProps> = ({
     hidden,
     selection,
 }) => {
+    const { t } = useTranslation("home");
     const dispatch = useAppDispatch();
     const appSettings = useAppSelector((store) => store.appSettings);
     const { setContextMenuData } = useAppContext();
+
+    const displayModeLabel = (mode: AppSettings["galleryDisplayMode"]): string => {
+        switch (mode) {
+            case "normal":
+                return t("gallery.toolbar.displayMode.normal");
+            case "cover-only":
+                return t("gallery.toolbar.displayMode.coverOnly");
+            case "compact":
+                return t("gallery.toolbar.displayMode.compact");
+            case "list":
+                return t("gallery.toolbar.displayMode.list");
+        }
+    };
 
     const handleSortClick = (e: React.MouseEvent) => {
         const items: Menu.ListItem[] =
             activeTab === "continue-reading"
                 ? [
                       {
-                          label: "Last Read",
+                          label: t("shared.sort.lastRead"),
                           action: () => dispatch(setAppSettings({ continueReadingSortBy: "lastRead" })),
                           selected: appSettings.continueReadingSortBy === "lastRead",
                       },
                       {
-                          label: "Title",
+                          label: t("shared.sort.title"),
                           action: () => dispatch(setAppSettings({ continueReadingSortBy: "name" })),
                           selected: appSettings.continueReadingSortBy === "name",
                       },
                       window.contextMenu.template.divider(),
                       {
-                          label: "Ascending",
+                          label: t("shared.sort.ascending"),
                           action: () => dispatch(setAppSettings({ continueReadingSortType: "normal" })),
                           selected: appSettings.continueReadingSortType === "normal",
                       },
                       {
-                          label: "Descending",
+                          label: t("shared.sort.descending"),
                           action: () => dispatch(setAppSettings({ continueReadingSortType: "inverse" })),
                           selected: appSettings.continueReadingSortType === "inverse",
                       },
                   ]
                 : [
                       {
-                          label: "Title",
+                          label: t("shared.sort.title"),
                           action: () => dispatch(setAppSettings({ gallerySortBy: "name" })),
                           selected: appSettings.gallerySortBy === "name",
                       },
                       {
-                          label: "Last Read",
+                          label: t("shared.sort.lastRead"),
                           action: () => dispatch(setAppSettings({ gallerySortBy: "lastRead" })),
                           selected: appSettings.gallerySortBy === "lastRead",
                       },
                       {
-                          label: "Date Modified",
+                          label: t("shared.sort.dateModified"),
                           action: () => dispatch(setAppSettings({ gallerySortBy: "date" })),
                           selected: appSettings.gallerySortBy === "date",
                       },
                       window.contextMenu.template.divider(),
                       {
-                          label: "Ascending",
+                          label: t("shared.sort.ascending"),
                           action: () => dispatch(setAppSettings({ gallerySortType: "normal" })),
                           selected: appSettings.gallerySortType === "normal",
                       },
                       {
-                          label: "Descending",
+                          label: t("shared.sort.descending"),
                           action: () => dispatch(setAppSettings({ gallerySortType: "inverse" })),
                           selected: appSettings.gallerySortType === "inverse",
                       },
@@ -149,22 +157,22 @@ const GalleryToolbar: React.FC<GalleryToolbarProps> = ({
     const handleViewClick = (e: React.MouseEvent) => {
         const items: Menu.ListItem[] = [
             {
-                label: "Cover + Title",
+                label: t("gallery.toolbar.viewMenu.coverAndTitle"),
                 action: () => dispatch(setAppSettings({ galleryDisplayMode: "normal" })),
                 selected: appSettings.galleryDisplayMode === "normal",
             },
             {
-                label: "Cover Only",
+                label: t("gallery.toolbar.viewMenu.coverOnly"),
                 action: () => dispatch(setAppSettings({ galleryDisplayMode: "cover-only" })),
                 selected: appSettings.galleryDisplayMode === "cover-only",
             },
             {
-                label: "Compact",
+                label: t("gallery.toolbar.viewMenu.compact"),
                 action: () => dispatch(setAppSettings({ galleryDisplayMode: "compact" })),
                 selected: appSettings.galleryDisplayMode === "compact",
             },
             {
-                label: "List",
+                label: t("gallery.toolbar.viewMenu.list"),
                 action: () => dispatch(setAppSettings({ galleryDisplayMode: "list" })),
                 selected: appSettings.galleryDisplayMode === "list",
             },
@@ -195,11 +203,11 @@ const GalleryToolbar: React.FC<GalleryToolbarProps> = ({
             ...(selection.extraMenuItems ?? []),
             ...(selection.extraMenuItems?.length ? [window.contextMenu.template.divider()] : []),
             {
-                label: "Invert Selection",
+                label: t("shared.selection.invert"),
                 action: selection.onInvertSelection,
             },
             {
-                label: "Clear Selection",
+                label: t("shared.selection.clear"),
                 action: selection.onCancel,
             },
         ];
@@ -218,21 +226,23 @@ const GalleryToolbar: React.FC<GalleryToolbarProps> = ({
                 <div className="selectionInfo">
                     <button
                         className="selectionCancel"
-                        data-tooltip="Cancel selection"
+                        data-tooltip={t("shared.selection.cancel")}
                         onClick={selection.onCancel}
                     >
                         <FontAwesomeIcon icon={faTimes} />
                     </button>
-                    <span className="selectionCount">{selection.count} selected</span>
+                    <span className="selectionCount">
+                        {t("shared.selection.count", { count: selection.count })}
+                    </span>
                 </div>
                 <div className="selectionActions">
-                    <button data-tooltip="Select All" onClick={selection.onSelectAll}>
+                    <button data-tooltip={t("shared.selection.selectAll")} onClick={selection.onSelectAll}>
                         <FontAwesomeIcon icon={faCheck} />
                     </button>
-                    <button data-tooltip="Invert Selection" onClick={selection.onInvertSelection}>
+                    <button data-tooltip={t("shared.selection.invert")} onClick={selection.onInvertSelection}>
                         <FontAwesomeIcon icon={faSort} rotation={90} />
                     </button>
-                    <button data-tooltip="More" onClick={handleMoreMenuClick}>
+                    <button data-tooltip={t("shared.selection.more")} onClick={handleMoreMenuClick}>
                         <FontAwesomeIcon icon={faEllipsisV} />
                     </button>
                 </div>
@@ -251,23 +261,28 @@ const GalleryToolbar: React.FC<GalleryToolbarProps> = ({
             <span className="toolbarDivider" aria-hidden="true" />
             <GalleryTypeFilterBar activeFilter={activeTypeFilter} onFilterChange={onTypeFilterChange} />
             <div className="search">
-                {!hideSearch && <ListNavigator.SearchInput placeholder="Type to Search" />}
+                {!hideSearch && <ListNavigator.SearchInput placeholder={t("gallery.toolbar.searchPlaceholder")} />}
             </div>
             <div className="actions">
                 <button
-                    data-tooltip={`Sort: ${sortType === "normal" ? "▲ " : "▼ "}${sortBy.toUpperCase()}`}
+                    data-tooltip={t("shared.sort.tooltip", {
+                        arrow: sortType === "normal" ? "▲ " : "▼ ",
+                        by: sortBy.toUpperCase(),
+                    })}
                     onClick={handleSortClick}
                 >
                     <FontAwesomeIcon icon={faSort} />
                 </button>
                 <button
-                    data-tooltip={`View: ${GalleryDisplayModeLabel[appSettings.galleryDisplayMode]}`}
+                    data-tooltip={t("gallery.toolbar.viewTooltip", {
+                        mode: displayModeLabel(appSettings.galleryDisplayMode),
+                    })}
                     onClick={handleViewClick}
                 >
                     <FontAwesomeIcon icon={faGrip} />
                 </button>
                 <Popover
-                    label="Grid size"
+                    label={t("gallery.toolbar.gridSize")}
                     align="end"
                     placement="bottom"
                     className="gridSizePopover"
@@ -276,7 +291,9 @@ const GalleryToolbar: React.FC<GalleryToolbarProps> = ({
                             type="button"
                             ref={ref as React.RefCallback<HTMLButtonElement>}
                             className="gridSizeTrigger"
-                            data-tooltip={`Grid size: ${appSettings.galleryItemWidth}em`}
+                            data-tooltip={t("gallery.toolbar.gridSizeTooltip", {
+                                size: appSettings.galleryItemWidth,
+                            })}
                             onClick={toggle}
                             {...ariaProps}
                         >
@@ -285,7 +302,7 @@ const GalleryToolbar: React.FC<GalleryToolbarProps> = ({
                     )}
                 >
                     <div className="gridSizePopoverHeader">
-                        <span>Grid size</span>
+                        <span>{t("gallery.toolbar.gridSize")}</span>
                         <span className="gridSizeValue">{appSettings.galleryItemWidth}em</span>
                     </div>
                     <InputRange

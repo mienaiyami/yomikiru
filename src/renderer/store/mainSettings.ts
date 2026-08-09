@@ -1,3 +1,4 @@
+import { BUILTIN_EN_SOURCE_ID } from "@common/i18n";
 import type { MainSettingsType } from "@electron/util/mainSettings";
 import { createAsyncThunk, createSlice } from "@reduxjs/toolkit";
 
@@ -14,6 +15,7 @@ const initialState: MainSettingsType = {
     skipPatch: false,
     autoDownload: false,
     channel: "stable",
+    languageSourceId: BUILTIN_EN_SOURCE_ID,
 };
 
 export const updateMainSettings = createAsyncThunk(

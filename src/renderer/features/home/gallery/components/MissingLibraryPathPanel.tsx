@@ -5,9 +5,9 @@ import { dialogUtils } from "@utils/dialog";
 import {
     confirmDeleteLibraryItem,
     dispatchRelocateLibraryItem,
-    LOCATE_ON_DISK_LABEL,
     pickRelocatedLibraryPath,
 } from "@utils/libraryMissingPath";
+import { useTranslation } from "react-i18next";
 
 type MissingLibraryPathPanelProps = {
     type: "manga" | "book";
@@ -30,6 +30,7 @@ const MissingLibraryPathPanel: React.FC<MissingLibraryPathPanelProps> = ({
     onRelocated,
     onRemoved,
 }) => {
+    const { t } = useTranslation("home");
     const dispatch = useAppDispatch();
 
     const handleLocate = async () => {
@@ -38,7 +39,7 @@ const MissingLibraryPathPanel: React.FC<MissingLibraryPathPanelProps> = ({
         const item = await dispatchRelocateLibraryItem(dispatch, { oldLink: link, newLink });
         if (!item) {
             await dialogUtils.customError({
-                message: "Could not update library path. The new location may already be in the library.",
+                message: t("gallery.missing.relocateFailed"),
             });
             return;
         }
@@ -51,12 +52,12 @@ const MissingLibraryPathPanel: React.FC<MissingLibraryPathPanelProps> = ({
 
     return (
         <div className="missing-library-path">
-            <h2>Missing from disk</h2>
-            <p>This {type === "book" ? "EPUB" : "manga folder or file"} was deleted or moved.</p>
+            <h2>{t("gallery.missing.title")}</h2>
+            <p>{type === "book" ? t("gallery.missing.wasDeletedBook") : t("gallery.missing.wasDeletedManga")}</p>
             <p className="missing-path" title={link}>
                 {link}
             </p>
-            <p>Locate it on disk to keep progress and bookmarks, or remove the library entry.</p>
+            <p>{t("gallery.missing.locateHint")}</p>
             <div className="missing-actions">
                 <button
                     type="button"
@@ -64,11 +65,11 @@ const MissingLibraryPathPanel: React.FC<MissingLibraryPathPanelProps> = ({
                     onClick={() => void handleLocate()}
                 >
                     <FontAwesomeIcon icon={faFolderOpen} />
-                    <span>{LOCATE_ON_DISK_LABEL}</span>
+                    <span>{t("gallery.missing.locateOnDisk")}</span>
                 </button>
                 <button type="button" className="action-button select-cover" onClick={handleRemove}>
                     <FontAwesomeIcon icon={faTrash} />
-                    <span>Remove from Library</span>
+                    <span>{t("shared.removeFromLibrary.title")}</span>
                 </button>
             </div>
         </div>

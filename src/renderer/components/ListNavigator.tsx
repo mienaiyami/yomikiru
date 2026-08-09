@@ -6,10 +6,10 @@ import { useVirtualizer } from "@tanstack/react-virtual";
 import { keyFormatter } from "@utils/keybindings";
 import { createRendererLogger } from "@utils/logger";
 import React, { createContext, memo, useCallback, useContext, useEffect, useMemo, useRef, useState } from "react";
+import { useTranslation } from "react-i18next";
+import { shallowEqual } from "react-redux";
 
 const log = createRendererLogger("components/ListNavigator");
-
-import { shallowEqual } from "react-redux";
 
 type ListNavigatorContextType<T> = {
     items: T[];
@@ -71,12 +71,14 @@ function ListNavigatorProviderComponent<T>({
     onContextMenu,
     handleExtraKeyDown,
     onSelect,
-    emptyMessage = "No items",
+    emptyMessage,
     inputRef: inputRefProp,
     onFilteredItemsChange,
     persistFilterOnItemsChange,
     children,
 }: ListNavigatorProps<T>) {
+    const { t } = useTranslation("common");
+    const resolvedEmptyMessage = emptyMessage ?? t("list.noItems");
     const shortcutsMapped = useAppSelector(getShortcutsMapped, shallowEqual);
     const [filter, setFilter] = useState<string>("");
     const [focused, setFocused] = useState(-1);
@@ -261,7 +263,7 @@ function ListNavigatorProviderComponent<T>({
             renderItem,
             onContextMenu,
             onSelect,
-            emptyMessage,
+            emptyMessage: resolvedEmptyMessage,
         }),
         [
             items,
@@ -273,7 +275,7 @@ function ListNavigatorProviderComponent<T>({
             renderItem,
             onContextMenu,
             onSelect,
-            emptyMessage,
+            resolvedEmptyMessage,
         ],
     );
 
@@ -313,11 +315,13 @@ type SearchInputProps = {
  * handlers) reset `input.value` directly.
  */
 const SearchInputComponent: React.FC<SearchInputProps> = ({
-    placeholder = "Type to search",
+    placeholder,
     className = "search-input",
     onChange,
     runOriginalOnChange = false,
 }) => {
+    const { t } = useTranslation("common");
+    const resolvedPlaceholder = placeholder ?? t("list.typeToSearch");
     const { inputRef, filter, handleFilterChange, handleKeyDown, setFocused } = useListNavigator();
     const [hasValue, setHasValue] = useState(false);
 
@@ -352,7 +356,7 @@ const SearchInputComponent: React.FC<SearchInputProps> = ({
                 type="text"
                 ref={inputRef}
                 className={className}
-                placeholder={placeholder}
+                placeholder={resolvedPlaceholder}
                 spellCheck="false"
                 onKeyDown={handleKeyDown}
                 onBlur={() => setFocused(-1)}
@@ -385,7 +389,7 @@ const SearchInputComponent: React.FC<SearchInputProps> = ({
                 <button
                     type="button"
                     className={`${className}-clear`}
-                    aria-label="Clear search"
+                    aria-label={t("list.clearSearch")}
                     onMouseDown={(e) => e.preventDefault()}
                     onClick={handleClear}
                 >

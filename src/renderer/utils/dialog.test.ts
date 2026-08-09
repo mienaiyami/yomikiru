@@ -11,10 +11,12 @@ describe("dialogUtils", () => {
         onInvoke("dialog:warn", async (req) => {
             expect(req.buttons).toEqual(["Yes", "No"]);
             expect(req.defaultId).toBe(1);
+            expect(req.cancelId).toBe(1);
             return okBox;
         });
         onInvoke("dialog:confirm", async (req) => {
             expect(req.type).toBe("question");
+            expect(req.cancelId).toBe(1);
             return okBox;
         });
 

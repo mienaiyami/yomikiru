@@ -18,12 +18,15 @@ import { libraryCoverSrc } from "@utils/libraryCover";
 import { resolveMangaChapterPath } from "@utils/mangaChapterPath";
 import type { RefObject } from "react";
 import { useCallback, useEffect, useMemo, useState } from "react";
+import { useTranslation } from "react-i18next";
 import ListNavigator from "../../../components/ListNavigator";
 import BookDetailsPanel from "./components/BookDetailsPanel";
 import GalleryToolbar, { type GalleryTabId, type GalleryTypeFilterId } from "./components/GalleryToolbar";
 import MangaDetailsPanel from "./components/MangaDetailsPanel";
 
 const GalleryView: React.FC = () => {
+    const { t } = useTranslation("home");
+    const { t: tCommon } = useTranslation("common");
     const dispatch = useAppDispatch();
     const library = useAppSelector((store) => store.library.items);
     const appSettings = useAppSelector((store) => store.appSettings);
@@ -149,7 +152,7 @@ const GalleryView: React.FC = () => {
 
             const items: Menu.ListItem[] = [
                 {
-                    label: "Continue Reading",
+                    label: t("shared.continueReading"),
                     action() {
                         handleContinueReading(item);
                     },
@@ -160,7 +163,7 @@ const GalleryView: React.FC = () => {
             ];
             if (anilistToken) {
                 items.push({
-                    label: "Track with AniList…",
+                    label: t("gallery.trackWithAnilist"),
                     action() {
                         dispatch(
                             setGalleryTrackContext({
@@ -187,7 +190,7 @@ const GalleryView: React.FC = () => {
                 focusBackElem: e.currentTarget,
             });
         },
-        [activeTab, anilistToken, dispatch, setContextMenuData, handleContinueReading],
+        [activeTab, anilistToken, dispatch, setContextMenuData, handleContinueReading, t],
     );
 
     const filterManga = useCallback((filter: string, item: LibraryItemWithProgress) => {
@@ -225,13 +228,13 @@ const GalleryView: React.FC = () => {
                     onContextMenu={(e) => handleContextMenu(item, e)}
                     data-focused={isSelected}
                 >
-                    {item.type === "book" && <span className="epubBadge">EPUB</span>}
+                    {item.type === "book" && <span className="epubBadge">{t("shared.epub")}</span>}
                     <SelectionCheckbox
                         className="galleryCheckbox"
                         boxClassName="checkBox"
                         checked={isChecked}
                         onToggle={({ shiftKey }) => selection.toggleItem(item.link, { shiftKey })}
-                        ariaLabel={`Select ${item.title}`}
+                        ariaLabel={t("shared.selectAria", { title: item.title })}
                     />
                     <div className="coverContainer">
                         {coverSrc ? (
@@ -261,7 +264,7 @@ const GalleryView: React.FC = () => {
                             e.stopPropagation();
                             handleContinueReading(item);
                         }}
-                        data-tooltip="Continue Reading"
+                        data-tooltip={t("shared.continueReading")}
                         tabIndex={-1}
                         onFocus={(e) => e.currentTarget.blur()}
                     >
@@ -270,7 +273,14 @@ const GalleryView: React.FC = () => {
                 </div>
             );
         },
-        [handleMangaSelect, handleContextMenu, handleContinueReading, appSettings.galleryDisplayMode, selection],
+        [
+            handleMangaSelect,
+            handleContextMenu,
+            handleContinueReading,
+            appSettings.galleryDisplayMode,
+            selection,
+            t,
+        ],
     );
 
     const handleCloseMangaDetails = useCallback(() => {
@@ -288,10 +298,10 @@ const GalleryView: React.FC = () => {
         if (links.length === 0) return;
         dialogUtils
             .warn({
-                title: "Remove from Library",
-                message: `Remove ${links.length} item${links.length === 1 ? "" : "s"} from library? Related bookmarks will also be removed. Files on disk are not deleted.`,
+                title: t("shared.removeFromLibrary.title"),
+                message: t("shared.removeFromLibrary.message", { count: links.length }),
                 noOption: false,
-                buttons: ["Cancel", "Yes"],
+                buttons: [tCommon("actions.cancel"), tCommon("actions.yes")],
                 defaultId: 0,
             })
             .then(({ response }) => {
@@ -301,7 +311,7 @@ const GalleryView: React.FC = () => {
                 }
                 selection.clearSelection();
             });
-    }, [dispatch, selection]);
+    }, [dispatch, selection, t, tCommon]);
 
     const detailsOpen = Boolean(selectedManga || selectedBook);
     useSelectionShortcuts({
@@ -320,7 +330,7 @@ const GalleryView: React.FC = () => {
                       ? []
                       : [
                             {
-                                label: `Remove ${selection.count} from Library`,
+                                label: t("shared.removeFromLibrary.menu", { count: selection.count }),
                                 action: handleRemoveSelectedFromLibrary,
                             },
                         ],
@@ -329,10 +339,10 @@ const GalleryView: React.FC = () => {
 
     const emptyMessage =
         activeTab === "favourites"
-            ? "No favourites yet"
+            ? t("gallery.empty.favourites")
             : activeTab === "continue-reading"
-              ? "Nothing in progress"
-              : "No items";
+              ? t("gallery.empty.continueReading")
+              : tCommon("list.noItems");
 
     return (
         <div

@@ -8,6 +8,7 @@ import type {
     UpdateMangaProgressData,
 } from "@common/types/db";
 import type { HistoryItem, Manga_BookItem } from "@common/types/legacy";
+import { mainT } from "@electron/i18n/mainI18n";
 import Database from "better-sqlite3";
 import { eq } from "drizzle-orm";
 // libsql wont work because of node/electron version issues
@@ -413,8 +414,11 @@ export class DatabaseService {
                 });
                 dialog.showMessageBox({
                     type: "error",
-                    message: "There were errors during migration.",
-                    detail: `Items skipped : ${errors.length}.\nPlease check the logs.`,
+                    message: mainT("migrate.partialErrors", { ns: "electron" }),
+                    detail: mainT("migrate.partialErrorsDetail", {
+                        ns: "electron",
+                        count: errors.length,
+                    }),
                 });
             }
 

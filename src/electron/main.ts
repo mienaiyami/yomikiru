@@ -12,6 +12,8 @@ remote.initialize();
 if (require("electron-squirrel-startup")) app.quit();
 
 import { DatabaseService } from "./db";
+import { registerI18nHandlers, setApplicationMenuRebuild } from "./i18n/ipc";
+import { initMainI18n, mainT } from "./i18n/mainI18n";
 import { registerCoverHandlers } from "./ipc/covers";
 import { setupDatabaseHandlers } from "./ipc/database";
 import { registerDialogHandlers } from "./ipc/dialog";
@@ -74,62 +76,77 @@ if (app.isPackaged) {
     });
 }
 
+/**
+ * Builds the application menu from the current main i18n language.
+ * Electron `role` items stay OS-localized; custom labels use `menu` namespace keys.
+ */
+const rebuildApplicationMenu = (): void => {
+    const t = mainT;
+    const template: MenuItemConstructorOptions[] = [
+        {
+            label: t("edit", { ns: "menu" }),
+            submenu: [
+                { role: "undo" },
+                { role: "redo" },
+                { role: "cut" },
+                { role: "copy" },
+                { role: "paste" },
+                { role: "pasteAndMatchStyle" },
+                { role: "selectAll" },
+            ],
+        },
+        {
+            label: t("view", { ns: "menu" }),
+            submenu: [
+                { role: "reload" },
+                { role: "forceReload" },
+                { role: "toggleDevTools" },
+                { type: "separator" },
+            ],
+        },
+        {
+            label: t("others", { ns: "menu" }),
+            submenu: [
+                {
+                    role: "help",
+                    accelerator: "F1",
+                    click: () => shell.openExternal("https://github.com/mienaiyami/yomikiru"),
+                },
+                {
+                    label: t("newWindow", { ns: "menu" }),
+                    accelerator: process.platform === "darwin" ? "Cmd+N" : "Ctrl+N",
+                    click: () => WindowManager.createWindow(),
+                },
+                {
+                    label: t("close", { ns: "menu" }),
+                    accelerator: process.platform === "darwin" ? "Cmd+W" : "Ctrl+W",
+                    click: (_, window) => window?.close(),
+                },
+                {
+                    label: t("reportIssue", { ns: "menu" }),
+                    click: () => errorHandler.showIssueReportDialog(),
+                },
+            ],
+        },
+    ];
+    Menu.setApplicationMenu(Menu.buildFromTemplate(template));
+};
+
 app.on("ready", async () => {
     try {
+        /* i18n before migration dialogs — checkForJSONMigration calls mainT() */
+        await initMainI18n();
+        setApplicationMenuRebuild(() => {
+            rebuildApplicationMenu();
+            WindowManager.setupWindowsTasks();
+            TrayManager.refreshMenu();
+        });
+        registerI18nHandlers();
+        rebuildApplicationMenu();
+        WindowManager.setupWindowsTasks();
+
         // checkForJSONMigration depends on app ready to use dialog
-        checkForJSONMigration(db);
-        /**
-         * enables basic shortcut keys such as copy, paste, reload, etc.
-         */
-        const template: MenuItemConstructorOptions[] = [
-            {
-                label: "Edit",
-                submenu: [
-                    { role: "undo" },
-                    { role: "redo" },
-                    { role: "cut" },
-                    { role: "copy" },
-                    { role: "paste" },
-                    { role: "pasteAndMatchStyle" },
-                    { role: "selectAll" },
-                ],
-            },
-            {
-                label: "View",
-                submenu: [
-                    { role: "reload" },
-                    { role: "forceReload" },
-                    { role: "toggleDevTools" },
-                    { type: "separator" },
-                ],
-            },
-            {
-                label: "Others",
-                submenu: [
-                    {
-                        role: "help",
-                        accelerator: "F1",
-                        click: () => shell.openExternal("https://github.com/mienaiyami/yomikiru"),
-                    },
-                    {
-                        label: "New Window",
-                        accelerator: process.platform === "darwin" ? "Cmd+N" : "Ctrl+N",
-                        click: () => WindowManager.createWindow(),
-                    },
-                    {
-                        label: "Close",
-                        accelerator: process.platform === "darwin" ? "Cmd+W" : "Ctrl+W",
-                        click: (_, window) => window?.close(),
-                    },
-                    {
-                        label: "Report Issue",
-                        click: () => errorHandler.showIssueReportDialog(),
-                    },
-                ],
-            },
-        ];
-        const menu = Menu.buildFromTemplate(template);
-        Menu.setApplicationMenu(menu);
+        void checkForJSONMigration(db);
 
         await db.initialize();
         setupDatabaseHandlers(db);

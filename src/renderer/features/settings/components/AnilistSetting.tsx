@@ -5,9 +5,11 @@ import { setAnilistLoginOpen } from "@store/ui";
 import InputCheckbox from "@ui/InputCheckbox";
 import AniList from "@utils/anilist";
 import { useEffect, useState } from "react";
+import { useTranslation } from "react-i18next";
 import { useSettingsContext } from "../Settings";
 
 const AnilistSetting: React.FC = () => {
+    const { t } = useTranslation("settings");
     const { scrollIntoView } = useSettingsContext();
     const appSettings = useAppSelector((store) => store.appSettings);
     const [anilistUsername, setAnilistUsername] = useState("Error");
@@ -22,19 +24,18 @@ const AnilistSetting: React.FC = () => {
     }, [anilistToken]);
     return (
         <div className="settingItem2">
-            <h3>AniList</h3>
+            <h3>{t("anilist.title")}</h3>
             <div className="desc">
-                Link Yomikiru to your AniList account.{" "}
+                {t("anilist.desc")}{" "}
                 <a
                     onClick={() => {
                         scrollIntoView("#settings-usage-anilist", "extras");
                     }}
                 >
-                    More Info
+                    {t("shared.moreInfo")}
                 </a>
                 <br />
-                NOTE: Yomikiru does not use internet for anything other than app updates if it is not linked with
-                AniList.
+                {t("anilist.note")}
             </div>
             <div className="main row">
                 <button
@@ -43,7 +44,7 @@ const AnilistSetting: React.FC = () => {
                         dispatch(setAnilistLoginOpen(true));
                     }}
                 >
-                    {!anilistToken ? "Login with AniList" : `Logged in as ${anilistUsername}`}
+                    {!anilistToken ? t("anilist.login") : t("anilist.loggedInAs", { username: anilistUsername })}
                 </button>
                 {anilistToken && (
                     <button
@@ -51,7 +52,7 @@ const AnilistSetting: React.FC = () => {
                             dispatch(setAnilistToken(""));
                         }}
                     >
-                        Logout
+                        {t("anilist.logout")}
                     </button>
                 )}
             </div>
@@ -67,12 +68,9 @@ const AnilistSetting: React.FC = () => {
                         );
                     }}
                     disabled={!anilistToken}
-                    labelAfter="Auto-Update AniList Progress"
+                    labelAfter={t("anilist.autoUpdate")}
                 />
-                <div className="desc">
-                    Automatically update AniList progress when chapter is read over 70%. Only works if chapter
-                    names are well formatted.
-                </div>
+                <div className="desc">{t("anilist.autoUpdateDesc")}</div>
             </div>
         </div>
     );

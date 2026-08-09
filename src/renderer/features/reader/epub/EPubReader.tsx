@@ -31,6 +31,7 @@ import { createRendererLogger } from "@utils/logger";
 import { getCSSPath } from "@utils/utils";
 import type React from "react";
 import { useCallback, useEffect, useLayoutEffect, useRef, useState } from "react";
+import { useTranslation } from "react-i18next";
 import { shallowEqual } from "react-redux";
 import { useAppContext } from "src/renderer/App";
 import FootNodeModal from "./components/FootNodeModal";
@@ -76,6 +77,7 @@ const EPubReader: React.FC = () => {
     const [zenMode, setZenMode] = useState(appSettings.openInZenMode || false);
     const [wasMaximized, setWasMaximized] = useState(false);
     // display this text when shortcuts clicked
+    const { t } = useTranslation("reader");
     const [shortcutText, setShortcutText] = useState("");
     // [0-100]
     const [bookProgress, setBookProgress] = useState(0);
@@ -214,12 +216,12 @@ const EPubReader: React.FC = () => {
                     }
                 } else {
                     dialogUtils.customError({
-                        message: "Could not find the chapter for corresponding id.",
+                        message: t("errors.chapterIdNotFound"),
                     });
                 }
             }
         },
-        [epubData],
+        [epubData, t],
     );
 
     /**
@@ -236,7 +238,7 @@ const EPubReader: React.FC = () => {
                 if (href.startsWith("http")) {
                     dialogUtils
                         .warn({
-                            message: "Open external link?",
+                            message: t("dialogs.openExternalLink"),
                             detail: href,
                             noOption: false,
                         })
@@ -273,7 +275,7 @@ const EPubReader: React.FC = () => {
                         const itemIdx = epubData.spine.findIndex((e) => e.href === href.split("#")[0]);
                         if (itemIdx < 0) {
                             dialogUtils.customError({
-                                message: "Could not find the chapter for corresponding link.",
+                                message: t("errors.chapterLinkNotFound"),
                             });
                             return;
                         }
@@ -284,7 +286,7 @@ const EPubReader: React.FC = () => {
                 }
             }
         },
-        [epubData, currentChapter.index],
+        [epubData, currentChapter.index, t],
     );
 
     const loadEPub = (link: string) => {
@@ -526,7 +528,7 @@ const EPubReader: React.FC = () => {
             const selection = window.getSelection();
             if (!selection || selection.isCollapsed || !mainRef.current?.contains(selection.anchorNode)) {
                 dialogUtils.customError({
-                    message: "Please select some text first",
+                    message: t("errors.selectTextFirst"),
                 });
                 return;
             }
@@ -534,7 +536,7 @@ const EPubReader: React.FC = () => {
             const range = highlightUtils.getCurrentSelection();
             if (!range) {
                 dialogUtils.customError({
-                    message: "Could not get selection range",
+                    message: t("errors.selectionRangeFailed"),
                 });
                 return;
             }
@@ -561,7 +563,7 @@ const EPubReader: React.FC = () => {
                 }),
             );
         },
-        [bookInReader, dispatch],
+        [bookInReader, dispatch, t],
     );
 
     //todo remove behavior
@@ -712,8 +714,9 @@ const EPubReader: React.FC = () => {
                     return true;
                 case is(shortcutsMapped.showHidePageNumberInZen):
                     setShortcutText(
-                        (!appSettings.epubReaderSettings.showProgressInZenMode ? "Show" : "Hide") +
-                            " progress in Zen Mode",
+                        appSettings.epubReaderSettings.showProgressInZenMode
+                            ? t("hud.hideProgressInZen")
+                            : t("hud.showProgressInZen"),
                     );
                     dispatch(
                         setEpubReaderSettings({
@@ -723,12 +726,12 @@ const EPubReader: React.FC = () => {
                     return true;
                 case is(shortcutsMapped.cyclePresetNext): {
                     const name = dispatch(cyclePresetNext("book")) as string | null;
-                    if (name) setShortcutText(`Preset: ${name}`);
+                    if (name) setShortcutText(t("hud.presetNamed", { name }));
                     return true;
                 }
                 case is(shortcutsMapped.cyclePresetPrev): {
                     const name = dispatch(cyclePresetPrev("book")) as string | null;
-                    if (name) setShortcutText(`Preset: ${name}`);
+                    if (name) setShortcutText(t("hud.presetNamed", { name }));
                     return true;
                 }
                 case is(shortcutsMapped.selectPreset1):
@@ -745,7 +748,7 @@ const EPubReader: React.FC = () => {
                     ].findIndex((keys) => is(keys ?? []));
                     if (slotIdx >= 0) {
                         const name = dispatch(selectPresetSlot("book", slotIdx)) as string | null;
-                        if (name) setShortcutText(`Preset: ${name}`);
+                        if (name) setShortcutText(t("hud.presetNamed", { name }));
                     }
                     return true;
                 }
@@ -1039,14 +1042,14 @@ const EPubReader: React.FC = () => {
                     e.stopPropagation();
                     const items: Menu.ListItem[] = [
                         {
-                            label: "Zen Mode",
+                            label: t("contextMenu.zenMode"),
                             selected: zenMode,
                             action() {
                                 setZenMode((init) => !init);
                             },
                         },
                         {
-                            label: "Hide Cursor in Zen Mode",
+                            label: t("contextMenu.hideCursorInZen"),
                             selected: appSettings.hideCursorInZenMode,
                             action() {
                                 dispatch(
@@ -1057,7 +1060,7 @@ const EPubReader: React.FC = () => {
                             },
                         },
                         {
-                            label: "Double Click Zen Mode",
+                            label: t("contextMenu.doubleClickZen"),
                             selected: !appSettings.epubReaderSettings.textSelect,
                             action() {
                                 dispatch(
@@ -1072,7 +1075,7 @@ const EPubReader: React.FC = () => {
                     const selection = window.getSelection();
                     if (selection && !selection.isCollapsed && mainRef.current?.contains(selection.anchorNode)) {
                         items.push({
-                            label: "Add Note",
+                            label: t("contextMenu.addNote"),
                             action() {
                                 handleAddNote();
                             },
@@ -1081,7 +1084,7 @@ const EPubReader: React.FC = () => {
                     items.push(
                         ...[
                             {
-                                label: "Bookmark",
+                                label: t("contextMenu.bookmark"),
                                 action() {
                                     addToBookmarkRef.current?.click();
                                 },

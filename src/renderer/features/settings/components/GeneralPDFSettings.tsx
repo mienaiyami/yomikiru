@@ -6,25 +6,27 @@ import { dialogUtils } from "@utils/dialog";
 import { promptSelectDir } from "@utils/file";
 import { createRendererLogger } from "@utils/logger";
 import { renderPDF } from "@utils/pdf";
+import { useTranslation } from "react-i18next";
 import { useSettingsContext } from "../Settings";
 
 const log = createRendererLogger("settings/GeneralPDFSettings");
 
 const GeneralPDFSettings: React.FC = () => {
+    const { t } = useTranslation("settings");
     const { scrollIntoView } = useSettingsContext();
     const appSettings = useAppSelector((store) => store.appSettings);
     const dispatch = useAppDispatch();
     return (
         <div className="settingItem2" id="settings-pdfScale">
-            <h3>PDF OPTIONS</h3>
+            <h3>{t("pdf.title")}</h3>
             <div className="desc">
-                Scales PDF render quality. Higher scale results in higher quality.{" "}
+                {t("pdf.scaleDesc")}{" "}
                 <a
                     onClick={() => {
                         scrollIntoView("#settings-usage-pdfScale", "extras");
                     }}
                 >
-                    More Info
+                    {t("shared.moreInfo")}
                 </a>
             </div>
             <div className="main row">
@@ -37,28 +39,29 @@ const GeneralPDFSettings: React.FC = () => {
                         const value = e.valueAsNumber;
                         dispatch(setReaderSettings({ pdfScale: value }));
                     }}
-                    labelBefore="SCALE"
+                    labelBefore={t("pdf.scaleLabel")}
                     className="noBG"
                 />
             </div>
             <div className="desc">
-                Render your pdf into png for faster loading. It is recommended to set{" "}
+                {t("pdf.renderDescBefore")}
                 <a
                     onClick={() => {
                         scrollIntoView("#settings-customTempFolder", "settings");
                     }}
                 >
-                    temp folder
-                </a>{" "}
-                to something that is not cleaned by your OS. <br />
+                    {t("pdf.tempFolder")}
+                </a>
+                {t("pdf.renderDescMid")}
+                <br />
                 <a
                     onClick={() => {
                         scrollIntoView("#settings-keepExtractedFiles", "settings");
                     }}
                 >
-                    Keep Temp Files
-                </a>{" "}
-                must be enabled to use this.
+                    {t("pdf.keepTempFiles")}
+                </a>
+                {t("pdf.renderDescAfter")}
             </div>
             <div className="main row">
                 <button
@@ -75,9 +78,11 @@ const GeneralPDFSettings: React.FC = () => {
                                         const linkSplitted = path.split(window.path.sep);
                                         dispatch(
                                             setReaderLoading({
-                                                message: `[${i + 1}/${paths.length}] Rendering "${linkSplitted
-                                                    .at(-1)
-                                                    ?.substring(0, 20)}..."`,
+                                                message: t("pdf.rendering", {
+                                                    current: i + 1,
+                                                    total: paths.length,
+                                                    name: linkSplitted.at(-1)?.substring(0, 20),
+                                                }),
                                             }),
                                         );
                                         const renderPath = window.path.join(
@@ -98,14 +103,14 @@ const GeneralPDFSettings: React.FC = () => {
                                             log.error(`render failed for "${path}"`, reason);
                                             if (reason instanceof Error && !reason.message.includes("password"))
                                                 dialogUtils.customError({
-                                                    message: "Error in rendering PDF",
+                                                    message: t("pdf.renderError"),
                                                     detail: path,
                                                     log: false,
                                                 });
                                         }
                                     }
                                     dialogUtils.confirm({
-                                        message: "Rendered all PDFs",
+                                        message: t("pdf.renderedAll"),
                                     });
                                     dispatch(setReaderLoading(null));
                                 })();
@@ -121,7 +126,7 @@ const GeneralPDFSettings: React.FC = () => {
                         );
                     }}
                 >
-                    Select PDFs to render
+                    {t("pdf.selectPdfs")}
                 </button>
             </div>
         </div>

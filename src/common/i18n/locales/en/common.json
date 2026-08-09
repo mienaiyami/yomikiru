@@ -1,0 +1,77 @@
+{
+    "actions": {
+        "save": "Save",
+        "cancel": "Cancel",
+        "ok": "OK",
+        "yes": "Yes",
+        "no": "No",
+        "close": "Close",
+        "remove": "Remove",
+        "install": "Install",
+        "export": "Export",
+        "change": "Change"
+    },
+    "appName": "Yomikiru",
+    "app": {
+        "noSettingsSelectFolder": "No settings found, Select manga folder",
+        "dropMultipleOnlyFirst": "More than one file/folder dropped. Only first in list will be loaded.",
+        "dropError": "Error while dropping file"
+    },
+    "topBar": {
+        "home": "Home",
+        "settings": "Settings",
+        "listView": "List View",
+        "galleryView": "Gallery View (Experimental)",
+        "navigateToPage": "Navigate To Page Number",
+        "pageNumPlaceholder": "Page Num.",
+        "minimize": "Minimize",
+        "restore": "Restore",
+        "maximize": "Maximize",
+        "close": "Close"
+    },
+    "list": {
+        "noItems": "No items",
+        "typeToSearch": "Type to search",
+        "clearSearch": "Clear search"
+    },
+    "validation": {
+        "required": "This field is required"
+    },
+    "link": {
+        "openUrlInBrowser": "Open URL in Browser?"
+    },
+    "contextMenu": {
+        "open": "Open",
+        "openInNewWindow": "Open in new Window",
+        "showInExplorer": "Show in File Explorer",
+        "copyPath": "Copy Path",
+        "copyImage": "Copy Image",
+        "removeFromLibrary": "Remove from Library",
+        "removeFromLibraryMessage": "Remove this item from library? Related bookmarks will also be removed. Files on disk are not deleted.",
+        "removeBookmark": "Remove Bookmark",
+        "removeBookmarkMessage": "Only this bookmark will be removed. Continue?",
+        "addToBookmarks": "Add to Bookmarks",
+        "markAsUnread": "Mark as Unread",
+        "markAsRead": "Mark as Read",
+        "markAllAsRead": "Mark All as Read",
+        "markAllAsReadMessage": "This will also mark all Chapters in this manga as read. Continue?",
+        "markAllAsUnread": "Mark All as Unread",
+        "markAllAsUnreadMessage": "This will remove all Chapters in this manga from history. Continue?"
+    },
+    "libraryMissing": {
+        "locateOnDisk": "Locate on disk",
+        "missingTitle": "Missing from disk",
+        "missingMessage": "This file or folder was deleted or moved.",
+        "missingDetail": "Locate it on disk to keep progress and bookmarks, or remove the library entry.",
+        "chapterMissingDetail": "The library item is still on disk, but this chapter path is missing. Remove the entry or cancel.",
+        "pathMissing": "Selected path does not exist.",
+        "selectManga": "Select a manga folder or a supported archive/PDF file.",
+        "selectBook": "Select a supported book file.",
+        "nameMismatchTitle": "Name does not match",
+        "nameMismatchMessage": "Selected \"{{chosen}}\" does not match library item \"{{title}}\".",
+        "nameMismatchDetail": "Previous path name: {{expected}}. Use this location anyway?",
+        "useAnyway": "Use anyway",
+        "relocateFailed": "Could not update library path. The new location may already be in the library.",
+        "chapterStillMissing": "Library path updated, but this chapter file/folder is still missing under the new location."
+    }
+}

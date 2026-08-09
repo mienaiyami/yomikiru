@@ -2,6 +2,7 @@ import { spawn } from "node:child_process";
 import fs from "node:fs";
 import path from "node:path";
 import type { AppUpdateChannel } from "@common/types/ipc";
+import { mainT } from "@electron/i18n/mainI18n";
 import { exec as execSudo } from "@vscode/sudo-prompt";
 import * as crossZip from "cross-zip";
 import { app, BrowserWindow, dialog, shell } from "electron";
@@ -96,14 +97,15 @@ const checkForAnnouncements = async () => {
             .filter((e) => e !== "");
         const newAnnouncements = raw.filter((e) => !existing.includes(e));
         fs.writeFileSync(existingPath, raw.join("\n"));
+        const t = mainT;
         if (newAnnouncements.length === 1)
             dialog
                 .showMessageBox({
                     type: "info",
-                    title: "New Announcement",
-                    message: "There's a new announcement. Check it out!",
+                    title: t("updater.newAnnouncementTitle", { ns: "electron" }),
+                    message: t("updater.newAnnouncementMessage", { ns: "electron" }),
                     detail: newAnnouncements[0],
-                    buttons: ["Show", "Dismiss"],
+                    buttons: [t("buttons.show", { ns: "dialogs" }), t("buttons.dismiss", { ns: "dialogs" })],
                     cancelId: 1,
                 })
                 .then((res) => {
@@ -113,10 +115,14 @@ const checkForAnnouncements = async () => {
             dialog
                 .showMessageBox({
                     type: "info",
-                    title: "New Announcements",
-                    message: "There are new announcements. Check them out!",
+                    title: t("updater.newAnnouncementsTitle", { ns: "electron" }),
+                    message: t("updater.newAnnouncementsMessage", { ns: "electron" }),
                     detail: newAnnouncements.join("\n"),
-                    buttons: ["Open Each", "Open Announcement Page", "Dismiss"],
+                    buttons: [
+                        t("updater.openEach", { ns: "electron" }),
+                        t("updater.openAnnouncementPage", { ns: "electron" }),
+                        t("buttons.dismiss", { ns: "dialogs" }),
+                    ],
                     cancelId: 2,
                 })
                 .then((res) => {
@@ -212,10 +218,11 @@ const checkForUpdate = async (
         logger.log("Update check: already on latest matching release");
         if (promptAfterCheck) {
             const window = BrowserWindow.fromId(windowId ?? 1)!;
+            const t = mainT;
             dialog.showMessageBox(window, {
                 type: "info",
-                title: "Yomikiru",
-                message: "Running latest version",
+                title: t("updater.appTitle", { ns: "electron" }),
+                message: t("updater.runningLatest", { ns: "electron" }),
                 buttons: [],
             });
         }
@@ -223,10 +230,11 @@ const checkForUpdate = async (
         logger.error("Update check: GitHub API or semver comparison failed", error);
         if (promptAfterCheck) {
             const window = BrowserWindow.fromId(windowId ?? 1)!;
+            const t = mainT;
             dialog.showMessageBox(window, {
                 type: "error",
-                title: "Update Check Failed",
-                message: "Failed to check for updates.",
+                title: t("updater.checkFailedTitle", { ns: "electron" }),
+                message: t("updater.checkFailedMessage", { ns: "electron" }),
                 detail: error instanceof Error ? error.message : String(error),
             });
         }
@@ -238,10 +246,11 @@ const checkForUpdate = async (
  */
 const showNoReleasesMessage = (windowId: number, channel: string) => {
     const window = BrowserWindow.fromId(windowId ?? 1)!;
+    const t = mainT;
     dialog.showMessageBox(window, {
         type: "info",
-        title: "Yomikiru",
-        message: `No ${channel} releases available.`,
+        title: t("updater.appTitle", { ns: "electron" }),
+        message: t("updater.noReleases", { ns: "electron", channel }),
         buttons: [],
     });
 };
@@ -253,19 +262,26 @@ const showUpdateAvailableMessage = (
     versionDiff: string | null,
 ) => {
     const window = BrowserWindow.fromId(windowId ?? 1)!;
+    const t = mainT;
 
-    const skipPatchHint =
-        versionDiff === "patch"
-            ? `To skip check for patch updates, enable "skip patch update" in settings.\nYou can also enable "auto download".`
-            : "";
+    const skipPatchHint = versionDiff === "patch" ? t("updater.skipPatchHint", { ns: "electron" }) : "";
 
     dialog
         .showMessageBox(window, {
             type: "info",
-            title: "New Version Available",
-            message: `Current Version : ${currentVersion}\n` + `Latest Version   : ${latestVersion}`,
+            title: t("updater.newVersionTitle", { ns: "electron" }),
+            message: t("updater.versionCompare", {
+                ns: "electron",
+                current: currentVersion,
+                latest: latestVersion,
+            }),
             detail: skipPatchHint,
-            buttons: ["Download Now", "Download and show Changelog", "Show Changelog", "Download Later"],
+            buttons: [
+                t("updater.downloadNow", { ns: "electron" }),
+                t("updater.downloadAndChangelog", { ns: "electron" }),
+                t("updater.showChangelog", { ns: "electron" }),
+                t("updater.downloadLater", { ns: "electron" }),
+            ],
             cancelId: 3,
         })
         .then((response) => {
@@ -335,13 +351,17 @@ const downloadUpdates = (latestVersion: string, windowId: number, silent = false
         }
 
         const showMainPrompt = () => {
-            const buttons = ["Install Now", "Install on Quit"];
-            if (silent) buttons.push("Install and Show Changelog");
+            const t = mainT;
+            const buttons = [
+                t("updater.installNow", { ns: "electron" }),
+                t("updater.installOnQuit", { ns: "electron" }),
+            ];
+            if (silent) buttons.push(t("updater.installAndChangelog", { ns: "electron" }));
             dialog
                 .showMessageBox(window, {
                     type: "info",
-                    title: "Updates downloaded",
-                    message: "Updates downloaded.",
+                    title: t("updater.downloadedTitle", { ns: "electron" }),
+                    message: t("updater.downloadedMessage", { ns: "electron" }),
                     buttons,
                     cancelId: 1,
                 })
@@ -361,17 +381,18 @@ const downloadUpdates = (latestVersion: string, windowId: number, silent = false
 
         // https://github.com/mienaiyami/yomikiru/discussions/451#discussioncomment-13778852
         if (process.platform === "win32" && !IS_PORTABLE) {
+            const t = mainT;
             dialog
                 .showMessageBox(window, {
                     type: "warning",
-                    title: "Update Installation Notice",
-                    message: "Due to recent Windows security changes, auto-updates might fail.",
-                    detail: `You can either proceed with normal installation (which might fail) or install manually (just run the downloaded file).`,
+                    title: t("updater.installNoticeTitle", { ns: "electron" }),
+                    message: t("updater.installNoticeMessage", { ns: "electron" }),
+                    detail: t("updater.installNoticeDetail", { ns: "electron" }),
                     buttons: [
-                        "Try Normal Installation",
-                        "Install Manually (Recommended, show downloaded file)",
-                        "Install Manually and Show Changelog",
-                        "More Info",
+                        t("updater.tryNormalInstall", { ns: "electron" }),
+                        t("updater.installManually", { ns: "electron" }),
+                        t("updater.installManuallyChangelog", { ns: "electron" }),
+                        t("updater.moreInfo", { ns: "electron" }),
                     ],
                     cancelId: 1,
                 })
@@ -407,10 +428,14 @@ const downloadUpdates = (latestVersion: string, windowId: number, silent = false
                     logger.log(`Update download temp dir: "${tempPath}"`);
                     e.once("done", (_, state) => {
                         if (state !== "completed") {
+                            const t = mainT;
                             dialog.showMessageBox(window, {
                                 type: "error",
-                                title: "Error while downloading",
-                                message: state === "cancelled" ? "Download canceled." : "Download failed.",
+                                title: t("updater.downloadErrorTitle", { ns: "electron" }),
+                                message:
+                                    state === "cancelled"
+                                        ? t("updater.downloadCanceled", { ns: "electron" })
+                                        : t("updater.downloadFailed", { ns: "electron" }),
                             });
                         }
                     });
@@ -429,10 +454,11 @@ const downloadUpdates = (latestVersion: string, windowId: number, silent = false
             })
             .catch((e) => {
                 downloadItem = null;
+                const t = mainT;
                 dialog.showMessageBox(window, {
                     type: "error",
-                    title: "Error while downloading",
-                    message: `${e}\n\nPlease check the homepage if persist.`,
+                    title: t("updater.downloadErrorTitle", { ns: "electron" }),
+                    message: t("updater.downloadErrorPersist", { ns: "electron", error: String(e) }),
                 });
             });
     };
@@ -443,13 +469,13 @@ const downloadUpdates = (latestVersion: string, windowId: number, silent = false
         const dl = await getArtifactDownloadUrl(latestVersion);
         if (!dl) {
             logger.error(`Update download: no artifact URL for v${latestVersion} (see artifacts.json)`);
+            const t = mainT;
             dialog
                 .showMessageBox(window, {
                     type: "error",
-                    title: "Update Failed",
-                    message:
-                        "Could not find update file for this platform. Please download manually from the releases page.",
-                    buttons: ["Open Releases", "OK"],
+                    title: t("updater.updateFailedTitle", { ns: "electron" }),
+                    message: t("updater.noArtifact", { ns: "electron" }),
+                    buttons: [t("updater.openReleases", { ns: "electron" }), t("buttons.ok", { ns: "dialogs" })],
                 })
                 .then((res) => {
                     if (res.response === 0) shell.openExternal(RELEASES_PAGE);
@@ -548,12 +574,13 @@ const downloadUpdates = (latestVersion: string, windowId: number, silent = false
             };
 
             const showInstallError = (err: unknown) => {
+                const t = mainT;
                 dialog.showMessageBox(window, {
                     type: "error",
-                    title: "Update Installation Failed",
-                    message: "Failed to install the update.",
+                    title: t("updater.installFailedTitle", { ns: "electron" }),
+                    message: t("updater.installFailedMessage", { ns: "electron" }),
                     detail: err instanceof Error ? err.message : String(err),
-                    buttons: ["OK"],
+                    buttons: [t("buttons.ok", { ns: "dialogs" })],
                 });
             };
 

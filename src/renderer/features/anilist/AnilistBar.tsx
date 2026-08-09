@@ -7,6 +7,7 @@ import InputNumber from "@ui/InputNumber";
 import AniList from "@utils/anilist";
 import { dialogUtils } from "@utils/dialog";
 import { memo, useCallback, useEffect, useState } from "react";
+import { useTranslation } from "react-i18next";
 
 export type AnilistBarProps = {
     /** When set (e.g. gallery detail panel), tracking uses this path instead of the open reader item. */
@@ -15,6 +16,7 @@ export type AnilistBarProps = {
 };
 
 const AnilistBar = memo((props: AnilistBarProps) => {
+    const { t } = useTranslation("anilist");
     const { localLibraryLink, libraryTitle } = props;
     const anilistTracking = useAppSelector((store) => store.anilist.tracking);
     const readerLink = useAppSelector((store) => store.reader.content?.link);
@@ -44,7 +46,7 @@ const AnilistBar = memo((props: AnilistBarProps) => {
                     if (e) {
                         dispatch(setAnilistCurrentManga(e));
                     } else {
-                        dialogUtils.customError({ message: "Failed to sync AniList progress.", log: false });
+                        dialogUtils.customError({ message: t("bar.syncFailed"), log: false });
                         setProgress(anilistCurrentManga.progress);
                     }
                 });
@@ -92,8 +94,8 @@ const AnilistBar = memo((props: AnilistBarProps) => {
 
     return (
         <div className="anilistBar">
-            <span className="bold">AniList</span>
-            <span className="bold"> : </span>
+            <span className="bold">{t("bar.brand")}</span>
+            <span className="bold">{t("bar.separator")}</span>
             {isTracking ? (
                 anilistCurrentManga ? (
                     <div className="btns">
@@ -109,16 +111,20 @@ const AnilistBar = memo((props: AnilistBarProps) => {
                         <button type="button" onClick={() => setProgress((init) => init + 1)}>
                             <FontAwesomeIcon icon={faPlus} />
                         </button>
-                        <button type="button" data-tooltip="More Options" onClick={() => openAnilistFlow("edit")}>
+                        <button
+                            type="button"
+                            data-tooltip={t("bar.moreOptions")}
+                            onClick={() => openAnilistFlow("edit")}
+                        >
                             <FontAwesomeIcon icon={faSlidersH} />
                         </button>
                     </div>
                 ) : (
-                    <span>Network Error</span>
+                    <span>{t("bar.networkError")}</span>
                 )
             ) : (
                 <button type="button" onClick={() => openAnilistFlow("search")}>
-                    Track
+                    {t("bar.track")}
                 </button>
             )}
         </div>

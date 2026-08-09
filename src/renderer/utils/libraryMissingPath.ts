@@ -6,13 +6,17 @@ import { dialogUtils } from "@utils/dialog";
 import { formatUtils } from "@utils/file";
 import { createRendererLogger } from "@utils/logger";
 import { normalizeMangaPathSegment } from "@utils/mangaChapterPath";
+import i18n from "../i18n";
 
 const log = createRendererLogger("utils/libraryMissingPath");
 
 type LibraryItemsMap = Record<string, LibraryItem | null | undefined>;
 
-/** Context-menu / button label for picking a new path when a library file or folder is missing. */
-export const LOCATE_ON_DISK_LABEL = "Locate on disk";
+/**
+ * Context-menu / button label for picking a new path when a library file or folder is missing.
+ * Resolved at call time so the active language pack applies.
+ */
+export const locateOnDiskLabel = (): string => i18n.t("libraryMissing.locateOnDisk", { ns: "common" });
 
 /**
  * Display name used when comparing a relocated path to the library entry
@@ -119,8 +123,8 @@ export const resolveMissingOpenPath = async (
 
     if (!libraryItem) {
         await dialogUtils.customError({
-            title: "Missing from disk",
-            message: "This file or folder was deleted or moved.",
+            title: i18n.t("libraryMissing.missingTitle", { ns: "common" }),
+            message: i18n.t("libraryMissing.missingMessage", { ns: "common" }),
             detail: openPath,
         });
         return null;
@@ -156,7 +160,7 @@ export const resolveMissingOpenPath = async (
     });
     if (!item) {
         await dialogUtils.customError({
-            message: "Could not update library path. The new location may already be in the library.",
+            message: i18n.t("libraryMissing.relocateFailed", { ns: "common" }),
         });
         return null;
     }
@@ -164,7 +168,7 @@ export const resolveMissingOpenPath = async (
     const remapped = mapOpenPathAfterRelocate(libraryItem.link, newRoot, openPath);
     if (!window.fs.existsSync(remapped)) {
         await dialogUtils.customError({
-            message: "Library path updated, but this chapter file/folder is still missing under the new location.",
+            message: i18n.t("libraryMissing.chapterStillMissing", { ns: "common" }),
         });
         return null;
     }
@@ -179,7 +183,7 @@ export const resolveMissingOpenPath = async (
 export const promptMissingLibraryPathAction = async (opts?: {
     /** Defaults to explaining library-entry removal. */
     detail?: string;
-    /** Middle (or sole primary) remove button label; defaults to `"Remove"`. */
+    /** Middle (or sole primary) remove button label; defaults to common Remove. */
     removeLabel?: string;
     /**
      * When false, Locate is omitted (open path missing but library root still present).
@@ -188,18 +192,19 @@ export const promptMissingLibraryPathAction = async (opts?: {
     offerLocate?: boolean;
 }): Promise<"locate" | "remove" | "cancel"> => {
     const offerLocate = opts?.offerLocate !== false;
-    const removeLabel = opts?.removeLabel ?? "Remove";
+    const removeLabel = opts?.removeLabel ?? i18n.t("actions.remove", { ns: "common" });
+    const cancelLabel = i18n.t("actions.cancel", { ns: "common" });
+    const title = i18n.t("libraryMissing.missingTitle", { ns: "common" });
+    const message = i18n.t("libraryMissing.missingMessage", { ns: "common" });
 
     if (!offerLocate) {
         const { response } = await dialogUtils.confirm({
             type: "error",
-            title: "Missing from disk",
-            message: "This file or folder was deleted or moved.",
-            detail:
-                opts?.detail ??
-                "The library item is still on disk, but this chapter path is missing. Remove the entry or cancel.",
+            title,
+            message,
+            detail: opts?.detail ?? i18n.t("libraryMissing.chapterMissingDetail", { ns: "common" }),
             noOption: false,
-            buttons: [removeLabel, "Cancel"],
+            buttons: [removeLabel, cancelLabel],
             defaultId: 1,
             cancelId: 1,
         });
@@ -208,11 +213,11 @@ export const promptMissingLibraryPathAction = async (opts?: {
 
     const { response } = await dialogUtils.confirm({
         type: "error",
-        title: "Missing from disk",
-        message: "This file or folder was deleted or moved.",
-        detail: opts?.detail ?? "Locate it on disk to keep progress and bookmarks, or remove the library entry.",
+        title,
+        message,
+        detail: opts?.detail ?? i18n.t("libraryMissing.missingDetail", { ns: "common" }),
         noOption: false,
-        buttons: [LOCATE_ON_DISK_LABEL, removeLabel, "Cancel"],
+        buttons: [locateOnDiskLabel(), removeLabel, cancelLabel],
         defaultId: 0,
         cancelId: 2,
     });
@@ -247,19 +252,19 @@ export const pickRelocatedLibraryPath = async (args: {
 
     const newLink = window.path.normalize(result.filePaths[0]);
     if (!window.fs.existsSync(newLink)) {
-        await dialogUtils.customError({ message: "Selected path does not exist." });
+        await dialogUtils.customError({ message: i18n.t("libraryMissing.pathMissing", { ns: "common" }) });
         return null;
     }
     if (type === "manga") {
         if (!window.fs.isDir(newLink) && !formatUtils.mangaFile.test(newLink)) {
             await dialogUtils.customError({
-                message: "Select a manga folder or a supported archive/PDF file.",
+                message: i18n.t("libraryMissing.selectManga", { ns: "common" }),
             });
             return null;
         }
     }
     if (type === "book" && (window.fs.isDir(newLink) || !formatUtils.book.test(newLink))) {
-        await dialogUtils.customError({ message: "Select a supported book file." });
+        await dialogUtils.customError({ message: i18n.t("libraryMissing.selectBook", { ns: "common" }) });
         return null;
     }
 
@@ -268,11 +273,18 @@ export const pickRelocatedLibraryPath = async (args: {
         const chosen = libraryPathDisplayName(newLink, type);
         const { response } = await dialogUtils.confirm({
             type: "warning",
-            title: "Name does not match",
-            message: `Selected "${chosen}" does not match library item "${title || expected}".`,
-            detail: `Previous path name: ${expected}. Use this location anyway?`,
+            title: i18n.t("libraryMissing.nameMismatchTitle", { ns: "common" }),
+            message: i18n.t("libraryMissing.nameMismatchMessage", {
+                ns: "common",
+                chosen,
+                title: title || expected,
+            }),
+            detail: i18n.t("libraryMissing.nameMismatchDetail", { ns: "common", expected }),
             noOption: false,
-            buttons: ["Use anyway", "Cancel"],
+            buttons: [
+                i18n.t("libraryMissing.useAnyway", { ns: "common" }),
+                i18n.t("actions.cancel", { ns: "common" }),
+            ],
             defaultId: 1,
             cancelId: 1,
         });
@@ -312,11 +324,10 @@ export const confirmDeleteLibraryItem = async (
     onRemoved?: () => void,
 ): Promise<void> => {
     const { response } = await dialogUtils.warn({
-        title: "Remove from Library",
-        message:
-            "Remove this item from library? Related bookmarks will also be removed. Files on disk are not deleted.",
+        title: i18n.t("contextMenu.removeFromLibrary", { ns: "common" }),
+        message: i18n.t("contextMenu.removeFromLibraryMessage", { ns: "common" }),
         noOption: false,
-        buttons: ["Cancel", "Yes"],
+        buttons: [i18n.t("actions.cancel", { ns: "common" }), i18n.t("actions.yes", { ns: "common" })],
         defaultId: 0,
     });
     if (!response) return;

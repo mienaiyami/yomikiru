@@ -1,15 +1,16 @@
 import Modal from "@ui/Modal";
 import { keyFormatter } from "@utils/keybindings";
 import { memo, useCallback, useEffect, useRef, useState } from "react";
+import { useTranslation } from "react-i18next";
 
 type TextInputModalProps = {
     /** Modal title shown above the input. */
     title: string;
     /** Placeholder for the text input. */
     placeholder?: string;
-    /** Label for the submit button. Default: "Save". */
+    /** Label for the submit button. Default: common `actions.save`. */
     submitLabel?: string;
-    /** Label for the cancel button. Default: "Cancel". */
+    /** Label for the cancel button. Default: common `actions.cancel`. */
     cancelLabel?: string;
     /** Initial value for the input. Default: "". */
     initialValue?: string;
@@ -28,16 +29,21 @@ const TextInputModal = memo(
     ({
         title,
         placeholder = "",
-        submitLabel = "Save",
-        cancelLabel = "Cancel",
+        submitLabel,
+        cancelLabel,
         initialValue = "",
-        validate = (value) => (value.trim() === "" ? "This field is required" : null),
+        validate,
         onClose,
         onSave,
     }: TextInputModalProps) => {
+        const { t } = useTranslation("common");
+        const resolvedSubmitLabel = submitLabel ?? t("actions.save");
+        const resolvedCancelLabel = cancelLabel ?? t("actions.cancel");
+        const resolvedValidate =
+            validate ?? ((value: string) => (value.trim() === "" ? t("validation.required") : null));
         const [value, setValue] = useState(initialValue);
         const inputRef = useRef<HTMLInputElement>(null);
-        const error = validate ? validate(value.trim()) : null;
+        const error = resolvedValidate(value.trim());
         const isValid = error === null;
 
         useEffect(() => {
@@ -74,9 +80,9 @@ const TextInputModal = memo(
                     </p>
                 )}
                 <div className="modal-actions">
-                    <button onClick={onClose}>{cancelLabel}</button>
+                    <button onClick={onClose}>{resolvedCancelLabel}</button>
                     <button onClick={handleSubmit} disabled={!isValid}>
-                        {submitLabel}
+                        {resolvedSubmitLabel}
                     </button>
                 </div>
             </Modal>

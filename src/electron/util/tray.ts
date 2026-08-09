@@ -1,4 +1,5 @@
 import path from "node:path";
+import { mainT } from "@electron/i18n/mainI18n";
 import type { BrowserWindow } from "electron";
 import { app, Menu, nativeImage, Tray } from "electron";
 import { createMainLogger } from "./logger";
@@ -52,10 +53,11 @@ export class TrayManager {
     private static updateContextMenu(): void {
         if (!TrayManager.tray || TrayManager.tray.isDestroyed()) return;
 
+        const t = mainT;
         const windows = WindowManager.getAllWindows();
         const windowItems: Electron.MenuItemConstructorOptions[] =
             windows.length === 0
-                ? [{ label: "(No windows)", enabled: false }]
+                ? [{ label: t("tray.noWindows", { ns: "electron" }), enabled: false }]
                 : windows.map((w) => ({
                       label: TrayManager.truncateTitle(w.getTitle() || app.name),
                       click: () => {
@@ -71,13 +73,13 @@ export class TrayManager {
 
         const template: Electron.MenuItemConstructorOptions[] = [
             {
-                label: "Windows",
+                label: t("tray.windows", { ns: "electron" }),
                 enabled: false,
             },
             ...windowItems,
             { type: "separator" },
             {
-                label: "Hide all Windows",
+                label: t("tray.hideAllWindows", { ns: "electron" }),
                 enabled: windows.length > 0,
                 click: () => {
                     TrayManager.hideAllWindows();
@@ -85,7 +87,7 @@ export class TrayManager {
             },
             { type: "separator" },
             {
-                label: "Exit",
+                label: t("tray.exit", { ns: "electron" }),
                 click: () => {
                     app.quit();
                 },

@@ -3,6 +3,7 @@ import { useAppSelector } from "@store/hooks";
 import { dialogUtils } from "@utils/dialog";
 import { formatUtils } from "@utils/file";
 import type { ReactElement } from "react";
+import { useTranslation } from "react-i18next";
 import { useAppContext } from "src/renderer/App";
 
 const LocationListItem = ({
@@ -20,12 +21,13 @@ const LocationListItem = ({
     onContextMenu: (e: React.MouseEvent<HTMLAnchorElement, MouseEvent>, link: string, inHistory: boolean) => void;
     focused: boolean;
 }): ReactElement => {
+    const { t } = useTranslation("home");
     const { openInReader } = useAppContext();
     const appSettings = useAppSelector((store) => store.appSettings);
 
     const onClickHandle = () => {
         if (!window.fs.existsSync(link)) {
-            dialogUtils.customError({ message: "Directory/File doesn't exist." });
+            dialogUtils.customError({ message: t("classic.location.pathMissing") });
             return;
         }
         if (formatUtils.files.test(name)) {

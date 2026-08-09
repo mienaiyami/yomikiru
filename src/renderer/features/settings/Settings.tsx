@@ -13,6 +13,7 @@ import {
     useState,
 } from "react";
 import FocusLock from "react-focus-lock";
+import { useTranslation } from "react-i18next";
 import About from "./components/About";
 import GeneralSettings from "./components/GeneralSettings";
 import Shortcuts from "./components/Shortcuts";
@@ -45,6 +46,7 @@ export const useSettingsContext = (): SettingsContext => {
 
 //todo: divide into components
 const Settings = (): ReactElement => {
+    const { t } = useTranslation("settings");
     const shortcuts = useAppSelector((store) => store.shortcuts);
     const isSettingOpen = useAppSelector((store) => store.ui.isOpen.settings);
     /**
@@ -150,7 +152,7 @@ const Settings = (): ReactElement => {
                                     className={`tabBtn ${currentTab === value[0] ? "selected " : ""}`}
                                     onClick={() => setCurrentTab(value[0])}
                                 >
-                                    {value[1]}
+                                    {t(value[1])}
                                 </button>
                             ))}
                         </div>
@@ -175,7 +177,7 @@ const Settings = (): ReactElement => {
                                 <About />
                             </div>
                             <div className={`tab ${currentTab === TAB_INFO.extras[0] ? "selected " : ""}`}>
-                                <h1>Usage & Features</h1>
+                                <h1>{t("tabs.usageFeatures")}</h1>
                                 <Usage />
                             </div>
                         </div>
