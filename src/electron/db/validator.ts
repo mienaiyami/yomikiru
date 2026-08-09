@@ -38,6 +38,12 @@ export const UpdateLibraryItemSchema = z.object({
     author: z.string().optional(),
 });
 
+/** Rewrites a library row's path and every child `itemLink` FK to the new location. */
+export const RelocateLibraryItemSchema = z.object({
+    oldLink: z.string().min(1),
+    newLink: z.string().min(1),
+});
+
 export const AddMangaBookmarkSchema = createInsertSchema(mangaBookmarks).omit({
     id: true,
     createdAt: true,

@@ -34,6 +34,34 @@ export class DatabaseService {
     get db(): ReturnType<typeof drizzle> {
         return this._db;
     }
+
+    /**
+     * Runs `fn` with `PRAGMA foreign_keys = OFF` on this connection, then restores ON in `finally`.
+     * Prefer a synchronous `fn` (and better-sqlite3 transactions inside it) so the main-process
+     * event loop cannot interleave other DB work while checks are disabled.
+     */
+    private withForeignKeysOff<T>(fn: () => T): T {
+        this.sqlite.pragma("foreign_keys = OFF");
+        try {
+            return fn();
+        } finally {
+            this.sqlite.pragma("foreign_keys = ON");
+        }
+    }
+
+    /**
+     * Async variant of {@link withForeignKeysOff}. Safe for `await migrate()`, but yields the
+     * event loop while FKs are off - only use when the work cannot stay synchronous.
+     */
+    private async withForeignKeysOffAsync<T>(fn: () => Promise<T>): Promise<T> {
+        this.sqlite.pragma("foreign_keys = OFF");
+        try {
+            return await fn();
+        } finally {
+            this.sqlite.pragma("foreign_keys = ON");
+        }
+    }
+
     async initialize(): Promise<void> {
         try {
             normalizeLegacyMangaDataBeforeMigration(this.sqlite);
@@ -58,22 +86,20 @@ export class DatabaseService {
         const libCols = this.sqlite.prepare("PRAGMA table_info(library_items)").all() as { name: string }[];
         const needs0001 = libCols.length > 0 && !libCols.some((c) => c.name === "id");
 
-        if (needs0001) {
-            logger.log("migration 0001 pending: disabling FK enforcement for table-rebuild");
-            this.sqlite.pragma("foreign_keys = OFF");
-        }
-
-        try {
+        const runMigrate = async () => {
             await migrate(this._db, {
                 migrationsFolder: app.isPackaged
                     ? path.join(path.dirname(app.getAppPath()), "drizzle")
                     : "drizzle",
             });
-        } finally {
-            if (needs0001) {
-                this.sqlite.pragma("foreign_keys = ON");
-                logger.log("migration 0001 complete: FK enforcement restored");
-            }
+        };
+
+        if (needs0001) {
+            logger.log("migration 0001 pending: disabling FK enforcement for table-rebuild");
+            await this.withForeignKeysOffAsync(runMigrate);
+            logger.log("migration 0001 complete: FK enforcement restored");
+        } else {
+            await runMigrate();
         }
     }
     async addLibraryItem(data: AddToLibraryData): Promise<LibraryItem> {
@@ -102,6 +128,69 @@ export class DatabaseService {
             }
             return item;
         });
+    }
+
+    /**
+     * Rewrites `library_items.link` and every child `itemLink` to `newLink`.
+     * Keeps the same row `id` (cover cache stays valid). Returns null when `oldLink`
+     * is missing or `newLink` is already used by another row.
+     *
+     * Existence/conflict checks and the rewrite run inside one sync
+     * {@link withForeignKeysOff} + better-sqlite3 transaction so other IPC cannot
+     * interleave while FKs are off. (SQLite also ignores `PRAGMA foreign_keys`
+     * inside a transaction.)
+     */
+    async relocateLibraryItem(oldLink: string, newLink: string): Promise<LibraryItem | null> {
+        if (oldLink === newLink) {
+            const [same] = await this._db.select().from(libraryItems).where(eq(libraryItems.link, oldLink));
+            return same ?? null;
+        }
+
+        try {
+            const relocated = this.withForeignKeysOff(() => {
+                const source = this.sqlite.prepare(`SELECT link FROM library_items WHERE link = ?`).get(oldLink) as
+                    | { link: string }
+                    | undefined;
+                if (!source) {
+                    logger.warn(`relocateLibraryItem: no library row for oldLink=${oldLink}`);
+                    return false;
+                }
+                const conflict = this.sqlite
+                    .prepare(`SELECT link FROM library_items WHERE link = ?`)
+                    .get(newLink) as { link: string } | undefined;
+                if (conflict) {
+                    logger.warn(`relocateLibraryItem: newLink already in library (${newLink})`);
+                    return false;
+                }
+
+                this.sqlite.transaction(() => {
+                    this.sqlite
+                        .prepare(`UPDATE manga_progress SET itemLink = ? WHERE itemLink = ?`)
+                        .run(newLink, oldLink);
+                    this.sqlite
+                        .prepare(`UPDATE book_progress SET itemLink = ? WHERE itemLink = ?`)
+                        .run(newLink, oldLink);
+                    this.sqlite
+                        .prepare(`UPDATE manga_bookmarks SET itemLink = ? WHERE itemLink = ?`)
+                        .run(newLink, oldLink);
+                    this.sqlite
+                        .prepare(`UPDATE book_bookmarks SET itemLink = ? WHERE itemLink = ?`)
+                        .run(newLink, oldLink);
+                    this.sqlite
+                        .prepare(`UPDATE book_notes SET itemLink = ? WHERE itemLink = ?`)
+                        .run(newLink, oldLink);
+                    this.sqlite.prepare(`UPDATE library_items SET link = ? WHERE link = ?`).run(newLink, oldLink);
+                })();
+                return true;
+            });
+            if (!relocated) return null;
+        } catch (err) {
+            logger.error("relocateLibraryItem: transaction failed", { oldLink, newLink }, err);
+            return null;
+        }
+
+        const [item] = await this._db.select().from(libraryItems).where(eq(libraryItems.link, newLink));
+        return item ?? null;
     }
 
     async updateMangaProgress(data: UpdateMangaProgressData): Promise<MangaProgress[]> {

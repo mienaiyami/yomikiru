@@ -1,6 +1,7 @@
 import type { BookBookmark, MangaBookmark } from "@common/types/db";
 import type { DatabaseChannels } from "@common/types/ipc";
 import { createAsyncThunk, createSlice, type PayloadAction } from "@reduxjs/toolkit";
+import { relocateLibraryItem } from "./library";
 
 type BookmarksState = {
     // map of key:itemLink value: bookmarks
@@ -95,6 +96,21 @@ const bookmarksSlice = createSlice({
                     state.book[bookBookmark.itemLink]?.push(bookBookmark);
                 }
                 state.loading = false;
+            })
+            .addCase(relocateLibraryItem.fulfilled, (state, action) => {
+                if (!action.payload) return;
+                const { oldLink, newLink } = action.meta.arg;
+                if (oldLink === newLink) return;
+                const mangaList = state.manga[oldLink];
+                if (mangaList) {
+                    delete state.manga[oldLink];
+                    state.manga[newLink] = mangaList.map((b) => ({ ...b, itemLink: newLink }));
+                }
+                const bookList = state.book[oldLink];
+                if (bookList) {
+                    delete state.book[oldLink];
+                    state.book[newLink] = bookList.map((b) => ({ ...b, itemLink: newLink }));
+                }
             });
     },
 });

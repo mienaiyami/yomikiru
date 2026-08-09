@@ -44,7 +44,9 @@ vi.mock("../util/logger", () => ({
     }),
 }));
 
+import { eq } from "drizzle-orm";
 import { DatabaseService } from "./index";
+import { mangaBookmarks } from "./schema";
 
 /** Cross-platform sample paths for db integration tests. */
 const MANGA_LINK = path.join("testdata", "manga", "series-a");
@@ -114,5 +116,51 @@ describe("DatabaseService", () => {
         });
         expect(progress?.position).toBe("body>p:nth-child(9)");
         expect(progress?.chapterId).toBe("c2");
+    });
+
+    it("relocates a manga library path and rewrites progress and bookmark itemLink", async () => {
+        const oldLink = path.join("testdata", "manga", "relocate-old");
+        const newLink = path.join("testdata", "manga", "relocate-new");
+        const item = await dbService.addLibraryItem({
+            type: "manga",
+            data: {
+                type: "manga",
+                link: oldLink,
+                title: "Relocate Me",
+            },
+            progress: {
+                chapterName: "ch1",
+                currentPage: 3,
+                totalPages: 10,
+            },
+        });
+        const idBefore = item.id;
+        await dbService.db.insert(mangaBookmarks).values({
+            itemLink: oldLink,
+            chapterName: "ch1",
+            page: 3,
+        });
+
+        const relocated = await dbService.relocateLibraryItem(oldLink, newLink);
+        expect(relocated?.link).toBe(newLink);
+        expect(relocated?.id).toBe(idBefore);
+
+        const [progress] = await dbService.updateMangaProgress({
+            itemLink: newLink,
+            currentPage: 4,
+            chapterName: "ch1",
+        });
+        expect(progress?.itemLink).toBe(newLink);
+        expect(progress?.currentPage).toBe(4);
+
+        const bookmarks = await dbService.db
+            .select()
+            .from(mangaBookmarks)
+            .where(eq(mangaBookmarks.itemLink, newLink));
+        expect(bookmarks).toHaveLength(1);
+        expect(bookmarks[0]?.chapterName).toBe("ch1");
+
+        expect(await dbService.relocateLibraryItem(oldLink, path.join("testdata", "manga", "gone"))).toBeNull();
+        expect(await dbService.relocateLibraryItem(newLink, MANGA_LINK)).toBeNull();
     });
 });

@@ -19,6 +19,7 @@ import { refreshThemes, setTheme } from "@store/themes";
 import { setAnilistEditOpen, setAnilistLoginOpen, setAnilistSearchOpen, toggleSettingsOpen } from "@store/ui";
 import { dialogUtils } from "@utils/dialog";
 import { keyFormatter, mouseEventFormatter } from "@utils/keybindings";
+import { resolveMissingOpenPath } from "@utils/libraryMissingPath";
 import {
     createContext,
     createRef,
@@ -136,11 +137,19 @@ const App = (): ReactElement => {
     };
 
     const openInNewWindow = (link: string) => {
-        // new window will be opened, if link is invalid then it will be forced closed.
-        link &&
-            window.fs.access(link).then(() => {
-                window.electron.send("window:openLinkInNewWindow", link);
+        if (!link) return;
+        void (async () => {
+            let target = link;
+            if (!window.fs.existsSync(target)) {
+                const remapped = await resolveMissingOpenPath(dispatch, target);
+                if (!remapped) return;
+                target = remapped;
+            }
+            // new window will be opened; main forces close if the link is still invalid
+            window.fs.access(target).then(() => {
+                window.electron.send("window:openLinkInNewWindow", target);
             });
+        })();
     };
 
     useLayoutEffect(() => {

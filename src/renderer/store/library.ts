@@ -70,6 +70,19 @@ export const deleteLibraryItem = createAsyncThunk(
     },
 );
 
+/**
+ * Moves a library item to a new disk path (progress/bookmarks/notes follow).
+ * Callers should update AniList `localURL` and any UI selection holding `oldLink`.
+ *
+ * @returns The updated library row, or `null` when the IPC reports conflict/missing.
+ */
+export const relocateLibraryItem = createAsyncThunk(
+    "library/relocateItem",
+    async (args: DatabaseChannels["db:library:relocateItem"]["request"]) => {
+        return await window.electron.invoke("db:library:relocateItem", args);
+    },
+);
+
 export const resetLibrary = createAsyncThunk("library/reset", async () => {
     return await window.electron.invoke("db:library:reset");
 });
@@ -155,6 +168,35 @@ const librarySlice = createSlice({
             .addCase(fetchAllItemsWithProgress.rejected, (state, action) => {
                 state.loading = false;
                 state.error = action.error.message || "Failed to load items";
+            })
+            // Keep UI selection keys valid before db:library:change refetch finishes.
+            .addCase(relocateLibraryItem.fulfilled, (state, action) => {
+                const item = action.payload;
+                const { oldLink, newLink } = action.meta.arg;
+                if (!item || oldLink === newLink) return;
+                const prev = state.items[oldLink];
+                delete state.items[oldLink];
+                if (!prev) {
+                    state.items[newLink] = { ...item, progress: null };
+                    return;
+                }
+                if (prev.type === "manga") {
+                    state.items[newLink] = {
+                        ...prev,
+                        ...item,
+                        type: "manga",
+                        link: newLink,
+                        progress: prev.progress ? { ...prev.progress, itemLink: newLink } : null,
+                    };
+                    return;
+                }
+                state.items[newLink] = {
+                    ...prev,
+                    ...item,
+                    type: "book",
+                    link: newLink,
+                    progress: prev.progress ? { ...prev.progress, itemLink: newLink } : null,
+                };
             });
     },
 });

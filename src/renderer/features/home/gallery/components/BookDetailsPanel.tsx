@@ -18,6 +18,7 @@ import { createRendererLogger } from "@utils/logger";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { shallowEqual } from "react-redux";
 import ListSelectionToolbar from "../../classic/components/ListSelectionToolbar";
+import MissingLibraryPathPanel from "./MissingLibraryPathPanel";
 import "./mangaDetailsPanel.scss";
 
 const log = createRendererLogger("gallery/BookDetailsPanel");
@@ -26,13 +27,15 @@ type BookDetailsPanelProps = {
     /** Library primary key: path to the `.epub` file */
     bookLink: string;
     onClose: () => void;
+    /** After Locate on disk succeeds, parent should select the new library link. */
+    onRelocated?: (newLink: string) => void;
 };
 
 /**
  * Gallery side panel for a library book: metadata, bookmarks, and reader notes (highlights).
  * Opening a bookmark or note launches the reader at the stored chapter and scroll position.
  */
-const BookDetailsPanel: React.FC<BookDetailsPanelProps> = ({ bookLink, onClose }) => {
+const BookDetailsPanel: React.FC<BookDetailsPanelProps> = ({ bookLink, onClose, onRelocated }) => {
     const dispatch = useAppDispatch();
     const library = useAppSelector((store) => store.library.items);
     const confirmDeleteItem = useAppSelector((store) => store.appSettings.confirmDeleteItem);
@@ -41,6 +44,7 @@ const BookDetailsPanel: React.FC<BookDetailsPanelProps> = ({ bookLink, onClose }
     const [activeTab, setActiveTab] = useState<"bookmarks" | "notes">("bookmarks");
 
     const book = library[bookLink] as (LibraryItemWithProgress & { type: "book" }) | undefined;
+    const pathMissing = Boolean(book) && !window.fs.existsSync(bookLink);
 
     const bookmarksArray = useAppSelector(
         (store) =>
@@ -75,25 +79,27 @@ const BookDetailsPanel: React.FC<BookDetailsPanelProps> = ({ bookLink, onClose }
      */
     const openBookmarkInReader = useCallback(
         (bookmark: BookBookmark) => {
+            if (pathMissing) return;
             openInReader(bookLink, {
                 epubChapterId: bookmark.chapterId,
                 epubElementQueryString: bookmark.position,
             });
         },
-        [bookLink, openInReader],
+        [bookLink, openInReader, pathMissing],
     );
 
     /**
-     * Opens the reader at the note’s chapter and scrolls to the highlight anchor.
+     * Opens the reader at the note's chapter and scrolls to the highlight anchor.
      */
     const openNoteInReader = useCallback(
         (note: BookNote) => {
+            if (pathMissing) return;
             openInReader(bookLink, {
                 epubChapterId: note.chapterId,
                 epubElementQueryString: `[data-highlight-id="${note.id}"]`,
             });
         },
-        [bookLink, openInReader],
+        [bookLink, openInReader, pathMissing],
     );
 
     const handleBookmarkContextMenu = useCallback(
@@ -101,7 +107,10 @@ const BookDetailsPanel: React.FC<BookDetailsPanelProps> = ({ bookLink, onClose }
             e.preventDefault();
             e.stopPropagation();
             const items: Menu.ListItem[] = [
-                window.contextMenu.template.openInNewWindow(bookmark.itemLink),
+                {
+                    ...window.contextMenu.template.openInNewWindow(bookmark.itemLink),
+                    disabled: pathMissing,
+                },
                 window.contextMenu.template.removeBookmark(bookmark.itemLink, bookmark.id, "book", true),
             ];
             setContextMenuData({
@@ -111,7 +120,7 @@ const BookDetailsPanel: React.FC<BookDetailsPanelProps> = ({ bookLink, onClose }
                 focusBackElem: e.currentTarget,
             });
         },
-        [setContextMenuData],
+        [pathMissing, setContextMenuData],
     );
 
     const handleNoteContextMenu = useCallback(
@@ -169,7 +178,7 @@ const BookDetailsPanel: React.FC<BookDetailsPanelProps> = ({ bookLink, onClose }
                     key={bookmark.id}
                     className={`bookmark-item ${isSelected ? "selected" : ""} ${
                         inSelectionMode ? "selectionMode" : ""
-                    } ${isChecked ? "multiSelected" : ""}`}
+                    } ${isChecked ? "multiSelected" : ""} ${pathMissing ? "openDisabled" : ""}`}
                     onClick={(e) => {
                         if (inSelectionMode) {
                             bookmarkSelection.toggleItem(bookmark.id, { shiftKey: e.shiftKey });
@@ -205,7 +214,7 @@ const BookDetailsPanel: React.FC<BookDetailsPanelProps> = ({ bookLink, onClose }
                 </div>
             );
         },
-        [handleBookmarkContextMenu, openBookmarkInReader, bookmarkSelection],
+        [handleBookmarkContextMenu, openBookmarkInReader, bookmarkSelection, pathMissing],
     );
 
     const renderNoteItem = useCallback(
@@ -217,7 +226,7 @@ const BookDetailsPanel: React.FC<BookDetailsPanelProps> = ({ bookLink, onClose }
                     key={note.id}
                     className={`note-item ${isSelected ? "selected" : ""} ${
                         inSelectionMode ? "selectionMode" : ""
-                    } ${isChecked ? "multiSelected" : ""}`}
+                    } ${isChecked ? "multiSelected" : ""} ${pathMissing ? "openDisabled" : ""}`}
                     onClick={(e) => {
                         if (inSelectionMode) {
                             noteSelection.toggleItem(note.id, { shiftKey: e.shiftKey });
@@ -259,7 +268,7 @@ const BookDetailsPanel: React.FC<BookDetailsPanelProps> = ({ bookLink, onClose }
                 </div>
             );
         },
-        [handleNoteContextMenu, openNoteInReader, noteSelection],
+        [handleNoteContextMenu, openNoteInReader, noteSelection, pathMissing],
     );
 
     useSelectionShortcuts({
@@ -344,6 +353,7 @@ const BookDetailsPanel: React.FC<BookDetailsPanelProps> = ({ bookLink, onClose }
     }, [book, bookLink, dispatch]);
 
     const handleContinueReading = useCallback(() => {
+        if (pathMissing) return;
         openInReader(
             bookLink,
             book?.progress
@@ -353,7 +363,7 @@ const BookDetailsPanel: React.FC<BookDetailsPanelProps> = ({ bookLink, onClose }
                   }
                 : undefined,
         );
-    }, [book, bookLink, openInReader]);
+    }, [book, bookLink, openInReader, pathMissing]);
 
     /** Context menu for the library `.epub` path (same entries as gallery grid). */
     const handleLibraryRootContextMenu = useCallback(
@@ -364,8 +374,14 @@ const BookDetailsPanel: React.FC<BookDetailsPanelProps> = ({ bookLink, onClose }
                 clickX: e.clientX,
                 clickY: e.clientY,
                 items: [
-                    window.contextMenu.template.openInNewWindow(bookLink),
-                    window.contextMenu.template.showInExplorer(bookLink),
+                    {
+                        ...window.contextMenu.template.openInNewWindow(bookLink),
+                        disabled: pathMissing,
+                    },
+                    {
+                        ...window.contextMenu.template.showInExplorer(bookLink),
+                        disabled: pathMissing,
+                    },
                     window.contextMenu.template.copyPath(bookLink),
                     window.contextMenu.template.divider(),
                     window.contextMenu.template.removeHistory(bookLink, false, onClose),
@@ -373,7 +389,7 @@ const BookDetailsPanel: React.FC<BookDetailsPanelProps> = ({ bookLink, onClose }
                 focusBackElem: e.currentTarget,
             });
         },
-        [bookLink, onClose, setContextMenuData],
+        [bookLink, onClose, pathMissing, setContextMenuData],
     );
 
     if (!book || book.type !== "book") {
@@ -442,38 +458,50 @@ const BookDetailsPanel: React.FC<BookDetailsPanelProps> = ({ bookLink, onClose }
                     </div>
 
                     <div className="manga-actions-container">
-                        {anilistToken ? (
-                            <div className="gallery-anilist-bar">
-                                <AnilistBar localLibraryLink={bookLink} libraryTitle={book.title} />
-                            </div>
-                        ) : null}
-                        <div className="manga-actions">
-                            {book.progress ? (
-                                <button
-                                    type="button"
-                                    className="action-button continue-reading"
-                                    onClick={handleContinueReading}
-                                >
-                                    Continue Reading
-                                </button>
-                            ) : (
-                                <button
-                                    type="button"
-                                    className="action-button continue-reading"
-                                    onClick={handleContinueReading}
-                                >
-                                    Start Reading
-                                </button>
-                            )}
-                            <button
-                                type="button"
-                                className="action-button select-cover"
-                                onClick={handleSelectCover}
-                            >
-                                <FontAwesomeIcon icon={faImage} />
-                                <span>Select Cover</span>
-                            </button>
-                        </div>
+                        {pathMissing ? (
+                            <MissingLibraryPathPanel
+                                type="book"
+                                link={bookLink}
+                                title={book.title}
+                                onRelocated={(newLink) => onRelocated?.(newLink)}
+                                onRemoved={onClose}
+                            />
+                        ) : (
+                            <>
+                                {anilistToken ? (
+                                    <div className="gallery-anilist-bar">
+                                        <AnilistBar localLibraryLink={bookLink} libraryTitle={book.title} />
+                                    </div>
+                                ) : null}
+                                <div className="manga-actions">
+                                    {book.progress ? (
+                                        <button
+                                            type="button"
+                                            className="action-button continue-reading"
+                                            onClick={handleContinueReading}
+                                        >
+                                            Continue Reading
+                                        </button>
+                                    ) : (
+                                        <button
+                                            type="button"
+                                            className="action-button continue-reading"
+                                            onClick={handleContinueReading}
+                                        >
+                                            Start Reading
+                                        </button>
+                                    )}
+                                    <button
+                                        type="button"
+                                        className="action-button select-cover"
+                                        onClick={handleSelectCover}
+                                    >
+                                        <FontAwesomeIcon icon={faImage} />
+                                        <span>Select Cover</span>
+                                    </button>
+                                </div>
+                            </>
+                        )}
                     </div>
                 </div>
 

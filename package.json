@@ -24,8 +24,12 @@
         "lint": "biome lint .",
         "lint:fix": "biome lint --write .",
         "check": "biome check . && tsc --noemit",
+        "check:write": "biome check --write .",
+        "check:staged": "biome check --write --files-ignore-unknown=true --no-errors-on-unmatched --staged",
         "check:chrome108": "eslint src --ext .js,.jsx,.ts,.tsx --config .eslintrc.chrome108.json",
         "check:full": "biome check . --diagnostic-level error && eslint --config .eslintrc.chrome108.json && tsc --noemit",
+        "hooks:pre-commit": "pnpm exec lint-staged",
+        "hooks:install": "husky",
         "tslint": "tsc --noemit",
         "package": "electron-forge package",
         "make:exe32": "electron-forge make --targets=@electron-forge/maker-squirrel --arch=ia32",
@@ -155,7 +159,7 @@
             "biome check --write --files-ignore-unknown=true --no-errors-on-unmatched"
         ],
         "*.{json,css}": [
-            "biome format --write"
+            "biome format --write --files-ignore-unknown=true --no-errors-on-unmatched"
         ]
     },
     "pnpm": {

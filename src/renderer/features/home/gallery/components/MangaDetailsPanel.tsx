@@ -30,6 +30,7 @@ import { resolveMangaChapterPath } from "@utils/mangaChapterPath";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { shallowEqual } from "react-redux";
 import ListSelectionToolbar from "../../classic/components/ListSelectionToolbar";
+import MissingLibraryPathPanel from "./MissingLibraryPathPanel";
 import "./mangaDetailsPanel.scss";
 
 const log = createRendererLogger("gallery/MangaDetailsPanel");
@@ -37,6 +38,8 @@ const log = createRendererLogger("gallery/MangaDetailsPanel");
 type MangaDetailsPanelProps = {
     mangaLink: string;
     onClose: () => void;
+    /** After Locate on disk succeeds, parent should select the new library link. */
+    onRelocated?: (newLink: string) => void;
 };
 
 type ChapterData = {
@@ -46,7 +49,13 @@ type ChapterData = {
     pages: number;
 };
 
-const MangaDetailsPanel: React.FC<MangaDetailsPanelProps> = ({ mangaLink, onClose }) => {
+/** Packed archives stay listed (pages not scanned); empty image folders are omitted. */
+const isListableMangaChapterChild = (chapter: { name: string; pages: number }): boolean => {
+    if (formatUtils.files.test(chapter.name)) return true;
+    return chapter.pages > 0;
+};
+
+const MangaDetailsPanel: React.FC<MangaDetailsPanelProps> = ({ mangaLink, onClose, onRelocated }) => {
     const dispatch = useAppDispatch();
     const library = useAppSelector((store) => store.library.items);
     const anilistToken = useAppSelector((store) => store.anilist.token);
@@ -59,6 +68,7 @@ const MangaDetailsPanel: React.FC<MangaDetailsPanelProps> = ({ mangaLink, onClos
     const sortOrder = useAppSelector((store) => store.appSettings.locationListSortType);
 
     const manga = library[mangaLink] as LibraryItemWithProgress & { type: "manga" };
+    const pathMissing = Boolean(manga) && !window.fs.existsSync(mangaLink);
     const bookmarksArray = useAppSelector(
         (store) =>
             [...((manga && store.bookmarks.manga[manga.link]) || [])].sort(
@@ -82,9 +92,7 @@ const MangaDetailsPanel: React.FC<MangaDetailsPanelProps> = ({ mangaLink, onClos
         })();
     }, [mangaLink, manga?.id, dispatch, validateDirectory]);
 
-    useEffect(() => {
-        setNote(placeholderNote);
-
+    const refreshChapters = useCallback(() => {
         const fetchChapters = async () => {
             try {
                 if (window.fs.existsSync(mangaLink) && window.fs.isDir(mangaLink)) {
@@ -111,12 +119,15 @@ const MangaDetailsPanel: React.FC<MangaDetailsPanelProps> = ({ mangaLink, onClos
                                     return;
                                 }
                                 if (stat.isDir || (stat.isFile && formatUtils.files.test(fileName))) {
-                                    dirNames.push({
+                                    const chapter = {
                                         name: fileName,
                                         link: filePath,
                                         dateModified: stat.mtimeMs,
                                         pages,
-                                    });
+                                    };
+                                    if (isListableMangaChapterChild(chapter)) {
+                                        dirNames.push(chapter);
+                                    }
                                 }
                             } catch (error) {
                                 console.log(error);
@@ -124,14 +135,24 @@ const MangaDetailsPanel: React.FC<MangaDetailsPanelProps> = ({ mangaLink, onClos
                         }),
                     );
                     setChapters(dirNames);
+                } else {
+                    setChapters([]);
                 }
             } catch (error) {
                 console.error("Error fetching chapters:", error);
             }
         };
 
-        fetchChapters();
+        void fetchChapters();
+    }, [mangaLink]);
+
+    useEffect(() => {
+        setNote(placeholderNote);
     }, [mangaLink, manga]);
+
+    useEffect(() => {
+        refreshChapters();
+    }, [refreshChapters]);
 
     const sortedChapters = useMemo(() => {
         if (!chapters.length) return [];
@@ -161,9 +182,10 @@ const MangaDetailsPanel: React.FC<MangaDetailsPanelProps> = ({ mangaLink, onClos
 
     const handleChapterClick = useCallback(
         (chapterLink: string) => {
+            if (pathMissing) return;
             openInReader(chapterLink);
         },
-        [openInReader],
+        [openInReader, pathMissing],
     );
 
     const handleSaveNote = useCallback(() => {
@@ -176,9 +198,9 @@ const MangaDetailsPanel: React.FC<MangaDetailsPanelProps> = ({ mangaLink, onClos
         (e: React.MouseEvent, chapterLink: string, chapterName: string) => {
             e.preventDefault();
 
-            const items = [
-                window.contextMenu.template.open(chapterLink),
-                window.contextMenu.template.openInNewWindow(chapterLink),
+            const items: Menu.ListItem[] = [
+                { ...window.contextMenu.template.open(chapterLink), disabled: pathMissing },
+                { ...window.contextMenu.template.openInNewWindow(chapterLink), disabled: pathMissing },
                 window.contextMenu.template.divider(),
             ];
 
@@ -200,7 +222,10 @@ const MangaDetailsPanel: React.FC<MangaDetailsPanelProps> = ({ mangaLink, onClos
 
             items.push(window.contextMenu.template.divider());
             items.push(window.contextMenu.template.copyPath(chapterLink));
-            items.push(window.contextMenu.template.showInExplorer(chapterLink));
+            items.push({
+                ...window.contextMenu.template.showInExplorer(chapterLink),
+                disabled: pathMissing,
+            });
 
             setContextMenuData({
                 clickX: e.clientX,
@@ -209,7 +234,7 @@ const MangaDetailsPanel: React.FC<MangaDetailsPanelProps> = ({ mangaLink, onClos
                 focusBackElem: e.currentTarget,
             });
         },
-        [mangaLink, manga, setContextMenuData, chapters],
+        [mangaLink, manga, setContextMenuData, chapters, pathMissing],
     );
 
     const handleSortClick = useCallback(
@@ -257,55 +282,6 @@ const MangaDetailsPanel: React.FC<MangaDetailsPanelProps> = ({ mangaLink, onClos
         [sortBy, sortOrder, setContextMenuData],
     );
 
-    const refreshChapters = useCallback(() => {
-        const fetchChapters = async () => {
-            try {
-                if (window.fs.existsSync(mangaLink) && window.fs.isDir(mangaLink)) {
-                    const files = await window.fs.readdir(mangaLink);
-                    const dirNames: ChapterData[] = [];
-                    await Promise.all(
-                        files.map(async (fileName) => {
-                            try {
-                                const filePath = window.path.join(mangaLink, fileName);
-                                await window.fs.access(filePath, window.fs.constants.R_OK);
-                                const stat = await window.fs.stat(filePath);
-
-                                let pages = 0;
-                                if (stat.isDir) {
-                                    try {
-                                        const chapterFiles = await window.fs.readdir(filePath);
-                                        pages = chapterFiles.filter((f) => formatUtils.image.test(f)).length;
-                                    } catch (err) {
-                                        console.error("Error counting pages:", err);
-                                    }
-                                }
-
-                                if (stat.isFile && formatUtils.image.test(fileName)) {
-                                    return;
-                                }
-                                if (stat.isDir || (stat.isFile && formatUtils.files.test(fileName))) {
-                                    dirNames.push({
-                                        name: fileName,
-                                        link: filePath,
-                                        dateModified: stat.mtimeMs,
-                                        pages,
-                                    });
-                                }
-                            } catch (error) {
-                                console.log(error);
-                            }
-                        }),
-                    );
-                    setChapters(dirNames);
-                }
-            } catch (error) {
-                console.error("Error fetching chapters:", error);
-            }
-        };
-
-        fetchChapters();
-    }, [mangaLink]);
-
     const filterChapter = useCallback((filter: string, chapter: ChapterData) => {
         return new RegExp(filter, "ig").test(chapter.name);
     }, []);
@@ -326,7 +302,9 @@ const MangaDetailsPanel: React.FC<MangaDetailsPanelProps> = ({ mangaLink, onClos
                     key={chapter.link}
                     className={`chapter-item ${isRead ? "read" : ""} ${isCurrent ? "current" : ""} ${
                         isSelected ? "selected" : ""
-                    } ${inSelectionMode ? "selectionMode" : ""} ${isChecked ? "multiSelected" : ""}`}
+                    } ${inSelectionMode ? "selectionMode" : ""} ${isChecked ? "multiSelected" : ""} ${
+                        pathMissing ? "openDisabled" : ""
+                    }`}
                     onClick={(e) => {
                         if (inSelectionMode) {
                             chapterSelection.toggleItem(chapter.name, { shiftKey: e.shiftKey });
@@ -368,11 +346,12 @@ const MangaDetailsPanel: React.FC<MangaDetailsPanelProps> = ({ mangaLink, onClos
                 </div>
             );
         },
-        [manga, handleChapterClick, handleChapterContextMenu, chapterSelection],
+        [manga, handleChapterClick, handleChapterContextMenu, chapterSelection, pathMissing],
     );
 
     const handleBookmarkClick = useCallback(
         (bookmark: MangaBookmark) => {
+            if (pathMissing) return;
             const bookmarkPath = resolveMangaChapterPath(bookmark.itemLink, bookmark.chapterName);
             const progressPath =
                 manga?.progress?.itemLink && manga?.progress?.chapterName
@@ -386,7 +365,7 @@ const MangaDetailsPanel: React.FC<MangaDetailsPanelProps> = ({ mangaLink, onClos
                 });
             }
         },
-        [manga, openInReader],
+        [manga, openInReader, pathMissing],
     );
 
     const handleBookmarkContextMenu = useCallback(
@@ -395,7 +374,10 @@ const MangaDetailsPanel: React.FC<MangaDetailsPanelProps> = ({ mangaLink, onClos
             e.stopPropagation();
 
             const items: Menu.ListItem[] = [
-                window.contextMenu.template.openInNewWindow(bookmark.itemLink),
+                {
+                    ...window.contextMenu.template.openInNewWindow(bookmark.itemLink),
+                    disabled: pathMissing,
+                },
                 window.contextMenu.template.removeBookmark(bookmark.itemLink, bookmark.id, "manga", true),
             ];
 
@@ -406,7 +388,7 @@ const MangaDetailsPanel: React.FC<MangaDetailsPanelProps> = ({ mangaLink, onClos
                 focusBackElem: e.currentTarget,
             });
         },
-        [setContextMenuData],
+        [pathMissing, setContextMenuData],
     );
 
     const renderBookmarkItem = useCallback(
@@ -418,7 +400,7 @@ const MangaDetailsPanel: React.FC<MangaDetailsPanelProps> = ({ mangaLink, onClos
                     key={bookmark.id}
                     className={`bookmark-item ${isSelected ? "selected" : ""} ${
                         inSelectionMode ? "selectionMode" : ""
-                    } ${isChecked ? "multiSelected" : ""}`}
+                    } ${isChecked ? "multiSelected" : ""} ${pathMissing ? "openDisabled" : ""}`}
                     onClick={(e) => {
                         if (inSelectionMode) {
                             bookmarkSelection.toggleItem(bookmark.id, { shiftKey: e.shiftKey });
@@ -459,7 +441,7 @@ const MangaDetailsPanel: React.FC<MangaDetailsPanelProps> = ({ mangaLink, onClos
                 </div>
             );
         },
-        [handleBookmarkClick, handleBookmarkContextMenu, bookmarkSelection],
+        [handleBookmarkClick, handleBookmarkContextMenu, bookmarkSelection, pathMissing],
     );
 
     const filterBookmark = useCallback((filter: string, bookmark: MangaBookmark) => {
@@ -541,8 +523,14 @@ const MangaDetailsPanel: React.FC<MangaDetailsPanelProps> = ({ mangaLink, onClos
                 clickX: e.clientX,
                 clickY: e.clientY,
                 items: [
-                    window.contextMenu.template.openInNewWindow(mangaLink),
-                    window.contextMenu.template.showInExplorer(mangaLink),
+                    {
+                        ...window.contextMenu.template.openInNewWindow(mangaLink),
+                        disabled: pathMissing,
+                    },
+                    {
+                        ...window.contextMenu.template.showInExplorer(mangaLink),
+                        disabled: pathMissing,
+                    },
                     window.contextMenu.template.copyPath(mangaLink),
                     window.contextMenu.template.divider(),
                     window.contextMenu.template.removeHistory(mangaLink, false, onClose),
@@ -550,7 +538,7 @@ const MangaDetailsPanel: React.FC<MangaDetailsPanelProps> = ({ mangaLink, onClos
                 focusBackElem: e.currentTarget,
             });
         },
-        [mangaLink, onClose, setContextMenuData],
+        [mangaLink, onClose, pathMissing, setContextMenuData],
     );
 
     const coverArtSrc = manga ? libraryCoverSrc(manga) : "";
@@ -571,7 +559,7 @@ const MangaDetailsPanel: React.FC<MangaDetailsPanelProps> = ({ mangaLink, onClos
                             {coverArtSrc ? (
                                 <img
                                     src={coverArtSrc}
-                                    alt={manga.title}
+                                    alt={manga?.title || "cover"}
                                     className="manga-cover"
                                     draggable={false}
                                 />
@@ -610,60 +598,75 @@ const MangaDetailsPanel: React.FC<MangaDetailsPanelProps> = ({ mangaLink, onClos
                     </div>
 
                     <div className="manga-actions-container">
-                        {anilistToken && manga ? (
-                            <div className="gallery-anilist-bar">
-                                <AnilistBar localLibraryLink={mangaLink} libraryTitle={manga.title} />
-                            </div>
-                        ) : null}
-                        <div className="manga-actions">
-                            {manga?.type === "manga" && manga.progress && (
-                                <button
-                                    className="action-button continue-reading"
-                                    onClick={() => {
-                                        const p =
-                                            manga?.progress?.itemLink && manga?.progress?.chapterName
-                                                ? resolveMangaChapterPath(
-                                                      manga.progress.itemLink,
-                                                      manga.progress.chapterName,
-                                                  )
-                                                : "";
-                                        openInReader(p, {
-                                            mangaPageNumber: manga?.progress?.currentPage || 0,
-                                        });
-                                    }}
-                                >
-                                    Continue Reading
-                                </button>
-                            )}
-                            <button className="action-button select-cover" onClick={handleSelectCover}>
-                                <FontAwesomeIcon icon={faImage} />
-                                <span>Select Cover</span>
-                            </button>
-                            {isEditingNote ? (
-                                <button className="action-button save-note" onClick={handleSaveNote}>
-                                    <FontAwesomeIcon icon={faSave} />
-                                    <span>Save Note</span>
-                                </button>
-                            ) : (
-                                <button className="action-button edit-note" onClick={() => setIsEditingNote(true)}>
-                                    <FontAwesomeIcon icon={faEdit} />
-                                    <span>Edit Note (Not implemented)</span>
-                                </button>
-                            )}
-                        </div>
-                        <div className="manga-note">
-                            <h3>About</h3>
-                            {isEditingNote ? (
-                                <textarea
-                                    className="note-editor"
-                                    value={note}
-                                    onChange={(e) => setNote(e.target.value)}
-                                    placeholder="Add notes about this manga..."
-                                />
-                            ) : (
-                                <div className="note-text">{note || "No description available."}</div>
-                            )}
-                        </div>
+                        {pathMissing && manga ? (
+                            <MissingLibraryPathPanel
+                                type="manga"
+                                link={mangaLink}
+                                title={manga.title}
+                                onRelocated={(newLink) => onRelocated?.(newLink)}
+                                onRemoved={onClose}
+                            />
+                        ) : (
+                            <>
+                                {anilistToken && manga ? (
+                                    <div className="gallery-anilist-bar">
+                                        <AnilistBar localLibraryLink={mangaLink} libraryTitle={manga.title} />
+                                    </div>
+                                ) : null}
+                                <div className="manga-actions">
+                                    {manga?.type === "manga" && manga.progress && (
+                                        <button
+                                            className="action-button continue-reading"
+                                            onClick={() => {
+                                                const p =
+                                                    manga?.progress?.itemLink && manga?.progress?.chapterName
+                                                        ? resolveMangaChapterPath(
+                                                              manga.progress.itemLink,
+                                                              manga.progress.chapterName,
+                                                          )
+                                                        : "";
+                                                openInReader(p, {
+                                                    mangaPageNumber: manga?.progress?.currentPage || 0,
+                                                });
+                                            }}
+                                        >
+                                            Continue Reading
+                                        </button>
+                                    )}
+                                    <button className="action-button select-cover" onClick={handleSelectCover}>
+                                        <FontAwesomeIcon icon={faImage} />
+                                        <span>Select Cover</span>
+                                    </button>
+                                    {isEditingNote ? (
+                                        <button className="action-button save-note" onClick={handleSaveNote}>
+                                            <FontAwesomeIcon icon={faSave} />
+                                            <span>Save Note</span>
+                                        </button>
+                                    ) : (
+                                        <button
+                                            className="action-button edit-note"
+                                            onClick={() => setIsEditingNote(true)}
+                                        >
+                                            <FontAwesomeIcon icon={faEdit} />
+                                            <span>Edit Note (Not implemented)</span>
+                                        </button>
+                                    )}
+                                </div>
+                                <div className="manga-note">
+                                    <h3>About</h3>
+                                    {isEditingNote ? (
+                                        <textarea
+                                            className="note-editor"
+                                            value={note}
+                                            onChange={(e) => setNote(e.target.value)}
+                                            placeholder="Add notes about this manga..."
+                                        />
+                                    ) : (
+                                        <div className="note-text">{note || "No description available."}</div>
+                                    )}
+                                </div>
+                            </>
+                        )}
                     </div>
                 </div>
 

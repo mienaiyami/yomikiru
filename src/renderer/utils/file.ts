@@ -4,9 +4,6 @@ const log = createRendererLogger("utils/file");
 
 const userDataURL = window.electron.app.getPath("userData");
 const settingsPath = window.path.join(userDataURL, "settings.json");
-// TODO: remove bookmarks and history as no longer used
-const bookmarksPath = window.path.join(userDataURL, "bookmarks.json");
-const historyPath = window.path.join(userDataURL, "history.json");
 const themesPath = window.path.join(userDataURL, "themes.json");
 const readerPresetsPath = window.path.join(userDataURL, "reader-presets.json");
 const shortcutsPath = window.path.join(userDataURL, "shortcuts.json");
@@ -28,16 +25,13 @@ const saveJSONfile = (path: string, data: any) => {
         }
 };
 
-export {
-    userDataURL,
-    settingsPath,
-    bookmarksPath,
-    historyPath,
-    themesPath,
-    readerPresetsPath,
-    shortcutsPath,
-    saveJSONfile,
-};
+export { userDataURL, settingsPath, themesPath, readerPresetsPath, shortcutsPath, saveJSONfile };
+
+/**
+ * Electron `FileFilter.extensions` values (no leading dot) from a `formatUtils` ext list.
+ */
+export const toDialogExtensions = (extList: readonly string[]): string[] =>
+    extList.map((ext) => (ext.startsWith(".") ? ext.slice(1) : ext));
 
 export const formatUtils = {
     image: {
@@ -68,11 +62,35 @@ export const formatUtils = {
             return !!str && formatUtils.packedManga.list.includes(window.path.extname(str).toLowerCase());
         },
     },
+    pdf: {
+        list: [".pdf"],
+        test: (str: string): boolean => {
+            return !!str && formatUtils.pdf.list.includes(window.path.extname(str).toLowerCase());
+        },
+    },
     book: {
         list: [".epub", ".xhtml", ".html", ".txt"],
         test: (str: string): boolean => {
             return !!str && formatUtils.book.list.includes(window.path.extname(str).toLowerCase());
         },
+    },
+    /**
+     * Single-file manga the image reader can open (packed archives + PDF).
+     */
+    mangaFile: {
+        test: (str: string): boolean => formatUtils.packedManga.test(str) || formatUtils.pdf.test(str),
+    },
+    /** Open-dialog filters derived from the extension lists above. */
+    dialogFilters: {
+        book: (): Electron.FileFilter[] => [
+            { name: "Book", extensions: toDialogExtensions(formatUtils.book.list) },
+        ],
+        mangaFile: (): Electron.FileFilter[] => [
+            {
+                name: "Manga",
+                extensions: toDialogExtensions([...formatUtils.packedManga.list, ...formatUtils.pdf.list]),
+            },
+        ],
     },
 };
 

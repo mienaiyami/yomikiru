@@ -173,10 +173,14 @@ const Usage: React.FC = () => {
                 <li>
                     <b>Gallery:</b> Click a book to open its details panel (bookmarks and notes from the reader;
                     click an entry to open the book at that place). Click manga for chapters and bookmarks as
-                    before. Right-click a tile for <b>Continue Reading</b>, <b>Show in File Explorer</b>, copy path,{" "}
-                    <b>Remove from Library</b> (files on disk stay), and (with AniList connected){" "}
-                    <b>Track with AniList</b>. In the details panel, right-click the cover for the same library
-                    path actions; use the AniList bar under the cover when logged in.
+                    before (empty image folders are hidden from the chapter list). Right-click a tile for{" "}
+                    <b>Continue Reading</b>, <b>Show in File Explorer</b>, copy path, <b>Remove from Library</b>{" "}
+                    (files on disk stay), and (with AniList connected) <b>Track with AniList</b>. In the details
+                    panel, right-click the cover for the same library path actions; use the AniList bar under the
+                    cover when logged in. If the library folder or EPUB is missing on disk, the details actions
+                    area shows <b>Locate on disk</b> (re-link the path; warns if the name does not match) or{" "}
+                    <b>Remove from Library</b> while cover, bookmarks, and notes stay visible. Classic History /
+                    Bookmark rows use the same dialog when opening a missing path.
                 </li>
                 <li>
                     <b>Gallery toolbar:</b> One bar above the grid with section tabs (<b>Continue</b> /{" "}

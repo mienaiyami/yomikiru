@@ -46,6 +46,7 @@ Features:
 - `openDirectlyFromManga`: when enabled, single-clicking a manga series root opens the first chapter directly, skipping the sub-folder list.
 - Double-click (or single-click when `openOnDblClick = false`) opens the item in the reader.
 - Context menu: Open, Open in New Window, Show in File Explorer, Copy Path, Remove from Library, Mark All Read/Unread.
+- Missing on-disk path (History/Bookmark open): dialog with **Locate on disk…** (`db:library:relocateItem`) or Remove.
 - List numbering can be disabled via `disableListNumbering`.
 - Multi-select with `enableClassicListCheckboxes` — shows checkboxes on hover; bulk operations via a toolbar.
 
@@ -148,11 +149,12 @@ Slides in from the right when a manga item is selected in the grid. Shows:
 - Cover image (with buttons to auto-refresh from folder or pick a custom image).
 - Title, last-read chapter, progress percentage.
 - Two tabs: **Content** (chapter list) and **Bookmarks** (manga bookmarks for this item).
-- Chapter list: sorted by name/date, each row shows chapter name, page count, read indicator.
+- Chapter list: sorted by name/date, each row shows chapter name, page count, read indicator; empty image folders are omitted (packed archives still listed).
 - "Continue Reading" button.
 - Mark All Read / Mark All Unread.
 - AniList tracking bar (if logged in).
 - Per-item note (editable inline).
+- Missing on-disk path: [`MissingLibraryPathPanel`](gallery/components/MissingLibraryPathPanel.tsx) replaces the actions area only (**Locate on disk** / Remove); cover, metadata, and bookmark lists stay visible.
 
 ### BookDetailsPanel
 
@@ -162,9 +164,9 @@ Same layout as MangaDetailsPanel but for EPUB books:
 
 - Shows extracted cover image.
 - Progress (chapter name + scroll position description).
-- **Content** tab lists EPUB TOC entries.
-- **Bookmarks** tab lists book bookmarks.
+- **Bookmarks** / **Notes** tabs from the reader.
 - AniList tracking bar.
+- Same missing-path panel in the actions area when the `.epub` is gone; bookmarks/notes stay visible.
 
 ### GalleryTabBar
 

@@ -354,10 +354,18 @@ const GalleryView: React.FC = () => {
                     </div>
 
                     {selectedManga && (
-                        <MangaDetailsPanel mangaLink={selectedManga} onClose={handleCloseMangaDetails} />
+                        <MangaDetailsPanel
+                            mangaLink={selectedManga}
+                            onClose={handleCloseMangaDetails}
+                            onRelocated={(newLink) => setSelectedManga(newLink)}
+                        />
                     )}
                     {selectedBook && (
-                        <BookDetailsPanel bookLink={selectedBook} onClose={handleCloseMangaDetails} />
+                        <BookDetailsPanel
+                            bookLink={selectedBook}
+                            onClose={handleCloseMangaDetails}
+                            onRelocated={(newLink) => setSelectedBook(newLink)}
+                        />
                     )}
                 </div>
             </ListNavigator.Provider>

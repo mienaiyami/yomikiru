@@ -2,6 +2,7 @@ import { useAppDispatch, useAppSelector } from "@store/hooks";
 import { setReaderLoading, setReaderState } from "@store/reader";
 import { dialogUtils } from "@utils/dialog";
 import { formatUtils } from "@utils/file";
+import { resolveMissingOpenPath } from "@utils/libraryMissingPath";
 import { createRendererLogger } from "@utils/logger";
 import { useCallback } from "react";
 import { DirectoryValidatorService } from "../services/directoryValidator";
@@ -94,10 +95,20 @@ export const useDirectoryValidator = () => {
                 errorOnInvalid = true,
             } = options || {};
 
-            const normalizedLink = window.path.normalize(link);
+            let normalizedLink = window.path.normalize(link);
             if (linkInReader === normalizedLink) {
                 dispatch(setReaderLoading(null));
                 return true;
+            }
+
+            if (!window.fs.existsSync(normalizedLink)) {
+                /* looks up library row from current store (not a closed-over snapshot) */
+                const remapped = await resolveMissingOpenPath(dispatch, normalizedLink);
+                if (!remapped) {
+                    dispatch(setReaderLoading(null));
+                    return false;
+                }
+                normalizedLink = window.path.normalize(remapped);
             }
 
             window.electron.webFrame.clearCache();

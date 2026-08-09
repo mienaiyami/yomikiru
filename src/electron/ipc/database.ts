@@ -8,6 +8,7 @@ import {
     AddBookNoteSchema,
     AddMangaBookmarkSchema,
     AddToLibrarySchema,
+    RelocateLibraryItemSchema,
     UpdateBookProgressSchema,
     UpdateLibraryItemSchema,
     UpdateMangaProgressSchema,
@@ -109,6 +110,20 @@ const handlers: {
         } catch (error) {
             logger.error('"db:library:deleteItem": delete failed', error);
             return false;
+        }
+    },
+    "db:library:relocateItem": async (db, request) => {
+        try {
+            const { oldLink, newLink } = RelocateLibraryItemSchema.parse(request);
+            const item = await db.relocateLibraryItem(oldLink, newLink);
+            if (!item) return null;
+            pingDatabaseChange("db:library:change");
+            pingDatabaseChange("db:bookmark:change");
+            pingDatabaseChange("db:bookNote:change");
+            return item;
+        } catch (error) {
+            logger.error('"db:library:relocateItem": relocate failed', error);
+            return null;
         }
     },
     "db:library:getAllBookmarks": async (db) => {

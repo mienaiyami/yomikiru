@@ -5,8 +5,8 @@ import { removeBookmark } from "@store/bookmarks";
 import { useAppDispatch, useAppSelector } from "@store/hooks";
 import { deleteLibraryItem } from "@store/library";
 import dateUtils from "@utils/date";
-import { dialogUtils } from "@utils/dialog";
 import { formatUtils } from "@utils/file";
+import { resolveMissingOpenPath, shouldOfferLibraryRelocate } from "@utils/libraryMissingPath";
 import { resolveMangaChapterPath } from "@utils/mangaChapterPath";
 import { useAppContext } from "src/renderer/App";
 import { bookmarkLibraryItemsAtProgress } from "../listSelectionActions";
@@ -26,7 +26,7 @@ const BookmarkHistoryListItem: React.FC<{
     /** Toggles selection for this row. Receives click modifiers for Shift+range select. */
     onToggleSelected?: (opts: { shiftKey: boolean }) => void;
 }> = (props) => {
-    const { openInReader, setContextMenuData } = useAppContext();
+    const { openInReader, openInNewWindow, setContextMenuData } = useAppContext();
     const dispatch = useAppDispatch();
     const appSettings = useAppSelector((store) => store.appSettings);
     const libraryItem = useAppSelector((store) => store.library.items[props.link]);
@@ -69,22 +69,45 @@ const BookmarkHistoryListItem: React.FC<{
           })}\n` +
           `Path      : ${props.bookmark?.itemLink}`;
 
-    const handleClick = (e: React.MouseEvent<HTMLAnchorElement>) => {
-        if (props.selectionMode) {
-            props.onToggleSelected?.({ shiftKey: e.shiftKey });
-            return;
-        }
+    const readerOptions = props.isHistory
+        ? libraryItem.type === "book"
+            ? {
+                  epubChapterId: libraryItem.progress?.chapterId,
+                  epubElementQueryString: libraryItem.progress?.position,
+              }
+            : { mangaPageNumber: libraryItem.progress?.currentPage || 1 }
+        : props.bookmark && "chapterId" in props.bookmark
+          ? {
+                epubChapterId: props.bookmark.chapterId,
+                epubElementQueryString: props.bookmark.position,
+            }
+          : { mangaPageNumber: props.bookmark?.page };
+
+    /**
+     * Shared by row click and context Open / Open in new Window so bookmark rows
+     * keep Remove Bookmark (not delete whole library) when the path is missing.
+     */
+    const openFromList = (target: "reader" | "newWindow") => {
+        const go = (openPath: string) => {
+            if (target === "reader") openInReader(openPath, readerOptions);
+            else openInNewWindow(openPath);
+        };
+
         if (!window.fs.existsSync(link)) {
-            dialogUtils
-                .confirm({
-                    type: "error",
-                    message: "File/folder does not exit. Remove item from library?",
-                    noOption: false,
-                    defaultId: 0,
-                    cancelId: 1,
-                })
-                .then((res) => {
-                    if (res.response === 0) {
+            void (async () => {
+                const offerLocate = shouldOfferLibraryRelocate(libraryItem.link);
+                const remapped = await resolveMissingOpenPath(dispatch, link, {
+                    libraryItem,
+                    offerLocate,
+                    removeLabel: props.bookmark ? "Remove Bookmark" : undefined,
+                    detail: props.bookmark
+                        ? offerLocate
+                            ? "Locate the library item on disk to keep progress, or remove this bookmark."
+                            : "This chapter path is missing, but the library item is still on disk. Remove this bookmark or cancel."
+                        : offerLocate
+                          ? undefined
+                          : "This chapter path is missing, but the library item is still on disk. Remove the library entry or cancel.",
+                    onRemove: () => {
                         if (props.bookmark) {
                             dispatch(
                                 removeBookmark({
@@ -93,46 +116,44 @@ const BookmarkHistoryListItem: React.FC<{
                                     type: libraryItem.type,
                                 }),
                             );
-                        } else {
-                            dispatch(
-                                deleteLibraryItem({
-                                    link: libraryItem.link,
-                                }),
-                            );
+                            return;
                         }
-                    }
+                        dispatch(deleteLibraryItem({ link: libraryItem.link }));
+                    },
                 });
+                if (!remapped) return;
+                go(remapped);
+            })();
             return;
         }
-        let options = {};
-        if (props.isHistory) {
-            options =
-                libraryItem.type === "book"
-                    ? {
-                          epubChapterId: libraryItem.progress?.chapterId,
-                          epubElementQueryString: libraryItem.progress?.position,
-                      }
-                    : { mangaPageNumber: libraryItem.progress?.currentPage || 1 };
-        } else {
-            if (props.bookmark && "chapterId" in props.bookmark) {
-                options = {
-                    epubChapterId: props.bookmark?.chapterId,
-                    epubElementQueryString: props.bookmark?.position,
-                };
-            } else {
-                options = {
-                    mangaPageNumber: props.bookmark?.page,
-                };
-            }
-        }
 
-        openInReader(link, options);
+        go(link);
+    };
+
+    const handleClick = (e: React.MouseEvent<HTMLAnchorElement>) => {
+        if (props.selectionMode) {
+            props.onToggleSelected?.({ shiftKey: e.shiftKey });
+            return;
+        }
+        openFromList("reader");
     };
 
     const handleContextMenu = (e: React.MouseEvent<HTMLAnchorElement>) => {
         const items = [
-            window.contextMenu.template.open(link),
-            window.contextMenu.template.openInNewWindow(link),
+            {
+                label: "Open",
+                disabled: !link,
+                action() {
+                    openFromList("reader");
+                },
+            },
+            {
+                label: "Open in new Window",
+                disabled: !link,
+                action() {
+                    openFromList("newWindow");
+                },
+            },
             window.contextMenu.template.showInExplorer(link),
             window.contextMenu.template.copyPath(link),
             {

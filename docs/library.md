@@ -117,6 +117,11 @@ A "library item" is:
 Items are added to the library automatically the first time a file/folder is opened in either reader.
 They are never deleted automatically — only via explicit user action (context menu "Remove" / gallery bulk-delete).
 
+When the path on disk is missing, gallery details and classic History/Bookmark open flows offer
+**Locate on disk…** (`db:library:relocateItem`) to rewrite `library_items.link` and every child
+`itemLink` while keeping the same `id`, or remove the entry / bookmark. A name mismatch between the
+chosen path and the previous basename or library title asks for confirmation before relocating.
+
 The `cover` column stores either:
 
 - `null` — no cover assigned; the library grid shows the first letter of the title.
@@ -124,7 +129,8 @@ The `cover` column stores either:
 - **Not** the WebP path — the materialize cache is kept separate (see [Cover System](#cover-system)).
 
 IPC surface: all `db:library:*` channels in [`src/common/types/ipc.ts`](../src/common/types/ipc.ts).
-Implementation: [`src/electron/db/index.ts`](../src/electron/db/index.ts), methods `addLibraryItem`, `updateLibraryItem`, `deleteLibraryItem`, `getAllLibraryItemsWithProgress`.
+Implementation: [`src/electron/db/index.ts`](../src/electron/db/index.ts), methods `addLibraryItem`,
+`updateLibraryItem`, `deleteLibraryItem`, `relocateLibraryItem`, `getAllLibraryItemsWithProgress`.
 
 ---
 

@@ -175,7 +175,7 @@ export class DirectoryValidatorService {
 
             if (formatUtils.packedManga.test(normalizedLink)) {
                 return await this.handlePackedManga(normalizedLink, linkSplitted, options);
-            } else if (path.extname(normalizedLink).toLowerCase() === ".pdf") {
+            } else if (formatUtils.pdf.test(normalizedLink)) {
                 return await this.handlePDF(normalizedLink, linkSplitted, options);
             } else {
                 return await this.processDirectory(normalizedLink, maxSubdirectoryDepth || 0, options);

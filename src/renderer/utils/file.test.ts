@@ -1,13 +1,17 @@
 import path from "node:path";
 import { onInvoke } from "@test/mocks/preload";
 import { describe, expect, it, vi } from "vitest";
-import { fileSrcToImagePath, formatUtils, makeFileSafe, promptSelectDir, unzip } from "./file";
+import { fileSrcToImagePath, formatUtils, makeFileSafe, promptSelectDir, toDialogExtensions, unzip } from "./file";
 
 describe("formatUtils", () => {
-    it("detects image / packed manga / book / archive extensions", () => {
+    it("detects image / packed manga / pdf / book / archive extensions", () => {
         expect(formatUtils.image.test("a.PNG")).toBe(true);
         expect(formatUtils.image.test("a.txt")).toBe(false);
         expect(formatUtils.packedManga.test("x.cbz")).toBe(true);
+        expect(formatUtils.pdf.test("n.pdf")).toBe(true);
+        expect(formatUtils.pdf.test("n.cbz")).toBe(false);
+        expect(formatUtils.mangaFile.test("n.pdf")).toBe(true);
+        expect(formatUtils.mangaFile.test("n.cbz")).toBe(true);
         expect(formatUtils.book.test("n.epub")).toBe(true);
         expect(formatUtils.files.test("n.pdf")).toBe(true);
         expect(formatUtils.files.test("")).toBe(false);
@@ -18,6 +22,13 @@ describe("formatUtils", () => {
         expect(formatUtils.files.getName("cover.jpg")).toBe("cover.jpg");
         expect(formatUtils.files.getExt("Story.epub")).toBe("EPUB");
         expect(formatUtils.files.getExt("cover.jpg")).toBe("");
+    });
+
+    it("builds Electron dialog filters from extension lists", () => {
+        expect(toDialogExtensions([".pdf", "epub"])).toEqual(["pdf", "epub"]);
+        expect(formatUtils.dialogFilters.mangaFile()[0]?.extensions).toContain("pdf");
+        expect(formatUtils.dialogFilters.mangaFile()[0]?.extensions).toContain("cbz");
+        expect(formatUtils.dialogFilters.book()[0]?.extensions).toContain("epub");
     });
 });
 
