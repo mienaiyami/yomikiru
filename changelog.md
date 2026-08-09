@@ -18,6 +18,8 @@
 
 # 2.24.1 (unreleased)
 
+- feat: gallery home has an item type filter (**All** / **Manga/Webcomic** / **eBook**) after the section tabs. Manga/Webcomic covers every image-based series (manga, manhwa, manhua, comics, webtoons); eBook covers EPUB only, not PDF. The choice is remembered across launches and applies to Continue, Library, and Favourites.
+- feat: search fields show a clear (**x**) button inside the field while they contain text; it can be reached with `Tab`.
 - feat: when a library folder or EPUB is missing on disk, gallery details and classic History/Bookmark offer **Locate on disk** (re-link the path and keep progress/bookmarks; confirm if the chosen name does not match) or remove the entry. Gallery manga chapter lists hide empty image folders (packed archives still listed).
 
 # 2.24.0

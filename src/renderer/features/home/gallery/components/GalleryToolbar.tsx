@@ -14,8 +14,9 @@ import Popover from "@renderer/components/ui/Popover";
 import { setAppSettings } from "@store/appSettings";
 import { useAppDispatch, useAppSelector } from "@store/hooks";
 import GalleryTabBar, { type GalleryTabId } from "./GalleryTabBar";
+import GalleryTypeFilterBar, { type GalleryTypeFilterId } from "./GalleryTypeFilterBar";
 
-export type { GalleryTabId };
+export type { GalleryTabId, GalleryTypeFilterId };
 
 /** Min / max for the gallery item width control (em). */
 const GALLERY_ITEM_WIDTH_MIN = 10;
@@ -35,6 +36,10 @@ export type GalleryToolbarProps = {
     activeTab: GalleryTabId;
     /** Switch home section (Continue / Library / Favourites). */
     onTabChange: (tab: GalleryTabId) => void;
+    /** Currently active library item type filter. */
+    activeTypeFilter: GalleryTypeFilterId;
+    /** Narrow the grid to a single item type (All / Manga / eBook). */
+    onTypeFilterChange: (filter: GalleryTypeFilterId) => void;
     /** Hide search input — used by tabs that don't expose filtering yet. */
     hideSearch?: boolean;
     /** When `true`, the entire toolbar collapses (e.g. while a details panel is open). */
@@ -58,15 +63,17 @@ export type GalleryToolbarSelectionProps = {
 };
 
 /**
- * Top chrome for the gallery home: section tabs, search, and view controls.
+ * Top chrome for the gallery home: section tabs, type filter, search, and view controls.
  * When `selection` is provided, swaps to a compact selection toolbar with bulk actions.
  *
- * Must be rendered inside a `ListNavigator.Provider` so
+ * Must be rendered inside a {@link ListNavigator} provider so
  * {@link ListNavigator.SearchInput} can wire up correctly.
  */
 const GalleryToolbar: React.FC<GalleryToolbarProps> = ({
     activeTab,
     onTabChange,
+    activeTypeFilter,
+    onTypeFilterChange,
     hideSearch,
     hidden,
     selection,
@@ -241,6 +248,8 @@ const GalleryToolbar: React.FC<GalleryToolbarProps> = ({
     return (
         <div className={`galleryToolbar ${hidden ? "hidden" : ""}`}>
             <GalleryTabBar activeTab={activeTab} onTabChange={onTabChange} />
+            <span className="toolbarDivider" aria-hidden="true" />
+            <GalleryTypeFilterBar activeFilter={activeTypeFilter} onFilterChange={onTypeFilterChange} />
             <div className="search">
                 {!hideSearch && <ListNavigator.SearchInput placeholder="Type to Search" />}
             </div>

@@ -66,6 +66,58 @@ html{
     --error-color: #c62828;
 }
 
+/*
+ * ListNavigator.SearchInput chrome.
+ *
+ * Deliberately left outside @layer main: every consumer toolbar (gallery, details
+ * panel, classic lists) ships an unlayered component stylesheet, and unlayered rules
+ * beat any layered rule regardless of specificity. These have to sit on the same
+ * footing to survive.
+ *
+ * The wrapper takes over the layout slot the bare input used to occupy and anchors
+ * the absolutely positioned clear button.
+ */
+.search-input-wrapper {
+    position: relative;
+    display: flex;
+    /* stretch, not center: several toolbars gave the bare input its height by
+     * stretching it as a flex child; the wrapper has to pass that through */
+    align-items: stretch;
+    /* width: 100% keeps the flex-basis the bare input had in those toolbars */
+    flex: 1 1 auto;
+    width: 100%;
+    min-width: 0;
+
+    > input.search-input {
+        width: 100%;
+        min-width: 0;
+    }
+
+    /* Consumers style .search-input with a padding shorthand from deeply nested
+     * (and therefore more specific) selectors. Keeping text out from under the clear
+     * button is a component invariant, so this one declaration has to force itself. */
+    &:has(> .search-input-clear) > input.search-input {
+        padding-right: 2.4em !important;
+    }
+
+    /* positioning only - visual style comes from the app's default button rules */
+    > .search-input-clear {
+        position: absolute;
+        right: 0.35em;
+        top: 50%;
+        transform: translateY(-50%);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        width: 1.8em;
+        height: calc(100% - 0.5em);
+        min-width: 0;
+        padding: 0;
+        font-size: 0.85em;
+        cursor: pointer;
+    }
+}
+
 @layer main {
     ::-webkit-scrollbar {
         width: 10px;

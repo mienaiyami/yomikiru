@@ -20,7 +20,7 @@ import type { RefObject } from "react";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import ListNavigator from "../../../components/ListNavigator";
 import BookDetailsPanel from "./components/BookDetailsPanel";
-import GalleryToolbar, { type GalleryTabId } from "./components/GalleryToolbar";
+import GalleryToolbar, { type GalleryTabId, type GalleryTypeFilterId } from "./components/GalleryToolbar";
 import MangaDetailsPanel from "./components/MangaDetailsPanel";
 
 const GalleryView: React.FC = () => {
@@ -38,6 +38,14 @@ const GalleryView: React.FC = () => {
     const setActiveTab = useCallback(
         (tab: GalleryTabId) => {
             dispatch(setAppSettings({ galleryActiveTab: tab }));
+        },
+        [dispatch],
+    );
+
+    const activeTypeFilter = appSettings.galleryTypeFilter;
+    const setActiveTypeFilter = useCallback(
+        (filter: GalleryTypeFilterId) => {
+            dispatch(setAppSettings({ galleryTypeFilter: filter }));
         },
         [dispatch],
     );
@@ -65,10 +73,14 @@ const GalleryView: React.FC = () => {
 
     /**
      * Items shown for the active tab. Each tab has its own slice of the library
-     * and (for sortable tabs) its own sort settings.
+     * and (for sortable tabs) its own sort settings. The type filter is applied
+     * first so it narrows every tab consistently.
      */
     const tabItems = useMemo<LibraryItemWithProgress[]>(() => {
-        const all = Object.values(library).filter((item): item is LibraryItemWithProgress => item !== null);
+        const all = Object.values(library).filter(
+            (item): item is LibraryItemWithProgress =>
+                item !== null && (activeTypeFilter === "all" || item.type === activeTypeFilter),
+        );
 
         if (activeTab === "continue-reading") {
             const withProgress = all.filter((item) => Boolean(item.progress));
@@ -86,6 +98,7 @@ const GalleryView: React.FC = () => {
     }, [
         library,
         activeTab,
+        activeTypeFilter,
         appSettings.continueReadingSortBy,
         appSettings.continueReadingSortType,
         appSettings.gallerySortBy,
@@ -97,7 +110,7 @@ const GalleryView: React.FC = () => {
 
     useEffect(() => {
         selection.clearSelection();
-    }, [activeTab, selection.clearSelection]);
+    }, [activeTab, activeTypeFilter, selection.clearSelection]);
 
     const handleMangaSelect = useCallback((libraryItem: LibraryItemWithProgress) => {
         if (libraryItem.type === "book") {
@@ -336,6 +349,8 @@ const GalleryView: React.FC = () => {
                 <GalleryToolbar
                     activeTab={activeTab}
                     onTabChange={setActiveTab}
+                    activeTypeFilter={activeTypeFilter}
+                    onTypeFilterChange={setActiveTypeFilter}
                     hidden={detailsOpen}
                     hideSearch={activeTab === "favourites"}
                     selection={selectionToolbarProps}

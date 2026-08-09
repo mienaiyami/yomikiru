@@ -113,6 +113,22 @@ A card-based library browser with three tabs and a detail panel.
 
 Tab state persisted in `appSettings.galleryActiveTab`.
 
+### Type Filter
+
+[`gallery/components/GalleryTypeFilterBar.tsx`](gallery/components/GalleryTypeFilterBar.tsx)
+
+Segmented control right of the tab switcher (separated by a `.toolbarDivider` rule),
+persisted in `appSettings.galleryTypeFilter`:
+
+| Filter ID | Shows |
+| --- | --- |
+| `all` | Every library item |
+| `manga` | `type === "manga"` (manga, manhwa, manhua, comics, webtoons) |
+| `book` | `type === "book"` (EPUB; PDF is not a library type) |
+
+Applied in the `tabItems` memo before tab slicing and sorting, so it narrows every tab.
+Changing it clears the current multi-select.
+
 ### Display Modes
 
 Controlled by `appSettings.galleryDisplayMode`:
@@ -134,7 +150,8 @@ Virtualised with `@tanstack/react-virtual` via the `ListNavigator.VirtualList` s
 Contains:
 
 - Tab switcher (Continue Reading / Library / Favourites).
-- Search input (hidden for the Favourites tab).
+- Item type filter (All / Manga+Webcomic / eBook), after a vertical divider.
+- Search input, fixed width (~50% wider than the previous gallery slot) and right-aligned (hidden for the Favourites tab). Toolbar height and action buttons match classic home tools (`44px` / `--button-width`).
 - Sort controls (sort field + direction).
 - Display mode toggle.
 - Item width slider.
@@ -193,6 +210,7 @@ Pill-style tab switcher at the top of the gallery toolbar.
 A reusable compound component providing:
 
 - **Provider** — holds filter state, focused index, and renders the search input + item list.
+- **SearchInput** — uncontrolled text input wrapped in `.search-input-wrapper`, with a focusable clear (`x`) button overlaid on its right edge while the field has text. Its styles live *outside* `@layer main` in `styles/index.scss`, because consumer component stylesheets are unlayered and would otherwise always win.
 - **VirtualList** — renders items via `@tanstack/react-virtual`. Supports `columnCount > 1` for the gallery grid.
 - **List** — non-virtualised ordered list (used by classic tabs).
 - **Input** — the search input field.

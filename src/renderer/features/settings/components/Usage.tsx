@@ -184,9 +184,15 @@ const Usage: React.FC = () => {
                 </li>
                 <li>
                     <b>Gallery toolbar:</b> One bar above the grid with section tabs (<b>Continue</b> /{" "}
-                    <b>Library</b> / <b>Favourites</b>), search, sort, view mode (Cover + Title / Cover Only /
-                    Compact / List), and a grid-size control that opens a slider for cover width.
+                    <b>Library</b> / <b>Favourites</b>), a type filter (<b>All</b> / <b>Manga/Webcomic</b> /{" "}
+                    <b>eBook</b>), search, sort, view mode (Cover + Title / Cover Only / Compact / List), and a
+                    grid-size control that opens a slider for cover width.
                     <ul>
+                        <li>
+                            <b>Manga/Webcomic</b> covers every image-based series (manga, manhwa, manhua, comics,
+                            webtoons); <b>eBook</b> covers EPUB files only, not PDF. Hover a segment for the full
+                            list. The choice is remembered and applies to all three sections.
+                        </li>
                         <li>
                             <b>Continue Reading</b> shows items with progress, sorted by last read by default.
                         </li>
@@ -195,6 +201,10 @@ const Usage: React.FC = () => {
                         </li>
                         <li>
                             <b>Favourites</b> is reserved for a future favourites feature.
+                        </li>
+                        <li>
+                            Search fields across the app show a small <b>x</b> button while they contain text;
+                            click it to clear the filter.
                         </li>
                     </ul>
                 </li>

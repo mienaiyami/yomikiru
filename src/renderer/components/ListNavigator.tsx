@@ -1,3 +1,5 @@
+import { faXmark } from "@fortawesome/free-solid-svg-icons";
+import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { useAppSelector } from "@store/hooks";
 import { getShortcutsMapped } from "@store/shortcuts";
 import { useVirtualizer } from "@tanstack/react-virtual";
@@ -304,13 +306,20 @@ type SearchInputProps = {
       }
 );
 
+/**
+ * Search field for {@link ListNavigator}. Uncontrolled input with a clear button
+ * that appears while the field has text. Clear-button visibility is re-read from
+ * the DOM when the filter settles, because the provider (and custom `onChange`
+ * handlers) reset `input.value` directly.
+ */
 const SearchInputComponent: React.FC<SearchInputProps> = ({
     placeholder = "Type to search",
     className = "search-input",
     onChange,
     runOriginalOnChange = false,
 }) => {
-    const { inputRef, handleFilterChange, handleKeyDown, setFocused } = useListNavigator();
+    const { inputRef, filter, handleFilterChange, handleKeyDown, setFocused } = useListNavigator();
+    const [hasValue, setHasValue] = useState(false);
 
     useEffect(() => {
         if (inputRef.current) {
@@ -318,39 +327,72 @@ const SearchInputComponent: React.FC<SearchInputProps> = ({
         }
     }, [inputRef]);
 
+    /* The input is uncontrolled: the provider (and custom `onChange` handlers) reset
+     * `input.value` directly. Re-read the DOM value whenever the filter settles so the
+     * clear button never lingers after an external reset. */
+    useEffect(() => {
+        setHasValue(Boolean(inputRef.current?.value));
+    }, [filter, inputRef]);
+
+    /**
+     * Clears the uncontrolled input and the list filter, then focuses the field.
+     */
+    const handleClear = () => {
+        if (inputRef.current) {
+            inputRef.current.value = "";
+            inputRef.current.focus();
+        }
+        handleFilterChange("");
+        setHasValue(false);
+    };
+
     return (
-        <input
-            type="text"
-            ref={inputRef}
-            className={className}
-            placeholder={placeholder}
-            spellCheck="false"
-            onKeyDown={handleKeyDown}
-            onBlur={() => setFocused(-1)}
-            onChange={(e) => {
-                if (onChange) {
-                    const val = onChange(e);
-                    if (val === undefined && runOriginalOnChange) {
-                        throw new Error("onChange returned undefined but runOriginalOnChange is true");
+        <div className={`${className}-wrapper`}>
+            <input
+                type="text"
+                ref={inputRef}
+                className={className}
+                placeholder={placeholder}
+                spellCheck="false"
+                onKeyDown={handleKeyDown}
+                onBlur={() => setFocused(-1)}
+                onChange={(e) => {
+                    if (onChange) {
+                        const val = onChange(e);
+                        if (val === undefined && runOriginalOnChange) {
+                            throw new Error("onChange returned undefined but runOriginalOnChange is true");
+                        }
+                        // need to `typeof val === "string"` because empty string is valid
+                        if (runOriginalOnChange && typeof val === "string") {
+                            handleFilterChange(val);
+                        } else if (typeof val === "string") {
+                            handleFilterChange(e, true);
+                        }
+                        if (val === "") {
+                            e.target.value = "";
+                        }
+                    } else {
+                        handleFilterChange(e);
                     }
-                    // need to `typeof val === "string"` because empty string is valid
-                    if (runOriginalOnChange && typeof val === "string") {
-                        handleFilterChange(val);
-                    } else if (typeof val === "string") {
-                        handleFilterChange(e, true);
-                    }
-                    if (val === "") {
-                        e.target.value = "";
-                    }
-                } else {
-                    handleFilterChange(e);
-                }
-            }}
-            onContextMenu={(e) => {
-                e.preventDefault();
-                e.stopPropagation();
-            }}
-        />
+                    setHasValue(Boolean(e.target.value));
+                }}
+                onContextMenu={(e) => {
+                    e.preventDefault();
+                    e.stopPropagation();
+                }}
+            />
+            {hasValue && (
+                <button
+                    type="button"
+                    className={`${className}-clear`}
+                    aria-label="Clear search"
+                    onMouseDown={(e) => e.preventDefault()}
+                    onClick={handleClear}
+                >
+                    <FontAwesomeIcon icon={faXmark} />
+                </button>
+            )}
+        </div>
     );
 };
 

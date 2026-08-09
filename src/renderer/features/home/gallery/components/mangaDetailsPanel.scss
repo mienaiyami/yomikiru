@@ -344,10 +344,13 @@
                 background-color: var(--topBar-color);
                 border-bottom: 1px solid var(--divider-color);
 
-                .search-input {
+                .search-input-wrapper {
                     flex: 1;
                     // max-width: 300px;
                     margin-left: auto;
+                }
+
+                .search-input {
                     padding: 8px 12px;
                     border: 1px solid var(--divider-color);
                     border-radius: 4px;

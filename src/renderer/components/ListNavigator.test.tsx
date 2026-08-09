@@ -68,3 +68,60 @@ describe("ListNavigator.Provider", () => {
         });
     });
 });
+
+describe("ListNavigator.SearchInput", () => {
+    /**
+     * The suite has no RTL auto-cleanup, so every query is scoped to this render's
+     * own container instead of `document.body`.
+     */
+    const renderSearch = () => {
+        const { container } = renderWithProviders(
+            <ListNavigator.Provider
+                items={ITEMS}
+                filterFn={(filter, item) => new RegExp(filter, "i").test(item)}
+                renderItem={(item) => <span>{item}</span>}
+                persistFilterOnItemsChange
+            >
+                <ListNavigator.SearchInput />
+                <ListNavigator.List />
+            </ListNavigator.Provider>,
+        );
+        return {
+            input: container.querySelector("input.search-input") as HTMLInputElement,
+            clearBtn: () => container.querySelector<HTMLButtonElement>(".search-input-clear"),
+            itemTexts: () => Array.from(container.querySelectorAll("ol span")).map((el) => el.textContent),
+        };
+    };
+
+    it("shows a keyboard-reachable clear button only while the input has a value", async () => {
+        const { input, clearBtn } = renderSearch();
+
+        expect(clearBtn()).toBeNull();
+
+        await act(async () => {
+            fireEvent.change(input, { target: { value: "alp" } });
+        });
+
+        await waitFor(() => expect(clearBtn()).not.toBeNull());
+        expect(clearBtn()?.tabIndex).toBe(0);
+    });
+
+    it("clears the input and the filter when the clear button is pressed", async () => {
+        const { input, clearBtn, itemTexts } = renderSearch();
+
+        await act(async () => {
+            fireEvent.change(input, { target: { value: "alp" } });
+        });
+        await waitFor(() => expect(itemTexts()).toEqual(["alpha"]));
+
+        await act(async () => {
+            fireEvent.click(clearBtn() as HTMLButtonElement);
+        });
+
+        expect(input.value).toBe("");
+        await waitFor(() => {
+            expect(itemTexts()).toEqual(ITEMS);
+            expect(clearBtn()).toBeNull();
+        });
+    });
+});

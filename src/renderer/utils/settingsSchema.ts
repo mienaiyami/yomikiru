@@ -56,6 +56,11 @@ const settingSchema = z
          */
         galleryActiveTab: z.union([z.literal("continue-reading"), z.literal("library"), z.literal("favourites")]),
         /**
+         * Library item type shown in the gallery home view. `"all"` disables the filter;
+         * `"manga"` keeps image-based series, `"book"` keeps EPUB books.
+         */
+        galleryTypeFilter: z.union([z.literal("all"), z.literal("manga"), z.literal("book")]),
+        /**
          * `normal` - normal grid view with title and cover
          * `compact` - compact grid view with title and cover (title overlapped on cover)
          * `cover-only` - compact grid view with only cover
@@ -148,6 +153,7 @@ const settingSchema = z
         continueReadingSortBy: "lastRead",
         continueReadingSortType: "normal",
         galleryActiveTab: "continue-reading",
+        galleryTypeFilter: "all",
         galleryDisplayMode: "normal",
         galleryItemWidth: 16,
         openDirectlyFromManga: false,

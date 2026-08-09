@@ -9,7 +9,7 @@ type TabConfig = {
     id: GalleryTabId;
     /** Short label shown in the toolbar segment. */
     label: string;
-    /** Full name used for tooltips / aria. */
+    /** Full name used for aria-label. */
     title: string;
     icon: typeof faPlay;
 };
@@ -38,7 +38,6 @@ const GalleryTabBar: React.FC<GalleryTabBarProps> = ({ activeTab, onTabChange })
                     key={tab.id}
                     type="button"
                     className={`galleryTab ${activeTab === tab.id ? "active" : ""}`}
-                    data-tooltip={tab.title}
                     onClick={() => onTabChange(tab.id)}
                     aria-pressed={activeTab === tab.id}
                     aria-label={tab.title}
