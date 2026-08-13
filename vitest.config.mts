@@ -58,14 +58,14 @@ export default defineConfig({
                 test: {
                     name: "db",
                     environment: "node",
-                    include: ["src/electron/db/**/*.test.ts"],
+                    include: ["src/electron/db/**/*.test.ts", "src/electron/util/**/*.test.ts"],
                 },
             },
         ],
         coverage: {
             provider: "v8",
             reporter: ["text", "json-summary", "html"],
-            include: ["src/common/**", "src/renderer/**", "src/electron/db/**"],
+            include: ["src/common/**", "src/renderer/**", "src/electron/db/**", "src/electron/util/**"],
             exclude: [
                 "**/*.d.ts",
                 "**/*.test.*",

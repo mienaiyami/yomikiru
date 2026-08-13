@@ -216,6 +216,35 @@ export type MainSettingsChannels = {
     "mainSettings:sync": ChannelDefinition<MainSettingsType, void, "m2r">;
 };
 
+export type DbBackupListItem = {
+    fileName: string;
+    createdAtMs: number;
+    byteSize: number;
+};
+
+/** {@link MainSettingsType.dbBackup} plus whether a backup is currently running. */
+export type DbBackupStatus = MainSettingsType["dbBackup"] & {
+    isBackingUp: boolean;
+};
+
+export type DbBackupRestoreErrorCode = "invalidName" | "notFound";
+
+export type DbBackupImportErrorCode = "notFound" | "integrityFailed" | "copyFailed";
+
+export type DbBackupChannels = {
+    "dbBackup:getStatus": ChannelDefinition<void, DbBackupStatus>;
+    "dbBackup:list": ChannelDefinition<void, DbBackupListItem[]>;
+    "dbBackup:runNow": ChannelDefinition<void, { ok: boolean }>;
+    "dbBackup:restore": ChannelDefinition<
+        { fileName: string },
+        { ok: true } | { ok: false; code: DbBackupRestoreErrorCode }
+    >;
+    "dbBackup:importAndRestore": ChannelDefinition<
+        { absolutePath: string },
+        { ok: true } | { ok: false; code: DbBackupImportErrorCode; reason?: string }
+    >;
+};
+
 export type I18nChannels = {
     "i18n:getState": ChannelDefinition<void, I18nState>;
     "i18n:listSources": ChannelDefinition<void, LanguageSource[]>;
@@ -242,6 +271,7 @@ export type IPCChannels = DatabaseChannels &
     DialogChannels &
     ErrorReportingChannels &
     MainSettingsChannels &
+    DbBackupChannels &
     CoverChannels &
     I18nChannels;
 

@@ -14,7 +14,7 @@ pnpm rebuild:electron   # after install / after test:db, before pnpm dev
 | Script | What |
 | -------- | ------ |
 | `pnpm test` / `pnpm test:unit` | Renderer/common unit + RTL (jsdom). No native ABI. |
-| `pnpm test:db` | `src/electron/db` (Node ABI for `better-sqlite3`). |
+| `pnpm test:db` | `src/electron/db` and `src/electron/util` (Node; mock or ABI-matched `better-sqlite3`). |
 | `pnpm test:all` | Unit + db. |
 | `pnpm test:watch` | Watch unit project. |
 | `pnpm test:coverage` | Unit coverage. |

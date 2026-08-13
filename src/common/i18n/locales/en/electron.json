@@ -20,6 +20,12 @@
         "partialErrors": "There were errors during migration.",
         "partialErrorsDetail": "Items skipped : {{count}}.\nPlease check the logs."
     },
+    "dbBackup": {
+        "restoreFailedTitle": "Database restore failed",
+        "sourceMissing": "Backup file was not found:\n{{fileName}}\n\nThe current library was left unchanged.",
+        "integrityFailed": "Backup failed integrity check:\n{{fileName}}\n\nReason: {{reason}}\n\nThe current library was left unchanged. Pick another backup from Settings.",
+        "stageFailed": "Could not replace the library database.\n\n{{error}}\n\nThe app will retry this restore on the next launch."
+    },
     "errors": {
         "reportIssueTitle": "Report Issue",
         "reportIssueMessage": "Would you like to report this issue to help improve Yomikiru?",

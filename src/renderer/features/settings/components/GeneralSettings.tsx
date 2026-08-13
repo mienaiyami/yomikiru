@@ -11,6 +11,7 @@ import { useTranslation } from "react-i18next";
 import { useSettingsContext } from "../Settings";
 import AnilistSetting from "./AnilistSetting";
 import CustomTempLocation from "./CustomTempLocation";
+import DbBackupSettings from "./DbBackupSettings";
 import FileExplorerOptions from "./FileExplorerOptions";
 import GeneralPDFSettings from "./GeneralPDFSettings";
 import GeneralReaderPresetsSettings from "./GeneralReaderPresetsSettings";
@@ -495,6 +496,7 @@ const GeneralSettings: React.FC = () => {
                     />
                 </div>
             </div>
+            <DbBackupSettings />
             <div className="settingItem2 dangerZone">
                 <h3>{t("reset.title")}</h3>
                 <div className="main row">

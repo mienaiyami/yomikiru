@@ -16,6 +16,12 @@ const initialState: MainSettingsType = {
     autoDownload: false,
     channel: "stable",
     languageSourceId: BUILTIN_EN_SOURCE_ID,
+    dbBackup: {
+        enabled: true,
+        intervalHours: 168,
+        keepCount: 10,
+        lastSuccessAt: 0,
+    },
 };
 
 export const updateMainSettings = createAsyncThunk(

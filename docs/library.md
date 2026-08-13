@@ -1,6 +1,6 @@
 # Yomikiru — Library, Progress, Bookmarks & Cover System
 
-> Last updated: 2026-08-09. Covers v2.24.x.
+> Last updated: 2026-08-11. Covers v2.24.x.
 
 All user data (library catalogue, reading progress, bookmarks, notes) is stored in a single
 SQLite database file at `userData/data.db`. The ORM is Drizzle.
@@ -29,6 +29,10 @@ SQLite database file at `userData/data.db`. The ORM is Drizzle.
     - [Migration 0001 — FK guard](#migration-0001--fk-guard)
     - [Pre-migration normalisation](#pre-migration-normalisation)
   - [Verify / Troubleshoot](#verify--troubleshoot)
+  - [Library database backups](#library-database-backups)
+    - [What happens on auto backup](#what-happens-on-auto-backup)
+    - [UI and opening items during backup](#ui-and-opening-items-during-backup)
+    - [Edge cases](#edge-cases)
 
 ---
 
@@ -358,3 +362,71 @@ Commands:
 pnpm test:db          # Run DB integration tests against a temp SQLite file
 pnpm drizzle:studio   # Open Drizzle Studio UI to inspect data.db directly
 ```
+
+---
+
+## Library database backups
+
+Automatic snapshots of `data.db` only (not covers or settings). Implementation: [`src/electron/util/dbBackup.ts`](../src/electron/util/dbBackup.ts). Settings UI under General → Library Database Backup. Config lives in `main-settings.json` (`dbBackup.*`).
+
+On disk under `userData/backups/`:
+
+| Path | Role |
+| --- | --- |
+| `data-<unixMs>.db` | Published backup (newest `dbBackup.keepCount` kept after each backup publish) |
+| `data-<unixMs>.db.tmp` | In-progress publish file (cleaned on startup) |
+| `restore-pending.json` | Queued restore across relaunch |
+| `data.db.tmp` (next to live DB) | Staging file while swapping during restore |
+
+### What happens on auto backup
+
+1. Hourly timer or OS `powerMonitor` resume calls `createBackupIfDue()` (fire-and-forget).
+2. Skips if disabled, not due, already backing up, or `data.db` missing.
+3. Runs better-sqlite3 online `backup()` on the **live** app connection into `backups/data-<ms>.db.tmp`, then renames to `data-<ms>.db`, prunes to `dbBackup.keepCount`, bumps `lastSuccessAt`.
+4. Online backup transfers pages in batches (default ~100 pages per event-loop turn), so the main process **yields** between batches instead of freezing for the whole copy.
+
+```mermaid
+sequenceDiagram
+    participant Timer as hourly_or_resume
+    participant Backup as createBackup
+    participant SQLite as live_data_db
+    participant IPC as library_IPC
+    participant UI as renderer
+
+    Timer->>Backup: createBackupIfDue
+    Backup->>SQLite: backup 100 pages
+    Note over Backup,SQLite: yields event loop
+    IPC->>SQLite: open item / progress write
+    Backup->>SQLite: next 100 pages
+    Backup->>UI: mainSettings sync lastSuccessAt
+```
+
+Cold start: if a backup is due, it runs **before** the main window is created (`runDbBackupStartupBeforeOpen`), which can delay first paint on a large DB.
+
+### UI and opening items during backup
+
+| Layer | Effect |
+| --- | --- |
+| Renderer (home / reader chrome) | Not blocked. Separate process; no auto-backup modal. |
+| Main process | Mostly cooperative. Short sync bursts for mkdir / rename / prune / settings write + Redux sync. |
+| Opening a library item mid-backup | Safe. Same SQLite connection; IPC reads/writes run between backup page batches. Snapshot consistency follows SQLite's backup API (a write that commits after a batch may land in live DB but not in that backup file; the next successful backup includes it). |
+| Mutex | Only skips a second backup; does **not** pause library IPC. |
+
+Restore is not concurrent: queue pending → relaunch → swap **before** the long-lived DB opens.
+
+### Edge cases
+
+| Case | Behavior |
+| --- | --- |
+| Second auto/manual backup while one runs | Skipped (`isBackingUp`) |
+| Quit during backup | `before-quit` awaits in-flight work, then closes SQLite |
+| Connection closed mid-backup | better-sqlite3 aborts pending backups |
+| Backup fails | Log; do not bump `lastSuccessAt`; remove tmp |
+| Missing / corrupt restore source | Dialog; clear pending (avoids relaunch loop); live DB unchanged |
+| Staging failure during restore | Dialog; **keep** pending so next launch can retry; leave live DB if rename did not succeed |
+| Path like `../data-….db` on restore | `path.basename` keeps the file under `backups/` |
+| Import external `.db` | Integrity-check → copy into `backups/data-<ms>.db` → same pending restore + relaunch |
+| Probing several restores | Restore/import do **not** prune; older originals stay. Prune runs only on Backup Now / scheduled backup (`dbBackup.keepCount`) |
+| App asleep for weeks | Due check on resume + hourly timer |
+
+Manual test notes: Settings → Backup Now; confirm `userData/backups/`; fill the keep set and Restore the oldest (stage-before-prune); truncated backup must leave live DB unchanged; Import & Restore a copied `data.db` from elsewhere; restore two different list entries and confirm older files remain until Backup Now.

@@ -32,6 +32,20 @@ const mainSettingsSchema = z
          * Mutate only via `i18n:setSource` so menus and both i18n instances stay in sync.
          */
         languageSourceId: z.string().default(BUILTIN_EN_SOURCE_ID),
+
+        /**
+         * Automatic SQLite library backups under userData/backups/.
+         * Interval is hours; keepCount is how many newest `data-*.db` files to keep after a backup publish;
+         * lastSuccessAt is unix ms and only advances on success.
+         */
+        dbBackup: z
+            .object({
+                enabled: z.boolean().default(true),
+                intervalHours: z.number().int().min(1).default(168),
+                keepCount: z.number().int().min(1).max(100).default(10),
+                lastSuccessAt: z.number().int().nonnegative().default(0),
+            })
+            .default({}),
     })
     .strip();
 
@@ -86,6 +100,10 @@ export class MainSettings {
         MainSettings._settings = mainSettingsSchema.parse({ ...MainSettings._settings, ...newSettings });
         await fs.promises.writeFile(MainSettings.settingsPath, JSON.stringify(MainSettings._settings, null, 2));
         MainSettings.applySettings(MainSettings._settings);
+        /* keep renderer Redux in sync when lastSuccessAt advances from backup, not only IPC updates */
+        for (const window of WindowManager.getAllWindows()) {
+            ipc.send(window.webContents, "mainSettings:sync", MainSettings.settings);
+        }
     }
 
     public static initialize(): void {
@@ -127,13 +145,9 @@ export class MainSettings {
     private static registerIpcHandlers(): void {
         ipc.handle("mainSettings:get", () => MainSettings.settings);
         ipc.handle("mainSettings:update", async (_, newSettings: Partial<MainSettingsType>) => {
-            /* languageSourceId is owned by i18n:setSource — ignore if sent here */
+            /* languageSourceId is owned by i18n:setSource - ignore if sent here */
             const { languageSourceId: _ignored, ...rest } = newSettings;
             await MainSettings.updateSettings(rest);
-            const windows = WindowManager.getAllWindows();
-            windows.forEach((window) => {
-                ipc.send(window.webContents, "mainSettings:sync", MainSettings.settings);
-            });
             TrayManager.setMinimizeToTray(MainSettings.settings.minimizeToTray);
         });
     }

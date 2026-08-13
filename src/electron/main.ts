@@ -15,6 +15,7 @@ import { DatabaseService } from "./db";
 import { registerI18nHandlers, setApplicationMenuRebuild } from "./i18n/ipc";
 import { initMainI18n, mainT } from "./i18n/mainI18n";
 import { registerCoverHandlers } from "./ipc/covers";
+import { registerDbBackupHandlers, runDbBackupStartupBeforeOpen } from "./ipc/dbBackup";
 import { setupDatabaseHandlers } from "./ipc/database";
 import { registerDialogHandlers } from "./ipc/dialog";
 import { registerErrorReportingHandlers } from "./ipc/errorReporting";
@@ -22,6 +23,7 @@ import { registerExplorerHandlers } from "./ipc/explorer";
 import { registerFSHandlers } from "./ipc/fs";
 import { registerUpdateHandlers } from "./ipc/update";
 import handleSquirrelEvent from "./util/handleSquirrelEvent";
+import { setLiveSqlite, stopScheduler } from "./util/dbBackup";
 import { MainSettings } from "./util/mainSettings";
 import { checkForJSONMigration } from "./util/migrate";
 import { TrayManager } from "./util/tray";
@@ -40,7 +42,9 @@ const errorHandler = getErrorHandler({
     enableCrashReporting: true,
 });
 
-const db = new DatabaseService();
+/* constructed in app.ready after restore + cold-start backup */
+let db: DatabaseService | null = null;
+let isShuttingDown = false;
 
 // when manga reader opened from context menu "open with manga reader"
 let openFolderOnLaunch = "";
@@ -145,11 +149,14 @@ app.on("ready", async () => {
         rebuildApplicationMenu();
         WindowManager.setupWindowsTasks();
 
-        // checkForJSONMigration depends on app ready to use dialog
-        void checkForJSONMigration(db);
+        await runDbBackupStartupBeforeOpen();
 
+        db = new DatabaseService();
         await db.initialize();
+        await checkForJSONMigration(db);
+
         setupDatabaseHandlers(db);
+        registerDbBackupHandlers(db);
         registerCoverHandlers();
 
         WindowManager.registerListeners();
@@ -171,8 +178,22 @@ app.on("ready", async () => {
     }
 });
 
-app.on("before-quit", () => {
-    logger.log("Application shutdown (before-quit)");
+app.on("before-quit", (event) => {
+    if (isShuttingDown) return;
+    event.preventDefault();
+    isShuttingDown = true;
+    void (async () => {
+        try {
+            await stopScheduler();
+            setLiveSqlite(null);
+            db?.close();
+        } catch (err) {
+            logger.error("shutdown: backup stop or db close failed", err);
+        } finally {
+            logger.log("Application shutdown (before-quit)");
+            app.quit();
+        }
+    })();
 });
 app.on("activate", () => {
     if (BrowserWindow.getAllWindows().length === 0) {

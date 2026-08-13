@@ -101,6 +101,19 @@ export const makeFileSafe = (string: string): string => {
     return string.replace(/(:|\\|\/|\||<|>|\*|\?)/g, "");
 };
 
+/**
+ * Formats a byte count for UI labels.
+ * Pass translated unit strings from the caller.
+ */
+export const formatByteSize = (
+    bytes: number,
+    units: { bytes: string; kb: string; mb: string },
+): string => {
+    if (bytes < 1024) return `${bytes} ${units.bytes}`;
+    if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} ${units.kb}`;
+    return `${(bytes / (1024 * 1024)).toFixed(1)} ${units.mb}`;
+};
+
 export const promptSelectDir = async (
     cb: (path: string | string[]) => void,
     asFile = false,

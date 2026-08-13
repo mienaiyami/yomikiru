@@ -1,7 +1,7 @@
 import path from "node:path";
 import { onInvoke } from "@test/mocks/preload";
 import { describe, expect, it, vi } from "vitest";
-import { fileSrcToImagePath, formatUtils, makeFileSafe, promptSelectDir, toDialogExtensions, unzip } from "./file";
+import { fileSrcToImagePath, formatByteSize, formatUtils, makeFileSafe, promptSelectDir, toDialogExtensions, unzip } from "./file";
 
 describe("formatUtils", () => {
     it("detects image / packed manga / pdf / book / archive extensions", () => {
@@ -35,6 +35,16 @@ describe("formatUtils", () => {
 describe("makeFileSafe", () => {
     it("strips filesystem-forbidden characters", () => {
         expect(makeFileSafe("a:b\\c/d|e<f>g*h?i")).toBe("abcdefghi");
+    });
+});
+
+describe("formatByteSize", () => {
+    const units = { bytes: "B", kb: "KB", mb: "MB" };
+
+    it("formats bytes, kilobytes, and megabytes with one decimal where needed", () => {
+        expect(formatByteSize(500, units)).toBe("500 B");
+        expect(formatByteSize(1536, units)).toBe("1.5 KB");
+        expect(formatByteSize(2 * 1024 * 1024, units)).toBe("2.0 MB");
     });
 });
 

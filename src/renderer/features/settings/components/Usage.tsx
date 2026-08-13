@@ -39,10 +39,6 @@ const Usage = (): ReactElement => {
     return (
         <div className="content2 features">
             <ul>
-                <li id="settings-usage-language">
-                    <b>{t("language.title")}</b>{" "}
-                    <Trans i18nKey="language.body" ns="usage" components={{ bold: <b />, code: <code /> }} />
-                </li>
                 <li>{t("defaultLocation")}</li>
                 <li>
                     <b>{t("fileArrangement.title")}</b> {t("fileArrangement.body")}
@@ -154,6 +150,22 @@ const Usage = (): ReactElement => {
                             <Trans i18nKey="searchShortcuts.byType" ns="usage" components={{ code: <code /> }} />
                         </li>
                     </ul>
+                </li>
+                <li id="settings-usage-language">
+                    <b>{t("language.title")}</b>{" "}
+                    <Trans i18nKey="language.body" ns="usage" components={{ bold: <b />, code: <code /> }} />
+                </li>
+                <li id="settings-usage-dbBackup">
+                    <b>{t("dbBackup.title")}</b>{" "}
+                    <Trans
+                        i18nKey="dbBackup.body"
+                        ns="usage"
+                        components={{
+                            bold: <b />,
+                            code: <code />,
+                            link: <SettingsLink tab="settings" target="#settings-dbBackup" />,
+                        }}
+                    />
                 </li>
                 <li>
                     <b>{t("homeLocation.title")}</b>

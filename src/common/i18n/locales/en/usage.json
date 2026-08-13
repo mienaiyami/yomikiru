@@ -156,5 +156,9 @@
     "customStylesheet": {
         "body": "If you know how to write <code>.css</code>, you can customize style of app, more than just theme color that is enabled by \"Theme Maker\", by making your custom <code>.css</code> file and adding it as <link>Custom Stylesheet</link>. You can use developer/inspect tool to check the element and existing styles.",
         "note": "NOTE: Do not move <code>\" .css \"</code> file in directly under app's folder. If you are using portable version, everything except <code>userdata</code> folder will be deleted. You can safely put it inside <code>userdata</code> folder."
+    },
+    "dbBackup": {
+        "title": "Library Database Backup:",
+        "body": "In <link><bold>Settings</bold></link>, enable automatic backups of the library database (bookmarks, history, reading progress). Choose how often (hours), how many newest files to keep, use <bold>Backup Now</bold>, <bold>Show backups</bold> to restore a snapshot or <bold>Show in File Explorer</bold> to highlight it, or <bold>Import & Restore</bold> a <code>.db</code> file from anywhere. Files live under the app data <code>backups</code> folder. Restore restarts the app and replaces <code>data.db</code>."
     }
 }

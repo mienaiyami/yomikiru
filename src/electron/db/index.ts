@@ -36,6 +36,16 @@ export class DatabaseService {
         return this._db;
     }
 
+    /** Underlying better-sqlite3 handle for online backup API. */
+    get sqliteDb(): Database.Database {
+        return this.sqlite;
+    }
+
+    /** Closes the SQLite connection. Safe to call once during shutdown. */
+    close(): void {
+        this.sqlite.close();
+    }
+
     /**
      * Runs `fn` with `PRAGMA foreign_keys = OFF` on this connection, then restores ON in `finally`.
      * Prefer a synchronous `fn` (and better-sqlite3 transactions inside it) so the main-process
