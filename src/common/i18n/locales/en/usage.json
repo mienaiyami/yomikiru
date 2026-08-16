@@ -64,7 +64,7 @@
     },
     "covers": {
         "title": "Covers:",
-        "body": "Generated thumbnails are saved under user data <code>covers</code> as <code>{{libraryId}}</code>. The gallery uses that file when present. If you use <bold>Select Cover</bold> in the details panel, the app stores that image's absolute path on the library entry and shows it when the file still exists; otherwise it falls back to the cached WebP. <link><bold>Library</bold></link> in Settings can clear thumbnails, regenerate them, or bulk-import from your default folder."
+        "body": "Generated thumbnails are saved under user data <code>covers</code> as <code>{{libraryId}}</code>. The gallery uses that file when present. If you use <bold>Select Cover</bold> in the details panel, the app stores that image's absolute path on the library entry and shows it when the file still exists; otherwise it falls back to the cached WebP. <link><bold>Library</bold></link> in Settings can clear thumbnails, regenerate them (missing files and folders are skipped and reported in one warning at the end), or bulk-import from your default folder."
     },
     "reader": {
         "title": "Reader :",

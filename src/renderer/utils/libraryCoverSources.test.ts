@@ -2,10 +2,12 @@ import path from "node:path";
 import type { ValidationResult } from "@renderer/features/reader/types";
 import { stubFs } from "@test/mocks/preload";
 import { describe, expect, it, vi } from "vitest";
+import EPUB from "./epub";
 import {
     fetchMangaCoverMaterializeSource,
     mangaDedicatedCoverPathForDb,
     mangaSeriesFirstImageScanOptions,
+    resolveBookCoverAbsolutePath,
     resolveMangaCoverSourcePath,
     type ValidateDirectoryFn,
 } from "./libraryCoverSources";
@@ -51,7 +53,7 @@ describe("fetchMangaCoverMaterializeSource", () => {
     it("returns dedicated cover when present", async () => {
         const dir = path.join("testdata", "manga", "series");
         const cover = path.join(dir, "cover.png");
-        stubFs({ isFile: (p) => p === cover });
+        stubFs({ existsSync: (p) => p === dir, isFile: (p) => p === cover });
         const validateDirectory: ValidateDirectoryFn = vi.fn(async () => ({ isValid: true }));
         await expect(fetchMangaCoverMaterializeSource(dir, validateDirectory)).resolves.toBe(cover);
     });
@@ -59,7 +61,7 @@ describe("fetchMangaCoverMaterializeSource", () => {
     it("falls back to validateDirectory first image", async () => {
         const dir = path.join("testdata", "manga", "series");
         const first = path.join(dir, "001.jpg");
-        stubFs({ isFile: (p) => p === first });
+        stubFs({ existsSync: (p) => p === dir, isFile: (p) => p === first });
         const validateDirectory: ValidateDirectoryFn = vi.fn(
             async (): Promise<ValidationResult> => ({
                 isValid: true,
@@ -68,5 +70,24 @@ describe("fetchMangaCoverMaterializeSource", () => {
         );
         await expect(fetchMangaCoverMaterializeSource(dir, validateDirectory)).resolves.toBe(first);
         expect(validateDirectory).toHaveBeenCalled();
+    });
+
+    it("returns undefined without scanning when the series path is missing", async () => {
+        const dir = path.join("testdata", "manga", "gone");
+        stubFs({ existsSync: () => false });
+        const validateDirectory: ValidateDirectoryFn = vi.fn(async () => ({ isValid: true }));
+        await expect(fetchMangaCoverMaterializeSource(dir, validateDirectory)).resolves.toBeUndefined();
+        expect(validateDirectory).not.toHaveBeenCalled();
+    });
+});
+
+describe("resolveBookCoverAbsolutePath", () => {
+    it("does not parse when the EPUB path is missing", async () => {
+        const epub = path.join("testdata", "books", "missing.epub");
+        stubFs({ existsSync: () => false });
+        const readEpubFile = vi.spyOn(EPUB, "readEpubFile");
+        await expect(resolveBookCoverAbsolutePath(epub)).resolves.toBeUndefined();
+        expect(readEpubFile).not.toHaveBeenCalled();
+        readEpubFile.mockRestore();
     });
 });

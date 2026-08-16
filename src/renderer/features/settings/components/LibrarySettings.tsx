@@ -3,7 +3,7 @@ import { useAppDispatch, useAppSelector } from "@store/hooks";
 import store from "@store/index";
 import { fetchAllItemsWithProgress } from "@store/library";
 import { dialogUtils } from "@utils/dialog";
-import { materializeBookLibraryThumbnail, materializeMangaLibraryThumbnail } from "@utils/libraryCoverService";
+import { regenerateLibraryThumbnails, showRegenSkippedWarning } from "@utils/libraryCoverService";
 import {
     addEpubAtNormalizedPath,
     addMangaFolderAtNormalizedPath,
@@ -87,23 +87,21 @@ const LibrarySettings: React.FC = () => {
             defaultId: 0,
         });
         if (!response) return;
+        let skippedMissing = 0;
+        let regenFinished = false;
         await runBusy("regen", t("library.regenError"), async () => {
             const list = Object.values(libraryItems).filter(
                 (item): item is NonNullable<typeof item> => item != null,
             );
-            let i = 0;
-            for (const item of list) {
-                i += 1;
-                setRegenLabel(`${i} / ${list.length}`);
-                if (item.id == null) continue;
-                if (item.type === "manga") {
-                    await materializeMangaLibraryThumbnail(dispatch, item.id, item.link, validateDirectory);
-                } else {
-                    await materializeBookLibraryThumbnail(dispatch, item.id, item.link);
-                }
-            }
+            const result = await regenerateLibraryThumbnails(dispatch, list, validateDirectory, (done, total) => {
+                setRegenLabel(`${done} / ${total}`);
+            });
+            skippedMissing = result.skippedMissing;
             await dispatch(fetchAllItemsWithProgress());
+            regenFinished = true;
         });
+        // skip the summary dialog if runBusy already showed regenError
+        if (regenFinished) await showRegenSkippedWarning(skippedMissing);
     }, [dispatch, libraryItems, validateDirectory, runBusy, t]);
 
     /**

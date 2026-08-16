@@ -1,3 +1,5 @@
+import type { LibraryItem } from "@common/types/db";
+import i18n from "@renderer/i18n";
 import type { AppDispatch } from "@store/index";
 import { fetchAllItemsWithProgress, updateLibraryItem } from "@store/library";
 import { dialogUtils } from "@utils/dialog";
@@ -62,6 +64,68 @@ export const materializeBookLibraryThumbnail = async (
     const src = await resolveBookCoverAbsolutePath(epubPath);
     if (!src || !window.fs.isFile(src)) return false;
     return materializeCoverAndRefreshLibrary(dispatch, libraryId, src);
+};
+
+/** Library row fields needed to rebuild a thumbnail. */
+export type RegenLibraryThumbnailItem = Pick<LibraryItem, "id" | "type" | "link">;
+
+/** Outcome of {@link regenerateLibraryThumbnails}. */
+export type RegenLibraryThumbnailsResult = {
+    /** Items whose `link` was missing on disk and were not parsed or materialized. */
+    skippedMissing: number;
+};
+
+/**
+ * Rebuilds WebP thumbnails for library rows whose file or folder still exists.
+ * Missing paths are skipped (not extracted/parsed) so bulk regen does not show a parse error per item.
+ *
+ * @param onProgress - called with 1-based index and list length before each item (including skips)
+ */
+export const regenerateLibraryThumbnails = async (
+    dispatch: AppDispatch,
+    items: readonly RegenLibraryThumbnailItem[],
+    validateDirectory: ValidateDirectoryFn,
+    onProgress: (done: number, total: number) => void,
+): Promise<RegenLibraryThumbnailsResult> => {
+    const skippedMissingItems: RegenLibraryThumbnailItem[] = [];
+    let i = 0;
+    for (const item of items) {
+        i += 1;
+        onProgress(i, items.length);
+        if (item.id == null) continue;
+        if (!window.fs.existsSync(item.link)) {
+            skippedMissingItems.push(item);
+            continue;
+        }
+        if (item.type === "manga") {
+            await materializeMangaLibraryThumbnail(dispatch, item.id, item.link, validateDirectory);
+        } else {
+            await materializeBookLibraryThumbnail(dispatch, item.id, item.link);
+        }
+    }
+    const skippedMissing = skippedMissingItems.length;
+    if (skippedMissing > 0) {
+        log.warn("regenerate thumbnails: skipped missing paths", {
+            count: skippedMissing,
+            items: skippedMissingItems.map(({ id, type, link }) => ({ id, type, link })),
+        });
+    }
+    log.info("regenerate thumbnails finished", { total: items.length, skippedMissing });
+    return { skippedMissing };
+};
+
+/**
+ * End-of-regen warning when bulk thumbnail rebuild skipped missing library paths.
+ *
+ * @param skippedMissing missing-path count from {@link regenerateLibraryThumbnails}; no-op when 0
+ */
+export const showRegenSkippedWarning = async (skippedMissing: number): Promise<void> => {
+    if (skippedMissing <= 0) return;
+    await dialogUtils.warn({
+        title: i18n.t("library.regenSkippedTitle", { ns: "settings" }),
+        message: i18n.t("library.regenSkippedMessage", { ns: "settings", count: skippedMissing }),
+        noOption: true,
+    });
 };
 
 export type MaterializeBookCoverFromExtractedPathOpts = {

@@ -42,11 +42,14 @@ export type ValidateDirectoryFn = (link: string, options?: DirectoryValidatorOpt
 
 /**
  * Resolves an image path for `covers:materialize`: `cover.*` in the series root if present, else first sorted image under the series (via directory scan).
+ * Returns `undefined` without scanning when `mangaDir` is missing on disk.
  */
 export const fetchMangaCoverMaterializeSource = async (
     mangaDir: string,
     validateDirectory: ValidateDirectoryFn,
 ): Promise<string | undefined> => {
+    if (!window.fs.existsSync(mangaDir)) return undefined;
+
     const dedicated = mangaDedicatedCoverPathForDb(mangaDir);
     if (dedicated && window.fs.isFile(dedicated)) return dedicated;
 
@@ -57,9 +60,11 @@ export const fetchMangaCoverMaterializeSource = async (
 };
 
 /**
- * Loads EPUB metadata and returns absolute cover image path if the file exists (extracts to a temp dir when needed).
+ * Loads EPUB metadata and returns the absolute cover image path when extract succeeds and the cover file exists.
+ * Skips extract/parse when `epubPath` is missing so callers (bulk regen) do not get per-item parse dialogs.
  */
 export const resolveBookCoverAbsolutePath = async (epubPath: string): Promise<string | undefined> => {
+    if (!window.fs.existsSync(epubPath)) return undefined;
     try {
         const ed = await EPUB.readEpubFile(epubPath, false);
         const c = ed.metadata.cover;
