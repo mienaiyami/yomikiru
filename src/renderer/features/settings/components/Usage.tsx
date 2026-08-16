@@ -254,6 +254,9 @@ const Usage = (): ReactElement => {
                             <Trans i18nKey="galleryToolbar.library" ns="usage" components={{ bold: <b /> }} />
                         </li>
                         <li>
+                            <Trans i18nKey="galleryToolbar.bookmarks" ns="usage" components={{ bold: <b /> }} />
+                        </li>
+                        <li>
                             <Trans i18nKey="galleryToolbar.favourites" ns="usage" components={{ bold: <b /> }} />
                         </li>
                         <li>

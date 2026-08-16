@@ -2,7 +2,7 @@ import { faBook, faImages, faLayerGroup } from "@fortawesome/free-solid-svg-icon
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { useTranslation } from "react-i18next";
 
-/** Library item type filter applied on top of the active gallery tab. */
+/** Persisted `galleryTypeFilter` id. */
 export type GalleryTypeFilterId = "all" | "manga" | "book";
 
 /** Display config for a single type-filter segment (labels resolved via i18n in the bar). */
@@ -13,7 +13,7 @@ type TypeFilterConfig = {
     icon: typeof faLayerGroup;
 };
 
-/** Segment configs for {@link GalleryTypeFilterBar} (All / Manga/Webcomic / eBook). */
+/** Ordered {@link GalleryTypeFilterId} entries for {@link GalleryTypeFilterBar}. */
 const TYPE_FILTERS: readonly TypeFilterConfig[] = [
     {
         id: "all",
@@ -42,7 +42,7 @@ export type GalleryTypeFilterBarProps = {
 };
 
 /**
- * Segmented control that narrows the gallery grid to a single library item type.
+ * Segmented control for `galleryTypeFilter`.
  * Renders after {@link GalleryTabBar} and shares its pill styling.
  */
 const GalleryTypeFilterBar: React.FC<GalleryTypeFilterBarProps> = ({ activeFilter, onFilterChange }) => {

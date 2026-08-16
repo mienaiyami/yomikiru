@@ -28,15 +28,25 @@ type BookDetailsPanelProps = {
     /** Library primary key: path to the `.epub` file */
     bookLink: string;
     onClose: () => void;
+    /**
+     * Inner tab shown on open. Omit to use `"bookmarks"`.
+     * Parent remounts the panel (`key` = item link) when the selection changes.
+     */
+    initialTab?: "bookmarks" | "notes";
     /** After Locate on disk succeeds, parent should select the new library link. */
     onRelocated?: (newLink: string) => void;
 };
 
 /**
- * Gallery side panel for a library book: metadata, bookmarks, and reader notes (highlights).
+ * Gallery side panel for a library book: metadata plus inner tabs `"bookmarks"` and `"notes"`.
  * Opening a bookmark or note launches the reader at the stored chapter and scroll position.
  */
-const BookDetailsPanel: React.FC<BookDetailsPanelProps> = ({ bookLink, onClose, onRelocated }) => {
+const BookDetailsPanel: React.FC<BookDetailsPanelProps> = ({
+    bookLink,
+    onClose,
+    onRelocated,
+    initialTab = "bookmarks",
+}) => {
     const { t } = useTranslation("home");
     const { t: tCommon } = useTranslation("common");
     const dispatch = useAppDispatch();
@@ -44,7 +54,7 @@ const BookDetailsPanel: React.FC<BookDetailsPanelProps> = ({ bookLink, onClose, 
     const confirmDeleteItem = useAppSelector((store) => store.appSettings.confirmDeleteItem);
     const anilistToken = useAppSelector((store) => store.anilist.token);
 
-    const [activeTab, setActiveTab] = useState<"bookmarks" | "notes">("bookmarks");
+    const [activeTab, setActiveTab] = useState<"bookmarks" | "notes">(initialTab);
 
     const book = library[bookLink] as (LibraryItemWithProgress & { type: "book" }) | undefined;
     const pathMissing = Boolean(book) && !window.fs.existsSync(bookLink);

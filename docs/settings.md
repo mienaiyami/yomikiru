@@ -50,7 +50,7 @@ On load, invalid or missing keys are repaired using `repairZodInputWithDefaults`
 Key groupings in the schema:
 
 - **Home / library** — `baseDir`, `homeViewMode`, `showTabs`, `openOnDblClick`, `openDirectlyFromManga`, list sort keys, display flags
-- **Gallery** — `galleryActiveTab`, `galleryTypeFilter`, `galleryDisplayMode`, `galleryItemWidth`, gallery/continue-reading sort keys
+- **Gallery** — `galleryActiveTab`, `galleryTypeFilter`, `galleryDisplayMode`, `galleryItemWidth`, `gallerySortBy` / `gallerySortType`
 - **Reader general** — `openInZenMode`, `hideCursorInZenMode`, `keepExtractedFiles`, `syncSettings`, `syncThemes`, `customStylesheet`
 - **Active presets** — `mangaReaderPresetId`, `bookReaderPresetId` (which named preset is selected)
 - **Reader sub-objects** — `readerSettings` (manga) and `epubReaderSettings` (book); both are embedded objects, see their own schemas below

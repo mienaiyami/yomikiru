@@ -39,25 +39,23 @@ const settingSchema = z
         historyListSortType: sortTypeEnum,
         /** Sort field for the classic History list. */
         historyListSortBy: sortByEnum,
-        /** Sort direction for the gallery Library tab. */
+        /** Sort direction for gallery tabs that show the sort control (not `continue-reading`). */
         gallerySortType: sortTypeEnum,
-        /** Sort field for the gallery Library tab. `"lastRead"` orders by most-recently-opened. */
+        /** Sort field for those tabs. `"lastRead"` orders by `progress.lastReadAt`. */
         gallerySortBy: z.union([z.literal("name"), z.literal("date"), z.literal("lastRead")]),
-        /**
-         * Sort field for the gallery "Continue Reading" tab. Persisted separately
-         * from the main library sort so the two tabs can have independent ordering.
-         */
-        continueReadingSortBy: z.union([z.literal("name"), z.literal("lastRead")]),
-        /** Sort direction for the gallery "Continue Reading" tab. */
-        continueReadingSortType: sortTypeEnum,
         /**
          * Last active tab in the gallery home view. Persisted so the app reopens
          * to the same section between launches.
          */
-        galleryActiveTab: z.union([z.literal("continue-reading"), z.literal("library"), z.literal("favourites")]),
+        galleryActiveTab: z.union([
+            z.literal("continue-reading"),
+            z.literal("library"),
+            z.literal("bookmarks"),
+            z.literal("favourites"),
+        ]),
         /**
          * Library item type shown in the gallery home view. `"all"` disables the filter;
-         * `"manga"` keeps image-based series, `"book"` keeps EPUB books.
+         * `"manga"` keeps `type === "manga"`, `"book"` keeps `type === "book"`.
          */
         galleryTypeFilter: z.union([z.literal("all"), z.literal("manga"), z.literal("book")]),
         /**
@@ -72,9 +70,7 @@ const settingSchema = z
             z.literal("cover-only"),
             z.literal("list"),
         ]),
-        /**
-         * width of gallery item in em
-         */
+        /** Card width in em. */
         galleryItemWidth: z.number().min(10).max(30),
         /**
          * Open chapter in reader directly, one folder inside of base manga dir.
@@ -150,8 +146,6 @@ const settingSchema = z
         historyListSortBy: "date",
         gallerySortType: "normal",
         gallerySortBy: "name",
-        continueReadingSortBy: "lastRead",
-        continueReadingSortType: "normal",
         galleryActiveTab: "continue-reading",
         galleryTypeFilter: "all",
         galleryDisplayMode: "normal",

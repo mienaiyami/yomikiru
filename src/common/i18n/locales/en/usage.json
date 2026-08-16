@@ -50,11 +50,12 @@
     },
     "galleryToolbar": {
         "title": "Gallery toolbar:",
-        "body": "One bar above the grid with section tabs (<bold>Continue</bold> / <bold>Library</bold> / <bold>Favourites</bold>), a type filter (<bold>All</bold> / <bold>Manga/Webcomic</bold> / <bold>eBook</bold>), search, sort, view mode (Cover + Title / Cover Only / Compact / List), and a grid-size control that opens a slider for cover width.",
-        "types": "<bold>Manga/Webcomic</bold> covers every image-based series (manga, manhwa, manhua, comics, webtoons); <bold>eBook</bold> covers EPUB files only, not PDF. Hover a segment for the full list. The choice is remembered and applies to all three sections.",
-        "continue": "<bold>Continue Reading</bold> shows items with progress, sorted by last read by default.",
+        "body": "One bar above the grid with section tabs (<bold>Continue</bold> / <bold>Library</bold> / <bold>Bookmarks</bold> / <bold>Favourites</bold>), a type filter (<bold>All</bold> / <bold>Manga/Webcomic</bold> / <bold>eBook</bold>), search, sort (every section except Continue), view mode (Cover + Title / Cover Only / Compact / List), and a grid-size control that opens a slider for cover width.",
+        "types": "<bold>Manga/Webcomic</bold> covers every image-based series (manga, manhwa, manhua, comics, webtoons); <bold>eBook</bold> covers EPUB files only, not PDF. Hover a segment for the full list. The choice is remembered and applies to all sections.",
+        "continue": "<bold>Continue Reading</bold> shows items with progress, always newest last-read first. There is no sort control on this tab.",
         "library": "<bold>Library</bold> shows everything; sort by title, date, or last read in either direction.",
-        "favourites": "<bold>Favourites</bold> is reserved for a future favourites feature.",
+        "bookmarks": "<bold>Bookmarks</bold> shows titles that have at least one bookmark. Search and sort match Library (title, date, or last read). Opening a tile shows the Bookmarks list in the details panel; play still continues last progress.",
+        "favourites": "<bold>Favourites</bold> is reserved for a future favourites feature. Search and sort are available so they work when that list is filled.",
         "clear": "Search fields across the app show a small <bold>x</bold> button while they contain text; click it to clear the filter."
     },
     "multiSelect": {

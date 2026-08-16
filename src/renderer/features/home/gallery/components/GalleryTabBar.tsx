@@ -1,18 +1,27 @@
-import { faBookOpen, faHeart, faPlay } from "@fortawesome/free-solid-svg-icons";
+import { faBookmark, faBookOpen, faHeart, faPlay } from "@fortawesome/free-solid-svg-icons";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { useTranslation } from "react-i18next";
 
-/** Active tab in the gallery home view. */
-export type GalleryTabId = "continue-reading" | "library" | "favourites";
+/** Persisted `galleryActiveTab` id. */
+export type GalleryTabId = "continue-reading" | "library" | "bookmarks" | "favourites";
 
 /** Display config for gallery home section tabs (labels resolved via i18n in the bar). */
 type TabConfig = {
     id: GalleryTabId;
-    labelKey: "gallery.tabs.continue.label" | "gallery.tabs.library.label" | "gallery.tabs.favourites.label";
-    titleKey: "gallery.tabs.continue.title" | "gallery.tabs.library.title" | "gallery.tabs.favourites.title";
+    labelKey:
+        | "gallery.tabs.continue.label"
+        | "gallery.tabs.library.label"
+        | "gallery.tabs.bookmarks.label"
+        | "gallery.tabs.favourites.label";
+    titleKey:
+        | "gallery.tabs.continue.title"
+        | "gallery.tabs.library.title"
+        | "gallery.tabs.bookmarks.title"
+        | "gallery.tabs.favourites.title";
     icon: typeof faPlay;
 };
 
+/** Ordered {@link GalleryTabId} entries for the gallery section switcher. */
 const TABS: readonly TabConfig[] = [
     {
         id: "continue-reading",
@@ -25,6 +34,12 @@ const TABS: readonly TabConfig[] = [
         labelKey: "gallery.tabs.library.label",
         titleKey: "gallery.tabs.library.title",
         icon: faBookOpen,
+    },
+    {
+        id: "bookmarks",
+        labelKey: "gallery.tabs.bookmarks.label",
+        titleKey: "gallery.tabs.bookmarks.title",
+        icon: faBookmark,
     },
     {
         id: "favourites",
@@ -41,8 +56,7 @@ export type GalleryTabBarProps = {
 };
 
 /**
- * Horizontal section switcher for the gallery home toolbar
- * (Continue / Library / Favourites).
+ * Horizontal section switcher for the gallery home toolbar ({@link GalleryTabId}).
  */
 const GalleryTabBar: React.FC<GalleryTabBarProps> = ({ activeTab, onTabChange }) => {
     const { t } = useTranslation("home");

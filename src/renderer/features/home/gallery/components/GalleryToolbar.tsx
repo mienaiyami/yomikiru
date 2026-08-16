@@ -19,23 +19,25 @@ import GalleryTypeFilterBar, { type GalleryTypeFilterId } from "./GalleryTypeFil
 
 export type { GalleryTabId, GalleryTypeFilterId };
 
-/** Min / max for the gallery item width control (em). */
+/** Clamp range and step for `galleryItemWidth` (em). */
 const GALLERY_ITEM_WIDTH_MIN = 10;
 const GALLERY_ITEM_WIDTH_MAX = 30;
 const GALLERY_ITEM_WIDTH_STEP = 1;
 
 /** Props for {@link GalleryToolbar}. */
 export type GalleryToolbarProps = {
-    /** Currently active tab. Determines which sort options are shown. */
+    /** Current `galleryActiveTab`. */
     activeTab: GalleryTabId;
-    /** Switch home section (Continue / Library / Favourites). */
+    /** Persist a new `galleryActiveTab`. */
     onTabChange: (tab: GalleryTabId) => void;
-    /** Currently active library item type filter. */
+    /** Current `galleryTypeFilter`. */
     activeTypeFilter: GalleryTypeFilterId;
-    /** Narrow the grid to a single item type (All / Manga / eBook). */
+    /** Persist a new `galleryTypeFilter`. */
     onTypeFilterChange: (filter: GalleryTypeFilterId) => void;
-    /** Hide search input — used by tabs that don't expose filtering yet. */
+    /** Hide the search field when the active tab does not query-filter. */
     hideSearch?: boolean;
+    /** Hide sort when the active tab does not use `gallerySortBy` / `gallerySortType`. */
+    hideSort?: boolean;
     /** When `true`, the entire toolbar collapses (e.g. while a details panel is open). */
     hidden?: boolean;
     /** Selection-mode props. When provided, toolbar swaps to the selection layout. */
@@ -69,6 +71,7 @@ const GalleryToolbar: React.FC<GalleryToolbarProps> = ({
     activeTypeFilter,
     onTypeFilterChange,
     hideSearch,
+    hideSort,
     hidden,
     selection,
 }) => {
@@ -91,59 +94,34 @@ const GalleryToolbar: React.FC<GalleryToolbarProps> = ({
     };
 
     const handleSortClick = (e: React.MouseEvent) => {
-        const items: Menu.ListItem[] =
-            activeTab === "continue-reading"
-                ? [
-                      {
-                          label: t("shared.sort.lastRead"),
-                          action: () => dispatch(setAppSettings({ continueReadingSortBy: "lastRead" })),
-                          selected: appSettings.continueReadingSortBy === "lastRead",
-                      },
-                      {
-                          label: t("shared.sort.title"),
-                          action: () => dispatch(setAppSettings({ continueReadingSortBy: "name" })),
-                          selected: appSettings.continueReadingSortBy === "name",
-                      },
-                      window.contextMenu.template.divider(),
-                      {
-                          label: t("shared.sort.ascending"),
-                          action: () => dispatch(setAppSettings({ continueReadingSortType: "normal" })),
-                          selected: appSettings.continueReadingSortType === "normal",
-                      },
-                      {
-                          label: t("shared.sort.descending"),
-                          action: () => dispatch(setAppSettings({ continueReadingSortType: "inverse" })),
-                          selected: appSettings.continueReadingSortType === "inverse",
-                      },
-                  ]
-                : [
-                      {
-                          label: t("shared.sort.title"),
-                          action: () => dispatch(setAppSettings({ gallerySortBy: "name" })),
-                          selected: appSettings.gallerySortBy === "name",
-                      },
-                      {
-                          label: t("shared.sort.lastRead"),
-                          action: () => dispatch(setAppSettings({ gallerySortBy: "lastRead" })),
-                          selected: appSettings.gallerySortBy === "lastRead",
-                      },
-                      {
-                          label: t("shared.sort.dateModified"),
-                          action: () => dispatch(setAppSettings({ gallerySortBy: "date" })),
-                          selected: appSettings.gallerySortBy === "date",
-                      },
-                      window.contextMenu.template.divider(),
-                      {
-                          label: t("shared.sort.ascending"),
-                          action: () => dispatch(setAppSettings({ gallerySortType: "normal" })),
-                          selected: appSettings.gallerySortType === "normal",
-                      },
-                      {
-                          label: t("shared.sort.descending"),
-                          action: () => dispatch(setAppSettings({ gallerySortType: "inverse" })),
-                          selected: appSettings.gallerySortType === "inverse",
-                      },
-                  ];
+        const items: Menu.ListItem[] = [
+            {
+                label: t("shared.sort.title"),
+                action: () => dispatch(setAppSettings({ gallerySortBy: "name" })),
+                selected: appSettings.gallerySortBy === "name",
+            },
+            {
+                label: t("shared.sort.lastRead"),
+                action: () => dispatch(setAppSettings({ gallerySortBy: "lastRead" })),
+                selected: appSettings.gallerySortBy === "lastRead",
+            },
+            {
+                label: t("shared.sort.dateModified"),
+                action: () => dispatch(setAppSettings({ gallerySortBy: "date" })),
+                selected: appSettings.gallerySortBy === "date",
+            },
+            window.contextMenu.template.divider(),
+            {
+                label: t("shared.sort.ascending"),
+                action: () => dispatch(setAppSettings({ gallerySortType: "normal" })),
+                selected: appSettings.gallerySortType === "normal",
+            },
+            {
+                label: t("shared.sort.descending"),
+                action: () => dispatch(setAppSettings({ gallerySortType: "inverse" })),
+                selected: appSettings.gallerySortType === "inverse",
+            },
+        ];
 
         setContextMenuData({
             clickX: e.currentTarget.getBoundingClientRect().x,
@@ -250,10 +228,8 @@ const GalleryToolbar: React.FC<GalleryToolbarProps> = ({
         );
     }
 
-    const sortBy =
-        activeTab === "continue-reading" ? appSettings.continueReadingSortBy : appSettings.gallerySortBy;
-    const sortType =
-        activeTab === "continue-reading" ? appSettings.continueReadingSortType : appSettings.gallerySortType;
+    const sortBy = appSettings.gallerySortBy;
+    const sortType = appSettings.gallerySortType;
 
     return (
         <div className={`galleryToolbar ${hidden ? "hidden" : ""}`}>
@@ -264,15 +240,17 @@ const GalleryToolbar: React.FC<GalleryToolbarProps> = ({
                 {!hideSearch && <ListNavigator.SearchInput placeholder={t("gallery.toolbar.searchPlaceholder")} />}
             </div>
             <div className="actions">
-                <button
-                    data-tooltip={t("shared.sort.tooltip", {
-                        arrow: sortType === "normal" ? "▲ " : "▼ ",
-                        by: sortBy.toUpperCase(),
-                    })}
-                    onClick={handleSortClick}
-                >
-                    <FontAwesomeIcon icon={faSort} />
-                </button>
+                {!hideSort && (
+                    <button
+                        data-tooltip={t("shared.sort.tooltip", {
+                            arrow: sortType === "normal" ? "▲ " : "▼ ",
+                            by: sortBy.toUpperCase(),
+                        })}
+                        onClick={handleSortClick}
+                    >
+                        <FontAwesomeIcon icon={faSort} />
+                    </button>
+                )}
                 <button
                     data-tooltip={t("gallery.toolbar.viewTooltip", {
                         mode: displayModeLabel(appSettings.galleryDisplayMode),

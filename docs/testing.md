@@ -35,7 +35,8 @@ CI uses system Node, so db tests need no rebuild there.
 - Co-located: `foo.ts` -> `foo.test.ts` / `.tsx`
 - [`vitest.config.mts`](../vitest.config.mts) — aliases from [`tsconfig.json`](../tsconfig.json) `paths`
 - Projects: **unit** (jsdom + `src/test/setup.ts`), **db** (node)
-- Harness: `src/test/mocks/preload.ts` (`onInvoke`, `stubFs` / `createTestFs`), `renderWithProviders`, `fixtures/libraryItem.ts`
+- Harness: `src/test/mocks/preload.ts` (`onInvoke`, `stubFs` / `createTestFs`), `renderWithProviders` (Redux + i18n), `renderWithI18n` (i18n only), `fixtures/libraryItem.ts`. Unit `setup.ts` calls `initRendererI18n` once; do not re-init i18next in individual tests.
+- App `tsconfig.json` excludes `src/test` and `*.test.ts(x)` so Forge/`pnpm dev` (ts-loader typechecks that project) does not typecheck tests. Webpack `ts-loader` `exclude` also skips those paths (plus `.webpack` / `e2e`) so an accidental import cannot pack them. Vitest still compiles them. Do not set ts-loader `onlyCompileBundledFiles` - it drops ambient `.d.ts` and floods the overlay.
 - E2E: [`e2e/`](../e2e/), [`playwright.config.ts`](../playwright.config.ts)
 
 ## Prefer Vitest flow tests (dialogs / IPC glue)

@@ -95,6 +95,10 @@
                 "label": "Library",
                 "title": "Library"
             },
+            "bookmarks": {
+                "label": "Bookmarks",
+                "title": "Bookmarks"
+            },
             "favourites": {
                 "label": "Favourites",
                 "title": "Favourites"
@@ -134,6 +138,7 @@
             "gridSizeTooltip": "Grid size: {{size}}em"
         },
         "empty": {
+            "bookmarks": "No bookmarked titles",
             "favourites": "No favourites yet",
             "continueReading": "Nothing in progress"
         },

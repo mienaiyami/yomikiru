@@ -13,7 +13,7 @@ import { deleteLibraryItem } from "@store/library";
 import { setAnilistSearchOpen } from "@store/ui";
 import { dialogUtils } from "@utils/dialog";
 import { formatUtils } from "@utils/file";
-import { sortContinueReadingItems, sortGalleryItems } from "@utils/gallerySort";
+import { selectBookmarkedItems, sortContinueReadingItems, sortGalleryItems } from "@utils/gallerySort";
 import { libraryCoverSrc } from "@utils/libraryCover";
 import { resolveMangaChapterPath } from "@utils/mangaChapterPath";
 import type { RefObject } from "react";
@@ -24,17 +24,23 @@ import BookDetailsPanel from "./components/BookDetailsPanel";
 import GalleryToolbar, { type GalleryTabId, type GalleryTypeFilterId } from "./components/GalleryToolbar";
 import MangaDetailsPanel from "./components/MangaDetailsPanel";
 
+/**
+ * Gallery home: cover grid for {@link GalleryTabId}, `galleryTypeFilter`, and a details panel.
+ */
 const GalleryView: React.FC = () => {
     const { t } = useTranslation("home");
     const { t: tCommon } = useTranslation("common");
     const dispatch = useAppDispatch();
     const library = useAppSelector((store) => store.library.items);
+    const bookmarks = useAppSelector((store) => store.bookmarks);
     const appSettings = useAppSelector((store) => store.appSettings);
     const anilistToken = useAppSelector((store) => store.anilist.token);
     const { openInReader, setContextMenuData } = useAppContext();
 
     const [selectedManga, setSelectedManga] = useState<string | null>(null);
     const [selectedBook, setSelectedBook] = useState<string | null>(null);
+    /** Captured when a tile is opened so switching gallery tabs does not flip the details inner tab. */
+    const [detailsInitialTab, setDetailsInitialTab] = useState<"bookmarks" | undefined>();
     const [libraryGridRef, containerWidth] = useResizeObserverRafWidth<HTMLDivElement>();
 
     const activeTab = appSettings.galleryActiveTab;
@@ -75,9 +81,9 @@ const GalleryView: React.FC = () => {
     }, [appSettings.galleryDisplayMode, containerWidth, galleryColumnCount, rootFontSizePx]);
 
     /**
-     * Items shown for the active tab. Each tab has its own slice of the library
-     * and (for sortable tabs) its own sort settings. The type filter is applied
-     * first so it narrows every tab consistently.
+     * Library slice for `galleryActiveTab`. `continue-reading` uses a fixed
+     * last-read order; `library` and `bookmarks` use {@link sortGalleryItems}.
+     * `favourites` is empty until that feature lands. `galleryTypeFilter` is applied first.
      */
     const tabItems = useMemo<LibraryItemWithProgress[]>(() => {
         const all = Object.values(library).filter(
@@ -86,27 +92,20 @@ const GalleryView: React.FC = () => {
         );
 
         if (activeTab === "continue-reading") {
-            const withProgress = all.filter((item) => Boolean(item.progress));
-            return sortContinueReadingItems(
-                withProgress,
-                appSettings.continueReadingSortBy,
-                appSettings.continueReadingSortType,
+            return sortContinueReadingItems(all.filter((item) => Boolean(item.progress)));
+        }
+        if (activeTab === "bookmarks") {
+            return sortGalleryItems(
+                selectBookmarkedItems(all, bookmarks),
+                appSettings.gallerySortBy,
+                appSettings.gallerySortType,
             );
         }
         if (activeTab === "favourites") {
-            // todo: hook up real favourites once the schema lands.
             return [];
         }
         return sortGalleryItems(all, appSettings.gallerySortBy, appSettings.gallerySortType);
-    }, [
-        library,
-        activeTab,
-        activeTypeFilter,
-        appSettings.continueReadingSortBy,
-        appSettings.continueReadingSortType,
-        appSettings.gallerySortBy,
-        appSettings.gallerySortType,
-    ]);
+    }, [library, activeTab, activeTypeFilter, bookmarks, appSettings.gallerySortBy, appSettings.gallerySortType]);
 
     const tabIds = useMemo(() => tabItems.map((it) => it.link), [tabItems]);
     const selection = useMultiSelect<string>(tabIds);
@@ -115,15 +114,23 @@ const GalleryView: React.FC = () => {
         selection.clearSelection();
     }, [activeTab, activeTypeFilter, selection.clearSelection]);
 
-    const handleMangaSelect = useCallback((libraryItem: LibraryItemWithProgress) => {
-        if (libraryItem.type === "book") {
-            setSelectedBook(libraryItem.link);
-            setSelectedManga(null);
-        } else {
-            setSelectedManga(libraryItem.link);
-            setSelectedBook(null);
-        }
-    }, []);
+    /**
+     * Open details for a tile. Captures inner tab `"bookmarks"` only when
+     * `galleryActiveTab` is `bookmarks` at click time.
+     */
+    const handleItemSelect = useCallback(
+        (libraryItem: LibraryItemWithProgress) => {
+            setDetailsInitialTab(activeTab === "bookmarks" ? "bookmarks" : undefined);
+            if (libraryItem.type === "book") {
+                setSelectedBook(libraryItem.link);
+                setSelectedManga(null);
+            } else {
+                setSelectedManga(libraryItem.link);
+                setSelectedBook(null);
+            }
+        },
+        [activeTab],
+    );
     const handleContinueReading = useCallback(
         (item: LibraryItemWithProgress) => {
             const mangaTarget =
@@ -223,7 +230,7 @@ const GalleryView: React.FC = () => {
                             selection.toggleItem(item.link, { shiftKey: e.shiftKey });
                             return;
                         }
-                        handleMangaSelect(item);
+                        handleItemSelect(item);
                     }}
                     onContextMenu={(e) => handleContextMenu(item, e)}
                     data-focused={isSelected}
@@ -273,19 +280,13 @@ const GalleryView: React.FC = () => {
                 </div>
             );
         },
-        [
-            handleMangaSelect,
-            handleContextMenu,
-            handleContinueReading,
-            appSettings.galleryDisplayMode,
-            selection,
-            t,
-        ],
+        [handleItemSelect, handleContextMenu, handleContinueReading, appSettings.galleryDisplayMode, selection, t],
     );
 
     const handleCloseMangaDetails = useCallback(() => {
         setSelectedManga(null);
         setSelectedBook(null);
+        setDetailsInitialTab(undefined);
     }, []);
 
     /**
@@ -340,9 +341,11 @@ const GalleryView: React.FC = () => {
     const emptyMessage =
         activeTab === "favourites"
             ? t("gallery.empty.favourites")
-            : activeTab === "continue-reading"
-              ? t("gallery.empty.continueReading")
-              : tCommon("list.noItems");
+            : activeTab === "bookmarks"
+              ? t("gallery.empty.bookmarks")
+              : activeTab === "continue-reading"
+                ? t("gallery.empty.continueReading")
+                : tCommon("list.noItems");
 
     return (
         <div
@@ -362,7 +365,7 @@ const GalleryView: React.FC = () => {
                     activeTypeFilter={activeTypeFilter}
                     onTypeFilterChange={setActiveTypeFilter}
                     hidden={detailsOpen}
-                    hideSearch={activeTab === "favourites"}
+                    hideSort={activeTab === "continue-reading"}
                     selection={selectionToolbarProps}
                 />
 
@@ -380,14 +383,18 @@ const GalleryView: React.FC = () => {
 
                     {selectedManga && (
                         <MangaDetailsPanel
+                            key={selectedManga}
                             mangaLink={selectedManga}
+                            initialTab={detailsInitialTab}
                             onClose={handleCloseMangaDetails}
                             onRelocated={(newLink) => setSelectedManga(newLink)}
                         />
                     )}
                     {selectedBook && (
                         <BookDetailsPanel
+                            key={selectedBook}
                             bookLink={selectedBook}
+                            initialTab={detailsInitialTab}
                             onClose={handleCloseMangaDetails}
                             onRelocated={(newLink) => setSelectedBook(newLink)}
                         />

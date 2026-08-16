@@ -45,6 +45,11 @@ const log = createRendererLogger("gallery/MangaDetailsPanel");
 type MangaDetailsPanelProps = {
     mangaLink: string;
     onClose: () => void;
+    /**
+     * Inner tab shown on open. Omit to use `"content"`.
+     * Parent remounts the panel (`key` = item link) when the selection changes.
+     */
+    initialTab?: "content" | "bookmarks";
     /** After Locate on disk succeeds, parent should select the new library link. */
     onRelocated?: (newLink: string) => void;
 };
@@ -62,7 +67,16 @@ const isListableMangaChapterChild = (chapter: { name: string; pages: number }): 
     return chapter.pages > 0;
 };
 
-const MangaDetailsPanel: React.FC<MangaDetailsPanelProps> = ({ mangaLink, onClose, onRelocated }) => {
+/**
+ * Gallery side panel for a library manga: metadata plus inner tabs `"content"` and `"bookmarks"`.
+ * Opening a chapter or bookmark launches the reader at the stored location.
+ */
+const MangaDetailsPanel: React.FC<MangaDetailsPanelProps> = ({
+    mangaLink,
+    onClose,
+    onRelocated,
+    initialTab = "content",
+}) => {
     const { t } = useTranslation("home");
     const { t: tCommon } = useTranslation("common");
     const dispatch = useAppDispatch();
@@ -72,7 +86,7 @@ const MangaDetailsPanel: React.FC<MangaDetailsPanelProps> = ({ mangaLink, onClos
     const [chapters, setChapters] = useState<ChapterData[]>([]);
     const [note, setNote] = useState<string>("");
     const [isEditingNote, setIsEditingNote] = useState(false);
-    const [activeTab, setActiveTab] = useState<"content" | "bookmarks">("content");
+    const [activeTab, setActiveTab] = useState<"content" | "bookmarks">(initialTab);
     const sortBy = useAppSelector((store) => store.appSettings.locationListSortBy);
     const sortOrder = useAppSelector((store) => store.appSettings.locationListSortType);
 

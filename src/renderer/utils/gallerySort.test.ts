@@ -1,6 +1,11 @@
 import { makeBookItem, makeMangaItem } from "@test/fixtures/libraryItem";
 import { describe, expect, it } from "vitest";
-import { sortContinueReadingItems, sortGalleryItems } from "./gallerySort";
+import {
+    selectBookmarkedItems,
+    sortContinueReadingItems,
+    sortGalleryItems,
+    type GalleryBookmarkMaps,
+} from "./gallerySort";
 
 describe("sortGalleryItems", () => {
     const items = [
@@ -47,12 +52,44 @@ describe("sortGalleryItems", () => {
 });
 
 describe("sortContinueReadingItems", () => {
-    it("sorts by name or lastRead", () => {
+    it("sorts by lastReadAt descending", () => {
         const items = [
             makeMangaItem({ title: "Z", link: "z" }, { lastReadAt: new Date("2024-01-01") }),
             makeMangaItem({ id: 2, title: "A", link: "a" }, { lastReadAt: new Date("2024-02-01") }),
+            makeMangaItem({ id: 3, title: "None", link: "n" }, null),
         ];
-        expect(sortContinueReadingItems(items, "name", "normal").map((i) => i.title)).toEqual(["A", "Z"]);
-        expect(sortContinueReadingItems(items, "lastRead", "normal")[0]?.link).toBe("a");
+        expect(sortContinueReadingItems(items).map((i) => i.link)).toEqual(["a", "z", "n"]);
+    });
+});
+
+describe("selectBookmarkedItems", () => {
+    const mangaA = makeMangaItem({ title: "Alpha", link: "a" }, null);
+    const mangaB = makeMangaItem({ id: 2, title: "Beta", link: "b" }, { lastReadAt: new Date("2024-06-01") });
+    const bookC = makeBookItem({ id: 3, title: "Gamma", link: "c" }, null);
+    const mangaEmpty = makeMangaItem({ id: 4, title: "Empty", link: "empty" }, null);
+    const items = [mangaA, mangaB, bookC, mangaEmpty];
+
+    const bookmarks: GalleryBookmarkMaps = {
+        manga: {
+            a: [{ createdAt: new Date("2024-01-01") }],
+            b: [{ createdAt: new Date("2024-03-01") }, { createdAt: new Date("2024-02-01") }],
+            empty: [],
+            nullish: null,
+        },
+        book: {
+            c: [{ createdAt: new Date("2024-02-15") }],
+        },
+    };
+
+    it("keeps items with at least one bookmark, including no-progress titles", () => {
+        expect(selectBookmarkedItems(items, bookmarks).map((i) => i.link)).toEqual(["a", "b", "c"]);
+    });
+
+    it("drops empty and null bookmark lists", () => {
+        const onlyEmpty = selectBookmarkedItems([mangaEmpty], {
+            manga: { empty: [], gone: null },
+            book: {},
+        });
+        expect(onlyEmpty).toEqual([]);
     });
 });

@@ -1,6 +1,6 @@
 # Home Feature
 
-> Last updated: 2026-08-09. Covers v2.24.x.
+> Last updated: 2026-08-16. Covers v2.24.x.
 
 The Home view is the main landing screen shown when no reader is open.
 It has two modes — **Classic** and **Gallery** — switchable via `appSettings.homeViewMode`.
@@ -101,17 +101,18 @@ Pure helpers used by the classic list tabs to derive the correct action for a gi
 
 Entry: [`gallery/GalleryView.tsx`](gallery/GalleryView.tsx).
 
-A card-based library browser with three tabs and a detail panel.
+A card-based library browser with a detail panel and section tabs (`galleryActiveTab`).
 
 ### Tabs
 
 | Tab ID | Shows |
 | --- | --- |
+| `continue-reading` | Items with progress, always newest `lastReadAt` first (no sort control) |
 | `library` | All library items, sorted by `gallerySortBy` / `gallerySortType` |
-| `continue-reading` | Items with progress, sorted by `continueReadingSortBy` / `continueReadingSortType` |
-| `favourites` | (Planned — currently always empty) |
+| `bookmarks` | Items with at least one bookmark, sorted by `gallerySortBy` / `gallerySortType` |
+| `favourites` | Planned — currently always empty; search and sort still shown |
 
-Tab state persisted in `appSettings.galleryActiveTab`.
+Tab state persisted in `galleryActiveTab`. Opening a tile from `bookmarks` selects the details inner tab `"bookmarks"`; `library` and `continue-reading` keep each panel's default (`"content"` for manga, `"bookmarks"` for books). Play always continues last progress.
 
 ### Type Filter
 
@@ -149,12 +150,12 @@ Virtualised with `@tanstack/react-virtual` via the `ListNavigator.VirtualList` s
 
 Contains:
 
-- Tab switcher (Continue Reading / Library / Favourites).
-- Item type filter (All / Manga+Webcomic / eBook), after a vertical divider.
-- Search input, fixed width (~50% wider than the previous gallery slot) and right-aligned (hidden for the Favourites tab). Toolbar height and action buttons match classic home tools (`44px` / `--button-width`).
-- Sort controls (sort field + direction).
-- Display mode toggle.
-- Item width slider.
+- Tab switcher (`galleryActiveTab`).
+- Type filter (`galleryTypeFilter`), after a vertical divider.
+- Search input, right-aligned (hidden when `hideSearch`). Height and action buttons match classic home tools (`--button-width`).
+- Sort controls when the tab uses `gallerySortBy` / `gallerySortType` (hidden when `hideSort`).
+- Display mode toggle (`galleryDisplayMode`).
+- Item width slider (`galleryItemWidth`).
 - Selection toolbar (injected when multi-select is active).
 
 ### MangaDetailsPanel
@@ -195,11 +196,13 @@ Pill-style tab switcher at the top of the gallery toolbar.
 
 [`src/renderer/utils/gallerySort.ts`](../../utils/gallerySort.ts)
 
-`sortGalleryItems` and `sortContinueReadingItems` — pure sort functions applied inside the `tabItems` memo in `GalleryView`. Sort keys are:
+`sortGalleryItems`, `sortContinueReadingItems`, and `selectBookmarkedItems` — pure helpers applied inside the `tabItems` memo in `GalleryView`. Shared sort keys (`gallerySortBy` / `gallerySortType`) for `library`, `bookmarks`, and `favourites`:
 
 - `name` — alphabetical title.
-- `date` — `createdAt` / `lastReadAt`.
-- `lastRead` — `lastReadAt` (continue-reading only).
+- `date` — `updatedAt`.
+- `lastRead` — `lastReadAt`.
+
+`continue-reading` always sorts by `lastReadAt` descending.
 
 ---
 

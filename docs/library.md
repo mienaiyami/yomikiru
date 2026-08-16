@@ -1,6 +1,6 @@
 # Yomikiru — Library, Progress, Bookmarks & Cover System
 
-> Last updated: 2026-08-11. Covers v2.24.x.
+> Last updated: 2026-08-16. Covers v2.24.x.
 
 All user data (library catalogue, reading progress, bookmarks, notes) is stored in a single
 SQLite database file at `userData/data.db`. The ORM is Drizzle.
@@ -198,7 +198,8 @@ Displayed in:
 
 - Classic Home → Bookmark Tab.
 - Manga Reader side-list → Bookmarks tab.
-- Gallery → MangaDetailsPanel → Bookmarks tab.
+- Gallery -> MangaDetailsPanel inner tab `"bookmarks"`.
+- Gallery home `bookmarks` tab (the parent library item, not each bookmark row).
 
 IPC: `db:manga:addBookmark`, `db:manga:deleteBookmarks`, `db:manga:getBookmarks`.
 
@@ -213,7 +214,8 @@ Displayed in:
 
 - Classic Home → Bookmark Tab (with EPUB badge).
 - EPUB Reader side-list → Bookmarks tab.
-- Gallery → BookDetailsPanel → Bookmarks tab.
+- Gallery -> BookDetailsPanel inner tab `"bookmarks"`.
+- Gallery home `bookmarks` tab (the parent library item, not each bookmark row).
 
 IPC: `db:book:addBookmark`, `db:book:deleteBookmarks`, `db:book:getBookmarks`.
 
@@ -222,6 +224,8 @@ IPC: `db:book:addBookmark`, `db:book:deleteBookmarks`, `db:book:getBookmarks`.
 [`src/renderer/store/bookmarks.ts`](../src/renderer/store/bookmarks.ts) — loads all bookmarks on startup via `fetchAllBookmarks` thunk,
 then keeps them in memory. Individual add/remove dispatches go straight to IPC and update the store.
 Change pings from main (`db:bookmark:change`) trigger a full re-fetch for cross-window sync.
+
+Gallery `bookmarks` lists library items that have at least one bookmark. Opening an item from that tab selects the details inner tab `"bookmarks"`. Classic Home Bookmark Tab still lists every bookmark as a row.
 
 ---
 

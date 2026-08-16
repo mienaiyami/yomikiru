@@ -38,6 +38,9 @@
         "dist",
         ".webpack",
         "out",
-        "e2e"
+        "e2e",
+        "src/test",
+        "**/*.test.ts",
+        "**/*.test.tsx"
     ]
 }
