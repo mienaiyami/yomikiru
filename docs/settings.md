@@ -25,7 +25,7 @@
 
 Entry: [`src/renderer/features/settings/Settings.tsx`](../src/renderer/features/settings/Settings.tsx)
 
-Toggled by the gear icon or `Ctrl+,`. Full-screen modal with five keyboard-navigable tabs:
+Toggled by the gear icon or `Ctrl+,`. Full-screen modal with five keyboard-navigable tabs driven by `SETTINGS_TABS`:
 
 - **0 — Settings** (`GeneralSettings.tsx`) — home/library, gallery, reader, background, PDF, explorer, cover tools
 - **1 — Shortcut Keys** (`Shortcuts.tsx`) — view and rebind all commands
@@ -33,7 +33,9 @@ Toggled by the gear icon or `Ctrl+,`. Full-screen modal with five keyboard-navig
 - **3 — About** (`About.tsx`) — version, build info, detailed info dialog
 - **4 — Extras / Usage** (`Usage.tsx`) — in-app usage guide for all features
 
-`SettingsContext` provides `scrollIntoView(selector, tab)` so any part of the UI can deep-link to a specific setting field and highlight it.
+Deep-link / jump-to: `navigateToSetting(targetId)` + catalog in `settingsTargets.ts`. See [`src/renderer/features/settings/search-and-navigate.md`](../src/renderer/features/settings/search-and-navigate.md).
+
+`SettingsContext` exposes tab index helpers only; navigation goes through the pending Redux target, not string selectors.
 
 ---
 

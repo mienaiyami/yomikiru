@@ -8,7 +8,7 @@ import InputCheckbox from "@ui/InputCheckbox";
 import { dialogUtils } from "@utils/dialog";
 import { promptSelectDir } from "@utils/file";
 import { useTranslation } from "react-i18next";
-import { useSettingsContext } from "../Settings";
+import { navigateToSetting } from "../utils/navigateToSetting";
 import AnilistSetting from "./AnilistSetting";
 import CustomTempLocation from "./CustomTempLocation";
 import DbBackupSettings from "./DbBackupSettings";
@@ -21,7 +21,6 @@ import LibrarySettings from "./LibrarySettings";
 
 const GeneralSettings: React.FC = () => {
     const { t } = useTranslation("settings");
-    const { scrollIntoView } = useSettingsContext();
     const appSettings = useAppSelector((store) => store.appSettings);
     const mainSettings = useAppSelector((store) => store.mainSettings);
     const dispatch = useAppDispatch();
@@ -58,7 +57,7 @@ const GeneralSettings: React.FC = () => {
                     {t("customStylesheet.desc")}{" "}
                     <a
                         onClick={() => {
-                            scrollIntoView("#settings-usage-customStylesheet", "extras");
+                            navigateToSetting("usage:custom-stylesheet", dispatch);
                         }}
                     >
                         {t("shared.moreInfo")}
@@ -203,7 +202,7 @@ const GeneralSettings: React.FC = () => {
                         {t("otherSettings.chapterOpeningShortcutDesc")}{" "}
                         <a
                             onClick={() => {
-                                scrollIntoView("#settings-usage-openDirectlyFromManga", "extras");
+                                navigateToSetting("usage:open-directly-from-manga", dispatch);
                             }}
                         >
                             {t("shared.moreInfo")}
@@ -402,7 +401,7 @@ const GeneralSettings: React.FC = () => {
                 </div>
             </div>
 
-            <div className="settingItem2 otherSettings">
+            <div className="settingItem2 otherSettings" id="settings-styleSettings">
                 <h3>{t("styleSettings.title")}</h3>
 
                 <div className="toggleItem">
@@ -497,7 +496,7 @@ const GeneralSettings: React.FC = () => {
                 </div>
             </div>
             <DbBackupSettings />
-            <div className="settingItem2 dangerZone">
+            <div className="settingItem2 dangerZone" id="settings-reset">
                 <h3>{t("reset.title")}</h3>
                 <div className="main row">
                     <button

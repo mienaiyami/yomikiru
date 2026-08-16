@@ -14,7 +14,7 @@ import { createRendererLogger } from "@utils/logger";
 import type { BookReaderPreset, MangaReaderPreset } from "@utils/readerPresets";
 import { isUserPresetId, parsePresetImport } from "@utils/readerPresets";
 import { useTranslation } from "react-i18next";
-import { useSettingsContext } from "../Settings";
+import { navigateToSetting } from "../utils/navigateToSetting";
 
 const log = createRendererLogger("settings/GeneralReaderPresetsSettings");
 
@@ -189,7 +189,6 @@ const GeneralReaderPresetsSettings: React.FC = () => {
     const { t } = useTranslation("settings");
     const dispatch = useAppDispatch();
     const presets = useAppSelector((s) => s.readerPresets.presets);
-    const { scrollIntoView } = useSettingsContext();
 
     const handleSavePresetFromClipboard = () => {
         const text = window.electron.readText("clipboard");
@@ -223,10 +222,7 @@ const GeneralReaderPresetsSettings: React.FC = () => {
             <h3>{t("readerPresets.title")}</h3>
             <div className="desc">
                 {t("readerPresets.desc")}{" "}
-                <a
-                    onClick={() => scrollIntoView("#settings-usage-readerPresets", "extras")}
-                    id="settings-readerPresets"
-                >
+                <a onClick={() => navigateToSetting("usage:reader-presets", dispatch)} id="settings-readerPresets">
                     {t("shared.moreInfo")}
                 </a>
             </div>

@@ -8,7 +8,7 @@ import { formatByteSize } from "@utils/file";
 import { createRendererLogger } from "@utils/logger";
 import { useState } from "react";
 import { useTranslation } from "react-i18next";
-import { useSettingsContext } from "../Settings";
+import { navigateToSetting } from "../utils/navigateToSetting";
 
 const log = createRendererLogger("settings/DbBackupSettings");
 
@@ -25,7 +25,6 @@ const KEEP_COUNT_MAX = 100;
 const DbBackupSettings: React.FC = () => {
     const { t } = useTranslation("settings");
     const { t: tCommon } = useTranslation("common");
-    const { scrollIntoView } = useSettingsContext();
     const dispatch = useAppDispatch();
     const dbBackup = useAppSelector((s) => s.mainSettings.dbBackup);
     const [items, setItems] = useState<DbBackupListItem[]>([]);
@@ -173,7 +172,7 @@ const DbBackupSettings: React.FC = () => {
                 {t("dbBackup.desc")}{" "}
                 <a
                     onClick={() => {
-                        scrollIntoView("#settings-usage-dbBackup", "extras");
+                        navigateToSetting("usage:db-backup", dispatch);
                     }}
                 >
                     {t("shared.moreInfo")}

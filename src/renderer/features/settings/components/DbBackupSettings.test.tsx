@@ -7,16 +7,6 @@ import { cleanup, fireEvent, screen, waitFor } from "@testing-library/react";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import DbBackupSettings from "./DbBackupSettings";
 
-vi.mock("../Settings", () => ({
-    useSettingsContext: () => ({
-        currentTab: 0,
-        setCurrentTab: vi.fn(),
-        nextTab: vi.fn(),
-        prevTab: vi.fn(),
-        scrollIntoView: vi.fn(),
-    }),
-}));
-
 const okBox = (response: number) => ({ response, checkboxChecked: false });
 const copy = settings.dbBackup;
 

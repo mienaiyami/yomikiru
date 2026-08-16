@@ -1,22 +1,22 @@
-import { useAppSelector } from "@store/hooks";
+import { useAppDispatch, useAppSelector } from "@store/hooks";
 import { Fragment, type ReactElement, type ReactNode } from "react";
 import { Trans, useTranslation } from "react-i18next";
-import { useSettingsContext } from "../Settings";
-import type { TAB_INFO } from "../utils/constants";
+import { navigateToSetting } from "../utils/navigateToSetting";
 import { keysFor, PRESET_SLOT_COMMANDS } from "../utils/usageKeys";
 
 type SettingsLinkProps = {
-    tab: keyof typeof TAB_INFO;
-    target: string;
+    /** Opaque catalog id (see settingsTargets). */
+    targetId: string;
+    /** Optional DOM id on the anchor (Usage section anchors). */
     id?: string;
     children?: ReactNode;
 };
 
-/** In-app deep link that switches to a Settings tab and highlights a section. */
-const SettingsLink = ({ tab, target, id, children }: SettingsLinkProps): ReactElement => {
-    const { scrollIntoView } = useSettingsContext();
+/** In-app deep link that opens Settings (if needed) and navigates to a catalog target. */
+const SettingsLink = ({ targetId, id, children }: SettingsLinkProps): ReactElement => {
+    const dispatch = useAppDispatch();
     return (
-        <a id={id} onClick={() => scrollIntoView(target, tab)}>
+        <a id={id} onClick={() => navigateToSetting(targetId, dispatch)}>
             {children}
         </a>
     );
@@ -171,7 +171,7 @@ const Usage = (): ReactElement => {
                         components={{
                             bold: <b />,
                             code: <code />,
-                            link: <SettingsLink tab="settings" target="#settings-dbBackup" />,
+                            link: <SettingsLink targetId="setting:db-backup" />,
                         }}
                     />
                 </li>
@@ -182,8 +182,7 @@ const Usage = (): ReactElement => {
                         <li>
                             <SettingsLink
                                 id="settings-usage-openDirectlyFromManga"
-                                tab="settings"
-                                target="#settings-openDirectlyFromManga"
+                                targetId="setting:open-directly-from-manga"
                             >
                                 {t("homeLocation.openDirectly.link")}
                             </SettingsLink>
@@ -281,7 +280,7 @@ const Usage = (): ReactElement => {
                             bold: <b />,
                             italic: <i />,
                             code: <code />,
-                            link: <SettingsLink tab="settings" target="#settings-classicListCheckboxes" />,
+                            link: <SettingsLink targetId="setting:classic-list-checkboxes" />,
                         }}
                     />
                 </li>
@@ -293,13 +292,7 @@ const Usage = (): ReactElement => {
                         components={{
                             bold: <b />,
                             code: <code />,
-                            link: (
-                                <SettingsLink
-                                    id="settings-usage-library"
-                                    tab="settings"
-                                    target="#settings-library"
-                                />
-                            ),
+                            link: <SettingsLink id="settings-usage-library" targetId="setting:library" />,
                         }}
                         values={{ libraryId: "<library id>.webp" }}
                     />
@@ -366,7 +359,7 @@ const Usage = (): ReactElement => {
                         i18nKey="fileExplorer.intro"
                         ns="usage"
                         components={{
-                            link: <SettingsLink tab="settings" target="#settings-fileExplorerOption" />,
+                            link: <SettingsLink targetId="setting:file-explorer" />,
                         }}
                     />
                     <ul>
@@ -381,7 +374,7 @@ const Usage = (): ReactElement => {
                         ns="usage"
                         components={{
                             bold: <b />,
-                            link: <SettingsLink tab="settings" target="#settings-otherSettings" />,
+                            link: <SettingsLink targetId="setting:other" />,
                         }}
                     />
                 </li>
@@ -390,13 +383,7 @@ const Usage = (): ReactElement => {
                         i18nKey="theme.body"
                         ns="usage"
                         components={{
-                            link: (
-                                <SettingsLink
-                                    id="settings-usage-copyTheme"
-                                    tab="settings"
-                                    target="#settings-copyTheme"
-                                />
-                            ),
+                            link: <SettingsLink id="settings-usage-copyTheme" targetId="setting:copy-theme" />,
                         }}
                     />
                 </li>
@@ -450,7 +437,7 @@ const Usage = (): ReactElement => {
                     </ul>
                 </li>
                 <li>
-                    <SettingsLink id="settings-usage-pdfScale" tab="settings" target="#settings-pdfScale">
+                    <SettingsLink id="settings-usage-pdfScale" targetId="setting:pdf">
                         <b>{t("pdfScale.link")}</b>
                     </SettingsLink>{" "}
                     {t("pdfScale.body")} <br />
@@ -492,7 +479,7 @@ const Usage = (): ReactElement => {
                         ns="usage"
                         components={{
                             bold: <b />,
-                            link: <SettingsLink tab="about" target="#settings-about" />,
+                            link: <SettingsLink targetId="about" />,
                         }}
                     />
                 </li>
@@ -502,7 +489,7 @@ const Usage = (): ReactElement => {
                         ns="usage"
                         components={{
                             code: <code />,
-                            link: <SettingsLink tab="settings" target="#settings-customStylesheet" />,
+                            link: <SettingsLink targetId="setting:custom-stylesheet" />,
                         }}
                     />
                     <br />

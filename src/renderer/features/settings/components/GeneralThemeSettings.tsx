@@ -7,14 +7,14 @@ import { createRendererLogger } from "@utils/logger";
 import { initThemeData } from "@utils/theme";
 import { useTranslation } from "react-i18next";
 import { useSettingsContext } from "../Settings";
+import { settingsTabIndex } from "../utils/constants";
+import { navigateToSetting } from "../utils/navigateToSetting";
 
 const log = createRendererLogger("settings/GeneralThemeSettings");
 
-import { TAB_INFO } from "../utils/constants";
-
 const GeneralThemeSettings: React.FC = () => {
     const { t } = useTranslation("settings");
-    const { scrollIntoView, setCurrentTab } = useSettingsContext();
+    const { setCurrentTab } = useSettingsContext();
     const theme = useAppSelector((store) => store.theme.name);
     const allThemes = useAppSelector((store) => store.theme.allData);
     const dispatch = useAppDispatch();
@@ -38,7 +38,7 @@ const GeneralThemeSettings: React.FC = () => {
                 <div className="row">
                     <button
                         onClick={() => {
-                            setCurrentTab(TAB_INFO.makeTheme[0]);
+                            setCurrentTab(settingsTabIndex("makeTheme"));
                         }}
                     >
                         <FontAwesomeIcon icon={faPlus} /> <span className="icon">/</span>{" "}
@@ -175,7 +175,7 @@ const GeneralThemeSettings: React.FC = () => {
                     {t("theme.shareDesc")}{" "}
                     <a
                         onClick={() => {
-                            scrollIntoView("#settings-usage-copyTheme", "extras");
+                            navigateToSetting("usage:copy-theme", dispatch);
                         }}
                         id="settings-copyTheme"
                     >

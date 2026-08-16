@@ -7,13 +7,12 @@ import { promptSelectDir } from "@utils/file";
 import { createRendererLogger } from "@utils/logger";
 import { renderPDF } from "@utils/pdf";
 import { useTranslation } from "react-i18next";
-import { useSettingsContext } from "../Settings";
+import { navigateToSetting } from "../utils/navigateToSetting";
 
 const log = createRendererLogger("settings/GeneralPDFSettings");
 
 const GeneralPDFSettings: React.FC = () => {
     const { t } = useTranslation("settings");
-    const { scrollIntoView } = useSettingsContext();
     const appSettings = useAppSelector((store) => store.appSettings);
     const dispatch = useAppDispatch();
     return (
@@ -23,7 +22,7 @@ const GeneralPDFSettings: React.FC = () => {
                 {t("pdf.scaleDesc")}{" "}
                 <a
                     onClick={() => {
-                        scrollIntoView("#settings-usage-pdfScale", "extras");
+                        navigateToSetting("usage:pdf-scale", dispatch);
                     }}
                 >
                     {t("shared.moreInfo")}
@@ -47,7 +46,7 @@ const GeneralPDFSettings: React.FC = () => {
                 {t("pdf.renderDescBefore")}
                 <a
                     onClick={() => {
-                        scrollIntoView("#settings-customTempFolder", "settings");
+                        navigateToSetting("setting:custom-temp", dispatch);
                     }}
                 >
                     {t("pdf.tempFolder")}
@@ -56,7 +55,7 @@ const GeneralPDFSettings: React.FC = () => {
                 <br />
                 <a
                     onClick={() => {
-                        scrollIntoView("#settings-keepExtractedFiles", "settings");
+                        navigateToSetting("setting:keep-extracted", dispatch);
                     }}
                 >
                     {t("pdf.keepTempFiles")}

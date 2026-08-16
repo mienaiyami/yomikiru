@@ -973,6 +973,15 @@ html{
                         }
                     }
                 }
+                /*
+                 * Must follow .settingItem2 / .toggleItem box-shadow rules or they override.
+                 * Prefer outline + bg: chrome 108 has no color-mix; box-shadow alone loses to dividers.
+                 */
+                .settings-target-highlight {
+                    outline: 3px solid var(--btn-color-focus);
+                    outline-offset: 2px;
+                    background-color: rgba(255, 255, 0, 0.28);
+                }
             }
 
             #loadingScreen {

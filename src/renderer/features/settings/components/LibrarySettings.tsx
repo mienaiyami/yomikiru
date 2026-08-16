@@ -13,6 +13,7 @@ import {
 import { createRendererLogger } from "@utils/logger";
 import { useCallback, useState } from "react";
 import { useTranslation } from "react-i18next";
+import { navigateToSetting } from "../utils/navigateToSetting";
 
 const log = createRendererLogger("settings/LibrarySettings");
 
@@ -234,10 +235,7 @@ const LibrarySettings: React.FC = () => {
                 {t("library.thumbnailsDescMid")}
                 <a
                     onClick={() => {
-                        document.getElementById("settings-default-location")?.scrollIntoView({
-                            behavior: "smooth",
-                            block: "start",
-                        });
+                        navigateToSetting("setting:default-location", dispatch);
                     }}
                 >
                     {t("defaultLocation.title")}

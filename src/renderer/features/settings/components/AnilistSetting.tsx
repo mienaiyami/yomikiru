@@ -6,11 +6,10 @@ import InputCheckbox from "@ui/InputCheckbox";
 import AniList from "@utils/anilist";
 import { useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
-import { useSettingsContext } from "../Settings";
+import { navigateToSetting } from "../utils/navigateToSetting";
 
 const AnilistSetting: React.FC = () => {
     const { t } = useTranslation("settings");
-    const { scrollIntoView } = useSettingsContext();
     const appSettings = useAppSelector((store) => store.appSettings);
     const [anilistUsername, setAnilistUsername] = useState("Error");
     const anilistToken = useAppSelector((store) => store.anilist.token);
@@ -23,13 +22,13 @@ const AnilistSetting: React.FC = () => {
             });
     }, [anilistToken]);
     return (
-        <div className="settingItem2">
+        <div className="settingItem2" id="settings-anilist">
             <h3>{t("anilist.title")}</h3>
             <div className="desc">
                 {t("anilist.desc")}{" "}
                 <a
                     onClick={() => {
-                        scrollIntoView("#settings-usage-anilist", "extras");
+                        navigateToSetting("usage:anilist", dispatch);
                     }}
                 >
                     {t("shared.moreInfo")}

@@ -7,8 +7,8 @@ import { keyFormatter, mouseEventFormatter, SHORTCUT_COMMAND_MAP } from "@utils/
 import { createRendererLogger } from "@utils/logger";
 import type { ReactElement } from "react";
 import { useTranslation } from "react-i18next";
-import { useSettingsContext } from "../Settings";
 import { reservedKeys, SHORTCUT_LIMIT } from "../utils/constants";
+import { navigateToSetting } from "../utils/navigateToSetting";
 
 const log = createRendererLogger("settings/Shortcuts");
 
@@ -100,7 +100,7 @@ const ShortcutInput = ({ command }: { command: ShortcutCommands }) => {
 const Shortcuts = (): ReactElement => {
     const { t } = useTranslation("settings");
     const { t: tReader } = useTranslation("reader");
-    const { scrollIntoView } = useSettingsContext();
+    const dispatch = useAppDispatch();
     return (
         <div className="shortcutKey">
             <ul>
@@ -129,13 +129,13 @@ const Shortcuts = (): ReactElement => {
                         <th>{t("shortcuts.key")}</th>
                     </tr>
                     {SHORTCUT_COMMAND_MAP.map((e) => (
-                        <tr key={e.command}>
+                        <tr key={e.command} id={`settings-shortcut-${e.command}`}>
                             <td>
                                 {tReader(e.name)}
                                 {(["dirUp", "contextMenu"] as ShortcutCommands[]).includes(e.command) && (
                                     <a
                                         onClick={() => {
-                                            scrollIntoView("#settings-usage-searchShortcutKeys", "extras");
+                                            navigateToSetting("usage:search-shortcut-keys", dispatch);
                                         }}
                                     >
                                         {t("shared.moreInfoDot")}
