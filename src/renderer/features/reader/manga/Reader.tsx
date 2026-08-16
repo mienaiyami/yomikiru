@@ -378,9 +378,6 @@ const Reader: React.FC = () => {
                 case is(shortcutsMapped.prevChapter):
                     openPrevChapterRef.current?.click();
                     return true;
-                case is(shortcutsMapped.focusSideListSearch):
-                    sideListSearchRef.current?.focus();
-                    return true;
                 case is(shortcutsMapped.randomChapter):
                     openRandomChapterRef.current?.click();
                     return true;

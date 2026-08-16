@@ -3,6 +3,7 @@ import { faSort } from "@fortawesome/free-solid-svg-icons";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import ListNavigator from "@renderer/components/ListNavigator";
 import { useMultiSelect } from "@renderer/hooks/useMultiSelect";
+import { PAGE_SEARCH_PRIORITY } from "@renderer/hooks/usePageSearchFocus";
 import { setAppSettings } from "@store/appSettings";
 import { useAppDispatch, useAppSelector } from "@store/hooks";
 import { dialogUtils } from "@utils/dialog";
@@ -255,7 +256,12 @@ const BookmarkTab: React.FC = () => {
                             >
                                 <FontAwesomeIcon icon={faSort} />
                             </button>
-                            <ListNavigator.SearchInput />
+                            <ListNavigator.SearchInput
+                                pageSearch={{
+                                    id: "classic-bookmark",
+                                    priority: PAGE_SEARCH_PRIORITY.homeFallback,
+                                }}
+                            />
                         </div>
                     </div>
                 )}

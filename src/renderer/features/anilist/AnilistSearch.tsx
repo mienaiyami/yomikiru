@@ -1,9 +1,10 @@
+import { PAGE_SEARCH_PRIORITY, usePageSearchFocus } from "@renderer/hooks/usePageSearchFocus";
 import { addAnilistTracker, setGalleryTrackContext } from "@store/anilist";
 import { useAppDispatch, useAppSelector } from "@store/hooks";
 import { getReaderContent } from "@store/reader";
 import { setAnilistSearchOpen } from "@store/ui";
 import AniList, { anilistFormatLabel, anilistStatusLabel } from "@utils/anilist";
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import FocusLock from "react-focus-lock";
 import { useTranslation } from "react-i18next";
 
@@ -17,6 +18,11 @@ const AnilistSearch = () => {
     const [search, setSearch] = useState("");
     const [result, setResult] = useState<Anilist.SearchMediaItem[]>([]);
     const [searchTimeout, setSearchTimeout] = useState<NodeJS.Timeout | null>(null);
+    const searchInputRef = useRef<HTMLInputElement>(null);
+    usePageSearchFocus(searchInputRef, {
+        id: "anilist-search",
+        priority: PAGE_SEARCH_PRIORITY.overlay,
+    });
 
     const dispatch = useAppDispatch();
 
@@ -28,6 +34,11 @@ const AnilistSearch = () => {
     useEffect(() => {
         setSearch(effectiveTitle);
     }, [effectiveTitle]);
+
+    /* the input remounts when link/title identity changes; restore focus after attach */
+    useEffect(() => {
+        searchInputRef.current?.focus();
+    }, [effectiveLink, effectiveTitle]);
 
     useEffect(() => {
         void AniList.searchMedia(search).then((e) => {
@@ -76,9 +87,7 @@ const AnilistSearch = () => {
                             onKeyDown={(e) => {
                                 e.stopPropagation();
                             }}
-                            ref={(node) => {
-                                if (node) node.focus();
-                            }}
+                            ref={searchInputRef}
                             defaultValue={effectiveTitle}
                             onChange={(e) => {
                                 if (searchTimeout) clearTimeout(searchTimeout);

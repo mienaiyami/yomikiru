@@ -1,4 +1,5 @@
 import { useDirectoryValidator } from "@features/reader/hooks/useDirectoryValidator";
+import { dispatchFocusPageSearchShortcut } from "@hooks/usePageSearchFocus";
 import { setAnilistCurrentManga, setGalleryTrackContext } from "@store/anilist";
 import { refreshAppSettings, setAppSettings } from "@store/appSettings";
 import { addBookmark, fetchAllBookmarks, removeBookmark } from "@store/bookmarks";
@@ -78,6 +79,7 @@ const App = (): ReactElement => {
     const appSettings = useAppSelector((state) => state.appSettings);
     // const isReaderOpen = useAppSelector((state) => state.ui.isOpen.reader);
     const isReaderOpen = useAppSelector((state) => state.reader.active);
+    const isSettingsOpen = useAppSelector((state) => state.ui.isOpen.settings);
     const linkInReader = useAppSelector((state) => state.reader.link);
     const shortcutsMapped = useAppSelector(getShortcutsMapped, shallowEqual);
     const theme = useAppSelector((state) => state.theme.name);
@@ -519,6 +521,9 @@ const App = (): ReactElement => {
                     window.electron.webFrame.setZoomFactor(window.electron.webFrame.getZoomFactor() + 0.1);
                     afterUIScale();
                     break;
+                case i(shortcutsMapped.focusPageSearch):
+                    dispatchFocusPageSearchShortcut(e, { settingsOpen: isSettingsOpen });
+                    break;
                 default:
                     break;
             }
@@ -539,7 +544,7 @@ const App = (): ReactElement => {
             window.removeEventListener("keydown", onKeyDown);
             window.removeEventListener("mousedown", onMouseDown);
         };
-    }, [shortcutsMapped, isReaderOpen]);
+    }, [shortcutsMapped, isReaderOpen, isSettingsOpen]);
 
     useEffect(() => {
         const abortController = new AbortController();

@@ -11,6 +11,7 @@ import { useAppContext } from "@renderer/App";
 import ListNavigator from "@renderer/components/ListNavigator";
 import InputRange from "@renderer/components/ui/InputRange";
 import Popover from "@renderer/components/ui/Popover";
+import { PAGE_SEARCH_PRIORITY } from "@renderer/hooks/usePageSearchFocus";
 import { setAppSettings } from "@store/appSettings";
 import { useAppDispatch, useAppSelector } from "@store/hooks";
 import { useTranslation } from "react-i18next";
@@ -237,7 +238,16 @@ const GalleryToolbar: React.FC<GalleryToolbarProps> = ({
             <span className="toolbarDivider" aria-hidden="true" />
             <GalleryTypeFilterBar activeFilter={activeTypeFilter} onFilterChange={onTypeFilterChange} />
             <div className="search">
-                {!hideSearch && <ListNavigator.SearchInput placeholder={t("gallery.toolbar.searchPlaceholder")} />}
+                {!hideSearch && (
+                    <ListNavigator.SearchInput
+                        placeholder={t("gallery.toolbar.searchPlaceholder")}
+                        pageSearch={{
+                            id: "gallery-toolbar",
+                            priority: PAGE_SEARCH_PRIORITY.home,
+                            enabled: !hidden,
+                        }}
+                    />
+                )}
             </div>
             <div className="actions">
                 {!hideSort && (

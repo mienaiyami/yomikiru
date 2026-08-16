@@ -1,6 +1,6 @@
 import { useAppSelector } from "@store/hooks";
 import { getShortcutsMapped } from "@store/shortcuts";
-import { keyFormatter } from "@utils/keybindings";
+import { isShortcutEventFromInputTarget, keyFormatter } from "@utils/keybindings";
 import { type RefObject, useCallback, useEffect } from "react";
 import { shallowEqual } from "react-redux";
 
@@ -76,9 +76,7 @@ export const useKeybindings = (handlers: KeybindHandlerConfig[], options: Keybin
 
             if (focusElement && document.activeElement !== focusElement.current) return;
 
-            const isInInput = ["INPUT", "TEXTAREA", "SELECT", "BUTTON"].includes(
-                (e.target as HTMLElement)?.tagName,
-            );
+            const isInInput = isShortcutEventFromInputTarget(e);
 
             if (window.app) {
                 window.app.keyRepeated = e.repeat;

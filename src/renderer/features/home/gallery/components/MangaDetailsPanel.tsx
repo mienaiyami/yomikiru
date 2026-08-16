@@ -15,6 +15,7 @@ import { useAppContext } from "@renderer/App";
 import ListNavigator from "@renderer/components/ListNavigator";
 import SelectionCheckbox from "@renderer/components/ui/SelectionCheckbox";
 import { useMultiSelect } from "@renderer/hooks/useMultiSelect";
+import { PAGE_SEARCH_PRIORITY } from "@renderer/hooks/usePageSearchFocus";
 import { useSelectionShortcuts } from "@renderer/hooks/useSelectionShortcuts";
 import { setAppSettings } from "@store/appSettings";
 import { removeBookmark } from "@store/bookmarks";
@@ -797,6 +798,10 @@ const MangaDetailsPanel: React.FC<MangaDetailsPanelProps> = ({
                                         </div>
                                         <ListNavigator.SearchInput
                                             placeholder={t("gallery.details.searchChapters")}
+                                            pageSearch={{
+                                                id: "gallery-manga-chapters",
+                                                priority: PAGE_SEARCH_PRIORITY.details,
+                                            }}
                                         />
                                     </div>
                                 )}
@@ -848,6 +853,10 @@ const MangaDetailsPanel: React.FC<MangaDetailsPanelProps> = ({
                                     <div className="chapters-toolbar">
                                         <ListNavigator.SearchInput
                                             placeholder={t("gallery.details.searchBookmarks")}
+                                            pageSearch={{
+                                                id: "gallery-manga-bookmarks",
+                                                priority: PAGE_SEARCH_PRIORITY.details,
+                                            }}
                                         />
                                     </div>
                                 )}

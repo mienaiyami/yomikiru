@@ -1,6 +1,6 @@
 import { createSelector, createSlice, type PayloadAction } from "@reduxjs/toolkit";
 import { dialogUtils } from "@utils/dialog";
-import { SHORTCUT_COMMAND_MAP } from "@utils/keybindings";
+import { healShortcutEntries, SHORTCUT_COMMAND_MAP } from "@utils/keybindings";
 import { saveJSONfile, shortcutsPath } from "../utils/file";
 import { createRendererLogger } from "../utils/logger";
 import { readJsonFileWithRetrySync } from "../utils/readJsonFileWithRetry";
@@ -30,19 +30,18 @@ if (window.fs.existsSync(shortcutsPath)) {
             throw Error("old shortcuts.json detected");
         }
 
-        // check if shortcut key is missing in shortcuts.json, if so then add
-        const shortcutKeyEntries = data.map((e) => e.command);
-        const shortcutKeyOriginal = SHORTCUT_COMMAND_MAP.map((e) => e.command);
-        data = data.filter((e) => shortcutKeyOriginal.includes(e.command));
-        SHORTCUT_COMMAND_MAP.forEach((e) => {
-            if (!shortcutKeyEntries.includes(e.command)) {
-                log.log(`shortcuts.json: added missing command "${e.command}" with defaults`);
-                data.push({
-                    command: e.command,
-                    keys: e.defaultKeys,
-                });
+        const beforeCommands = new Set(data.map((e) => e.command as string));
+        data = healShortcutEntries(data);
+        for (const command of beforeCommands) {
+            if (!data.some((e) => e.command === command)) {
+                log.log(`shortcuts.json: dropped unknown command "${command}"`);
             }
-        });
+        }
+        for (const e of data) {
+            if (!beforeCommands.has(e.command)) {
+                log.log(`shortcuts.json: added missing command "${e.command}" with defaults`);
+            }
+        }
         saveJSONfile(shortcutsPath, data);
         initialState.push(...data);
     } catch (err) {

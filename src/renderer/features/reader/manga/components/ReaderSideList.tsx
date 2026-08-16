@@ -12,6 +12,7 @@ import {
 } from "@fortawesome/free-solid-svg-icons";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import ListNavigator from "@renderer/components/ListNavigator";
+import { PAGE_SEARCH_PRIORITY } from "@renderer/hooks/usePageSearchFocus";
 import { setAppSettings } from "@store/appSettings";
 import { addBookmark, removeBookmark } from "@store/bookmarks";
 import { useAppDispatch, useAppSelector } from "@store/hooks";
@@ -628,7 +629,13 @@ const ReaderSideList = memo(
                     <div className="tools">
                         <div className="row1">
                             <div className="search-with-pin">
-                                <ListNavigator.SearchInput placeholder={t("sideList.searchChapters")} />
+                                <ListNavigator.SearchInput
+                                    placeholder={t("sideList.searchChapters")}
+                                    pageSearch={{
+                                        id: "reader-manga-sidelist",
+                                        priority: PAGE_SEARCH_PRIORITY.reader,
+                                    }}
+                                />
                                 <button
                                     className={`pin-filter-toggle ${isSearchFixed ? "selected" : ""}`}
                                     data-tooltip={

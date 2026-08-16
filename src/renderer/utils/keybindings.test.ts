@@ -1,5 +1,11 @@
 import { describe, expect, it, vi } from "vitest";
-import { keyFormatter, mouseEventFormatter, SHORTCUT_COMMAND_MAP } from "./keybindings";
+import {
+    healShortcutEntries,
+    isShortcutEventFromInputTarget,
+    keyFormatter,
+    mouseEventFormatter,
+    SHORTCUT_COMMAND_MAP,
+} from "./keybindings";
 
 const keyEvent = (partial: Partial<KeyboardEvent> & Pick<KeyboardEvent, "code" | "key">): KeyboardEvent =>
     partial as KeyboardEvent;
@@ -9,6 +15,47 @@ describe("SHORTCUT_COMMAND_MAP", () => {
         expect(Object.isFrozen(SHORTCUT_COMMAND_MAP)).toBe(true);
         const commands = SHORTCUT_COMMAND_MAP.map((c) => c.command);
         expect(new Set(commands).size).toBe(commands.length);
+    });
+
+    it("focusPageSearch defaults to slash and ctrl+shift+f without taking ctrl+slash", () => {
+        const entry = SHORTCUT_COMMAND_MAP.find((c) => c.command === "focusPageSearch");
+        expect(entry?.defaultKeys).toEqual(["slash", "ctrl+shift+f"]);
+        expect(entry?.defaultKeys).not.toContain("ctrl+slash");
+        expect(SHORTCUT_COMMAND_MAP.some((c) => c.command === "focusSideListSearch")).toBe(false);
+    });
+});
+
+describe("isShortcutEventFromInputTarget", () => {
+    it("is true for input, textarea, select, and button targets", () => {
+        for (const tag of ["INPUT", "TEXTAREA", "SELECT", "BUTTON"] as const) {
+            const el = document.createElement(tag.toLowerCase());
+            const event = new KeyboardEvent("keydown", { key: "/", code: "Slash", bubbles: true });
+            Object.defineProperty(event, "target", { value: el });
+            expect(isShortcutEventFromInputTarget(event)).toBe(true);
+        }
+    });
+
+    it("is false for body", () => {
+        const event = new KeyboardEvent("keydown", { key: "/", code: "Slash", bubbles: true });
+        Object.defineProperty(event, "target", { value: document.body });
+        expect(isShortcutEventFromInputTarget(event)).toBe(false);
+    });
+});
+
+describe("healShortcutEntries", () => {
+    it("drops unknown commands, keeps saved keys, and fills missing map entries with defaults", () => {
+        const healed = healShortcutEntries([
+            { command: "navToHome", keys: ["home"] },
+            { command: "notARealCommand", keys: ["x"] },
+        ]);
+        expect(healed.some((e) => e.command === "notARealCommand")).toBe(false);
+        expect(healed.find((e) => e.command === "navToHome")?.keys).toEqual(["home"]);
+        const pageSearch = healed.find((e) => e.command === "focusPageSearch");
+        expect(pageSearch?.keys).toEqual(
+            SHORTCUT_COMMAND_MAP.find((c) => c.command === "focusPageSearch")?.defaultKeys,
+        );
+        expect(healed).toHaveLength(SHORTCUT_COMMAND_MAP.length);
+        expect(new Set(healed.map((e) => e.command))).toEqual(new Set(SHORTCUT_COMMAND_MAP.map((e) => e.command)));
     });
 });
 

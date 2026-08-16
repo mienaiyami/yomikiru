@@ -6,6 +6,7 @@ import { useAppContext } from "@renderer/App";
 import ListNavigator from "@renderer/components/ListNavigator";
 import SelectionCheckbox from "@renderer/components/ui/SelectionCheckbox";
 import { useMultiSelect } from "@renderer/hooks/useMultiSelect";
+import { PAGE_SEARCH_PRIORITY } from "@renderer/hooks/usePageSearchFocus";
 import { useSelectionShortcuts } from "@renderer/hooks/useSelectionShortcuts";
 import { removeBookmark } from "@store/bookmarks";
 import { removeNote } from "@store/bookNotes";
@@ -575,6 +576,10 @@ const BookDetailsPanel: React.FC<BookDetailsPanelProps> = ({
                                     <div className="chapters-toolbar">
                                         <ListNavigator.SearchInput
                                             placeholder={t("gallery.details.searchBookmarks")}
+                                            pageSearch={{
+                                                id: "gallery-book-bookmarks",
+                                                priority: PAGE_SEARCH_PRIORITY.details,
+                                            }}
                                         />
                                     </div>
                                 )}
@@ -622,6 +627,10 @@ const BookDetailsPanel: React.FC<BookDetailsPanelProps> = ({
                                     <div className="chapters-toolbar">
                                         <ListNavigator.SearchInput
                                             placeholder={t("gallery.details.searchNotes")}
+                                            pageSearch={{
+                                                id: "gallery-book-notes",
+                                                priority: PAGE_SEARCH_PRIORITY.details,
+                                            }}
                                         />
                                     </div>
                                 )}

@@ -2,6 +2,7 @@ import LocationListItem from "@features/home/classic/components/LocationListItem
 import { faAngleUp, faSort } from "@fortawesome/free-solid-svg-icons";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import ListNavigator from "@renderer/components/ListNavigator";
+import { PAGE_SEARCH_PRIORITY } from "@renderer/hooks/usePageSearchFocus";
 import { setAppSettings } from "@store/appSettings";
 import { useAppDispatch, useAppSelector } from "@store/hooks";
 import { dialogUtils } from "@utils/dialog";
@@ -323,7 +324,14 @@ const LocationsTab = (): ReactElement => {
                         >
                             <FontAwesomeIcon icon={faAngleUp} />
                         </button>
-                        <ListNavigator.SearchInput runOriginalOnChange={true} onChange={handleOnChange} />
+                        <ListNavigator.SearchInput
+                            runOriginalOnChange={true}
+                            onChange={handleOnChange}
+                            pageSearch={{
+                                id: "classic-locations",
+                                priority: PAGE_SEARCH_PRIORITY.homeLast,
+                            }}
+                        />
                     </div>
                     <div className="currentPath">
                         <button

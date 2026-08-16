@@ -55,9 +55,9 @@ export const SHORTCUT_COMMAND_MAP = [
         defaultKeys: ["bracketleft"],
     },
     {
-        command: "focusSideListSearch" as const,
-        name: "shortcutNames.focusSideListSearch",
-        defaultKeys: ["ctrl+shift+f"],
+        command: "focusPageSearch" as const,
+        name: "shortcutNames.focusPageSearch",
+        defaultKeys: ["slash", "ctrl+shift+f"],
     },
     {
         command: "randomChapter" as const,
@@ -251,6 +251,38 @@ export const SHORTCUT_COMMAND_MAP = [
     },
 ];
 Object.freeze(SHORTCUT_COMMAND_MAP);
+
+/** Tags that already consume typing, so character shortcuts must not steal the key. */
+const SHORTCUT_INPUT_TAGS = new Set(["INPUT", "TEXTAREA", "SELECT", "BUTTON"]);
+
+/**
+ * True when the event target is a control that already consumes typing.
+ * App's Focus search case and the keybinding hook share this so the keystroke is not stolen.
+ */
+export const isShortcutEventFromInputTarget = (e: Event): boolean => {
+    const tag = (e.target as HTMLElement | null)?.tagName;
+    return Boolean(tag && SHORTCUT_INPUT_TAGS.has(tag));
+};
+
+/**
+ * Normalizes a persisted shortcut list to {@link SHORTCUT_COMMAND_MAP}: keep
+ * saved keys for known commands, drop unknown ids, and fill missing commands
+ * with their default keys.
+ */
+export const healShortcutEntries = (
+    saved: readonly { command: string; keys: readonly string[] }[],
+): ShortcutSchema[] => {
+    const allowed = new Set<string>(SHORTCUT_COMMAND_MAP.map((e) => e.command));
+    const byCommand = new Map<string, string[]>();
+    for (const e of saved) {
+        if (!allowed.has(e.command) || byCommand.has(e.command)) continue;
+        byCommand.set(e.command, [...e.keys]);
+    }
+    return SHORTCUT_COMMAND_MAP.map((e) => ({
+        command: e.command,
+        keys: byCommand.get(e.command) ?? [...e.defaultKeys],
+    }));
+};
 
 /**
  * Format key event to string (e.g. "ctrl+shift+a", "ctrl+shift+numpad_plus")

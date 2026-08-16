@@ -23,6 +23,7 @@
         "selectEmpty": "Click <code>{{select}}</code> on empty folder to open in reader.",
         "dirUp": "Click <code>{{up}}</code> to go up a directory/folder.",
         "contextMenu": "Click <code>{{menu}}</code> buttons to get right click menu of focused item.",
+        "focusPageSearch": "<code>{{focus}}</code> focuses the main search field on the current page (classic Continue Reading / History when that list is shown, otherwise Bookmarks then Locations; gallery toolbar, or the open details list; manga sidelist or book find-in-page). Does not run while typing in an input. Settings search will use the same shortcut when it exists.",
         "byType": "Search by type: Type <code>manga|manhua|manhwa|webtoon|webcomic|comic</code> to search for manga/manhua/manhwa/webtoon/webcomic/comic or <code>epub</code> for epub."
     },
     "homeLocation": {
@@ -75,7 +76,7 @@
         "mouseScroll": "To scroll using mouse while viewing full page, use \"Left to Right\" or \"Right to Left\" reading mode, then \"Fit Vertically\" option or make image size lower than window height.",
         "middleMouse": "Middle mouse button for auto scrolling.",
         "sideList": "Access the side list by moving the mouse to left side of the screen. You can pin and resize the side list.",
-        "sideListSearch": "<code>{{focus}}</code> focuses the sidelist chapter search. <code>{{random}}</code> opens a random chapter (avoids recently opened; works with shuffle mode).",
+        "sideListSearch": "<code>{{focus}}</code> focuses the sidelist chapter search (same Focus search command as home). <code>{{random}}</code> opens a random chapter (avoids recently opened; works with shuffle mode).",
         "shuffle": {
             "title": "Shuffle mode",
             "body": "(shuffle icon in sidelist): randomizes chapter order once; prev/next follow shuffled order. Auto-refresh disabled in this mode. Session-only."

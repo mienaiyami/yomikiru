@@ -147,6 +147,14 @@ const Usage = (): ReactElement => {
                             />
                         </li>
                         <li>
+                            <Trans
+                                i18nKey="searchShortcuts.focusPageSearch"
+                                ns="usage"
+                                components={{ code: <code /> }}
+                                values={{ focus: keysFor(shortcuts, "focusPageSearch") }}
+                            />
+                        </li>
+                        <li>
                             <Trans i18nKey="searchShortcuts.byType" ns="usage" components={{ code: <code /> }} />
                         </li>
                     </ul>
@@ -324,7 +332,7 @@ const Usage = (): ReactElement => {
                                 ns="usage"
                                 components={{ code: <code /> }}
                                 values={{
-                                    focus: keysFor(shortcuts, "focusSideListSearch"),
+                                    focus: keysFor(shortcuts, "focusPageSearch"),
                                     random: keysFor(shortcuts, "randomChapter"),
                                 }}
                             />

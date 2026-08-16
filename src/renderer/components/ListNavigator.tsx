@@ -1,5 +1,6 @@
 import { faXmark } from "@fortawesome/free-solid-svg-icons";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
+import { type PageSearchTargetOptions, usePageSearchFocus } from "@renderer/hooks/usePageSearchFocus";
 import { useAppSelector } from "@store/hooks";
 import { getShortcutsMapped } from "@store/shortcuts";
 import { useVirtualizer } from "@tanstack/react-virtual";
@@ -287,6 +288,11 @@ const ListNavigatorProvider = memo(ListNavigatorProviderComponent) as typeof Lis
 type SearchInputProps = {
     placeholder?: string;
     className?: string;
+    /**
+     * When set, this field is a candidate for {@link usePageSearchFocus}.
+     * Higher {@link PageSearchTargetOptions.priority} wins among shown, mounted fields.
+     */
+    pageSearch?: PageSearchTargetOptions;
     /** @returns value to set to the filter when `runOriginalOnChange` is true
      * or return anything when `runOriginalOnChange` is false
      */
@@ -317,6 +323,7 @@ type SearchInputProps = {
 const SearchInputComponent: React.FC<SearchInputProps> = ({
     placeholder,
     className = "search-input",
+    pageSearch,
     onChange,
     runOriginalOnChange = false,
 }) => {
@@ -324,6 +331,12 @@ const SearchInputComponent: React.FC<SearchInputProps> = ({
     const resolvedPlaceholder = placeholder ?? t("list.typeToSearch");
     const { inputRef, filter, handleFilterChange, handleKeyDown, setFocused } = useListNavigator();
     const [hasValue, setHasValue] = useState(false);
+
+    usePageSearchFocus(inputRef, {
+        id: pageSearch?.id ?? "",
+        priority: pageSearch?.priority ?? 0,
+        enabled: pageSearch?.enabled ?? true,
+    });
 
     useEffect(() => {
         if (inputRef.current) {
