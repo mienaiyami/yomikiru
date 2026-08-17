@@ -92,7 +92,7 @@ const Settings = (): ReactElement => {
         if (!isSettingOpen || !pendingSettingsNav) return;
 
         let cancelled = false;
-        const { id, requestId } = pendingSettingsNav;
+        const { id } = pendingSettingsNav;
         const target = getSettingsTarget(id);
         if (!target) {
             log.error("pending settings nav: unknown id", { id });
@@ -116,7 +116,6 @@ const Settings = (): ReactElement => {
             clearHighlightRef.current?.();
             clearHighlightRef.current = highlightSettingsTargetElement(elem);
             dispatch(clearPendingSettingsNav());
-            log.log("settings nav applied", { id, requestId });
         });
 
         return () => {

@@ -118,7 +118,6 @@ export class TrayManager {
             w.hide();
         }
         TrayManager.refreshMenu();
-        logger.log(`Tray menu 'Hide all': minimized ${windows.length} window(s) to tray`);
     }
 
     /**
@@ -134,7 +133,6 @@ export class TrayManager {
             }
             only.hide();
             TrayManager.refreshMenu();
-            logger.log("Tray icon click: minimized focused window to tray");
             return;
         }
         const hidden = windows.filter((w) => !w.isVisible());
