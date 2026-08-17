@@ -426,11 +426,25 @@ html{
                 overflow-y: auto;
                 background-color: var(--btn-color);
                 color: var(--font-color);
+                /* KeyboardList enables clicks only on :focus-within; filter-while-type lists stay unfocused */
+                &.retainFocus {
+                    pointer-events: all;
+                }
                 ul {
                     li {
                         padding: 5px 10px;
                         display: grid;
-                        grid-template-columns: 1em auto;
+                        grid-template-columns: 1em minmax(0, 1fr) auto;
+                        column-gap: 0.5em;
+                        align-items: baseline;
+                        .itemListLabel {
+                            min-width: 0;
+                        }
+                        .itemListDesc {
+                            opacity: 0.55;
+                            font-size: 0.85em;
+                            white-space: nowrap;
+                        }
                     }
                 }
             }
@@ -512,6 +526,19 @@ html{
                     background: var(--body-bg-color);
                 }
                 --tabMoverHeight: 3em;
+                --settingsSearchHeight: 3.5em;
+                .settingsSearch {
+                    position: relative;
+                    z-index: 2;
+                    height: var(--settingsSearchHeight);
+                    padding: 0.5em 0.75em;
+                    box-sizing: border-box;
+                    border-bottom: 1px solid var(--divider-color);
+                    .search-input-wrapper,
+                    .search-input {
+                        height: 100%;
+                    }
+                }
                 .tabMovers {
                     height: var(--tabMoverHeight);
                     position: relative;
@@ -554,7 +581,7 @@ html{
                 .overlayCont {
                     position: relative;
                     width: 100%;
-                    height: calc(100% - var(--tabMoverHeight));
+                    height: calc(100% - var(--tabMoverHeight) - var(--settingsSearchHeight));
                     overflow: auto;
 
                     &.noScroll {

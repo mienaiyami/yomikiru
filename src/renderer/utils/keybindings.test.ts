@@ -17,6 +17,12 @@ describe("SHORTCUT_COMMAND_MAP", () => {
         expect(new Set(commands).size).toBe(commands.length);
     });
 
+    it("uses shortcutNames.<command> as the reader catalog label key", () => {
+        for (const entry of SHORTCUT_COMMAND_MAP) {
+            expect(entry.name).toBe(`shortcutNames.${entry.command}`);
+        }
+    });
+
     it("focusPageSearch defaults to slash and ctrl+shift+f without taking ctrl+slash", () => {
         const entry = SHORTCUT_COMMAND_MAP.find((c) => c.command === "focusPageSearch");
         expect(entry?.defaultKeys).toEqual(["slash", "ctrl+shift+f"]);
@@ -56,6 +62,15 @@ describe("healShortcutEntries", () => {
         );
         expect(healed).toHaveLength(SHORTCUT_COMMAND_MAP.length);
         expect(new Set(healed.map((e) => e.command))).toEqual(new Set(SHORTCUT_COMMAND_MAP.map((e) => e.command)));
+    });
+
+    it("copies defaultKeys into a mutable keys array", () => {
+        const healed = healShortcutEntries([]);
+        const fromMap = SHORTCUT_COMMAND_MAP[0];
+        expect(healed[0]?.keys).toEqual([...fromMap.defaultKeys]);
+        expect(healed[0]?.keys).not.toBe(fromMap.defaultKeys);
+        healed[0]?.keys.push("test-only");
+        expect(fromMap.defaultKeys).not.toContain("test-only");
     });
 });
 

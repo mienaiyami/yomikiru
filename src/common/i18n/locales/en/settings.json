@@ -22,6 +22,10 @@
         "extras": "Extras",
         "usageFeatures": "Usage & Features"
     },
+    "search": {
+        "placeholder": "Search settings",
+        "noResults": "No matching settings"
+    },
     "shared": {
         "moreInfo": "More Info",
         "moreInfoDot": "More Info.",

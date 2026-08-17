@@ -16,6 +16,7 @@ import FocusLock from "react-focus-lock";
 import { useTranslation } from "react-i18next";
 import About from "./components/About";
 import GeneralSettings from "./components/GeneralSettings";
+import SettingsSearch from "./components/SettingsSearch";
 import Shortcuts from "./components/Shortcuts";
 import ThemeCont from "./components/ThemeCont";
 import Usage from "./components/Usage";
@@ -86,14 +87,6 @@ const Settings = (): ReactElement => {
     const prevTab = useCallback(() => {
         setCurrentTab((init) => (init - 1 + SETTINGS_TABS.length) % SETTINGS_TABS.length);
     }, []);
-
-    useEffect(() => {
-        if (isSettingOpen) {
-            setTimeout(() => {
-                settingContRef.current?.focus();
-            }, 300);
-        }
-    }, [isSettingOpen]);
 
     useEffect(() => {
         if (!isSettingOpen || !pendingSettingsNav) return;
@@ -179,17 +172,32 @@ const Settings = (): ReactElement => {
         if (settingContRef.current) {
             settingContRef.current.scrollTop = 0;
         }
-        setTimeout(() => {
-            settingContRef.current?.focus();
+        const timer = window.setTimeout(() => {
+            const body = settingContRef.current;
+            if (!body) return;
+            // overlay is always mounted; skip while closed so this does not steal page focus
+            if (body.closest("#settings")?.getAttribute("data-state") !== "open") return;
+            body.focus();
         }, 100);
+        return () => window.clearTimeout(timer);
     }, [currentTab]);
 
     return (
         <SettingsContext.Provider value={{ currentTab, setCurrentTab, nextTab, prevTab }}>
             <FocusLock disabled={!isSettingOpen}>
-                <div id="settings" data-state={isSettingOpen ? "open" : "closed"}>
+                <div
+                    id="settings"
+                    data-state={isSettingOpen ? "open" : "closed"}
+                    onKeyDown={(e) => {
+                        if (e.key !== "Escape") return;
+                        // search-field Escape is owned by Combobox (clear vs dismiss)
+                        if (e.target instanceof HTMLElement && e.target.closest(".settingsSearch")) return;
+                        dispatch(setSettingsOpen(false));
+                    }}
+                >
                     <div className="clickClose" onClick={() => dispatch(setSettingsOpen(false))}></div>
                     <div className="overflowWrap">
+                        <SettingsSearch />
                         <div className="tabMovers">
                             {SETTINGS_TABS.map((tab, index) => (
                                 <button
@@ -201,14 +209,7 @@ const Settings = (): ReactElement => {
                                 </button>
                             ))}
                         </div>
-                        <div
-                            className={"overlayCont settingCont"}
-                            onKeyDown={(e) => {
-                                if (e.key === "Escape") dispatch(setSettingsOpen(false));
-                            }}
-                            tabIndex={-1}
-                            ref={settingContRef}
-                        >
+                        <div className={"overlayCont settingCont"} tabIndex={-1} ref={settingContRef}>
                             {SETTINGS_TABS.map((tab, index) => (
                                 <div key={tab.key} className={`tab ${currentTab === index ? "selected " : ""}`}>
                                     {renderTabPanel(tab.key, t("tabs.usageFeatures"))}

@@ -155,6 +155,14 @@ const Usage = (): ReactElement => {
                             />
                         </li>
                         <li>
+                            <Trans
+                                i18nKey="searchShortcuts.settingsJump"
+                                ns="usage"
+                                components={{ code: <code /> }}
+                                values={{ focus: keysFor(shortcuts, "focusPageSearch") }}
+                            />
+                        </li>
+                        <li>
                             <Trans i18nKey="searchShortcuts.byType" ns="usage" components={{ code: <code /> }} />
                         </li>
                     </ul>
@@ -374,7 +382,7 @@ const Usage = (): ReactElement => {
                         ns="usage"
                         components={{
                             bold: <b />,
-                            link: <SettingsLink targetId="setting:other" />,
+                            link: <SettingsLink targetId="setting:minimize-to-tray" />,
                         }}
                     />
                 </li>

@@ -3,7 +3,7 @@ import { useAppSelector } from "@store/hooks";
 import { getShortcutsMapped } from "@store/shortcuts";
 import { renderWithProviders } from "@test/renderWithProviders";
 import { act, fireEvent } from "@testing-library/react";
-import { keyFormatter, SHORTCUT_COMMAND_MAP } from "@utils/keybindings";
+import { healShortcutEntries, keyFormatter } from "@utils/keybindings";
 import { type ReactElement, useEffect, useRef } from "react";
 import { afterEach, describe, expect, it } from "vitest";
 import {
@@ -296,10 +296,7 @@ const FocusPageSearchDispatcher = ({ settingsOpen = false }: { settingsOpen?: bo
 };
 
 /** Fresh keymap so tests do not depend on the developer machine's shortcuts.json. */
-const defaultShortcutsState = SHORTCUT_COMMAND_MAP.map((e) => ({
-    command: e.command,
-    keys: e.defaultKeys,
-}));
+const defaultShortcutsState = healShortcutEntries([]);
 
 const renderWithFocusSearch = (ui: ReactElement) =>
     renderWithProviders(ui, { preloadedState: { shortcuts: defaultShortcutsState } });

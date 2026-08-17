@@ -7,6 +7,8 @@ import uiReducer, {
 } from "@store/ui";
 import { describe, expect, it, vi } from "vitest";
 import {
+    firstFocusableInSettingsTarget,
+    focusSettingsTargetElement,
     highlightSettingsTargetElement,
     navigateToSetting,
     waitForSettingsTargetElement,
@@ -116,6 +118,7 @@ describe("highlightSettingsTargetElement", () => {
         const cancel = highlightSettingsTargetElement(elem);
         expect(elem.scrollIntoView).toHaveBeenCalled();
         expect(elem.classList.contains(SETTINGS_TARGET_HIGHLIGHT_CLASS)).toBe(true);
+        expect(document.activeElement).toBe(elem);
 
         cancel();
         expect(elem.classList.contains(SETTINGS_TARGET_HIGHLIGHT_CLASS)).toBe(false);
@@ -137,5 +140,72 @@ describe("highlightSettingsTargetElement", () => {
 
         elem.remove();
         vi.useRealTimers();
+    });
+});
+
+describe("firstFocusableInSettingsTarget", () => {
+    it("prefers a descendant button over an in-app more-info link", () => {
+        const root = document.createElement("div");
+        const link = document.createElement("a");
+        const btn = document.createElement("button");
+        root.append(link, btn);
+        document.body.appendChild(root);
+        expect(firstFocusableInSettingsTarget(root)).toBe(btn);
+        root.remove();
+    });
+
+    it("returns the root when it is the catalog target anchor", () => {
+        const link = document.createElement("a");
+        document.body.appendChild(link);
+        expect(firstFocusableInSettingsTarget(link)).toBe(link);
+        link.remove();
+    });
+
+    it("returns a tabindex=0 toggle before a sibling checkbox", () => {
+        const root = document.createElement("div");
+        const toggle = document.createElement("span");
+        toggle.tabIndex = 0;
+        const checkbox = document.createElement("input");
+        checkbox.type = "checkbox";
+        root.append(toggle, checkbox);
+        document.body.appendChild(root);
+        expect(firstFocusableInSettingsTarget(root)).toBe(toggle);
+        root.remove();
+    });
+
+    it("skips a disabled button for a later enabled one", () => {
+        const root = document.createElement("div");
+        const disabled = document.createElement("button");
+        disabled.disabled = true;
+        const enabled = document.createElement("button");
+        root.append(disabled, enabled);
+        document.body.appendChild(root);
+        expect(firstFocusableInSettingsTarget(root)).toBe(enabled);
+        root.remove();
+    });
+});
+
+describe("focusSettingsTargetElement", () => {
+    it("moves focus from another field onto the first control", () => {
+        const search = document.createElement("input");
+        const root = document.createElement("div");
+        const btn = document.createElement("button");
+        root.appendChild(btn);
+        document.body.append(search, root);
+        search.focus();
+        expect(document.activeElement).toBe(search);
+        focusSettingsTargetElement(root);
+        expect(document.activeElement).toBe(btn);
+        search.remove();
+        root.remove();
+    });
+
+    it("lands on a wrapper with no controls via tabindex -1", () => {
+        const root = document.createElement("div");
+        document.body.appendChild(root);
+        focusSettingsTargetElement(root);
+        expect(root.getAttribute("tabindex")).toBe("-1");
+        expect(document.activeElement).toBe(root);
+        root.remove();
     });
 });

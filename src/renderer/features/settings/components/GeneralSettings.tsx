@@ -100,7 +100,7 @@ const GeneralSettings: React.FC = () => {
             <CustomTempLocation />
             <div className="settingItem2 otherSettings" id="settings-otherSettings">
                 <h3>{t("otherSettings.title")}</h3>
-                <div className="toggleItem">
+                <div className="toggleItem" id="settings-hardwareAcceleration">
                     <InputCheckbox
                         checked={mainSettings.hardwareAcceleration}
                         className="noBG"
@@ -113,7 +113,7 @@ const GeneralSettings: React.FC = () => {
                         {t("otherSettings.hardwareAccelerationDesc")} <code>{t("shared.appRestartNeeded")}</code>
                     </div>
                 </div>
-                <div className="toggleItem">
+                <div className="toggleItem" id="settings-confirmCloseWindow">
                     <InputCheckbox
                         checked={mainSettings.askBeforeClosing}
                         className="noBG"
@@ -124,7 +124,7 @@ const GeneralSettings: React.FC = () => {
                     />
                     <div className="desc">{t("otherSettings.confirmCloseWindowDesc")}</div>
                 </div>
-                <div className="toggleItem">
+                <div className="toggleItem" id="settings-minimizeToTray">
                     <InputCheckbox
                         checked={mainSettings.minimizeToTray}
                         className="noBG"
@@ -135,7 +135,7 @@ const GeneralSettings: React.FC = () => {
                     />
                     <div className="desc">{t("otherSettings.minimizeToTrayDesc")}</div>
                 </div>
-                <div className="toggleItem">
+                <div className="toggleItem" id="settings-useExistingWindow">
                     <InputCheckbox
                         checked={mainSettings.openInExistingWindow}
                         className="noBG"
@@ -148,7 +148,7 @@ const GeneralSettings: React.FC = () => {
                         {t("otherSettings.useExistingWindowDesc")} <code>{t("shared.appRestartNeeded")}</code>
                     </div>
                 </div>
-                <div className="toggleItem">
+                <div className="toggleItem" id="settings-openOnDblClick">
                     <InputCheckbox
                         checked={appSettings.openOnDblClick}
                         className="noBG"
@@ -159,7 +159,7 @@ const GeneralSettings: React.FC = () => {
                     />
                     <div className="desc">{t("otherSettings.openOnDblClickDesc")}</div>
                 </div>
-                <div className="toggleItem">
+                <div className="toggleItem" id="settings-syncSettings">
                     <InputCheckbox
                         checked={appSettings.syncSettings}
                         className="noBG"
@@ -172,7 +172,7 @@ const GeneralSettings: React.FC = () => {
                         {t("otherSettings.syncSettingsDesc")} <code>{t("shared.appRestartNeeded")}</code>
                     </div>
                 </div>
-                <div className="toggleItem">
+                <div className="toggleItem" id="settings-syncThemes">
                     <InputCheckbox
                         checked={appSettings.syncThemes}
                         className="noBG"
@@ -209,7 +209,7 @@ const GeneralSettings: React.FC = () => {
                         </a>
                     </div>
                 </div>
-                <div className="toggleItem">
+                <div className="toggleItem" id="settings-bookmarkHistorySearch">
                     <InputCheckbox
                         checked={appSettings.showSearch}
                         className="noBG"
@@ -235,7 +235,7 @@ const GeneralSettings: React.FC = () => {
                     />
                     <div className="desc">{t("otherSettings.classicListCheckboxesDesc")}</div>
                 </div>
-                <div className="toggleItem">
+                <div className="toggleItem" id="settings-confirmSideListDelete">
                     <InputCheckbox
                         checked={appSettings.confirmDeleteItem}
                         className="noBG"
@@ -254,7 +254,7 @@ const GeneralSettings: React.FC = () => {
                         {t("otherSettings.confirmSideListDeleteDesc2")}
                     </div>
                 </div>
-                <div className="toggleItem">
+                <div className="toggleItem" id="settings-autoZenMode">
                     <InputCheckbox
                         checked={appSettings.openInZenMode}
                         className="noBG"
@@ -265,7 +265,7 @@ const GeneralSettings: React.FC = () => {
                     />
                     <div className="desc">{t("otherSettings.autoZenModeDesc")}</div>
                 </div>
-                <div className="toggleItem">
+                <div className="toggleItem" id="settings-zenModeCursor">
                     <InputCheckbox
                         checked={appSettings.hideCursorInZenMode}
                         className="noBG"
@@ -280,7 +280,7 @@ const GeneralSettings: React.FC = () => {
                     />
                     <div className="desc">{t("otherSettings.zenModeCursorDesc")}</div>
                 </div>
-                <div className="toggleItem">
+                <div className="toggleItem" id="settings-autoRefreshSideList">
                     <InputCheckbox
                         checked={appSettings.autoRefreshSideList}
                         className="noBG"
@@ -295,7 +295,7 @@ const GeneralSettings: React.FC = () => {
                     />
                     <div className="desc">{t("otherSettings.autoRefreshSideListDesc")}</div>
                 </div>
-                <div className="toggleItem">
+                <div className="toggleItem" id="settings-canvasBasedRendering">
                     <InputCheckbox
                         checked={appSettings.useCanvasBasedReader}
                         className="noBG"
@@ -315,7 +315,7 @@ const GeneralSettings: React.FC = () => {
                         <code>{t("shared.experimental")}</code>
                     </div>
                 </div>
-                <div className="toggleItem">
+                <div className="toggleItem" id="settings-dynamicImageLoading">
                     <InputCheckbox
                         checked={appSettings.readerSettings.dynamicLoading}
                         className="noBG"
@@ -336,7 +336,7 @@ const GeneralSettings: React.FC = () => {
                     </div>
                 </div>
 
-                <div className="toggleItem">
+                <div className="toggleItem" id="settings-autoFocusChapter">
                     <InputCheckbox
                         checked={appSettings.readerSettings.focusChapterInList}
                         className="noBG"
@@ -351,7 +351,7 @@ const GeneralSettings: React.FC = () => {
                     />
                     <div className="desc">{t("otherSettings.autoFocusChapterDesc")}</div>
                 </div>
-                <div className="toggleItem">
+                <div className="toggleItem" id="settings-epubAutoFocusChapter">
                     <InputCheckbox
                         checked={appSettings.epubReaderSettings.focusChapterInList}
                         className="noBG"
@@ -365,7 +365,7 @@ const GeneralSettings: React.FC = () => {
                         labelAfter={t("otherSettings.epubAutoFocusChapter")}
                     />
                 </div>
-                <div className="toggleItem">
+                <div className="toggleItem" id="settings-epubLoadByChapter">
                     <InputCheckbox
                         checked={appSettings.epubReaderSettings.loadOneChapter}
                         className="noBG"
@@ -384,7 +384,7 @@ const GeneralSettings: React.FC = () => {
                         {t("otherSettings.epubLoadByChapterDesc2")}
                     </div>
                 </div>
-                <div className="toggleItem">
+                <div className="toggleItem" id="settings-epubDisableTextSelect">
                     <InputCheckbox
                         checked={!appSettings.epubReaderSettings.textSelect}
                         className="noBG"
@@ -404,7 +404,7 @@ const GeneralSettings: React.FC = () => {
             <div className="settingItem2 otherSettings" id="settings-styleSettings">
                 <h3>{t("styleSettings.title")}</h3>
 
-                <div className="toggleItem">
+                <div className="toggleItem" id="settings-locationListNumbering">
                     <InputCheckbox
                         checked={!appSettings.disableListNumbering}
                         className="noBG"
@@ -419,7 +419,7 @@ const GeneralSettings: React.FC = () => {
                     />
                     <div className="desc">{t("styleSettings.locationListNumberingDesc")}</div>
                 </div>
-                <div className="toggleItem">
+                <div className="toggleItem" id="settings-chapterTransition">
                     <InputCheckbox
                         checked={!appSettings.readerSettings.disableChapterTransitionScreen}
                         className="noBG"
@@ -435,7 +435,7 @@ const GeneralSettings: React.FC = () => {
                     <div className="desc">{t("styleSettings.chapterTransitionDesc")}</div>
                 </div>
 
-                <div className="toggleItem">
+                <div className="toggleItem" id="settings-moreInfoOnHover">
                     <InputCheckbox
                         checked={appSettings.showMoreDataOnItemHover}
                         className="noBG"
@@ -451,7 +451,7 @@ const GeneralSettings: React.FC = () => {
                     <div className="desc">{t("styleSettings.moreInfoOnHoverDesc")}</div>
                 </div>
 
-                <div className="toggleItem">
+                <div className="toggleItem" id="settings-readerSettingsCheckbox">
                     <InputCheckbox
                         checked={appSettings.checkboxReaderSetting}
                         className="noBG"
@@ -466,7 +466,7 @@ const GeneralSettings: React.FC = () => {
                     />
                     <div className="desc">{t("styleSettings.readerSettingsCheckboxDesc")}</div>
                 </div>
-                <div className="toggleItem">
+                <div className="toggleItem" id="settings-showPageCountInSideList">
                     <InputCheckbox
                         checked={appSettings.showPageCountInSideList}
                         className="noBG"
@@ -480,7 +480,7 @@ const GeneralSettings: React.FC = () => {
                         labelAfter={t("styleSettings.showPageCountInSideList")}
                     />
                 </div>
-                <div className="toggleItem">
+                <div className="toggleItem" id="settings-showTextFileBadge">
                     <InputCheckbox
                         checked={appSettings.showTextFileBadge}
                         className="noBG"

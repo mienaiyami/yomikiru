@@ -1,6 +1,6 @@
 import { createSelector, createSlice, type PayloadAction } from "@reduxjs/toolkit";
 import { dialogUtils } from "@utils/dialog";
-import { healShortcutEntries, SHORTCUT_COMMAND_MAP } from "@utils/keybindings";
+import { healShortcutEntries } from "@utils/keybindings";
 import { saveJSONfile, shortcutsPath } from "../utils/file";
 import { createRendererLogger } from "../utils/logger";
 import { readJsonFileWithRetrySync } from "../utils/readJsonFileWithRetry";
@@ -11,10 +11,8 @@ import type { RootState } from ".";
 
 const initialState: ShortcutSchema[] = [];
 
-const defaultShortcuts: ShortcutSchema[] = SHORTCUT_COMMAND_MAP.map((e) => ({
-    command: e.command,
-    keys: e.defaultKeys,
-}));
+/** Mutable default keymap; copies keys so Redux does not share frozen map tuples. */
+const defaultShortcuts: ShortcutSchema[] = healShortcutEntries([]);
 
 //todo make function readJSONfile
 if (window.fs.existsSync(shortcutsPath)) {

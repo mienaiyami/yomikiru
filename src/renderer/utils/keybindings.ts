@@ -1,7 +1,12 @@
+import type readerEn from "@common/i18n/locales/en/reader.json";
+
+/** i18n key under reader.shortcutNames; a typo fails at compile time. */
+type ShortcutNameKey = `shortcutNames.${keyof typeof readerEn.shortcutNames & string}`;
+
 /**
  * Reader / global shortcut commands.
- * `name` is an i18n key under the `reader` namespace (e.g. `shortcutNames.navToPage`);
- * translate at display sites with `t(entry.name, { ns: "reader" })`.
+ * {@link ShortcutNameKey} is the reader-namespace label; translate at display
+ * sites with `t(entry.name, { ns: "reader" })`.
  */
 export const SHORTCUT_COMMAND_MAP = [
     {
@@ -249,7 +254,11 @@ export const SHORTCUT_COMMAND_MAP = [
         name: "shortcutNames.listSelect",
         defaultKeys: ["enter"],
     },
-];
+] as const satisfies readonly {
+    command: string;
+    name: ShortcutNameKey;
+    defaultKeys: readonly string[];
+}[];
 Object.freeze(SHORTCUT_COMMAND_MAP);
 
 /** Tags that already consume typing, so character shortcuts must not steal the key. */
@@ -267,7 +276,8 @@ export const isShortcutEventFromInputTarget = (e: Event): boolean => {
 /**
  * Normalizes a persisted shortcut list to {@link SHORTCUT_COMMAND_MAP}: keep
  * saved keys for known commands, drop unknown ids, and fill missing commands
- * with their default keys.
+ * with their default keys. Returned {@link ShortcutSchema.keys} arrays are copies
+ * so callers can mutate them without changing {@link SHORTCUT_COMMAND_MAP}.
  */
 export const healShortcutEntries = (
     saved: readonly { command: string; keys: readonly string[] }[],

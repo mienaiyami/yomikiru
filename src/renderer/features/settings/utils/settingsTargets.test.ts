@@ -1,13 +1,43 @@
+import readerEn from "@common/i18n/locales/en/reader.json";
+import settingsEn from "@common/i18n/locales/en/settings.json";
+import usageEn from "@common/i18n/locales/en/usage.json";
 import { SHORTCUT_COMMAND_MAP } from "@utils/keybindings";
 import { describe, expect, it } from "vitest";
 import { SETTINGS_TABS, settingsTabIndex } from "./constants";
 import {
+    buildSettingsTargetSearchTexts,
     buildShortcutSettingsTargets,
+    collectI18nStringLeaves,
+    filterSettingsTargets,
     getAllSettingsTargets,
     getSettingsTarget,
     isSettingsTargetAvailable,
     SETTINGS_TARGETS_STATIC,
+    settingsTargetContentPaths,
+    type SettingsTarget,
 } from "./settingsTargets";
+
+const enCatalogs = { settings: settingsEn, reader: readerEn, usage: usageEn } as const;
+
+/**
+ * Walks a dotted path on an i18n JSON object. Test-only; production uses i18next.
+ */
+const valueAtPath = (root: unknown, path: string): unknown => {
+    let cur: unknown = root;
+    for (const part of path.split(".")) {
+        if (cur === null || typeof cur !== "object" || !(part in cur)) return undefined;
+        cur = (cur as Record<string, unknown>)[part];
+    }
+    return cur;
+};
+
+const resolveLabelFromEn = (target: SettingsTarget): string =>
+    String(valueAtPath(enCatalogs[target.labelNs], target.labelKey) ?? "");
+
+const getSearchTextsFromEn = (target: SettingsTarget): string[] =>
+    buildSettingsTargetSearchTexts(target, resolveLabelFromEn, (ns, path) =>
+        valueAtPath(enCatalogs[ns as keyof typeof enCatalogs], path),
+    );
 
 describe("SETTINGS_TABS", () => {
     it("exposes stable ordered tab keys and indices", () => {
@@ -39,6 +69,7 @@ describe("settingsTargets", () => {
             expect(target?.tab).toBe("shortcutKeys");
             expect(target?.labelKey).toBe(entry.name);
             expect(target?.labelNs).toBe("reader");
+            expect(valueAtPath(readerEn, entry.name)).toEqual(expect.any(String));
         }
     });
 
@@ -56,5 +87,127 @@ describe("settingsTargets", () => {
         expect(isSettingsTargetAvailable(explorer!, "linux")).toBe(false);
         const library = getSettingsTarget("setting:library");
         expect(isSettingsTargetAvailable(library!, "linux")).toBe(true);
+    });
+
+    it("every static contentPath exists on the English catalog for its namespace", () => {
+        for (const target of SETTINGS_TARGETS_STATIC) {
+            for (const path of settingsTargetContentPaths(target)) {
+                expect({
+                    id: target.id,
+                    path,
+                    value: valueAtPath(enCatalogs[target.labelNs], path),
+                }).toEqual({
+                    id: target.id,
+                    path,
+                    value: expect.anything(),
+                });
+            }
+        }
+    });
+
+    it("indexes Other Settings and Style Settings controls separately from the section heading", () => {
+        expect(getSettingsTarget("setting:hardware-acceleration")?.selector).toBe(
+            "#settings-hardwareAcceleration",
+        );
+        expect(getSettingsTarget("setting:other")?.contentPath).toBeUndefined();
+        expect(getSettingsTarget("setting:location-list-numbering")?.selector).toBe(
+            "#settings-locationListNumbering",
+        );
+        expect(getSettingsTarget("setting:style")?.contentPath).toBeUndefined();
+    });
+});
+
+describe("collectI18nStringLeaves", () => {
+    it("flattens nested objects and arrays into strings", () => {
+        expect(collectI18nStringLeaves({ a: "one", b: { c: "two", d: ["three"] } })).toEqual([
+            "one",
+            "two",
+            "three",
+        ]);
+    });
+});
+
+describe("filterSettingsTargets", () => {
+    const sample: SettingsTarget[] = [
+        {
+            id: "setting:library",
+            tab: "settings",
+            selector: "#settings-library",
+            labelNs: "settings",
+            labelKey: "library.title",
+            keywords: ["covers", "thumbnails"],
+            contentPath: "library",
+        },
+        {
+            id: "setting:anilist",
+            tab: "settings",
+            selector: "#settings-anilist",
+            labelNs: "settings",
+            labelKey: "anilist.title",
+            contentPath: "anilist",
+        },
+        {
+            id: "about",
+            tab: "about",
+            selector: "#settings-about",
+            labelNs: "settings",
+            labelKey: "tabs.about",
+        },
+    ];
+
+    const content: Record<string, unknown> = {
+        library: { title: "Library", clearCache: "Clear thumbnail cache" },
+        anilist: {
+            title: "AniList",
+            autoUpdate: "Auto-Update AniList Progress",
+        },
+    };
+
+    const resolveLabel = (t: SettingsTarget) => {
+        if (t.id === "about") return "About";
+        if (t.id === "setting:anilist") return "AniList";
+        return "Library";
+    };
+
+    const getSearchTexts = (target: SettingsTarget) =>
+        buildSettingsTargetSearchTexts(target, resolveLabel, (_ns, path) => content[path]);
+
+    it("returns empty for blank query", () => {
+        expect(filterSettingsTargets(sample, "", getSearchTexts)).toEqual([]);
+        expect(filterSettingsTargets(sample, "   ", getSearchTexts)).toEqual([]);
+    });
+
+    it("matches label case-insensitively", () => {
+        expect(filterSettingsTargets(sample, "LIB", getSearchTexts).map((t) => t.id)).toEqual(["setting:library"]);
+        expect(filterSettingsTargets(sample, "about", getSearchTexts).map((t) => t.id)).toEqual(["about"]);
+    });
+
+    it("matches keywords without requiring label hit", () => {
+        expect(filterSettingsTargets(sample, "thumbnails", getSearchTexts).map((t) => t.id)).toEqual([
+            "setting:library",
+        ]);
+    });
+
+    it("matches contentPath body copy", () => {
+        expect(filterSettingsTargets(sample, "auto", getSearchTexts).map((t) => t.id)).toEqual([
+            "setting:anilist",
+        ]);
+        expect(filterSettingsTargets(sample, "thumbnail cache", getSearchTexts).map((t) => t.id)).toEqual([
+            "setting:library",
+        ]);
+    });
+
+    it("does not fuzzy-match unrelated strings", () => {
+        expect(filterSettingsTargets(sample, "xyzzy", getSearchTexts)).toEqual([]);
+    });
+
+    it("does not match the Other Settings heading on a child control query", () => {
+        const ids = filterSettingsTargets(
+            SETTINGS_TARGETS_STATIC,
+            "hardware acceleration",
+            getSearchTextsFromEn,
+        ).map((t) => t.id);
+        expect(ids).toContain("setting:hardware-acceleration");
+        expect(ids).not.toContain("setting:other");
     });
 });

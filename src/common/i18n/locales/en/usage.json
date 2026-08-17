@@ -23,7 +23,8 @@
         "selectEmpty": "Click <code>{{select}}</code> on empty folder to open in reader.",
         "dirUp": "Click <code>{{up}}</code> to go up a directory/folder.",
         "contextMenu": "Click <code>{{menu}}</code> buttons to get right click menu of focused item.",
-        "focusPageSearch": "<code>{{focus}}</code> focuses the main search field on the current page (classic Continue Reading / History when that list is shown, otherwise Bookmarks then Locations; gallery toolbar, or the open details list; manga sidelist or book find-in-page). Does not run while typing in an input. Settings search will use the same shortcut when it exists.",
+        "focusPageSearch": "<code>{{focus}}</code> focuses the main search field on the current page (classic Continue Reading / History when that list is shown, otherwise Bookmarks then Locations; gallery toolbar, or the open details list; manga sidelist or book find-in-page; AniList search; and the Settings search field while Settings is open). Does not run while typing in an input.",
+        "settingsJump": "While Settings is open, type in the search field at the top to jump to a setting, shortcut, About, or Usage section. Selecting a result moves focus to that control. <code>{{focus}}</code> focuses the search field. Escape clears the query, then closes Settings.",
         "byType": "Search by type: Type <code>manga|manhua|manhwa|webtoon|webcomic|comic</code> to search for manga/manhua/manhwa/webtoon/webcomic/comic or <code>epub</code> for epub."
     },
     "homeLocation": {
