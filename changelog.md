@@ -29,7 +29,9 @@
 - feat: when a library folder or EPUB is missing on disk, gallery details and classic History/Bookmark offer **Locate on disk** (re-link the path and keep progress/bookmarks; confirm if the chosen name does not match) or remove the entry. Gallery manga chapter lists hide empty image folders (packed archives still listed).
 - feat: search fields show a clear (**x**) button inside the field while they contain text; it can be reached with `Tab`.
 - feat: symbolic links to directories are treated as directories in Locations / home location, so linked folders can be browsed and opened.
+- fix: updater version and announcement checks ignore non-ok GitHub responses instead of parsing error HTML/JSON as content, which was re-showing the same announcements many times a day. An empty ok announcement body no longer wipes the local seen list.
 - fix: stop reader scroll stutter caused by unstable Redux selectors and progress updates after reader presets (#523).
+- dev: shared HTTP client (`src/common/http`) using axios for Electron main and the renderer; updater and AniList no longer use fetch / electron-fetch.
 - dev: Vitest/RTL unit and temp-SQLite db test harness, Playwright Electron smoke (app opens to home), and CI coverage job.
 - dev: `pnpm demo:setup` fetches a gitignored local sample library for gallery/format testing.
 - dev: architecture, library, settings, and reader feature documentation.

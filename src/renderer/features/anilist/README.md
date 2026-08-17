@@ -1,6 +1,6 @@
 # AniList Integration
 
-> Last updated: 2026-08-09. Covers v2.24.x.
+> Last updated: 2026-08-17. Covers v2.24.x.
 
 Yomikiru can track reading progress on [AniList](https://anilist.co) (manga and novels).
 The integration is fully optional and requires a personal AniList OAuth token.
@@ -170,4 +170,4 @@ Static class. Key methods:
 
 The GraphQL mutation (`SaveMediaListEntry`) is defined as a static string field on the class and supports all MediaListEntry fields.
 
-API calls use `electron-fetch` (main-compatible `fetch`). Token is sent as `Authorization: Bearer <token>` header.
+API calls use the shared HTTP client (`@common/http` / axios). Token is sent as `Authorization: Bearer <token>` header.

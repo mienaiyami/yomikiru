@@ -1,6 +1,6 @@
 # Yomikiru — Architecture Overview
 
-> Last updated: 2026-08-09. Covers v2.24.x.
+> Last updated: 2026-08-17. Covers v2.24.x.
 
 Yomikiru is an offline Electron desktop app (Windows + Linux) for reading manga/comics and EPUB novels.
 No server component; all data lives on the user's machine.
@@ -40,7 +40,7 @@ No server component; all data lives on the user's machine.
 | EPUB parsing | Custom parser in `src/renderer/utils/epub.ts` |
 | PDF rendering | `pdfjs-dist` (web worker in renderer) |
 | Image processing | `sharp` (main-process only, for cover WebP generation) |
-| Auto-updater | Custom; GitHub Releases API + `electron-dl` + `electron-fetch` |
+| Auto-updater | Custom; GitHub Releases API + `electron-dl` + shared HTTP client (`src/common/http`, axios) |
 | Icons | Font Awesome 6 (SVG-core) |
 | Virtualised lists | `@tanstack/react-virtual` |
 | Type checking | TypeScript 5, Biome linter/formatter |
@@ -91,7 +91,8 @@ All channel names, request shapes, and response shapes live there.
 
 ```
 src/
-├── common/           # Shared types: IPC channels, DB types, legacy types, Logger
+├── common/           # Shared types: IPC channels, DB types, legacy types, Logger, HTTP client
+│   ├── http.ts             axios HTTP client (main + renderer); no fetch
 │   ├── types/
 │   │   ├── ipc.ts          IPC channel union
 │   │   ├── db.ts           DB-level types (LibraryItem, Progress, Bookmark…)

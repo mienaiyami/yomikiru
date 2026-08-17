@@ -1,13 +1,19 @@
 import { spawn } from "node:child_process";
 import fs from "node:fs";
 import path from "node:path";
+import {
+    http,
+    HttpStatusError,
+    isHttpUrlLineList,
+    shouldReplaceTextSnapshot,
+    splitTextLines,
+} from "@common/http";
 import type { AppUpdateChannel } from "@common/types/ipc";
 import { mainT } from "@electron/i18n/mainI18n";
 import { exec as execSudo } from "@vscode/sudo-prompt";
 import * as crossZip from "cross-zip";
 import { app, BrowserWindow, dialog, shell } from "electron";
 import * as electronDl from "electron-dl";
-import fetch from "electron-fetch";
 import * as semver from "semver";
 import { IS_PORTABLE, isArchLinux, sleep } from "./util";
 import { createMainLogger } from "./util/logger";
@@ -34,6 +40,18 @@ type ArtifactMetadata = {
     type: string;
 };
 
+/** Narrows unknown JSON array elements to {@link ArtifactMetadata}. */
+const isArtifactMetadata = (value: unknown): value is ArtifactMetadata => {
+    if (typeof value !== "object" || value === null) return false;
+    const rec = value as Record<string, unknown>;
+    return (
+        typeof rec.name === "string" &&
+        typeof rec.platform === "string" &&
+        typeof rec.arch === "string" &&
+        typeof rec.type === "string"
+    );
+};
+
 /**
  * Fetches artifacts.json from the release and returns the download URL for the current platform/arch.
  * @param version release tag (e.g. "v2.3.8")
@@ -43,13 +61,9 @@ const getArtifactDownloadUrl = async (version: string): Promise<string | null> =
     try {
         const url = version.startsWith("v") ? version : `v${version}`;
         const artifactsUrl = `${DOWNLOAD_LINK}/${url}/artifacts.json`;
-        const res = await fetch(artifactsUrl);
-        if (!res.ok) {
-            logger.warn(`Update: artifacts.json HTTP ${res.status} ${res.statusText} (${artifactsUrl})`);
-            return null;
-        }
-        const artifacts = (await res.json()) as ArtifactMetadata[];
-        if (!Array.isArray(artifacts) || artifacts.length === 0) {
+        const artifacts = await http.getJson(artifactsUrl);
+        const catalog = Array.isArray(artifacts) ? artifacts.filter(isArtifactMetadata) : [];
+        if (catalog.length === 0) {
             logger.warn(`Update: artifacts.json missing or empty for ${artifactsUrl}`);
             return null;
         }
@@ -61,12 +75,12 @@ const getArtifactDownloadUrl = async (version: string): Promise<string | null> =
         let match: ArtifactMetadata | null = null;
         if (platform === "win32") {
             match =
-                artifacts.find((a) => a.platform === "win32" && a.type === wantType && a.arch === arch) ?? null;
+                catalog.find((a) => a.platform === "win32" && a.type === wantType && a.arch === arch) ?? null;
         } else if (platform === "linux") {
             if (isArchLinux()) {
-                match = artifacts.find((a) => a.platform === "linux" && a.name.endsWith(".pkg.tar.zst")) ?? null;
+                match = catalog.find((a) => a.platform === "linux" && a.name.endsWith(".pkg.tar.zst")) ?? null;
             } else {
-                match = artifacts.find((a) => a.platform === "linux" && a.name.endsWith(".deb")) ?? null;
+                match = catalog.find((a) => a.platform === "linux" && a.name.endsWith(".deb")) ?? null;
             }
         }
 
@@ -76,26 +90,46 @@ const getArtifactDownloadUrl = async (version: string): Promise<string | null> =
         }
         return `${DOWNLOAD_LINK}/${url}/${match.name}`;
     } catch (error) {
+        if (error instanceof HttpStatusError) {
+            logger.warn("Update: artifacts.json HTTP error", {
+                status: error.status,
+                statusText: error.statusText,
+                url: error.url,
+            });
+            return null;
+        }
         logger.error("Update: could not resolve download URL from artifacts.json", error);
         return null;
     }
 };
 
+/**
+ * Downloads announcements.txt and shows a dialog only for URLs not already stored locally.
+ * Failed HTTP responses throw from {@link http} and must not persist; error HTML would
+ * overwrite the seen list and re-alert on every later successful request.
+ */
 const checkForAnnouncements = async () => {
     try {
         await sleep(5000);
-        const raw = await fetch(ANNOUNCEMENTS_URL)
-            .then((data) => data.text())
-            .then((data) => data.split("\n").filter((e) => e !== ""));
+        const body = await http.getText(ANNOUNCEMENTS_URL);
+        const raw = splitTextLines(body);
         const existingPath = path.join(app.getPath("userData"), "announcements.txt");
         if (!fs.existsSync(existingPath)) {
             fs.writeFileSync(existingPath, "");
         }
-        const existing = fs
-            .readFileSync(path.join(app.getPath("userData"), "announcements.txt"), "utf-8")
-            .split("\n")
-            .filter((e) => e !== "");
+        const existing = splitTextLines(fs.readFileSync(existingPath, "utf-8"));
+        if (!shouldReplaceTextSnapshot(raw, existing)) {
+            logger.warn("Announcements: ok response was empty; keeping local seen list");
+            return;
+        }
+        if (!isHttpUrlLineList(raw)) {
+            logger.warn("Announcements: remote body is not an http(s) URL list; keeping local seen list", {
+                lineCount: raw.length,
+            });
+            return;
+        }
         const newAnnouncements = raw.filter((e) => !existing.includes(e));
+        // persist only after a validated 2xx body so a failed check cannot reset seen URLs
         fs.writeFileSync(existingPath, raw.join("\n"));
         const t = mainT;
         if (newAnnouncements.length === 1)
@@ -130,12 +164,19 @@ const checkForAnnouncements = async () => {
                     else if (res.response === 1) shell.openExternal(ANNOUNCEMENTS_DISCUSSION_URL);
                 });
     } catch (error) {
-        logger.error("Announcements: fetch or parse failed (non-fatal)", error);
+        logger.error("Announcements: request or parse failed (non-fatal)", error);
     }
 };
 
+/** GitHub releases API item fields used for channel filter and semver sort. */
+type GithubRelease = {
+    tag_name: string;
+    prerelease?: boolean;
+};
+
 /**
- * Check for updates and handle version comparison properly using semver
+ * Check for updates and handle version comparison properly using semver.
+ * Non-ok GitHub responses throw before JSON is treated as a release list.
  * @param windowId id of window in which message box should be shown
  * @param skipPatch skip patch updates for stable channel (e.g. 1.2.x to 1.2.y)
  * @param promptAfterCheck show message box if current version is same as latest version
@@ -152,7 +193,7 @@ const checkForUpdate = async (
     checkForAnnouncements();
 
     try {
-        const rawdata = await fetch(RELEASES_URL).then((data) => data.json());
+        const rawdata = await http.getJson(RELEASES_URL);
 
         if (!Array.isArray(rawdata) || rawdata.length === 0) {
             logger.log("Update check: GitHub releases API returned no usable releases");
@@ -166,20 +207,22 @@ const checkForUpdate = async (
         logger.log(`Update check: installed version ${currentVersion}`);
 
         const releases = rawdata
-            .filter((release: any) => {
-                const hasValidTagName =
-                    typeof release.tag_name === "string" && semver.clean(release.tag_name, { loose: true });
-                if (!hasValidTagName) return false;
-
+            .filter((value: unknown): value is GithubRelease => {
+                if (typeof value !== "object" || value === null) return false;
+                const release = value as { tag_name?: unknown; prerelease?: unknown };
+                if (typeof release.tag_name !== "string" || !semver.clean(release.tag_name, { loose: true })) {
+                    return false;
+                }
                 if (channel === "stable") {
                     return !release.prerelease;
-                } else if (channel === "beta") {
-                    // include all releases, the highest version will be selected later
+                }
+                // beta channel: every tagged release; the highest semver is picked after sort
+                if (channel === "beta") {
                     return true;
                 }
                 return false;
             })
-            .sort((a: any, b: any) => {
+            .sort((a, b) => {
                 const versionA = semver.clean(a.tag_name, { loose: true }) || "";
                 const versionB = semver.clean(b.tag_name, { loose: true }) || "";
                 return semver.rcompare(versionA, versionB);

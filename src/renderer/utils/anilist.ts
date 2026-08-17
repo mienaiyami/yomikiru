@@ -1,10 +1,42 @@
+import { http, HttpStatusError } from "@common/http";
 import i18n from "@renderer/i18n";
-
 import { dialogUtils } from "./dialog";
 import { getStorageItem, setStorageItem } from "./localStorage";
 import { createRendererLogger } from "./logger";
 
 const log = createRendererLogger("AniList");
+
+const ANILIST_GRAPHQL_URL = "https://graphql.anilist.co";
+
+/**
+ * POSTs a GraphQL operation to AniList with the given bearer token.
+ *
+ * @throws {HttpStatusError} when status is outside 2xx
+ * @throws {HttpMediaTypeError} when a 2xx body is HTML
+ * @throws {HttpNetworkError} when the request fails without a status
+ */
+const postAnilistGraphql = async (
+    token: string,
+    payload: { query: string; variables?: object },
+): Promise<unknown> =>
+    http.postJson(ANILIST_GRAPHQL_URL, payload, {
+        headers: {
+            Authorization: `Bearer ${token}`,
+            Accept: "application/json",
+        },
+    });
+
+/** GraphQL `data` fields used by this class's operations. */
+type AnilistGraphqlData = {
+    Viewer?: {
+        name?: string;
+        options?: { displayAdultContent?: boolean };
+    };
+    Page?: {
+        media?: Anilist.SearchMediaItem[] | null;
+    };
+    SaveMediaListEntry?: Anilist.MangaData;
+};
 
 /** Ensures the lazy `anilist` catalog is available before util dialogs / labels run. */
 const ensureAnilistNs = (): void => {
@@ -100,6 +132,10 @@ export default class AniList {
     static setCurrentMangaListId(id: null | number) {
         AniList.#currentMangaListId = id;
     }
+    /**
+     * Validates a bearer token and loads the viewer's adult-content preference.
+     * @returns true on 2xx, false on HTTP error, undefined on network failure
+     */
     static async checkToken(token: string) {
         const query = `#graphql
     query{
@@ -111,66 +147,54 @@ export default class AniList {
         }
     }
     `;
-        const body = JSON.stringify({
-            query,
-        });
         try {
-            const raw = await fetch("https://graphql.anilist.co", {
-                method: "POST",
-                headers: {
-                    Authorization: `Bearer ${token}`,
-                    "Content-Type": "application/json",
-                    Accept: "application/json",
-                },
-                body,
-            });
-            if (raw.ok) {
-                const json = await raw.json();
-                AniList.displayAdultContent = json.data.Viewer.options.displayAdultContent;
+            const json = await postAnilistGraphql(token, { query });
+            if (json && typeof json === "object" && "data" in json) {
+                const data = (json as { data?: AnilistGraphqlData }).data;
+                AniList.displayAdultContent = Boolean(data?.Viewer?.options?.displayAdultContent);
             }
-            return raw.ok;
+            return true;
         } catch (reason) {
+            if (reason instanceof HttpStatusError) {
+                return false;
+            }
             dialogUtils.customError({ message: i18n.t("errors.requestFailed", { ns: "anilist" }) });
             log.error("checkToken: request failed", reason);
         }
     }
-    static async fetch(query: string, variables = {}) {
+    /**
+     * Runs a GraphQL operation against AniList and returns the envelope `data` field on 2xx.
+     * HTTP errors are logged; an invalid-token payload shows a dialog.
+     */
+    static async request(query: string, variables = {}): Promise<AnilistGraphqlData | undefined> {
         if (!AniList.#token) {
-            log.error("fetch: skipped (no access token; user not logged in)");
+            log.error("request: skipped (no access token; user not logged in)");
             return;
         }
         try {
-            const body = JSON.stringify({
-                query,
-                variables,
-            });
-
-            const raw = await fetch("https://graphql.anilist.co", {
-                method: "POST",
-                headers: {
-                    Authorization: `Bearer ${AniList.#token}`,
-                    "Content-Type": "application/json",
-                    Accept: "application/json",
-                },
-                body,
-            });
-            if (raw.ok) {
-                const json = await raw.json();
-                return json.data;
-            } else {
-                log.error(`fetch: HTTP ${raw.status} ${raw.statusText} from graphql.anilist.co`);
-                const json = await raw.json();
-                if (json) {
-                    log.error("fetch: error payload from API", json);
-                    if (json.errors.message === "Invalid token")
-                        dialogUtils.customError({
-                            message: i18n.t("errors.invalidToken", { ns: "anilist" }),
-                            detail: i18n.t("errors.invalidTokenDetail", { ns: "anilist" }),
-                        });
-                }
+            const json = await postAnilistGraphql(AniList.#token, { query, variables });
+            if (json && typeof json === "object" && "data" in json) {
+                return (json as { data: AnilistGraphqlData }).data;
             }
         } catch (reason) {
-            log.error("fetch: network or parse error", reason);
+            if (reason instanceof HttpStatusError) {
+                log.error("request: GraphQL HTTP error", {
+                    status: reason.status,
+                    statusText: reason.statusText,
+                    data: reason.data,
+                });
+                const errors =
+                    reason.data && typeof reason.data === "object" && "errors" in reason.data
+                        ? (reason.data as { errors?: { message?: string } }).errors
+                        : undefined;
+                if (errors?.message === "Invalid token")
+                    dialogUtils.customError({
+                        message: i18n.t("errors.invalidToken", { ns: "anilist" }),
+                        detail: i18n.t("errors.invalidTokenDetail", { ns: "anilist" }),
+                    });
+                return;
+            }
+            log.error("request: network or parse error", reason);
         }
     }
     static async getUserName() {
@@ -181,9 +205,9 @@ export default class AniList {
             }
         }
         `;
-        const data = await AniList.fetch(query);
-        if (data) return data.Viewer.name;
-        else return i18n.t("errors.username", { ns: "anilist" });
+        const data = await AniList.request(query);
+        if (data?.Viewer?.name) return data.Viewer.name;
+        return i18n.t("errors.username", { ns: "anilist" });
     }
     static getVariables(variables: object) {
         return AniList.displayAdultContent ? { ...variables } : { ...variables, displayAdultContent: false };
@@ -222,15 +246,15 @@ export default class AniList {
         const variables = AniList.getVariables({
             search: name,
         });
-        const data = await AniList.fetch(query, variables);
-        if (data) return (data.Page.media ?? []) as Anilist.SearchMediaItem[];
+        const data = await AniList.request(query, variables);
+        if (data) return (data.Page?.media ?? []) as Anilist.SearchMediaItem[];
         return [];
     }
     static async getMangaData(mediaId: number) {
         const variables = AniList.getVariables({ mediaId });
-        const data = await AniList.fetch(AniList.#mutation, variables);
-        if (data) {
-            return data.SaveMediaListEntry as Anilist.MangaData;
+        const data = await AniList.request(AniList.#mutation, variables);
+        if (data?.SaveMediaListEntry) {
+            return data.SaveMediaListEntry;
         }
     }
     static async setCurrentMangaData(newData: Omit<Anilist.MangaData, "id" | "mediaId" | "media">) {
@@ -239,9 +263,9 @@ export default class AniList {
             return;
         }
         const variables = AniList.getVariables({ id: AniList.#currentMangaListId, ...newData });
-        const data = await AniList.fetch(AniList.#mutation, variables);
-        if (data) {
-            return data.SaveMediaListEntry as Anilist.MangaData;
+        const data = await AniList.request(AniList.#mutation, variables);
+        if (data?.SaveMediaListEntry) {
+            return data.SaveMediaListEntry;
         }
     }
     static async setCurrentMangaProgress(progress: Anilist.MangaData["progress"]) {
@@ -250,9 +274,9 @@ export default class AniList {
             return;
         }
         const variables = AniList.getVariables({ id: AniList.#currentMangaListId, progress });
-        const data = await AniList.fetch(AniList.#mutation, variables);
-        if (data) {
-            return data.SaveMediaListEntry as Anilist.MangaData;
+        const data = await AniList.request(AniList.#mutation, variables);
+        if (data?.SaveMediaListEntry) {
+            return data.SaveMediaListEntry;
         }
     }
 }
