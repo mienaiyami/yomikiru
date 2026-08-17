@@ -261,16 +261,16 @@ export const SHORTCUT_COMMAND_MAP = [
 }[];
 Object.freeze(SHORTCUT_COMMAND_MAP);
 
-/** Tags that already consume typing, so character shortcuts must not steal the key. */
-const SHORTCUT_INPUT_TAGS = new Set(["INPUT", "TEXTAREA", "SELECT", "BUTTON"]);
-
 /**
- * True when the event target is a control that already consumes typing.
- * App's Focus search case and the keybinding hook share this so the keystroke is not stolen.
+ * True when the event target would consume a character keystroke (text field
+ * or contenteditable). Buttons and native selects do not; they are not typing
+ * surfaces for Focus search or other character shortcuts.
  */
 export const isShortcutEventFromInputTarget = (e: Event): boolean => {
-    const tag = (e.target as HTMLElement | null)?.tagName;
-    return Boolean(tag && SHORTCUT_INPUT_TAGS.has(tag));
+    const target = e.target;
+    if (!(target instanceof HTMLElement)) return false;
+    if (target.isContentEditable) return true;
+    return target.tagName === "INPUT" || target.tagName === "TEXTAREA";
 };
 
 /**

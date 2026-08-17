@@ -239,6 +239,22 @@ describe("page search registry", () => {
         expect(document.activeElement).not.toBe(home);
     });
 
+    it("dispatchFocusPageSearchShortcut focuses when a button is the event target", () => {
+        const home = makeInput("home-from-button");
+        const button = document.createElement("button");
+        document.body.appendChild(button);
+        createdNodes.push(button);
+        registerPageSearch({
+            id: "home-from-button",
+            priority: PAGE_SEARCH_PRIORITY.home,
+            getElement: () => home,
+        });
+        const event = new KeyboardEvent("keydown", { key: "/", code: "Slash", cancelable: true });
+        Object.defineProperty(event, "target", { value: button });
+        expect(dispatchFocusPageSearchShortcut(event, { settingsOpen: false })).toBe(true);
+        expect(document.activeElement).toBe(home);
+    });
+
     it("dispatchFocusPageSearchShortcut ignores key-repeat", () => {
         const home = makeInput("home-repeat");
         registerPageSearch({ id: "home-repeat", priority: PAGE_SEARCH_PRIORITY.home, getElement: () => home });

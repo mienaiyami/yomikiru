@@ -32,19 +32,26 @@ describe("SHORTCUT_COMMAND_MAP", () => {
 });
 
 describe("isShortcutEventFromInputTarget", () => {
-    it("is true for input, textarea, select, and button targets", () => {
-        for (const tag of ["INPUT", "TEXTAREA", "SELECT", "BUTTON"] as const) {
-            const el = document.createElement(tag.toLowerCase());
+    it("is true for input, textarea, and contentEditable targets", () => {
+        for (const tag of ["input", "textarea"] as const) {
+            const el = document.createElement(tag);
             const event = new KeyboardEvent("keydown", { key: "/", code: "Slash", bubbles: true });
             Object.defineProperty(event, "target", { value: el });
             expect(isShortcutEventFromInputTarget(event)).toBe(true);
         }
+        const editable = document.createElement("div");
+        Object.defineProperty(editable, "isContentEditable", { configurable: true, value: true });
+        const editableEvent = new KeyboardEvent("keydown", { key: "/", code: "Slash", bubbles: true });
+        Object.defineProperty(editableEvent, "target", { value: editable });
+        expect(isShortcutEventFromInputTarget(editableEvent)).toBe(true);
     });
 
-    it("is false for body", () => {
-        const event = new KeyboardEvent("keydown", { key: "/", code: "Slash", bubbles: true });
-        Object.defineProperty(event, "target", { value: document.body });
-        expect(isShortcutEventFromInputTarget(event)).toBe(false);
+    it("is false for body, button, and select", () => {
+        for (const el of [document.body, document.createElement("button"), document.createElement("select")]) {
+            const event = new KeyboardEvent("keydown", { key: "/", code: "Slash", bubbles: true });
+            Object.defineProperty(event, "target", { value: el });
+            expect(isShortcutEventFromInputTarget(event)).toBe(false);
+        }
     });
 });
 
