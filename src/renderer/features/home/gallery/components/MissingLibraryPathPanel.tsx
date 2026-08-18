@@ -19,8 +19,8 @@ type MissingLibraryPathPanelProps = {
 };
 
 /**
- * Shown inside gallery details `manga-actions-container` when the library path is
- * missing on disk. Cover, metadata, and bookmark/note lists stay mounted.
+ * Shown above the gallery details hero when the library path is missing on disk.
+ * Cover, metadata, and bookmark/note lists stay mounted.
  * Offers Locate on disk (DB relocate) or Remove from Library.
  */
 const MissingLibraryPathPanel: React.FC<MissingLibraryPathPanelProps> = ({
@@ -51,7 +51,7 @@ const MissingLibraryPathPanel: React.FC<MissingLibraryPathPanelProps> = ({
     };
 
     return (
-        <div className="missing-library-path">
+        <div className="missing-library-path" role="alert">
             <h2>{t("gallery.missing.title")}</h2>
             <p>{type === "book" ? t("gallery.missing.wasDeletedBook") : t("gallery.missing.wasDeletedManga")}</p>
             <p className="missing-path" title={link}>

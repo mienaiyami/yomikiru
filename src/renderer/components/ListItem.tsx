@@ -54,7 +54,7 @@ const ListItem: React.FC<ListItemProps> = ({
 
     useEffect(() => {
         if ((focused || scrollIntoView) && itemRef.current) {
-            itemRef.current.scrollIntoView({ block: "nearest" });
+            itemRef.current.scrollIntoView({ block: "nearest", behavior: "instant" });
         }
     }, [focused, scrollIntoView]);
 

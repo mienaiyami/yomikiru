@@ -13,6 +13,7 @@
         "brand": "AniList",
         "separator": " : ",
         "track": "Track",
+        "compactTracked": "{{brand}} · {{progress}}",
         "networkError": "Network Error",
         "moreOptions": "More Options",
         "syncFailed": "Failed to sync AniList progress."

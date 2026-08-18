@@ -1,7 +1,7 @@
 import path from "node:path";
 import { stubFs } from "@test/mocks/preload";
 import { afterEach, describe, expect, it, vi } from "vitest";
-import { debounce, findCover, getCSSPath, randomString, sleep } from "./utils";
+import { debounce, findCover, getCSSPath, randomString, scrollChildInContainer, sleep } from "./utils";
 
 describe("getCSSPath", () => {
     afterEach(() => {
@@ -37,6 +37,41 @@ describe("findCover", () => {
 
     it("returns empty string when no cover file exists", () => {
         expect(findCover(path.join("testdata", "manga", "bare"))).toBe("");
+    });
+});
+
+describe("scrollChildInContainer", () => {
+    const mockRect = (top: number, height: number): DOMRect =>
+        ({
+            top,
+            height,
+            bottom: top + height,
+            left: 0,
+            right: 0,
+            width: 0,
+            x: 0,
+            y: 0,
+            toJSON: () => ({}),
+        }) as DOMRect;
+
+    it("centers the child inside the container scrollTop", () => {
+        const container = document.createElement("div");
+        const child = document.createElement("div");
+        container.scrollTop = 10;
+        vi.spyOn(container, "getBoundingClientRect").mockReturnValue(mockRect(0, 100));
+        vi.spyOn(child, "getBoundingClientRect").mockReturnValue(mockRect(80, 20));
+        scrollChildInContainer(container, child, "center");
+        expect(container.scrollTop).toBe(50);
+    });
+
+    it("does not move when nearest and the child is already fully visible", () => {
+        const container = document.createElement("div");
+        const child = document.createElement("div");
+        container.scrollTop = 4;
+        vi.spyOn(container, "getBoundingClientRect").mockReturnValue(mockRect(0, 100));
+        vi.spyOn(child, "getBoundingClientRect").mockReturnValue(mockRect(20, 20));
+        scrollChildInContainer(container, child, "nearest");
+        expect(container.scrollTop).toBe(4);
     });
 });
 

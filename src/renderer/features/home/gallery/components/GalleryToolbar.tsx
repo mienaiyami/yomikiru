@@ -237,75 +237,77 @@ const GalleryToolbar: React.FC<GalleryToolbarProps> = ({
             <GalleryTabBar activeTab={activeTab} onTabChange={onTabChange} />
             <span className="toolbarDivider" aria-hidden="true" />
             <GalleryTypeFilterBar activeFilter={activeTypeFilter} onFilterChange={onTypeFilterChange} />
-            <div className="search">
-                {!hideSearch && (
-                    <ListNavigator.SearchInput
-                        placeholder={t("gallery.toolbar.searchPlaceholder")}
-                        pageSearch={{
-                            id: "gallery-toolbar",
-                            priority: PAGE_SEARCH_PRIORITY.home,
-                            enabled: !hidden,
-                        }}
-                    />
-                )}
-            </div>
-            <div className="actions">
-                {!hideSort && (
-                    <button
-                        data-tooltip={t("shared.sort.tooltip", {
-                            arrow: sortType === "normal" ? "▲ " : "▼ ",
-                            by: sortBy.toUpperCase(),
-                        })}
-                        onClick={handleSortClick}
-                    >
-                        <FontAwesomeIcon icon={faSort} />
-                    </button>
-                )}
-                <button
-                    data-tooltip={t("gallery.toolbar.viewTooltip", {
-                        mode: displayModeLabel(appSettings.galleryDisplayMode),
-                    })}
-                    onClick={handleViewClick}
-                >
-                    <FontAwesomeIcon icon={faGrip} />
-                </button>
-                <Popover
-                    label={t("gallery.toolbar.gridSize")}
-                    align="end"
-                    placement="bottom"
-                    className="gridSizePopover"
-                    trigger={({ ref, toggle, ariaProps }) => (
+            <div className="toolbarEnd">
+                <div className="actions">
+                    {!hideSort && (
                         <button
-                            type="button"
-                            ref={ref as React.RefCallback<HTMLButtonElement>}
-                            className="gridSizeTrigger"
-                            data-tooltip={t("gallery.toolbar.gridSizeTooltip", {
-                                size: appSettings.galleryItemWidth,
+                            data-tooltip={t("shared.sort.tooltip", {
+                                arrow: sortType === "normal" ? "▲ " : "▼ ",
+                                by: sortBy.toUpperCase(),
                             })}
-                            onClick={toggle}
-                            {...ariaProps}
+                            onClick={handleSortClick}
                         >
-                            <FontAwesomeIcon icon={faTableCellsLarge} />
+                            <FontAwesomeIcon icon={faSort} />
                         </button>
                     )}
-                >
-                    <div className="gridSizePopoverHeader">
-                        <span>{t("gallery.toolbar.gridSize")}</span>
-                        <span className="gridSizeValue">{appSettings.galleryItemWidth}em</span>
-                    </div>
-                    <InputRange
-                        min={GALLERY_ITEM_WIDTH_MIN}
-                        max={GALLERY_ITEM_WIDTH_MAX}
-                        step={GALLERY_ITEM_WIDTH_STEP}
-                        value={appSettings.galleryItemWidth}
-                        onChange={handleGridSizeSliderChange}
-                        className="gridSizeSlider"
-                    />
-                    <div className="gridSizeBounds">
-                        <span>{GALLERY_ITEM_WIDTH_MIN}</span>
-                        <span>{GALLERY_ITEM_WIDTH_MAX}</span>
-                    </div>
-                </Popover>
+                    <button
+                        data-tooltip={t("gallery.toolbar.viewTooltip", {
+                            mode: displayModeLabel(appSettings.galleryDisplayMode),
+                        })}
+                        onClick={handleViewClick}
+                    >
+                        <FontAwesomeIcon icon={faGrip} />
+                    </button>
+                    <Popover
+                        label={t("gallery.toolbar.gridSize")}
+                        align="end"
+                        placement="bottom"
+                        className="gridSizePopover"
+                        trigger={({ ref, toggle, ariaProps }) => (
+                            <button
+                                type="button"
+                                ref={ref as React.RefCallback<HTMLButtonElement>}
+                                className="gridSizeTrigger"
+                                data-tooltip={t("gallery.toolbar.gridSizeTooltip", {
+                                    size: appSettings.galleryItemWidth,
+                                })}
+                                onClick={toggle}
+                                {...ariaProps}
+                            >
+                                <FontAwesomeIcon icon={faTableCellsLarge} />
+                            </button>
+                        )}
+                    >
+                        <div className="gridSizePopoverHeader">
+                            <span>{t("gallery.toolbar.gridSize")}</span>
+                            <span className="gridSizeValue">{appSettings.galleryItemWidth}em</span>
+                        </div>
+                        <InputRange
+                            min={GALLERY_ITEM_WIDTH_MIN}
+                            max={GALLERY_ITEM_WIDTH_MAX}
+                            step={GALLERY_ITEM_WIDTH_STEP}
+                            value={appSettings.galleryItemWidth}
+                            onChange={handleGridSizeSliderChange}
+                            className="gridSizeSlider"
+                        />
+                        <div className="gridSizeBounds">
+                            <span>{GALLERY_ITEM_WIDTH_MIN}</span>
+                            <span>{GALLERY_ITEM_WIDTH_MAX}</span>
+                        </div>
+                    </Popover>
+                </div>
+                <div className="search">
+                    {!hideSearch && (
+                        <ListNavigator.SearchInput
+                            placeholder={t("gallery.toolbar.searchPlaceholder")}
+                            pageSearch={{
+                                id: "gallery-toolbar",
+                                priority: PAGE_SEARCH_PRIORITY.home,
+                                enabled: !hidden,
+                            }}
+                        />
+                    )}
+                </div>
             </div>
         </div>
     );

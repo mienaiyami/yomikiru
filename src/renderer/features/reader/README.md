@@ -253,7 +253,7 @@ When text is selected in the EPUB content:
 4. On chapter re-render, stored notes are replayed via `highlightUtils.applyHighlight`.
 5. Notes list ([`epub/components/NotesList.tsx`](epub/components/NotesList.tsx)) shows all notes for the current book; clicking one navigates to the chapter and scrolls to the highlight.
 
-Highlight colors: `DEFAULT_HIGHLIGHT_COLORS` in [`src/renderer/utils/highlight.ts`](../../utils/highlight.ts) (yellow, red, blue, green, purple, pink…).
+Highlight colors: `DEFAULT_HIGHLIGHT_COLORS` in [`src/renderer/utils/highlight.ts`](../../utils/highlight.ts) (yellow, red, blue, green, purple, pink...).
 
 ---
 
@@ -308,7 +308,7 @@ Slides in from the left. Displays:
 - **Bookmark list** ([`manga/components/BookmarkList.tsx`](manga/components/BookmarkList.tsx)) — all bookmarks for the current manga.
 - AniList bar.
 - Prev/next chapter buttons, random chapter button, shuffle toggle.
-- Sort button (name/date, normal/inverse).
+- Sort button (name/date, normal/inverse) and refresh sit to the right of the chapter search field.
 - "Fix search" toggle — keeps the filter active when changing chapters.
 - Pin button — pins the side list open (shifts the reading area).
 

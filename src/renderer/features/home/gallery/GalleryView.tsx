@@ -4,21 +4,25 @@ import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { useAppContext } from "@renderer/App";
 import SelectionCheckbox from "@renderer/components/ui/SelectionCheckbox";
 import { useMultiSelect } from "@renderer/hooks/useMultiSelect";
+import { focusPrimaryPageSearch } from "@renderer/hooks/usePageSearchFocus";
 import { useResizeObserverRafWidth } from "@renderer/hooks/useResizeObserverRafWidth";
 import { useSelectionShortcuts } from "@renderer/hooks/useSelectionShortcuts";
 import { setGalleryTrackContext } from "@store/anilist";
 import { setAppSettings } from "@store/appSettings";
 import { useAppDispatch, useAppSelector } from "@store/hooks";
 import { deleteLibraryItem } from "@store/library";
+import { getShortcutsMapped } from "@store/shortcuts";
 import { setAnilistSearchOpen } from "@store/ui";
 import { dialogUtils } from "@utils/dialog";
 import { formatUtils } from "@utils/file";
 import { selectBookmarkedItems, sortContinueReadingItems, sortGalleryItems } from "@utils/gallerySort";
+import { isShortcutEventFromInputTarget, keyFormatter } from "@utils/keybindings";
 import { libraryCoverSrc } from "@utils/libraryCover";
 import { resolveMangaChapterPath } from "@utils/mangaChapterPath";
 import type { RefObject } from "react";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
+import { shallowEqual } from "react-redux";
 import ListNavigator from "../../../components/ListNavigator";
 import BookDetailsPanel from "./components/BookDetailsPanel";
 import GalleryToolbar, { type GalleryTabId, type GalleryTypeFilterId } from "./components/GalleryToolbar";
@@ -35,6 +39,12 @@ const GalleryView: React.FC = () => {
     const bookmarks = useAppSelector((store) => store.bookmarks);
     const appSettings = useAppSelector((store) => store.appSettings);
     const anilistToken = useAppSelector((store) => store.anilist.token);
+    const shortcutsMapped = useAppSelector(getShortcutsMapped, shallowEqual);
+    const readerActive = useAppSelector((store) => store.reader.active);
+    const detailsDirUpBlocked = useAppSelector((store) => {
+        const open = store.ui.isOpen;
+        return open.settings || open.anilist.login || open.anilist.search || open.anilist.edit;
+    });
     const { openInReader, setContextMenuData } = useAppContext();
 
     const [selectedManga, setSelectedManga] = useState<string | null>(null);
@@ -73,7 +83,8 @@ const GalleryView: React.FC = () => {
 
     const galleryEstimatedRowSize = useMemo(() => {
         if (appSettings.galleryDisplayMode === "list") {
-            return 6 * rootFontSizePx;
+            /* keep in sync with `.galleryList.list .galleryItem` height */
+            return 6.6 * rootFontSizePx;
         }
         if (!containerWidth || !galleryColumnCount) return 300;
         const colWidth = (containerWidth - 32) / galleryColumnCount;
@@ -283,10 +294,24 @@ const GalleryView: React.FC = () => {
         [handleItemSelect, handleContextMenu, handleContinueReading, appSettings.galleryDisplayMode, selection, t],
     );
 
+    /**
+     * Leaves gallery details and focuses gallery search after the home toolbar is shown.
+     */
     const handleCloseMangaDetails = useCallback(() => {
         setSelectedManga(null);
         setSelectedBook(null);
         setDetailsInitialTab(undefined);
+        requestAnimationFrame(() => {
+            focusPrimaryPageSearch();
+        });
+    }, []);
+
+    const handleListContextMenu = useCallback((elem: HTMLElement) => {
+        elem.dispatchEvent(window.contextMenu.fakeEvent(elem));
+    }, []);
+
+    const handleListSelect = useCallback((elem: HTMLElement) => {
+        elem.click();
     }, []);
 
     /**
@@ -315,6 +340,25 @@ const GalleryView: React.FC = () => {
     }, [dispatch, selection, t, tCommon]);
 
     const detailsOpen = Boolean(selectedManga || selectedBook);
+
+    useEffect(() => {
+        /* Home stays mounted with display:none during the reader; keep this
+         * listener off then. After close, window capture still runs when focus
+         * is on the TopBar (tree capture on .galleryView did not). */
+        if (!detailsOpen || readerActive || detailsDirUpBlocked) return;
+        const onKeyDown = (e: KeyboardEvent) => {
+            if (isShortcutEventFromInputTarget(e)) return;
+            const keyStr = keyFormatter(e);
+            if (!shortcutsMapped.dirUp.includes(keyStr)) return;
+            e.preventDefault();
+            e.stopPropagation();
+            handleCloseMangaDetails();
+        };
+        /* capture: details search stopPropagation would skip a bubble listener */
+        window.addEventListener("keydown", onKeyDown, true);
+        return () => window.removeEventListener("keydown", onKeyDown, true);
+    }, [detailsOpen, readerActive, detailsDirUpBlocked, shortcutsMapped, handleCloseMangaDetails]);
+
     useSelectionShortcuts({
         selection,
         enabled: !detailsOpen,
@@ -357,6 +401,8 @@ const GalleryView: React.FC = () => {
                 filterFn={filterManga}
                 renderItem={renderMangaItem}
                 emptyMessage={emptyMessage}
+                onContextMenu={handleListContextMenu}
+                onSelect={handleListSelect}
                 onFilteredItemsChange={(items) => selection.setVisibleOrder(items.map((it) => it.link))}
             >
                 <GalleryToolbar

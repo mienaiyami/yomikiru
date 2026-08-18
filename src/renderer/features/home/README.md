@@ -1,6 +1,6 @@
 # Home Feature
 
-> Last updated: 2026-08-16. Covers v2.24.x.
+> Last updated: 2026-08-18. Covers v2.24.x.
 
 The Home view is the main landing screen shown when no reader is open.
 It has two modes — **Classic** and **Gallery** — switchable via `appSettings.homeViewMode`.
@@ -46,7 +46,7 @@ Features:
 - `openDirectlyFromManga`: when enabled, single-clicking a manga series root opens the first chapter directly, skipping the sub-folder list.
 - Double-click (or single-click when `openOnDblClick = false`) opens the item in the reader.
 - Context menu: Open, Open in New Window, Show in File Explorer, Copy Path, Remove from Library, Mark All Read/Unread.
-- Missing on-disk path (History/Bookmark open): dialog with **Locate on disk…** (`db:library:relocateItem`) or Remove.
+- Missing on-disk path (History/Bookmark open): dialog with **Locate on disk...** (`db:library:relocateItem`) or Remove.
 - List numbering can be disabled via `disableListNumbering`.
 - Multi-select with `enableClassicListCheckboxes` — shows checkboxes on hover; bulk operations via a toolbar.
 
@@ -139,7 +139,7 @@ Controlled by `appSettings.galleryDisplayMode`:
 | `normal` | Grid with cover + title below |
 | `compact` | Grid with title overlaid on cover (semi-transparent) |
 | `cover-only` | Grid with cover only, no title text |
-| `list` | Single-column list with cover + title |
+| `list` | Single-column list: leading checkbox, cover, and title, vertically centered |
 
 Column count is computed dynamically from the container width and `appSettings.galleryItemWidth` (10–30 em).
 Virtualised with `@tanstack/react-virtual` via the `ListNavigator.VirtualList` sub-component.
@@ -152,39 +152,22 @@ Contains:
 
 - Tab switcher (`galleryActiveTab`).
 - Type filter (`galleryTypeFilter`), after a vertical divider.
-- Search input, right-aligned (hidden when `hideSearch`). Height and action buttons match classic home tools (`--button-width`).
+- Search input, right-aligned after sort / view / grid-size (hidden when `hideSearch`). Height and action buttons match classic home tools (`--button-width`).
 - Sort controls when the tab uses `gallerySortBy` / `gallerySortType` (hidden when `hideSort`).
 - Display mode toggle (`galleryDisplayMode`).
 - Item width slider (`galleryItemWidth`).
 - Selection toolbar (injected when multi-select is active).
 
-### MangaDetailsPanel
+### MangaDetailsPanel / BookDetailsPanel
 
-[`gallery/components/MangaDetailsPanel.tsx`](gallery/components/MangaDetailsPanel.tsx)
+[`gallery/components/MangaDetailsPanel.tsx`](gallery/components/MangaDetailsPanel.tsx), [`gallery/components/BookDetailsPanel.tsx`](gallery/components/BookDetailsPanel.tsx), shared chrome [`gallery/components/DetailsHero.tsx`](gallery/components/DetailsHero.tsx).
 
-Slides in from the right when a manga item is selected in the grid. Shows:
+Full-page replacement of the gallery grid (not a side drawer). Shared hero: cover with overlay back, title (EPUB badge on books), optional author, Continue/Start plus icon Select Cover / Show in File Explorer / Copy Path, compact AniList when a token exists. Opening the page focuses Continue/Start. The cover scales with the metadata block height. Auto height (`galleryDetailsHeroHeight` `0`) uses `--details-meta-min-h` / `DETAILS_HERO_HEIGHT_MIN_REM` as the section min/max and scrolls if the hero is taller; dragging the divider can go below that rem floor (`DETAILS_HERO_RESIZE_MIN_PX`). Current chapter sits with last-read date, manga page, and chapters-read (`read / total`); About / genres (preview flag) sit in that same column below those fields; the title **Note** sits beside that block from mid width (click to edit; Escape or blur finishes; local UI only until persistence lands; height follows the note text). Drag the divider under the header to resize the metadata block (quiet grip on the bar); `galleryDetailsHeroHeight` is one setting for manga and book (`0` = auto section). Lists sit under the same `galleryToolbar` chrome as gallery home (tabs left; locate-current / sort/refresh left of search on gallery home and details only). **Directory Up** (`dirUp`) closes details and focuses gallery search, including after returning from the reader (window capture; ignored while the reader is open, while Settings or AniList overlays are open, and while typing in a field). Context-menu shortcut (`ctrl+/` by default) works on focused tiles and details rows the same way as classic lists.
 
-- Cover image (with buttons to auto-refresh from folder or pick a custom image).
-- Title, last-read chapter, progress percentage.
-- Two tabs: **Content** (chapter list) and **Bookmarks** (manga bookmarks for this item).
-- Chapter list: sorted by name/date, each row shows chapter name, page count, read indicator; empty image folders are omitted (packed archives still listed).
-- "Continue Reading" button.
-- Mark All Read / Mark All Unread.
-- AniList tracking bar (if logged in).
-- Per-item note (editable inline).
-- Missing on-disk path: [`MissingLibraryPathPanel`](gallery/components/MissingLibraryPathPanel.tsx) replaces the actions area only (**Locate on disk** / Remove); cover, metadata, and bookmark lists stay visible. Classic History / Continue Reading (manga only): if the series folder exists but a chapter path is missing, the dialog offers **Open first chapter** / **Locate chapter** (pick renamed/moved chapter) — never open the series root (cover-only) and never relocate the library link to a chapter.
-
-### BookDetailsPanel
-
-[`gallery/components/BookDetailsPanel.tsx`](gallery/components/BookDetailsPanel.tsx)
-
-Same layout as MangaDetailsPanel but for EPUB books:
-
-- Shows extracted cover image.
-- Progress (chapter name + scroll position description).
-- **Bookmarks** / **Notes** tabs from the reader.
-- AniList tracking bar.
-- Same missing-path panel in the actions area when the `.epub` is gone; bookmarks/notes stay visible.
+- Manga tabs: **Content** (chapter list; empty image folders omitted, packed archives still listed) and **Bookmarks**. Tab labels have no counts. Content toolbar locate scrolls to the in-progress chapter.
+- Book tabs: **Bookmarks** / **Notes** from the reader.
+- Unimplemented About / synopsis stays behind `DETAILS_HERO_SYNOPSIS_PREVIEW` in `DetailsHero.tsx` (code-only).
+- Missing on-disk path: [`MissingLibraryPathPanel`](gallery/components/MissingLibraryPathPanel.tsx) is an error-styled banner **above** the hero (`--error-color`; **Locate on disk** / Remove); cover, metadata, and lists stay visible. Classic History / Continue Reading (manga only): if the series folder exists but a chapter path is missing, the dialog offers **Open first chapter** / **Locate chapter** (pick renamed/moved chapter) — never open the series root (cover-only) and never relocate the library link to a chapter.
 
 ### GalleryTabBar
 
@@ -213,9 +196,9 @@ Pill-style tab switcher at the top of the gallery toolbar.
 A reusable compound component providing:
 
 - **Provider** — holds filter state, focused index, and renders the search input + item list.
-- **SearchInput** — uncontrolled text input wrapped in `.search-input-wrapper`, with a focusable clear (`x`) button overlaid on its right edge while the field has text. Its styles live *outside* `@layer main` in `styles/index.scss`, because consumer component stylesheets are unlayered and would otherwise always win.
+- **SearchInput** — uncontrolled text input wrapped in `.search-input-wrapper`, with a focusable clear (`x`) button overlaid on its right edge while the field has text. Focuses on mount unless `autoFocus` is false (gallery details lists pass false so Continue/Start can take initial focus). Its styles live *outside* `@layer main` in `styles/index.scss`, because consumer component stylesheets are unlayered and would otherwise always win.
 - **VirtualList** — renders items via `@tanstack/react-virtual`. Supports `columnCount > 1` for the gallery grid.
-- **List** — non-virtualised ordered list (used by classic tabs).
+- **List** — non-virtualised ordered list (classic tabs; gallery details). Optional `scrollContainerRef` scrolls the focused row inside that overflow box so ancestor panels do not jump.
 - **Input** — the search input field.
 
 Key capabilities:

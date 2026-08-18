@@ -24,7 +24,7 @@ Highlight uses `outline` plus a light yellow background (Chrome 108 has no `colo
 Opaque ids are the public API. CSS selectors stay inside the catalog.
 
 | Pattern | Example | Notes |
-|---------|---------|--------|
+| --------- | --------- | -------- |
 | `setting:<kebab>` | `setting:library` | Settings tab sections / controls |
 | `shortcut:<command>` | `shortcut:focusPageSearch` | Generated from `SHORTCUT_COMMAND_MAP` |
 | `about` | About root | |
@@ -39,9 +39,9 @@ Grab-bag sections (`setting:other`, `setting:style`) keep a heading target for t
 
 ### Adding a target
 
-1. Give the DOM node a stable `#settings-…` id (shortcut rows: `#settings-shortcut-<command>`).
+1. Give the DOM node a stable `#settings-...` id (shortcut rows: `#settings-shortcut-<command>`).
 2. Add a `SETTINGS_TARGETS_STATIC` row (or rely on shortcut generation). Prefer `contentPath` when the section has body / control copy users will search for. Grab-bag sections should add one row per control instead of one `contentPath` on the heading.
-3. Call `navigateToSetting("…", dispatch)` or `<SettingsLink targetId="…" />`.
+3. Call `navigateToSetting("...", dispatch)` or `<SettingsLink targetId="..." />`.
 
 ## Tabs (`constants.ts`)
 

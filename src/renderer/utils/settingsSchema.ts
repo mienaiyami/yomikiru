@@ -73,6 +73,11 @@ const settingSchema = z
         /** Card width in em. */
         galleryItemWidth: z.number().min(10).max(30),
         /**
+         * Pixel height of the gallery details metadata block (hero).
+         * Shared for manga and book. `0` is auto (section uses the rem min and scrolls if taller).
+         */
+        galleryDetailsHeroHeight: z.number().min(0).default(0),
+        /**
          * Open chapter in reader directly, one folder inside of base manga dir.
          */
         openDirectlyFromManga: z.boolean(),
@@ -148,8 +153,9 @@ const settingSchema = z
         gallerySortBy: "name",
         galleryActiveTab: "continue-reading",
         galleryTypeFilter: "all",
-        galleryDisplayMode: "normal",
+        galleryDisplayMode: "compact",
         galleryItemWidth: 16,
+        galleryDetailsHeroHeight: 0,
         openDirectlyFromManga: false,
         showTabs: {
             bookmark: true,

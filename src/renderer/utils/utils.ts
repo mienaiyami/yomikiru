@@ -91,17 +91,31 @@ export const randomString = (length: number) => {
     return result;
 };
 
-// /**
-//  * scroll to a element
-//  * @param query - element query string of position to scroll to
-//  * @param behavior - `ScrollBehavior`
-//  */
-// export const scrollToElement = (query: string, behavior: ScrollBehavior = "smooth") => {
-//     const element = document.querySelector(query);
-//     if (element) {
-//         element.scrollIntoView({ behavior, block: "start" });
-//     }
-// };
+/**
+ * Scrolls `child` inside `container` without moving ancestor scrollers.
+ * `Element.scrollIntoView` also shifts outer overflow boxes (gallery details hero).
+ *
+ * @param block `"center"` places the child in the middle of the container; `"nearest"`
+ * only moves if the child is clipped.
+ */
+export const scrollChildInContainer = (
+    container: HTMLElement,
+    child: HTMLElement,
+    block: "center" | "nearest" = "center",
+): void => {
+    const cRect = container.getBoundingClientRect();
+    const eRect = child.getBoundingClientRect();
+    if (block === "nearest") {
+        if (eRect.top >= cRect.top && eRect.bottom <= cRect.bottom) return;
+        if (eRect.top < cRect.top) {
+            container.scrollTop += eRect.top - cRect.top;
+            return;
+        }
+        container.scrollTop += eRect.bottom - cRect.bottom;
+        return;
+    }
+    container.scrollTop += eRect.top - cRect.top - (cRect.height - eRect.height) / 2;
+};
 
 export const sleep = (ms: number): Promise<void> => new Promise((resolve) => setTimeout(resolve, ms));
 

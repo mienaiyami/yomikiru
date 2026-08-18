@@ -1,8 +1,18 @@
 import { renderWithProviders } from "@test/renderWithProviders";
 import { act, fireEvent, waitFor } from "@testing-library/react";
-import { useState } from "react";
+import { healShortcutEntries } from "@utils/keybindings";
+import { useRef, useState } from "react";
 import { describe, expect, it, vi } from "vitest";
 import ListNavigator from "./ListNavigator";
+
+const { scrollChildInContainer } = vi.hoisted(() => ({
+    scrollChildInContainer: vi.fn(),
+}));
+
+vi.mock("@utils/utils", async (importOriginal) => {
+    const mod = await importOriginal<typeof import("@utils/utils")>();
+    return { ...mod, scrollChildInContainer };
+});
 
 const ITEMS = ["alpha", "beta"];
 
@@ -123,5 +133,103 @@ describe("ListNavigator.SearchInput", () => {
             expect(itemTexts()).toEqual(ITEMS);
             expect(clearBtn()).toBeNull();
         });
+    });
+
+    it("does not focus the field on mount when autoFocus is false", () => {
+        const { container } = renderWithProviders(
+            <ListNavigator.Provider
+                items={ITEMS}
+                filterFn={(filter, item) => new RegExp(filter, "i").test(item)}
+                renderItem={(item) => <span>{item}</span>}
+            >
+                <ListNavigator.SearchInput autoFocus={false} />
+                <ListNavigator.List />
+            </ListNavigator.Provider>,
+        );
+        const input = container.querySelector("input.search-input") as HTMLInputElement;
+        expect(input).not.toBe(document.activeElement);
+    });
+});
+
+describe("ListNavigator keyboard on focused rows", () => {
+    const defaultShortcuts = { shortcuts: healShortcutEntries([]) };
+
+    it("fires contextMenu for a focused row that has no inner a", () => {
+        const onContextMenu = vi.fn();
+        renderWithProviders(
+            <ListNavigator.Provider
+                items={ITEMS}
+                renderItem={(item, _i, selected) => <div data-focused={selected}>{item}</div>}
+                onContextMenu={onContextMenu}
+            >
+                <ListNavigator.SearchInput />
+                <ListNavigator.List />
+            </ListNavigator.Provider>,
+            { preloadedState: defaultShortcuts },
+        );
+
+        const input = document.querySelector("input.search-input") as HTMLInputElement;
+        fireEvent.keyDown(input, { key: "ArrowDown", code: "ArrowDown" });
+        fireEvent.keyDown(input, { key: "/", code: "Slash", ctrlKey: true });
+        expect(onContextMenu).toHaveBeenCalledTimes(1);
+        expect(onContextMenu.mock.calls[0][0]).toBeInstanceOf(HTMLElement);
+        expect((onContextMenu.mock.calls[0][0] as HTMLElement).textContent).toBe("alpha");
+    });
+
+    it("fires contextMenu on the inner a when the focused row has one", () => {
+        const onContextMenu = vi.fn();
+        renderWithProviders(
+            <ListNavigator.Provider
+                items={ITEMS}
+                renderItem={(item, _i, selected) => (
+                    <li data-focused={selected}>
+                        <a href="#">{item}</a>
+                    </li>
+                )}
+                onContextMenu={onContextMenu}
+            >
+                <ListNavigator.SearchInput />
+                <ListNavigator.List />
+            </ListNavigator.Provider>,
+            { preloadedState: defaultShortcuts },
+        );
+
+        const input = document.querySelector("input.search-input") as HTMLInputElement;
+        fireEvent.keyDown(input, { key: "ArrowDown", code: "ArrowDown" });
+        fireEvent.keyDown(input, { key: "/", code: "Slash", ctrlKey: true });
+        expect(onContextMenu).toHaveBeenCalledTimes(1);
+        expect((onContextMenu.mock.calls[0][0] as HTMLElement).tagName).toBe("A");
+    });
+
+    /**
+     * Details lists scroll the overflow parent via {@link scrollChildInContainer}
+     * so ancestor boxes (hero / meta) do not move. Classic lists omit the ref.
+     */
+    it("scrolls the focused row inside scrollContainerRef when list focus moves", () => {
+        scrollChildInContainer.mockClear();
+        const Harness = () => {
+            const scrollRef = useRef<HTMLDivElement>(null);
+            return (
+                <ListNavigator.Provider
+                    items={ITEMS}
+                    renderItem={(item, _i, selected) => <div data-focused={selected}>{item}</div>}
+                >
+                    <ListNavigator.SearchInput />
+                    <div ref={scrollRef}>
+                        <ListNavigator.List scrollContainerRef={scrollRef} />
+                    </div>
+                </ListNavigator.Provider>
+            );
+        };
+        renderWithProviders(<Harness />, { preloadedState: defaultShortcuts });
+        const input = document.querySelector("input.search-input") as HTMLInputElement;
+        fireEvent.keyDown(input, { key: "ArrowDown", code: "ArrowDown" });
+        expect(scrollChildInContainer).toHaveBeenCalled();
+        const first = scrollChildInContainer.mock.calls.at(-1);
+        expect(first?.[2]).toBe("nearest");
+        expect((first?.[1] as HTMLElement).textContent).toBe("alpha");
+        fireEvent.keyDown(input, { key: "ArrowDown", code: "ArrowDown" });
+        const second = scrollChildInContainer.mock.calls.at(-1);
+        expect((second?.[1] as HTMLElement).textContent).toBe("beta");
     });
 });

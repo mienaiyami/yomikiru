@@ -13,11 +13,16 @@ export type AnilistBarProps = {
     /** When set (e.g. gallery detail panel), tracking uses this path instead of the open reader item. */
     localLibraryLink?: string;
     libraryTitle?: string;
+    /**
+     * Layout of the tracking control. Gallery details uses `"compact"` so this bar
+     * does not include progress steppers; search/edit still use the existing overlays.
+     */
+    variant?: "bar" | "compact";
 };
 
 const AnilistBar = memo((props: AnilistBarProps) => {
     const { t } = useTranslation("anilist");
-    const { localLibraryLink, libraryTitle } = props;
+    const { localLibraryLink, libraryTitle, variant = "bar" } = props;
     const anilistTracking = useAppSelector((store) => store.anilist.tracking);
     const readerLink = useAppSelector((store) => store.reader.content?.link);
     const trackLink = localLibraryLink ?? readerLink ?? undefined;
@@ -91,6 +96,29 @@ const AnilistBar = memo((props: AnilistBarProps) => {
         },
         [dispatch, libraryTitle, localLibraryLink],
     );
+
+    if (variant === "compact") {
+        return (
+            <div className="anilistBar anilistBar--compact">
+                {isTracking ? (
+                    anilistCurrentManga ? (
+                        <button type="button" onClick={() => openAnilistFlow("edit")}>
+                            {t("bar.compactTracked", {
+                                brand: t("bar.brand"),
+                                progress,
+                            })}
+                        </button>
+                    ) : (
+                        <span>{t("bar.networkError")}</span>
+                    )
+                ) : (
+                    <button type="button" onClick={() => openAnilistFlow("search")}>
+                        {t("bar.track")}
+                    </button>
+                )}
+            </div>
+        );
+    }
 
     return (
         <div className="anilistBar">

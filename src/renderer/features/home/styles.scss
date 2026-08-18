@@ -105,17 +105,30 @@
             background-color: var(--divider-color);
         }
 
+        .toolbarEnd {
+            /* hug actions+search on the trailing edge; growing this cluster
+             * leaves empty space after the search field */
+            margin-left: auto;
+            display: flex;
+            align-items: center;
+            justify-content: flex-end;
+            gap: 8px;
+            flex: 0 0 auto;
+            width: max-content;
+            max-width: 100%;
+            min-width: 0;
+            height: var(--galleryToolbarRowHeight);
+        }
+
         .search {
             flex: 0 1 auto;
             display: flex;
             /* stretch so the wrapper / input fill the row (classic .tools .row1) */
             align-items: stretch;
             height: var(--galleryToolbarRowHeight);
-            /* fixed search slot: original 18rem + 50% */
             width: 27rem;
             min-width: 10rem;
-            max-width: 50%;
-            margin-left: auto;
+            max-width: 100%;
 
             &:empty {
                 width: 0;
@@ -253,12 +266,15 @@
                     flex-direction: column;
                     padding-inline: 4em;
                     .galleryItem {
-                        height: 6em;
+                        /* 10% taller than the previous 6em row */
+                        height: 6.6em;
+                        box-sizing: border-box;
                         display: grid;
-                        grid-template-columns: 4em 1fr;
+                        grid-template-columns: auto auto 1fr;
+                        align-items: center;
                         gap: 1em;
                         text-align: left;
-                        padding: 0.5em;
+                        padding: 0.5em 0.5em 0.5em 0.85em;
                         &:hover {
                             scale: 1;
                             background-color: var(--listItem-bg-color-hover);
@@ -274,11 +290,43 @@
                         .continueReadingBtn {
                             display: none;
                         }
+                        .galleryCheckbox {
+                            position: static;
+                            top: auto;
+                            left: auto;
+                            opacity: 1;
+                            background-color: transparent;
+                            backdrop-filter: none;
+                            .checkBox {
+                                border-color: var(--font-color);
+                            }
+                            input:checked + .checkBox {
+                                background-color: var(--font-color);
+                                border-color: var(--font-color);
+                                &::after {
+                                    border-color: var(--body-bg-color);
+                                }
+                            }
+                        }
+                        &:hover .galleryCheckbox,
+                        &.selectionMode .galleryCheckbox,
+                        &.multiSelected .galleryCheckbox {
+                            background-color: transparent;
+                            backdrop-filter: none;
+                        }
+                        .coverContainer {
+                            height: 100%;
+                            width: auto;
+                            aspect-ratio: 2 / 3;
+                            max-height: 100%;
+                        }
                         .mangaTitle {
                             align-items: center;
                             font-size: 1.2em;
                             justify-content: start;
                             -webkit-line-clamp: 1;
+                            padding: 0;
+                            text-align: left;
                         }
                     }
                 }
@@ -527,94 +575,6 @@
                     font-size: 1.2em;
                     align-items: center;
                     justify-content: center;
-                }
-            }
-        }
-
-        .mangaDetailsPanel {
-            width: 300px;
-            height: 100%;
-            border-left: 1px solid var(--divider-color);
-            overflow-y: auto;
-            background-color: var(--listItem-bg-color);
-
-            .mangaInfo {
-                padding: 16px;
-                border-bottom: 1px solid var(--divider-color);
-
-                h3 {
-                    margin-bottom: 8px;
-                    font-size: 18px;
-                }
-
-                p {
-                    color: var(--font-color);
-                    font-size: 14px;
-                }
-            }
-
-            .detailTabs {
-                display: flex;
-                border-bottom: 1px solid var(--divider-color);
-
-                button {
-                    flex: 1;
-                    padding: 12px;
-                    background: none;
-                    border: none;
-                    cursor: pointer;
-                    color: var(--font-color);
-
-                    &.active {
-                        font-weight: bold;
-                        border-bottom: 2px solid var(--btn-color);
-                    }
-                }
-            }
-
-            .tabContent {
-                height: calc(100% - 150px);
-                overflow-y: auto;
-
-                .emptyState {
-                    padding: 16px;
-                    text-align: center;
-                    color: var(--font-color);
-                    opacity: 0.5;
-                }
-
-                .chapterItem {
-                    display: flex;
-                    justify-content: space-between;
-                    align-items: center;
-                    padding: 10px 16px;
-                    cursor: pointer;
-                    border-bottom: 1px solid var(--divider-color);
-
-                    &:hover {
-                        background-color: var(--listItem-bg-color-hover);
-                    }
-
-                    &.read {
-                        background-color: var(--listItem-bg-color-read);
-                    }
-
-                    .chapterName {
-                        flex: 1;
-                        text-overflow: ellipsis;
-                        white-space: nowrap;
-                        overflow: hidden;
-                    }
-
-                    .chapterExt {
-                        flex-shrink: 0;
-                        padding: 2px 6px;
-                        margin-left: 8px;
-                        border-radius: 4px;
-                        background-color: var(--code-bg-color);
-                        color: var(--code-text-color);
-                        font-size: 12px;
-                    }
                 }
             }
         }

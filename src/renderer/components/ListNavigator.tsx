@@ -6,11 +6,33 @@ import { getShortcutsMapped } from "@store/shortcuts";
 import { useVirtualizer } from "@tanstack/react-virtual";
 import { keyFormatter } from "@utils/keybindings";
 import { createRendererLogger } from "@utils/logger";
-import React, { createContext, memo, useCallback, useContext, useEffect, useMemo, useRef, useState } from "react";
+import { scrollChildInContainer } from "@utils/utils";
+import React, {
+    createContext,
+    memo,
+    useCallback,
+    useContext,
+    useEffect,
+    useLayoutEffect,
+    useMemo,
+    useRef,
+    useState,
+} from "react";
 import { useTranslation } from "react-i18next";
 import { shallowEqual } from "react-redux";
 
 const log = createRendererLogger("components/ListNavigator");
+
+/**
+ * Row for listSelect / contextMenu. Classic list rows set `data-focused` on the
+ * `<li>` and the action lives on the inner `<a>`; gallery tiles and details rows
+ * set `data-focused` on the clickable row itself.
+ */
+const queryFocusedListRow = (list: HTMLOListElement | null): HTMLElement | null => {
+    const focused = list?.querySelector<HTMLElement>('[data-focused="true"]');
+    if (!focused) return null;
+    return focused.querySelector("a") ?? focused;
+};
 
 type ListNavigatorContextType<T> = {
     items: T[];
@@ -135,7 +157,7 @@ function ListNavigatorProviderComponent<T>({
                     break;
 
                 case shortcutsMapped.contextMenu.includes(keyStr): {
-                    const elem = listRef.current?.querySelector('[data-focused="true"] a') as HTMLElement | null;
+                    const elem = queryFocusedListRow(listRef.current);
                     if (elem) {
                         e.stopPropagation();
                         e.preventDefault();
@@ -148,10 +170,10 @@ function ListNavigatorProviderComponent<T>({
                 }
 
                 case shortcutsMapped.listSelect.includes(keyStr): {
-                    const elem = listRef.current?.querySelector('[data-focused="true"] a') as HTMLElement | null;
+                    const elem = queryFocusedListRow(listRef.current);
                     if (elem) return onSelect?.(elem);
-                    const elems = listRef.current?.querySelectorAll("a");
-                    if (elems?.length === 1) return onSelect?.(elems[0] as HTMLElement);
+                    const anchors = listRef.current?.querySelectorAll("a");
+                    if (anchors?.length === 1) return onSelect?.(anchors[0] as HTMLElement);
                     break;
                 }
 
@@ -303,6 +325,12 @@ type SearchInputProps = {
      * @default false
      */
     runOriginalOnChange?: boolean;
+    /**
+     * When true, focus the field after mount. Details lists pass false so Continue
+     * / Start can take initial focus.
+     * @default true
+     */
+    autoFocus?: boolean;
 } & (
     | {
           onChange: (e: React.ChangeEvent<HTMLInputElement>) => string;
@@ -326,6 +354,7 @@ const SearchInputComponent: React.FC<SearchInputProps> = ({
     pageSearch,
     onChange,
     runOriginalOnChange = false,
+    autoFocus = true,
 }) => {
     const { t } = useTranslation("common");
     const resolvedPlaceholder = placeholder ?? t("list.typeToSearch");
@@ -339,10 +368,9 @@ const SearchInputComponent: React.FC<SearchInputProps> = ({
     });
 
     useEffect(() => {
-        if (inputRef.current) {
-            inputRef.current.focus();
-        }
-    }, [inputRef]);
+        if (!autoFocus) return;
+        inputRef.current?.focus();
+    }, [autoFocus, inputRef]);
 
     /* The input is uncontrolled: the provider (and custom `onChange` handlers) reset
      * `input.value` directly. Re-read the DOM value whenever the filter settles so the
@@ -417,10 +445,23 @@ const SearchInput = SearchInputComponent;
 
 type ListProps = {
     className?: string;
+    /**
+     * Overflow parent that should move when keyboard focus changes. Omit when the
+     * `<ol>` itself scrolls, or when rows already scroll themselves (classic home lists).
+     */
+    scrollContainerRef?: React.RefObject<HTMLElement | null>;
 };
 
-const ListComponent = ({ className = "list-container" }: ListProps) => {
+const ListComponent = ({ className = "list-container", scrollContainerRef }: ListProps) => {
     const { filteredItems, focused, listRef, renderItem, emptyMessage } = useListNavigator();
+
+    useLayoutEffect(() => {
+        if (focused < 0) return;
+        const container = scrollContainerRef?.current;
+        const row = listRef.current?.querySelector<HTMLElement>('[data-focused="true"]');
+        if (!container || !row) return;
+        scrollChildInContainer(container, row, "nearest");
+    }, [focused, listRef, scrollContainerRef]);
 
     if (filteredItems.length === 0) {
         return <p className="empty-message">{emptyMessage}</p>;
@@ -507,7 +548,8 @@ const VirtualListComponent = ({
     useEffect(() => {
         if (focused < 0 || filteredItems.length === 0) return;
         const rowIndex = Math.floor(focused / cols);
-        virtualizer.scrollToIndex(rowIndex, { align: "auto", behavior: "smooth" });
+        /* instant: held listUp/listDown must not queue smooth animations */
+        virtualizer.scrollToIndex(rowIndex, { align: "auto", behavior: "instant" });
     }, [cols, focused, filteredItems.length, virtualizer]);
 
     if (filteredItems.length === 0) {

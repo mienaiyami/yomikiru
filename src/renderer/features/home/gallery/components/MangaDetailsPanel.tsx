@@ -2,11 +2,11 @@ import type { LibraryItemWithProgress, MangaBookmark } from "@common/types/db";
 import AnilistBar from "@features/anilist/AnilistBar";
 import { useDirectoryValidator } from "@features/reader/hooks/useDirectoryValidator";
 import {
-    faArrowLeft,
     faBookmark,
-    faEdit,
+    faBookOpen,
+    faFolderOpen,
     faImage,
-    faSave,
+    faLocationDot,
     faSort,
     faSyncAlt,
 } from "@fortawesome/free-solid-svg-icons";
@@ -34,10 +34,20 @@ import {
 } from "@utils/libraryMissingPath";
 import { createRendererLogger } from "@utils/logger";
 import { resolveMangaChapterPath } from "@utils/mangaChapterPath";
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { scrollChildInContainer } from "@utils/utils";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { shallowEqual } from "react-redux";
 import ListSelectionToolbar from "../../classic/components/ListSelectionToolbar";
+import {
+    DetailsCopyPathButton,
+    DetailsFactField,
+    DetailsHero,
+    DetailsItemNote,
+    DetailsListToolbar,
+    DetailsMetaBlock,
+    DetailsTabBar,
+} from "./DetailsHero";
 import MissingLibraryPathPanel from "./MissingLibraryPathPanel";
 import "./mangaDetailsPanel.scss";
 
@@ -47,7 +57,7 @@ type MangaDetailsPanelProps = {
     mangaLink: string;
     onClose: () => void;
     /**
-     * Inner tab shown on open. Omit to use `"content"`.
+     * Inner tab shown on open. Omit to use this panel's default.
      * Parent remounts the panel (`key` = item link) when the selection changes.
      */
     initialTab?: "content" | "bookmarks";
@@ -69,15 +79,15 @@ const isListableMangaChapterChild = (chapter: { name: string; pages: number }): 
 };
 
 /**
- * Gallery side panel for a library manga: metadata plus inner tabs `"content"` and `"bookmarks"`.
+ * Gallery details page for a library manga: shared hero plus inner list tabs.
  * Opening a chapter or bookmark launches the reader at the stored location.
  */
-const MangaDetailsPanel: React.FC<MangaDetailsPanelProps> = ({
+const MangaDetailsPanel = ({
     mangaLink,
     onClose,
     onRelocated,
     initialTab = "content",
-}) => {
+}: MangaDetailsPanelProps) => {
     const { t } = useTranslation("home");
     const { t: tCommon } = useTranslation("common");
     const dispatch = useAppDispatch();
@@ -85,9 +95,9 @@ const MangaDetailsPanel: React.FC<MangaDetailsPanelProps> = ({
     const anilistToken = useAppSelector((store) => store.anilist.token);
 
     const [chapters, setChapters] = useState<ChapterData[]>([]);
-    const [note, setNote] = useState<string>("");
-    const [isEditingNote, setIsEditingNote] = useState(false);
     const [activeTab, setActiveTab] = useState<"content" | "bookmarks">(initialTab);
+    /* Local-only until library-item notes persist. */
+    const [itemNote, setItemNote] = useState("");
     const sortBy = useAppSelector((store) => store.appSettings.locationListSortBy);
     const sortOrder = useAppSelector((store) => store.appSettings.locationListSortType);
 
@@ -102,8 +112,12 @@ const MangaDetailsPanel: React.FC<MangaDetailsPanelProps> = ({
     );
     const { setContextMenuData, openInReader } = useAppContext();
     const { validateDirectory } = useDirectoryValidator();
+    const continueRef = useRef<HTMLButtonElement>(null);
+    const chaptersListRef = useRef<HTMLDivElement>(null);
 
-    const placeholderNote = t("gallery.details.noDescription");
+    useEffect(() => {
+        continueRef.current?.focus();
+    }, []);
 
     useEffect(() => {
         if (!manga?.id || !window.fs.existsSync(mangaLink) || !window.fs.isDir(mangaLink)) return;
@@ -171,10 +185,6 @@ const MangaDetailsPanel: React.FC<MangaDetailsPanelProps> = ({
     }, [mangaLink]);
 
     useEffect(() => {
-        setNote(placeholderNote);
-    }, [mangaLink, manga, placeholderNote]);
-
-    useEffect(() => {
         refreshChapters();
     }, [refreshChapters]);
 
@@ -211,12 +221,6 @@ const MangaDetailsPanel: React.FC<MangaDetailsPanelProps> = ({
         },
         [openInReader, pathMissing],
     );
-
-    const handleSaveNote = useCallback(() => {
-        if (!manga) return;
-        setIsEditingNote(false);
-        // todo: update note
-    }, [manga, note]);
 
     const handleChapterContextMenu = useCallback(
         (e: React.MouseEvent, chapterLink: string, chapterName: string) => {
@@ -339,11 +343,6 @@ const MangaDetailsPanel: React.FC<MangaDetailsPanelProps> = ({
                     onContextMenu={(e) => handleChapterContextMenu(e, chapter.link, chapter.name)}
                     data-url={chapter.link}
                     data-focused={isSelected}
-                    ref={(node) => {
-                        if (node && isSelected) {
-                            node.scrollIntoView({ behavior: "instant", block: "nearest" });
-                        }
-                    }}
                 >
                     <SelectionCheckbox
                         className="rowSelectCheck"
@@ -359,12 +358,6 @@ const MangaDetailsPanel: React.FC<MangaDetailsPanelProps> = ({
                             <code className="file-ext">{formatUtils.files.getExt(chapter.name)}</code>
                         ) : (
                             <span className="page-count">{chapter.pages}</span>
-                        )}
-
-                        {isCurrent && (
-                            <span className="current-indicator">
-                                <FontAwesomeIcon icon={faBookmark} />
-                            </span>
                         )}
                     </div>
                 </div>
@@ -587,287 +580,278 @@ const MangaDetailsPanel: React.FC<MangaDetailsPanelProps> = ({
         [mangaLink, onClose, pathMissing, setContextMenuData],
     );
 
+    const handleContinueReading = () => {
+        if (pathMissing || !manga) return;
+        if (manga.progress?.itemLink && manga.progress.chapterName) {
+            openInReader(resolveMangaChapterPath(manga.progress.itemLink, manga.progress.chapterName), {
+                mangaPageNumber: manga.progress.currentPage || 0,
+            });
+            return;
+        }
+        openInReader(mangaLink);
+    };
+
     const coverArtSrc = manga ? libraryCoverSrc(manga) : "";
+    const title = manga?.title || t("gallery.details.unknownManga");
+    const mangaProgress = manga?.type === "manga" ? manga.progress : null;
+    const currentChapterLink =
+        mangaProgress?.itemLink && mangaProgress.chapterName
+            ? resolveMangaChapterPath(mangaProgress.itemLink, mangaProgress.chapterName)
+            : "";
+
+    /**
+     * Scrolls the Content list to the in-progress chapter (reader sidelist locate).
+     * Uses {@link scrollChildInContainer} so the hero / meta block does not jump.
+     */
+    const handleLocateCurrentChapter = () => {
+        const list = chaptersListRef.current;
+        if (!currentChapterLink || !list) return;
+        list.querySelectorAll("[data-url]").forEach((elem) => {
+            if (elem.getAttribute("data-url") === currentChapterLink && elem instanceof HTMLElement) {
+                scrollChildInContainer(list, elem, "center");
+            }
+        });
+    };
+
+    const tabBar = (
+        <DetailsTabBar
+            tabs={[
+                { id: "content", label: t("gallery.details.content"), icon: faBookOpen },
+                { id: "bookmarks", label: t("gallery.details.bookmarks"), icon: faBookmark },
+            ]}
+            activeId={activeTab}
+            onChange={setActiveTab}
+            ariaLabel={t("gallery.details.tabsAria")}
+        />
+    );
 
     return (
         <div className="manga-details-panel">
-            <div className="top-bar">
-                <button className="back-button" onClick={onClose}>
-                    <FontAwesomeIcon icon={faArrowLeft} />
-                </button>
-                <h1 className="manga-title">{manga?.title || t("gallery.details.unknownManga")}</h1>
-            </div>
-
-            <div className="panel-content">
-                <div className="left-panel">
-                    <div className="manga-meta">
-                        <div className="cover-container" onContextMenu={handleLibraryRootContextMenu}>
-                            {coverArtSrc ? (
-                                <img
-                                    src={coverArtSrc}
-                                    alt={manga?.title || t("gallery.details.coverAlt")}
-                                    className="manga-cover"
-                                    draggable={false}
-                                />
-                            ) : (
-                                <div className="cover-placeholder">
-                                    <span>{manga?.title?.[0] || "?"}</span>
-                                </div>
-                            )}
-                        </div>
-                        <div className="manga-info">
-                            <div className="info-row">
-                                <span className="info-label">{t("gallery.details.author")}</span>
-                                <span className="info-value">{manga?.author || t("shared.unknown")}</span>
-                            </div>
-                            {manga?.type === "manga" && manga.progress && (
-                                <>
-                                    <div className="info-row">
-                                        <span className="info-label">{t("gallery.details.lastRead")}</span>
-                                        <span className="info-value">
-                                            {formatUtils.files.getName(manga.progress.chapterName || "")}
-                                        </span>
-                                    </div>
-                                    <div className="info-row">
-                                        <span className="info-label">{t("gallery.details.currentPage")}</span>
-                                        <span className="info-value">
-                                            {manga.progress.currentPage} / {manga.progress.totalPages || "?"}
-                                        </span>
-                                    </div>
-                                    <div className="info-row">
-                                        <span className="info-label">{t("gallery.details.chaptersRead")}</span>
-                                        <span className="info-value">{manga.progress.chaptersRead.length}</span>
-                                    </div>
-                                </>
-                            )}
-                        </div>
-                    </div>
-
-                    <div className="manga-actions-container">
-                        {pathMissing && manga ? (
-                            <MissingLibraryPathPanel
-                                type="manga"
-                                link={mangaLink}
-                                title={manga.title}
-                                onRelocated={(newLink) => onRelocated?.(newLink)}
-                                onRemoved={onClose}
-                            />
-                        ) : (
+            {pathMissing && manga ? (
+                <MissingLibraryPathPanel
+                    type="manga"
+                    link={mangaLink}
+                    title={manga.title}
+                    onRelocated={(newLink) => onRelocated?.(newLink)}
+                    onRemoved={onClose}
+                />
+            ) : null}
+            <DetailsMetaBlock>
+                <DetailsHero
+                    title={title}
+                    author={manga?.author}
+                    coverSrc={coverArtSrc}
+                    coverAlt={manga?.title || t("gallery.details.coverAlt")}
+                    onBack={onClose}
+                    onCoverContextMenu={handleLibraryRootContextMenu}
+                    includeGenresPreview
+                    actions={
+                        pathMissing || !manga ? null : (
                             <>
-                                {anilistToken && manga ? (
-                                    <div className="gallery-anilist-bar">
-                                        <AnilistBar localLibraryLink={mangaLink} libraryTitle={manga.title} />
-                                    </div>
+                                <button
+                                    type="button"
+                                    className="continue-reading"
+                                    ref={continueRef}
+                                    onClick={handleContinueReading}
+                                >
+                                    {mangaProgress ? t("shared.continueReading") : t("shared.startReading")}
+                                </button>
+                                <button
+                                    type="button"
+                                    className="details-icon-btn"
+                                    onClick={() => void handleSelectCover()}
+                                    aria-label={t("shared.selectCover")}
+                                    data-tooltip={t("shared.selectCover")}
+                                >
+                                    <FontAwesomeIcon icon={faImage} />
+                                </button>
+                                <button
+                                    type="button"
+                                    className="details-icon-btn"
+                                    onClick={() => window.electron.showItemInFolder(mangaLink)}
+                                    aria-label={tCommon("contextMenu.showInExplorer")}
+                                    data-tooltip={tCommon("contextMenu.showInExplorer")}
+                                >
+                                    <FontAwesomeIcon icon={faFolderOpen} />
+                                </button>
+                                <DetailsCopyPathButton path={mangaLink} />
+                                {anilistToken ? (
+                                    <AnilistBar
+                                        variant="compact"
+                                        localLibraryLink={mangaLink}
+                                        libraryTitle={manga.title}
+                                    />
                                 ) : null}
-                                <div className="manga-actions">
-                                    {manga?.type === "manga" && manga.progress && (
-                                        <button
-                                            className="action-button continue-reading"
-                                            onClick={() => {
-                                                const p =
-                                                    manga?.progress?.itemLink && manga?.progress?.chapterName
-                                                        ? resolveMangaChapterPath(
-                                                              manga.progress.itemLink,
-                                                              manga.progress.chapterName,
-                                                          )
-                                                        : "";
-                                                openInReader(p, {
-                                                    mangaPageNumber: manga?.progress?.currentPage || 0,
-                                                });
-                                            }}
-                                        >
-                                            {t("shared.continueReading")}
-                                        </button>
-                                    )}
-                                    <button className="action-button select-cover" onClick={handleSelectCover}>
-                                        <FontAwesomeIcon icon={faImage} />
-                                        <span>{t("shared.selectCover")}</span>
-                                    </button>
-                                    {isEditingNote ? (
-                                        <button className="action-button save-note" onClick={handleSaveNote}>
-                                            <FontAwesomeIcon icon={faSave} />
-                                            <span>{t("gallery.details.saveNote")}</span>
-                                        </button>
-                                    ) : (
-                                        <button
-                                            className="action-button edit-note"
-                                            onClick={() => setIsEditingNote(true)}
-                                        >
-                                            <FontAwesomeIcon icon={faEdit} />
-                                            <span>{t("gallery.details.editNote")}</span>
-                                        </button>
-                                    )}
-                                </div>
-                                <div className="manga-note">
-                                    <h3>{t("gallery.details.about")}</h3>
-                                    {isEditingNote ? (
-                                        <textarea
-                                            className="note-editor"
-                                            value={note}
-                                            onChange={(e) => setNote(e.target.value)}
-                                            placeholder={t("gallery.details.notePlaceholder")}
-                                        />
-                                    ) : (
-                                        <div className="note-text">
-                                            {note || t("gallery.details.noDescription")}
-                                        </div>
-                                    )}
-                                </div>
                             </>
-                        )}
-                    </div>
-                </div>
-
-                <div className="right-panel">
-                    <div className="panel-tabs">
-                        <button
-                            className={`tab-button ${activeTab === "content" ? "active" : ""}`}
-                            onClick={() => setActiveTab("content")}
-                        >
-                            {t("gallery.details.content")}
-                        </button>
-                        <button
-                            className={`tab-button ${activeTab === "bookmarks" ? "active" : ""}`}
-                            onClick={() => setActiveTab("bookmarks")}
-                        >
-                            {t("gallery.details.bookmarks")}
-                        </button>
-                    </div>
-
-                    {activeTab === "content" && (
+                        )
+                    }
+                    facts={
                         <>
-                            <div className="chapters-header">
-                                <h2 className="chapters-title">
-                                    {t("gallery.details.chaptersCount", { count: chapters.length })}
-                                </h2>
+                            {mangaProgress ? (
+                                <DetailsFactField label={t("gallery.details.currentChapter")}>
+                                    {formatUtils.files.getName(mangaProgress.chapterName || "")}
+                                </DetailsFactField>
+                            ) : null}
+                            <div className="details-pair-row">
+                                {mangaProgress ? (
+                                    <>
+                                        <DetailsFactField label={t("gallery.details.lastRead")}>
+                                            {dateUtils.format(mangaProgress.lastReadAt, {
+                                                format: dateUtils.presets.dateTime,
+                                            })}
+                                        </DetailsFactField>
+                                        <DetailsFactField label={t("gallery.details.currentPage")}>
+                                            {mangaProgress.currentPage} / {mangaProgress.totalPages || "?"}
+                                        </DetailsFactField>
+                                    </>
+                                ) : null}
+                                <DetailsFactField label={t("gallery.details.chaptersRead")}>
+                                    {`${mangaProgress?.chaptersRead.length ?? 0} / ${chapters.length}`}
+                                </DetailsFactField>
                             </div>
-
-                            <ListNavigator.Provider
-                                items={sortedChapters}
-                                filterFn={filterChapter}
-                                renderItem={renderChapterItem}
-                                onContextMenu={handleContextMenu}
-                                onSelect={handleSelect}
-                                onFilteredItemsChange={(items) =>
-                                    chapterSelection.setVisibleOrder(items.map((c) => c.name))
-                                }
-                                emptyMessage={t("gallery.details.noChapters")}
-                            >
-                                {chapterSelection.isSelectionMode ? (
-                                    <div className="chapters-toolbar">
-                                        <ListSelectionToolbar
-                                            count={chapterSelection.count}
-                                            onSelectAll={chapterSelection.selectAll}
-                                            onInvertSelection={chapterSelection.invertSelection}
-                                            onCancel={chapterSelection.clearSelection}
-                                            extraMenuItems={[
-                                                {
-                                                    label: t("gallery.details.markAsRead", {
-                                                        count: chapterSelection.count,
-                                                    }),
-                                                    action: () => handleBulkMarkChapters(true),
-                                                },
-                                                {
-                                                    label: t("gallery.details.markAsUnread", {
-                                                        count: chapterSelection.count,
-                                                    }),
-                                                    action: () => handleBulkMarkChapters(false),
-                                                },
-                                            ]}
-                                        />
-                                    </div>
-                                ) : (
-                                    <div className="chapters-toolbar">
-                                        <div className="toolbar-actions">
-                                            <button
-                                                data-tooltip={t("gallery.details.refresh")}
-                                                onClick={refreshChapters}
-                                            >
-                                                <FontAwesomeIcon icon={faSyncAlt} />
-                                            </button>
-
-                                            <button
-                                                data-tooltip={t("shared.sort.tooltip", {
-                                                    arrow: sortOrder === "normal" ? "▲ " : "▼ ",
-                                                    by: sortBy.toUpperCase(),
-                                                })}
-                                                onClick={handleSortClick}
-                                            >
-                                                <FontAwesomeIcon icon={faSort} />
-                                            </button>
-                                        </div>
-                                        <ListNavigator.SearchInput
-                                            placeholder={t("gallery.details.searchChapters")}
-                                            pageSearch={{
-                                                id: "gallery-manga-chapters",
-                                                priority: PAGE_SEARCH_PRIORITY.details,
-                                            }}
-                                        />
-                                    </div>
-                                )}
-
-                                <div className="chapters-list">
-                                    <ListNavigator.List />
-                                </div>
-                            </ListNavigator.Provider>
                         </>
-                    )}
+                    }
+                    note={<DetailsItemNote value={itemNote} onChange={setItemNote} />}
+                />
+            </DetailsMetaBlock>
 
-                    {activeTab === "bookmarks" && (
-                        <>
-                            <div className="chapters-header">
-                                <h2 className="chapters-title">
-                                    {t("gallery.details.bookmarksCount", { count: bookmarksArray.length })}
-                                </h2>
-                            </div>
-
-                            <ListNavigator.Provider
-                                items={bookmarksArray}
-                                filterFn={filterBookmark}
-                                renderItem={renderBookmarkItem}
-                                onContextMenu={handleContextMenu}
-                                onSelect={handleSelect}
-                                onFilteredItemsChange={(items) =>
-                                    bookmarkSelection.setVisibleOrder(items.map((b) => b.id))
-                                }
-                                emptyMessage={t("gallery.details.noBookmarksFound")}
-                            >
-                                {bookmarkSelection.isSelectionMode ? (
-                                    <div className="chapters-toolbar">
-                                        <ListSelectionToolbar
-                                            count={bookmarkSelection.count}
-                                            onSelectAll={bookmarkSelection.selectAll}
-                                            onInvertSelection={bookmarkSelection.invertSelection}
-                                            onCancel={bookmarkSelection.clearSelection}
-                                            extraMenuItems={[
-                                                {
-                                                    label: t("gallery.details.deleteBookmarksMenu", {
-                                                        count: bookmarkSelection.count,
-                                                    }),
-                                                    action: handleBulkDeleteBookmarks,
-                                                },
-                                            ]}
-                                        />
-                                    </div>
-                                ) : (
-                                    <div className="chapters-toolbar">
-                                        <ListNavigator.SearchInput
-                                            placeholder={t("gallery.details.searchBookmarks")}
-                                            pageSearch={{
-                                                id: "gallery-manga-bookmarks",
-                                                priority: PAGE_SEARCH_PRIORITY.details,
-                                            }}
-                                        />
-                                    </div>
-                                )}
-
-                                <div className="chapters-list">
-                                    <ListNavigator.List />
-                                </div>
-                            </ListNavigator.Provider>
-                        </>
-                    )}
-                </div>
+            <div className="details-stage">
+                {activeTab === "content" ? (
+                    <ListNavigator.Provider
+                        items={sortedChapters}
+                        filterFn={filterChapter}
+                        renderItem={renderChapterItem}
+                        onContextMenu={handleContextMenu}
+                        onSelect={handleSelect}
+                        onFilteredItemsChange={(items) =>
+                            chapterSelection.setVisibleOrder(items.map((c) => c.name))
+                        }
+                        emptyMessage={t("gallery.details.noChapters")}
+                    >
+                        <DetailsListToolbar
+                            tabBar={tabBar}
+                            selection={
+                                chapterSelection.isSelectionMode ? (
+                                    <ListSelectionToolbar
+                                        count={chapterSelection.count}
+                                        onSelectAll={chapterSelection.selectAll}
+                                        onInvertSelection={chapterSelection.invertSelection}
+                                        onCancel={chapterSelection.clearSelection}
+                                        extraMenuItems={[
+                                            {
+                                                label: t("gallery.details.markAsRead", {
+                                                    count: chapterSelection.count,
+                                                }),
+                                                action: () => handleBulkMarkChapters(true),
+                                            },
+                                            {
+                                                label: t("gallery.details.markAsUnread", {
+                                                    count: chapterSelection.count,
+                                                }),
+                                                action: () => handleBulkMarkChapters(false),
+                                            },
+                                        ]}
+                                    />
+                                ) : undefined
+                            }
+                            search={
+                                <ListNavigator.SearchInput
+                                    placeholder={t("gallery.details.searchChapters")}
+                                    autoFocus={false}
+                                    pageSearch={{
+                                        id: "gallery-manga-chapters",
+                                        priority: PAGE_SEARCH_PRIORITY.details,
+                                    }}
+                                />
+                            }
+                            actions={
+                                <>
+                                    <button
+                                        type="button"
+                                        data-tooltip={t("gallery.details.locateCurrentChapter")}
+                                        aria-label={t("gallery.details.locateCurrentChapter")}
+                                        disabled={!currentChapterLink}
+                                        onClick={handleLocateCurrentChapter}
+                                    >
+                                        <FontAwesomeIcon icon={faLocationDot} />
+                                    </button>
+                                    <button
+                                        type="button"
+                                        data-tooltip={t("gallery.details.refresh")}
+                                        aria-label={t("gallery.details.refresh")}
+                                        onClick={refreshChapters}
+                                    >
+                                        <FontAwesomeIcon icon={faSyncAlt} />
+                                    </button>
+                                    <button
+                                        type="button"
+                                        data-tooltip={t("shared.sort.tooltip", {
+                                            arrow: sortOrder === "normal" ? "▲ " : "▼ ",
+                                            by: sortBy.toUpperCase(),
+                                        })}
+                                        aria-label={t("shared.sort.tooltip", {
+                                            arrow: sortOrder === "normal" ? "▲ " : "▼ ",
+                                            by: sortBy.toUpperCase(),
+                                        })}
+                                        onClick={handleSortClick}
+                                    >
+                                        <FontAwesomeIcon icon={faSort} />
+                                    </button>
+                                </>
+                            }
+                        />
+                        <div className="chapters-list" ref={chaptersListRef}>
+                            <ListNavigator.List scrollContainerRef={chaptersListRef} />
+                        </div>
+                    </ListNavigator.Provider>
+                ) : (
+                    <ListNavigator.Provider
+                        items={bookmarksArray}
+                        filterFn={filterBookmark}
+                        renderItem={renderBookmarkItem}
+                        onContextMenu={handleContextMenu}
+                        onSelect={handleSelect}
+                        onFilteredItemsChange={(items) =>
+                            bookmarkSelection.setVisibleOrder(items.map((b) => b.id))
+                        }
+                        emptyMessage={t("gallery.details.noBookmarksFound")}
+                    >
+                        <DetailsListToolbar
+                            tabBar={tabBar}
+                            selection={
+                                bookmarkSelection.isSelectionMode ? (
+                                    <ListSelectionToolbar
+                                        count={bookmarkSelection.count}
+                                        onSelectAll={bookmarkSelection.selectAll}
+                                        onInvertSelection={bookmarkSelection.invertSelection}
+                                        onCancel={bookmarkSelection.clearSelection}
+                                        extraMenuItems={[
+                                            {
+                                                label: t("gallery.details.deleteBookmarksMenu", {
+                                                    count: bookmarkSelection.count,
+                                                }),
+                                                action: handleBulkDeleteBookmarks,
+                                            },
+                                        ]}
+                                    />
+                                ) : undefined
+                            }
+                            search={
+                                <ListNavigator.SearchInput
+                                    placeholder={t("gallery.details.searchBookmarks")}
+                                    autoFocus={false}
+                                    pageSearch={{
+                                        id: "gallery-manga-bookmarks",
+                                        priority: PAGE_SEARCH_PRIORITY.details,
+                                    }}
+                                />
+                            }
+                        />
+                        <div className="chapters-list" ref={chaptersListRef}>
+                            <ListNavigator.List scrollContainerRef={chaptersListRef} />
+                        </div>
+                    </ListNavigator.Provider>
+                )}
             </div>
         </div>
     );

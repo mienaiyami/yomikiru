@@ -1,6 +1,6 @@
 # AniList Integration
 
-> Last updated: 2026-08-17. Covers v2.24.x.
+> Last updated: 2026-08-18. Covers v2.24.x.
 
 Yomikiru can track reading progress on [AniList](https://anilist.co) (manga and novels).
 The integration is fully optional and requires a personal AniList OAuth token.
@@ -63,20 +63,15 @@ Entry: [`AnilistBar.tsx`](AnilistBar.tsx)
 
 The `AnilistBar` component appears in:
 
-- The manga reader side-list.
-- The EPUB reader side-list.
-- The `MangaDetailsPanel` in the gallery.
-- The `BookDetailsPanel` in the gallery.
+- The manga reader side-list (`variant="bar"`, default).
+- The EPUB reader side-list (`variant="bar"`).
+- Gallery manga/book details (`variant="compact"`).
 
-It shows whether the current item is linked to an AniList entry, and provides:
+**Bar** (reader): progress counter with `+` / `-`, an edit control, and Track when unlinked. Progress uses a debounced 1-second save via `AniList.setCurrentMangaProgress`.
 
-- **Progress counter** with `+` / `-` buttons (increments/decrements chapter progress).
-- **Edit button** — opens the full edit overlay (`AnilistEdit`).
-- **Link / Unlink** — associates/removes the local item from AniList tracking.
+**Compact** (gallery details): Track, or a status/count control that opens the existing search/edit overlays. No `+` / `-` on this page.
 
-The progress counter uses a debounced 1-second save: changes are sent to AniList via `AniList.setCurrentMangaProgress` after the user stops interacting.
-
-When `localLibraryLink` prop is provided (gallery detail panels), tracking resolves from that path instead of the open reader item.
+When `localLibraryLink` prop is provided (gallery details), tracking resolves from that path instead of the open reader item.
 
 ---
 
@@ -84,7 +79,7 @@ When `localLibraryLink` prop is provided (gallery detail panels), tracking resol
 
 Entry: [`AnilistSearch.tsx`](AnilistSearch.tsx)
 
-When "Track with AniList…" is selected (reader bar or gallery context menu), the search overlay opens.
+When "Track with AniList..." is selected (reader bar or gallery context menu), the search overlay opens.
 
 1. User types a title → `AniList.search(query)` calls the AniList GraphQL API.
 2. Results show cover, title (English/Romaji/Native), format, status, episode/chapter count.
@@ -127,7 +122,7 @@ This only triggers when the item is linked (exists in `anilist.tracking`) and a 
 
 ## Gallery Context Tracking
 
-When the user right-clicks a gallery item and selects "Track with AniList…":
+When the user right-clicks a gallery item and selects "Track with AniList...":
 
 1. `setGalleryTrackContext({ link, title })` is dispatched to `anilist` slice.
 2. `setAnilistSearchOpen(true)` opens the search overlay.
