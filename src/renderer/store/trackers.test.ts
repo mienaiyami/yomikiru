@@ -3,7 +3,8 @@ import type { ItemTracker } from "@common/types/db";
 import { configureStore } from "@reduxjs/toolkit";
 import { onInvoke } from "@test/mocks/preload";
 import { afterEach, describe, expect, it, vi } from "vitest";
-import trackersReducer, { removeTracker, updateTrackerSnapshot, upsertTracker } from "./trackers";
+import type { RootState } from ".";
+import trackersReducer, { removeTracker, selectTracker, updateTrackerSnapshot, upsertTracker } from "./trackers";
 
 const itemLink = path.join("library", "tracked");
 
@@ -67,5 +68,23 @@ describe("trackers thunks", () => {
         );
         expect(store.getState().trackers.entries[0]?.media?.title).toBe("Cached");
         expect(store.getState().trackers.entries[0]?.media?.status).toBe("RELEASING");
+    });
+});
+
+describe("selectTracker", () => {
+    /** Minimal root state so {@link selectTracker} can read `trackers.entries`. */
+    const asRoot = (entries: ItemTracker[]): RootState => ({ trackers: { entries } }) as RootState;
+
+    it("returns the row for the library path and provider", () => {
+        const row = trackerRow({ remoteId: "99" });
+        expect(selectTracker(asRoot([row]), itemLink, "anilist")).toEqual(row);
+    });
+
+    it("returns undefined when the library path does not match", () => {
+        expect(selectTracker(asRoot([trackerRow()]), path.join("library", "other"), "anilist")).toBeUndefined();
+    });
+
+    it("returns undefined when itemLink is missing", () => {
+        expect(selectTracker(asRoot([trackerRow()]), undefined, "anilist")).toBeUndefined();
     });
 });

@@ -1,9 +1,11 @@
+import path from "node:path";
 import { http } from "@common/http";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import {
     anilistRequest,
     setAnilistClientToken,
     setAnilistStorageToken,
+    toAnilistTrackerSnapshotUpdate,
     toTrackerListState,
     toTrackerMediaSnapshot,
 } from "./anilist";
@@ -21,6 +23,22 @@ const media = (patch: Partial<Anilist.ListEntry["media"]> = {}): Anilist.ListEnt
     idMal: 1,
     status: "RELEASING",
     format: "MANGA",
+    ...patch,
+});
+
+/** GraphQL list-entry fixture for mapping tests. */
+const listEntry = (patch: Partial<Anilist.ListEntry> = {}): Anilist.ListEntry => ({
+    id: 42,
+    mediaId: 99,
+    status: "CURRENT",
+    progress: 4,
+    progressVolumes: 1,
+    score: 70,
+    repeat: 0,
+    private: false,
+    startedAt: { year: null, month: null, day: null },
+    completedAt: { year: null, month: null, day: null },
+    media: media(),
     ...patch,
 });
 
@@ -76,19 +94,44 @@ describe("anilistRequest token", () => {
 
 describe("toTrackerListState", () => {
     it("copies list-entry status and scores", () => {
-        const state = toTrackerListState({
-            id: 1,
-            mediaId: 2,
+        expect(toTrackerListState(listEntry())).toEqual({
             status: "CURRENT",
             progress: 4,
             progressVolumes: 1,
             score: 70,
-            repeat: 0,
-            private: false,
-            startedAt: { year: null, month: null, day: null },
-            completedAt: { year: null, month: null, day: null },
-            media: media(),
         });
-        expect(state).toEqual({ status: "CURRENT", progress: 4, progressVolumes: 1, score: 70 });
+    });
+});
+
+describe("toAnilistTrackerSnapshotUpdate", () => {
+    afterEach(() => {
+        vi.useRealTimers();
+    });
+
+    it("maps a list entry to AniList provider snapshot IPC args", () => {
+        vi.useFakeTimers();
+        vi.setSystemTime(new Date("2026-01-15T12:00:00.000Z"));
+        const itemLink = path.join("library", "tracked");
+        const update = toAnilistTrackerSnapshotUpdate(itemLink, listEntry());
+        expect(update).toEqual({
+            itemLink,
+            provider: "anilist",
+            remoteListId: "42",
+            remoteUrl: "https://example.test",
+            media: {
+                title: "English",
+                coverImage: "l",
+                bannerImage: "b",
+                description: "About",
+                genres: ["Drama"],
+                status: "RELEASING",
+                format: "MANGA",
+                totalChapters: 12,
+                siteUrl: "https://example.test",
+                score: 80,
+            },
+            listState: { status: "CURRENT", progress: 4, progressVolumes: 1, score: 70 },
+            syncedAt: new Date("2026-01-15T12:00:00.000Z"),
+        });
     });
 });

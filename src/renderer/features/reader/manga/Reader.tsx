@@ -3,13 +3,14 @@ import {
     applyMakeCoverFromPageImage,
     applyMangaCoverAfterChapterLoad,
 } from "@features/reader/services/readerCoverFlows";
-import { cacheAnilistListEntry, setAnilistCurrentListEntry } from "@store/anilist";
+import { setAnilistCurrentListEntry } from "@store/anilist";
 import { setAppSettings, setReaderSettings } from "@store/appSettings";
 import { useAppDispatch, useAppSelector } from "@store/hooks";
 import { addLibraryItem, selectLibraryItem, updateChaptersRead, updateMangaProgress } from "@store/library";
 import { setReaderLoading, setReaderOpen, updateReaderContent, updateReaderMangaCurrentPage } from "@store/reader";
 import { cyclePresetNext, cyclePresetPrev, selectPresetSlot } from "@store/readerPresets";
-import { setAnilistListProgress } from "@utils/anilist";
+import { updateTrackerSnapshot } from "@store/trackers";
+import { setAnilistListProgress, toAnilistTrackerSnapshotUpdate } from "@utils/anilist";
 import { processChapterNumber } from "@utils/chapterUtils";
 import { fileSrcToImagePath, formatUtils } from "@utils/file";
 import { keyFormatter, mouseEventFormatter } from "@utils/keybindings";
@@ -1002,8 +1003,9 @@ const Reader: React.FC = () => {
                 setAnilistListProgress(chapterNumber).then((e) => {
                     if (e) {
                         dispatch(setAnilistCurrentListEntry(e));
-                        /* follow-up: updateTrackerSnapshot + mapping helpers (see store/trackers.md) */
-                        void dispatch(cacheAnilistListEntry({ itemLink: mangaProgressItemLink, data: e }));
+                        void dispatch(
+                            updateTrackerSnapshot(toAnilistTrackerSnapshotUpdate(mangaProgressItemLink, e)),
+                        );
                         log.log(`AniList auto-progress: synced list progress to chapter ${chapterNumber}`);
                     } else {
                         log.error(

@@ -20,7 +20,6 @@ import SelectionCheckbox from "@renderer/components/ui/SelectionCheckbox";
 import { useMultiSelect } from "@renderer/hooks/useMultiSelect";
 import { PAGE_SEARCH_PRIORITY } from "@renderer/hooks/usePageSearchFocus";
 import { useSelectionShortcuts } from "@renderer/hooks/useSelectionShortcuts";
-import { selectAnilistTracker } from "@store/anilist";
 import { setAppSettings } from "@store/appSettings";
 import { removeBookmark } from "@store/bookmarks";
 import { useAppDispatch, useAppSelector } from "@store/hooks";
@@ -30,6 +29,7 @@ import {
     setLibraryItemNote,
     updateChaptersReadAll,
 } from "@store/library";
+import { selectTracker } from "@store/trackers";
 import dateUtils from "@utils/date";
 import { dialogUtils } from "@utils/dialog";
 import { formatUtils } from "@utils/file";
@@ -115,8 +115,7 @@ const MangaDetailsPanel = ({
 
     const manga = library[mangaLink] as LibraryItemWithProgress & { type: "manga" };
     const overlays = useAppSelector((store) => selectItemMetadata(store, mangaLink));
-    // follow-up: selectTracker(store, mangaLink, "anilist") from @store/trackers (see store/trackers.md)
-    const tracker = useAppSelector((store) => selectAnilistTracker(store, mangaLink));
+    const tracker = useAppSelector((store) => selectTracker(store, mangaLink, "anilist"));
     /* book details uses the same overlay+tracker resolve; no shared hook until a third caller */
     const resolved = useMemo(
         () => (manga ? resolveItemMetadata({ item: manga, overlays, tracker }) : null),

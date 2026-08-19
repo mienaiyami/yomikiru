@@ -39,6 +39,7 @@
 - fix: popovers trap keyboard focus while open (Tab stays in the panel).
 - fix: updater version and announcement checks ignore non-ok GitHub responses instead of parsing error HTML/JSON as content, which was re-showing the same announcements many times a day. An empty ok announcement body no longer wipes the local seen list.
 - fix: stop reader scroll stutter caused by unstable Redux selectors and progress updates after reader presets (#523).
+- dev: gallery details and reader auto-progress persist tracker cache through `selectTracker` / `updateTrackerSnapshot`; AniList bar, search, and edit still use AniList-named wrappers.
 - dev: AniList helpers are module functions (`initAnilist` at startup) instead of a static class; tracker rows and metadata overlays live in SQLite (`item_trackers`, `library_item_metadata`, plus `favouritedAt` / `note` / `extra` on `library_items`).
 - dev: shared HTTP client (`src/common/http`) using axios for Electron main and the renderer; updater and AniList no longer use fetch / electron-fetch.
 - dev: Vitest/RTL unit and temp-SQLite db test harness, Playwright Electron smoke (app opens to home), and CI coverage job.

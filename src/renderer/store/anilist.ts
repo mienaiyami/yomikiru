@@ -6,8 +6,7 @@ import {
     setAnilistClientToken,
     setAnilistListEntryId,
     setAnilistStorageToken,
-    toTrackerListState,
-    toTrackerMediaSnapshot,
+    toAnilistTrackerSnapshotUpdate,
 } from "@utils/anilist";
 import { getStorageItem, setStorageItem } from "@utils/localStorage";
 import { createRendererLogger } from "@utils/logger";
@@ -84,20 +83,11 @@ export const removeAnilistTracker = (itemLink: string) => removeTracker({ itemLi
 
 /**
  * Writes the AniList list-entry payload into the tracker cache for this library item.
- * Dispatches {@link updateTrackerSnapshot}.
- * AniList UI only; reader/details should dispatch {@link updateTrackerSnapshot} after
- * {@link toTrackerMediaSnapshot} / {@link toTrackerListState} (`trackers.md`).
+ * Dispatches {@link updateTrackerSnapshot} via {@link toAnilistTrackerSnapshotUpdate}.
+ * AniList UI only; readers should dispatch {@link updateTrackerSnapshot} with that helper.
  */
 export const cacheAnilistListEntry = ({ itemLink, data }: { itemLink: string; data: Anilist.ListEntry }) =>
-    updateTrackerSnapshot({
-        itemLink,
-        provider: "anilist",
-        remoteListId: String(data.id),
-        remoteUrl: data.media.siteUrl,
-        media: toTrackerMediaSnapshot(data.media),
-        listState: toTrackerListState(data),
-        syncedAt: new Date(),
-    });
+    updateTrackerSnapshot(toAnilistTrackerSnapshotUpdate(itemLink, data));
 
 const anilistSlice = createSlice({
     name: "anilist",

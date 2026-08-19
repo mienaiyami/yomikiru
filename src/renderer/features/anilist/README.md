@@ -1,6 +1,6 @@
 # AniList Integration
 
-> Last updated: 2026-08-19. Covers the unreleased library-item metadata / tracker work on top of v2.24.x.
+> Last updated: 2026-08-20. Covers the unreleased library-item metadata / tracker work on top of v2.24.x.
 
 Yomikiru can track reading progress on [AniList](https://anilist.co) (manga and novels).
 The integration is fully optional and requires a personal AniList OAuth token.
@@ -124,7 +124,7 @@ Saves via `setAnilistListEntry` (GraphQL mutation `SaveMediaListEntry`). Untrack
 
 `autoUpdateAnilistProgress` in manga / book reader settings:
 
-When enabled, finishing a manga chapter (last page) or advancing book progress calls `setAnilistListProgress` and then `cacheAnilistListEntry` so the local tracker cache stays in sync.
+When enabled, finishing a manga chapter (last page) or advancing book progress calls `setAnilistListProgress`, updates session `currentListEntry`, then `updateTrackerSnapshot` with `toAnilistTrackerSnapshotUpdate` so the local tracker cache stays in sync. AniList bar/edit still use `cacheAnilistListEntry` (same payload helper).
 
 This only triggers when the item is linked (an `item_trackers` row for that path) and a valid `currentListEntry` is set in the Redux slice.
 
@@ -146,7 +146,7 @@ On close or after linking, `galleryTrackContext` is cleared to `null`. After a l
 
 Generic tracker rows: [`src/renderer/store/trackers.ts`](../../store/trackers.ts) (`trackers.entries`). AniList session: [`src/renderer/store/anilist.ts`](../../store/anilist.ts).
 
-**Rule:** AniList UI in this folder (and Settings / login) may use `addAnilistTracker`, `removeAnilistTracker`, `cacheAnilistListEntry`, `selectAnilistTracker`. Library, gallery details, and reader cache writes should use the generic trackers APIs instead. GraphQL (`getAnilistListEntry`, `setAnilistListEntry`, `setAnilistListProgress`) stays here. Call-site conversion: [`src/renderer/store/trackers.md`](../../store/trackers.md).
+**Rule:** AniList UI in this folder (and Settings / login) may use `addAnilistTracker`, `removeAnilistTracker`, `cacheAnilistListEntry`, `selectAnilistTracker`. Library, gallery details, and reader cache writes use the generic trackers APIs (`selectTracker`, `updateTrackerSnapshot`). GraphQL (`getAnilistListEntry`, `setAnilistListEntry`, `setAnilistListProgress`) stays here. Boundary: [`src/renderer/store/trackers.md`](../../store/trackers.md).
 
 | State key | Slice | Type | Description |
 | --- | --- | --- | --- |
@@ -177,7 +177,7 @@ Named exports (no static class). Call `initAnilist()` once at app startup to val
 | `setAnilistListProgress(n)` | Update progress count; returns updated `ListEntry` |
 | `getAnilistStorageToken` / `setAnilistStorageToken` | Token localStorage persistence |
 | `readStoredTracking` | Legacy `anilist_tracking` read for the one-shot import |
-| `toTrackerMediaSnapshot` / `toTrackerListState` | Map GraphQL payloads into DB cache columns |
+| `toTrackerMediaSnapshot` / `toTrackerListState` / `toAnilistTrackerSnapshotUpdate` | Map GraphQL payloads into DB cache columns / `updateTrackerSnapshot` args |
 
 The GraphQL mutation (`SaveMediaListEntry`) is a module-level query string and requests description, genres, chapters, volumes, averageScore, coverImage.large, and idMal in addition to the list-entry fields.
 

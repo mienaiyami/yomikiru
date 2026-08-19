@@ -1,5 +1,5 @@
 import { HttpStatusError, http } from "@common/http";
-import type { TrackerListState, TrackerMediaSnapshot } from "@common/types/db";
+import type { TrackerListState, TrackerMediaSnapshot, UpdateTrackerSnapshotData } from "@common/types/db";
 import i18n from "@renderer/i18n";
 import { dialogUtils } from "./dialog";
 import { getStorageItem, setStorageItem } from "./localStorage";
@@ -8,8 +8,8 @@ import { createRendererLogger } from "./logger";
 /**
  * AniList GraphQL client and OAuth token helpers.
  * Persist tracker rows through `store/trackers.ts` (`trackers.md`). Mapping helpers
- * {@link toTrackerMediaSnapshot} / {@link toTrackerListState} belong here because they
- * know the GraphQL shape.
+ * {@link toTrackerMediaSnapshot} / {@link toTrackerListState} /
+ * {@link toAnilistTrackerSnapshotUpdate} belong here because they know the GraphQL shape.
  */
 
 const log = createRendererLogger("AniList");
@@ -193,6 +193,22 @@ export const toTrackerListState = (data: Anilist.ListEntry): TrackerListState =>
     progress: data.progress,
     progressVolumes: data.progressVolumes,
     score: data.score,
+});
+
+/**
+ * Maps a GraphQL list entry to {@link UpdateTrackerSnapshotData} for the AniList provider.
+ */
+export const toAnilistTrackerSnapshotUpdate = (
+    itemLink: string,
+    data: Anilist.ListEntry,
+): UpdateTrackerSnapshotData => ({
+    itemLink,
+    provider: "anilist",
+    remoteListId: String(data.id),
+    remoteUrl: data.media.siteUrl,
+    media: toTrackerMediaSnapshot(data.media),
+    listState: toTrackerListState(data),
+    syncedAt: new Date(),
 });
 
 /**

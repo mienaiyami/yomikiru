@@ -1,5 +1,5 @@
 import type { BookProgress } from "@common/types/db";
-import { cacheAnilistListEntry, setAnilistCurrentListEntry } from "@store/anilist";
+import { setAnilistCurrentListEntry } from "@store/anilist";
 import { setAppSettings, setEpubReaderSettings, setReaderSettings } from "@store/appSettings";
 import { addNote } from "@store/bookNotes";
 import { useAppDispatch, useAppSelector } from "@store/hooks";
@@ -19,7 +19,8 @@ import {
 } from "@store/reader";
 import { cyclePresetNext, cyclePresetPrev, selectPresetSlot } from "@store/readerPresets";
 import { getShortcutsMapped } from "@store/shortcuts";
-import { setAnilistListProgress } from "@utils/anilist";
+import { updateTrackerSnapshot } from "@store/trackers";
+import { setAnilistListProgress, toAnilistTrackerSnapshotUpdate } from "@utils/anilist";
 import { processChapterNumber } from "@utils/chapterUtils";
 import { colorUtils } from "@utils/color";
 import { dialogUtils } from "@utils/dialog";
@@ -519,8 +520,9 @@ const EPubReader: React.FC = () => {
                 if (e) {
                     dispatch(setAnilistCurrentListEntry(e));
                     if (bookInReader.link)
-                        /* follow-up: updateTrackerSnapshot + mapping helpers (see store/trackers.md) */
-                        void dispatch(cacheAnilistListEntry({ itemLink: bookInReader.link, data: e }));
+                        void dispatch(
+                            updateTrackerSnapshot(toAnilistTrackerSnapshotUpdate(bookInReader.link, e)),
+                        );
                 }
             });
     }, [bookProgress, appSettings.readerSettings.autoUpdateAnilistProgress]);

@@ -2,13 +2,11 @@
 
 SQLite `item_trackers` is provider-agnostic. Renderer code that **reads or writes those rows** should go through [`trackers.ts`](trackers.ts), not AniList-named thunks. AniList-named APIs stay for GraphQL, OAuth, and AniList UI.
 
-This file is the follow-up checklist. **Do not convert call sites in the same commit that only adds this doc.**
-
 ---
 
 ## Generic APIs (`store/trackers.ts`)
 
-Use these from library, gallery details, app bootstrap, relocate, and any future provider:
+Use these from library, gallery details, app bootstrap, relocate, readers (cache writes), and any future provider:
 
 | Export | Role |
 | --- | --- |
@@ -20,50 +18,36 @@ Use these from library, gallery details, app bootstrap, relocate, and any future
 
 `resolveItemMetadata` already takes a generic `ItemTracker`. Pass whatever `selectTracker` returns.
 
+`provider: "anilist"` at those call sites is the row discriminator while `TrackerProvider` has one member. Do not add a "first tracker for this item" picker until a second provider exists.
+
 ---
 
 ## AniList-only APIs (keep)
 
-**GraphQL / token** ([`utils/anilist.ts`](../utils/anilist.ts)): `getAnilistListEntry`, `setAnilistListEntry`, `setAnilistListProgress`, `searchAnilistMedia`, `checkAnilistToken`, storage token helpers, `toTrackerMediaSnapshot`, `toTrackerListState`. These know the AniList payload; they are not DB thunks.
+**GraphQL / token** ([`utils/anilist.ts`](../utils/anilist.ts)): `getAnilistListEntry`, `setAnilistListEntry`, `setAnilistListProgress`, `searchAnilistMedia`, `checkAnilistToken`, storage token helpers, `toTrackerMediaSnapshot`, `toTrackerListState`, `toAnilistTrackerSnapshotUpdate`. These know the AniList payload; they are not DB thunks.
 
 **Session slice** ([`anilist.ts`](anilist.ts)): `token`, `currentListEntry`, `galleryTrackContext`, `setAnilistToken`, `setAnilistCurrentListEntry`, `setGalleryTrackContext`, `importAnilistTrackingFromStorage`.
 
 **AniList UI** (`features/anilist/*`, Settings AniList, login): may keep calling `addAnilistTracker`, `removeAnilistTracker`, `cacheAnilistListEntry`, `selectAnilistTracker`. Those are thin wrappers over the generic thunks with `provider: "anilist"`.
 
----
-
-## Follow-up (next commit)
-
-Goal: outside AniList UI, dispatch / select only the generic trackers APIs. Mapping from `Anilist.ListEntry` stays in `utils/anilist.ts`.
-
-Suggested shape for a cache write after a GraphQL list-entry returns:
+Cache write after a GraphQL list-entry returns:
 
 ```ts
-void dispatch(
-    updateTrackerSnapshot({
-        itemLink,
-        provider: "anilist",
-        remoteListId: String(data.id),
-        remoteUrl: data.media.siteUrl,
-        media: toTrackerMediaSnapshot(data.media),
-        listState: toTrackerListState(data),
-        syncedAt: new Date(),
-    }),
-);
+void dispatch(updateTrackerSnapshot(toAnilistTrackerSnapshotUpdate(itemLink, data)));
 ```
 
-Optional: extract that object from `cacheAnilistListEntry` into a payload helper in `utils/anilist.ts` so AniList UI and the reader share one field list without AniList-named DB thunks at library/reader call sites.
+---
 
-### Convert
+## Converted call sites
 
-| File | Today | Next |
-| --- | --- | --- |
-| [`MangaDetailsPanel.tsx`](../features/home/gallery/components/MangaDetailsPanel.tsx) | `selectAnilistTracker` | `selectTracker(store, link, "anilist")` |
-| [`BookDetailsPanel.tsx`](../features/home/gallery/components/BookDetailsPanel.tsx) | same | same |
-| [`Reader.tsx`](../features/reader/manga/Reader.tsx) | `cacheAnilistListEntry` after auto-progress | `updateTrackerSnapshot` + mapping helpers |
-| [`EPubReader.tsx`](../features/reader/epub/EPubReader.tsx) | same | same |
+| File | Row API |
+| --- | --- |
+| [`MangaDetailsPanel.tsx`](../features/home/gallery/components/MangaDetailsPanel.tsx) | `selectTracker(store, link, "anilist")` |
+| [`BookDetailsPanel.tsx`](../features/home/gallery/components/BookDetailsPanel.tsx) | same |
+| [`Reader.tsx`](../features/reader/manga/Reader.tsx) | `updateTrackerSnapshot(toAnilistTrackerSnapshotUpdate(...))` after auto-progress |
+| [`EPubReader.tsx`](../features/reader/epub/EPubReader.tsx) | same |
 
-Keep `setAnilistListProgress` and `setAnilistCurrentListEntry` in the readers: auto-progress is an AniList GraphQL + session update. Only the **DB cache write** should be generic.
+Readers still call `setAnilistListProgress` and `setAnilistCurrentListEntry`: auto-progress is AniList GraphQL + session. Only the **DB cache write** is generic.
 
 ### Already generic / AniList-UI (leave)
 

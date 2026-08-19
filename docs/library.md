@@ -350,7 +350,7 @@ IPC: `db:trackers:getAll`, `db:trackers:upsert`, `db:trackers:remove`, `db:track
 
 Renderer store: generic tracker rows live in `trackers.entries` ([`src/renderer/store/trackers.ts`](../src/renderer/store/trackers.ts)). AniList OAuth, the open list entry, and gallery track context stay in the `anilist` slice.
 
-Callers that are not AniList UI (bar / search / edit / login) should read and write rows through the generic trackers APIs (`fetchAllTrackers`, `upsertTracker`, `removeTracker`, `updateTrackerSnapshot`, `selectTracker`). GraphQL helpers in [`src/renderer/utils/anilist.ts`](../src/renderer/utils/anilist.ts) stay AniList-named. Follow-up call-site conversion: [`src/renderer/store/trackers.md`](../src/renderer/store/trackers.md).
+Callers that are not AniList UI (bar / search / edit / login) read and write rows through the generic trackers APIs (`fetchAllTrackers`, `upsertTracker`, `removeTracker`, `updateTrackerSnapshot`, `selectTracker`). GraphQL helpers in [`src/renderer/utils/anilist.ts`](../src/renderer/utils/anilist.ts) stay AniList-named. Boundary: [`src/renderer/store/trackers.md`](../src/renderer/store/trackers.md).
 
 ---
 

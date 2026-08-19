@@ -9,11 +9,11 @@ import SelectionCheckbox from "@renderer/components/ui/SelectionCheckbox";
 import { useMultiSelect } from "@renderer/hooks/useMultiSelect";
 import { PAGE_SEARCH_PRIORITY } from "@renderer/hooks/usePageSearchFocus";
 import { useSelectionShortcuts } from "@renderer/hooks/useSelectionShortcuts";
-import { selectAnilistTracker } from "@store/anilist";
 import { removeBookmark } from "@store/bookmarks";
 import { removeNote } from "@store/bookNotes";
 import { useAppDispatch, useAppSelector } from "@store/hooks";
 import { selectItemMetadata, setLibraryItemFavourite, setLibraryItemNote } from "@store/library";
+import { selectTracker } from "@store/trackers";
 import dateUtils from "@utils/date";
 import { dialogUtils } from "@utils/dialog";
 import { libraryCoverSrc } from "@utils/libraryCover";
@@ -71,8 +71,7 @@ const BookDetailsPanel = ({ bookLink, onClose, onRelocated, initialTab = "bookma
 
     const book = library[bookLink] as (LibraryItemWithProgress & { type: "book" }) | undefined;
     const overlays = useAppSelector((store) => selectItemMetadata(store, bookLink));
-    // follow-up: selectTracker(store, bookLink, "anilist") from @store/trackers (see store/trackers.md)
-    const tracker = useAppSelector((store) => selectAnilistTracker(store, bookLink));
+    const tracker = useAppSelector((store) => selectTracker(store, bookLink, "anilist"));
     const resolved = useMemo(
         () => (book ? resolveItemMetadata({ item: book, overlays, tracker }) : null),
         [book, overlays, tracker],
