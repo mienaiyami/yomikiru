@@ -46,7 +46,15 @@ vi.mock("../util/logger", () => ({
 
 import { eq } from "drizzle-orm";
 import { DatabaseService } from "./index";
-import { itemTrackers, libraryItemMetadata, libraryItems, mangaBookmarks, mangaProgress } from "./schema";
+import {
+    itemTrackers,
+    libraryItemMetadata,
+    libraryItems,
+    libraryItemTags,
+    libraryTags,
+    mangaBookmarks,
+    mangaProgress,
+} from "./schema";
 
 /** Cross-platform sample paths for db integration tests. */
 const MANGA_LINK = path.join("testdata", "manga", "series-a");
@@ -299,6 +307,42 @@ describe("DatabaseService", () => {
         expect(
             await dbService.db.select().from(libraryItemMetadata).where(eq(libraryItemMetadata.itemLink, newLink)),
         ).toEqual([]);
+    });
+
+    it("enforces case-insensitive unique tag names and rewrites assignments on relocate", async () => {
+        const oldLink = path.join("testdata", "manga", "tag-old");
+        const newLink = path.join("testdata", "manga", "tag-new");
+        await dbService.addLibraryItem({
+            type: "manga",
+            data: { type: "manga", link: oldLink, title: "Tagged" },
+            progress: { chapterName: "ch1", currentPage: 1, totalPages: 2 },
+        });
+        const [tag] = await dbService.db
+            .insert(libraryTags)
+            .values({ name: "Ongoing", color: "#2563eb" })
+            .returning();
+        await dbService.db.insert(libraryItemTags).values({ itemLink: oldLink, tagId: tag.id });
+
+        await expect(
+            dbService.db.insert(libraryTags).values({ name: "ongoing", color: "#dc2626" }),
+        ).rejects.toThrow();
+
+        const relocated = await dbService.relocateLibraryItem(oldLink, newLink);
+        expect(relocated?.link).toBe(newLink);
+        const assignments = await dbService.db
+            .select()
+            .from(libraryItemTags)
+            .where(eq(libraryItemTags.itemLink, newLink));
+        expect(assignments).toHaveLength(1);
+        expect(assignments[0]?.tagId).toBe(tag.id);
+
+        await dbService.db.delete(libraryItems).where(eq(libraryItems.link, newLink));
+        expect(
+            await dbService.db.select().from(libraryItemTags).where(eq(libraryItemTags.itemLink, newLink)),
+        ).toEqual([]);
+        expect(await dbService.db.select().from(libraryTags).where(eq(libraryTags.id, tag.id))).toHaveLength(1);
+
+        await dbService.db.delete(libraryTags).where(eq(libraryTags.id, tag.id));
     });
 
     it("rejects a second tracker row for the same item and provider", async () => {

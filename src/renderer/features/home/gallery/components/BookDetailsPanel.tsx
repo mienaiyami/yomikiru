@@ -34,6 +34,7 @@ import {
     DetailsTabBar,
 } from "./DetailsHero";
 import { ItemMetadataEditor } from "./ItemMetadataEditor";
+import { ItemTagsRow } from "./ItemTagsPicker";
 import MissingLibraryPathPanel from "./MissingLibraryPathPanel";
 import "./mangaDetailsPanel.scss";
 
@@ -503,6 +504,7 @@ const BookDetailsPanel = ({ bookLink, onClose, onRelocated, initialTab = "bookma
                     onCoverContextMenu={handleLibraryRootContextMenu}
                     description={resolved?.description}
                     genres={resolved?.genres}
+                    tags={<ItemTagsRow itemLink={bookLink} />}
                     actions={
                         pathMissing ? null : (
                             <>

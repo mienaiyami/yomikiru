@@ -168,9 +168,8 @@ They are never deleted automatically — only via explicit user action (context 
 
 When the path on disk is missing, gallery details and classic History/Bookmark open flows offer
 **Locate on disk…** (`db:library:relocateItem`) to rewrite `library_items.link` and every child
-`itemLink` (progress, bookmarks, notes, trackers, metadata overlays) while keeping the same `id`, or remove the entry / bookmark. A name mismatch between the
+`itemLink` (progress, bookmarks, notes, trackers, metadata overlays, tag assignments) while keeping the same `id`, or remove the entry / bookmark. A name mismatch between the
 chosen path and the previous basename or library title asks for confirmation before relocating.
-Tag assignments (`library_item_tags.itemLink`) belong in that same rewrite; that lands with the tags UI.
 
 `favouritedAt` is a nullable timestamp: set means the item is in the gallery Favourites tab; null means not favourited.
 `note` is free-text commentary on the library item (not chapter / bookmark / EPUB highlight notes).
@@ -331,7 +330,11 @@ User organization labels are a **catalog plus assignments**, not free-form strin
 - [`library_tags`](../src/electron/db/schema.ts) is the global catalog (manga and book share one list). `name` is unique after trim and case-fold (`uq_library_tags_name` on `lower(trim(name))`). `color` is a CSS hex string for chips.
 - [`library_item_tags`](../src/electron/db/schema.ts) is `(itemLink, tagId)` with cascade on both parents. Deleting a tag unassigns it from every item.
 
-These tables ship in migration `0003` with the metadata/tracker tables. Assignment UI, IPC, and relocate rewrite are a follow-up; until then the tables stay empty.
+IPC: `db:tags:getAll`, `db:tags:create`, `db:tags:update`, `db:tags:delete`, `db:library:getAllItemTags`, `db:library:setItemTags` (replace-set of ids for one item), ping `db:tag:change`.
+
+Renderer: [`src/renderer/store/tags.ts`](../src/renderer/store/tags.ts) holds the catalog and assignments. Details chips and picker: [`ItemTagsRow`](../src/renderer/features/home/gallery/components/ItemTagsPicker.tsx). Gallery home filters by one tag from a toolbar `InputSelect` (session state, not an app setting), combined with `galleryTypeFilter`. Overlay `library_item_metadata.tags` stays file-derived and is not this catalog.
+
+`relocateLibraryItem` rewrites `library_item_tags.itemLink` in the same FK-off transaction as other children.
 
 ---
 
@@ -442,7 +445,7 @@ See [`src/electron/db/index.ts`](../src/electron/db/index.ts) (`withForeignKeysO
 
 ### Migration 0003 — additive metadata
 
-Adds `library_items.favouritedAt`, `note`, and `extra`, plus `item_trackers`, `library_item_metadata`, `library_tags`, and `library_item_tags`. The SQL is `ALTER TABLE ... ADD COLUMN` and `CREATE TABLE` only (`drizzle/0003_*.sql`) - no `__new_library_items` rebuild (the FK-cascade hazard 0001 was patched for).
+Adds `library_items.favouritedAt`, `note`, and `extra`, plus `item_trackers`, `library_item_metadata`, `library_tags`, and `library_item_tags`. The SQL is `ALTER TABLE ... ADD COLUMN` and `CREATE TABLE` only (`drizzle/0003_zippy_lethal_legion.sql`) - no `__new_library_items` rebuild (the FK-cascade hazard 0001 was patched for).
 
 ### Pre-migration normalisation
 

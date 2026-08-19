@@ -3,7 +3,9 @@ import { useAppDispatch } from "@store/hooks";
 import { setLibraryItemMetadata } from "@store/library";
 import Modal from "@ui/Modal";
 import { formatGenreList, parseGenreList } from "@utils/libraryMetadata";
+import { appRootElement } from "@utils/utils";
 import { useEffect, useRef, useState } from "react";
+import { createPortal } from "react-dom";
 import { useTranslation } from "react-i18next";
 
 type ItemMetadataEditorProps = {
@@ -79,7 +81,8 @@ export const ItemMetadataEditor = ({ itemLink, userOverlay, onClose }: ItemMetad
                 ? tCommon("actions.failed")
                 : tCommon("actions.save");
 
-    return (
+    /* details meta containment clips position:fixed; host on #app without changing Modal */
+    return createPortal(
         <Modal open onClose={onClose} className="item-metadata-editor">
             <h3>{t("gallery.details.editMetadata")}</h3>
             <div className="item-metadata-editor-field">
@@ -127,6 +130,7 @@ export const ItemMetadataEditor = ({ itemLink, userOverlay, onClose }: ItemMetad
                     {saveLabel}
                 </button>
             </div>
-        </Modal>
+        </Modal>,
+        appRootElement(),
     );
 };

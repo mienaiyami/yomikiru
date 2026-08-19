@@ -10,6 +10,7 @@ import readerReducer from "./reader";
 import readerPresetsReducer from "./readerPresets";
 import { readerPresetsAutosaveMiddleware } from "./readerPresetsAutosaveMiddleware";
 import shortcutsReducer from "./shortcuts";
+import tagsReducer from "./tags";
 import themesReducer from "./themes";
 import trackersReducer from "./trackers";
 import uiReducer from "./ui";
@@ -29,6 +30,7 @@ export const rootReducer = {
     shortcuts: shortcutsReducer,
     anilist: anilistReducer,
     trackers: trackersReducer,
+    tags: tagsReducer,
     ui: uiReducer,
     reader: readerReducer,
     mainSettings: mainSettingsReducer,

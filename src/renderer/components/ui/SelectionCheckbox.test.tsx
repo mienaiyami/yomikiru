@@ -29,4 +29,26 @@ describe("SelectionCheckbox", () => {
         rerender(<SelectionCheckbox checked onToggle={vi.fn()} ariaLabel="Pick" />);
         expect(getByRole("checkbox")).toBeChecked();
     });
+
+    it("stays out of the tab order unless tabIndex is set", () => {
+        const { getByRole, rerender } = render(
+            <SelectionCheckbox checked={false} onToggle={vi.fn()} ariaLabel="Pick" />,
+        );
+        expect(getByRole("checkbox")).toHaveAttribute("tabIndex", "-1");
+        rerender(<SelectionCheckbox checked={false} onToggle={vi.fn()} ariaLabel="Pick" tabIndex={0} />);
+        expect(getByRole("checkbox")).toHaveAttribute("tabIndex", "0");
+    });
+
+    it("toggles from Space without bubbling", () => {
+        const onToggle = vi.fn();
+        const parentKey = vi.fn();
+        const { getByRole } = render(
+            <div onKeyDown={parentKey}>
+                <SelectionCheckbox checked={false} onToggle={onToggle} ariaLabel="Pick" tabIndex={0} />
+            </div>,
+        );
+        fireEvent.keyDown(getByRole("checkbox"), { key: " " });
+        expect(onToggle).toHaveBeenCalledWith({ shiftKey: false });
+        expect(parentKey).not.toHaveBeenCalled();
+    });
 });

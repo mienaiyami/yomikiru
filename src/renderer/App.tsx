@@ -21,6 +21,7 @@ import { getMainSettings, setMainSettings } from "@store/mainSettings";
 import { resetReaderState } from "@store/reader";
 import { refreshReaderPresetsWithReconcile } from "@store/readerPresets";
 import { getShortcutsMapped, refreshShortcuts } from "@store/shortcuts";
+import { fetchAllTags } from "@store/tags";
 import { refreshThemes, setTheme } from "@store/themes";
 import { fetchAllTrackers } from "@store/trackers";
 import { setAnilistEditOpen, setAnilistLoginOpen, setAnilistSearchOpen, toggleSettingsOpen } from "@store/ui";
@@ -195,6 +196,7 @@ const App = (): ReactElement => {
             });
         });
         dispatch(fetchAllMetadata());
+        dispatch(fetchAllTags());
         dispatch(fetchAllBookmarks());
         dispatch(fetchAllNotes());
         dispatch(getMainSettings());
@@ -224,6 +226,9 @@ const App = (): ReactElement => {
             }),
             window.electron.on("db:tracker:change", () => {
                 dispatch(fetchAllTrackers());
+            }),
+            window.electron.on("db:tag:change", () => {
+                dispatch(fetchAllTags());
             }),
             window.electron.on("mainSettings:sync", (settings) => {
                 dispatch(setMainSettings(settings));

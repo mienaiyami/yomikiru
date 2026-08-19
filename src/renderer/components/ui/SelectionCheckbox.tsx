@@ -8,6 +8,11 @@ export type SelectionCheckboxProps = {
     className?: string;
     inputClassName?: string;
     boxClassName?: string;
+    /**
+     * Native input tab order. Defaults to `-1` so bulk row-select UIs skip the box.
+     * Overlay hosts that treat Space as click still receive that key unless the input stops it.
+     */
+    tabIndex?: number;
 };
 
 /**
@@ -24,6 +29,7 @@ const SelectionCheckbox: React.FC<SelectionCheckboxProps> = ({
     className = "",
     inputClassName = "",
     boxClassName = "",
+    tabIndex = -1,
 }) => {
     return (
         <label
@@ -35,7 +41,20 @@ const SelectionCheckbox: React.FC<SelectionCheckboxProps> = ({
             }}
             aria-label={ariaLabel}
         >
-            <input type="checkbox" tabIndex={-1} checked={checked} readOnly className={inputClassName} />
+            <input
+                type="checkbox"
+                tabIndex={tabIndex}
+                checked={checked}
+                readOnly
+                className={inputClassName}
+                onKeyDown={(e) => {
+                    if (e.key !== " ") return;
+                    /* Modal overlay treats Space as click; keep that key on this control */
+                    e.preventDefault();
+                    e.stopPropagation();
+                    onToggle({ shiftKey: e.shiftKey });
+                }}
+            />
             <span className={boxClassName || "checkBox"} />
         </label>
     );

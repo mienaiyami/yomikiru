@@ -2,10 +2,13 @@ import path from "node:path";
 import { describe, expect, it } from "vitest";
 import {
     AddToLibrarySchema,
+    CreateLibraryTagSchema,
     RemoveItemTrackerSchema,
     SetLibraryItemMetadataSchema,
+    SetLibraryItemTagsSchema,
     UpdateBookProgressSchema,
     UpdateLibraryItemSchema,
+    UpdateLibraryTagSchema,
     UpdateMangaProgressSchema,
     UpsertItemTrackerSchema,
 } from "./validator";
@@ -136,5 +139,25 @@ describe("tracker and metadata schemas", () => {
                 media: { genres: "not-an-array" },
             }).success,
         ).toBe(false);
+    });
+});
+
+describe("library tag schemas", () => {
+    it("trims names and requires a CSS hex colour on create", () => {
+        expect(CreateLibraryTagSchema.safeParse({ name: "  Ongoing  ", color: "#2563eb" }).success).toBe(true);
+        expect(CreateLibraryTagSchema.parse({ name: "  Ongoing  ", color: "#2563eb" }).name).toBe("Ongoing");
+        expect(CreateLibraryTagSchema.safeParse({ name: "   ", color: "#2563eb" }).success).toBe(false);
+        expect(CreateLibraryTagSchema.safeParse({ name: "Ongoing", color: "#fff" }).success).toBe(false);
+    });
+
+    it("requires at least one patch field on update", () => {
+        expect(UpdateLibraryTagSchema.safeParse({ id: 1, name: "Done" }).success).toBe(true);
+        expect(UpdateLibraryTagSchema.safeParse({ id: 1 }).success).toBe(false);
+    });
+
+    it("accepts an empty tagIds replace-set", () => {
+        expect(SetLibraryItemTagsSchema.safeParse({ itemLink: mangaLink, tagIds: [] }).success).toBe(true);
+        expect(SetLibraryItemTagsSchema.safeParse({ itemLink: mangaLink, tagIds: [1, 2] }).success).toBe(true);
+        expect(SetLibraryItemTagsSchema.safeParse({ itemLink: mangaLink }).success).toBe(false);
     });
 });

@@ -8,12 +8,16 @@ import {
     AddBookNoteSchema,
     AddMangaBookmarkSchema,
     AddToLibrarySchema,
+    CreateLibraryTagSchema,
+    DeleteLibraryTagSchema,
     RelocateLibraryItemSchema,
     RemoveItemTrackerSchema,
     SetLibraryItemMetadataSchema,
+    SetLibraryItemTagsSchema,
     UpdateBookBookmarkSchema,
     UpdateBookProgressSchema,
     UpdateLibraryItemSchema,
+    UpdateLibraryTagSchema,
     UpdateMangaBookmarkSchema,
     UpdateMangaProgressSchema,
     UpdateTrackerSnapshotSchema,
@@ -30,6 +34,8 @@ import {
     itemTrackers,
     libraryItemMetadata,
     libraryItems,
+    libraryItemTags,
+    libraryTags,
     mangaBookmarks,
     mangaProgress,
 } from "../db/schema";
@@ -48,6 +54,13 @@ const omitUndefined = <T extends Record<string, unknown>>(obj: T): Partial<T> =>
     }
     return out;
 };
+
+/** SQLite unique / FK failures from better-sqlite3 (`SQLITE_CONSTRAINT_*`). */
+const isSqliteConstraintError = (err: unknown): boolean =>
+    typeof err === "object" &&
+    err !== null &&
+    "code" in err &&
+    String((err as { code: unknown }).code).startsWith("SQLITE_CONSTRAINT");
 
 /**
  * Sends database change notifications to all open windows
@@ -135,6 +148,7 @@ const handlers: {
             pingDatabaseChange("db:bookmark:change");
             pingDatabaseChange("db:bookNote:change");
             pingDatabaseChange("db:tracker:change");
+            pingDatabaseChange("db:tag:change");
             return true;
         } catch (error) {
             logger.error('"db:library:deleteItem": delete failed', error);
@@ -150,6 +164,7 @@ const handlers: {
             pingDatabaseChange("db:bookmark:change");
             pingDatabaseChange("db:bookNote:change");
             pingDatabaseChange("db:tracker:change");
+            pingDatabaseChange("db:tag:change");
             return item;
         } catch (error) {
             logger.error('"db:library:relocateItem": relocate failed', error);
@@ -362,6 +377,78 @@ const handlers: {
             .returning();
         if (row) pingDatabaseChange("db:library:change");
         return row ?? null;
+    },
+    "db:tags:getAll": async (db) => {
+        return await db.db.select().from(libraryTags);
+    },
+    "db:tags:create": async (db, request) => {
+        const parsed = CreateLibraryTagSchema.parse(request);
+        try {
+            const [row] = await db.db.insert(libraryTags).values(parsed).returning();
+            if (row) pingDatabaseChange("db:tag:change");
+            return row ?? null;
+        } catch (error) {
+            if (isSqliteConstraintError(error)) {
+                logger.warn("db:tags:create: constraint failed", { name: parsed.name }, error);
+                return null;
+            }
+            throw error;
+        }
+    },
+    "db:tags:update": async (db, request) => {
+        const { id, ...fields } = UpdateLibraryTagSchema.parse(request);
+        const patch = omitUndefined(fields);
+        try {
+            const [row] = await db.db.update(libraryTags).set(patch).where(eq(libraryTags.id, id)).returning();
+            if (row) pingDatabaseChange("db:tag:change");
+            return row ?? null;
+        } catch (error) {
+            if (isSqliteConstraintError(error)) {
+                logger.warn("db:tags:update: constraint failed", { id }, error);
+                return null;
+            }
+            throw error;
+        }
+    },
+    "db:tags:delete": async (db, request) => {
+        const { id } = DeleteLibraryTagSchema.parse(request);
+        await db.db.delete(libraryTags).where(eq(libraryTags.id, id));
+        pingDatabaseChange("db:tag:change");
+        return true;
+    },
+    "db:library:getAllItemTags": async (db) => {
+        return await db.db.select().from(libraryItemTags);
+    },
+    "db:library:setItemTags": async (db, request) => {
+        const { itemLink, tagIds } = SetLibraryItemTagsSchema.parse(request);
+        const uniqueIds = [...new Set(tagIds)];
+        if (uniqueIds.length > 0) {
+            const existing = await db.db
+                .select({ id: libraryTags.id })
+                .from(libraryTags)
+                .where(inArray(libraryTags.id, uniqueIds));
+            if (existing.length !== uniqueIds.length) {
+                logger.warn("db:library:setItemTags: unknown tag id", { itemLink, uniqueIds });
+                return null;
+            }
+        }
+        try {
+            await db.db.transaction(async (tx) => {
+                await tx.delete(libraryItemTags).where(eq(libraryItemTags.itemLink, itemLink));
+                if (uniqueIds.length > 0) {
+                    await tx.insert(libraryItemTags).values(uniqueIds.map((tagId) => ({ itemLink, tagId })));
+                }
+            });
+        } catch (error) {
+            if (isSqliteConstraintError(error)) {
+                logger.warn("db:library:setItemTags: constraint failed", { itemLink }, error);
+                return null;
+            }
+            throw error;
+        }
+        const rows = await db.db.select().from(libraryItemTags).where(eq(libraryItemTags.itemLink, itemLink));
+        pingDatabaseChange("db:tag:change");
+        return rows;
     },
     // "db:migrateFromJSON": async (db, request) => {
     //     await db.migrateFromJSON(request.historyData, request.bookmarkData);

@@ -96,6 +96,41 @@
             }
         }
 
+        .galleryTagFilterBar {
+            flex: 0 0 auto;
+            display: inline-flex;
+            align-items: center;
+            height: var(--galleryToolbarRowHeight);
+            min-width: 0;
+            max-width: 16em;
+
+            /* :not(#dummy#dummy) beats `#app button.optSelectBtn` the same way `.colorPickerBtn` does */
+            button.optSelectBtn:not(#dummy#dummy) {
+                position: relative;
+                display: block;
+                box-sizing: border-box;
+                flex: 1 1 auto;
+                height: 100%;
+                width: auto;
+                min-width: 0;
+                max-width: 11em;
+                overflow: hidden;
+                text-overflow: ellipsis;
+                white-space: nowrap;
+                /* padding-left clears the stripe width seeded on the bar */
+                padding: 0 1.8em 0 calc(8px + var(--gallery-tag-filter-stripe));
+                text-align: left;
+                /* InputSelect only paints option.style on the open menu */
+                box-shadow: inset var(--gallery-tag-filter-stripe) 0 0 var(--gallery-tag-filter-color, transparent);
+                svg {
+                    position: absolute;
+                    right: 6px;
+                    top: 50%;
+                    transform: translateY(-50%);
+                }
+            }
+        }
+
         .toolbarDivider {
             flex: 0 0 auto;
             align-self: center;

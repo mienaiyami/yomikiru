@@ -322,11 +322,14 @@ type DetailsHeroProps = {
     description?: string | null;
     /** Resolved genres; omitted when empty. */
     genres?: readonly string[];
+    /** Catalog tag chips; omitted from layout when empty. */
+    tags?: ReactNode;
 };
 
 /**
  * Shared gallery-details header: cover with overlay back, title/actions, then metadata.
  * About / genres render from resolved metadata and hide when empty.
+ * Catalog tags render through {@link DetailsHeroProps.tags}.
  * Chapter / bookmark / note lists stay in each panel.
  */
 export const DetailsHero = ({
@@ -342,6 +345,7 @@ export const DetailsHero = ({
     note,
     description,
     genres,
+    tags,
 }: DetailsHeroProps) => {
     const { t } = useTranslation("home");
     const descriptionText = description?.trim() ?? "";
@@ -358,7 +362,7 @@ export const DetailsHero = ({
                 {genreList.length > 0 ? <div className="details-genres">{genreList.join(" · ")}</div> : null}
             </>
         ) : null;
-    const showFacts = Boolean(facts) || Boolean(note) || Boolean(aboutBlock);
+    const showFacts = Boolean(facts) || Boolean(note) || Boolean(aboutBlock) || Boolean(tags);
     const authorText = author?.trim();
 
     return (
@@ -393,10 +397,11 @@ export const DetailsHero = ({
             </div>
             {showFacts ? (
                 <div className="details-facts">
-                    {facts || aboutBlock ? (
+                    {facts || aboutBlock || tags ? (
                         <div className="details-facts-main">
                             {facts}
                             {aboutBlock}
+                            {tags}
                         </div>
                     ) : null}
                     {note}

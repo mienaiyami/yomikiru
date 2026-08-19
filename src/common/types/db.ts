@@ -6,8 +6,8 @@ import type {
     bookProgress,
     itemTrackers,
     libraryItemMetadata,
-    libraryItemTags,
     libraryItems,
+    libraryItemTags,
     libraryTags,
     mangaBookmarks,
     mangaProgress,
@@ -17,11 +17,15 @@ import type {
     AddBookNoteSchema,
     AddMangaBookmarkSchema,
     AddToLibrarySchema,
+    CreateLibraryTagSchema,
+    DeleteLibraryTagSchema,
     RemoveItemTrackerSchema,
     SetLibraryItemMetadataSchema,
+    SetLibraryItemTagsSchema,
     UpdateBookBookmarkSchema,
     UpdateBookProgressSchema,
     UpdateLibraryItemSchema,
+    UpdateLibraryTagSchema,
     UpdateMangaBookmarkSchema,
     UpdateMangaProgressSchema,
     UpdateTrackerSnapshotSchema,
@@ -72,3 +76,7 @@ export type UpsertItemTrackerData = z.infer<typeof UpsertItemTrackerSchema>;
 export type RemoveItemTrackerData = z.infer<typeof RemoveItemTrackerSchema>;
 export type UpdateTrackerSnapshotData = z.infer<typeof UpdateTrackerSnapshotSchema>;
 export type SetLibraryItemMetadataData = z.infer<typeof SetLibraryItemMetadataSchema>;
+export type CreateLibraryTagData = z.infer<typeof CreateLibraryTagSchema>;
+export type UpdateLibraryTagData = z.infer<typeof UpdateLibraryTagSchema>;
+export type DeleteLibraryTagData = z.infer<typeof DeleteLibraryTagSchema>;
+export type SetLibraryItemTagsData = z.infer<typeof SetLibraryItemTagsSchema>;

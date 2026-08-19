@@ -59,6 +59,7 @@ import {
     DetailsTabBar,
 } from "./DetailsHero";
 import { ItemMetadataEditor } from "./ItemMetadataEditor";
+import { ItemTagsRow } from "./ItemTagsPicker";
 import MissingLibraryPathPanel from "./MissingLibraryPathPanel";
 import "./mangaDetailsPanel.scss";
 
@@ -688,6 +689,7 @@ const MangaDetailsPanel = ({
                     onCoverContextMenu={handleLibraryRootContextMenu}
                     description={resolved?.description}
                     genres={resolved?.genres}
+                    tags={<ItemTagsRow itemLink={mangaLink} />}
                     actions={
                         pathMissing || !manga ? null : (
                             <>

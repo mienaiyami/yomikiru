@@ -7,6 +7,7 @@ import {
     itemTrackers,
     libraryItemMetadata,
     libraryItems,
+    libraryTags,
     mangaBookmarks,
     mangaProgress,
 } from "./schema";
@@ -210,4 +211,43 @@ export const SetLibraryItemMetadataSchema = createInsertSchema(libraryItemMetada
 }).omit({
     createdAt: true,
     updatedAt: true,
+});
+
+/** CSS hex (`#` plus six hex digits) stored on {@link libraryTags.color}. */
+const cssHexColor = z.string().regex(/^#[0-9A-Fa-f]{6}$/);
+
+/** Create a catalog tag. `name` is trimmed; uniqueness is enforced by the SQLite index. */
+export const CreateLibraryTagSchema = createInsertSchema(libraryTags, {
+    name: z.string().trim().min(1),
+    color: cssHexColor,
+}).omit({
+    id: true,
+    createdAt: true,
+});
+
+/**
+ * Patch a catalog tag. Omitted keys stay as stored. At least one of `name` / `color` is required.
+ */
+export const UpdateLibraryTagSchema = z
+    .object({
+        id: z.number().int().positive(),
+        name: z.string().trim().min(1).optional(),
+        color: cssHexColor.optional(),
+    })
+    .refine((data) => data.name !== undefined || data.color !== undefined, {
+        message: "At least one field besides id is required",
+    });
+
+/** Identifies one catalog tag to delete. Assignments cascade in SQLite. */
+export const DeleteLibraryTagSchema = z.object({
+    id: z.number().int().positive(),
+});
+
+/**
+ * Replace-set of catalog tag ids on one library item. Empty `tagIds` clears all assignments.
+ * Duplicate ids are accepted and should be uniqued by the handler.
+ */
+export const SetLibraryItemTagsSchema = z.object({
+    itemLink: z.string().min(1),
+    tagIds: z.array(z.number().int().positive()),
 });

@@ -213,6 +213,9 @@ export class DatabaseService {
                     this.sqlite
                         .prepare(`UPDATE library_item_metadata SET itemLink = ? WHERE itemLink = ?`)
                         .run(newLink, oldLink);
+                    this.sqlite
+                        .prepare(`UPDATE library_item_tags SET itemLink = ? WHERE itemLink = ?`)
+                        .run(newLink, oldLink);
                     this.sqlite.prepare(`UPDATE library_items SET link = ? WHERE link = ?`).run(newLink, oldLink);
                 })();
                 return true;

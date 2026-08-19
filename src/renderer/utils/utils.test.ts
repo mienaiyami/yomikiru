@@ -1,7 +1,15 @@
 import path from "node:path";
 import { stubFs } from "@test/mocks/preload";
 import { afterEach, describe, expect, it, vi } from "vitest";
-import { debounce, findCover, getCSSPath, randomString, scrollChildInContainer, sleep } from "./utils";
+import {
+    appRootElement,
+    debounce,
+    findCover,
+    getCSSPath,
+    randomString,
+    scrollChildInContainer,
+    sleep,
+} from "./utils";
 
 describe("getCSSPath", () => {
     afterEach(() => {
@@ -24,6 +32,23 @@ describe("getCSSPath", () => {
         const el = document.querySelector("section p:last-child");
         expect(el).toBeTruthy();
         expect(getCSSPath(el!)).toContain("p:nth-of-type(2)");
+    });
+});
+
+describe("appRootElement", () => {
+    afterEach(() => {
+        document.getElementById("app")?.remove();
+    });
+
+    it("returns #app when the shell is mounted", () => {
+        const app = document.createElement("div");
+        app.id = "app";
+        document.body.appendChild(app);
+        expect(appRootElement()).toBe(app);
+    });
+
+    it("returns document.body when #app is missing", () => {
+        expect(appRootElement()).toBe(document.body);
     });
 });
 

@@ -405,4 +405,131 @@ input[type="color"] {
             max-height: 12rem;
         }
     }
+
+    &.item-tags-picker {
+        .modal-overlayCont {
+            width: min(36rem, 92vw);
+            max-height: min(80vh, 42rem);
+            /* list scrolls; title / filter / create stay put */
+            overflow: hidden;
+        }
+        .item-tags-picker-filter.search-input-wrapper {
+            flex: 0 0 auto;
+            width: 100%;
+        }
+        .item-tags-picker-list {
+            list-style: none;
+            margin: 0;
+            padding: 4px;
+            display: flex;
+            flex-direction: column;
+            gap: 0.6em;
+            flex: 1 1 auto;
+            min-height: 0;
+            overflow-y: auto;
+            max-height: min(50vh, 24rem);
+        }
+        .item-tags-picker-row {
+            display: flex;
+            flex-direction: column;
+            gap: 0.35em;
+            min-width: 0;
+        }
+        .item-tags-picker-row-main {
+            display: flex;
+            flex-direction: row;
+            flex-wrap: nowrap;
+            align-items: center;
+            gap: 0.4em;
+            min-width: 0;
+        }
+        .item-tags-assign-check {
+            padding: 0;
+            align-self: center;
+            input:focus-visible + .checkBox {
+                box-shadow: var(--btn-color-focus) 0 0 0 2px;
+            }
+        }
+        .item-tag-chip {
+            min-width: 0;
+            flex: 1 1 auto;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+            display: block;
+            cursor: pointer;
+        }
+        .item-tags-picker-name {
+            flex: 1 1 auto;
+            min-width: 0;
+        }
+        .item-tags-picker-row-actions {
+            display: flex;
+            flex-wrap: nowrap;
+            gap: 10px;
+            align-items: center;
+            flex-shrink: 0;
+        }
+        .item-tags-picker-swatches {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            /* :not(#dummy#dummy) beats `#app button` the same way `.colorPickerBtn` does */
+            .item-tags-picker-preset:not(#dummy#dummy) {
+                height: 3em;
+                aspect-ratio: 1;
+                padding: 0;
+                background-color: var(--highlight-color);
+                &.is-active {
+                    box-shadow: var(--btn-color-focus) 0 0 0 2px;
+                }
+            }
+            /* custom picker is the app colour control, distinct from the solid presets */
+            .colorPickerBtn:not(#dummy#dummy) {
+                width: 3.2em;
+                aspect-ratio: 1;
+                flex: 0 0 auto;
+            }
+        }
+        .item-tags-picker-create {
+            display: flex;
+            flex-direction: column;
+            align-items: stretch;
+            gap: 0.4em;
+            margin-top: 0.8em;
+            flex-shrink: 0;
+            label {
+                background: none;
+                padding: 0;
+                box-shadow: none;
+                cursor: default;
+                &:hover,
+                &:focus,
+                &:active {
+                    background: none;
+                    box-shadow: none;
+                }
+            }
+        }
+        .item-tags-picker-error {
+            margin: 0;
+            color: var(--error-color);
+            font-size: 0.95em;
+        }
+        .item-tags-picker-edit {
+            display: flex;
+            flex-direction: column;
+            gap: 0.4em;
+        }
+    }
+}
+
+.item-tag-chip {
+    display: inline-flex;
+    align-items: center;
+    padding: 0.15em 0.55em;
+    border-radius: 999px;
+    font-size: 1.05rem;
+    line-height: 1.3;
+    font-weight: 600;
 }

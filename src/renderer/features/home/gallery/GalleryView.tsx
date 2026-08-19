@@ -23,6 +23,7 @@ import {
 } from "@utils/gallerySort";
 import { isShortcutEventFromInputTarget, keyFormatter } from "@utils/keybindings";
 import { libraryCoverSrc } from "@utils/libraryCover";
+import { itemsWithTag } from "@utils/libraryTags";
 import { resolveMangaChapterPath } from "@utils/mangaChapterPath";
 import type { RefObject } from "react";
 import { useCallback, useEffect, useMemo, useState } from "react";
@@ -30,11 +31,15 @@ import { useTranslation } from "react-i18next";
 import { shallowEqual } from "react-redux";
 import ListNavigator from "../../../components/ListNavigator";
 import BookDetailsPanel from "./components/BookDetailsPanel";
-import GalleryToolbar, { type GalleryTabId, type GalleryTypeFilterId } from "./components/GalleryToolbar";
+import GalleryToolbar, {
+    type GalleryTabId,
+    type GalleryTagFilterId,
+    type GalleryTypeFilterId,
+} from "./components/GalleryToolbar";
 import MangaDetailsPanel from "./components/MangaDetailsPanel";
 
 /**
- * Gallery home: cover grid for {@link GalleryTabId}, `galleryTypeFilter`, and a details panel.
+ * Gallery home: cover grid for {@link GalleryTabId}, `galleryTypeFilter`, a session tag filter, and a details panel.
  */
 const GalleryView: React.FC = () => {
     const { t } = useTranslation("home");
@@ -57,6 +62,11 @@ const GalleryView: React.FC = () => {
     /** Captured when a tile is opened so switching gallery tabs does not flip the details inner tab. */
     const [detailsInitialTab, setDetailsInitialTab] = useState<"bookmarks" | undefined>();
     const [libraryGridRef, containerWidth] = useResizeObserverRafWidth<HTMLDivElement>();
+    const tagCatalog = useAppSelector((store) => store.tags.catalog);
+    const tagAssignments = useAppSelector((store) => store.tags.assignments);
+    const [selectedTagId, setSelectedTagId] = useState<GalleryTagFilterId>(null);
+    const activeTagFilter =
+        selectedTagId != null && tagCatalog.some((tag) => tag.id === selectedTagId) ? selectedTagId : null;
 
     const activeTab = appSettings.galleryActiveTab;
     const setActiveTab = useCallback(
@@ -99,13 +109,14 @@ const GalleryView: React.FC = () => {
     /**
      * Library slice for `galleryActiveTab`. `continue-reading` uses a fixed
      * last-read order; `library`, `bookmarks`, and `favourites` use {@link sortGalleryItems}.
-     * `galleryTypeFilter` is applied first.
+     * `galleryTypeFilter` is applied first, then the session tag filter.
      */
     const tabItems = useMemo<LibraryItemWithProgress[]>(() => {
-        const all = Object.values(library).filter(
+        const typed = Object.values(library).filter(
             (item): item is LibraryItemWithProgress =>
                 item !== null && (activeTypeFilter === "all" || item.type === activeTypeFilter),
         );
+        const all = activeTagFilter == null ? typed : itemsWithTag(typed, tagAssignments, activeTagFilter);
 
         if (activeTab === "continue-reading") {
             return sortContinueReadingItems(all.filter((item) => Boolean(item.progress)));
@@ -126,16 +137,25 @@ const GalleryView: React.FC = () => {
             );
         }
         return sortGalleryItems(all, appSettings.gallerySortBy, appSettings.gallerySortType);
-    }, [library, activeTab, activeTypeFilter, bookmarks, appSettings.gallerySortBy, appSettings.gallerySortType]);
+    }, [
+        library,
+        activeTab,
+        activeTypeFilter,
+        activeTagFilter,
+        tagAssignments,
+        bookmarks,
+        appSettings.gallerySortBy,
+        appSettings.gallerySortType,
+    ]);
 
     const tabIds = useMemo(() => tabItems.map((it) => it.link), [tabItems]);
     const selection = useMultiSelect<string>(tabIds);
 
-    /* clear when the gallery tab or type filter changes; extra deps are triggers */
+    /* clear when the gallery tab or type/tag filter changes; extra deps are triggers */
     // biome-ignore lint/correctness/useExhaustiveDependencies: clear selection on tab/filter change
     useEffect(() => {
         selection.clearSelection();
-    }, [activeTab, activeTypeFilter, selection.clearSelection]);
+    }, [activeTab, activeTypeFilter, activeTagFilter, selection.clearSelection]);
 
     /**
      * Open details for a tile. Captures inner tab `"bookmarks"` only when
@@ -480,6 +500,9 @@ const GalleryView: React.FC = () => {
                     onTabChange={setActiveTab}
                     activeTypeFilter={activeTypeFilter}
                     onTypeFilterChange={setActiveTypeFilter}
+                    tagCatalog={tagCatalog}
+                    selectedTagId={activeTagFilter}
+                    onTagFilterChange={setSelectedTagId}
                     hidden={detailsOpen}
                     hideSort={activeTab === "continue-reading"}
                     selection={selectionToolbarProps}

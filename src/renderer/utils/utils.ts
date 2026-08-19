@@ -25,6 +25,12 @@ export const getCSSPath = (el: Element): string => {
     return path.join(" > ");
 };
 
+/**
+ * `#app` when the shell is mounted, otherwise `document.body` (unit tests).
+ * Portal host for overlays that must escape CSS containment without changing Modal.
+ */
+export const appRootElement = (): HTMLElement => document.getElementById("app") ?? document.body;
+
 window.app.betterSortOrder = Intl.Collator(undefined, { numeric: true, sensitivity: "base" }).compare;
 window.app.deleteDirOnClose = "";
 window.sleep = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));

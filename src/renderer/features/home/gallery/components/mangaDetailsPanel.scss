@@ -516,6 +516,18 @@
         color: var(--font-color-secondary);
     }
 
+    .details-tags {
+        align-self: stretch;
+        width: 100%;
+    }
+
+    .details-tags-list {
+        display: flex;
+        flex-wrap: wrap;
+        align-items: center;
+        gap: 0.35em;
+    }
+
     .details-stage {
         flex: 1;
         min-height: 0;
