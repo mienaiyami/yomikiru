@@ -173,7 +173,7 @@ chosen path and the previous basename or library title asks for confirmation bef
 
 `favouritedAt` is a nullable timestamp: set means the item is in the gallery Favourites tab; null means not favourited.
 `note` is free-text commentary on the library item (not chapter / bookmark / EPUB highlight notes).
-`extra` is a JSON object (`LibraryItemExtra`) for fields that have not earned a column yet.
+`extra` is a JSON object (`LibraryItemExtra`) for fields that have not earned a column yet. Named keys include `detailsCoverSource` (`library` | `tracker`): which cover gallery details and tiles prefer when a tracker snapshot has an image. Omitted uses the tracker image when one exists.
 
 Re-adding an existing path (`addLibraryItem` conflict) updates **title only**. Author, cover, favourite, note, and `extra` stay as stored. Progress insert uses `onConflictDoNothing()` so an existing progress row is not reset.
 
@@ -342,7 +342,7 @@ Renderer: [`src/renderer/store/tags.ts`](../src/renderer/store/tags.ts) holds th
 
 [`item_trackers`](../src/electron/db/schema.ts) is one binding per library item per provider. Unique `(itemLink, provider)`. `provider` is a TEXT slug (`"anilist"` only in TypeScript). `remoteId` is TEXT so non-integer provider ids fit later. `remoteListId` is the remote list-entry id when the service splits media from "my list". `remoteUrl` is stored rather than rebuilt.
 
-`media` and `listState` are rebuildable cache (`TrackerMediaSnapshot`, `TrackerListState`). `syncedAt` is local staleness. The remote service remains the source of truth.
+`media` and `listState` are rebuildable cache (`TrackerMediaSnapshot`, `TrackerListState`), including optional `author` from provider staff. `syncedAt` is local staleness. The remote service remains the source of truth.
 
 AniList OAuth tokens stay in localStorage (not in this table) so DB backups do not include them. A one-shot import copies legacy `anilist_tracking` into this table; see [`src/renderer/features/anilist/README.md`](../src/renderer/features/anilist/README.md).
 

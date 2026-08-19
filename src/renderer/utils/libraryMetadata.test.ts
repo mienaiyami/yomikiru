@@ -34,6 +34,15 @@ const tracker = (patch: Partial<ItemTracker> = {}): ItemTracker => ({
 });
 
 describe("resolveItemMetadata", () => {
+    it("prefers tracker author over the library item when overlays omit it", () => {
+        const resolved = resolveItemMetadata({
+            item: { title: "Base", author: "Folder Author" },
+            overlays: [],
+            tracker: tracker({ media: { author: "Staff Author" } }),
+        });
+        expect(resolved.author).toBe("Staff Author");
+    });
+
     it("uses library title and author when no overlays exist", () => {
         const resolved = resolveItemMetadata({
             item: { title: "Folder Title", author: "File Author" },

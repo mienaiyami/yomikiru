@@ -12,11 +12,16 @@ import { useSelectionShortcuts } from "@renderer/hooks/useSelectionShortcuts";
 import { removeBookmark } from "@store/bookmarks";
 import { removeNote } from "@store/bookNotes";
 import { useAppDispatch, useAppSelector } from "@store/hooks";
-import { selectItemMetadata, setLibraryItemFavourite, setLibraryItemNote } from "@store/library";
+import {
+    selectItemMetadata,
+    setLibraryItemDetailsCoverSource,
+    setLibraryItemFavourite,
+    setLibraryItemNote,
+} from "@store/library";
 import { selectTracker } from "@store/trackers";
 import dateUtils from "@utils/date";
 import { dialogUtils } from "@utils/dialog";
-import { libraryCoverSrc } from "@utils/libraryCover";
+import { parseDetailsCoverSource, resolveDetailsCoverSrc } from "@utils/libraryCover";
 import { pickAndApplyCustomCover } from "@utils/libraryCoverService";
 import { resolveItemMetadata } from "@utils/libraryMetadata";
 import { createRendererLogger } from "@utils/logger";
@@ -467,7 +472,8 @@ const BookDetailsPanel = ({ bookLink, onClose, onRelocated, initialTab = "bookma
         );
     }
 
-    const coverArtSrc = libraryCoverSrc(book);
+    const coverArtSrc = resolveDetailsCoverSrc(book, tracker?.media?.coverImage);
+    const trackerCoverAvailable = Boolean(tracker?.media?.coverImage?.trim());
 
     const tabBar = (
         <DetailsTabBar
@@ -499,6 +505,11 @@ const BookDetailsPanel = ({ bookLink, onClose, onRelocated, initialTab = "bookma
                     typeBadge={t("shared.epub")}
                     coverSrc={coverArtSrc}
                     coverAlt={book.title}
+                    trackerCoverAvailable={trackerCoverAvailable}
+                    coverSource={parseDetailsCoverSource(book.extra, tracker?.media?.coverImage)}
+                    onCoverSourceChange={(source) => {
+                        void dispatch(setLibraryItemDetailsCoverSource({ link: bookLink, source }));
+                    }}
                     onBack={onClose}
                     onCoverContextMenu={handleLibraryRootContextMenu}
                     description={resolved?.description}

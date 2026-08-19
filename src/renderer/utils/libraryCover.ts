@@ -1,4 +1,4 @@
-import type { LibraryItem } from "@common/types/db";
+import type { DetailsCoverSource, ItemTracker, LibraryItem, LibraryItemExtra } from "@common/types/db";
 
 /**
  * Builds a `file://` URL for gallery/detail `<img src>`, with `#` escaped for Electron.
@@ -40,4 +40,48 @@ export const libraryCoverSrc = (item: Pick<LibraryItem, "id" | "cover">): string
     const canonical = canonicalCoverAbsolutePath(item.id);
     if (window.fs.isFile(canonical)) return absolutePathToFileUrl(canonical);
     return "";
+};
+
+/**
+ * Reads {@link LibraryItemExtra.detailsCoverSource}.
+ * When that key is omitted, a non-empty tracker cover URL selects the tracker image.
+ *
+ * @param trackerCoverUrl Snapshot cover URL used only when extra does not name a source
+ */
+export const parseDetailsCoverSource = (
+    extra: LibraryItemExtra | undefined,
+    trackerCoverUrl?: string | null,
+): DetailsCoverSource => {
+    if (extra?.detailsCoverSource === "library") return "library";
+    if (extra?.detailsCoverSource === "tracker") return "tracker";
+    return trackerCoverUrl?.trim() ? "tracker" : "library";
+};
+
+/**
+ * Cover URL for details and gallery tiles: tracker snapshot image when the resolved source
+ * is tracker and a URL exists, otherwise {@link libraryCoverSrc}.
+ */
+export const resolveDetailsCoverSrc = (
+    item: Pick<LibraryItem, "id" | "cover" | "extra">,
+    trackerCoverUrl: string | null | undefined,
+): string => {
+    const trackerUrl = trackerCoverUrl?.trim() ?? "";
+    if (parseDetailsCoverSource(item.extra, trackerUrl) === "tracker" && trackerUrl) return trackerUrl;
+    return libraryCoverSrc(item);
+};
+
+/**
+ * First non-empty tracker snapshot cover per library path.
+ * ponytail: multiple providers can share a path; first row with an image wins until a picker exists.
+ */
+export const trackerCoverUrlByItemLink = (
+    entries: readonly Pick<ItemTracker, "itemLink" | "media">[],
+): Record<string, string> => {
+    const map: Record<string, string> = {};
+    for (const row of entries) {
+        if (map[row.itemLink]) continue;
+        const url = row.media?.coverImage?.trim();
+        if (url) map[row.itemLink] = url;
+    }
+    return map;
 };

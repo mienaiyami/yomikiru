@@ -53,7 +53,7 @@ export const resolveItemMetadata = ({
 
     return {
         title: firstNonEmpty(user?.title, media?.title, file?.title, item.title) ?? item.title,
-        author: firstNonEmpty(user?.author, file?.author, item.author),
+        author: firstNonEmpty(user?.author, media?.author, file?.author, item.author),
         description: firstNonEmpty(user?.description, media?.description, file?.description),
         genres: firstNonEmptyList(user?.genres, media?.genres, file?.genres),
         tags: firstNonEmptyList(user?.tags, file?.tags),

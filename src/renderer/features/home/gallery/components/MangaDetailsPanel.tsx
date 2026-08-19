@@ -25,6 +25,7 @@ import { removeBookmark } from "@store/bookmarks";
 import { useAppDispatch, useAppSelector } from "@store/hooks";
 import {
     selectItemMetadata,
+    setLibraryItemDetailsCoverSource,
     setLibraryItemFavourite,
     setLibraryItemNote,
     updateChaptersReadAll,
@@ -33,7 +34,7 @@ import { selectTracker } from "@store/trackers";
 import dateUtils from "@utils/date";
 import { dialogUtils } from "@utils/dialog";
 import { formatUtils } from "@utils/file";
-import { libraryCoverSrc } from "@utils/libraryCover";
+import { parseDetailsCoverSource, resolveDetailsCoverSrc } from "@utils/libraryCover";
 import { materializeMangaLibraryThumbnail, pickAndApplyCustomCover } from "@utils/libraryCoverService";
 import { resolveItemMetadata } from "@utils/libraryMetadata";
 import {
@@ -633,7 +634,8 @@ const MangaDetailsPanel = ({
         openInReader(mangaLink);
     };
 
-    const coverArtSrc = manga ? libraryCoverSrc(manga) : "";
+    const coverArtSrc = manga ? resolveDetailsCoverSrc(manga, tracker?.media?.coverImage) : "";
+    const trackerCoverAvailable = Boolean(tracker?.media?.coverImage?.trim());
     const title = manga?.title || t("gallery.details.unknownManga");
     const mangaProgress = manga?.type === "manga" ? manga.progress : null;
     const currentChapterLink =
@@ -684,6 +686,15 @@ const MangaDetailsPanel = ({
                     author={resolved?.author ?? manga?.author}
                     coverSrc={coverArtSrc}
                     coverAlt={manga?.title || t("gallery.details.coverAlt")}
+                    trackerCoverAvailable={Boolean(manga) && trackerCoverAvailable}
+                    coverSource={parseDetailsCoverSource(manga?.extra, tracker?.media?.coverImage)}
+                    onCoverSourceChange={
+                        manga
+                            ? (source) => {
+                                  void dispatch(setLibraryItemDetailsCoverSource({ link: mangaLink, source }));
+                              }
+                            : undefined
+                    }
                     onBack={onClose}
                     onCoverContextMenu={handleLibraryRootContextMenu}
                     description={resolved?.description}

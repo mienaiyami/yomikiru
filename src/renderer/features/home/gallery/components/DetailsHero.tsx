@@ -1,8 +1,10 @@
+import type { DetailsCoverSource } from "@common/types/db";
 import type { IconDefinition } from "@fortawesome/fontawesome-svg-core";
 import { faArrowLeft, faCopy } from "@fortawesome/free-solid-svg-icons";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { setAppSettings } from "@store/appSettings";
 import { useAppDispatch, useAppSelector } from "@store/hooks";
+import { DETAILS_ABOUT_HTML_TAGS, sanitizeHtmlAllowlist } from "@utils/html";
 import type { KeyboardEvent, MouseEvent, ReactNode } from "react";
 import { useEffect, useLayoutEffect, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
@@ -15,6 +17,12 @@ export const DETAILS_HERO_RESIZE_MIN_PX = 280;
 
 /** Fraction of the details panel height the metadata block may occupy while dragging. */
 export const DETAILS_HERO_HEIGHT_MAX_FRACTION = 0.8;
+
+/**
+ * Max panel width that uses the stacked details hero (cover above title).
+ * Keep in sync with the matching `@container details` query in mangaDetailsPanel.scss.
+ */
+export const DETAILS_STACKED_LAYOUT_MAX_PX = 599;
 
 type DetailsFactFieldProps = {
     label: string;
@@ -315,6 +323,13 @@ type DetailsHeroProps = {
     coverAlt: string;
     onBack: () => void;
     onCoverContextMenu: (e: MouseEvent) => void;
+    /**
+     * When set with {@link DetailsHeroProps.onCoverSourceChange}, shows an AniList-cover
+     * toggle in the hero action row. The parent resolves {@link DetailsHeroProps.coverSrc}.
+     */
+    trackerCoverAvailable?: boolean;
+    coverSource?: DetailsCoverSource;
+    onCoverSourceChange?: (source: DetailsCoverSource) => void;
     actions?: ReactNode;
     facts?: ReactNode;
     note?: ReactNode;
@@ -328,8 +343,9 @@ type DetailsHeroProps = {
 
 /**
  * Shared gallery-details header: cover with overlay back, title/actions, then metadata.
- * About / genres render from resolved metadata and hide when empty.
- * Catalog tags render through {@link DetailsHeroProps.tags}.
+ * Cover and title stay sticky in `.details-meta` while About and facts scroll.
+ * About / genres render from resolved metadata (genres above About) and hide when empty.
+ * Catalog tags render through {@link DetailsHeroProps.tags} above the item note.
  * Chapter / bookmark / note lists stay in each panel.
  */
 export const DetailsHero = ({
@@ -340,6 +356,9 @@ export const DetailsHero = ({
     coverAlt,
     onBack,
     onCoverContextMenu,
+    trackerCoverAvailable = false,
+    coverSource = "library",
+    onCoverSourceChange,
     actions,
     facts,
     note,
@@ -348,26 +367,59 @@ export const DetailsHero = ({
     tags,
 }: DetailsHeroProps) => {
     const { t } = useTranslation("home");
+    const heroRef = useRef<HTMLElement>(null);
+    const mediaRef = useRef<HTMLDivElement>(null);
     const descriptionText = description?.trim() ?? "";
     const genreList = genres?.filter((g) => g.trim().length > 0) ?? [];
+    const descriptionHtml = descriptionText ? sanitizeHtmlAllowlist(descriptionText, DETAILS_ABOUT_HTML_TAGS) : "";
+    const showCoverSource = trackerCoverAvailable && Boolean(onCoverSourceChange);
     const aboutBlock =
-        descriptionText || genreList.length > 0 ? (
+        descriptionHtml || genreList.length > 0 ? (
             <>
-                {descriptionText ? (
+                {genreList.length > 0 ? <div className="details-genres">{genreList.join(" · ")}</div> : null}
+                {descriptionHtml ? (
                     <div className="details-synopsis">
                         <div className="details-field-label">{t("gallery.details.about")}</div>
-                        <p>{descriptionText}</p>
+                        <div
+                            className="details-synopsis-body"
+                            // biome-ignore lint/security/noDangerouslySetInnerHtml: <About HTML is passed through sanitizeHtmlAllowlist first>
+                            dangerouslySetInnerHTML={{ __html: descriptionHtml }}
+                        />
                     </div>
                 ) : null}
-                {genreList.length > 0 ? <div className="details-genres">{genreList.join(" · ")}</div> : null}
             </>
         ) : null;
     const showFacts = Boolean(facts) || Boolean(note) || Boolean(aboutBlock) || Boolean(tags);
     const authorText = author?.trim();
 
+    /*
+     * Stacked layout: both cover and title use top:0 unless title is offset by the
+     * sticky cover height. Wide layout keeps title in the other column (offset 0).
+     */
+    useLayoutEffect(() => {
+        const hero = heroRef.current;
+        const media = mediaRef.current;
+        if (!hero || !media) return;
+
+        const syncTitleStickyOffset = () => {
+            const panel = hero.closest(".manga-details-panel");
+            const stacked = (panel?.clientWidth ?? hero.clientWidth) <= DETAILS_STACKED_LAYOUT_MAX_PX;
+            hero.style.setProperty("--details-title-sticky-top", stacked ? `${media.offsetHeight}px` : "0px");
+        };
+
+        syncTitleStickyOffset();
+        if (typeof ResizeObserver === "undefined") return;
+        const observer = new ResizeObserver(syncTitleStickyOffset);
+        observer.observe(media);
+        const panel = hero.closest(".manga-details-panel");
+        if (panel) observer.observe(panel);
+        else observer.observe(hero);
+        return () => observer.disconnect();
+    }, [coverSrc, title]);
+
     return (
-        <header className={`details-hero${showFacts ? "" : " no-facts"}`}>
-            <div className="details-media">
+        <header ref={heroRef} className={`details-hero${showFacts ? "" : " no-facts"}`}>
+            <div ref={mediaRef} className="details-media">
                 <button
                     type="button"
                     className="details-back"
@@ -387,26 +439,53 @@ export const DetailsHero = ({
                     )}
                 </div>
             </div>
-            <div className="details-identity">
+            <div className="details-main">
                 <div className="details-title-row">
                     <h2 className="details-title">{title}</h2>
                     {typeBadge ? <span className="details-type-badge">{typeBadge}</span> : null}
                 </div>
                 {authorText ? <div className="details-author">{authorText}</div> : null}
-                {actions ? <div className="details-hero-actions">{actions}</div> : null}
+                {actions || showCoverSource ? (
+                    <div className="details-hero-actions">
+                        {actions}
+                        {showCoverSource ? (
+                            <button
+                                type="button"
+                                className="details-cover-source-toggle"
+                                aria-pressed={coverSource === "tracker"}
+                                data-tooltip={
+                                    coverSource === "tracker"
+                                        ? t("gallery.details.coverSourceShowLibrary")
+                                        : t("gallery.details.coverSourceShowAnilist")
+                                }
+                                onClick={() =>
+                                    onCoverSourceChange?.(coverSource === "tracker" ? "library" : "tracker")
+                                }
+                            >
+                                {coverSource === "tracker"
+                                    ? t("gallery.details.coverSourceAnilist")
+                                    : t("gallery.details.coverSourceLibrary")}
+                            </button>
+                        ) : null}
+                    </div>
+                ) : null}
+                {showFacts ? (
+                    <div className="details-facts">
+                        {facts || aboutBlock ? (
+                            <div className="details-facts-main">
+                                {facts}
+                                {aboutBlock}
+                            </div>
+                        ) : null}
+                        {tags || note ? (
+                            <div className="details-facts-side">
+                                {tags}
+                                {note}
+                            </div>
+                        ) : null}
+                    </div>
+                ) : null}
             </div>
-            {showFacts ? (
-                <div className="details-facts">
-                    {facts || aboutBlock || tags ? (
-                        <div className="details-facts-main">
-                            {facts}
-                            {aboutBlock}
-                            {tags}
-                        </div>
-                    ) : null}
-                    {note}
-                </div>
-            ) : null}
         </header>
     );
 };

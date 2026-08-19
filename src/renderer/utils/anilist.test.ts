@@ -3,6 +3,7 @@ import { http } from "@common/http";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import {
     anilistRequest,
+    authorFromAnilistStaff,
     setAnilistClientToken,
     setAnilistStorageToken,
     toAnilistTrackerSnapshotUpdate,
@@ -50,6 +51,22 @@ describe("toTrackerMediaSnapshot", () => {
         expect(snapshot.title).toBe("English");
         expect(snapshot.totalChapters).toBe(12);
         expect(snapshot.score).toBe(80);
+        expect(snapshot.author).toBeNull();
+    });
+
+    it("copies the preferred staff names as author", () => {
+        const snapshot = toTrackerMediaSnapshot(
+            media({
+                staff: {
+                    edges: [
+                        { role: "Art", node: { name: { full: "Artist" } } },
+                        { role: "Story & Art", node: { name: { full: "Author One" } } },
+                        { role: "Story", node: { name: { full: "Author Two" } } },
+                    ],
+                },
+            }),
+        );
+        expect(snapshot.author).toBe("Author One, Author Two");
     });
 
     it("stores null status and format when the payload omits them", () => {
@@ -92,6 +109,16 @@ describe("anilistRequest token", () => {
     });
 });
 
+describe("authorFromAnilistStaff", () => {
+    it("falls back to named staff when no story or creator role exists", () => {
+        expect(
+            authorFromAnilistStaff({
+                edges: [{ role: "Art", node: { name: { full: "Artist" } } }],
+            }),
+        ).toBe("Artist");
+    });
+});
+
 describe("toTrackerListState", () => {
     it("copies list-entry status and scores", () => {
         expect(toTrackerListState(listEntry())).toEqual({
@@ -120,6 +147,7 @@ describe("toAnilistTrackerSnapshotUpdate", () => {
             remoteUrl: "https://example.test",
             media: {
                 title: "English",
+                author: null,
                 coverImage: "l",
                 bannerImage: "b",
                 description: "About",

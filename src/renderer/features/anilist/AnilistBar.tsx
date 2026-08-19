@@ -34,17 +34,20 @@ const AnilistBar = memo((props: AnilistBarProps) => {
     const anilistCurrentListEntry = useAppSelector((store) => store.anilist.currentListEntry);
     const isAniEditOpen = useAppSelector((store) => store.ui.isOpen.anilist.edit);
 
+    const hasTracker = Boolean(anilistTracker);
+    const remoteId = anilistTracker?.remoteId;
+
     const [isTracking, setTracking] = useState(false);
     const [progress, setProgress] = useState(anilistCurrentListEntry?.progress || 0);
     const dispatch = useAppDispatch();
 
     useEffect(() => {
-        if (anilistTracker) setTracking(true);
+        if (hasTracker) setTracking(true);
         else {
             setTracking(false);
             dispatch(setAnilistEditOpen(false));
         }
-    }, [anilistTracker, dispatch]);
+    }, [hasTracker, dispatch]);
     useEffect(() => {
         setProgress(anilistCurrentListEntry?.progress || 0);
     }, [anilistCurrentListEntry]);
@@ -69,13 +72,13 @@ const AnilistBar = memo((props: AnilistBarProps) => {
         };
     }, [progress]);
 
-    /* refetch after the edit overlay closes; isAniEditOpen is a trigger, not a body read */
+    /* refetch when tracking starts, the remote id changes, or the edit overlay toggles; not on cache writes */
     // biome-ignore lint/correctness/useExhaustiveDependencies: refetch when the edit overlay closes
     useEffect(() => {
         if (!trackLink) return;
         if (isTracking) {
-            if (anilistTracker) {
-                getAnilistListEntry(Number(anilistTracker.remoteId)).then((e) => {
+            if (remoteId) {
+                getAnilistListEntry(Number(remoteId)).then((e) => {
                     if (e) {
                         dispatch(setAnilistCurrentListEntry(e));
                         void dispatch(cacheAnilistListEntry({ itemLink: trackLink, data: e }));
@@ -85,7 +88,7 @@ const AnilistBar = memo((props: AnilistBarProps) => {
         } else {
             dispatch(setAnilistCurrentListEntry(null));
         }
-    }, [isTracking, trackLink, isAniEditOpen, anilistTracker, dispatch]);
+    }, [isTracking, trackLink, isAniEditOpen, remoteId, dispatch]);
 
     const openAnilistFlow = useCallback(
         (mode: "search" | "edit") => {

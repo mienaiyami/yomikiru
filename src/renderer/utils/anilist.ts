@@ -60,6 +60,16 @@ const SAVE_MEDIA_LIST_ENTRY = `#graphql
           averageScore
           status(version: 2)
           format
+          staff {
+            edges {
+              role
+              node {
+                name {
+                  full
+                }
+              }
+            }
+          }
         }
       }
     }
@@ -170,10 +180,36 @@ export const readStoredTracking = (): Anilist.TrackStore => {
 };
 
 /**
+ * Picks a display author from AniList staff edges.
+ * Prefers roles whose name includes Story or Creator; otherwise uses named staff.
+ */
+export const authorFromAnilistStaff = (staff: Anilist.ListEntry["media"]["staff"]): string | null => {
+    const edges = staff?.edges ?? [];
+    const namesFor = (list: typeof edges): string[] => {
+        const names: string[] = [];
+        const seen = new Set<string>();
+        for (const edge of list) {
+            const name = edge?.node?.name?.full?.trim();
+            if (!name || seen.has(name)) continue;
+            seen.add(name);
+            names.push(name);
+        }
+        return names;
+    };
+    const preferred = edges.filter((edge) => {
+        const role = edge?.role ?? "";
+        return /story/i.test(role) || /creator/i.test(role);
+    });
+    const names = namesFor(preferred.length > 0 ? preferred : edges);
+    return names.length > 0 ? names.join(", ") : null;
+};
+
+/**
  * Maps an AniList media payload to the provider-agnostic tracker snapshot stored in the DB.
  */
 export const toTrackerMediaSnapshot = (media: Anilist.ListEntry["media"]): TrackerMediaSnapshot => ({
     title: media.title.english || media.title.romaji || media.title.native,
+    author: authorFromAnilistStaff(media.staff),
     coverImage: media.coverImage.large || media.coverImage.medium,
     bannerImage: media.bannerImage,
     description: media.description ?? null,

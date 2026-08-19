@@ -82,7 +82,7 @@ The `AnilistBar` component appears in:
 
 When `localLibraryLink` prop is provided (gallery details), tracking resolves from that path instead of the open reader item.
 
-After a list-entry fetch, `cacheAnilistListEntry` writes description, genres, chapter count, score, and related fields into the tracker cache for details About / genres.
+After a list-entry fetch, `cacheAnilistListEntry` writes description, genres, staff author, chapter count, score, and related fields into the tracker cache for details About / author / genres. The list-entry request is keyed on the remote media id (and edit-overlay open state), not the whole tracker row, so cache writes do not refetch.
 
 ---
 
@@ -177,8 +177,8 @@ Named exports (no static class). Call `initAnilist()` once at app startup to val
 | `setAnilistListProgress(n)` | Update progress count; returns updated `ListEntry` |
 | `getAnilistStorageToken` / `setAnilistStorageToken` | Token localStorage persistence |
 | `readStoredTracking` | Legacy `anilist_tracking` read for the one-shot import |
-| `toTrackerMediaSnapshot` / `toTrackerListState` / `toAnilistTrackerSnapshotUpdate` | Map GraphQL payloads into DB cache columns / `updateTrackerSnapshot` args |
+| `toTrackerMediaSnapshot` / `toTrackerListState` / `toAnilistTrackerSnapshotUpdate` / `authorFromAnilistStaff` | Map GraphQL payloads into DB cache columns / `updateTrackerSnapshot` args |
 
-The GraphQL mutation (`SaveMediaListEntry`) is a module-level query string and requests description, genres, chapters, volumes, averageScore, coverImage.large, and idMal in addition to the list-entry fields.
+The GraphQL mutation (`SaveMediaListEntry`) is a module-level query string and requests description, genres, chapters, volumes, averageScore, coverImage.large, idMal, and staff (for cached author) in addition to the list-entry fields.
 
 API calls use the shared HTTP client (`@common/http` / axios). Token is sent as `Authorization: Bearer <token>` header.

@@ -4,12 +4,19 @@ import { index, integer, primaryKey, sqliteTable, text, unique, uniqueIndex } fr
 const timeNow = sql`(unixepoch() * 1000)`;
 
 /**
+ * Which image gallery details and tiles prefer when a tracker snapshot has a cover URL.
+ * Omitted uses the tracker image when one exists, otherwise the library file.
+ */
+export type DetailsCoverSource = "library" | "tracker";
+
+/**
  * Durable loosely-defined fields on a library item that have not earned a dedicated column.
  * Named keys are added to this type as they appear; unknown keys require a type narrowing to read.
  * When a key graduates, a migration moves the data into a real column.
  */
 export type LibraryItemExtra = {
     [key: string]: unknown;
+    detailsCoverSource?: DetailsCoverSource;
 };
 
 /** Tracker slug stored on {@link itemTrackers.provider}. SQLite has no CHECK; this is TypeScript-only. */
@@ -24,6 +31,7 @@ export type LibraryItemMetadataSource = "user" | "file";
  */
 export type TrackerMediaSnapshot = {
     title?: string | null;
+    author?: string | null;
     coverImage?: string | null;
     bannerImage?: string | null;
     description?: string | null;

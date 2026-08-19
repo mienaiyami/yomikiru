@@ -173,10 +173,8 @@
     .details-hero {
         display: grid;
         grid-template-columns: auto minmax(0, 1fr);
-        grid-template-rows: auto minmax(0, 1fr);
-        grid-template-areas:
-            "cover ident"
-            "cover facts";
+        grid-template-rows: minmax(0, 1fr);
+        grid-template-areas: "cover main";
         column-gap: 1.25rem;
         row-gap: 0.75rem;
         align-items: stretch;
@@ -186,11 +184,7 @@
         min-height: 100%;
         height: auto;
         overflow: visible;
-
-        &.no-facts {
-            grid-template-areas: "cover ident";
-            grid-template-rows: 1fr;
-        }
+        --details-title-sticky-top: 0px;
     }
 
     /* not-found stub renders the hero as a direct child (no `.details-meta`) */
@@ -200,11 +194,14 @@
 
     .details-media {
         grid-area: cover;
-        position: relative;
+        position: sticky;
+        top: 0;
+        z-index: 3;
         align-self: start;
         min-height: 0;
         height: auto;
         width: auto;
+        background-color: var(--body-bg-color);
     }
 
     .details-cover-wrap {
@@ -273,20 +270,25 @@
         }
     }
 
-    .details-identity {
-        grid-area: ident;
+    .details-main {
+        grid-area: main;
         min-width: 0;
         display: flex;
         flex-direction: column;
         gap: 0.75rem;
-        padding-bottom: 0.75rem;
     }
 
     .details-title-row {
+        position: sticky;
+        top: var(--details-title-sticky-top, 0px);
+        z-index: 2;
         display: flex;
         align-items: baseline;
         gap: 0.6rem;
         min-width: 0;
+        background-color: var(--body-bg-color);
+        padding-bottom: 0.35rem;
+        margin-bottom: -0.35rem;
     }
 
     .details-title {
@@ -335,6 +337,17 @@
             box-sizing: border-box;
         }
 
+        .details-cover-source-toggle {
+            padding: 0 0.75rem;
+            font-size: 1.2rem;
+            border-radius: 6px;
+            white-space: nowrap;
+
+            &[aria-pressed="true"] {
+                background-color: var(--btn-color-focus);
+            }
+        }
+
         .continue-reading {
             font-size: 1.2rem;
             font-weight: 400;
@@ -379,10 +392,7 @@
     }
 
     .details-facts {
-        grid-area: facts;
         min-width: 0;
-        min-height: 0;
-        overflow: auto;
         display: flex;
         flex-direction: column;
         gap: 0.75rem;
@@ -402,6 +412,14 @@
             align-self: stretch;
             width: 100%;
         }
+    }
+
+    .details-facts-side {
+        display: flex;
+        flex-direction: column;
+        gap: 0.75rem;
+        min-width: 0;
+        align-self: stretch;
     }
 
     .details-field-label {
@@ -504,10 +522,9 @@
             cursor: default;
         }
 
-        p {
+        p,
+        .details-synopsis-body {
             margin: 0;
-            max-height: 4.6em;
-            overflow: auto;
         }
     }
 
@@ -749,14 +766,14 @@
         }
     }
 
+    /* stacked max-width matches DETAILS_STACKED_LAYOUT_MAX_PX (title sticky offset) */
     @container details (max-width: 599px) {
         .details-hero {
             grid-template-columns: 1fr;
-            grid-template-rows: auto auto auto;
+            grid-template-rows: auto auto;
             grid-template-areas:
                 "cover"
-                "ident"
-                "facts";
+                "main";
             row-gap: 14px;
             column-gap: 0;
             min-height: 0;
@@ -773,15 +790,6 @@
             height: auto;
             max-height: 100%;
         }
-
-        .details-hero.no-facts {
-            grid-template-areas: "cover" "ident";
-            grid-template-rows: auto auto;
-        }
-
-        .details-identity {
-            padding-bottom: 0;
-        }
     }
 
     @container details (min-width: 720px) {
@@ -792,7 +800,7 @@
         }
 
         .details-facts:has(.details-facts-main) .details-facts-main,
-        .details-facts:has(.details-facts-main) .details-item-note {
+        .details-facts:has(.details-facts-main) .details-facts-side {
             flex: 1 1 0;
         }
     }

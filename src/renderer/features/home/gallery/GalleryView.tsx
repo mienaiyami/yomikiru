@@ -22,7 +22,7 @@ import {
     sortGalleryItems,
 } from "@utils/gallerySort";
 import { isShortcutEventFromInputTarget, keyFormatter } from "@utils/keybindings";
-import { libraryCoverSrc } from "@utils/libraryCover";
+import { resolveDetailsCoverSrc, trackerCoverUrlByItemLink } from "@utils/libraryCover";
 import { itemsWithTag } from "@utils/libraryTags";
 import { resolveMangaChapterPath } from "@utils/mangaChapterPath";
 import type { RefObject } from "react";
@@ -64,6 +64,8 @@ const GalleryView: React.FC = () => {
     const [libraryGridRef, containerWidth] = useResizeObserverRafWidth<HTMLDivElement>();
     const tagCatalog = useAppSelector((store) => store.tags.catalog);
     const tagAssignments = useAppSelector((store) => store.tags.assignments);
+    const trackerEntries = useAppSelector((store) => store.trackers.entries);
+    const trackerCoverByLink = useMemo(() => trackerCoverUrlByItemLink(trackerEntries), [trackerEntries]);
     const [selectedTagId, setSelectedTagId] = useState<GalleryTagFilterId>(null);
     const activeTagFilter =
         selectedTagId != null && tagCatalog.some((tag) => tag.id === selectedTagId) ? selectedTagId : null;
@@ -266,7 +268,7 @@ const GalleryView: React.FC = () => {
 
     const renderMangaItem = useCallback(
         (item: LibraryItemWithProgress, _index: number, isSelected: boolean) => {
-            const coverSrc = libraryCoverSrc(item);
+            const coverSrc = resolveDetailsCoverSrc(item, trackerCoverByLink[item.link]);
             const isChecked = selection.isSelected(item.link);
             const inSelectionMode = selection.isSelectionMode;
             return (
@@ -332,7 +334,15 @@ const GalleryView: React.FC = () => {
                 </div>
             );
         },
-        [handleItemSelect, handleContextMenu, handleContinueReading, appSettings.galleryDisplayMode, selection, t],
+        [
+            handleItemSelect,
+            handleContextMenu,
+            handleContinueReading,
+            appSettings.galleryDisplayMode,
+            selection,
+            t,
+            trackerCoverByLink,
+        ],
     );
 
     /**

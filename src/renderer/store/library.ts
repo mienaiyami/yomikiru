@@ -1,4 +1,4 @@
-import type { LibraryItem, LibraryItemMetadata } from "@common/types/db";
+import type { DetailsCoverSource, LibraryItem, LibraryItemMetadata } from "@common/types/db";
 import type { DatabaseChannels } from "@common/types/ipc";
 import { createAsyncThunk, createSlice, type PayloadAction } from "@reduxjs/toolkit";
 import { formatUtils } from "@utils/file";
@@ -50,6 +50,26 @@ export const setLibraryItemFavourite = createAsyncThunk(
         return await window.electron.invoke("db:library:updateItem", {
             link,
             favouritedAt: favourite ? new Date() : null,
+        });
+    },
+);
+
+/**
+ * Merges {@link LibraryItemExtra.detailsCoverSource} into the row extra JSON.
+ * `db:library:updateItem` replaces `extra` wholesale, so this reads the current map first.
+ * Omitted extra follows the tracker image once a snapshot URL exists.
+ */
+export const setLibraryItemDetailsCoverSource = createAsyncThunk(
+    "library/setDetailsCoverSource",
+    async ({ link, source }: { link: string; source: DetailsCoverSource }, { getState }) => {
+        const item = (getState() as RootState).library.items[link];
+        if (!item) {
+            log.warn("setDetailsCoverSource: no library row", { link });
+            return null;
+        }
+        return await window.electron.invoke("db:library:updateItem", {
+            link,
+            extra: { ...item.extra, detailsCoverSource: source },
         });
     },
 );
@@ -234,6 +254,9 @@ const librarySlice = createSlice({
                 applyLibraryItemPatch(state, action.payload);
             })
             .addCase(setLibraryItemNote.fulfilled, (state, action) => {
+                applyLibraryItemPatch(state, action.payload);
+            })
+            .addCase(setLibraryItemDetailsCoverSource.fulfilled, (state, action) => {
                 applyLibraryItemPatch(state, action.payload);
             })
             .addCase(setLibraryItemMetadata.fulfilled, (state, action) => {

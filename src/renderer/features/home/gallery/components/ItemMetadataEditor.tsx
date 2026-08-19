@@ -85,6 +85,7 @@ export const ItemMetadataEditor = ({ itemLink, userOverlay, onClose }: ItemMetad
     return createPortal(
         <Modal open onClose={onClose} className="item-metadata-editor">
             <h3>{t("gallery.details.editMetadata")}</h3>
+            <p className="item-metadata-editor-hint">{t("gallery.details.metadataAnilistHint")}</p>
             <div className="item-metadata-editor-field">
                 <label htmlFor={FIELD_IDS.title}>{t("gallery.details.metadataTitle")}</label>
                 <input

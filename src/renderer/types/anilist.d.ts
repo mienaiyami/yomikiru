@@ -85,6 +85,14 @@ declare namespace Anilist {
             idMal?: number | null;
             status?: MediaStatus | null;
             format?: MediaFormat | null;
+            staff?: {
+                edges?: {
+                    role?: string | null;
+                    node?: {
+                        name?: { full?: string | null } | null;
+                    } | null;
+                }[] | null;
+            } | null;
         };
     };
 }

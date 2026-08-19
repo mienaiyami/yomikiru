@@ -142,6 +142,7 @@ export const UpdateBookProgressSchema = createUpdateSchema(bookProgress)
  */
 const trackerMediaSnapshotSchema = z.object({
     title: z.string().nullable().optional(),
+    author: z.string().nullable().optional(),
     coverImage: z.string().nullable().optional(),
     bannerImage: z.string().nullable().optional(),
     description: z.string().nullable().optional(),

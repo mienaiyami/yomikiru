@@ -5,6 +5,7 @@ import { onInvoke } from "@test/mocks/preload";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import libraryReducer, {
     fetchAllMetadata,
+    setLibraryItemDetailsCoverSource,
     setLibraryItemFavourite,
     setLibraryItemMetadata,
     setLibraryItemNote,
@@ -61,6 +62,36 @@ describe("library metadata thunks", () => {
         await store.dispatch(setLibraryItemNote({ link: itemLink, note: "   " }));
         expect(updateItem).toHaveBeenCalledWith(expect.objectContaining({ link: itemLink, note: null }));
         expect(store.getState().library.items[itemLink]?.note).toBeNull();
+    });
+
+    it("merges detailsCoverSource into extra without dropping other keys", async () => {
+        const item = makeMangaItem({ link: itemLink, extra: { keep: true } });
+        const store = configureStore({
+            reducer: { library: libraryReducer },
+            preloadedState: {
+                library: {
+                    items: { [itemLink]: item },
+                    metadata: {},
+                    loading: false,
+                    error: null,
+                },
+            },
+        });
+        const updateItem = vi.fn(async (req: { link: string; extra?: Record<string, unknown> }) => ({
+            ...makeMangaItem({ link: req.link, extra: req.extra ?? {} }),
+        }));
+        onInvoke("db:library:updateItem", updateItem);
+        await store.dispatch(setLibraryItemDetailsCoverSource({ link: itemLink, source: "tracker" }));
+        expect(updateItem).toHaveBeenCalledWith(
+            expect.objectContaining({
+                link: itemLink,
+                extra: { keep: true, detailsCoverSource: "tracker" },
+            }),
+        );
+        expect(store.getState().library.items[itemLink]?.extra).toEqual({
+            keep: true,
+            detailsCoverSource: "tracker",
+        });
     });
 
     it("groups fetchAllMetadata rows by itemLink", async () => {

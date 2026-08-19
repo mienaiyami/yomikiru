@@ -38,6 +38,7 @@ describe("ItemMetadataEditor", () => {
         expect(screen.getByLabelText(home.gallery.details.metadataAuthor)).toBeInTheDocument();
         expect(screen.getByLabelText(home.gallery.details.metadataDescription)).toBeInTheDocument();
         expect(screen.getByLabelText(home.gallery.details.metadataGenres)).toBeInTheDocument();
+        expect(screen.getByText(home.gallery.details.metadataAnilistHint)).toBeInTheDocument();
     });
 
     it("swaps Save to Saving then Saved and closes after success", async () => {

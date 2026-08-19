@@ -33,6 +33,7 @@ import type {
 } from "../../electron/db/validator";
 
 export type {
+    DetailsCoverSource,
     LibraryItemExtra,
     LibraryItemMetadataSource,
     TrackerListState,
