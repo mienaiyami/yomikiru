@@ -1,3 +1,4 @@
+import type { LibraryItem, LibraryItemMetadata } from "@common/types/db";
 import type { DatabaseChannels } from "@common/types/ipc";
 import { createAsyncThunk, createSlice, type PayloadAction } from "@reduxjs/toolkit";
 import { formatUtils } from "@utils/file";
@@ -6,30 +7,22 @@ import type { RootState } from ".";
 
 const log = createRendererLogger("store/library");
 
-// todo : add proper error handling
-
 type LibraryState = {
     items: Record<string, DatabaseChannels["db:library:getAllAndProgress"]["response"][0] | null>;
-    // mangaProgress: Record<string, MangaProgress>;
-    // bookProgress: Record<string, BookProgress>;
+    metadata: Record<string, LibraryItemMetadata[]>;
     loading: boolean;
     error: string | null;
 };
 
 const initialState: LibraryState = {
     items: {},
-    // mangaProgress: {},
-    // bookProgress: {},
+    metadata: {},
     loading: false,
     error: null,
 };
 
 export const fetchAllItemsWithProgress = createAsyncThunk("library/getAllItemsWithProgress", async () => {
-    const now = performance.now();
-    const data = await window.electron.invoke("db:library:getAllAndProgress");
-    const time = performance.now() - now;
-    // console.log(`db:library:getAllAndProgress took ${time}ms`);
-    return data;
+    return await window.electron.invoke("db:library:getAllAndProgress");
 });
 
 export const addLibraryItem = createAsyncThunk(
@@ -42,6 +35,44 @@ export const updateLibraryItem = createAsyncThunk(
     "library/updateItem",
     async (args: DatabaseChannels["db:library:updateItem"]["request"]) => {
         return await window.electron.invoke("db:library:updateItem", args);
+    },
+);
+
+/** Loads every metadata overlay row and groups them by `itemLink` in the slice. */
+export const fetchAllMetadata = createAsyncThunk("library/getAllMetadata", async () => {
+    return await window.electron.invoke("db:library:getAllMetadata");
+});
+
+/** Writes {@link LibraryItem.favouritedAt} to a timestamp, or null to clear the favourite. */
+export const setLibraryItemFavourite = createAsyncThunk(
+    "library/setFavourite",
+    async ({ link, favourite }: { link: string; favourite: boolean }) => {
+        return await window.electron.invoke("db:library:updateItem", {
+            link,
+            favouritedAt: favourite ? new Date() : null,
+        });
+    },
+);
+
+/** Persists the library-item note. Empty string is stored as null. */
+export const setLibraryItemNote = createAsyncThunk(
+    "library/setNote",
+    async ({ link, note }: { link: string; note: string }) => {
+        const trimmed = note.trim();
+        return await window.electron.invoke("db:library:updateItem", {
+            link,
+            note: trimmed.length > 0 ? trimmed : null,
+        });
+    },
+);
+
+/**
+ * Upserts one metadata overlay. Omitted fields stay as stored; explicit `null` clears that field.
+ */
+export const setLibraryItemMetadata = createAsyncThunk(
+    "library/setMetadata",
+    async (args: DatabaseChannels["db:library:setMetadata"]["request"]) => {
+        return await window.electron.invoke("db:library:setMetadata", args);
     },
 );
 
@@ -71,8 +102,8 @@ export const deleteLibraryItem = createAsyncThunk(
 );
 
 /**
- * Moves a library item to a new disk path (progress/bookmarks/notes follow).
- * Callers should update AniList `localURL` and any UI selection holding `oldLink`.
+ * Moves a library item to a new disk path (progress/bookmarks/notes/trackers/metadata follow).
+ * Callers should update any UI selection holding `oldLink`.
  *
  * @returns The updated library row, or `null` when the IPC reports conflict/missing.
  */
@@ -138,6 +169,24 @@ export const updateChaptersReadAll = createAsyncThunk(
     },
 );
 
+/**
+ * Merges a library-row IPC result into the in-memory map so toggles (favourite,
+ * note, title) update the UI before `db:library:change` refetch finishes.
+ * Progress is kept from the previous map entry.
+ */
+const applyLibraryItemPatch = (state: LibraryState, item: LibraryItem | null | undefined): void => {
+    if (!item) return;
+    const prev = state.items[item.link];
+    if (!prev) return;
+    if (prev.type === "manga" && item.type === "manga") {
+        state.items[item.link] = { ...prev, ...item, type: "manga", progress: prev.progress };
+        return;
+    }
+    if (prev.type === "book" && item.type === "book") {
+        state.items[item.link] = { ...prev, ...item, type: "book", progress: prev.progress };
+    }
+};
+
 const librarySlice = createSlice({
     name: "library",
     initialState,
@@ -169,6 +218,37 @@ const librarySlice = createSlice({
                 state.loading = false;
                 state.error = action.error.message || "Failed to load items";
             })
+            .addCase(fetchAllMetadata.fulfilled, (state, action) => {
+                const next: Record<string, LibraryItemMetadata[]> = {};
+                for (const row of action.payload) {
+                    const list = next[row.itemLink];
+                    if (list) list.push(row);
+                    else next[row.itemLink] = [row];
+                }
+                state.metadata = next;
+            })
+            .addCase(updateLibraryItem.fulfilled, (state, action) => {
+                applyLibraryItemPatch(state, action.payload);
+            })
+            .addCase(setLibraryItemFavourite.fulfilled, (state, action) => {
+                applyLibraryItemPatch(state, action.payload);
+            })
+            .addCase(setLibraryItemNote.fulfilled, (state, action) => {
+                applyLibraryItemPatch(state, action.payload);
+            })
+            .addCase(setLibraryItemMetadata.fulfilled, (state, action) => {
+                const row = action.payload;
+                if (!row) return;
+                const list = state.metadata[row.itemLink] ?? [];
+                const index = list.findIndex((item) => item.source === row.source);
+                if (index === -1) {
+                    state.metadata[row.itemLink] = [...list, row];
+                    return;
+                }
+                const next = [...list];
+                next[index] = row;
+                state.metadata[row.itemLink] = next;
+            })
             // Keep UI selection keys valid before db:library:change refetch finishes.
             .addCase(relocateLibraryItem.fulfilled, (state, action) => {
                 const item = action.payload;
@@ -176,6 +256,11 @@ const librarySlice = createSlice({
                 if (!item || oldLink === newLink) return;
                 const prev = state.items[oldLink];
                 delete state.items[oldLink];
+                const overlays = state.metadata[oldLink];
+                if (overlays) {
+                    delete state.metadata[oldLink];
+                    state.metadata[newLink] = overlays.map((row) => ({ ...row, itemLink: newLink }));
+                }
                 if (!prev) {
                     state.items[newLink] = { ...item, progress: null };
                     return;
@@ -213,3 +298,7 @@ export const selectLibraryItem = (state: RootState, path: string) => {
         return null;
     }
 };
+
+/** Metadata overlay rows for a library path (user and, later, file). */
+export const selectItemMetadata = (state: RootState, itemLink: string): LibraryItemMetadata[] =>
+    state.library.metadata[itemLink] ?? [];

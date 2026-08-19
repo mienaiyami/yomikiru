@@ -1,6 +1,6 @@
 # Home Feature
 
-> Last updated: 2026-08-18. Covers v2.24.x.
+> Last updated: 2026-08-19. Covers v2.24.x plus unreleased gallery metadata / favourites.
 
 The Home view is the main landing screen shown when no reader is open.
 It has two modes — **Classic** and **Gallery** — switchable via `appSettings.homeViewMode`.
@@ -110,7 +110,7 @@ A card-based library browser with a detail panel and section tabs (`galleryActiv
 | `continue-reading` | Items with progress, always newest `lastReadAt` first (no sort control) |
 | `library` | All library items, sorted by `gallerySortBy` / `gallerySortType` |
 | `bookmarks` | Items with at least one bookmark, sorted by `gallerySortBy` / `gallerySortType` |
-| `favourites` | Planned — currently always empty; search and sort still shown |
+| `favourites` | Items with `favouritedAt` set, sorted by `gallerySortBy` / `gallerySortType` |
 
 Tab state persisted in `galleryActiveTab`. Opening a tile from `bookmarks` selects the details inner tab `"bookmarks"`; `library` and `continue-reading` keep each panel's default (`"content"` for manga, `"bookmarks"` for books). Play always continues last progress.
 
@@ -162,11 +162,11 @@ Contains:
 
 [`gallery/components/MangaDetailsPanel.tsx`](gallery/components/MangaDetailsPanel.tsx), [`gallery/components/BookDetailsPanel.tsx`](gallery/components/BookDetailsPanel.tsx), shared chrome [`gallery/components/DetailsHero.tsx`](gallery/components/DetailsHero.tsx).
 
-Full-page replacement of the gallery grid (not a side drawer). Shared hero: cover with overlay back, title (EPUB badge on books), optional author, Continue/Start plus icon Select Cover / Show in File Explorer / Copy Path, compact AniList when a token exists. Opening the page focuses Continue/Start. The cover scales with the metadata block height. Auto height (`galleryDetailsHeroHeight` `0`) uses `--details-meta-min-h` / `DETAILS_HERO_HEIGHT_MIN_REM` as the section min/max and scrolls if the hero is taller; dragging the divider can go below that rem floor (`DETAILS_HERO_RESIZE_MIN_PX`). Current chapter sits with last-read date, manga page, and chapters-read (`read / total`); About / genres (preview flag) sit in that same column below those fields; the title **Note** sits beside that block from mid width (click to edit; Escape or blur finishes; local UI only until persistence lands; height follows the note text). Drag the divider under the header to resize the metadata block (quiet grip on the bar); `galleryDetailsHeroHeight` is one setting for manga and book (`0` = auto section). Lists sit under the same `galleryToolbar` chrome as gallery home (tabs left; locate-current / sort/refresh left of search on gallery home and details only). **Directory Up** (`dirUp`) closes details and focuses gallery search, including after returning from the reader (window capture; ignored while the reader is open, while Settings or AniList overlays are open, and while typing in a field). Context-menu shortcut (`ctrl+/` by default) works on focused tiles and details rows the same way as classic lists.
+Full-page replacement of the gallery grid (not a side drawer). Shared hero: cover with overlay back, title (EPUB badge on books), optional author, Continue/Start plus icon favourite / edit metadata / Select Cover / Show in File Explorer / Copy Path, compact AniList when a token exists. Opening the page focuses Continue/Start. The cover scales with the metadata block height. Auto height (`galleryDetailsHeroHeight` `0`) uses `--details-meta-min-h` / `DETAILS_HERO_HEIGHT_MIN_REM` as the section min/max and scrolls if the hero is taller; dragging the divider can go below that rem floor (`DETAILS_HERO_RESIZE_MIN_PX`). Current chapter sits with last-read date, manga page, and chapters-read (`read / total`); About / genres sit in that same column when resolved metadata supplies them (hidden when empty). The title **Note** sits beside that block from mid width (click to edit; Escape or blur commits to `library_items.note`; height follows the note text). Drag the divider under the header to resize the metadata block (quiet grip on the bar); `galleryDetailsHeroHeight` is one setting for manga and book (`0` = auto section). Lists sit under the same `galleryToolbar` chrome as gallery home (tabs left; locate-current / sort/refresh left of search on gallery home and details only). **Directory Up** (`dirUp`) closes details and focuses gallery search, including after returning from the reader (window capture; ignored while the reader is open, while Settings or AniList overlays are open, and while typing in a field). Context-menu shortcut (`ctrl+/` by default) works on focused tiles and details rows the same way as classic lists.
 
 - Manga tabs: **Content** (chapter list; empty image folders omitted, packed archives still listed) and **Bookmarks**. Tab labels have no counts. Content toolbar locate scrolls to the in-progress chapter.
 - Book tabs: **Bookmarks** / **Notes** from the reader.
-- Unimplemented About / synopsis stays behind `DETAILS_HERO_SYNOPSIS_PREVIEW` in `DetailsHero.tsx` (code-only).
+- Display title / author / About / genres come from `resolveItemMetadata` (user overlay > tracker snapshot > file overlay > `library_items` base). Tracker rows for that snapshot should be selected with `selectTracker` from [`store/trackers.ts`](../../store/trackers.ts) (`trackers.md`); compact AniList UI still uses [`AnilistBar`](../anilist/AnilistBar.tsx). Edit metadata opens [`ItemMetadataEditor`](gallery/components/ItemMetadataEditor.tsx) and writes the `user` overlay. File overlays are reserved for later ComicInfo / EPUB extraction.
 - Missing on-disk path: [`MissingLibraryPathPanel`](gallery/components/MissingLibraryPathPanel.tsx) is an error-styled banner **above** the hero (`--error-color`; **Locate on disk** / Remove); cover, metadata, and lists stay visible. Classic History / Continue Reading (manga only): if the series folder exists but a chapter path is missing, the dialog offers **Open first chapter** / **Locate chapter** (pick renamed/moved chapter) — never open the series root (cover-only) and never relocate the library link to a chapter.
 
 ### GalleryTabBar
@@ -179,7 +179,7 @@ Pill-style tab switcher at the top of the gallery toolbar.
 
 [`src/renderer/utils/gallerySort.ts`](../../utils/gallerySort.ts)
 
-`sortGalleryItems`, `sortContinueReadingItems`, and `selectBookmarkedItems` — pure helpers applied inside the `tabItems` memo in `GalleryView`. Shared sort keys (`gallerySortBy` / `gallerySortType`) for `library`, `bookmarks`, and `favourites`:
+`sortGalleryItems`, `sortContinueReadingItems`, `selectBookmarkedItems`, and `selectFavouritedItems` — pure helpers applied inside the `tabItems` memo in `GalleryView`. Shared sort keys (`gallerySortBy` / `gallerySortType`) for `library`, `bookmarks`, and `favourites`:
 
 - `name` — alphabetical title.
 - `date` — `updatedAt`.
@@ -228,7 +228,7 @@ Generic hook returning a `UseMultiSelectReturn<T>` API:
 | `clearSelection()` | Clears all + exits selection mode |
 | `setVisibleOrder(ids)` | Updates the ordered list (from ListNavigator filter); drops hidden items from selection |
 
-Selection mode is implicit — it activates when the first item is selected and exits when selection is cleared.
+Selection mode is implicit — it activates when the first item is selected and exits when selection is cleared. Gallery overflow offers **Add to Favourites** (Library / Continue / Bookmarks) or **Remove from Favourites** (Favourites tab; confirms when more than one item is selected) plus **Remove from Library**.
 
 Shift-range selection uses `getIdsInRange` from [`src/renderer/utils/multiSelectRange.ts`](../../utils/multiSelectRange.ts) to find the contiguous slice between the anchor and the clicked item in `orderedIds`.
 
@@ -258,6 +258,7 @@ The global `window.contextMenu.template` factory (defined in `App.tsx`) provides
 | `copyPath(url)` | Clipboard write |
 | `copyImage(url)` | Clipboard write image |
 | `removeHistory(url)` | Remove from library (with confirmation; files on disk stay) |
+| gallery favourite toggle | Add to / Remove from Favourites (`library_items.favouritedAt`) |
 | `removeBookmark(...)` | Delete bookmark (with confirmation) |
 | `addToBookmark(args)` | Add bookmark |
 | `readChapter / unreadChapter` | Toggle single chapter read state |

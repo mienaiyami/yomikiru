@@ -9,7 +9,6 @@ import { cleanup, fireEvent, screen } from "@testing-library/react";
 import dateUtils from "@utils/date";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import BookDetailsPanel from "./BookDetailsPanel";
-import { DETAILS_HERO_SYNOPSIS_PREVIEW } from "./DetailsHero";
 
 const { openInReader } = vi.hoisted(() => ({
     openInReader: vi.fn(),
@@ -26,9 +25,12 @@ vi.mock("@renderer/App", () => ({
 
 const emptyAnilist = {
     token: null as string | null,
-    tracking: [] as Anilist.TrackStore,
-    currentManga: null,
+    currentListEntry: null,
     galleryTrackContext: null,
+};
+
+const emptyTrackers = {
+    entries: [] as [],
 };
 
 /**
@@ -52,8 +54,9 @@ const renderBookPanel = (
     const onClose = options.onClose ?? vi.fn();
     const utils = renderWithProviders(<BookDetailsPanel bookLink={item.link} onClose={onClose} />, {
         preloadedState: {
-            library: { items: { [item.link]: item }, loading: false, error: null },
+            library: { items: { [item.link]: item }, metadata: {}, loading: false, error: null },
             anilist: { ...emptyAnilist, token: options.anilistToken ?? null },
+            trackers: { ...emptyTrackers },
         },
     });
     return { ...utils, onClose, item };
@@ -134,20 +137,7 @@ describe("BookDetailsPanel", () => {
         expect(screen.queryByText(home.gallery.details.currentPage)).not.toBeInTheDocument();
         expect(screen.queryByText(home.gallery.details.chaptersRead)).not.toBeInTheDocument();
         expect(screen.queryByText(home.gallery.details.author)).not.toBeInTheDocument();
-        expect(screen.queryByText(home.gallery.details.editNote)).not.toBeInTheDocument();
-        if (DETAILS_HERO_SYNOPSIS_PREVIEW) {
-            const factsMain = document.querySelector(".details-facts-main");
-            const about = screen.getByText(home.gallery.details.about);
-            expect(factsMain?.contains(about)).toBe(true);
-            expect(
-                (screen.getByText(home.gallery.details.currentChapter).compareDocumentPosition(about) &
-                    Node.DOCUMENT_POSITION_FOLLOWING) !==
-                    0,
-            ).toBe(true);
-            expect(screen.queryByText(home.gallery.details.genresPreview)).not.toBeInTheDocument();
-        } else {
-            expect(screen.queryByText(home.gallery.details.about)).not.toBeInTheDocument();
-        }
+        expect(screen.queryByText(home.gallery.details.about)).not.toBeInTheDocument();
         expect(screen.getByText(home.gallery.details.itemNote)).toBeInTheDocument();
         expect(screen.getByPlaceholderText(home.gallery.details.searchBookmarks)).toBeInTheDocument();
     });
@@ -157,7 +147,6 @@ describe("BookDetailsPanel", () => {
         renderBookPanel();
         fireEvent.click(screen.getByRole("button", { name: home.gallery.details.itemNote }));
         expect(screen.getByRole("textbox", { name: home.gallery.details.itemNote })).toBeInTheDocument();
-        expect(screen.queryByRole("button", { name: home.gallery.details.editNote })).not.toBeInTheDocument();
     });
 
     it("reveals the library path from the hero Show in File Explorer control", () => {
@@ -184,8 +173,9 @@ describe("BookDetailsPanel", () => {
         expect(screen.getByText(item.link)).toBeInTheDocument();
         const alert = screen.getByRole("alert");
         const hero = document.querySelector(".details-hero");
-        expect(hero).toBeTruthy();
-        expect((alert.compareDocumentPosition(hero!) & Node.DOCUMENT_POSITION_FOLLOWING) !== 0).toBe(true);
+        expect(hero).toBeInstanceOf(HTMLElement);
+        if (!(hero instanceof HTMLElement)) throw new Error("expected .details-hero");
+        expect((alert.compareDocumentPosition(hero) & Node.DOCUMENT_POSITION_FOLLOWING) !== 0).toBe(true);
         expect(screen.getByPlaceholderText(home.gallery.details.searchBookmarks)).toBeInTheDocument();
         expect(screen.queryByRole("button", { name: home.shared.continueReading })).not.toBeInTheDocument();
     });

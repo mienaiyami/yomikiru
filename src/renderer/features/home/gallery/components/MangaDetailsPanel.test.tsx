@@ -3,13 +3,12 @@ import common from "@common/i18n/locales/en/common.json";
 import home from "@common/i18n/locales/en/home.json";
 import settings from "@common/i18n/locales/en/settings.json";
 import { makeMangaItem } from "@test/fixtures/libraryItem";
-import { stubFs } from "@test/mocks/preload";
+import { onInvoke, stubFs } from "@test/mocks/preload";
 import { renderWithProviders } from "@test/renderWithProviders";
 import { cleanup, fireEvent, screen, waitFor } from "@testing-library/react";
 import dateUtils from "@utils/date";
 import { resolveMangaChapterPath } from "@utils/mangaChapterPath";
 import { afterEach, describe, expect, it, vi } from "vitest";
-import { DETAILS_HERO_SYNOPSIS_PREVIEW } from "./DetailsHero";
 import MangaDetailsPanel from "./MangaDetailsPanel";
 
 const { openInReader } = vi.hoisted(() => ({
@@ -35,9 +34,12 @@ vi.mock("@utils/libraryCoverService", async (importOriginal) => {
 
 const emptyAnilist = {
     token: null as string | null,
-    tracking: [] as Anilist.TrackStore,
-    currentManga: null,
+    currentListEntry: null,
     galleryTrackContext: null,
+};
+
+const emptyTrackers = {
+    entries: [] as [],
 };
 
 /**
@@ -69,8 +71,9 @@ const renderMangaPanel = (
     const onClose = options.onClose ?? vi.fn();
     const utils = renderWithProviders(<MangaDetailsPanel mangaLink={item.link} onClose={onClose} />, {
         preloadedState: {
-            library: { items: { [item.link]: item }, loading: false, error: null },
+            library: { items: { [item.link]: item }, metadata: {}, loading: false, error: null },
             anilist: { ...emptyAnilist, token: options.anilistToken ?? null },
+            trackers: { ...emptyTrackers },
         },
     });
     return { ...utils, onClose, item };
@@ -209,20 +212,7 @@ describe("MangaDetailsPanel", () => {
         expect(screen.getByText(home.gallery.details.chaptersRead)).toBeInTheDocument();
         expect(screen.getByText("0 / 0")).toBeInTheDocument();
         expect(screen.queryByText(home.gallery.details.author)).not.toBeInTheDocument();
-        expect(screen.queryByText(home.gallery.details.editNote)).not.toBeInTheDocument();
-        if (DETAILS_HERO_SYNOPSIS_PREVIEW) {
-            const factsMain = document.querySelector(".details-facts-main");
-            const about = screen.getByText(home.gallery.details.about);
-            expect(factsMain?.contains(about)).toBe(true);
-            expect(
-                (screen.getByText(home.gallery.details.currentChapter).compareDocumentPosition(about) &
-                    Node.DOCUMENT_POSITION_FOLLOWING) !==
-                    0,
-            ).toBe(true);
-            expect(factsMain?.contains(screen.getByText(home.gallery.details.genresPreview))).toBe(true);
-        } else {
-            expect(screen.queryByText(home.gallery.details.about)).not.toBeInTheDocument();
-        }
+        expect(screen.queryByText(home.gallery.details.about)).not.toBeInTheDocument();
         await waitForEmptyChapterList();
     });
 
@@ -252,8 +242,9 @@ describe("MangaDetailsPanel", () => {
         expect(screen.getByText(item.link)).toBeInTheDocument();
         const alert = screen.getByRole("alert");
         const hero = document.querySelector(".details-hero");
-        expect(hero).toBeTruthy();
-        expect((alert.compareDocumentPosition(hero!) & Node.DOCUMENT_POSITION_FOLLOWING) !== 0).toBe(true);
+        expect(hero).toBeInstanceOf(HTMLElement);
+        if (!(hero instanceof HTMLElement)) throw new Error("expected .details-hero");
+        expect((alert.compareDocumentPosition(hero) & Node.DOCUMENT_POSITION_FOLLOWING) !== 0).toBe(true);
         await waitForEmptyChapterList();
         expect(screen.getByPlaceholderText(home.gallery.details.searchChapters)).toBeInTheDocument();
         expect(screen.getByRole("button", { name: home.gallery.details.content })).toBeInTheDocument();
@@ -294,7 +285,76 @@ describe("MangaDetailsPanel", () => {
         expect(screen.getByText(home.gallery.details.itemNote)).toBeInTheDocument();
         fireEvent.click(screen.getByRole("button", { name: home.gallery.details.itemNote }));
         expect(screen.getByRole("textbox", { name: home.gallery.details.itemNote })).toBeInTheDocument();
-        expect(screen.queryByRole("button", { name: home.gallery.details.editNote })).not.toBeInTheDocument();
+        await waitForEmptyChapterList();
+    });
+
+    it("persists the item note on commit", async () => {
+        stubMangaOnDisk();
+        const updateItem = vi.fn(async (req: { link: string; note?: string | null }) => ({
+            ...makeMangaItem(),
+            link: req.link,
+            note: req.note ?? null,
+        }));
+        onInvoke("db:library:updateItem", updateItem);
+        const { item } = renderMangaPanel();
+        fireEvent.click(screen.getByRole("button", { name: home.gallery.details.itemNote }));
+        fireEvent.change(screen.getByRole("textbox", { name: home.gallery.details.itemNote }), {
+            target: { value: "keep this" },
+        });
+        fireEvent.blur(screen.getByRole("textbox", { name: home.gallery.details.itemNote }));
+        await waitFor(() => {
+            expect(updateItem).toHaveBeenCalledWith(
+                expect.objectContaining({ link: item.link, note: "keep this" }),
+            );
+        });
+        await waitForEmptyChapterList();
+    });
+
+    it("shows About and genres from user metadata and can favourite", async () => {
+        stubMangaOnDisk();
+        const item = makeMangaItem();
+        const updateItem = vi.fn(async (req: { link: string; favouritedAt?: Date | null }) => ({
+            ...item,
+            favouritedAt: req.favouritedAt ?? null,
+        }));
+        onInvoke("db:library:updateItem", updateItem);
+        renderWithProviders(<MangaDetailsPanel mangaLink={item.link} onClose={vi.fn()} />, {
+            preloadedState: {
+                library: {
+                    items: { [item.link]: item },
+                    metadata: {
+                        [item.link]: [
+                            {
+                                itemLink: item.link,
+                                source: "user" as const,
+                                title: null,
+                                author: null,
+                                description: "A long voyage.",
+                                genres: ["Adventure"],
+                                tags: null,
+                                publisher: null,
+                                createdAt: new Date(0),
+                                updatedAt: new Date(0),
+                            },
+                        ],
+                    },
+                    loading: false,
+                    error: null,
+                },
+                anilist: { ...emptyAnilist },
+                trackers: { ...emptyTrackers },
+            },
+        });
+        expect(screen.getByText(home.gallery.details.about)).toBeInTheDocument();
+        expect(screen.getByText("A long voyage.")).toBeInTheDocument();
+        expect(screen.getByText("Adventure")).toBeInTheDocument();
+        fireEvent.click(screen.getByRole("button", { name: home.gallery.details.addFavourite }));
+        await waitFor(() => {
+            expect(updateItem).toHaveBeenCalledWith(
+                expect.objectContaining({ link: item.link, favouritedAt: expect.any(Date) }),
+            );
+        });
+        expect(screen.getByRole("button", { name: home.gallery.details.removeFavourite })).toBeInTheDocument();
         await waitForEmptyChapterList();
     });
 

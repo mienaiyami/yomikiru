@@ -113,6 +113,17 @@ export class DatabaseService {
             await runMigrate();
         }
     }
+    /**
+     * Inserts a library item and its progress row, or refreshes the title when the item
+     * is already present.
+     *
+     * Re-adding is a safe no-op for everything the user or an earlier session stored.
+     * Callers echo a full row back on every open - manga readers pass `author: null` and a
+     * derived `cover`, which would otherwise erase a stored author and replace a custom
+     * cover - so the conflict path updates only the title. Author and cover have their own
+     * update path (`db:library:updateItem`). Existing progress is likewise kept rather than
+     * reset to the freshly opened position.
+     */
     async addLibraryItem(data: AddToLibraryData): Promise<LibraryItem> {
         return await this._db.transaction(async (tx) => {
             const [item] = await tx
@@ -120,22 +131,28 @@ export class DatabaseService {
                 .values(data.data)
                 .onConflictDoUpdate({
                     target: [libraryItems.link],
-                    set: data.data,
+                    set: { title: data.data.title },
                 })
                 .returning();
             if (data.type === "manga") {
-                await tx.insert(mangaProgress).values({
-                    itemLink: item.link,
-                    ...data.progress,
-                    chaptersRead: [],
-                    lastReadAt: new Date(),
-                });
+                await tx
+                    .insert(mangaProgress)
+                    .values({
+                        itemLink: item.link,
+                        ...data.progress,
+                        chaptersRead: [],
+                        lastReadAt: new Date(),
+                    })
+                    .onConflictDoNothing();
             } else {
-                await tx.insert(bookProgress).values({
-                    itemLink: item.link,
-                    ...data.progress,
-                    lastReadAt: new Date(),
-                });
+                await tx
+                    .insert(bookProgress)
+                    .values({
+                        itemLink: item.link,
+                        ...data.progress,
+                        lastReadAt: new Date(),
+                    })
+                    .onConflictDoNothing();
             }
             return item;
         });
@@ -189,6 +206,12 @@ export class DatabaseService {
                         .run(newLink, oldLink);
                     this.sqlite
                         .prepare(`UPDATE book_notes SET itemLink = ? WHERE itemLink = ?`)
+                        .run(newLink, oldLink);
+                    this.sqlite
+                        .prepare(`UPDATE item_trackers SET itemLink = ? WHERE itemLink = ?`)
+                        .run(newLink, oldLink);
+                    this.sqlite
+                        .prepare(`UPDATE library_item_metadata SET itemLink = ? WHERE itemLink = ?`)
                         .run(newLink, oldLink);
                     this.sqlite.prepare(`UPDATE library_items SET link = ? WHERE link = ?`).run(newLink, oldLink);
                 })();

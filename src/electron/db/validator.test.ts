@@ -2,11 +2,12 @@ import path from "node:path";
 import { describe, expect, it } from "vitest";
 import {
     AddToLibrarySchema,
-    UpdateBookBookmarkSchema,
+    RemoveItemTrackerSchema,
+    SetLibraryItemMetadataSchema,
     UpdateBookProgressSchema,
     UpdateLibraryItemSchema,
-    UpdateMangaBookmarkSchema,
     UpdateMangaProgressSchema,
+    UpsertItemTrackerSchema,
 } from "./validator";
 
 const mangaLink = path.join("testdata", "manga", "series");
@@ -75,13 +76,65 @@ describe("Update* schemas", () => {
         expect(UpdateBookProgressSchema.safeParse({ itemLink: "a", position: "p" }).success).toBe(true);
     });
 
-    it("accepts partial bookmark updates with required id", () => {
-        expect(UpdateMangaBookmarkSchema.safeParse({ id: 1 }).success).toBe(false);
-        expect(UpdateMangaBookmarkSchema.safeParse({ id: 1, chapterName: "ch2" }).success).toBe(true);
-        expect(UpdateMangaBookmarkSchema.safeParse({ id: 1, page: 3, note: "x" }).success).toBe(true);
-        expect(UpdateBookBookmarkSchema.safeParse({ id: 1 }).success).toBe(false);
-        expect(UpdateBookBookmarkSchema.safeParse({ id: 1, chapterId: "c2", position: "body" }).success).toBe(
-            true,
+    it("accepts optional note and favouritedAt on library item updates", () => {
+        expect(UpdateLibraryItemSchema.safeParse({ link: "a", note: "hello" }).success).toBe(true);
+        expect(UpdateLibraryItemSchema.safeParse({ link: "a", note: null }).success).toBe(true);
+        expect(UpdateLibraryItemSchema.safeParse({ link: "a", favouritedAt: null }).success).toBe(true);
+        expect(
+            UpdateLibraryItemSchema.safeParse({ link: "a", favouritedAt: new Date().toISOString() }).success,
+        ).toBe(true);
+    });
+});
+
+describe("tracker and metadata schemas", () => {
+    it("requires itemLink, provider, and remoteId on upsert", () => {
+        expect(
+            UpsertItemTrackerSchema.safeParse({
+                itemLink: mangaLink,
+                provider: "anilist",
+                remoteId: "123",
+            }).success,
+        ).toBe(true);
+        expect(UpsertItemTrackerSchema.safeParse({ itemLink: mangaLink, provider: "anilist" }).success).toBe(
+            false,
         );
+        expect(RemoveItemTrackerSchema.safeParse({ itemLink: mangaLink, provider: "anilist" }).success).toBe(true);
+    });
+
+    it("treats omitted metadata fields as absent, not cleared", () => {
+        const parsed = SetLibraryItemMetadataSchema.parse({
+            itemLink: mangaLink,
+            source: "user",
+            description: "hello",
+        });
+        expect(parsed.description).toBe("hello");
+        expect(parsed.author).toBeUndefined();
+        expect(
+            SetLibraryItemMetadataSchema.parse({
+                itemLink: mangaLink,
+                source: "user",
+                author: null,
+            }).author,
+        ).toBeNull();
+    });
+
+    it("accepts nested tracker media snapshots on upsert", () => {
+        expect(
+            UpsertItemTrackerSchema.safeParse({
+                itemLink: mangaLink,
+                provider: "anilist",
+                remoteId: "123",
+                media: { title: "T", genres: ["Action"] },
+                listState: { progress: 2 },
+            }).success,
+        ).toBe(true);
+        expect(
+            UpsertItemTrackerSchema.safeParse({
+                itemLink: mangaLink,
+                provider: "anilist",
+                remoteId: "123",
+                media: { genres: "not-an-array" },
+            }).success,
+        ).toBe(false);
     });
 });

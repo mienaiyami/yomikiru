@@ -1,6 +1,7 @@
 import type { BookBookmark, BookNote, LibraryItemWithProgress } from "@common/types/db";
 import AnilistBar from "@features/anilist/AnilistBar";
-import { faBookmark, faFolderOpen, faImage, faPen } from "@fortawesome/free-solid-svg-icons";
+import { faStar as faStarRegular } from "@fortawesome/free-regular-svg-icons";
+import { faBookmark, faFolderOpen, faImage, faPen, faStar } from "@fortawesome/free-solid-svg-icons";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { useAppContext } from "@renderer/App";
 import ListNavigator from "@renderer/components/ListNavigator";
@@ -8,13 +9,16 @@ import SelectionCheckbox from "@renderer/components/ui/SelectionCheckbox";
 import { useMultiSelect } from "@renderer/hooks/useMultiSelect";
 import { PAGE_SEARCH_PRIORITY } from "@renderer/hooks/usePageSearchFocus";
 import { useSelectionShortcuts } from "@renderer/hooks/useSelectionShortcuts";
+import { selectAnilistTracker } from "@store/anilist";
 import { removeBookmark } from "@store/bookmarks";
 import { removeNote } from "@store/bookNotes";
 import { useAppDispatch, useAppSelector } from "@store/hooks";
+import { selectItemMetadata, setLibraryItemFavourite, setLibraryItemNote } from "@store/library";
 import dateUtils from "@utils/date";
 import { dialogUtils } from "@utils/dialog";
 import { libraryCoverSrc } from "@utils/libraryCover";
 import { pickAndApplyCustomCover } from "@utils/libraryCoverService";
+import { resolveItemMetadata } from "@utils/libraryMetadata";
 import { createRendererLogger } from "@utils/logger";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
@@ -29,6 +33,7 @@ import {
     DetailsMetaBlock,
     DetailsTabBar,
 } from "./DetailsHero";
+import { ItemMetadataEditor } from "./ItemMetadataEditor";
 import MissingLibraryPathPanel from "./MissingLibraryPathPanel";
 import "./mangaDetailsPanel.scss";
 
@@ -60,10 +65,19 @@ const BookDetailsPanel = ({ bookLink, onClose, onRelocated, initialTab = "bookma
     const anilistToken = useAppSelector((store) => store.anilist.token);
 
     const [activeTab, setActiveTab] = useState<"bookmarks" | "notes">(initialTab);
-    /* Local-only until library-item notes persist. */
+    const [metadataEditorOpen, setMetadataEditorOpen] = useState(false);
     const [itemNote, setItemNote] = useState("");
 
     const book = library[bookLink] as (LibraryItemWithProgress & { type: "book" }) | undefined;
+    const overlays = useAppSelector((store) => selectItemMetadata(store, bookLink));
+    // follow-up: selectTracker(store, bookLink, "anilist") from @store/trackers (see store/trackers.md)
+    const tracker = useAppSelector((store) => selectAnilistTracker(store, bookLink));
+    const resolved = useMemo(
+        () => (book ? resolveItemMetadata({ item: book, overlays, tracker }) : null),
+        [book, overlays, tracker],
+    );
+    const userOverlay = overlays.find((row) => row.source === "user");
+    const isFavourite = Boolean(book?.favouritedAt);
     const pathMissing = Boolean(book) && !window.fs.existsSync(bookLink);
 
     const bookmarksArray = useAppSelector(
@@ -90,11 +104,17 @@ const BookDetailsPanel = ({ bookLink, onClose, onRelocated, initialTab = "bookma
         continueRef.current?.focus();
     }, []);
 
+    useEffect(() => {
+        setItemNote(book?.note ?? "");
+    }, [book?.note]);
+
     const bookmarkSourceIds = useMemo(() => bookmarksArray.map((b) => b.id), [bookmarksArray]);
     const noteSourceIds = useMemo(() => notesArray.map((n) => n.id), [notesArray]);
     const bookmarkSelection = useMultiSelect<number>(bookmarkSourceIds);
     const noteSelection = useMultiSelect<number>(noteSourceIds);
 
+    /* clear when the details tab changes; extra dep is a trigger */
+    // biome-ignore lint/correctness/useExhaustiveDependencies: clear selection on details tab change
     useEffect(() => {
         bookmarkSelection.clearSelection();
         noteSelection.clearSelection();
@@ -410,12 +430,27 @@ const BookDetailsPanel = ({ bookLink, onClose, onRelocated, initialTab = "bookma
                     },
                     window.contextMenu.template.copyPath(bookLink),
                     window.contextMenu.template.divider(),
+                    {
+                        label: isFavourite
+                            ? t("gallery.details.removeFavourite")
+                            : t("gallery.details.addFavourite"),
+                        action() {
+                            dispatch(setLibraryItemFavourite({ link: bookLink, favourite: !isFavourite }));
+                        },
+                    },
+                    {
+                        label: t("gallery.details.editMetadata"),
+                        action() {
+                            setMetadataEditorOpen(true);
+                        },
+                    },
+                    window.contextMenu.template.divider(),
                     window.contextMenu.template.removeHistory(bookLink, false, onClose),
                 ],
                 focusBackElem: e.currentTarget,
             });
         },
-        [bookLink, onClose, pathMissing, setContextMenuData],
+        [bookLink, onClose, pathMissing, setContextMenuData, isFavourite, t, dispatch],
     );
 
     if (!book || book.type !== "book") {
@@ -459,13 +494,15 @@ const BookDetailsPanel = ({ bookLink, onClose, onRelocated, initialTab = "bookma
             ) : null}
             <DetailsMetaBlock>
                 <DetailsHero
-                    title={book.title}
-                    author={book.author}
+                    title={resolved?.title || book.title}
+                    author={resolved?.author ?? book.author}
                     typeBadge={t("shared.epub")}
                     coverSrc={coverArtSrc}
                     coverAlt={book.title}
                     onBack={onClose}
                     onCoverContextMenu={handleLibraryRootContextMenu}
+                    description={resolved?.description}
+                    genres={resolved?.genres}
                     actions={
                         pathMissing ? null : (
                             <>
@@ -476,6 +513,39 @@ const BookDetailsPanel = ({ bookLink, onClose, onRelocated, initialTab = "bookma
                                     onClick={handleContinueReading}
                                 >
                                     {book.progress ? t("shared.continueReading") : t("shared.startReading")}
+                                </button>
+                                <button
+                                    type="button"
+                                    className="details-icon-btn"
+                                    onClick={() =>
+                                        void dispatch(
+                                            setLibraryItemFavourite({
+                                                link: bookLink,
+                                                favourite: !isFavourite,
+                                            }),
+                                        )
+                                    }
+                                    aria-label={
+                                        isFavourite
+                                            ? t("gallery.details.removeFavourite")
+                                            : t("gallery.details.addFavourite")
+                                    }
+                                    data-tooltip={
+                                        isFavourite
+                                            ? t("gallery.details.removeFavourite")
+                                            : t("gallery.details.addFavourite")
+                                    }
+                                >
+                                    <FontAwesomeIcon icon={isFavourite ? faStar : faStarRegular} />
+                                </button>
+                                <button
+                                    type="button"
+                                    className="details-icon-btn"
+                                    onClick={() => setMetadataEditorOpen(true)}
+                                    aria-label={t("gallery.details.editMetadata")}
+                                    data-tooltip={t("gallery.details.editMetadata")}
+                                >
+                                    <FontAwesomeIcon icon={faPen} />
                                 </button>
                                 <button
                                     type="button"
@@ -522,7 +592,15 @@ const BookDetailsPanel = ({ bookLink, onClose, onRelocated, initialTab = "bookma
                             </>
                         ) : undefined
                     }
-                    note={<DetailsItemNote value={itemNote} onChange={setItemNote} />}
+                    note={
+                        <DetailsItemNote
+                            value={itemNote}
+                            onChange={setItemNote}
+                            onCommit={() => {
+                                void dispatch(setLibraryItemNote({ link: bookLink, note: itemNote }));
+                            }}
+                        />
+                    }
                 />
             </DetailsMetaBlock>
 
@@ -621,6 +699,13 @@ const BookDetailsPanel = ({ bookLink, onClose, onRelocated, initialTab = "bookma
                     </ListNavigator.Provider>
                 )}
             </div>
+            {metadataEditorOpen ? (
+                <ItemMetadataEditor
+                    itemLink={bookLink}
+                    userOverlay={userOverlay}
+                    onClose={() => setMetadataEditorOpen(false)}
+                />
+            ) : null}
         </div>
     );
 };

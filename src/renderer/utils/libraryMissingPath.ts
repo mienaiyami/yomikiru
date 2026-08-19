@@ -1,5 +1,5 @@
 import type { LibraryItem } from "@common/types/db";
-import { relocateAnilistTrackerLocalURL } from "@store/anilist";
+import { relocateGalleryTrackContext } from "@store/anilist";
 import { updateMangaBookmark } from "@store/bookmarks";
 import store, { type AppDispatch } from "@store/index";
 import { deleteLibraryItem, relocateLibraryItem } from "@store/library";
@@ -340,7 +340,8 @@ export const pickRelocatedLibraryPath = async (args: {
 };
 
 /**
- * Runs {@link relocateLibraryItem} and remaps AniList `localURL` on success.
+ * Runs {@link relocateLibraryItem} and remaps session AniList gallery-track context on success.
+ * Tracker rows are rewritten in the DB transaction.
  */
 export const dispatchRelocateLibraryItem = async (
     dispatch: AppDispatch,
@@ -349,7 +350,7 @@ export const dispatchRelocateLibraryItem = async (
     try {
         const item = await dispatch(relocateLibraryItem(args)).unwrap();
         if (!item) return null;
-        dispatch(relocateAnilistTrackerLocalURL(args));
+        dispatch(relocateGalleryTrackContext(args));
         return item;
     } catch (err) {
         log.error("dispatchRelocateLibraryItem failed", args, err);

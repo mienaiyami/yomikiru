@@ -69,3 +69,7 @@ export const selectBookmarkedItems = (
         const list = bookmarksForItem(item, bookmarks);
         return Boolean(list && list.length > 0);
     });
+
+/** Library items that have a `favouritedAt` timestamp (`favourites` gallery tab). */
+export const selectFavouritedItems = (items: LibraryItemWithProgress[]): LibraryItemWithProgress[] =>
+    items.filter((item) => item.favouritedAt != null);

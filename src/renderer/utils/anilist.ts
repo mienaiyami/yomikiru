@@ -1,53 +1,26 @@
-import { http, HttpStatusError } from "@common/http";
+import { HttpStatusError, http } from "@common/http";
+import type { TrackerListState, TrackerMediaSnapshot } from "@common/types/db";
 import i18n from "@renderer/i18n";
 import { dialogUtils } from "./dialog";
 import { getStorageItem, setStorageItem } from "./localStorage";
 import { createRendererLogger } from "./logger";
 
+/**
+ * AniList GraphQL client and OAuth token helpers.
+ * Persist tracker rows through `store/trackers.ts` (`trackers.md`). Mapping helpers
+ * {@link toTrackerMediaSnapshot} / {@link toTrackerListState} belong here because they
+ * know the GraphQL shape.
+ */
+
 const log = createRendererLogger("AniList");
 
 const ANILIST_GRAPHQL_URL = "https://graphql.anilist.co";
 
-/**
- * POSTs a GraphQL operation to AniList with the given bearer token.
- *
- * @throws {HttpStatusError} when status is outside 2xx
- * @throws {HttpMediaTypeError} when a 2xx body is HTML
- * @throws {HttpNetworkError} when the request fails without a status
- */
-const postAnilistGraphql = async (
-    token: string,
-    payload: { query: string; variables?: object },
-): Promise<unknown> =>
-    http.postJson(ANILIST_GRAPHQL_URL, payload, {
-        headers: {
-            Authorization: `Bearer ${token}`,
-            Accept: "application/json",
-        },
-    });
+let token = "";
+let displayAdultContent = false;
+let anilistListEntryId: number | null = null;
 
-/** GraphQL `data` fields used by this class's operations. */
-type AnilistGraphqlData = {
-    Viewer?: {
-        name?: string;
-        options?: { displayAdultContent?: boolean };
-    };
-    Page?: {
-        media?: Anilist.SearchMediaItem[] | null;
-    };
-    SaveMediaListEntry?: Anilist.MangaData;
-};
-
-/** Ensures the lazy `anilist` catalog is available before util dialogs / labels run. */
-const ensureAnilistNs = (): void => {
-    void i18n.loadNamespaces("anilist");
-};
-
-export default class AniList {
-    static #token = "";
-    static displayAdultContent = false;
-    static #currentMangaListId = null as null | number;
-    static #mutation = `#graphql
+const SAVE_MEDIA_LIST_ENTRY = `#graphql
     mutation($mediaId: Int, $id: Int,$status:MediaListStatus, $score:Float, $progress:Int, $repeat:Int, $startedAt: FuzzyDateInput, $completedAt:FuzzyDateInput, $progressVolumes:Int, $private:Boolean){
       SaveMediaListEntry(mediaId:$mediaId, id:$id,status:$status, score:$score,  progress:$progress,  repeat:$repeat,  startedAt:$startedAt,   completedAt:$completedAt, progressVolumes:$progressVolumes, private:$private  ){
         id
@@ -69,6 +42,7 @@ export default class AniList {
             day
         }
         media{
+          idMal
           title{
             english
             romaji
@@ -76,68 +50,141 @@ export default class AniList {
           }
           coverImage{
             medium
+            large
           }
           bannerImage
           siteUrl
+          description
+          genres
+          chapters
+          volumes
+          averageScore
+          status(version: 2)
+          format
         }
       }
     }
     `;
 
-    static {
-        ensureAnilistNs();
-        // for first launch
-        if (AniList.getStorageToken() === null) AniList.setStorageToken("");
-        if (AniList.loadTrackingFromStorage().length === 0) AniList.setStorageTracking([]);
+/**
+ * POSTs a GraphQL operation to AniList with the given bearer token.
+ *
+ * @throws {HttpStatusError} when status is outside 2xx
+ * @throws {HttpMediaTypeError} when a 2xx body is HTML
+ * @throws {HttpNetworkError} when the request fails without a status
+ */
+const postAnilistGraphql = async (
+    bearer: string,
+    payload: { query: string; variables?: object },
+): Promise<unknown> =>
+    http.postJson(ANILIST_GRAPHQL_URL, payload, {
+        headers: {
+            Authorization: `Bearer ${bearer}`,
+            Accept: "application/json",
+        },
+    });
 
-        const token = AniList.getStorageToken() || "";
-        AniList.#token = token;
-        if (token)
-            AniList.checkToken(token).then((e) => {
-                if (!e && e !== undefined)
-                    dialogUtils.customError({
-                        message: i18n.t("errors.loginFailed", { ns: "anilist" }),
-                    });
+/** GraphQL `data` fields used by this module's operations. */
+type AnilistGraphqlData = {
+    Viewer?: {
+        name?: string;
+        options?: { displayAdultContent?: boolean };
+    };
+    Page?: {
+        media?: Anilist.SearchMediaItem[] | null;
+    };
+    SaveMediaListEntry?: Anilist.ListEntry;
+};
+
+/** Ensures the lazy `anilist` catalog is available before util dialogs / labels run. */
+const ensureAnilistNs = (): void => {
+    void i18n.loadNamespaces("anilist");
+};
+
+/**
+ * Loads the stored token into module state and validates it. Call once from app startup;
+ * this module no longer runs that work on import.
+ */
+export const initAnilist = (): void => {
+    ensureAnilistNs();
+    if (getAnilistStorageToken() === null) setAnilistStorageToken("");
+    const stored = getAnilistStorageToken() || "";
+    setAnilistClientToken(stored);
+    if (!stored) return;
+    void checkAnilistToken(stored).then((ok) => {
+        if (!ok && ok !== undefined)
+            dialogUtils.customError({
+                message: i18n.t("errors.loginFailed", { ns: "anilist" }),
             });
-    }
-    private constructor() {
-        throw new Error("Cannot instantiate static class");
-    }
-    static setToken(token: string) {
-        AniList.#token = token;
-    }
+    });
+};
 
-    static getStorageToken(): string | null {
-        const value = getStorageItem("ANILIST_TOKEN");
-        return value || null;
-    }
+/** Loads the stored token into module state. Does not validate it. */
+export const setAnilistClientToken = (value: string): void => {
+    token = value;
+};
 
-    static setStorageToken(token: string) {
-        setStorageItem("ANILIST_TOKEN", token);
-    }
+/** Stored AniList OAuth token, or null when the key is empty / missing. */
+export const getAnilistStorageToken = (): string | null => {
+    const value = getStorageItem("ANILIST_TOKEN");
+    return value || null;
+};
 
-    static setStorageTracking(tracking: Anilist.TrackStore) {
-        setStorageItem("ANILIST_TRACKING", JSON.stringify(tracking));
-    }
+/** Persists the AniList OAuth token. Empty string is a logged-out token. */
+export const setAnilistStorageToken = (value: string): void => {
+    setStorageItem("ANILIST_TOKEN", value);
+};
 
-    static loadTrackingFromStorage(): Anilist.TrackStore {
-        try {
-            const tracking = JSON.parse(getStorageItem("ANILIST_TRACKING") || "[]") as Anilist.TrackStore;
-            return tracking.filter((e) => window.fs.existsSync(e.localURL));
-        } catch (e) {
-            log.error("loadTrackingFromStorage: invalid JSON or read error; clearing tracking list", e);
-            return [];
-        }
+/** Sets the MediaList entry id used by progress / edit mutations. */
+export const setAnilistListEntryId = (id: null | number): void => {
+    anilistListEntryId = id;
+};
+
+/**
+ * Reads the legacy localStorage tracking list. Used only by the one-shot DB import.
+ * Does not filter by disk existence; the import matches against `library_items.link`.
+ */
+export const readStoredTracking = (): Anilist.TrackStore => {
+    try {
+        return JSON.parse(getStorageItem("ANILIST_TRACKING") || "[]") as Anilist.TrackStore;
+    } catch (e) {
+        log.error("readStoredTracking: invalid JSON or read error; treating as empty", e);
+        return [];
     }
-    static setCurrentMangaListId(id: null | number) {
-        AniList.#currentMangaListId = id;
-    }
-    /**
-     * Validates a bearer token and loads the viewer's adult-content preference.
-     * @returns true on 2xx, false on HTTP error, undefined on network failure
-     */
-    static async checkToken(token: string) {
-        const query = `#graphql
+};
+
+/**
+ * Maps an AniList media payload to the provider-agnostic tracker snapshot stored in the DB.
+ */
+export const toTrackerMediaSnapshot = (media: Anilist.ListEntry["media"]): TrackerMediaSnapshot => ({
+    title: media.title.english || media.title.romaji || media.title.native,
+    coverImage: media.coverImage.large || media.coverImage.medium,
+    bannerImage: media.bannerImage,
+    description: media.description ?? null,
+    genres: media.genres,
+    status: media.status ?? null,
+    format: media.format ?? null,
+    totalChapters: media.chapters ?? null,
+    siteUrl: media.siteUrl,
+    score: media.averageScore ?? null,
+});
+
+/**
+ * Maps list-entry fields to the cached tracker list state.
+ */
+export const toTrackerListState = (data: Anilist.ListEntry): TrackerListState => ({
+    status: data.status,
+    progress: data.progress,
+    progressVolumes: data.progressVolumes,
+    score: data.score,
+});
+
+/**
+ * Validates a bearer token and loads the viewer's adult-content preference.
+ * @returns true on 2xx, false on HTTP error, undefined on network failure
+ */
+export const checkAnilistToken = async (bearer: string): Promise<boolean | undefined> => {
+    const query = `#graphql
     query{
         Viewer{
                 name
@@ -147,83 +194,89 @@ export default class AniList {
         }
     }
     `;
-        try {
-            const json = await postAnilistGraphql(token, { query });
-            if (json && typeof json === "object" && "data" in json) {
-                const data = (json as { data?: AnilistGraphqlData }).data;
-                AniList.displayAdultContent = Boolean(data?.Viewer?.options?.displayAdultContent);
-            }
-            return true;
-        } catch (reason) {
-            if (reason instanceof HttpStatusError) {
-                return false;
-            }
-            dialogUtils.customError({ message: i18n.t("errors.requestFailed", { ns: "anilist" }) });
-            log.error("checkToken: request failed", reason);
+    try {
+        const json = await postAnilistGraphql(bearer, { query });
+        if (json && typeof json === "object" && "data" in json) {
+            const data = (json as { data?: AnilistGraphqlData }).data;
+            displayAdultContent = Boolean(data?.Viewer?.options?.displayAdultContent);
         }
+        return true;
+    } catch (reason) {
+        if (reason instanceof HttpStatusError) {
+            return false;
+        }
+        dialogUtils.customError({ message: i18n.t("errors.requestFailed", { ns: "anilist" }) });
+        log.error("checkAnilistToken: request failed", reason);
     }
-    /**
-     * Runs a GraphQL operation against AniList and returns the envelope `data` field on 2xx.
-     * HTTP errors are logged; an invalid-token payload shows a dialog.
-     */
-    static async request(query: string, variables = {}): Promise<AnilistGraphqlData | undefined> {
-        if (!AniList.#token) {
-            log.error("request: skipped (no access token; user not logged in)");
+};
+
+/**
+ * Runs a GraphQL operation against AniList and returns the envelope `data` field on 2xx.
+ * HTTP errors are logged; an invalid-token payload shows a dialog.
+ */
+export const anilistRequest = async (query: string, variables = {}): Promise<AnilistGraphqlData | undefined> => {
+    if (!token) {
+        log.error("request: skipped (no access token; user not logged in)");
+        return;
+    }
+    try {
+        const json = await postAnilistGraphql(token, { query, variables });
+        if (json && typeof json === "object" && "data" in json) {
+            return (json as { data: AnilistGraphqlData }).data;
+        }
+    } catch (reason) {
+        if (reason instanceof HttpStatusError) {
+            log.error("request: GraphQL HTTP error", {
+                status: reason.status,
+                statusText: reason.statusText,
+                data: reason.data,
+            });
+            const errors =
+                reason.data && typeof reason.data === "object" && "errors" in reason.data
+                    ? (reason.data as { errors?: { message?: string } }).errors
+                    : undefined;
+            if (errors?.message === "Invalid token")
+                dialogUtils.customError({
+                    message: i18n.t("errors.invalidToken", { ns: "anilist" }),
+                    detail: i18n.t("errors.invalidTokenDetail", { ns: "anilist" }),
+                });
             return;
         }
-        try {
-            const json = await postAnilistGraphql(AniList.#token, { query, variables });
-            if (json && typeof json === "object" && "data" in json) {
-                return (json as { data: AnilistGraphqlData }).data;
-            }
-        } catch (reason) {
-            if (reason instanceof HttpStatusError) {
-                log.error("request: GraphQL HTTP error", {
-                    status: reason.status,
-                    statusText: reason.statusText,
-                    data: reason.data,
-                });
-                const errors =
-                    reason.data && typeof reason.data === "object" && "errors" in reason.data
-                        ? (reason.data as { errors?: { message?: string } }).errors
-                        : undefined;
-                if (errors?.message === "Invalid token")
-                    dialogUtils.customError({
-                        message: i18n.t("errors.invalidToken", { ns: "anilist" }),
-                        detail: i18n.t("errors.invalidTokenDetail", { ns: "anilist" }),
-                    });
-                return;
-            }
-            log.error("request: network or parse error", reason);
-        }
+        log.error("request: network or parse error", reason);
     }
-    static async getUserName() {
-        const query = `#graphql
+};
+
+/** Returns the logged-in AniList username, or a localized fallback when the request fails. */
+export const getAnilistUserName = async (): Promise<string> => {
+    const query = `#graphql
         query{
             Viewer{
                     name
             }
         }
         `;
-        const data = await AniList.request(query);
-        if (data?.Viewer?.name) return data.Viewer.name;
-        return i18n.t("errors.username", { ns: "anilist" });
-    }
-    static getVariables(variables: object) {
-        return AniList.displayAdultContent ? { ...variables } : { ...variables, displayAdultContent: false };
-    }
-    /**
-     * Search manga and novels on Anilist.
-     * @param name search term in `English` or `Romaji`
-     * @returns media items (manga and novels), excludes unreleased
-     */
-    static async searchMedia(name: string): Promise<Anilist.SearchMediaItem[]> {
-        if (!name) return [];
-        const query = `#graphql
+    const data = await anilistRequest(query);
+    if (data?.Viewer?.name) return data.Viewer.name;
+    return i18n.t("errors.username", { ns: "anilist" });
+};
+
+const withAdultContentVariable = (variables: object): object =>
+    displayAdultContent ? { ...variables } : { ...variables, displayAdultContent: false };
+
+/**
+ * Search AniList media by title. GraphQL `type: MANGA` includes novels and other
+ * print formats; it is AniList's enum, not the app library type `"manga"`.
+ * @param name search term in `English` or `Romaji`
+ * @returns media items, excludes unreleased
+ */
+export const searchAnilistMedia = async (name: string): Promise<Anilist.SearchMediaItem[]> => {
+    if (!name) return [];
+    const query = `#graphql
         query($search: String,$displayAdultContent: Boolean){
             Page(page: 1, perPage: 20){
                 media(search: $search, type: MANGA, sort: POPULARITY_DESC, status_not: NOT_YET_RELEASED, isAdult:$displayAdultContent ){
                     id
+                    idMal
                     title{
                       english
                       romaji
@@ -237,49 +290,66 @@ export default class AniList {
                     format
                     coverImage{
                         medium
+                        large
                     }
+                    bannerImage
+                    siteUrl
+                    description
+                    genres
+                    chapters
+                    volumes
+                    averageScore
                     status(version: 2)
                 }
             }
         }
         `;
-        const variables = AniList.getVariables({
-            search: name,
-        });
-        const data = await AniList.request(query, variables);
-        if (data) return (data.Page?.media ?? []) as Anilist.SearchMediaItem[];
-        return [];
+    const data = await anilistRequest(query, withAdultContentVariable({ search: name }));
+    if (data) return (data.Page?.media ?? []) as Anilist.SearchMediaItem[];
+    return [];
+};
+
+/** Creates or fetches the user's MediaList entry for an AniList media id. */
+export const getAnilistListEntry = async (mediaId: number): Promise<Anilist.ListEntry | undefined> => {
+    const data = await anilistRequest(SAVE_MEDIA_LIST_ENTRY, withAdultContentVariable({ mediaId }));
+    if (data?.SaveMediaListEntry) {
+        return data.SaveMediaListEntry;
     }
-    static async getMangaData(mediaId: number) {
-        const variables = AniList.getVariables({ mediaId });
-        const data = await AniList.request(AniList.#mutation, variables);
-        if (data?.SaveMediaListEntry) {
-            return data.SaveMediaListEntry;
-        }
+};
+
+/** Saves list-entry fields (status, score, progress, dates) for the current MediaList id. */
+export const setAnilistListEntry = async (
+    newData: Omit<Anilist.ListEntry, "id" | "mediaId" | "media">,
+): Promise<Anilist.ListEntry | undefined> => {
+    if (!anilistListEntryId) {
+        log.error("setAnilistListEntry: anilistListEntryId missing; cannot save list entry");
+        return;
     }
-    static async setCurrentMangaData(newData: Omit<Anilist.MangaData, "id" | "mediaId" | "media">) {
-        if (!AniList.#currentMangaListId) {
-            log.error("setCurrentMangaData: currentMangaListId missing; cannot save list entry");
-            return;
-        }
-        const variables = AniList.getVariables({ id: AniList.#currentMangaListId, ...newData });
-        const data = await AniList.request(AniList.#mutation, variables);
-        if (data?.SaveMediaListEntry) {
-            return data.SaveMediaListEntry;
-        }
+    const data = await anilistRequest(
+        SAVE_MEDIA_LIST_ENTRY,
+        withAdultContentVariable({ id: anilistListEntryId, ...newData }),
+    );
+    if (data?.SaveMediaListEntry) {
+        return data.SaveMediaListEntry;
     }
-    static async setCurrentMangaProgress(progress: Anilist.MangaData["progress"]) {
-        if (!AniList.#currentMangaListId) {
-            log.error("setCurrentMangaProgress: currentMangaListId missing; cannot sync progress");
-            return;
-        }
-        const variables = AniList.getVariables({ id: AniList.#currentMangaListId, progress });
-        const data = await AniList.request(AniList.#mutation, variables);
-        if (data?.SaveMediaListEntry) {
-            return data.SaveMediaListEntry;
-        }
+};
+
+/** Updates only the chapter/volume progress count on the current MediaList entry. */
+export const setAnilistListProgress = async (
+    progress: Anilist.ListEntry["progress"],
+): Promise<Anilist.ListEntry | undefined> => {
+    if (!anilistListEntryId) {
+        log.error("setAnilistListProgress: anilistListEntryId missing; cannot sync progress");
+        return;
     }
-}
+    const data = await anilistRequest(
+        SAVE_MEDIA_LIST_ENTRY,
+        withAdultContentVariable({ id: anilistListEntryId, progress }),
+    );
+    if (data?.SaveMediaListEntry) {
+        return data.SaveMediaListEntry;
+    }
+};
 
 /**
  * Human-readable label for an Anilist media format value.

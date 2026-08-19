@@ -20,6 +20,8 @@ export type ListSelectionToolbarProps = {
      * Invert remains available under the 3-dot menu. @default true
      */
     showInvertButton?: boolean;
+    /** Overrides the 3-dot button tooltip. Dismissed Copy Path menus put Copied here. */
+    moreTooltip?: string;
 };
 
 /**
@@ -33,6 +35,7 @@ const ListSelectionToolbar: React.FC<ListSelectionToolbarProps> = ({
     onCancel,
     extraMenuItems,
     showInvertButton = true,
+    moreTooltip,
 }) => {
     const { t } = useTranslation("home");
     const { setContextMenuData } = useAppContext();
@@ -68,7 +71,7 @@ const ListSelectionToolbar: React.FC<ListSelectionToolbarProps> = ({
                     <FontAwesomeIcon icon={faSort} rotation={90} />
                 </button>
             )}
-            <button data-tooltip={t("shared.selection.more")} onClick={handleMore}>
+            <button data-tooltip={moreTooltip ?? t("shared.selection.more")} onClick={handleMore}>
                 <FontAwesomeIcon icon={faEllipsisV} />
             </button>
         </div>

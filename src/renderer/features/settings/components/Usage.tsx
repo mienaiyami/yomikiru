@@ -456,7 +456,9 @@ const Usage = (): ReactElement => {
                     <ul>
                         <li>{t("anilist.login")}</li>
                         <li>{t("anilist.managed")}</li>
-                        <li>{t("anilist.autoUpdate")}</li>
+                        <li>
+                            <Trans i18nKey="anilist.autoUpdate" ns="usage" components={{ bold: <b /> }} />
+                        </li>
                     </ul>
                 </li>
                 <li id="settings-usage-epubBackground">

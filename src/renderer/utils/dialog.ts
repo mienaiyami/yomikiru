@@ -160,3 +160,29 @@ export const dialogUtils: DialogUtils = {
         return window.electron.invoke("dialog:showSaveDialog", options);
     },
 };
+
+/**
+ * Returns true immediately when `count` is 1. For larger batches, shows a two-button
+ * warn dialog (cancel index 0, confirm index 1) and returns whether confirm was chosen.
+ * Esc / window close maps to cancel.
+ *
+ * @returns `true` when the caller should proceed
+ */
+export const confirmWhenMany = async (args: {
+    count: number;
+    title: string;
+    message: string;
+    cancelLabel: string;
+    confirmLabel: string;
+}): Promise<boolean> => {
+    if (args.count <= 1) return true;
+    const { response } = await dialogUtils.warn({
+        title: args.title,
+        message: args.message,
+        noOption: false,
+        buttons: [args.cancelLabel, args.confirmLabel],
+        defaultId: 0,
+        cancelId: 0,
+    });
+    return Boolean(response);
+};

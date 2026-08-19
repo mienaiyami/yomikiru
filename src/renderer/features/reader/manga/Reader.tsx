@@ -3,19 +3,13 @@ import {
     applyMakeCoverFromPageImage,
     applyMangaCoverAfterChapterLoad,
 } from "@features/reader/services/readerCoverFlows";
-import { setAnilistCurrentManga } from "@store/anilist";
+import { cacheAnilistListEntry, setAnilistCurrentListEntry } from "@store/anilist";
 import { setAppSettings, setReaderSettings } from "@store/appSettings";
 import { useAppDispatch, useAppSelector } from "@store/hooks";
-import {
-    addLibraryItem,
-    selectLibraryItem,
-    updateChaptersRead,
-    updateLibraryItem,
-    updateMangaProgress,
-} from "@store/library";
+import { addLibraryItem, selectLibraryItem, updateChaptersRead, updateMangaProgress } from "@store/library";
 import { setReaderLoading, setReaderOpen, updateReaderContent, updateReaderMangaCurrentPage } from "@store/reader";
 import { cyclePresetNext, cyclePresetPrev, selectPresetSlot } from "@store/readerPresets";
-import AniList from "@utils/anilist";
+import { setAnilistListProgress } from "@utils/anilist";
 import { processChapterNumber } from "@utils/chapterUtils";
 import { fileSrcToImagePath, formatUtils } from "@utils/file";
 import { keyFormatter, mouseEventFormatter } from "@utils/keybindings";
@@ -67,7 +61,7 @@ const Reader: React.FC = () => {
     const mangaHasProgress = useAppSelector((store) =>
         store.reader.type === "manga" ? !!store.reader.content?.progress : false,
     );
-    const anilistCurrentManga = useAppSelector((store) => store.anilist.currentManga);
+    const anilistCurrentListEntry = useAppSelector((store) => store.anilist.currentListEntry);
     const isLoadingManga = useAppSelector((store) => store.reader.loading !== null);
 
     const libraryItem = useAppSelector((store) => selectLibraryItem(store, linkInReader));
@@ -985,8 +979,7 @@ const Reader: React.FC = () => {
         // anilist auto update progress
         if (updatedAnilistProgress || !appSettings.readerSettings.autoUpdateAnilistProgress) return;
         if (currentPageNumber / images.length > (images.length <= 4 ? 0.5 : 0.7)) {
-            if (!anilistCurrentManga || !mangaHasProgress || !mangaChapterName || !mangaProgressItemLink) {
-                // console.error("anilistCurrentManga is null, this should not happen");
+            if (!anilistCurrentListEntry || !mangaHasProgress || !mangaChapterName || !mangaProgressItemLink) {
                 return;
             }
             const chapterNumber = processChapterNumber(mangaChapterName);
@@ -1005,14 +998,16 @@ const Reader: React.FC = () => {
                 }),
             );
             setUpdatedAnilistProgress(true);
-            if (chapterNumber > anilistCurrentManga.progress)
-                AniList.setCurrentMangaProgress(chapterNumber).then((e) => {
+            if (chapterNumber > anilistCurrentListEntry.progress)
+                setAnilistListProgress(chapterNumber).then((e) => {
                     if (e) {
-                        dispatch(setAnilistCurrentManga(e));
+                        dispatch(setAnilistCurrentListEntry(e));
+                        /* follow-up: updateTrackerSnapshot + mapping helpers (see store/trackers.md) */
+                        void dispatch(cacheAnilistListEntry({ itemLink: mangaProgressItemLink, data: e }));
                         log.log(`AniList auto-progress: synced list progress to chapter ${chapterNumber}`);
                     } else {
                         log.error(
-                            "AniList auto-progress: setCurrentMangaProgress returned empty (sync may have failed)",
+                            "AniList auto-progress: setAnilistListProgress returned empty (sync may have failed)",
                         );
                         // dialogUtils.customError({ message: "Failed to sync AniList progress.", log: false });
                     }

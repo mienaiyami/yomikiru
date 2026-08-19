@@ -1,5 +1,5 @@
 import type { BookProgress } from "@common/types/db";
-import { setAnilistCurrentManga } from "@store/anilist";
+import { cacheAnilistListEntry, setAnilistCurrentListEntry } from "@store/anilist";
 import { setAppSettings, setEpubReaderSettings, setReaderSettings } from "@store/appSettings";
 import { addNote } from "@store/bookNotes";
 import { useAppDispatch, useAppSelector } from "@store/hooks";
@@ -19,7 +19,7 @@ import {
 } from "@store/reader";
 import { cyclePresetNext, cyclePresetPrev, selectPresetSlot } from "@store/readerPresets";
 import { getShortcutsMapped } from "@store/shortcuts";
-import AniList from "@utils/anilist";
+import { setAnilistListProgress } from "@utils/anilist";
 import { processChapterNumber } from "@utils/chapterUtils";
 import { colorUtils } from "@utils/color";
 import { dialogUtils } from "@utils/dialog";
@@ -51,7 +51,7 @@ const EPubReader: React.FC = () => {
     const shortcutsMapped = useAppSelector(getShortcutsMapped, shallowEqual);
     const isSettingOpen = useAppSelector((store) => store.ui.isOpen.settings);
     const readerState = useAppSelector((store) => store.reader);
-    const anilistCurrentManga = useAppSelector((store) => store.anilist.currentManga);
+    const anilistCurrentListEntry = useAppSelector((store) => store.anilist.currentListEntry);
     const isLoading = useAppSelector((store) => store.reader.loading !== null);
 
     const libraryItem = useAppSelector((store) => selectLibraryItem(store, readerState.link));
@@ -510,13 +510,18 @@ const EPubReader: React.FC = () => {
     useLayoutEffect(() => {
         if (updatedAnilistProgress || !appSettings.readerSettings.autoUpdateAnilistProgress) return;
         if (bookProgress < 70) return;
-        if (!anilistCurrentManga || !bookInReader?.progress) return;
+        if (!anilistCurrentListEntry || !bookInReader?.progress) return;
         const chapterNumber = processChapterNumber(bookInReader.progress.chapterName);
         if (!chapterNumber) return;
         setUpdatedAnilistProgress(true);
-        if (chapterNumber > anilistCurrentManga.progress)
-            AniList.setCurrentMangaProgress(chapterNumber).then((e) => {
-                if (e) dispatch(setAnilistCurrentManga(e));
+        if (chapterNumber > anilistCurrentListEntry.progress)
+            setAnilistListProgress(chapterNumber).then((e) => {
+                if (e) {
+                    dispatch(setAnilistCurrentListEntry(e));
+                    if (bookInReader.link)
+                        /* follow-up: updateTrackerSnapshot + mapping helpers (see store/trackers.md) */
+                        void dispatch(cacheAnilistListEntry({ itemLink: bookInReader.link, data: e }));
+                }
             });
     }, [bookProgress, appSettings.readerSettings.autoUpdateAnilistProgress]);
 

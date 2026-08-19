@@ -9,20 +9,45 @@ import {
     AddMangaBookmarkSchema,
     AddToLibrarySchema,
     RelocateLibraryItemSchema,
+    RemoveItemTrackerSchema,
+    SetLibraryItemMetadataSchema,
     UpdateBookBookmarkSchema,
     UpdateBookProgressSchema,
     UpdateLibraryItemSchema,
     UpdateMangaBookmarkSchema,
     UpdateMangaProgressSchema,
+    UpdateTrackerSnapshotSchema,
+    UpsertItemTrackerSchema,
 } from "@electron/db/validator";
 import { createMainLogger } from "@electron/util/logger";
 import { and, desc, eq, inArray } from "drizzle-orm";
 import { app, BrowserWindow, ipcMain } from "electron";
 import { type DatabaseService, DB_PATH } from "../db";
-import { bookBookmarks, bookNotes, bookProgress, libraryItems, mangaBookmarks, mangaProgress } from "../db/schema";
+import {
+    bookBookmarks,
+    bookNotes,
+    bookProgress,
+    itemTrackers,
+    libraryItemMetadata,
+    libraryItems,
+    mangaBookmarks,
+    mangaProgress,
+} from "../db/schema";
 import { ipc } from "./utils";
 
 const logger = createMainLogger("ipc/database");
+
+/**
+ * Copies own enumerable keys whose value is not `undefined`. Used so drizzle `.set()`
+ * never receives omitted optional fields (which would be written as NULL).
+ */
+const omitUndefined = <T extends Record<string, unknown>>(obj: T): Partial<T> => {
+    const out: Partial<T> = {};
+    for (const key of Object.keys(obj) as (keyof T)[]) {
+        if (obj[key] !== undefined) out[key] = obj[key];
+    }
+    return out;
+};
 
 /**
  * Sends database change notifications to all open windows
@@ -83,12 +108,13 @@ const handlers: {
         return data;
     },
     "db:library:updateItem": async (db, request) => {
-        const { link, author, cover, title } = UpdateLibraryItemSchema.parse(request);
-        const data = await db.db
-            .update(libraryItems)
-            .set({ author, cover, title })
-            .where(eq(libraryItems.link, link))
-            .returning();
+        const { link, ...fields } = UpdateLibraryItemSchema.parse(request);
+        const patch = omitUndefined(fields);
+        if (Object.keys(patch).length === 0) {
+            const [existing] = await db.db.select().from(libraryItems).where(eq(libraryItems.link, link));
+            return existing ?? null;
+        }
+        const data = await db.db.update(libraryItems).set(patch).where(eq(libraryItems.link, link)).returning();
 
         pingDatabaseChange("db:library:change");
         return data?.[0] ?? null;
@@ -108,6 +134,7 @@ const handlers: {
             pingDatabaseChange("db:library:change");
             pingDatabaseChange("db:bookmark:change");
             pingDatabaseChange("db:bookNote:change");
+            pingDatabaseChange("db:tracker:change");
             return true;
         } catch (error) {
             logger.error('"db:library:deleteItem": delete failed', error);
@@ -122,6 +149,7 @@ const handlers: {
             pingDatabaseChange("db:library:change");
             pingDatabaseChange("db:bookmark:change");
             pingDatabaseChange("db:bookNote:change");
+            pingDatabaseChange("db:tracker:change");
             return item;
         } catch (error) {
             logger.error('"db:library:relocateItem": relocate failed', error);
@@ -272,6 +300,68 @@ const handlers: {
             .where(and(eq(bookNotes.itemLink, request.itemLink), inArray(bookNotes.id, request.ids)));
         pingDatabaseChange("db:bookNote:change");
         return true;
+    },
+    "db:trackers:getAll": async (db) => {
+        return await db.db.select().from(itemTrackers);
+    },
+    "db:trackers:upsert": async (db, request) => {
+        const parsed = UpsertItemTrackerSchema.parse(request);
+        const { itemLink, provider, remoteId, ...optional } = parsed;
+        const patch = omitUndefined({ remoteId, ...optional });
+        const [row] = await db.db
+            .insert(itemTrackers)
+            .values(parsed)
+            .onConflictDoUpdate({
+                target: [itemTrackers.itemLink, itemTrackers.provider],
+                set: patch,
+            })
+            .returning();
+        if (row) pingDatabaseChange("db:tracker:change");
+        return row ?? null;
+    },
+    "db:trackers:remove": async (db, request) => {
+        const { itemLink, provider } = RemoveItemTrackerSchema.parse(request);
+        await db.db
+            .delete(itemTrackers)
+            .where(and(eq(itemTrackers.itemLink, itemLink), eq(itemTrackers.provider, provider)));
+        pingDatabaseChange("db:tracker:change");
+        return true;
+    },
+    "db:trackers:updateSnapshot": async (db, request) => {
+        const { itemLink, provider, ...fields } = UpdateTrackerSnapshotSchema.parse(request);
+        const patch = omitUndefined(fields);
+        if (Object.keys(patch).length === 0) {
+            const [existing] = await db.db
+                .select()
+                .from(itemTrackers)
+                .where(and(eq(itemTrackers.itemLink, itemLink), eq(itemTrackers.provider, provider)));
+            return existing ?? null;
+        }
+        const [row] = await db.db
+            .update(itemTrackers)
+            .set(patch)
+            .where(and(eq(itemTrackers.itemLink, itemLink), eq(itemTrackers.provider, provider)))
+            .returning();
+        if (row) pingDatabaseChange("db:tracker:change");
+        return row ?? null;
+    },
+    "db:library:getAllMetadata": async (db) => {
+        return await db.db.select().from(libraryItemMetadata);
+    },
+    "db:library:setMetadata": async (db, request) => {
+        const parsed = SetLibraryItemMetadataSchema.parse(request);
+        const { itemLink, source, ...fields } = parsed;
+        const patch = omitUndefined(fields);
+        const [row] = await db.db
+            .insert(libraryItemMetadata)
+            .values({ itemLink, source, ...patch })
+            .onConflictDoUpdate({
+                target: [libraryItemMetadata.itemLink, libraryItemMetadata.source],
+                set: Object.keys(patch).length > 0 ? patch : { source },
+            })
+            .returning();
+        if (row) pingDatabaseChange("db:library:change");
+        return row ?? null;
     },
     // "db:migrateFromJSON": async (db, request) => {
     //     await db.migrateFromJSON(request.historyData, request.bookmarkData);

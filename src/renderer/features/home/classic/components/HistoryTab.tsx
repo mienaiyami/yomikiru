@@ -9,7 +9,7 @@ import { useAppDispatch, useAppSelector } from "@store/hooks";
 import { deleteLibraryItem } from "@store/library";
 import { dialogUtils } from "@utils/dialog";
 import { formatUtils } from "@utils/file";
-import { useCallback, useEffect, useMemo } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { useAppContext } from "src/renderer/App";
 import { bookmarkLibraryItemsAtProgress, copyPathsToClipboard, getHistoryItemPath } from "../listSelectionActions";
@@ -19,6 +19,7 @@ import ListSelectionToolbar from "./ListSelectionToolbar";
 const HistoryTab: React.FC = () => {
     const { t } = useTranslation("home");
     const { t: tCommon } = useTranslation("common");
+    const { t: tSettings } = useTranslation("settings");
     const library = useAppSelector((store) => store.library);
     const appSettings = useAppSelector((store) => store.appSettings);
     const dispatch = useAppDispatch();
@@ -93,6 +94,13 @@ const HistoryTab: React.FC = () => {
             />
         );
 
+    const [pathCopied, setPathCopied] = useState(false);
+    const copiedTimerRef = useRef(0);
+
+    useEffect(() => {
+        return () => window.clearTimeout(copiedTimerRef.current);
+    }, []);
+
     const handleCopySelected = useCallback(() => {
         // Fall back to the library link when the item is missing or has no progress.
         copyPathsToClipboard(
@@ -101,6 +109,9 @@ const HistoryTab: React.FC = () => {
                 return item?.progress ? getHistoryItemPath(item) : link;
             }),
         );
+        setPathCopied(true);
+        window.clearTimeout(copiedTimerRef.current);
+        copiedTimerRef.current = window.setTimeout(() => setPathCopied(false), 3000);
     }, [library.items, selection.selectedIds]);
 
     const handleBookmarkSelected = useCallback(() => {
@@ -160,9 +171,12 @@ const HistoryTab: React.FC = () => {
                             onInvertSelection={selection.invertSelection}
                             onCancel={selection.clearSelection}
                             showInvertButton={false}
+                            moreTooltip={pathCopied ? tSettings("shared.copied") : undefined}
                             extraMenuItems={[
                                 {
-                                    label: t("shared.selection.copyPath"),
+                                    label: pathCopied
+                                        ? tSettings("shared.copied")
+                                        : t("shared.selection.copyPath"),
                                     action: handleCopySelected,
                                 },
                                 {

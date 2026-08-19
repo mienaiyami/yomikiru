@@ -1,6 +1,10 @@
 import { useDirectoryValidator } from "@features/reader/hooks/useDirectoryValidator";
 import { dispatchFocusPageSearchShortcut } from "@hooks/usePageSearchFocus";
-import { setAnilistCurrentManga, setGalleryTrackContext } from "@store/anilist";
+import {
+    importAnilistTrackingFromStorage,
+    setAnilistCurrentListEntry,
+    setGalleryTrackContext,
+} from "@store/anilist";
 import { refreshAppSettings, setAppSettings } from "@store/appSettings";
 import { addBookmark, fetchAllBookmarks, removeBookmark } from "@store/bookmarks";
 import { fetchAllNotes } from "@store/bookNotes";
@@ -8,6 +12,7 @@ import { useAppDispatch, useAppSelector } from "@store/hooks";
 import {
     deleteLibraryItem,
     fetchAllItemsWithProgress,
+    fetchAllMetadata,
     updateChaptersRead,
     updateChaptersReadAll,
     updateCurrentItemProgress,
@@ -17,7 +22,9 @@ import { resetReaderState } from "@store/reader";
 import { refreshReaderPresetsWithReconcile } from "@store/readerPresets";
 import { getShortcutsMapped, refreshShortcuts } from "@store/shortcuts";
 import { refreshThemes, setTheme } from "@store/themes";
+import { fetchAllTrackers } from "@store/trackers";
 import { setAnilistEditOpen, setAnilistLoginOpen, setAnilistSearchOpen, toggleSettingsOpen } from "@store/ui";
+import { initAnilist } from "@utils/anilist";
 import { dialogUtils } from "@utils/dialog";
 import { keyFormatter, mouseEventFormatter } from "@utils/keybindings";
 import { resolveMissingOpenPath } from "@utils/libraryMissingPath";
@@ -111,7 +118,7 @@ const App = (): ReactElement => {
         window.app.flushEpubScrollPos?.();
         await dispatch(updateCurrentItemProgress());
         dispatch(resetReaderState());
-        dispatch(setAnilistCurrentManga(null));
+        dispatch(setAnilistCurrentListEntry(null));
         dispatch(setAnilistEditOpen(false));
         dispatch(setAnilistLoginOpen(false));
         dispatch(setAnilistSearchOpen(false));
@@ -180,7 +187,14 @@ const App = (): ReactElement => {
     useEffect(() => {
         const listeners: (() => void)[] = [];
         setFirstRendered(true);
-        dispatch(fetchAllItemsWithProgress());
+        initAnilist();
+        void dispatch(fetchAllItemsWithProgress()).then(() => {
+            void dispatch(importAnilistTrackingFromStorage()).then(() => {
+                // generic item_trackers rows; AniList session stays in the anilist slice
+                void dispatch(fetchAllTrackers());
+            });
+        });
+        dispatch(fetchAllMetadata());
         dispatch(fetchAllBookmarks());
         dispatch(fetchAllNotes());
         dispatch(getMainSettings());
@@ -200,12 +214,16 @@ const App = (): ReactElement => {
         listeners.push(
             window.electron.on("db:library:change", () => {
                 dispatch(fetchAllItemsWithProgress());
+                dispatch(fetchAllMetadata());
             }),
             window.electron.on("db:bookmark:change", () => {
                 dispatch(fetchAllBookmarks());
             }),
             window.electron.on("db:bookNote:change", () => {
                 dispatch(fetchAllNotes());
+            }),
+            window.electron.on("db:tracker:change", () => {
+                dispatch(fetchAllTrackers());
             }),
             window.electron.on("mainSettings:sync", (settings) => {
                 dispatch(setMainSettings(settings));

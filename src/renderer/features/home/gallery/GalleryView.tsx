@@ -10,12 +10,17 @@ import { useSelectionShortcuts } from "@renderer/hooks/useSelectionShortcuts";
 import { setGalleryTrackContext } from "@store/anilist";
 import { setAppSettings } from "@store/appSettings";
 import { useAppDispatch, useAppSelector } from "@store/hooks";
-import { deleteLibraryItem } from "@store/library";
+import { deleteLibraryItem, setLibraryItemFavourite } from "@store/library";
 import { getShortcutsMapped } from "@store/shortcuts";
 import { setAnilistSearchOpen } from "@store/ui";
-import { dialogUtils } from "@utils/dialog";
+import { confirmWhenMany, dialogUtils } from "@utils/dialog";
 import { formatUtils } from "@utils/file";
-import { selectBookmarkedItems, sortContinueReadingItems, sortGalleryItems } from "@utils/gallerySort";
+import {
+    selectBookmarkedItems,
+    selectFavouritedItems,
+    sortContinueReadingItems,
+    sortGalleryItems,
+} from "@utils/gallerySort";
 import { isShortcutEventFromInputTarget, keyFormatter } from "@utils/keybindings";
 import { libraryCoverSrc } from "@utils/libraryCover";
 import { resolveMangaChapterPath } from "@utils/mangaChapterPath";
@@ -93,8 +98,8 @@ const GalleryView: React.FC = () => {
 
     /**
      * Library slice for `galleryActiveTab`. `continue-reading` uses a fixed
-     * last-read order; `library` and `bookmarks` use {@link sortGalleryItems}.
-     * `favourites` is empty until that feature lands. `galleryTypeFilter` is applied first.
+     * last-read order; `library`, `bookmarks`, and `favourites` use {@link sortGalleryItems}.
+     * `galleryTypeFilter` is applied first.
      */
     const tabItems = useMemo<LibraryItemWithProgress[]>(() => {
         const all = Object.values(library).filter(
@@ -113,7 +118,12 @@ const GalleryView: React.FC = () => {
             );
         }
         if (activeTab === "favourites") {
-            return [];
+            // membership is selectFavouritedItems; GalleryView RTL would re-test that filter
+            return sortGalleryItems(
+                selectFavouritedItems(all),
+                appSettings.gallerySortBy,
+                appSettings.gallerySortType,
+            );
         }
         return sortGalleryItems(all, appSettings.gallerySortBy, appSettings.gallerySortType);
     }, [library, activeTab, activeTypeFilter, bookmarks, appSettings.gallerySortBy, appSettings.gallerySortType]);
@@ -121,6 +131,8 @@ const GalleryView: React.FC = () => {
     const tabIds = useMemo(() => tabItems.map((it) => it.link), [tabItems]);
     const selection = useMultiSelect<string>(tabIds);
 
+    /* clear when the gallery tab or type filter changes; extra deps are triggers */
+    // biome-ignore lint/correctness/useExhaustiveDependencies: clear selection on tab/filter change
     useEffect(() => {
         selection.clearSelection();
     }, [activeTab, activeTypeFilter, selection.clearSelection]);
@@ -193,6 +205,15 @@ const GalleryView: React.FC = () => {
                     },
                 });
             }
+
+            items.push({
+                label: item.favouritedAt
+                    ? t("gallery.details.removeFavourite")
+                    : t("gallery.details.addFavourite"),
+                action() {
+                    dispatch(setLibraryItemFavourite({ link: item.link, favourite: !item.favouritedAt }));
+                },
+            });
 
             if (activeTab !== "favourites") {
                 items.push(
@@ -315,6 +336,42 @@ const GalleryView: React.FC = () => {
     }, []);
 
     /**
+     * Stars every selected tile. Bulk add is one-click; original spec was hero + tile menu only.
+     */
+    const handleAddSelectedToFavourites = useCallback(() => {
+        const links = Array.from(selection.selectedIds);
+        if (links.length === 0) return;
+        for (const link of links) {
+            dispatch(setLibraryItemFavourite({ link, favourite: true }));
+        }
+        selection.clearSelection();
+    }, [dispatch, selection]);
+
+    /**
+     * Clears favourite on the current selection. Confirms when more than one item
+     * is selected; a single toggle stays one-click.
+     */
+    const handleRemoveSelectedFromFavourites = useCallback(() => {
+        const links = Array.from(selection.selectedIds);
+        if (links.length === 0) return;
+        const run = () => {
+            for (const link of links) {
+                dispatch(setLibraryItemFavourite({ link, favourite: false }));
+            }
+            selection.clearSelection();
+        };
+        void confirmWhenMany({
+            count: links.length,
+            title: t("shared.removeFavourite.title"),
+            message: t("shared.removeFavourite.message", { count: links.length }),
+            cancelLabel: tCommon("actions.cancel"),
+            confirmLabel: tCommon("actions.yes"),
+        }).then((ok) => {
+            if (!ok) return;
+            run();
+        });
+    }, [dispatch, selection, t, tCommon]);
+    /**
      * Bulk-delete the currently selected library items. Behaviour matches the
      * single-item context menu remove flow, with one confirmation covering the
      * whole batch.
@@ -372,8 +429,21 @@ const GalleryView: React.FC = () => {
               onCancel: selection.clearSelection,
               extraMenuItems:
                   activeTab === "favourites"
-                      ? []
+                      ? [
+                            {
+                                label: t("shared.removeFavourite.menu", { count: selection.count }),
+                                action: handleRemoveSelectedFromFavourites,
+                            },
+                            {
+                                label: t("shared.removeFromLibrary.menu", { count: selection.count }),
+                                action: handleRemoveSelectedFromLibrary,
+                            },
+                        ]
                       : [
+                            {
+                                label: t("shared.addFavourite.menu", { count: selection.count }),
+                                action: handleAddSelectedToFavourites,
+                            },
                             {
                                 label: t("shared.removeFromLibrary.menu", { count: selection.count }),
                                 action: handleRemoveSelectedFromLibrary,

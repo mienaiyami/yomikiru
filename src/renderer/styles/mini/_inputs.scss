@@ -374,4 +374,35 @@ input[type="color"] {
             padding: 8px;
         }
     }
+
+    /* stacked library-item metadata form; wider than the single-field text-input modal */
+    &.item-metadata-editor {
+        .modal-overlayCont {
+            width: min(36rem, 92vw);
+            max-height: min(80vh, 40rem);
+            overflow: auto;
+        }
+        .item-metadata-editor-field {
+            display: flex;
+            flex-direction: column;
+            align-items: stretch;
+            gap: 0.35em;
+            label {
+                background: none;
+                padding: 0;
+                box-shadow: none;
+                cursor: default;
+                &:hover,
+                &:focus,
+                &:active {
+                    background: none;
+                    box-shadow: none;
+                }
+            }
+        }
+        textarea {
+            resize: vertical;
+            max-height: 12rem;
+        }
+    }
 }

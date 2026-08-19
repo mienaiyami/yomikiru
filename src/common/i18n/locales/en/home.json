@@ -30,6 +30,15 @@
             "message_other": "Remove {{count}} items from library? Related bookmarks will also be removed. Files on disk are not deleted.",
             "menu": "Remove {{count}} from Library"
         },
+        "addFavourite": {
+            "menu": "Add {{count}} to Favourites"
+        },
+        "removeFavourite": {
+            "title": "Remove from Favourites",
+            "message_one": "Remove {{count}} item from Favourites?",
+            "message_other": "Remove {{count}} items from Favourites?",
+            "menu": "Remove {{count}} from Favourites"
+        },
         "epub": "EPUB",
         "unknown": "Unknown",
         "selectAria": "Select {{title}}"
@@ -156,13 +165,16 @@
             "currentPage": "Page",
             "chaptersRead": "Chapters read",
             "about": "About",
-            "synopsisPreview": "Placeholder description for a future AniList synopsis.",
-            "genresPreview": "Action · Drama · Supernatural",
-            "noDescription": "No description available.",
-            "editNote": "Edit Note (Not implemented)",
-            "saveNote": "Save Note",
             "itemNote": "Note",
             "notePlaceholder": "Add a note about this title",
+            "addFavourite": "Add to Favourites",
+            "removeFavourite": "Remove from Favourites",
+            "editMetadata": "Edit metadata",
+            "metadataTitle": "Title",
+            "metadataAuthor": "Author",
+            "metadataDescription": "About",
+            "metadataGenres": "Genres",
+            "metadataGenresHint": "Comma-separated",
             "content": "Content",
             "bookmarks": "Bookmarks",
             "notes": "Notes",

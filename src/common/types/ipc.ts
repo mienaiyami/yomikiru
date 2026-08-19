@@ -8,15 +8,21 @@ import type {
     BookBookmark,
     BookNote,
     BookProgress,
+    ItemTracker,
     LibraryItem,
+    LibraryItemMetadata,
     LibraryItemWithProgress,
     MangaBookmark,
     MangaProgress,
+    RemoveItemTrackerData,
+    SetLibraryItemMetadataData,
     UpdateBookBookmarkData,
     UpdateBookProgressData,
     UpdateLibraryItemData,
     UpdateMangaBookmarkData,
     UpdateMangaProgressData,
+    UpdateTrackerSnapshotData,
+    UpsertItemTrackerData,
 } from "./db";
 
 /**
@@ -85,6 +91,13 @@ export type DatabaseChannels = {
     "db:book:updateNote": ChannelDefinition<{ id: number; content: string; color?: string }, BookNote | null>;
     "db:book:deleteNotes": ChannelDefinition<{ itemLink: string; ids: number[]; all?: boolean }, boolean>;
 
+    "db:trackers:getAll": ChannelDefinition<void, ItemTracker[]>;
+    "db:trackers:upsert": ChannelDefinition<UpsertItemTrackerData, ItemTracker | null>;
+    "db:trackers:remove": ChannelDefinition<RemoveItemTrackerData, boolean>;
+    "db:trackers:updateSnapshot": ChannelDefinition<UpdateTrackerSnapshotData, ItemTracker | null>;
+    "db:library:getAllMetadata": ChannelDefinition<void, LibraryItemMetadata[]>;
+    "db:library:setMetadata": ChannelDefinition<SetLibraryItemMetadataData, LibraryItemMetadata | null>;
+
     //
     "db:library:reset": ChannelDefinition<void, boolean>;
 };
@@ -94,6 +107,7 @@ export type DatabaseChangeChannels = {
     "db:library:change": ChannelDefinition<void, void, "m2r">;
     "db:bookmark:change": ChannelDefinition<void, void, "m2r">;
     "db:bookNote:change": ChannelDefinition<void, void, "m2r">;
+    "db:tracker:change": ChannelDefinition<void, void, "m2r">;
 };
 
 export type WindowManagementChannels = {

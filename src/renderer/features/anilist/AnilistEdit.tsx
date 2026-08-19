@@ -1,11 +1,11 @@
-import { removeAnilistTracker, setAnilistCurrentManga } from "@store/anilist";
+import { cacheAnilistListEntry, removeAnilistTracker, setAnilistCurrentListEntry } from "@store/anilist";
 import { useAppDispatch, useAppSelector } from "@store/hooks";
 import { setAnilistEditOpen } from "@store/ui";
 import InputCheckbox from "@ui/InputCheckbox";
 import InputNumber from "@ui/InputNumber";
 import InputSelect from "@ui/InputSelect";
 import Link from "@ui/Link";
-import AniList from "@utils/anilist";
+import { setAnilistListEntry } from "@utils/anilist";
 import { useEffect, useLayoutEffect, useRef, useState } from "react";
 import FocusLock from "react-focus-lock";
 import { useTranslation } from "react-i18next";
@@ -15,15 +15,15 @@ const AnilistEdit = () => {
     const { t: tCommon } = useTranslation("common");
     const dispatch = useAppDispatch();
     const contRef = useRef<HTMLDivElement>(null);
-    const anilistCurrentManga = useAppSelector((store) => store.anilist.currentManga);
+    const anilistCurrentListEntry = useAppSelector((store) => store.anilist.currentListEntry);
     /** Local path for AniList tracking: gallery context when opened from home, otherwise the open reader item. */
     const trackLocalLink = useAppSelector(
         (store) => store.anilist.galleryTrackContext?.link ?? store.reader.content?.link,
     );
 
-    const [tempData, setTempData] = useState(anilistCurrentManga);
+    const [tempData, setTempData] = useState(anilistCurrentListEntry);
 
-    const statusLabel = (status: Anilist.MangaData["status"]): string => {
+    const statusLabel = (status: Anilist.ListEntry["status"]): string => {
         switch (status) {
             case "CURRENT":
                 return t("edit.statusReading");
@@ -49,8 +49,8 @@ const AnilistEdit = () => {
     }, []);
 
     useLayoutEffect(() => {
-        setTempData(anilistCurrentManga);
-    }, [anilistCurrentManga]);
+        setTempData(anilistCurrentListEntry);
+    }, [anilistCurrentListEntry]);
 
     return (
         <FocusLock>
@@ -114,7 +114,7 @@ const AnilistEdit = () => {
                                             "PAUSED",
                                             "REPEATING",
                                         ].map((e) => ({
-                                            label: statusLabel(e as Anilist.MangaData["status"]),
+                                            label: statusLabel(e as Anilist.ListEntry["status"]),
                                             value: e,
                                             style: { textAlign: "center" },
                                         }))}
@@ -124,7 +124,7 @@ const AnilistEdit = () => {
                                                 if (init)
                                                     return {
                                                         ...init,
-                                                        status: value as Anilist.MangaData["status"],
+                                                        status: value as Anilist.ListEntry["status"],
                                                     };
                                                 return null;
                                             });
@@ -287,12 +287,20 @@ const AnilistEdit = () => {
                                 <div className="last">
                                     <button
                                         onClick={(e) => {
+                                            if (!tempData) return;
                                             const target = e.currentTarget;
                                             const oldText = target.innerText;
                                             target.innerText = t("edit.saving");
-                                            AniList.setCurrentMangaData(tempData).then((result) => {
+                                            setAnilistListEntry(tempData).then((result) => {
                                                 if (result) {
-                                                    dispatch(setAnilistCurrentManga(result));
+                                                    dispatch(setAnilistCurrentListEntry(result));
+                                                    if (trackLocalLink)
+                                                        void dispatch(
+                                                            cacheAnilistListEntry({
+                                                                itemLink: trackLocalLink,
+                                                                data: result,
+                                                            }),
+                                                        );
                                                     target.innerText = t("edit.saved");
                                                 } else {
                                                     target.innerText = t("edit.failed");

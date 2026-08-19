@@ -25,6 +25,9 @@ describe("relocateLibraryItem fulfilled (optimistic keys)", () => {
                             type: "manga" as const,
                             author: null,
                             cover: null,
+                            favouritedAt: null,
+                            note: null,
+                            extra: {},
                             createdAt: new Date(0),
                             updatedAt: new Date(0),
                             progress: {
@@ -36,6 +39,22 @@ describe("relocateLibraryItem fulfilled (optimistic keys)", () => {
                                 lastReadAt: new Date(0),
                             },
                         },
+                    },
+                    metadata: {
+                        [oldLink]: [
+                            {
+                                itemLink: oldLink,
+                                source: "user",
+                                title: "User Title",
+                                author: null,
+                                description: "About",
+                                genres: ["Drama"],
+                                tags: null,
+                                publisher: null,
+                                createdAt: new Date(0),
+                                updatedAt: new Date(0),
+                            },
+                        ],
                     },
                     loading: false,
                     error: null,
@@ -94,6 +113,9 @@ describe("relocateLibraryItem fulfilled (optimistic keys)", () => {
                     type: "manga",
                     author: null,
                     cover: null,
+                    favouritedAt: null,
+                    note: null,
+                    extra: {},
                     createdAt: new Date(0),
                     updatedAt: new Date(0),
                 },
@@ -106,6 +128,8 @@ describe("relocateLibraryItem fulfilled (optimistic keys)", () => {
         expect(state.library.items[oldLink]).toBeUndefined();
         expect(state.library.items[newLink]?.link).toBe(newLink);
         expect(state.library.items[newLink]?.progress?.itemLink).toBe(newLink);
+        expect(state.library.metadata[oldLink]).toBeUndefined();
+        expect(state.library.metadata[newLink]?.[0]?.itemLink).toBe(newLink);
         expect(state.bookmarks.manga[oldLink]).toBeUndefined();
         expect(state.bookmarks.manga[newLink]?.[0]?.itemLink).toBe(newLink);
         expect(state.bookNotes.book[oldLink]).toBeUndefined();

@@ -3,7 +3,7 @@ import { addAnilistTracker, setGalleryTrackContext } from "@store/anilist";
 import { useAppDispatch, useAppSelector } from "@store/hooks";
 import { getReaderContent } from "@store/reader";
 import { setAnilistSearchOpen } from "@store/ui";
-import AniList, { anilistFormatLabel, anilistStatusLabel } from "@utils/anilist";
+import { anilistFormatLabel, anilistStatusLabel, searchAnilistMedia } from "@utils/anilist";
 import { useCallback, useEffect, useRef, useState } from "react";
 import FocusLock from "react-focus-lock";
 import { useTranslation } from "react-i18next";
@@ -41,17 +41,18 @@ const AnilistSearch = () => {
     }, [effectiveLink, effectiveTitle]);
 
     useEffect(() => {
-        void AniList.searchMedia(search).then((e) => {
+        void searchAnilistMedia(search).then((e) => {
             setResult(e);
         });
     }, [search]);
 
     const handleItemClick = (anilistMediaId: number) => {
         if (!effectiveLink) return;
+        // bar fetch writes the snapshot cache; search only binds remoteId
         dispatch(
             addAnilistTracker({
                 anilistMediaId,
-                localURL: effectiveLink,
+                itemLink: effectiveLink,
             }),
         );
         closeSearch();

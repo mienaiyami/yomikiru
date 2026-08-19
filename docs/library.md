@@ -1,6 +1,6 @@
 # Yomikiru — Library, Progress, Bookmarks & Cover System
 
-> Last updated: 2026-08-16. Covers v2.24.x.
+> Last updated: 2026-08-19. Covers v2.24.x plus unreleased item metadata / trackers.
 
 All user data (library catalogue, reading progress, bookmarks, notes) is stored in a single
 SQLite database file at `userData/data.db`. The ORM is Drizzle.
@@ -21,12 +21,16 @@ SQLite database file at `userData/data.db`. The ORM is Drizzle.
     - [Book Bookmarks](#book-bookmarks)
     - [Redux Bookmarks Slice](#redux-bookmarks-slice)
   - [Book Notes (Highlights)](#book-notes-highlights)
+  - [Item metadata overlays](#item-metadata-overlays)
+  - [Library tags](#library-tags)
+  - [Trackers](#trackers)
   - [Cover System](#cover-system)
     - [Flow](#flow)
   - [Redux Library Slice](#redux-library-slice)
   - [Legacy Migration (JSON -\> SQLite)](#legacy-migration-json---sqlite)
   - [Schema Migrations (Drizzle)](#schema-migrations-drizzle)
     - [Migration 0001 — FK guard](#migration-0001--fk-guard)
+    - [Migration 0003 — additive metadata](#migration-0003--additive-metadata)
     - [Pre-migration normalisation](#pre-migration-normalisation)
   - [Verify / Troubleshoot](#verify--troubleshoot)
   - [Library database backups](#library-database-backups)
@@ -51,6 +55,9 @@ erDiagram
         int createdAt
         text author
         text cover "absolute path or null"
+        int favouritedAt "null = not favourited"
+        text note
+        text extra "JSON object"
     }
     manga_progress {
         text itemLink PK FK
@@ -96,12 +103,50 @@ erDiagram
         int createdAt
         int updatedAt
     }
+    item_trackers {
+        int id PK
+        text itemLink FK
+        text provider "anilist"
+        text remoteId
+        text remoteListId
+        text remoteUrl
+        text media "JSON cache"
+        text listState "JSON cache"
+        int syncedAt
+        int createdAt
+    }
+    library_item_metadata {
+        text itemLink PK FK
+        text source PK "user | file"
+        text title
+        text author
+        text description
+        text genres "JSON string[]"
+        text tags "JSON string[] file-derived"
+        text publisher
+        int createdAt
+        int updatedAt
+    }
+    library_tags {
+        int id PK
+        text name
+        text color "CSS hex"
+        int createdAt
+    }
+    library_item_tags {
+        text itemLink PK FK
+        int tagId PK FK
+    }
 
     library_items ||--o| manga_progress : "one"
     library_items ||--o| book_progress : "one"
     library_items ||--o{ manga_bookmarks : "many"
     library_items ||--o{ book_bookmarks : "many"
     library_items ||--o{ book_notes : "many"
+    library_items ||--o{ item_trackers : "many"
+    library_items ||--o{ library_item_metadata : "many"
+    library_items ||--o{ library_item_tags : "many"
+    library_tags ||--o{ library_item_tags : "many"
 ```
 
 All children cascade-delete when a `library_items` row is removed
@@ -123,8 +168,15 @@ They are never deleted automatically — only via explicit user action (context 
 
 When the path on disk is missing, gallery details and classic History/Bookmark open flows offer
 **Locate on disk…** (`db:library:relocateItem`) to rewrite `library_items.link` and every child
-`itemLink` while keeping the same `id`, or remove the entry / bookmark. A name mismatch between the
+`itemLink` (progress, bookmarks, notes, trackers, metadata overlays) while keeping the same `id`, or remove the entry / bookmark. A name mismatch between the
 chosen path and the previous basename or library title asks for confirmation before relocating.
+Tag assignments (`library_item_tags.itemLink`) belong in that same rewrite; that lands with the tags UI.
+
+`favouritedAt` is a nullable timestamp: set means the item is in the gallery Favourites tab; null means not favourited.
+`note` is free-text commentary on the library item (not chapter / bookmark / EPUB highlight notes).
+`extra` is a JSON object (`LibraryItemExtra`) for fields that have not earned a column yet.
+
+Re-adding an existing path (`addLibraryItem` conflict) updates **title only**. Author, cover, favourite, note, and `extra` stay as stored. Progress insert uses `onConflictDoNothing()` so an existing progress row is not reset.
 
 The `cover` column stores either:
 
@@ -256,6 +308,49 @@ Redux: [`src/renderer/store/bookNotes.ts`](../src/renderer/store/bookNotes.ts).
 
 ---
 
+## Item metadata overlays
+
+[`library_item_metadata`](../src/electron/db/schema.ts) is a per-source overlay on a library item. Composite primary key `(itemLink, source)` with `source` `"user"` | `"file"`. `"user"` is written by the details **Edit metadata** form. `"file"` is reserved for later ComicInfo / EPUB extraction; nothing writes it in this change.
+
+Null (or empty string / empty array) on a field means that source does not supply it. Display resolution is read-time in [`resolveItemMetadata`](../src/renderer/utils/libraryMetadata.ts):
+
+**user overlay > tracker snapshot (`item_trackers.media` / `listState`) > file overlay > `library_items` title/author.**
+
+There are no lock booleans. Tracker-only fields (`status`, `score`, `siteUrl`, `totalChapters`) have no user/file columns.
+
+IPC: `db:library:getAllMetadata`, `db:library:setMetadata`. Omitted keys on set leave stored values; explicit `null` clears that overlay field.
+
+The overlay `tags` JSON column is file-derived descriptive tags (ComicInfo later). It is not the user catalog.
+
+---
+
+## Library tags
+
+User organization labels are a **catalog plus assignments**, not free-form strings on the item.
+
+- [`library_tags`](../src/electron/db/schema.ts) is the global catalog (manga and book share one list). `name` is unique after trim and case-fold (`uq_library_tags_name` on `lower(trim(name))`). `color` is a CSS hex string for chips.
+- [`library_item_tags`](../src/electron/db/schema.ts) is `(itemLink, tagId)` with cascade on both parents. Deleting a tag unassigns it from every item.
+
+These tables ship in migration `0003` with the metadata/tracker tables. Assignment UI, IPC, and relocate rewrite are a follow-up; until then the tables stay empty.
+
+---
+
+## Trackers
+
+[`item_trackers`](../src/electron/db/schema.ts) is one binding per library item per provider. Unique `(itemLink, provider)`. `provider` is a TEXT slug (`"anilist"` only in TypeScript). `remoteId` is TEXT so non-integer provider ids fit later. `remoteListId` is the remote list-entry id when the service splits media from "my list". `remoteUrl` is stored rather than rebuilt.
+
+`media` and `listState` are rebuildable cache (`TrackerMediaSnapshot`, `TrackerListState`). `syncedAt` is local staleness. The remote service remains the source of truth.
+
+AniList OAuth tokens stay in localStorage (not in this table) so DB backups do not include them. A one-shot import copies legacy `anilist_tracking` into this table; see [`src/renderer/features/anilist/README.md`](../src/renderer/features/anilist/README.md).
+
+IPC: `db:trackers:getAll`, `db:trackers:upsert`, `db:trackers:remove`, `db:trackers:updateSnapshot`, ping `db:tracker:change`.
+
+Renderer store: generic tracker rows live in `trackers.entries` ([`src/renderer/store/trackers.ts`](../src/renderer/store/trackers.ts)). AniList OAuth, the open list entry, and gallery track context stay in the `anilist` slice.
+
+Callers that are not AniList UI (bar / search / edit / login) should read and write rows through the generic trackers APIs (`fetchAllTrackers`, `upsertTracker`, `removeTracker`, `updateTrackerSnapshot`, `selectTracker`). GraphQL helpers in [`src/renderer/utils/anilist.ts`](../src/renderer/utils/anilist.ts) stay AniList-named. Follow-up call-site conversion: [`src/renderer/store/trackers.md`](../src/renderer/store/trackers.md).
+
+---
+
 ## Cover System
 
 Library thumbnails are WebP files stored in `userData/covers/<libraryId>.webp`, generated by `sharp` in the main process.
@@ -292,20 +387,25 @@ The `library_items.cover` column stores only user-picked non-WebP paths (e.g. a 
 
 ## Redux Library Slice
 
-[`src/renderer/store/library.ts`](../src/renderer/store/library.ts) maintains `items: Record<string, LibraryItemWithProgress | null>` keyed by `link`.
+[`src/renderer/store/library.ts`](../src/renderer/store/library.ts) maintains `items: Record<string, LibraryItemWithProgress | null>` keyed by `link`, and `metadata: Record<string, LibraryItemMetadata[]>` keyed by the same path. Favourite, note, and metadata thunks merge the IPC result into that map so the UI updates before `db:library:change` refetch.
 
 Key thunks:
 
 | Thunk | Purpose |
 | --- | --- |
 | `fetchAllItemsWithProgress` | Loads entire library + progress from DB |
+| `fetchAllMetadata` | Loads overlay rows, grouped by `itemLink` |
 | `addLibraryItem` | Adds/upserts item; triggers cover flow |
 | `updateCurrentItemProgress` | Writes current reader progress to DB (flush on close) |
 | `updateMangaProgress` | Mid-read progress update |
 | `updateBookProgress` | EPUB scroll position update |
-| `deleteLibraryItem` | DB delete (cascades bookmarks/notes) + store removal |
+| `deleteLibraryItem` | DB delete (cascades bookmarks/notes/trackers/metadata) + store removal |
 | `updateChaptersRead` | Toggle one chapter read/unread |
 | `updateChaptersReadAll` | Mark all chapters read/unread |
+| `setLibraryItemFavourite` | Sets or clears `favouritedAt` |
+| `setLibraryItemNote` | Persists `library_items.note` |
+| `setLibraryItemMetadata` | Upserts one overlay (`user` or, later, `file`) |
+| `relocateLibraryItem` | Rewrites path + child FKs; remaps store keys before refetch |
 
 ---
 
@@ -338,7 +438,11 @@ all children. The guard:
 2. If 0001 is pending, sets `PRAGMA foreign_keys = OFF` on the connection **before** `migrate()` opens its transaction.
 3. After `migrate()` completes (in the `finally` block), restores `PRAGMA foreign_keys = ON`.
 
-See [`src/electron/db/index.ts` lines 57-77](../src/electron/db/index.ts).
+See [`src/electron/db/index.ts`](../src/electron/db/index.ts) (`withForeignKeysOffAsync` around `migrate()`).
+
+### Migration 0003 — additive metadata
+
+Adds `library_items.favouritedAt`, `note`, and `extra`, plus `item_trackers`, `library_item_metadata`, `library_tags`, and `library_item_tags`. The SQL is `ALTER TABLE ... ADD COLUMN` and `CREATE TABLE` only (`drizzle/0003_*.sql`) - no `__new_library_items` rebuild (the FK-cascade hazard 0001 was patched for).
 
 ### Pre-migration normalisation
 

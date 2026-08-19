@@ -7,12 +7,6 @@ import type { KeyboardEvent, MouseEvent, ReactNode } from "react";
 import { useEffect, useLayoutEffect, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 
-/**
- * Code-only switch for unimplemented About / genres copy in the details hero.
- * Not a user setting. Leave off until a real synopsis source exists.
- */
-export const DETAILS_HERO_SYNOPSIS_PREVIEW = false;
-
 /** Auto-sized {@link DetailsMetaBlock} min/max height, in rem (keep in sync with `--details-meta-min-h`). */
 export const DETAILS_HERO_HEIGHT_MIN_REM = 40;
 
@@ -106,7 +100,7 @@ export const DetailsListToolbar = ({ tabBar, selection, search, actions }: Detai
 type DetailsItemNoteProps = {
     value: string;
     onChange: (value: string) => void;
-    /** Invoked when leaving edit mode. Persistence may still be unimplemented. */
+    /** Invoked when leaving edit mode so the parent can persist {@link DetailsItemNoteProps.value}. */
     onCommit?: () => void;
 };
 
@@ -324,14 +318,15 @@ type DetailsHeroProps = {
     actions?: ReactNode;
     facts?: ReactNode;
     note?: ReactNode;
-    /** When {@link DETAILS_HERO_SYNOPSIS_PREVIEW} is on, also show the genre placeholder. */
-    includeGenresPreview?: boolean;
+    /** Resolved About text; omitted when empty. */
+    description?: string | null;
+    /** Resolved genres; omitted when empty. */
+    genres?: readonly string[];
 };
 
 /**
  * Shared gallery-details header: cover with overlay back, title/actions, then metadata.
- * About / genres preview (when {@link DETAILS_HERO_SYNOPSIS_PREVIEW} is on) is a
- * full-width row in the facts column, below the progress fields.
+ * About / genres render from resolved metadata and hide when empty.
  * Chapter / bookmark / note lists stay in each panel.
  */
 export const DetailsHero = ({
@@ -345,22 +340,26 @@ export const DetailsHero = ({
     actions,
     facts,
     note,
-    includeGenresPreview = false,
+    description,
+    genres,
 }: DetailsHeroProps) => {
     const { t } = useTranslation("home");
-    const showFacts = Boolean(facts) || Boolean(note) || DETAILS_HERO_SYNOPSIS_PREVIEW;
+    const descriptionText = description?.trim() ?? "";
+    const genreList = genres?.filter((g) => g.trim().length > 0) ?? [];
+    const aboutBlock =
+        descriptionText || genreList.length > 0 ? (
+            <>
+                {descriptionText ? (
+                    <div className="details-synopsis">
+                        <div className="details-field-label">{t("gallery.details.about")}</div>
+                        <p>{descriptionText}</p>
+                    </div>
+                ) : null}
+                {genreList.length > 0 ? <div className="details-genres">{genreList.join(" · ")}</div> : null}
+            </>
+        ) : null;
+    const showFacts = Boolean(facts) || Boolean(note) || Boolean(aboutBlock);
     const authorText = author?.trim();
-    const synopsisPreview = DETAILS_HERO_SYNOPSIS_PREVIEW ? (
-        <>
-            <div className="details-synopsis">
-                <div className="details-field-label">{t("gallery.details.about")}</div>
-                <p>{t("gallery.details.synopsisPreview")}</p>
-            </div>
-            {includeGenresPreview ? (
-                <div className="details-genres">{t("gallery.details.genresPreview")}</div>
-            ) : null}
-        </>
-    ) : null;
 
     return (
         <header className={`details-hero${showFacts ? "" : " no-facts"}`}>
@@ -394,10 +393,10 @@ export const DetailsHero = ({
             </div>
             {showFacts ? (
                 <div className="details-facts">
-                    {facts || synopsisPreview ? (
+                    {facts || aboutBlock ? (
                         <div className="details-facts-main">
                             {facts}
-                            {synopsisPreview}
+                            {aboutBlock}
                         </div>
                     ) : null}
                     {note}

@@ -1,10 +1,11 @@
 import { makeBookItem, makeMangaItem } from "@test/fixtures/libraryItem";
 import { describe, expect, it } from "vitest";
 import {
+    type GalleryBookmarkMaps,
     selectBookmarkedItems,
+    selectFavouritedItems,
     sortContinueReadingItems,
     sortGalleryItems,
-    type GalleryBookmarkMaps,
 } from "./gallerySort";
 
 describe("sortGalleryItems", () => {
@@ -91,5 +92,16 @@ describe("selectBookmarkedItems", () => {
             book: {},
         });
         expect(onlyEmpty).toEqual([]);
+    });
+});
+
+describe("selectFavouritedItems", () => {
+    it("keeps only items with favouritedAt set", () => {
+        const starred = makeMangaItem(
+            { title: "Starred", link: "star", favouritedAt: new Date("2024-01-01") },
+            null,
+        );
+        const plain = makeMangaItem({ id: 2, title: "Plain", link: "plain" }, null);
+        expect(selectFavouritedItems([starred, plain]).map((item) => item.link)).toEqual(["star"]);
     });
 });

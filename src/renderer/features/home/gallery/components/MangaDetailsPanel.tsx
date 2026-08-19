@@ -1,13 +1,16 @@
 import type { LibraryItemWithProgress, MangaBookmark } from "@common/types/db";
 import AnilistBar from "@features/anilist/AnilistBar";
 import { useDirectoryValidator } from "@features/reader/hooks/useDirectoryValidator";
+import { faStar as faStarRegular } from "@fortawesome/free-regular-svg-icons";
 import {
     faBookmark,
     faBookOpen,
     faFolderOpen,
     faImage,
     faLocationDot,
+    faPen,
     faSort,
+    faStar,
     faSyncAlt,
 } from "@fortawesome/free-solid-svg-icons";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
@@ -17,15 +20,22 @@ import SelectionCheckbox from "@renderer/components/ui/SelectionCheckbox";
 import { useMultiSelect } from "@renderer/hooks/useMultiSelect";
 import { PAGE_SEARCH_PRIORITY } from "@renderer/hooks/usePageSearchFocus";
 import { useSelectionShortcuts } from "@renderer/hooks/useSelectionShortcuts";
+import { selectAnilistTracker } from "@store/anilist";
 import { setAppSettings } from "@store/appSettings";
 import { removeBookmark } from "@store/bookmarks";
 import { useAppDispatch, useAppSelector } from "@store/hooks";
-import { updateChaptersReadAll } from "@store/library";
+import {
+    selectItemMetadata,
+    setLibraryItemFavourite,
+    setLibraryItemNote,
+    updateChaptersReadAll,
+} from "@store/library";
 import dateUtils from "@utils/date";
 import { dialogUtils } from "@utils/dialog";
 import { formatUtils } from "@utils/file";
 import { libraryCoverSrc } from "@utils/libraryCover";
 import { materializeMangaLibraryThumbnail, pickAndApplyCustomCover } from "@utils/libraryCoverService";
+import { resolveItemMetadata } from "@utils/libraryMetadata";
 import {
     mangaPageForMissingKind,
     resolveMissingOpenPath,
@@ -48,6 +58,7 @@ import {
     DetailsMetaBlock,
     DetailsTabBar,
 } from "./DetailsHero";
+import { ItemMetadataEditor } from "./ItemMetadataEditor";
 import MissingLibraryPathPanel from "./MissingLibraryPathPanel";
 import "./mangaDetailsPanel.scss";
 
@@ -96,12 +107,26 @@ const MangaDetailsPanel = ({
 
     const [chapters, setChapters] = useState<ChapterData[]>([]);
     const [activeTab, setActiveTab] = useState<"content" | "bookmarks">(initialTab);
-    /* Local-only until library-item notes persist. */
+    const [metadataEditorOpen, setMetadataEditorOpen] = useState(false);
     const [itemNote, setItemNote] = useState("");
     const sortBy = useAppSelector((store) => store.appSettings.locationListSortBy);
     const sortOrder = useAppSelector((store) => store.appSettings.locationListSortType);
 
     const manga = library[mangaLink] as LibraryItemWithProgress & { type: "manga" };
+    const overlays = useAppSelector((store) => selectItemMetadata(store, mangaLink));
+    // follow-up: selectTracker(store, mangaLink, "anilist") from @store/trackers (see store/trackers.md)
+    const tracker = useAppSelector((store) => selectAnilistTracker(store, mangaLink));
+    /* book details uses the same overlay+tracker resolve; no shared hook until a third caller */
+    const resolved = useMemo(
+        () => (manga ? resolveItemMetadata({ item: manga, overlays, tracker }) : null),
+        [manga, overlays, tracker],
+    );
+    const userOverlay = overlays.find((row) => row.source === "user");
+    const isFavourite = Boolean(manga?.favouritedAt);
+
+    useEffect(() => {
+        setItemNote(manga?.note ?? "");
+    }, [manga?.note]);
     const pathMissing = Boolean(manga) && !window.fs.existsSync(mangaLink);
     const bookmarksArray = useAppSelector(
         (store) =>
@@ -209,6 +234,8 @@ const MangaDetailsPanel = ({
     const chapterSelection = useMultiSelect<string>(chapterSourceIds);
     const bookmarkSelection = useMultiSelect<number>(bookmarkSourceIds);
 
+    /* clear when the details tab changes; extra dep is a trigger */
+    // biome-ignore lint/correctness/useExhaustiveDependencies: clear selection on details tab change
     useEffect(() => {
         chapterSelection.clearSelection();
         bookmarkSelection.clearSelection();
@@ -572,12 +599,27 @@ const MangaDetailsPanel = ({
                     },
                     window.contextMenu.template.copyPath(mangaLink),
                     window.contextMenu.template.divider(),
+                    {
+                        label: isFavourite
+                            ? t("gallery.details.removeFavourite")
+                            : t("gallery.details.addFavourite"),
+                        action() {
+                            dispatch(setLibraryItemFavourite({ link: mangaLink, favourite: !isFavourite }));
+                        },
+                    },
+                    {
+                        label: t("gallery.details.editMetadata"),
+                        action() {
+                            setMetadataEditorOpen(true);
+                        },
+                    },
+                    window.contextMenu.template.divider(),
                     window.contextMenu.template.removeHistory(mangaLink, false, onClose),
                 ],
                 focusBackElem: e.currentTarget,
             });
         },
-        [mangaLink, onClose, pathMissing, setContextMenuData],
+        [mangaLink, onClose, pathMissing, setContextMenuData, isFavourite, t, dispatch],
     );
 
     const handleContinueReading = () => {
@@ -638,13 +680,14 @@ const MangaDetailsPanel = ({
             ) : null}
             <DetailsMetaBlock>
                 <DetailsHero
-                    title={title}
-                    author={manga?.author}
+                    title={resolved?.title || title}
+                    author={resolved?.author ?? manga?.author}
                     coverSrc={coverArtSrc}
                     coverAlt={manga?.title || t("gallery.details.coverAlt")}
                     onBack={onClose}
                     onCoverContextMenu={handleLibraryRootContextMenu}
-                    includeGenresPreview
+                    description={resolved?.description}
+                    genres={resolved?.genres}
                     actions={
                         pathMissing || !manga ? null : (
                             <>
@@ -655,6 +698,39 @@ const MangaDetailsPanel = ({
                                     onClick={handleContinueReading}
                                 >
                                     {mangaProgress ? t("shared.continueReading") : t("shared.startReading")}
+                                </button>
+                                <button
+                                    type="button"
+                                    className="details-icon-btn"
+                                    onClick={() =>
+                                        void dispatch(
+                                            setLibraryItemFavourite({
+                                                link: mangaLink,
+                                                favourite: !isFavourite,
+                                            }),
+                                        )
+                                    }
+                                    aria-label={
+                                        isFavourite
+                                            ? t("gallery.details.removeFavourite")
+                                            : t("gallery.details.addFavourite")
+                                    }
+                                    data-tooltip={
+                                        isFavourite
+                                            ? t("gallery.details.removeFavourite")
+                                            : t("gallery.details.addFavourite")
+                                    }
+                                >
+                                    <FontAwesomeIcon icon={isFavourite ? faStar : faStarRegular} />
+                                </button>
+                                <button
+                                    type="button"
+                                    className="details-icon-btn"
+                                    onClick={() => setMetadataEditorOpen(true)}
+                                    aria-label={t("gallery.details.editMetadata")}
+                                    data-tooltip={t("gallery.details.editMetadata")}
+                                >
+                                    <FontAwesomeIcon icon={faPen} />
                                 </button>
                                 <button
                                     type="button"
@@ -711,7 +787,15 @@ const MangaDetailsPanel = ({
                             </div>
                         </>
                     }
-                    note={<DetailsItemNote value={itemNote} onChange={setItemNote} />}
+                    note={
+                        <DetailsItemNote
+                            value={itemNote}
+                            onChange={setItemNote}
+                            onCommit={() => {
+                                void dispatch(setLibraryItemNote({ link: mangaLink, note: itemNote }));
+                            }}
+                        />
+                    }
                 />
             </DetailsMetaBlock>
 
@@ -853,6 +937,13 @@ const MangaDetailsPanel = ({
                     </ListNavigator.Provider>
                 )}
             </div>
+            {metadataEditorOpen ? (
+                <ItemMetadataEditor
+                    itemLink={mangaLink}
+                    userOverlay={userOverlay}
+                    onClose={() => setMetadataEditorOpen(false)}
+                />
+            ) : null}
         </div>
     );
 };
