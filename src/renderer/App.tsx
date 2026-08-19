@@ -39,6 +39,7 @@ import {
     useState,
 } from "react";
 import { shallowEqual } from "react-redux";
+import UiBlockOverlay from "./components/UiBlockOverlay";
 import i18n from "./i18n";
 import Main from "./Main";
 import TopBar from "./TopBar";
@@ -636,6 +637,7 @@ const App = (): ReactElement => {
         >
             <TopBar />
             <Main />
+            <UiBlockOverlay />
         </AppContext.Provider>
     );
 };

@@ -155,9 +155,14 @@ const usage = (
  * by {@link buildShortcutSettingsTargets}.
  */
 export const SETTINGS_TARGETS_STATIC: readonly SettingsTarget[] = [
+    setting("setting:library", "#settings-library", "library.title", {
+        keywords: ["covers", "thumbnails", "import", "epub", "default location"],
+        contentPath: "library",
+    }),
     setting("setting:default-location", "#settings-default-location", "defaultLocation.title", {
         keywords: ["base dir", "home folder"],
         contentPath: "defaultLocation",
+        groupLabelKey: "library.title",
     }),
     setting("setting:theme", "#settings-theme", "theme.title", { contentPath: "theme" }),
     setting("setting:copy-theme", "#settings-copyTheme", "theme.copyCurrent", {
@@ -176,10 +181,6 @@ export const SETTINGS_TARGETS_STATIC: readonly SettingsTarget[] = [
     setting("setting:anilist", "#settings-anilist", "anilist.title", {
         keywords: ["tracking"],
         contentPath: "anilist",
-    }),
-    setting("setting:library", "#settings-library", "library.title", {
-        keywords: ["covers", "thumbnails"],
-        contentPath: "library",
     }),
     setting("setting:db-backup", "#settings-dbBackup", "dbBackup.title", {
         keywords: ["backup", "restore", "database"],

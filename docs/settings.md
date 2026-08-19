@@ -27,7 +27,7 @@ Entry: [`src/renderer/features/settings/Settings.tsx`](../src/renderer/features/
 
 Toggled by the gear icon or `Ctrl+,`. Full-screen modal with five keyboard-navigable tabs driven by `SETTINGS_TABS`:
 
-- **0 — Settings** (`GeneralSettings.tsx`) — home/library, gallery, reader, background, PDF, explorer, cover tools
+- **0 — Settings** (`GeneralSettings.tsx`) — Library (Default Location, bulk import, thumbnails) first, then theme, language, gallery, reader, background, PDF, explorer
 - **1 — Shortcut Keys** (`Shortcuts.tsx`) — view and rebind all commands
 - **2 — Theme Maker** (`ThemeCont.tsx`) — create/edit/import/export CSS-var themes
 - **3 — About** (`About.tsx`) — version, build info, detailed info dialog

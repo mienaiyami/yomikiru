@@ -44,6 +44,7 @@
     },
     "defaultLocation": {
         "title": "Default Location",
+        "desc": "Folder shown in the Locations tab. Bulk import and the chapter-opening shortcut use this folder.",
         "changeDefault": "Change Default"
     },
     "customStylesheet": {
@@ -161,12 +162,12 @@
     },
     "library": {
         "title": "Library",
+        "intro": "Set the Default Location used by the Locations tab and bulk import, then import titles from that folder or manage cover thumbnails.",
         "thumbnails": "Thumbnails",
-        "importFromDefault": "Import from default folder",
+        "importFromDefault": "Import from this folder",
         "immediateChildren": "Immediate children:",
-        "thumbnailsDescBefore": "Thumbnails live under app user data ",
-        "thumbnailsDescMid": ". Bulk import uses your ",
-        "thumbnailsDescAfter": " (top of this page).",
+        "thumbnailsDescBefore": "Generated thumbnails live under app user data ",
+        "thumbnailsDescAfter": ".",
         "clearRegenDesc": "Clear generated files to free space, or rebuild WebP thumbnails for every library item.",
         "importPackedDescBefore": " each subfolder is checked as manga (packed layout); each ",
         "importPackedDescAfter": " in that folder becomes a book. Invalid or unrecognized entries are skipped.",
@@ -177,7 +178,7 @@
         "addValidItems": "Add valid items from default folder",
         "importing": "Importing... {{label}}",
         "addAllEpubs": "Add all EPUBs recursively",
-        "scanning": "Scanning... {{label}}",
+        "scanning": "Scanning {{label}}...",
         "epubsProgress": "EPUBs: {{scanned}} scanned, +{{added}} added",
         "clearCacheTitle": "Clear cover cache",
         "clearCacheMessage": "Remove all generated thumbnail files in the app data covers folder?",

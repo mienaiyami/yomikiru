@@ -53,6 +53,17 @@ ref={(node) => {
 | AnilistEdit | `src/renderer/features/anilist/AnilistEdit.tsx` | Form overlay with multiple inputs |
 | Settings | `src/renderer/features/settings/Settings.tsx` | Uses `overlayCont settingCont` |
 | Modal | `src/renderer/components/ui/Modal.tsx` | Reusable modal with `modal-overlayCont` |
+| UiBlockOverlay | `src/renderer/components/UiBlockOverlay.tsx` | Non-dismissible full-window lock |
+
+## UI lock (`blockUi`)
+
+Use this when work must freeze the whole renderer (mouse and keyboard), not a dismissible dialog.
+
+- State: `ui.blocks` in [`src/renderer/store/ui.ts`](../src/renderer/store/ui.ts). Dispatch `blockUi({ id, message })` and `unblockUi(id)` from any feature. Same `id` updates the message; nested ids stack.
+- Overlay: [`UiBlockOverlay`](../src/renderer/components/UiBlockOverlay.tsx) is mounted in `App` above TopBar. It covers pointer input and swallows shortcut events in capture on `window`.
+- Not for Settings / AniList / Modal (those stay dismissible). Native Electron dialogs still work because they are a separate window.
+
+Current caller: Settings Library folder import and recursive EPUB scan (`UI_BLOCK_ID_LIBRARY`).
 
 ## Modal Component
 

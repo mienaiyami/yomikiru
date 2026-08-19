@@ -39,7 +39,15 @@ const Usage = (): ReactElement => {
     return (
         <div className="content2 features">
             <ul>
-                <li>{t("defaultLocation")}</li>
+                <li>
+                    <Trans
+                        i18nKey="defaultLocation"
+                        ns="usage"
+                        components={{
+                            link: <SettingsLink targetId="setting:default-location" />,
+                        }}
+                    />
+                </li>
                 <li>
                     <b>{t("fileArrangement.title")}</b> {t("fileArrangement.body")}
                     <ul className="fileExample">

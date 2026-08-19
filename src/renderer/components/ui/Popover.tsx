@@ -8,6 +8,7 @@ import {
     useRef,
     useState,
 } from "react";
+import FocusLock from "react-focus-lock";
 
 /** Vertical anchor side of the popover relative to the trigger. */
 export type PopoverPlacement = "bottom" | "top";
@@ -67,9 +68,9 @@ export type PopoverProps = {
 
 /**
  * Lightweight, reusable popover anchored to a trigger element. Handles
- * click-outside and Escape dismissal, supports controlled or uncontrolled
- * open state, and supports either a cloneable trigger element or a render
- * prop for advanced cases.
+ * click-outside and Escape dismissal, traps keyboard focus while open,
+ * supports controlled or uncontrolled open state, and supports either a
+ * cloneable trigger element or a render prop for advanced cases.
  *
  * @example Basic usage with a button trigger
  * ```tsx
@@ -200,14 +201,18 @@ const Popover: React.FC<PopoverProps> = ({
                     data-placement={placement}
                     data-align={align}
                     role="dialog"
+                    aria-modal="true"
                     aria-label={label}
+                    tabIndex={-1}
                     style={{ "--popover-offset": `${offset}px` } as React.CSSProperties}
                     onMouseDown={(e) => {
-                        // Prevent outside-click handler from triggering when interacting inside.
+                        // keep mousedown inside so the document outside-click listener does not close
                         e.stopPropagation();
                     }}
                 >
-                    {popoverContent}
+                    <FocusLock returnFocus>
+                        {popoverContent}
+                    </FocusLock>
                 </div>
             )}
         </span>

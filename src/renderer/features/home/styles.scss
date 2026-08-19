@@ -58,6 +58,7 @@
             .galleryTab {
                 display: inline-flex;
                 align-items: center;
+                justify-content: center;
                 gap: 5px;
                 height: 100%;
                 padding: 0 8px;
@@ -87,8 +88,10 @@
                 .galleryTabLabel {
                     line-height: 1;
                 }
-
-                @media (max-width: 900px) {
+            }
+            @media (max-width: 1550px) {
+                .galleryTab {
+                    width: 2.3em;
                     .galleryTabLabel {
                         display: none;
                     }

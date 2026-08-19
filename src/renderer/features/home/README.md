@@ -48,7 +48,7 @@ Features:
 - Context menu: Open, Open in New Window, Show in File Explorer, Copy Path, Remove from Library, Mark All Read/Unread.
 - Missing on-disk path (History/Bookmark open): dialog with **Locate on disk...** (`db:library:relocateItem`) or Remove.
 - List numbering can be disabled via `disableListNumbering`.
-- Multi-select with `enableClassicListCheckboxes` — shows checkboxes on hover; bulk operations via a toolbar.
+- Multi-select with `enableClassicListCheckboxes` (on by default) — checkboxes on Bookmark / History rows; bulk operations via a toolbar.
 
 ### BookmarkTab
 

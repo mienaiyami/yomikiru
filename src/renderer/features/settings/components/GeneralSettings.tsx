@@ -27,29 +27,12 @@ const GeneralSettings: React.FC = () => {
 
     return (
         <div className="content2">
-            <div className="settingItem2" id="settings-default-location">
-                <h3>{t("defaultLocation.title")}</h3>
-                {/* <div className="desc">
-                                    Default location of home screen Locations tab. Set this to folder where you
-                                    store your manga.
-                                </div> */}
-                <div className="main row">
-                    <input type="text" value={appSettings.baseDir} readOnly />
-                    <button
-                        onClick={() => {
-                            promptSelectDir((path) => dispatch(setAppSettings({ baseDir: path as string })));
-                        }}
-                    >
-                        {t("defaultLocation.changeDefault")}
-                    </button>
-                </div>
-            </div>
+            <LibrarySettings />
             <GeneralThemeSettings />
             <LanguageSettings />
             <GeneralReaderPresetsSettings />
             {process.platform === "win32" && <FileExplorerOptions />}
             <AnilistSetting />
-            <LibrarySettings />
             <GeneralPDFSettings />
             <div className="settingItem2" id="settings-customStylesheet">
                 <h3>{t("customStylesheet.title")}</h3>

@@ -341,6 +341,44 @@ html{
             overflow: hidden;
         }
 
+        /*
+         * Non-dismissible lock above TopBar, Settings, and menus. Mouse is covered
+         * by the overlay; keyboard/pointer shortcuts are stopped in capture in the
+         * overlay component.
+         */
+        #uiBlockOverlay {
+            position: fixed;
+            inset: 0;
+            z-index: 2000000;
+            display: grid;
+            place-items: center;
+            gap: 1em;
+            background: var(--body-bg-color);
+            cursor: wait;
+            opacity: 0.7;
+            backdrop-filter: blur(4px);
+
+
+            @keyframes uiBlockPulse {
+                0% {
+                    opacity: 1;
+                }
+                50% {
+                    opacity: 0.2;
+                }
+                100% {
+                    opacity: 1;
+                }
+            }
+
+            .loadingText {
+                font-size: 2em;
+                text-align: center;
+                padding: 0 1em;
+                animation: 2s linear uiBlockPulse infinite;
+            }
+        }
+
         #app {
             position: absolute;
             top: var(--titleBar-height);
@@ -655,6 +693,9 @@ html{
                                     word-spacing: 0.3em;
                                     letter-spacing: 0.02em;
                                 }
+                                h4 {
+                                    margin-top: 1.2em;
+                                }
                                 ul {
                                     margin: 0;
                                     margin-left: 1.5em;
@@ -713,6 +754,11 @@ html{
                                     display: flex;
                                     color: var(--font-color);
                                     padding: 0.4em 1em;
+                                    /* Nested copy already sits in this padding (reader-preset layout). */
+                                    .desc {
+                                        padding-left: 0;
+                                        padding-right: 0;
+                                    }
                                     // align-items: center;
                                     justify-content: flex-start;
                                     // flex-wrap: wrap;

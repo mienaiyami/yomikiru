@@ -4,11 +4,11 @@ import {
     HttpMediaTypeError,
     HttpNetworkError,
     HttpStatusError,
+    type HttpTransport,
+    type HttpTransportResponse,
     isHttpUrlLineList,
     shouldReplaceTextSnapshot,
     splitTextLines,
-    type HttpTransport,
-    type HttpTransportResponse,
 } from "./http";
 
 /**
@@ -101,6 +101,28 @@ describe("createHttpClient status handling", () => {
         await expect(client.getJson("https://example.com/api")).rejects.toSatisfy(
             (error: unknown) => error instanceof HttpNetworkError && error.url === "https://example.com/api",
         );
+    });
+});
+
+describe("createHttpClient request headers", () => {
+    it("omits User-Agent when the runtime forbids that header (renderer / jsdom)", async () => {
+        let captured: Record<string, string> | undefined;
+        const transport: HttpTransport = async (req) => {
+            captured = req.headers;
+            return {
+                status: 200,
+                statusText: "OK",
+                headers: { "content-type": "application/json" },
+                data: {},
+            };
+        };
+        const client = createHttpClient(transport);
+        await client.getJson("https://example.com/api");
+        expect(captured?.["User-Agent"]).toBeUndefined();
+        expect(Object.keys(captured ?? {}).some((key) => key.toLowerCase() === "user-agent")).toBe(false);
+
+        await client.getJson("https://example.com/api", { headers: { "User-Agent": "Nope" } });
+        expect(Object.keys(captured ?? {}).some((key) => key.toLowerCase() === "user-agent")).toBe(false);
     });
 });
 

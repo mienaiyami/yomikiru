@@ -3,7 +3,7 @@
         "title": "Language:",
         "body": "In Settings (after Theme), choose a language source (<code>locale - name</code>). Yomikiru ships English; you can <bold>Install pack...</bold> a community <code>.zip</code> (one locale per pack), <bold>Export...</bold> a pack to share, or remove an installed pack. Missing strings in a pack fall back to English."
     },
-    "defaultLocation": "It is recommended to set \"Default Location\" to the folder where you usually store manga.",
+    "defaultLocation": "Set <link>Default Location</link> in Settings (Library section) to the folder where you usually store manga and books.",
     "fileArrangement": {
         "title": "Recommended File Arrangement:",
         "body": "Though you can open manga from anywhere, it is recommended to arrange file in way as shown below for better experience and features like \"reader side-list\".",
@@ -67,7 +67,7 @@
     },
     "covers": {
         "title": "Covers:",
-        "body": "Generated thumbnails are saved under user data <code>covers</code> as <code>{{libraryId}}</code>. The gallery uses that file when present. If you use <bold>Select Cover</bold> in the details panel, the app stores that image's absolute path on the library entry and shows it when the file still exists; otherwise it falls back to the cached WebP. <link><bold>Library</bold></link> in Settings can clear thumbnails, regenerate them (missing files and folders are skipped and reported in one warning at the end), or bulk-import from your default folder."
+        "body": "Generated thumbnails are saved under user data <code>covers</code> as <code>{{libraryId}}</code>. The gallery uses that file when present. If you use <bold>Select Cover</bold> in the details panel, the app stores that image's absolute path on the library entry and shows it when the file still exists; otherwise it falls back to the cached WebP. <link><bold>Library</bold></link> in Settings (first section) holds Default Location, bulk import from that folder, and thumbnail clear/regenerate. Missing files and folders are skipped during regenerate and reported in one warning at the end. The UI is locked while folder import or recursive EPUB scan runs."
     },
     "reader": {
         "title": "Reader :",

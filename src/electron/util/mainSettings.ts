@@ -41,7 +41,7 @@ const mainSettingsSchema = z
         dbBackup: z
             .object({
                 enabled: z.boolean().default(true),
-                intervalHours: z.number().int().min(1).default(168),
+                intervalHours: z.number().int().min(1).default(24),
                 keepCount: z.number().int().min(1).max(100).default(10),
                 lastSuccessAt: z.number().int().nonnegative().default(0),
             })

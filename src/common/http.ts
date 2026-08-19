@@ -3,8 +3,14 @@ import axios from "axios";
 /** Default request timeout for {@link http}. Callers may override per request. */
 export const HTTP_DEFAULT_TIMEOUT_MS = 30_000;
 
-/** Identifying User-Agent for Node/main requests (browsers ignore this header). */
+/** Identifying User-Agent for Node/main requests. */
 export const HTTP_USER_AGENT = "Yomikiru";
+
+/**
+ * True when the runtime uses Chromium XHR, which refuses forbidden headers
+ * such as User-Agent (`Refused to set unsafe header`).
+ */
+const httpRuntimeForbidsUserAgentHeader = (): boolean => typeof XMLHttpRequest !== "undefined";
 
 export type HttpMethod = "GET" | "POST";
 
@@ -174,15 +180,22 @@ const normalizeHeaders = (headers: Record<string, string> | undefined): Record<s
     return out;
 };
 
-/** Default User-Agent / JSON headers, then caller headers (caller wins). */
+/**
+ * Default JSON headers, then caller headers (caller wins). User-Agent is set
+ * only in Node/main: Chromium XHR rejects it and logs an unsafe-header error.
+ * Caller User-Agent is also stripped in that runtime so it cannot sneak back in.
+ */
 const mergeRequestHeaders = (init: HttpRequest): Record<string, string> => {
     const headers: Record<string, string> = {
-        "User-Agent": HTTP_USER_AGENT,
-        ...(init.json !== undefined
-            ? { "Content-Type": "application/json", Accept: "application/json" }
-            : {}),
+        ...(httpRuntimeForbidsUserAgentHeader() ? {} : { "User-Agent": HTTP_USER_AGENT }),
+        ...(init.json !== undefined ? { "Content-Type": "application/json", Accept: "application/json" } : {}),
         ...init.headers,
     };
+    if (httpRuntimeForbidsUserAgentHeader()) {
+        for (const key of Object.keys(headers)) {
+            if (key.toLowerCase() === "user-agent") delete headers[key];
+        }
+    }
     return headers;
 };
 

@@ -18,7 +18,8 @@
     "app": {
         "noSettingsSelectFolder": "No settings found, Select manga folder",
         "dropMultipleOnlyFirst": "More than one file/folder dropped. Only first in list will be loaded.",
-        "dropError": "Error while dropping file"
+        "dropError": "Error while dropping file",
+        "uiBlocked": "Please wait"
     },
     "topBar": {
         "home": "Home",

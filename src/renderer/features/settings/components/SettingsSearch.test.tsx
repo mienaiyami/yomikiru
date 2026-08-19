@@ -23,6 +23,7 @@ const openSettingsState = {
     ui: {
         isOpen: { settings: true, anilist: { login: false, search: false, edit: false } },
         pendingSettingsNav: null,
+        blocks: [],
     },
 } as const;
 

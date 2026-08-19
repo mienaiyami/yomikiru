@@ -1,8 +1,11 @@
 import { useDirectoryValidator } from "@features/reader/hooks/useDirectoryValidator";
+import { setAppSettings } from "@store/appSettings";
 import { useAppDispatch, useAppSelector } from "@store/hooks";
 import store from "@store/index";
 import { fetchAllItemsWithProgress } from "@store/library";
+import { UI_BLOCK_ID_LIBRARY, blockUi, unblockUi } from "@store/ui";
 import { dialogUtils } from "@utils/dialog";
+import { promptSelectDir } from "@utils/file";
 import { regenerateLibraryThumbnails, showRegenSkippedWarning } from "@utils/libraryCoverService";
 import {
     addEpubAtNormalizedPath,
@@ -13,14 +16,14 @@ import {
 import { createRendererLogger } from "@utils/logger";
 import { useCallback, useState } from "react";
 import { useTranslation } from "react-i18next";
-import { navigateToSetting } from "../utils/navigateToSetting";
 
 const log = createRendererLogger("settings/LibrarySettings");
 
 type LibrarySettingsBusy = "clear" | "regen" | "importChildren" | "importEpubsRecursive" | null;
 
 /**
- * Library-related settings: thumbnail cache, bulk import from the default folder (Settings → Default Location).
+ * Library settings: Default Location (Locations tab + bulk import), thumbnail
+ * cache, and import from that folder.
  */
 const LibrarySettings: React.FC = () => {
     const { t } = useTranslation("settings");
@@ -34,28 +37,42 @@ const LibrarySettings: React.FC = () => {
     const [importLabel, setImportLabel] = useState("");
 
     /**
-     * Runs a long-running settings action with a shared busy/label lifecycle: sets `busy`, resets
-     * labels and `busy` in `finally`, and surfaces a user-visible dialog plus logger call on error.
+     * Runs a long-running settings action with a shared busy/label lifecycle: sets `busy`,
+     * optionally locks the app UI, resets labels / `busy` / the lock in `finally`, and
+     * surfaces a user-visible dialog plus logger call on error.
      */
     const runBusy = useCallback(
         async (
             key: Exclude<LibrarySettingsBusy, null>,
             errorMessage: string,
             work: () => Promise<void>,
+            uiLockMessage?: string,
         ): Promise<void> => {
             setBusy(key);
+            if (uiLockMessage !== undefined) {
+                dispatch(blockUi({ id: UI_BLOCK_ID_LIBRARY, message: uiLockMessage }));
+            }
             try {
                 await work();
             } catch (e) {
                 log.error(`${key} failed`, e);
                 dialogUtils.customError({ message: errorMessage });
             } finally {
+                if (uiLockMessage !== undefined) dispatch(unblockUi(UI_BLOCK_ID_LIBRARY));
                 setImportLabel("");
                 setRegenLabel("");
                 setBusy(null);
             }
         },
-        [],
+        [dispatch],
+    );
+
+    /** Replaces the overlay status text for the Settings library lock id. */
+    const setLibraryBlockMessage = useCallback(
+        (message: string) => {
+            dispatch(blockUi({ id: UI_BLOCK_ID_LIBRARY, message }));
+        },
+        [dispatch],
     );
 
     const handleClearCache = useCallback(async () => {
@@ -147,27 +164,34 @@ const LibrarySettings: React.FC = () => {
             defaultId: 0,
         });
         if (!response) return;
-        await runBusy("importChildren", t("library.importError"), async () => {
-            let added = 0;
-            let skipped = 0;
-            let failed = 0;
-            const names = await window.fs.readdir(baseDir);
-            names.sort((a, b) => a.localeCompare(b));
-            let i = 0;
-            for (const name of names) {
-                i += 1;
-                setImportLabel(`${i} / ${names.length}`);
-                const full = window.path.join(baseDir, name);
-                const r = await tryAddImmediateChild(full);
-                if (r === "added") added += 1;
-                else if (r === "skipped") skipped += 1;
-                else failed += 1;
-            }
-            await dispatch(fetchAllItemsWithProgress());
-            log.info("import default folder children", { added, skipped, failed });
-            await showImportFinishedSummary(added, skipped, failed, "folderChildren");
-        });
-    }, [appSettings.baseDir, dispatch, tryAddImmediateChild, runBusy, t]);
+        await runBusy(
+            "importChildren",
+            t("library.importError"),
+            async () => {
+                let added = 0;
+                let skipped = 0;
+                let failed = 0;
+                const names = await window.fs.readdir(baseDir);
+                names.sort((a, b) => a.localeCompare(b));
+                let i = 0;
+                for (const name of names) {
+                    i += 1;
+                    const label = `${i} / ${names.length}`;
+                    setImportLabel(label);
+                    setLibraryBlockMessage(t("library.importing", { label }));
+                    const full = window.path.join(baseDir, name);
+                    const r = await tryAddImmediateChild(full);
+                    if (r === "added") added += 1;
+                    else if (r === "skipped") skipped += 1;
+                    else failed += 1;
+                }
+                await dispatch(fetchAllItemsWithProgress());
+                log.info("import default folder children", { added, skipped, failed });
+                await showImportFinishedSummary(added, skipped, failed, "folderChildren");
+            },
+            t("library.importing", { label: "" }),
+        );
+    }, [appSettings.baseDir, dispatch, tryAddImmediateChild, runBusy, setLibraryBlockMessage, t]);
 
     /**
      * Walks `baseDir` recursively and adds every `.epub` file not already in the library.
@@ -186,98 +210,118 @@ const LibrarySettings: React.FC = () => {
             defaultId: 0,
         });
         if (!response) return;
-        await runBusy("importEpubsRecursive", t("library.scanError"), async () => {
-            const queue: string[] = [baseDir];
-            let added = 0;
-            let skipped = 0;
-            let failed = 0;
-            let scanned = 0;
-            while (queue.length > 0) {
-                const dir = queue.shift();
-                if (!dir) break;
-                const entries = await window.fs.readdir(dir);
-                for (const name of entries) {
-                    const full = window.path.join(dir, name);
-                    const st = await window.fs.stat(full);
-                    if (st.isDir) {
-                        queue.push(full);
-                    } else if (name.toLowerCase().endsWith(".epub")) {
-                        scanned += 1;
-                        setImportLabel(t("library.epubsProgress", { scanned, added }));
-                        const norm = window.path.normalize(full);
-                        if (store.getState().library.items[norm]) {
-                            skipped += 1;
-                            continue;
+        await runBusy(
+            "importEpubsRecursive",
+            t("library.scanError"),
+            async () => {
+                const queue: string[] = [baseDir];
+                let added = 0;
+                let skipped = 0;
+                let failed = 0;
+                let scanned = 0;
+                while (queue.length > 0) {
+                    const dir = queue.shift();
+                    if (!dir) break;
+                    const entries = await window.fs.readdir(dir);
+                    for (const name of entries) {
+                        const full = window.path.join(dir, name);
+                        const st = await window.fs.stat(full);
+                        if (st.isDir) {
+                            queue.push(full);
+                        } else if (name.toLowerCase().endsWith(".epub")) {
+                            scanned += 1;
+                            const label = t("library.epubsProgress", { scanned, added });
+                            setImportLabel(label);
+                            setLibraryBlockMessage(t("library.scanning", { label }));
+                            const norm = window.path.normalize(full);
+                            if (store.getState().library.items[norm]) {
+                                skipped += 1;
+                                continue;
+                            }
+                            const r = await addEpubAtNormalizedPath(norm, {
+                                dispatch,
+                                keepExtractedFiles: appSettings.keepExtractedFiles,
+                            });
+                            if (r === "added") added += 1;
+                            else failed += 1;
                         }
-                        const r = await addEpubAtNormalizedPath(norm, {
-                            dispatch,
-                            keepExtractedFiles: appSettings.keepExtractedFiles,
-                        });
-                        if (r === "added") added += 1;
-                        else failed += 1;
                     }
                 }
-            }
-            await dispatch(fetchAllItemsWithProgress());
-            log.info("import all epubs recursive", { added, skipped, failed, scanned });
-            await showImportFinishedSummary(added, skipped, failed, "recursiveEpubs");
-        });
-    }, [appSettings.baseDir, appSettings.keepExtractedFiles, dispatch, runBusy, t]);
+                await dispatch(fetchAllItemsWithProgress());
+                log.info("import all epubs recursive", { added, skipped, failed, scanned });
+                await showImportFinishedSummary(added, skipped, failed, "recursiveEpubs");
+            },
+            t("library.scanning", { label: "" }),
+        );
+    }, [appSettings.baseDir, appSettings.keepExtractedFiles, dispatch, runBusy, setLibraryBlockMessage, t]);
 
     const disabled = busy !== null;
 
     return (
         <div className="settingItem2" id="settings-library">
             <h3>{t("library.title")}</h3>
-            <div className="desc">
-                {t("library.thumbnailsDescBefore")}
-                <code>covers</code>
-                {t("library.thumbnailsDescMid")}
-                <a
-                    onClick={() => {
-                        navigateToSetting("setting:default-location", dispatch);
-                    }}
-                >
-                    {t("defaultLocation.title")}
-                </a>
-                {t("library.thumbnailsDescAfter")}
-            </div>
+            <div className="desc">{t("library.intro")}</div>
 
-            <div className="desc" style={{ marginTop: "1rem" }}>
-                <b>{t("library.thumbnails")}</b>
-            </div>
-            <div className="desc">{t("library.clearRegenDesc")}</div>
-            <div className="main row" style={{ gap: "0.5rem", flexWrap: "wrap" }}>
-                <button type="button" disabled={disabled} onClick={() => void handleClearCache()}>
-                    {busy === "clear" ? t("library.clearing") : t("library.clearCached")}
-                </button>
-                <button type="button" disabled={disabled} onClick={() => void handleRegenerateAll()}>
-                    {busy === "regen"
-                        ? t("library.regenerating", { label: regenLabel })
-                        : t("library.regenerateAll")}
-                </button>
-            </div>
+            {/* Same .main.col indent as reader preset h4s (not flush with the section h3). */}
+            <div className="main col">
+                <div className="col" id="settings-default-location">
+                    <h4>{t("defaultLocation.title")}</h4>
+                    <div className="desc">{t("defaultLocation.desc")}</div>
+                    <div className="row">
+                        <input type="text" value={appSettings.baseDir} readOnly />
+                        <button
+                            type="button"
+                            disabled={disabled}
+                            onClick={() => {
+                                promptSelectDir((path) => dispatch(setAppSettings({ baseDir: path as string })));
+                            }}
+                        >
+                            {t("defaultLocation.changeDefault")}
+                        </button>
+                    </div>
+                </div>
 
-            <div className="desc" style={{ marginTop: "1.25rem" }}>
-                <b>{t("library.importFromDefault")}</b>
-            </div>
-            <div className="desc">
-                <b>{t("library.immediateChildren")}</b>
-                {t("library.importPackedDescBefore")}
-                <code>.epub</code>
-                {t("library.importPackedDescAfter")}
-            </div>
-            <div className="main row" style={{ gap: "0.5rem", flexWrap: "wrap" }}>
-                <button type="button" disabled={disabled} onClick={() => void handleImportDefaultFolderChildren()}>
-                    {busy === "importChildren"
-                        ? t("library.importing", { label: importLabel })
-                        : t("library.addValidItems")}
-                </button>
-                <button type="button" disabled={disabled} onClick={() => void handleImportAllEpubsRecursive()}>
-                    {busy === "importEpubsRecursive"
-                        ? t("library.scanning", { label: importLabel })
-                        : t("library.addAllEpubs")}
-                </button>
+                <div className="col">
+                    <h4>{t("library.importFromDefault")}</h4>
+                    <div className="desc">
+                        <b>{t("library.immediateChildren")}</b>
+                        {t("library.importPackedDescBefore")}
+                        <code>.epub</code>
+                        {t("library.importPackedDescAfter")}
+                    </div>
+                    <div className="row" style={{ gap: "0.5rem", flexWrap: "wrap" }}>
+                        <button type="button" disabled={disabled} onClick={() => void handleImportDefaultFolderChildren()}>
+                            {busy === "importChildren"
+                                ? t("library.importing", { label: importLabel })
+                                : t("library.addValidItems")}
+                        </button>
+                        <button type="button" disabled={disabled} onClick={() => void handleImportAllEpubsRecursive()}>
+                            {busy === "importEpubsRecursive"
+                                ? t("library.scanning", { label: importLabel })
+                                : t("library.addAllEpubs")}
+                        </button>
+                    </div>
+                </div>
+
+                <div className="col">
+                    <h4>{t("library.thumbnails")}</h4>
+                    <div className="desc">
+                        {t("library.thumbnailsDescBefore")}
+                        <code>covers</code>
+                        {t("library.thumbnailsDescAfter")}
+                    </div>
+                    <div className="desc">{t("library.clearRegenDesc")}</div>
+                    <div className="row" style={{ gap: "0.5rem", flexWrap: "wrap" }}>
+                        <button type="button" disabled={disabled} onClick={() => void handleClearCache()}>
+                            {busy === "clear" ? t("library.clearing") : t("library.clearCached")}
+                        </button>
+                        <button type="button" disabled={disabled} onClick={() => void handleRegenerateAll()}>
+                            {busy === "regen"
+                                ? t("library.regenerating", { label: regenLabel })
+                                : t("library.regenerateAll")}
+                        </button>
+                    </div>
+                </div>
             </div>
         </div>
     );

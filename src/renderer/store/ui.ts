@@ -6,6 +6,16 @@ type PendingSettingsNav = {
     requestId: number;
 };
 
+/**
+ * One non-dismissible full-window lock. `id` lets nested callers release only
+ * their own entry; the last stack item is the one shown.
+ */
+export type UiBlock = {
+    id: string;
+    /** Status text on the overlay; omit for a silent lock. */
+    message?: string;
+};
+
 type UIState = {
     isOpen: {
         settings: boolean;
@@ -17,7 +27,12 @@ type UIState = {
     };
     /** Catalog target id waiting for Settings to apply; cleared after apply or close. */
     pendingSettingsNav: PendingSettingsNav | null;
+    /** Stack of {@link UiBlock} entries; empty means the UI is interactive. */
+    blocks: UiBlock[];
 };
+
+/** {@link blockUi} id for Settings library import, EPUB scan, and thumbnail work. */
+export const UI_BLOCK_ID_LIBRARY = "settings-library";
 
 const initialState: UIState = {
     isOpen: {
@@ -29,6 +44,7 @@ const initialState: UIState = {
         },
     },
     pendingSettingsNav: null,
+    blocks: [],
 };
 
 const uiSlice = createSlice({
@@ -56,6 +72,21 @@ const uiSlice = createSlice({
             state.pendingSettingsNav = null;
         },
 
+        /**
+         * Adds or replaces a UI lock by id. The last stack entry is shown.
+         * Call {@link unblockUi} with the same id when the work finishes.
+         */
+        blockUi: (state, action: PayloadAction<UiBlock>) => {
+            const next = action.payload;
+            const i = state.blocks.findIndex((b) => b.id === next.id);
+            if (i >= 0) state.blocks[i] = next;
+            else state.blocks.push(next);
+        },
+        /** Removes the UI lock with this id. No-op when that id is not in the stack. */
+        unblockUi: (state, action: PayloadAction<string>) => {
+            state.blocks = state.blocks.filter((b) => b.id !== action.payload);
+        },
+
         setAnilistLoginOpen: (state, action: PayloadAction<boolean>) => {
             state.isOpen.anilist.login = action.payload;
         },
@@ -73,6 +104,8 @@ export const {
     toggleSettingsOpen,
     requestSettingsNav,
     clearPendingSettingsNav,
+    blockUi,
+    unblockUi,
     setAnilistLoginOpen,
     setAnilistSearchOpen,
     setAnilistEditOpen,

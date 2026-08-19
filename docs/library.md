@@ -382,7 +382,7 @@ sequenceDiagram
 - **Reader flow**: [`src/renderer/features/reader/services/readerCoverFlows.ts`](../src/renderer/features/reader/services/readerCoverFlows.ts) — `applyMangaCoverAfterChapterLoad` and `applyMakeCoverFromPageImage` coordinate the reader-triggered cover updates.
 - **Custom cover**: user can right-click a page in the manga reader → "Set as Cover", or use the "Pick Cover" button in the details panel.
 - **Cache clear**: `covers:clearCache` IPC removes all files under `userData/covers/` and recreates the empty directory.
-- **Bulk regenerate**: Settings → Library walks every library row. Missing files/folders are skipped (not extracted or parsed) and a single warning reports how many were skipped.
+- **Bulk regenerate / import**: Settings → Library (first section) includes Default Location, bulk import from that folder, and thumbnail clear/regenerate. Regenerating walks every library row; missing files/folders are skipped (not extracted or parsed) and a single warning reports how many were skipped. Import and recursive EPUB scan lock the app UI until they finish.
 
 The `library_items.cover` column stores only user-picked non-WebP paths (e.g. a `cover.jpg` in the manga root). The WebP thumbnail at `userData/covers/<id>.webp` is separate and not stored in the DB — the renderer resolves it from the library item `id` at render time via `libraryCoverSrc` in [`src/renderer/utils/libraryCover.ts`](../src/renderer/utils/libraryCover.ts).
 

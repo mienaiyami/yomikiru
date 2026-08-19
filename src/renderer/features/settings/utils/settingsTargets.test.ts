@@ -73,6 +73,12 @@ describe("settingsTargets", () => {
         }
     });
 
+    it("places Library before Default Location so search lists the section first", () => {
+        const ids = SETTINGS_TARGETS_STATIC.map((t) => t.id);
+        expect(ids.indexOf("setting:library")).toBeLessThan(ids.indexOf("setting:default-location"));
+        expect(getSettingsTarget("setting:default-location")?.groupLabelKey).toBe("library.title");
+    });
+
     it("resolves known ids via getSettingsTarget", () => {
         expect(getSettingsTarget("setting:library")?.selector).toBe("#settings-library");
         expect(getSettingsTarget("about")?.tab).toBe("about");
