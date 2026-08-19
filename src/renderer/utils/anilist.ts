@@ -16,7 +16,6 @@ const log = createRendererLogger("AniList");
 
 const ANILIST_GRAPHQL_URL = "https://graphql.anilist.co";
 
-let token = "";
 let displayAdultContent = false;
 let anilistListEntryId: number | null = null;
 
@@ -101,6 +100,34 @@ const ensureAnilistNs = (): void => {
     void i18n.loadNamespaces("anilist");
 };
 
+/** Stored AniList OAuth token, or null when the key is empty / missing. */
+export const getAnilistStorageToken = (): string | null => {
+    const value = getStorageItem("ANILIST_TOKEN");
+    return value || null;
+};
+
+/** Persists the AniList OAuth token. Empty string is a logged-out token. */
+export const setAnilistStorageToken = (value: string): void => {
+    setStorageItem("ANILIST_TOKEN", value);
+};
+
+/*
+ * In-memory bearer used by GraphQL calls. Seeded from localStorage so Settings
+ * (always mounted) can request before App's initAnilist effect runs.
+ */
+let token = getAnilistStorageToken() || "";
+
+/**
+ * Bearer for GraphQL: in-memory session first, then persisted token.
+ * Settings username fetch runs in a child effect before {@link initAnilist}.
+ */
+const resolveAnilistBearer = (): string => {
+    if (token) return token;
+    const stored = getAnilistStorageToken() || "";
+    if (stored) token = stored;
+    return stored;
+};
+
 /**
  * Loads the stored token into module state and validates it. Call once from app startup;
  * this module no longer runs that work on import.
@@ -122,17 +149,6 @@ export const initAnilist = (): void => {
 /** Loads the stored token into module state. Does not validate it. */
 export const setAnilistClientToken = (value: string): void => {
     token = value;
-};
-
-/** Stored AniList OAuth token, or null when the key is empty / missing. */
-export const getAnilistStorageToken = (): string | null => {
-    const value = getStorageItem("ANILIST_TOKEN");
-    return value || null;
-};
-
-/** Persists the AniList OAuth token. Empty string is a logged-out token. */
-export const setAnilistStorageToken = (value: string): void => {
-    setStorageItem("ANILIST_TOKEN", value);
 };
 
 /** Sets the MediaList entry id used by progress / edit mutations. */
@@ -212,15 +228,17 @@ export const checkAnilistToken = async (bearer: string): Promise<boolean | undef
 
 /**
  * Runs a GraphQL operation against AniList and returns the envelope `data` field on 2xx.
- * HTTP errors are logged; an invalid-token payload shows a dialog.
+ * Uses the in-memory session token, then the persisted token, so a login is enough
+ * even before {@link initAnilist}. HTTP errors are logged; an invalid-token payload shows a dialog.
  */
 export const anilistRequest = async (query: string, variables = {}): Promise<AnilistGraphqlData | undefined> => {
-    if (!token) {
+    const bearer = resolveAnilistBearer();
+    if (!bearer) {
         log.error("request: skipped (no access token; user not logged in)");
         return;
     }
     try {
-        const json = await postAnilistGraphql(token, { query, variables });
+        const json = await postAnilistGraphql(bearer, { query, variables });
         if (json && typeof json === "object" && "data" in json) {
             return (json as { data: AnilistGraphqlData }).data;
         }

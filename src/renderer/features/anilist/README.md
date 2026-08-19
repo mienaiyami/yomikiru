@@ -165,7 +165,7 @@ Thunks: `fetchAllTrackers`, `upsertTracker`, `removeTracker`, `updateTrackerSnap
 
 [`src/renderer/utils/anilist.ts`](../../utils/anilist.ts)
 
-Named exports (no static class). Call `initAnilist()` once at app startup; module load only reads the token for the Redux `initialState`.
+Named exports (no static class). Call `initAnilist()` once at app startup to validate the stored token. GraphQL calls use the in-memory session token, falling back to the persisted `anilist_token` so requests still work before that startup effect (Settings is always mounted).
 
 | Export | Description |
 | --- | --- |

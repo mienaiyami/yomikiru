@@ -1,5 +1,12 @@
-import { describe, expect, it } from "vitest";
-import { toTrackerListState, toTrackerMediaSnapshot } from "./anilist";
+import { http } from "@common/http";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+import {
+    anilistRequest,
+    setAnilistClientToken,
+    setAnilistStorageToken,
+    toTrackerListState,
+    toTrackerMediaSnapshot,
+} from "./anilist";
 
 const media = (patch: Partial<Anilist.ListEntry["media"]> = {}): Anilist.ListEntry["media"] => ({
     title: { english: "English", romaji: "Romaji", native: "Native" },
@@ -31,6 +38,39 @@ describe("toTrackerMediaSnapshot", () => {
         const snapshot = toTrackerMediaSnapshot(media({ status: undefined, format: undefined }));
         expect(snapshot.status).toBeNull();
         expect(snapshot.format).toBeNull();
+    });
+});
+
+describe("anilistRequest token", () => {
+    beforeEach(() => {
+        localStorage.clear();
+        setAnilistClientToken("");
+        vi.spyOn(http, "postJson").mockResolvedValue({ data: { Viewer: { name: "alice" } } });
+    });
+
+    afterEach(() => {
+        vi.restoreAllMocks();
+        localStorage.clear();
+        setAnilistClientToken("");
+    });
+
+    it("uses the stored token when the in-memory client token is not set yet", async () => {
+        setAnilistStorageToken("stored-token");
+        const data = await anilistRequest("query { Viewer { name } }");
+        expect(http.postJson).toHaveBeenCalledOnce();
+        expect(vi.mocked(http.postJson).mock.calls[0]?.[2]).toEqual(
+            expect.objectContaining({
+                headers: expect.objectContaining({
+                    Authorization: "Bearer stored-token",
+                }),
+            }),
+        );
+        expect(data?.Viewer?.name).toBe("alice");
+    });
+
+    it("skips the request when neither memory nor storage has a token", async () => {
+        await anilistRequest("query { Viewer { name } }");
+        expect(http.postJson).not.toHaveBeenCalled();
     });
 });
 
