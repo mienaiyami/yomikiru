@@ -465,7 +465,18 @@ const Usage = (): ReactElement => {
                 <li id="settings-usage-anilist">
                     <b>{t("anilist.title")}</b>
                     <ul>
-                        <li>{t("anilist.login")}</li>
+                        <li>
+                            <Trans
+                                i18nKey="anilist.login"
+                                ns="usage"
+                                components={{ code: <code /> }}
+                                values={{
+                                    down: keysFor(shortcuts, "listDown"),
+                                    up: keysFor(shortcuts, "listUp"),
+                                    select: keysFor(shortcuts, "listSelect"),
+                                }}
+                            />
+                        </li>
                         <li>{t("anilist.managed")}</li>
                         <li>
                             <Trans i18nKey="anilist.autoUpdate" ns="usage" components={{ bold: <b /> }} />

@@ -135,6 +135,45 @@ describe("ListNavigator.SearchInput", () => {
         });
     });
 
+    it("seeds the field and shows the clear button when defaultValue is set", () => {
+        const { container } = renderWithProviders(
+            <ListNavigator.Provider
+                items={ITEMS}
+                filterFn={(filter, item) => new RegExp(filter, "i").test(item)}
+                renderItem={(item) => <span>{item}</span>}
+                persistFilterOnItemsChange
+            >
+                <ListNavigator.SearchInput defaultValue="alp" />
+                <ListNavigator.List />
+            </ListNavigator.Provider>,
+        );
+        const input = container.querySelector("input.search-input") as HTMLInputElement;
+        expect(input.value).toBe("alp");
+        expect(container.querySelector(".search-input-clear")).not.toBeNull();
+    });
+
+    it("notifies onChange with an empty value when the clear button is pressed", async () => {
+        const onChange = vi.fn();
+        const { container } = renderWithProviders(
+            <ListNavigator.Provider
+                items={ITEMS}
+                renderItem={(item) => <span>{item}</span>}
+                persistFilterOnItemsChange
+            >
+                <ListNavigator.SearchInput defaultValue="alp" onChange={onChange} />
+                <ListNavigator.List />
+            </ListNavigator.Provider>,
+        );
+        const clearBtn = container.querySelector(".search-input-clear") as HTMLButtonElement;
+        await act(async () => {
+            fireEvent.click(clearBtn);
+        });
+        expect(onChange).toHaveBeenCalledTimes(1);
+        const event = onChange.mock.calls[0][0] as { target: HTMLInputElement };
+        expect(event.target.value).toBe("");
+        expect((container.querySelector("input.search-input") as HTMLInputElement).value).toBe("");
+    });
+
     it("does not focus the field on mount when autoFocus is false", () => {
         const { container } = renderWithProviders(
             <ListNavigator.Provider
@@ -148,6 +187,26 @@ describe("ListNavigator.SearchInput", () => {
         );
         const input = container.querySelector("input.search-input") as HTMLInputElement;
         expect(input).not.toBe(document.activeElement);
+    });
+
+    it("focuses the field after autoFocusDelayMs", async () => {
+        vi.useFakeTimers();
+        try {
+            const { container } = renderWithProviders(
+                <ListNavigator.Provider items={ITEMS} renderItem={(item) => <span>{item}</span>}>
+                    <ListNavigator.SearchInput autoFocusDelayMs={100} />
+                    <ListNavigator.List />
+                </ListNavigator.Provider>,
+            );
+            const input = container.querySelector("input.search-input") as HTMLInputElement;
+            expect(input).not.toBe(document.activeElement);
+            await act(async () => {
+                vi.advanceTimersByTime(100);
+            });
+            expect(input).toBe(document.activeElement);
+        } finally {
+            vi.useRealTimers();
+        }
     });
 });
 

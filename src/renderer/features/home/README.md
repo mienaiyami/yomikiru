@@ -195,19 +195,19 @@ Pill-style tab switcher at the top of the gallery toolbar.
 
 A reusable compound component providing:
 
-- **Provider** — holds filter state, focused index, and renders the search input + item list.
-- **SearchInput** — uncontrolled text input wrapped in `.search-input-wrapper`, with a focusable clear (`x`) button overlaid on its right edge while the field has text. Focuses on mount unless `autoFocus` is false (gallery details lists pass false so Continue/Start can take initial focus). Its styles live *outside* `@layer main` in `styles/index.scss`, because consumer component stylesheets are unlayered and would otherwise always win.
+- **Provider** — holds filter state, focused index, and list keyboard handling.
+- **SearchInput** — uncontrolled text input wrapped in `.search-input-wrapper`, with a focusable clear (`x`) button overlaid on its right edge while the field has text. `defaultValue` seeds the field (and the clear button). Clear also runs a custom `onChange` so remote-search parents see the empty query. Focuses on mount unless `autoFocus` is false (gallery details lists pass false so Continue/Start can take initial focus). `autoFocusDelayMs` waits that long first so overlay search can win over `visibility:hidden` / FocusLock. Its styles live *outside* `@layer main` in `styles/index.scss`, because consumer component stylesheets are unlayered and would otherwise always win.
 - **VirtualList** — renders items via `@tanstack/react-virtual`. Supports `columnCount > 1` for the gallery grid.
-- **List** — non-virtualised ordered list (classic tabs; gallery details). Optional `scrollContainerRef` scrolls the focused row inside that overflow box so ancestor panels do not jump.
+- **List** — non-virtualised ordered list (classic tabs; gallery details; AniList Add Tracking). Optional `scrollContainerRef` scrolls the focused row inside that overflow box so ancestor panels do not jump.
 - **Input** — the search input field.
 
 Key capabilities:
 
-- Filter function (`filterFn`) is caller-supplied; the component manages the input value and filtered item list.
+- Filter function (`filterFn`) is caller-supplied; omit it for remote search (Add Tracking) so API hits are not regex-filtered locally.
 - Keyboard navigation: arrow keys move focus, Enter/Space select, Home/End jump to ends.
 - `handleExtraKeyDown` hook allows caller to intercept additional keys (e.g. shortcut commands).
 - `onFilteredItemsChange` callback lets callers track the visible subset (used by multi-select).
-- `persistFilter` — when true, the filter is not cleared when the item list refreshes.
+- `persistFilterOnItemsChange` — when true, the filter is not cleared when the item list refreshes.
 
 ---
 

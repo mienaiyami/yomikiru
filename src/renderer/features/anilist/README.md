@@ -94,8 +94,8 @@ Entry: [`AnilistSearch.tsx`](AnilistSearch.tsx)
 
 When "Track with AniList..." is selected (reader bar or gallery context menu), the search overlay opens.
 
-1. User types a title → `searchAnilistMedia(query)` calls the AniList GraphQL API.
-2. Results show cover, title (English/Romaji/Native), format, status, and chapter count when the API returns them.
+1. The field is prefilled with the item title. Typing debounces, then `searchAnilistMedia(query)` calls the AniList GraphQL API. Results are **not** filtered locally (`filterFn` is omitted) so remote titles that do not match a client regex still show.
+2. Results use [`ListNavigator`](../../components/ListNavigator.tsx) (`persistFilterOnItemsChange`): list up/down moves the highlight, listSelect (Enter) links the focused row. Escape on the overlay (including the search field) closes it.
 3. Selecting a result:
    - Dispatches `addAnilistTracker({ itemLink, anilistMediaId })` (`db:trackers:upsert`).
    - The bar later calls `getAnilistListEntry(mediaId)` (`SaveMediaListEntry`) to create or fetch the list entry and cache the snapshot.

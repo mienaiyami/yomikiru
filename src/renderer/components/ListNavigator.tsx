@@ -331,6 +331,19 @@ type SearchInputProps = {
      * @default true
      */
     autoFocus?: boolean;
+    /**
+     * Wait this many milliseconds after mount before focusing when {@link SearchInputProps.autoFocus}
+     * is true. Overlay search uses it so focus lands after the host sets `data-state="open"`
+     * (visibility) and after FocusLock's mount effect, which otherwise steals the caret.
+     */
+    autoFocusDelayMs?: number;
+    /**
+     * Uncontrolled seed for the field (e.g. overlay search prefilled from a title).
+     * Also shows the clear button when non-empty. Pair with
+     * {@link ListNavigatorProps.persistFilterOnItemsChange} so the items-change
+     * reset does not wipe the seeded value.
+     */
+    defaultValue?: string;
 } & (
     | {
           onChange: (e: React.ChangeEvent<HTMLInputElement>) => string;
@@ -355,11 +368,13 @@ const SearchInputComponent: React.FC<SearchInputProps> = ({
     onChange,
     runOriginalOnChange = false,
     autoFocus = true,
+    autoFocusDelayMs,
+    defaultValue,
 }) => {
     const { t } = useTranslation("common");
     const resolvedPlaceholder = placeholder ?? t("list.typeToSearch");
     const { inputRef, filter, handleFilterChange, handleKeyDown, setFocused } = useListNavigator();
-    const [hasValue, setHasValue] = useState(false);
+    const [hasValue, setHasValue] = useState(() => Boolean(defaultValue));
 
     usePageSearchFocus(inputRef, {
         id: pageSearch?.id ?? "",
@@ -369,8 +384,15 @@ const SearchInputComponent: React.FC<SearchInputProps> = ({
 
     useEffect(() => {
         if (!autoFocus) return;
-        inputRef.current?.focus();
-    }, [autoFocus, inputRef]);
+        if (!autoFocusDelayMs) {
+            inputRef.current?.focus();
+            return;
+        }
+        const id = window.setTimeout(() => {
+            inputRef.current?.focus();
+        }, autoFocusDelayMs);
+        return () => window.clearTimeout(id);
+    }, [autoFocus, autoFocusDelayMs, inputRef]);
 
     /* The input is uncontrolled: the provider (and custom `onChange` handlers) reset
      * `input.value` directly. Re-read the DOM value whenever the filter settles so the
@@ -380,12 +402,45 @@ const SearchInputComponent: React.FC<SearchInputProps> = ({
     }, [filter, inputRef]);
 
     /**
+     * Runs a custom {@link SearchInputProps.onChange} then the list filter, matching
+     * the input's onChange path so clear and typing stay in sync (remote-search
+     * parents see the empty value).
+     */
+    const applyChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+        if (onChange) {
+            const val = onChange(e);
+            if (val === undefined && runOriginalOnChange) {
+                throw new Error("onChange returned undefined but runOriginalOnChange is true");
+            }
+            // need to `typeof val === "string"` because empty string is valid
+            if (runOriginalOnChange && typeof val === "string") {
+                handleFilterChange(val);
+            } else if (typeof val === "string") {
+                handleFilterChange(e, true);
+            }
+            if (val === "") {
+                e.target.value = "";
+            }
+        } else {
+            handleFilterChange(e);
+        }
+        setHasValue(Boolean(e.target.value));
+    };
+
+    /**
      * Clears the uncontrolled input and the list filter, then focuses the field.
+     * Uses the same change path as typing so a parent onChange sees the empty value.
      */
     const handleClear = () => {
-        if (inputRef.current) {
-            inputRef.current.value = "";
-            inputRef.current.focus();
+        const input = inputRef.current;
+        if (input) {
+            input.value = "";
+            input.focus();
+            applyChange({
+                target: input,
+                currentTarget: input,
+            } as React.ChangeEvent<HTMLInputElement>);
+            return;
         }
         handleFilterChange("");
         setHasValue(false);
@@ -398,29 +453,11 @@ const SearchInputComponent: React.FC<SearchInputProps> = ({
                 ref={inputRef}
                 className={className}
                 placeholder={resolvedPlaceholder}
+                defaultValue={defaultValue}
                 spellCheck="false"
                 onKeyDown={handleKeyDown}
                 onBlur={() => setFocused(-1)}
-                onChange={(e) => {
-                    if (onChange) {
-                        const val = onChange(e);
-                        if (val === undefined && runOriginalOnChange) {
-                            throw new Error("onChange returned undefined but runOriginalOnChange is true");
-                        }
-                        // need to `typeof val === "string"` because empty string is valid
-                        if (runOriginalOnChange && typeof val === "string") {
-                            handleFilterChange(val);
-                        } else if (typeof val === "string") {
-                            handleFilterChange(e, true);
-                        }
-                        if (val === "") {
-                            e.target.value = "";
-                        }
-                    } else {
-                        handleFilterChange(e);
-                    }
-                    setHasValue(Boolean(e.target.value));
-                }}
+                onChange={applyChange}
                 onContextMenu={(e) => {
                     e.preventDefault();
                     e.stopPropagation();

@@ -156,6 +156,10 @@
             padding: 10px;
             box-shadow: inset 0 -2px 0 0 var(--divider-color);
             font-size: 1.2em;
+
+            .search-input-wrapper {
+                flex: 1 1 auto;
+            }
         }
         .results {
             height: 70vh;
@@ -177,7 +181,7 @@
                 li {
                     list-style: none;
                     margin: 2px;
-                    button {
+                    a {
                         padding: 10px;
                         height: 150px;
                         width: 100%;
@@ -231,6 +235,9 @@
                                 }
                             }
                         }
+                    }
+                    &[data-focused="true"] a {
+                        background: var(--btn-color-hover);
                     }
                 }
             }
