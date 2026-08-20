@@ -1257,42 +1257,34 @@ html{
                 }
             }
             #EPubReader {
-                // for .txt and .xhtml
-                &:not(.fake) {
-                    .readerSideList {
-                        .location-cont {
-                            li {
-                                // --level-top: 0;
-                                // font-size: calc(1rem + calc(calc(var(--level-top) / 3) * 1em));
-                                a {
-                                    grid-template-columns: auto;
+                .readerSideList {
+                    .location-cont {
+                        li {
+                            a {
+                                grid-template-columns: auto;
 
-                                    &::before {
-                                        display: none;
-                                    }
+                                &::before {
+                                    display: none;
                                 }
-                                // &.collapsed {
-                                //     display: none;
-                                // }
-                                &.collapsible {
+                            }
+                            &.collapsible {
+                                &::before {
+                                    content: "▼";
+                                    display: inline-block;
+                                    transform: rotate(0);
+                                    height: 100%;
+                                    aspect-ratio: 1;
+                                    margin-top: 0.2em;
+                                }
+                                &.collapsed {
+                                    display: flex;
+                                    align-items: center;
                                     &::before {
-                                        content: "▼";
-                                        display: inline-block;
-                                        transform: rotate(0);
-                                        height: 100%;
-                                        aspect-ratio: 1;
-                                        margin-top: 0.2em;
+                                        transform: rotate(-90deg);
+                                        margin-top: 0;
                                     }
-                                    &.collapsed {
-                                        display: flex;
-                                        align-items: center;
-                                        &::before {
-                                            transform: rotate(-90deg);
-                                            margin-top: 0;
-                                        }
-                                        & + ol {
-                                            display: none;
-                                        }
+                                    & + ol {
+                                        display: none;
                                     }
                                 }
                             }

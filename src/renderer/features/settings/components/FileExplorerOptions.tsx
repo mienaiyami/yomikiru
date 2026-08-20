@@ -45,7 +45,7 @@ const FileExplorerOptions = (): ReactElement => {
                 <li>
                     <div className="desc">
                         {t("fileExplorer.epubDescBefore")}
-                        <code>.epub</code>, <code>.txt</code>, <code>.html/.xhtml</code>
+                        <code>.epub</code>
                         {t("fileExplorer.epubDescAfter")}
                     </div>
                     <div className="main row">

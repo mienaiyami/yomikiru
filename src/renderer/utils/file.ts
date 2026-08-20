@@ -40,8 +40,11 @@ export const formatUtils = {
             return !!str && formatUtils.image.list.includes(window.path.extname(str).toLowerCase());
         },
     },
+    /**
+     * Single-file content the Locations browser and drop handler treat as openable.
+     */
     files: {
-        list: [".zip", ".cbz", ".7z", ".cb7", ".rar", ".cbr", ".pdf", ".epub", ".xhtml", ".html", ".txt"],
+        list: [".zip", ".cbz", ".7z", ".cb7", ".rar", ".cbr", ".pdf", ".epub"],
         test: (str: string): boolean => {
             return !!str && formatUtils.files.list.includes(window.path.extname(str).toLowerCase());
         },
@@ -68,8 +71,11 @@ export const formatUtils = {
             return !!str && formatUtils.pdf.list.includes(window.path.extname(str).toLowerCase());
         },
     },
+    /**
+     * Standalone book files the book reader can open.
+     */
     book: {
-        list: [".epub", ".xhtml", ".html", ".txt"],
+        list: [".epub"],
         test: (str: string): boolean => {
             return !!str && formatUtils.book.list.includes(window.path.extname(str).toLowerCase());
         },

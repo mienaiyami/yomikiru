@@ -120,11 +120,6 @@
             align-self: center;
         }
     }
-    &.hideTextFileBadge {
-        .nonFolder[data-type-text="true"] {
-            display: none;
-        }
-    }
     &.hidePageCountInSideList {
         .pageNum {
             display: none;

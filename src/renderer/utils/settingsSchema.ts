@@ -127,8 +127,6 @@ const settingSchema = z
 
         /** Show page count badge on chapter rows in the manga reader side-list. */
         showPageCountInSideList: z.boolean(),
-        /** Show the "EPUB" type badge on book items in classic lists. */
-        showTextFileBadge: z.boolean(),
 
         readerSettings: mangaReaderSettingsSchema,
         epubReaderSettings: bookReaderSettingsSchema,
@@ -176,7 +174,6 @@ const settingSchema = z
         syncThemes: true,
         confirmDeleteItem: true,
         showPageCountInSideList: true,
-        showTextFileBadge: true,
         readerSettings: defaultMangaReaderSettings,
         epubReaderSettings: defaultBookReaderSettings,
         mangaReaderPresetId: USER_PRESET_MANGA_ID,

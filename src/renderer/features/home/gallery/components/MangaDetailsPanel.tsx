@@ -85,9 +85,9 @@ type ChapterData = {
     pages: number;
 };
 
-/** Packed archives stay listed (pages not scanned); empty image folders are omitted. */
+/** Single-file manga chapters stay listed (pages not scanned); empty image folders are omitted. */
 const isListableMangaChapterChild = (chapter: { name: string; pages: number }): boolean => {
-    if (formatUtils.files.test(chapter.name)) return true;
+    if (formatUtils.mangaFile.test(chapter.name)) return true;
     return chapter.pages > 0;
 };
 
@@ -182,7 +182,7 @@ const MangaDetailsPanel = ({
                                 if (stat.isFile && formatUtils.image.test(fileName)) {
                                     return;
                                 }
-                                if (stat.isDir || (stat.isFile && formatUtils.files.test(fileName))) {
+                                if (stat.isDir || (stat.isFile && formatUtils.mangaFile.test(fileName))) {
                                     const chapter = {
                                         name: fileName,
                                         link: filePath,
@@ -382,7 +382,7 @@ const MangaDetailsPanel = ({
                     <span className="chapter-name">{formatUtils.files.getName(chapter.name)}</span>
 
                     <div className="chapter-meta">
-                        {formatUtils.files.test(chapter.name) ? (
+                        {formatUtils.mangaFile.test(chapter.name) ? (
                             <code className="file-ext">{formatUtils.files.getExt(chapter.name)}</code>
                         ) : (
                             <span className="page-count">{chapter.pages}</span>

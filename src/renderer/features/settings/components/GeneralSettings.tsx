@@ -463,20 +463,6 @@ const GeneralSettings: React.FC = () => {
                         labelAfter={t("styleSettings.showPageCountInSideList")}
                     />
                 </div>
-                <div className="toggleItem" id="settings-showTextFileBadge">
-                    <InputCheckbox
-                        checked={appSettings.showTextFileBadge}
-                        className="noBG"
-                        onChange={(e) => {
-                            dispatch(
-                                setAppSettings({
-                                    showTextFileBadge: e.currentTarget.checked,
-                                }),
-                            );
-                        }}
-                        labelAfter={t("styleSettings.showTextFileBadge")}
-                    />
-                </div>
             </div>
             <DbBackupSettings />
             <div className="settingItem2 dangerZone" id="settings-reset">

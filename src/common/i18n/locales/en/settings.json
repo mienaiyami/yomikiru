@@ -109,8 +109,7 @@
         "moreInfoOnHoverDesc": "Show more info such as \"date\", \"total pages\", \"last page number\", \"path\" when mouse over items in bookmark / history tab.",
         "readerSettingsCheckbox": "Reader Settings Checkbox",
         "readerSettingsCheckboxDesc": "Show checkbox instead of toggle in reader settings.",
-        "showPageCountInSideList": "Show Page Count in Side-List",
-        "showTextFileBadge": "Show text files badge in Side-List"
+        "showPageCountInSideList": "Show Page Count in Side-List"
     },
     "dbBackup": {
         "title": "Library Database Backup",
@@ -248,11 +247,11 @@
         "mangaDescBefore": "For folders, ",
         "mangaDescAfter": " (Opened in Manga/Image Reader)",
         "epubDescBefore": "For ",
-        "epubDescAfter": " (Opened in Epub/Text Reader)",
+        "epubDescAfter": " (Opened in EPUB Reader)",
         "addedManga": "Explorer option added successfully for manga/image files",
         "removedManga": "Explorer option removed successfully for manga/image files",
-        "addedEpub": "Explorer option added successfully for epub/text files",
-        "removedEpub": "Explorer option removed successfully for epub/text files"
+        "addedEpub": "Explorer option added successfully for EPUB files",
+        "removedEpub": "Explorer option removed successfully for EPUB files"
     },
     "anilist": {
         "title": "AniList",

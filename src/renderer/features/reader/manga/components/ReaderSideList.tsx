@@ -246,7 +246,7 @@ const ReaderSideList = memo(
                             } catch (err) {
                                 log.error(`readdir failed for "${filePath}"`, err);
                             }
-                        } else if (formatUtils.files.test(filePath)) {
+                        } else if (formatUtils.mangaFile.test(filePath)) {
                             return {
                                 name: fileName,
                                 pages: 0,
@@ -592,8 +592,8 @@ const ReaderSideList = memo(
         return (
             <div
                 className={`readerSideList listCont ${isListOpen ? "open" : ""} ${
-                    !appSettings.showTextFileBadge ? "hideTextFileBadge" : ""
-                } ${!appSettings.showPageCountInSideList ? "hidePageCountInSideList" : ""}`}
+                    !appSettings.showPageCountInSideList ? "hidePageCountInSideList" : ""
+                }`}
                 onMouseEnter={handleListMouseEnter}
                 onMouseLeave={handleListMouseLeave}
                 onFocus={handleListFocus}

@@ -348,11 +348,6 @@ export const SETTINGS_TARGETS_STATIC: readonly SettingsTarget[] = [
         "#settings-showPageCountInSideList",
         "styleSettings.showPageCountInSideList",
     ),
-    styleSetting(
-        "setting:show-text-file-badge",
-        "#settings-showTextFileBadge",
-        "styleSettings.showTextFileBadge",
-    ),
     setting("setting:reset", "#settings-reset", "reset.title", {
         keywords: ["danger", "wipe"],
         contentPath: "reset",

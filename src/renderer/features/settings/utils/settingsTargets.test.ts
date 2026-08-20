@@ -121,6 +121,10 @@ describe("settingsTargets", () => {
         );
         expect(getSettingsTarget("setting:style")?.contentPath).toBeUndefined();
     });
+
+    it("does not keep the removed manga side-list book-file badge target", () => {
+        expect(getSettingsTarget("setting:show-text-file-badge")).toBeUndefined();
+    });
 });
 
 describe("collectI18nStringLeaves", () => {

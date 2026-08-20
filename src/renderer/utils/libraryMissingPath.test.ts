@@ -135,6 +135,25 @@ describe("libraryMissingPath", () => {
             });
             await expect(pickFirstMangaChapterUnderRoot(root)).resolves.toBeNull();
         });
+
+        /**
+         * A book file next to chapter folders is not a readable manga chapter.
+         */
+        it("skips EPUB files sitting beside manga chapters", async () => {
+            const root = path.join("library", "series");
+            const epub = path.join(root, "bonus.epub");
+            const ch01 = path.join(root, "ch01");
+            stubFs({
+                existsSync: (p: string) => [root, epub, ch01].includes(p),
+                isDir: (p: string) => p === root || p === ch01,
+                readdir: async (dir: string) => {
+                    if (dir === root) return ["bonus.epub", "ch01"];
+                    if (dir === ch01) return ["page.png"];
+                    return [];
+                },
+            });
+            await expect(pickFirstMangaChapterUnderRoot(root)).resolves.toBe(ch01);
+        });
     });
 
     describe("mangaPageForMissingKind", () => {

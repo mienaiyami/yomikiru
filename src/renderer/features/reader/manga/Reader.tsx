@@ -1107,7 +1107,7 @@ const Reader: React.FC = () => {
                             prevNextChapter.prev,
                             formatUtils.files.getExt(prevNextChapter.prev),
                         )}
-                        {formatUtils.files.test(prevNextChapter.prev) && (
+                        {formatUtils.mangaFile.test(prevNextChapter.prev) && (
                             <code>{formatUtils.files.getExt(prevNextChapter.prev)}</code>
                         )}
                     </span>
@@ -1116,7 +1116,7 @@ const Reader: React.FC = () => {
                     <span className="a">{t("chapterNav.current")}</span>
                     <span className="b">
                         {window.path.basename(mangaChapterName || "")}
-                        {formatUtils.files.test(mangaChapterName || "") && (
+                        {formatUtils.mangaFile.test(mangaChapterName || "") && (
                             <code>{formatUtils.files.getExt(mangaChapterName || "")}</code>
                         )}
                     </span>
@@ -1145,7 +1145,7 @@ const Reader: React.FC = () => {
                             prevNextChapter.next,
                             formatUtils.files.getExt(prevNextChapter.next),
                         )}
-                        {formatUtils.files.test(prevNextChapter.next) && (
+                        {formatUtils.mangaFile.test(prevNextChapter.next) && (
                             <code>{formatUtils.files.getExt(prevNextChapter.next)}</code>
                         )}
                     </span>

@@ -75,10 +75,8 @@ const ReaderSideListItem = memo(
                 }}
             >
                 <span className="text">{formatUtils.files.getName(name)}</span>
-                {formatUtils.files.test(name) ? (
-                    <code className="nonFolder" data-type-text={formatUtils.book.test(name)}>
-                        {formatUtils.files.getExt(name)}
-                    </code>
+                {formatUtils.mangaFile.test(name) ? (
+                    <code className="nonFolder">{formatUtils.files.getExt(name)}</code>
                 ) : (
                     <span className="pageNum" title={t("sideList.totalPages")}>
                         {pages}

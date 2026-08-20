@@ -284,7 +284,7 @@ const BookmarkHistoryListItem: React.FC<{
                         </span>
                         &nbsp;&nbsp;&nbsp;
                         <span className="page">
-                            {formatUtils.files.test(
+                            {formatUtils.mangaFile.test(
                                 props.bookmark?.chapterName || libraryItem.progress?.chapterName || "~",
                             ) && (
                                 <code className="nonFolder">

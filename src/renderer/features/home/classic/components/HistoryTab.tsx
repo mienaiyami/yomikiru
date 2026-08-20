@@ -77,7 +77,7 @@ const HistoryTab: React.FC = () => {
         const extra =
             item.type === "manga"
                 ? `${
-                      formatUtils.files.test(item.progress?.chapterName || "")
+                      formatUtils.mangaFile.test(item.progress?.chapterName || "")
                           ? window.path.extname(item.progress?.chapterName || "")
                           : ""
                   }manga|manhua|manhwa|webtoon|webcomic|comic`

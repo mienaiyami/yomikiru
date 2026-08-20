@@ -119,7 +119,7 @@ const isReadableMangaChapterPath = async (chapterPath: string): Promise<boolean>
     if (!window.fs.existsSync(chapterPath)) return false;
     const base = window.path.basename(chapterPath);
     if (!window.fs.isDir(chapterPath)) {
-        return formatUtils.files.test(base) || formatUtils.mangaFile.test(base);
+        return formatUtils.mangaFile.test(base);
     }
     const kids = await window.fs.readdir(chapterPath);
     return kids.some((file) => formatUtils.image.test(file));
