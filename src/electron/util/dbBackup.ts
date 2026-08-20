@@ -8,11 +8,12 @@ import type {
     DbBackupStatus,
 } from "@common/types/ipc";
 import { DB_PATH } from "@electron/db";
+import { hasLibraryItemsTable, listPendingDrizzleMigrations } from "@electron/db/migrations";
 import { mainT } from "@electron/i18n/mainI18n";
 import { createMainLogger } from "@electron/util/logger";
 import { MainSettings } from "@electron/util/mainSettings";
 import Database from "better-sqlite3";
-import { app, dialog, powerMonitor } from "electron";
+import { app, dialog, powerMonitor, shell } from "electron";
 
 const logger = createMainLogger("dbBackup");
 
@@ -21,6 +22,43 @@ const DUE_CHECK_MS = 60 * 60 * 1000;
 
 /** Matches published library DB backup files: `data-<unixMs>.db`. */
 export const BACKUP_NAME_RE = /^data-(\d+)\.db$/;
+
+/**
+ * Outcome of {@link createBackup}: a published `data-<unixMs>.db`, or why none was written.
+ * `inProgress` / `missingDb` are skips; `failed` is an I/O or backup() error.
+ */
+export type CreateBackupResult =
+    | { ok: true; fileName: string }
+    | { ok: false; reason: "inProgress" | "missingDb" | "failed" };
+
+/** Options for {@link createBackup}. */
+export type CreateBackupOptions = {
+    /**
+     * When false, skip {@link pruneBackups} after publish.
+     * Pre-migrate snapshots use this so `keepCount` does not drop older copies at upgrade time.
+     */
+    prune?: boolean;
+};
+
+/** {@link createBackupIfDue} when the interval has not elapsed (or backups are disabled). */
+export type CreateBackupIfDueResult = CreateBackupResult | { ok: false; reason: "notDue" };
+
+/**
+ * Cold-start backup result for the pre-migrate orchestrator to reuse a snapshot from this launch.
+ */
+export type ColdStartBackupResult = {
+    snapshotted: boolean;
+    fileName: string | null;
+};
+
+/**
+ * Whether startup should run `migrate()`, plus tags/fileName for logs and migrate-failure recovery.
+ */
+export type PreMigrateBackupOutcome = {
+    proceed: boolean;
+    pendingTags: string[];
+    snapshotFileName: string | null;
+};
 
 type RestorePending = {
     source: string;
@@ -165,21 +203,21 @@ const runIntegrityCheck = (dbFile: string): IntegrityResult => {
 /**
  * Writes a consistent snapshot via better-sqlite3 online backup into `userData/backups/`.
  * Uses the live connection when set; otherwise opens a short-lived handle on {@link DB_PATH}.
- *
- * @returns whether a new backup file was published
+ * Success still bumps `dbBackup.lastSuccessAt` (including pre-migrate snapshots).
  */
-export const createBackup = async (): Promise<boolean> => {
+export const createBackup = async (options?: CreateBackupOptions): Promise<CreateBackupResult> => {
+    const shouldPrune = options?.prune !== false;
     if (isBackingUp) {
         logger.warn("backup skipped; already in progress");
-        return false;
+        return { ok: false, reason: "inProgress" };
     }
     if (!fs.existsSync(DB_PATH)) {
         logger.log("backup skipped; data.db missing");
-        return false;
+        return { ok: false, reason: "missingDb" };
     }
 
     isBackingUp = true;
-    const work = (async () => {
+    const work = (async (): Promise<CreateBackupResult> => {
         const dir = ensureBackupsDir();
         const ms = Date.now();
         const finalName = `data-${ms}.db`;
@@ -195,12 +233,12 @@ export const createBackup = async (): Promise<boolean> => {
             const db = source ?? owned;
             if (!db) {
                 logger.error("backup aborted; no sqlite handle");
-                return false;
+                return { ok: false, reason: "failed" };
             }
             if (fs.existsSync(tmpPath)) fs.unlinkSync(tmpPath);
             await db.backup(tmpPath);
             fs.renameSync(tmpPath, finalPath);
-            pruneBackups();
+            if (shouldPrune) pruneBackups();
             await MainSettings.updateSettings({
                 dbBackup: {
                     ...MainSettings.settings.dbBackup,
@@ -208,7 +246,7 @@ export const createBackup = async (): Promise<boolean> => {
                 },
             });
             logger.log("backup published", { finalName });
-            return true;
+            return { ok: true, fileName: finalName };
         } catch (err) {
             logger.error("backup failed", err);
             try {
@@ -216,7 +254,7 @@ export const createBackup = async (): Promise<boolean> => {
             } catch {
                 /* ignore */
             }
-            return false;
+            return { ok: false, reason: "failed" };
         } finally {
             owned?.close();
         }
@@ -232,9 +270,114 @@ export const createBackup = async (): Promise<boolean> => {
 };
 
 /** Cold-start / resume / timer entry: backup only when due and enabled. */
-export const createBackupIfDue = async (): Promise<boolean> => {
-    if (!isBackupDue()) return false;
+export const createBackupIfDue = async (): Promise<CreateBackupIfDueResult> => {
+    if (!isBackupDue()) return { ok: false, reason: "notDue" };
     return createBackup();
+};
+
+/**
+ * If Drizzle has pending journal files and `library_items` exists, snapshot before normalize/migrate.
+ * Ignores `dbBackup.enabled`. Reuses {@link ColdStartBackupResult} from this launch when `snapshotted`.
+ *
+ * @returns `proceed: false` only when the user chooses Quit after a snapshot failure
+ */
+export const backupIfPendingMigrations = async (
+    sqlite: Database.Database,
+    cold: ColdStartBackupResult,
+): Promise<PreMigrateBackupOutcome> => {
+    let pendingTags: string[];
+    try {
+        pendingTags = listPendingDrizzleMigrations(sqlite).map((row) => row.tag);
+    } catch (err) {
+        logger.error("could not list pending drizzle migrations; skipping pre-migrate backup", err);
+        return { proceed: true, pendingTags: [], snapshotFileName: cold.fileName };
+    }
+
+    if (!hasLibraryItemsTable(sqlite)) {
+        logger.log("pre-migrate backup skipped", { reason: "first-run", tags: pendingTags });
+        return { proceed: true, pendingTags, snapshotFileName: cold.fileName };
+    }
+
+    if (pendingTags.length === 0) {
+        return { proceed: true, pendingTags: [], snapshotFileName: cold.fileName };
+    }
+
+    logger.log("pending drizzle migrations; taking pre-migrate backup", { tags: pendingTags });
+
+    if (cold.snapshotted && cold.fileName) {
+        logger.log("reusing cold-start backup from this launch", {
+            tags: pendingTags,
+            fileName: cold.fileName,
+        });
+        return { proceed: true, pendingTags, snapshotFileName: cold.fileName };
+    }
+
+    const result = await createBackup({ prune: false });
+    if (result.ok) {
+        logger.log("pre-migrate backup published", { tags: pendingTags, fileName: result.fileName });
+        return { proceed: true, pendingTags, snapshotFileName: result.fileName };
+    }
+
+    logger.error("pre-migrate backup failed", { tags: pendingTags, reason: result.reason });
+    const choice = await dialog.showMessageBox({
+        type: "warning",
+        title: mainT("dbBackup.preMigrateBackupFailedTitle", { ns: "electron" }),
+        message: mainT("dbBackup.preMigrateBackupFailedMessage", { ns: "electron" }),
+        buttons: [
+            mainT("dbBackup.continueWithoutBackup", { ns: "electron" }),
+            mainT("dbBackup.quit", { ns: "electron" }),
+        ],
+        defaultId: 1,
+        cancelId: 1,
+    });
+    if (choice.response === 0) {
+        logger.warn("continuing schema migrate without pre-migrate backup", { tags: pendingTags });
+        return { proceed: true, pendingTags, snapshotFileName: null };
+    }
+    return { proceed: false, pendingTags, snapshotFileName: null };
+};
+
+/**
+ * Dialog after `migrate()` throws: restore the pre-migrate snapshot, open `backups/`, or quit.
+ * Restore uses {@link queueRestoreAndRelaunch} (relaunch + quit). Other choices do not quit; the caller should.
+ */
+export const handleFailedSchemaMigrate = async (snapshotFileName: string | null): Promise<void> => {
+    const hasSnapshot = Boolean(snapshotFileName && BACKUP_NAME_RE.test(snapshotFileName));
+    const buttons = hasSnapshot
+        ? [
+              mainT("dbBackup.restoreSnapshot", { ns: "electron" }),
+              mainT("dbBackup.openBackupsFolder", { ns: "electron" }),
+              mainT("dbBackup.quit", { ns: "electron" }),
+          ]
+        : [
+              mainT("dbBackup.openBackupsFolder", { ns: "electron" }),
+              mainT("dbBackup.quit", { ns: "electron" }),
+          ];
+
+    const res = await dialog.showMessageBox({
+        type: "error",
+        title: mainT("dbBackup.preMigrateMigrateFailedTitle", { ns: "electron" }),
+        message: snapshotFileName
+            ? mainT("dbBackup.preMigrateMigrateFailedMessage", {
+                  ns: "electron",
+                  fileName: snapshotFileName,
+              })
+            : mainT("dbBackup.preMigrateMigrateFailedMessageNoSnapshot", { ns: "electron" }),
+        buttons,
+        defaultId: 0,
+        cancelId: buttons.length - 1,
+    });
+
+    if (hasSnapshot && snapshotFileName && res.response === 0) {
+        await queueRestoreAndRelaunch(snapshotFileName);
+        return;
+    }
+    const openIdx = hasSnapshot ? 1 : 0;
+    if (res.response === openIdx) {
+        const dir = getBackupsDir();
+        fs.mkdirSync(dir, { recursive: true });
+        await shell.openPath(dir);
+    }
 };
 
 /**

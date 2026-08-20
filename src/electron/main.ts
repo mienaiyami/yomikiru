@@ -23,7 +23,7 @@ import { registerExplorerHandlers } from "./ipc/explorer";
 import { registerFSHandlers } from "./ipc/fs";
 import { registerUpdateHandlers } from "./ipc/update";
 import handleSquirrelEvent from "./util/handleSquirrelEvent";
-import { setLiveSqlite, stopScheduler } from "./util/dbBackup";
+import { backupIfPendingMigrations, handleFailedSchemaMigrate, setLiveSqlite, stopScheduler } from "./util/dbBackup";
 import { MainSettings } from "./util/mainSettings";
 import { checkForJSONMigration } from "./util/migrate";
 import { TrayManager } from "./util/tray";
@@ -149,10 +149,23 @@ app.on("ready", async () => {
         rebuildApplicationMenu();
         WindowManager.setupWindowsTasks();
 
-        await runDbBackupStartupBeforeOpen();
+        const cold = await runDbBackupStartupBeforeOpen();
 
         db = new DatabaseService();
-        await db.initialize();
+        setLiveSqlite(db.sqliteDb);
+        const pre = await backupIfPendingMigrations(db.sqliteDb, cold);
+        if (!pre.proceed) {
+            app.quit();
+            return;
+        }
+        try {
+            await db.initialize(pre.pendingTags);
+        } catch (err) {
+            logger.error("schema migrate failed", { tags: pre.pendingTags }, err);
+            await handleFailedSchemaMigrate(pre.snapshotFileName);
+            app.quit();
+            return;
+        }
         await checkForJSONMigration(db);
 
         setupDatabaseHandlers(db);

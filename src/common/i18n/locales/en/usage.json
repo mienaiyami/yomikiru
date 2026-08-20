@@ -163,6 +163,6 @@
     },
     "dbBackup": {
         "title": "Library Database Backup:",
-        "body": "In <link><bold>Settings</bold></link>, enable automatic backups of the library database (bookmarks, history, reading progress). Choose how often (hours), how many newest files to keep, use <bold>Backup Now</bold>, <bold>Show backups</bold> to restore a snapshot or <bold>Show in File Explorer</bold> to highlight it, or <bold>Import & Restore</bold> a <code>.db</code> file from anywhere. Files live under the app data <code>backups</code> folder. Restore restarts the app and replaces <code>data.db</code>."
+        "body": "In <link><bold>Settings</bold></link>, enable automatic backups of the library database (bookmarks, history, reading progress). Choose how often (hours), how many newest files to keep, use <bold>Backup Now</bold>, <bold>Show backups</bold> to restore a snapshot or <bold>Show in File Explorer</bold> to highlight it, or <bold>Import & Restore</bold> a <code>.db</code> file from anywhere. Files live under the app data <code>backups</code> folder. Restore restarts the app and replaces <code>data.db</code>. Before a schema update, the app also snapshots the library even if automatic backups are off (that copy counts as the last successful backup). If that snapshot fails you can quit or continue without a backup. If the schema update itself fails, you can restore that snapshot or open the backups folder."
     }
 }

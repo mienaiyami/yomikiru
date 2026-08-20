@@ -19,6 +19,7 @@
 # unreleased
 
 - feat: Add Tracking (AniList search) uses the same list shortcuts as other search bars: move through results, Enter to link the focused title, Escape to close. The field still searches AniList remotely (not a local filter).
+- feat: before a library schema update, the app copies `data.db` into `backups/` even if automatic backups are off. If that copy fails you can quit or continue without a backup; if the update itself fails you can restore that snapshot or open the backups folder.
 
 - feat: books are EPUB-only. Standalone `.html`, `.xhtml`, and `.txt` files are no longer opened, listed as chapters, or registered in Windows Explorer "Open with". Remove still clears leftover associations from older builds. Existing library rows for those files are kept until you remove them. Manga chapter lists (reader side-list, gallery details, locate-first-chapter) no longer include EPUB files; the Style Settings text-file badge toggle is removed.
 - feat: library tags are a catalog you create, then assign to titles (several per item, with a colour). Edit tags from gallery details. Filter the grid by one tag (with the type filter). Names are unique ignoring case; deleting a tag unassigns it.

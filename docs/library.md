@@ -461,6 +461,12 @@ Adds `library_items.favouritedAt`, `note`, and `extra`, plus `item_trackers`, `l
 
 This is safe to re-run (idempotent) — it early-exits if the old columns are already absent.
 
+### Pre-migrate snapshot
+
+When `DatabaseService.initialize()` would apply new journal files and `library_items` already exists, startup copies `data.db` into `userData/backups/` **before** normalisation and `migrate()`. That copy uses the same `data-<unixMs>.db` helper as scheduled backups (`createBackup({ prune: false })`), even if automatic backups are off. A successful copy bumps `dbBackup.lastSuccessAt`.
+
+If the copy fails, a dialog offers **Continue without backup** or **Quit** (default). If `migrate()` itself throws, another dialog can restore that snapshot, open the backups folder, or quit — the main window is not created.
+
 ---
 
 ## Verify / Troubleshoot
@@ -500,6 +506,7 @@ On disk under `userData/backups/`:
 2. Skips if disabled, not due, already backing up, or `data.db` missing.
 3. Runs better-sqlite3 online `backup()` on the **live** app connection into `backups/data-<ms>.db.tmp`, then renames to `data-<ms>.db`, prunes to `dbBackup.keepCount`, bumps `lastSuccessAt`.
 4. Online backup transfers pages in batches (default ~100 pages per event-loop turn), so the main process **yields** between batches instead of freezing for the whole copy.
+5. A pending Drizzle journal file also triggers a snapshot at startup (see [Pre-migrate snapshot](#pre-migrate-snapshot)). That publish skips prune so older copies are not dropped at upgrade time; later Backup Now / scheduled publishes still prune.
 
 ```mermaid
 sequenceDiagram
@@ -517,7 +524,7 @@ sequenceDiagram
     Backup->>UI: mainSettings sync lastSuccessAt
 ```
 
-Cold start: if a backup is due, it runs **before** the main window is created (`runDbBackupStartupBeforeOpen`), which can delay first paint on a large DB.
+Cold start: if a backup is due, it runs **before** the long-lived DB opens (`runDbBackupStartupBeforeOpen`). If a schema update is also pending, a second blocking snapshot can run after the DB opens and before `migrate()`. Either can delay first paint on a large DB.
 
 ### UI and opening items during backup
 
@@ -535,6 +542,8 @@ Restore is not concurrent: queue pending → relaunch → swap **before** the lo
 | Case | Behavior |
 | --- | --- |
 | Second auto/manual backup while one runs | Skipped (`isBackingUp`) |
+| Pre-migrate snapshot fails | Dialog: Continue without backup, or Quit (default). Live DB unmodified if you quit |
+| Schema `migrate()` throws after a snapshot | Dialog: Restore snapshot, Open backups folder, or Quit. Main window is not created |
 | Quit during backup | `before-quit` awaits in-flight work, then closes SQLite |
 | Connection closed mid-backup | better-sqlite3 aborts pending backups |
 | Backup fails | Log; do not bump `lastSuccessAt`; remove tmp |

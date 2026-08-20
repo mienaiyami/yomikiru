@@ -224,8 +224,11 @@ sequenceDiagram
     participant Renderer
 
     OS->>Main: launch (app ready)
-    Main->>DB: checkForJSONMigration (offer legacy import)
+    Main->>Main: runDbBackupStartupBeforeOpen (restore + due backup)
+    Main->>DB: new DatabaseService
+    Main->>Main: backupIfPendingMigrations
     Main->>DB: db.initialize() (drizzle migrate + FK guard)
+    Main->>DB: checkForJSONMigration (offer legacy import)
     Main->>Main: registerIpcHandlers (DB, covers, FS, dialog, explorer, errors)
     Main->>WindowManager: createWindow()
     WindowManager->>Renderer: loadURL (HOME_WEBPACK_ENTRY)

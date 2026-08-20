@@ -1,4 +1,5 @@
 import {
+    type ColdStartBackupResult,
     applyPendingRestore,
     cleanTmpFiles,
     createBackup,
@@ -23,8 +24,8 @@ export const registerDbBackupHandlers = (db: DatabaseService): void => {
     ipc.handle("dbBackup:getStatus", () => getDbBackupStatus());
     ipc.handle("dbBackup:list", () => listBackups());
     ipc.handle("dbBackup:runNow", async () => {
-        const ok = await createBackup();
-        return { ok };
+        const result = await createBackup();
+        return { ok: result.ok };
     });
     ipc.handle("dbBackup:restore", async (_e, { fileName }) => queueRestoreAndRelaunch(fileName));
     ipc.handle("dbBackup:importAndRestore", async (_e, { absolutePath }) =>
@@ -37,9 +38,13 @@ export const registerDbBackupHandlers = (db: DatabaseService): void => {
 /**
  * Startup path before the long-lived DB opens: clear tmp, apply pending restore,
  * then cold-start backup if the interval elapsed.
+ *
+ * @returns whether a snapshot was published this launch, and its fileName for pre-migrate reuse
  */
-export const runDbBackupStartupBeforeOpen = async (): Promise<void> => {
+export const runDbBackupStartupBeforeOpen = async (): Promise<ColdStartBackupResult> => {
     cleanTmpFiles();
     await applyPendingRestore();
-    await createBackupIfDue();
+    const result = await createBackupIfDue();
+    if (result.ok) return { snapshotted: true, fileName: result.fileName };
+    return { snapshotted: false, fileName: null };
 };

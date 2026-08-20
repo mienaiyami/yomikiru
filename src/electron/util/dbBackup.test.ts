@@ -2,7 +2,7 @@ import fs from "node:fs";
 import path from "node:path";
 import { afterAll, afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
-const { tmpUserData, dbPath, showMessageBox, relaunch, quit, powerMonitorOn, powerMonitorOff, DatabaseMock } =
+const { tmpUserData, dbPath, showMessageBox, relaunch, quit, openPath, powerMonitorOn, powerMonitorOff, DatabaseMock } =
     vi.hoisted(() => {
         const fsHoisted = require("node:fs") as typeof import("node:fs");
         const osHoisted = require("node:os") as typeof import("node:os");
@@ -40,6 +40,7 @@ const { tmpUserData, dbPath, showMessageBox, relaunch, quit, powerMonitorOn, pow
             showMessageBox: vi.fn(async () => ({ response: 0 })),
             relaunch: vi.fn(),
             quit: vi.fn(),
+            openPath: vi.fn(async () => ""),
             powerMonitorOn: vi.fn(),
             powerMonitorOff: vi.fn(),
             DatabaseMock,
@@ -89,6 +90,9 @@ vi.mock("electron", () => ({
     dialog: {
         showMessageBox,
     },
+    shell: {
+        openPath,
+    },
     powerMonitor: {
         on: powerMonitorOn,
         off: powerMonitorOff,
@@ -118,6 +122,16 @@ vi.mock("@electron/db", () => ({
     DB_PATH: dbPath,
 }));
 
+const migrationsMock = vi.hoisted(() => ({
+    hasLibraryItemsTable: vi.fn(() => true),
+    listPendingDrizzleMigrations: vi.fn((): { tag: string; folderMillis: number; hash: string }[] => []),
+}));
+
+vi.mock("@electron/db/migrations", () => ({
+    hasLibraryItemsTable: (...args: unknown[]) => migrationsMock.hasLibraryItemsTable(...args),
+    listPendingDrizzleMigrations: (...args: unknown[]) => migrationsMock.listPendingDrizzleMigrations(...args),
+}));
+
 vi.mock("@electron/util/mainSettings", () => ({
     MainSettings: {
         get settings() {
@@ -139,11 +153,13 @@ vi.mock("@electron/util/mainSettings", () => ({
 import type Database from "better-sqlite3";
 import {
     applyPendingRestore,
+    backupIfPendingMigrations,
     cleanTmpFiles,
     createBackup,
     createBackupIfDue,
     getBackupsDir,
     getDbBackupStatus,
+    handleFailedSchemaMigrate,
     isBackupDue,
     listBackups,
     parseBackupFileName,
@@ -186,6 +202,11 @@ const resetWorkspace = (): void => {
     showMessageBox.mockClear();
     relaunch.mockClear();
     quit.mockClear();
+    openPath.mockClear();
+    migrationsMock.hasLibraryItemsTable.mockReset();
+    migrationsMock.hasLibraryItemsTable.mockReturnValue(true);
+    migrationsMock.listPendingDrizzleMigrations.mockReset();
+    migrationsMock.listPendingDrizzleMigrations.mockReturnValue([]);
     powerMonitorOn.mockClear();
     powerMonitorOff.mockClear();
 
@@ -314,8 +335,8 @@ describe("dbBackup", () => {
 
     describe("createBackup", () => {
         it("skips when data.db is missing and does not bump lastSuccessAt", async () => {
-            const ok = await createBackup();
-            expect(ok).toBe(false);
+            const result = await createBackup();
+            expect(result).toEqual({ ok: false, reason: "missingDb" });
             expect(mainSettingsState.state.dbBackup.lastSuccessAt).toBe(0);
             expect(listBackups()).toHaveLength(0);
         });
@@ -328,21 +349,34 @@ describe("dbBackup", () => {
             }
 
             const before = Date.now();
-            const ok = await createBackup();
+            const result = await createBackup();
             const after = Date.now();
 
-            expect(ok).toBe(true);
+            expect(result.ok).toBe(true);
             expect(listBackups()).toHaveLength(keep);
             const newest = listBackups()[0];
             expect(newest).toBeDefined();
             expect(newest!.createdAtMs).toBeGreaterThanOrEqual(before);
             expect(newest!.createdAtMs).toBeLessThanOrEqual(after);
+            expect(result).toEqual({ ok: true, fileName: newest!.fileName });
             expect(readMarker(path.join(backupsDir(), newest!.fileName))).toBe("live-v1");
             expect(mainSettingsState.state.dbBackup.lastSuccessAt).toBe(newest!.createdAtMs);
             expect(fs.existsSync(path.join(backupsDir(), "data-1000.db"))).toBe(false);
             expect(fs.readdirSync(backupsDir()).some((n) => n.endsWith(".tmp"))).toBe(false);
             /* live DB must remain readable and unchanged after a successful backup */
             expect(readMarker(dbPath)).toBe("live-v1");
+        });
+
+        it("skips prune when prune is false", async () => {
+            writeMarkerDb(dbPath, "live-v1");
+            writePublishedBackup(1000, "old");
+            const result = await createBackup({ prune: false });
+            expect(result.ok).toBe(true);
+            if (!result.ok) return;
+            expect(listBackups().map((item) => item.fileName)).toEqual(
+                expect.arrayContaining(["data-1000.db", result.fileName]),
+            );
+            expect(listBackups()).toHaveLength(2);
         });
 
         it("uses live sqlite handle when registered", async () => {
@@ -356,8 +390,10 @@ describe("dbBackup", () => {
             } as unknown as Database.Database;
             setLiveSqlite(live);
 
-            expect(await createBackup()).toBe(true);
+            const result = await createBackup();
+            expect(result.ok).toBe(true);
             const newest = listBackups()[0]!;
+            expect(result).toEqual({ ok: true, fileName: newest.fileName });
             expect(readMarker(path.join(backupsDir(), newest.fileName))).toBe("from-live");
             expect(DatabaseMock).not.toHaveBeenCalled();
         });
@@ -371,8 +407,8 @@ describe("dbBackup", () => {
             } as unknown as Database.Database;
             setLiveSqlite(failing);
 
-            const ok = await createBackup();
-            expect(ok).toBe(false);
+            const result = await createBackup();
+            expect(result).toEqual({ ok: false, reason: "failed" });
             expect(mainSettingsState.state.dbBackup.lastSuccessAt).toBe(0);
             expect(listBackups()).toHaveLength(0);
             expect(fs.existsSync(backupsDir()) ? fs.readdirSync(backupsDir()) : []).toEqual([]);
@@ -395,16 +431,17 @@ describe("dbBackup", () => {
             const first = createBackup();
             await vi.waitFor(() => expect(slow.backup).toHaveBeenCalled());
             const second = await createBackup();
-            expect(second).toBe(false);
+            expect(second).toEqual({ ok: false, reason: "inProgress" });
             release();
-            expect(await first).toBe(true);
+            const firstResult = await first;
+            expect(firstResult.ok).toBe(true);
         });
 
         it("createBackupIfDue no-ops when not due", async () => {
             writeMarkerDb(dbPath, "live");
             mainSettingsState.state.dbBackup.lastSuccessAt = Date.now();
             mainSettingsState.state.dbBackup.intervalHours = 168;
-            expect(await createBackupIfDue()).toBe(false);
+            expect(await createBackupIfDue()).toEqual({ ok: false, reason: "notDue" });
             expect(listBackups()).toHaveLength(0);
         });
 
@@ -412,8 +449,150 @@ describe("dbBackup", () => {
             writeMarkerDb(dbPath, "live");
             mainSettingsState.state.dbBackup.lastSuccessAt = 0;
             mainSettingsState.state.dbBackup.intervalHours = 1;
-            expect(await createBackupIfDue()).toBe(true);
+            const result = await createBackupIfDue();
+            expect(result.ok).toBe(true);
             expect(listBackups()).toHaveLength(1);
+        });
+    });
+
+    describe("backupIfPendingMigrations", () => {
+        const sqlite = {} as Database.Database;
+        const pendingRow = { tag: "0003_zippy_lethal_legion", folderMillis: 1, hash: "abc" };
+
+        it("skips backup when library_items is missing (first-run)", async () => {
+            writeMarkerDb(dbPath, "live");
+            migrationsMock.hasLibraryItemsTable.mockReturnValue(false);
+            migrationsMock.listPendingDrizzleMigrations.mockReturnValue([pendingRow]);
+
+            const outcome = await backupIfPendingMigrations(sqlite, {
+                snapshotted: false,
+                fileName: null,
+            });
+            expect(outcome).toEqual({
+                proceed: true,
+                pendingTags: [pendingRow.tag],
+                snapshotFileName: null,
+            });
+            expect(listBackups()).toHaveLength(0);
+            expect(showMessageBox).not.toHaveBeenCalled();
+        });
+
+        it("does not backup when nothing is pending", async () => {
+            writeMarkerDb(dbPath, "live");
+            const outcome = await backupIfPendingMigrations(sqlite, {
+                snapshotted: false,
+                fileName: null,
+            });
+            expect(outcome).toEqual({ proceed: true, pendingTags: [], snapshotFileName: null });
+            expect(listBackups()).toHaveLength(0);
+        });
+
+        it("publishes a snapshot when migrations are pending", async () => {
+            writeMarkerDb(dbPath, "live");
+            migrationsMock.listPendingDrizzleMigrations.mockReturnValue([pendingRow]);
+
+            const outcome = await backupIfPendingMigrations(sqlite, {
+                snapshotted: false,
+                fileName: null,
+            });
+            expect(outcome.proceed).toBe(true);
+            expect(outcome.pendingTags).toEqual([pendingRow.tag]);
+            expect(outcome.snapshotFileName).toMatch(/^data-\d+\.db$/);
+            expect(listBackups()).toHaveLength(1);
+            expect(showMessageBox).not.toHaveBeenCalled();
+        });
+
+        it("reuses a cold-start snapshot instead of publishing another", async () => {
+            writeMarkerDb(dbPath, "live");
+            writePublishedBackup(5000, "cold");
+            migrationsMock.listPendingDrizzleMigrations.mockReturnValue([pendingRow]);
+
+            const outcome = await backupIfPendingMigrations(sqlite, {
+                snapshotted: true,
+                fileName: "data-5000.db",
+            });
+            expect(outcome).toEqual({
+                proceed: true,
+                pendingTags: [pendingRow.tag],
+                snapshotFileName: "data-5000.db",
+            });
+            expect(listBackups()).toHaveLength(1);
+        });
+
+        it("Quit after a failed snapshot does not proceed", async () => {
+            writeMarkerDb(dbPath, "live");
+            migrationsMock.listPendingDrizzleMigrations.mockReturnValue([pendingRow]);
+            setLiveSqlite({
+                backup: async () => {
+                    throw new Error("backup boom");
+                },
+            } as unknown as Database.Database);
+            showMessageBox.mockResolvedValueOnce({ response: 1 });
+
+            const outcome = await backupIfPendingMigrations(sqlite, {
+                snapshotted: false,
+                fileName: null,
+            });
+            expect(outcome.proceed).toBe(false);
+            expect(outcome.snapshotFileName).toBeNull();
+            expect(showMessageBox).toHaveBeenCalled();
+        });
+
+        it("Continue without backup proceeds with a null snapshot", async () => {
+            writeMarkerDb(dbPath, "live");
+            migrationsMock.listPendingDrizzleMigrations.mockReturnValue([pendingRow]);
+            setLiveSqlite({
+                backup: async () => {
+                    throw new Error("backup boom");
+                },
+            } as unknown as Database.Database);
+            showMessageBox.mockResolvedValueOnce({ response: 0 });
+
+            const outcome = await backupIfPendingMigrations(sqlite, {
+                snapshotted: false,
+                fileName: null,
+            });
+            expect(outcome).toEqual({
+                proceed: true,
+                pendingTags: [pendingRow.tag],
+                snapshotFileName: null,
+            });
+        });
+
+        it("probe throw skips backup and still proceeds", async () => {
+            writeMarkerDb(dbPath, "live");
+            migrationsMock.listPendingDrizzleMigrations.mockImplementation(() => {
+                throw new Error("journal missing");
+            });
+
+            const outcome = await backupIfPendingMigrations(sqlite, {
+                snapshotted: false,
+                fileName: null,
+            });
+            expect(outcome).toEqual({ proceed: true, pendingTags: [], snapshotFileName: null });
+            expect(showMessageBox).not.toHaveBeenCalled();
+            expect(listBackups()).toHaveLength(0);
+        });
+    });
+
+    describe("handleFailedSchemaMigrate", () => {
+        it("Restore snapshot queues restore and relaunches", async () => {
+            writePublishedBackup(2000, "snap");
+            showMessageBox.mockResolvedValueOnce({ response: 0 });
+
+            await handleFailedSchemaMigrate("data-2000.db");
+            expect(fs.existsSync(pendingPath())).toBe(true);
+            expect(relaunch).toHaveBeenCalled();
+            expect(quit).toHaveBeenCalled();
+            expect(openPath).not.toHaveBeenCalled();
+        });
+
+        it("Open backups folder uses shell.openPath when there is no snapshot", async () => {
+            showMessageBox.mockResolvedValueOnce({ response: 0 });
+
+            await handleFailedSchemaMigrate(null);
+            expect(openPath).toHaveBeenCalledWith(backupsDir());
+            expect(relaunch).not.toHaveBeenCalled();
         });
     });
 

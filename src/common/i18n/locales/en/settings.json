@@ -113,7 +113,7 @@
     },
     "dbBackup": {
         "title": "Library Database Backup",
-        "desc": "Automatically backs up the library database (bookmarks, history, progress). Choose how many newest backups to keep after each backup.",
+        "desc": "Automatically backs up the library database (bookmarks, history, progress). Choose how many newest backups to keep after each backup. A schema update also snapshots the library even when automatic backups are off.",
         "enabled": "Enable automatic backups",
         "intervalLabel": "Backup interval",
         "hoursUnit": "hours",

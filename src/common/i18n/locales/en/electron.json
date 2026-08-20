@@ -24,7 +24,16 @@
         "restoreFailedTitle": "Database restore failed",
         "sourceMissing": "Backup file was not found:\n{{fileName}}\n\nThe current library was left unchanged.",
         "integrityFailed": "Backup failed integrity check:\n{{fileName}}\n\nReason: {{reason}}\n\nThe current library was left unchanged. Pick another backup from Settings.",
-        "stageFailed": "Could not replace the library database.\n\n{{error}}\n\nThe app will retry this restore on the next launch."
+        "stageFailed": "Could not replace the library database.\n\n{{error}}\n\nThe app will retry this restore on the next launch.",
+        "preMigrateBackupFailedTitle": "Could not back up before a schema update",
+        "preMigrateBackupFailedMessage": "The library database could not be copied before applying a schema update.\n\nQuit to leave the library unchanged, or continue without a backup (the update may not be reversible).",
+        "continueWithoutBackup": "Continue without backup",
+        "quit": "Quit",
+        "preMigrateMigrateFailedTitle": "Schema update failed",
+        "preMigrateMigrateFailedMessage": "The library schema update did not finish.\n\nSnapshot: {{fileName}}\n\nYou can restore that snapshot, open the backups folder, or quit. The app will not open until you try again.",
+        "preMigrateMigrateFailedMessageNoSnapshot": "The library schema update did not finish.\n\nYou can open the backups folder or quit. The app will not open until you try again.",
+        "restoreSnapshot": "Restore snapshot",
+        "openBackupsFolder": "Open backups folder"
     },
     "errors": {
         "reportIssueTitle": "Report Issue",

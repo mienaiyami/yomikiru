@@ -21,6 +21,7 @@ import { createMainLogger } from "../util/logger";
 const logger = createMainLogger("db");
 
 import { normalizeLegacyMangaDataBeforeMigration } from "./legacyNormalize";
+import { getMigrationsFolder } from "./migrations";
 import * as schema from "./schema";
 import { bookBookmarks, bookProgress, libraryItems, mangaBookmarks, mangaProgress } from "./schema";
 
@@ -73,7 +74,18 @@ export class DatabaseService {
         }
     }
 
-    async initialize(): Promise<void> {
+    /**
+     * Normalizes legacy manga rows, then applies pending Drizzle journal files.
+     *
+     * @param pendingTags journal tags the caller already detected (for apply/complete logs only;
+     *   empty on everyday launches). Does not re-read the journal.
+     * @throws Relays normalize or Drizzle `migrate()` failures after logging.
+     */
+    async initialize(pendingTags: string[] = []): Promise<void> {
+        if (pendingTags.length > 0) {
+            logger.log("applying drizzle migrations", { tags: pendingTags });
+        }
+
         try {
             normalizeLegacyMangaDataBeforeMigration(this.sqlite);
         } catch (e) {
@@ -99,9 +111,7 @@ export class DatabaseService {
 
         const runMigrate = async () => {
             await migrate(this._db, {
-                migrationsFolder: app.isPackaged
-                    ? path.join(path.dirname(app.getAppPath()), "drizzle")
-                    : "drizzle",
+                migrationsFolder: getMigrationsFolder(),
             });
         };
 
@@ -111,6 +121,10 @@ export class DatabaseService {
             logger.log("migration 0001 complete: FK enforcement restored");
         } else {
             await runMigrate();
+        }
+
+        if (pendingTags.length > 0) {
+            logger.log("drizzle migrations complete", { tags: pendingTags });
         }
     }
     /**
