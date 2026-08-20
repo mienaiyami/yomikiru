@@ -1,7 +1,10 @@
 import AnilistBar from "@features/anilist/AnilistBar";
 import { faArrowLeft, faArrowRight, faLocationDot, faThumbtack } from "@fortawesome/free-solid-svg-icons";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
+import { ItemDisplayTitle } from "@renderer/components/ItemDisplayTitle";
 import { useAppSelector } from "@store/hooks";
+import { selectResolvedItemMetadata } from "@store/library";
+import { getReaderBook } from "@store/reader";
 import type { EPubData } from "@utils/epub";
 import { memo, useEffect, useLayoutEffect, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
@@ -61,6 +64,8 @@ const EPubReaderSideList = memo(
         const { contextMenuData, colorSelectData } = useAppContext();
         const appSettings = useAppSelector((store) => store.appSettings);
         const anilistToken = useAppSelector((store) => store.anilist.token);
+        const bookInReader = useAppSelector(getReaderBook);
+        const bookDisplay = useAppSelector((store) => selectResolvedItemMetadata(store, bookInReader?.link));
         const sideListRef = useRef<HTMLDivElement>(null);
         const [isListOpen, setListOpen] = useState(false);
         const [preventListClose, setPreventListClose] = useState(false);
@@ -224,7 +229,10 @@ const EPubReaderSideList = memo(
                     <div>
                         <span className="bold">{t("sideList.title")}</span>
                         <span className="bold"> : </span>
-                        <span>{epubData.metadata.title}</span>
+                        <ItemDisplayTitle
+                            primary={bookDisplay?.title ?? epubData.metadata.title}
+                            original={bookDisplay?.originalTitle}
+                        />
                     </div>
                     {appSettings.epubReaderSettings.loadOneChapter && (
                         <div>

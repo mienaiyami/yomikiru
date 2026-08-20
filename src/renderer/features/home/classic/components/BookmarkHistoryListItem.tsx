@@ -1,11 +1,14 @@
 import type { BookBookmark, MangaBookmark } from "@common/types/db";
+import { ItemDisplayTitle } from "@renderer/components/ItemDisplayTitle";
 import ListItem from "@renderer/components/ListItem";
 import SelectionCheckbox from "@renderer/components/ui/SelectionCheckbox";
 import { removeBookmark } from "@store/bookmarks";
 import { useAppDispatch, useAppSelector } from "@store/hooks";
-import { deleteLibraryItem } from "@store/library";
+import { deleteLibraryItem, selectItemMetadata } from "@store/library";
+import { selectTracker } from "@store/trackers";
 import dateUtils from "@utils/date";
 import { formatUtils } from "@utils/file";
+import { resolveItemMetadata } from "@utils/libraryMetadata";
 import {
     mangaPageForMissingKind,
     resolveMissingOpenPath,
@@ -37,6 +40,8 @@ const BookmarkHistoryListItem: React.FC<{
     const dispatch = useAppDispatch();
     const appSettings = useAppSelector((store) => store.appSettings);
     const libraryItem = useAppSelector((store) => store.library.items[props.link]);
+    const overlays = useAppSelector((store) => selectItemMetadata(store, props.link));
+    const tracker = useAppSelector((store) => selectTracker(store, props.link, "anilist"));
 
     if (props.isBookmark && !props.bookmark) return <p>{t("classic.listItem.bookmarkNotFound")}</p>;
 
@@ -53,10 +58,15 @@ const BookmarkHistoryListItem: React.FC<{
                 : "";
     if (!link) return <p>{t("classic.listItem.linkNotFound")}</p>;
 
+    const resolved = resolveItemMetadata({ item: libraryItem, overlays, tracker });
+    const titleLabel = resolved.originalTitle
+        ? t("gallery.details.titleWithOriginal", { title: resolved.title, original: resolved.originalTitle })
+        : resolved.title;
+
     const title = props.isHistory
         ? libraryItem.type === "book"
             ? [
-                  t("classic.listItem.tooltip.title", { value: libraryItem.title }),
+                  t("classic.listItem.tooltip.title", { value: titleLabel }),
                   t("classic.listItem.tooltip.chapter", {
                       value: libraryItem.progress?.chapterName || "~",
                   }),
@@ -68,7 +78,7 @@ const BookmarkHistoryListItem: React.FC<{
                   t("classic.listItem.tooltip.path", { value: libraryItem.link }),
               ].join("\n")
             : [
-                  t("classic.listItem.tooltip.manga", { value: libraryItem.title }),
+                  t("classic.listItem.tooltip.manga", { value: titleLabel }),
                   t("classic.listItem.tooltip.chapter", { value: libraryItem.progress?.chapterName }),
                   t("classic.listItem.tooltip.pages", { value: libraryItem.progress?.totalPages }),
                   t("classic.listItem.tooltip.page", { value: libraryItem.progress?.currentPage }),
@@ -80,7 +90,7 @@ const BookmarkHistoryListItem: React.FC<{
                   t("classic.listItem.tooltip.path", { value: libraryItem.link }),
               ].join("\n")
         : [
-              t("classic.listItem.tooltip.title", { value: libraryItem.title }),
+              t("classic.listItem.tooltip.title", { value: titleLabel }),
               t("classic.listItem.tooltip.chapter", { value: props.bookmark?.chapterName || "~" }),
               t("classic.listItem.tooltip.date", {
                   value: dateUtils.format(props.bookmark?.createdAt, {
@@ -230,7 +240,7 @@ const BookmarkHistoryListItem: React.FC<{
             boxClassName="checkBox"
             checked={props.isChecked ?? false}
             onToggle={({ shiftKey }) => props.onToggleSelected?.({ shiftKey })}
-            ariaLabel={t("shared.selectAria", { title: libraryItem.title })}
+            ariaLabel={t("shared.selectAria", { title: titleLabel })}
         />
     ) : null;
 
@@ -248,7 +258,9 @@ const BookmarkHistoryListItem: React.FC<{
         >
             {libraryItem.type === "book" ? (
                 <span className="double">
-                    <span className="text">{libraryItem.title}</span>
+                    <span className="text">
+                        <ItemDisplayTitle primary={resolved.title} original={resolved.originalTitle} />
+                    </span>
                     <span className="chapter">
                         <span className="text">
                             {props.bookmark?.chapterName || libraryItem.progress?.chapterName || "~"}
@@ -261,7 +273,9 @@ const BookmarkHistoryListItem: React.FC<{
                 </span>
             ) : (
                 <span className="double">
-                    <span className="text">{libraryItem.title}</span>
+                    <span className="text">
+                        <ItemDisplayTitle primary={resolved.title} original={resolved.originalTitle} />
+                    </span>
                     <span className="chapter">
                         <span className="text">
                             {formatUtils.files.getName(

@@ -1,5 +1,6 @@
 import type { LibraryItemWithProgress } from "@common/types/db";
 import { createSlice, type PayloadAction } from "@reduxjs/toolkit";
+import { resolveItemMetadata, trackerByItemLink } from "@utils/libraryMetadata";
 import i18n from "../i18n";
 import type { RootState } from ".";
 import { updateChaptersRead, updateChaptersReadAll } from "./library";
@@ -193,11 +194,19 @@ export const getReaderManga = (state: RootState) => {
     return null;
 };
 
-/** Returns content with link and title for both manga and book readers. */
+/**
+ * Open reader item with the resolved display title (user overlay, else tracker, else file, else row).
+ * AniList search and similar callers should use this instead of {@link LibraryItem.title}.
+ */
 export const getReaderContent = (state: RootState): { link: string; title: string } | null => {
     const content = state.reader.content;
     if (!content) return null;
-    return { link: content.link, title: content.title };
+    const resolved = resolveItemMetadata({
+        item: content,
+        overlays: state.library.metadata[content.link] ?? [],
+        tracker: trackerByItemLink(state.trackers.entries)[content.link],
+    });
+    return { link: content.link, title: resolved.title };
 };
 export const getReaderMangaState = (state: RootState) => {
     if (state.reader.type === "manga") {

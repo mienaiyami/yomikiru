@@ -11,11 +11,13 @@ import {
     faThumbtack,
 } from "@fortawesome/free-solid-svg-icons";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
+import { ItemDisplayTitle } from "@renderer/components/ItemDisplayTitle";
 import ListNavigator from "@renderer/components/ListNavigator";
 import { PAGE_SEARCH_PRIORITY } from "@renderer/hooks/usePageSearchFocus";
 import { setAppSettings } from "@store/appSettings";
 import { addBookmark, removeBookmark } from "@store/bookmarks";
 import { useAppDispatch, useAppSelector } from "@store/hooks";
+import { selectResolvedItemMetadata } from "@store/library";
 import { getReaderManga, setReaderState } from "@store/reader";
 import { dialogUtils } from "@utils/dialog";
 import { formatUtils } from "@utils/file";
@@ -98,6 +100,9 @@ const ReaderSideList = memo(
             contentLink ?? (readerType === "manga" && readerLink ? window.path.dirname(readerLink) : undefined);
         /** mangaInReader.link !== linkInReader */
         const mangaInReader = useAppSelector(getReaderManga);
+        const mangaDisplay = useAppSelector((store) =>
+            selectResolvedItemMetadata(store, mangaInReader?.link ?? mangaLink),
+        );
         const bookmarks = useAppSelector((store) => store.bookmarks);
         const appSettings = useAppSelector((store) => store.appSettings);
         const anilistToken = useAppSelector((store) => store.anilist.token);
@@ -704,7 +709,10 @@ const ReaderSideList = memo(
                         <div>
                             <span className="bold">{t("sideList.manga")}</span>
                             <span className="bold"> : </span>
-                            <span>{mangaInReader?.title}</span>
+                            <ItemDisplayTitle
+                                primary={mangaDisplay?.title ?? mangaInReader?.title ?? ""}
+                                original={mangaDisplay?.originalTitle}
+                            />
                         </div>
                         <div>
                             <span className="bold">{t("sideList.chapter")}</span>

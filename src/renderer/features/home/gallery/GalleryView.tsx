@@ -2,6 +2,7 @@ import type { LibraryItemWithProgress } from "@common/types/db";
 import { faPlay } from "@fortawesome/free-solid-svg-icons";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { useAppContext } from "@renderer/App";
+import { ItemDisplayTitle } from "@renderer/components/ItemDisplayTitle";
 import SelectionCheckbox from "@renderer/components/ui/SelectionCheckbox";
 import { useMultiSelect } from "@renderer/hooks/useMultiSelect";
 import { focusPrimaryPageSearch } from "@renderer/hooks/usePageSearchFocus";
@@ -23,6 +24,11 @@ import {
 } from "@utils/gallerySort";
 import { isShortcutEventFromInputTarget, keyFormatter } from "@utils/keybindings";
 import { resolveDetailsCoverSrc, trackerCoverUrlByItemLink } from "@utils/libraryCover";
+import {
+    libraryItemSearchText,
+    resolveAllItemMetadata,
+    trackerByItemLink,
+} from "@utils/libraryMetadata";
 import { itemsWithTag } from "@utils/libraryTags";
 import { resolveMangaChapterPath } from "@utils/mangaChapterPath";
 import type { RefObject } from "react";
@@ -46,6 +52,7 @@ const GalleryView: React.FC = () => {
     const { t: tCommon } = useTranslation("common");
     const dispatch = useAppDispatch();
     const library = useAppSelector((store) => store.library.items);
+    const metadataByLink = useAppSelector((store) => store.library.metadata);
     const bookmarks = useAppSelector((store) => store.bookmarks);
     const appSettings = useAppSelector((store) => store.appSettings);
     const anilistToken = useAppSelector((store) => store.anilist.token);
@@ -66,6 +73,10 @@ const GalleryView: React.FC = () => {
     const tagAssignments = useAppSelector((store) => store.tags.assignments);
     const trackerEntries = useAppSelector((store) => store.trackers.entries);
     const trackerCoverByLink = useMemo(() => trackerCoverUrlByItemLink(trackerEntries), [trackerEntries]);
+    const displayByLink = useMemo(() => {
+        const items = Object.values(library).filter((item): item is LibraryItemWithProgress => item !== null);
+        return resolveAllItemMetadata(items, metadataByLink, trackerByItemLink(trackerEntries));
+    }, [library, metadataByLink, trackerEntries]);
     const [selectedTagId, setSelectedTagId] = useState<GalleryTagFilterId>(null);
     const activeTagFilter =
         selectedTagId != null && tagCatalog.some((tag) => tag.id === selectedTagId) ? selectedTagId : null;
@@ -119,6 +130,7 @@ const GalleryView: React.FC = () => {
                 item !== null && (activeTypeFilter === "all" || item.type === activeTypeFilter),
         );
         const all = activeTagFilter == null ? typed : itemsWithTag(typed, tagAssignments, activeTagFilter);
+        const titleOf = (item: LibraryItemWithProgress) => displayByLink[item.link]?.title ?? item.title;
 
         if (activeTab === "continue-reading") {
             return sortContinueReadingItems(all.filter((item) => Boolean(item.progress)));
@@ -128,6 +140,7 @@ const GalleryView: React.FC = () => {
                 selectBookmarkedItems(all, bookmarks),
                 appSettings.gallerySortBy,
                 appSettings.gallerySortType,
+                titleOf,
             );
         }
         if (activeTab === "favourites") {
@@ -136,9 +149,10 @@ const GalleryView: React.FC = () => {
                 selectFavouritedItems(all),
                 appSettings.gallerySortBy,
                 appSettings.gallerySortType,
+                titleOf,
             );
         }
-        return sortGalleryItems(all, appSettings.gallerySortBy, appSettings.gallerySortType);
+        return sortGalleryItems(all, appSettings.gallerySortBy, appSettings.gallerySortType, titleOf);
     }, [
         library,
         activeTab,
@@ -148,6 +162,7 @@ const GalleryView: React.FC = () => {
         bookmarks,
         appSettings.gallerySortBy,
         appSettings.gallerySortType,
+        displayByLink,
     ]);
 
     const tabIds = useMemo(() => tabItems.map((it) => it.link), [tabItems]);
@@ -220,7 +235,7 @@ const GalleryView: React.FC = () => {
                         dispatch(
                             setGalleryTrackContext({
                                 link: item.link,
-                                title: item.title,
+                                title: displayByLink[item.link]?.title ?? item.title,
                             }),
                         );
                         dispatch(setAnilistSearchOpen(true));
@@ -251,26 +266,36 @@ const GalleryView: React.FC = () => {
                 focusBackElem: e.currentTarget,
             });
         },
-        [activeTab, anilistToken, dispatch, setContextMenuData, handleContinueReading, t],
+        [activeTab, anilistToken, dispatch, displayByLink, setContextMenuData, handleContinueReading, t],
     );
 
-    const filterManga = useCallback((filter: string, item: LibraryItemWithProgress) => {
-        const searchText =
-            item.type === "manga"
-                ? item.title +
-                  (formatUtils.files.test(item.progress?.chapterName || "")
-                      ? `${window.path.extname(item.progress?.chapterName || "")}`
-                      : "") +
-                  "manga|manhua|manhwa|webtoon|webcomic|comic"
-                : `${item.title}.epubbook`;
-        return new RegExp(filter, "ig").test(searchText);
-    }, []);
+    const filterManga = useCallback(
+        (filter: string, item: LibraryItemWithProgress) => {
+            const titles = displayByLink[item.link]?.searchTitles ?? [item.title];
+            const extra =
+                item.type === "manga"
+                    ? `${
+                          formatUtils.files.test(item.progress?.chapterName || "")
+                              ? window.path.extname(item.progress?.chapterName || "")
+                              : ""
+                      }manga|manhua|manhwa|webtoon|webcomic|comic`
+                    : ".epubbook";
+            return new RegExp(filter, "ig").test(libraryItemSearchText(titles, extra));
+        },
+        [displayByLink],
+    );
 
     const renderMangaItem = useCallback(
         (item: LibraryItemWithProgress, _index: number, isSelected: boolean) => {
             const coverSrc = resolveDetailsCoverSrc(item, trackerCoverByLink[item.link]);
             const isChecked = selection.isSelected(item.link);
             const inSelectionMode = selection.isSelectionMode;
+            const display = displayByLink[item.link];
+            const primary = display?.title ?? item.title;
+            const original = display?.originalTitle;
+            const titleLabel = original
+                ? t("gallery.details.titleWithOriginal", { title: primary, original })
+                : primary;
             return (
                 <div
                     key={item.link}
@@ -295,17 +320,19 @@ const GalleryView: React.FC = () => {
                         boxClassName="checkBox"
                         checked={isChecked}
                         onToggle={({ shiftKey }) => selection.toggleItem(item.link, { shiftKey })}
-                        ariaLabel={t("shared.selectAria", { title: item.title })}
+                        ariaLabel={t("shared.selectAria", { title: titleLabel })}
                     />
                     <div className="coverContainer">
                         {coverSrc ? (
-                            <img src={coverSrc} alt={item.title} draggable={false} loading="lazy" />
+                            <img src={coverSrc} alt={titleLabel} draggable={false} loading="lazy" />
                         ) : (
-                            <div className="blankCover">{item.title[0]}</div>
+                            <div className="blankCover">{primary[0]}</div>
                         )}
                         {appSettings.galleryDisplayMode === "compact" && (
-                            <div className="mangaTitle compact" title={item.title}>
-                                <span>{item.title}</span>
+                            <div className="mangaTitle compact" title={titleLabel}>
+                                <span>
+                                    <ItemDisplayTitle primary={primary} original={original} />
+                                </span>
                                 {/* temp solution coz cant make background opacity work */}
                                 <span className="bg"></span>
                             </div>
@@ -314,8 +341,10 @@ const GalleryView: React.FC = () => {
 
                     {appSettings.galleryDisplayMode !== "cover-only" &&
                         appSettings.galleryDisplayMode !== "compact" && (
-                            <div className="mangaTitle" title={item.title}>
-                                <span>{item.title}</span>
+                            <div className="mangaTitle" title={titleLabel}>
+                                <span>
+                                    <ItemDisplayTitle primary={primary} original={original} />
+                                </span>
                                 <span className="bg"></span>
                             </div>
                         )}
@@ -342,6 +371,7 @@ const GalleryView: React.FC = () => {
             selection,
             t,
             trackerCoverByLink,
+            displayByLink,
         ],
     );
 

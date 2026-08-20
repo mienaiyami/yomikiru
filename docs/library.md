@@ -313,9 +313,13 @@ Redux: [`src/renderer/store/bookNotes.ts`](../src/renderer/store/bookNotes.ts).
 
 Null (or empty string / empty array) on a field means that source does not supply it. Display resolution is read-time in [`resolveItemMetadata`](../src/renderer/utils/libraryMetadata.ts):
 
-**user overlay > tracker snapshot (`item_trackers.media` / `listState`) > file overlay > `library_items` title/author.**
+**user overlay > tracker snapshot (`item_trackers.media`) > file overlay > `library_items` title/author.**
 
-There are no lock booleans. Tracker-only fields (`status`, `score`, `siteUrl`, `totalChapters`) have no user/file columns.
+When the resolved title differs from `library_items.title`, UI shows the resolved title first and the library row name in muted parentheses (gallery tiles, details hero, classic History/Bookmarks, reader sidebars). Search matches every title layer. Name-sort uses the resolved title. The window / OS title and AniList search seed use the primary resolved title only (no muted original). Locate-on-disk, Locations, and EPUB chapter names keep the library row or file identity. The library row title is not overwritten.
+
+**Edit metadata** can **Reset** the user overlay (confirm first). Explicit `null` on each field falls through to tracker / file / library row again.
+
+There are no lock booleans. Tracker catalog fields shown on details (`mediaStatus`, `mediaScore`, `mediaFormat`, `totalChapters`, `siteUrl`) come from the media snapshot only; list-entry status/score stay on the AniList bar. Those facts sit above genres, separated by a hairline (no Tracker label).
 
 IPC: `db:library:getAllMetadata`, `db:library:setMetadata`. Omitted keys on set leave stored values; explicit `null` clears that overlay field.
 

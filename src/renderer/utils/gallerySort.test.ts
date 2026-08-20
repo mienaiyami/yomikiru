@@ -36,6 +36,12 @@ describe("sortGalleryItems", () => {
         expect(sorted.map((i) => i.title)).toEqual(["A", "B", "C"]);
     });
 
+    it("sorts by name using titleOf when provided", () => {
+        const titles: Record<string, string> = { a: "Zeta", b: "Alpha", c: "Mu" };
+        const sorted = sortGalleryItems(items, "name", "normal", (item) => titles[item.link] ?? item.title);
+        expect(sorted.map((i) => i.link)).toEqual(["b", "c", "a"]);
+    });
+
     it("inverts name sort", () => {
         const sorted = sortGalleryItems(items, "name", "inverse");
         expect(sorted.map((i) => i.title)).toEqual(["C", "B", "A"]);

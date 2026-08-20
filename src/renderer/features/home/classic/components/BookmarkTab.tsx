@@ -8,6 +8,7 @@ import { setAppSettings } from "@store/appSettings";
 import { useAppDispatch, useAppSelector } from "@store/hooks";
 import { dialogUtils } from "@utils/dialog";
 import { formatUtils } from "@utils/file";
+import { libraryItemSearchText, resolveAllItemMetadata, trackerByItemLink } from "@utils/libraryMetadata";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { useAppContext } from "src/renderer/App";
@@ -28,10 +29,16 @@ const BookmarkTab: React.FC = () => {
     const { t: tSettings } = useTranslation("settings");
     const bookmarks = useAppSelector((store) => store.bookmarks);
     const library = useAppSelector((store) => store.library);
+    const trackerEntries = useAppSelector((store) => store.trackers.entries);
     const appSettings = useAppSelector((store) => store.appSettings);
     const dispatch = useAppDispatch();
     const { setContextMenuData } = useAppContext();
     const checkboxesEnabled = appSettings.enableClassicListCheckboxes;
+
+    const displayByLink = useMemo(() => {
+        const items = Object.values(library.items).filter((item): item is LibraryItemWithProgress => item !== null);
+        return resolveAllItemMetadata(items, library.metadata, trackerByItemLink(trackerEntries));
+    }, [library.items, library.metadata, trackerEntries]);
 
     const bookmarksArray = useMemo(() => {
         const arr: (BookBookmark | MangaBookmark)[] = [];
@@ -53,14 +60,17 @@ const BookmarkTab: React.FC = () => {
                 const itemA = library.items[a.itemLink];
                 const itemB = library.items[b.itemLink];
                 if (!itemA || !itemB) return 0;
-                return window.app.betterSortOrder(itemA.title, itemB.title);
+                return window.app.betterSortOrder(
+                    displayByLink[itemA.link]?.title ?? itemA.title,
+                    displayByLink[itemB.link]?.title ?? itemB.title,
+                );
             });
         } else {
             sorted = sorted.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
         }
 
         return appSettings.bookListSortType === "inverse" ? [...sorted].reverse() : sorted;
-    }, [bookmarks, library.items, appSettings.bookListSortBy, appSettings.bookListSortType]);
+    }, [bookmarks, library.items, appSettings.bookListSortBy, appSettings.bookListSortType, displayByLink]);
 
     const sourceIds = useMemo(() => bookmarksArray.map(getBookmarkSelectionKey), [bookmarksArray]);
     const selection = useMultiSelect(sourceIds);
@@ -76,13 +86,12 @@ const BookmarkTab: React.FC = () => {
 
         //"page" in bookmark means it's a manga bookmark not epub
 
-        const searchText =
-            item.title +
-            (item.progress?.chapterName ? ` ${item.progress.chapterName}` : "") +
-            ("page" in bookmark ? "manga|manhua|manhwa|webtoon|webcomic|comic" : "") +
-            ` ${formatUtils.files.getExt("page" in bookmark ? bookmark.chapterName : bookmark.itemLink)}`;
+        const titles = displayByLink[item.link]?.searchTitles ?? [item.title];
+        const extra = `${item.progress?.chapterName ? ` ${item.progress.chapterName}` : ""}${
+            "page" in bookmark ? "manga|manhua|manhwa|webtoon|webcomic|comic" : ""
+        } ${formatUtils.files.getExt("page" in bookmark ? bookmark.chapterName : bookmark.itemLink)}`;
 
-        return new RegExp(filter, "ig").test(searchText);
+        return new RegExp(filter, "ig").test(libraryItemSearchText(titles, extra));
     };
 
     const renderBookmarkItem = (

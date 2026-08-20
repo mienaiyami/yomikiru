@@ -1,3 +1,4 @@
+import anilistEn from "@common/i18n/locales/en/anilist.json";
 import home from "@common/i18n/locales/en/home.json";
 import { renderWithI18n } from "@test/renderWithProviders";
 import { fireEvent, screen } from "@testing-library/react";
@@ -56,6 +57,57 @@ describe("DetailsHero", () => {
         expect(side?.contains(tags)).toBe(true);
         expect(side?.contains(note)).toBe(true);
         expect(side?.innerHTML.indexOf("hero-tags") ?? -1).toBeLessThan(side?.innerHTML.indexOf("hero-note") ?? 0);
+    });
+
+    it("shows the original library title muted after an edited primary title", () => {
+        renderWithI18n(
+            <DetailsHero
+                title="Edited"
+                originalTitle="Folder Name"
+                coverSrc=""
+                coverAlt=""
+                onBack={vi.fn()}
+                onCoverContextMenu={vi.fn()}
+            />,
+        );
+        expect(screen.getByRole("heading", { name: "Edited (Folder Name)" })).toBeInTheDocument();
+        expect(screen.getByTitle("Edited (Folder Name)")).toBeInTheDocument();
+    });
+
+    it("places tracker catalog facts above genres", () => {
+        const { container } = renderWithI18n(
+            <DetailsHero
+                title="Title"
+                coverSrc=""
+                coverAlt=""
+                onBack={vi.fn()}
+                onCoverContextMenu={vi.fn()}
+                genres={["Drama"]}
+                trackerMedia={{ status: "RELEASING", score: 78, totalChapters: 12, format: "MANGA" }}
+            />,
+        );
+        const main = container.querySelector(".details-facts-main")?.textContent ?? "";
+        expect(main.indexOf(anilistEn.status.RELEASING)).toBeGreaterThanOrEqual(0);
+        expect(main.indexOf(anilistEn.status.RELEASING)).toBeLessThan(main.indexOf("Drama"));
+        expect(main).toContain(anilistEn.status.RELEASING);
+        expect(main).toContain("Score 78");
+        expect(main).toContain("12 chapters");
+        expect(main).toContain(anilistEn.format.MANGA);
+        expect(container.querySelector(".details-tracker-facts")).not.toBeNull();
+    });
+
+    it("hides tracker facts when the media snapshot has nothing to show", () => {
+        renderWithI18n(
+            <DetailsHero
+                title="Title"
+                coverSrc=""
+                coverAlt=""
+                onBack={vi.fn()}
+                onCoverContextMenu={vi.fn()}
+                trackerMedia={{ status: null, score: null, totalChapters: null, format: null }}
+            />,
+        );
+        expect(document.querySelector(".details-tracker-facts")).toBeNull();
     });
 
     it("toggles the cover source from Default to AniList when a tracker image exists", () => {

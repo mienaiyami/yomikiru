@@ -2,6 +2,7 @@ import type { DetailsCoverSource, LibraryItem, LibraryItemMetadata } from "@comm
 import type { DatabaseChannels } from "@common/types/ipc";
 import { createAsyncThunk, createSlice, type PayloadAction } from "@reduxjs/toolkit";
 import { formatUtils } from "@utils/file";
+import { resolveItemMetadata, type ResolvedItemMetadata } from "@utils/libraryMetadata";
 import { createRendererLogger } from "../utils/logger";
 import type { RootState } from ".";
 
@@ -325,3 +326,22 @@ export const selectLibraryItem = (state: RootState, path: string) => {
 /** Metadata overlay rows for a library path (user and, later, file). */
 export const selectItemMetadata = (state: RootState, itemLink: string): LibraryItemMetadata[] =>
     state.library.metadata[itemLink] ?? [];
+
+/**
+ * Display metadata for a library path: user overlay > tracker snapshot > file overlay > row.
+ * Returns null when the library map has no item for `itemLink`.
+ */
+export const selectResolvedItemMetadata = (
+    state: RootState,
+    itemLink: string | undefined,
+): ResolvedItemMetadata | null => {
+    if (!itemLink) return null;
+    const item = state.library.items[itemLink];
+    if (!item) return null;
+    const tracker = state.trackers.entries.find((row) => row.itemLink === itemLink && row.provider === "anilist");
+    return resolveItemMetadata({
+        item,
+        overlays: state.library.metadata[itemLink] ?? [],
+        tracker,
+    });
+};

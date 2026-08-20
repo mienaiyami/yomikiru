@@ -554,7 +554,7 @@
                             z-index: 2;
                         }
                     }
-                    span {
+                    > span:not(.bg) {
                         // text-overflow: ellipsis;
                         /* white-space: nowrap; */
                         -webkit-line-clamp: 2;

@@ -118,6 +118,17 @@ html{
     }
 }
 
+/*
+ * Library item title: original folder/file name sits in muted parentheses after the
+ * edited or tracker title. Unlayered so gallery (unlayered home/styles) and details
+ * (unlayered mangaDetailsPanel.scss) cannot override the mute.
+ */
+.itemDisplayTitle-original {
+    color: var(--font-color-secondary);
+    font-weight: 400;
+    font-size: 0.85em;
+}
+
 @layer main {
     ::-webkit-scrollbar {
         width: 10px;

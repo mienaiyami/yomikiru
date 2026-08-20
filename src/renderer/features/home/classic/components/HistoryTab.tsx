@@ -9,6 +9,7 @@ import { useAppDispatch, useAppSelector } from "@store/hooks";
 import { deleteLibraryItem } from "@store/library";
 import { dialogUtils } from "@utils/dialog";
 import { formatUtils } from "@utils/file";
+import { libraryItemSearchText, resolveAllItemMetadata, trackerByItemLink } from "@utils/libraryMetadata";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { useAppContext } from "src/renderer/App";
@@ -21,10 +22,16 @@ const HistoryTab: React.FC = () => {
     const { t: tCommon } = useTranslation("common");
     const { t: tSettings } = useTranslation("settings");
     const library = useAppSelector((store) => store.library);
+    const trackerEntries = useAppSelector((store) => store.trackers.entries);
     const appSettings = useAppSelector((store) => store.appSettings);
     const dispatch = useAppDispatch();
     const { setContextMenuData } = useAppContext();
     const checkboxesEnabled = appSettings.enableClassicListCheckboxes;
+
+    const displayByLink = useMemo(() => {
+        const items = Object.values(library.items).filter((item): item is LibraryItemWithProgress => item !== null);
+        return resolveAllItemMetadata(items, library.metadata, trackerByItemLink(trackerEntries));
+    }, [library.items, library.metadata, trackerEntries]);
 
     const historyItems = useMemo(() => {
         const items = Object.values(library.items).filter((item) => item?.progress) as LibraryItemWithProgress[];
@@ -32,7 +39,12 @@ const HistoryTab: React.FC = () => {
         let sorted = [...items];
 
         if (appSettings.historyListSortBy === "name") {
-            sorted = sorted.sort((a, b) => window.app.betterSortOrder(a.title, b.title));
+            sorted = sorted.sort((a, b) =>
+                window.app.betterSortOrder(
+                    displayByLink[a.link]?.title ?? a.title,
+                    displayByLink[b.link]?.title ?? b.title,
+                ),
+            );
         } else {
             sorted = sorted.sort((a, b) => {
                 const aDate =
@@ -50,7 +62,7 @@ const HistoryTab: React.FC = () => {
         }
 
         return appSettings.historyListSortType === "inverse" ? [...sorted].reverse() : sorted;
-    }, [library.items, appSettings.historyListSortBy, appSettings.historyListSortType]);
+    }, [library.items, appSettings.historyListSortBy, appSettings.historyListSortType, displayByLink]);
 
     const sourceIds = useMemo(() => historyItems.map((it) => it.link), [historyItems]);
     const selection = useMultiSelect(sourceIds);
@@ -61,16 +73,16 @@ const HistoryTab: React.FC = () => {
 
     const filterHistoryItem = (filter: string, item: LibraryItemWithProgress | BookBookmark | MangaBookmark) => {
         if (!("type" in item)) return false;
-        const searchText =
+        const titles = displayByLink[item.link]?.searchTitles ?? [item.title];
+        const extra =
             item.type === "manga"
-                ? item.title +
-                  (formatUtils.files.test(item.progress?.chapterName || "")
-                      ? `${window.path.extname(item.progress?.chapterName || "")}`
-                      : "") +
-                  "manga|manhua|manhwa|webtoon|webcomic|comic"
-                : `${item.title}.epubbook`;
-
-        return new RegExp(filter, "ig").test(searchText);
+                ? `${
+                      formatUtils.files.test(item.progress?.chapterName || "")
+                          ? window.path.extname(item.progress?.chapterName || "")
+                          : ""
+                  }manga|manhua|manhwa|webtoon|webcomic|comic`
+                : ".epubbook";
+        return new RegExp(filter, "ig").test(libraryItemSearchText(titles, extra));
     };
 
     const renderHistoryItem = (

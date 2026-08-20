@@ -15,6 +15,9 @@ export type GalleryBookmarkMaps = {
  */
 const lastReadTime = (item: LibraryItemWithProgress): number => item.progress?.lastReadAt?.getTime() ?? 0;
 
+/** Title used for gallery name-sort; defaults to {@link LibraryItemWithProgress.title}. */
+export type GallerySortTitleOf = (item: LibraryItemWithProgress) => string;
+
 /**
  * Orders items by `gallerySortBy` / `gallerySortType` for tabs that show sort.
  */
@@ -22,11 +25,12 @@ export const sortGalleryItems = (
     items: LibraryItemWithProgress[],
     sortBy: AppSettings["gallerySortBy"],
     sortType: AppSettings["gallerySortType"],
+    titleOf: GallerySortTitleOf = (item) => item.title,
 ): LibraryItemWithProgress[] => {
     const sorted = [...items];
     switch (sortBy) {
         case "name":
-            sorted.sort((a, b) => window.app.betterSortOrder(a.title, b.title));
+            sorted.sort((a, b) => window.app.betterSortOrder(titleOf(a), titleOf(b)));
             break;
         case "lastRead":
             sorted.sort((a, b) => lastReadTime(b) - lastReadTime(a));

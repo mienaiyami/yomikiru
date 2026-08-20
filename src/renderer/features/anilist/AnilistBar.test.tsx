@@ -1,8 +1,9 @@
 import path from "node:path";
+import anilistEn from "@common/i18n/locales/en/anilist.json";
 import type { ItemTracker } from "@common/types/db";
 import { onInvoke } from "@test/mocks/preload";
 import { renderWithProviders } from "@test/renderWithProviders";
-import { cleanup, waitFor } from "@testing-library/react";
+import { cleanup, fireEvent, screen, waitFor } from "@testing-library/react";
 import { getAnilistListEntry } from "@utils/anilist";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import AnilistBar from "./AnilistBar";
@@ -90,5 +91,40 @@ describe("AnilistBar", () => {
         });
         expect(getAnilistListEntry).toHaveBeenCalledTimes(1);
         expect(getAnilistListEntry).toHaveBeenCalledWith(99);
+    });
+
+    it("does not show Network Error while the list-entry fetch is in flight", () => {
+        vi.mocked(getAnilistListEntry).mockImplementation(
+            () =>
+                new Promise((resolve) => {
+                    /* leave pending so the bar cannot treat a miss as an error yet */
+                    void resolve;
+                }),
+        );
+        renderWithProviders(<AnilistBar localLibraryLink={itemLink} variant="compact" />, {
+            preloadedState: {
+                anilist: { token: "token", currentListEntry: null, galleryTrackContext: null },
+                trackers: { entries: [trackerRow()] },
+            },
+        });
+        expect(screen.queryByRole("button", { name: anilistEn.bar.networkError })).toBeNull();
+        expect(screen.queryByText(anilistEn.bar.networkError)).toBeNull();
+        expect(screen.getByRole("button", { name: anilistEn.bar.brand })).toBeDisabled();
+    });
+
+    it("shows a Network Error retry button after the list-entry fetch misses", async () => {
+        vi.mocked(getAnilistListEntry).mockResolvedValue(undefined);
+        renderWithProviders(<AnilistBar localLibraryLink={itemLink} variant="compact" />, {
+            preloadedState: {
+                anilist: { token: "token", currentListEntry: null, galleryTrackContext: null },
+                trackers: { entries: [trackerRow()] },
+            },
+        });
+        const retry = await screen.findByRole("button", { name: anilistEn.bar.networkError });
+        expect(retry).toHaveAttribute("data-tooltip", anilistEn.bar.retry);
+        fireEvent.click(retry);
+        await waitFor(() => {
+            expect(getAnilistListEntry).toHaveBeenCalledTimes(2);
+        });
     });
 });

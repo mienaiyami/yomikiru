@@ -2,6 +2,7 @@ import type { LibraryItemMetadata } from "@common/types/db";
 import { useAppDispatch } from "@store/hooks";
 import { setLibraryItemMetadata } from "@store/library";
 import Modal from "@ui/Modal";
+import { dialogUtils } from "@utils/dialog";
 import { formatGenreList, parseGenreList } from "@utils/libraryMetadata";
 import { appRootElement } from "@utils/utils";
 import { useEffect, useRef, useState } from "react";
@@ -17,7 +18,7 @@ type ItemMetadataEditorProps = {
 
 type SavePhase = "idle" | "saving" | "saved" | "failed";
 
-/** How long Saving / Saved / Failed stays on the overlay save button. Success then calls {@link ItemMetadataEditorProps.onClose}. */
+/** How long Saving / Saved / Failed stays on the overlay save or reset button. Success then calls {@link ItemMetadataEditorProps.onClose}. */
 const SAVE_FEEDBACK_MS = 1500;
 
 /** Stable control ids so each stacked field label can point at its input. */
@@ -28,9 +29,19 @@ const FIELD_IDS = {
     genres: "item-metadata-editor-genres",
 } as const;
 
+/** True when the stored user overlay has at least one non-empty display field. */
+const overlayHasEdits = (row: LibraryItemMetadata | undefined): boolean =>
+    Boolean(
+        row &&
+            ((row.title && row.title.trim()) ||
+                (row.author && row.author.trim()) ||
+                (row.description && row.description.trim()) ||
+                (row.genres && row.genres.length > 0)),
+    );
+
 /**
  * Overlay editor for the user metadata layer (title, author, description, genres).
- * Save swaps the button label for the IPC outcome, then closes after a successful save.
+ * Save and Reset swap the button label for the IPC outcome, then close after success.
  */
 export const ItemMetadataEditor = ({ itemLink, userOverlay, onClose }: ItemMetadataEditorProps) => {
     const { t } = useTranslation("home");
@@ -41,12 +52,17 @@ export const ItemMetadataEditor = ({ itemLink, userOverlay, onClose }: ItemMetad
     const [description, setDescription] = useState(userOverlay?.description ?? "");
     const [genres, setGenres] = useState(formatGenreList(userOverlay?.genres ?? []));
     const [savePhase, setSavePhase] = useState<SavePhase>("idle");
+    const [resetPhase, setResetPhase] = useState<SavePhase>("idle");
     const feedbackTimerRef = useRef(0);
 
     useEffect(() => () => window.clearTimeout(feedbackTimerRef.current), []);
 
+    const formHasValues = Boolean(title.trim() || author.trim() || description.trim() || parseGenreList(genres).length);
+    const canReset = overlayHasEdits(userOverlay) || formHasValues;
+    const busy = savePhase === "saving" || resetPhase === "saving";
+
     const handleSave = async () => {
-        if (savePhase === "saving") return;
+        if (busy) return;
         const genreList = parseGenreList(genres);
         setSavePhase("saving");
         try {
@@ -72,6 +88,52 @@ export const ItemMetadataEditor = ({ itemLink, userOverlay, onClose }: ItemMetad
         feedbackTimerRef.current = window.setTimeout(() => setSavePhase("idle"), SAVE_FEEDBACK_MS);
     };
 
+    const handleReset = async () => {
+        if (busy || !canReset) return;
+        const { response } = await dialogUtils.confirm({
+            title: t("gallery.details.metadataResetTitle"),
+            message: t("gallery.details.metadataResetMessage"),
+            noOption: false,
+            type: "warning",
+        });
+        if (response !== 0) return;
+        /* no stored overlay fields: clearing the form is enough */
+        if (!overlayHasEdits(userOverlay)) {
+            setTitle("");
+            setAuthor("");
+            setDescription("");
+            setGenres("");
+            onClose();
+            return;
+        }
+        setResetPhase("saving");
+        try {
+            const row = await dispatch(
+                setLibraryItemMetadata({
+                    itemLink,
+                    source: "user",
+                    title: null,
+                    author: null,
+                    description: null,
+                    genres: null,
+                }),
+            ).unwrap();
+            if (row) {
+                setTitle("");
+                setAuthor("");
+                setDescription("");
+                setGenres("");
+                setResetPhase("saved");
+                feedbackTimerRef.current = window.setTimeout(() => onClose(), SAVE_FEEDBACK_MS);
+                return;
+            }
+            setResetPhase("failed");
+        } catch {
+            setResetPhase("failed");
+        }
+        feedbackTimerRef.current = window.setTimeout(() => setResetPhase("idle"), SAVE_FEEDBACK_MS);
+    };
+
     const saveLabel =
         savePhase === "saving"
             ? tCommon("actions.saving")
@@ -80,6 +142,15 @@ export const ItemMetadataEditor = ({ itemLink, userOverlay, onClose }: ItemMetad
               : savePhase === "failed"
                 ? tCommon("actions.failed")
                 : tCommon("actions.save");
+
+    const resetLabel =
+        resetPhase === "saving"
+            ? tCommon("actions.resetting")
+            : resetPhase === "saved"
+              ? tCommon("actions.saved")
+              : resetPhase === "failed"
+                ? tCommon("actions.failed")
+                : tCommon("actions.reset");
 
     /* details meta containment clips position:fixed; host on #app without changing Modal */
     return createPortal(
@@ -124,10 +195,18 @@ export const ItemMetadataEditor = ({ itemLink, userOverlay, onClose }: ItemMetad
                 />
             </div>
             <div className="modal-actions">
-                <button type="button" onClick={onClose}>
+                <button
+                    type="button"
+                    className="item-metadata-editor-reset"
+                    onClick={() => void handleReset()}
+                    disabled={busy || !canReset}
+                >
+                    {resetLabel}
+                </button>
+                <button type="button" onClick={onClose} disabled={busy}>
                     {tCommon("actions.cancel")}
                 </button>
-                <button type="button" onClick={() => void handleSave()} disabled={savePhase === "saving"}>
+                <button type="button" onClick={() => void handleSave()} disabled={busy}>
                     {saveLabel}
                 </button>
             </div>

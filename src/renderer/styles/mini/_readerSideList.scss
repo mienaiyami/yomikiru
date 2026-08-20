@@ -113,6 +113,12 @@
                 position: relative;
             }
         }
+        .anilistBar-retry {
+            white-space: nowrap;
+            font-size: 0.8em;
+            justify-self: start;
+            align-self: center;
+        }
     }
     &.hideTextFileBadge {
         .nonFolder[data-type-text="true"] {

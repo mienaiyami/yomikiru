@@ -683,9 +683,10 @@ const MangaDetailsPanel = ({
             <DetailsMetaBlock>
                 <DetailsHero
                     title={resolved?.title || title}
+                    originalTitle={resolved?.originalTitle}
                     author={resolved?.author ?? manga?.author}
                     coverSrc={coverArtSrc}
-                    coverAlt={manga?.title || t("gallery.details.coverAlt")}
+                    coverAlt={resolved?.title || manga?.title || t("gallery.details.coverAlt")}
                     trackerCoverAvailable={Boolean(manga) && trackerCoverAvailable}
                     coverSource={parseDetailsCoverSource(manga?.extra, tracker?.media?.coverImage)}
                     onCoverSourceChange={
@@ -699,6 +700,16 @@ const MangaDetailsPanel = ({
                     onCoverContextMenu={handleLibraryRootContextMenu}
                     description={resolved?.description}
                     genres={resolved?.genres}
+                    trackerMedia={
+                        resolved
+                            ? {
+                                  status: resolved.mediaStatus,
+                                  score: resolved.mediaScore,
+                                  totalChapters: resolved.totalChapters,
+                                  format: resolved.mediaFormat,
+                              }
+                            : null
+                    }
                     tags={<ItemTagsRow itemLink={mangaLink} />}
                     actions={
                         pathMissing || !manga ? null : (
@@ -767,7 +778,7 @@ const MangaDetailsPanel = ({
                                     <AnilistBar
                                         variant="compact"
                                         localLibraryLink={mangaLink}
-                                        libraryTitle={manga.title}
+                                        libraryTitle={resolved?.title ?? manga.title}
                                     />
                                 ) : null}
                             </>

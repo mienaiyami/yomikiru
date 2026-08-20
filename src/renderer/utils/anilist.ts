@@ -422,17 +422,15 @@ export const setAnilistListProgress = async (
 };
 
 /**
- * Human-readable label for an Anilist media format value.
- *
- * @param format Anilist GraphQL media format enum
+ * Human-readable label for a tracker/AniList media format value.
+ * Unknown strings pass through as the i18n defaultValue.
  */
-export const anilistFormatLabel = (format: Anilist.MediaFormat): string =>
+export const anilistFormatLabel = (format: string): string =>
     i18n.t(`format.${format}`, { ns: "anilist", defaultValue: format });
 
 /**
- * Human-readable label for an Anilist media status value.
- *
- * @param status Anilist GraphQL media status enum
+ * Human-readable label for a tracker/AniList media status value.
+ * Unknown strings pass through as the i18n defaultValue.
  */
-export const anilistStatusLabel = (status: Anilist.MediaStatus): string =>
+export const anilistStatusLabel = (status: string): string =>
     i18n.t(`status.${status}`, { ns: "anilist", defaultValue: status });

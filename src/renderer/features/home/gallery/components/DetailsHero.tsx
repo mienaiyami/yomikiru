@@ -2,9 +2,12 @@ import type { DetailsCoverSource } from "@common/types/db";
 import type { IconDefinition } from "@fortawesome/fontawesome-svg-core";
 import { faArrowLeft, faCopy } from "@fortawesome/free-solid-svg-icons";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
+import { ItemDisplayTitle } from "@renderer/components/ItemDisplayTitle";
 import { setAppSettings } from "@store/appSettings";
 import { useAppDispatch, useAppSelector } from "@store/hooks";
+import { anilistFormatLabel, anilistStatusLabel } from "@utils/anilist";
 import { DETAILS_ABOUT_HTML_TAGS, sanitizeHtmlAllowlist } from "@utils/html";
+import { hasTrackerMediaFacts } from "@utils/libraryMetadata";
 import type { KeyboardEvent, MouseEvent, ReactNode } from "react";
 import { useEffect, useLayoutEffect, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
@@ -313,8 +316,18 @@ export const DetailsMetaBlock = ({ children }: DetailsMetaBlockProps) => {
     );
 };
 
+/** Tracker media-snapshot fields shown above genres. Omitted fields are skipped. */
+export type DetailsTrackerMedia = {
+    status?: string | null;
+    score?: number | null;
+    totalChapters?: number | null;
+    format?: string | null;
+};
+
 type DetailsHeroProps = {
     title: string;
+    /** Library row title when it differs from {@link DetailsHeroProps.title}. */
+    originalTitle?: string | null;
     /** Omitted from the DOM when empty. */
     author?: string | null;
     /** Optional type chip next to the title (e.g. EPUB). */
@@ -330,6 +343,11 @@ type DetailsHeroProps = {
     trackerCoverAvailable?: boolean;
     coverSource?: DetailsCoverSource;
     onCoverSourceChange?: (source: DetailsCoverSource) => void;
+    /**
+     * Catalog facts from the tracker media snapshot (releasing status, score, chapters).
+     * Hidden when every field is empty. List-entry status/score stay on the AniList bar.
+     */
+    trackerMedia?: DetailsTrackerMedia | null;
     actions?: ReactNode;
     facts?: ReactNode;
     note?: ReactNode;
@@ -344,12 +362,13 @@ type DetailsHeroProps = {
 /**
  * Shared gallery-details header: cover with overlay back, title/actions, then metadata.
  * Cover and title stay sticky in `.details-meta` while About and facts scroll.
- * About / genres render from resolved metadata (genres above About) and hide when empty.
+ * About / genres render from resolved metadata (tracker facts then genres above About) and hide when empty.
  * Catalog tags render through {@link DetailsHeroProps.tags} above the item note.
  * Chapter / bookmark / note lists stay in each panel.
  */
 export const DetailsHero = ({
     title,
+    originalTitle,
     author,
     typeBadge,
     coverSrc,
@@ -359,6 +378,7 @@ export const DetailsHero = ({
     trackerCoverAvailable = false,
     coverSource = "library",
     onCoverSourceChange,
+    trackerMedia,
     actions,
     facts,
     note,
@@ -373,9 +393,35 @@ export const DetailsHero = ({
     const genreList = genres?.filter((g) => g.trim().length > 0) ?? [];
     const descriptionHtml = descriptionText ? sanitizeHtmlAllowlist(descriptionText, DETAILS_ABOUT_HTML_TAGS) : "";
     const showCoverSource = trackerCoverAvailable && Boolean(onCoverSourceChange);
+    const showTrackerFacts = Boolean(
+        trackerMedia &&
+            hasTrackerMediaFacts({
+                mediaStatus: trackerMedia.status ?? null,
+                mediaScore: trackerMedia.score ?? null,
+                mediaFormat: trackerMedia.format ?? null,
+                totalChapters: trackerMedia.totalChapters ?? null,
+            }),
+    );
+    const trackerFactParts: string[] = [];
+    if (showTrackerFacts && trackerMedia) {
+        const status = trackerMedia.status?.trim();
+        if (status) trackerFactParts.push(anilistStatusLabel(status));
+        if (trackerMedia.score != null)
+            trackerFactParts.push(t("gallery.details.trackerScore", { value: trackerMedia.score }));
+        if (trackerMedia.totalChapters != null) {
+            trackerFactParts.push(t("gallery.details.trackerChapters", { count: trackerMedia.totalChapters }));
+        }
+        const format = trackerMedia.format?.trim();
+        if (format) trackerFactParts.push(anilistFormatLabel(format));
+    }
+    const trackerFactsEl =
+        showTrackerFacts && trackerFactParts.length > 0 ? (
+            <div className="details-tracker-facts">{trackerFactParts.join(" · ")}</div>
+        ) : null;
     const aboutBlock =
-        descriptionHtml || genreList.length > 0 ? (
+        descriptionHtml || genreList.length > 0 || trackerFactsEl ? (
             <>
+                {trackerFactsEl}
                 {genreList.length > 0 ? <div className="details-genres">{genreList.join(" · ")}</div> : null}
                 {descriptionHtml ? (
                     <div className="details-synopsis">
@@ -441,7 +487,9 @@ export const DetailsHero = ({
             </div>
             <div className="details-main">
                 <div className="details-title-row">
-                    <h2 className="details-title">{title}</h2>
+                    <h2 className="details-title">
+                        <ItemDisplayTitle primary={title} original={originalTitle} />
+                    </h2>
                     {typeBadge ? <span className="details-type-badge">{typeBadge}</span> : null}
                 </div>
                 {authorText ? <div className="details-author">{authorText}</div> : null}

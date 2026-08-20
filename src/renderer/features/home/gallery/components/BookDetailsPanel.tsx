@@ -501,10 +501,11 @@ const BookDetailsPanel = ({ bookLink, onClose, onRelocated, initialTab = "bookma
             <DetailsMetaBlock>
                 <DetailsHero
                     title={resolved?.title || book.title}
+                    originalTitle={resolved?.originalTitle}
                     author={resolved?.author ?? book.author}
                     typeBadge={t("shared.epub")}
                     coverSrc={coverArtSrc}
-                    coverAlt={book.title}
+                    coverAlt={resolved?.title || book.title}
                     trackerCoverAvailable={trackerCoverAvailable}
                     coverSource={parseDetailsCoverSource(book.extra, tracker?.media?.coverImage)}
                     onCoverSourceChange={(source) => {
@@ -514,6 +515,16 @@ const BookDetailsPanel = ({ bookLink, onClose, onRelocated, initialTab = "bookma
                     onCoverContextMenu={handleLibraryRootContextMenu}
                     description={resolved?.description}
                     genres={resolved?.genres}
+                    trackerMedia={
+                        resolved
+                            ? {
+                                  status: resolved.mediaStatus,
+                                  score: resolved.mediaScore,
+                                  totalChapters: resolved.totalChapters,
+                                  format: resolved.mediaFormat,
+                              }
+                            : null
+                    }
                     tags={<ItemTagsRow itemLink={bookLink} />}
                     actions={
                         pathMissing ? null : (
@@ -582,7 +593,7 @@ const BookDetailsPanel = ({ bookLink, onClose, onRelocated, initialTab = "bookma
                                     <AnilistBar
                                         variant="compact"
                                         localLibraryLink={bookLink}
-                                        libraryTitle={book.title}
+                                        libraryTitle={resolved?.title ?? book.title}
                                     />
                                 ) : null}
                             </>

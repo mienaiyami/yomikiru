@@ -5,11 +5,13 @@ import { onInvoke } from "@test/mocks/preload";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import libraryReducer, {
     fetchAllMetadata,
+    selectResolvedItemMetadata,
     setLibraryItemDetailsCoverSource,
     setLibraryItemFavourite,
     setLibraryItemMetadata,
     setLibraryItemNote,
 } from "./library";
+import trackersReducer from "./trackers";
 
 const itemLink = path.join("library", "series");
 
@@ -154,5 +156,41 @@ describe("library metadata thunks", () => {
             expect.objectContaining({ itemLink, source: "user", description: "About" }),
         );
         expect(store.getState().library.metadata[itemLink]).toEqual([row]);
+    });
+});
+
+describe("selectResolvedItemMetadata", () => {
+    it("prefers the user overlay title over the library row", () => {
+        const item = makeMangaItem({ link: itemLink, title: "Folder" });
+        const overlay = {
+            itemLink,
+            source: "user" as const,
+            title: "Edited",
+            author: null,
+            description: null,
+            genres: null,
+            tags: null,
+            publisher: null,
+            createdAt: new Date(0),
+            updatedAt: new Date(0),
+        };
+        const store = configureStore({
+            reducer: { library: libraryReducer, trackers: trackersReducer },
+            preloadedState: {
+                library: {
+                    items: { [itemLink]: item },
+                    metadata: { [itemLink]: [overlay] },
+                    loading: false,
+                    error: null,
+                },
+                trackers: { entries: [] },
+            },
+        });
+        const resolved = selectResolvedItemMetadata(
+            store.getState() as Parameters<typeof selectResolvedItemMetadata>[0],
+            itemLink,
+        );
+        expect(resolved?.title).toBe("Edited");
+        expect(resolved?.originalTitle).toBe("Folder");
     });
 });

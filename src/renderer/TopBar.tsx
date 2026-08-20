@@ -11,6 +11,7 @@ import {
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { setAppSettings } from "@store/appSettings";
 import { useAppDispatch, useAppSelector } from "@store/hooks";
+import { selectResolvedItemMetadata } from "@store/library";
 import { setSysBtnColor } from "@store/themes";
 import { setSettingsOpen, toggleSettingsOpen } from "@store/ui";
 import { formatUtils } from "@utils/file";
@@ -26,6 +27,12 @@ const TopBar = (): ReactElement => {
     const [isMaximized, setMaximized] = useState(window.electron.currentWindow.isMaximized() || false);
     const [pageNumberChangeDisabled, setPageNumberChangeDisabled] = useState(false);
     const readerContent = useAppSelector((store) => store.reader.content);
+    const readerDisplayTitle = useAppSelector((store) => {
+        const content = store.reader.content;
+        if (!content) return null;
+        // primary resolved title only; the muted original does not fit the title bar
+        return selectResolvedItemMetadata(store, content.link)?.title ?? content.title;
+    });
     // todo: move input to separate component
     const currentPageNumber = useAppSelector((store) => {
         if (store.reader.type === "manga" && store.reader.content?.progress) {
@@ -46,7 +53,7 @@ const TopBar = (): ReactElement => {
             return;
         }
         if (readerContent.type === "manga") {
-            let mangaName = readerContent.title;
+            let mangaName = readerDisplayTitle ?? readerContent.title;
             let chapterName = formatUtils.files.getName(readerContent.progress?.chapterName || "");
             if (mangaName.length > 13) mangaName = `${mangaName.substring(0, 20)}...`;
             if (chapterName.length > 83) chapterName = `${chapterName.substring(0, 80)}...`;
@@ -55,7 +62,7 @@ const TopBar = (): ReactElement => {
             document.title = title;
             return;
         } else if (readerContent.type === "book") {
-            let bookTitle = readerContent.title;
+            let bookTitle = readerDisplayTitle ?? readerContent.title;
             let chapterName = "";
             if (
                 appSettings.epubReaderSettings.loadOneChapter &&
@@ -106,7 +113,7 @@ const TopBar = (): ReactElement => {
     }, [currentPageNumber]);
     useEffect(() => {
         setTitleWithSize();
-    }, [readerContent]);
+    }, [readerContent, readerDisplayTitle]);
 
     const viewMode = useAppSelector((store) => store.appSettings.homeViewMode);
     // todo: temp only, extract to component

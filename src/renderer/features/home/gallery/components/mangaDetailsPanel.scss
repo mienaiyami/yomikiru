@@ -387,6 +387,7 @@
                 padding: 0 1.25rem;
                 display: inline-flex;
                 align-items: center;
+                white-space: nowrap;
             }
         }
     }
@@ -408,7 +409,8 @@
         min-width: 0;
 
         .details-synopsis,
-        .details-genres {
+        .details-genres,
+        .details-tracker-facts {
             align-self: stretch;
             width: 100%;
         }
@@ -531,6 +533,18 @@
     .details-genres {
         font-size: 1.2rem;
         color: var(--font-color-secondary);
+    }
+
+    .details-tracker-facts {
+        font-size: 1.15rem;
+        color: var(--font-color);
+        line-height: 1.4;
+    }
+
+    .details-tracker-facts + .details-genres,
+    .details-tracker-facts + .details-synopsis {
+        padding-top: 0.7rem;
+        border-top: 1px solid var(--divider-color);
     }
 
     .details-tags {

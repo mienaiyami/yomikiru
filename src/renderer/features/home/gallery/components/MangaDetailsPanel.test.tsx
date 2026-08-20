@@ -365,4 +365,80 @@ describe("MangaDetailsPanel", () => {
         expect(window.electron.showItemInFolder).toHaveBeenCalledWith(item.link);
         await waitForEmptyChapterList();
     });
+
+    it("shows an edited title with the original library name muted", async () => {
+        stubMangaOnDisk();
+        const item = makeMangaItem({ title: "Folder Name" });
+        renderWithProviders(<MangaDetailsPanel mangaLink={item.link} onClose={vi.fn()} />, {
+            preloadedState: {
+                library: {
+                    items: { [item.link]: item },
+                    metadata: {
+                        [item.link]: [
+                            {
+                                itemLink: item.link,
+                                source: "user" as const,
+                                title: "Edited Title",
+                                author: null,
+                                description: null,
+                                genres: null,
+                                tags: null,
+                                publisher: null,
+                                createdAt: new Date(0),
+                                updatedAt: new Date(0),
+                            },
+                        ],
+                    },
+                    loading: false,
+                    error: null,
+                },
+                anilist: { ...emptyAnilist },
+                trackers: { ...emptyTrackers },
+            },
+        });
+        expect(screen.getByTitle("Edited Title (Folder Name)")).toBeInTheDocument();
+        expect(screen.getByText(/\(Folder Name\)/)).toBeInTheDocument();
+        await waitForEmptyChapterList();
+    });
+
+    it("shows tracker catalog facts above genres", async () => {
+        stubMangaOnDisk();
+        const item = makeMangaItem();
+        renderWithProviders(<MangaDetailsPanel mangaLink={item.link} onClose={vi.fn()} />, {
+            preloadedState: {
+                library: { items: { [item.link]: item }, metadata: {}, loading: false, error: null },
+                anilist: { ...emptyAnilist },
+                trackers: {
+                    entries: [
+                        {
+                            id: 1,
+                            itemLink: item.link,
+                            provider: "anilist" as const,
+                            remoteId: "1",
+                            remoteListId: null,
+                            remoteUrl: null,
+                            media: {
+                                status: "RELEASING",
+                                score: 78,
+                                totalChapters: 12,
+                                format: "MANGA",
+                                genres: ["Adventure"],
+                            },
+                            listState: { status: "CURRENT", score: 9 },
+                            syncedAt: null,
+                            createdAt: new Date(0),
+                        },
+                    ],
+                },
+            },
+        });
+        const main = document.querySelector(".details-facts-main")?.textContent ?? "";
+        expect(main.indexOf(anilistEn.status.RELEASING)).toBeGreaterThanOrEqual(0);
+        expect(main.indexOf(anilistEn.status.RELEASING)).toBeLessThan(main.indexOf("Adventure"));
+        expect(main).toContain(anilistEn.status.RELEASING);
+        expect(main).toContain("Score 78");
+        expect(main).not.toContain("Score 9");
+        expect(document.querySelector(".details-tracker-facts")).not.toBeNull();
+        await waitForEmptyChapterList();
+    });
 });

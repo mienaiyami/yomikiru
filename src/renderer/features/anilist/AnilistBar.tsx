@@ -36,34 +36,40 @@ const AnilistBar = memo((props: AnilistBarProps) => {
 
     const hasTracker = Boolean(anilistTracker);
     const remoteId = anilistTracker?.remoteId;
+    /* session list entry is shared; only show it when it belongs to this remote id */
+    const listEntry =
+        anilistCurrentListEntry && remoteId && String(anilistCurrentListEntry.mediaId) === String(remoteId)
+            ? anilistCurrentListEntry
+            : null;
+    const listFetchKey = trackLink && remoteId ? `${trackLink}:${remoteId}` : "";
+    const cachedProgress = anilistTracker?.listState?.progress;
 
-    const [isTracking, setTracking] = useState(false);
-    const [progress, setProgress] = useState(anilistCurrentListEntry?.progress || 0);
+    const [progress, setProgress] = useState(listEntry?.progress || 0);
+    const [retryTick, setRetryTick] = useState(0);
+    /* miss is keyed to this item so a previous error does not flash on the next title */
+    const [failedKey, setFailedKey] = useState<string | null>(null);
+    const fetchFailed = Boolean(listFetchKey) && failedKey === listFetchKey;
     const dispatch = useAppDispatch();
 
     useEffect(() => {
-        if (hasTracker) setTracking(true);
-        else {
-            setTracking(false);
-            dispatch(setAnilistEditOpen(false));
-        }
+        if (!hasTracker) dispatch(setAnilistEditOpen(false));
     }, [hasTracker, dispatch]);
     useEffect(() => {
-        setProgress(anilistCurrentListEntry?.progress || 0);
-    }, [anilistCurrentListEntry]);
+        setProgress(listEntry?.progress || 0);
+    }, [listEntry]);
     /* debounce: restart the timer only when the local progress value changes */
     // biome-ignore lint/correctness/useExhaustiveDependencies: debounce keyed on progress only
     useEffect(() => {
         const timeout = setTimeout(() => {
-            anilistCurrentListEntry &&
-                anilistCurrentListEntry.progress !== progress &&
+            listEntry &&
+                listEntry.progress !== progress &&
                 setAnilistListProgress(progress).then((e) => {
                     if (e) {
                         dispatch(setAnilistCurrentListEntry(e));
                         if (trackLink) void dispatch(cacheAnilistListEntry({ itemLink: trackLink, data: e }));
                     } else {
                         dialogUtils.customError({ message: t("bar.syncFailed"), log: false });
-                        setProgress(anilistCurrentListEntry.progress);
+                        setProgress(listEntry.progress);
                     }
                 });
         }, 1000);
@@ -76,19 +82,25 @@ const AnilistBar = memo((props: AnilistBarProps) => {
     // biome-ignore lint/correctness/useExhaustiveDependencies: refetch when the edit overlay closes
     useEffect(() => {
         if (!trackLink) return;
-        if (isTracking) {
-            if (remoteId) {
-                getAnilistListEntry(Number(remoteId)).then((e) => {
-                    if (e) {
-                        dispatch(setAnilistCurrentListEntry(e));
-                        void dispatch(cacheAnilistListEntry({ itemLink: trackLink, data: e }));
-                    }
-                });
-            }
-        } else {
+        if (!hasTracker || !remoteId) {
             dispatch(setAnilistCurrentListEntry(null));
+            return;
         }
-    }, [isTracking, trackLink, isAniEditOpen, remoteId, dispatch]);
+        let cancelled = false;
+        setFailedKey((prev) => (prev === listFetchKey ? null : prev));
+        void getAnilistListEntry(Number(remoteId)).then((entry) => {
+            if (cancelled) return;
+            if (entry) {
+                dispatch(setAnilistCurrentListEntry(entry));
+                void dispatch(cacheAnilistListEntry({ itemLink: trackLink, data: entry }));
+                return;
+            }
+            setFailedKey(listFetchKey);
+        });
+        return () => {
+            cancelled = true;
+        };
+    }, [hasTracker, trackLink, isAniEditOpen, remoteId, listFetchKey, retryTick, dispatch]);
 
     const openAnilistFlow = useCallback(
         (mode: "search" | "edit") => {
@@ -110,19 +122,40 @@ const AnilistBar = memo((props: AnilistBarProps) => {
         [dispatch, libraryTitle, localLibraryLink],
     );
 
+    const retryControl = (
+        <button
+            type="button"
+            className="anilistBar-retry"
+            onClick={() => setRetryTick((n) => n + 1)}
+            data-tooltip={t("bar.retry")}
+        >
+            {t("bar.networkError")}
+        </button>
+    );
+
+    const compactPending = (
+        <button type="button" disabled aria-busy="true">
+            {cachedProgress != null
+                ? t("bar.compactTracked", { brand: t("bar.brand"), progress: cachedProgress })
+                : t("bar.brand")}
+        </button>
+    );
+
     if (variant === "compact") {
         return (
             <div className="anilistBar anilistBar--compact">
-                {isTracking ? (
-                    anilistCurrentListEntry ? (
+                {hasTracker ? (
+                    listEntry ? (
                         <button type="button" onClick={() => openAnilistFlow("edit")}>
                             {t("bar.compactTracked", {
                                 brand: t("bar.brand"),
                                 progress,
                             })}
                         </button>
+                    ) : fetchFailed ? (
+                        retryControl
                     ) : (
-                        <span>{t("bar.networkError")}</span>
+                        compactPending
                     )
                 ) : (
                     <button type="button" onClick={() => openAnilistFlow("search")}>
@@ -137,8 +170,8 @@ const AnilistBar = memo((props: AnilistBarProps) => {
         <div className="anilistBar">
             <span className="bold">{t("bar.brand")}</span>
             <span className="bold">{t("bar.separator")}</span>
-            {isTracking ? (
-                anilistCurrentListEntry ? (
+            {hasTracker ? (
+                listEntry ? (
                     <div className="btns">
                         <button type="button" onClick={() => setProgress((init) => init - 1)}>
                             <FontAwesomeIcon icon={faMinus} />
@@ -160,9 +193,9 @@ const AnilistBar = memo((props: AnilistBarProps) => {
                             <FontAwesomeIcon icon={faSlidersH} />
                         </button>
                     </div>
-                ) : (
-                    <span>{t("bar.networkError")}</span>
-                )
+                ) : fetchFailed ? (
+                    retryControl
+                ) : null
             ) : (
                 <button type="button" onClick={() => openAnilistFlow("search")}>
                     {t("bar.track")}

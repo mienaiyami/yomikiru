@@ -78,9 +78,11 @@ The `AnilistBar` component appears in:
 
 **Bar** (reader): progress counter with `+` / `-`, an edit control, and Track when unlinked. Progress uses a debounced 1-second save via `setAnilistListProgress`.
 
-**Compact** (gallery details): Track, or a status/count control that opens the existing search/edit overlays. No `+` / `-` on this page.
+**Compact** (gallery details): Track, or a status/count control that opens the existing search/edit overlays. No `+` / `-` on this page. While the list entry is loading, the control stays a same-height disabled button (brand, or cached progress when the tracker snapshot has it). A failed fetch is a **Network Error** button; tooltip is Retry.
 
 When `localLibraryLink` prop is provided (gallery details), tracking resolves from that path instead of the open reader item.
+
+The session `currentListEntry` is shared. The bar only shows it when `mediaId` matches this item's `remoteId`, so opening details does not flash Network Error (or another title's progress) before the fetch returns.
 
 After a list-entry fetch, `cacheAnilistListEntry` writes description, genres, staff author, chapter count, score, and related fields into the tracker cache for details About / author / genres. The list-entry request is keyed on the remote media id (and edit-overlay open state), not the whole tracker row, so cache writes do not refetch.
 

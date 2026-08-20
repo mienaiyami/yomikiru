@@ -6,13 +6,23 @@ import type { ItemTracker, LibraryItem, LibraryItemMetadata } from "@common/type
  */
 export type ResolvedItemMetadata = {
     title: string;
+    /**
+     * {@link LibraryItem.title} when it differs from {@link ResolvedItemMetadata.title}.
+     * Null when the library row is already the primary title.
+     */
+    originalTitle: string | null;
+    /** Unique non-empty titles from every layer, for search haystacks. */
+    searchTitles: string[];
     author: string | null;
     description: string | null;
     genres: string[];
     tags: string[];
     publisher: string | null;
-    status: string | null;
-    score: number | null;
+    /** Tracker catalog status (releasing / finished), not the user's list-entry status. */
+    mediaStatus: string | null;
+    /** Tracker catalog score (e.g. AniList average), not the user's list-entry score. */
+    mediaScore: number | null;
+    mediaFormat: string | null;
     siteUrl: string | null;
     totalChapters: number | null;
 };
@@ -38,8 +48,26 @@ const firstNonEmptyList = (...values: (string[] | null | undefined)[]): string[]
 };
 
 /**
+ * Unique trimmed titles, first-seen order, compared case-insensitively.
+ */
+const uniqueTitles = (...values: (string | null | undefined)[]): string[] => {
+    const seen = new Set<string>();
+    const out: string[] = [];
+    for (const value of values) {
+        const trimmed = value?.trim();
+        if (!trimmed) continue;
+        const key = trimmed.toLowerCase();
+        if (seen.has(key)) continue;
+        seen.add(key);
+        out.push(trimmed);
+    }
+    return out;
+};
+
+/**
  * Resolves display metadata from overlay rows, tracker cache, and {@link LibraryItem} base columns.
- * Tracker-only fields have no file/user overlay columns.
+ * Tracker catalog fields (`mediaStatus`, `mediaScore`, `mediaFormat`, `totalChapters`) come from
+ * the media snapshot only; list-entry state stays on {@link ItemTracker.listState}.
  */
 export const resolveItemMetadata = ({
     item,
@@ -49,20 +77,79 @@ export const resolveItemMetadata = ({
     const user = overlays.find((row) => row.source === "user");
     const file = overlays.find((row) => row.source === "file");
     const media = tracker?.media;
-    const listState = tracker?.listState;
+    const title = firstNonEmpty(user?.title, media?.title, file?.title, item.title) ?? item.title;
+    const libraryTitle = item.title.trim();
+    const originalTitle =
+        libraryTitle && libraryTitle.toLowerCase() !== title.trim().toLowerCase() ? item.title : null;
 
     return {
-        title: firstNonEmpty(user?.title, media?.title, file?.title, item.title) ?? item.title,
+        title,
+        originalTitle,
+        searchTitles: uniqueTitles(user?.title, media?.title, file?.title, item.title),
         author: firstNonEmpty(user?.author, media?.author, file?.author, item.author),
         description: firstNonEmpty(user?.description, media?.description, file?.description),
         genres: firstNonEmptyList(user?.genres, media?.genres, file?.genres),
         tags: firstNonEmptyList(user?.tags, file?.tags),
         publisher: firstNonEmpty(user?.publisher, file?.publisher),
-        status: firstNonEmpty(listState?.status, media?.status),
-        score: listState?.score ?? media?.score ?? null,
+        mediaStatus: firstNonEmpty(media?.status),
+        mediaScore: media?.score ?? null,
+        mediaFormat: firstNonEmpty(media?.format),
         siteUrl: media?.siteUrl ?? null,
         totalChapters: media?.totalChapters ?? null,
     };
+};
+
+type TrackerMediaFacts = Pick<
+    ResolvedItemMetadata,
+    "mediaStatus" | "mediaScore" | "mediaFormat" | "totalChapters"
+>;
+
+/**
+ * True when the tracker media snapshot has at least one catalog fact to show on details.
+ */
+export const hasTrackerMediaFacts = (resolved: TrackerMediaFacts): boolean =>
+    Boolean(
+        resolved.mediaStatus?.trim() ||
+            resolved.mediaFormat?.trim() ||
+            resolved.mediaScore != null ||
+            resolved.totalChapters != null,
+    );
+
+/**
+ * Concatenates title layers and caller extras (type tokens, chapter extension) for list search.
+ */
+export const libraryItemSearchText = (searchTitles: readonly string[], extra = ""): string =>
+    `${searchTitles.join(" ")}${extra}`;
+
+/**
+ * First tracker row per library path.
+ * ponytail: first row wins until a provider picker exists.
+ */
+export const trackerByItemLink = (entries: readonly ItemTracker[]): Record<string, ItemTracker> => {
+    const map: Record<string, ItemTracker> = {};
+    for (const row of entries) {
+        if (!map[row.itemLink]) map[row.itemLink] = row;
+    }
+    return map;
+};
+
+/**
+ * Resolves display metadata for every item, keyed by {@link LibraryItem.link}.
+ */
+export const resolveAllItemMetadata = (
+    items: Iterable<Pick<LibraryItem, "link" | "title" | "author">>,
+    metadataByLink: Record<string, LibraryItemMetadata[] | undefined>,
+    trackerByLink: Record<string, ItemTracker | undefined>,
+): Record<string, ResolvedItemMetadata> => {
+    const out: Record<string, ResolvedItemMetadata> = {};
+    for (const item of items) {
+        out[item.link] = resolveItemMetadata({
+            item,
+            overlays: metadataByLink[item.link] ?? [],
+            tracker: trackerByLink[item.link],
+        });
+    }
+    return out;
 };
 
 /**

@@ -15,6 +15,7 @@
         "track": "Track",
         "compactTracked": "{{brand}} · {{progress}}",
         "networkError": "Network Error",
+        "retry": "Retry",
         "moreOptions": "More Options",
         "syncFailed": "Failed to sync AniList progress."
     },

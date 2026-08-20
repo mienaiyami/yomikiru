@@ -405,10 +405,13 @@ input[type="color"] {
                     box-shadow: none;
                 }
             }
+            textarea {
+                resize: vertical;
+                max-height: 12rem;
+            }
         }
-        textarea {
-            resize: vertical;
-            max-height: 12rem;
+        .item-metadata-editor-reset {
+            margin-right: auto;
         }
     }
 

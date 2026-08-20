@@ -72,4 +72,63 @@ describe("ItemMetadataEditor", () => {
             expect(screen.getByRole("button", { name: common.actions.failed })).toBeInTheDocument();
         });
     });
+
+    it("disables Reset when the overlay and form are empty", () => {
+        renderWithProviders(<ItemMetadataEditor itemLink={itemLink} onClose={vi.fn()} />);
+        expect(screen.getByRole("button", { name: common.actions.reset })).toBeDisabled();
+    });
+
+    it("asks before resetting overlay fields and writes nulls", async () => {
+        onInvoke("dialog:confirm", async () => ({ response: 0, checkboxChecked: false }));
+        const setMetadata = vi.fn(async () => ({ ...userOverlay, title: null }));
+        onInvoke("db:library:setMetadata", setMetadata);
+        const onClose = vi.fn();
+        renderWithProviders(
+            <ItemMetadataEditor itemLink={itemLink} userOverlay={userOverlay} onClose={onClose} />,
+        );
+        fireEvent.click(screen.getByRole("button", { name: common.actions.reset }));
+        await waitFor(() =>
+            expect(setMetadata).toHaveBeenCalledWith(
+                expect.objectContaining({
+                    itemLink,
+                    source: "user",
+                    title: null,
+                    author: null,
+                    description: null,
+                    genres: null,
+                }),
+            ),
+        );
+        expect(await screen.findByRole("button", { name: common.actions.saved })).toBeInTheDocument();
+        await waitFor(() => expect(onClose).toHaveBeenCalledTimes(1), { timeout: 2500 });
+    });
+
+    it("does not write metadata when reset is cancelled", async () => {
+        const confirm = vi.fn(async () => ({ response: 1, checkboxChecked: false }));
+        onInvoke("dialog:confirm", confirm);
+        const setMetadata = vi.fn();
+        onInvoke("db:library:setMetadata", setMetadata);
+        renderWithProviders(
+            <ItemMetadataEditor itemLink={itemLink} userOverlay={userOverlay} onClose={vi.fn()} />,
+        );
+        fireEvent.click(screen.getByRole("button", { name: common.actions.reset }));
+        await waitFor(() => expect(confirm).toHaveBeenCalled());
+        expect(setMetadata).not.toHaveBeenCalled();
+    });
+
+    it("clears unsaved form fields without IPC after reset confirm", async () => {
+        const confirm = vi.fn(async () => ({ response: 0, checkboxChecked: false }));
+        onInvoke("dialog:confirm", confirm);
+        const setMetadata = vi.fn();
+        onInvoke("db:library:setMetadata", setMetadata);
+        const onClose = vi.fn();
+        renderWithProviders(<ItemMetadataEditor itemLink={itemLink} onClose={onClose} />);
+        fireEvent.change(screen.getByLabelText(home.gallery.details.metadataTitle), {
+            target: { value: "Draft" },
+        });
+        fireEvent.click(screen.getByRole("button", { name: common.actions.reset }));
+        await waitFor(() => expect(confirm).toHaveBeenCalled());
+        expect(setMetadata).not.toHaveBeenCalled();
+        expect(onClose).toHaveBeenCalledTimes(1);
+    });
 });
