@@ -31,16 +31,20 @@ export const MangaProgressSchema = createInsertSchema(mangaProgress).omit({
     itemLink: true,
 });
 
+/**
+ * Insert payload for a catalogue row. `progress` is required when the reader opens a title;
+ * scan/import omit it so Continue Reading stays empty until a real read.
+ */
 export const AddToLibrarySchema = z.discriminatedUnion("type", [
     z.object({
         type: z.literal("book"),
         data: LibraryItemSchema.extend({ type: z.literal("book") }),
-        progress: BookProgressSchema,
+        progress: BookProgressSchema.optional(),
     }),
     z.object({
         type: z.literal("manga"),
         data: LibraryItemSchema.extend({ type: z.literal("manga") }),
-        progress: MangaProgressSchema,
+        progress: MangaProgressSchema.optional(),
     }),
 ]);
 

@@ -75,6 +75,35 @@ describe("DatabaseService", () => {
         }
     });
 
+    it("adds a manga catalogue row without progress", async () => {
+        const itemLink = path.join("testdata", "manga", "scan-only");
+        const item = await dbService.addLibraryItem({
+            type: "manga",
+            data: {
+                type: "manga",
+                link: itemLink,
+                title: "Unread Series",
+            },
+        });
+        expect(item.link).toBe(itemLink);
+
+        const progressRows = await dbService.db
+            .select()
+            .from(mangaProgress)
+            .where(eq(mangaProgress.itemLink, itemLink));
+        expect(progressRows).toEqual([]);
+
+        await dbService.addLibraryItem({
+            type: "manga",
+            data: { type: "manga", link: itemLink, title: "Unread Series" },
+        });
+        const stillNone = await dbService.db
+            .select()
+            .from(mangaProgress)
+            .where(eq(mangaProgress.itemLink, itemLink));
+        expect(stillNone).toEqual([]);
+    });
+
     it("adds a manga library item with progress in a transaction", async () => {
         const item = await dbService.addLibraryItem({
             type: "manga",
@@ -229,7 +258,95 @@ describe("DatabaseService", () => {
         expect(bookmarks[0]?.chapterName).toBe("ch1");
 
         expect(await dbService.relocateLibraryItem(oldLink, path.join("testdata", "manga", "gone"))).toBeNull();
-        expect(await dbService.relocateLibraryItem(newLink, MANGA_LINK)).toBeNull();
+        expect(await dbService.relocateLibraryItem(newLink, BOOK_LINK)).toBeNull();
+        const stillManga = await dbService.db.select().from(libraryItems).where(eq(libraryItems.link, newLink));
+        const stillBook = await dbService.db.select().from(libraryItems).where(eq(libraryItems.link, BOOK_LINK));
+        expect(stillManga).toHaveLength(1);
+        expect(stillBook).toHaveLength(1);
+    });
+
+    it("merges into an occupied path, keeping the keeper id and unioning chaptersRead", async () => {
+        const keeperLink = path.join("testdata", "manga", "merge-keeper");
+        const discardLink = path.join("testdata", "manga", "merge-discard");
+        const keeper = await dbService.addLibraryItem({
+            type: "manga",
+            data: { type: "manga", link: keeperLink, title: "Keeper Title" },
+            progress: { chapterName: "ch1", currentPage: 5, totalPages: 10 },
+        });
+        await dbService.db
+            .update(mangaProgress)
+            .set({ chaptersRead: ["ch1"], lastReadAt: new Date(1_000) })
+            .where(eq(mangaProgress.itemLink, keeperLink));
+        await dbService.db.insert(mangaBookmarks).values({
+            itemLink: keeperLink,
+            chapterName: "ch1",
+            page: 5,
+        });
+
+        const discard = await dbService.addLibraryItem({
+            type: "manga",
+            data: { type: "manga", link: discardLink, title: "Discard Title" },
+            progress: { chapterName: "ch2", currentPage: 1, totalPages: 8 },
+        });
+        await dbService.db
+            .update(mangaProgress)
+            .set({ chaptersRead: ["ch2"], lastReadAt: new Date(2_000) })
+            .where(eq(mangaProgress.itemLink, discardLink));
+        await dbService.db.insert(mangaBookmarks).values({
+            itemLink: discardLink,
+            chapterName: "ch2",
+            page: 1,
+        });
+
+        const [tagKeeper] = await dbService.db
+            .insert(libraryTags)
+            .values({ name: "MergeKeeper", color: "#111111" })
+            .returning();
+        const [tagDiscard] = await dbService.db
+            .insert(libraryTags)
+            .values({ name: "MergeDiscard", color: "#222222" })
+            .returning();
+        const [tagBoth] = await dbService.db
+            .insert(libraryTags)
+            .values({ name: "MergeBoth", color: "#333333" })
+            .returning();
+        await dbService.db.insert(libraryItemTags).values([
+            { itemLink: keeperLink, tagId: tagKeeper.id },
+            { itemLink: keeperLink, tagId: tagBoth.id },
+            { itemLink: discardLink, tagId: tagDiscard.id },
+            { itemLink: discardLink, tagId: tagBoth.id },
+        ]);
+
+        const merged = await dbService.relocateLibraryItem(keeperLink, discardLink);
+        expect(merged?.id).toBe(keeper.id);
+        expect(merged?.link).toBe(discardLink);
+        expect(merged?.title).toBe("Keeper Title");
+
+        const gone = await dbService.db.select().from(libraryItems).where(eq(libraryItems.link, keeperLink));
+        expect(gone).toHaveLength(0);
+        expect(discard.id).not.toBe(keeper.id);
+
+        const [progress] = await dbService.db
+            .select()
+            .from(mangaProgress)
+            .where(eq(mangaProgress.itemLink, discardLink));
+        expect(progress?.chapterName).toBe("ch2");
+        expect(progress?.currentPage).toBe(1);
+        expect(progress?.chaptersRead.sort()).toEqual(["ch1", "ch2"]);
+
+        const bookmarks = await dbService.db
+            .select()
+            .from(mangaBookmarks)
+            .where(eq(mangaBookmarks.itemLink, discardLink));
+        expect(bookmarks).toHaveLength(2);
+
+        const tags = await dbService.db
+            .select()
+            .from(libraryItemTags)
+            .where(eq(libraryItemTags.itemLink, discardLink));
+        expect(tags.map((row) => row.tagId).sort()).toEqual(
+            [tagKeeper.id, tagDiscard.id, tagBoth.id].sort(),
+        );
     });
 
     it("updates a manga bookmark chapterName in place (locate-chapter rewrite)", async () => {

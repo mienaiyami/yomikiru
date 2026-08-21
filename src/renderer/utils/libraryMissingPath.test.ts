@@ -4,8 +4,10 @@ import type { AppDispatch } from "@store/index";
 import { onInvoke, stubFs } from "@test/mocks/preload";
 import { describe, expect, it, vi } from "vitest";
 import {
+    chaptersReadForOpenedManga,
     doesRelocateNameMatch,
     findLibraryItemForPath,
+    findMissingSameNameCandidates,
     libraryPathDisplayName,
     mangaPageForMissingKind,
     mapOpenPathAfterRelocate,
@@ -14,6 +16,7 @@ import {
     shouldOfferLibraryRelocate,
     shouldOfferMissingMangaChapterActions,
 } from "./libraryMissingPath";
+import { MANGA_ROOT_CHAPTER_NAME } from "./mangaChapterPath";
 
 const noopDispatch = vi.fn() as unknown as AppDispatch;
 const okBox = (response: number) => ({ response, checkboxChecked: false });
@@ -63,6 +66,31 @@ describe("libraryMissingPath", () => {
             const oldDir = path.join("old", "Series A");
             const newArchive = path.join("new", "Series A.cbz");
             expect(doesRelocateNameMatch(oldDir, newArchive, "Other Title", "manga")).toBe(true);
+        });
+    });
+
+    describe("findMissingSameNameCandidates", () => {
+        it("returns missing same-name rows only, not live paths or other types", () => {
+            const missing = path.join("old", "Series A");
+            const live = path.join("live", "Series A");
+            const otherType = path.join("old", "Series A.epub");
+            const target = path.join("new", "Series A");
+            stubFs({
+                existsSync: (p: string) => p === live || p === target,
+            });
+            const items = {
+                [missing]: mangaItem(missing),
+                [live]: mangaItem(live),
+                [otherType]: bookItem(otherType),
+            };
+            const found = findMissingSameNameCandidates(items, target, "manga");
+            expect(found.map((i) => i.link)).toEqual([missing]);
+        });
+
+        it("returns no candidates when the new path is already the only row", () => {
+            const target = path.join("new", "Series A");
+            stubFs({ existsSync: () => true });
+            expect(findMissingSameNameCandidates({ [target]: mangaItem(target) }, target, "manga")).toEqual([]);
         });
     });
 
@@ -287,6 +315,17 @@ describe("libraryMissingPath", () => {
                 },
             });
             expect(resolved).toBeNull();
+        });
+    });
+
+    describe("chaptersReadForOpenedManga", () => {
+        it("does not store the root-chapter token", () => {
+            expect(chaptersReadForOpenedManga(["ch1"], MANGA_ROOT_CHAPTER_NAME)).toEqual(["ch1"]);
+            expect(chaptersReadForOpenedManga(["ch1"], "")).toEqual(["ch1"]);
+        });
+
+        it("appends a child chapter name", () => {
+            expect(chaptersReadForOpenedManga(["ch1"], "ch2")).toEqual(["ch1", "ch2"]);
         });
     });
 });

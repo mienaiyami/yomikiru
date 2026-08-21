@@ -9,6 +9,7 @@ import { refreshAppSettings, setAppSettings } from "@store/appSettings";
 import { addBookmark, fetchAllBookmarks, removeBookmark } from "@store/bookmarks";
 import { fetchAllNotes } from "@store/bookNotes";
 import { useAppDispatch, useAppSelector } from "@store/hooks";
+import store from "@store/index";
 import {
     deleteLibraryItem,
     fetchAllItemsWithProgress,
@@ -24,11 +25,22 @@ import { getShortcutsMapped, refreshShortcuts } from "@store/shortcuts";
 import { fetchAllTags } from "@store/tags";
 import { refreshThemes, setTheme } from "@store/themes";
 import { fetchAllTrackers } from "@store/trackers";
-import { setAnilistEditOpen, setAnilistLoginOpen, setAnilistSearchOpen, toggleSettingsOpen } from "@store/ui";
+import {
+    setAnilistEditOpen,
+    setAnilistLoginOpen,
+    setAnilistSearchOpen,
+    toggleSettingsOpen,
+} from "@store/ui";
 import { initAnilist } from "@utils/anilist";
 import { dialogUtils } from "@utils/dialog";
 import { keyFormatter, mouseEventFormatter } from "@utils/keybindings";
 import { resolveMissingOpenPath } from "@utils/libraryMissingPath";
+import {
+    LIBRARY_SCAN_INTERVAL_POLL_MS,
+    listDueIntervalLibraryScanRoots,
+    listStartupLibraryScanRoots,
+    runScheduledLibraryScan,
+} from "@utils/librarySettingsImport";
 import {
     createContext,
     createRef,
@@ -191,6 +203,11 @@ const App = (): ReactElement => {
         setFirstRendered(true);
         initAnilist();
         void dispatch(fetchAllItemsWithProgress()).then(() => {
+            void runScheduledLibraryScan(
+                dispatch,
+                validateDirectory,
+                listStartupLibraryScanRoots(store.getState().appSettings),
+            );
             void dispatch(importAnilistTrackingFromStorage()).then(() => {
                 // generic item_trackers rows; AniList session stays in the anilist slice
                 void dispatch(fetchAllTrackers());
@@ -279,6 +296,19 @@ const App = (): ReactElement => {
             listeners.forEach((e) => void e());
         };
     }, []);
+
+    useEffect(() => {
+        // background walk; TopBar shows status, including while the reader is open
+        const id = window.setInterval(() => {
+            void runScheduledLibraryScan(
+                dispatch,
+                validateDirectory,
+                listDueIntervalLibraryScanRoots(store.getState().appSettings),
+            );
+        }, LIBRARY_SCAN_INTERVAL_POLL_MS);
+        return () => window.clearInterval(id);
+    }, [dispatch, validateDirectory]);
+
     useEffect(() => {
         const listener = window.electron.on("reader:recordPage", async () => {
             if (isReaderOpen) await closeReader();

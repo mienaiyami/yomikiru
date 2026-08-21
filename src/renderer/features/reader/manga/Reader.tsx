@@ -1,21 +1,16 @@
-import type { MangaProgress } from "@common/types/db";
-import {
-    applyMakeCoverFromPageImage,
-    applyMangaCoverAfterChapterLoad,
-} from "@features/reader/services/readerCoverFlows";
+import { applyMakeCoverFromPageImage } from "@features/reader/services/readerCoverFlows";
 import { setAnilistCurrentListEntry } from "@store/anilist";
 import { setAppSettings, setReaderSettings } from "@store/appSettings";
 import { useAppDispatch, useAppSelector } from "@store/hooks";
-import { addLibraryItem, selectLibraryItem, updateChaptersRead, updateMangaProgress } from "@store/library";
-import { setReaderLoading, setReaderOpen, updateReaderContent, updateReaderMangaCurrentPage } from "@store/reader";
+import { selectLibraryItem, updateChaptersRead } from "@store/library";
+import { setReaderLoading, setReaderOpen, updateReaderMangaCurrentPage } from "@store/reader";
 import { cyclePresetNext, cyclePresetPrev, selectPresetSlot } from "@store/readerPresets";
 import { updateTrackerSnapshot } from "@store/trackers";
 import { setAnilistListProgress, toAnilistTrackerSnapshotUpdate } from "@utils/anilist";
 import { processChapterNumber } from "@utils/chapterUtils";
 import { fileSrcToImagePath, formatUtils } from "@utils/file";
 import { keyFormatter, mouseEventFormatter } from "@utils/keybindings";
-import { materializeMangaRootAfterAdd } from "@utils/libraryCoverService";
-import { mangaDedicatedCoverPathForDb } from "@utils/libraryCoverSources";
+import { syncMangaLibraryOnReaderOpen } from "@utils/libraryMissingPath";
 import { createRendererLogger } from "@utils/logger";
 import { Fragment, useCallback, useEffect, useLayoutEffect, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
@@ -682,79 +677,14 @@ const Reader: React.FC = () => {
             }),
         );
 
-        const linkSplitted = link.split(window.path.sep).filter((e) => e !== "");
-
-        const progress: MangaProgress = {
+        const mangaItem = libraryItem?.type === "manga" ? libraryItem : null;
+        await syncMangaLibraryOnReaderOpen({
+            dispatch,
+            openedPath: link,
+            libraryItem: mangaItem,
+            images: imgs,
             currentPage: mangaOpenPage || 1,
-            lastReadAt: new Date(),
-            chapterName: linkSplitted.at(-1) || "",
-            itemLink: window.path.dirname(link),
-            totalPages: imgs.length,
-            chaptersRead: [],
-        };
-
-        const mangaDir = window.path.dirname(link);
-
-        if (libraryItem && libraryItem.type === "manga" && libraryItem.progress) {
-            progress.chaptersRead = Array.from(libraryItem.progress?.chaptersRead || []);
-            progress.chaptersRead.push(window.path.basename(link));
-
-            try {
-                await applyMangaCoverAfterChapterLoad({
-                    dispatch,
-                    libraryItem,
-                    mangaDir,
-                    imgs,
-                });
-            } catch (err) {
-                log.error("covers:materialize failed", err);
-            }
-            dispatch(
-                updateReaderContent({
-                    ...libraryItem,
-                    progress,
-                }),
-            );
-            dispatch(updateMangaProgress(progress));
-        } else {
-            const mangaOpened = {
-                type: "manga" as const,
-                link: window.path.dirname(link),
-                title: linkSplitted[linkSplitted.length - 2],
-                author: null,
-                cover: mangaDedicatedCoverPathForDb(mangaDir),
-                createdAt: new Date(),
-                updatedAt: new Date(),
-            };
-            try {
-                const added = await dispatch(
-                    addLibraryItem({
-                        type: "manga",
-                        data: mangaOpened,
-                        progress: {
-                            currentPage: 1,
-                            totalPages: imgs.length,
-                            chapterName: linkSplitted.at(-1) || "",
-                        },
-                    }),
-                ).unwrap();
-                dispatch(
-                    updateReaderContent({
-                        ...added,
-                        type: "manga",
-                        progress,
-                    }),
-                );
-                await materializeMangaRootAfterAdd({
-                    dispatch,
-                    libraryId: added?.id,
-                    mangaDir,
-                    firstPageImage: imgs[0],
-                });
-            } catch (err) {
-                log.error("addLibraryItem or cover materialize failed", err);
-            }
-        }
+        });
         setImages(imgs);
         dispatch(setReaderOpen());
     };

@@ -1,6 +1,6 @@
 # Yomikiru — Library, Progress, Bookmarks & Cover System
 
-> Last updated: 2026-08-19. Covers v2.24.x plus unreleased item metadata / trackers.
+> Last updated: 2026-08-21. Covers v2.24.x plus unreleased item metadata / trackers and library discovery design.
 
 All user data (library catalogue, reading progress, bookmarks, notes) is stored in a single
 SQLite database file at `userData/data.db`. The ORM is Drizzle.
@@ -13,6 +13,7 @@ SQLite database file at `userData/data.db`. The ORM is Drizzle.
   - [Table of Contents](#table-of-contents)
   - [Database Schema](#database-schema)
   - [Library Items](#library-items)
+  - [Library discovery and path merge](#library-discovery-and-path-merge)
   - [Reading Progress](#reading-progress)
     - [Manga Progress](#manga-progress)
     - [Book Progress](#book-progress)
@@ -186,6 +187,23 @@ The `cover` column stores either:
 IPC surface: all `db:library:*` channels in [`src/common/types/ipc.ts`](../src/common/types/ipc.ts).
 Implementation: [`src/electron/db/index.ts`](../src/electron/db/index.ts), methods `addLibraryItem`,
 `updateLibraryItem`, `deleteLibraryItem`, `relocateLibraryItem`, `getAllLibraryItemsWithProgress`.
+
+Scan, library folders, catalogue-without-progress, and relocate-into-an-occupied-path are specified in
+[library-discovery.md](library-discovery.md). **Scan now**, extra library folders, reader one-shot,
+and relocate merge are in `# unreleased`. Live watch and clear unused progress are still pending.
+
+---
+
+## Library discovery and path merge
+
+Design (classifier, settings keys, Continue Reading vs catalogue, D11 merge): [library-discovery.md](library-discovery.md).
+Research (this app + Komga / Kavita / Mihon / Calibre / Plex / Node watch): [research-library-discovery.md](research-library-discovery.md).
+
+Settings → Library **Scan now** walks extra `libraryFolders` (and Default Location when opted in)
+with the series classifier (same chapter-child rule as gallery details), not the reader image validator.
+It adds catalogue rows without progress, including one-shot image folders. Scan on start and interval
+use the same walk and keep the window interactive (title-bar status). Relocate into an occupied path can merge; opening a moved folder can update the
+missing row instead of adding a duplicate.
 
 ---
 
@@ -386,7 +404,7 @@ sequenceDiagram
 - **Reader flow**: [`src/renderer/features/reader/services/readerCoverFlows.ts`](../src/renderer/features/reader/services/readerCoverFlows.ts) — `applyMangaCoverAfterChapterLoad` and `applyMakeCoverFromPageImage` coordinate the reader-triggered cover updates.
 - **Custom cover**: user can right-click a page in the manga reader → "Set as Cover", or use the "Pick Cover" button in the details panel.
 - **Cache clear**: `covers:clearCache` IPC removes all files under `userData/covers/` and recreates the empty directory.
-- **Bulk regenerate / import**: Settings → Library (first section) includes Default Location, bulk import from that folder, and thumbnail clear/regenerate. Regenerating walks every library row; missing files/folders are skipped (not extracted or parsed) and a single warning reports how many were skipped. Import and recursive EPUB scan lock the app UI until they finish.
+- **Bulk regenerate / scan**: Settings → Library (first section) includes Default Location, **Scan now** (nested series and EPUBs under that folder), and thumbnail clear/regenerate. Regenerating walks every library row; missing files/folders are skipped (not extracted or parsed) and a single warning reports how many were skipped. Scan now and thumbnail rebuild lock the app UI until they finish. Scan on start and interval scans do not lock; TopBar shows a folder status while they run.
 
 The `library_items.cover` column stores only user-picked non-WebP paths (e.g. a `cover.jpg` in the manga root). The WebP thumbnail at `userData/covers/<id>.webp` is separate and not stored in the DB — the renderer resolves it from the library item `id` at render time via `libraryCoverSrc` in [`src/renderer/utils/libraryCover.ts`](../src/renderer/utils/libraryCover.ts).
 

@@ -99,9 +99,7 @@ const setting = (
     id: string,
     selector: string,
     labelKey: SettingsCatalogTarget["labelKey"],
-    extra?: Partial<
-        Pick<SettingsCatalogTarget, "keywords" | "platform" | "contentPath" | "groupLabelKey">
-    >,
+    extra?: Partial<Pick<SettingsCatalogTarget, "keywords" | "platform" | "contentPath" | "groupLabelKey">>,
 ): SettingsCatalogTarget => ({
     id,
     tab: "settings",
@@ -119,8 +117,7 @@ const otherSetting = (
     selector: string,
     labelKey: SettingsCatalogTarget["labelKey"],
     extra?: Partial<Pick<SettingsCatalogTarget, "keywords" | "contentPath">>,
-): SettingsCatalogTarget =>
-    setting(id, selector, labelKey, { ...extra, groupLabelKey: "otherSettings.title" });
+): SettingsCatalogTarget => setting(id, selector, labelKey, { ...extra, groupLabelKey: "otherSettings.title" });
 
 /**
  * Settings-tab control whose search-row group is the styleSettings section title.
@@ -130,8 +127,7 @@ const styleSetting = (
     selector: string,
     labelKey: SettingsCatalogTarget["labelKey"],
     extra?: Partial<Pick<SettingsCatalogTarget, "keywords" | "contentPath">>,
-): SettingsCatalogTarget =>
-    setting(id, selector, labelKey, { ...extra, groupLabelKey: "styleSettings.title" });
+): SettingsCatalogTarget => setting(id, selector, labelKey, { ...extra, groupLabelKey: "styleSettings.title" });
 
 /**
  * Builds an Extras/Usage catalog row ({@link UsageCatalogTarget.labelNs} usage).
@@ -156,12 +152,27 @@ const usage = (
  */
 export const SETTINGS_TARGETS_STATIC: readonly SettingsTarget[] = [
     setting("setting:library", "#settings-library", "library.title", {
-        keywords: ["covers", "thumbnails", "import", "epub", "default location"],
+        keywords: ["covers", "thumbnails", "import", "scan", "epub", "default location", "library folders"],
         contentPath: "library",
     }),
     setting("setting:default-location", "#settings-default-location", "defaultLocation.title", {
         keywords: ["base dir", "home folder"],
         contentPath: "defaultLocation",
+        groupLabelKey: "library.title",
+    }),
+    setting("setting:scan-default-location", "#settings-scan-default-location", "library.scanDefaultLocation", {
+        keywords: ["base dir", "scan default"],
+        contentPath: "library.scanDefaultLocationDesc",
+        groupLabelKey: "library.title",
+    }),
+    setting("setting:library-folders", "#settings-library-folders", "library.foldersTitle", {
+        keywords: ["library folder", "watch", "interval", "max depth"],
+        contentPath: "library.foldersDesc",
+        groupLabelKey: "library.title",
+    }),
+    setting("setting:library-scan-now", "#settings-library-scan-now", "library.scanNow", {
+        keywords: ["import", "epub", "scan now"],
+        contentPath: "library.scanNowDesc",
         groupLabelKey: "library.title",
     }),
     setting("setting:theme", "#settings-theme", "theme.title", { contentPath: "theme" }),
@@ -215,12 +226,9 @@ export const SETTINGS_TARGETS_STATIC: readonly SettingsTarget[] = [
         contentPath: "otherSettings.minimizeToTrayDesc",
         keywords: ["tray"],
     }),
-    otherSetting(
-        "setting:use-existing-window",
-        "#settings-useExistingWindow",
-        "otherSettings.useExistingWindow",
-        { contentPath: "otherSettings.useExistingWindowDesc" },
-    ),
+    otherSetting("setting:use-existing-window", "#settings-useExistingWindow", "otherSettings.useExistingWindow", {
+        contentPath: "otherSettings.useExistingWindowDesc",
+    }),
     otherSetting("setting:open-on-dblclick", "#settings-openOnDblClick", "otherSettings.openOnDblClick", {
         contentPath: "otherSettings.openOnDblClickDesc",
     }),
@@ -256,10 +264,7 @@ export const SETTINGS_TARGETS_STATIC: readonly SettingsTarget[] = [
         "#settings-confirmSideListDelete",
         "otherSettings.confirmSideListDelete",
         {
-            contentPath: [
-                "otherSettings.confirmSideListDeleteDesc1",
-                "otherSettings.confirmSideListDeleteDesc2",
-            ],
+            contentPath: ["otherSettings.confirmSideListDeleteDesc1", "otherSettings.confirmSideListDeleteDesc2"],
         },
     ),
     otherSetting("setting:auto-zen-mode", "#settings-autoZenMode", "otherSettings.autoZenMode", {
@@ -279,10 +284,7 @@ export const SETTINGS_TARGETS_STATIC: readonly SettingsTarget[] = [
         "#settings-canvasBasedRendering",
         "otherSettings.canvasBasedRendering",
         {
-            contentPath: [
-                "otherSettings.canvasBasedRenderingDesc1",
-                "otherSettings.canvasBasedRenderingDesc2",
-            ],
+            contentPath: ["otherSettings.canvasBasedRenderingDesc1", "otherSettings.canvasBasedRenderingDesc2"],
         },
     ),
     otherSetting(
@@ -290,10 +292,7 @@ export const SETTINGS_TARGETS_STATIC: readonly SettingsTarget[] = [
         "#settings-dynamicImageLoading",
         "otherSettings.dynamicImageLoading",
         {
-            contentPath: [
-                "otherSettings.dynamicImageLoadingDesc1",
-                "otherSettings.dynamicImageLoadingDesc2",
-            ],
+            contentPath: ["otherSettings.dynamicImageLoadingDesc1", "otherSettings.dynamicImageLoadingDesc2"],
         },
     ),
     otherSetting("setting:auto-focus-chapter", "#settings-autoFocusChapter", "otherSettings.autoFocusChapter", {
@@ -325,18 +324,12 @@ export const SETTINGS_TARGETS_STATIC: readonly SettingsTarget[] = [
         "styleSettings.locationListNumbering",
         { contentPath: "styleSettings.locationListNumberingDesc" },
     ),
-    styleSetting(
-        "setting:chapter-transition",
-        "#settings-chapterTransition",
-        "styleSettings.chapterTransition",
-        { contentPath: "styleSettings.chapterTransitionDesc" },
-    ),
-    styleSetting(
-        "setting:more-info-on-hover",
-        "#settings-moreInfoOnHover",
-        "styleSettings.moreInfoOnHover",
-        { contentPath: "styleSettings.moreInfoOnHoverDesc" },
-    ),
+    styleSetting("setting:chapter-transition", "#settings-chapterTransition", "styleSettings.chapterTransition", {
+        contentPath: "styleSettings.chapterTransitionDesc",
+    }),
+    styleSetting("setting:more-info-on-hover", "#settings-moreInfoOnHover", "styleSettings.moreInfoOnHover", {
+        contentPath: "styleSettings.moreInfoOnHoverDesc",
+    }),
     styleSetting(
         "setting:reader-settings-checkbox",
         "#settings-readerSettingsCheckbox",
@@ -481,7 +474,5 @@ export const filterSettingsTargets = (
 ): SettingsTarget[] => {
     const needle = query.trim().toLowerCase();
     if (!needle) return [];
-    return targets.filter((target) =>
-        getSearchTexts(target).some((text) => text.toLowerCase().includes(needle)),
-    );
+    return targets.filter((target) => getSearchTexts(target).some((text) => text.toLowerCase().includes(needle)));
 };

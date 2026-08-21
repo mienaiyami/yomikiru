@@ -1,12 +1,20 @@
-import type { LibraryItem } from "@common/types/db";
+import type { LibraryItem, LibraryItemWithProgress, MangaProgress } from "@common/types/db";
+import { applyMangaCoverAfterChapterLoad } from "@features/reader/services/readerCoverFlows";
 import { relocateGalleryTrackContext } from "@store/anilist";
 import { updateMangaBookmark } from "@store/bookmarks";
 import store, { type AppDispatch } from "@store/index";
-import { deleteLibraryItem, relocateLibraryItem } from "@store/library";
+import { addLibraryItem, deleteLibraryItem, relocateLibraryItem, updateMangaProgress } from "@store/library";
+import { updateReaderContent } from "@store/reader";
 import { dialogUtils } from "@utils/dialog";
 import { formatUtils } from "@utils/file";
+import { materializeMangaRootAfterAdd } from "@utils/libraryCoverService";
+import { mangaDedicatedCoverPathForDb } from "@utils/libraryCoverSources";
 import { createRendererLogger } from "@utils/logger";
-import { normalizeMangaPathSegment } from "@utils/mangaChapterPath";
+import {
+    isMangaRootChapterName,
+    normalizeMangaPathSegment,
+    resolveMangaOpenSeries,
+} from "@utils/mangaChapterPath";
 import i18n from "../i18n";
 
 const log = createRendererLogger("utils/libraryMissingPath");
@@ -89,6 +97,26 @@ export const doesRelocateNameMatch = (
     const oldName = libraryPathDisplayName(oldLink, type).toLowerCase();
     const titleNorm = title.trim().toLowerCase();
     return newName === oldName || (titleNorm.length > 0 && newName === titleNorm);
+};
+
+/**
+ * Catalogue rows of `type` whose path is missing on disk and whose display name matches `newLink`.
+ * Used before add so a moved folder can relocate instead of creating a duplicate.
+ */
+export const findMissingSameNameCandidates = (
+    items: LibraryItemsMap,
+    newLink: string,
+    type: LibraryItem["type"],
+): LibraryItem[] => {
+    const target = normalizeMangaPathSegment(newLink);
+    const out: LibraryItem[] = [];
+    for (const item of Object.values(items)) {
+        if (!item || item.type !== type) continue;
+        if (normalizeMangaPathSegment(item.link) === target) continue;
+        if (window.fs.existsSync(item.link)) continue;
+        if (doesRelocateNameMatch(item.link, newLink, item.title, type)) out.push(item);
+    }
+    return out;
 };
 
 /**
@@ -358,6 +386,35 @@ export const dispatchRelocateLibraryItem = async (
     }
 };
 
+/**
+ * Relocates `oldLink` to `newLink`. If another catalogue row already occupies `newLink`,
+ * asks to merge first. Cancel leaves both rows. Shows a relocate-failed dialog when the DB returns null.
+ */
+export const relocateLibraryItemWithOccupiedMerge = async (
+    dispatch: AppDispatch,
+    args: { oldLink: string; newLink: string },
+): Promise<LibraryItem | null> => {
+    const occupant = store.getState().library.items[normalizeMangaPathSegment(args.newLink)];
+    if (occupant && occupant.link !== args.oldLink) {
+        const { response } = await dialogUtils.confirm({
+            type: "warning",
+            title: tMissing("mergeTitle"),
+            message: tMissing("mergeMessage"),
+            noOption: false,
+            buttons: [tMissing("mergeConfirm"), tCommon("actions.cancel")],
+            defaultId: 1,
+            cancelId: 1,
+        });
+        if (response !== 0) return null;
+    }
+    const item = await dispatchRelocateLibraryItem(dispatch, args);
+    if (!item) {
+        await dialogUtils.customError({ message: tMissing("relocateFailed") });
+        return null;
+    }
+    return item;
+};
+
 const relocateAndRemap = async (
     dispatch: AppDispatch,
     libraryItem: LibraryItem,
@@ -370,14 +427,11 @@ const relocateAndRemap = async (
     });
     if (!newRoot) return null;
 
-    const item = await dispatchRelocateLibraryItem(dispatch, {
+    const item = await relocateLibraryItemWithOccupiedMerge(dispatch, {
         oldLink: libraryItem.link,
         newLink: newRoot,
     });
-    if (!item) {
-        await dialogUtils.customError({ message: tMissing("relocateFailed") });
-        return null;
-    }
+    if (!item) return null;
 
     const remapped = mapOpenPathAfterRelocate(libraryItem.link, newRoot, openPath);
     if (window.fs.existsSync(remapped)) return { openPath: remapped, kind: "relocate" };
@@ -476,4 +530,235 @@ export const confirmDeleteLibraryItem = async (
     if (!response) return;
     dispatch(deleteLibraryItem({ link }));
     onRemoved?.();
+};
+
+/**
+ * `chaptersRead` for the chapter just opened. Root-chapter tokens are not stored.
+ */
+export const chaptersReadForOpenedManga = (existing: string[] | undefined, chapterName: string): string[] => {
+    const chaptersRead = Array.from(existing ?? []);
+    if (!isMangaRootChapterName(chapterName)) chaptersRead.push(chapterName);
+    return chaptersRead;
+};
+
+/** Inputs for {@link syncMangaLibraryOnReaderOpen}. */
+export type SyncMangaLibraryOnOpenOpts = {
+    dispatch: AppDispatch;
+    openedPath: string;
+    libraryItem: (LibraryItemWithProgress & { type: "manga" }) | null | undefined;
+    images: string[];
+    currentPage: number;
+};
+
+/** Series path, chapter key, and progress after {@link syncMangaLibraryOnReaderOpen}. */
+export type SyncMangaLibraryOnOpenResult = {
+    itemLink: string;
+    chapterName: string;
+    progress: MangaProgress;
+};
+
+/**
+ * Inserts progress on a catalogue-only manga row (conflict path keeps stored title/cover).
+ */
+const persistCatalogueProgress = async (
+    dispatch: AppDispatch,
+    itemLink: string,
+    title: string,
+    chapterName: string,
+    images: string[],
+    currentPage: number,
+): Promise<void> => {
+    await dispatch(
+        addLibraryItem({
+            type: "manga",
+            data: {
+                type: "manga",
+                link: itemLink,
+                title,
+                author: null,
+                cover: mangaDedicatedCoverPathForDb(itemLink),
+            },
+            progress: {
+                currentPage,
+                totalPages: images.length,
+                chapterName,
+            },
+        }),
+    ).unwrap();
+};
+
+/**
+ * Cover + reader content + progress for a manga row that already exists in the catalogue.
+ */
+const applyOpenedMangaItem = async (
+    dispatch: AppDispatch,
+    libraryItem: LibraryItemWithProgress & { type: "manga" },
+    itemLink: string,
+    chapterName: string,
+    images: string[],
+    currentPage: number,
+): Promise<MangaProgress> => {
+    const progress: MangaProgress = {
+        currentPage,
+        lastReadAt: new Date(),
+        chapterName,
+        itemLink,
+        totalPages: images.length,
+        chaptersRead: libraryItem.progress
+            ? chaptersReadForOpenedManga(libraryItem.progress.chaptersRead, chapterName)
+            : [],
+    };
+    try {
+        await applyMangaCoverAfterChapterLoad({
+            dispatch,
+            libraryItem,
+            mangaDir: itemLink,
+            imgs: images,
+        });
+    } catch (err) {
+        log.error("covers:materialize failed", err);
+    }
+    dispatch(updateReaderContent({ ...libraryItem, progress }));
+    if (libraryItem.progress) {
+        dispatch(updateMangaProgress(progress));
+    } else {
+        try {
+            await persistCatalogueProgress(
+                dispatch,
+                itemLink,
+                libraryItem.title,
+                chapterName,
+                images,
+                currentPage,
+            );
+            dispatch(updateMangaProgress(progress));
+        } catch (err) {
+            log.error("addLibraryItem progress for catalogue row failed", err);
+        }
+    }
+    return progress;
+};
+
+/**
+ * Adds a new manga catalogue row with progress when open did not match an existing item.
+ */
+const addNewMangaOnOpen = async (
+    dispatch: AppDispatch,
+    itemLink: string,
+    chapterName: string,
+    images: string[],
+    progress: MangaProgress,
+): Promise<void> => {
+    try {
+        const added = await dispatch(
+            addLibraryItem({
+                type: "manga",
+                data: {
+                    type: "manga",
+                    link: itemLink,
+                    title: window.path.basename(itemLink),
+                    author: null,
+                    cover: mangaDedicatedCoverPathForDb(itemLink),
+                },
+                progress: {
+                    currentPage: 1,
+                    totalPages: images.length,
+                    chapterName,
+                },
+            }),
+        ).unwrap();
+        dispatch(
+            updateReaderContent({
+                ...added,
+                type: "manga",
+                progress,
+            }),
+        );
+        await materializeMangaRootAfterAdd({
+            dispatch,
+            libraryId: added?.id,
+            mangaDir: itemLink,
+            firstPageImage: images[0],
+        });
+    } catch (err) {
+        log.error("addLibraryItem or cover materialize failed", err);
+    }
+};
+
+/**
+ * Ensures a manga catalogue row and progress when the reader loads images.
+ * Relocate-before-add when exactly one missing same-name row matches.
+ */
+export const syncMangaLibraryOnReaderOpen = async (
+    opts: SyncMangaLibraryOnOpenOpts,
+): Promise<SyncMangaLibraryOnOpenResult> => {
+    const { dispatch, openedPath, images, currentPage } = opts;
+    const { itemLink, chapterName } = resolveMangaOpenSeries(openedPath, opts.libraryItem?.link ?? null);
+
+    const progress: MangaProgress = {
+        currentPage,
+        lastReadAt: new Date(),
+        chapterName,
+        itemLink,
+        totalPages: images.length,
+        chaptersRead: [],
+    };
+
+    if (opts.libraryItem) {
+        const next = await applyOpenedMangaItem(
+            dispatch,
+            opts.libraryItem,
+            itemLink,
+            chapterName,
+            images,
+            currentPage,
+        );
+        return { itemLink, chapterName, progress: next };
+    }
+
+    const candidates = findMissingSameNameCandidates(store.getState().library.items, itemLink, "manga");
+    if (candidates.length === 1 && candidates[0]) {
+        const cand = candidates[0];
+        const { response } = await dialogUtils.confirm({
+            type: "question",
+            title: tMissing("relocateInsteadConfirm"),
+            message: tMissing("relocateInstead", { title: cand.title }),
+            noOption: false,
+            buttons: [tMissing("relocateInsteadConfirm"), tCommon("actions.cancel")],
+            defaultId: 0,
+            cancelId: 1,
+        });
+        if (response === 0) {
+            const relocated = await dispatchRelocateLibraryItem(dispatch, {
+                oldLink: cand.link,
+                newLink: itemLink,
+            });
+            if (relocated) {
+                const mapped = store.getState().library.items[normalizeMangaPathSegment(itemLink)];
+                if (mapped?.type === "manga") {
+                    const next = await applyOpenedMangaItem(
+                        dispatch,
+                        mapped,
+                        itemLink,
+                        chapterName,
+                        images,
+                        currentPage,
+                    );
+                    return { itemLink, chapterName, progress: next };
+                }
+            }
+        }
+    } else if (candidates.length > 1) {
+        /*
+         * ponytail: several same-name missing rows - do not pick silently.
+         * Upgrade: a picker dialog. User can Locate from details.
+         */
+        await dialogUtils.warn({
+            message: tMissing("severalMissingSameName"),
+            noOption: true,
+        });
+    }
+
+    await addNewMangaOnOpen(dispatch, itemLink, chapterName, images, progress);
+    return { itemLink, chapterName, progress };
 };

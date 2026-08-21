@@ -1,6 +1,6 @@
 import { configureStore } from "@reduxjs/toolkit";
 import { describe, expect, it } from "vitest";
-import uiReducer, { UI_BLOCK_ID_LIBRARY, blockUi, unblockUi } from "./ui";
+import uiReducer, { UI_BLOCK_ID_LIBRARY, blockUi, setLibraryScanBusy, unblockUi } from "./ui";
 
 /**
  * Minimal store with only the ui slice for lock-stack tests.
@@ -38,5 +38,16 @@ describe("ui blocks", () => {
         expect(store.getState().ui.blocks).toEqual([{ id: "outer", message: "One" }]);
         store.dispatch(unblockUi("missing"));
         expect(store.getState().ui.blocks).toHaveLength(1);
+    });
+});
+
+describe("ui libraryScanBusy", () => {
+    it("starts false and toggles the title-bar scan flag", () => {
+        const store = createUiStore();
+        expect(store.getState().ui.libraryScanBusy).toBe(false);
+        store.dispatch(setLibraryScanBusy(true));
+        expect(store.getState().ui.libraryScanBusy).toBe(true);
+        store.dispatch(setLibraryScanBusy(false));
+        expect(store.getState().ui.libraryScanBusy).toBe(false);
     });
 });

@@ -1,8 +1,8 @@
 import type { DetailsCoverSource, LibraryItem, LibraryItemMetadata } from "@common/types/db";
 import type { DatabaseChannels } from "@common/types/ipc";
 import { createAsyncThunk, createSlice, type PayloadAction } from "@reduxjs/toolkit";
-import { formatUtils } from "@utils/file";
-import { resolveItemMetadata, type ResolvedItemMetadata } from "@utils/libraryMetadata";
+import { type ResolvedItemMetadata, resolveItemMetadata } from "@utils/libraryMetadata";
+import { findLibraryItemKeyForOpenPath } from "@utils/mangaChapterPath";
 import { createRendererLogger } from "../utils/logger";
 import type { RootState } from ".";
 
@@ -315,8 +315,8 @@ export default librarySlice.reducer;
 
 export const selectLibraryItem = (state: RootState, path: string) => {
     try {
-        const dirPath = formatUtils.book.test(path) ? path : window.path.dirname(path);
-        return state.library.items[dirPath] ?? null;
+        const key = findLibraryItemKeyForOpenPath(path, (link) => Boolean(state.library.items[link]));
+        return key ? (state.library.items[key] ?? null) : null;
     } catch (error) {
         log.error(`selectLibraryItem: lookup failed for "${path}"`, error);
         return null;

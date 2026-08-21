@@ -1,7 +1,7 @@
 import fs from "node:fs";
 import { copyFile } from "node:fs/promises";
 import path from "node:path";
-import type { BookProgress, LibraryItem, MangaProgress } from "@common/types/db";
+import type { LibraryItemWithProgress } from "@common/types/db";
 import type { DatabaseChangeChannels, DatabaseChannels } from "@common/types/ipc";
 import {
     AddBookBookmarkSchema,
@@ -109,11 +109,8 @@ const handlers: {
             .orderBy(desc(mangaProgress.lastReadAt), desc(bookProgress.lastReadAt));
         return itemsWithProgress.map(({ item, bookProgress, mangaProgress }) => ({
             ...item,
-            progress: mangaProgress || bookProgress,
-        })) as (
-            | (LibraryItem & { type: "book"; progress: BookProgress })
-            | (LibraryItem & { type: "manga"; progress: MangaProgress })
-        )[];
+            progress: item.type === "book" ? bookProgress : mangaProgress,
+        })) as LibraryItemWithProgress[];
     },
     "db:library:addItem": async (db, request) => {
         const data = (await db.addLibraryItem(AddToLibrarySchema.parse(request))) ?? null;

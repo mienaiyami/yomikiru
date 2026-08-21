@@ -3,33 +3,62 @@ import { setAppSettings } from "@store/appSettings";
 import { useAppDispatch, useAppSelector } from "@store/hooks";
 import store from "@store/index";
 import { fetchAllItemsWithProgress } from "@store/library";
-import { UI_BLOCK_ID_LIBRARY, blockUi, unblockUi } from "@store/ui";
+import { blockUi, UI_BLOCK_ID_LIBRARY, unblockUi } from "@store/ui";
+import InputCheckbox from "@ui/InputCheckbox";
+import InputNumber from "@ui/InputNumber";
+import InputSelect from "@ui/InputSelect";
 import { dialogUtils } from "@utils/dialog";
 import { promptSelectDir } from "@utils/file";
 import { regenerateLibraryThumbnails, showRegenSkippedWarning } from "@utils/libraryCoverService";
 import {
-    addEpubAtNormalizedPath,
-    addMangaFolderAtNormalizedPath,
     getExistingBaseDir,
+    isDuplicateLibraryFolderPath,
+    type LibraryScanRoot,
+    libraryFolderScanRoot,
+    listManualLibraryScanRoots,
+    scanLibraryRoots,
     showImportFinishedSummary,
+    withLibraryScanTimestamps,
 } from "@utils/librarySettingsImport";
 import { createRendererLogger } from "@utils/logger";
+import { LIBRARY_SCAN_MAX_DEPTH_CEILING } from "@utils/mangaChapters";
+import type { LibraryFolderSetting } from "@utils/settingsSchema";
 import { useCallback, useState } from "react";
 import { useTranslation } from "react-i18next";
 
 const log = createRendererLogger("settings/LibrarySettings");
 
-type LibrarySettingsBusy = "clear" | "regen" | "importChildren" | "importEpubsRecursive" | null;
+const LIBRARY_FOLDER_CONTENT = ["manga", "book", "both"] as const;
+
+type LibraryFolderContent = (typeof LIBRARY_FOLDER_CONTENT)[number];
+
+const isLibraryFolderContent = (value: string): value is LibraryFolderContent =>
+    (LIBRARY_FOLDER_CONTENT as readonly string[]).includes(value);
 
 /**
- * Library settings: Default Location (Locations tab + bulk import), thumbnail
- * cache, and import from that folder.
+ * New library-folder row after the user picks a directory.
+ */
+const newLibraryFolderSetting = (folderPath: string): LibraryFolderSetting => ({
+    path: window.path.normalize(folderPath),
+    content: "both",
+    maxDepth: LIBRARY_SCAN_MAX_DEPTH_CEILING,
+    scanOnStart: false,
+    scanIntervalHours: 0,
+    watch: false,
+    lastScanAtMs: 0,
+});
+
+type LibrarySettingsBusy = "clear" | "regen" | "importChildren" | null;
+
+/**
+ * Settings for how the library finds titles on disk and refreshes cover thumbnails.
  */
 const LibrarySettings: React.FC = () => {
     const { t } = useTranslation("settings");
     const dispatch = useAppDispatch();
     const appSettings = useAppSelector((s) => s.appSettings);
     const libraryItems = useAppSelector((s) => s.library.items);
+    const libraryScanBusy = useAppSelector((s) => s.ui.libraryScanBusy);
     const { validateDirectory } = useDirectoryValidator();
 
     const [busy, setBusy] = useState<LibrarySettingsBusy>(null);
@@ -74,6 +103,44 @@ const LibrarySettings: React.FC = () => {
         },
         [dispatch],
     );
+
+    const persistScanTimestamps = (paths: readonly string[]): void => {
+        const latest = store.getState().appSettings;
+        dispatch(setAppSettings(withLibraryScanTimestamps(latest, paths)));
+    };
+
+    /**
+     * Locks the UI, walks `roots`, stamps last-scan times, and optionally shows the summary dialog.
+     */
+    const runScan = async (roots: readonly LibraryScanRoot[], showSummary: boolean): Promise<void> => {
+        if (roots.length === 0) {
+            if (showSummary) dialogUtils.customError({ message: t("library.scanNoRoots") });
+            return;
+        }
+        await runBusy(
+            "importChildren",
+            t("library.importError"),
+            async () => {
+                const existingLinks = new Set(Object.keys(store.getState().library.items));
+                const { added, skipped, failed, ran } = await scanLibraryRoots(roots, {
+                    dispatch,
+                    keepExtractedFiles: store.getState().appSettings.keepExtractedFiles,
+                    validateDirectory,
+                    existingLinks,
+                    onProgress: (done, total) => {
+                        const label = `${done} / ${total}`;
+                        setImportLabel(label);
+                        setLibraryBlockMessage(t("library.importing", { label }));
+                    },
+                });
+                if (ran) persistScanTimestamps(roots.map((r) => r.path));
+                await dispatch(fetchAllItemsWithProgress());
+                log.info("library scan", { added, skipped, failed, ran, paths: roots.map((r) => r.path) });
+                if (showSummary && ran) await showImportFinishedSummary(added, skipped, failed);
+            },
+            t("library.importing", { label: "" }),
+        );
+    };
 
     const handleClearCache = useCallback(async () => {
         const { response } = await dialogUtils.warn({
@@ -122,40 +189,7 @@ const LibrarySettings: React.FC = () => {
         if (regenFinished) await showRegenSkippedWarning(skippedMissing);
     }, [dispatch, libraryItems, validateDirectory, runBusy, t]);
 
-    /**
-     * Adds one immediate child of the default folder: a manga folder if it validates as a packed series,
-     * or a `.epub` file as a book. Everything else (including already-indexed paths) is skipped.
-     */
-    const tryAddImmediateChild = useCallback(
-        async (fullPath: string): Promise<"added" | "skipped" | "failed"> => {
-            const norm = window.path.normalize(fullPath);
-            if (store.getState().library.items[norm]) return "skipped";
-
-            try {
-                const st = await window.fs.stat(norm);
-                if (st.isFile) {
-                    if (window.path.extname(norm).toLowerCase() !== ".epub") return "skipped";
-                    return addEpubAtNormalizedPath(norm, {
-                        dispatch,
-                        keepExtractedFiles: appSettings.keepExtractedFiles,
-                    });
-                }
-                if (!st.isDir) return "skipped";
-                return addMangaFolderAtNormalizedPath(norm, { dispatch, validateDirectory });
-            } catch (e) {
-                log.error("tryAddImmediateChild failed", norm, e);
-                return "failed";
-            }
-        },
-        [appSettings.keepExtractedFiles, dispatch, validateDirectory],
-    );
-
-    const handleImportDefaultFolderChildren = useCallback(async () => {
-        const baseDir = getExistingBaseDir(appSettings.baseDir);
-        if (!baseDir) {
-            dialogUtils.customError({ message: t("library.setDefaultFirst") });
-            return;
-        }
+    const confirmThenScan = async (roots: readonly LibraryScanRoot[]): Promise<void> => {
         const { response } = await dialogUtils.warn({
             title: t("library.importTitle"),
             message: t("library.importMessage"),
@@ -164,98 +198,42 @@ const LibrarySettings: React.FC = () => {
             defaultId: 0,
         });
         if (!response) return;
-        await runBusy(
-            "importChildren",
-            t("library.importError"),
-            async () => {
-                let added = 0;
-                let skipped = 0;
-                let failed = 0;
-                const names = await window.fs.readdir(baseDir);
-                names.sort((a, b) => a.localeCompare(b));
-                let i = 0;
-                for (const name of names) {
-                    i += 1;
-                    const label = `${i} / ${names.length}`;
-                    setImportLabel(label);
-                    setLibraryBlockMessage(t("library.importing", { label }));
-                    const full = window.path.join(baseDir, name);
-                    const r = await tryAddImmediateChild(full);
-                    if (r === "added") added += 1;
-                    else if (r === "skipped") skipped += 1;
-                    else failed += 1;
-                }
-                await dispatch(fetchAllItemsWithProgress());
-                log.info("import default folder children", { added, skipped, failed });
-                await showImportFinishedSummary(added, skipped, failed, "folderChildren");
-            },
-            t("library.importing", { label: "" }),
-        );
-    }, [appSettings.baseDir, dispatch, tryAddImmediateChild, runBusy, setLibraryBlockMessage, t]);
+        await runScan(roots, true);
+    };
 
-    /**
-     * Walks `baseDir` recursively and adds every `.epub` file not already in the library.
-     */
-    const handleImportAllEpubsRecursive = useCallback(async () => {
-        const baseDir = getExistingBaseDir(appSettings.baseDir);
-        if (!baseDir) {
-            dialogUtils.customError({ message: t("library.setDefaultFirst") });
-            return;
-        }
-        const { response } = await dialogUtils.warn({
-            title: t("library.importAllEpubsTitle"),
-            message: t("library.importAllEpubsMessage"),
-            noOption: false,
-            buttons: [t("shared.cancel"), t("library.scan")],
-            defaultId: 0,
-        });
-        if (!response) return;
-        await runBusy(
-            "importEpubsRecursive",
-            t("library.scanError"),
-            async () => {
-                const queue: string[] = [baseDir];
-                let added = 0;
-                let skipped = 0;
-                let failed = 0;
-                let scanned = 0;
-                while (queue.length > 0) {
-                    const dir = queue.shift();
-                    if (!dir) break;
-                    const entries = await window.fs.readdir(dir);
-                    for (const name of entries) {
-                        const full = window.path.join(dir, name);
-                        const st = await window.fs.stat(full);
-                        if (st.isDir) {
-                            queue.push(full);
-                        } else if (name.toLowerCase().endsWith(".epub")) {
-                            scanned += 1;
-                            const label = t("library.epubsProgress", { scanned, added });
-                            setImportLabel(label);
-                            setLibraryBlockMessage(t("library.scanning", { label }));
-                            const norm = window.path.normalize(full);
-                            if (store.getState().library.items[norm]) {
-                                skipped += 1;
-                                continue;
-                            }
-                            const r = await addEpubAtNormalizedPath(norm, {
-                                dispatch,
-                                keepExtractedFiles: appSettings.keepExtractedFiles,
-                            });
-                            if (r === "added") added += 1;
-                            else failed += 1;
-                        }
-                    }
-                }
-                await dispatch(fetchAllItemsWithProgress());
-                log.info("import all epubs recursive", { added, skipped, failed, scanned });
-                await showImportFinishedSummary(added, skipped, failed, "recursiveEpubs");
-            },
-            t("library.scanning", { label: "" }),
+    const patchFolder = (index: number, patch: Partial<LibraryFolderSetting>): void => {
+        dispatch(
+            setAppSettings({
+                libraryFolders: appSettings.libraryFolders.map((folder, i) =>
+                    i === index ? { ...folder, ...patch } : folder,
+                ),
+            }),
         );
-    }, [appSettings.baseDir, appSettings.keepExtractedFiles, dispatch, runBusy, setLibraryBlockMessage, t]);
+    };
+
+    const handleAddFolder = (): void => {
+        promptSelectDir((selected) => {
+            const folderPath = Array.isArray(selected) ? selected[0] : selected;
+            if (!folderPath) return;
+            if (isDuplicateLibraryFolderPath(appSettings.libraryFolders, folderPath)) {
+                dialogUtils.customError({ message: t("library.folderAlreadyAdded") });
+                return;
+            }
+            dispatch(
+                setAppSettings({
+                    libraryFolders: [...appSettings.libraryFolders, newLibraryFolderSetting(folderPath)],
+                }),
+            );
+        });
+    };
 
     const disabled = busy !== null;
+    // start/interval walks share the in-flight lock; keep Scan now from stacking on them
+    const scanDisabled = disabled || libraryScanBusy;
+    const scanBusyLabel =
+        busy === "importChildren" ? t("library.importing", { label: importLabel }) : t("library.scanNow");
+    const scanThisLabel =
+        busy === "importChildren" ? t("library.importing", { label: importLabel }) : t("library.scanThisFolder");
 
     return (
         <div className="settingItem2" id="settings-library">
@@ -279,26 +257,233 @@ const LibrarySettings: React.FC = () => {
                             {t("defaultLocation.changeDefault")}
                         </button>
                     </div>
-                </div>
-
-                <div className="col">
-                    <h4>{t("library.importFromDefault")}</h4>
-                    <div className="desc">
-                        <b>{t("library.immediateChildren")}</b>
-                        {t("library.importPackedDescBefore")}
-                        <code>.epub</code>
-                        {t("library.importPackedDescAfter")}
+                    <div className="toggleItem" id="settings-scan-default-location">
+                        <InputCheckbox
+                            checked={appSettings.scanDefaultLocation}
+                            className="noBG"
+                            disabled={disabled}
+                            onChange={(e) => {
+                                dispatch(setAppSettings({ scanDefaultLocation: e.currentTarget.checked }));
+                            }}
+                            labelAfter={t("library.scanDefaultLocation")}
+                        />
+                        <div className="desc">{t("library.scanDefaultLocationDesc")}</div>
                     </div>
                     <div className="row" style={{ gap: "0.5rem", flexWrap: "wrap" }}>
-                        <button type="button" disabled={disabled} onClick={() => void handleImportDefaultFolderChildren()}>
-                            {busy === "importChildren"
-                                ? t("library.importing", { label: importLabel })
-                                : t("library.addValidItems")}
+                        <InputNumber
+                            value={appSettings.scanDefaultLocationIntervalHours}
+                            min={0}
+                            step={1}
+                            disabled={disabled || !appSettings.scanDefaultLocation}
+                            className="noBG"
+                            labelBefore={t("library.scanDefaultLocationInterval")}
+                            labelAfter={t("library.hoursUnit")}
+                            timeout={[
+                                500,
+                                (value) => {
+                                    dispatch(
+                                        setAppSettings({
+                                            scanDefaultLocationIntervalHours: Math.max(0, Math.round(value)),
+                                        }),
+                                    );
+                                },
+                            ]}
+                        />
+                    </div>
+                    <div className="desc">{t("library.intervalHoursHint")}</div>
+                    <div className="row" style={{ gap: "0.5rem", flexWrap: "wrap" }}>
+                        <button
+                            type="button"
+                            disabled={scanDisabled}
+                            onClick={() => {
+                                const baseDir = getExistingBaseDir(appSettings.baseDir);
+                                if (!baseDir) {
+                                    dialogUtils.customError({ message: t("library.setDefaultFirst") });
+                                    return;
+                                }
+                                void confirmThenScan([
+                                    { path: baseDir, content: "both", maxDepth: LIBRARY_SCAN_MAX_DEPTH_CEILING },
+                                ]);
+                            }}
+                        >
+                            {scanThisLabel}
                         </button>
-                        <button type="button" disabled={disabled} onClick={() => void handleImportAllEpubsRecursive()}>
-                            {busy === "importEpubsRecursive"
-                                ? t("library.scanning", { label: importLabel })
-                                : t("library.addAllEpubs")}
+                    </div>
+                </div>
+
+                <div className="col" id="settings-library-folders">
+                    <h4>{t("library.foldersTitle")}</h4>
+                    <div className="desc">{t("library.foldersDesc")}</div>
+                    <div className="row" style={{ gap: "0.5rem", flexWrap: "wrap" }}>
+                        <button type="button" disabled={disabled} onClick={handleAddFolder}>
+                            {t("library.addFolder")}
+                        </button>
+                    </div>
+                    {appSettings.libraryFolders.map((folder, index) => (
+                        <div
+                            key={`${folder.path}-${index}`}
+                            className="col"
+                            style={{ marginTop: "0.75rem", gap: "0.35rem" }}
+                        >
+                            <div className="row" style={{ gap: "0.5rem", flexWrap: "wrap" }}>
+                                <input type="text" value={folder.path} readOnly />
+                                <button
+                                    type="button"
+                                    disabled={disabled}
+                                    onClick={() => {
+                                        promptSelectDir((selected) => {
+                                            const folderPath = Array.isArray(selected) ? selected[0] : selected;
+                                            if (!folderPath) return;
+                                            const others = appSettings.libraryFolders.filter(
+                                                (_, i) => i !== index,
+                                            );
+                                            if (isDuplicateLibraryFolderPath(others, folderPath)) {
+                                                dialogUtils.customError({
+                                                    message: t("library.folderAlreadyAdded"),
+                                                });
+                                                return;
+                                            }
+                                            patchFolder(index, { path: window.path.normalize(folderPath) });
+                                        });
+                                    }}
+                                >
+                                    {t("library.changeFolder")}
+                                </button>
+                                <button
+                                    type="button"
+                                    disabled={disabled}
+                                    onClick={() => {
+                                        dispatch(
+                                            setAppSettings({
+                                                libraryFolders: appSettings.libraryFolders.filter(
+                                                    (_, i) => i !== index,
+                                                ),
+                                            }),
+                                        );
+                                    }}
+                                >
+                                    {t("shared.remove")}
+                                </button>
+                            </div>
+                            <div className="row" style={{ gap: "0.5rem", flexWrap: "wrap" }}>
+                                <InputSelect
+                                    value={folder.content}
+                                    disabled={disabled}
+                                    className="noBG"
+                                    labelBefore={t("library.contentLabel")}
+                                    onChange={(value) => {
+                                        if (isLibraryFolderContent(value)) patchFolder(index, { content: value });
+                                    }}
+                                    options={[
+                                        { label: t("library.contentManga"), value: "manga" },
+                                        { label: t("library.contentBook"), value: "book" },
+                                        { label: t("library.contentBoth"), value: "both" },
+                                    ]}
+                                />
+                                <InputNumber
+                                    value={folder.maxDepth}
+                                    min={0}
+                                    max={LIBRARY_SCAN_MAX_DEPTH_CEILING}
+                                    step={1}
+                                    disabled={disabled}
+                                    className="noBG"
+                                    labelBefore={t("library.maxDepth")}
+                                    timeout={[
+                                        500,
+                                        (value) => {
+                                            patchFolder(index, {
+                                                maxDepth: Math.min(
+                                                    LIBRARY_SCAN_MAX_DEPTH_CEILING,
+                                                    Math.max(0, Math.round(value)),
+                                                ),
+                                            });
+                                        },
+                                    ]}
+                                />
+                            </div>
+                            <div className="toggleItem">
+                                <InputCheckbox
+                                    checked={folder.scanOnStart}
+                                    className="noBG"
+                                    disabled={disabled}
+                                    onChange={(e) => {
+                                        patchFolder(index, { scanOnStart: e.currentTarget.checked });
+                                    }}
+                                    labelAfter={t("library.scanOnStart")}
+                                />
+                            </div>
+                            <div className="row" style={{ gap: "0.5rem", flexWrap: "wrap" }}>
+                                <InputNumber
+                                    value={folder.scanIntervalHours}
+                                    min={0}
+                                    step={1}
+                                    disabled={disabled}
+                                    className="noBG"
+                                    labelBefore={t("library.intervalHours")}
+                                    labelAfter={t("library.hoursUnit")}
+                                    timeout={[
+                                        500,
+                                        (value) => {
+                                            patchFolder(index, {
+                                                scanIntervalHours: Math.max(0, Math.round(value)),
+                                            });
+                                        },
+                                    ]}
+                                />
+                            </div>
+                            <div className="toggleItem">
+                                <InputCheckbox
+                                    checked={folder.watch}
+                                    className="noBG"
+                                    disabled
+                                    title={t("library.watchUnavailable")}
+                                    onChange={() => undefined}
+                                    labelAfter={t("library.watch")}
+                                />
+                                <div className="desc">{t("library.watchDesc")}</div>
+                            </div>
+                            <div className="row" style={{ gap: "0.5rem", flexWrap: "wrap" }}>
+                                <button
+                                    type="button"
+                                    disabled={scanDisabled}
+                                    onClick={() => {
+                                        const root = libraryFolderScanRoot(folder);
+                                        if (!root) {
+                                            dialogUtils.customError({ message: t("library.folderMissing") });
+                                            return;
+                                        }
+                                        void confirmThenScan([root]);
+                                    }}
+                                >
+                                    {scanThisLabel}
+                                </button>
+                            </div>
+                        </div>
+                    ))}
+                </div>
+
+                <div className="col" id="settings-library-scan-now">
+                    <h4>{t("library.scanNow")}</h4>
+                    <div className="desc">
+                        {t("library.scanDescBefore")}
+                        <code>.epub</code>
+                        {t("library.scanDescAfter")}
+                    </div>
+                    <div className="desc">{t("library.scanNowDesc")}</div>
+                    <div className="row" style={{ gap: "0.5rem", flexWrap: "wrap" }}>
+                        <button
+                            type="button"
+                            disabled={scanDisabled}
+                            onClick={() => {
+                                const roots = listManualLibraryScanRoots(appSettings);
+                                if (roots.length === 0) {
+                                    dialogUtils.customError({ message: t("library.scanNoRoots") });
+                                    return;
+                                }
+                                void confirmThenScan(roots);
+                            }}
+                        >
+                            {scanBusyLabel}
                         </button>
                     </div>
                 </div>

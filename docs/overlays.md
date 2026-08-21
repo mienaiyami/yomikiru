@@ -60,10 +60,10 @@ ref={(node) => {
 Use this when work must freeze the whole renderer (mouse and keyboard), not a dismissible dialog.
 
 - State: `ui.blocks` in [`src/renderer/store/ui.ts`](../src/renderer/store/ui.ts). Dispatch `blockUi({ id, message })` and `unblockUi(id)` from any feature. Same `id` updates the message; nested ids stack.
-- Overlay: [`UiBlockOverlay`](../src/renderer/components/UiBlockOverlay.tsx) is mounted in `App` above TopBar. It covers pointer input and swallows shortcut events in capture on `window`.
+- Overlay: [`UiBlockOverlay`](../src/renderer/components/UiBlockOverlay.tsx) is mounted in `App` after TopBar (paints on top). It covers pointer input and swallows shortcut events in capture on `window`.
 - Not for Settings / AniList / Modal (those stay dismissible). Native Electron dialogs still work because they are a separate window.
 
-Current caller: Settings Library folder import and recursive EPUB scan (`UI_BLOCK_ID_LIBRARY`).
+Current `blockUi` callers: Settings Library **Scan now** and thumbnail rebuild (`UI_BLOCK_ID_LIBRARY`). Scan on start and interval scans do not lock; they set `ui.libraryScanBusy` so TopBar can show a status control.
 
 ## Modal Component
 

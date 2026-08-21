@@ -1,11 +1,10 @@
 import { faFolderOpen, faTrash } from "@fortawesome/free-solid-svg-icons";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { useAppDispatch } from "@store/hooks";
-import { dialogUtils } from "@utils/dialog";
 import {
     confirmDeleteLibraryItem,
-    dispatchRelocateLibraryItem,
     pickRelocatedLibraryPath,
+    relocateLibraryItemWithOccupiedMerge,
 } from "@utils/libraryMissingPath";
 import { useTranslation } from "react-i18next";
 
@@ -36,13 +35,8 @@ const MissingLibraryPathPanel: React.FC<MissingLibraryPathPanelProps> = ({
     const handleLocate = async () => {
         const newLink = await pickRelocatedLibraryPath({ type, oldLink: link, title });
         if (!newLink) return;
-        const item = await dispatchRelocateLibraryItem(dispatch, { oldLink: link, newLink });
-        if (!item) {
-            await dialogUtils.customError({
-                message: t("gallery.missing.relocateFailed"),
-            });
-            return;
-        }
+        const item = await relocateLibraryItemWithOccupiedMerge(dispatch, { oldLink: link, newLink });
+        if (!item) return;
         onRelocated(newLink);
     };
 

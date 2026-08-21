@@ -1,5 +1,6 @@
 import {
     faCog,
+    faFolderOpen,
     faGrip,
     faHome,
     faList,
@@ -9,6 +10,7 @@ import {
     faWindowRestore,
 } from "@fortawesome/free-solid-svg-icons";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
+import { navigateToSetting } from "@features/settings/utils/navigateToSetting";
 import { setAppSettings } from "@store/appSettings";
 import { useAppDispatch, useAppSelector } from "@store/hooks";
 import { selectResolvedItemMetadata } from "@store/library";
@@ -116,6 +118,7 @@ const TopBar = (): ReactElement => {
     }, [readerContent, readerDisplayTitle]);
 
     const viewMode = useAppSelector((store) => store.appSettings.homeViewMode);
+    const libraryScanBusy = useAppSelector((store) => store.ui.libraryScanBusy);
     // todo: temp only, extract to component
     const toggleViewMode = () => {
         dispatch(
@@ -173,6 +176,21 @@ const TopBar = (): ReactElement => {
                         </button>
                     )}
                 </div>
+                {libraryScanBusy && (
+                    <button
+                        type="button"
+                        className="libraryScanStatus"
+                        tabIndex={-1}
+                        aria-busy="true"
+                        aria-live="polite"
+                        aria-label={t("topBar.scanningLibrary")}
+                        data-tooltip={t("topBar.scanningLibraryTooltip")}
+                        onFocus={(e) => e.currentTarget.blur()}
+                        onClick={() => navigateToSetting("setting:library-scan-now", dispatch)}
+                    >
+                        <FontAwesomeIcon icon={faFolderOpen} />
+                    </button>
+                )}
             </div>
             <div className="mainTitleCont">
                 <div className="title">{title}</div>

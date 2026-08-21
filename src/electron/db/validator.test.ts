@@ -51,6 +51,23 @@ describe("AddToLibrarySchema", () => {
         expect(parsed.success).toBe(true);
     });
 
+    it("strips catalogue timestamps; the DB default owns createdAt and updatedAt", () => {
+        const parsed = AddToLibrarySchema.safeParse({
+            type: "manga",
+            data: {
+                type: "manga",
+                link: mangaLink,
+                title: "Series",
+                createdAt: new Date(),
+                updatedAt: new Date(),
+            },
+        });
+        expect(parsed.success).toBe(true);
+        if (!parsed.success) return;
+        expect(parsed.data.data).not.toHaveProperty("createdAt");
+        expect(parsed.data.data).not.toHaveProperty("updatedAt");
+    });
+
     it("rejects mismatched type discriminators", () => {
         const parsed = AddToLibrarySchema.safeParse({
             type: "manga",

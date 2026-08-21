@@ -53,6 +53,11 @@
                 background: var(--topBar-btn-hover);
             }
         }
+        .libraryScanStatus {
+            svg {
+                animation: libraryScanPulse 1.4s ease-in-out infinite;
+            }
+        }
         .viewToggle {
             display: flex;
             height: 100%;
@@ -177,5 +182,21 @@
                 background: var(--topBar-btn-hover);
             }
         }
+    }
+}
+
+@keyframes libraryScanPulse {
+    0%,
+    100% {
+        opacity: 1;
+    }
+    50% {
+        opacity: 0.35;
+    }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    #topBar .homeBtns .libraryScanStatus svg {
+        animation: none;
     }
 }

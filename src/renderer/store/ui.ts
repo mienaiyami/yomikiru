@@ -29,9 +29,14 @@ type UIState = {
     pendingSettingsNav: PendingSettingsNav | null;
     /** Stack of {@link UiBlock} entries; empty means the UI is interactive. */
     blocks: UiBlock[];
+    /**
+     * True while a start/interval library scan is walking (and refreshing catalogue).
+     * TopBar shows status; does not freeze input. Scan now still uses {@link blockUi}.
+     */
+    libraryScanBusy: boolean;
 };
 
-/** {@link blockUi} id for Settings library import, EPUB scan, and thumbnail work. */
+/** {@link blockUi} id for Settings library scan and thumbnail work. */
 export const UI_BLOCK_ID_LIBRARY = "settings-library";
 
 const initialState: UIState = {
@@ -45,6 +50,7 @@ const initialState: UIState = {
     },
     pendingSettingsNav: null,
     blocks: [],
+    libraryScanBusy: false,
 };
 
 const uiSlice = createSlice({
@@ -86,6 +92,10 @@ const uiSlice = createSlice({
         unblockUi: (state, action: PayloadAction<string>) => {
             state.blocks = state.blocks.filter((b) => b.id !== action.payload);
         },
+        /** Shows or hides the title-bar library-scan status. */
+        setLibraryScanBusy: (state, action: PayloadAction<boolean>) => {
+            state.libraryScanBusy = action.payload;
+        },
 
         setAnilistLoginOpen: (state, action: PayloadAction<boolean>) => {
             state.isOpen.anilist.login = action.payload;
@@ -106,6 +116,7 @@ export const {
     clearPendingSettingsNav,
     blockUi,
     unblockUi,
+    setLibraryScanBusy,
     setAnilistLoginOpen,
     setAnilistSearchOpen,
     setAnilistEditOpen,

@@ -1,6 +1,6 @@
 # Yomikiru — Settings, Themes, Shortcuts & Reader Presets
 
-> Last updated: 2026-08-09. Covers v2.24.x.
+> Last updated: 2026-08-21. Covers v2.24.x plus unreleased Settings search, language, and library discovery.
 
 ---
 
@@ -27,7 +27,7 @@ Entry: [`src/renderer/features/settings/Settings.tsx`](../src/renderer/features/
 
 Toggled by the gear icon or `Ctrl+,`. Full-screen modal with five keyboard-navigable tabs driven by `SETTINGS_TABS`:
 
-- **0 — Settings** (`GeneralSettings.tsx`) — Library (Default Location, bulk import, thumbnails) first, then theme, language, gallery, reader, background, PDF, explorer
+- **0 — Settings** (`GeneralSettings.tsx`) — Library (Default Location, extra library folders, Scan now, thumbnails) first, then theme, language, gallery, reader, background, PDF, explorer. Discovery / merge: [library-discovery.md](library-discovery.md).
 - **1 — Shortcut Keys** (`Shortcuts.tsx`) — view and rebind all commands
 - **2 — Theme Maker** (`ThemeCont.tsx`) — create/edit/import/export CSS-var themes
 - **3 — About** (`About.tsx`) — version, build info, detailed info dialog
@@ -51,7 +51,7 @@ On load, invalid or missing keys are repaired using `repairZodInputWithDefaults`
 
 Key groupings in the schema:
 
-- **Home / library** — `baseDir`, `homeViewMode`, `showTabs`, `openOnDblClick`, `openDirectlyFromManga`, list sort keys, display flags
+- **Home / library** — `baseDir`, `libraryFolders`, `scanDefaultLocation` (+ interval / last-scan stamps), `homeViewMode`, `showTabs`, `openOnDblClick`, `openDirectlyFromManga`, list sort keys, display flags
 - **Gallery** — `galleryActiveTab`, `galleryTypeFilter`, `galleryDisplayMode`, `galleryItemWidth`, `gallerySortBy` / `gallerySortType`
 - **Reader general** — `openInZenMode`, `hideCursorInZenMode`, `keepExtractedFiles`, `syncSettings`, `syncThemes`, `customStylesheet`
 - **Active presets** — `mangaReaderPresetId`, `bookReaderPresetId` (which named preset is selected)

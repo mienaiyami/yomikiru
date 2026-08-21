@@ -1,3 +1,4 @@
+import fs from "node:fs";
 import path from "node:path";
 import type {
     AddToLibraryData,
@@ -28,6 +29,241 @@ import { bookBookmarks, bookProgress, libraryItems, mangaBookmarks, mangaProgres
 electronOnly();
 
 export const DB_PATH = app.isPackaged ? path.join(app.getPath("userData"), "data.db") : "data.db";
+
+/**
+ * better-sqlite3 `SELECT *` shape for a drizzle model: `timestamp_ms` columns are unix ms,
+ * not {@link Date}. JSON columns may still be text until parsed.
+ */
+type SqliteSelectRow<T> = {
+    [K in keyof T]: T[K] extends Date ? number : T[K] extends Date | null ? number | null : T[K];
+};
+
+type LibraryItemRow = SqliteSelectRow<LibraryItem>;
+type MangaProgressRow = SqliteSelectRow<MangaProgress>;
+type BookProgressRow = SqliteSelectRow<BookProgress>;
+
+/**
+ * Child tables keyed by `itemLink`. Relocate rewrites these with the library row.
+ * ponytail: add a name here when a new ON DELETE CASCADE child is keyed the same way.
+ */
+const ITEMLINK_CHILD_TABLES = [
+    "manga_progress",
+    "book_progress",
+    "manga_bookmarks",
+    "book_bookmarks",
+    "book_notes",
+    "item_trackers",
+    "library_item_metadata",
+    "library_item_tags",
+] as const;
+
+/**
+ * Rewrites every `itemLink` child of `fromLink` to `toLink`. Does not change `library_items.link`.
+ */
+const rewriteChildItemLinks = (sqlite: Database.Database, fromLink: string, toLink: string): void => {
+    for (const table of ITEMLINK_CHILD_TABLES) {
+        sqlite.prepare(`UPDATE ${table} SET itemLink = ? WHERE itemLink = ?`).run(toLink, fromLink);
+    }
+};
+
+/**
+ * Prefers a cover path that still exists on disk; keeper wins when both exist.
+ */
+const pickExistingCover = (keeperCover: string | null, discardCover: string | null): string | null => {
+    if (keeperCover && fs.existsSync(keeperCover)) return keeperCover;
+    if (discardCover && fs.existsSync(discardCover)) return discardCover;
+    return keeperCover || discardCover;
+};
+
+/**
+ * Parses a JSON object column that better-sqlite3 may return as text or an object.
+ */
+const parseJsonObject = (raw: unknown): Record<string, unknown> => {
+    if (raw && typeof raw === "object" && !Array.isArray(raw)) return raw as Record<string, unknown>;
+    if (typeof raw === "string") {
+        try {
+            const parsed: unknown = JSON.parse(raw);
+            if (parsed && typeof parsed === "object" && !Array.isArray(parsed)) {
+                return parsed as Record<string, unknown>;
+            }
+        } catch {
+            /* ignore */
+        }
+    }
+    return {};
+};
+
+/**
+ * Parses a JSON string-array column that better-sqlite3 may return as text or an array.
+ */
+const parseStringArray = (raw: unknown): string[] => {
+    if (Array.isArray(raw)) return raw.filter((x): x is string => typeof x === "string");
+    if (typeof raw === "string") {
+        try {
+            const parsed: unknown = JSON.parse(raw);
+            if (Array.isArray(parsed)) return parsed.filter((x): x is string => typeof x === "string");
+        } catch {
+            /* ignore */
+        }
+    }
+    return [];
+};
+
+/** Removes the discard row's generated WebP; keeper `id` (and its file) stays. */
+const deleteCoverCacheFile = (libraryId: number): void => {
+    const coverFile = path.join(app.getPath("userData"), "covers", `${libraryId}.webp`);
+    try {
+        if (fs.existsSync(coverFile)) fs.unlinkSync(coverFile);
+    } catch (err) {
+        logger.warn("relocate merge: could not remove discard cover file", { libraryId }, err);
+    }
+};
+
+/**
+ * Folds the row at `newLink` (discard) into the keeper at `oldLink`, then deletes discard.
+ * Caller must run this with foreign keys off, inside the relocate transaction.
+ *
+ * @returns discard `id` when merged, or `null` when a row is missing or types differ
+ */
+const mergeOccupiedIntoKeeper = (sqlite: Database.Database, oldLink: string, newLink: string): number | null => {
+    const keeper = sqlite.prepare(`SELECT * FROM library_items WHERE link = ?`).get(oldLink) as
+        | LibraryItemRow
+        | undefined;
+    const discard = sqlite.prepare(`SELECT * FROM library_items WHERE link = ?`).get(newLink) as
+        | LibraryItemRow
+        | undefined;
+    if (!keeper || !discard) {
+        logger.warn("relocateLibraryItem: refuse merge; keeper or discard missing", { oldLink, newLink });
+        return null;
+    }
+    if (keeper.type !== discard.type) {
+        logger.warn("relocateLibraryItem: refuse merge; types differ", {
+            oldLink,
+            newLink,
+            keeperType: keeper.type,
+            discardType: discard.type,
+        });
+        return null;
+    }
+
+    const title = keeper.title || discard.title;
+    const author = keeper.author || discard.author;
+    const cover = pickExistingCover(keeper.cover, discard.cover);
+    const favouritedAt = keeper.favouritedAt != null ? keeper.favouritedAt : discard.favouritedAt;
+    const note = keeper.note && keeper.note.length > 0 ? keeper.note : discard.note;
+    const extra = { ...parseJsonObject(discard.extra), ...parseJsonObject(keeper.extra) };
+
+    sqlite
+        .prepare(
+            `UPDATE library_items SET title = ?, author = ?, cover = ?, favouritedAt = ?, note = ?, extra = ? WHERE link = ?`,
+        )
+        .run(title, author, cover, favouritedAt, note, JSON.stringify(extra), oldLink);
+
+    const keeperManga = sqlite.prepare(`SELECT * FROM manga_progress WHERE itemLink = ?`).get(oldLink) as
+        | MangaProgressRow
+        | undefined;
+    const discardManga = sqlite.prepare(`SELECT * FROM manga_progress WHERE itemLink = ?`).get(newLink) as
+        | MangaProgressRow
+        | undefined;
+    if (keeperManga && discardManga) {
+        const keeperAt = keeperManga.lastReadAt;
+        const discardAt = discardManga.lastReadAt;
+        const later = discardAt > keeperAt ? discardManga : keeperManga;
+        const chaptersRead = Array.from(
+            new Set([
+                ...parseStringArray(keeperManga.chaptersRead),
+                ...parseStringArray(discardManga.chaptersRead),
+            ]),
+        );
+        sqlite
+            .prepare(
+                `UPDATE manga_progress SET chapterName = ?, currentPage = ?, totalPages = ?, chaptersRead = ?, lastReadAt = ? WHERE itemLink = ?`,
+            )
+            .run(
+                later.chapterName,
+                later.currentPage,
+                later.totalPages,
+                JSON.stringify(chaptersRead),
+                later.lastReadAt,
+                oldLink,
+            );
+        sqlite.prepare(`DELETE FROM manga_progress WHERE itemLink = ?`).run(newLink);
+    } else if (!keeperManga && discardManga) {
+        sqlite.prepare(`UPDATE manga_progress SET itemLink = ? WHERE itemLink = ?`).run(oldLink, newLink);
+    }
+
+    const keeperBook = sqlite.prepare(`SELECT * FROM book_progress WHERE itemLink = ?`).get(oldLink) as
+        | BookProgressRow
+        | undefined;
+    const discardBook = sqlite.prepare(`SELECT * FROM book_progress WHERE itemLink = ?`).get(newLink) as
+        | BookProgressRow
+        | undefined;
+    if (keeperBook && discardBook) {
+        const later = discardBook.lastReadAt > keeperBook.lastReadAt ? discardBook : keeperBook;
+        sqlite
+            .prepare(
+                `UPDATE book_progress SET chapterId = ?, chapterName = ?, position = ?, lastReadAt = ? WHERE itemLink = ?`,
+            )
+            .run(later.chapterId, later.chapterName, later.position, later.lastReadAt, oldLink);
+        sqlite.prepare(`DELETE FROM book_progress WHERE itemLink = ?`).run(newLink);
+    } else if (!keeperBook && discardBook) {
+        sqlite.prepare(`UPDATE book_progress SET itemLink = ? WHERE itemLink = ?`).run(oldLink, newLink);
+    }
+
+    /* drop discard children whose unique key already exists on keeper, then rekey the rest */
+    sqlite
+        .prepare(
+            `DELETE FROM manga_bookmarks WHERE itemLink = ? AND EXISTS (
+                SELECT 1 FROM manga_bookmarks k WHERE k.itemLink = ? AND k.chapterName = manga_bookmarks.chapterName AND k.page = manga_bookmarks.page
+            )`,
+        )
+        .run(newLink, oldLink);
+    sqlite.prepare(`UPDATE manga_bookmarks SET itemLink = ? WHERE itemLink = ?`).run(oldLink, newLink);
+
+    sqlite
+        .prepare(
+            `DELETE FROM book_bookmarks WHERE itemLink = ? AND EXISTS (
+                SELECT 1 FROM book_bookmarks k WHERE k.itemLink = ? AND k.chapterId = book_bookmarks.chapterId AND k.position = book_bookmarks.position
+            )`,
+        )
+        .run(newLink, oldLink);
+    sqlite.prepare(`UPDATE book_bookmarks SET itemLink = ? WHERE itemLink = ?`).run(oldLink, newLink);
+
+    /* unique is (chapterId, range, selectedText); drop discard rows that would collide after rekey */
+    sqlite
+        .prepare(
+            `DELETE FROM book_notes WHERE itemLink = ? AND EXISTS (
+                SELECT 1 FROM book_notes k WHERE k.itemLink = ? AND k.chapterId = book_notes.chapterId AND k.range = book_notes.range AND k.selectedText = book_notes.selectedText
+            )`,
+        )
+        .run(newLink, oldLink);
+    sqlite.prepare(`UPDATE book_notes SET itemLink = ? WHERE itemLink = ?`).run(oldLink, newLink);
+
+    sqlite
+        .prepare(
+            `DELETE FROM item_trackers WHERE itemLink = ? AND provider IN (SELECT provider FROM item_trackers WHERE itemLink = ?)`,
+        )
+        .run(newLink, oldLink);
+    sqlite.prepare(`UPDATE item_trackers SET itemLink = ? WHERE itemLink = ?`).run(oldLink, newLink);
+
+    sqlite
+        .prepare(
+            `DELETE FROM library_item_metadata WHERE itemLink = ? AND source IN (SELECT source FROM library_item_metadata WHERE itemLink = ?)`,
+        )
+        .run(newLink, oldLink);
+    sqlite.prepare(`UPDATE library_item_metadata SET itemLink = ? WHERE itemLink = ?`).run(oldLink, newLink);
+
+    sqlite
+        .prepare(
+            `INSERT OR IGNORE INTO library_item_tags (itemLink, tagId) SELECT ?, tagId FROM library_item_tags WHERE itemLink = ?`,
+        )
+        .run(oldLink, newLink);
+    /* FKs are off, so CASCADE will not drop discard tags; leftover rows at newLink collide on rewrite */
+    sqlite.prepare(`DELETE FROM library_item_tags WHERE itemLink = ?`).run(newLink);
+
+    sqlite.prepare(`DELETE FROM library_items WHERE link = ?`).run(newLink);
+    return discard.id;
+};
 
 export class DatabaseService {
     private readonly sqlite = new Database(DB_PATH);
@@ -128,15 +364,16 @@ export class DatabaseService {
         }
     }
     /**
-     * Inserts a library item and its progress row, or refreshes the title when the item
-     * is already present.
+     * Inserts a library item, optionally with a progress row, or refreshes the title when
+     * the item is already present.
      *
      * Re-adding is a safe no-op for everything the user or an earlier session stored.
      * Callers echo a full row back on every open - manga readers pass `author: null` and a
      * derived `cover`, which would otherwise erase a stored author and replace a custom
      * cover - so the conflict path updates only the title. Author and cover have their own
      * update path (`db:library:updateItem`). Existing progress is likewise kept rather than
-     * reset to the freshly opened position.
+     * reset to the freshly opened position. Scan/import omit `progress` so the row stays
+     * catalogue-only until the reader writes one.
      */
     async addLibraryItem(data: AddToLibraryData): Promise<LibraryItem> {
         return await this._db.transaction(async (tx) => {
@@ -148,7 +385,7 @@ export class DatabaseService {
                     set: { title: data.data.title },
                 })
                 .returning();
-            if (data.type === "manga") {
+            if (data.progress && data.type === "manga") {
                 await tx
                     .insert(mangaProgress)
                     .values({
@@ -158,7 +395,7 @@ export class DatabaseService {
                         lastReadAt: new Date(),
                     })
                     .onConflictDoNothing();
-            } else {
+            } else if (data.progress && data.type === "book") {
                 await tx
                     .insert(bookProgress)
                     .values({
@@ -174,8 +411,9 @@ export class DatabaseService {
 
     /**
      * Rewrites `library_items.link` and every child `itemLink` to `newLink`.
-     * Keeps the same row `id` (cover cache stays valid). Returns null when `oldLink`
-     * is missing or `newLink` is already used by another row.
+     * Keeps the same row `id` (cover cache stays valid). When `newLink` is already
+     * occupied by the same type, merges discard into keeper then rewrites. Returns
+     * null when `oldLink` is missing or types differ.
      *
      * Existence/conflict checks and the rewrite run inside one sync
      * {@link withForeignKeysOff} + better-sqlite3 transaction so other IPC cannot
@@ -197,41 +435,21 @@ export class DatabaseService {
                     logger.warn(`relocateLibraryItem: no library row for oldLink=${oldLink}`);
                     return false;
                 }
-                const conflict = this.sqlite
-                    .prepare(`SELECT link FROM library_items WHERE link = ?`)
-                    .get(newLink) as { link: string } | undefined;
-                if (conflict) {
-                    logger.warn(`relocateLibraryItem: newLink already in library (${newLink})`);
-                    return false;
-                }
+                const conflict = this.sqlite.prepare(`SELECT id FROM library_items WHERE link = ?`).get(newLink) as
+                    | { id: number }
+                    | undefined;
 
+                let discardedId: number | null = null;
                 this.sqlite.transaction(() => {
-                    this.sqlite
-                        .prepare(`UPDATE manga_progress SET itemLink = ? WHERE itemLink = ?`)
-                        .run(newLink, oldLink);
-                    this.sqlite
-                        .prepare(`UPDATE book_progress SET itemLink = ? WHERE itemLink = ?`)
-                        .run(newLink, oldLink);
-                    this.sqlite
-                        .prepare(`UPDATE manga_bookmarks SET itemLink = ? WHERE itemLink = ?`)
-                        .run(newLink, oldLink);
-                    this.sqlite
-                        .prepare(`UPDATE book_bookmarks SET itemLink = ? WHERE itemLink = ?`)
-                        .run(newLink, oldLink);
-                    this.sqlite
-                        .prepare(`UPDATE book_notes SET itemLink = ? WHERE itemLink = ?`)
-                        .run(newLink, oldLink);
-                    this.sqlite
-                        .prepare(`UPDATE item_trackers SET itemLink = ? WHERE itemLink = ?`)
-                        .run(newLink, oldLink);
-                    this.sqlite
-                        .prepare(`UPDATE library_item_metadata SET itemLink = ? WHERE itemLink = ?`)
-                        .run(newLink, oldLink);
-                    this.sqlite
-                        .prepare(`UPDATE library_item_tags SET itemLink = ? WHERE itemLink = ?`)
-                        .run(newLink, oldLink);
+                    if (conflict) {
+                        discardedId = mergeOccupiedIntoKeeper(this.sqlite, oldLink, newLink);
+                        if (discardedId == null) return;
+                    }
+                    rewriteChildItemLinks(this.sqlite, oldLink, newLink);
                     this.sqlite.prepare(`UPDATE library_items SET link = ? WHERE link = ?`).run(newLink, oldLink);
                 })();
+                if (conflict && discardedId == null) return false;
+                if (discardedId != null) deleteCoverCacheFile(discardedId);
                 return true;
             });
             if (!relocated) return null;

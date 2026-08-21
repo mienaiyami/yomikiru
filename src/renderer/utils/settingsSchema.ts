@@ -2,6 +2,7 @@ import { z } from "zod";
 import { dialogUtils } from "./dialog";
 import { saveJSONfile, settingsPath } from "./file";
 import { createRendererLogger } from "./logger";
+import { LIBRARY_SCAN_MAX_DEPTH_CEILING } from "./mangaChapters";
 import { getValueFromDeepObject } from "./objectPath";
 import { USER_PRESET_BOOK_ID, USER_PRESET_MANGA_ID } from "./readerPresets";
 import {
@@ -109,6 +110,39 @@ const settingSchema = z
         /** Re-scan the chapter list each time the reader window gains focus. */
         autoRefreshSideList: z.boolean(),
         /**
+         * Extra roots Scan now / start / interval may walk. Default Location is not in this list;
+         * {@link scanDefaultLocation} opts it in separately.
+         */
+        libraryFolders: z
+            .array(
+                z.object({
+                    path: z.string().min(1),
+                    content: z.union([z.literal("manga"), z.literal("book"), z.literal("both")]).default("both"),
+                    maxDepth: z
+                        .number()
+                        .int()
+                        .min(0)
+                        .max(LIBRARY_SCAN_MAX_DEPTH_CEILING)
+                        .default(LIBRARY_SCAN_MAX_DEPTH_CEILING),
+                    scanOnStart: z.boolean().default(false),
+                    /** Hours between automatic scans of this folder; `0` means interval scanning is off. */
+                    scanIntervalHours: z.number().min(0).default(0),
+                    watch: z.boolean().default(false),
+                    /** Unix ms of the last completed scan of this folder; `0` means never. */
+                    lastScanAtMs: z.number().min(0).default(0),
+                }),
+            )
+            .default([]),
+        /** When true, Scan now / start also walk Default Location (`baseDir`). */
+        scanDefaultLocation: z.boolean().default(false),
+        /**
+         * Hours between automatic scans of Default Location when {@link scanDefaultLocation} is on;
+         * `0` means interval scanning is off for that folder.
+         */
+        scanDefaultLocationIntervalHours: z.number().min(0).default(0),
+        /** Unix ms of the last completed Default Location scan; `0` means never. */
+        scanDefaultLocationLastAtMs: z.number().min(0).default(0),
+        /**
          * Cache extracted EPUB/ZIP content in the temp directory between sessions.
          * When false, the temp folder is deleted when the reader closes.
          */
@@ -168,6 +202,10 @@ const settingSchema = z
         hideCursorInZenMode: false,
         showMoreDataOnItemHover: true,
         autoRefreshSideList: false,
+        libraryFolders: [],
+        scanDefaultLocation: false,
+        scanDefaultLocationIntervalHours: 0,
+        scanDefaultLocationLastAtMs: 0,
         keepExtractedFiles: true,
         checkboxReaderSetting: false,
         syncSettings: true,
@@ -236,3 +274,5 @@ const parseAppSettings = (): z.infer<typeof settingSchema> => {
 };
 
 export { settingSchema, parseAppSettings, makeSettingsJson };
+
+export type LibraryFolderSetting = z.infer<typeof settingSchema>["libraryFolders"][number];

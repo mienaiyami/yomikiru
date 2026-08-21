@@ -45,6 +45,7 @@ import {
 } from "@utils/libraryMissingPath";
 import { createRendererLogger } from "@utils/logger";
 import { resolveMangaChapterPath } from "@utils/mangaChapterPath";
+import { listMangaChapterChildren, type MangaChapterChild } from "@utils/mangaChapters";
 import { scrollChildInContainer } from "@utils/utils";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
@@ -78,19 +79,6 @@ type MangaDetailsPanelProps = {
     onRelocated?: (newLink: string) => void;
 };
 
-type ChapterData = {
-    name: string;
-    link: string;
-    dateModified: number;
-    pages: number;
-};
-
-/** Single-file manga chapters stay listed (pages not scanned); empty image folders are omitted. */
-const isListableMangaChapterChild = (chapter: { name: string; pages: number }): boolean => {
-    if (formatUtils.mangaFile.test(chapter.name)) return true;
-    return chapter.pages > 0;
-};
-
 /**
  * Gallery details page for a library manga: shared hero plus inner list tabs.
  * Opening a chapter or bookmark launches the reader at the stored location.
@@ -107,7 +95,7 @@ const MangaDetailsPanel = ({
     const library = useAppSelector((store) => store.library.items);
     const anilistToken = useAppSelector((store) => store.anilist.token);
 
-    const [chapters, setChapters] = useState<ChapterData[]>([]);
+    const [chapters, setChapters] = useState<MangaChapterChild[]>([]);
     const [activeTab, setActiveTab] = useState<"content" | "bookmarks">(initialTab);
     const [metadataEditorOpen, setMetadataEditorOpen] = useState(false);
     const [itemNote, setItemNote] = useState("");
@@ -160,50 +148,12 @@ const MangaDetailsPanel = ({
         const fetchChapters = async () => {
             try {
                 if (window.fs.existsSync(mangaLink) && window.fs.isDir(mangaLink)) {
-                    const files = await window.fs.readdir(mangaLink);
-                    const dirNames: ChapterData[] = [];
-                    await Promise.all(
-                        files.map(async (fileName) => {
-                            try {
-                                const filePath = window.path.join(mangaLink, fileName);
-                                await window.fs.access(filePath, window.fs.constants.R_OK);
-                                const stat = await window.fs.stat(filePath);
-
-                                let pages = 0;
-                                if (stat.isDir) {
-                                    try {
-                                        const chapterFiles = await window.fs.readdir(filePath);
-                                        pages = chapterFiles.filter((f) => formatUtils.image.test(f)).length;
-                                    } catch (err) {
-                                        console.error("Error counting pages:", err);
-                                    }
-                                }
-
-                                if (stat.isFile && formatUtils.image.test(fileName)) {
-                                    return;
-                                }
-                                if (stat.isDir || (stat.isFile && formatUtils.mangaFile.test(fileName))) {
-                                    const chapter = {
-                                        name: fileName,
-                                        link: filePath,
-                                        dateModified: stat.mtimeMs,
-                                        pages,
-                                    };
-                                    if (isListableMangaChapterChild(chapter)) {
-                                        dirNames.push(chapter);
-                                    }
-                                }
-                            } catch (error) {
-                                console.log(error);
-                            }
-                        }),
-                    );
-                    setChapters(dirNames);
+                    setChapters(await listMangaChapterChildren(mangaLink));
                 } else {
                     setChapters([]);
                 }
             } catch (error) {
-                console.error("Error fetching chapters:", error);
+                log.error("Error fetching chapters", error);
             }
         };
 
@@ -217,7 +167,7 @@ const MangaDetailsPanel = ({
     const sortedChapters = useMemo(() => {
         if (!chapters.length) return [];
 
-        let sorted: ChapterData[];
+        let sorted: MangaChapterChild[];
         if (sortBy === "name") {
             sorted = [...chapters].sort((a, b) =>
                 window.app.betterSortOrder(formatUtils.files.getName(a.name), formatUtils.files.getName(b.name)),
@@ -338,12 +288,12 @@ const MangaDetailsPanel = ({
         [sortBy, sortOrder, setContextMenuData, t, dispatch],
     );
 
-    const filterChapter = useCallback((filter: string, chapter: ChapterData) => {
+    const filterChapter = useCallback((filter: string, chapter: MangaChapterChild) => {
         return new RegExp(filter, "ig").test(chapter.name);
     }, []);
 
     const renderChapterItem = useCallback(
-        (chapter: ChapterData, _index: number, isSelected: boolean) => {
+        (chapter: MangaChapterChild, _index: number, isSelected: boolean) => {
             const isRead = manga?.type === "manga" && manga.progress?.chaptersRead.includes(chapter.name);
             const progressPath =
                 manga?.progress?.itemLink && manga?.progress?.chapterName

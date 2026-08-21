@@ -248,7 +248,7 @@
             "wasDeletedManga": "This manga folder or file was deleted or moved.",
             "locateHint": "Locate it on disk to keep progress and bookmarks, or remove the library entry.",
             "locateOnDisk": "Locate on disk",
-            "relocateFailed": "Could not update library path. The new location may already be in the library."
+            "relocateFailed": "Could not update library path."
         }
     }
 }

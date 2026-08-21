@@ -33,7 +33,9 @@
         "minimize": "Minimize",
         "restore": "Restore",
         "maximize": "Maximize",
-        "close": "Close"
+        "close": "Close",
+        "scanningLibrary": "Scanning library",
+        "scanningLibraryTooltip": "Scanning library. Click to open Library settings."
     },
     "list": {
         "noItems": "No items",
@@ -82,7 +84,13 @@
         "nameMismatchMessage": "Selected \"{{chosen}}\" does not match library item \"{{title}}\".",
         "nameMismatchDetail": "Previous path name: {{expected}}. Use this location anyway?",
         "useAnyway": "Use anyway",
-        "relocateFailed": "Could not update library path. The new location may already be in the library.",
+        "relocateFailed": "Could not update library path.",
+        "mergeTitle": "Merge library entries?",
+        "mergeMessage": "This folder is already in the library as a separate entry. Merge reading progress and details into one title?",
+        "mergeConfirm": "Merge",
+        "relocateInstead": "This looks like \"{{title}}\". Update its location instead of adding a new entry?",
+        "relocateInsteadConfirm": "Update location",
+        "severalMissingSameName": "Several missing library entries match this name. Locate one on disk from its details page instead of adding a duplicate.",
         "chapterStillMissing": "Library path updated, but this chapter file/folder is still missing under the new location."
     }
 }
