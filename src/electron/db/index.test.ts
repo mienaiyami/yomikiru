@@ -104,6 +104,24 @@ describe("DatabaseService", () => {
         expect(stillNone).toEqual([]);
     });
 
+    it("deleteProgressForLinks drops progress and keeps the catalogue row", async () => {
+        const itemLink = path.join("testdata", "manga", "dummy-progress");
+        await dbService.addLibraryItem({
+            type: "manga",
+            data: { type: "manga", link: itemLink, title: "Dummy" },
+            progress: { chapterName: "~", currentPage: 1, totalPages: 0 },
+        });
+        const deleted = await dbService.deleteProgressForLinks([itemLink]);
+        expect(deleted).toBe(1);
+        const [item] = await dbService.db.select().from(libraryItems).where(eq(libraryItems.link, itemLink));
+        expect(item?.link).toBe(itemLink);
+        const progressRows = await dbService.db
+            .select()
+            .from(mangaProgress)
+            .where(eq(mangaProgress.itemLink, itemLink));
+        expect(progressRows).toEqual([]);
+    });
+
     it("adds a manga library item with progress in a transaction", async () => {
         const item = await dbService.addLibraryItem({
             type: "manga",

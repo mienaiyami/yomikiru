@@ -11,7 +11,7 @@ import type {
 import type { HistoryItem, Manga_BookItem } from "@common/types/legacy";
 import { mainT } from "@electron/i18n/mainI18n";
 import Database from "better-sqlite3";
-import { eq } from "drizzle-orm";
+import { eq, inArray } from "drizzle-orm";
 // libsql wont work because of node/electron version issues
 import { drizzle } from "drizzle-orm/better-sqlite3";
 import { migrate } from "drizzle-orm/better-sqlite3/migrator";
@@ -406,6 +406,20 @@ export class DatabaseService {
                     .onConflictDoNothing();
             }
             return item;
+        });
+    }
+
+    /**
+     * Deletes manga and book progress rows for `links` without removing catalogue items.
+     * Empty `links` is a no-op. Used by Settings clear-unused-progress.
+     */
+    async deleteProgressForLinks(links: readonly string[]): Promise<number> {
+        if (links.length === 0) return 0;
+        const unique = [...new Set(links)];
+        return await this._db.transaction(async (tx) => {
+            const manga = await tx.delete(mangaProgress).where(inArray(mangaProgress.itemLink, unique)).returning();
+            const books = await tx.delete(bookProgress).where(inArray(bookProgress.itemLink, unique)).returning();
+            return manga.length + books.length;
         });
     }
 

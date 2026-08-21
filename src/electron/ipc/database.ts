@@ -10,6 +10,7 @@ import {
     AddToLibrarySchema,
     CreateLibraryTagSchema,
     DeleteLibraryTagSchema,
+    DeleteProgressForLinksSchema,
     RelocateLibraryItemSchema,
     RemoveItemTrackerSchema,
     SetLibraryItemMetadataSchema,
@@ -151,6 +152,12 @@ const handlers: {
             logger.error('"db:library:deleteItem": delete failed', error);
             return false;
         }
+    },
+    "db:library:deleteProgressForLinks": async (db, request) => {
+        const { links } = DeleteProgressForLinksSchema.parse(request);
+        const deleted = await db.deleteProgressForLinks(links);
+        if (deleted > 0) pingDatabaseChange("db:library:change");
+        return { deleted };
     },
     "db:library:relocateItem": async (db, request) => {
         try {

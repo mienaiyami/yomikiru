@@ -186,11 +186,11 @@ The `cover` column stores either:
 
 IPC surface: all `db:library:*` channels in [`src/common/types/ipc.ts`](../src/common/types/ipc.ts).
 Implementation: [`src/electron/db/index.ts`](../src/electron/db/index.ts), methods `addLibraryItem`,
-`updateLibraryItem`, `deleteLibraryItem`, `relocateLibraryItem`, `getAllLibraryItemsWithProgress`.
+`updateLibraryItem`, `deleteLibraryItem`, `deleteProgressForLinks`, `relocateLibraryItem`, `getAllLibraryItemsWithProgress`.
 
 Scan, library folders, catalogue-without-progress, and relocate-into-an-occupied-path are specified in
 [library-discovery.md](library-discovery.md). **Scan now**, extra library folders, reader one-shot,
-and relocate merge are in `# unreleased`. Live watch and clear unused progress are still pending.
+and relocate merge are in `# unreleased`. Live watch and **Clear unused progress** are in the same unreleased work.
 
 ---
 
@@ -202,7 +202,8 @@ Research (this app + Komga / Kavita / Mihon / Calibre / Plex / Node watch): [res
 Settings → Library **Scan now** walks extra `libraryFolders` (and Default Location when opted in)
 with the series classifier (same chapter-child rule as gallery details), not the reader image validator.
 It adds catalogue rows without progress, including one-shot image folders. Scan on start and interval
-use the same walk and keep the window interactive (title-bar status). Relocate into an occupied path can merge; opening a moved folder can update the
+use the same walk and keep the window interactive (title-bar status). **Watch** on an extra folder
+adds new titles from filesystem events (debounced; classify upward; does not auto-remove). Relocate into an occupied path can merge; opening a moved folder or EPUB can update the
 missing row instead of adding a duplicate.
 
 ---

@@ -8,6 +8,12 @@ import { normalizeMangaPathSegment } from "@utils/mangaChapterPath";
  */
 export const LIBRARY_SCAN_MAX_DEPTH_CEILING = 12;
 
+/**
+ * Default grouping-folder steps for a new extra library folder.
+ * The walk ceiling stays {@link LIBRARY_SCAN_MAX_DEPTH_CEILING}.
+ */
+export const LIBRARY_SCAN_DEFAULT_MAX_DEPTH = 2;
+
 /** How {@link classifyLibraryNode} labels a file or directory. */
 export type LibraryNodeKind = "series" | "oneshot" | "grouping" | "packedManga" | "book" | "skip";
 
@@ -235,4 +241,72 @@ export const collectLibraryScanTargets = async (
 
     await walk(normalizedRoot, remaining);
     return out;
+};
+
+const pathIsInsideRoot = (absPath: string, root: string): boolean => {
+    const a = normalizeMangaPathSegment(absPath);
+    const r = normalizeMangaPathSegment(root);
+    if (a === r) return true;
+    const rel = window.path.relative(r, a);
+    return rel !== "" && !rel.startsWith("..") && !window.path.isAbsolute(rel);
+};
+
+/**
+ * Grouping folders Scan now would enter to reach `absPath` from `root`.
+ * The last path segment is the node itself, so a series at `root/a/b/series` is 2.
+ */
+const groupingsEnteredFromRoot = (root: string, absPath: string): number | null => {
+    if (!pathIsInsideRoot(absPath, root)) return null;
+    const a = normalizeMangaPathSegment(absPath);
+    const r = normalizeMangaPathSegment(root);
+    if (a === r) return 0;
+    const rel = window.path.relative(r, a);
+    const segs = rel.split(/[/\\]/).filter(Boolean);
+    return Math.max(0, segs.length - 1);
+};
+
+/**
+ * Finds one catalogue target by classifying `eventPath` then each parent up to `root`.
+ * Chapter folders look like one-shots and packed chapter files look like series items;
+ * those are only used when no series ancestor exists. Does not walk sibling trees.
+ *
+ * @returns The series, one-shot, packed file, or book to add, or `null` when the
+ *   event is outside `root`, already catalogued, or deeper than `maxDepth`.
+ */
+export const collectLibraryScanTargetFromEventPath = async (
+    eventPath: string,
+    root: string,
+    opts: CollectLibraryScanTargetsOpts,
+): Promise<LibraryScanTarget | null> => {
+    const rootN = normalizeMangaPathSegment(root);
+    let cur = normalizeMangaPathSegment(eventPath);
+    if (!pathIsInsideRoot(cur, rootN)) return null;
+
+    const remaining = Math.min(Math.max(0, opts.maxDepth), LIBRARY_SCAN_MAX_DEPTH_CEILING);
+    let fallback: LibraryScanTarget | null = null;
+
+    while (true) {
+        const node = await classifyLibraryNode(cur);
+        const entered = groupingsEnteredFromRoot(rootN, node.path);
+        const withinDepth = entered !== null && entered <= remaining;
+
+        if (node.kind === "series") {
+            // event is inside a known series: do not promote a chapter folder to a new item
+            if (opts.existingLinks.has(node.path)) return null;
+            if (withinDepth) {
+                const out: LibraryScanTarget[] = [];
+                emitTarget(node, opts, out);
+                if (out[0]) return out[0];
+            }
+        } else if (withinDepth && !opts.existingLinks.has(node.path)) {
+            const out: LibraryScanTarget[] = [];
+            emitTarget(node, opts, out);
+            if (out[0] && !fallback) fallback = out[0];
+        }
+
+        if (cur === rootN) return fallback;
+        const parent = normalizeMangaPathSegment(window.path.dirname(cur));
+        if (parent === cur) return fallback;
+        cur = parent;
+    }
 };

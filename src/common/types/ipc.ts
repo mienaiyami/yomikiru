@@ -62,6 +62,8 @@ export type DatabaseChannels = {
     "db:library:addItem": ChannelDefinition<AddToLibraryData, LibraryItem>;
     "db:library:updateItem": ChannelDefinition<UpdateLibraryItemData, LibraryItem | null>;
     "db:library:deleteItem": ChannelDefinition<{ link: string }, boolean>;
+    /** Drops progress rows for the given catalogue links; library items stay. */
+    "db:library:deleteProgressForLinks": ChannelDefinition<{ links: string[] }, { deleted: number }>;
     /** Move a library item to a new disk path; updates FK `itemLink` columns. Returns null on conflict/missing. */
     "db:library:relocateItem": ChannelDefinition<{ oldLink: string; newLink: string }, LibraryItem | null>;
     "db:library:getAllBookmarks": ChannelDefinition<

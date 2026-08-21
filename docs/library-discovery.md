@@ -2,7 +2,7 @@
 
 How Yomikiru finds titles on disk, what belongs in Continue Reading, and what happens when a series is moved then opened at a new path.
 
-Classifier, optional progress on add, nested **Scan now**, extra library folders, reader one-shot, relocate merge, and scan on start / interval are in `# unreleased`. Live watch and clear unused progress are still pending. Research background: [research-library-discovery.md](research-library-discovery.md). Persistence overview: [library.md](library.md).
+Classifier, optional progress on add, nested **Scan now**, extra library folders, reader one-shot, relocate merge, scan on start / interval, live watch, and clear unused progress are in `# unreleased`. Research background: [research-library-discovery.md](research-library-discovery.md). Persistence overview: [library.md](library.md).
 
 ---
 
@@ -26,7 +26,7 @@ Two product bugs share one cause: bulk add reused the **reader image scanner** a
 | D3 Roots | `baseDir` remains Locations-only. Separate library-folder list. Checkbox to also scan Default Location. |
 | D4 History | Classic History = actually read (has progress), same as gallery Continue Reading. Unread catalogue is gallery Library / Locations. |
 | D5 Missing disk | Scan never auto-removes. Locate / Remove stay. |
-| D6 When to scan | Settings expose Scan now, scan on start, interval, and watch. First ship: Scan now + optional start + optional interval. Watch toggle exists, default off; live watch can land in a follow-up. |
+| D6 When to scan | Settings expose Scan now, scan on start, interval, and watch. Watch default off. Live watch classifies from the changed path upward (slice 8). |
 | D7 Root type | Each library folder: manga, books, or both. |
 | D8 Open still adds | Opening in the reader still creates a catalogue row. Scan is additive. |
 | D9 Volumes | `Series / Vol1 / Ch1 / images`: the library item is `Vol1` (matches details + `chapterName` = direct child). Nested chapter keys are out of scope. |
@@ -85,9 +85,9 @@ Skip-update: existing dummy rows stay until the user runs **Clear unused progres
 
 New keys on `settings.json` (Zod + `repairZodInputWithDefaults`; old files get defaults):
 
-- `libraryFolders`: list of `{ path, content, maxDepth, scanOnStart, scanIntervalHours, watch }`
+- `libraryFolders`: list of `{ path, content, maxDepth, scanOnStart, scanIntervalMinutes, watch }`
   - `content`: `manga` | `book` | `both`
-  - `scanIntervalHours`: number or disabled (schema: nullable / `0` meaning off — pick one in code and JSDoc it; do not duplicate a magic number here)
+  - `scanIntervalMinutes`: number or disabled (schema: `0` meaning off — pick one in code and JSDoc it; do not duplicate a magic number here)
   - `watch`: boolean, default off
 - `scanDefaultLocation`: boolean, default off (do not scan `baseDir` when it is still the schema default home directory unless the user opts in)
 
@@ -114,6 +114,8 @@ Typical user path:
 2. Move the directory to `folder2`.
 3. Open `folder2` in the reader -> **new** `library_items` row (different `id`, empty extras, new progress).
 4. Old row at `folder1` is missing -> Locate. Picking `folder2` **fails** because that path is already in the library.
+
+(The same split applied to a moved EPUB file. Open-before-add below covers manga folders and books.)
 
 Two tiles, split history. Cover cache is on the old `id`.
 
@@ -208,19 +210,19 @@ Zod keys, repair, Library Settings UI, catalog, i18n, Usage. Scan now wired. Wat
 
 ### 6. Relocate merge + open-before-add
 
-DB merge transaction + db tests. Missing-path UI confirm. Reader/open path: same-name missing candidate prompt. Redux remap including discard. **Done** (unreleased). Several same-name missing rows warn then add (no picker).
+DB merge transaction + db tests. Missing-path UI confirm. Reader/open path: same-name missing candidate prompt for manga folders and EPUB files. Redux remap including discard. **Done** (unreleased). Several same-name missing rows warn then add (no picker).
 
 ### 7. Scan on start + interval
 
 After library hydrate. Interval from settings; skip if a scan is already running (lock covers the walk and catalogue refresh). Renderer is fine (today’s import already lives there). **Done** (unreleased). Start and interval scans do not lock the window; TopBar shows a status control. Interval can run while the reader is open. Zen mode hides the title bar, so that status is hidden until zen ends.
 
-### 8. Watch (follow-up)
+### 8. Watch
 
-Existing `window.chokidar`, debounce, classify from the new path upward, not a full-tree rescan. Default off. Windows/SMB warning.
+Existing `window.chokidar`, debounce, classify from the new path upward, not a full-tree rescan. Default off. Windows/SMB warning. **Done** (unreleased).
 
 ### 9. Clear unused progress
 
-Settings Library action + confirm. Not on scan.
+Settings Library action + confirm. Not on scan. **Done** (unreleased).
 
 Changelog, Usage, catalog updates land **with the slice that makes the control real**, once per commit.
 
@@ -267,7 +269,7 @@ Not seams: chokidar internals, Settings JSX layout, dialog pixel copy, Directory
 - Progress-optional add is additive (no DROP). `lastReadAt` stays NOT NULL on progress rows that exist.
 - Merge is explicit (confirm). Scan does not delete.
 - Fresh install: empty library folders, Default Location as today, Scan now no-ops until a folder is added or the Default Location checkbox is on.
-- Upgrade from current stable: same `baseDir`; import buttons replaced by Scan now once slice 3 ships; existing dummy progress until D10 action.
+- Upgrade from current stable: same `baseDir`; import buttons replaced by Scan now once slice 3 ships; leftover dummy progress is cleared only if the user runs **Clear unused progress**.
 
 ---
 
@@ -278,8 +280,11 @@ Not seams: chokidar internals, Settings JSX layout, dialog pixel copy, Directory
 - Open a chapter: Continue Reading shows it; details Continue vs Start matches.
 - One-shot folder: one library item at that folder; open does not register the parent grouping folder.
 - Move series, open new path: prompt to update location; one row; progress/metadata kept.
+- Move an EPUB, open the new file: same prompt; one book row.
 - If a duplicate was already created: Locate -> merge confirm -> one row, keeper id.
 - Classic History does not list unread scan rows.
 - Pointing a library folder at a huge tree: max-depth ceiling stops the walk; UI stays locked with progress copy during Scan now. Start and interval scans stay usable and show a title-bar status.
+- Watch on an extra folder: dropping a new series in adds a catalogue row after the debounce; deleting a folder does not remove the library item.
+- Clear unused progress: leftover first-page progress from older add-on-open rows is removed after confirm; catalogue stays.
 
 See [docs/testing.md](testing.md) for commands (`pnpm test`, `pnpm test:db`). Do not treat coverage % as the goal.

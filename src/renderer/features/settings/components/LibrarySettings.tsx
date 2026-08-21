@@ -13,42 +13,36 @@ import { regenerateLibraryThumbnails, showRegenSkippedWarning } from "@utils/lib
 import {
     getExistingBaseDir,
     isDuplicateLibraryFolderPath,
+    isLibraryFolderContent,
     type LibraryScanRoot,
     libraryFolderScanRoot,
     listManualLibraryScanRoots,
+    newLibraryFolderSetting,
     scanLibraryRoots,
     showImportFinishedSummary,
+    unusedDummyProgressLinks,
     withLibraryScanTimestamps,
 } from "@utils/librarySettingsImport";
 import { createRendererLogger } from "@utils/logger";
 import { LIBRARY_SCAN_MAX_DEPTH_CEILING } from "@utils/mangaChapters";
 import type { LibraryFolderSetting } from "@utils/settingsSchema";
-import { useCallback, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
 
 const log = createRendererLogger("settings/LibrarySettings");
 
-const LIBRARY_FOLDER_CONTENT = ["manga", "book", "both"] as const;
+/** Catalog ids under Library that sit inside the collapsible body (not the section heading). */
+const LIBRARY_COLLAPSED_NAV_IDS = new Set([
+    "setting:default-location",
+    "setting:scan-default-location",
+    "setting:scan-default-location-interval",
+    "setting:library-folders",
+    "setting:library-folders-list",
+    "setting:library-scan-now",
+    "setting:library-clear-unused-progress",
+]);
 
-type LibraryFolderContent = (typeof LIBRARY_FOLDER_CONTENT)[number];
-
-const isLibraryFolderContent = (value: string): value is LibraryFolderContent =>
-    (LIBRARY_FOLDER_CONTENT as readonly string[]).includes(value);
-
-/**
- * New library-folder row after the user picks a directory.
- */
-const newLibraryFolderSetting = (folderPath: string): LibraryFolderSetting => ({
-    path: window.path.normalize(folderPath),
-    content: "both",
-    maxDepth: LIBRARY_SCAN_MAX_DEPTH_CEILING,
-    scanOnStart: false,
-    scanIntervalHours: 0,
-    watch: false,
-    lastScanAtMs: 0,
-});
-
-type LibrarySettingsBusy = "clear" | "regen" | "importChildren" | null;
+type LibrarySettingsBusy = "clear" | "regen" | "importChildren" | "clearProgress" | null;
 
 /**
  * Settings for how the library finds titles on disk and refreshes cover thumbnails.
@@ -59,11 +53,36 @@ const LibrarySettings: React.FC = () => {
     const appSettings = useAppSelector((s) => s.appSettings);
     const libraryItems = useAppSelector((s) => s.library.items);
     const libraryScanBusy = useAppSelector((s) => s.ui.libraryScanBusy);
+    const pendingSettingsNav = useAppSelector((s) => s.ui.pendingSettingsNav);
     const { validateDirectory } = useDirectoryValidator();
 
     const [busy, setBusy] = useState<LibrarySettingsBusy>(null);
     const [regenLabel, setRegenLabel] = useState("");
     const [importLabel, setImportLabel] = useState("");
+    const [clearProgressLabel, setClearProgressLabel] = useState("");
+
+    useEffect(() => {
+        const navId = pendingSettingsNav?.id;
+        if (!navId || !LIBRARY_COLLAPSED_NAV_IDS.has(navId)) return;
+        const expandFoldersList =
+            navId === "setting:library-folders" &&
+            appSettings.libraryFolders.length > 0 &&
+            !appSettings.libraryFoldersListExpanded;
+        if (!appSettings.librarySettingsExpanded || expandFoldersList) {
+            dispatch(
+                setAppSettings({
+                    ...(appSettings.librarySettingsExpanded ? {} : { librarySettingsExpanded: true }),
+                    ...(expandFoldersList ? { libraryFoldersListExpanded: true } : {}),
+                }),
+            );
+        }
+    }, [
+        pendingSettingsNav?.id,
+        appSettings.librarySettingsExpanded,
+        appSettings.libraryFoldersListExpanded,
+        appSettings.libraryFolders.length,
+        dispatch,
+    ]);
 
     /**
      * Runs a long-running settings action with a shared busy/label lifecycle: sets `busy`,
@@ -222,8 +241,64 @@ const LibrarySettings: React.FC = () => {
             dispatch(
                 setAppSettings({
                     libraryFolders: [...appSettings.libraryFolders, newLibraryFolderSetting(folderPath)],
+                    libraryFoldersListExpanded: true,
                 }),
             );
+        });
+    };
+
+    const handleRemoveFolder = async (index: number): Promise<void> => {
+        const folder = appSettings.libraryFolders[index];
+        if (!folder) return;
+        const { response } = await dialogUtils.warn({
+            title: t("library.removeFolderTitle"),
+            message: t("library.removeFolderMessage", { path: folder.path }),
+            noOption: false,
+            buttons: [t("shared.cancel"), t("shared.remove")],
+            defaultId: 0,
+        });
+        if (!response) return;
+        dispatch(
+            setAppSettings({
+                libraryFolders: appSettings.libraryFolders.filter((_, i) => i !== index),
+            }),
+        );
+    };
+
+    const handleScanThisFolder = (folder: LibraryFolderSetting): void => {
+        const root = libraryFolderScanRoot(folder);
+        if (!root) {
+            dialogUtils.customError({ message: t("library.folderMissing") });
+            return;
+        }
+        void confirmThenScan([root]);
+    };
+
+    const handleClearUnusedProgress = async (): Promise<void> => {
+        const links = unusedDummyProgressLinks(libraryItems);
+        if (links.length === 0) {
+            await dialogUtils.confirm({
+                title: t("library.clearUnusedProgressTitle"),
+                message: t("library.clearUnusedProgressNone"),
+                noOption: true,
+                type: "info",
+            });
+            return;
+        }
+        const { response } = await dialogUtils.warn({
+            title: t("library.clearUnusedProgressTitle"),
+            message: t("library.clearUnusedProgressMessage", { count: links.length }),
+            detail: t("library.clearUnusedProgressDetail"),
+            noOption: false,
+            buttons: [t("shared.cancel"), t("library.clearUnusedProgress")],
+            defaultId: 0,
+        });
+        if (!response) return;
+        await runBusy("clearProgress", t("library.clearUnusedProgressError"), async () => {
+            const res = await window.electron.invoke("db:library:deleteProgressForLinks", { links });
+            await dispatch(fetchAllItemsWithProgress());
+            setClearProgressLabel(t("library.clearedUnused", { count: res.deleted }));
+            window.setTimeout(() => setClearProgressLabel(""), 2000);
         });
     };
 
@@ -240,133 +315,145 @@ const LibrarySettings: React.FC = () => {
             <h3>{t("library.title")}</h3>
             <div className="desc">{t("library.intro")}</div>
 
-            {/* Same .main.col indent as reader preset h4s (not flush with the section h3). */}
-            <div className="main col">
-                <div className="col" id="settings-default-location">
-                    <h4>{t("defaultLocation.title")}</h4>
-                    <div className="desc">{t("defaultLocation.desc")}</div>
-                    <div className="row">
-                        <input type="text" value={appSettings.baseDir} readOnly />
-                        <button
-                            type="button"
-                            disabled={disabled}
-                            onClick={() => {
-                                promptSelectDir((path) => dispatch(setAppSettings({ baseDir: path as string })));
-                            }}
-                        >
-                            {t("defaultLocation.changeDefault")}
-                        </button>
-                    </div>
-                    <div className="toggleItem" id="settings-scan-default-location">
-                        <InputCheckbox
-                            checked={appSettings.scanDefaultLocation}
-                            className="noBG"
-                            disabled={disabled}
-                            onChange={(e) => {
-                                dispatch(setAppSettings({ scanDefaultLocation: e.currentTarget.checked }));
-                            }}
-                            labelAfter={t("library.scanDefaultLocation")}
-                        />
-                        <div className="desc">{t("library.scanDefaultLocationDesc")}</div>
-                    </div>
-                    <div className="row" style={{ gap: "0.5rem", flexWrap: "wrap" }}>
-                        <InputNumber
-                            value={appSettings.scanDefaultLocationIntervalHours}
-                            min={0}
-                            step={1}
-                            disabled={disabled || !appSettings.scanDefaultLocation}
-                            className="noBG"
-                            labelBefore={t("library.scanDefaultLocationInterval")}
-                            labelAfter={t("library.hoursUnit")}
-                            timeout={[
-                                500,
-                                (value) => {
-                                    dispatch(
-                                        setAppSettings({
-                                            scanDefaultLocationIntervalHours: Math.max(0, Math.round(value)),
-                                        }),
-                                    );
-                                },
-                            ]}
-                        />
-                    </div>
-                    <div className="desc">{t("library.intervalHoursHint")}</div>
-                    <div className="row" style={{ gap: "0.5rem", flexWrap: "wrap" }}>
-                        <button
-                            type="button"
-                            disabled={scanDisabled}
-                            onClick={() => {
-                                const baseDir = getExistingBaseDir(appSettings.baseDir);
-                                if (!baseDir) {
-                                    dialogUtils.customError({ message: t("library.setDefaultFirst") });
-                                    return;
-                                }
-                                void confirmThenScan([
-                                    { path: baseDir, content: "both", maxDepth: LIBRARY_SCAN_MAX_DEPTH_CEILING },
-                                ]);
-                            }}
-                        >
-                            {scanThisLabel}
-                        </button>
-                    </div>
-                </div>
+            <div className="row" id="settings-library-section-toggle">
+                <button
+                    type="button"
+                    disabled={disabled}
+                    onClick={() => {
+                        dispatch(
+                            setAppSettings({ librarySettingsExpanded: !appSettings.librarySettingsExpanded }),
+                        );
+                    }}
+                >
+                    {appSettings.librarySettingsExpanded
+                        ? t("library.collapseSection")
+                        : t("library.expandSection")}
+                </button>
+            </div>
 
-                <div className="col" id="settings-library-folders">
-                    <h4>{t("library.foldersTitle")}</h4>
-                    <div className="desc">{t("library.foldersDesc")}</div>
-                    <div className="row" style={{ gap: "0.5rem", flexWrap: "wrap" }}>
-                        <button type="button" disabled={disabled} onClick={handleAddFolder}>
-                            {t("library.addFolder")}
-                        </button>
-                    </div>
-                    {appSettings.libraryFolders.map((folder, index) => (
-                        <div
-                            key={`${folder.path}-${index}`}
-                            className="col"
-                            style={{ marginTop: "0.75rem", gap: "0.35rem" }}
-                        >
-                            <div className="row" style={{ gap: "0.5rem", flexWrap: "wrap" }}>
-                                <input type="text" value={folder.path} readOnly />
+            {appSettings.librarySettingsExpanded && (
+                <>
+            <div className="main col" id="settings-default-location">
+                <h4>{t("defaultLocation.title")}</h4>
+                <div className="desc">{t("defaultLocation.desc")}</div>
+                <div className="row">
+                    <input type="text" value={appSettings.baseDir} readOnly />
+                    <button
+                        type="button"
+                        disabled={disabled}
+                        onClick={() => {
+                            promptSelectDir((path) => dispatch(setAppSettings({ baseDir: path as string })));
+                        }}
+                    >
+                        {t("defaultLocation.changeDefault")}
+                    </button>
+                </div>
+            </div>
+
+            <div className="toggleItem" id="settings-scan-default-location">
+                <InputCheckbox
+                    checked={appSettings.scanDefaultLocation}
+                    className="noBG"
+                    disabled={disabled}
+                    onChange={(e) => {
+                        dispatch(setAppSettings({ scanDefaultLocation: e.currentTarget.checked }));
+                    }}
+                    labelAfter={t("library.scanDefaultLocation")}
+                />
+                <div className="desc">{t("library.scanDefaultLocationDesc")}</div>
+            </div>
+
+            <div id="settings-scan-default-location-interval">
+                <div className="main row">
+                    <InputNumber
+                        value={appSettings.scanDefaultLocationIntervalMinutes}
+                        min={0}
+                        step={1}
+                        integerOnly
+                        disabled={disabled || !appSettings.scanDefaultLocation}
+                        className="noBG"
+                        labelBefore={t("library.scanDefaultLocationInterval")}
+                        labelAfter={t("library.minutesUnit")}
+                        timeout={[
+                            500,
+                            (value) => {
+                                dispatch(
+                                    setAppSettings({
+                                        scanDefaultLocationIntervalMinutes: Math.max(0, Math.trunc(value)),
+                                    }),
+                                );
+                            },
+                        ]}
+                    />
+                    <button
+                        type="button"
+                        disabled={scanDisabled}
+                        onClick={() => {
+                            const baseDir = getExistingBaseDir(appSettings.baseDir);
+                            if (!baseDir) {
+                                dialogUtils.customError({ message: t("library.setDefaultFirst") });
+                                return;
+                            }
+                            void confirmThenScan([
+                                { path: baseDir, content: "both", maxDepth: LIBRARY_SCAN_MAX_DEPTH_CEILING },
+                            ]);
+                        }}
+                    >
+                        {scanThisLabel}
+                    </button>
+                </div>
+                <div className="desc">{t("library.intervalMinutesHint")}</div>
+            </div>
+
+            <div className="main col" id="settings-library-folders">
+                <h4>{t("library.foldersTitle")}</h4>
+                <div className="desc">{t("library.foldersDesc")}</div>
+                <div className="desc">{t("library.watchDesc")}</div>
+                <div className="row">
+                    <button type="button" disabled={disabled} onClick={handleAddFolder}>
+                        {t("library.addFolder")}
+                    </button>
+                    <button
+                        type="button"
+                        id="settings-library-folders-list-toggle"
+                        disabled={disabled || appSettings.libraryFolders.length === 0}
+                        onClick={() => {
+                            dispatch(
+                                setAppSettings({
+                                    libraryFoldersListExpanded: !appSettings.libraryFoldersListExpanded,
+                                }),
+                            );
+                        }}
+                    >
+                        {appSettings.libraryFoldersListExpanded
+                            ? t("library.hideFolders")
+                            : t("library.showFolders", { count: appSettings.libraryFolders.length })}
+                    </button>
+                </div>
+                {appSettings.libraryFoldersListExpanded &&
+                    appSettings.libraryFolders.map((folder, index) => (
+                        <div key={`${folder.path}-${index}`} className="col libraryFolderCard">
+                            <div className="row libraryFolderRow">
+                                <span className="libraryFolderPathLabel">{t("library.folderPath")}</span>
+                                <input type="text" value={folder.path} readOnly title={folder.path} />
                                 <button
                                     type="button"
-                                    disabled={disabled}
-                                    onClick={() => {
-                                        promptSelectDir((selected) => {
-                                            const folderPath = Array.isArray(selected) ? selected[0] : selected;
-                                            if (!folderPath) return;
-                                            const others = appSettings.libraryFolders.filter(
-                                                (_, i) => i !== index,
-                                            );
-                                            if (isDuplicateLibraryFolderPath(others, folderPath)) {
-                                                dialogUtils.customError({
-                                                    message: t("library.folderAlreadyAdded"),
-                                                });
-                                                return;
-                                            }
-                                            patchFolder(index, { path: window.path.normalize(folderPath) });
-                                        });
-                                    }}
+                                    disabled={scanDisabled}
+                                    onClick={() => handleScanThisFolder(folder)}
                                 >
-                                    {t("library.changeFolder")}
+                                    {scanThisLabel}
                                 </button>
                                 <button
                                     type="button"
                                     disabled={disabled}
-                                    onClick={() => {
-                                        dispatch(
-                                            setAppSettings({
-                                                libraryFolders: appSettings.libraryFolders.filter(
-                                                    (_, i) => i !== index,
-                                                ),
-                                            }),
-                                        );
-                                    }}
+                                    onClick={() => void handleRemoveFolder(index)}
                                 >
                                     {t("shared.remove")}
                                 </button>
                             </div>
-                            <div className="row" style={{ gap: "0.5rem", flexWrap: "wrap" }}>
+                            <div className="row libraryFolderRow">
                                 <InputSelect
+                                    labeled
                                     value={folder.content}
                                     disabled={disabled}
                                     className="noBG"
@@ -400,8 +487,23 @@ const LibrarySettings: React.FC = () => {
                                         },
                                     ]}
                                 />
-                            </div>
-                            <div className="toggleItem">
+                                <InputNumber
+                                    value={folder.scanIntervalMinutes}
+                                    min={0}
+                                    step={1}
+                                    integerOnly
+                                    disabled={disabled}
+                                    className="noBG"
+                                    labelBefore={t("library.intervalMinutes")}
+                                    timeout={[
+                                        500,
+                                        (value) => {
+                                            patchFolder(index, {
+                                                scanIntervalMinutes: Math.max(0, Math.trunc(value)),
+                                            });
+                                        },
+                                    ]}
+                                />
                                 <InputCheckbox
                                     checked={folder.scanOnStart}
                                     className="noBG"
@@ -411,103 +513,79 @@ const LibrarySettings: React.FC = () => {
                                     }}
                                     labelAfter={t("library.scanOnStart")}
                                 />
-                            </div>
-                            <div className="row" style={{ gap: "0.5rem", flexWrap: "wrap" }}>
-                                <InputNumber
-                                    value={folder.scanIntervalHours}
-                                    min={0}
-                                    step={1}
-                                    disabled={disabled}
-                                    className="noBG"
-                                    labelBefore={t("library.intervalHours")}
-                                    labelAfter={t("library.hoursUnit")}
-                                    timeout={[
-                                        500,
-                                        (value) => {
-                                            patchFolder(index, {
-                                                scanIntervalHours: Math.max(0, Math.round(value)),
-                                            });
-                                        },
-                                    ]}
-                                />
-                            </div>
-                            <div className="toggleItem">
                                 <InputCheckbox
                                     checked={folder.watch}
                                     className="noBG"
-                                    disabled
-                                    title={t("library.watchUnavailable")}
-                                    onChange={() => undefined}
+                                    disabled={disabled}
+                                    onChange={(e) => {
+                                        patchFolder(index, { watch: e.currentTarget.checked });
+                                    }}
                                     labelAfter={t("library.watch")}
                                 />
-                                <div className="desc">{t("library.watchDesc")}</div>
-                            </div>
-                            <div className="row" style={{ gap: "0.5rem", flexWrap: "wrap" }}>
-                                <button
-                                    type="button"
-                                    disabled={scanDisabled}
-                                    onClick={() => {
-                                        const root = libraryFolderScanRoot(folder);
-                                        if (!root) {
-                                            dialogUtils.customError({ message: t("library.folderMissing") });
-                                            return;
-                                        }
-                                        void confirmThenScan([root]);
-                                    }}
-                                >
-                                    {scanThisLabel}
-                                </button>
                             </div>
                         </div>
                     ))}
-                </div>
+            </div>
 
-                <div className="col" id="settings-library-scan-now">
-                    <h4>{t("library.scanNow")}</h4>
-                    <div className="desc">
-                        {t("library.scanDescBefore")}
-                        <code>.epub</code>
-                        {t("library.scanDescAfter")}
-                    </div>
-                    <div className="desc">{t("library.scanNowDesc")}</div>
-                    <div className="row" style={{ gap: "0.5rem", flexWrap: "wrap" }}>
-                        <button
-                            type="button"
-                            disabled={scanDisabled}
-                            onClick={() => {
-                                const roots = listManualLibraryScanRoots(appSettings);
-                                if (roots.length === 0) {
-                                    dialogUtils.customError({ message: t("library.scanNoRoots") });
-                                    return;
-                                }
-                                void confirmThenScan(roots);
-                            }}
-                        >
-                            {scanBusyLabel}
-                        </button>
-                    </div>
+            <div className="main col" id="settings-library-scan-now">
+                <h4>{t("library.scanNow")}</h4>
+                <div className="desc">
+                    {t("library.scanDescBefore")}
+                    <code>.epub</code>
+                    {t("library.scanDescAfter")}
                 </div>
-
-                <div className="col">
-                    <h4>{t("library.thumbnails")}</h4>
-                    <div className="desc">
-                        {t("library.thumbnailsDescBefore")}
-                        <code>covers</code>
-                        {t("library.thumbnailsDescAfter")}
-                    </div>
-                    <div className="desc">{t("library.clearRegenDesc")}</div>
-                    <div className="row" style={{ gap: "0.5rem", flexWrap: "wrap" }}>
-                        <button type="button" disabled={disabled} onClick={() => void handleClearCache()}>
-                            {busy === "clear" ? t("library.clearing") : t("library.clearCached")}
-                        </button>
-                        <button type="button" disabled={disabled} onClick={() => void handleRegenerateAll()}>
-                            {busy === "regen"
-                                ? t("library.regenerating", { label: regenLabel })
-                                : t("library.regenerateAll")}
-                        </button>
-                    </div>
+                <div className="desc">{t("library.scanNowDesc")}</div>
+                <div className="row">
+                    <button
+                        type="button"
+                        disabled={scanDisabled}
+                        onClick={() => {
+                            const roots = listManualLibraryScanRoots(appSettings);
+                            if (roots.length === 0) {
+                                dialogUtils.customError({ message: t("library.scanNoRoots") });
+                                return;
+                            }
+                            void confirmThenScan(roots);
+                        }}
+                    >
+                        {scanBusyLabel}
+                    </button>
                 </div>
             </div>
+
+            <div className="main col" id="settings-library-clear-unused-progress">
+                <h4>{t("library.clearUnusedProgress")}</h4>
+                <div className="desc">{t("library.clearUnusedProgressDesc")}</div>
+                <div className="row">
+                    <button type="button" disabled={disabled} onClick={() => void handleClearUnusedProgress()}>
+                        {busy === "clearProgress"
+                            ? t("library.clearingUnused")
+                            : clearProgressLabel || t("library.clearUnusedProgress")}
+                    </button>
+                </div>
+            </div>
+
+            <div className="main col">
+                <h4>{t("library.thumbnails")}</h4>
+                <div className="desc">
+                    {t("library.thumbnailsDescBefore")}
+                    <code>covers</code>
+                    {t("library.thumbnailsDescAfter")}
+                </div>
+                <div className="desc">{t("library.clearRegenDesc")}</div>
+                <div className="row">
+                    <button type="button" disabled={disabled} onClick={() => void handleClearCache()}>
+                        {busy === "clear" ? t("library.clearing") : t("library.clearCached")}
+                    </button>
+                    <button type="button" disabled={disabled} onClick={() => void handleRegenerateAll()}>
+                        {busy === "regen"
+                            ? t("library.regenerating", { label: regenLabel })
+                            : t("library.regenerateAll")}
+                    </button>
+                </div>
+            </div>
+                </>
+            )}
         </div>
     );
 };

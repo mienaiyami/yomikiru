@@ -69,6 +69,11 @@ export const RelocateLibraryItemSchema = z.object({
     newLink: z.string().min(1),
 });
 
+/** Catalogue `link` values whose progress rows should be deleted. */
+export const DeleteProgressForLinksSchema = z.object({
+    links: z.array(z.string().min(1)),
+});
+
 export const AddMangaBookmarkSchema = createInsertSchema(mangaBookmarks).omit({
     id: true,
     createdAt: true,

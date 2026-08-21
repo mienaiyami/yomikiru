@@ -76,19 +76,45 @@ describe("settingsTargets", () => {
     it("places Library before Default Location so search lists the section first", () => {
         const ids = SETTINGS_TARGETS_STATIC.map((t) => t.id);
         expect(ids.indexOf("setting:library")).toBeLessThan(ids.indexOf("setting:default-location"));
+        expect(ids.indexOf("setting:library-section-expanded")).toBeLessThan(
+            ids.indexOf("setting:default-location"),
+        );
         expect(ids.indexOf("setting:default-location")).toBeLessThan(ids.indexOf("setting:scan-default-location"));
-        expect(ids.indexOf("setting:scan-default-location")).toBeLessThan(ids.indexOf("setting:library-folders"));
-        expect(ids.indexOf("setting:library-folders")).toBeLessThan(ids.indexOf("setting:library-scan-now"));
+        expect(ids.indexOf("setting:scan-default-location")).toBeLessThan(
+            ids.indexOf("setting:scan-default-location-interval"),
+        );
+        expect(ids.indexOf("setting:scan-default-location-interval")).toBeLessThan(
+            ids.indexOf("setting:library-folders"),
+        );
+        expect(ids.indexOf("setting:library-folders")).toBeLessThan(
+            ids.indexOf("setting:library-folders-list"),
+        );
+        expect(ids.indexOf("setting:library-folders-list")).toBeLessThan(ids.indexOf("setting:library-scan-now"));
+        expect(ids.indexOf("setting:library-scan-now")).toBeLessThan(
+            ids.indexOf("setting:library-clear-unused-progress"),
+        );
         expect(getSettingsTarget("setting:default-location")?.groupLabelKey).toBe("library.title");
     });
 
     it("resolves known ids via getSettingsTarget", () => {
         expect(getSettingsTarget("setting:library")?.selector).toBe("#settings-library");
+        expect(getSettingsTarget("setting:library-section-expanded")?.selector).toBe(
+            "#settings-library-section-toggle",
+        );
         expect(getSettingsTarget("setting:scan-default-location")?.selector).toBe(
             "#settings-scan-default-location",
         );
+        expect(getSettingsTarget("setting:scan-default-location-interval")?.selector).toBe(
+            "#settings-scan-default-location-interval",
+        );
         expect(getSettingsTarget("setting:library-folders")?.selector).toBe("#settings-library-folders");
+        expect(getSettingsTarget("setting:library-folders-list")?.selector).toBe(
+            "#settings-library-folders-list-toggle",
+        );
         expect(getSettingsTarget("setting:library-scan-now")?.selector).toBe("#settings-library-scan-now");
+        expect(getSettingsTarget("setting:library-clear-unused-progress")?.selector).toBe(
+            "#settings-library-clear-unused-progress",
+        );
         expect(getSettingsTarget("about")?.tab).toBe("about");
         expect(getSettingsTarget("missing:id")).toBeUndefined();
         expect(getAllSettingsTargets().length).toBe(SETTINGS_TARGETS_STATIC.length + SHORTCUT_COMMAND_MAP.length);

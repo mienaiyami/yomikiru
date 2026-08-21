@@ -312,6 +312,7 @@ const Usage = (): ReactElement => {
                             bold: <b />,
                             code: <code />,
                             link: <SettingsLink id="settings-usage-library" targetId="setting:library" />,
+                            clear: <SettingsLink targetId="setting:library-clear-unused-progress" />,
                         }}
                         values={{ libraryId: "<library id>.webp" }}
                     />

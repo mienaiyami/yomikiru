@@ -64,6 +64,8 @@ const pathAPI = {
     basename: path.basename,
     dirname: path.dirname,
     resolve: path.resolve,
+    relative: path.relative,
+    isAbsolute: path.isAbsolute,
     sep: path.sep,
 };
 // this will only return single type "will-resize" coz of typescript limitation?

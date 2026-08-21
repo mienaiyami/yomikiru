@@ -787,6 +787,35 @@ html{
                                     label:has(.toggle-area) {
                                         font-size: 1.3em;
                                     }
+                                    .libraryFolderCard {
+                                        width: 100%;
+                                        gap: 0.4em;
+                                        padding: 0.65em 0 0.2em;
+                                        box-shadow: inset 0 1px 0 0 var(--divider-color);
+                                        .libraryFolderPathLabel {
+                                            flex: 0 0 auto;
+                                            opacity: 0.8;
+                                        }
+                                    }
+                                    .libraryFolderRow {
+                                        align-items: center;
+                                        flex-wrap: wrap;
+                                        gap: 0.45em 0.7em;
+                                        input[type="text"] {
+                                            flex: 1 1 12em;
+                                            min-width: 8em;
+                                            max-width: none;
+                                        }
+                                        label:has(.toggle-area) {
+                                            font-size: 1em;
+                                            flex-direction: row;
+                                            padding: 0.15em 0;
+                                            gap: 0.35em;
+                                            .toggle-area {
+                                                margin-left: 0;
+                                            }
+                                        }
+                                    }
                                     &:has(.themeButtons) {
                                         flex-wrap: wrap;
                                     }

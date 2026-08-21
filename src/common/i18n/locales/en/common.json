@@ -90,7 +90,7 @@
         "mergeConfirm": "Merge",
         "relocateInstead": "This looks like \"{{title}}\". Update its location instead of adding a new entry?",
         "relocateInsteadConfirm": "Update location",
-        "severalMissingSameName": "Several missing library entries match this name. Locate one on disk from its details page instead of adding a duplicate.",
+        "severalMissingSameName": "Several missing library entries match this name. A new entry will be added. You can Locate one of the missing titles from its details page later.",
         "chapterStillMissing": "Library path updated, but this chapter file/folder is still missing under the new location."
     }
 }

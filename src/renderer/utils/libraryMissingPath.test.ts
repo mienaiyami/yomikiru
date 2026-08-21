@@ -1,6 +1,8 @@
 import path from "node:path";
-import type { LibraryItem } from "@common/types/db";
-import type { AppDispatch } from "@store/index";
+import type { BookProgress, LibraryItem } from "@common/types/db";
+import { configureStore } from "@reduxjs/toolkit";
+import { rootReducer, type AppDispatch } from "@store/index";
+import { makeBookItem } from "@test/fixtures/libraryItem";
 import { onInvoke, stubFs } from "@test/mocks/preload";
 import { describe, expect, it, vi } from "vitest";
 import {
@@ -11,10 +13,12 @@ import {
     libraryPathDisplayName,
     mangaPageForMissingKind,
     mapOpenPathAfterRelocate,
+    maybeRelocateMissingSameNameOnOpen,
     pickFirstMangaChapterUnderRoot,
     resolveMissingOpenPath,
     shouldOfferLibraryRelocate,
     shouldOfferMissingMangaChapterActions,
+    syncBookLibraryOnReaderOpen,
 } from "./libraryMissingPath";
 import { MANGA_ROOT_CHAPTER_NAME } from "./mangaChapterPath";
 
@@ -91,6 +95,14 @@ describe("libraryMissingPath", () => {
             const target = path.join("new", "Series A");
             stubFs({ existsSync: () => true });
             expect(findMissingSameNameCandidates({ [target]: mangaItem(target) }, target, "manga")).toEqual([]);
+        });
+
+        it("matches missing books by file stem", () => {
+            const missing = path.join("old", "Novel.epub");
+            const target = path.join("new", "Novel.epub");
+            stubFs({ existsSync: (p: string) => p === target });
+            const found = findMissingSameNameCandidates({ [missing]: bookItem(missing) }, target, "book");
+            expect(found.map((i) => i.link)).toEqual([missing]);
         });
     });
 
@@ -326,6 +338,220 @@ describe("libraryMissingPath", () => {
 
         it("appends a child chapter name", () => {
             expect(chaptersReadForOpenedManga(["ch1"], "ch2")).toEqual(["ch1", "ch2"]);
+        });
+    });
+
+    describe("maybeRelocateMissingSameNameOnOpen", () => {
+        /** Store with library slice so relocate IPC can run through the thunk. */
+        const makeStore = () =>
+            configureStore({
+                reducer: rootReducer,
+                middleware: (getDefaultMiddleware) => getDefaultMiddleware({ serializableCheck: false }),
+            });
+
+        it("relocates one missing same-name book when confirmed", async () => {
+            const oldLink = path.join("old", "Novel.epub");
+            const newLink = path.join("new", "Novel.epub");
+            stubFs({ existsSync: (p: string) => p === newLink });
+            const missing = bookItem(oldLink);
+            const store = makeStore();
+            onInvoke("dialog:confirm", async () => okBox(0));
+            onInvoke("db:library:relocateItem", async () => ({ ...missing, link: newLink }));
+
+            const result = await maybeRelocateMissingSameNameOnOpen(
+                store.dispatch,
+                { [oldLink]: missing },
+                newLink,
+                "book",
+            );
+            expect(result?.link).toBe(newLink);
+        });
+
+        it("does not relocate when the user cancels", async () => {
+            const oldLink = path.join("old", "Novel.epub");
+            const newLink = path.join("new", "Novel.epub");
+            stubFs({ existsSync: (p: string) => p === newLink });
+            const relocate = vi.fn();
+            onInvoke("dialog:confirm", async () => okBox(1));
+            onInvoke("db:library:relocateItem", relocate);
+
+            const result = await maybeRelocateMissingSameNameOnOpen(
+                noopDispatch,
+                { [oldLink]: bookItem(oldLink) },
+                newLink,
+                "book",
+            );
+            expect(result).toBeNull();
+            expect(relocate).not.toHaveBeenCalled();
+        });
+
+        it("warns then skips relocate when several missing books share the name", async () => {
+            const first = path.join("old", "a", "Novel.epub");
+            const second = path.join("old", "b", "Novel.epub");
+            const newLink = path.join("new", "Novel.epub");
+            stubFs({ existsSync: (p: string) => p === newLink });
+            const warn = vi.fn(async () => okBox(0));
+            const relocate = vi.fn();
+            onInvoke("dialog:warn", warn);
+            onInvoke("db:library:relocateItem", relocate);
+
+            const result = await maybeRelocateMissingSameNameOnOpen(
+                noopDispatch,
+                {
+                    [first]: bookItem(first),
+                    [second]: { ...bookItem(second), id: 2 },
+                },
+                newLink,
+                "book",
+            );
+            expect(result).toBeNull();
+            expect(warn).toHaveBeenCalled();
+            expect(relocate).not.toHaveBeenCalled();
+        });
+
+        it("returns null without a dialog when nothing matches", async () => {
+            const newLink = path.join("new", "Novel.epub");
+            stubFs({ existsSync: () => true });
+            const confirm = vi.fn();
+            onInvoke("dialog:confirm", confirm);
+
+            const result = await maybeRelocateMissingSameNameOnOpen(noopDispatch, {}, newLink, "book");
+            expect(result).toBeNull();
+            expect(confirm).not.toHaveBeenCalled();
+        });
+    });
+
+    describe("syncBookLibraryOnReaderOpen", () => {
+        /** Store with library slice so add/update/progress thunks can run. */
+        const makeStore = () =>
+            configureStore({
+                reducer: rootReducer,
+                middleware: (getDefaultMiddleware) => getDefaultMiddleware({ serializableCheck: false }),
+            });
+
+        const openedProgress = (link: string): BookProgress => ({
+            chapterId: "chap-1",
+            chapterName: "Chapter 1",
+            position: "",
+            itemLink: link,
+            lastReadAt: new Date("2024-06-01T00:00:00.000Z"),
+        });
+
+        /** IPC `library_items` row without the progress join. */
+        const libraryRowFromBook = (item: ReturnType<typeof makeBookItem>): LibraryItem => {
+            const { progress: _progress, ...row } = item;
+            return row;
+        };
+
+        it("updates an existing book and does not add", async () => {
+            const link = path.join("library", "Novel.epub");
+            const libraryItem = makeBookItem({ link, title: "Old" });
+            let added = false;
+            let updated = false;
+            let progressWritten = false;
+            onInvoke("db:library:addItem", async () => {
+                added = true;
+                return libraryRowFromBook(libraryItem);
+            });
+            onInvoke("db:library:updateItem", async (req) => {
+                updated = true;
+                return libraryRowFromBook(makeBookItem({ link: req.link, title: req.title, author: req.author }));
+            });
+            onInvoke("db:book:updateProgress", async (req) => {
+                progressWritten = true;
+                return req;
+            });
+
+            await syncBookLibraryOnReaderOpen({
+                dispatch: makeStore().dispatch,
+                openedPath: link,
+                libraryItem,
+                progress: openedProgress(link),
+                title: "From Epub",
+                author: "A",
+                coverAbsolutePath: null,
+            });
+
+            expect(added).toBe(false);
+            expect(updated).toBe(true);
+            expect(progressWritten).toBe(false);
+        });
+
+        it("writes progress when the opened position is non-empty", async () => {
+            const link = path.join("library", "Novel.epub");
+            const libraryItem = makeBookItem({ link, title: "Old" });
+            let progressWritten = false;
+            onInvoke("db:library:updateItem", async (req) =>
+                libraryRowFromBook(makeBookItem({ link: req.link, title: req.title, author: req.author })),
+            );
+            onInvoke("db:book:updateProgress", async (req) => {
+                progressWritten = true;
+                return req;
+            });
+
+            await syncBookLibraryOnReaderOpen({
+                dispatch: makeStore().dispatch,
+                openedPath: link,
+                libraryItem,
+                progress: { ...openedProgress(link), position: "body>p:nth-child(9)" },
+                title: "From Epub",
+                author: "A",
+                coverAbsolutePath: null,
+            });
+
+            expect(progressWritten).toBe(true);
+        });
+
+        it("adds a book when no missing same-name row exists", async () => {
+            const link = path.join("new", "Novel.epub");
+            stubFs({ existsSync: () => true, isFile: () => false });
+            let addedLink: string | null = null;
+            onInvoke("db:library:addItem", async (req) => {
+                addedLink = req.data.link;
+                return libraryRowFromBook(makeBookItem({ ...req.data, id: 9, link: req.data.link }));
+            });
+
+            await syncBookLibraryOnReaderOpen({
+                dispatch: makeStore().dispatch,
+                openedPath: link,
+                libraryItem: null,
+                progress: openedProgress(link),
+                title: "From Epub",
+                author: "A",
+                coverAbsolutePath: null,
+            });
+
+            expect(addedLink).toBe(link);
+        });
+
+        it("materializes a cover after add when the extract path is a file", async () => {
+            const link = path.join("new", "Novel.epub");
+            const cover = path.join("tmp", "cover.jpg");
+            stubFs({
+                existsSync: (p: string) => p === link || p === cover,
+                isFile: (p: string) => p === cover,
+            });
+            onInvoke("db:library:addItem", async (req) =>
+                libraryRowFromBook(makeBookItem({ ...req.data, id: 9, link: req.data.link })),
+            );
+            let materializeArg: { libraryId: number; sourceAbsolutePath: string } | null = null;
+            onInvoke("covers:materialize", async (req) => {
+                materializeArg = req;
+                return { ok: true };
+            });
+            onInvoke("db:library:getAllAndProgress", async () => []);
+
+            await syncBookLibraryOnReaderOpen({
+                dispatch: makeStore().dispatch,
+                openedPath: link,
+                libraryItem: null,
+                progress: openedProgress(link),
+                title: "From Epub",
+                author: "A",
+                coverAbsolutePath: cover,
+            });
+
+            expect(materializeArg).toEqual({ libraryId: 9, sourceAbsolutePath: cover });
         });
     });
 });

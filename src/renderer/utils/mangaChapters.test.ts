@@ -1,7 +1,12 @@
 import path from "node:path";
 import { stubFs } from "@test/mocks/preload";
 import { describe, expect, it } from "vitest";
-import { classifyLibraryNode, collectLibraryScanTargets, listMangaChapterChildren } from "./mangaChapters";
+import {
+    classifyLibraryNode,
+    collectLibraryScanTargetFromEventPath,
+    collectLibraryScanTargets,
+    listMangaChapterChildren,
+} from "./mangaChapters";
 
 /**
  * Installs a directory tree on `window.fs`. Keys are directory paths; values are
@@ -217,5 +222,89 @@ describe("collectLibraryScanTargets", () => {
             existingLinks: new Set(),
         });
         expect(found.map((t) => t.path).sort()).toEqual([series, shot].sort());
+    });
+});
+
+describe("collectLibraryScanTargetFromEventPath", () => {
+    it("walks up from a chapter page to the series, not the chapter folder", async () => {
+        const root = path.join("testdata", "lib");
+        const series = path.join(root, "Series");
+        const ch = path.join(series, "Ch01");
+        const page = path.join(ch, "01.jpg");
+        stubTree(
+            {
+                [root]: ["Series"],
+                [series]: ["Ch01"],
+                [ch]: ["01.jpg"],
+            },
+            [page],
+        );
+        const found = await collectLibraryScanTargetFromEventPath(page, root, {
+            content: "manga",
+            maxDepth: 2,
+            existingLinks: new Set(),
+        });
+        expect(found).toEqual({ type: "manga", path: series });
+    });
+
+    it("does not treat a packed chapter file as its own library item", async () => {
+        const root = path.join("testdata", "lib");
+        const series = path.join(root, "Series");
+        const packed = path.join(series, "Ch02.cbz");
+        const ch = path.join(series, "Ch01");
+        stubTree(
+            {
+                [root]: ["Series"],
+                [series]: ["Ch01", "Ch02.cbz"],
+                [ch]: ["01.jpg"],
+            },
+            [packed, path.join(ch, "01.jpg")],
+        );
+        const found = await collectLibraryScanTargetFromEventPath(packed, root, {
+            content: "manga",
+            maxDepth: 2,
+            existingLinks: new Set(),
+        });
+        expect(found).toEqual({ type: "manga", path: series });
+    });
+
+    it("returns a true one-shot folder when there is no series ancestor", async () => {
+        const root = path.join("testdata", "lib");
+        const shot = path.join(root, "Oneshot");
+        const page = path.join(shot, "01.jpg");
+        stubTree(
+            {
+                [root]: ["Oneshot"],
+                [shot]: ["01.jpg"],
+            },
+            [page],
+        );
+        const found = await collectLibraryScanTargetFromEventPath(page, root, {
+            content: "manga",
+            maxDepth: 2,
+            existingLinks: new Set(),
+        });
+        expect(found).toEqual({ type: "manga", path: shot });
+    });
+
+    it("returns null when the series is already in the library", async () => {
+        const root = path.join("testdata", "lib");
+        const series = path.join(root, "Series");
+        const ch = path.join(series, "Ch01");
+        const page = path.join(ch, "01.jpg");
+        stubTree(
+            {
+                [root]: ["Series"],
+                [series]: ["Ch01"],
+                [ch]: ["01.jpg"],
+            },
+            [page],
+        );
+        const found = await collectLibraryScanTargetFromEventPath(page, root, {
+            content: "manga",
+            maxDepth: 2,
+            existingLinks: new Set([series]),
+        });
+        expect(found).toBeNull();
     });
 });

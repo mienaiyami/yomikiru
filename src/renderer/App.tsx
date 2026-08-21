@@ -40,6 +40,7 @@ import {
     listDueIntervalLibraryScanRoots,
     listStartupLibraryScanRoots,
     runScheduledLibraryScan,
+    startLibraryFolderWatches,
 } from "@utils/librarySettingsImport";
 import {
     createContext,
@@ -308,6 +309,19 @@ const App = (): ReactElement => {
         }, LIBRARY_SCAN_INTERVAL_POLL_MS);
         return () => window.clearInterval(id);
     }, [dispatch, validateDirectory]);
+
+    const libraryFolderWatchKey = appSettings.libraryFolders
+        .map((folder) => `${folder.path}\0${folder.watch}\0${folder.content}\0${folder.maxDepth}`)
+        .join("\n");
+
+    useEffect(() => {
+        // read folders from the store so lastScanAtMs stamps do not restart chokidar
+        return startLibraryFolderWatches(store.getState().appSettings.libraryFolders, {
+            dispatch,
+            keepExtractedFiles: store.getState().appSettings.keepExtractedFiles,
+            validateDirectory,
+        });
+    }, [libraryFolderWatchKey, appSettings.keepExtractedFiles, dispatch, validateDirectory]);
 
     useEffect(() => {
         const listener = window.electron.on("reader:recordPage", async () => {

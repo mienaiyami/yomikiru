@@ -1,3 +1,4 @@
+import { navigateToSetting } from "@features/settings/utils/navigateToSetting";
 import {
     faCog,
     faFolderOpen,
@@ -10,7 +11,6 @@ import {
     faWindowRestore,
 } from "@fortawesome/free-solid-svg-icons";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import { navigateToSetting } from "@features/settings/utils/navigateToSetting";
 import { setAppSettings } from "@store/appSettings";
 import { useAppDispatch, useAppSelector } from "@store/hooks";
 import { selectResolvedItemMetadata } from "@store/library";

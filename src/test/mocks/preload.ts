@@ -119,6 +119,8 @@ export const installPreloadMocks = (): void => {
         basename: path.basename,
         dirname: path.dirname,
         resolve: path.resolve,
+        relative: path.relative,
+        isAbsolute: path.isAbsolute,
         sep: path.sep,
     };
 

@@ -1,13 +1,20 @@
-import type { LibraryItem, LibraryItemWithProgress, MangaProgress } from "@common/types/db";
+import type { BookProgress, LibraryItem, LibraryItemWithProgress, MangaProgress } from "@common/types/db";
 import { applyMangaCoverAfterChapterLoad } from "@features/reader/services/readerCoverFlows";
 import { relocateGalleryTrackContext } from "@store/anilist";
 import { updateMangaBookmark } from "@store/bookmarks";
 import store, { type AppDispatch } from "@store/index";
-import { addLibraryItem, deleteLibraryItem, relocateLibraryItem, updateMangaProgress } from "@store/library";
+import {
+    addLibraryItem,
+    deleteLibraryItem,
+    relocateLibraryItem,
+    updateBookProgress,
+    updateLibraryItem,
+    updateMangaProgress,
+} from "@store/library";
 import { updateReaderContent } from "@store/reader";
 import { dialogUtils } from "@utils/dialog";
 import { formatUtils } from "@utils/file";
-import { materializeMangaRootAfterAdd } from "@utils/libraryCoverService";
+import { materializeBookCoverFromExtractedPath, materializeMangaRootAfterAdd } from "@utils/libraryCoverService";
 import { mangaDedicatedCoverPathForDb } from "@utils/libraryCoverSources";
 import { createRendererLogger } from "@utils/logger";
 import {
@@ -686,6 +693,48 @@ const addNewMangaOnOpen = async (
 };
 
 /**
+ * When opening a path not already in the catalogue, offers to relocate one missing
+ * same-name row onto that path. Zero matches or a declined confirm means the caller should add.
+ * Several matches warn then add (no picker).
+ */
+export const maybeRelocateMissingSameNameOnOpen = async (
+    dispatch: AppDispatch,
+    items: LibraryItemsMap,
+    newLink: string,
+    type: LibraryItem["type"],
+): Promise<LibraryItem | null> => {
+    const candidates = findMissingSameNameCandidates(items, newLink, type);
+    if (candidates.length === 1 && candidates[0]) {
+        const cand = candidates[0];
+        const { response } = await dialogUtils.confirm({
+            type: "question",
+            title: tMissing("relocateInsteadConfirm"),
+            message: tMissing("relocateInstead", { title: cand.title }),
+            noOption: false,
+            buttons: [tMissing("relocateInsteadConfirm"), tCommon("actions.cancel")],
+            defaultId: 0,
+            cancelId: 1,
+        });
+        if (response !== 0) return null;
+        return dispatchRelocateLibraryItem(dispatch, {
+            oldLink: cand.link,
+            newLink,
+        });
+    }
+    if (candidates.length > 1) {
+        /*
+         * ponytail: several same-name missing rows - do not pick silently.
+         * Upgrade: a picker dialog. User can Locate from details.
+         */
+        await dialogUtils.warn({
+            message: tMissing("severalMissingSameName"),
+            noOption: true,
+        });
+    }
+    return null;
+};
+
+/**
  * Ensures a manga catalogue row and progress when the reader loads images.
  * Relocate-before-add when exactly one missing same-name row matches.
  */
@@ -716,49 +765,115 @@ export const syncMangaLibraryOnReaderOpen = async (
         return { itemLink, chapterName, progress: next };
     }
 
-    const candidates = findMissingSameNameCandidates(store.getState().library.items, itemLink, "manga");
-    if (candidates.length === 1 && candidates[0]) {
-        const cand = candidates[0];
-        const { response } = await dialogUtils.confirm({
-            type: "question",
-            title: tMissing("relocateInsteadConfirm"),
-            message: tMissing("relocateInstead", { title: cand.title }),
-            noOption: false,
-            buttons: [tMissing("relocateInsteadConfirm"), tCommon("actions.cancel")],
-            defaultId: 0,
-            cancelId: 1,
-        });
-        if (response === 0) {
-            const relocated = await dispatchRelocateLibraryItem(dispatch, {
-                oldLink: cand.link,
-                newLink: itemLink,
-            });
-            if (relocated) {
-                const mapped = store.getState().library.items[normalizeMangaPathSegment(itemLink)];
-                if (mapped?.type === "manga") {
-                    const next = await applyOpenedMangaItem(
-                        dispatch,
-                        mapped,
-                        itemLink,
-                        chapterName,
-                        images,
-                        currentPage,
-                    );
-                    return { itemLink, chapterName, progress: next };
-                }
-            }
+    const relocated = await maybeRelocateMissingSameNameOnOpen(
+        dispatch,
+        store.getState().library.items,
+        itemLink,
+        "manga",
+    );
+    if (relocated) {
+        const mapped = store.getState().library.items[normalizeMangaPathSegment(itemLink)];
+        if (mapped?.type === "manga") {
+            const next = await applyOpenedMangaItem(
+                dispatch,
+                mapped,
+                itemLink,
+                chapterName,
+                images,
+                currentPage,
+            );
+            return { itemLink, chapterName, progress: next };
         }
-    } else if (candidates.length > 1) {
-        /*
-         * ponytail: several same-name missing rows - do not pick silently.
-         * Upgrade: a picker dialog. User can Locate from details.
-         */
-        await dialogUtils.warn({
-            message: tMissing("severalMissingSameName"),
-            noOption: true,
-        });
     }
 
     await addNewMangaOnOpen(dispatch, itemLink, chapterName, images, progress);
     return { itemLink, chapterName, progress };
+};
+
+/** Inputs for {@link syncBookLibraryOnReaderOpen}. */
+export type SyncBookLibraryOnOpenOpts = {
+    dispatch: AppDispatch;
+    openedPath: string;
+    libraryItem: (LibraryItemWithProgress & { type: "book" }) | null | undefined;
+    progress: BookProgress;
+    title: string;
+    author: string | null;
+    /** Extracted EPUB cover path; materialized only when adding a new catalogue row. */
+    coverAbsolutePath: string | null | undefined;
+};
+
+/**
+ * Ensures a book catalogue row and progress when the EPUB reader loads a file.
+ * Relocate-before-add when exactly one missing same-name row matches.
+ * Does not replace stored CFI with an empty first-load position.
+ */
+export const syncBookLibraryOnReaderOpen = async (opts: SyncBookLibraryOnOpenOpts): Promise<void> => {
+    const { dispatch, title, author, coverAbsolutePath } = opts;
+    const itemLink = normalizeMangaPathSegment(opts.openedPath);
+    const progress: BookProgress = { ...opts.progress, itemLink };
+
+    let item = opts.libraryItem?.type === "book" ? opts.libraryItem : null;
+    if (!item) {
+        const relocated = await maybeRelocateMissingSameNameOnOpen(
+            dispatch,
+            store.getState().library.items,
+            itemLink,
+            "book",
+        );
+        if (relocated) {
+            const mapped = store.getState().library.items[normalizeMangaPathSegment(itemLink)];
+            if (mapped?.type === "book") item = mapped;
+            else if (relocated.type === "book") {
+                // relocate updates the dispatch store; the app singleton map can still hold the old key
+                item = { ...relocated, type: "book", progress: null };
+            }
+        }
+    }
+
+    if (item) {
+        const stored = item.progress;
+        const openedEmpty = progress.position.trim() === "";
+        const keepStored = Boolean(stored && stored.position.trim() !== "" && openedEmpty);
+        const nextProgress = keepStored && stored ? { ...stored, itemLink } : progress;
+        dispatch(updateReaderContent({ ...item, progress: nextProgress }));
+        await dispatch(
+            updateLibraryItem({
+                link: itemLink,
+                author,
+                title,
+            }),
+        );
+        if (!keepStored) await dispatch(updateBookProgress(progress));
+        return;
+    }
+
+    try {
+        const added = await dispatch(
+            addLibraryItem({
+                type: "book",
+                data: {
+                    type: "book",
+                    link: itemLink,
+                    title,
+                    author,
+                    cover: null,
+                },
+                progress,
+            }),
+        ).unwrap();
+        dispatch(
+            updateReaderContent({
+                ...added,
+                type: "book",
+                progress,
+            }),
+        );
+        await materializeBookCoverFromExtractedPath({
+            dispatch,
+            libraryId: added.id,
+            coverAbsolutePath: coverAbsolutePath ?? undefined,
+        });
+    } catch (err) {
+        log.error("addLibraryItem or book cover materialize failed", err);
+    }
 };

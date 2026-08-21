@@ -2,23 +2,29 @@ import path from "node:path";
 import type { AddToLibraryData } from "@common/types/db";
 import { configureStore } from "@reduxjs/toolkit";
 import { rootReducer } from "@store/index";
+import { makeBookItem, makeMangaItem } from "@test/fixtures/libraryItem";
 import { onInvoke, stubFs } from "@test/mocks/preload";
 import { describe, expect, it, vi } from "vitest";
 import {
     addMangaFolderAtNormalizedPath,
     getExistingBaseDir,
     isDuplicateLibraryFolderPath,
+    isLibraryFolderContent,
     isLibraryScanDue,
+    isUnusedDummyProgress,
     type LibraryScanSettingsSlice,
     listDueIntervalLibraryScanRoots,
     listManualLibraryScanRoots,
     listStartupLibraryScanRoots,
+    newLibraryFolderSetting,
     runScheduledLibraryScan,
     scanRootAndAddLibraryItems,
     showImportFinishedSummary,
+    startLibraryFolderWatches,
+    unusedDummyProgressLinks,
     withLibraryScanTimestamps,
 } from "./librarySettingsImport";
-import { LIBRARY_SCAN_MAX_DEPTH_CEILING } from "./mangaChapters";
+import { LIBRARY_SCAN_DEFAULT_MAX_DEPTH, LIBRARY_SCAN_MAX_DEPTH_CEILING } from "./mangaChapters";
 
 /** Fresh Redux store so import helpers can dispatch `addLibraryItem`. */
 const makeStore = () =>
@@ -181,14 +187,14 @@ const scanSettings = (
     over: Partial<LibraryScanSettingsSlice> & Pick<LibraryScanSettingsSlice, "baseDir">,
 ): LibraryScanSettingsSlice => ({
     scanDefaultLocation: false,
-    scanDefaultLocationIntervalHours: 0,
+    scanDefaultLocationIntervalMinutes: 0,
     scanDefaultLocationLastAtMs: 0,
     libraryFolders: [],
     ...over,
 });
 
 describe("isLibraryScanDue", () => {
-    it("is never due when interval hours is 0", () => {
+    it("is never due when interval minutes is 0", () => {
         expect(isLibraryScanDue(0, 0, 1_000)).toBe(false);
         expect(isLibraryScanDue(1, 0, 1_000)).toBe(false);
     });
@@ -198,9 +204,9 @@ describe("isLibraryScanDue", () => {
     });
 
     it("is due only after the interval has elapsed", () => {
-        const hour = 3_600_000;
-        expect(isLibraryScanDue(1_000, 1, 1_000 + hour - 1)).toBe(false);
-        expect(isLibraryScanDue(1_000, 1, 1_000 + hour)).toBe(true);
+        const minute = 60_000;
+        expect(isLibraryScanDue(1_000, 1, 1_000 + minute - 1)).toBe(false);
+        expect(isLibraryScanDue(1_000, 1, 1_000 + minute)).toBe(true);
     });
 });
 
@@ -226,7 +232,7 @@ describe("listManualLibraryScanRoots", () => {
                         content: "manga",
                         maxDepth: 4,
                         scanOnStart: false,
-                        scanIntervalHours: 0,
+                        scanIntervalMinutes: 0,
                         watch: false,
                         lastScanAtMs: 0,
                     },
@@ -235,7 +241,7 @@ describe("listManualLibraryScanRoots", () => {
                         content: "book",
                         maxDepth: 1,
                         scanOnStart: false,
-                        scanIntervalHours: 0,
+                        scanIntervalMinutes: 0,
                         watch: false,
                         lastScanAtMs: 0,
                     },
@@ -244,7 +250,7 @@ describe("listManualLibraryScanRoots", () => {
                         content: "both",
                         maxDepth: 2,
                         scanOnStart: false,
-                        scanIntervalHours: 0,
+                        scanIntervalMinutes: 0,
                         watch: false,
                         lastScanAtMs: 0,
                     },
@@ -273,7 +279,7 @@ describe("listStartupLibraryScanRoots", () => {
                         content: "book",
                         maxDepth: 3,
                         scanOnStart: true,
-                        scanIntervalHours: 0,
+                        scanIntervalMinutes: 0,
                         watch: false,
                         lastScanAtMs: 0,
                     },
@@ -293,7 +299,7 @@ describe("listDueIntervalLibraryScanRoots", () => {
             content: "both" as const,
             maxDepth: 2,
             scanOnStart: false,
-            scanIntervalHours: 1,
+            scanIntervalMinutes: 1,
             watch: false,
             lastScanAtMs: 1_000,
         };
@@ -306,7 +312,7 @@ describe("listDueIntervalLibraryScanRoots", () => {
         expect(
             listDueIntervalLibraryScanRoots(
                 scanSettings({ baseDir: path.join("testdata", "home"), libraryFolders: [folder] }),
-                1_000 + 3_600_000,
+                1_000 + 60_000,
             ),
         ).toEqual([{ path: extra, content: "both", maxDepth: 2 }]);
     });
@@ -322,7 +328,7 @@ describe("withLibraryScanTimestamps", () => {
             content: "both" as const,
             maxDepth: 2,
             scanOnStart: false,
-            scanIntervalHours: 0,
+            scanIntervalMinutes: 0,
             watch: false,
             lastScanAtMs: 0,
         };
@@ -345,6 +351,46 @@ describe("isDuplicateLibraryFolderPath", () => {
         const dir = path.join("testdata", "lib");
         expect(isDuplicateLibraryFolderPath([{ path: dir }], `  ${dir}  `)).toBe(true);
         expect(isDuplicateLibraryFolderPath([{ path: dir }], path.join("testdata", "other"))).toBe(false);
+    });
+});
+
+describe("newLibraryFolderSetting / isLibraryFolderContent", () => {
+    it("normalizes the path and defaults scan fields off", () => {
+        const dir = path.join("testdata", "lib");
+        expect(newLibraryFolderSetting(`  ${dir}  `)).toMatchObject({
+            path: window.path.normalize(`  ${dir}  `),
+            content: "both",
+            maxDepth: LIBRARY_SCAN_DEFAULT_MAX_DEPTH,
+            scanOnStart: false,
+            scanIntervalMinutes: 0,
+            watch: false,
+            lastScanAtMs: 0,
+        });
+    });
+
+    it("accepts only manga, book, or both", () => {
+        expect(isLibraryFolderContent("manga")).toBe(true);
+        expect(isLibraryFolderContent("both")).toBe(true);
+        expect(isLibraryFolderContent("epub")).toBe(false);
+    });
+});
+
+describe("isUnusedDummyProgress", () => {
+    it("matches first-page manga progress stamped at create time", () => {
+        const item = makeMangaItem({}, { currentPage: 1, chaptersRead: [], lastReadAt: new Date("2024-01-01T00:00:00.000Z") });
+        expect(isUnusedDummyProgress(item)).toBe(true);
+        expect(unusedDummyProgressLinks({ [item.link]: item })).toEqual([item.link]);
+    });
+
+    it("rejects progress after a real read", () => {
+        const item = makeMangaItem();
+        expect(isUnusedDummyProgress(item)).toBe(false);
+        expect(unusedDummyProgressLinks({ [item.link]: item })).toEqual([]);
+    });
+
+    it("matches empty-position book progress stamped at create time", () => {
+        const item = makeBookItem({}, { position: "", lastReadAt: new Date("2024-01-01T00:00:00.000Z") });
+        expect(isUnusedDummyProgress(item)).toBe(true);
     });
 });
 
@@ -376,5 +422,39 @@ describe("runScheduledLibraryScan", () => {
         expect(seenBusy).toContain(true);
         expect(store.getState().ui.libraryScanBusy).toBe(false);
         expect(store.getState().ui.blocks).toEqual([]);
+    });
+});
+
+describe("startLibraryFolderWatches", () => {
+    const watchOpts = () => ({
+        dispatch: makeStore().dispatch,
+        keepExtractedFiles: false,
+        validateDirectory: async () => ({ isValid: true }),
+    });
+
+    it("does not start chokidar when watch is off", () => {
+        const spy = vi.fn();
+        window.chokidar.watch = spy;
+        const dir = path.join("testdata", "lib");
+        stubFs({ existsSync: () => true, isDir: () => true });
+        const stop = startLibraryFolderWatches([{ ...newLibraryFolderSetting(dir), watch: false }], watchOpts());
+        expect(spy).not.toHaveBeenCalled();
+        stop();
+    });
+
+    it("starts chokidar when watch is on and the path exists", () => {
+        const spy = vi.fn(() => () => undefined);
+        window.chokidar.watch = spy;
+        const dir = path.join("testdata", "lib");
+        stubFs({ existsSync: (p) => p === dir, isDir: (p) => p === dir });
+        const stop = startLibraryFolderWatches([{ ...newLibraryFolderSetting(dir), watch: true }], watchOpts());
+        expect(spy).toHaveBeenCalledWith(
+            expect.objectContaining({
+                path: dir,
+                event: "all",
+                options: expect.objectContaining({ ignoreInitial: true }),
+            }),
+        );
+        stop();
     });
 });

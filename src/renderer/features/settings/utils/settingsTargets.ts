@@ -155,6 +155,11 @@ export const SETTINGS_TARGETS_STATIC: readonly SettingsTarget[] = [
         keywords: ["covers", "thumbnails", "import", "scan", "epub", "default location", "library folders"],
         contentPath: "library",
     }),
+    setting("setting:library-section-expanded", "#settings-library-section-toggle", "library.expandSection", {
+        keywords: ["collapse", "expand", "hide library settings"],
+        contentPath: "library.intro",
+        groupLabelKey: "library.title",
+    }),
     setting("setting:default-location", "#settings-default-location", "defaultLocation.title", {
         keywords: ["base dir", "home folder"],
         contentPath: "defaultLocation",
@@ -165,9 +170,23 @@ export const SETTINGS_TARGETS_STATIC: readonly SettingsTarget[] = [
         contentPath: "library.scanDefaultLocationDesc",
         groupLabelKey: "library.title",
     }),
+    setting(
+        "setting:scan-default-location-interval",
+        "#settings-scan-default-location-interval",
+        "library.scanDefaultLocationInterval",
+        {
+            keywords: ["minutes", "interval"],
+            contentPath: "library.intervalMinutesHint",
+            groupLabelKey: "library.title",
+        },
+    ),
     setting("setting:library-folders", "#settings-library-folders", "library.foldersTitle", {
         keywords: ["library folder", "watch", "interval", "max depth"],
         contentPath: "library.foldersDesc",
+        groupLabelKey: "library.title",
+    }),
+    setting("setting:library-folders-list", "#settings-library-folders-list-toggle", "library.hideFolders", {
+        keywords: ["show folders", "hide folders", "folder list"],
         groupLabelKey: "library.title",
     }),
     setting("setting:library-scan-now", "#settings-library-scan-now", "library.scanNow", {
@@ -175,6 +194,16 @@ export const SETTINGS_TARGETS_STATIC: readonly SettingsTarget[] = [
         contentPath: "library.scanNowDesc",
         groupLabelKey: "library.title",
     }),
+    setting(
+        "setting:library-clear-unused-progress",
+        "#settings-library-clear-unused-progress",
+        "library.clearUnusedProgress",
+        {
+            keywords: ["progress", "unread", "dummy", "clear"],
+            contentPath: "library.clearUnusedProgressDesc",
+            groupLabelKey: "library.title",
+        },
+    ),
     setting("setting:theme", "#settings-theme", "theme.title", { contentPath: "theme" }),
     setting("setting:copy-theme", "#settings-copyTheme", "theme.copyCurrent", {
         keywords: ["clipboard", "share theme"],

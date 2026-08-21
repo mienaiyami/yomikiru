@@ -4,18 +4,14 @@ import { setAppSettings, setEpubReaderSettings, setReaderSettings } from "@store
 import { addNote } from "@store/bookNotes";
 import { useAppDispatch, useAppSelector } from "@store/hooks";
 import {
-    addLibraryItem,
     selectLibraryItem,
-    updateBookProgress,
     updateCurrentItemProgress,
-    updateLibraryItem,
 } from "@store/library";
 import {
     getReaderBook,
     setReaderLoading,
     setReaderOpen,
     updateReaderBookProgress,
-    updateReaderContent,
 } from "@store/reader";
 import { cyclePresetNext, cyclePresetPrev, selectPresetSlot } from "@store/readerPresets";
 import { getShortcutsMapped } from "@store/shortcuts";
@@ -27,7 +23,7 @@ import { dialogUtils } from "@utils/dialog";
 import EPUB, { type EPubData } from "@utils/epub";
 import { DEFAULT_HIGHLIGHT_COLORS, highlightUtils } from "@utils/highlight";
 import { keyFormatter, mouseEventFormatter } from "@utils/keybindings";
-import { materializeBookCoverFromExtractedPath } from "@utils/libraryCoverService";
+import { syncBookLibraryOnReaderOpen } from "@utils/libraryMissingPath";
 import { createRendererLogger } from "@utils/logger";
 import { getCSSPath } from "@utils/utils";
 import type React from "react";
@@ -314,56 +310,15 @@ const EPubReader: React.FC = () => {
                     itemLink: link,
                     lastReadAt: new Date(),
                 };
-                if (libraryItem && libraryItem.type === "book") {
-                    dispatch(
-                        updateReaderContent({
-                            ...libraryItem,
-                            progress,
-                        }),
-                    );
-                    await dispatch(
-                        updateLibraryItem({
-                            link,
-                            author: ed.metadata.author,
-                            title: ed.metadata.title,
-                        }),
-                    );
-                    await dispatch(updateBookProgress(progress));
-                } else {
-                    const bookOpened = {
-                        type: "book" as const,
-                        link,
-                        title: ed.metadata.title,
-                        author: ed.metadata.author,
-                        /** EPUB extract cover lives under temp; gallery uses materialized WebP or user-picked `cover` only. */
-                        cover: null,
-                        createdAt: new Date(),
-                        updatedAt: new Date(),
-                    };
-                    try {
-                        const added = await dispatch(
-                            addLibraryItem({
-                                type: "book",
-                                data: bookOpened,
-                                progress,
-                            }),
-                        ).unwrap();
-                        dispatch(
-                            updateReaderContent({
-                                ...added,
-                                type: "book",
-                                progress,
-                            }),
-                        );
-                        await materializeBookCoverFromExtractedPath({
-                            dispatch,
-                            libraryId: added.id,
-                            coverAbsolutePath: ed.metadata.cover,
-                        });
-                    } catch (err) {
-                        log.error("addLibraryItem or book cover materialize failed", err);
-                    }
-                }
+                await syncBookLibraryOnReaderOpen({
+                    dispatch,
+                    openedPath: link,
+                    libraryItem: libraryItem?.type === "book" ? libraryItem : null,
+                    progress,
+                    title: ed.metadata.title,
+                    author: ed.metadata.author || null,
+                    coverAbsolutePath: ed.metadata.cover,
+                });
                 setCurrentChapter({
                     index: currentChapterIndex,
                     fragment: "",
