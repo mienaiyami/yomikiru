@@ -774,14 +774,7 @@ export const syncMangaLibraryOnReaderOpen = async (
     if (relocated) {
         const mapped = store.getState().library.items[normalizeMangaPathSegment(itemLink)];
         if (mapped?.type === "manga") {
-            const next = await applyOpenedMangaItem(
-                dispatch,
-                mapped,
-                itemLink,
-                chapterName,
-                images,
-                currentPage,
-            );
+            const next = await applyOpenedMangaItem(dispatch, mapped, itemLink, chapterName, images, currentPage);
             return { itemLink, chapterName, progress: next };
         }
     }
