@@ -18,6 +18,8 @@
 
 # unreleased
 
+- feat: **Remove Progress** on library item context menus (gallery tiles, details cover, classic History) and the selection overflow menu. Confirms first; last position and chapter read marks are cleared. The library entry, bookmarks, and notes stay, so the title leaves Continue Reading until you open it again. Disabled when the item has no progress.
+
 - feat: **Delete selected items** shortcut (default `Delete`, customizable in Settings → Shortcut Keys) removes the current multi-select: library tiles, classic History / Bookmarks, and details bookmarks or notes (same confirmations as the overflow menu). It does not run while typing, while the reader is open, or on manga chapter lists.
 
 - feat: **Scan now** in Library settings walks nested folders under Default Location. A series is a folder whose direct children are chapter folders or packed/PDF files (same rule as gallery details); grouping folders are not added. EPUB files in the tree are added as books. Scan does not write reading progress, so Continue Reading stays empty until you open a title.

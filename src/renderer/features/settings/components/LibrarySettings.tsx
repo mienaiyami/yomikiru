@@ -2,7 +2,7 @@ import { useDirectoryValidator } from "@features/reader/hooks/useDirectoryValida
 import { setAppSettings } from "@store/appSettings";
 import { useAppDispatch, useAppSelector } from "@store/hooks";
 import store from "@store/index";
-import { fetchAllItemsWithProgress } from "@store/library";
+import { deleteProgressForLinks, fetchAllItemsWithProgress } from "@store/library";
 import { blockUi, UI_BLOCK_ID_LIBRARY, unblockUi } from "@store/ui";
 import InputCheckbox from "@ui/InputCheckbox";
 import InputNumber from "@ui/InputNumber";
@@ -312,8 +312,7 @@ const LibrarySettings: React.FC = () => {
         });
         if (!response) return;
         await runBusy("clearProgress", t("library.clearUnusedProgressError"), async () => {
-            const res = await window.electron.invoke("db:library:deleteProgressForLinks", { links });
-            await dispatch(fetchAllItemsWithProgress());
+            const res = await dispatch(deleteProgressForLinks({ links })).unwrap();
             setClearProgressLabel(t("library.clearedUnused", { count: res.deleted }));
             window.setTimeout(() => setClearProgressLabel(""), 2000);
         });

@@ -1,4 +1,8 @@
 import type { LibraryItemWithProgress } from "@common/types/db";
+import {
+    confirmDeleteProgressForLinks,
+    progressLinksFromSelection,
+} from "@features/home/classic/listSelectionActions";
 import { faPlay } from "@fortawesome/free-solid-svg-icons";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { useAppContext } from "@renderer/App";
@@ -248,11 +252,12 @@ const GalleryView: React.FC = () => {
                 },
             });
 
+            items.push(
+                window.contextMenu.template.divider(),
+                window.contextMenu.template.removeProgress(item.link),
+            );
             if (activeTab !== "favourites") {
-                items.push(
-                    window.contextMenu.template.divider(),
-                    window.contextMenu.template.removeHistory(item.link),
-                );
+                items.push(window.contextMenu.template.removeHistory(item.link));
             }
 
             setContextMenuData({
@@ -452,6 +457,16 @@ const GalleryView: React.FC = () => {
             });
     }, [dispatch, selection, t, tCommon]);
 
+    /**
+     * Drops reading progress for selected titles that have it. Catalogue rows stay.
+     */
+    const handleRemoveSelectedProgress = useCallback(() => {
+        const links = progressLinksFromSelection(library, selection.selectedIds);
+        void confirmDeleteProgressForLinks(dispatch, links, {
+            onRemoved: selection.clearSelection,
+        });
+    }, [dispatch, library, selection]);
+
     const detailsOpen = Boolean(selectedManga || selectedBook);
 
     useEffect(() => {
@@ -478,6 +493,17 @@ const GalleryView: React.FC = () => {
         onDelete: handleRemoveSelectedFromLibrary,
     });
 
+    const selectedProgressLinks = selection.isSelectionMode
+        ? progressLinksFromSelection(library, selection.selectedIds)
+        : [];
+    const removeProgressMenuItem: Menu.ListItem = {
+        label: t("shared.removeProgress.menu", {
+            count: selectedProgressLinks.length || selection.count,
+        }),
+        disabled: selectedProgressLinks.length === 0,
+        action: handleRemoveSelectedProgress,
+    };
+
     const selectionToolbarProps = selection.isSelectionMode
         ? {
               count: selection.count,
@@ -491,6 +517,7 @@ const GalleryView: React.FC = () => {
                                 label: t("shared.removeFavourite.menu", { count: selection.count }),
                                 action: handleRemoveSelectedFromFavourites,
                             },
+                            removeProgressMenuItem,
                             {
                                 label: t("shared.removeFromLibrary.menu", { count: selection.count }),
                                 action: handleRemoveSelectedFromLibrary,
@@ -501,6 +528,7 @@ const GalleryView: React.FC = () => {
                                 label: t("shared.addFavourite.menu", { count: selection.count }),
                                 action: handleAddSelectedToFavourites,
                             },
+                            removeProgressMenuItem,
                             {
                                 label: t("shared.removeFromLibrary.menu", { count: selection.count }),
                                 action: handleRemoveSelectedFromLibrary,

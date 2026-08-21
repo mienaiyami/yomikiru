@@ -1,3 +1,4 @@
+import { confirmDeleteProgressForLinks } from "@features/home/classic/listSelectionActions";
 import { useDirectoryValidator } from "@features/reader/hooks/useDirectoryValidator";
 import { dispatchFocusPageSearchShortcut } from "@hooks/usePageSearchFocus";
 import {
@@ -423,6 +424,16 @@ const App = (): ReactElement => {
                                     runRemove();
                                 });
                         }
+                    },
+                };
+            },
+            removeProgress(url, onRemoved?) {
+                const hasProgress = Boolean(url && store.getState().library.items[url]?.progress);
+                return {
+                    label: i18n.t("contextMenu.removeProgress", { ns: "common" }),
+                    disabled: !hasProgress,
+                    action() {
+                        void confirmDeleteProgressForLinks(dispatch, [url], { onRemoved });
                     },
                 };
             },

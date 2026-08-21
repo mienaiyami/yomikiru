@@ -210,7 +210,10 @@ const BookmarkHistoryListItem: React.FC<{
         ];
 
         if (props.isHistory) {
-            items.push(window.contextMenu.template.removeHistory(props.link));
+            items.push(
+                window.contextMenu.template.removeProgress(props.link),
+                window.contextMenu.template.removeHistory(props.link),
+            );
         }
 
         if (props.isBookmark && props.bookmark) {

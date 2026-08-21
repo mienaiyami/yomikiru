@@ -1,15 +1,20 @@
 import path from "node:path";
 import type { BookBookmark, MangaBookmark } from "@common/types/db";
+import { configureStore } from "@reduxjs/toolkit";
+import libraryReducer from "@store/library";
 import { makeBookItem, makeMangaItem, SAMPLE_BOOK_LINK, SAMPLE_MANGA_LINK } from "@test/fixtures/libraryItem";
-import { describe, expect, it, vi } from "vitest";
+import { onInvoke } from "@test/mocks/preload";
+import { afterEach, describe, expect, it, vi } from "vitest";
 import {
     bookmarkLibraryItemsAtProgress,
+    confirmDeleteProgressForLinks,
     copyPathsToClipboard,
     getAddBookmarkArgsFromProgress,
     getBookmarkItemPath,
     getBookmarkSelectionKey,
     getBookmarksBySelectionKeys,
     getHistoryItemPath,
+    progressLinksFromSelection,
     removeBookmarksGrouped,
 } from "./listSelectionActions";
 
@@ -172,5 +177,78 @@ describe("copyPathsToClipboard / removeBookmarksGrouped", () => {
         ];
         removeBookmarksGrouped(dispatch, bookmarks);
         expect(dispatch).toHaveBeenCalledTimes(2);
+    });
+});
+
+describe("progressLinksFromSelection", () => {
+    it("keeps selected links that have progress and skips the rest", () => {
+        const unread = makeMangaItem({ link: path.join("testdata", "manga", "unread"), id: 9 }, null);
+        const items = {
+            [SAMPLE_MANGA_LINK]: makeMangaItem(),
+            [SAMPLE_BOOK_LINK]: makeBookItem(),
+            [unread.link]: unread,
+        };
+        expect(
+            progressLinksFromSelection(items, [unread.link, SAMPLE_BOOK_LINK, "missing", SAMPLE_MANGA_LINK]),
+        ).toEqual([SAMPLE_BOOK_LINK, SAMPLE_MANGA_LINK]);
+    });
+});
+
+describe("confirmDeleteProgressForLinks", () => {
+    afterEach(() => {
+        vi.restoreAllMocks();
+    });
+
+    /** Library store seeded with one manga that has progress. */
+    const makeProgressStore = () =>
+        configureStore({
+            reducer: { library: libraryReducer },
+            preloadedState: {
+                library: {
+                    items: { [SAMPLE_MANGA_LINK]: makeMangaItem() },
+                    metadata: {},
+                    loading: false,
+                    error: null,
+                },
+            },
+        });
+
+    it("does not invoke IPC when the user cancels", async () => {
+        const invoke = vi.fn(async () => ({ deleted: 1 }));
+        onInvoke("dialog:warn", async () => ({ response: 0, checkboxChecked: false }));
+        onInvoke("db:library:deleteProgressForLinks", invoke);
+        const store = makeProgressStore();
+        const onRemoved = vi.fn();
+
+        const ok = await confirmDeleteProgressForLinks(store.dispatch, [SAMPLE_MANGA_LINK], { onRemoved });
+
+        expect(ok).toBe(false);
+        expect(invoke).not.toHaveBeenCalled();
+        expect(onRemoved).not.toHaveBeenCalled();
+        expect(store.getState().library.items[SAMPLE_MANGA_LINK]?.progress).not.toBeNull();
+    });
+
+    it("deletes progress after confirm and runs onRemoved", async () => {
+        onInvoke("dialog:warn", async () => ({ response: 1, checkboxChecked: false }));
+        onInvoke("db:library:deleteProgressForLinks", async ({ links }) => ({ deleted: links.length }));
+        const store = makeProgressStore();
+        const onRemoved = vi.fn();
+
+        const ok = await confirmDeleteProgressForLinks(store.dispatch, [SAMPLE_MANGA_LINK], { onRemoved });
+
+        expect(ok).toBe(true);
+        expect(onRemoved).toHaveBeenCalledTimes(1);
+        expect(store.getState().library.items[SAMPLE_MANGA_LINK]?.progress).toBeNull();
+    });
+
+    it("skips the dialog when links are empty", async () => {
+        const warn = vi.fn(async () => ({ response: 1, checkboxChecked: false }));
+        onInvoke("dialog:warn", warn);
+        const store = makeProgressStore();
+
+        const ok = await confirmDeleteProgressForLinks(store.dispatch, []);
+
+        expect(ok).toBe(false);
+        expect(warn).not.toHaveBeenCalled();
     });
 });

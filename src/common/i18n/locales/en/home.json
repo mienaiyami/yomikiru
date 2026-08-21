@@ -30,6 +30,12 @@
             "message_other": "Remove {{count}} items from library? Related bookmarks will also be removed. Files on disk are not deleted.",
             "menu": "Remove {{count}} from Library"
         },
+        "removeProgress": {
+            "title": "Remove Progress",
+            "message_one": "Remove reading progress from {{count}} title? Last position and chapter read marks are cleared. The library entry, bookmarks, and notes stay.",
+            "message_other": "Remove reading progress from {{count}} titles? Last position and chapter read marks are cleared. The library entry, bookmarks, and notes stay.",
+            "menu": "Remove Progress from {{count}}"
+        },
         "addFavourite": {
             "menu": "Add {{count}} to Favourites"
         },

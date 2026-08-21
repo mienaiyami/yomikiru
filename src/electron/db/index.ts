@@ -411,7 +411,7 @@ export class DatabaseService {
 
     /**
      * Deletes manga and book progress rows for `links` without removing catalogue items.
-     * Empty `links` is a no-op. Used by Settings clear-unused-progress.
+     * Empty `links` is a no-op. Used by Settings clear-unused-progress and home Remove Progress.
      */
     async deleteProgressForLinks(links: readonly string[]): Promise<number> {
         if (links.length === 0) return 0;

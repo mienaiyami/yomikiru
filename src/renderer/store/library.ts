@@ -123,6 +123,20 @@ export const deleteLibraryItem = createAsyncThunk(
 );
 
 /**
+ * Drops manga/book progress for `links` and keeps catalogue rows.
+ * Empty `links` skips IPC. Duplicate links are sent once.
+ */
+export const deleteProgressForLinks = createAsyncThunk(
+    "library/deleteProgressForLinks",
+    async ({ links }: { links: readonly string[] }) => {
+        const unique = [...new Set(links)];
+        if (unique.length === 0) return { deleted: 0, links: unique };
+        const res = await window.electron.invoke("db:library:deleteProgressForLinks", { links: unique });
+        return { deleted: res.deleted, links: unique };
+    },
+);
+
+/**
  * Moves a library item to a new disk path (progress/bookmarks/notes/trackers/metadata follow).
  * Callers should update any UI selection holding `oldLink`.
  *
@@ -272,6 +286,17 @@ const librarySlice = createSlice({
                 const next = [...list];
                 next[index] = row;
                 state.metadata[row.itemLink] = next;
+            })
+            .addCase(deleteProgressForLinks.fulfilled, (state, action) => {
+                for (const link of action.payload.links) {
+                    const item = state.items[link];
+                    if (!item) continue;
+                    if (item.type === "manga") {
+                        state.items[link] = { ...item, type: "manga", progress: null };
+                    } else {
+                        state.items[link] = { ...item, type: "book", progress: null };
+                    }
+                }
             })
             // Keep UI selection keys valid before db:library:change refetch finishes.
             .addCase(relocateLibraryItem.fulfilled, (state, action) => {

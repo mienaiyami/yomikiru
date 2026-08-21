@@ -228,7 +228,7 @@ Generic hook returning a `UseMultiSelectReturn<T>` API:
 | `clearSelection()` | Clears all + exits selection mode |
 | `setVisibleOrder(ids)` | Updates the ordered list (from ListNavigator filter); drops hidden items from selection |
 
-Selection mode is implicit — it activates when the first item is selected and exits when selection is cleared. Gallery overflow offers **Add to Favourites** (Library / Continue / Bookmarks) or **Remove from Favourites** (Favourites tab; confirms when more than one item is selected) plus **Remove from Library**.
+Selection mode is implicit — it activates when the first item is selected and exits when selection is cleared. Gallery overflow offers **Add to Favourites** (Library / Continue / Bookmarks) or **Remove from Favourites** (Favourites tab; confirms when more than one item is selected), **Remove Progress** (keeps the catalogue row), and **Remove from Library**. Classic History overflow includes the same progress action.
 
 Shift-range selection uses `getIdsInRange` from [`src/renderer/utils/multiSelectRange.ts`](../../utils/multiSelectRange.ts) to find the contiguous slice between the anchor and the clicked item in `orderedIds`.
 
@@ -260,6 +260,7 @@ The global `window.contextMenu.template` factory (defined in `App.tsx`) provides
 | `copyPath(url)` | Clipboard write |
 | `copyImage(url)` | Clipboard write image |
 | `removeHistory(url)` | Remove from library (with confirmation; files on disk stay) |
+| `removeProgress(url)` | Drop reading progress (with confirmation; catalogue row, bookmarks, and notes stay) |
 | gallery favourite toggle | Add to / Remove from Favourites (`library_items.favouritedAt`) |
 | `removeBookmark(...)` | Delete bookmark (with confirmation) |
 | `addToBookmark(args)` | Add bookmark |

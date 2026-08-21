@@ -1,7 +1,13 @@
 import type { BookBookmark, LibraryItemWithProgress, MangaBookmark } from "@common/types/db";
+import i18n from "@renderer/i18n";
 import { addBookmark, removeBookmark } from "@store/bookmarks";
 import type { AppDispatch } from "@store/index";
+import { deleteProgressForLinks } from "@store/library";
+import { dialogUtils } from "@utils/dialog";
+import { createRendererLogger } from "@utils/logger";
 import { resolveMangaChapterPath } from "@utils/mangaChapterPath";
+
+const log = createRendererLogger("home/listSelectionActions");
 
 type AddBookmarkArgs = Parameters<typeof addBookmark>[0];
 type LibraryBookmark = BookBookmark | MangaBookmark;
@@ -64,6 +70,56 @@ export const bookmarkLibraryItemsAtProgress = (
         const args = getAddBookmarkArgsFromProgress(item);
         if (args) dispatch(addBookmark(args));
     }
+};
+
+/**
+ * Selected catalogue links that currently have reading progress.
+ * Unknown, missing, and unread links are skipped (order follows `links`).
+ */
+export const progressLinksFromSelection = (
+    items: Record<string, LibraryItemWithProgress | null | undefined>,
+    links: Iterable<string>,
+): string[] => {
+    const out: string[] = [];
+    for (const link of links) {
+        if (items[link]?.progress) out.push(link);
+    }
+    return out;
+};
+
+type ConfirmDeleteProgressOptions = {
+    /** Runs after progress rows are deleted (e.g. clear multi-select). */
+    onRemoved?: () => void;
+};
+
+/**
+ * Confirms, then drops reading progress for `links` without removing catalogue rows.
+ * Empty `links` is a no-op. Bookmarks and notes are left alone.
+ *
+ * @returns `true` when the user confirmed and {@link deleteProgressForLinks} ran
+ */
+export const confirmDeleteProgressForLinks = async (
+    dispatch: AppDispatch,
+    links: readonly string[],
+    options?: ConfirmDeleteProgressOptions,
+): Promise<boolean> => {
+    if (links.length === 0) return false;
+    const { response } = await dialogUtils.warn({
+        title: i18n.t("shared.removeProgress.title", { ns: "home" }),
+        message: i18n.t("shared.removeProgress.message", { ns: "home", count: links.length }),
+        noOption: false,
+        buttons: [i18n.t("actions.cancel", { ns: "common" }), i18n.t("actions.yes", { ns: "common" })],
+        defaultId: 0,
+    });
+    if (!response) return false;
+    try {
+        await dispatch(deleteProgressForLinks({ links })).unwrap();
+    } catch (err) {
+        log.error("confirmDeleteProgressForLinks failed", { links }, err);
+        return false;
+    }
+    options?.onRemoved?.();
+    return true;
 };
 
 /** Path copied by the history-row context menu (chapter path for manga). */

@@ -14,7 +14,13 @@ import { libraryItemSearchText, resolveAllItemMetadata, trackerByItemLink } from
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { useAppContext } from "src/renderer/App";
-import { bookmarkLibraryItemsAtProgress, copyPathsToClipboard, getHistoryItemPath } from "../listSelectionActions";
+import {
+    bookmarkLibraryItemsAtProgress,
+    confirmDeleteProgressForLinks,
+    copyPathsToClipboard,
+    getHistoryItemPath,
+    progressLinksFromSelection,
+} from "../listSelectionActions";
 import BookmarkHistoryListItem from "./BookmarkHistoryListItem";
 import ListSelectionToolbar from "./ListSelectionToolbar";
 
@@ -161,6 +167,16 @@ const HistoryTab: React.FC = () => {
             });
     }, [dispatch, selection, t, tCommon]);
 
+    /**
+     * Drops reading progress for selected history rows. Catalogue rows stay.
+     */
+    const handleRemoveSelectedProgress = useCallback(() => {
+        const links = progressLinksFromSelection(library.items, selection.selectedIds);
+        void confirmDeleteProgressForLinks(dispatch, links, {
+            onRemoved: selection.clearSelection,
+        });
+    }, [dispatch, library.items, selection]);
+
     useSelectionShortcuts({
         selection,
         enabled: checkboxesEnabled,
@@ -203,6 +219,10 @@ const HistoryTab: React.FC = () => {
                                 {
                                     label: t("shared.selection.bookmark"),
                                     action: handleBookmarkSelected,
+                                },
+                                {
+                                    label: t("shared.removeProgress.menu", { count: selection.count }),
+                                    action: handleRemoveSelectedProgress,
                                 },
                                 {
                                     label: t("shared.removeFromLibrary.menu", { count: selection.count }),
