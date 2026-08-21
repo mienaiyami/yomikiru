@@ -171,6 +171,16 @@ export const SETTINGS_TARGETS_STATIC: readonly SettingsTarget[] = [
         groupLabelKey: "library.title",
     }),
     setting(
+        "setting:scan-default-location-depth",
+        "#settings-scan-default-location-depth",
+        "library.scanDefaultLocationMaxDepth",
+        {
+            keywords: ["scan depth", "walk depth", "default location depth"],
+            contentPath: "library.scanDefaultLocationMaxDepthWarn",
+            groupLabelKey: "library.title",
+        },
+    ),
+    setting(
         "setting:scan-default-location-interval",
         "#settings-scan-default-location-interval",
         "library.scanDefaultLocationInterval",
@@ -395,6 +405,10 @@ export const SETTINGS_TARGETS_STATIC: readonly SettingsTarget[] = [
     usage("usage:library", "#settings-usage-library", "covers.title", {
         keywords: ["covers"],
         contentPath: "covers",
+    }),
+    usage("usage:multi-select", "#settings-usage-multiSelect", "multiSelect.title", {
+        keywords: ["delete", "selection", "ctrl+a"],
+        contentPath: "multiSelect",
     }),
     {
         id: "usage:copy-theme",

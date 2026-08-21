@@ -240,13 +240,16 @@ export class DirectoryValidatorService {
                     app.deleteDirOnClose = tempExtractPath;
                 }
 
-                onProgress({
-                    message: i18n.t("loading.extracting", {
-                        ns: "reader",
-                        prefix: linkSplitted.at(-1)?.substring(0, 10),
-                        ext: formatUtils.files.getExt(link),
-                    }),
-                });
+                // library scan/cover reuse this path; only the reader overlay should show EXTRACTING
+                if (options.showLoading) {
+                    onProgress({
+                        message: i18n.t("loading.extracting", {
+                            ns: "reader",
+                            prefix: linkSplitted.at(-1)?.substring(0, 10),
+                            ext: formatUtils.files.getExt(link),
+                        }),
+                    });
+                }
 
                 try {
                     const result = await unzip(link, tempExtractPath);
@@ -317,15 +320,18 @@ export class DirectoryValidatorService {
                     app.deleteDirOnClose = tempExtractPath;
                 }
 
-                onProgress({
-                    message: i18n.t("loading.rendering", {
-                        ns: "reader",
-                        name: linkSplitted.at(-1)?.substring(0, 20),
-                    }),
-                });
+                if (options.showLoading) {
+                    onProgress({
+                        message: i18n.t("loading.rendering", {
+                            ns: "reader",
+                            name: linkSplitted.at(-1)?.substring(0, 20),
+                        }),
+                    });
+                }
 
                 try {
                     await renderPDF(link, tempExtractPath, appSettings.pdfScale, (total, done) => {
+                        if (!options.showLoading) return;
                         onProgress({
                             percent: Math.round((done / total) * 100),
                             message: i18n.t("loading.renderingProgress", {
@@ -375,7 +381,7 @@ export class DirectoryValidatorService {
                 return { isValid: false, error: "Directory is empty" };
             }
 
-            if (sendImages && !firstImageOnly) {
+            if (sendImages && !firstImageOnly && options.showLoading) {
                 //     loadingTimeout = setTimeout(() => {
                 onProgress({
                     // message: `PROCESSING IMAGES`,
@@ -402,9 +408,11 @@ export class DirectoryValidatorService {
                             return { path: fullPath, isEmpty: true };
                         } finally {
                             processed++;
-                            onProgress({
-                                percent: Math.round((processed / imgs.length) * 100) / 20,
-                            });
+                            if (options.showLoading) {
+                                onProgress({
+                                    percent: Math.round((processed / imgs.length) * 100) / 20,
+                                });
+                            }
                         }
                     });
 
@@ -437,9 +445,11 @@ export class DirectoryValidatorService {
             if (sendImages) {
                 const sortedImages = sortedNames.map((e) => path.join(link, e));
 
-                onProgress({
-                    percent: 10,
-                });
+                if (options.showLoading) {
+                    onProgress({
+                        percent: 10,
+                    });
+                }
 
                 return {
                     isValid: true,

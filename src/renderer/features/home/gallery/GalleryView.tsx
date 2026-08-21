@@ -24,11 +24,7 @@ import {
 } from "@utils/gallerySort";
 import { isShortcutEventFromInputTarget, keyFormatter } from "@utils/keybindings";
 import { resolveDetailsCoverSrc, trackerCoverUrlByItemLink } from "@utils/libraryCover";
-import {
-    libraryItemSearchText,
-    resolveAllItemMetadata,
-    trackerByItemLink,
-} from "@utils/libraryMetadata";
+import { libraryItemSearchText, resolveAllItemMetadata, trackerByItemLink } from "@utils/libraryMetadata";
 import { itemsWithTag } from "@utils/libraryTags";
 import { resolveMangaChapterPath } from "@utils/mangaChapterPath";
 import type { RefObject } from "react";
@@ -479,6 +475,7 @@ const GalleryView: React.FC = () => {
     useSelectionShortcuts({
         selection,
         enabled: !detailsOpen,
+        onDelete: handleRemoveSelectedFromLibrary,
     });
 
     const selectionToolbarProps = selection.isSelectionMode

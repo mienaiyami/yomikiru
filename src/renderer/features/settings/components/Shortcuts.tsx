@@ -132,10 +132,17 @@ const Shortcuts = (): ReactElement => {
                         <tr key={e.command} id={`settings-shortcut-${e.command}`}>
                             <td>
                                 {tReader(e.name)}
-                                {(["dirUp", "contextMenu"] as ShortcutCommands[]).includes(e.command) && (
+                                {(["dirUp", "contextMenu", "deleteSelected"] as ShortcutCommands[]).includes(
+                                    e.command,
+                                ) && (
                                     <a
                                         onClick={() => {
-                                            navigateToSetting("usage:search-shortcut-keys", dispatch);
+                                            navigateToSetting(
+                                                e.command === "deleteSelected"
+                                                    ? "usage:multi-select"
+                                                    : "usage:search-shortcut-keys",
+                                                dispatch,
+                                            );
                                         }}
                                     >
                                         {t("shared.moreInfoDot")}

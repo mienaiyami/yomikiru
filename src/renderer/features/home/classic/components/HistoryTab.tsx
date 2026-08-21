@@ -4,6 +4,7 @@ import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import ListNavigator from "@renderer/components/ListNavigator";
 import { useMultiSelect } from "@renderer/hooks/useMultiSelect";
 import { PAGE_SEARCH_PRIORITY } from "@renderer/hooks/usePageSearchFocus";
+import { useSelectionShortcuts } from "@renderer/hooks/useSelectionShortcuts";
 import { setAppSettings } from "@store/appSettings";
 import { useAppDispatch, useAppSelector } from "@store/hooks";
 import { deleteLibraryItem } from "@store/library";
@@ -29,7 +30,9 @@ const HistoryTab: React.FC = () => {
     const checkboxesEnabled = appSettings.enableClassicListCheckboxes;
 
     const displayByLink = useMemo(() => {
-        const items = Object.values(library.items).filter((item): item is LibraryItemWithProgress => item !== null);
+        const items = Object.values(library.items).filter(
+            (item): item is LibraryItemWithProgress => item !== null,
+        );
         return resolveAllItemMetadata(items, library.metadata, trackerByItemLink(trackerEntries));
     }, [library.items, library.metadata, trackerEntries]);
 
@@ -157,6 +160,12 @@ const HistoryTab: React.FC = () => {
                 selection.clearSelection();
             });
     }, [dispatch, selection, t, tCommon]);
+
+    useSelectionShortcuts({
+        selection,
+        enabled: checkboxesEnabled,
+        onDelete: handleRemoveSelected,
+    });
 
     if (!appSettings.showTabs.history) {
         return null;

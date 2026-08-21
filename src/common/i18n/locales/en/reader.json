@@ -48,7 +48,8 @@
         "uiSizeUp": "Increase UI Size",
         "listDown": "List Down",
         "listUp": "List Up",
-        "listSelect": "List Select"
+        "listSelect": "List Select",
+        "deleteSelected": "Delete selected items"
     },
     "hud": {
         "savedToPreset": "Saved to preset \"{{name}}\"",

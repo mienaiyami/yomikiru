@@ -240,7 +240,9 @@ Keyboard shortcuts layered on top of `useMultiSelect`. Wires:
 
 - `Ctrl+A` → select all.
 - `Escape` → clear selection.
-- `Delete` → trigger a caller-supplied delete handler.
+- `deleteSelected` (default `Delete`, customizable in Settings → Shortcut Keys) → the caller’s bulk remove handler while something is selected (library item, history, bookmarks, notes). Not used on manga chapter lists.
+
+Does not run while typing in a field or while the reader is open (Home stays mounted). Classic Bookmark / History use the same hook when list checkboxes are on.
 
 Enabled/disabled based on the `enabled` prop (e.g. disabled when the detail panel is open in the gallery).
 

@@ -90,15 +90,16 @@ New keys on `settings.json` (Zod + `repairZodInputWithDefaults`; old files get d
   - `scanIntervalMinutes`: number or disabled (schema: `0` meaning off — pick one in code and JSDoc it; do not duplicate a magic number here)
   - `watch`: boolean, default off
 - `scanDefaultLocation`: boolean, default off (do not scan `baseDir` when it is still the schema default home directory unless the user opts in)
+- `scanDefaultLocationMaxDepth`: grouping-folder steps for that walk (same clamp as extra-folder `maxDepth`; Settings shows a warning). Old files without the key get the same default as a new extra folder.
 
 UI: Settings -> Library (same section as Default Location and thumbnails).
 
-- Default Location block unchanged + checkbox “also scan this folder into the library.”
-- Library folders list: add/remove, content type, max depth, start/interval/watch, Scan this folder.
+- Default Location block: path picker, checkbox to also scan this folder, **scan depth** (with a warning about deep walks), and interval.
+- Library folders list: add/remove, content type, max depth, start/interval/watch, Scan this folder. Enabling **Watch** asks first (live watcher, automatic adds, disk/network cost).
 - **Scan now** (all enabled folders) replaces “Add valid items from default folder.” EPUB recursive becomes part of Scan now when the folder allows books.
 - One-line Continue Reading explanation: titles appear there after you open them in the reader.
 
-Catalog, i18n, Usage, `SettingsLink` when those controls land. Watch copy must warn like `autoRefreshSideList` (slow disks, large trees).
+Catalog, i18n, Usage, `SettingsLink` when those controls land. Watch copy must warn like `autoRefreshSideList` (slow disks, large trees); turning Watch on also confirms in a dialog.
 
 ---
 

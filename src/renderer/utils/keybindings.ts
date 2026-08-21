@@ -254,6 +254,11 @@ export const SHORTCUT_COMMAND_MAP = [
         name: "shortcutNames.listSelect",
         defaultKeys: ["enter"],
     },
+    {
+        command: "deleteSelected" as const,
+        name: "shortcutNames.deleteSelected",
+        defaultKeys: ["delete"],
+    },
 ] as const satisfies readonly {
     command: string;
     name: ShortcutNameKey;

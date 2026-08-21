@@ -14,6 +14,13 @@ export const LIBRARY_SCAN_MAX_DEPTH_CEILING = 12;
  */
 export const LIBRARY_SCAN_DEFAULT_MAX_DEPTH = 2;
 
+/**
+ * Clamps a grouping-folder walk depth to `0`..{@link LIBRARY_SCAN_MAX_DEPTH_CEILING}.
+ * Used by Settings inputs and by scan-root builders before classify.
+ */
+export const clampLibraryScanMaxDepth = (value: number): number =>
+    Math.min(LIBRARY_SCAN_MAX_DEPTH_CEILING, Math.max(0, Math.round(value)));
+
 /** How {@link classifyLibraryNode} labels a file or directory. */
 export type LibraryNodeKind = "series" | "oneshot" | "grouping" | "packedManga" | "book" | "skip";
 

@@ -29,6 +29,11 @@ describe("SHORTCUT_COMMAND_MAP", () => {
         expect(entry?.defaultKeys).not.toContain("ctrl+slash");
         expect(SHORTCUT_COMMAND_MAP.some((c) => c.command === "focusSideListSearch")).toBe(false);
     });
+
+    it("deleteSelected defaults to the Delete key", () => {
+        const entry = SHORTCUT_COMMAND_MAP.find((c) => c.command === "deleteSelected");
+        expect(entry?.defaultKeys).toEqual(["delete"]);
+    });
 });
 
 describe("isShortcutEventFromInputTarget", () => {

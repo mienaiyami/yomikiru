@@ -143,6 +143,17 @@ const settingSchema = z
         /** When true, Scan now / start also walk Default Location (`baseDir`). */
         scanDefaultLocation: z.boolean().default(false),
         /**
+         * Grouping-folder steps when walking Default Location (capped by
+         * {@link LIBRARY_SCAN_MAX_DEPTH_CEILING}). Ignored while
+         * {@link scanDefaultLocation} is off.
+         */
+        scanDefaultLocationMaxDepth: z
+            .number()
+            .int()
+            .min(0)
+            .max(LIBRARY_SCAN_MAX_DEPTH_CEILING)
+            .default(LIBRARY_SCAN_DEFAULT_MAX_DEPTH),
+        /**
          * Minutes between automatic scans of Default Location when {@link scanDefaultLocation} is on;
          * `0` means interval scanning is off for that folder.
          */
@@ -215,6 +226,7 @@ const settingSchema = z
         autoRefreshSideList: false,
         libraryFolders: [],
         scanDefaultLocation: false,
+        scanDefaultLocationMaxDepth: LIBRARY_SCAN_DEFAULT_MAX_DEPTH,
         scanDefaultLocationIntervalMinutes: 0,
         scanDefaultLocationLastAtMs: 0,
         librarySettingsExpanded: true,

@@ -24,7 +24,7 @@ import {
     withLibraryScanTimestamps,
 } from "@utils/librarySettingsImport";
 import { createRendererLogger } from "@utils/logger";
-import { LIBRARY_SCAN_MAX_DEPTH_CEILING } from "@utils/mangaChapters";
+import { clampLibraryScanMaxDepth, LIBRARY_SCAN_MAX_DEPTH_CEILING } from "@utils/mangaChapters";
 import type { LibraryFolderSetting } from "@utils/settingsSchema";
 import { useCallback, useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
@@ -35,6 +35,7 @@ const log = createRendererLogger("settings/LibrarySettings");
 const LIBRARY_COLLAPSED_NAV_IDS = new Set([
     "setting:default-location",
     "setting:scan-default-location",
+    "setting:scan-default-location-depth",
     "setting:scan-default-location-interval",
     "setting:library-folders",
     "setting:library-folders-list",
@@ -274,6 +275,22 @@ const LibrarySettings: React.FC = () => {
         void confirmThenScan([root]);
     };
 
+    /**
+     * Confirm before turning Watch on. Unchecking does not ask. Cancel leaves
+     * the setting off so a mis-click cannot start a live tree watcher.
+     */
+    const confirmEnableWatch = async (): Promise<boolean> => {
+        const { response } = await dialogUtils.warn({
+            title: t("library.watchConfirmTitle"),
+            message: t("library.watchConfirmMessage"),
+            detail: t("library.watchConfirmDetail"),
+            noOption: false,
+            buttons: [t("shared.cancel"), t("library.watchConfirmEnable")],
+            defaultId: 0,
+        });
+        return Boolean(response);
+    };
+
     const handleClearUnusedProgress = async (): Promise<void> => {
         const links = unusedDummyProgressLinks(libraryItems);
         if (links.length === 0) {
@@ -333,257 +350,299 @@ const LibrarySettings: React.FC = () => {
 
             {appSettings.librarySettingsExpanded && (
                 <>
-            <div className="main col" id="settings-default-location">
-                <h4>{t("defaultLocation.title")}</h4>
-                <div className="desc">{t("defaultLocation.desc")}</div>
-                <div className="row">
-                    <input type="text" value={appSettings.baseDir} readOnly />
-                    <button
-                        type="button"
-                        disabled={disabled}
-                        onClick={() => {
-                            promptSelectDir((path) => dispatch(setAppSettings({ baseDir: path as string })));
-                        }}
-                    >
-                        {t("defaultLocation.changeDefault")}
-                    </button>
-                </div>
-            </div>
-
-            <div className="toggleItem" id="settings-scan-default-location">
-                <InputCheckbox
-                    checked={appSettings.scanDefaultLocation}
-                    className="noBG"
-                    disabled={disabled}
-                    onChange={(e) => {
-                        dispatch(setAppSettings({ scanDefaultLocation: e.currentTarget.checked }));
-                    }}
-                    labelAfter={t("library.scanDefaultLocation")}
-                />
-                <div className="desc">{t("library.scanDefaultLocationDesc")}</div>
-            </div>
-
-            <div id="settings-scan-default-location-interval">
-                <div className="main row">
-                    <InputNumber
-                        value={appSettings.scanDefaultLocationIntervalMinutes}
-                        min={0}
-                        step={1}
-                        integerOnly
-                        disabled={disabled || !appSettings.scanDefaultLocation}
-                        className="noBG"
-                        labelBefore={t("library.scanDefaultLocationInterval")}
-                        labelAfter={t("library.minutesUnit")}
-                        timeout={[
-                            500,
-                            (value) => {
-                                dispatch(
-                                    setAppSettings({
-                                        scanDefaultLocationIntervalMinutes: Math.max(0, Math.trunc(value)),
-                                    }),
-                                );
-                            },
-                        ]}
-                    />
-                    <button
-                        type="button"
-                        disabled={scanDisabled}
-                        onClick={() => {
-                            const baseDir = getExistingBaseDir(appSettings.baseDir);
-                            if (!baseDir) {
-                                dialogUtils.customError({ message: t("library.setDefaultFirst") });
-                                return;
-                            }
-                            void confirmThenScan([
-                                { path: baseDir, content: "both", maxDepth: LIBRARY_SCAN_MAX_DEPTH_CEILING },
-                            ]);
-                        }}
-                    >
-                        {scanThisLabel}
-                    </button>
-                </div>
-                <div className="desc">{t("library.intervalMinutesHint")}</div>
-            </div>
-
-            <div className="main col" id="settings-library-folders">
-                <h4>{t("library.foldersTitle")}</h4>
-                <div className="desc">{t("library.foldersDesc")}</div>
-                <div className="desc">{t("library.watchDesc")}</div>
-                <div className="row">
-                    <button type="button" disabled={disabled} onClick={handleAddFolder}>
-                        {t("library.addFolder")}
-                    </button>
-                    <button
-                        type="button"
-                        id="settings-library-folders-list-toggle"
-                        disabled={disabled || appSettings.libraryFolders.length === 0}
-                        onClick={() => {
-                            dispatch(
-                                setAppSettings({
-                                    libraryFoldersListExpanded: !appSettings.libraryFoldersListExpanded,
-                                }),
-                            );
-                        }}
-                    >
-                        {appSettings.libraryFoldersListExpanded
-                            ? t("library.hideFolders")
-                            : t("library.showFolders", { count: appSettings.libraryFolders.length })}
-                    </button>
-                </div>
-                {appSettings.libraryFoldersListExpanded &&
-                    appSettings.libraryFolders.map((folder, index) => (
-                        <div key={`${folder.path}-${index}`} className="col libraryFolderCard">
-                            <div className="row libraryFolderRow">
-                                <span className="libraryFolderPathLabel">{t("library.folderPath")}</span>
-                                <input type="text" value={folder.path} readOnly title={folder.path} />
-                                <button
-                                    type="button"
-                                    disabled={scanDisabled}
-                                    onClick={() => handleScanThisFolder(folder)}
-                                >
-                                    {scanThisLabel}
-                                </button>
-                                <button
-                                    type="button"
-                                    disabled={disabled}
-                                    onClick={() => void handleRemoveFolder(index)}
-                                >
-                                    {t("shared.remove")}
-                                </button>
-                            </div>
-                            <div className="row libraryFolderRow">
-                                <InputSelect
-                                    labeled
-                                    value={folder.content}
-                                    disabled={disabled}
-                                    className="noBG"
-                                    labelBefore={t("library.contentLabel")}
-                                    onChange={(value) => {
-                                        if (isLibraryFolderContent(value)) patchFolder(index, { content: value });
-                                    }}
-                                    options={[
-                                        { label: t("library.contentManga"), value: "manga" },
-                                        { label: t("library.contentBook"), value: "book" },
-                                        { label: t("library.contentBoth"), value: "both" },
-                                    ]}
-                                />
-                                <InputNumber
-                                    value={folder.maxDepth}
-                                    min={0}
-                                    max={LIBRARY_SCAN_MAX_DEPTH_CEILING}
-                                    step={1}
-                                    disabled={disabled}
-                                    className="noBG"
-                                    labelBefore={t("library.maxDepth")}
-                                    timeout={[
-                                        500,
-                                        (value) => {
-                                            patchFolder(index, {
-                                                maxDepth: Math.min(
-                                                    LIBRARY_SCAN_MAX_DEPTH_CEILING,
-                                                    Math.max(0, Math.round(value)),
-                                                ),
-                                            });
-                                        },
-                                    ]}
-                                />
-                                <InputNumber
-                                    value={folder.scanIntervalMinutes}
-                                    min={0}
-                                    step={1}
-                                    integerOnly
-                                    disabled={disabled}
-                                    className="noBG"
-                                    labelBefore={t("library.intervalMinutes")}
-                                    timeout={[
-                                        500,
-                                        (value) => {
-                                            patchFolder(index, {
-                                                scanIntervalMinutes: Math.max(0, Math.trunc(value)),
-                                            });
-                                        },
-                                    ]}
-                                />
-                                <InputCheckbox
-                                    checked={folder.scanOnStart}
-                                    className="noBG"
-                                    disabled={disabled}
-                                    onChange={(e) => {
-                                        patchFolder(index, { scanOnStart: e.currentTarget.checked });
-                                    }}
-                                    labelAfter={t("library.scanOnStart")}
-                                />
-                                <InputCheckbox
-                                    checked={folder.watch}
-                                    className="noBG"
-                                    disabled={disabled}
-                                    onChange={(e) => {
-                                        patchFolder(index, { watch: e.currentTarget.checked });
-                                    }}
-                                    labelAfter={t("library.watch")}
-                                />
-                            </div>
+                    <div className="main col" id="settings-default-location">
+                        <h4>{t("defaultLocation.title")}</h4>
+                        <div className="desc">{t("defaultLocation.desc")}</div>
+                        <div className="row">
+                            <input type="text" value={appSettings.baseDir} readOnly />
+                            <button
+                                type="button"
+                                disabled={disabled}
+                                onClick={() => {
+                                    promptSelectDir((path) =>
+                                        dispatch(setAppSettings({ baseDir: path as string })),
+                                    );
+                                }}
+                            >
+                                {t("defaultLocation.changeDefault")}
+                            </button>
                         </div>
-                    ))}
-            </div>
+                    </div>
 
-            <div className="main col" id="settings-library-scan-now">
-                <h4>{t("library.scanNow")}</h4>
-                <div className="desc">
-                    {t("library.scanDescBefore")}
-                    <code>.epub</code>
-                    {t("library.scanDescAfter")}
-                </div>
-                <div className="desc">{t("library.scanNowDesc")}</div>
-                <div className="row">
-                    <button
-                        type="button"
-                        disabled={scanDisabled}
-                        onClick={() => {
-                            const roots = listManualLibraryScanRoots(appSettings);
-                            if (roots.length === 0) {
-                                dialogUtils.customError({ message: t("library.scanNoRoots") });
-                                return;
-                            }
-                            void confirmThenScan(roots);
-                        }}
-                    >
-                        {scanBusyLabel}
-                    </button>
-                </div>
-            </div>
+                    <div className="toggleItem" id="settings-scan-default-location">
+                        <InputCheckbox
+                            checked={appSettings.scanDefaultLocation}
+                            className="noBG"
+                            disabled={disabled}
+                            onChange={(e) => {
+                                dispatch(setAppSettings({ scanDefaultLocation: e.currentTarget.checked }));
+                            }}
+                            labelAfter={t("library.scanDefaultLocation")}
+                        />
+                        <div className="desc">{t("library.scanDefaultLocationDesc")}</div>
+                    </div>
 
-            <div className="main col" id="settings-library-clear-unused-progress">
-                <h4>{t("library.clearUnusedProgress")}</h4>
-                <div className="desc">{t("library.clearUnusedProgressDesc")}</div>
-                <div className="row">
-                    <button type="button" disabled={disabled} onClick={() => void handleClearUnusedProgress()}>
-                        {busy === "clearProgress"
-                            ? t("library.clearingUnused")
-                            : clearProgressLabel || t("library.clearUnusedProgress")}
-                    </button>
-                </div>
-            </div>
+                    <div id="settings-scan-default-location-depth">
+                        <div className="main row">
+                            <InputNumber
+                                value={appSettings.scanDefaultLocationMaxDepth}
+                                min={0}
+                                max={LIBRARY_SCAN_MAX_DEPTH_CEILING}
+                                step={1}
+                                integerOnly
+                                disabled={disabled || !appSettings.scanDefaultLocation}
+                                className="noBG"
+                                labelBefore={t("library.scanDefaultLocationMaxDepth")}
+                                timeout={[
+                                    500,
+                                    (value) => {
+                                        dispatch(
+                                            setAppSettings({
+                                                scanDefaultLocationMaxDepth: clampLibraryScanMaxDepth(value),
+                                            }),
+                                        );
+                                    },
+                                ]}
+                            />
+                        </div>
+                        <div className="desc">{t("library.scanDefaultLocationMaxDepthWarn")}</div>
+                    </div>
 
-            <div className="main col">
-                <h4>{t("library.thumbnails")}</h4>
-                <div className="desc">
-                    {t("library.thumbnailsDescBefore")}
-                    <code>covers</code>
-                    {t("library.thumbnailsDescAfter")}
-                </div>
-                <div className="desc">{t("library.clearRegenDesc")}</div>
-                <div className="row">
-                    <button type="button" disabled={disabled} onClick={() => void handleClearCache()}>
-                        {busy === "clear" ? t("library.clearing") : t("library.clearCached")}
-                    </button>
-                    <button type="button" disabled={disabled} onClick={() => void handleRegenerateAll()}>
-                        {busy === "regen"
-                            ? t("library.regenerating", { label: regenLabel })
-                            : t("library.regenerateAll")}
-                    </button>
-                </div>
-            </div>
+                    <div id="settings-scan-default-location-interval">
+                        <div className="main row">
+                            <InputNumber
+                                value={appSettings.scanDefaultLocationIntervalMinutes}
+                                min={0}
+                                step={1}
+                                integerOnly
+                                disabled={disabled || !appSettings.scanDefaultLocation}
+                                className="noBG"
+                                labelBefore={t("library.scanDefaultLocationInterval")}
+                                labelAfter={t("library.minutesUnit")}
+                                timeout={[
+                                    500,
+                                    (value) => {
+                                        dispatch(
+                                            setAppSettings({
+                                                scanDefaultLocationIntervalMinutes: Math.max(0, Math.trunc(value)),
+                                            }),
+                                        );
+                                    },
+                                ]}
+                            />
+                            <button
+                                type="button"
+                                disabled={scanDisabled}
+                                onClick={() => {
+                                    const baseDir = getExistingBaseDir(appSettings.baseDir);
+                                    if (!baseDir) {
+                                        dialogUtils.customError({ message: t("library.setDefaultFirst") });
+                                        return;
+                                    }
+                                    void confirmThenScan([
+                                        {
+                                            path: baseDir,
+                                            content: "both",
+                                            maxDepth: clampLibraryScanMaxDepth(
+                                                appSettings.scanDefaultLocationMaxDepth,
+                                            ),
+                                        },
+                                    ]);
+                                }}
+                            >
+                                {scanThisLabel}
+                            </button>
+                        </div>
+                        <div className="desc">{t("library.intervalMinutesHint")}</div>
+                    </div>
+
+                    <div className="main col" id="settings-library-folders">
+                        <h4>{t("library.foldersTitle")}</h4>
+                        <div className="desc">{t("library.foldersDesc")}</div>
+                        <div className="desc">{t("library.watchDesc")}</div>
+                        <div className="row">
+                            <button type="button" disabled={disabled} onClick={handleAddFolder}>
+                                {t("library.addFolder")}
+                            </button>
+                            <button
+                                type="button"
+                                id="settings-library-folders-list-toggle"
+                                disabled={disabled || appSettings.libraryFolders.length === 0}
+                                onClick={() => {
+                                    dispatch(
+                                        setAppSettings({
+                                            libraryFoldersListExpanded: !appSettings.libraryFoldersListExpanded,
+                                        }),
+                                    );
+                                }}
+                            >
+                                {appSettings.libraryFoldersListExpanded
+                                    ? t("library.hideFolders")
+                                    : t("library.showFolders", { count: appSettings.libraryFolders.length })}
+                            </button>
+                        </div>
+                        {appSettings.libraryFoldersListExpanded &&
+                            appSettings.libraryFolders.map((folder, index) => (
+                                <div key={`${folder.path}-${index}`} className="col libraryFolderCard">
+                                    <div className="row libraryFolderRow">
+                                        <span className="libraryFolderPathLabel">{t("library.folderPath")}</span>
+                                        <input type="text" value={folder.path} readOnly title={folder.path} />
+                                        <button
+                                            type="button"
+                                            disabled={scanDisabled}
+                                            onClick={() => handleScanThisFolder(folder)}
+                                        >
+                                            {scanThisLabel}
+                                        </button>
+                                        <button
+                                            type="button"
+                                            disabled={disabled}
+                                            onClick={() => void handleRemoveFolder(index)}
+                                        >
+                                            {t("shared.remove")}
+                                        </button>
+                                    </div>
+                                    <div className="row libraryFolderRow">
+                                        <InputSelect
+                                            labeled
+                                            value={folder.content}
+                                            disabled={disabled}
+                                            className="noBG"
+                                            labelBefore={t("library.contentLabel")}
+                                            onChange={(value) => {
+                                                if (isLibraryFolderContent(value))
+                                                    patchFolder(index, { content: value });
+                                            }}
+                                            options={[
+                                                { label: t("library.contentManga"), value: "manga" },
+                                                { label: t("library.contentBook"), value: "book" },
+                                                { label: t("library.contentBoth"), value: "both" },
+                                            ]}
+                                        />
+                                        <InputNumber
+                                            value={folder.maxDepth}
+                                            min={0}
+                                            max={LIBRARY_SCAN_MAX_DEPTH_CEILING}
+                                            step={1}
+                                            disabled={disabled}
+                                            className="noBG"
+                                            labelBefore={t("library.maxDepth")}
+                                            timeout={[
+                                                500,
+                                                (value) => {
+                                                    patchFolder(index, {
+                                                        maxDepth: clampLibraryScanMaxDepth(value),
+                                                    });
+                                                },
+                                            ]}
+                                        />
+                                        <InputNumber
+                                            value={folder.scanIntervalMinutes}
+                                            min={0}
+                                            step={1}
+                                            integerOnly
+                                            disabled={disabled}
+                                            className="noBG"
+                                            labelBefore={t("library.intervalMinutes")}
+                                            timeout={[
+                                                500,
+                                                (value) => {
+                                                    patchFolder(index, {
+                                                        scanIntervalMinutes: Math.max(0, Math.trunc(value)),
+                                                    });
+                                                },
+                                            ]}
+                                        />
+                                        <InputCheckbox
+                                            checked={folder.scanOnStart}
+                                            className="noBG"
+                                            disabled={disabled}
+                                            onChange={(e) => {
+                                                patchFolder(index, { scanOnStart: e.currentTarget.checked });
+                                            }}
+                                            labelAfter={t("library.scanOnStart")}
+                                        />
+                                        <InputCheckbox
+                                            checked={folder.watch}
+                                            className="noBG"
+                                            disabled={disabled}
+                                            onChange={(e) => {
+                                                if (!e.currentTarget.checked) {
+                                                    patchFolder(index, { watch: false });
+                                                    return;
+                                                }
+                                                void confirmEnableWatch().then((ok) => {
+                                                    if (ok) patchFolder(index, { watch: true });
+                                                });
+                                            }}
+                                            labelAfter={t("library.watch")}
+                                        />
+                                    </div>
+                                </div>
+                            ))}
+                    </div>
+
+                    <div className="main col" id="settings-library-scan-now">
+                        <h4>{t("library.scanNow")}</h4>
+                        <div className="desc">
+                            {t("library.scanDescBefore")}
+                            <code>.epub</code>
+                            {t("library.scanDescAfter")}
+                        </div>
+                        <div className="desc">{t("library.scanNowDesc")}</div>
+                        <div className="row">
+                            <button
+                                type="button"
+                                disabled={scanDisabled}
+                                onClick={() => {
+                                    const roots = listManualLibraryScanRoots(appSettings);
+                                    if (roots.length === 0) {
+                                        dialogUtils.customError({ message: t("library.scanNoRoots") });
+                                        return;
+                                    }
+                                    void confirmThenScan(roots);
+                                }}
+                            >
+                                {scanBusyLabel}
+                            </button>
+                        </div>
+                    </div>
+
+                    <div className="main col" id="settings-library-clear-unused-progress">
+                        <h4>{t("library.clearUnusedProgress")}</h4>
+                        <div className="desc">{t("library.clearUnusedProgressDesc")}</div>
+                        <div className="row">
+                            <button
+                                type="button"
+                                disabled={disabled}
+                                onClick={() => void handleClearUnusedProgress()}
+                            >
+                                {busy === "clearProgress"
+                                    ? t("library.clearingUnused")
+                                    : clearProgressLabel || t("library.clearUnusedProgress")}
+                            </button>
+                        </div>
+                    </div>
+
+                    <div className="main col">
+                        <h4>{t("library.thumbnails")}</h4>
+                        <div className="desc">
+                            {t("library.thumbnailsDescBefore")}
+                            <code>covers</code>
+                            {t("library.thumbnailsDescAfter")}
+                        </div>
+                        <div className="desc">{t("library.clearRegenDesc")}</div>
+                        <div className="row">
+                            <button type="button" disabled={disabled} onClick={() => void handleClearCache()}>
+                                {busy === "clear" ? t("library.clearing") : t("library.clearCached")}
+                            </button>
+                            <button type="button" disabled={disabled} onClick={() => void handleRegenerateAll()}>
+                                {busy === "regen"
+                                    ? t("library.regenerating", { label: regenLabel })
+                                    : t("library.regenerateAll")}
+                            </button>
+                        </div>
+                    </div>
                 </>
             )}
         </div>

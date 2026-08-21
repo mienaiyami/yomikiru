@@ -15,6 +15,7 @@ import {
 import { createRendererLogger } from "@utils/logger";
 import {
     type CollectLibraryScanTargetsOpts,
+    clampLibraryScanMaxDepth,
     classifyLibraryNode,
     collectLibraryScanTargetFromEventPath,
     collectLibraryScanTargets,
@@ -232,6 +233,7 @@ export type LibraryScanSettingsSlice = {
     scanDefaultLocation: boolean;
     scanDefaultLocationIntervalMinutes: number;
     scanDefaultLocationLastAtMs: number;
+    scanDefaultLocationMaxDepth: number;
     libraryFolders: {
         path: string;
         content: "manga" | "book" | "both";
@@ -275,7 +277,11 @@ const defaultLocationRoot = (settings: LibraryScanSettingsSlice): LibraryScanRoo
     if (!settings.scanDefaultLocation) return null;
     const base = getExistingBaseDir(settings.baseDir);
     if (!base) return null;
-    return { path: base, content: "both", maxDepth: LIBRARY_SCAN_MAX_DEPTH_CEILING };
+    return {
+        path: base,
+        content: "both",
+        maxDepth: clampLibraryScanMaxDepth(settings.scanDefaultLocationMaxDepth),
+    };
 };
 
 const pushUniqueRoot = (out: LibraryScanRoot[], root: LibraryScanRoot | null): void => {

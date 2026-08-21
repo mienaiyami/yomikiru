@@ -290,7 +290,7 @@ const Usage = (): ReactElement => {
                         </li>
                     </ul>
                 </li>
-                <li>
+                <li id="settings-usage-multiSelect">
                     <b>{t("multiSelect.title")}</b>{" "}
                     <Trans
                         i18nKey="multiSelect.body"
@@ -301,6 +301,7 @@ const Usage = (): ReactElement => {
                             code: <code />,
                             link: <SettingsLink targetId="setting:classic-list-checkboxes" />,
                         }}
+                        values={{ delete: keysFor(shortcuts, "deleteSelected") }}
                     />
                 </li>
                 <li>

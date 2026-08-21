@@ -322,15 +322,6 @@ const BookDetailsPanel = ({ bookLink, onClose, onRelocated, initialTab = "bookma
         [handleNoteContextMenu, openNoteInReader, noteSelection, pathMissing, t],
     );
 
-    useSelectionShortcuts({
-        selection: bookmarkSelection,
-        enabled: activeTab === "bookmarks",
-    });
-    useSelectionShortcuts({
-        selection: noteSelection,
-        enabled: activeTab === "notes",
-    });
-
     const handleBulkDeleteBookmarks = useCallback(() => {
         const ids = Array.from(bookmarkSelection.selectedIds);
         if (ids.length === 0) return;
@@ -370,6 +361,17 @@ const BookDetailsPanel = ({ bookLink, onClose, onRelocated, initialTab = "bookma
                 noteSelection.clearSelection();
             });
     }, [noteSelection, bookLink, dispatch, t, tCommon]);
+
+    useSelectionShortcuts({
+        selection: bookmarkSelection,
+        enabled: activeTab === "bookmarks",
+        onDelete: handleBulkDeleteBookmarks,
+    });
+    useSelectionShortcuts({
+        selection: noteSelection,
+        enabled: activeTab === "notes",
+        onDelete: handleBulkDeleteNotes,
+    });
 
     const filterBookmark = useCallback((filter: string, bookmark: BookBookmark) => {
         return new RegExp(filter, "ig").test(

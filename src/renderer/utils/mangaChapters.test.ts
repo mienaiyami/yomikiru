@@ -2,9 +2,11 @@ import path from "node:path";
 import { stubFs } from "@test/mocks/preload";
 import { describe, expect, it } from "vitest";
 import {
+    clampLibraryScanMaxDepth,
     classifyLibraryNode,
     collectLibraryScanTargetFromEventPath,
     collectLibraryScanTargets,
+    LIBRARY_SCAN_MAX_DEPTH_CEILING,
     listMangaChapterChildren,
 } from "./mangaChapters";
 
@@ -24,6 +26,14 @@ const stubTree = (dirs: Record<string, string[]>, files: string[] = []): void =>
         stat: async () => ({ mtimeMs: 1 }),
     });
 };
+
+describe("clampLibraryScanMaxDepth", () => {
+    it("rounds and clamps to the walk ceiling", () => {
+        expect(clampLibraryScanMaxDepth(-1)).toBe(0);
+        expect(clampLibraryScanMaxDepth(2.6)).toBe(3);
+        expect(clampLibraryScanMaxDepth(LIBRARY_SCAN_MAX_DEPTH_CEILING + 5)).toBe(LIBRARY_SCAN_MAX_DEPTH_CEILING);
+    });
+});
 
 describe("listMangaChapterChildren", () => {
     it("lists image folders and packed files; skips root images and empty dirs", async () => {

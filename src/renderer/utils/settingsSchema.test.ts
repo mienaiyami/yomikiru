@@ -16,9 +16,10 @@ describe("settingSchema library scan keys", () => {
         if (!repaired.success) return;
         expect(repaired.data.libraryFolders).toEqual([]);
         expect(repaired.data.scanDefaultLocation).toBe(false);
+        expect(repaired.data.scanDefaultLocationMaxDepth).toBe(2);
         expect(repaired.data.scanDefaultLocationIntervalMinutes).toBe(0);
-        expect(repaired.data.librarySettingsExpanded).toBe(false);
-        expect(repaired.data.libraryFoldersListExpanded).toBe(false);
+        expect(repaired.data.librarySettingsExpanded).toBe(true);
+        expect(repaired.data.libraryFoldersListExpanded).toBe(true);
     });
 
     it("fills missing library folder maxDepth with the default walk depth", () => {

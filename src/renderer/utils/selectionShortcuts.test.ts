@@ -47,4 +47,19 @@ describe("matchSelectionShortcut", () => {
         ).toBeNull();
         expect(matchSelectionShortcut(keyEvent({ key: "a", code: "KeyA", target: document.body }))).toBeNull();
     });
+
+    it("maps deleteKeys to delete and ignores Delete when unbound", () => {
+        const del = keyEvent({ key: "Delete", code: "Delete", target: document.body });
+        expect(matchSelectionShortcut(del)).toBeNull();
+        expect(matchSelectionShortcut(del, { deleteKeys: [] })).toBeNull();
+        expect(matchSelectionShortcut(del, { deleteKeys: ["delete"] })).toBe("delete");
+        expect(
+            matchSelectionShortcut(
+                keyEvent({ key: "Delete", code: "Delete", target: document.createElement("input") }),
+                {
+                    deleteKeys: ["delete"],
+                },
+            ),
+        ).toBeNull();
+    });
 });

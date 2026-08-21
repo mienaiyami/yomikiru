@@ -81,14 +81,15 @@ describe("settingsTargets", () => {
         );
         expect(ids.indexOf("setting:default-location")).toBeLessThan(ids.indexOf("setting:scan-default-location"));
         expect(ids.indexOf("setting:scan-default-location")).toBeLessThan(
+            ids.indexOf("setting:scan-default-location-depth"),
+        );
+        expect(ids.indexOf("setting:scan-default-location-depth")).toBeLessThan(
             ids.indexOf("setting:scan-default-location-interval"),
         );
         expect(ids.indexOf("setting:scan-default-location-interval")).toBeLessThan(
             ids.indexOf("setting:library-folders"),
         );
-        expect(ids.indexOf("setting:library-folders")).toBeLessThan(
-            ids.indexOf("setting:library-folders-list"),
-        );
+        expect(ids.indexOf("setting:library-folders")).toBeLessThan(ids.indexOf("setting:library-folders-list"));
         expect(ids.indexOf("setting:library-folders-list")).toBeLessThan(ids.indexOf("setting:library-scan-now"));
         expect(ids.indexOf("setting:library-scan-now")).toBeLessThan(
             ids.indexOf("setting:library-clear-unused-progress"),
@@ -104,6 +105,10 @@ describe("settingsTargets", () => {
         expect(getSettingsTarget("setting:scan-default-location")?.selector).toBe(
             "#settings-scan-default-location",
         );
+        expect(getSettingsTarget("setting:scan-default-location-depth")?.selector).toBe(
+            "#settings-scan-default-location-depth",
+        );
+        expect(getSettingsTarget("usage:multi-select")?.selector).toBe("#settings-usage-multiSelect");
         expect(getSettingsTarget("setting:scan-default-location-interval")?.selector).toBe(
             "#settings-scan-default-location-interval",
         );

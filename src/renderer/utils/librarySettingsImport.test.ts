@@ -189,6 +189,7 @@ const scanSettings = (
     scanDefaultLocation: false,
     scanDefaultLocationIntervalMinutes: 0,
     scanDefaultLocationLastAtMs: 0,
+    scanDefaultLocationMaxDepth: LIBRARY_SCAN_DEFAULT_MAX_DEPTH,
     libraryFolders: [],
     ...over,
 });
@@ -258,9 +259,23 @@ describe("listManualLibraryScanRoots", () => {
             }),
         );
         expect(roots).toEqual([
-            { path: base, content: "both", maxDepth: LIBRARY_SCAN_MAX_DEPTH_CEILING },
+            { path: base, content: "both", maxDepth: LIBRARY_SCAN_DEFAULT_MAX_DEPTH },
             { path: extra, content: "manga", maxDepth: 4 },
         ]);
+    });
+
+    it("uses scanDefaultLocationMaxDepth for Default Location", () => {
+        const base = path.join("testdata", "home");
+        stubFs({ existsSync: (p) => p === base });
+        expect(
+            listManualLibraryScanRoots(
+                scanSettings({
+                    baseDir: base,
+                    scanDefaultLocation: true,
+                    scanDefaultLocationMaxDepth: 4,
+                }),
+            ),
+        ).toEqual([{ path: base, content: "both", maxDepth: 4 }]);
     });
 });
 
@@ -377,7 +392,10 @@ describe("newLibraryFolderSetting / isLibraryFolderContent", () => {
 
 describe("isUnusedDummyProgress", () => {
     it("matches first-page manga progress stamped at create time", () => {
-        const item = makeMangaItem({}, { currentPage: 1, chaptersRead: [], lastReadAt: new Date("2024-01-01T00:00:00.000Z") });
+        const item = makeMangaItem(
+            {},
+            { currentPage: 1, chaptersRead: [], lastReadAt: new Date("2024-01-01T00:00:00.000Z") },
+        );
         expect(isUnusedDummyProgress(item)).toBe(true);
         expect(unusedDummyProgressLinks({ [item.link]: item })).toEqual([item.link]);
     });

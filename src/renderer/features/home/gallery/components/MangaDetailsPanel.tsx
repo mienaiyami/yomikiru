@@ -473,15 +473,6 @@ const MangaDetailsPanel = ({
         elem.click();
     }, []);
 
-    useSelectionShortcuts({
-        selection: chapterSelection,
-        enabled: activeTab === "content",
-    });
-    useSelectionShortcuts({
-        selection: bookmarkSelection,
-        enabled: activeTab === "bookmarks",
-    });
-
     /**
      * Marks every chapter in the current selection as read (or unread). A
      * single batched IPC call updates the manga progress so the UI refreshes
@@ -519,6 +510,16 @@ const MangaDetailsPanel = ({
                 bookmarkSelection.clearSelection();
             });
     }, [bookmarkSelection, mangaLink, dispatch, t, tCommon]);
+
+    useSelectionShortcuts({
+        selection: chapterSelection,
+        enabled: activeTab === "content",
+    });
+    useSelectionShortcuts({
+        selection: bookmarkSelection,
+        enabled: activeTab === "bookmarks",
+        onDelete: handleBulkDeleteBookmarks,
+    });
 
     const handleSelectCover = useCallback(async () => {
         if (!manga) return;
