@@ -56,7 +56,7 @@ describe("promptSelectDir / unzip", () => {
             filePaths: [chosen],
         }));
         const cb = vi.fn();
-        await promptSelectDir(cb, false);
+        await expect(promptSelectDir(cb, false)).resolves.toBe(path.normalize(chosen));
         expect(cb).toHaveBeenCalledWith(path.normalize(chosen));
     });
 
@@ -66,8 +66,16 @@ describe("promptSelectDir / unzip", () => {
             filePaths: [],
         }));
         const cb = vi.fn();
-        await promptSelectDir(cb);
+        await expect(promptSelectDir(cb)).resolves.toBeNull();
         expect(cb).not.toHaveBeenCalled();
+    });
+
+    it("returns every file in multi-selection mode", async () => {
+        const files = [path.join("testdata", "one.pdf"), path.join("testdata", "two.pdf")];
+        onInvoke("dialog:showOpenDialog", async () => ({ canceled: false, filePaths: files }));
+        const cb = vi.fn();
+        await expect(promptSelectDir(cb, true, undefined, true)).resolves.toEqual(files);
+        expect(cb).toHaveBeenCalledWith(files);
     });
 
     it("forwards unzip to fs:unzip", async () => {

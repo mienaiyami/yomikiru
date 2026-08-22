@@ -18,7 +18,12 @@
     },
     "appName": "Yomikiru",
     "app": {
-        "noSettingsSelectFolder": "No settings found, Select manga folder",
+        "initialLibraryRootTitle": "Choose your Home library root",
+        "initialLibraryRootMessage": "Select the folder Yomikiru should use as your Home library root.",
+        "initialLibraryRootDetail": "This folder appears in Locations and can be scanned for manga and books. Choose later to use your system home folder for now. You can change it at any time in Library settings.",
+        "chooseLibraryRootNow": "Choose now",
+        "chooseLibraryRootLater": "Choose later",
+        "defaultLocationMissing": "Your Home library root is no longer available. Select its new location.",
         "dropMultipleOnlyFirst": "More than one file/folder dropped. Only first in list will be loaded.",
         "dropError": "Error while dropping file",
         "uiBlocked": "Please wait"

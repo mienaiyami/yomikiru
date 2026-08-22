@@ -191,14 +191,6 @@ export const isLibraryFolderContent = (value: string): value is LibraryFolderCon
     (LIBRARY_FOLDER_CONTENT as readonly string[]).includes(value);
 
 /**
- * Drops catalog ids that are no longer in `knownIds` (deleted tags).
- */
-export const keepKnownLibraryFolderTagIds = (
-    tagIds: readonly number[],
-    knownIds: ReadonlySet<number>,
-): number[] => tagIds.filter((id) => knownIds.has(id));
-
-/**
  * Removes `deletedTagId` from every folder's `tagIds`.
  *
  * @returns whether any row actually dropped the id

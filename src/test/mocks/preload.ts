@@ -218,5 +218,8 @@ export const installPreloadMocks = (): void => {
     onInvoke("anilist:claimStartupImport", () => true);
     onInvoke("mainSettings:update", () => undefined);
     onInvoke("covers:materialize", () => ({ ok: true }));
+    onInvoke("covers:acquirePdfRender", () => true);
+    onInvoke("covers:releasePdfRender", () => undefined);
+    onInvoke("covers:materializeFromLibraryPath", () => ({ ok: true }));
     onInvoke("db:library:getAllAndProgress", () => []);
 };

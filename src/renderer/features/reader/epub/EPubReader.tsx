@@ -1,3 +1,4 @@
+import { isExternalEpubReference, type EpubPackage } from "@common/epub";
 import type { BookProgress } from "@common/types/db";
 import { setAnilistCurrentListEntry } from "@store/anilist";
 import { setAppSettings, setEpubReaderSettings, setReaderSettings } from "@store/appSettings";
@@ -20,7 +21,7 @@ import { setAnilistListProgress, toAnilistTrackerSnapshotUpdate } from "@utils/a
 import { processChapterNumber } from "@utils/chapterUtils";
 import { colorUtils } from "@utils/color";
 import { dialogUtils } from "@utils/dialog";
-import EPUB, { type EPubData } from "@utils/epub";
+import { readEpubFile } from "@utils/epub";
 import { DEFAULT_HIGHLIGHT_COLORS, highlightUtils } from "@utils/highlight";
 import { keyFormatter, mouseEventFormatter } from "@utils/keybindings";
 import { syncBookLibraryOnReaderOpen } from "@utils/libraryMissingPath";
@@ -55,14 +56,14 @@ const EPubReader: React.FC = () => {
     const bookInReader = useAppSelector(getReaderBook);
 
     const dispatch = useAppDispatch();
-    const [epubData, setEpubData] = useState<EPubData | null>(null);
-    /** index of current chapter in EPUB.Spine */
+    const [epubData, setEpubData] = useState<EpubPackage | null>(null);
+    /** Index of the current chapter in {@link EpubPackage.spine}. */
     const [currentChapter, setCurrentChapter] = useState({
         index: -1,
         fragment: "",
     });
     /**
-     * `EPUB.Spine.id` before `currentChapter` that has a title in toc
+     * Spine id at or before `currentChapter` that has a title in the TOC.
      * only for display purpose in side-list, titlebar, history
      * it can be heavy to get because title only exists in toc, and not all href have a title
      * so it will find any last title before current chapter (href from spine) which has a occurrence in toc
@@ -194,7 +195,7 @@ const EPubReader: React.FC = () => {
     }, [epubData]);
 
     /**
-     * @param chapterId - `EPUB.Spine[].id`
+     * @param chapterId - id from {@link EpubPackage.spine}
      * @param position - element query string of position to scroll to
      */
     const openChapterById = useCallback(
@@ -232,7 +233,7 @@ const EPubReader: React.FC = () => {
             if (!epubData) return;
             const href = (ev.currentTarget as HTMLAnchorElement).getAttribute("data-href");
             if (href) {
-                if (href.startsWith("http")) {
+                if (isExternalEpubReference(href)) {
                     dialogUtils
                         .warn({
                             message: t("dialogs.openExternalLink"),
@@ -295,7 +296,7 @@ const EPubReader: React.FC = () => {
                 .catch((err) => log.error("temp extract dir delete failed", err));
 
         link = window.path.normalize(link);
-        EPUB.readEpubFile(link, appSettings.keepExtractedFiles)
+        readEpubFile(link, appSettings.keepExtractedFiles)
             .then(async (ed) => {
                 // todo : When current chapter is not top level(level=0), make BookItem.chapter concat of all parent chapters.
                 let currentChapterIndex = 0;

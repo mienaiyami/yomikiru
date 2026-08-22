@@ -3,13 +3,11 @@ import {
     extraLibraryFolders,
     getDefaultLocationFolder,
     isLibraryFolderContent,
-    keepKnownLibraryFolderTagIds,
     LIBRARY_SCAN_MAX_DEPTH_CEILING,
     type LibraryFolder,
     patchLibraryFolder,
     setDefaultLocationPath,
 } from "@common/library/folders";
-import { useDirectoryValidator } from "@features/reader/hooks/useDirectoryValidator";
 import { setAppSettings } from "@store/appSettings";
 import { useAppDispatch, useAppSelector } from "@store/hooks";
 import store from "@store/index";
@@ -63,11 +61,9 @@ const LibrarySettings: React.FC = () => {
     const appSettings = useAppSelector((s) => s.appSettings);
     const folders = useAppSelector((s) => s.mainSettings.library.folders);
     const libraryItems = useAppSelector((s) => s.library.items);
-    const tagCatalog = useAppSelector((s) => s.tags.catalog);
     const libraryScanStatus = useAppSelector((s) => s.ui.libraryScanStatus);
     const libraryScanBusy = libraryScanStatus != null;
     const pendingSettingsNav = useAppSelector((s) => s.ui.pendingSettingsNav);
-    const { validateDirectory } = useDirectoryValidator();
 
     const defaultFolder = getDefaultLocationFolder(folders);
     const extras = extraLibraryFolders(folders);
@@ -195,7 +191,7 @@ const LibrarySettings: React.FC = () => {
             const list = Object.values(libraryItems).filter(
                 (item): item is NonNullable<typeof item> => item != null,
             );
-            const result = await regenerateLibraryThumbnails(dispatch, list, validateDirectory, (done, total) => {
+            const result = await regenerateLibraryThumbnails(dispatch, list, (done, total) => {
                 setRegenLabel(`${done} / ${total}`);
             });
             skippedMissing = result.skippedMissing;
@@ -204,7 +200,7 @@ const LibrarySettings: React.FC = () => {
         });
         // skip the summary dialog if runBusy already showed regenError
         if (regenFinished) await showRegenSkippedWarning(skippedMissing);
-    }, [dispatch, libraryItems, validateDirectory, runBusy, t]);
+    }, [dispatch, libraryItems, runBusy, t]);
 
     const confirmThenScan = async (paths: readonly string[]): Promise<void> => {
         const { response } = await dialogUtils.warn({
@@ -227,8 +223,7 @@ const LibrarySettings: React.FC = () => {
         tagIds: readonly number[],
         target: "default" | number,
     ): Promise<void> => {
-        const known = new Set(tagCatalog.map((tag) => tag.id));
-        const ids = keepKnownLibraryFolderTagIds(tagIds, known);
+        const ids = [...tagIds];
         if (ids.length === 0) return;
         const skipRoots = listForeignLibraryScanSkipPaths(rootPath, folders);
         const links = libraryItemLinksUnderScanRoot(Object.keys(libraryItems), rootPath, skipRoots);

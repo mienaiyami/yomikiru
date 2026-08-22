@@ -3,7 +3,7 @@ import {
     type LibraryFolder,
 } from "@common/library/folders";
 import { makeBookItem, makeMangaItem } from "@test/fixtures/libraryItem";
-import { stubFs } from "@test/mocks/preload";
+import { onInvoke, stubFs } from "@test/mocks/preload";
 import path from "node:path";
 import { describe, expect, it } from "vitest";
 import {
@@ -15,6 +15,7 @@ import {
     libraryItemLinksUnderScanRoot,
     listForeignLibraryScanSkipPaths,
     newLibraryFolderSetting,
+    promptForInitialDefaultLocation,
     unusedDummyProgressLinks,
 } from "./librarySettingsImport";
 import { LIBRARY_SCAN_DEFAULT_MAX_DEPTH } from "@common/types/libraryScan";
@@ -36,6 +37,29 @@ describe("getExistingBaseDir", () => {
         const dir = path.join("testdata", "library");
         stubFs({ existsSync: (p) => p === dir });
         expect(getExistingBaseDir(`  ${dir}  `)).toBe(dir);
+    });
+});
+
+describe("promptForInitialDefaultLocation", () => {
+    it("returns the selected root after Choose now", async () => {
+        const selected = path.join("testdata", "library");
+        onInvoke("dialog:confirm", async () => ({ response: 0, checkboxChecked: false }));
+        onInvoke("dialog:showOpenDialog", async () => ({ canceled: false, filePaths: [selected] }));
+        await expect(promptForInitialDefaultLocation(path.join("users", "reader"))).resolves.toBe(
+            path.normalize(selected),
+        );
+    });
+
+    it("uses the system home root after Choose later", async () => {
+        const home = path.join("users", "reader");
+        onInvoke("dialog:confirm", async () => ({ response: 1, checkboxChecked: false }));
+        await expect(promptForInitialDefaultLocation(home)).resolves.toBe(path.normalize(home));
+    });
+
+    it("keeps Default Location empty when Choose now picker is cancelled", async () => {
+        onInvoke("dialog:confirm", async () => ({ response: 0, checkboxChecked: false }));
+        onInvoke("dialog:showOpenDialog", async () => ({ canceled: true, filePaths: [] }));
+        await expect(promptForInitialDefaultLocation(path.join("users", "reader"))).resolves.toBeNull();
     });
 });
 

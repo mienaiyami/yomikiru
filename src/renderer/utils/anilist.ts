@@ -139,14 +139,22 @@ const resolveAnilistBearer = (): string => {
 };
 
 /**
- * Loads the stored token into module state and validates it. Call once from app startup;
- * this module no longer runs that work on import.
+ * Loads the stored token into module state. Does not validate it.
+ * Every window must call this so GraphQL has a bearer; token check is once per app.
  */
-export const initAnilist = (): void => {
+export const hydrateAnilistClientFromStorage = (): void => {
     ensureAnilistNs();
     if (getAnilistStorageToken() === null) setAnilistStorageToken("");
+    setAnilistClientToken(getAnilistStorageToken() || "");
+};
+
+/**
+ * Loads the stored token and validates it with AniList. Call once per app
+ * (first window to claim `anilist:claimStartupImport`).
+ */
+export const initAnilist = (): void => {
+    hydrateAnilistClientFromStorage();
     const stored = getAnilistStorageToken() || "";
-    setAnilistClientToken(stored);
     if (!stored) return;
     void checkAnilistToken(stored).then((ok) => {
         if (!ok && ok !== undefined)

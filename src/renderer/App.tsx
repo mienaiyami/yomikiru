@@ -34,11 +34,11 @@ import {
     setLibraryScanStatus,
     toggleSettingsOpen,
 } from "@store/ui";
-import { initAnilist } from "@utils/anilist";
+import { hydrateAnilistClientFromStorage, initAnilist } from "@utils/anilist";
 import { dialogUtils } from "@utils/dialog";
 import { keyFormatter, mouseEventFormatter } from "@utils/keybindings";
 import { resolveMissingOpenPath } from "@utils/libraryMissingPath";
-import { getExistingBaseDir } from "@utils/librarySettingsImport";
+import { getExistingBaseDir, promptForInitialDefaultLocation } from "@utils/librarySettingsImport";
 import {
     createContext,
     createRef,
@@ -120,15 +120,11 @@ const App = (): ReactElement => {
 
     useEffect(() => {
         if (firstRendered) {
-            if (
-                mainSettingsReady &&
-                !askedDefaultLocation.current &&
-                getExistingBaseDir(getDefaultLocationPath(libraryFolders)) === null
-            ) {
+            if (mainSettingsReady && !askedDefaultLocation.current) {
+                const configuredPath = getDefaultLocationPath(libraryFolders).trim();
+                if (getExistingBaseDir(configuredPath) !== null) return;
                 askedDefaultLocation.current = true;
-                dialogUtils.customError({ message: i18n.t("app.noSettingsSelectFolder", { ns: "common" }) });
-                promptSelectDir((selected) => {
-                    const folderPath = Array.isArray(selected) ? selected[0] : selected;
+                const persistDefaultLocation = (folderPath: string | null): void => {
                     if (!folderPath) return;
                     void dispatch(
                         updateMainSettings({
@@ -140,6 +136,21 @@ const App = (): ReactElement => {
                             },
                         }),
                     );
+                };
+
+                if (!configuredPath) {
+                    void promptForInitialDefaultLocation(window.electron.app.getPath("home")).then(
+                        persistDefaultLocation,
+                    );
+                    return;
+                }
+
+                void dialogUtils.customError({
+                    message: i18n.t("app.defaultLocationMissing", { ns: "common" }),
+                    detail: configuredPath,
+                });
+                void promptSelectDir((selected) => {
+                    persistDefaultLocation(Array.isArray(selected) ? (selected[0] ?? null) : selected);
                 });
             }
         } else {
@@ -221,12 +232,13 @@ const App = (): ReactElement => {
     useEffect(() => {
         const listeners: (() => void)[] = [];
         setFirstRendered(true);
-        initAnilist();
+        hydrateAnilistClientFromStorage();
         void dispatch(fetchAllItemsWithProgress()).then(() => {
             void window.electron.invoke("libraryScan:rendererReady");
             // TODO: added temporarily to import old app's anilist data, remove later
             void window.electron.invoke("anilist:claimStartupImport").then((claimed) => {
                 if (!claimed) return;
+                initAnilist();
                 void dispatch(importAnilistTrackingFromStorage()).then(() => {
                     void dispatch(fetchAllTrackers());
                 });

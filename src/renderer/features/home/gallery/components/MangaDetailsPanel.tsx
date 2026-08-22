@@ -1,6 +1,5 @@
 import type { LibraryItemWithProgress, MangaBookmark } from "@common/types/db";
 import AnilistBar from "@features/anilist/AnilistBar";
-import { useDirectoryValidator } from "@features/reader/hooks/useDirectoryValidator";
 import { faStar as faStarRegular } from "@fortawesome/free-regular-svg-icons";
 import {
     faBookmark,
@@ -34,7 +33,7 @@ import { selectTracker } from "@store/trackers";
 import dateUtils from "@utils/date";
 import { dialogUtils } from "@utils/dialog";
 import { formatUtils } from "@utils/file";
-import { parseDetailsCoverSource, resolveDetailsCoverSrc } from "@utils/libraryCover";
+import { libraryCoverSrc, parseDetailsCoverSource, resolveDetailsCoverSrc } from "@utils/libraryCover";
 import { materializeMangaLibraryThumbnail, pickAndApplyCustomCover } from "@utils/libraryCoverService";
 import { resolveItemMetadata } from "@utils/libraryMetadata";
 import {
@@ -125,7 +124,6 @@ const MangaDetailsPanel = ({
         shallowEqual,
     );
     const { setContextMenuData, openInReader } = useAppContext();
-    const { validateDirectory } = useDirectoryValidator();
     const continueRef = useRef<HTMLButtonElement>(null);
     const chaptersListRef = useRef<HTMLDivElement>(null);
 
@@ -134,15 +132,22 @@ const MangaDetailsPanel = ({
     }, []);
 
     useEffect(() => {
-        if (!manga?.id || !window.fs.existsSync(mangaLink) || !window.fs.isDir(mangaLink)) return;
+        if (
+            !manga?.id ||
+            libraryCoverSrc(manga) ||
+            !window.fs.existsSync(mangaLink) ||
+            !window.fs.isDir(mangaLink)
+        ) {
+            return;
+        }
         void (async () => {
             try {
-                await materializeMangaLibraryThumbnail(dispatch, manga.id, mangaLink, validateDirectory);
+                await materializeMangaLibraryThumbnail(dispatch, manga.id, mangaLink);
             } catch (err) {
                 log.error("covers:materialize from details panel failed", err);
             }
         })();
-    }, [mangaLink, manga?.id, dispatch, validateDirectory]);
+    }, [mangaLink, manga?.id, dispatch]);
 
     const refreshChapters = useCallback(() => {
         const fetchChapters = async () => {

@@ -54,7 +54,7 @@ Do **not** use `DirectoryValidatorService` to decide “is this a series.” Tha
 
 For directory `D`:
 
-1. If `D` has at least one **listable chapter child** (subdir with images, or packed/PDF) -> **series**. Add `D`. Stop.
+1. If `D` has at least one **listable chapter child** (subdir with images, or packed/PDF) and no sibling that itself contains nested directories or book/packed files -> **series**. Add `D`. Stop. Otherwise `D` is a grouping folder so a mixed library root does not swallow nested series or one-shots.
 2. Else if `D` has only images (cover sidecars allowed) -> **one-shot**. Add `D` (D1).
 3. Else if `D` has subdirectories -> **grouping**. Recurse until the per-root max-depth ceiling.
 4. Files: `.epub` -> book (if the root allows books). Packed/PDF in a grouping folder -> single-file manga item (if the root allows manga).
@@ -93,7 +93,7 @@ Library scan config lives in **`main-settings.json`** (`MainSettings.library.fol
   - `lastScanAtMs`: unix ms; `0` means never scanned (interval treats as due)
   - `skipPattern`: string, default empty (no regex skip)
   - `tagIds`: catalog tag ids unioned onto items found under this folder
-- **No migrate** from old `settings.json` `baseDir` / `libraryFolders` / `scanDefaultLocation*`. After this change, Default Location is empty until the user picks a folder again (existing first-run prompt).
+- **No migrate** from old `settings.json` `baseDir` / `libraryFolders` / `scanDefaultLocation*`. When Default Location is empty, startup asks whether to choose the Home library root now or use the system home folder until it is changed later.
 - Shallow-merge of MainSettings replaces the whole `library` object; callers send the full `folders` array.
 
 UI: Settings -> Library (same section as Default Location and thumbnails).
@@ -105,7 +105,7 @@ UI: Settings -> Library (same section as Default Location and thumbnails).
 
 When walking root R, other library-folder paths that sit inside R are not entered. Ancestor roots are not skip targets, so a nested extra folder still walks its own children. Skip regex is case-insensitive against descendant basenames only (a pattern with no special characters matches as a substring). A sentinel **file** named `yomikiru-ignore` or `.yomikiru-ignore` inside D skips D; a **folder** with that name skips that folder only. Folder tags are unioned onto new scan/watch items; backfill uses the same foreign-root exclusion. Scan never auto-removes catalogue rows.
 
-The title bar shows live scan status (phase, root, current path) in a popover on every window, with **Cancel scan**. Scan now does **not** lock the window (thumbnail regenerate still can). Scan, interval, and folder watch run in the main process. EPUB files are skipped until the shared OPF parser lands (wrong basename-only titles are worse than a defer). PDF manga is added without a cover; the first gallery window that shows the tile generates page 1 (limited concurrency). Packed zip/cbz/7z covers unzip in main; rar/cbr stay coverless until opened.
+The title bar shows live scan status (phase, root, current path) in a popover on every window, with **Cancel scan**. Scan now does **not** lock the window (thumbnail regenerate still can). Scan, interval, and folder watch run in the main process. Cancellation is checked during the walk, not only after a root finishes. EPUB files are added with title, author, and cover from the OPF (shared `fast-xml-parser` adapter). PDF manga is added without a cover; the first gallery window that shows the tile generates page 1 (limited concurrency). Packed zip/cbz/7z and rar/cbr covers are resolved in main through the same extraction owner used by open/extract; temporary scan and regeneration sources are removed after materialization.
 
 Catalog, i18n, Usage (`usage:library-scan`). Watch copy must warn like `autoRefreshSideList` (slow disks, large trees); turning Watch on also confirms in a dialog.
 
@@ -252,8 +252,10 @@ Changelog, Usage, catalog updates land **with the slice that makes the control r
 
 | Concern | Home |
 | --- | --- |
-| Chapter listing + classifier | `src/renderer/utils/mangaChapterPath.ts` (extend) or a sibling **generic** `mangaChapters.ts` if the file would mix path resolve with FS walks — prefer one domain module, not `classifySeries.ts` |
-| Scan walk / import | `librarySettingsImport.ts` (already the import home) |
+| Chapter listing + classifier | `src/common/library/classify.ts` (injected `LibraryIo`); renderer wrappers in `mangaChapters.ts` |
+| Scan walk / watch / interval | `src/electron/util/libraryScan.ts` (main) |
+| EPUB package (title/cover/TOC) | `src/common/epub/` |
+| Cover first-image (folder/archive/EPUB) | `src/common/library/images.ts` + `src/electron/util/contentSource.ts`; `src/electron/ipc/covers.ts` owns library-path materialization |
 | Missing-path + merge confirm | `libraryMissingPath.ts` |
 | Relocate / merge persistence | `DatabaseService` in `src/electron/db/index.ts` |
 | Settings UI | `LibrarySettings.tsx` + catalog |
@@ -288,7 +290,7 @@ Not seams: chokidar internals, Settings JSX layout, dialog pixel copy, Directory
 - Settings keys additive with Zod repair.
 - Progress-optional add is additive (no DROP). `lastReadAt` stays NOT NULL on progress rows that exist.
 - Merge is explicit (confirm). Scan does not delete.
-- Fresh install: empty library folders, Default Location as today, Scan now no-ops until a folder is added or the Default Location checkbox is on.
+- Fresh install: startup offers to select the Home library root; choosing later stores the system home folder. Scan flags remain off until the user enables them.
 - Upgrade from current stable: same `baseDir`; import buttons replaced by Scan now once slice 3 ships; leftover dummy progress is cleared only if the user runs **Clear unused progress**.
 
 ---
@@ -303,7 +305,7 @@ Not seams: chokidar internals, Settings JSX layout, dialog pixel copy, Directory
 - Move an EPUB, open the new file: same prompt; one book row.
 - If a duplicate was already created: Locate -> merge confirm -> one row, keeper id.
 - Classic History does not list unread scan rows.
-- Pointing a library folder at a huge tree: max-depth ceiling stops the walk; UI stays locked with progress copy during Scan now. Start and interval scans stay usable and show a title-bar status.
+- Pointing a library folder at a huge tree: max-depth ceiling stops the walk; Scan now, start, and interval scans keep the window usable and show title-bar status with cancellation.
 - Watch on an extra folder: dropping a new series in adds a catalogue row after the debounce; deleting a folder does not remove the library item.
 - Clear unused progress: leftover first-page progress from older add-on-open rows is removed after confirm; catalogue stays.
 

@@ -8,7 +8,6 @@ import {
     isDuplicateLibraryFolderPath,
     isLibraryFolderContent,
     isLibraryScanDue,
-    keepKnownLibraryFolderTagIds,
     libraryFoldersNeedHeal,
     librarySettingsSchema,
     newExtraLibraryFolder,
@@ -115,7 +114,6 @@ describe("isLibraryFolderContent / tag prune", () => {
         expect(changed).toBe(true);
         expect(next[0]?.tagIds).toEqual([1]);
         expect(next[1]?.tagIds).toEqual([3]);
-        expect(keepKnownLibraryFolderTagIds([1, 9], new Set([1]))).toEqual([1]);
     });
 });
 

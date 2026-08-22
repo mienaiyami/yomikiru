@@ -1,27 +1,10 @@
 import path from "node:path";
-import type { ValidationResult } from "@renderer/features/reader/types";
 import { stubFs } from "@test/mocks/preload";
-import { describe, expect, it, vi } from "vitest";
-import EPUB from "./epub";
+import { describe, expect, it } from "vitest";
 import {
-    fetchMangaCoverMaterializeSource,
     mangaDedicatedCoverPathForDb,
-    mangaSeriesFirstImageScanOptions,
-    resolveBookCoverAbsolutePath,
     resolveMangaCoverSourcePath,
-    type ValidateDirectoryFn,
 } from "./libraryCoverSources";
-
-describe("mangaSeriesFirstImageScanOptions", () => {
-    it("matches bulk-import first-image scan flags", () => {
-        expect(mangaSeriesFirstImageScanOptions()).toMatchObject({
-            firstImageOnly: true,
-            maxSubdirectoryDepth: 1,
-            errorOnInvalid: false,
-            useCache: true,
-        });
-    });
-});
 
 describe("mangaDedicatedCoverPathForDb / resolveMangaCoverSourcePath", () => {
     it("returns dedicated cover.* when findCover finds a file", () => {
@@ -46,66 +29,5 @@ describe("mangaDedicatedCoverPathForDb / resolveMangaCoverSourcePath", () => {
             realCover: "",
             sourceForCover: firstPage,
         });
-    });
-});
-
-describe("fetchMangaCoverMaterializeSource", () => {
-    it("returns dedicated cover when present", async () => {
-        const dir = path.join("testdata", "manga", "series");
-        const cover = path.join(dir, "cover.png");
-        stubFs({ existsSync: (p) => p === dir, isFile: (p) => p === cover });
-        const validateDirectory: ValidateDirectoryFn = vi.fn(async () => ({ isValid: true }));
-        await expect(fetchMangaCoverMaterializeSource(dir, validateDirectory)).resolves.toBe(cover);
-    });
-
-    it("falls back to the first sorted image in the folder", async () => {
-        const dir = path.join("testdata", "manga", "series");
-        const first = path.join(dir, "001.jpg");
-        stubFs({
-            existsSync: (p) => p === dir || p === first,
-            isDir: (p) => p === dir,
-            isFile: (p) => p === first,
-            readdir: async (p) => (p === dir ? ["001.jpg"] : []),
-        });
-        const validateDirectory: ValidateDirectoryFn = vi.fn(async () => ({ isValid: true }));
-        await expect(fetchMangaCoverMaterializeSource(dir, validateDirectory)).resolves.toBe(first);
-        expect(validateDirectory).not.toHaveBeenCalled();
-    });
-
-    it("uses validateDirectory for packed archives", async () => {
-        const archive = path.join("testdata", "manga", "series.cbz");
-        const first = path.join("tmp", "001.jpg");
-        stubFs({
-            existsSync: (p) => p === archive || p === first,
-            isFile: (p) => p === archive || p === first,
-            isDir: () => false,
-        });
-        const validateDirectory: ValidateDirectoryFn = vi.fn(
-            async (): Promise<ValidationResult> => ({
-                isValid: true,
-                images: [first],
-            }),
-        );
-        await expect(fetchMangaCoverMaterializeSource(archive, validateDirectory)).resolves.toBe(first);
-        expect(validateDirectory).toHaveBeenCalled();
-    });
-
-    it("returns undefined without scanning when the series path is missing", async () => {
-        const dir = path.join("testdata", "manga", "gone");
-        stubFs({ existsSync: () => false });
-        const validateDirectory: ValidateDirectoryFn = vi.fn(async () => ({ isValid: true }));
-        await expect(fetchMangaCoverMaterializeSource(dir, validateDirectory)).resolves.toBeUndefined();
-        expect(validateDirectory).not.toHaveBeenCalled();
-    });
-});
-
-describe("resolveBookCoverAbsolutePath", () => {
-    it("does not parse when the EPUB path is missing", async () => {
-        const epub = path.join("testdata", "books", "missing.epub");
-        stubFs({ existsSync: () => false });
-        const readEpubFile = vi.spyOn(EPUB, "readEpubFile");
-        await expect(resolveBookCoverAbsolutePath(epub)).resolves.toBeUndefined();
-        expect(readEpubFile).not.toHaveBeenCalled();
-        readEpubFile.mockRestore();
     });
 });

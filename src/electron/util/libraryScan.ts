@@ -26,7 +26,7 @@ import type { DatabaseService } from "@electron/db";
 import { libraryItemTags, libraryItems, libraryTags } from "@electron/db/schema";
 import { pingDatabaseChange } from "@electron/ipc/database";
 import { ipc } from "@electron/ipc/utils";
-import { resolveFirstImage } from "@electron/util/contentSource";
+import { withExtractedEpubPackage, withResolvedFirstImage } from "@electron/util/contentSource";
 import { mainLibraryIo } from "@electron/util/libraryFs";
 import { createMainLogger } from "@electron/util/logger";
 import { MainSettings } from "@electron/util/mainSettings";
@@ -52,12 +52,14 @@ let currentStatus: LibraryScanStatus | null = null;
 let abort: AbortController | null = null;
 let didStartup = false;
 let intervalTimer: ReturnType<typeof setInterval> | null = null;
-const watchers = new Map<string, () => void>();
+/** Active watcher depth and cleanup keyed by normalized library root. */
+const watchers = new Map<string, { maxDepth: number; stop: () => void }>();
 const watchDebounce = new Map<string, ReturnType<typeof setTimeout>>();
 const watchQueued = new Map<string, Set<string>>();
 
 const normalizeRoot = (raw: string): string => path.normalize(raw.trim());
 
+/** Stores the latest status and broadcasts it to every living renderer window. */
 const broadcastStatus = (status: LibraryScanStatus | null): void => {
     currentStatus = status;
     for (const window of BrowserWindow.getAllWindows()) {
@@ -70,6 +72,7 @@ const broadcastStatus = (status: LibraryScanStatus | null): void => {
     }
 };
 
+/** Throws the shared cancellation sentinel used by manual scans and watch flushes. */
 const throwIfAborted = (): void => {
     if (abort?.signal.aborted) {
         const err = new Error("library scan cancelled");
@@ -90,6 +93,10 @@ export const cancelLibraryScan = (): void => {
     log.info("library scan cancel requested");
 };
 
+/**
+ * Other configured roots a walk of `currentRoot` must not enter.
+ * Ancestors are omitted because excluding one would also exclude the current walk.
+ */
 const listForeignSkipPaths = (currentRoot: string, folders: readonly LibraryFolder[]): string[] => {
     const current = normalizeRoot(currentRoot);
     const out: string[] = [];
@@ -103,12 +110,14 @@ const listForeignSkipPaths = (currentRoot: string, folders: readonly LibraryFold
     return out;
 };
 
+/** Returns a folder row only when its configured root currently exists. */
 const libraryFolderScanRoot = (folder: LibraryFolder) => {
     const p = folder.path.trim();
     if (!p || !fs.existsSync(p)) return null;
     return folder;
 };
 
+/** Filters, normalizes, and de-duplicates folder rows selected for one scan reason. */
 const rootsFromFolders = (
     folders: readonly LibraryFolder[],
     include: (folder: LibraryFolder) => boolean,
@@ -127,12 +136,17 @@ const rootsFromFolders = (
     return out;
 };
 
+/** Reads the catalogue's natural keys so a walk cannot re-add existing titles. */
 const existingLibraryLinks = async (): Promise<Set<string>> => {
     if (!dbRef) return new Set();
     const rows = await dbRef.db.select({ link: libraryItems.link }).from(libraryItems);
     return new Set(rows.map((row) => row.link));
 };
 
+/**
+ * Adds configured folder tags without replacing existing assignments.
+ * The whole union is skipped when settings contain an unknown tag id.
+ */
 const unionFolderTags = async (itemLink: string, tagIds: readonly number[]): Promise<void> => {
     if (!dbRef || tagIds.length === 0) return;
     const uniqueIds = [...new Set(tagIds)];
@@ -150,6 +164,7 @@ const unionFolderTags = async (itemLink: string, tagIds: readonly number[]): Pro
         .onConflictDoNothing();
 };
 
+/** Adds one classified manga target and materializes its non-PDF cover when available. */
 const addMangaPath = async (norm: string, tagIds: readonly number[]): Promise<"added" | "skipped" | "failed"> => {
     if (!dbRef) return "failed";
     try {
@@ -173,9 +188,9 @@ const addMangaPath = async (norm: string, tagIds: readonly number[]): Promise<"a
             },
         });
         await unionFolderTags(item.link, tagIds);
-        if (item.id != null && !isPdfFileName(norm, io.path.extname)) {
-            const source = await resolveFirstImage(norm);
-            if (source) await materializeCoverFromSourcePath(item.id, source);
+        const libraryId = item.id;
+        if (libraryId != null && !isPdfFileName(norm, io.path.extname)) {
+            await withResolvedFirstImage(norm, (source) => materializeCoverFromSourcePath(libraryId, source));
         }
         return "added";
     } catch (err) {
@@ -184,22 +199,51 @@ const addMangaPath = async (norm: string, tagIds: readonly number[]): Promise<"a
     }
 };
 
+/** Adds one EPUB from shared package metadata while its extracted cover remains alive. */
+const addBookPath = async (norm: string, tagIds: readonly number[]): Promise<"added" | "skipped" | "failed"> => {
+    const db = dbRef;
+    if (!db) return "failed";
+    const added = await withExtractedEpubPackage(norm, async (pkg) => {
+        const item = await db.addLibraryItem({
+            type: "book",
+            data: {
+                type: "book",
+                link: norm,
+                title: pkg.metadata.title,
+                author: pkg.metadata.author.trim() ? pkg.metadata.author : null,
+                cover: null,
+            },
+        });
+        await unionFolderTags(item.link, tagIds);
+        if (item.id != null && pkg.metadata.cover) {
+            await materializeCoverFromSourcePath(item.id, pkg.metadata.cover);
+        }
+        return "added" as const;
+    });
+    if (added === "added") return "added";
+    log.warn("scan skipped EPUB; extract or OPF parse failed", { path: norm });
+    return "failed";
+};
+
+/** Dispatches one classified target to its content-specific catalogue writer. */
 const addScanTarget = async (
     target: { type: "manga" | "book"; path: string },
     tagIds: readonly number[],
     existing: Set<string>,
 ): Promise<"added" | "skipped" | "failed"> => {
     if (existing.has(target.path)) return "skipped";
-    if (target.type === "book" || isBookFileName(target.path, io.path.extname)) {
-        /* P5: shared OPF parser; adding with basename-only would show the wrong title */
-        log.info("scan deferred EPUB until metadata parser lands", { path: target.path });
-        return "skipped";
-    }
-    const result = await addMangaPath(target.path, tagIds);
+    const result =
+        target.type === "book" || isBookFileName(target.path, io.path.extname)
+            ? await addBookPath(target.path, tagIds)
+            : await addMangaPath(target.path, tagIds);
     if (result === "added" || result === "skipped") existing.add(target.path);
     return result;
 };
 
+/**
+ * Classifies and adds every requested root in order while broadcasting aggregate progress.
+ * A root enters `completedPaths` only after all of its targets finish.
+ */
 const walkAndAdd = async (
     folders: readonly LibraryFolder[],
     allFolders: readonly LibraryFolder[],
@@ -239,6 +283,7 @@ const walkAndAdd = async (
                 if (abort?.signal.aborted) return;
                 broadcastStatus({ ...baseStatus, phase: "walking", currentPath, added, skipped, failed });
             },
+            shouldStop: () => abort?.signal.aborted ?? false,
         });
         throwIfAborted();
         const addTotal = targets.length;
@@ -265,12 +310,14 @@ const walkAndAdd = async (
     return { added, skipped, failed, completedPaths };
 };
 
+/** Persists last-scan timestamps for roots that completed without cancellation. */
 const stampCompleted = async (paths: readonly string[]): Promise<void> => {
     if (paths.length === 0) return;
     const folders = withLibraryScanTimestamps(MainSettings.settings.library.folders, paths);
     await MainSettings.updateSettings({ library: { folders } });
 };
 
+/** Selects existing roots according to explicit paths or the request reason's folder flags. */
 const selectScanRoots = (request: LibraryScanStartRequest): LibraryFolder[] => {
     const folders = MainSettings.settings.library.folders;
     if (request.paths && request.paths.length > 0) {
@@ -347,10 +394,11 @@ export const startLibraryScan = async (
     return runScan(req.reason, roots);
 };
 
+/** Closes one watcher and clears its queued/debounced work. */
 const closeWatcher = (root: string): void => {
-    const stop = watchers.get(root);
-    if (stop) {
-        stop();
+    const watcher = watchers.get(root);
+    if (watcher) {
+        watcher.stop();
         watchers.delete(root);
     }
     const timer = watchDebounce.get(root);
@@ -361,12 +409,14 @@ const closeWatcher = (root: string): void => {
     watchQueued.delete(root);
 };
 
+/** Watch depth includes chapter descendants so a page copy can trigger classify-upward. */
 const watchDepth = (maxDepth: number): number =>
     Math.min(
         Math.max(0, maxDepth) + LIBRARY_FOLDER_WATCH_DEPTH_PAD,
         LIBRARY_SCAN_MAX_DEPTH_CEILING + LIBRARY_FOLDER_WATCH_DEPTH_PAD,
     );
 
+/** Classifies queued changes upward under one root and adds newly completed titles. */
 const flushWatchRoot = async (root: string, eventPaths: string[]): Promise<void> => {
     const folder = MainSettings.settings.library.folders.find((row) => normalizeRoot(row.path) === root);
     if (!folder || eventPaths.length === 0) return;
@@ -375,7 +425,24 @@ const flushWatchRoot = async (root: string, eventPaths: string[]): Promise<void>
     const skipRegex = compiled.status === "ok" ? compiled.regex : null;
     const allFolders = MainSettings.settings.library.folders;
     let added = 0;
-    for (const eventPath of eventPaths) {
+    let skipped = 0;
+    let failed = 0;
+    for (let index = 0; index < eventPaths.length; index += 1) {
+        throwIfAborted();
+        const eventPath = eventPaths[index];
+        if (!eventPath) continue;
+        const baseStatus = {
+            rootIndex: 1,
+            rootCount: 1,
+            rootPath: root,
+            currentPath: eventPath,
+            added,
+            skipped,
+            failed,
+            addIndex: index + 1,
+            addTotal: eventPaths.length,
+        };
+        broadcastStatus({ ...baseStatus, phase: "walking" });
         try {
             const target = await collectLibraryScanTargetFromEventPath(io, eventPath, root, {
                 content: folder.content,
@@ -385,9 +452,15 @@ const flushWatchRoot = async (root: string, eventPaths: string[]): Promise<void>
                 skipRegex,
             });
             if (!target) continue;
+            throwIfAborted();
+            broadcastStatus({ ...baseStatus, phase: "adding" });
             const result = await addScanTarget(target, folder.tagIds, existing);
             if (result === "added") added += 1;
+            else if (result === "failed") failed += 1;
+            else skipped += 1;
         } catch (err) {
+            if (err instanceof Error && err.name === "AbortError") throw err;
+            failed += 1;
             log.error("library folder watch classify failed", { eventPath, root }, err);
         }
     }
@@ -398,6 +471,7 @@ const flushWatchRoot = async (root: string, eventPaths: string[]): Promise<void>
     }
 };
 
+/** Debounces watcher bursts and retries after any process-wide scan holding the shared lock. */
 const scheduleWatchFlush = (root: string): void => {
     const prev = watchDebounce.get(root);
     if (prev) clearTimeout(prev);
@@ -423,6 +497,12 @@ const scheduleWatchFlush = (root: string): void => {
                 abort = new AbortController();
                 try {
                     await flushWatchRoot(root, eventPaths);
+                } catch (err) {
+                    if (err instanceof Error && err.name === "AbortError") {
+                        log.info("library folder watch flush cancelled", { root });
+                    } else {
+                        log.error("library folder watch flush failed", { root }, err);
+                    }
                 } finally {
                     inFlight = false;
                     abort = null;
@@ -433,6 +513,7 @@ const scheduleWatchFlush = (root: string): void => {
     );
 };
 
+/** Starts one symlink-compatible chokidar tree and queues relevant add/change events. */
 const startWatcher = (root: string, maxDepth: number): void => {
     if (watchers.has(root)) return;
     if (!fs.existsSync(root)) {
@@ -463,8 +544,11 @@ const startWatcher = (root: string, maxDepth: number): void => {
         queued.add(eventPath);
         scheduleWatchFlush(root);
     });
-    watchers.set(root, () => {
-        void watcher.close();
+    watchers.set(root, {
+        maxDepth,
+        stop: () => {
+            void watcher.close();
+        },
     });
 };
 
@@ -483,7 +567,9 @@ export const syncLibraryScanWatchers = (): void => {
         if (!wanted.has(root)) closeWatcher(root);
     }
     for (const [root, maxDepth] of wanted) {
-        if (watchers.has(root)) continue;
+        const current = watchers.get(root);
+        if (current?.maxDepth === maxDepth) continue;
+        if (current) closeWatcher(root);
         startWatcher(root, maxDepth);
     }
 };

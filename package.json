@@ -76,6 +76,7 @@
         "electron-dl": "^3.5.0",
         "electron-log": "^4.4.8",
         "electron-squirrel-startup": "^1.0.0",
+        "fast-xml-parser": "^5.11.0",
         "font-list": "^1.4.5",
         "i18next": "^26.3.6",
         "i18next-resources-to-backend": "^1.2.3",

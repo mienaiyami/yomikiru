@@ -6,15 +6,13 @@ import { dialogUtils } from "@utils/dialog";
 import { formatUtils } from "@utils/file";
 import { canonicalCoverAbsolutePath } from "@utils/libraryCover";
 import { renderPDF } from "@utils/pdf";
-import {
-    fetchMangaCoverMaterializeSource,
-    resolveBookCoverAbsolutePath,
-    resolveMangaCoverSourcePath,
-    type ValidateDirectoryFn,
-} from "@utils/libraryCoverSources";
+import { resolveMangaCoverSourcePath } from "@utils/libraryCoverSources";
 import { createRendererLogger } from "@utils/logger";
 
 const log = createRendererLogger("utils/libraryCoverService");
+
+/** Library ids whose lazy PDF cover generation already ran in this renderer session. */
+const pdfCoverAttempted = new Set<number>();
 
 /**
  * Invokes main-process WebP materialize; on success refreshes library rows from the DB.
@@ -39,8 +37,25 @@ export const materializeCoverAndRefreshLibrary = async (
     return false;
 };
 
+/** Resolves a library path in main, materializes its cover, then refreshes renderer library rows. */
+const materializeLibraryPathAndRefresh = async (
+    dispatch: AppDispatch,
+    libraryId: number,
+    itemType: "manga" | "book",
+    link: string,
+): Promise<boolean> => {
+    const result = await window.electron.invoke("covers:materializeFromLibraryPath", {
+        libraryId,
+        itemType,
+        link,
+    });
+    if (!result.ok) return false;
+    await dispatch(fetchAllItemsWithProgress());
+    return true;
+};
+
 /**
- * Builds/refreshes the library WebP thumbnail for a manga row using {@link fetchMangaCoverMaterializeSource}.
+ * Builds or refreshes a manga row thumbnail through the main-process content-source resolver.
  *
  * @returns whether materialize reported success
  */
@@ -48,24 +63,19 @@ export const materializeMangaLibraryThumbnail = async (
     dispatch: AppDispatch,
     libraryId: number,
     mangaDir: string,
-    validateDirectory: ValidateDirectoryFn,
 ): Promise<boolean> => {
-    const src = await fetchMangaCoverMaterializeSource(mangaDir, validateDirectory);
-    if (!src || !window.fs.isFile(src)) return false;
-    return materializeCoverAndRefreshLibrary(dispatch, libraryId, src);
+    return materializeLibraryPathAndRefresh(dispatch, libraryId, "manga", mangaDir);
 };
 
 /**
- * EPUB cover for `covers:materialize` (extract + metadata); same path as bulk regen / new-book flows.
+ * Builds or refreshes an EPUB row thumbnail through the main-process package parser.
  */
 export const materializeBookLibraryThumbnail = async (
     dispatch: AppDispatch,
     libraryId: number,
     epubPath: string,
 ): Promise<boolean> => {
-    const src = await resolveBookCoverAbsolutePath(epubPath);
-    if (!src || !window.fs.isFile(src)) return false;
-    return materializeCoverAndRefreshLibrary(dispatch, libraryId, src);
+    return materializeLibraryPathAndRefresh(dispatch, libraryId, "book", epubPath);
 };
 
 /** Library row fields needed to rebuild a thumbnail. */
@@ -86,7 +96,6 @@ export type RegenLibraryThumbnailsResult = {
 export const regenerateLibraryThumbnails = async (
     dispatch: AppDispatch,
     items: readonly RegenLibraryThumbnailItem[],
-    validateDirectory: ValidateDirectoryFn,
     onProgress: (done: number, total: number) => void,
 ): Promise<RegenLibraryThumbnailsResult> => {
     const skippedMissingItems: RegenLibraryThumbnailItem[] = [];
@@ -100,7 +109,7 @@ export const regenerateLibraryThumbnails = async (
             continue;
         }
         if (item.type === "manga") {
-            await materializeMangaLibraryThumbnail(dispatch, item.id, item.link, validateDirectory);
+            await materializeMangaLibraryThumbnail(dispatch, item.id, item.link);
         } else {
             await materializeBookLibraryThumbnail(dispatch, item.id, item.link);
         }
@@ -209,36 +218,10 @@ export const pickAndApplyCustomCover = async (opts: PickAndApplyCustomCoverOpts)
     }
 };
 
-/** Max concurrent PDF first-page cover renders across gallery tiles. */
-const PDF_COVER_GENERATE_CONCURRENCY = 2;
-
-const pdfCoverAttempted = new Set<number>();
-let pdfCoverActive = 0;
-const pdfCoverWait: Array<() => void> = [];
-
-const acquirePdfCoverSlot = (): Promise<void> =>
-    new Promise((resolve) => {
-        if (pdfCoverActive < PDF_COVER_GENERATE_CONCURRENCY) {
-            pdfCoverActive += 1;
-            resolve();
-            return;
-        }
-        pdfCoverWait.push(() => {
-            pdfCoverActive += 1;
-            resolve();
-        });
-    });
-
-const releasePdfCoverSlot = (): void => {
-    pdfCoverActive = Math.max(0, pdfCoverActive - 1);
-    const next = pdfCoverWait.shift();
-    if (next) next();
-};
-
 /**
  * Renders page 1 of a PDF manga item and materializes the library WebP.
  * No-ops when a cover already exists, the path is not a PDF, or this id already tried.
- * ponytail: two concurrent renders; failed ids are not retried this session.
+ * Main grants the renderer a process-wide canvas slot so another window cannot race the same cover.
  */
 export const ensurePdfLibraryCover = async (
     dispatch: AppDispatch,
@@ -248,10 +231,12 @@ export const ensurePdfLibraryCover = async (
     if (!formatUtils.pdf.test(item.link)) return;
     if (pdfCoverAttempted.has(item.id)) return;
     if (window.fs.isFile(canonicalCoverAbsolutePath(item.id))) return;
-    pdfCoverAttempted.add(item.id);
-    await acquirePdfCoverSlot();
     const dest = window.path.join(window.electron.app.getPath("temp"), `yomikiru-pdf-cover-${item.id}`);
+    let ownsRender = false;
     try {
+        ownsRender = await window.electron.invoke("covers:acquirePdfRender", { libraryId: item.id });
+        if (!ownsRender) return;
+        pdfCoverAttempted.add(item.id);
         if (!window.fs.existsSync(item.link)) return;
         await window.fs.mkdir(dest, { recursive: true });
         await renderPDF(item.link, dest, 1, undefined, 1);
@@ -267,6 +252,10 @@ export const ensurePdfLibraryCover = async (
                 log.warn("pdf library cover temp cleanup failed", { dest }, err);
             });
         }
-        releasePdfCoverSlot();
+        if (ownsRender) {
+            await window.electron.invoke("covers:releasePdfRender", { libraryId: item.id }).catch((err) => {
+                log.warn("pdf library cover release failed", { id: item.id }, err);
+            });
+        }
     }
 };

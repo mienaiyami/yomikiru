@@ -16,7 +16,7 @@ let anilistStartupImportClaimed = false;
 
 /**
  * Registers process-wide library scan (walk + watch + interval) and the AniList
- * once-per-app import claim. Call once after the database is open.
+ * once-per-app token check + legacy tracking import claim. Call once after the database is open.
  */
 export const registerLibraryScanHandlers = (db: DatabaseService): void => {
     setLibraryScanDatabase(db);

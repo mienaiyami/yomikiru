@@ -11,7 +11,8 @@ import { resolveMangaChapterPath } from "@utils/mangaChapterPath";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import MangaDetailsPanel from "./MangaDetailsPanel";
 
-const { openInReader } = vi.hoisted(() => ({
+const { materializeMangaLibraryThumbnail, openInReader } = vi.hoisted(() => ({
+    materializeMangaLibraryThumbnail: vi.fn(async () => false),
     openInReader: vi.fn(),
 }));
 
@@ -28,7 +29,7 @@ vi.mock("@utils/libraryCoverService", async (importOriginal) => {
     const mod = await importOriginal<typeof import("@utils/libraryCoverService")>();
     return {
         ...mod,
-        materializeMangaLibraryThumbnail: vi.fn(async () => false),
+        materializeMangaLibraryThumbnail,
     };
 });
 
@@ -88,6 +89,7 @@ const waitForEmptyChapterList = () =>
 describe("MangaDetailsPanel", () => {
     afterEach(() => {
         cleanup();
+        materializeMangaLibraryThumbnail.mockClear();
         openInReader.mockClear();
         vi.mocked(window.electron.showItemInFolder).mockClear();
     });
@@ -105,6 +107,21 @@ describe("MangaDetailsPanel", () => {
         renderMangaPanel();
         expect(screen.getByTitle(home.gallery.details.resizeMeta)).toBeInTheDocument();
         await waitForEmptyChapterList();
+    });
+
+    it("does not rebuild an existing library cover when details opens", async () => {
+        const cover = window.path.join(window.electron.app.getPath("userData"), "custom-cover.jpg");
+        stubFs({
+            existsSync: () => true,
+            isDir: () => true,
+            isFile: (filePath) => filePath === cover,
+            readdir: async () => [],
+            access: async () => undefined,
+            stat: async () => ({ mtimeMs: 1 }) as Awaited<ReturnType<Window["fs"]["stat"]>>,
+        });
+        renderMangaPanel(makeMangaItem({ cover }));
+        await waitForEmptyChapterList();
+        expect(materializeMangaLibraryThumbnail).not.toHaveBeenCalled();
     });
 
     it("continues at the stored chapter and page", async () => {

@@ -1,17 +1,22 @@
-import { setLibraryIo } from "@common/library/io";
+import { setLibraryIo, type LibraryIo } from "@common/library/io";
 import { createRendererLogger } from "./logger";
 
 export { formatUtils, toDialogExtensions } from "@common/library/formats";
 
-/*
- * Factory, not a snapshot: unit tests replace window.fs / window.path (stubFs, reinstall).
- * Same shape as rendererLibraryIo in mangaChapters.ts — file.ts must not import that module
- * (it pulls classify into every file.ts consumer).
+/**
+ * Preload-backed {@link LibraryIo}. The UTF-8 wrapper narrows Node's overloaded
+ * `readFile` bridge to the text contract common EPUB parsing consumes.
  */
-setLibraryIo(() => ({
-    fs: window.fs,
+export const rendererLibraryIo = (): LibraryIo => ({
+    fs: {
+        ...window.fs,
+        readFile: (filePath) => window.fs.readFile(filePath, "utf-8"),
+    },
     path: window.path,
-}));
+});
+
+/* Factory, not a snapshot: unit tests replace window.fs / window.path. */
+setLibraryIo(rendererLibraryIo);
 
 const log = createRendererLogger("utils/file");
 
@@ -40,9 +45,7 @@ const saveJSONfile = (path: string, data: any) => {
 
 export { userDataURL, settingsPath, themesPath, readerPresetsPath, shortcutsPath, saveJSONfile };
 
-/**
- * take string and make it safe for file system
- */
+/** Removes characters that cannot be used in generated filesystem names. */
 export const makeFileSafe = (string: string): string => {
     return string.replace(/(:|\\|\/|\||<|>|\*|\?)/g, "");
 };
@@ -60,12 +63,16 @@ export const formatByteSize = (
     return `${(bytes / (1024 * 1024)).toFixed(1)} ${units.mb}`;
 };
 
+/**
+ * Opens the shared file/directory picker, normalizes directory results, and optionally invokes `cb`.
+ * Multi-file mode returns every selected file; cancellation returns `null` without invoking `cb`.
+ */
 export const promptSelectDir = async (
-    cb: (path: string | string[]) => void,
+    cb?: (path: string | string[]) => void,
     asFile = false,
     filters?: Electron.FileFilter[],
     multi = false,
-): Promise<void> => {
+): Promise<string | string[] | null> => {
     const result = await window.electron.invoke("dialog:showOpenDialog", {
         properties: asFile
             ? multi
@@ -75,21 +82,22 @@ export const promptSelectDir = async (
         filters,
     });
 
-    if (result.canceled || result.filePaths.length === 0) return;
-    const path = asFile
+    if (result.canceled || result.filePaths.length === 0) return null;
+    const selected = asFile
         ? multi
-            ? result.filePaths[0]
+            ? result.filePaths
             : result.filePaths[0]
         : window.path.normalize(result.filePaths[0]);
-    cb?.(path);
+    cb?.(selected);
+    return selected;
 };
 
-export const unzip = (source: string, destination: string) => {
-    return window.electron.invoke("fs:unzip", {
+/** Requests main-process archive extraction and returns its structured outcome. */
+export const unzip = (source: string, destination: string) =>
+    window.electron.invoke("fs:unzip", {
         destination,
         source,
     });
-};
 
 /**
  * Converts an `<img src="file://...">` value (or similar) to a local filesystem path (Windows-safe).

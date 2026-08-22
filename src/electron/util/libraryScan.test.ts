@@ -24,6 +24,12 @@ const { ipcSend, getAllWindows, watchMock, watcherOn, watcherClose, updateSettin
     };
 });
 
+const { addLibraryItem, materializeCoverFromSourcePath, withExtractedEpubPackage } = vi.hoisted(() => ({
+    addLibraryItem: vi.fn(),
+    materializeCoverFromSourcePath: vi.fn(async () => ({ ok: true as const })),
+    withExtractedEpubPackage: vi.fn(),
+}));
+
 const foldersState = {
     folders: [emptyDefaultLibraryFolder()],
 };
@@ -91,11 +97,12 @@ vi.mock("@electron/ipc/database", () => ({
 }));
 
 vi.mock("@electron/util/coverMaterialize", () => ({
-    materializeCoverFromSourcePath: vi.fn(async () => ({ ok: true })),
+    materializeCoverFromSourcePath,
 }));
 
 vi.mock("@electron/util/contentSource", () => ({
-    resolveFirstImage: vi.fn(async () => undefined),
+    withResolvedFirstImage: vi.fn(async () => undefined),
+    withExtractedEpubPackage,
 }));
 
 vi.mock("@common/library/classify", async () => {
@@ -113,6 +120,7 @@ import {
     collectLibraryScanTargetFromEventPath,
     collectLibraryScanTargets,
 } from "@common/library/classify";
+import { withExtractedEpubPackage as extractEpubPackage } from "@electron/util/contentSource";
 import {
     cancelLibraryScan,
     getLibraryScanStatus,
@@ -160,6 +168,10 @@ describe("libraryScan engine", () => {
         watcherOn.mockClear();
         watcherClose.mockClear();
         updateSettings.mockClear();
+        addLibraryItem.mockReset();
+        materializeCoverFromSourcePath.mockClear();
+        withExtractedEpubPackage.mockReset();
+        withExtractedEpubPackage.mockResolvedValue(undefined);
         vi.mocked(collectLibraryScanTargets).mockReset();
         vi.mocked(collectLibraryScanTargets).mockResolvedValue([]);
         vi.mocked(collectLibraryScanTargetFromEventPath).mockReset();
@@ -177,7 +189,7 @@ describe("libraryScan engine", () => {
                     from: () => Promise.resolve([]),
                 }),
             },
-            addLibraryItem: vi.fn(),
+            addLibraryItem,
         } as never);
     });
 
@@ -219,6 +231,47 @@ describe("libraryScan engine", () => {
         expect(getLibraryScanStatus()).toBeNull();
     });
 
+    it("adds EPUB metadata and materializes its package cover", async () => {
+        const epub = path.join(existingRoot, "novel.epub");
+        const cover = path.join(existingRoot, "extract", "cover.jpg");
+        vi.mocked(collectLibraryScanTargets).mockResolvedValue([{ type: "book", path: epub }]);
+        addLibraryItem.mockResolvedValue({ id: 7, link: epub });
+        vi.mocked(extractEpubPackage).mockImplementation(async (_epubPath, usePackage) =>
+            usePackage(
+                {
+                    metadata: {
+                        title: "Package title",
+                        author: "Package author",
+                        cover,
+                        opfDir: path.dirname(cover),
+                        ncx_depth: 0,
+                    },
+                    manifest: new Map(),
+                    spine: [],
+                    toc: new Map(),
+                    ncx: [],
+                    styleSheets: [],
+                },
+                path.dirname(cover),
+            ),
+        );
+
+        const result = await startLibraryScan({ reason: "manual" });
+
+        expect(result).toMatchObject({ started: true, added: 1, failed: 0 });
+        expect(addLibraryItem).toHaveBeenCalledWith({
+            type: "book",
+            data: {
+                type: "book",
+                link: epub,
+                title: "Package title",
+                author: "Package author",
+                cover: null,
+            },
+        });
+        expect(materializeCoverFromSourcePath).toHaveBeenCalledWith(7, cover);
+    });
+
     it("broadcasts status to every living window while walking", async () => {
         const { collectLibraryScanTargets } = await import("@common/library/classify");
         const a = mockWindow(1);
@@ -245,14 +298,18 @@ describe("libraryScan engine", () => {
         });
     });
 
-    it("opens one watcher per watched folder and skips a second sync of the same path", () => {
+    it("restarts a watcher only when its configured depth changes", () => {
         foldersState.folders = [{ ...emptyDefaultLibraryFolder(), path: existingRoot, watch: true, maxDepth: 2 }];
         syncLibraryScanWatchers();
         syncLibraryScanWatchers();
         expect(watchMock).toHaveBeenCalledTimes(1);
+        foldersState.folders = [{ ...emptyDefaultLibraryFolder(), path: existingRoot, watch: true, maxDepth: 3 }];
+        syncLibraryScanWatchers();
+        expect(watchMock).toHaveBeenCalledTimes(2);
+        expect(watcherClose).toHaveBeenCalledTimes(1);
         foldersState.folders = [{ ...emptyDefaultLibraryFolder(), path: existingRoot, watch: false, maxDepth: 2 }];
         syncLibraryScanWatchers();
-        expect(watcherClose).toHaveBeenCalledTimes(1);
+        expect(watcherClose).toHaveBeenCalledTimes(2);
     });
 
     it("debounces watch events then classifies in main (no host flush)", async () => {
@@ -265,6 +322,10 @@ describe("libraryScan engine", () => {
             | undefined;
         expect(onAll).toBeTypeOf("function");
         const a = path.join(existingRoot, "series", "Ch01");
+        vi.mocked(collectLibraryScanTargetFromEventPath).mockImplementation(async () => {
+            expect(getLibraryScanStatus()).toMatchObject({ phase: "walking", rootPath: existingRoot });
+            return null;
+        });
         onAll!("add", a);
         expect(collectLibraryScanTargetFromEventPath).not.toHaveBeenCalled();
         await vi.advanceTimersByTimeAsync(LIBRARY_FOLDER_WATCH_DEBOUNCE_MS);

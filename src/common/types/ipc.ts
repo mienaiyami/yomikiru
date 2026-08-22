@@ -57,6 +57,15 @@ export type CoverOpResult = { ok: true } | { ok: false; message: string };
 
 export type CoverChannels = {
     "covers:materialize": ChannelDefinition<{ libraryId: number; sourceAbsolutePath: string }, CoverOpResult>;
+    /** Claims the process-wide renderer canvas slot for one lazy PDF thumbnail. */
+    "covers:acquirePdfRender": ChannelDefinition<{ libraryId: number }, boolean>;
+    /** Releases a PDF thumbnail canvas slot after the claiming renderer finishes or abandons it. */
+    "covers:releasePdfRender": ChannelDefinition<{ libraryId: number }, void>;
+    /** Resolves a folder/archive/EPUB source in main, then materializes its managed thumbnail. */
+    "covers:materializeFromLibraryPath": ChannelDefinition<
+        { libraryId: number; itemType: "manga" | "book"; link: string },
+        CoverOpResult
+    >;
     "covers:deleteForLibraryId": ChannelDefinition<{ libraryId: number }, CoverOpResult>;
     /** Removes all files under `userData/covers` and recreates the directory. */
     "covers:clearCache": ChannelDefinition<void, CoverOpResult>;

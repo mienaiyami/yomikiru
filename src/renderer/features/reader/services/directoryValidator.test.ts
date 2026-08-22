@@ -71,25 +71,6 @@ describe("DirectoryValidatorService", () => {
         expect(result.imageCount).toBe(2);
     });
 
-    it("firstImageOnly returns a single path but full imageCount", async () => {
-        const dir = path.join("testdata", "manga", "ch1");
-        const { service } = makeService({
-            readdir: async () => ["02.jpg", "01.jpg"],
-            stat: async () => ({ mtimeMs: 3 }),
-        });
-        const result = await service.validateDirectory(dir, {
-            useCache: false,
-            errorOnInvalid: false,
-            firstImageOnly: true,
-            sendImages: true,
-        });
-        expect(result).toEqual({
-            isValid: true,
-            images: [path.join(dir, "01.jpg")],
-            imageCount: 2,
-        });
-    });
-
     it("walks one subdirectory when the root has no images", async () => {
         const root = path.join("testdata", "manga", "series");
         const chapter = path.join(root, "ch1");

@@ -37,7 +37,7 @@ Steps:
 3. Paste the token into the input.
 4. Click "Login" — the token is validated against the AniList API.
 
-The token is stored in `localStorage` via `setAnilistStorageToken` (key `anilist_token`). It stays in localStorage on purpose: library DB backups must not include the OAuth secret. On startup, `App.tsx` calls `initAnilist()`, which loads the stored token and runs `checkAnilistToken`; if the token is invalid, a dialog prompts the user to re-login.
+The token is stored in `localStorage` via `setAnilistStorageToken` (key `anilist_token`). It stays in localStorage on purpose: library DB backups must not include the OAuth secret. On startup, every window calls `hydrateAnilistClientFromStorage()`. The first window to claim `anilist:claimStartupImport` also runs `initAnilist()` (token check) and the legacy tracking import; other windows skip those so you do not get N login-failed dialogs.
 
 ---
 
@@ -167,11 +167,12 @@ Thunks: `fetchAllTrackers`, `upsertTracker`, `removeTracker`, `updateTrackerSnap
 
 [`src/renderer/utils/anilist.ts`](../../utils/anilist.ts)
 
-Named exports (no static class). Call `initAnilist()` once at app startup to validate the stored token. GraphQL calls use the in-memory session token, falling back to the persisted `anilist_token` so requests still work before that startup effect (Settings is always mounted).
+Named exports (no static class). Every window calls `hydrateAnilistClientFromStorage()` so GraphQL has a bearer; the first window to claim `anilist:claimStartupImport` also runs `initAnilist()` (token check) and the legacy tracking import. GraphQL falls back to the persisted `anilist_token` so Settings can request before that claim.
 
 | Export | Description |
 | --- | --- |
-| `initAnilist()` | Load stored token into module state and validate it |
+| `hydrateAnilistClientFromStorage()` | Load stored token into module state (no network) |
+| `initAnilist()` | Hydrate then validate the stored token (once per app) |
 | `checkAnilistToken(token)` | Validates token against AniList API |
 | `searchAnilistMedia(query)` | Search media by title; returns array of results. GraphQL `type: MANGA` includes novels |
 | `getAnilistListEntry(mediaId)` | Create or fetch a MediaListEntry for the given media |

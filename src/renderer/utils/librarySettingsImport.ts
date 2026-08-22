@@ -1,11 +1,13 @@
 import type { LibraryFolder } from "@common/library/folders";
 import type { LibraryItemWithProgress } from "@common/types/db";
+import i18n from "@renderer/i18n";
+import { dialogUtils } from "@utils/dialog";
+import { promptSelectDir } from "@utils/file";
 import { pathIsInsideRoot } from "@utils/mangaChapters";
 
 export {
     isDuplicateLibraryFolderPath,
     isLibraryFolderContent,
-    keepKnownLibraryFolderTagIds,
     newExtraLibraryFolder as newLibraryFolderSetting,
 } from "@common/library/folders";
 
@@ -22,6 +24,34 @@ export const getExistingBaseDir = (raw: string | undefined): string | null => {
     const baseDir = raw?.trim();
     if (!baseDir || !window.fs.existsSync(baseDir)) return null;
     return baseDir;
+};
+
+/**
+ * Asks how to initialize an empty Default Location.
+ * Choosing immediately opens the folder picker; deferring returns the normalized system home path.
+ *
+ * @returns Selected/default path, or `null` when the folder picker is cancelled
+ */
+export const promptForInitialDefaultLocation = async (homePath: string): Promise<string | null> => {
+    const { response } = await dialogUtils.confirm({
+        title: i18n.t("app.initialLibraryRootTitle", { ns: "common" }),
+        message: i18n.t("app.initialLibraryRootMessage", { ns: "common" }),
+        detail: i18n.t("app.initialLibraryRootDetail", { ns: "common" }),
+        noOption: false,
+        buttons: [
+            i18n.t("app.chooseLibraryRootNow", { ns: "common" }),
+            i18n.t("app.chooseLibraryRootLater", { ns: "common" }),
+        ],
+        defaultId: 0,
+        cancelId: 1,
+        type: "question",
+    });
+    if (response === 1) {
+        const fallback = homePath.trim();
+        return fallback ? window.path.normalize(fallback) : null;
+    }
+    const selected = await promptSelectDir(undefined, false);
+    return Array.isArray(selected) ? (selected[0] ?? null) : selected;
 };
 
 /**

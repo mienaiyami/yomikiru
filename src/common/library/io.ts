@@ -19,6 +19,10 @@ export type LibraryFs = {
      */
     isFile: (path: string, acceptSymbolicLink?: boolean) => boolean;
     readdir: (path: string) => Promise<string[]>;
+    /**
+     * UTF-8 file read. Optional so classify test fakes omit it; EPUB parse requires it.
+     */
+    readFile?: (path: string, encoding?: string) => Promise<string>;
     access: (path: string, mode?: number) => Promise<void>;
     stat: (path: string) => Promise<{ mtimeMs: number }>;
     constants: { R_OK: number };

@@ -1,5 +1,6 @@
+import type { EpubManifest } from "@common/epub";
 import { useAppSelector } from "@store/hooks";
-import EPUB from "@utils/epub";
+import { readEpubChapter } from "@utils/epub";
 import { highlightUtils } from "@utils/highlight";
 import { createRendererLogger } from "@utils/logger";
 import { memo, useEffect, useLayoutEffect, useRef, useState } from "react";
@@ -19,7 +20,7 @@ const HTMLPart = memo(
         onEpubLinkClick,
         currentChapter,
     }: {
-        epubManifest: EPUB.Manifest;
+        epubManifest: EpubManifest;
         currentChapter: {
             id: string;
             /** id of element to scroll to, `#` part of url */
@@ -59,7 +60,7 @@ const HTMLPart = memo(
                     log.error(`EPUB manifest: no item for chapter id "${currentChapter.id}"`);
                     return `Error: manifest item not found for id: ${currentChapter.id}`;
                 }
-                setHtmlContent(await EPUB.readChapter(manifestItem.href));
+                setHtmlContent(await readEpubChapter(manifestItem.href));
             };
             setHTML();
         }, [currentChapter.id, epubManifest]);

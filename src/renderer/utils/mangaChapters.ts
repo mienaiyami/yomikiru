@@ -1,20 +1,12 @@
 import {
-    type LibraryIo,
     listMangaChapterChildren as listMangaChapterChildrenWith,
     type MangaChapterChild,
     pathIsInsideRoot as pathIsInsideRootWith,
 } from "@common/library/classify";
+import { rendererLibraryIo } from "./file";
 
 export type { MangaChapterChild };
-
-/**
- * Preload fs/path for classify. Main uses `mainLibraryIo` instead.
- * Process-wide helpers (`formatUtils`, folder normalize) use `setLibraryIo` in `file.ts`.
- */
-export const rendererLibraryIo = (): LibraryIo => ({
-    fs: window.fs,
-    path: window.path,
-});
+export { rendererLibraryIo };
 
 /**
  * True when `absPath` is `root` or a descendant of `root` after normalize.

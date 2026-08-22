@@ -71,6 +71,8 @@ export type CollectLibraryScanTargetsOpts = {
      * when driving title-bar status.
      */
     onWalkProgress?: (currentPath: string) => void;
+    /** Cooperative stop checked before each directory and child classification. */
+    shouldStop?: () => boolean;
 };
 
 /**
@@ -344,7 +346,7 @@ export const collectLibraryScanTargets = async (
     const out: LibraryScanTarget[] = [];
     const skipRoots = skipRootsNormalized(io, opts.skipRoots);
 
-    if (!io.fs.existsSync(normalizedRoot)) return out;
+    if (opts.shouldStop?.() || !io.fs.existsSync(normalizedRoot)) return out;
 
     const rootSkip = await shouldSkipScanSubtree(io, normalizedRoot, io.path.basename(normalizedRoot), {
         skipRoots,
@@ -360,7 +362,7 @@ export const collectLibraryScanTargets = async (
     }
 
     const walk = async (dir: string, depthLeft: number): Promise<void> => {
-        if (!io.fs.isDir(dir)) return;
+        if (opts.shouldStop?.() || !io.fs.isDir(dir)) return;
         opts.onWalkProgress?.(dir);
         let names: string[] = [];
         try {
@@ -369,6 +371,7 @@ export const collectLibraryScanTargets = async (
             return;
         }
         for (const name of names) {
+            if (opts.shouldStop?.()) return;
             const child = io.path.join(dir, name);
             if (
                 await shouldSkipScanSubtree(io, child, name, {

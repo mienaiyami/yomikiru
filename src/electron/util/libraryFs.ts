@@ -34,6 +34,7 @@ export const createMainLibraryIo = (): LibraryIo => ({
         isDir: (filePath, acceptSymbolicLink = true) => followsLink(filePath, acceptSymbolicLink, "dir"),
         isFile: (filePath, acceptSymbolicLink = true) => followsLink(filePath, acceptSymbolicLink, "file"),
         readdir: (filePath) => fsp.readdir(filePath),
+        readFile: (filePath, encoding = "utf-8") => fsp.readFile(filePath, encoding as BufferEncoding),
         access: (filePath, mode) => fsp.access(filePath, mode),
         stat: async (filePath) => {
             const st = await fsp.stat(filePath);

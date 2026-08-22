@@ -400,12 +400,12 @@ sequenceDiagram
     Renderer->>Renderer: dispatch fetchAllItemsWithProgress (refresh cover URL)
 ```
 
-- **Source resolution**: [`src/renderer/utils/libraryCoverSources.ts`](../src/renderer/utils/libraryCoverSources.ts) — `resolveMangaCoverSourcePath` checks for a dedicated `cover.*` file in the manga root, falls back to the first page image.
-- **Service layer**: [`src/renderer/utils/libraryCoverService.ts`](../src/renderer/utils/libraryCoverService.ts) — `materializeMangaLibraryThumbnail`, `materializeBookLibraryThumbnail`, `materializeBookCoverFromExtractedPath`, `pickAndApplyCustomCover`.
+- **Source resolution**: [`src/electron/util/contentSource.ts`](../src/electron/util/contentSource.ts) resolves folder, packed-manga, and EPUB sources in main while temporary extracts are alive. Renderer `libraryCoverSources.ts` only handles sources already available in an open reader.
+- **Service layer**: [`src/renderer/utils/libraryCoverService.ts`](../src/renderer/utils/libraryCoverService.ts) requests main-owned library-path materialization, handles lazy PDF page rendering, and coordinates reader/custom-cover updates.
 - **Reader flow**: [`src/renderer/features/reader/services/readerCoverFlows.ts`](../src/renderer/features/reader/services/readerCoverFlows.ts) — `applyMangaCoverAfterChapterLoad` and `applyMakeCoverFromPageImage` coordinate the reader-triggered cover updates.
 - **Custom cover**: user can right-click a page in the manga reader → "Set as Cover", or use the "Pick Cover" button in the details panel.
 - **Cache clear**: `covers:clearCache` IPC removes all files under `userData/covers/` and recreates the empty directory.
-- **Bulk regenerate / scan**: Settings → Library (first section) includes Default Location, **Scan now** (nested series and EPUBs under that folder), and thumbnail clear/regenerate. Regenerating walks every library row; missing files/folders are skipped (not extracted or parsed) and a single warning reports how many were skipped. Scan now and thumbnail rebuild lock the app UI until they finish. Scan on start and interval scans do not lock; TopBar shows a folder status while they run.
+- **Bulk regenerate / scan**: Settings -> Library (first section) includes Default Location, **Scan now** (nested series and EPUBs under that folder), and thumbnail clear/regenerate. Regenerating walks every library row; missing files/folders are skipped (not extracted or parsed) and a single warning reports how many were skipped. Thumbnail rebuild locks the app UI; every scan reason remains usable through the title-bar status and cancellation control.
 
 The `library_items.cover` column stores only user-picked non-WebP paths (e.g. a `cover.jpg` in the manga root). The WebP thumbnail at `userData/covers/<id>.webp` is separate and not stored in the DB — the renderer resolves it from the library item `id` at render time via `libraryCoverSrc` in [`src/renderer/utils/libraryCover.ts`](../src/renderer/utils/libraryCover.ts).
 

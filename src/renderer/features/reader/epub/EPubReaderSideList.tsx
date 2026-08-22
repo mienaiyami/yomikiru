@@ -1,3 +1,4 @@
+import type { EpubPackage, EpubSpine } from "@common/epub";
 import AnilistBar from "@features/anilist/AnilistBar";
 import { faArrowLeft, faArrowRight, faLocationDot, faThumbtack } from "@fortawesome/free-solid-svg-icons";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
@@ -5,7 +6,6 @@ import { ItemDisplayTitle } from "@renderer/components/ItemDisplayTitle";
 import { useAppSelector } from "@store/hooks";
 import { selectResolvedItemMetadata } from "@store/library";
 import { getReaderBook } from "@store/reader";
-import type { EPubData } from "@utils/epub";
 import { memo, useEffect, useLayoutEffect, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { useAppContext } from "src/renderer/App";
@@ -40,10 +40,10 @@ const EPubReaderSideList = memo(
     }: {
         openNextChapter: () => void;
         openPrevChapter: () => void;
-        currentChapter: EPUB.Spine[number];
+        currentChapter: EpubSpine[number];
         currentChapterFake: string;
         openChapterById: (chapterId: string, position?: string) => void;
-        epubData: EPubData;
+        epubData: EpubPackage;
         onEpubLinkClick: (ev: MouseEvent | React.MouseEvent<HTMLAnchorElement, MouseEvent>) => void;
         addToBookmarkRef: React.RefObject<HTMLButtonElement>;
         setShortcutText: React.Dispatch<React.SetStateAction<string>>;

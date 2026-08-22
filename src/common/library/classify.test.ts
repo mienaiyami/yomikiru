@@ -1,5 +1,5 @@
 import path from "node:path";
-import { classifyLibraryNode, type LibraryIo } from "@common/library/classify";
+import { classifyLibraryNode, collectLibraryScanTargets, type LibraryIo } from "@common/library/classify";
 import { describe, expect, it } from "vitest";
 
 /**
@@ -29,5 +29,24 @@ describe("classifyLibraryNode with injected fs", () => {
         const img = path.join(ch, "01.jpg");
         const io = ioForTree({ [series]: ["Ch01"], [ch]: ["01.jpg"] }, [img]);
         await expect(classifyLibraryNode(io, series)).resolves.toEqual({ kind: "series", path: series });
+    });
+
+    it("stops a walk before classifying the next child", async () => {
+        const root = path.join("lib", "books");
+        const epub = path.join(root, "novel.epub");
+        const io = ioForTree({ [root]: ["novel.epub"] }, [epub]);
+        let stopped = false;
+
+        const targets = await collectLibraryScanTargets(io, root, {
+            content: "book",
+            maxDepth: 2,
+            existingLinks: new Set(),
+            onWalkProgress: () => {
+                stopped = true;
+            },
+            shouldStop: () => stopped,
+        });
+
+        expect(targets).toEqual([]);
     });
 });

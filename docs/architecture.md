@@ -37,7 +37,7 @@ No server component; all data lives on the user's machine.
 | Schema migrations | `drizzle-kit` (migration files in `drizzle/`) |
 | Schema validation | Zod |
 | File watching | Chokidar (exposed to renderer via preload) |
-| EPUB parsing | Custom parser in `src/renderer/utils/epub.ts` |
+| EPUB package parse | Shared `fast-xml-parser` OPF/NCX/nav adapter in `src/common/epub/`; chapter HTML rewrite in `src/renderer/utils/epub.ts` |
 | PDF rendering | `pdfjs-dist` (web worker in renderer) |
 | Image processing | `sharp` (main-process only, for cover WebP generation) |
 | Auto-updater | Custom; GitHub Releases API + `electron-dl` + shared HTTP client (`src/common/http`, axios) |
@@ -98,6 +98,7 @@ All channel names, request shapes, and response shapes live there.
 src/
 ├── common/           # Shared by main + renderer: no Node builtins, no Electron (setLibraryIo)
 │   ├── http.ts             axios HTTP client (main + renderer); no fetch
+│   ├── epub/               Shared fast-xml-parser EPUB package parse (OPF / NCX / nav; no chapter HTML)
 │   ├── library/            Shared library classify / folders / images / formats (main + renderer)
 │   ├── mainSettings.ts     MainSettings Zod schema and defaults (no Electron)
 │   ├── types/
@@ -130,7 +131,7 @@ src/
 │       ├── mainSettings.ts MainSettings persist (schema: src/common/mainSettings.ts)
 │       ├── libraryScan.ts  Process-wide library walk, watch, interval, cancel
 │       ├── libraryFs.ts    Preload-shaped fs adapter (symlink follow)
-│       ├── contentSource.ts First-image / packed-archive cover source for scan
+│       ├── contentSource.ts Shared folder / packed-archive extraction and first-image source
 │       ├── coverMaterialize.ts  sharp WebP pipeline (userData/covers/<id>.webp)
 │       ├── migrate.ts      JSON -> SQLite migration (bookmarks.json / history.json)
 │       ├── logger.ts       createMainLogger (electron-log scoped sinks)

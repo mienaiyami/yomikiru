@@ -1,3 +1,4 @@
+import type { EpubNcxTree, EpubToc } from "@common/epub";
 import { useAppSelector } from "@store/hooks";
 import { Fragment, memo, useState } from "react";
 import { useTranslation } from "react-i18next";
@@ -11,8 +12,8 @@ const ContentList = memo(
         currentChapterHref,
     }: {
         currentChapterHref: string;
-        epubTOC: EPUB.TOC;
-        epubNCX: EPUB.NCXTree[];
+        epubTOC: EpubToc;
+        epubNCX: EpubNcxTree[];
         onEpubLinkClick: (ev: MouseEvent | React.MouseEvent<HTMLAnchorElement, MouseEvent>) => void;
         sideListRef: React.RefObject<HTMLDivElement>;
     }) => {
@@ -23,7 +24,7 @@ const ContentList = memo(
 
         if (epubTOC.size === 0) return <p>{t("sideList.noToc")}</p>;
 
-        const NestedList = ({ ncx }: { ncx: EPUB.NCXTree[] }) => {
+        const NestedList = ({ ncx }: { ncx: EpubNcxTree[] }) => {
             return (
                 <ol>
                     {ncx.map((e) => (
@@ -82,9 +83,10 @@ const ContentList = memo(
         };
         return <NestedList ncx={epubNCX} />;
     },
-    //todo imp check if need in props
-    // focusChapterInList will make sure that it wont rerender when its `false` for performance benefits
-    // (prev, next) => !prev.focusChapterInList || prev.currentChapter.href === next.currentChapter.href
+    /*
+     * Navigation callbacks and TOC maps remain stable while the current href changes.
+     * Restricting the comparator keeps large nested lists out of unrelated reader renders.
+     */
     (prev, next) => prev.currentChapterHref === next.currentChapterHref,
 );
 ContentList.displayName = "ContentList";
