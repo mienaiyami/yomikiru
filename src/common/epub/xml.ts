@@ -1,8 +1,5 @@
 import { XMLParser, XMLValidator } from "fast-xml-parser";
 
-/** DTD declarations are rejected so EPUB package parsing cannot register custom entities. */
-const EPUB_DOCTYPE_DECLARATION = /<!DOCTYPE\b/i;
-
 /** Ordered XML parser used for EPUB package documents in both app processes. */
 const EPUB_XML_PARSER = new XMLParser({
     preserveOrder: true,
@@ -15,6 +12,7 @@ const EPUB_XML_PARSER = new XMLParser({
     removeNSPrefix: true,
     ignoreDeclaration: true,
     ignorePiTags: true,
+    htmlEntities: true,
 });
 
 /** One element: local name, attributes, descendant text, and child elements. */
@@ -116,14 +114,12 @@ export const xmlFindAll = (node: XmlNode, name: string): XmlNode[] => {
 
 /**
  * Parses and validates XML into the namespace-agnostic tree used by EPUB package parsing.
+ * Accepts DTD and HTML entities used by older and web-generated EPUB metadata and navigation files.
  *
  * @throws {Error} When the document is malformed or has no root element
  */
 export const parseXml = (raw: string): XmlNode => {
     const source = raw.replace(/^\uFEFF/, "").trim();
-    if (EPUB_DOCTYPE_DECLARATION.test(source)) {
-        throw new Error("parseXml: DOCTYPE declarations are not supported");
-    }
     const validation = XMLValidator.validate(source);
     if (validation !== true) {
         throw new Error(`parseXml: ${validation.err.msg}`);
@@ -131,7 +127,8 @@ export const parseXml = (raw: string): XmlNode => {
     const parsed = EPUB_XML_PARSER.parse(source) as unknown;
     if (!Array.isArray(parsed)) throw new Error("parseXml: no root element");
     const root = parsed.find(
-        (entry): entry is OrderedXmlEntry => entry !== null && typeof entry === "object" && Boolean(elementKey(entry)),
+        (entry): entry is OrderedXmlEntry =>
+            entry !== null && typeof entry === "object" && Boolean(elementKey(entry)),
     );
     if (!root) throw new Error("parseXml: no root element");
     return toXmlNode(root);

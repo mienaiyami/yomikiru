@@ -97,4 +97,39 @@ describe("parseExtractedEpubDir", () => {
         expect(pkg.metadata.navId).toBe("nav");
         expect([...pkg.toc.values()][0]?.title).toBe("Chapter One");
     });
+
+    it("reads an EPUB 2 package and NCX with legacy declarations and entities", async () => {
+        const root = path.join("epub2-legacy");
+        const container = path.join(root, "META-INF", "container.xml");
+        const opf = path.join(root, "OEBPS", "content.opf");
+        const ncx = path.join(root, "OEBPS", "toc.ncx");
+        const chapter = path.join(root, "OEBPS", "Text", "chapter.xhtml");
+        const files: Record<string, string> = {
+            [root]: "",
+            [container]: `<container><rootfile full-path="OEBPS/content.opf"/></container>`,
+            [opf]: `<!DOCTYPE package [<!ENTITY bookTitle "Archive Book">]>
+                <package xmlns:dc="http://purl.org/dc/elements/1.1/">
+                  <metadata><dc:title>&bookTitle;</dc:title></metadata>
+                  <manifest>
+                    <item id="ncx" href="toc.ncx" media-type="application/x-dtbncx+xml"/>
+                    <item id="chapter" href="Text/chapter.xhtml" media-type="application/xhtml+xml"/>
+                  </manifest>
+                  <spine toc="ncx"><itemref idref="chapter"/></spine>
+                </package>`,
+            [ncx]: `<!DOCTYPE ncx PUBLIC "-//NISO//DTD ncx 2005-1//EN"
+                "http://www.daisy.org/z3986/2005/ncx-2005-1.dtd">
+                <ncx><navMap><navPoint id="chapter-nav">
+                  <navLabel><text>Chapter&nbsp;One</text></navLabel>
+                  <content src="Text/chapter.xhtml"/>
+                </navPoint></navMap></ncx>`,
+            [chapter]: "<html/>",
+        };
+        const pkg = await parseExtractedEpubDir(root, ioForFiles(files));
+        expect(pkg.metadata.title).toBe("Archive Book");
+        expect(pkg.toc.get("chapter-nav")).toMatchObject({
+            title: "Chapter\u00a0One",
+            href: chapter,
+            chapterId: "chapter",
+        });
+    });
 });

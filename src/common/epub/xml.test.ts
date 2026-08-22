@@ -39,9 +39,22 @@ describe("parseXml", () => {
         expect(() => parseXml("<package><metadata></package>")).toThrow("parseXml:");
     });
 
-    it("rejects DTD declarations before custom entities can be registered", () => {
-        expect(() => parseXml(`<!DOCTYPE package [<!ENTITY title "unsafe">]><package>&title;</package>`)).toThrow(
-            "DOCTYPE declarations are not supported",
-        );
+    it("accepts EPUB 2 public DTD declarations", () => {
+        const root = parseXml(`<!DOCTYPE ncx PUBLIC "-//NISO//DTD ncx 2005-1//EN"
+            "http://www.daisy.org/z3986/2005/ncx-2005-1.dtd">
+            <ncx><navMap/></ncx>`);
+        expect(root.name).toBe("ncx");
+        expect(xmlFind(root, "navMap")?.name).toBe("navmap");
+    });
+
+    it("accepts internal DTD entities used by older package documents", () => {
+        const root = parseXml(`<!DOCTYPE package [<!ENTITY title "Old Book">]>
+            <package><metadata><title>&title;</title></metadata></package>`);
+        expect(xmlFind(root, "title")?.text).toBe("Old Book");
+    });
+
+    it("decodes common HTML entities found in scraped package metadata", () => {
+        const root = parseXml("<package><metadata><title>Old&nbsp;Book &copy;</title></metadata></package>");
+        expect(xmlFind(root, "title")?.text).toBe("Old\u00a0Book \u00a9");
     });
 });

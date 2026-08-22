@@ -10,6 +10,12 @@ const logger = createMainLogger("util/coverMaterialize");
 const MAX_EDGE = 400;
 const WEBP_QUALITY = 82;
 
+/*
+ * libvips must not retain source file handles because extracted archive covers
+ * are deleted immediately after materialization, which Windows otherwise rejects.
+ */
+sharp.cache({ files: 0 });
+
 /**
  * @returns Absolute path to the directory where cached cover WebP files are stored.
  */
