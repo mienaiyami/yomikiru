@@ -87,6 +87,12 @@ describe("settingsTargets", () => {
             ids.indexOf("setting:scan-default-location-interval"),
         );
         expect(ids.indexOf("setting:scan-default-location-interval")).toBeLessThan(
+            ids.indexOf("setting:scan-default-location-skip"),
+        );
+        expect(ids.indexOf("setting:scan-default-location-skip")).toBeLessThan(
+            ids.indexOf("setting:scan-default-location-tags"),
+        );
+        expect(ids.indexOf("setting:scan-default-location-tags")).toBeLessThan(
             ids.indexOf("setting:library-folders"),
         );
         expect(ids.indexOf("setting:library-folders")).toBeLessThan(ids.indexOf("setting:library-folders-list"));
@@ -95,6 +101,18 @@ describe("settingsTargets", () => {
             ids.indexOf("setting:library-clear-unused-progress"),
         );
         expect(getSettingsTarget("setting:default-location")?.groupLabelKey).toBe("library.title");
+        expect(getSettingsTarget("setting:scan-default-location-depth")?.groupLabelKey).toBe(
+            "library.scanDefaultLocation",
+        );
+        expect(getSettingsTarget("setting:scan-default-location-interval")?.groupLabelKey).toBe(
+            "library.scanDefaultLocation",
+        );
+        expect(getSettingsTarget("setting:scan-default-location-skip")?.groupLabelKey).toBe(
+            "library.scanDefaultLocation",
+        );
+        expect(getSettingsTarget("setting:scan-default-location-tags")?.groupLabelKey).toBe(
+            "library.scanDefaultLocation",
+        );
     });
 
     it("resolves known ids via getSettingsTarget", () => {
@@ -112,6 +130,13 @@ describe("settingsTargets", () => {
         expect(getSettingsTarget("setting:scan-default-location-interval")?.selector).toBe(
             "#settings-scan-default-location-interval",
         );
+        expect(getSettingsTarget("setting:scan-default-location-skip")?.selector).toBe(
+            "#settings-scan-default-location-skip",
+        );
+        expect(getSettingsTarget("setting:scan-default-location-tags")?.selector).toBe(
+            "#settings-scan-default-location-tags",
+        );
+        expect(getSettingsTarget("usage:library-scan")?.selector).toBe("#settings-usage-library-scan");
         expect(getSettingsTarget("setting:library-folders")?.selector).toBe("#settings-library-folders");
         expect(getSettingsTarget("setting:library-folders-list")?.selector).toBe(
             "#settings-library-folders-list-toggle",
@@ -244,6 +269,15 @@ describe("filterSettingsTargets", () => {
         expect(filterSettingsTargets(sample, "thumbnail cache", getSearchTexts).map((t) => t.id)).toEqual([
             "setting:library",
         ]);
+    });
+
+    it("indexes skip-regex examples on the library scan usage target", () => {
+        const ids = filterSettingsTargets(
+            SETTINGS_TARGETS_STATIC,
+            "Completed|Archived",
+            getSearchTextsFromEn,
+        ).map((t) => t.id);
+        expect(ids).toContain("usage:library-scan");
     });
 
     it("does not fuzzy-match unrelated strings", () => {

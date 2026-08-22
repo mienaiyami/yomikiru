@@ -13,7 +13,9 @@ import {
     isLibraryScanDue,
     isUnusedDummyProgress,
     type LibraryScanSettingsSlice,
+    libraryItemLinksUnderScanRoot,
     listDueIntervalLibraryScanRoots,
+    listForeignLibraryScanSkipPaths,
     listManualLibraryScanRoots,
     listStartupLibraryScanRoots,
     newLibraryFolderSetting,
@@ -180,9 +182,61 @@ describe("scanRootAndAddLibraryItems", () => {
         expect(captured.map((c) => c.data.link)).toEqual([series]);
         expect(captured[0]?.progress).toBeUndefined();
     });
+
+    it("unions folder tag ids onto newly added items", async () => {
+        const root = path.join("testdata", "lib");
+        const series = path.join(root, "Series A");
+        const ch = path.join(series, "Ch01");
+        stubTree({ [root]: ["Series A"], [series]: ["Ch01"], [ch]: ["01.jpg"] }, [path.join(ch, "01.jpg")]);
+        onInvoke("db:library:addItem", async (request) => ({
+            id: 1,
+            type: "manga",
+            link: request.data.link,
+            title: request.data.title,
+            author: null,
+            cover: null,
+            createdAt: new Date(),
+            updatedAt: new Date(),
+            favouritedAt: null,
+            note: null,
+            extra: {},
+        }));
+        const unioned: { itemLinks: string[]; tagIds: number[] }[] = [];
+        onInvoke("db:library:unionItemTags", async (request) => {
+            unioned.push(request);
+            return request.itemLinks.flatMap((itemLink) => request.tagIds.map((tagId) => ({ itemLink, tagId })));
+        });
+        const store = makeStore();
+        await scanRootAndAddLibraryItems(root, {
+            dispatch: store.dispatch,
+            keepExtractedFiles: false,
+            validateDirectory: async () => ({ isValid: true }),
+            content: "manga",
+            maxDepth: 8,
+            existingLinks: new Set(),
+            tagIds: [4, 5],
+        });
+        expect(unioned).toEqual([{ itemLinks: [series], tagIds: [4, 5] }]);
+    });
 });
 
-/** Settings slice for scan-root list tests. */
+/** Extra-folder row for scan-root list tests. */
+const testFolder = (
+    over: Partial<LibraryScanSettingsSlice["libraryFolders"][number]> & { path: string },
+): LibraryScanSettingsSlice["libraryFolders"][number] => ({
+    content: "both",
+    maxDepth: LIBRARY_SCAN_DEFAULT_MAX_DEPTH,
+    scanOnStart: false,
+    scanIntervalMinutes: 0,
+    watch: false,
+    lastScanAtMs: 0,
+    skipPattern: "",
+    tagIds: [],
+    ...over,
+});
+
+/** Expected {@link LibraryScanRoot} fields besides path/content/maxDepth. */
+const emptySkipMeta = { skipPattern: "", tagIds: [] as number[] };
 const scanSettings = (
     over: Partial<LibraryScanSettingsSlice> & Pick<LibraryScanSettingsSlice, "baseDir">,
 ): LibraryScanSettingsSlice => ({
@@ -190,6 +244,8 @@ const scanSettings = (
     scanDefaultLocationIntervalMinutes: 0,
     scanDefaultLocationLastAtMs: 0,
     scanDefaultLocationMaxDepth: LIBRARY_SCAN_DEFAULT_MAX_DEPTH,
+    scanDefaultLocationSkipPattern: "",
+    scanDefaultLocationTagIds: [],
     libraryFolders: [],
     ...over,
 });
@@ -228,39 +284,15 @@ describe("listManualLibraryScanRoots", () => {
                 baseDir: base,
                 scanDefaultLocation: true,
                 libraryFolders: [
-                    {
-                        path: extra,
-                        content: "manga",
-                        maxDepth: 4,
-                        scanOnStart: false,
-                        scanIntervalMinutes: 0,
-                        watch: false,
-                        lastScanAtMs: 0,
-                    },
-                    {
-                        path: base,
-                        content: "book",
-                        maxDepth: 1,
-                        scanOnStart: false,
-                        scanIntervalMinutes: 0,
-                        watch: false,
-                        lastScanAtMs: 0,
-                    },
-                    {
-                        path: missing,
-                        content: "both",
-                        maxDepth: 2,
-                        scanOnStart: false,
-                        scanIntervalMinutes: 0,
-                        watch: false,
-                        lastScanAtMs: 0,
-                    },
+                    testFolder({ path: extra, content: "manga", maxDepth: 4 }),
+                    testFolder({ path: base, content: "book", maxDepth: 1 }),
+                    testFolder({ path: missing, maxDepth: 2 }),
                 ],
             }),
         );
         expect(roots).toEqual([
-            { path: base, content: "both", maxDepth: LIBRARY_SCAN_DEFAULT_MAX_DEPTH },
-            { path: extra, content: "manga", maxDepth: 4 },
+            { path: base, content: "both", maxDepth: LIBRARY_SCAN_DEFAULT_MAX_DEPTH, ...emptySkipMeta },
+            { path: extra, content: "manga", maxDepth: 4, ...emptySkipMeta },
         ]);
     });
 
@@ -275,7 +307,7 @@ describe("listManualLibraryScanRoots", () => {
                     scanDefaultLocationMaxDepth: 4,
                 }),
             ),
-        ).toEqual([{ path: base, content: "both", maxDepth: 4 }]);
+        ).toEqual([{ path: base, content: "both", maxDepth: 4, ...emptySkipMeta }]);
     });
 });
 
@@ -288,17 +320,7 @@ describe("listStartupLibraryScanRoots", () => {
             scanSettings({
                 baseDir: base,
                 scanDefaultLocation: true,
-                libraryFolders: [
-                    {
-                        path: extra,
-                        content: "book",
-                        maxDepth: 3,
-                        scanOnStart: true,
-                        scanIntervalMinutes: 0,
-                        watch: false,
-                        lastScanAtMs: 0,
-                    },
-                ],
+                libraryFolders: [testFolder({ path: extra, content: "book", maxDepth: 3, scanOnStart: true })],
             }),
         );
         expect(roots.map((r) => r.path)).toEqual([base, extra]);
@@ -309,15 +331,7 @@ describe("listDueIntervalLibraryScanRoots", () => {
     it("includes a folder only when its interval is due", () => {
         const extra = path.join("testdata", "drive");
         stubFs({ existsSync: (p) => p === extra });
-        const folder = {
-            path: extra,
-            content: "both" as const,
-            maxDepth: 2,
-            scanOnStart: false,
-            scanIntervalMinutes: 1,
-            watch: false,
-            lastScanAtMs: 1_000,
-        };
+        const folder = testFolder({ path: extra, scanIntervalMinutes: 1, lastScanAtMs: 1_000 });
         expect(
             listDueIntervalLibraryScanRoots(
                 scanSettings({ baseDir: path.join("testdata", "home"), libraryFolders: [folder] }),
@@ -329,7 +343,7 @@ describe("listDueIntervalLibraryScanRoots", () => {
                 scanSettings({ baseDir: path.join("testdata", "home"), libraryFolders: [folder] }),
                 1_000 + 60_000,
             ),
-        ).toEqual([{ path: extra, content: "both", maxDepth: 2 }]);
+        ).toEqual([{ path: extra, content: "both", maxDepth: 2, ...emptySkipMeta }]);
     });
 });
 
@@ -338,15 +352,7 @@ describe("withLibraryScanTimestamps", () => {
         const base = path.join("testdata", "home");
         const extra = path.join("testdata", "drive");
         stubFs({ existsSync: (p) => p === base || p === extra });
-        const folder = {
-            path: extra,
-            content: "both" as const,
-            maxDepth: 2,
-            scanOnStart: false,
-            scanIntervalMinutes: 0,
-            watch: false,
-            lastScanAtMs: 0,
-        };
+        const folder = testFolder({ path: extra });
         const patched = withLibraryScanTimestamps(
             scanSettings({
                 baseDir: base,
@@ -358,6 +364,56 @@ describe("withLibraryScanTimestamps", () => {
         );
         expect(patched.scanDefaultLocationLastAtMs).toBe(9_000);
         expect(patched.libraryFolders[0]?.lastScanAtMs).toBe(9_000);
+    });
+});
+
+describe("listForeignLibraryScanSkipPaths", () => {
+    it("excludes nested extra folders from Default Location and not the current root", () => {
+        const base = path.join("testdata", "home");
+        const extra = path.join(base, "completed");
+        const other = path.join("testdata", "drive");
+        stubFs({ existsSync: (p) => p === base || p === extra || p === other });
+        const settings = scanSettings({
+            baseDir: base,
+            scanDefaultLocation: true,
+            libraryFolders: [testFolder({ path: extra }), testFolder({ path: other })],
+        });
+        expect(listForeignLibraryScanSkipPaths(base, settings).sort()).toEqual([extra, other].sort());
+        expect(listForeignLibraryScanSkipPaths(extra, settings)).toEqual([other]);
+    });
+
+    it("skips Default Location from an extra folder only when it sits inside that folder", () => {
+        const extra = path.join("testdata", "drive");
+        const base = path.join(extra, "home");
+        stubFs({ existsSync: (p) => p === base || p === extra });
+        const settings = scanSettings({
+            baseDir: base,
+            scanDefaultLocation: true,
+            libraryFolders: [testFolder({ path: extra })],
+        });
+        expect(listForeignLibraryScanSkipPaths(extra, settings)).toEqual([base]);
+    });
+
+    it("does not skip Default Location from an extra folder when that scan is off", () => {
+        const base = path.join("testdata", "home");
+        const extra = path.join("testdata", "drive");
+        stubFs({ existsSync: (p) => p === base || p === extra });
+        const settings = scanSettings({
+            baseDir: base,
+            scanDefaultLocation: false,
+            libraryFolders: [testFolder({ path: extra })],
+        });
+        expect(listForeignLibraryScanSkipPaths(extra, settings)).toEqual([]);
+    });
+});
+
+describe("libraryItemLinksUnderScanRoot", () => {
+    it("keeps items under the root and drops those inside a nested extra folder", () => {
+        const root = path.join("testdata", "lib");
+        const extra = path.join(root, "completed");
+        const keep = path.join(root, "Keep");
+        const nested = path.join(extra, "Done");
+        expect(libraryItemLinksUnderScanRoot([keep, nested], root, [extra])).toEqual([keep]);
     });
 });
 
@@ -380,6 +436,8 @@ describe("newLibraryFolderSetting / isLibraryFolderContent", () => {
             scanIntervalMinutes: 0,
             watch: false,
             lastScanAtMs: 0,
+            skipPattern: "",
+            tagIds: [],
         });
     });
 
@@ -416,7 +474,7 @@ describe("runScheduledLibraryScan", () => {
     it("does not set the title-bar flag when there are no roots", async () => {
         const store = makeStore();
         await runScheduledLibraryScan(store.dispatch, async () => ({ isValid: true }), []);
-        expect(store.getState().ui.libraryScanBusy).toBe(false);
+        expect(store.getState().ui.libraryScanStatus).toBeNull();
         expect(store.getState().ui.blocks).toEqual([]);
     });
 
@@ -429,16 +487,22 @@ describe("runScheduledLibraryScan", () => {
         // record busy after each dispatch so the test sees the in-flight flag, not only the end state
         const dispatch: typeof store.dispatch = ((action: Parameters<typeof store.dispatch>[0]) => {
             const result = store.dispatch(action);
-            seenBusy.push(store.getState().ui.libraryScanBusy);
+            seenBusy.push(store.getState().ui.libraryScanStatus != null);
             return result;
         }) as typeof store.dispatch;
 
         await runScheduledLibraryScan(dispatch, async () => ({ isValid: true }), [
-            { path: series, content: "manga", maxDepth: LIBRARY_SCAN_MAX_DEPTH_CEILING },
+            {
+                path: series,
+                content: "manga",
+                maxDepth: LIBRARY_SCAN_MAX_DEPTH_CEILING,
+                skipPattern: "",
+                tagIds: [],
+            },
         ]);
 
         expect(seenBusy).toContain(true);
-        expect(store.getState().ui.libraryScanBusy).toBe(false);
+        expect(store.getState().ui.libraryScanStatus).toBeNull();
         expect(store.getState().ui.blocks).toEqual([]);
     });
 });

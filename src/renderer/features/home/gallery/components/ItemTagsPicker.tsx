@@ -18,7 +18,7 @@ import {
     tagsForItem,
 } from "@utils/libraryTags";
 import { appRootElement } from "@utils/utils";
-import { type CSSProperties, type KeyboardEvent, useState } from "react";
+import { type CSSProperties, type KeyboardEvent, type ReactNode, useState } from "react";
 import { createPortal } from "react-dom";
 import { useTranslation } from "react-i18next";
 
@@ -26,9 +26,26 @@ type ItemTagsRowProps = {
     itemLink: string;
 };
 
-type ItemTagsPickerProps = ItemTagsRowProps & {
+type ItemTagsPickerBase = {
     onClose: () => void;
+    /** Modal heading; defaults to the gallery picker title. */
+    title?: string;
+    /** Extra controls in the modal action row (before Close). */
+    extraActions?: ReactNode;
 };
+
+/**
+ * Overlay to assign catalog tags. Either replace-set on a library item, or a
+ * caller-owned id list (scan-root folder tags) with the same catalog UI.
+ */
+export type ItemTagsPickerProps = ItemTagsPickerBase &
+    (
+        | { itemLink: string }
+        | {
+              selectedIds: readonly number[];
+              onSelectedIdsChange: (ids: number[]) => void;
+          }
+    );
 
 type ColorSwatchesProps = {
     value: string;
@@ -107,16 +124,23 @@ const ColorSwatches = ({ value, onChange }: ColorSwatchesProps) => {
 };
 
 /**
- * Overlay to assign catalog tags to a library item, create a tag, and rename / recolour / delete.
+ * Overlay to assign catalog tags, create a tag, and rename / recolour / delete.
+ * Library-item mode replace-sets assignments; selection mode writes {@link ItemTagsPickerProps} ids.
  */
-const ItemTagsPicker = ({ itemLink, onClose }: ItemTagsPickerProps) => {
+export const ItemTagsPicker = (props: ItemTagsPickerProps) => {
+    const { onClose, extraActions } = props;
     const { t } = useTranslation("home");
     const { t: tCommon } = useTranslation("common");
     const dispatch = useAppDispatch();
     const catalog = useAppSelector((store) => store.tags.catalog);
     const assignments = useAppSelector((store) => store.tags.assignments);
-    const assignedIds = new Set(tagsForItem(catalog, assignments, itemLink).map((tag) => tag.id));
+    const assignedIds = new Set(
+        "itemLink" in props
+            ? tagsForItem(catalog, assignments, props.itemLink).map((tag) => tag.id)
+            : props.selectedIds,
+    );
     const sortedCatalog = [...catalog].sort((a, b) => a.name.localeCompare(b.name));
+    const heading = props.title ?? t("gallery.tags.pickerTitle");
 
     const [newName, setNewName] = useState("");
     const [newColor, setNewColor] = useState(DEFAULT_TAG_COLOR);
@@ -132,12 +156,23 @@ const ItemTagsPicker = ({ itemLink, onClose }: ItemTagsPickerProps) => {
         (tag) => editingId === tag.id || !listQuery || tag.name.toLowerCase().includes(listQuery),
     );
 
-    const assignedIdList = () => tagsForItem(catalog, assignments, itemLink).map((tag) => tag.id);
+    const assignedIdList = (): number[] =>
+        "itemLink" in props
+            ? tagsForItem(catalog, assignments, props.itemLink).map((tag) => tag.id)
+            : [...props.selectedIds];
+
+    const applyIds = async (tagIds: number[]): Promise<void> => {
+        if ("itemLink" in props) {
+            await dispatch(setLibraryItemTags({ itemLink: props.itemLink, tagIds })).unwrap();
+            return;
+        }
+        props.onSelectedIdsChange([...new Set(tagIds)]);
+    };
 
     const handleToggle = async (tagId: number, checked: boolean) => {
         const current = assignedIdList();
         const tagIds = checked ? [...current, tagId] : current.filter((id) => id !== tagId);
-        await dispatch(setLibraryItemTags({ itemLink, tagIds })).unwrap();
+        await applyIds(tagIds);
     };
 
     const handleCreate = async () => {
@@ -154,7 +189,7 @@ const ItemTagsPicker = ({ itemLink, onClose }: ItemTagsPickerProps) => {
             return;
         }
         setNewName("");
-        await dispatch(setLibraryItemTags({ itemLink, tagIds: [...assignedIdList(), row.id] })).unwrap();
+        await applyIds([...assignedIdList(), row.id]);
     };
 
     const startEdit = (tag: LibraryTag) => {
@@ -204,7 +239,7 @@ const ItemTagsPicker = ({ itemLink, onClose }: ItemTagsPickerProps) => {
     /* details meta containment clips position:fixed; host on #app without changing Modal */
     return createPortal(
         <Modal open onClose={onClose} className="item-tags-picker">
-            <h3>{t("gallery.tags.pickerTitle")}</h3>
+            <h3>{heading}</h3>
             {sortedCatalog.length > 0 ? (
                 <TagListFilter value={listFilter} onChange={setListFilter} onKeyDown={stopModalKeys} />
             ) : null}
@@ -292,6 +327,7 @@ const ItemTagsPicker = ({ itemLink, onClose }: ItemTagsPickerProps) => {
                 </button>
             </div>
             <div className="modal-actions">
+                {extraActions}
                 <button type="button" onClick={onClose}>
                     {tCommon("actions.close")}
                 </button>

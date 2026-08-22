@@ -16,6 +16,8 @@ describe("settingSchema library scan keys", () => {
         if (!repaired.success) return;
         expect(repaired.data.libraryFolders).toEqual([]);
         expect(repaired.data.scanDefaultLocation).toBe(false);
+        expect(repaired.data.scanDefaultLocationSkipPattern).toBe("");
+        expect(repaired.data.scanDefaultLocationTagIds).toEqual([]);
         expect(repaired.data.scanDefaultLocationMaxDepth).toBe(2);
         expect(repaired.data.scanDefaultLocationIntervalMinutes).toBe(0);
         expect(repaired.data.librarySettingsExpanded).toBe(true);
@@ -39,6 +41,8 @@ describe("settingSchema library scan keys", () => {
         if (!repaired.success) return;
         expect(repaired.data.libraryFolders[0]?.maxDepth).toBe(2);
         expect(repaired.data.libraryFolders[0]?.watch).toBe(false);
+        expect(repaired.data.libraryFolders[0]?.skipPattern).toBe("");
+        expect(repaired.data.libraryFolders[0]?.tagIds).toEqual([]);
     });
 
     it("truncates fractional scan interval minutes from settings.json", () => {

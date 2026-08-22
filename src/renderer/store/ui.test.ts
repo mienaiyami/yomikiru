@@ -1,6 +1,6 @@
 import { configureStore } from "@reduxjs/toolkit";
 import { describe, expect, it } from "vitest";
-import uiReducer, { UI_BLOCK_ID_LIBRARY, blockUi, setLibraryScanBusy, unblockUi } from "./ui";
+import uiReducer, { UI_BLOCK_ID_LIBRARY, blockUi, setLibraryScanStatus, unblockUi } from "./ui";
 
 /**
  * Minimal store with only the ui slice for lock-stack tests.
@@ -41,13 +41,26 @@ describe("ui blocks", () => {
     });
 });
 
-describe("ui libraryScanBusy", () => {
-    it("starts false and toggles the title-bar scan flag", () => {
+describe("ui libraryScanStatus", () => {
+    it("starts idle and stores live scan progress", () => {
         const store = createUiStore();
-        expect(store.getState().ui.libraryScanBusy).toBe(false);
-        store.dispatch(setLibraryScanBusy(true));
-        expect(store.getState().ui.libraryScanBusy).toBe(true);
-        store.dispatch(setLibraryScanBusy(false));
-        expect(store.getState().ui.libraryScanBusy).toBe(false);
+        expect(store.getState().ui.libraryScanStatus).toBeNull();
+        store.dispatch(
+            setLibraryScanStatus({
+                phase: "walking",
+                rootIndex: 1,
+                rootCount: 2,
+                rootPath: "lib",
+                currentPath: "lib/a",
+                added: 0,
+                skipped: 0,
+                failed: 0,
+                addIndex: 0,
+                addTotal: 0,
+            }),
+        );
+        expect(store.getState().ui.libraryScanStatus?.phase).toBe("walking");
+        store.dispatch(setLibraryScanStatus(null));
+        expect(store.getState().ui.libraryScanStatus).toBeNull();
     });
 });

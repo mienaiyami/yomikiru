@@ -189,8 +189,9 @@ const Settings = (): ReactElement => {
                     data-state={isSettingOpen ? "open" : "closed"}
                     onKeyDown={(e) => {
                         if (e.key !== "Escape") return;
-                        // search-field Escape is owned by Combobox (clear vs dismiss)
-                        if (e.target instanceof HTMLElement && e.target.closest(".settingsSearch")) return;
+                        if (!(e.target instanceof HTMLElement)) return;
+                        /* Combobox owns search-field Escape; nested Modal portals bubble here */
+                        if (e.target.closest(".settingsSearch") || e.target.closest(".modal-element")) return;
                         dispatch(setSettingsOpen(false));
                     }}
                 >

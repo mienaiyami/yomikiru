@@ -22,6 +22,7 @@ import type {
     RemoveItemTrackerSchema,
     SetLibraryItemMetadataSchema,
     SetLibraryItemTagsSchema,
+    UnionLibraryItemTagsSchema,
     UpdateBookBookmarkSchema,
     UpdateBookProgressSchema,
     UpdateLibraryItemSchema,
@@ -81,3 +82,4 @@ export type CreateLibraryTagData = z.infer<typeof CreateLibraryTagSchema>;
 export type UpdateLibraryTagData = z.infer<typeof UpdateLibraryTagSchema>;
 export type DeleteLibraryTagData = z.infer<typeof DeleteLibraryTagSchema>;
 export type SetLibraryItemTagsData = z.infer<typeof SetLibraryItemTagsSchema>;
+export type UnionLibraryItemTagsData = z.infer<typeof UnionLibraryItemTagsSchema>;

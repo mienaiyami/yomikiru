@@ -797,6 +797,34 @@ html{
                                             opacity: 0.8;
                                         }
                                     }
+                                    .libraryScanDefaultLocation {
+                                        width: 100%;
+                                        gap: 0.4em;
+                                    }
+                                    .libraryScanRootOptions {
+                                        width: 100%;
+                                        gap: 0.25em;
+                                        .libraryScanRootRow {
+                                            width: 100%;
+                                            label.noBG {
+                                                flex: 1 1 16em;
+                                                min-width: 0;
+                                                padding: 0;
+                                                gap: 0.5em;
+                                            }
+                                            .librarySkipPatternInput {
+                                                font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+                                                flex: 1 1 12em;
+                                                min-width: 8em;
+                                            }
+                                            > button {
+                                                flex: 0 0 auto;
+                                            }
+                                        }
+                                        .librarySkipPatternError {
+                                            color: var(--error-color);
+                                        }
+                                    }
                                     .libraryFolderRow {
                                         align-items: center;
                                         flex-wrap: wrap;

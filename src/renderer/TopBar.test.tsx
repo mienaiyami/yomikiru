@@ -1,7 +1,7 @@
 import { act, fireEvent } from "@testing-library/react";
 import { describe, expect, it, vi } from "vitest";
 import { renderWithProviders } from "../test/renderWithProviders";
-import { setLibraryScanBusy } from "./store/ui";
+import { setLibraryScanStatus } from "./store/ui";
 import TopBar from "./TopBar";
 
 const { navigateToSettingMock } = vi.hoisted(() => ({
@@ -28,19 +28,35 @@ vi.mock("./features/settings/utils/navigateToSetting", () => ({
     navigateToSetting: navigateToSettingMock,
 }));
 
+const walkingStatus = {
+    phase: "walking" as const,
+    rootIndex: 1,
+    rootCount: 2,
+    rootPath: "lib",
+    currentPath: "lib",
+    added: 1,
+    skipped: 0,
+    failed: 0,
+    addIndex: 0,
+    addTotal: 0,
+};
+
 describe("TopBar library scan status", () => {
     it("hides the scan control when idle", () => {
         const { queryByRole } = renderWithProviders(<TopBar />);
         expect(queryByRole("button", { name: "Scanning library" })).toBeNull();
     });
 
-    it("shows the scan control and opens Library scan settings", () => {
-        const { store, getByRole } = renderWithProviders(<TopBar />);
+    it("shows live status and opens Library scan settings from the popover", () => {
+        const { store, getByRole, queryByText } = renderWithProviders(<TopBar />);
         act(() => {
-            store.dispatch(setLibraryScanBusy(true));
+            store.dispatch(setLibraryScanStatus(walkingStatus));
         });
-        const status = getByRole("button", { name: "Scanning library" });
-        fireEvent.click(status);
+        fireEvent.click(getByRole("button", { name: "Scanning library" }));
+        expect(getByRole("dialog", { name: "Scanning library" })).toBeTruthy();
+        expect(queryByText("Added")).toBeNull();
+        expect(getByRole("button", { name: "Open Library settings" })).toBeTruthy();
+        fireEvent.click(getByRole("button", { name: "Open Library settings" }));
         expect(navigateToSettingMock).toHaveBeenCalledWith("setting:library-scan-now", store.dispatch);
     });
 });

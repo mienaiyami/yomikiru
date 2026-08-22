@@ -6,8 +6,11 @@ import {
     classifyLibraryNode,
     collectLibraryScanTargetFromEventPath,
     collectLibraryScanTargets,
+    compileLibraryScanSkipRegex,
+    isLibraryScanIgnoreName,
     LIBRARY_SCAN_MAX_DEPTH_CEILING,
     listMangaChapterChildren,
+    shouldSkipLibraryScanEntry,
 } from "./mangaChapters";
 
 /**
@@ -26,6 +29,37 @@ const stubTree = (dirs: Record<string, string[]>, files: string[] = []): void =>
         stat: async () => ({ mtimeMs: 1 }),
     });
 };
+
+describe("compileLibraryScanSkipRegex", () => {
+    it("treats empty and whitespace as no pattern", () => {
+        expect(compileLibraryScanSkipRegex("")).toEqual({ status: "empty" });
+        expect(compileLibraryScanSkipRegex("   ")).toEqual({ status: "empty" });
+    });
+
+    it("returns invalid for a broken pattern instead of throwing", () => {
+        expect(compileLibraryScanSkipRegex("(")).toEqual({ status: "invalid" });
+    });
+
+    it("compiles a case-insensitive basename pattern", () => {
+        const compiled = compileLibraryScanSkipRegex("(^archived|completed)");
+        expect(compiled.status).toBe("ok");
+        if (compiled.status !== "ok") return;
+        expect(shouldSkipLibraryScanEntry("Archived", compiled.regex)).toBe(true);
+        expect(shouldSkipLibraryScanEntry("series-completed", compiled.regex)).toBe(true);
+        expect(shouldSkipLibraryScanEntry("ongoing", compiled.regex)).toBe(false);
+    });
+});
+
+describe("isLibraryScanIgnoreName", () => {
+    it("matches ignore sentinel names without regarding case", () => {
+        expect(isLibraryScanIgnoreName("yomikiru-ignore")).toBe(true);
+        expect(isLibraryScanIgnoreName(".yomikiru-ignore")).toBe(true);
+        expect(isLibraryScanIgnoreName("Yomikiru-Ignore")).toBe(true);
+        expect(isLibraryScanIgnoreName(".YOMIKIRU-IGNORE")).toBe(true);
+        expect(isLibraryScanIgnoreName("yomikiru-ignore.txt")).toBe(false);
+        expect(isLibraryScanIgnoreName("series")).toBe(false);
+    });
+});
 
 describe("clampLibraryScanMaxDepth", () => {
     it("rounds and clamps to the walk ceiling", () => {
@@ -122,6 +156,23 @@ describe("classifyLibraryNode", () => {
         const ch = path.join(series, "Ch01");
         const empty = path.join(series, "empty");
         stubTree({ [series]: ["Ch01", "empty"], [ch]: ["01.jpg"], [empty]: [] }, [path.join(ch, "01.jpg")]);
+        await expect(classifyLibraryNode(series)).resolves.toMatchObject({ kind: "series" });
+    });
+
+    it("still classifies a series when a sibling ignore folder holds junk", async () => {
+        const series = path.join("testdata", "Series A");
+        const ch = path.join(series, "Ch01");
+        const dump = path.join(series, "yomikiru-ignore");
+        const dumpChild = path.join(dump, "bin");
+        stubTree(
+            {
+                [series]: ["Ch01", "yomikiru-ignore"],
+                [ch]: ["01.jpg"],
+                [dump]: ["bin"],
+                [dumpChild]: ["x.jpg"],
+            },
+            [path.join(ch, "01.jpg"), path.join(dumpChild, "x.jpg")],
+        );
         await expect(classifyLibraryNode(series)).resolves.toMatchObject({ kind: "series" });
     });
 });
@@ -233,6 +284,133 @@ describe("collectLibraryScanTargets", () => {
         });
         expect(found.map((t) => t.path).sort()).toEqual([series, shot].sort());
     });
+
+    it("skips grouping folders and catalogue files whose basename matches the skip regex", async () => {
+        const root = path.join("testdata", "lib");
+        const archived = path.join(root, "archived");
+        const archivedSeries = path.join(archived, "Old");
+        const archivedCh = path.join(archivedSeries, "c1");
+        const keep = path.join(root, "Keep");
+        const keepCh = path.join(keep, "c1");
+        const doneEpub = path.join(root, "novel-completed.epub");
+        const keepEpub = path.join(root, "novel.epub");
+        stubTree(
+            {
+                [root]: ["archived", "Keep", "novel-completed.epub", "novel.epub"],
+                [archived]: ["Old"],
+                [archivedSeries]: ["c1"],
+                [archivedCh]: ["p.jpg"],
+                [keep]: ["c1"],
+                [keepCh]: ["p.jpg"],
+            },
+            [path.join(archivedCh, "p.jpg"), path.join(keepCh, "p.jpg"), doneEpub, keepEpub],
+        );
+        const compiled = compileLibraryScanSkipRegex("(^archived|completed)");
+        expect(compiled.status).toBe("ok");
+        if (compiled.status !== "ok") return;
+        const found = await collectLibraryScanTargets(root, {
+            content: "both",
+            maxDepth: 8,
+            existingLinks: new Set(),
+            skipRegex: compiled.regex,
+        });
+        expect(found.map((t) => t.path).sort()).toEqual([keep, keepEpub].sort());
+    });
+
+    it("does not apply the skip regex to the scan root basename", async () => {
+        const root = path.join("testdata", "archived");
+        const series = path.join(root, "Keep");
+        const ch = path.join(series, "c1");
+        stubTree({ [root]: ["Keep"], [series]: ["c1"], [ch]: ["p.jpg"] }, [path.join(ch, "p.jpg")]);
+        const compiled = compileLibraryScanSkipRegex("^archived");
+        expect(compiled.status).toBe("ok");
+        if (compiled.status !== "ok") return;
+        const found = await collectLibraryScanTargets(root, {
+            content: "manga",
+            maxDepth: 8,
+            existingLinks: new Set(),
+            skipRegex: compiled.regex,
+        });
+        expect(found).toEqual([{ type: "manga", path: series }]);
+    });
+
+    it("skips a series that contains an ignore sentinel file", async () => {
+        const root = path.join("testdata", "lib");
+        const skipped = path.join(root, "Hidden");
+        const skippedCh = path.join(skipped, "c1");
+        const keep = path.join(root, "Keep");
+        const keepCh = path.join(keep, "c1");
+        const ignoreFile = path.join(skipped, "yomikiru-ignore");
+        stubTree(
+            {
+                [root]: ["Hidden", "Keep"],
+                [skipped]: ["c1", "yomikiru-ignore"],
+                [skippedCh]: ["p.jpg"],
+                [keep]: ["c1"],
+                [keepCh]: ["p.jpg"],
+            },
+            [path.join(skippedCh, "p.jpg"), path.join(keepCh, "p.jpg"), ignoreFile],
+        );
+        const found = await collectLibraryScanTargets(root, {
+            content: "manga",
+            maxDepth: 8,
+            existingLinks: new Set(),
+        });
+        expect(found).toEqual([{ type: "manga", path: keep }]);
+    });
+
+    it("skips an ignore-named folder without skipping sibling series", async () => {
+        const root = path.join("testdata", "lib");
+        const dump = path.join(root, "yomikiru-ignore");
+        const dumpSeries = path.join(dump, "Junk");
+        const dumpCh = path.join(dumpSeries, "c1");
+        const keep = path.join(root, "Keep");
+        const keepCh = path.join(keep, "c1");
+        stubTree(
+            {
+                [root]: ["yomikiru-ignore", "Keep"],
+                [dump]: ["Junk"],
+                [dumpSeries]: ["c1"],
+                [dumpCh]: ["p.jpg"],
+                [keep]: ["c1"],
+                [keepCh]: ["p.jpg"],
+            },
+            [path.join(dumpCh, "p.jpg"), path.join(keepCh, "p.jpg")],
+        );
+        const found = await collectLibraryScanTargets(root, {
+            content: "manga",
+            maxDepth: 8,
+            existingLinks: new Set(),
+        });
+        expect(found).toEqual([{ type: "manga", path: keep }]);
+    });
+
+    it("does not walk a nested extra library folder passed as skipRoots", async () => {
+        const root = path.join("testdata", "lib");
+        const extra = path.join(root, "completed");
+        const extraSeries = path.join(extra, "Done");
+        const extraCh = path.join(extraSeries, "c1");
+        const keep = path.join(root, "Keep");
+        const keepCh = path.join(keep, "c1");
+        stubTree(
+            {
+                [root]: ["completed", "Keep"],
+                [extra]: ["Done"],
+                [extraSeries]: ["c1"],
+                [extraCh]: ["p.jpg"],
+                [keep]: ["c1"],
+                [keepCh]: ["p.jpg"],
+            },
+            [path.join(extraCh, "p.jpg"), path.join(keepCh, "p.jpg")],
+        );
+        const found = await collectLibraryScanTargets(root, {
+            content: "manga",
+            maxDepth: 8,
+            existingLinks: new Set(),
+            skipRoots: [extra],
+        });
+        expect(found).toEqual([{ type: "manga", path: keep }]);
+    });
 });
 
 describe("collectLibraryScanTargetFromEventPath", () => {
@@ -280,14 +458,18 @@ describe("collectLibraryScanTargetFromEventPath", () => {
 
     it("returns a true one-shot folder when there is no series ancestor", async () => {
         const root = path.join("testdata", "lib");
+        const series = path.join(root, "Series");
+        const ch = path.join(series, "Ch01");
         const shot = path.join(root, "Oneshot");
         const page = path.join(shot, "01.jpg");
         stubTree(
             {
-                [root]: ["Oneshot"],
+                [root]: ["Series", "Oneshot"],
+                [series]: ["Ch01"],
+                [ch]: ["01.jpg"],
                 [shot]: ["01.jpg"],
             },
-            [page],
+            [page, path.join(ch, "01.jpg")],
         );
         const found = await collectLibraryScanTargetFromEventPath(page, root, {
             content: "manga",
@@ -314,6 +496,30 @@ describe("collectLibraryScanTargetFromEventPath", () => {
             content: "manga",
             maxDepth: 2,
             existingLinks: new Set([series]),
+        });
+        expect(found).toBeNull();
+    });
+
+    it("returns null when the event is inside a foreign skip root", async () => {
+        const root = path.join("testdata", "lib");
+        const extra = path.join(root, "completed");
+        const series = path.join(extra, "Done");
+        const ch = path.join(series, "c1");
+        const page = path.join(ch, "p.jpg");
+        stubTree(
+            {
+                [root]: ["completed"],
+                [extra]: ["Done"],
+                [series]: ["c1"],
+                [ch]: ["p.jpg"],
+            },
+            [page],
+        );
+        const found = await collectLibraryScanTargetFromEventPath(page, root, {
+            content: "manga",
+            maxDepth: 8,
+            existingLinks: new Set(),
+            skipRoots: [extra],
         });
         expect(found).toBeNull();
     });

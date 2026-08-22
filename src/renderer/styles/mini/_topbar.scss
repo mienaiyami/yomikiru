@@ -27,8 +27,13 @@
         display: flex;
         flex-direction: row;
         align-items: center;
-        width: calc(var(--button-width) * 5);
+        width: auto;
+        min-width: calc(var(--button-width) * 4);
         height: 100%;
+
+        .popover-wrapper {
+            height: 100%;
+        }
 
         button {
             width: var(--button-width);
@@ -54,8 +59,25 @@
             }
         }
         .libraryScanStatus {
+            width: auto;
+            min-width: var(--button-width);
+            padding: 0 0.55em;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.4em;
             svg {
                 animation: libraryScanPulse 1.4s ease-in-out infinite;
+            }
+            .libraryScanStatusLabel {
+                font-size: 11px;
+                max-width: 11em;
+                overflow: hidden;
+                text-overflow: ellipsis;
+                white-space: nowrap;
+                opacity: 0.88;
+                font-variant-numeric: tabular-nums;
+                letter-spacing: 0.02em;
             }
         }
         .viewToggle {
@@ -199,4 +221,61 @@
     #topBar .homeBtns .libraryScanStatus svg {
         animation: none;
     }
+}
+
+.popover.libraryScanPopover {
+    width: 22em;
+    padding: 0.7em 0.9em 0.85em;
+    .libraryScanPopoverBody {
+        display: flex;
+        flex-direction: column;
+        gap: 0.35em;
+        width: 100%;
+        min-width: 0;
+    }
+    .libraryScanPopoverPhase,
+    .libraryScanPopoverFolder,
+    .libraryScanPopoverMeta {
+        width: 100%;
+        margin: 0;
+    }
+    .libraryScanPopoverPhase {
+        font-size: 0.78em;
+        letter-spacing: 0.08em;
+        text-transform: uppercase;
+        opacity: 0.7;
+    }
+    .libraryScanPopoverFolder {
+        font-size: 1.05em;
+        font-weight: 600;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+    }
+    .libraryScanPopoverMeta {
+        font-size: 0.85em;
+        opacity: 0.75;
+        font-variant-numeric: tabular-nums;
+    }
+    .libraryScanPopoverSettings {
+        margin-top: 0.25em;
+        align-self: stretch;
+        width: 100%;
+        box-sizing: border-box;
+        font-size: 0.9em;
+        text-decoration: underline;
+        background: none;
+        border: none;
+        padding: 0.35em 0;
+        cursor: pointer;
+        color: inherit;
+        height: auto;
+        text-align: left;
+    }
+}
+
+/* #topBar .homeBtns button is more specific than a class-only width */
+#topBar .homeBtns .libraryScanPopoverSettings {
+    width: 100%;
+    height: auto;
 }

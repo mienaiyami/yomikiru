@@ -6,7 +6,7 @@ import { onInvoke } from "@test/mocks/preload";
 import { renderWithProviders } from "@test/renderWithProviders";
 import { cleanup, fireEvent, screen, waitFor } from "@testing-library/react";
 import { afterEach, describe, expect, it, vi } from "vitest";
-import { ItemTagsRow } from "./ItemTagsPicker";
+import { ItemTagsPicker, ItemTagsRow } from "./ItemTagsPicker";
 
 const { setColorSelectData } = vi.hoisted(() => ({
     setColorSelectData: vi.fn(),
@@ -128,5 +128,31 @@ describe("ItemTagsRow", () => {
             ).toBeInTheDocument();
         });
         expect(removeTag).not.toHaveBeenCalled();
+    });
+});
+
+describe("ItemTagsPicker selection mode", () => {
+    afterEach(() => {
+        cleanup();
+        vi.restoreAllMocks();
+        setColorSelectData.mockClear();
+    });
+
+    it("filters the catalog and reports checkbox changes without a library item", () => {
+        const onSelectedIdsChange = vi.fn();
+        renderWithProviders(
+            <ItemTagsPicker
+                selectedIds={[1]}
+                onSelectedIdsChange={onSelectedIdsChange}
+                onClose={vi.fn()}
+            />,
+            { preloadedState: { tags: { catalog, assignments: [] } } },
+        );
+        expect(screen.getByRole("textbox", { name: home.gallery.tags.listFilter })).toBeInTheDocument();
+        fireEvent.click(
+            screen.getByRole("checkbox", { name: home.gallery.tags.assignAria.replace("{{name}}", "Done") }),
+        );
+        expect(onSelectedIdsChange).toHaveBeenCalledWith([1, 2]);
+        expect(screen.queryByRole("button", { name: home.gallery.tags.edit })).toBeNull();
     });
 });

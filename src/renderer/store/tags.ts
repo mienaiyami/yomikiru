@@ -59,6 +59,15 @@ export const setLibraryItemTags = createAsyncThunk(
     },
 );
 
+/** Unions tag ids onto many library items without removing existing assignments. */
+export const unionLibraryItemTags = createAsyncThunk(
+    "tags/unionItemTags",
+    async (args: DatabaseChannels["db:library:unionItemTags"]["request"]) => {
+        const rows = await window.electron.invoke("db:library:unionItemTags", args);
+        return { itemLinks: args.itemLinks, rows };
+    },
+);
+
 const upsertCatalogRow = (state: TagsState, row: LibraryTag | null | undefined): void => {
     if (!row) return;
     const index = state.catalog.findIndex((tag) => tag.id === row.id);
@@ -92,6 +101,12 @@ const tagsSlice = createSlice({
                 const { itemLink, rows } = action.payload;
                 if (!rows) return;
                 state.assignments = [...state.assignments.filter((row) => row.itemLink !== itemLink), ...rows];
+            })
+            .addCase(unionLibraryItemTags.fulfilled, (state, action) => {
+                const { itemLinks, rows } = action.payload;
+                if (!rows) return;
+                const touched = new Set(itemLinks);
+                state.assignments = [...state.assignments.filter((row) => !touched.has(row.itemLink)), ...rows];
             })
             .addCase(relocateLibraryItem.fulfilled, (state, action) => {
                 const item = action.payload;

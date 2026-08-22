@@ -332,6 +332,10 @@ input[type="color"] {
     z-index: 100;
     display: grid;
     place-items: center;
+    /* tag pickers open from Settings; sit above that overlay's stacking context */
+    &.item-tags-picker {
+        z-index: 1100;
+    }
     @include mixins.contFadeScaleIn(".modal-overlayCont");
     .modal-overlayCont {
         position: relative;
@@ -421,6 +425,22 @@ input[type="color"] {
             max-height: min(80vh, 42rem);
             /* list scrolls; title / filter / create stay put */
             overflow: hidden;
+        }
+        .modal-actions {
+            overflow: visible;
+            /* :not(#dummy#dummy) beats `#app button` overflow:hidden that clips ::before */
+            [data-tooltip]:not(#dummy#dummy) {
+                overflow: visible;
+                &::before {
+                    left: auto;
+                    right: 0;
+                    top: 0;
+                    --translate: 0, calc(-100% - 0.5em);
+                    white-space: unset;
+                    max-width: 20em;
+                    padding: 0.4em;
+                }
+            }
         }
         .item-tags-picker-filter.search-input-wrapper {
             flex: 0 0 auto;

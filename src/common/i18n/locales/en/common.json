@@ -35,7 +35,17 @@
         "maximize": "Maximize",
         "close": "Close",
         "scanningLibrary": "Scanning library",
-        "scanningLibraryTooltip": "Scanning library. Click to open Library settings."
+        "scanningLibraryTooltip": "Scanning library. Click for details or to open Library settings.",
+        "scanPhaseWalking": "Walking folders",
+        "scanPhaseAdding": "Adding titles",
+        "scanPhaseRefreshing": "Refreshing library",
+        "scanWalkingShort": "{{folder}}",
+        "scanAddingShort": "{{done}} / {{total}}",
+        "scanRootIndex": "Folder {{index}} of {{count}}",
+        "scanAdded": "Added",
+        "scanSkipped": "Skipped",
+        "scanFailed": "Failed",
+        "scanOpenSettings": "Open Library settings"
     },
     "list": {
         "noItems": "No items",

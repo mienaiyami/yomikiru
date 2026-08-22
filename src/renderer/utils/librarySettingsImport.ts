@@ -2,7 +2,8 @@ import type { LibraryItemWithProgress } from "@common/types/db";
 import { setAppSettings } from "@store/appSettings";
 import store, { type AppDispatch } from "@store/index";
 import { addLibraryItem, fetchAllItemsWithProgress } from "@store/library";
-import { setLibraryScanBusy } from "@store/ui";
+import { unionLibraryItemTags } from "@store/tags";
+import { setLibraryScanStatus, type LibraryScanStatus } from "@store/ui";
 import { dialogUtils } from "@utils/dialog";
 import EPUB from "@utils/epub";
 import { formatUtils } from "@utils/file";
@@ -19,9 +20,11 @@ import {
     classifyLibraryNode,
     collectLibraryScanTargetFromEventPath,
     collectLibraryScanTargets,
+    compileLibraryScanSkipRegex,
     LIBRARY_SCAN_DEFAULT_MAX_DEPTH,
     LIBRARY_SCAN_MAX_DEPTH_CEILING,
     listMangaChapterChildren,
+    pathIsInsideRoot,
 } from "@utils/mangaChapters";
 
 const log = createRendererLogger("utils/librarySettingsImport");
@@ -42,6 +45,35 @@ const LIBRARY_SCAN_INTERVAL_MINUTE_MS = 60_000;
  * ponytail: coalesces copy/extract bursts; upgrade: longer quiet window or ignore incomplete folders.
  */
 export const LIBRARY_FOLDER_WATCH_DEBOUNCE_MS = 2000;
+
+/**
+ * Quiet window before title-bar status is shown for a watch flush.
+ * ponytail: watch bursts are usually short; upgrade: always-on watch status.
+ */
+export const LIBRARY_SCAN_WATCH_STATUS_DELAY_MS = 750;
+
+/**
+ * Minimum time between Redux scan-status writes during a walk.
+ * ponytail: per-directory dispatch would flood the store; upgrade: rAF coalescing.
+ */
+export const LIBRARY_SCAN_STATUS_THROTTLE_MS = 80;
+
+let lastLibraryScanStatusAt = 0;
+
+/**
+ * Dispatches live scan progress, coalesced by {@link LIBRARY_SCAN_STATUS_THROTTLE_MS}
+ * unless `force` is set (add-phase counts must not be dropped).
+ */
+const emitLibraryScanStatus = (
+    dispatch: AppDispatch,
+    status: LibraryScanStatus,
+    force = false,
+): void => {
+    const now = Date.now();
+    if (!force && now - lastLibraryScanStatusAt < LIBRARY_SCAN_STATUS_THROTTLE_MS) return;
+    lastLibraryScanStatusAt = now;
+    dispatch(setLibraryScanStatus(status));
+};
 
 /**
  * Extra chokidar depth past {@link LibraryScanSettingsSlice.libraryFolders} maxDepth so
@@ -160,6 +192,15 @@ export const addMangaFolderAtNormalizedPath = async (
     }
 };
 
+const unionScanRootTags = async (
+    dispatch: AppDispatch,
+    itemLink: string,
+    tagIds: readonly number[] | undefined,
+): Promise<void> => {
+    if (!tagIds || tagIds.length === 0) return;
+    await dispatch(unionLibraryItemTags({ itemLinks: [itemLink], tagIds: [...tagIds] }));
+};
+
 export type ScanRootAndAddLibraryItemsOpts = {
     dispatch: AppDispatch;
     keepExtractedFiles: boolean;
@@ -169,8 +210,16 @@ export type ScanRootAndAddLibraryItemsOpts = {
     maxDepth: number;
     /** Mutated when a path is added or skipped so later roots in the same run do not re-add it. */
     existingLinks: Set<string>;
+    /** Other library-folder paths this walk must not enter. */
+    skipRoots?: readonly string[];
+    /** Compiled skip regex for descendant basenames; `null` means no regex skip. */
+    skipRegex?: RegExp | null;
+    /** Catalog tag ids to union onto newly added items. */
+    tagIds?: readonly number[];
     /** 1-based index and target count after classify, before each add. */
     onProgress?: (done: number, total: number) => void;
+    /** Called with the directory currently being listed during classify. */
+    onWalkProgress?: (currentPath: string) => void;
 };
 
 /**
@@ -183,7 +232,14 @@ export const scanRootAndAddLibraryItems = async (
 ): Promise<{ added: number; skipped: number; failed: number }> => {
     const { dispatch, keepExtractedFiles, validateDirectory, content, existingLinks, onProgress } = opts;
     const maxDepth = Math.min(Math.max(0, opts.maxDepth), LIBRARY_SCAN_MAX_DEPTH_CEILING);
-    const targets = await collectLibraryScanTargets(root, { content, maxDepth, existingLinks });
+    const targets = await collectLibraryScanTargets(root, {
+        content,
+        maxDepth,
+        existingLinks,
+        skipRoots: opts.skipRoots,
+        skipRegex: opts.skipRegex,
+        onWalkProgress: opts.onWalkProgress,
+    });
     let added = 0;
     let skipped = 0;
     let failed = 0;
@@ -200,6 +256,7 @@ export const scanRootAndAddLibraryItems = async (
             if (r === "added") {
                 added += 1;
                 existingLinks.add(target.path);
+                await unionScanRootTags(dispatch, target.path, opts.tagIds);
             } else failed += 1;
             continue;
         }
@@ -207,6 +264,7 @@ export const scanRootAndAddLibraryItems = async (
         if (r === "added") {
             added += 1;
             existingLinks.add(target.path);
+            await unionScanRootTags(dispatch, target.path, opts.tagIds);
         } else if (r === "skipped") {
             skipped += 1;
             existingLinks.add(target.path);
@@ -234,6 +292,8 @@ export type LibraryScanSettingsSlice = {
     scanDefaultLocationIntervalMinutes: number;
     scanDefaultLocationLastAtMs: number;
     scanDefaultLocationMaxDepth: number;
+    scanDefaultLocationSkipPattern: string;
+    scanDefaultLocationTagIds: number[];
     libraryFolders: {
         path: string;
         content: "manga" | "book" | "both";
@@ -242,6 +302,8 @@ export type LibraryScanSettingsSlice = {
         scanIntervalMinutes: number;
         watch: boolean;
         lastScanAtMs: number;
+        skipPattern: string;
+        tagIds: number[];
     }[];
 };
 
@@ -250,17 +312,68 @@ export type LibraryScanRoot = {
     path: string;
     content: CollectLibraryScanTargetsOpts["content"];
     maxDepth: number;
+    skipPattern: string;
+    tagIds: number[];
 };
 
 /**
  * True when `intervalMinutes` is on and enough time has passed since `lastScanAtMs`.
- * `lastScanAtMs` of 0 means never scanned.
+ * Unset last-scan stamps count as never scanned.
  */
 export const isLibraryScanDue = (lastScanAtMs: number, intervalMinutes: number, now = Date.now()): boolean => {
     if (intervalMinutes <= 0) return false;
     if (lastScanAtMs <= 0) return true;
     return now - lastScanAtMs >= intervalMinutes * LIBRARY_SCAN_INTERVAL_MINUTE_MS;
 };
+
+/**
+ * Other scan roots that {@link collectLibraryScanTargets} must not enter while walking `currentRoot`.
+ * Nested extra folders (and an opted-in Default Location that sits inside the current root) are
+ * included. The current root and any ancestor of it are omitted so descendants are still walked.
+ */
+export const listForeignLibraryScanSkipPaths = (
+    currentRoot: string,
+    settings: LibraryScanSettingsSlice,
+): string[] => {
+    const current = window.path.normalize(currentRoot.trim());
+    const out: string[] = [];
+    const push = (raw: string): void => {
+        const n = window.path.normalize(raw.trim());
+        if (!n || n === current) return;
+        /* ancestor skip roots match every descendant of the current walk */
+        if (pathIsInsideRoot(current, n)) return;
+        if (out.some((p) => window.path.normalize(p) === n)) return;
+        out.push(n);
+    };
+    for (const folder of settings.libraryFolders) {
+        push(folder.path);
+    }
+    if (settings.scanDefaultLocation) {
+        const base = getExistingBaseDir(settings.baseDir);
+        if (base) push(base);
+    }
+    return out;
+};
+
+/**
+ * Catalogue links that sit under `rootPath` and not under a foreign skip root.
+ * Used to backfill folder tags onto items already in the library.
+ */
+export const libraryItemLinksUnderScanRoot = (
+    itemLinks: readonly string[],
+    rootPath: string,
+    skipRoots: readonly string[],
+): string[] =>
+    itemLinks.filter((link) => {
+        if (!pathIsInsideRoot(link, rootPath)) return false;
+        return !skipRoots.some((skip) => pathIsInsideRoot(link, skip));
+    });
+
+/**
+ * Drops catalog ids that are no longer in `knownIds` (deleted tags).
+ */
+export const keepKnownLibraryFolderTagIds = (tagIds: readonly number[], knownIds: ReadonlySet<number>): number[] =>
+    tagIds.filter((id) => knownIds.has(id));
 
 /**
  * Walkable root for one library-folder row when that path exists on disk.
@@ -270,7 +383,13 @@ export const libraryFolderScanRoot = (
 ): LibraryScanRoot | null => {
     const p = folder.path.trim();
     if (!p || !window.fs.existsSync(p)) return null;
-    return { path: p, content: folder.content, maxDepth: folder.maxDepth };
+    return {
+        path: p,
+        content: folder.content,
+        maxDepth: folder.maxDepth,
+        skipPattern: folder.skipPattern,
+        tagIds: folder.tagIds,
+    };
 };
 
 const defaultLocationRoot = (settings: LibraryScanSettingsSlice): LibraryScanRoot | null => {
@@ -281,6 +400,8 @@ const defaultLocationRoot = (settings: LibraryScanSettingsSlice): LibraryScanRoo
         path: base,
         content: "both",
         maxDepth: clampLibraryScanMaxDepth(settings.scanDefaultLocationMaxDepth),
+        skipPattern: settings.scanDefaultLocationSkipPattern,
+        tagIds: settings.scanDefaultLocationTagIds,
     };
 };
 
@@ -321,6 +442,8 @@ export const newLibraryFolderSetting = (
     scanIntervalMinutes: 0,
     watch: false,
     lastScanAtMs: 0,
+    skipPattern: "",
+    tagIds: [],
 });
 
 /**
@@ -409,12 +532,60 @@ const walkLibraryScanRoots = async (
     let skipped = 0;
     let failed = 0;
     const links = new Set(opts.existingLinks);
-    for (const root of roots) {
+    const settings = store.getState().appSettings;
+    const rootCount = roots.length;
+    for (let i = 0; i < roots.length; i += 1) {
+        const root = roots[i];
+        if (!root) continue;
+        const compiled = compileLibraryScanSkipRegex(root.skipPattern);
+        const skipRegex = compiled.status === "ok" ? compiled.regex : null;
+        const baseStatus = {
+            rootIndex: i + 1,
+            rootCount,
+            rootPath: root.path,
+            currentPath: root.path,
+            added,
+            skipped,
+            failed,
+            addIndex: 0,
+            addTotal: 0,
+        };
+        emitLibraryScanStatus(opts.dispatch, { ...baseStatus, phase: "walking" }, true);
         const r = await scanRootAndAddLibraryItems(root.path, {
             ...opts,
             content: root.content,
             maxDepth: root.maxDepth,
+            skipRoots: listForeignLibraryScanSkipPaths(root.path, settings),
+            skipRegex,
+            tagIds: root.tagIds,
             existingLinks: links,
+            onWalkProgress: (currentPath) => {
+                emitLibraryScanStatus(opts.dispatch, {
+                    ...baseStatus,
+                    phase: "walking",
+                    currentPath,
+                    added,
+                    skipped,
+                    failed,
+                });
+            },
+            onProgress: (done, total) => {
+                opts.onProgress?.(done, total);
+                emitLibraryScanStatus(
+                    opts.dispatch,
+                    {
+                        ...baseStatus,
+                        phase: "adding",
+                        currentPath: root.path,
+                        added,
+                        skipped,
+                        failed,
+                        addIndex: done,
+                        addTotal: total,
+                    },
+                    true,
+                );
+            },
         });
         added += r.added;
         skipped += r.skipped;
@@ -443,8 +614,8 @@ export const scanLibraryRoots = async (
 };
 
 /**
- * Walks start/interval roots without locking the window. Sets {@link setLibraryScanBusy}
- * for the title-bar status. Library Settings Scan now still uses the full-window lock.
+ * Walks start/interval roots without locking the window. Sets {@link setLibraryScanStatus}
+ * for the title-bar. Library Settings Scan now still uses the full-window lock.
  * Holds the scan lock through catalogue refresh so a later poll cannot start a second walk.
  */
 export const runScheduledLibraryScan = async (
@@ -457,7 +628,6 @@ export const runScheduledLibraryScan = async (
         log.info("scheduled library scan skipped; already running");
         return;
     }
-    dispatch(setLibraryScanBusy(true));
     try {
         const state = store.getState();
         const result = await walkLibraryScanRoots(roots, {
@@ -466,6 +636,23 @@ export const runScheduledLibraryScan = async (
             validateDirectory,
             existingLinks: new Set(Object.keys(state.library.items)),
         });
+        const lastRoot = roots[roots.length - 1];
+        emitLibraryScanStatus(
+            dispatch,
+            {
+                phase: "refreshing",
+                rootIndex: roots.length,
+                rootCount: roots.length,
+                rootPath: lastRoot?.path ?? "",
+                currentPath: lastRoot?.path ?? "",
+                added: result.added,
+                skipped: result.skipped,
+                failed: result.failed,
+                addIndex: 0,
+                addTotal: 0,
+            },
+            true,
+        );
         dispatch(
             setAppSettings(
                 withLibraryScanTimestamps(
@@ -480,7 +667,7 @@ export const runScheduledLibraryScan = async (
         log.error("scheduled library scan failed", e);
     } finally {
         endLibraryScan();
-        dispatch(setLibraryScanBusy(false));
+        dispatch(setLibraryScanStatus(null));
     }
 };
 
@@ -522,6 +709,7 @@ const addWatchTarget = async (
     target: { type: "manga" | "book"; path: string },
     opts: LibraryFolderWatchOpts,
     existingLinks: Set<string>,
+    tagIds: readonly number[],
 ): Promise<boolean> => {
     if (existingLinks.has(target.path)) return false;
     if (target.type === "book") {
@@ -531,6 +719,7 @@ const addWatchTarget = async (
         });
         if (r === "added") {
             existingLinks.add(target.path);
+            await unionScanRootTags(opts.dispatch, target.path, tagIds);
             return true;
         }
         return false;
@@ -541,6 +730,7 @@ const addWatchTarget = async (
     });
     if (r === "added") {
         existingLinks.add(target.path);
+        await unionScanRootTags(opts.dispatch, target.path, tagIds);
         return true;
     }
     if (r === "skipped") existingLinks.add(target.path);
@@ -579,18 +769,39 @@ export const startLibraryFolderWatches = (
             }
             const paths = [...queued];
             queued.clear();
+            const statusTimer = setTimeout(() => {
+                opts.dispatch(
+                    setLibraryScanStatus({
+                        phase: "walking",
+                        rootIndex: 1,
+                        rootCount: 1,
+                        rootPath: root,
+                        currentPath: root,
+                        added: 0,
+                        skipped: 0,
+                        failed: 0,
+                        addIndex: 0,
+                        addTotal: 0,
+                    }),
+                );
+            }, LIBRARY_SCAN_WATCH_STATUS_DELAY_MS);
             try {
                 const existingLinks = new Set(Object.keys(store.getState().library.items));
                 let added = 0;
                 for (const eventPath of paths) {
                     try {
+                        const settings = store.getState().appSettings;
+                        const compiled = compileLibraryScanSkipRegex(folder.skipPattern);
+                        const skipRegex = compiled.status === "ok" ? compiled.regex : null;
                         const target = await collectLibraryScanTargetFromEventPath(eventPath, root, {
                             content: folder.content,
                             maxDepth: folder.maxDepth,
                             existingLinks,
+                            skipRoots: listForeignLibraryScanSkipPaths(root, settings),
+                            skipRegex,
                         });
                         if (!target) continue;
-                        if (await addWatchTarget(target, opts, existingLinks)) added += 1;
+                        if (await addWatchTarget(target, opts, existingLinks, folder.tagIds)) added += 1;
                     } catch (e) {
                         log.error("library folder watch classify failed", { eventPath, root }, e);
                     }
@@ -600,6 +811,8 @@ export const startLibraryFolderWatches = (
                     log.info("library folder watch added", { root, added });
                 }
             } finally {
+                if (statusTimer) clearTimeout(statusTimer);
+                opts.dispatch(setLibraryScanStatus(null));
                 endLibraryScan();
                 if (queued.size > 0) scheduleFlush();
             }

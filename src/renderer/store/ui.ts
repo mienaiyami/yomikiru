@@ -16,6 +16,24 @@ export type UiBlock = {
     message?: string;
 };
 
+/** Classify / add / catalogue-refresh stages of a library scan. */
+export type LibraryScanPhase = "walking" | "adding" | "refreshing";
+
+/** Shared scan progress shown on the title bar and the Scan now overlay. */
+export type LibraryScanStatus = {
+    phase: LibraryScanPhase;
+    /** 1-based index of the root currently being walked. */
+    rootIndex: number;
+    rootCount: number;
+    rootPath: string;
+    currentPath: string;
+    added: number;
+    skipped: number;
+    failed: number;
+    addIndex: number;
+    addTotal: number;
+};
+
 type UIState = {
     isOpen: {
         settings: boolean;
@@ -30,10 +48,10 @@ type UIState = {
     /** Stack of {@link UiBlock} entries; empty means the UI is interactive. */
     blocks: UiBlock[];
     /**
-     * True while a start/interval library scan is walking (and refreshing catalogue).
-     * TopBar shows status; does not freeze input. Scan now still uses {@link blockUi}.
+     * Live library-scan progress for the title bar and Scan now overlay.
+     * `null` means idle.
      */
-    libraryScanBusy: boolean;
+    libraryScanStatus: LibraryScanStatus | null;
 };
 
 /** {@link blockUi} id for Settings library scan and thumbnail work. */
@@ -50,7 +68,7 @@ const initialState: UIState = {
     },
     pendingSettingsNav: null,
     blocks: [],
-    libraryScanBusy: false,
+    libraryScanStatus: null,
 };
 
 const uiSlice = createSlice({
@@ -92,9 +110,9 @@ const uiSlice = createSlice({
         unblockUi: (state, action: PayloadAction<string>) => {
             state.blocks = state.blocks.filter((b) => b.id !== action.payload);
         },
-        /** Shows or hides the title-bar library-scan status. */
-        setLibraryScanBusy: (state, action: PayloadAction<boolean>) => {
-            state.libraryScanBusy = action.payload;
+        /** Sets or clears live library-scan progress for the title bar. */
+        setLibraryScanStatus: (state, action: PayloadAction<LibraryScanStatus | null>) => {
+            state.libraryScanStatus = action.payload;
         },
 
         setAnilistLoginOpen: (state, action: PayloadAction<boolean>) => {
@@ -116,7 +134,7 @@ export const {
     clearPendingSettingsNav,
     blockUi,
     unblockUi,
-    setLibraryScanBusy,
+    setLibraryScanStatus,
     setAnilistLoginOpen,
     setAnilistSearchOpen,
     setAnilistEditOpen,

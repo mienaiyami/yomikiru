@@ -18,6 +18,8 @@
 
 # unreleased
 
+- feat: Library scan can skip other library folders, skip names with a per-root regex, and skip `yomikiru-ignore` / `.yomikiru-ignore` sentinels (file skips that folder; a folder with that name skips only itself). Default Location and extra folders can attach catalog tags to newly found titles, with Apply to existing for titles already in the library (union; confirms when more than one). The title bar shows live scan progress in a popover instead of a silent icon.
+
 - feat: **Remove Progress** on library item context menus (gallery tiles, details cover, classic History) and the selection overflow menu. Confirms first; last position and chapter read marks are cleared. The library entry, bookmarks, and notes stay, so the title leaves Continue Reading until you open it again. Disabled when the item has no progress.
 
 - feat: **Delete selected items** shortcut (default `Delete`, customizable in Settings → Shortcut Keys) removes the current multi-select: library tiles, classic History / Bookmarks, and details bookmarks or notes (same confirmations as the overflow menu). It does not run while typing, while the reader is open, or on manga chapter lists.

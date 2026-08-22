@@ -261,3 +261,12 @@ export const SetLibraryItemTagsSchema = z.object({
     itemLink: z.string().min(1),
     tagIds: z.array(z.number().int().positive()),
 });
+
+/**
+ * Union catalog tag ids onto many library items. Existing assignments are kept.
+ * Duplicate links/ids are accepted and should be uniqued by the handler.
+ */
+export const UnionLibraryItemTagsSchema = z.object({
+    itemLinks: z.array(z.string().min(1)),
+    tagIds: z.array(z.number().int().positive()),
+});

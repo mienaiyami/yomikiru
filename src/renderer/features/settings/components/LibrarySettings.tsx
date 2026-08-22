@@ -3,19 +3,23 @@ import { setAppSettings } from "@store/appSettings";
 import { useAppDispatch, useAppSelector } from "@store/hooks";
 import store from "@store/index";
 import { deleteProgressForLinks, fetchAllItemsWithProgress } from "@store/library";
-import { blockUi, UI_BLOCK_ID_LIBRARY, unblockUi } from "@store/ui";
+import { unionLibraryItemTags } from "@store/tags";
+import { blockUi, setLibraryScanStatus, UI_BLOCK_ID_LIBRARY, unblockUi } from "@store/ui";
 import InputCheckbox from "@ui/InputCheckbox";
 import InputNumber from "@ui/InputNumber";
 import InputSelect from "@ui/InputSelect";
-import { dialogUtils } from "@utils/dialog";
+import { confirmWhenMany, dialogUtils } from "@utils/dialog";
 import { promptSelectDir } from "@utils/file";
 import { regenerateLibraryThumbnails, showRegenSkippedWarning } from "@utils/libraryCoverService";
 import {
     getExistingBaseDir,
     isDuplicateLibraryFolderPath,
     isLibraryFolderContent,
+    keepKnownLibraryFolderTagIds,
     type LibraryScanRoot,
     libraryFolderScanRoot,
+    libraryItemLinksUnderScanRoot,
+    listForeignLibraryScanSkipPaths,
     listManualLibraryScanRoots,
     newLibraryFolderSetting,
     scanLibraryRoots,
@@ -28,8 +32,12 @@ import { clampLibraryScanMaxDepth, LIBRARY_SCAN_MAX_DEPTH_CEILING } from "@utils
 import type { LibraryFolderSetting } from "@utils/settingsSchema";
 import { useCallback, useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
+import LibraryScanRootOptions from "./LibraryScanRootOptions";
 
 const log = createRendererLogger("settings/LibrarySettings");
+
+/** How long Saved / Failed stays on the folder-tag backfill button. */
+const BACKFILL_FEEDBACK_RESTORE_MS = 1500;
 
 /** Catalog ids under Library that sit inside the collapsible body (not the section heading). */
 const LIBRARY_COLLAPSED_NAV_IDS = new Set([
@@ -37,6 +45,8 @@ const LIBRARY_COLLAPSED_NAV_IDS = new Set([
     "setting:scan-default-location",
     "setting:scan-default-location-depth",
     "setting:scan-default-location-interval",
+    "setting:scan-default-location-skip",
+    "setting:scan-default-location-tags",
     "setting:library-folders",
     "setting:library-folders-list",
     "setting:library-scan-now",
@@ -50,10 +60,13 @@ type LibrarySettingsBusy = "clear" | "regen" | "importChildren" | "clearProgress
  */
 const LibrarySettings: React.FC = () => {
     const { t } = useTranslation("settings");
+    const { t: tCommon } = useTranslation("common");
     const dispatch = useAppDispatch();
     const appSettings = useAppSelector((s) => s.appSettings);
     const libraryItems = useAppSelector((s) => s.library.items);
-    const libraryScanBusy = useAppSelector((s) => s.ui.libraryScanBusy);
+    const tagCatalog = useAppSelector((s) => s.tags.catalog);
+    const libraryScanStatus = useAppSelector((s) => s.ui.libraryScanStatus);
+    const libraryScanBusy = libraryScanStatus != null;
     const pendingSettingsNav = useAppSelector((s) => s.ui.pendingSettingsNav);
     const { validateDirectory } = useDirectoryValidator();
 
@@ -61,6 +74,8 @@ const LibrarySettings: React.FC = () => {
     const [regenLabel, setRegenLabel] = useState("");
     const [importLabel, setImportLabel] = useState("");
     const [clearProgressLabel, setClearProgressLabel] = useState("");
+    const [backfillFeedback, setBackfillFeedback] = useState<"idle" | "saving" | "saved" | "failed">("idle");
+    const [backfillTarget, setBackfillTarget] = useState<"default" | number | null>(null);
 
     useEffect(() => {
         const navId = pendingSettingsNav?.id;
@@ -124,6 +139,42 @@ const LibrarySettings: React.FC = () => {
         [dispatch],
     );
 
+    useEffect(() => {
+        if (busy !== "importChildren" || !libraryScanStatus) return;
+        const folder = window.path.basename(libraryScanStatus.currentPath || libraryScanStatus.rootPath);
+        const label =
+            libraryScanStatus.phase === "adding" && libraryScanStatus.addTotal > 0
+                ? `${libraryScanStatus.addIndex} / ${libraryScanStatus.addTotal}`
+                : folder;
+        setImportLabel(label);
+        setLibraryBlockMessage(t("library.importing", { label }));
+    }, [busy, libraryScanStatus, t, setLibraryBlockMessage]);
+
+    useEffect(() => {
+        if (tagCatalog.length === 0) return;
+        const known = new Set(tagCatalog.map((tag) => tag.id));
+        const nextDefault = keepKnownLibraryFolderTagIds(appSettings.scanDefaultLocationTagIds, known);
+        const nextFolders = appSettings.libraryFolders.map((folder) => ({
+            ...folder,
+            tagIds: keepKnownLibraryFolderTagIds(folder.tagIds, known),
+        }));
+        const defaultSame =
+            nextDefault.length === appSettings.scanDefaultLocationTagIds.length &&
+            nextDefault.every((id, i) => id === appSettings.scanDefaultLocationTagIds[i]);
+        const foldersSame = nextFolders.every(
+            (folder, i) =>
+                folder.tagIds.length === (appSettings.libraryFolders[i]?.tagIds.length ?? 0) &&
+                folder.tagIds.every((id, j) => id === appSettings.libraryFolders[i]?.tagIds[j]),
+        );
+        if (defaultSame && foldersSame) return;
+        dispatch(
+            setAppSettings({
+                scanDefaultLocationTagIds: nextDefault,
+                libraryFolders: nextFolders,
+            }),
+        );
+    }, [appSettings.libraryFolders, appSettings.scanDefaultLocationTagIds, dispatch, tagCatalog]);
+
     const persistScanTimestamps = (paths: readonly string[]): void => {
         const latest = store.getState().appSettings;
         dispatch(setAppSettings(withLibraryScanTimestamps(latest, paths)));
@@ -142,21 +193,25 @@ const LibrarySettings: React.FC = () => {
             t("library.importError"),
             async () => {
                 const existingLinks = new Set(Object.keys(store.getState().library.items));
-                const { added, skipped, failed, ran } = await scanLibraryRoots(roots, {
-                    dispatch,
-                    keepExtractedFiles: store.getState().appSettings.keepExtractedFiles,
-                    validateDirectory,
-                    existingLinks,
-                    onProgress: (done, total) => {
-                        const label = `${done} / ${total}`;
-                        setImportLabel(label);
-                        setLibraryBlockMessage(t("library.importing", { label }));
-                    },
-                });
-                if (ran) persistScanTimestamps(roots.map((r) => r.path));
-                await dispatch(fetchAllItemsWithProgress());
-                log.info("library scan", { added, skipped, failed, ran, paths: roots.map((r) => r.path) });
-                if (showSummary && ran) await showImportFinishedSummary(added, skipped, failed);
+                let shouldClearStatus = false;
+                try {
+                    const { added, skipped, failed, ran } = await scanLibraryRoots(roots, {
+                        dispatch,
+                        keepExtractedFiles: store.getState().appSettings.keepExtractedFiles,
+                        validateDirectory,
+                        existingLinks,
+                    });
+                    shouldClearStatus = ran;
+                    if (ran) persistScanTimestamps(roots.map((r) => r.path));
+                    await dispatch(fetchAllItemsWithProgress());
+                    log.info("library scan", { added, skipped, failed, ran, paths: roots.map((r) => r.path) });
+                    if (showSummary && ran) await showImportFinishedSummary(added, skipped, failed);
+                } catch (e) {
+                    shouldClearStatus = true;
+                    throw e;
+                } finally {
+                    if (shouldClearStatus) dispatch(setLibraryScanStatus(null));
+                }
             },
             t("library.importing", { label: "" }),
         );
@@ -219,6 +274,47 @@ const LibrarySettings: React.FC = () => {
         });
         if (!response) return;
         await runScan(roots, true);
+    };
+
+    /**
+     * Unions this root's folder tags onto catalogue items already under the root
+     * (excluding foreign extra-folder trees). Confirms when more than one item.
+     */
+    const handleBackfill = async (
+        rootPath: string,
+        tagIds: readonly number[],
+        target: "default" | number,
+    ): Promise<void> => {
+        const known = new Set(tagCatalog.map((tag) => tag.id));
+        const ids = keepKnownLibraryFolderTagIds(tagIds, known);
+        if (ids.length === 0) return;
+        const skipRoots = listForeignLibraryScanSkipPaths(rootPath, appSettings);
+        const links = libraryItemLinksUnderScanRoot(Object.keys(libraryItems), rootPath, skipRoots);
+        if (links.length === 0) {
+            dialogUtils.customError({ message: t("library.backfillNone") });
+            return;
+        }
+        const ok = await confirmWhenMany({
+            count: links.length,
+            title: t("library.backfillTitle"),
+            message: t("library.backfillMessage", { count: links.length }),
+            cancelLabel: tCommon("actions.cancel"),
+            confirmLabel: t("library.backfillTags"),
+        });
+        if (!ok) return;
+        setBackfillTarget(target);
+        setBackfillFeedback("saving");
+        try {
+            const result = await dispatch(unionLibraryItemTags({ itemLinks: links, tagIds: ids })).unwrap();
+            setBackfillFeedback(result.rows ? "saved" : "failed");
+        } catch (e) {
+            log.error("folder tag backfill failed", { rootPath, count: links.length }, e);
+            setBackfillFeedback("failed");
+        }
+        window.setTimeout(() => {
+            setBackfillFeedback("idle");
+            setBackfillTarget(null);
+        }, BACKFILL_FEEDBACK_RESTORE_MS);
     };
 
     const patchFolder = (index: number, patch: Partial<LibraryFolderSetting>): void => {
@@ -381,78 +477,109 @@ const LibrarySettings: React.FC = () => {
                         <div className="desc">{t("library.scanDefaultLocationDesc")}</div>
                     </div>
 
-                    <div id="settings-scan-default-location-depth">
-                        <div className="main row">
-                            <InputNumber
-                                value={appSettings.scanDefaultLocationMaxDepth}
-                                min={0}
-                                max={LIBRARY_SCAN_MAX_DEPTH_CEILING}
-                                step={1}
-                                integerOnly
-                                disabled={disabled || !appSettings.scanDefaultLocation}
-                                className="noBG"
-                                labelBefore={t("library.scanDefaultLocationMaxDepth")}
-                                timeout={[
-                                    500,
-                                    (value) => {
-                                        dispatch(
-                                            setAppSettings({
-                                                scanDefaultLocationMaxDepth: clampLibraryScanMaxDepth(value),
-                                            }),
-                                        );
-                                    },
-                                ]}
-                            />
-                        </div>
-                        <div className="desc">{t("library.scanDefaultLocationMaxDepthWarn")}</div>
-                    </div>
-
-                    <div id="settings-scan-default-location-interval">
-                        <div className="main row">
-                            <InputNumber
-                                value={appSettings.scanDefaultLocationIntervalMinutes}
-                                min={0}
-                                step={1}
-                                integerOnly
-                                disabled={disabled || !appSettings.scanDefaultLocation}
-                                className="noBG"
-                                labelBefore={t("library.scanDefaultLocationInterval")}
-                                labelAfter={t("library.minutesUnit")}
-                                timeout={[
-                                    500,
-                                    (value) => {
-                                        dispatch(
-                                            setAppSettings({
-                                                scanDefaultLocationIntervalMinutes: Math.max(0, Math.trunc(value)),
-                                            }),
-                                        );
-                                    },
-                                ]}
-                            />
-                            <button
-                                type="button"
-                                disabled={scanDisabled}
-                                onClick={() => {
-                                    const baseDir = getExistingBaseDir(appSettings.baseDir);
-                                    if (!baseDir) {
-                                        dialogUtils.customError({ message: t("library.setDefaultFirst") });
-                                        return;
-                                    }
-                                    void confirmThenScan([
-                                        {
-                                            path: baseDir,
-                                            content: "both",
-                                            maxDepth: clampLibraryScanMaxDepth(
-                                                appSettings.scanDefaultLocationMaxDepth,
-                                            ),
+                    <div className="main col libraryScanDefaultLocation">
+                        <div id="settings-scan-default-location-depth">
+                            <div className="row">
+                                <InputNumber
+                                    value={appSettings.scanDefaultLocationMaxDepth}
+                                    min={0}
+                                    max={LIBRARY_SCAN_MAX_DEPTH_CEILING}
+                                    step={1}
+                                    integerOnly
+                                    disabled={disabled || !appSettings.scanDefaultLocation}
+                                    className="noBG"
+                                    labelBefore={t("library.scanDefaultLocationMaxDepth")}
+                                    timeout={[
+                                        500,
+                                        (value) => {
+                                            dispatch(
+                                                setAppSettings({
+                                                    scanDefaultLocationMaxDepth: clampLibraryScanMaxDepth(value),
+                                                }),
+                                            );
                                         },
-                                    ]);
-                                }}
-                            >
-                                {scanThisLabel}
-                            </button>
+                                    ]}
+                                />
+                            </div>
+                            <div className="desc">{t("library.scanDefaultLocationMaxDepthWarn")}</div>
                         </div>
-                        <div className="desc">{t("library.intervalMinutesHint")}</div>
+
+                        <div id="settings-scan-default-location-interval">
+                            <div className="row">
+                                <InputNumber
+                                    value={appSettings.scanDefaultLocationIntervalMinutes}
+                                    min={0}
+                                    step={1}
+                                    integerOnly
+                                    disabled={disabled || !appSettings.scanDefaultLocation}
+                                    className="noBG"
+                                    labelBefore={t("library.scanDefaultLocationInterval")}
+                                    labelAfter={t("library.minutesUnit")}
+                                    timeout={[
+                                        500,
+                                        (value) => {
+                                            dispatch(
+                                                setAppSettings({
+                                                    scanDefaultLocationIntervalMinutes: Math.max(
+                                                        0,
+                                                        Math.trunc(value),
+                                                    ),
+                                                }),
+                                            );
+                                        },
+                                    ]}
+                                />
+                                <button
+                                    type="button"
+                                    disabled={scanDisabled}
+                                    onClick={() => {
+                                        const baseDir = getExistingBaseDir(appSettings.baseDir);
+                                        if (!baseDir) {
+                                            dialogUtils.customError({ message: t("library.setDefaultFirst") });
+                                            return;
+                                        }
+                                        void confirmThenScan([
+                                            {
+                                                path: baseDir,
+                                                content: "both",
+                                                maxDepth: clampLibraryScanMaxDepth(
+                                                    appSettings.scanDefaultLocationMaxDepth,
+                                                ),
+                                                skipPattern: appSettings.scanDefaultLocationSkipPattern,
+                                                tagIds: appSettings.scanDefaultLocationTagIds,
+                                            },
+                                        ]);
+                                    }}
+                                >
+                                    {scanThisLabel}
+                                </button>
+                            </div>
+                            <div className="desc">{t("library.intervalMinutesHint")}</div>
+                        </div>
+
+                        <LibraryScanRootOptions
+                            skipPattern={appSettings.scanDefaultLocationSkipPattern}
+                            tagIds={appSettings.scanDefaultLocationTagIds}
+                            skipInputId="settings-scan-default-location-skip"
+                            tagsId="settings-scan-default-location-tags"
+                            disabled={disabled || !appSettings.scanDefaultLocation}
+                            onSkipPatternChange={(value) => {
+                                dispatch(setAppSettings({ scanDefaultLocationSkipPattern: value }));
+                            }}
+                            onTagIdsChange={(ids) => {
+                                dispatch(setAppSettings({ scanDefaultLocationTagIds: ids }));
+                            }}
+                            onBackfill={() => {
+                                const baseDir = getExistingBaseDir(appSettings.baseDir);
+                                if (!baseDir) {
+                                    dialogUtils.customError({ message: t("library.setDefaultFirst") });
+                                    return;
+                                }
+                                void handleBackfill(baseDir, appSettings.scanDefaultLocationTagIds, "default");
+                            }}
+                            backfillBusy={backfillTarget === "default"}
+                            backfillFeedback={backfillTarget === "default" ? backfillFeedback : "idle"}
+                        />
                     </div>
 
                     <div className="main col" id="settings-library-folders">
@@ -577,6 +704,24 @@ const LibrarySettings: React.FC = () => {
                                             labelAfter={t("library.watch")}
                                         />
                                     </div>
+                                    <LibraryScanRootOptions
+                                        skipPattern={folder.skipPattern}
+                                        tagIds={folder.tagIds}
+                                        skipInputId={`settings-library-folder-skip-${index}`}
+                                        tagsId={`settings-library-folder-tags-${index}`}
+                                        disabled={disabled}
+                                        onSkipPatternChange={(value) => {
+                                            patchFolder(index, { skipPattern: value });
+                                        }}
+                                        onTagIdsChange={(ids) => {
+                                            patchFolder(index, { tagIds: ids });
+                                        }}
+                                        onBackfill={() => {
+                                            void handleBackfill(folder.path, folder.tagIds, index);
+                                        }}
+                                        backfillBusy={backfillTarget === index}
+                                        backfillFeedback={backfillTarget === index ? backfillFeedback : "idle"}
+                                    />
                                 </div>
                             ))}
                     </div>

@@ -176,11 +176,15 @@ const Usage = (): ReactElement => {
                     </ul>
                 </li>
                 <li id="settings-usage-language">
-                    <b>{t("language.title")}</b>{" "}
+                    <SettingsLink targetId="setting:language">
+                        <b>{t("language.title")}</b>
+                    </SettingsLink>{" "}
                     <Trans i18nKey="language.body" ns="usage" components={{ bold: <b />, code: <code /> }} />
                 </li>
                 <li id="settings-usage-dbBackup">
-                    <b>{t("dbBackup.title")}</b>{" "}
+                    <SettingsLink targetId="setting:db-backup">
+                        <b>{t("dbBackup.title")}</b>
+                    </SettingsLink>{" "}
                     <Trans
                         i18nKey="dbBackup.body"
                         ns="usage"
@@ -319,6 +323,67 @@ const Usage = (): ReactElement => {
                     />
                 </li>
                 <li>
+                    <SettingsLink id="settings-usage-library-scan" targetId="setting:library-scan-now">
+                        <b>{t("libraryScan.title")}</b>
+                    </SettingsLink>{" "}
+                    <Trans i18nKey="libraryScan.body" ns="usage" components={{ bold: <b /> }} />
+                    <ul>
+                        <li>
+                            <Trans
+                                i18nKey="libraryScan.regex"
+                                ns="usage"
+                                components={{
+                                    bold: <b />,
+                                    code: <code />,
+                                    link: <SettingsLink targetId="setting:scan-default-location-skip" />,
+                                }}
+                            />
+                        </li>
+                        <li>
+                            <Trans i18nKey="libraryScan.regexSimple" ns="usage" components={{ code: <code /> }} />
+                        </li>
+                        <li>
+                            <Trans i18nKey="libraryScan.regexStart" ns="usage" components={{ code: <code /> }} />
+                        </li>
+                        <li>
+                            <Trans i18nKey="libraryScan.regexExample" ns="usage" components={{ code: <code /> }} />
+                        </li>
+                        <li>
+                            <Trans
+                                i18nKey="libraryScan.ignoreFile"
+                                ns="usage"
+                                components={{ bold: <b />, code: <code /> }}
+                            />
+                        </li>
+                        <li>
+                            <Trans
+                                i18nKey="libraryScan.ignoreFolder"
+                                ns="usage"
+                                components={{ bold: <b />, code: <code /> }}
+                            />
+                        </li>
+                        <li>
+                            <Trans
+                                i18nKey="libraryScan.tags"
+                                ns="usage"
+                                components={{
+                                    bold: <b />,
+                                    link: <SettingsLink targetId="setting:scan-default-location-tags" />,
+                                }}
+                            />
+                        </li>
+                        <li>
+                            <Trans
+                                i18nKey="libraryScan.status"
+                                ns="usage"
+                                components={{
+                                    link: <SettingsLink targetId="setting:library-scan-now" />,
+                                }}
+                            />
+                        </li>
+                    </ul>
+                </li>
+                <li>
                     <b>{t("reader.title")}</b>
                     <ul>
                         <li>
@@ -389,7 +454,9 @@ const Usage = (): ReactElement => {
                     </ul>
                 </li>
                 <li>
-                    <b>{t("tray.title")}</b>{" "}
+                    <SettingsLink targetId="setting:minimize-to-tray">
+                        <b>{t("tray.title")}</b>
+                    </SettingsLink>{" "}
                     <Trans
                         i18nKey="tray.body"
                         ns="usage"
@@ -409,7 +476,10 @@ const Usage = (): ReactElement => {
                     />
                 </li>
                 <li id="settings-usage-readerPresets">
-                    <b>{t("readerPresets.title")}</b> {t("readerPresets.body")}
+                    <SettingsLink targetId="setting:reader-presets">
+                        <b>{t("readerPresets.title")}</b>
+                    </SettingsLink>{" "}
+                    {t("readerPresets.body")}
                     <ul>
                         <li>
                             <b>{t("readerPresets.defaults.title")}</b> {t("readerPresets.defaults.body")}
@@ -465,7 +535,9 @@ const Usage = (): ReactElement => {
                     <b>{t("pdfScale.warning")}</b>
                 </li>
                 <li id="settings-usage-anilist">
-                    <b>{t("anilist.title")}</b>
+                    <SettingsLink targetId="setting:anilist">
+                        <b>{t("anilist.title")}</b>
+                    </SettingsLink>
                     <ul>
                         <li>
                             <Trans

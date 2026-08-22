@@ -480,6 +480,38 @@ describe("DatabaseService", () => {
         await dbService.db.delete(libraryTags).where(eq(libraryTags.id, tag.id));
     });
 
+    it("keeps existing tag assignments when inserting the same pair again", async () => {
+        const itemLink = path.join("testdata", "manga", "tag-union");
+        await dbService.addLibraryItem({
+            type: "manga",
+            data: { type: "manga", link: itemLink, title: "Union" },
+        });
+        const [tagA] = await dbService.db
+            .insert(libraryTags)
+            .values({ name: "FolderA", color: "#2563eb" })
+            .returning();
+        const [tagB] = await dbService.db
+            .insert(libraryTags)
+            .values({ name: "FolderB", color: "#16a34a" })
+            .returning();
+        await dbService.db.insert(libraryItemTags).values({ itemLink, tagId: tagA.id });
+        await dbService.db
+            .insert(libraryItemTags)
+            .values([
+                { itemLink, tagId: tagA.id },
+                { itemLink, tagId: tagB.id },
+            ])
+            .onConflictDoNothing();
+        const assigned = await dbService.db
+            .select()
+            .from(libraryItemTags)
+            .where(eq(libraryItemTags.itemLink, itemLink));
+        expect(assigned.map((row) => row.tagId).sort()).toEqual([tagA.id, tagB.id].sort());
+        await dbService.db.delete(libraryItems).where(eq(libraryItems.link, itemLink));
+        await dbService.db.delete(libraryTags).where(eq(libraryTags.id, tagA.id));
+        await dbService.db.delete(libraryTags).where(eq(libraryTags.id, tagB.id));
+    });
+
     it("rejects a second tracker row for the same item and provider", async () => {
         const itemLink = path.join("testdata", "manga", "tracker-unique");
         await dbService.addLibraryItem({

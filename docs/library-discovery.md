@@ -85,21 +85,28 @@ Skip-update: existing dummy rows stay until the user runs **Clear unused progres
 
 New keys on `settings.json` (Zod + `repairZodInputWithDefaults`; old files get defaults):
 
-- `libraryFolders`: list of `{ path, content, maxDepth, scanOnStart, scanIntervalMinutes, watch }`
+- `libraryFolders`: list of `{ path, content, maxDepth, scanOnStart, scanIntervalMinutes, watch, skipPattern, tagIds }`
   - `content`: `manga` | `book` | `both`
   - `scanIntervalMinutes`: number or disabled (schema: `0` meaning off — pick one in code and JSDoc it; do not duplicate a magic number here)
   - `watch`: boolean, default off
+  - `skipPattern`: string, default empty (no regex skip)
+  - `tagIds`: catalog tag ids unioned onto items found under this folder
 - `scanDefaultLocation`: boolean, default off (do not scan `baseDir` when it is still the schema default home directory unless the user opts in)
 - `scanDefaultLocationMaxDepth`: grouping-folder steps for that walk (same clamp as extra-folder `maxDepth`; Settings shows a warning). Old files without the key get the same default as a new extra folder.
+- `scanDefaultLocationSkipPattern` / `scanDefaultLocationTagIds`: same skip regex and folder tags for Default Location.
 
 UI: Settings -> Library (same section as Default Location and thumbnails).
 
-- Default Location block: path picker, checkbox to also scan this folder, **scan depth** (with a warning about deep walks), and interval.
-- Library folders list: add/remove, content type, max depth, start/interval/watch, Scan this folder. Enabling **Watch** asks first (live watcher, automatic adds, disk/network cost).
+- Default Location block: path picker, checkbox to also scan this folder, **scan depth** (with a warning about deep walks), interval, skip regex, and a tags button (choose tags and backfill in a modal).
+- Library folders list: add/remove, content type, max depth, start/interval/watch, skip regex, folder tags + backfill, Scan this folder. Enabling **Watch** asks first (live watcher, automatic adds, disk/network cost).
 - **Scan now** (all enabled folders) replaces “Add valid items from default folder.” EPUB recursive becomes part of Scan now when the folder allows books.
 - One-line Continue Reading explanation: titles appear there after you open them in the reader.
 
-Catalog, i18n, Usage, `SettingsLink` when those controls land. Watch copy must warn like `autoRefreshSideList` (slow disks, large trees); turning Watch on also confirms in a dialog.
+When walking root R, other extra library-folder paths that sit inside R (and Default Location when it is opted in and sits inside R) are not entered. Ancestor roots are not skip targets, so a nested extra folder still walks its own children. Skip regex is case-insensitive against descendant basenames only (a pattern with no special characters matches as a substring). A sentinel **file** named `yomikiru-ignore` or `.yomikiru-ignore` inside D skips D; a **folder** with that name skips that folder only. Folder tags are unioned onto new scan/watch items; backfill uses the same foreign-root exclusion. Scan never auto-removes catalogue rows.
+
+The title bar shows live scan status (phase, root, current path, added/skipped/failed) in a popover; Scan now overlay uses the same copy.
+
+Catalog, i18n, Usage (`usage:library-scan`). Watch copy must warn like `autoRefreshSideList` (slow disks, large trees); turning Watch on also confirms in a dialog.
 
 ---
 

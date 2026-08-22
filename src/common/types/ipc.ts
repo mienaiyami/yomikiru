@@ -21,6 +21,7 @@ import type {
     RemoveItemTrackerData,
     SetLibraryItemMetadataData,
     SetLibraryItemTagsData,
+    UnionLibraryItemTagsData,
     UpdateBookBookmarkData,
     UpdateBookProgressData,
     UpdateLibraryItemData,
@@ -111,6 +112,7 @@ export type DatabaseChannels = {
     "db:tags:delete": ChannelDefinition<DeleteLibraryTagData, boolean>;
     "db:library:getAllItemTags": ChannelDefinition<void, LibraryItemTag[]>;
     "db:library:setItemTags": ChannelDefinition<SetLibraryItemTagsData, LibraryItemTag[] | null>;
+    "db:library:unionItemTags": ChannelDefinition<UnionLibraryItemTagsData, LibraryItemTag[] | null>;
 
     //
     "db:library:reset": ChannelDefinition<void, boolean>;

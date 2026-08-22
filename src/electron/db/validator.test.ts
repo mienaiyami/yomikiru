@@ -6,6 +6,7 @@ import {
     RemoveItemTrackerSchema,
     SetLibraryItemMetadataSchema,
     SetLibraryItemTagsSchema,
+    UnionLibraryItemTagsSchema,
     UpdateBookProgressSchema,
     UpdateLibraryItemSchema,
     UpdateLibraryTagSchema,
@@ -176,5 +177,10 @@ describe("library tag schemas", () => {
         expect(SetLibraryItemTagsSchema.safeParse({ itemLink: mangaLink, tagIds: [] }).success).toBe(true);
         expect(SetLibraryItemTagsSchema.safeParse({ itemLink: mangaLink, tagIds: [1, 2] }).success).toBe(true);
         expect(SetLibraryItemTagsSchema.safeParse({ itemLink: mangaLink }).success).toBe(false);
+        expect(
+            UnionLibraryItemTagsSchema.safeParse({ itemLinks: [mangaLink], tagIds: [1] }).success,
+        ).toBe(true);
+        expect(UnionLibraryItemTagsSchema.safeParse({ itemLinks: [], tagIds: [1] }).success).toBe(true);
+        expect(UnionLibraryItemTagsSchema.safeParse({ itemLinks: [mangaLink] }).success).toBe(false);
     });
 });

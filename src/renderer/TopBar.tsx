@@ -1,7 +1,5 @@
-import { navigateToSetting } from "@features/settings/utils/navigateToSetting";
 import {
     faCog,
-    faFolderOpen,
     faGrip,
     faHome,
     faList,
@@ -21,6 +19,7 @@ import { type ReactElement, useEffect, useLayoutEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { shallowEqual } from "react-redux";
 import { useAppContext } from "./App";
+import LibraryScanStatusButton from "./components/LibraryScanStatusButton";
 
 const TopBar = (): ReactElement => {
     const { t } = useTranslation("common");
@@ -118,8 +117,6 @@ const TopBar = (): ReactElement => {
     }, [readerContent, readerDisplayTitle]);
 
     const viewMode = useAppSelector((store) => store.appSettings.homeViewMode);
-    const libraryScanBusy = useAppSelector((store) => store.ui.libraryScanBusy);
-    // todo: temp only, extract to component
     const toggleViewMode = () => {
         dispatch(
             setAppSettings({
@@ -176,21 +173,7 @@ const TopBar = (): ReactElement => {
                         </button>
                     )}
                 </div>
-                {libraryScanBusy && (
-                    <button
-                        type="button"
-                        className="libraryScanStatus"
-                        tabIndex={-1}
-                        aria-busy="true"
-                        aria-live="polite"
-                        aria-label={t("topBar.scanningLibrary")}
-                        data-tooltip={t("topBar.scanningLibraryTooltip")}
-                        onFocus={(e) => e.currentTarget.blur()}
-                        onClick={() => navigateToSetting("setting:library-scan-now", dispatch)}
-                    >
-                        <FontAwesomeIcon icon={faFolderOpen} />
-                    </button>
-                )}
+                <LibraryScanStatusButton />
             </div>
             <div className="mainTitleCont">
                 <div className="title">{title}</div>

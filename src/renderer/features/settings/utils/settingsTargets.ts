@@ -177,7 +177,7 @@ export const SETTINGS_TARGETS_STATIC: readonly SettingsTarget[] = [
         {
             keywords: ["scan depth", "walk depth", "default location depth"],
             contentPath: "library.scanDefaultLocationMaxDepthWarn",
-            groupLabelKey: "library.title",
+            groupLabelKey: "library.scanDefaultLocation",
         },
     ),
     setting(
@@ -187,11 +187,21 @@ export const SETTINGS_TARGETS_STATIC: readonly SettingsTarget[] = [
         {
             keywords: ["minutes", "interval"],
             contentPath: "library.intervalMinutesHint",
-            groupLabelKey: "library.title",
+            groupLabelKey: "library.scanDefaultLocation",
         },
     ),
+    setting("setting:scan-default-location-skip", "#settings-scan-default-location-skip", "library.skipPattern", {
+        keywords: ["skip", "regex", "ignore", "yomikiru-ignore"],
+        contentPath: "library.skipPatternHint",
+        groupLabelKey: "library.scanDefaultLocation",
+    }),
+    setting("setting:scan-default-location-tags", "#settings-scan-default-location-tags", "library.folderTags", {
+        keywords: ["folder tags", "backfill"],
+        contentPath: ["library.folderTagsHint", "library.backfillTooltip"],
+        groupLabelKey: "library.scanDefaultLocation",
+    }),
     setting("setting:library-folders", "#settings-library-folders", "library.foldersTitle", {
-        keywords: ["library folder", "watch", "interval", "max depth"],
+        keywords: ["library folder", "watch", "interval", "max depth", "skip", "tags"],
         contentPath: "library.foldersDesc",
         groupLabelKey: "library.title",
     }),
@@ -405,6 +415,10 @@ export const SETTINGS_TARGETS_STATIC: readonly SettingsTarget[] = [
     usage("usage:library", "#settings-usage-library", "covers.title", {
         keywords: ["covers"],
         contentPath: "covers",
+    }),
+    usage("usage:library-scan", "#settings-usage-library-scan", "libraryScan.title", {
+        keywords: ["scan", "skip", "regex", "ignore", "folder tags"],
+        contentPath: "libraryScan",
     }),
     usage("usage:multi-select", "#settings-usage-multiSelect", "multiSelect.title", {
         keywords: ["delete", "selection", "ctrl+a"],

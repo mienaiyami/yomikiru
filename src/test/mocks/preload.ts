@@ -186,7 +186,7 @@ export const installPreloadMocks = (): void => {
             minimize: vi.fn(),
             restore: vi.fn(),
             close: vi.fn(),
-            setTitleBarOverlay: vi.fn(),
+            setTitleBarOverlay: vi.fn(() => vi.fn()),
             clearEvents: vi.fn(),
             on: vi.fn(() => () => undefined),
             id: () => 1,
@@ -203,4 +203,12 @@ export const installPreloadMocks = (): void => {
             throw new Error(`window.electron.invoke("${String(channel)}") is not stubbed in this test`);
         }),
     } as Window["electron"];
+
+    /* process-wide scan lock lives in main; unit tests are a single window */
+    onInvoke("libraryScan:tryBegin", () => true);
+    onInvoke("libraryScan:end", () => undefined);
+    onInvoke("libraryScan:getStatus", () => null);
+    onInvoke("libraryScan:syncConfig", () => undefined);
+    onInvoke("libraryScan:rendererReady", () => undefined);
+    onInvoke("libraryScan:requeueWatch", () => undefined);
 };

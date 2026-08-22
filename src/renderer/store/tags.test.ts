@@ -3,7 +3,13 @@ import type { LibraryItemTag, LibraryTag } from "@common/types/db";
 import { configureStore } from "@reduxjs/toolkit";
 import { onInvoke } from "@test/mocks/preload";
 import { afterEach, describe, expect, it, vi } from "vitest";
-import tagsReducer, { createLibraryTag, deleteLibraryTag, setLibraryItemTags, updateLibraryTag } from "./tags";
+import tagsReducer, {
+    createLibraryTag,
+    deleteLibraryTag,
+    setLibraryItemTags,
+    unionLibraryItemTags,
+    updateLibraryTag,
+} from "./tags";
 
 const itemLink = path.join("library", "tagged");
 
@@ -66,5 +72,26 @@ describe("tags thunks", () => {
         const store = makeStore([tagRow(), tagRow({ id: 2 })], [{ itemLink, tagId: 1 }]);
         await store.dispatch(setLibraryItemTags({ itemLink, tagIds: [2] }));
         expect(store.getState().tags.assignments).toEqual(rows);
+    });
+
+    it("unions tag ids onto items without dropping other assignments", async () => {
+        const other = path.join("library", "other");
+        const rows: LibraryItemTag[] = [
+            { itemLink, tagId: 1 },
+            { itemLink, tagId: 2 },
+        ];
+        onInvoke("db:library:unionItemTags", async () => rows);
+        const store = makeStore(
+            [tagRow(), tagRow({ id: 2 })],
+            [
+                { itemLink, tagId: 1 },
+                { itemLink: other, tagId: 1 },
+            ],
+        );
+        await store.dispatch(unionLibraryItemTags({ itemLinks: [itemLink], tagIds: [2] }));
+        expect(store.getState().tags.assignments).toEqual(
+            expect.arrayContaining([...rows, { itemLink: other, tagId: 1 }]),
+        );
+        expect(store.getState().tags.assignments).toHaveLength(3);
     });
 });

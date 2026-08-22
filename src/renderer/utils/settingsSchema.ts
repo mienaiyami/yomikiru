@@ -132,14 +132,25 @@ const settingSchema = z
                         .max(LIBRARY_SCAN_MAX_DEPTH_CEILING)
                         .default(LIBRARY_SCAN_DEFAULT_MAX_DEPTH),
                     scanOnStart: z.boolean().default(false),
-                    /** Minutes between automatic scans of this folder; `0` means interval scanning is off. */
+                    /** Minutes between automatic scans of this folder; not-positive turns interval scanning off. */
                     scanIntervalMinutes: scanIntervalMinutesSchema.default(0),
                     watch: z.boolean().default(false),
-                    /** Unix ms of the last completed scan of this folder; `0` means never. */
+                    /** Unix ms of the last completed scan of this folder; unset until a scan finishes. */
                     lastScanAtMs: z.number().min(0).default(0),
+                    /**
+                     * One JS regex tested against descendant basenames when scanning this folder.
+                     * A blank pattern disables regex skip. Invalid patterns are kept and treated as match-nothing.
+                     */
+                    skipPattern: z.string().default(""),
+                    /** Catalog tag ids unioned onto items found under this folder. */
+                    tagIds: z.array(z.number().int().positive()).default([]),
                 }),
             )
             .default([]),
+        /*
+         * Default Location scan settings stay as sibling keys so old settings.json
+         * heals without a nested-object rename.
+         */
         /** When true, Scan now / start also walk Default Location (`baseDir`). */
         scanDefaultLocation: z.boolean().default(false),
         /**
@@ -154,12 +165,19 @@ const settingSchema = z
             .max(LIBRARY_SCAN_MAX_DEPTH_CEILING)
             .default(LIBRARY_SCAN_DEFAULT_MAX_DEPTH),
         /**
-         * Minutes between automatic scans of Default Location when {@link scanDefaultLocation} is on;
-         * `0` means interval scanning is off for that folder.
+         * Minutes between automatic scans of Default Location when {@link scanDefaultLocation} is on.
+         * Interval scanning for that folder is off when the value is not positive.
          */
         scanDefaultLocationIntervalMinutes: scanIntervalMinutesSchema.default(0),
-        /** Unix ms of the last completed Default Location scan; `0` means never. */
+        /** Unix ms of the last completed Default Location scan; unset until a scan finishes. */
         scanDefaultLocationLastAtMs: z.number().min(0).default(0),
+        /**
+         * One JS regex tested against descendant basenames when walking Default Location.
+         * A blank pattern disables regex skip. Invalid patterns are kept and treated as match-nothing.
+         */
+        scanDefaultLocationSkipPattern: z.string().default(""),
+        /** Catalog tag ids unioned onto items found under Default Location (not under extra folders). */
+        scanDefaultLocationTagIds: z.array(z.number().int().positive()).default([]),
         /** When true, the Library settings section shows scan, folder, and maintenance controls. */
         librarySettingsExpanded: z.boolean().default(true),
         /** When true, the per-folder rows under Library folders are visible. */
@@ -229,6 +247,8 @@ const settingSchema = z
         scanDefaultLocationMaxDepth: LIBRARY_SCAN_DEFAULT_MAX_DEPTH,
         scanDefaultLocationIntervalMinutes: 0,
         scanDefaultLocationLastAtMs: 0,
+        scanDefaultLocationSkipPattern: "",
+        scanDefaultLocationTagIds: [],
         librarySettingsExpanded: true,
         libraryFoldersListExpanded: true,
         keepExtractedFiles: true,

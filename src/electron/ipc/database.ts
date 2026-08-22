@@ -15,6 +15,7 @@ import {
     RemoveItemTrackerSchema,
     SetLibraryItemMetadataSchema,
     SetLibraryItemTagsSchema,
+    UnionLibraryItemTagsSchema,
     UpdateBookBookmarkSchema,
     UpdateBookProgressSchema,
     UpdateLibraryItemSchema,
@@ -451,6 +452,40 @@ const handlers: {
             throw error;
         }
         const rows = await db.db.select().from(libraryItemTags).where(eq(libraryItemTags.itemLink, itemLink));
+        pingDatabaseChange("db:tag:change");
+        return rows;
+    },
+    "db:library:unionItemTags": async (db, request) => {
+        const { itemLinks, tagIds } = UnionLibraryItemTagsSchema.parse(request);
+        const uniqueLinks = [...new Set(itemLinks)];
+        const uniqueIds = [...new Set(tagIds)];
+        if (uniqueLinks.length === 0 || uniqueIds.length === 0) {
+            if (uniqueLinks.length === 0) return [];
+            return await db.db.select().from(libraryItemTags).where(inArray(libraryItemTags.itemLink, uniqueLinks));
+        }
+        const existingTags = await db.db
+            .select({ id: libraryTags.id })
+            .from(libraryTags)
+            .where(inArray(libraryTags.id, uniqueIds));
+        if (existingTags.length !== uniqueIds.length) {
+            logger.warn("db:library:unionItemTags: unknown tag id", { uniqueIds });
+            return null;
+        }
+        try {
+            await db.db.transaction(async (tx) => {
+                await tx
+                    .insert(libraryItemTags)
+                    .values(uniqueLinks.flatMap((itemLink) => uniqueIds.map((tagId) => ({ itemLink, tagId }))))
+                    .onConflictDoNothing();
+            });
+        } catch (error) {
+            if (isSqliteConstraintError(error)) {
+                logger.warn("db:library:unionItemTags: constraint failed", { uniqueLinks, uniqueIds }, error);
+                return null;
+            }
+            throw error;
+        }
+        const rows = await db.db.select().from(libraryItemTags).where(inArray(libraryItemTags.itemLink, uniqueLinks));
         pingDatabaseChange("db:tag:change");
         return rows;
     },
