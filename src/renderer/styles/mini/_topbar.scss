@@ -261,31 +261,50 @@
         display: flex;
         flex-direction: row;
         flex-wrap: nowrap;
-        gap: 0.75em;
+        gap: 0.5em;
         align-items: center;
-        margin-top: 0.25em;
+        justify-content: flex-end;
+        margin-top: 0.5em;
         width: 100%;
     }
+    /* match #app button chrome; popover lives under topBar so it misses that nest */
     .libraryScanPopoverSettings {
         margin-top: 0;
-        flex: 1 1 0;
+        flex: 0 0 auto;
         min-width: 0;
         width: auto;
-        box-sizing: border-box;
-        font-size: 0.9em;
-        text-decoration: underline;
-        background: none;
-        border: none;
-        padding: 0.35em 0;
-        cursor: pointer;
-        color: inherit;
         height: auto;
+        box-sizing: border-box;
+        font-family: inherit;
+        font-size: 0.85em;
+        text-decoration: none;
+        background: var(--btn-color);
+        border: none;
+        border-radius: 3px;
+        padding: 0.45em 0.85em;
+        cursor: pointer;
+        color: var(--font-color);
+        overflow: hidden;
         text-align: center;
+        &:hover {
+            background: var(--btn-color-hover);
+        }
+        &:active {
+            background-color: var(--btn-color-focus);
+        }
     }
 }
 
-/* #topBar .homeBtns button is more specific than a class-only width */
+/* beat #topBar .homeBtns button width/height/background and topBar hover tint */
 #topBar .homeBtns .libraryScanPopoverSettings {
     width: auto;
     height: auto;
+    font-size: 0.85em;
+    background: var(--btn-color);
+    &:hover {
+        background: var(--btn-color-hover);
+    }
+    &:active {
+        background-color: var(--btn-color-focus);
+    }
 }
