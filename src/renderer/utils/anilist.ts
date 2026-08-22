@@ -16,6 +16,18 @@ const log = createRendererLogger("AniList");
 
 const ANILIST_GRAPHQL_URL = "https://graphql.anilist.co";
 
+/** Viewer fields that establish the AniList session preferences for a renderer. */
+const ANILIST_VIEWER_QUERY = `#graphql
+    query {
+        Viewer {
+            name
+            options {
+                displayAdultContent
+            }
+        }
+    }
+`;
+
 let displayAdultContent = false;
 let anilistListEntryId: number | null = null;
 
@@ -105,6 +117,9 @@ type AnilistGraphqlData = {
     SaveMediaListEntry?: Anilist.ListEntry;
 };
 
+/** AniList profile fields shared by token validation and the Settings account label. */
+type AnilistViewer = NonNullable<AnilistGraphqlData["Viewer"]>;
+
 /** Ensures the lazy `anilist` catalog is available before util dialogs / labels run. */
 const ensureAnilistNs = (): void => {
     void i18n.loadNamespaces("anilist");
@@ -156,8 +171,8 @@ export const initAnilist = (): void => {
     hydrateAnilistClientFromStorage();
     const stored = getAnilistStorageToken() || "";
     if (!stored) return;
-    void checkAnilistToken(stored).then((ok) => {
-        if (!ok && ok !== undefined)
+    void getAnilistViewer(stored).then((viewer) => {
+        if (!viewer)
             dialogUtils.customError({
                 message: i18n.t("errors.loginFailed", { ns: "anilist" }),
             });
@@ -256,33 +271,35 @@ export const toAnilistTrackerSnapshotUpdate = (
 });
 
 /**
- * Validates a bearer token and loads the viewer's adult-content preference.
- * @returns true on 2xx, false on HTTP error, undefined on network failure
+ * Fetches the AniList viewer and applies account preferences to this renderer.
+ * Pass a bearer while validating a newly entered token; otherwise the current session token is used.
+ *
+ * @returns Viewer data on success, or undefined when the profile is unavailable
  */
-export const checkAnilistToken = async (bearer: string): Promise<boolean | undefined> => {
-    const query = `#graphql
-    query{
-        Viewer{
-                name
-                options{
-                    displayAdultContent
-                }
-        }
+export const getAnilistViewer = async (
+    bearer = resolveAnilistBearer(),
+): Promise<AnilistViewer | undefined> => {
+    if (!bearer) {
+        log.error("getAnilistViewer: skipped (no access token; user not logged in)");
+        return;
     }
-    `;
     try {
-        const json = await postAnilistGraphql(bearer, { query });
+        const json = await postAnilistGraphql(bearer, { query: ANILIST_VIEWER_QUERY });
         if (json && typeof json === "object" && "data" in json) {
             const data = (json as { data?: AnilistGraphqlData }).data;
-            displayAdultContent = Boolean(data?.Viewer?.options?.displayAdultContent);
+            const viewer = data?.Viewer;
+            if (viewer) {
+                displayAdultContent = Boolean(viewer.options?.displayAdultContent);
+                return viewer;
+            }
         }
-        return true;
+        return;
     } catch (reason) {
         if (reason instanceof HttpStatusError) {
-            return false;
+            return;
         }
         dialogUtils.customError({ message: i18n.t("errors.requestFailed", { ns: "anilist" }) });
-        log.error("checkAnilistToken: request failed", reason);
+        log.error("getAnilistViewer: request failed", reason);
     }
 };
 
@@ -322,20 +339,6 @@ export const anilistRequest = async (query: string, variables = {}): Promise<Ani
         }
         log.error("request: network or parse error", reason);
     }
-};
-
-/** Returns the logged-in AniList username, or a localized fallback when the request fails. */
-export const getAnilistUserName = async (): Promise<string> => {
-    const query = `#graphql
-        query{
-            Viewer{
-                    name
-            }
-        }
-        `;
-    const data = await anilistRequest(query);
-    if (data?.Viewer?.name) return data.Viewer.name;
-    return i18n.t("errors.username", { ns: "anilist" });
 };
 
 const withAdultContentVariable = (variables: object): object =>

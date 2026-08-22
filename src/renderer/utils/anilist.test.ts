@@ -1,9 +1,11 @@
 import path from "node:path";
-import { http } from "@common/http";
+import { HttpStatusError, http } from "@common/http";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import {
     anilistRequest,
     authorFromAnilistStaff,
+    getAnilistViewer,
+    searchAnilistMedia,
     setAnilistClientToken,
     setAnilistStorageToken,
     toAnilistTrackerSnapshotUpdate,
@@ -106,6 +108,51 @@ describe("anilistRequest token", () => {
     it("skips the request when neither memory nor storage has a token", async () => {
         await anilistRequest("query { Viewer { name } }");
         expect(http.postJson).not.toHaveBeenCalled();
+    });
+});
+
+describe("getAnilistViewer", () => {
+    beforeEach(() => {
+        localStorage.clear();
+        setAnilistClientToken("");
+        vi.spyOn(http, "postJson").mockResolvedValue({
+            data: { Viewer: { name: "alice", options: { displayAdultContent: true } } },
+        });
+    });
+
+    afterEach(() => {
+        vi.restoreAllMocks();
+        localStorage.clear();
+        setAnilistClientToken("");
+    });
+
+    it("loads the username and adult-content preference from one Viewer request", async () => {
+        const viewer = await getAnilistViewer("viewer-token");
+
+        expect(viewer).toEqual({ name: "alice", options: { displayAdultContent: true } });
+        expect(http.postJson).toHaveBeenCalledWith(
+            "https://graphql.anilist.co",
+            expect.objectContaining({
+                query: expect.stringContaining("displayAdultContent"),
+            }),
+            expect.objectContaining({
+                headers: expect.objectContaining({ Authorization: "Bearer viewer-token" }),
+            }),
+        );
+
+        setAnilistClientToken("viewer-token");
+        await searchAnilistMedia("title");
+        expect(vi.mocked(http.postJson).mock.calls[1]?.[1]).toEqual(
+            expect.objectContaining({ variables: { search: "title" } }),
+        );
+    });
+
+    it("returns undefined when AniList rejects the token", async () => {
+        vi.mocked(http.postJson).mockRejectedValue(
+            new HttpStatusError("https://graphql.anilist.co", 401, "Unauthorized", {}),
+        );
+
+        await expect(getAnilistViewer("viewer-token")).resolves.toBeUndefined();
     });
 });
 

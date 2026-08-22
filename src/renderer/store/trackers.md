@@ -24,7 +24,7 @@ Use these from library, gallery details, app bootstrap, relocate, readers (cache
 
 ## AniList-only APIs (keep)
 
-**GraphQL / token** ([`utils/anilist.ts`](../utils/anilist.ts)): `getAnilistListEntry`, `setAnilistListEntry`, `setAnilistListProgress`, `searchAnilistMedia`, `checkAnilistToken`, storage token helpers, `toTrackerMediaSnapshot`, `toTrackerListState`, `toAnilistTrackerSnapshotUpdate`. These know the AniList payload; they are not DB thunks.
+**GraphQL / token** ([`utils/anilist.ts`](../utils/anilist.ts)): `getAnilistViewer`, `getAnilistListEntry`, `setAnilistListEntry`, `setAnilistListProgress`, `searchAnilistMedia`, storage token helpers, `toTrackerMediaSnapshot`, `toTrackerListState`, `toAnilistTrackerSnapshotUpdate`. These know the AniList payload; they are not DB thunks.
 
 **Session slice** ([`anilist.ts`](anilist.ts)): `token`, `currentListEntry`, `galleryTrackContext`, `setAnilistToken`, `setAnilistCurrentListEntry`, `setGalleryTrackContext`, `importAnilistTrackingFromStorage`.
 

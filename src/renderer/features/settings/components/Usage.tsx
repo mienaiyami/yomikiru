@@ -553,6 +553,7 @@ const Usage = (): ReactElement => {
                             />
                         </li>
                         <li>{t("anilist.managed")}</li>
+                        <li>{t("anilist.adultContent")}</li>
                         <li>
                             <Trans i18nKey="anilist.autoUpdate" ns="usage" components={{ bold: <b /> }} />
                         </li>

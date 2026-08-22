@@ -100,7 +100,7 @@ When "Track with AniList..." is selected (reader bar or gallery context menu), t
    - Dispatches `addAnilistTracker({ itemLink, anilistMediaId })` (`db:trackers:upsert`).
    - The bar later calls `getAnilistListEntry(mediaId)` (`SaveMediaListEntry`) to create or fetch the list entry and cache the snapshot.
 
-Adult content is only shown when the viewer's AniList `displayAdultContent` option is true (loaded during `checkAnilistToken`; no in-app toggle).
+Adult content is only shown when the viewer's AniList `displayAdultContent` option is true (loaded with the viewer profile in each renderer; no in-app toggle).
 
 ---
 
@@ -173,7 +173,7 @@ Named exports (no static class). Every window calls `hydrateAnilistClientFromSto
 | --- | --- |
 | `hydrateAnilistClientFromStorage()` | Load stored token into module state (no network) |
 | `initAnilist()` | Hydrate then validate the stored token (once per app) |
-| `checkAnilistToken(token)` | Validates token against AniList API |
+| `getAnilistViewer(token?)` | Fetch the viewer profile, validate a token, and synchronize viewer preferences |
 | `searchAnilistMedia(query)` | Search media by title; returns array of results. GraphQL `type: MANGA` includes novels |
 | `getAnilistListEntry(mediaId)` | Create or fetch a MediaListEntry for the given media |
 | `setAnilistListEntry(data)` | Save mutation for the current MediaListEntry |

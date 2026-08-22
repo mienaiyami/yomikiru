@@ -3,7 +3,7 @@ import { setReaderSettings } from "@store/appSettings";
 import { useAppDispatch, useAppSelector } from "@store/hooks";
 import { setAnilistLoginOpen } from "@store/ui";
 import InputCheckbox from "@ui/InputCheckbox";
-import { getAnilistUserName } from "@utils/anilist";
+import { getAnilistViewer } from "@utils/anilist";
 import { useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { navigateToSetting } from "../utils/navigateToSetting";
@@ -17,8 +17,8 @@ const AnilistSetting: React.FC = () => {
 
     useEffect(() => {
         if (anilistToken)
-            getAnilistUserName().then((name) => {
-                if (name) setAnilistUsername(name);
+            getAnilistViewer().then((viewer) => {
+                if (viewer?.name) setAnilistUsername(viewer.name);
             });
     }, [anilistToken]);
     return (

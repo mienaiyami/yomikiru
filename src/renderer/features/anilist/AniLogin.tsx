@@ -1,7 +1,7 @@
 import { setAnilistToken } from "@store/anilist";
 import { useAppDispatch, useAppSelector } from "@store/hooks";
 import { setAnilistLoginOpen } from "@store/ui";
-import { checkAnilistToken } from "@utils/anilist";
+import { getAnilistViewer } from "@utils/anilist";
 import type React from "react";
 import { useEffect, useRef, useState } from "react";
 import FocusLock from "react-focus-lock";
@@ -84,8 +84,8 @@ const AniLogin: React.FC = () => {
                                             const token = inputRef.current.value.trimEnd();
                                             const elem = e.currentTarget;
                                             elem.innerText = t("login.checking");
-                                            checkAnilistToken(token).then((ok) => {
-                                                if (ok) {
+                                            getAnilistViewer(token).then((viewer) => {
+                                                if (viewer) {
                                                     elem.innerText = t("login.linked");
                                                     setTimeout(() => {
                                                         dispatch(setAnilistToken(token));
