@@ -2,6 +2,7 @@ import {
     listMangaChapterChildren as listMangaChapterChildrenWith,
     type MangaChapterChild,
     pathIsInsideRoot as pathIsInsideRootWith,
+    resolveMangaStartPath as resolveMangaStartPathWith,
 } from "@common/library/classify";
 import { rendererLibraryIo } from "./file";
 
@@ -19,3 +20,10 @@ export const pathIsInsideRoot = (absPath: string, root: string): boolean =>
  */
 export const listMangaChapterChildren = (seriesDir: string): Promise<MangaChapterChild[]> =>
     listMangaChapterChildrenWith(rendererLibraryIo(), seriesDir);
+
+/**
+ * Reader target for an unread manga item: itself for a packed file/one-shot,
+ * otherwise the first naturally name-sorted chapter below a series root.
+ */
+export const resolveMangaStartPath = (libraryPath: string): Promise<string | null> =>
+    resolveMangaStartPathWith(rendererLibraryIo(), libraryPath);

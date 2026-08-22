@@ -417,7 +417,10 @@ export class DatabaseService {
         if (links.length === 0) return 0;
         const unique = [...new Set(links)];
         return await this._db.transaction(async (tx) => {
-            const manga = await tx.delete(mangaProgress).where(inArray(mangaProgress.itemLink, unique)).returning();
+            const manga = await tx
+                .delete(mangaProgress)
+                .where(inArray(mangaProgress.itemLink, unique))
+                .returning();
             const books = await tx.delete(bookProgress).where(inArray(bookProgress.itemLink, unique)).returning();
             return manga.length + books.length;
         });
@@ -476,15 +479,27 @@ export class DatabaseService {
         return item ?? null;
     }
 
+    /**
+     * Persists manga progress, creating the child row when a catalogue-only scan item
+     * is opened for the first time and updating it on later reader saves.
+     */
     async updateMangaProgress(data: UpdateMangaProgressData): Promise<MangaProgress[]> {
         const { itemLink, ...updateData } = data;
+        if (data.chapterName === undefined) throw new Error("Cannot create manga progress without a chapter name");
         return await this._db
-            .update(mangaProgress)
-            .set({
-                ...updateData,
+            .insert(mangaProgress)
+            .values({
+                itemLink,
+                chapterName: data.chapterName,
+                currentPage: data.currentPage,
+                chaptersRead: data.chaptersRead ?? [],
+                totalPages: data.totalPages,
                 lastReadAt: new Date(),
             })
-            .where(eq(mangaProgress.itemLink, itemLink))
+            .onConflictDoUpdate({
+                target: mangaProgress.itemLink,
+                set: { ...updateData, lastReadAt: new Date() },
+            })
             .returning();
     }
 
@@ -511,15 +526,28 @@ export class DatabaseService {
         });
     }
 
+    /**
+     * Persists book progress, creating the child row when a catalogue-only scan item
+     * is opened for the first time and updating it on later reader saves.
+     */
     async updateBookProgress(data: UpdateBookProgressData): Promise<BookProgress[]> {
         const { itemLink, ...updateData } = data;
+        if (data.chapterId === undefined || data.position === undefined) {
+            throw new Error("Cannot create book progress without a chapter and position");
+        }
         return await this._db
-            .update(bookProgress)
-            .set({
-                ...updateData,
+            .insert(bookProgress)
+            .values({
+                itemLink,
+                chapterId: data.chapterId,
+                chapterName: data.chapterName,
+                position: data.position,
                 lastReadAt: new Date(),
             })
-            .where(eq(bookProgress.itemLink, itemLink))
+            .onConflictDoUpdate({
+                target: bookProgress.itemLink,
+                set: { ...updateData, lastReadAt: new Date() },
+            })
             .returning();
     }
 

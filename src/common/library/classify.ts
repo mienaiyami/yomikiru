@@ -171,13 +171,18 @@ const dirHasIgnoreSentinelFile = async (io: LibraryIo, dir: string): Promise<boo
 /**
  * Direct children of `seriesDir` that are readable chapters: image-bearing folders
  * or packed/PDF files. Root image files (including covers) are omitted; empty dirs too.
- * Ignore-sentinel names are never chapters.
+ * Ignore-sentinel names are never chapters; an unreadable root returns an empty list.
  */
 export const listMangaChapterChildren = async (io: LibraryIo, seriesDir: string): Promise<MangaChapterChild[]> => {
     const root = normalizeLibraryPath(io, seriesDir);
     if (!io.fs.existsSync(root) || !io.fs.isDir(root)) return [];
 
-    const names = await io.fs.readdir(root);
+    let names: string[] = [];
+    try {
+        names = await io.fs.readdir(root);
+    } catch {
+        return [];
+    }
     const out: MangaChapterChild[] = [];
     for (const fileName of names) {
         if (isLibraryScanIgnoreName(fileName)) continue;
@@ -210,6 +215,36 @@ export const listMangaChapterChildren = async (io: LibraryIo, seriesDir: string)
     return out;
 };
 
+/**
+ * Resolves the path used to start an unread manga catalogue item.
+ * Packed files and image-bearing one-shots open directly; series roots open their
+ * first naturally name-sorted chapter and cover-only roots are never treated as chapters.
+ */
+export const resolveMangaStartPath = async (io: LibraryIo, libraryPath: string): Promise<string | null> => {
+    const root = normalizeLibraryPath(io, libraryPath);
+    if (!io.fs.existsSync(root)) return null;
+    if (io.fs.isFile(root)) return isMangaFileName(root, io.path.extname) ? root : null;
+    if (!io.fs.isDir(root)) return null;
+
+    let names: string[] = [];
+    try {
+        names = await io.fs.readdir(root);
+    } catch {
+        return null;
+    }
+    const hasPages = names.some((name) => {
+        const child = io.path.join(root, name);
+        return (
+            io.fs.isFile(child) && isImageFileName(name, io.path.extname) && !isMangaSeriesCoverFileName(io, name)
+        );
+    });
+    if (hasPages) return root;
+
+    const chapters = await listMangaChapterChildren(io, root);
+    chapters.sort((a, b) => a.name.localeCompare(b.name, undefined, { numeric: true, sensitivity: "base" }));
+    return chapters[0]?.link ?? null;
+};
+
 const classifyFile = (io: LibraryIo, normalized: string): LibraryNodeKind => {
     if (isBookFileName(normalized, io.path.extname)) return "book";
     if (isMangaFileName(normalized, io.path.extname)) return "packedManga";
@@ -231,7 +266,10 @@ const dirLooksLikeGrouping = async (io: LibraryIo, dir: string): Promise<boolean
         if (isLibraryScanIgnoreName(name)) continue;
         const child = io.path.join(dir, name);
         if (io.fs.isDir(child)) return true;
-        if (io.fs.isFile(child) && (isBookFileName(name, io.path.extname) || isMangaFileName(name, io.path.extname))) {
+        if (
+            io.fs.isFile(child) &&
+            (isBookFileName(name, io.path.extname) || isMangaFileName(name, io.path.extname))
+        ) {
             return true;
         }
     }
@@ -331,9 +369,42 @@ const shouldSkipScanSubtree = async (
     return false;
 };
 
+/** Emits direct EPUB children that would otherwise be hidden by a terminal manga directory. */
+const emitDirectBookChildren = async (
+    io: LibraryIo,
+    dir: string,
+    opts: CollectLibraryScanTargetsOpts,
+    scanOpts: { skipRoots: readonly string[] },
+    out: LibraryScanTarget[],
+): Promise<void> => {
+    if (!allowsBook(opts.content) || !io.fs.isDir(dir)) return;
+    let names: string[] = [];
+    try {
+        names = await io.fs.readdir(dir);
+    } catch {
+        return;
+    }
+    for (const name of names) {
+        if (opts.shouldStop?.()) return;
+        const child = io.path.join(dir, name);
+        if (!io.fs.isFile(child) || !isBookFileName(name, io.path.extname)) continue;
+        if (
+            await shouldSkipScanSubtree(io, child, name, {
+                skipRoots: scanOpts.skipRoots,
+                skipRegex: opts.skipRegex,
+                isWalkRoot: false,
+            })
+        ) {
+            continue;
+        }
+        emitTarget({ kind: "book", path: normalizeLibraryPath(io, child) }, opts, out);
+    }
+};
+
 /**
- * Walks `root` for catalogue paths. Recurses grouping and skip dirs (epubs in otherwise-empty
- * folders); does not enter series or oneshot folders. Skip regex, ignore sentinels, and
+ * Walks `root` for catalogue paths. Recurses grouping and skip dirs (EPUBs in otherwise-empty
+ * folders); terminal manga directories are not descended, but their direct book siblings are
+ * still emitted for mixed roots. Skip regex, ignore sentinels, and
  * {@link CollectLibraryScanTargetsOpts.skipRoots} prune whole subtrees.
  */
 export const collectLibraryScanTargets = async (
@@ -358,6 +429,9 @@ export const collectLibraryScanTargets = async (
     const rootNode = await classifyLibraryNode(io, normalizedRoot);
     if (rootNode.kind !== "grouping" && rootNode.kind !== "skip") {
         emitTarget(rootNode, opts, out);
+        if (rootNode.kind === "series" || rootNode.kind === "oneshot") {
+            await emitDirectBookChildren(io, normalizedRoot, opts, { skipRoots }, out);
+        }
         return out;
     }
 
@@ -384,6 +458,9 @@ export const collectLibraryScanTargets = async (
             }
             const node = await classifyLibraryNode(io, child);
             emitTarget(node, opts, out);
+            if (node.kind === "series" || node.kind === "oneshot") {
+                await emitDirectBookChildren(io, child, opts, { skipRoots }, out);
+            }
             /* skip dirs still hold epubs/packed files; do not enter series or oneshot folders */
             if (io.fs.isDir(child) && node.kind !== "series" && node.kind !== "oneshot" && depthLeft > 0) {
                 await walk(child, depthLeft - 1);
@@ -452,7 +529,7 @@ export const collectLibraryScanTargetFromEventPath = async (
 
         if (node.kind === "series") {
             // event is inside a known series: do not promote a chapter folder to a new item
-            if (opts.existingLinks.has(node.path)) return null;
+            if (opts.existingLinks.has(node.path)) return fallback?.type === "book" ? fallback : null;
             if (withinDepth) {
                 const out: LibraryScanTarget[] = [];
                 emitTarget(node, opts, out);

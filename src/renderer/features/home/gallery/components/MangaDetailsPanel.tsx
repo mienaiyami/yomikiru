@@ -44,7 +44,7 @@ import {
 } from "@utils/libraryMissingPath";
 import { createRendererLogger } from "@utils/logger";
 import { resolveMangaChapterPath } from "@utils/mangaChapterPath";
-import { listMangaChapterChildren, type MangaChapterChild } from "@utils/mangaChapters";
+import { listMangaChapterChildren, type MangaChapterChild, resolveMangaStartPath } from "@utils/mangaChapters";
 import { scrollChildInContainer } from "@utils/utils";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
@@ -580,7 +580,7 @@ const MangaDetailsPanel = ({
         [mangaLink, onClose, pathMissing, setContextMenuData, isFavourite, t, dispatch],
     );
 
-    const handleContinueReading = () => {
+    const handleContinueReading = useCallback(() => {
         if (pathMissing || !manga) return;
         if (manga.progress?.itemLink && manga.progress.chapterName) {
             openInReader(resolveMangaChapterPath(manga.progress.itemLink, manga.progress.chapterName), {
@@ -588,8 +588,11 @@ const MangaDetailsPanel = ({
             });
             return;
         }
-        openInReader(mangaLink);
-    };
+        void (async () => {
+            const startPath = await resolveMangaStartPath(mangaLink);
+            if (startPath) await openInReader(startPath);
+        })();
+    }, [manga, mangaLink, openInReader, pathMissing]);
 
     const coverArtSrc = manga ? resolveDetailsCoverSrc(manga, tracker?.media?.coverImage) : "";
     const trackerCoverAvailable = Boolean(tracker?.media?.coverImage?.trim());

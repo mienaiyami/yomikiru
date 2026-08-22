@@ -1,5 +1,10 @@
 import path from "node:path";
-import { classifyLibraryNode, collectLibraryScanTargets, type LibraryIo } from "@common/library/classify";
+import {
+    classifyLibraryNode,
+    collectLibraryScanTargetFromEventPath,
+    collectLibraryScanTargets,
+    type LibraryIo,
+} from "@common/library/classify";
 import { describe, expect, it } from "vitest";
 
 /**
@@ -48,5 +53,38 @@ describe("classifyLibraryNode with injected fs", () => {
         });
 
         expect(targets).toEqual([]);
+    });
+
+    it("collects direct books beside packed manga chapters", async () => {
+        const root = path.join("lib", "mixed");
+        const archive = path.join(root, "chapter-01.zip");
+        const epub = path.join(root, "novel.epub");
+        const io = ioForTree({ [root]: ["chapter-01.zip", "novel.epub"] }, [archive, epub]);
+
+        const targets = await collectLibraryScanTargets(io, root, {
+            content: "both",
+            maxDepth: 2,
+            existingLinks: new Set(),
+        });
+
+        expect(targets).toEqual([
+            { type: "manga", path: root },
+            { type: "book", path: epub },
+        ]);
+    });
+
+    it("keeps a new book event inside an existing mixed manga series", async () => {
+        const root = path.join("lib", "mixed");
+        const archive = path.join(root, "chapter-01.zip");
+        const epub = path.join(root, "novel.epub");
+        const io = ioForTree({ [root]: ["chapter-01.zip", "novel.epub"] }, [archive, epub]);
+
+        const target = await collectLibraryScanTargetFromEventPath(io, epub, root, {
+            content: "both",
+            maxDepth: 2,
+            existingLinks: new Set([root]),
+        });
+
+        expect(target).toEqual({ type: "book", path: epub });
     });
 });

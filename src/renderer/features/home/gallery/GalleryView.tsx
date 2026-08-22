@@ -28,10 +28,11 @@ import {
 } from "@utils/gallerySort";
 import { isShortcutEventFromInputTarget, keyFormatter } from "@utils/keybindings";
 import { resolveDetailsCoverSrc, trackerCoverUrlByItemLink } from "@utils/libraryCover";
+import { ensurePdfLibraryCover } from "@utils/libraryCoverService";
 import { libraryItemSearchText, resolveAllItemMetadata, trackerByItemLink } from "@utils/libraryMetadata";
 import { itemsWithTag } from "@utils/libraryTags";
 import { resolveMangaChapterPath } from "@utils/mangaChapterPath";
-import { ensurePdfLibraryCover } from "@utils/libraryCoverService";
+import { resolveMangaStartPath } from "@utils/mangaChapters";
 import type { RefObject } from "react";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
@@ -48,13 +49,7 @@ import MangaDetailsPanel from "./components/MangaDetailsPanel";
 /**
  * When a PDF manga tile has no cover yet, generate page-1 WebP (D2). No visual of its own.
  */
-const GalleryPdfCoverKickoff = ({
-    item,
-    hasCover,
-}: {
-    item: LibraryItemWithProgress;
-    hasCover: boolean;
-}) => {
+const GalleryPdfCoverKickoff = ({ item, hasCover }: { item: LibraryItemWithProgress; hasCover: boolean }) => {
     const dispatch = useAppDispatch();
     useEffect(() => {
         if (hasCover) return;
@@ -212,21 +207,20 @@ const GalleryView: React.FC = () => {
     );
     const handleContinueReading = useCallback(
         (item: LibraryItemWithProgress) => {
-            const mangaTarget =
-                item.type === "manga" && item.progress && "chapterName" in item.progress
+            void (async () => {
+                if (item.type === "book") {
+                    await openInReader(item.link, {
+                        epubElementQueryString: item.progress?.position,
+                        epubChapterId: item.progress?.chapterId,
+                    });
+                    return;
+                }
+                const mangaTarget = item.progress
                     ? resolveMangaChapterPath(item.progress.itemLink, item.progress.chapterName)
-                    : "";
-            openInReader(
-                item.type === "book" ? item.link : mangaTarget,
-                item.type === "book"
-                    ? {
-                          epubElementQueryString: item.progress?.position,
-                          epubChapterId: item.progress?.chapterId,
-                      }
-                    : {
-                          mangaPageNumber: item.progress?.currentPage,
-                      },
-            );
+                    : await resolveMangaStartPath(item.link);
+                if (!mangaTarget) return;
+                await openInReader(mangaTarget, { mangaPageNumber: item.progress?.currentPage });
+            })();
         },
         [openInReader],
     );

@@ -104,6 +104,23 @@ describe("DatabaseService", () => {
         expect(stillNone).toEqual([]);
     });
 
+    it("creates manga progress when a scanned catalogue row is read", async () => {
+        const itemLink = path.join("testdata", "manga", "scan-then-read");
+        await dbService.addLibraryItem({
+            type: "manga",
+            data: { type: "manga", link: itemLink, title: "Unread Series" },
+        });
+
+        const [progress] = await dbService.updateMangaProgress({
+            itemLink,
+            chapterName: "ch01",
+            currentPage: 2,
+            totalPages: 12,
+        });
+
+        expect(progress).toMatchObject({ itemLink, chapterName: "ch01", currentPage: 2, totalPages: 12 });
+    });
+
     it("deleteProgressForLinks drops progress and keeps the catalogue row", async () => {
         const itemLink = path.join("testdata", "manga", "dummy-progress");
         await dbService.addLibraryItem({
@@ -231,6 +248,28 @@ describe("DatabaseService", () => {
         });
         expect(progress?.position).toBe("body>p:nth-child(9)");
         expect(progress?.chapterId).toBe("c2");
+    });
+
+    it("creates book progress when a scanned catalogue row is read", async () => {
+        const itemLink = path.join("testdata", "books", "scan-then-read.epub");
+        await dbService.addLibraryItem({
+            type: "book",
+            data: { type: "book", link: itemLink, title: "Unread Book" },
+        });
+
+        const [progress] = await dbService.updateBookProgress({
+            itemLink,
+            chapterId: "chapter-1",
+            chapterName: "Chapter 1",
+            position: "body>p:nth-child(2)",
+        });
+
+        expect(progress).toMatchObject({
+            itemLink,
+            chapterId: "chapter-1",
+            chapterName: "Chapter 1",
+            position: "body>p:nth-child(2)",
+        });
     });
 
     it("relocates a manga library path and rewrites progress and bookmark itemLink", async () => {
@@ -362,9 +401,7 @@ describe("DatabaseService", () => {
             .select()
             .from(libraryItemTags)
             .where(eq(libraryItemTags.itemLink, discardLink));
-        expect(tags.map((row) => row.tagId).sort()).toEqual(
-            [tagKeeper.id, tagDiscard.id, tagBoth.id].sort(),
-        );
+        expect(tags.map((row) => row.tagId).sort()).toEqual([tagKeeper.id, tagDiscard.id, tagBoth.id].sort());
     });
 
     it("updates a manga bookmark chapterName in place (locate-chapter rewrite)", async () => {

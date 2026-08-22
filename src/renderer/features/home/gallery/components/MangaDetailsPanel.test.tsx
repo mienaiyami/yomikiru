@@ -203,13 +203,26 @@ describe("MangaDetailsPanel", () => {
         await waitForEmptyChapterList();
     });
 
-    it("starts from the manga folder when there is no progress", async () => {
-        stubMangaOnDisk();
+    it("starts from the first canonical chapter when a series has no progress", async () => {
         const item = makeMangaItem({}, null);
+        const ch02 = window.path.join(item.link, "ch02");
+        const ch10 = window.path.join(item.link, "ch10");
+        stubFs({
+            existsSync: (filePath) => [item.link, ch02, ch10].includes(filePath),
+            isDir: (filePath) => [item.link, ch02, ch10].includes(filePath),
+            isFile: () => false,
+            readdir: async (dir) => (dir === item.link ? ["ch10", "ch02"] : ["01.png"]),
+            access: async () => undefined,
+            stat: async () =>
+                ({
+                    mtimeMs: 1,
+                    isDir: true,
+                    isFile: false,
+                }) as Awaited<ReturnType<Window["fs"]["stat"]>>,
+        });
         renderMangaPanel(item);
         fireEvent.click(screen.getByRole("button", { name: home.shared.startReading }));
-        expect(openInReader).toHaveBeenCalledWith(item.link);
-        await waitForEmptyChapterList();
+        await waitFor(() => expect(openInReader).toHaveBeenCalledWith(ch02));
     });
 
     it("shows current chapter name, last-read date, and chapters-read as read / total", async () => {
