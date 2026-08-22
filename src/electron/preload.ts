@@ -49,8 +49,11 @@ const fsAPI = {
             return false;
         }
     },
-    isFile: (path: string) => {
+    isFile: (path: string, acceptSymbolicLink = true) => {
         try {
+            if (acceptSymbolicLink && lstatSync(path).isSymbolicLink()) {
+                return statSync(path).isFile();
+            }
             return lstatSync(path).isFile();
         } catch (_error) {
             return false;

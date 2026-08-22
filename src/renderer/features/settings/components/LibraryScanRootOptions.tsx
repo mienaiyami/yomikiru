@@ -1,9 +1,12 @@
 import { ItemTagsPicker } from "@features/home/gallery/components/ItemTagsPicker";
 import { useAppDispatch } from "@store/hooks";
-import { compileLibraryScanSkipRegex } from "@utils/mangaChapters";
-import { useState } from "react";
+import { compileLibraryScanSkipRegex } from "@common/library/classify";
+import { useEffect, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { navigateToSetting } from "../utils/navigateToSetting";
+
+/** Delay before skip-pattern edits are written; matches InputNumber timeout on sibling scan fields. */
+const SKIP_PATTERN_PERSIST_MS = 500;
 
 type LibraryScanRootOptionsProps = {
     skipPattern: string;
@@ -37,8 +40,23 @@ const LibraryScanRootOptions = ({
     const { t } = useTranslation("settings");
     const dispatch = useAppDispatch();
     const [pickerOpen, setPickerOpen] = useState(false);
-    const compiled = compileLibraryScanSkipRegex(skipPattern);
+    const [draftSkip, setDraftSkip] = useState(skipPattern);
+    const onSkipRef = useRef(onSkipPatternChange);
+    onSkipRef.current = onSkipPatternChange;
+    const compiled = compileLibraryScanSkipRegex(draftSkip);
     const skipFieldId = `${skipInputId}-input`;
+
+    useEffect(() => {
+        setDraftSkip(skipPattern);
+    }, [skipPattern]);
+
+    useEffect(() => {
+        if (draftSkip === skipPattern) return;
+        const timer = window.setTimeout(() => {
+            onSkipRef.current(draftSkip);
+        }, SKIP_PATTERN_PERSIST_MS);
+        return () => window.clearTimeout(timer);
+    }, [draftSkip, skipPattern]);
 
     const backfillLabel =
         backfillFeedback === "saving"
@@ -58,12 +76,15 @@ const LibraryScanRootOptions = ({
                         id={skipFieldId}
                         type="text"
                         className="librarySkipPatternInput"
-                        value={skipPattern}
+                        value={draftSkip}
                         disabled={disabled}
                         spellCheck={false}
                         autoComplete="off"
                         placeholder={t("library.skipPatternPlaceholder")}
-                        onChange={(e) => onSkipPatternChange(e.currentTarget.value)}
+                        onChange={(e) => setDraftSkip(e.currentTarget.value)}
+                        onBlur={() => {
+                            if (draftSkip !== skipPattern) onSkipPatternChange(draftSkip);
+                        }}
                     />
                 </label>
                 <a

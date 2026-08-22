@@ -28,8 +28,9 @@ if (window.fs.existsSync(shortcutsPath)) {
             throw Error("old shortcuts.json detected");
         }
 
-        const beforeCommands = new Set(data.map((e) => e.command as string));
-        data = healShortcutEntries(data);
+        const parsed = data;
+        const beforeCommands = new Set(parsed.map((e) => e.command as string));
+        data = healShortcutEntries(parsed);
         for (const command of beforeCommands) {
             if (!data.some((e) => e.command === command)) {
                 log.log(`shortcuts.json: dropped unknown command "${command}"`);
@@ -40,7 +41,13 @@ if (window.fs.existsSync(shortcutsPath)) {
                 log.log(`shortcuts.json: added missing command "${e.command}" with defaults`);
             }
         }
-        saveJSONfile(shortcutsPath, data);
+        const healedSameAsParsed =
+            parsed.length === data.length &&
+            parsed.every(
+                (row, i) =>
+                    row.command === data[i]?.command && JSON.stringify(row.keys) === JSON.stringify(data[i]?.keys),
+            );
+        if (!healedSameAsParsed) saveJSONfile(shortcutsPath, data);
         initialState.push(...data);
     } catch (err) {
         if (err instanceof Error && err.message.includes("old shortcuts")) {

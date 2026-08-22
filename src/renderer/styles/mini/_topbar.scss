@@ -257,10 +257,20 @@
         opacity: 0.75;
         font-variant-numeric: tabular-nums;
     }
-    .libraryScanPopoverSettings {
+    .libraryScanPopoverActions {
+        display: flex;
+        flex-direction: row;
+        flex-wrap: nowrap;
+        gap: 0.75em;
+        align-items: center;
         margin-top: 0.25em;
-        align-self: stretch;
         width: 100%;
+    }
+    .libraryScanPopoverSettings {
+        margin-top: 0;
+        flex: 1 1 0;
+        min-width: 0;
+        width: auto;
         box-sizing: border-box;
         font-size: 0.9em;
         text-decoration: underline;
@@ -270,12 +280,12 @@
         cursor: pointer;
         color: inherit;
         height: auto;
-        text-align: left;
+        text-align: center;
     }
 }
 
 /* #topBar .homeBtns button is more specific than a class-only width */
 #topBar .homeBtns .libraryScanPopoverSettings {
-    width: 100%;
+    width: auto;
     height: auto;
 }

@@ -161,47 +161,12 @@ export const SETTINGS_TARGETS_STATIC: readonly SettingsTarget[] = [
         groupLabelKey: "library.title",
     }),
     setting("setting:default-location", "#settings-default-location", "defaultLocation.title", {
-        keywords: ["base dir", "home folder"],
+        keywords: ["base dir", "home folder", "scan default", "skip", "regex", "folder tags"],
         contentPath: "defaultLocation",
         groupLabelKey: "library.title",
     }),
-    setting("setting:scan-default-location", "#settings-scan-default-location", "library.scanDefaultLocation", {
-        keywords: ["base dir", "scan default"],
-        contentPath: "library.scanDefaultLocationDesc",
-        groupLabelKey: "library.title",
-    }),
-    setting(
-        "setting:scan-default-location-depth",
-        "#settings-scan-default-location-depth",
-        "library.scanDefaultLocationMaxDepth",
-        {
-            keywords: ["scan depth", "walk depth", "default location depth"],
-            contentPath: "library.scanDefaultLocationMaxDepthWarn",
-            groupLabelKey: "library.scanDefaultLocation",
-        },
-    ),
-    setting(
-        "setting:scan-default-location-interval",
-        "#settings-scan-default-location-interval",
-        "library.scanDefaultLocationInterval",
-        {
-            keywords: ["minutes", "interval"],
-            contentPath: "library.intervalMinutesHint",
-            groupLabelKey: "library.scanDefaultLocation",
-        },
-    ),
-    setting("setting:scan-default-location-skip", "#settings-scan-default-location-skip", "library.skipPattern", {
-        keywords: ["skip", "regex", "ignore", "yomikiru-ignore"],
-        contentPath: "library.skipPatternHint",
-        groupLabelKey: "library.scanDefaultLocation",
-    }),
-    setting("setting:scan-default-location-tags", "#settings-scan-default-location-tags", "library.folderTags", {
-        keywords: ["folder tags", "backfill"],
-        contentPath: ["library.folderTagsHint", "library.backfillTooltip"],
-        groupLabelKey: "library.scanDefaultLocation",
-    }),
     setting("setting:library-folders", "#settings-library-folders", "library.foldersTitle", {
-        keywords: ["library folder", "watch", "interval", "max depth", "skip", "tags"],
+        keywords: ["library folder", "watch", "interval", "max depth", "grouping folder", "skip", "tags"],
         contentPath: "library.foldersDesc",
         groupLabelKey: "library.title",
     }),

@@ -335,7 +335,7 @@ const Usage = (): ReactElement => {
                                 components={{
                                     bold: <b />,
                                     code: <code />,
-                                    link: <SettingsLink targetId="setting:scan-default-location-skip" />,
+                                    link: <SettingsLink targetId="setting:default-location" />,
                                 }}
                             />
                         </li>
@@ -368,7 +368,7 @@ const Usage = (): ReactElement => {
                                 ns="usage"
                                 components={{
                                     bold: <b />,
-                                    link: <SettingsLink targetId="setting:scan-default-location-tags" />,
+                                    link: <SettingsLink targetId="setting:default-location" />,
                                 }}
                             />
                         </li>
@@ -377,6 +377,7 @@ const Usage = (): ReactElement => {
                                 i18nKey="libraryScan.status"
                                 ns="usage"
                                 components={{
+                                    bold: <b />,
                                     link: <SettingsLink targetId="setting:library-scan-now" />,
                                 }}
                             />

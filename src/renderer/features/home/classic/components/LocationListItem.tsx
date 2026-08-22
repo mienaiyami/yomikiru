@@ -1,3 +1,4 @@
+import { getDefaultLocationPath } from "@common/library/folders";
 import ListItem from "@renderer/components/ListItem";
 import { useAppSelector } from "@store/hooks";
 import { dialogUtils } from "@utils/dialog";
@@ -24,6 +25,9 @@ const LocationListItem = ({
     const { t } = useTranslation("home");
     const { openInReader } = useAppContext();
     const appSettings = useAppSelector((store) => store.appSettings);
+    const defaultLocationPath = getDefaultLocationPath(
+        useAppSelector((store) => store.mainSettings.library.folders),
+    );
 
     const onClickHandle = () => {
         if (!window.fs.existsSync(link)) {
@@ -37,7 +41,7 @@ const LocationListItem = ({
         if (
             appSettings.openDirectlyFromManga &&
             window.path.normalize(window.path.resolve(`${link}../../../`) + window.path.sep) ===
-                window.path.normalize(appSettings.baseDir + window.path.sep)
+                window.path.normalize(defaultLocationPath + window.path.sep)
         ) {
             openInReader(link).then((isValid) => {
                 if (isValid) {

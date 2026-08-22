@@ -59,6 +59,7 @@ export default defineConfig({
                     name: "db",
                     environment: "node",
                     include: ["src/electron/db/**/*.test.ts", "src/electron/util/**/*.test.ts"],
+                    setupFiles: ["src/test/setupMainLibraryIo.ts"],
                 },
             },
         ],

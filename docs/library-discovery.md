@@ -12,7 +12,7 @@ Two product bugs share one cause: bulk add reused the **reader image scanner** a
 
 1. **Scan must find series in messy trees** (`group / series / chapter`, a root `cover.*` plus chapters, one-image chapters, packed chapter files) without requiring a hard layout.
 2. **Catalogue membership is not reading.** Gallery Continue Reading (and classic History) must not treat “just added” as “in progress.”
-3. **Several folders / drives** can feed the catalogue. Default Location stays the classic Locations browser.
+3. **Several folders / drives** can feed the catalogue. Default Location is the flagged row in that same list (Locations browser).
 4. **Moving a folder** then opening the new path must not create a second row that blocks Locate. Relocate into an occupied path **merges**.
 
 ---
@@ -23,7 +23,7 @@ Two product bugs share one cause: bulk add reused the **reader image scanner** a
 | --- | --- |
 | D1 One-shot | The folder that contains images and no chapter children **is** the library item. Reader: if the opened path is already a library `link`, do not `dirname`. |
 | D2 Depth | **Auto-classify** series vs grouping. Per-root **max-depth safety ceiling** only. |
-| D3 Roots | `baseDir` remains Locations-only. Separate library-folder list. Checkbox to also scan Default Location. |
+| D3 Roots | One `library.folders[]` in MainSettings. Exactly one flagged Default Location (Locations tab). Scan now walks every existing path. Auto start/interval/watch are per-row flags (Default Location starts with those off). |
 | D4 History | Classic History = actually read (has progress), same as gallery Continue Reading. Unread catalogue is gallery Library / Locations. |
 | D5 Missing disk | Scan never auto-removes. Locate / Remove stay. |
 | D6 When to scan | Settings expose Scan now, scan on start, interval, and watch. Watch default off. Live watch classifies from the changed path upward (slice 8). |
@@ -44,7 +44,7 @@ Two product bugs share one cause: bulk add reused the **reader image scanner** a
 | Cover file | Series-root sidecar. Today `findCover` only matches `cover` + image ext. Scan ignores those files when deciding “does this folder have pages.” |
 | Grouping folder | Not a series. Recurse. |
 | One-shot | Images in the series folder, no chapter children. Progress uses sentinel chapter key `~` (same token books already use for an empty name). Continue / Start opens the series folder itself. |
-| Library folder | A root the scanner may walk. Not the same as Default Location. |
+| Library folder | A root in MainSettings `library.folders`. One row is Default Location. |
 | Catalogue | `library_items` row. `progress` may be `null`. |
 | In progress | A progress row written by the reader (or leftover from old import). |
 
@@ -83,30 +83,42 @@ Skip-update: existing dummy rows stay until the user runs **Clear unused progres
 
 ## Settings shape
 
-New keys on `settings.json` (Zod + `repairZodInputWithDefaults`; old files get defaults):
+Library scan config lives in **`main-settings.json`** (`MainSettings.library.folders`), not `settings.json`.
 
-- `libraryFolders`: list of `{ path, content, maxDepth, scanOnStart, scanIntervalMinutes, watch, skipPattern, tagIds }`
+- Exactly one row has `isDefaultLocation: true` (Default Location / Locations tab root). That row may have an empty path. Extra rows cannot be empty and cannot steal the flag.
+- Each row: `{ path, isDefaultLocation, content, maxDepth, scanOnStart, scanIntervalMinutes, watch, lastScanAtMs, skipPattern, tagIds }`
   - `content`: `manga` | `book` | `both`
-  - `scanIntervalMinutes`: number or disabled (schema: `0` meaning off — pick one in code and JSDoc it; do not duplicate a magic number here)
+  - `scanIntervalMinutes`: `0` means off
   - `watch`: boolean, default off
+  - `lastScanAtMs`: unix ms; `0` means never scanned (interval treats as due)
   - `skipPattern`: string, default empty (no regex skip)
   - `tagIds`: catalog tag ids unioned onto items found under this folder
-- `scanDefaultLocation`: boolean, default off (do not scan `baseDir` when it is still the schema default home directory unless the user opts in)
-- `scanDefaultLocationMaxDepth`: grouping-folder steps for that walk (same clamp as extra-folder `maxDepth`; Settings shows a warning). Old files without the key get the same default as a new extra folder.
-- `scanDefaultLocationSkipPattern` / `scanDefaultLocationTagIds`: same skip regex and folder tags for Default Location.
+- **No migrate** from old `settings.json` `baseDir` / `libraryFolders` / `scanDefaultLocation*`. After this change, Default Location is empty until the user picks a folder again (existing first-run prompt).
+- Shallow-merge of MainSettings replaces the whole `library` object; callers send the full `folders` array.
 
 UI: Settings -> Library (same section as Default Location and thumbnails).
 
-- Default Location block: path picker, checkbox to also scan this folder, **scan depth** (with a warning about deep walks), interval, skip regex, and a tags button (choose tags and backfill in a modal).
-- Library folders list: add/remove, content type, max depth, start/interval/watch, skip regex, folder tags + backfill, Scan this folder. Enabling **Watch** asks first (live watcher, automatic adds, disk/network cost).
-- **Scan now** (all enabled folders) replaces “Add valid items from default folder.” EPUB recursive becomes part of Scan now when the folder allows books.
+- Default Location block: path picker (not removable), same scan controls as extras (content, depth, interval, start, watch, skip regex, folder tags + backfill), **Scan this folder**. Enabling **Watch** asks first.
+- Extra folders list: add/remove, same scan controls, Scan this folder.
+- **Scan now** walks every folder whose path exists on disk (including Default Location when a path is set). Nested other roots are skip-paths even if their own scan flags are off.
 - One-line Continue Reading explanation: titles appear there after you open them in the reader.
 
-When walking root R, other extra library-folder paths that sit inside R (and Default Location when it is opted in and sits inside R) are not entered. Ancestor roots are not skip targets, so a nested extra folder still walks its own children. Skip regex is case-insensitive against descendant basenames only (a pattern with no special characters matches as a substring). A sentinel **file** named `yomikiru-ignore` or `.yomikiru-ignore` inside D skips D; a **folder** with that name skips that folder only. Folder tags are unioned onto new scan/watch items; backfill uses the same foreign-root exclusion. Scan never auto-removes catalogue rows.
+When walking root R, other library-folder paths that sit inside R are not entered. Ancestor roots are not skip targets, so a nested extra folder still walks its own children. Skip regex is case-insensitive against descendant basenames only (a pattern with no special characters matches as a substring). A sentinel **file** named `yomikiru-ignore` or `.yomikiru-ignore` inside D skips D; a **folder** with that name skips that folder only. Folder tags are unioned onto new scan/watch items; backfill uses the same foreign-root exclusion. Scan never auto-removes catalogue rows.
 
-The title bar shows live scan status (phase, root, current path, added/skipped/failed) in a popover; Scan now overlay uses the same copy.
+The title bar shows live scan status (phase, root, current path) in a popover on every window, with **Cancel scan**. Scan now does **not** lock the window (thumbnail regenerate still can). Scan, interval, and folder watch run in the main process. EPUB files are skipped until the shared OPF parser lands (wrong basename-only titles are worse than a defer). PDF manga is added without a cover; the first gallery window that shows the tile generates page 1 (limited concurrency). Packed zip/cbz/7z covers unzip in main; rar/cbr stay coverless until opened.
 
 Catalog, i18n, Usage (`usage:library-scan`). Watch copy must warn like `autoRefreshSideList` (slow disks, large trees); turning Watch on also confirms in a dialog.
+
+### Main-process scan IPC
+
+Renderer (any window):
+
+- `libraryScan:start` `{ reason, paths? }` — waits until the walk finishes or is cancelled. `paths` is Scan this folder; omit for Scan now / startup / interval selection.
+- `libraryScan:cancel` — abort in-flight walk; cancelled roots are not stamped.
+- `libraryScan:getStatus` / `libraryScan:status` — live DTO or `null` when idle.
+- `libraryScan:rendererReady` — first living window triggers scan-on-start once per process.
+
+Classifier: `src/common/library/classify.ts` with an injected fs/path matching preload (`isDir` / `isFile` follow symlinks). Main adapter: `src/electron/util/libraryFs.ts` (also `setLibraryIo` for `formatUtils` / folder normalize). `src/common` does not import Node builtins.
 
 ---
 

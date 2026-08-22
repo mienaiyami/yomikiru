@@ -192,6 +192,7 @@ export class WindowManager {
             await fs.access(dirToDlt);
             await fs.rm(dirToDlt, { recursive: true });
         } catch (reason) {
+            if (typeof reason === "string" && reason.includes("ENOENT")) return;
             logger.error(`Could not delete temp reader directory "${dirToDlt}"`, reason);
         }
     }

@@ -58,7 +58,6 @@
             "directoryUp": "Directory Up",
             "folderImageCount": "0 Folders, {{count}} Images",
             "imagesTooltip": "{{count}} Images",
-            "defaultLocationMissing": "Default Location doesn't exist.",
             "pathMissing": "Directory/File doesn't exist."
         },
         "bookmarks": {

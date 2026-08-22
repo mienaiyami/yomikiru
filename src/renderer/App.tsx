@@ -1,3 +1,4 @@
+import { getDefaultLocationPath, setDefaultLocationPath } from "@common/library/folders";
 import { confirmDeleteProgressForLinks } from "@features/home/classic/listSelectionActions";
 import { useDirectoryValidator } from "@features/reader/hooks/useDirectoryValidator";
 import { dispatchFocusPageSearchShortcut } from "@hooks/usePageSearchFocus";
@@ -6,7 +7,7 @@ import {
     setAnilistCurrentListEntry,
     setGalleryTrackContext,
 } from "@store/anilist";
-import { refreshAppSettings, setAppSettings } from "@store/appSettings";
+import { refreshAppSettings } from "@store/appSettings";
 import { addBookmark, fetchAllBookmarks, removeBookmark } from "@store/bookmarks";
 import { fetchAllNotes } from "@store/bookNotes";
 import { useAppDispatch, useAppSelector } from "@store/hooks";
@@ -19,7 +20,7 @@ import {
     updateChaptersReadAll,
     updateCurrentItemProgress,
 } from "@store/library";
-import { getMainSettings, setMainSettings } from "@store/mainSettings";
+import { getMainSettings, setMainSettings, updateMainSettings } from "@store/mainSettings";
 import { resetReaderState } from "@store/reader";
 import { refreshReaderPresetsWithReconcile } from "@store/readerPresets";
 import { getShortcutsMapped, refreshShortcuts } from "@store/shortcuts";
@@ -30,19 +31,14 @@ import {
     setAnilistEditOpen,
     setAnilistLoginOpen,
     setAnilistSearchOpen,
+    setLibraryScanStatus,
     toggleSettingsOpen,
 } from "@store/ui";
 import { initAnilist } from "@utils/anilist";
 import { dialogUtils } from "@utils/dialog";
 import { keyFormatter, mouseEventFormatter } from "@utils/keybindings";
 import { resolveMissingOpenPath } from "@utils/libraryMissingPath";
-import {
-    LIBRARY_SCAN_INTERVAL_POLL_MS,
-    listDueIntervalLibraryScanRoots,
-    listStartupLibraryScanRoots,
-    runScheduledLibraryScan,
-    startLibraryFolderWatches,
-} from "@utils/librarySettingsImport";
+import { getExistingBaseDir } from "@utils/librarySettingsImport";
 import {
     createContext,
     createRef,
@@ -50,6 +46,7 @@ import {
     useContext,
     useEffect,
     useLayoutEffect,
+    useRef,
     useState,
 } from "react";
 import { shallowEqual } from "react-redux";
@@ -100,6 +97,7 @@ export const useAppContext = (): AppContext => {
 
 const App = (): ReactElement => {
     const appSettings = useAppSelector((state) => state.appSettings);
+    const libraryFolders = useAppSelector((state) => state.mainSettings.library.folders);
     // const isReaderOpen = useAppSelector((state) => state.ui.isOpen.reader);
     const isReaderOpen = useAppSelector((state) => state.reader.active);
     const isSettingsOpen = useAppSelector((state) => state.ui.isOpen.settings);
@@ -110,6 +108,8 @@ const App = (): ReactElement => {
     const pageNumberInputRef: React.RefObject<HTMLInputElement> = createRef();
     const bookProgressRef: React.RefObject<HTMLInputElement> = createRef();
     const [firstRendered, setFirstRendered] = useState(false);
+    const [mainSettingsReady, setMainSettingsReady] = useState(false);
+    const askedDefaultLocation = useRef(false);
     const [contextMenuData, setContextMenuData] = useState<Menu.ContextMenuData | null>(null);
     const [optSelectData, setOptSelectData] = useState<Menu.OptSelectData | null>(null);
     const [colorSelectData, setColorSelectData] = useState<Menu.ColorSelectData | null>(null);
@@ -120,14 +120,32 @@ const App = (): ReactElement => {
 
     useEffect(() => {
         if (firstRendered) {
-            if (appSettings.baseDir === "") {
+            if (
+                mainSettingsReady &&
+                !askedDefaultLocation.current &&
+                getExistingBaseDir(getDefaultLocationPath(libraryFolders)) === null
+            ) {
+                askedDefaultLocation.current = true;
                 dialogUtils.customError({ message: i18n.t("app.noSettingsSelectFolder", { ns: "common" }) });
-                promptSelectDir((path) => dispatch(setAppSettings({ baseDir: path as string })));
+                promptSelectDir((selected) => {
+                    const folderPath = Array.isArray(selected) ? selected[0] : selected;
+                    if (!folderPath) return;
+                    void dispatch(
+                        updateMainSettings({
+                            library: {
+                                folders: setDefaultLocationPath(
+                                    store.getState().mainSettings.library.folders,
+                                    folderPath,
+                                ),
+                            },
+                        }),
+                    );
+                });
             }
         } else {
             dispatch(setTheme(theme));
         }
-    }, [firstRendered]);
+    }, [firstRendered, mainSettingsReady, libraryFolders, dispatch]);
 
     const closeReader = async () => {
         // may leave Redux book position behind the viewport until % changes; flush before DB write
@@ -205,21 +223,22 @@ const App = (): ReactElement => {
         setFirstRendered(true);
         initAnilist();
         void dispatch(fetchAllItemsWithProgress()).then(() => {
-            void runScheduledLibraryScan(
-                dispatch,
-                validateDirectory,
-                listStartupLibraryScanRoots(store.getState().appSettings),
-            );
-            void dispatch(importAnilistTrackingFromStorage()).then(() => {
-                // generic item_trackers rows; AniList session stays in the anilist slice
-                void dispatch(fetchAllTrackers());
+            void window.electron.invoke("libraryScan:rendererReady");
+            // TODO: added temporarily to import old app's anilist data, remove later
+            void window.electron.invoke("anilist:claimStartupImport").then((claimed) => {
+                if (!claimed) return;
+                void dispatch(importAnilistTrackingFromStorage()).then(() => {
+                    void dispatch(fetchAllTrackers());
+                });
             });
         });
         dispatch(fetchAllMetadata());
         dispatch(fetchAllTags());
         dispatch(fetchAllBookmarks());
         dispatch(fetchAllNotes());
-        dispatch(getMainSettings());
+        void dispatch(getMainSettings()).then(() => {
+            setMainSettingsReady(true);
+        });
         listeners.push(
             window.electron.on("reader:loadLink", ({ link }) => {
                 if (link)
@@ -250,6 +269,9 @@ const App = (): ReactElement => {
             window.electron.on("db:tag:change", () => {
                 dispatch(fetchAllTags());
             }),
+            window.electron.on("libraryScan:status", (status) => {
+                dispatch(setLibraryScanStatus(status));
+            }),
             window.electron.on("mainSettings:sync", (settings) => {
                 dispatch(setMainSettings(settings));
             }),
@@ -268,6 +290,10 @@ const App = (): ReactElement => {
                 window.electron.send("window:statusCheck:response");
             }),
         );
+
+        void window.electron.invoke("libraryScan:getStatus").then((status) => {
+            dispatch(setLibraryScanStatus(status));
+        });
 
         window.app.titleBarHeight = parseFloat(
             window.getComputedStyle(document.body).getPropertyValue("--titleBar-height"),
@@ -298,31 +324,6 @@ const App = (): ReactElement => {
             listeners.forEach((e) => void e());
         };
     }, []);
-
-    useEffect(() => {
-        // background walk; TopBar shows status, including while the reader is open
-        const id = window.setInterval(() => {
-            void runScheduledLibraryScan(
-                dispatch,
-                validateDirectory,
-                listDueIntervalLibraryScanRoots(store.getState().appSettings),
-            );
-        }, LIBRARY_SCAN_INTERVAL_POLL_MS);
-        return () => window.clearInterval(id);
-    }, [dispatch, validateDirectory]);
-
-    const libraryFolderWatchKey = appSettings.libraryFolders
-        .map((folder) => `${folder.path}\0${folder.watch}\0${folder.content}\0${folder.maxDepth}`)
-        .join("\n");
-
-    useEffect(() => {
-        // read folders from the store so lastScanAtMs stamps do not restart chokidar
-        return startLibraryFolderWatches(store.getState().appSettings.libraryFolders, {
-            dispatch,
-            keepExtractedFiles: store.getState().appSettings.keepExtractedFiles,
-            validateDirectory,
-        });
-    }, [libraryFolderWatchKey, appSettings.keepExtractedFiles, dispatch, validateDirectory]);
 
     useEffect(() => {
         const listener = window.electron.on("reader:recordPage", async () => {

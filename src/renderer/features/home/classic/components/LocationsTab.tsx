@@ -1,12 +1,13 @@
+import { getDefaultLocationPath, planLocationsListLoad } from "@common/library/folders";
 import LocationListItem from "@features/home/classic/components/LocationListItem";
 import { faAngleUp, faSort } from "@fortawesome/free-solid-svg-icons";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import ListNavigator from "@renderer/components/ListNavigator";
 import { PAGE_SEARCH_PRIORITY } from "@renderer/hooks/usePageSearchFocus";
-import { setAppSettings } from "@store/appSettings";
 import { useAppDispatch, useAppSelector } from "@store/hooks";
+import { setAppSettings } from "@store/appSettings";
 import { dialogUtils } from "@utils/dialog";
-import { formatUtils, promptSelectDir } from "@utils/file";
+import { formatUtils } from "@utils/file";
 import { createRendererLogger } from "@utils/logger";
 import { type ReactElement, useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
@@ -20,11 +21,15 @@ const LocationsTab = (): ReactElement => {
     const { t } = useTranslation("home");
     const { openInReader, setContextMenuData } = useAppContext();
     const library = useAppSelector((store) => store.library.items);
-    const appSettings = useAppSelector((store) => store.appSettings);
+    const appSettings = useAppSelector((storeState) => storeState.appSettings);
+    const libraryFolders = useAppSelector((storeState) => storeState.mainSettings.library.folders);
+    const defaultLocationPath = getDefaultLocationPath(libraryFolders);
     const dispatch = useAppDispatch();
 
     //todo : use reducer instead and check if exists and is dir
-    const [currentLink, setCurrentLink] = useState(window.path.resolve(appSettings.baseDir));
+    const [currentLink, setCurrentLink] = useState(
+        defaultLocationPath ? window.path.resolve(defaultLocationPath) : "",
+    );
     const item = library[currentLink];
 
     const [locations, setLocations] = useState<LocationData[]>([]);
@@ -35,20 +40,21 @@ const LocationsTab = (): ReactElement => {
 
     const displayList = async (link = currentLink, refresh = false): Promise<void> => {
         try {
-            if (!window.fs.existsSync(link)) {
-                if (!window.fs.existsSync(appSettings.baseDir)) {
-                    dialogUtils.customError({ message: t("classic.location.defaultLocationMissing") });
-                    promptSelectDir((path) => dispatch(setAppSettings({ baseDir: path as string })));
-                    return;
-                }
-                dialogUtils.customError({ message: t("classic.location.pathMissing") });
-                setCurrentLink(window.path.resolve(appSettings.baseDir));
+            const plan = planLocationsListLoad(link, defaultLocationPath, (p) => window.fs.existsSync(p));
+            if (plan.kind === "idle") {
+                setLocations([]);
+                setIsLoadingFile(false);
+                return;
+            }
+            if (plan.kind === "reset") {
+                if (plan.warn) dialogUtils.customError({ message: t("classic.location.pathMissing") });
+                setCurrentLink(window.path.resolve(plan.path));
                 return;
             }
 
-            if (window.fs.existsSync(link) && window.fs.isDir(link)) {
+            if (window.fs.existsSync(plan.path) && window.fs.isDir(plan.path)) {
                 if (!refresh) setIsLoadingFile(true);
-                const files = await window.fs.readdir(link);
+                const files = await window.fs.readdir(plan.path);
                 let imgCount = 0;
 
                 // order does not matter because it need to be sorted later
@@ -56,7 +62,7 @@ const LocationsTab = (): ReactElement => {
                 await Promise.all(
                     files.map(async (fileName) => {
                         try {
-                            const filePath = window.path.join(link, fileName);
+                            const filePath = window.path.join(plan.path, fileName);
                             // to prevent errors in case system files or no permissions or doesn't exist
                             await window.fs.access(filePath, window.fs.constants.R_OK);
                             const stat = await window.fs.stat(filePath);
@@ -90,8 +96,10 @@ const LocationsTab = (): ReactElement => {
     };
 
     useEffect(() => {
-        if (currentLink !== appSettings.baseDir) setCurrentLink(window.path.resolve(appSettings.baseDir));
-    }, [appSettings.baseDir]);
+        if (defaultLocationPath && currentLink !== defaultLocationPath) {
+            setCurrentLink(window.path.resolve(defaultLocationPath));
+        }
+    }, [defaultLocationPath]);
 
     useEffect(() => {
         let timeout: NodeJS.Timeout;

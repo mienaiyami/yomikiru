@@ -38,7 +38,7 @@ Clicking a divider toggles the adjacent panel collapsed/expanded (stored in `app
 
 [`classic/components/LocationsTab.tsx`](classic/components/LocationsTab.tsx)
 
-Browsable file tree rooted at `appSettings.baseDir`. Each entry is a directory (manga series root) or a readable file (`.epub`, `.cbz`, `.zip`, `.pdf`).
+Browsable file tree rooted at Default Location (`mainSettings.library.folders` flagged row). Each entry is a directory (manga series root) or a readable file (`.epub`, `.cbz`, `.zip`, `.pdf`).
 
 Features:
 

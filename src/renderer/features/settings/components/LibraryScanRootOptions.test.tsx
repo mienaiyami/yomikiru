@@ -71,4 +71,14 @@ describe("LibraryScanRootOptions", () => {
         renderOptions({ skipPattern: "(", tagIds: [] }, []);
         expect(screen.getByText(settings.library.skipPatternInvalid)).toBeInTheDocument();
     });
+
+    it("debounces skip-pattern persist instead of writing on every keystroke", () => {
+        vi.useFakeTimers();
+        const { onSkipPatternChange } = renderOptions();
+        fireEvent.change(screen.getByLabelText(settings.library.skipPattern), { target: { value: "Archived" } });
+        expect(onSkipPatternChange).not.toHaveBeenCalled();
+        vi.advanceTimersByTime(500);
+        expect(onSkipPatternChange).toHaveBeenCalledWith("Archived");
+        vi.useRealTimers();
+    });
 });

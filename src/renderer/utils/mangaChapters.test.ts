@@ -1,17 +1,28 @@
+import {
+    classifyLibraryNode as classifyLibraryNodeWith,
+    collectLibraryScanTargetFromEventPath as collectLibraryScanTargetFromEventPathWith,
+    collectLibraryScanTargets as collectLibraryScanTargetsWith,
+    compileLibraryScanSkipRegex,
+    isLibraryScanIgnoreName,
+    shouldSkipLibraryScanEntry,
+} from "@common/library/classify";
+import { clampLibraryScanMaxDepth, LIBRARY_SCAN_MAX_DEPTH_CEILING } from "@common/types/libraryScan";
 import path from "node:path";
 import { stubFs } from "@test/mocks/preload";
 import { describe, expect, it } from "vitest";
-import {
-    clampLibraryScanMaxDepth,
-    classifyLibraryNode,
-    collectLibraryScanTargetFromEventPath,
-    collectLibraryScanTargets,
-    compileLibraryScanSkipRegex,
-    isLibraryScanIgnoreName,
-    LIBRARY_SCAN_MAX_DEPTH_CEILING,
-    listMangaChapterChildren,
-    shouldSkipLibraryScanEntry,
-} from "./mangaChapters";
+import { listMangaChapterChildren, rendererLibraryIo } from "./mangaChapters";
+
+const classifyLibraryNode = (absPath: string) => classifyLibraryNodeWith(rendererLibraryIo(), absPath);
+const collectLibraryScanTargets = (
+    root: string,
+    opts: Parameters<typeof collectLibraryScanTargetsWith>[2],
+) => collectLibraryScanTargetsWith(rendererLibraryIo(), root, opts);
+const collectLibraryScanTargetFromEventPath = (
+    eventPath: string,
+    root: string,
+    opts: Parameters<typeof collectLibraryScanTargetFromEventPathWith>[3],
+) => collectLibraryScanTargetFromEventPathWith(rendererLibraryIo(), eventPath, root, opts);
+
 
 /**
  * Installs a directory tree on `window.fs`. Keys are directory paths; values are

@@ -1,6 +1,7 @@
 import fs from "node:fs";
 import { copyFile } from "node:fs/promises";
 import path from "node:path";
+import { pruneLibraryFolderTagId } from "@common/library/folders";
 import type { LibraryItemWithProgress } from "@common/types/db";
 import type { DatabaseChangeChannels, DatabaseChannels } from "@common/types/ipc";
 import {
@@ -26,6 +27,7 @@ import {
     UpsertItemTrackerSchema,
 } from "@electron/db/validator";
 import { createMainLogger } from "@electron/util/logger";
+import { MainSettings } from "@electron/util/mainSettings";
 import { and, desc, eq, inArray } from "drizzle-orm";
 import { app, BrowserWindow, ipcMain } from "electron";
 import { type DatabaseService, DB_PATH } from "../db";
@@ -418,6 +420,10 @@ const handlers: {
     "db:tags:delete": async (db, request) => {
         const { id } = DeleteLibraryTagSchema.parse(request);
         await db.db.delete(libraryTags).where(eq(libraryTags.id, id));
+        const pruned = pruneLibraryFolderTagId(MainSettings.settings.library.folders, id);
+        if (pruned.changed) {
+            await MainSettings.updateSettings({ library: { folders: pruned.folders } });
+        }
         pingDatabaseChange("db:tag:change");
         return true;
     },

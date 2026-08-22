@@ -789,13 +789,19 @@ html{
                                     }
                                     .libraryFolderCard {
                                         width: 100%;
-                                        gap: 0.4em;
+                                        gap: 0.2em;
+                                        display: flex;
                                         padding: 0.65em 0 0.2em;
                                         box-shadow: inset 0 1px 0 0 var(--divider-color);
                                         .libraryFolderPathLabel {
                                             flex: 0 0 auto;
                                             opacity: 0.8;
                                         }
+                                    }
+                                    .libraryFolderControls {
+                                        width: 100%;
+                                        display: flex;
+                                        gap: 0.2em;
                                     }
                                     .libraryScanDefaultLocation {
                                         width: 100%;
@@ -841,6 +847,19 @@ html{
                                             gap: 0.35em;
                                             .toggle-area {
                                                 margin-left: 0;
+                                            }
+                                        }
+                                        /* Max depth / interval hints: below the label, wrapped */
+                                        [data-tooltip] {
+                                            overflow: visible;
+                                            &::before {
+                                                left: 50%;
+                                                top: 100%;
+                                                --translate: -50%, 0.5em;
+                                                white-space: normal;
+                                                max-width: min(22em, 90vw);
+                                                width: max-content;
+                                                padding: 0.4em 0.5em;
                                             }
                                         }
                                     }

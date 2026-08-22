@@ -21,10 +21,13 @@ import { registerDialogHandlers } from "./ipc/dialog";
 import { registerErrorReportingHandlers } from "./ipc/errorReporting";
 import { registerExplorerHandlers } from "./ipc/explorer";
 import { registerFSHandlers } from "./ipc/fs";
+import { registerLibraryScanHandlers, stopLibraryScan } from "./ipc/libraryScan";
 import { registerUpdateHandlers } from "./ipc/update";
 import handleSquirrelEvent from "./util/handleSquirrelEvent";
 import { backupIfPendingMigrations, handleFailedSchemaMigrate, setLiveSqlite, stopScheduler } from "./util/dbBackup";
 import { MainSettings } from "./util/mainSettings";
+/* Side-effect: installs process-wide library Io for common folder/format helpers. */
+import "./util/libraryFs";
 import { checkForJSONMigration } from "./util/migrate";
 import { TrayManager } from "./util/tray";
 import { WindowManager } from "./util/window";
@@ -176,6 +179,7 @@ app.on("ready", async () => {
 
         registerExplorerHandlers();
         registerFSHandlers();
+        registerLibraryScanHandlers(db);
         registerDialogHandlers();
         registerErrorReportingHandlers();
 
@@ -198,6 +202,7 @@ app.on("before-quit", (event) => {
     void (async () => {
         try {
             await stopScheduler();
+            stopLibraryScan();
             setLiveSqlite(null);
             db?.close();
         } catch (err) {

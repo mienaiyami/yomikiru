@@ -31,6 +31,7 @@ import { resolveDetailsCoverSrc, trackerCoverUrlByItemLink } from "@utils/librar
 import { libraryItemSearchText, resolveAllItemMetadata, trackerByItemLink } from "@utils/libraryMetadata";
 import { itemsWithTag } from "@utils/libraryTags";
 import { resolveMangaChapterPath } from "@utils/mangaChapterPath";
+import { ensurePdfLibraryCover } from "@utils/libraryCoverService";
 import type { RefObject } from "react";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
@@ -43,6 +44,24 @@ import GalleryToolbar, {
     type GalleryTypeFilterId,
 } from "./components/GalleryToolbar";
 import MangaDetailsPanel from "./components/MangaDetailsPanel";
+
+/**
+ * When a PDF manga tile has no cover yet, generate page-1 WebP (D2). No visual of its own.
+ */
+const GalleryPdfCoverKickoff = ({
+    item,
+    hasCover,
+}: {
+    item: LibraryItemWithProgress;
+    hasCover: boolean;
+}) => {
+    const dispatch = useAppDispatch();
+    useEffect(() => {
+        if (hasCover) return;
+        void ensurePdfLibraryCover(dispatch, item);
+    }, [dispatch, hasCover, item]);
+    return null;
+};
 
 /**
  * Gallery home: cover grid for {@link GalleryTabId}, `galleryTypeFilter`, a session tag filter, and a details panel.
@@ -324,6 +343,7 @@ const GalleryView: React.FC = () => {
                         ariaLabel={t("shared.selectAria", { title: titleLabel })}
                     />
                     <div className="coverContainer">
+                        <GalleryPdfCoverKickoff item={item} hasCover={Boolean(coverSrc)} />
                         {coverSrc ? (
                             <img src={coverSrc} alt={titleLabel} draggable={false} loading="lazy" />
                         ) : (

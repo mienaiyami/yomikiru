@@ -58,17 +58,35 @@ describe("fetchMangaCoverMaterializeSource", () => {
         await expect(fetchMangaCoverMaterializeSource(dir, validateDirectory)).resolves.toBe(cover);
     });
 
-    it("falls back to validateDirectory first image", async () => {
+    it("falls back to the first sorted image in the folder", async () => {
         const dir = path.join("testdata", "manga", "series");
         const first = path.join(dir, "001.jpg");
-        stubFs({ existsSync: (p) => p === dir, isFile: (p) => p === first });
+        stubFs({
+            existsSync: (p) => p === dir || p === first,
+            isDir: (p) => p === dir,
+            isFile: (p) => p === first,
+            readdir: async (p) => (p === dir ? ["001.jpg"] : []),
+        });
+        const validateDirectory: ValidateDirectoryFn = vi.fn(async () => ({ isValid: true }));
+        await expect(fetchMangaCoverMaterializeSource(dir, validateDirectory)).resolves.toBe(first);
+        expect(validateDirectory).not.toHaveBeenCalled();
+    });
+
+    it("uses validateDirectory for packed archives", async () => {
+        const archive = path.join("testdata", "manga", "series.cbz");
+        const first = path.join("tmp", "001.jpg");
+        stubFs({
+            existsSync: (p) => p === archive || p === first,
+            isFile: (p) => p === archive || p === first,
+            isDir: () => false,
+        });
         const validateDirectory: ValidateDirectoryFn = vi.fn(
             async (): Promise<ValidationResult> => ({
                 isValid: true,
                 images: [first],
             }),
         );
-        await expect(fetchMangaCoverMaterializeSource(dir, validateDirectory)).resolves.toBe(first);
+        await expect(fetchMangaCoverMaterializeSource(archive, validateDirectory)).resolves.toBe(first);
         expect(validateDirectory).toHaveBeenCalled();
     });
 

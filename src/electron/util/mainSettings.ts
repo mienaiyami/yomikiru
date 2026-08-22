@@ -1,9 +1,9 @@
 import fs from "node:fs";
 import path from "node:path";
-import { BUILTIN_EN_SOURCE_ID } from "@common/i18n";
+import { libraryFoldersNeedHeal } from "@common/library/folders";
+import { mainSettingsSchema, parseMainSettings as parseMainSettingsJson, type MainSettingsType } from "@common/mainSettings";
 import { ipc } from "@electron/ipc/utils";
 import { app } from "electron";
-import { z } from "zod";
 import { createMainLogger } from "./logger";
 
 const logger = createMainLogger("MainSettings");
@@ -11,45 +11,7 @@ const logger = createMainLogger("MainSettings");
 import { TrayManager } from "./tray";
 import { WindowManager } from "./window";
 
-const mainSettingsSchema = z
-    .object({
-        hardwareAcceleration: z.boolean().default(true),
-        tempPath: z.string().default(app.getPath("temp")),
-        /** Open files in current window and focus it when launching the app again. Disabled: open in new window. */
-        openInExistingWindow: z.boolean().default(false),
-        askBeforeClosing: z.boolean().default(false),
-        /** When enabled, minimize sends window to system tray instead of taskbar. */
-        minimizeToTray: z.boolean().default(false),
-
-        //app updates
-        checkForUpdates: z.boolean().default(true),
-        skipPatch: z.boolean().default(false),
-        autoDownload: z.boolean().default(false),
-        channel: z.enum(["stable", "beta"]).default("stable"),
-
-        /**
-         * Active language source id (`builtin:en` or `pack:<packId>`).
-         * Mutate only via `i18n:setSource` so menus and both i18n instances stay in sync.
-         */
-        languageSourceId: z.string().default(BUILTIN_EN_SOURCE_ID),
-
-        /**
-         * Automatic SQLite library backups under userData/backups/.
-         * Interval is hours; keepCount is how many newest `data-*.db` files to keep after a backup publish;
-         * lastSuccessAt is unix ms and only advances on success.
-         */
-        dbBackup: z
-            .object({
-                enabled: z.boolean().default(true),
-                intervalHours: z.number().int().min(1).default(24),
-                keepCount: z.number().int().min(1).max(100).default(10),
-                lastSuccessAt: z.number().int().nonnegative().default(0),
-            })
-            .default({}),
-    })
-    .strip();
-
-export type MainSettingsType = z.infer<typeof mainSettingsSchema>;
+export type { MainSettingsType };
 
 const oldHWAPath = path.join(app.getPath("userData"), "DISABLE_HARDWARE_ACCELERATION");
 const oldTempPath = path.join(app.getPath("userData"), "TEMP_PATH");
@@ -58,9 +20,19 @@ const oldOpenInExistingWindowPath = path.join(app.getPath("userData"), "OPEN_IN_
 export class MainSettings {
     private static _settings: MainSettingsType;
     private static readonly settingsPath = path.join(app.getPath("userData"), "main-settings.json");
+    /** Optional hook after a successful persist (library-folder watchers). Must not import this module. */
+    private static afterUpdate: (() => void) | null = null;
+
+    /**
+     * Registers a callback run after every {@link updateSettings} write.
+     * Used so library-folder watchers can resync without a MainSettings <-> scan import cycle.
+     */
+    public static setAfterUpdate(fn: () => void): void {
+        MainSettings.afterUpdate = fn;
+    }
 
     private static makeMainSettingsJson(): MainSettingsType {
-        const defaultSettings = mainSettingsSchema.parse({});
+        const defaultSettings = parseMainSettingsJson({}, app.getPath("temp"));
         fs.writeFileSync(MainSettings.settingsPath, JSON.stringify(defaultSettings, null, 2));
         return defaultSettings;
     }
@@ -71,8 +43,15 @@ export class MainSettings {
                 return MainSettings.makeMainSettingsJson();
             }
 
-            const parsedJSON = JSON.parse(fs.readFileSync(MainSettings.settingsPath, "utf-8"));
-            return mainSettingsSchema.parse(parsedJSON);
+            const parsedJSON = JSON.parse(fs.readFileSync(MainSettings.settingsPath, "utf-8")) as {
+                library?: { folders?: unknown };
+            };
+            const parsed = parseMainSettingsJson(parsedJSON, app.getPath("temp"));
+            /* persist when the loader restored the one-flagged-row invariant */
+            if (libraryFoldersNeedHeal(parsedJSON?.library?.folders)) {
+                fs.writeFileSync(MainSettings.settingsPath, JSON.stringify(parsed, null, 2));
+            }
+            return parsed;
         } catch (err) {
             logger.error("main-settings.json is invalid or unreadable; recreating defaults", err);
             return MainSettings.makeMainSettingsJson();
@@ -104,6 +83,7 @@ export class MainSettings {
         for (const window of WindowManager.getAllWindows()) {
             ipc.send(window.webContents, "mainSettings:sync", MainSettings.settings);
         }
+        MainSettings.afterUpdate?.();
     }
 
     public static initialize(): void {

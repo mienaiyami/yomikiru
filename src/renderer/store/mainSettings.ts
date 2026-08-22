@@ -1,28 +1,7 @@
-import { BUILTIN_EN_SOURCE_ID } from "@common/i18n";
-import type { MainSettingsType } from "@electron/util/mainSettings";
+import { defaultMainSettings, type MainSettingsType } from "@common/mainSettings";
 import { createAsyncThunk, createSlice } from "@reduxjs/toolkit";
 
-/**
- * @see src/electron/util/mainSettings.ts
- */
-const initialState: MainSettingsType = {
-    hardwareAcceleration: true,
-    tempPath: window.electron.app.getPath("temp"),
-    openInExistingWindow: false,
-    askBeforeClosing: false,
-    minimizeToTray: false,
-    checkForUpdates: true,
-    skipPatch: false,
-    autoDownload: false,
-    channel: "stable",
-    languageSourceId: BUILTIN_EN_SOURCE_ID,
-    dbBackup: {
-        enabled: true,
-        intervalHours: 168,
-        keepCount: 10,
-        lastSuccessAt: 0,
-    },
-};
+const initialState: MainSettingsType = defaultMainSettings(window.electron.app.getPath("temp"));
 
 export const updateMainSettings = createAsyncThunk(
     "mainSettings/update",

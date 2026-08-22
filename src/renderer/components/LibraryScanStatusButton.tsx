@@ -7,7 +7,7 @@ import { useTranslation } from "react-i18next";
 
 /**
  * Title-bar control while a library scan is running. Shows a live folder label;
- * the popover lists phase, root, current path, and a jump to Library settings.
+ * the popover lists phase, root, current path, Settings, and Cancel on one row.
  */
 const LibraryScanStatusButton = () => {
     const { t } = useTranslation("common");
@@ -64,13 +64,24 @@ const LibraryScanStatusButton = () => {
                             {t("topBar.scanAddingShort", { done: status.addIndex, total: status.addTotal })}
                         </p>
                     ) : null}
-                    <button
-                        type="button"
-                        className="libraryScanPopoverSettings"
-                        onClick={() => navigateToSetting("setting:library-scan-now", dispatch)}
-                    >
-                        {t("topBar.scanOpenSettings")}
-                    </button>
+                    <div className="libraryScanPopoverActions">
+                        <button
+                            type="button"
+                            className="libraryScanPopoverSettings"
+                            onClick={() => navigateToSetting("setting:library-scan-now", dispatch)}
+                        >
+                            {t("topBar.scanOpenSettings")}
+                        </button>
+                        <button
+                            type="button"
+                            className="libraryScanPopoverSettings"
+                            onClick={() => {
+                                void window.electron.invoke("libraryScan:cancel");
+                            }}
+                        >
+                            {t("topBar.scanCancel")}
+                        </button>
+                    </div>
                 </div>
             )}
         </Popover>

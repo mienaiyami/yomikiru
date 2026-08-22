@@ -1,6 +1,6 @@
 # Yomikiru — Architecture Overview
 
-> Last updated: 2026-08-17. Covers v2.24.x.
+> Last updated: 2026-08-22. Covers v2.24.x.
 
 Yomikiru is an offline Electron desktop app (Windows + Linux) for reading manga/comics and EPUB novels.
 No server component; all data lives on the user's machine.
@@ -68,13 +68,18 @@ graph TD
 - `DatabaseService` (`src/electron/db/index.ts`) — SQLite via drizzle
 - `WindowManager` (`src/electron/util/window.ts`) — BrowserWindow lifecycle
 - `TrayManager` (`src/electron/util/tray.ts`) — system tray icon
-- `MainSettings` (`src/electron/util/mainSettings.ts`) — hardware acceleration, temp path, tray, single-instance, updates
+- `MainSettings` (`src/electron/util/mainSettings.ts`) — persist/apply; schema and defaults live in `src/common/mainSettings.ts` (hardware acceleration, temp path, tray, single-instance, updates, **library folders**)
+- Library scan engine (`src/electron/util/libraryScan.ts`) — Scan now / start / interval / watch, status broadcast, cancel
 - `Updater` (`src/electron/updater.ts`) — GitHub releases polling
-- IPC handler registrations (covers, DB, dialogs, FS, explorer, updates)
+- IPC handler registrations (covers, DB, dialogs, FS, explorer, library scan, updates)
+
+There are two settings stores: `settings.json` (renderer app settings) and `main-settings.json` (`MainSettings`). Library scan roots and Default Location live only in MainSettings. Do not read `settings.json` from main for scan config.
+
+**`src/common`** is imported by both processes. It must not import Node builtins (`node:path`, `fs`, ...) or Electron. Each process installs fs/path once (`setLibraryIo` / `libraryIo()`); classify still takes a per-call `LibraryIo` for fake trees.
 
 **Preload** exposes a secure surface to the renderer:
 
-- `window.fs` — async/sync filesystem subset (read, write, stat, rm, mkdir, existsSync, isDir, isFile)
+- `window.fs` — async/sync filesystem subset (read, write, stat, rm, mkdir, existsSync, isDir, isFile). `isDir` / `isFile` follow directory and file symlinks by default.
 - `window.path` — path utilities (join, basename, extname, sep…)
 - `window.electron` — app info, clipboard, shell, webFrame zoom, currentWindow events, typed IPC (`.invoke` / `.send` / `.on`)
 - `window.chokidar` — single-path file watcher returning a cleanup function
@@ -91,8 +96,10 @@ All channel names, request shapes, and response shapes live there.
 
 ```
 src/
-├── common/           # Shared types: IPC channels, DB types, legacy types, Logger, HTTP client
+├── common/           # Shared by main + renderer: no Node builtins, no Electron (setLibraryIo)
 │   ├── http.ts             axios HTTP client (main + renderer); no fetch
+│   ├── library/            Shared library classify / folders / images / formats (main + renderer)
+│   ├── mainSettings.ts     MainSettings Zod schema and defaults (no Electron)
 │   ├── types/
 │   │   ├── ipc.ts          IPC channel union
 │   │   ├── db.ts           DB-level types (LibraryItem, Progress, Bookmark…)
@@ -113,13 +120,17 @@ src/
 │   │   ├── dialog.ts       dialog:error / warn / confirm / showOpenDialog …
 │   │   ├── explorer.ts     Windows "Open with" context-menu integration
 │   │   ├── fs.ts           fs:unzip / fs:showInExplorer / fs:saveFile / fs:fileChanged
+│   │   ├── libraryScan.ts  libraryScan:start / cancel / getStatus / status; anilist:claimStartupImport
 │   │   ├── reader.ts       reader:loadLink / reader:recordPage (m2r pushes)
 │   │   ├── update.ts       update:check:manual
 │   │   └── errorReporting.ts  error:report handler
 │   └── util/
 │       ├── window.ts       WindowManager (create, close, cleanup, error check)
 │       ├── tray.ts         TrayManager (minimize-to-tray, hide-all, left-click toggle)
-│       ├── mainSettings.ts MainSettings (HWA, tempPath, tray, single-instance, updates)
+│       ├── mainSettings.ts MainSettings persist (schema: src/common/mainSettings.ts)
+│       ├── libraryScan.ts  Process-wide library walk, watch, interval, cancel
+│       ├── libraryFs.ts    Preload-shaped fs adapter (symlink follow)
+│       ├── contentSource.ts First-image / packed-archive cover source for scan
 │       ├── coverMaterialize.ts  sharp WebP pipeline (userData/covers/<id>.webp)
 │       ├── migrate.ts      JSON -> SQLite migration (bookmarks.json / history.json)
 │       ├── logger.ts       createMainLogger (electron-log scoped sinks)
@@ -253,6 +264,7 @@ sequenceDiagram
 - **Cross-window config sync**: when any window writes `settings.json`, `themes.json`, `shortcuts.json`, or `readerPresets.json` via `fs:saveFile`, main pushes `fs:fileChanged` to all windows. Each renderer reloads only when the relevant setting changed and `syncSettings`/`syncThemes` is enabled.
 - **Window close**: sends `reader:recordPage` (IPC m2r) → renderer saves progress → sends `window:destroy` → main destroys the window. A 5-second safety fallback destroys without waiting.
 - **Temp dir cleanup**: before closing, main deletes any `window:addDirToDelete` path registered for that window (extracted EPUB/ZIP temp dirs).
+- **App-wide vs window-local**: each window has its own renderer, Redux store, and module-level variables. SQLite and on-disk settings are shared. Library scan, folder watch, interval polls, and DB backups run **only in main**. Renderers invoke `libraryScan:start` / `cancel` / `getStatus` and listen for `libraryScan:status` plus `db:*:change`. A renderer `setInterval` / `let lock` is per window. Reader progress is window-local on purpose.
 
 ---
 

@@ -1,4 +1,17 @@
+import { setLibraryIo } from "@common/library/io";
 import { createRendererLogger } from "./logger";
+
+export { formatUtils, toDialogExtensions } from "@common/library/formats";
+
+/*
+ * Factory, not a snapshot: unit tests replace window.fs / window.path (stubFs, reinstall).
+ * Same shape as rendererLibraryIo in mangaChapters.ts — file.ts must not import that module
+ * (it pulls classify into every file.ts consumer).
+ */
+setLibraryIo(() => ({
+    fs: window.fs,
+    path: window.path,
+}));
 
 const log = createRendererLogger("utils/file");
 
@@ -26,79 +39,6 @@ const saveJSONfile = (path: string, data: any) => {
 };
 
 export { userDataURL, settingsPath, themesPath, readerPresetsPath, shortcutsPath, saveJSONfile };
-
-/**
- * Electron `FileFilter.extensions` values (no leading dot) from a `formatUtils` ext list.
- */
-export const toDialogExtensions = (extList: readonly string[]): string[] =>
-    extList.map((ext) => (ext.startsWith(".") ? ext.slice(1) : ext));
-
-export const formatUtils = {
-    image: {
-        list: [".jpg", ".jpeg", ".png", ".webp", ".svg", ".apng", ".gif", ".avif"],
-        test: (str: string): boolean => {
-            return !!str && formatUtils.image.list.includes(window.path.extname(str).toLowerCase());
-        },
-    },
-    /**
-     * Single-file content the Locations browser and drop handler treat as openable.
-     */
-    files: {
-        list: [".zip", ".cbz", ".7z", ".cb7", ".rar", ".cbr", ".pdf", ".epub"],
-        test: (str: string): boolean => {
-            return !!str && formatUtils.files.list.includes(window.path.extname(str).toLowerCase());
-        },
-        getName: (str: string): string => {
-            const ext = window.path.extname(str);
-            if (!formatUtils.files.list.includes(ext)) return str;
-            return window.path.basename(str, ext);
-        },
-        getExt: (str: string): string => {
-            const ext = window.path.extname(str);
-            if (!formatUtils.files.list.includes(ext)) return "";
-            return ext.replace(".", "").toUpperCase();
-        },
-    },
-    packedManga: {
-        list: [".zip", ".cbz", ".7z", ".cb7", ".rar", ".cbr"],
-        test: (str: string): boolean => {
-            return !!str && formatUtils.packedManga.list.includes(window.path.extname(str).toLowerCase());
-        },
-    },
-    pdf: {
-        list: [".pdf"],
-        test: (str: string): boolean => {
-            return !!str && formatUtils.pdf.list.includes(window.path.extname(str).toLowerCase());
-        },
-    },
-    /**
-     * Standalone book files the book reader can open.
-     */
-    book: {
-        list: [".epub"],
-        test: (str: string): boolean => {
-            return !!str && formatUtils.book.list.includes(window.path.extname(str).toLowerCase());
-        },
-    },
-    /**
-     * Single-file manga the image reader can open (packed archives + PDF).
-     */
-    mangaFile: {
-        test: (str: string): boolean => formatUtils.packedManga.test(str) || formatUtils.pdf.test(str),
-    },
-    /** Open-dialog filters derived from the extension lists above. */
-    dialogFilters: {
-        book: (): Electron.FileFilter[] => [
-            { name: "Book", extensions: toDialogExtensions(formatUtils.book.list) },
-        ],
-        mangaFile: (): Electron.FileFilter[] => [
-            {
-                name: "Manga",
-                extensions: toDialogExtensions([...formatUtils.packedManga.list, ...formatUtils.pdf.list]),
-            },
-        ],
-    },
-};
 
 /**
  * take string and make it safe for file system

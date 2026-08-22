@@ -2,7 +2,6 @@ import { z } from "zod";
 import { dialogUtils } from "./dialog";
 import { saveJSONfile, settingsPath } from "./file";
 import { createRendererLogger } from "./logger";
-import { LIBRARY_SCAN_DEFAULT_MAX_DEPTH, LIBRARY_SCAN_MAX_DEPTH_CEILING } from "./mangaChapters";
 import { getValueFromDeepObject } from "./objectPath";
 import { USER_PRESET_BOOK_ID, USER_PRESET_MANGA_ID } from "./readerPresets";
 import {
@@ -16,21 +15,12 @@ import { repairZodInputWithDefaults } from "./zodRepair";
 
 const log = createRendererLogger("settingsSchema");
 
-/** Whole-minute scan interval; fractional values read from settings.json are truncated. */
-const scanIntervalMinutesSchema = z
-    .number()
-    .min(0)
-    .transform((value) => Math.trunc(value))
-    .pipe(z.number().int().min(0));
-
 const sortTypeEnum = z.union([z.literal("normal"), z.literal("inverse")]);
 const sortByEnum = z.union([z.literal("name"), z.literal("date")]);
 const viewModeEnum = z.union([z.literal("classic"), z.literal("gallery")]);
 
 const settingSchema = z
     .object({
-        /** Root directory shown in the LocationsTab file browser. */
-        baseDir: z.string(),
         /** Absolute path to a user CSS file injected into document.head. Empty string = disabled. */
         customStylesheet: z.string(),
         /** Home view mode: classic (three-panel list) or gallery (cover grid). */
@@ -116,68 +106,6 @@ const settingSchema = z
         showMoreDataOnItemHover: z.boolean(),
         /** Re-scan the chapter list each time the reader window gains focus. */
         autoRefreshSideList: z.boolean(),
-        /**
-         * Extra roots Scan now / start / interval may walk. Default Location is not in this list;
-         * {@link scanDefaultLocation} opts it in separately.
-         */
-        libraryFolders: z
-            .array(
-                z.object({
-                    path: z.string().min(1),
-                    content: z.union([z.literal("manga"), z.literal("book"), z.literal("both")]).default("both"),
-                    maxDepth: z
-                        .number()
-                        .int()
-                        .min(0)
-                        .max(LIBRARY_SCAN_MAX_DEPTH_CEILING)
-                        .default(LIBRARY_SCAN_DEFAULT_MAX_DEPTH),
-                    scanOnStart: z.boolean().default(false),
-                    /** Minutes between automatic scans of this folder; not-positive turns interval scanning off. */
-                    scanIntervalMinutes: scanIntervalMinutesSchema.default(0),
-                    watch: z.boolean().default(false),
-                    /** Unix ms of the last completed scan of this folder; unset until a scan finishes. */
-                    lastScanAtMs: z.number().min(0).default(0),
-                    /**
-                     * One JS regex tested against descendant basenames when scanning this folder.
-                     * A blank pattern disables regex skip. Invalid patterns are kept and treated as match-nothing.
-                     */
-                    skipPattern: z.string().default(""),
-                    /** Catalog tag ids unioned onto items found under this folder. */
-                    tagIds: z.array(z.number().int().positive()).default([]),
-                }),
-            )
-            .default([]),
-        /*
-         * Default Location scan settings stay as sibling keys so old settings.json
-         * heals without a nested-object rename.
-         */
-        /** When true, Scan now / start also walk Default Location (`baseDir`). */
-        scanDefaultLocation: z.boolean().default(false),
-        /**
-         * Grouping-folder steps when walking Default Location (capped by
-         * {@link LIBRARY_SCAN_MAX_DEPTH_CEILING}). Ignored while
-         * {@link scanDefaultLocation} is off.
-         */
-        scanDefaultLocationMaxDepth: z
-            .number()
-            .int()
-            .min(0)
-            .max(LIBRARY_SCAN_MAX_DEPTH_CEILING)
-            .default(LIBRARY_SCAN_DEFAULT_MAX_DEPTH),
-        /**
-         * Minutes between automatic scans of Default Location when {@link scanDefaultLocation} is on.
-         * Interval scanning for that folder is off when the value is not positive.
-         */
-        scanDefaultLocationIntervalMinutes: scanIntervalMinutesSchema.default(0),
-        /** Unix ms of the last completed Default Location scan; unset until a scan finishes. */
-        scanDefaultLocationLastAtMs: z.number().min(0).default(0),
-        /**
-         * One JS regex tested against descendant basenames when walking Default Location.
-         * A blank pattern disables regex skip. Invalid patterns are kept and treated as match-nothing.
-         */
-        scanDefaultLocationSkipPattern: z.string().default(""),
-        /** Catalog tag ids unioned onto items found under Default Location (not under extra folders). */
-        scanDefaultLocationTagIds: z.array(z.number().int().positive()).default([]),
         /** When true, the Library settings section shows scan, folder, and maintenance controls. */
         librarySettingsExpanded: z.boolean().default(true),
         /** When true, the per-folder rows under Library folders are visible. */
@@ -212,7 +140,6 @@ const settingSchema = z
     .strip()
     // it is separate do i dont leave default-less value
     .default({
-        baseDir: window.electron.app.getPath("home"),
         customStylesheet: "",
         homeViewMode: "classic",
         locationListSortType: "normal",
@@ -242,13 +169,6 @@ const settingSchema = z
         hideCursorInZenMode: false,
         showMoreDataOnItemHover: true,
         autoRefreshSideList: false,
-        libraryFolders: [],
-        scanDefaultLocation: false,
-        scanDefaultLocationMaxDepth: LIBRARY_SCAN_DEFAULT_MAX_DEPTH,
-        scanDefaultLocationIntervalMinutes: 0,
-        scanDefaultLocationLastAtMs: 0,
-        scanDefaultLocationSkipPattern: "",
-        scanDefaultLocationTagIds: [],
         librarySettingsExpanded: true,
         libraryFoldersListExpanded: true,
         keepExtractedFiles: true,
@@ -319,5 +239,3 @@ const parseAppSettings = (): z.infer<typeof settingSchema> => {
 };
 
 export { settingSchema, parseAppSettings, makeSettingsJson };
-
-export type LibraryFolderSetting = z.infer<typeof settingSchema>["libraryFolders"][number];

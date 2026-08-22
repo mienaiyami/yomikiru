@@ -1,4 +1,7 @@
+import type { LibraryScanStatus } from "@common/types/libraryScan";
 import { createSlice, type PayloadAction } from "@reduxjs/toolkit";
+
+export type { LibraryScanPhase, LibraryScanStatus } from "@common/types/libraryScan";
 
 type PendingSettingsNav = {
     id: string;
@@ -14,24 +17,6 @@ export type UiBlock = {
     id: string;
     /** Status text on the overlay; omit for a silent lock. */
     message?: string;
-};
-
-/** Classify / add / catalogue-refresh stages of a library scan. */
-export type LibraryScanPhase = "walking" | "adding" | "refreshing";
-
-/** Shared scan progress shown on the title bar and the Scan now overlay. */
-export type LibraryScanStatus = {
-    phase: LibraryScanPhase;
-    /** 1-based index of the root currently being walked. */
-    rootIndex: number;
-    rootCount: number;
-    rootPath: string;
-    currentPath: string;
-    added: number;
-    skipped: number;
-    failed: number;
-    addIndex: number;
-    addTotal: number;
 };
 
 type UIState = {

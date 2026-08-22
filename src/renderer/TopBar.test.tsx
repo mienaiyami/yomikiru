@@ -58,5 +58,6 @@ describe("TopBar library scan status", () => {
         expect(getByRole("button", { name: "Open Library settings" })).toBeTruthy();
         fireEvent.click(getByRole("button", { name: "Open Library settings" }));
         expect(navigateToSettingMock).toHaveBeenCalledWith("setting:library-scan-now", store.dispatch);
+        expect(getByRole("button", { name: "Cancel scan" })).toBeTruthy();
     });
 });

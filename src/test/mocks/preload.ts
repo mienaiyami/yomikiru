@@ -204,11 +204,19 @@ export const installPreloadMocks = (): void => {
         }),
     } as Window["electron"];
 
-    /* process-wide scan lock lives in main; unit tests are a single window */
-    onInvoke("libraryScan:tryBegin", () => true);
-    onInvoke("libraryScan:end", () => undefined);
+    /* process-wide scan lives in main; unit tests are a single window */
+    onInvoke("libraryScan:start", () => ({
+        started: false,
+        cancelled: false,
+        added: 0,
+        skipped: 0,
+        failed: 0,
+    }));
+    onInvoke("libraryScan:cancel", () => undefined);
     onInvoke("libraryScan:getStatus", () => null);
-    onInvoke("libraryScan:syncConfig", () => undefined);
     onInvoke("libraryScan:rendererReady", () => undefined);
-    onInvoke("libraryScan:requeueWatch", () => undefined);
+    onInvoke("anilist:claimStartupImport", () => true);
+    onInvoke("mainSettings:update", () => undefined);
+    onInvoke("covers:materialize", () => ({ ok: true }));
+    onInvoke("db:library:getAllAndProgress", () => []);
 };

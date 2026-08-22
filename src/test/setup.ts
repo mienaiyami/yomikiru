@@ -4,10 +4,16 @@ process.env.NODE_ENV ??= "test";
 import "@testing-library/jest-dom/vitest";
 import { cleanup } from "@testing-library/react";
 import { afterEach, beforeAll, vi } from "vitest";
+import { setLibraryIo } from "@common/library/io";
 import { installPreloadMocks, resetPreloadMocks } from "./mocks/preload";
 
 /* Must run before any `@renderer/*` import that creates a Logger (e.g. i18n). */
 installPreloadMocks();
+/* Factory so afterEach reinstall / stubFs replacements are visible to formatUtils. */
+setLibraryIo(() => ({
+    fs: window.fs,
+    path: window.path,
+}));
 
 /*
  * Bundled catalogs + initReactI18next once for the unit project. Tests that

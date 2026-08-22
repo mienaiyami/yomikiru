@@ -1,5 +1,8 @@
 import type { DirectoryValidatorOptions, ValidationResult } from "@features/reader/types";
+import { isPackedMangaFileName, isPdfFileName } from "@common/library/formats";
+import { firstImageInMangaFolder } from "@common/library/images";
 import EPUB from "@utils/epub";
+import { rendererLibraryIo } from "@utils/mangaChapters";
 import { findCover } from "@utils/utils";
 
 /**
@@ -41,22 +44,24 @@ export const mangaSeriesFirstImageScanOptions = (): DirectoryValidatorOptions =>
 export type ValidateDirectoryFn = (link: string, options?: DirectoryValidatorOptions) => Promise<ValidationResult>;
 
 /**
- * Resolves an image path for `covers:materialize`: `cover.*` in the series root if present, else first sorted image under the series (via directory scan).
- * Returns `undefined` without scanning when `mangaDir` is missing on disk.
+ * Resolves an image path for `covers:materialize`: cover sidecar or first folder image;
+ * packed archives still use the directory validator unzip. PDFs have no source here (lazy gallery).
  */
 export const fetchMangaCoverMaterializeSource = async (
     mangaDir: string,
     validateDirectory: ValidateDirectoryFn,
 ): Promise<string | undefined> => {
     if (!window.fs.existsSync(mangaDir)) return undefined;
-
+    if (isPdfFileName(mangaDir)) return undefined;
+    if (window.fs.isFile(mangaDir) && isPackedMangaFileName(mangaDir)) {
+        const result = await validateDirectory(mangaDir, mangaSeriesFirstImageScanOptions());
+        const first = result.images?.[0];
+        if (first && window.fs.isFile(first)) return first;
+        return undefined;
+    }
     const dedicated = mangaDedicatedCoverPathForDb(mangaDir);
     if (dedicated && window.fs.isFile(dedicated)) return dedicated;
-
-    const result = await validateDirectory(mangaDir, mangaSeriesFirstImageScanOptions());
-    const first = result.images?.[0];
-    if (first && window.fs.isFile(first)) return first;
-    return undefined;
+    return firstImageInMangaFolder(rendererLibraryIo(), mangaDir);
 };
 
 /**

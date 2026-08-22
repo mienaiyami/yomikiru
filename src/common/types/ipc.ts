@@ -1,5 +1,10 @@
 import type { I18nChangedPayload, I18nState, LanguageSource } from "@common/i18n";
-import type { MainSettingsType } from "@electron/util/mainSettings";
+import type {
+    LibraryScanStartRequest,
+    LibraryScanStartResult,
+    LibraryScanStatus,
+} from "@common/types/libraryScan";
+import type { MainSettingsType } from "@common/mainSettings";
 import type {
     AddBookBookmarkData,
     AddBookNoteData,
@@ -55,6 +60,15 @@ export type CoverChannels = {
     "covers:deleteForLibraryId": ChannelDefinition<{ libraryId: number }, CoverOpResult>;
     /** Removes all files under `userData/covers` and recreates the directory. */
     "covers:clearCache": ChannelDefinition<void, CoverOpResult>;
+};
+
+export type LibraryScanChannels = {
+    "libraryScan:start": ChannelDefinition<LibraryScanStartRequest, LibraryScanStartResult>;
+    "libraryScan:cancel": ChannelDefinition<void, void>;
+    "libraryScan:getStatus": ChannelDefinition<void, LibraryScanStatus | null>;
+    "libraryScan:rendererReady": ChannelDefinition<void, void>;
+    "libraryScan:status": ChannelDefinition<LibraryScanStatus | null, void, "m2r">;
+    "anilist:claimStartupImport": ChannelDefinition<void, boolean>;
 };
 
 export type DatabaseChannels = {
@@ -304,6 +318,7 @@ export type IPCChannels = DatabaseChannels &
     MainSettingsChannels &
     DbBackupChannels &
     CoverChannels &
+    LibraryScanChannels &
     I18nChannels;
 
 export type MainToRendererChannels = {

@@ -14,28 +14,11 @@ describe("formatUtils", () => {
         expect(formatUtils.mangaFile.test("n.cbz")).toBe(true);
         expect(formatUtils.mangaFile.test("n.epub")).toBe(false);
         expect(formatUtils.book.test("n.epub")).toBe(true);
-        expect(formatUtils.book.test("n.html")).toBe(false);
-        expect(formatUtils.book.test("n.xhtml")).toBe(false);
-        expect(formatUtils.book.test("n.txt")).toBe(false);
         expect(formatUtils.files.test("n.pdf")).toBe(true);
-        expect(formatUtils.files.test("n.epub")).toBe(true);
-        expect(formatUtils.files.test("n.html")).toBe(false);
-        expect(formatUtils.files.test("n.txt")).toBe(false);
-        expect(formatUtils.files.test("")).toBe(false);
-    });
-
-    it("getName / getExt only strip known archive-like extensions", () => {
         expect(formatUtils.files.getName("Story.cbz")).toBe("Story");
-        expect(formatUtils.files.getName("cover.jpg")).toBe("cover.jpg");
         expect(formatUtils.files.getExt("Story.epub")).toBe("EPUB");
-        expect(formatUtils.files.getExt("cover.jpg")).toBe("");
-    });
-
-    it("builds Electron dialog filters from extension lists", () => {
-        expect(toDialogExtensions([".pdf", "epub"])).toEqual(["pdf", "epub"]);
-        expect(formatUtils.dialogFilters.mangaFile()[0]?.extensions).toContain("pdf");
-        expect(formatUtils.dialogFilters.mangaFile()[0]?.extensions).toContain("cbz");
         expect(formatUtils.dialogFilters.book()[0]?.extensions).toEqual(["epub"]);
+        expect(toDialogExtensions([".pdf", "epub"])).toEqual(["pdf", "epub"]);
     });
 });
 

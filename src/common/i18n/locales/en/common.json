@@ -45,7 +45,8 @@
         "scanAdded": "Added",
         "scanSkipped": "Skipped",
         "scanFailed": "Failed",
-        "scanOpenSettings": "Open Library settings"
+        "scanOpenSettings": "Open Library settings",
+        "scanCancel": "Cancel scan"
     },
     "list": {
         "noItems": "No items",

@@ -4,6 +4,8 @@ import type { AppDispatch } from "@store/index";
 import { fetchAllItemsWithProgress, updateLibraryItem } from "@store/library";
 import { dialogUtils } from "@utils/dialog";
 import { formatUtils } from "@utils/file";
+import { canonicalCoverAbsolutePath } from "@utils/libraryCover";
+import { renderPDF } from "@utils/pdf";
 import {
     fetchMangaCoverMaterializeSource,
     resolveBookCoverAbsolutePath,
@@ -204,5 +206,67 @@ export const pickAndApplyCustomCover = async (opts: PickAndApplyCustomCoverOpts)
         }
     } catch (err) {
         log.error(`${errorLogLabel}: open dialog failed`, err);
+    }
+};
+
+/** Max concurrent PDF first-page cover renders across gallery tiles. */
+const PDF_COVER_GENERATE_CONCURRENCY = 2;
+
+const pdfCoverAttempted = new Set<number>();
+let pdfCoverActive = 0;
+const pdfCoverWait: Array<() => void> = [];
+
+const acquirePdfCoverSlot = (): Promise<void> =>
+    new Promise((resolve) => {
+        if (pdfCoverActive < PDF_COVER_GENERATE_CONCURRENCY) {
+            pdfCoverActive += 1;
+            resolve();
+            return;
+        }
+        pdfCoverWait.push(() => {
+            pdfCoverActive += 1;
+            resolve();
+        });
+    });
+
+const releasePdfCoverSlot = (): void => {
+    pdfCoverActive = Math.max(0, pdfCoverActive - 1);
+    const next = pdfCoverWait.shift();
+    if (next) next();
+};
+
+/**
+ * Renders page 1 of a PDF manga item and materializes the library WebP.
+ * No-ops when a cover already exists, the path is not a PDF, or this id already tried.
+ * ponytail: two concurrent renders; failed ids are not retried this session.
+ */
+export const ensurePdfLibraryCover = async (
+    dispatch: AppDispatch,
+    item: Pick<LibraryItem, "id" | "type" | "link">,
+): Promise<void> => {
+    if (item.type !== "manga" || item.id == null) return;
+    if (!formatUtils.pdf.test(item.link)) return;
+    if (pdfCoverAttempted.has(item.id)) return;
+    if (window.fs.isFile(canonicalCoverAbsolutePath(item.id))) return;
+    pdfCoverAttempted.add(item.id);
+    await acquirePdfCoverSlot();
+    const dest = window.path.join(window.electron.app.getPath("temp"), `yomikiru-pdf-cover-${item.id}`);
+    try {
+        if (!window.fs.existsSync(item.link)) return;
+        await window.fs.mkdir(dest, { recursive: true });
+        await renderPDF(item.link, dest, 1, undefined, 1);
+        const first = window.path.join(dest, "1.png");
+        if (window.fs.isFile(first)) {
+            await materializeCoverAndRefreshLibrary(dispatch, item.id, first);
+        }
+    } catch (err) {
+        log.warn("pdf library cover generate failed", { id: item.id, link: item.link }, err);
+    } finally {
+        if (window.fs.existsSync(dest)) {
+            await window.fs.rm(dest, { recursive: true }).catch((err) => {
+                log.warn("pdf library cover temp cleanup failed", { dest }, err);
+            });
+        }
+        releasePdfCoverSlot();
     }
 };

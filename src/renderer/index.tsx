@@ -1,3 +1,5 @@
+/* Installs process-wide library Io (preload fs/path) before other renderer modules. */
+import "./utils/file";
 import ReactDOM from "react-dom";
 import { Provider } from "react-redux";
 import App from "./App";
