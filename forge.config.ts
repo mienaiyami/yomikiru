@@ -1,4 +1,5 @@
 import fs from "node:fs";
+import { createRequire } from "node:module";
 import path from "node:path";
 import { MakerDeb } from "@electron-forge/maker-deb";
 import { MakerSquirrel } from "@electron-forge/maker-squirrel";
@@ -26,6 +27,9 @@ const ARCHIVE_BINARY_RESOURCE_DIRECTORY = "7zip";
 
 /** Packaged resource directory resolved by the main-process cover module. */
 const SHARP_RUNTIME_RESOURCE_DIRECTORY = "sharp";
+
+/** Resolves package paths the same way Node/pnpm would from this config file. */
+const requireFromConfig = createRequire(__filename);
 
 /** Runtime files required by each packaged operating system. */
 const ARCHIVE_RUNTIME_FILES: Record<string, readonly string[]> = {
@@ -60,16 +64,41 @@ const packagedResourcesDirectory = (buildPath: string, platform: string): string
     return path.join(buildPath, appBundle, "Contents", "Resources");
 };
 
-/** Resolves an installed package directory without evaluating its runtime entry point. */
-const runtimePackageDirectory = (packageName: string): string =>
-    path.join(NODE_MODULES_DIRECTORY, ...packageName.split("/"));
+/**
+ * Resolves an installed package directory without evaluating its runtime entry.
+ * Prefer the repo-root install path (Windows / hoisted installs), then walk from
+ * Sharp's real install dir so pnpm-nested deps like `@img/colour` resolve on Linux
+ * make:deb without relying on `require.resolve(.../package.json)` (blocked by
+ * `@img/sharp-*` package exports).
+ */
+const runtimePackageDirectory = (packageName: string): string => {
+    const segments = packageName.split("/");
+    const candidates: string[] = [path.join(NODE_MODULES_DIRECTORY, ...segments)];
+
+    try {
+        const sharpRoot = path.dirname(requireFromConfig.resolve("sharp/package.json"));
+        const sharpReal = fs.realpathSync(sharpRoot);
+        candidates.push(
+            path.join(sharpRoot, "node_modules", ...segments),
+            path.join(sharpReal, "node_modules", ...segments),
+            path.join(path.dirname(sharpReal), ...segments),
+        );
+    } catch {
+        /* sharp missing - fall through to candidate check */
+    }
+
+    for (const candidate of candidates) {
+        if (fs.existsSync(path.join(candidate, "package.json"))) {
+            return candidate;
+        }
+    }
+
+    throw new Error(`Required package runtime is not installed for this target: ${packageName}`);
+};
 
 /** Copies one external runtime package while dereferencing pnpm's dependency links. */
 const copyRuntimePackage = (packageName: string, destinationNodeModules: string): void => {
     const source = runtimePackageDirectory(packageName);
-    if (!fs.existsSync(source)) {
-        throw new Error(`Required package runtime is not installed for this target: ${packageName}`);
-    }
     fs.cpSync(source, path.join(destinationNodeModules, ...packageName.split("/")), {
         recursive: true,
         dereference: true,
