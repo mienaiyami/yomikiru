@@ -142,9 +142,7 @@ export const trackerMediaPageUrl = (
  * Home-gallery `details` label key for the open-on-tracker link above About.
  * Exhaustive on {@link TrackerProvider} so a new provider must add a key here.
  */
-export const trackerExternalOpenLabelKey = (
-    provider: TrackerProvider,
-): "gallery.details.openOnAnilist" => {
+export const trackerExternalOpenLabelKey = (provider: TrackerProvider): "gallery.details.openOnAnilist" => {
     switch (provider) {
         case "anilist":
             return "gallery.details.openOnAnilist";

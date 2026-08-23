@@ -136,7 +136,7 @@ const Combobox: React.FC<{
                           disabled: true,
                       },
                   ]
-                  : opts.map((opt, i) => ({
+                : opts.map((opt, i) => ({
                       label: opt.label,
                       description: opt.description,
                       selected: i === 0,
@@ -207,7 +207,8 @@ const Combobox: React.FC<{
             <input
                 ref={(node) => {
                     inputRef.current = node;
-                    if (inputRefProp) (inputRefProp as React.MutableRefObject<HTMLInputElement | null>).current = node;
+                    if (inputRefProp)
+                        (inputRefProp as React.MutableRefObject<HTMLInputElement | null>).current = node;
                 }}
                 type="text"
                 className="search-input"

@@ -1,10 +1,8 @@
-import {
-    emptyDefaultLibraryFolder,
-    type LibraryFolder,
-} from "@common/library/folders";
+import path from "node:path";
+import { emptyDefaultLibraryFolder, type LibraryFolder } from "@common/library/folders";
+import { LIBRARY_SCAN_DEFAULT_MAX_DEPTH } from "@common/types/libraryScan";
 import { makeBookItem, makeMangaItem } from "@test/fixtures/libraryItem";
 import { onInvoke, stubFs } from "@test/mocks/preload";
-import path from "node:path";
 import { describe, expect, it } from "vitest";
 import {
     existingLibraryFolderPaths,
@@ -18,7 +16,6 @@ import {
     promptForInitialDefaultLocation,
     unusedDummyProgressLinks,
 } from "./librarySettingsImport";
-import { LIBRARY_SCAN_DEFAULT_MAX_DEPTH } from "@common/types/libraryScan";
 
 /** Extra library-folder row for skip-path / existing-path tests. */
 const testFolder = (over: Partial<LibraryFolder> & { path: string }): LibraryFolder => ({
@@ -110,7 +107,13 @@ describe("listForeignLibraryScanSkipPaths", () => {
         const base = path.join("testdata", "home");
         const extra = path.join("testdata", "drive");
         const folders = [
-            { ...emptyDefaultLibraryFolder(), path: base, scanOnStart: false, watch: false, scanIntervalMinutes: 0 },
+            {
+                ...emptyDefaultLibraryFolder(),
+                path: base,
+                scanOnStart: false,
+                watch: false,
+                scanIntervalMinutes: 0,
+            },
             testFolder({ path: extra }),
         ];
         expect(listForeignLibraryScanSkipPaths(extra, folders)).toEqual([base]);

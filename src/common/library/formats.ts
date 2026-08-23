@@ -45,10 +45,8 @@ export const hasListedExt = (
 ): boolean => !!str && list.includes(extname(str).toLowerCase());
 
 /** True when `str` is an image the manga reader can show. */
-export const isImageFileName = (
-    str: string,
-    extname: (filePath: string) => string = extnameFromIo,
-): boolean => hasListedExt(str, IMAGE_EXTS, extname);
+export const isImageFileName = (str: string, extname: (filePath: string) => string = extnameFromIo): boolean =>
+    hasListedExt(str, IMAGE_EXTS, extname);
 
 /** True when `str` is a packed manga archive. */
 export const isPackedMangaFileName = (
@@ -57,22 +55,16 @@ export const isPackedMangaFileName = (
 ): boolean => hasListedExt(str, PACKED_MANGA_EXTS, extname);
 
 /** True when `str` is a PDF. */
-export const isPdfFileName = (
-    str: string,
-    extname: (filePath: string) => string = extnameFromIo,
-): boolean => hasListedExt(str, PDF_EXTS, extname);
+export const isPdfFileName = (str: string, extname: (filePath: string) => string = extnameFromIo): boolean =>
+    hasListedExt(str, PDF_EXTS, extname);
 
 /** True when `str` is a packed manga archive or PDF. */
-export const isMangaFileName = (
-    str: string,
-    extname: (filePath: string) => string = extnameFromIo,
-): boolean => isPackedMangaFileName(str, extname) || isPdfFileName(str, extname);
+export const isMangaFileName = (str: string, extname: (filePath: string) => string = extnameFromIo): boolean =>
+    isPackedMangaFileName(str, extname) || isPdfFileName(str, extname);
 
 /** True when `str` is a standalone book file. */
-export const isBookFileName = (
-    str: string,
-    extname: (filePath: string) => string = extnameFromIo,
-): boolean => hasListedExt(str, BOOK_EXTS, extname);
+export const isBookFileName = (str: string, extname: (filePath: string) => string = extnameFromIo): boolean =>
+    hasListedExt(str, BOOK_EXTS, extname);
 
 /**
  * Electron `FileFilter.extensions` values (no leading dot) from an extension list.

@@ -1,10 +1,5 @@
 import type { LanguageSource } from "@common/i18n";
-import {
-    BUILTIN_EN_SOURCE_ID,
-    BUILTIN_SOURCES,
-    isBuiltinSourceId,
-    parsePackSourceId,
-} from "@common/i18n";
+import { BUILTIN_EN_SOURCE_ID, BUILTIN_SOURCES, isBuiltinSourceId, parsePackSourceId } from "@common/i18n";
 import { useAppDispatch } from "@store/hooks";
 import { getMainSettings } from "@store/mainSettings";
 import InputSelect from "@ui/InputSelect";

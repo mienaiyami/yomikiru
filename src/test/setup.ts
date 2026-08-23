@@ -2,9 +2,9 @@
 process.env.NODE_ENV ??= "test";
 
 import "@testing-library/jest-dom/vitest";
+import { setLibraryIo } from "@common/library/io";
 import { cleanup } from "@testing-library/react";
 import { afterEach, beforeAll, vi } from "vitest";
-import { setLibraryIo } from "@common/library/io";
 import { installPreloadMocks, resetPreloadMocks } from "./mocks/preload";
 
 /* Must run before any `@renderer/*` import that creates a Logger (e.g. i18n). */

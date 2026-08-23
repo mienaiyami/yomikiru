@@ -1,6 +1,6 @@
 import { configureStore } from "@reduxjs/toolkit";
 import { describe, expect, it } from "vitest";
-import uiReducer, { UI_BLOCK_ID_LIBRARY, blockUi, setLibraryScanStatus, unblockUi } from "./ui";
+import uiReducer, { blockUi, setLibraryScanStatus, UI_BLOCK_ID_LIBRARY, unblockUi } from "./ui";
 
 /**
  * Minimal store with only the ui slice for lock-stack tests.

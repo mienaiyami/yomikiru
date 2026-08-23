@@ -1,10 +1,6 @@
 import path from "node:path";
 import { describe, expect, it } from "vitest";
-import {
-    isExternalEpubReference,
-    resolveEpubChapterReference,
-    stripEpubInlineEventHandlers,
-} from "./chapter";
+import { isExternalEpubReference, resolveEpubChapterReference, stripEpubInlineEventHandlers } from "./chapter";
 
 describe("EPUB chapter references", () => {
     it("keeps web and fragment references while resolving package-relative paths", () => {

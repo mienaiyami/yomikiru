@@ -18,9 +18,7 @@ type ReaderSideListItemProps = {
 const ReaderSideListItem = memo(
     ({ name, pages, link, inHistory, current, focused, onClick }: ReaderSideListItemProps) => {
         const { t } = useTranslation("reader");
-        const focusChapterInList = useAppSelector(
-            (state) => state.appSettings.readerSettings?.focusChapterInList,
-        );
+        const focusChapterInList = useAppSelector((state) => state.appSettings.readerSettings?.focusChapterInList);
         const { openInReader, setContextMenuData } = useAppContext();
 
         const handleClick = () => {

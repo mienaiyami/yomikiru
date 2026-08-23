@@ -102,7 +102,10 @@ const GalleryView: React.FC = () => {
     /* trust settings until the catalog is loaded; then drop ids for deleted tags */
     const filterTagIds = tagsHydrated ? activeTagIds : selectedTagIds;
     /* stable key for selection-clear effect when the filter membership changes */
-    const activeTagFilterKey = filterTagIds.slice().sort((a, b) => a - b).join(",");
+    const activeTagFilterKey = filterTagIds
+        .slice()
+        .sort((a, b) => a - b)
+        .join(",");
 
     const activeTab = appSettings.galleryActiveTab;
     const setActiveTab = useCallback(
@@ -166,8 +169,7 @@ const GalleryView: React.FC = () => {
             (item): item is LibraryItemWithProgress =>
                 item !== null && (activeTypeFilter === "all" || item.type === activeTypeFilter),
         );
-        const all =
-            filterTagIds.length === 0 ? typed : itemsWithAnyTag(typed, tagAssignments, filterTagIds);
+        const all = filterTagIds.length === 0 ? typed : itemsWithAnyTag(typed, tagAssignments, filterTagIds);
         const titleOf = (item: LibraryItemWithProgress) => displayByLink[item.link]?.title ?? item.title;
 
         if (activeTab === "continue-reading") {

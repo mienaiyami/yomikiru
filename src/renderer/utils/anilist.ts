@@ -276,9 +276,7 @@ export const toAnilistTrackerSnapshotUpdate = (
  *
  * @returns Viewer data on success, or undefined when the profile is unavailable
  */
-export const getAnilistViewer = async (
-    bearer = resolveAnilistBearer(),
-): Promise<AnilistViewer | undefined> => {
+export const getAnilistViewer = async (bearer = resolveAnilistBearer()): Promise<AnilistViewer | undefined> => {
     if (!bearer) {
         log.error("getAnilistViewer: skipped (no access token; user not logged in)");
         return;

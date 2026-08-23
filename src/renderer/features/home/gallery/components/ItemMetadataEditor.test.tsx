@@ -42,7 +42,9 @@ describe("ItemMetadataEditor", () => {
     });
 
     it("swaps Save to Saving then Saved and closes after success", async () => {
-        let resolveSave: (row: LibraryItemMetadata | null) => void = () => {};
+        let resolveSave: (row: LibraryItemMetadata | null) => void = () => {
+            /* replaced when the deferred setMetadata promise is created */
+        };
         onInvoke(
             "db:library:setMetadata",
             () =>

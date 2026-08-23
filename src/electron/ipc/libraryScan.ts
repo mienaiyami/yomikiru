@@ -1,5 +1,4 @@
 import type { DatabaseService } from "@electron/db";
-import { MainSettings } from "@electron/util/mainSettings";
 import {
     cancelLibraryScan,
     getLibraryScanStatus,
@@ -10,6 +9,7 @@ import {
     startLibraryScanScheduler,
     stopLibraryScanScheduler,
 } from "@electron/util/libraryScan";
+import { MainSettings } from "@electron/util/mainSettings";
 import { ipc } from "./utils";
 
 let anilistLegacyTrackingImportClaimed = false;

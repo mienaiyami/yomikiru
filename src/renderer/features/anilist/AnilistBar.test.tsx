@@ -76,10 +76,7 @@ describe("AnilistBar", () => {
         });
         const track = screen.getByRole("button", { name: anilistEn.bar.track });
         expect(track).toBeDisabled();
-        expect(track.closest("[data-tooltip]")).toHaveAttribute(
-            "data-tooltip",
-            anilistEn.bar.loginToTrackHint,
-        );
+        expect(track.closest("[data-tooltip]")).toHaveAttribute("data-tooltip", anilistEn.bar.loginToTrackHint);
     });
 
     it("shows a track-for-metadata tip on enabled Track when logged in and untracked", () => {
@@ -119,10 +116,9 @@ describe("AnilistBar", () => {
         expect(document.querySelector("[data-tooltip]")).toBeNull();
         expect(
             screen.getByRole("button", {
-                name: anilistEn.bar.compactTracked.replace("{{brand}}", anilistEn.bar.brand).replace(
-                    "{{progress}}",
-                    "3",
-                ),
+                name: anilistEn.bar.compactTracked
+                    .replace("{{brand}}", anilistEn.bar.brand)
+                    .replace("{{progress}}", "3"),
             }),
         ).toBeDisabled();
     });

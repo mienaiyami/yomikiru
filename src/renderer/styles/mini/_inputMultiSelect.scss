@@ -92,6 +92,10 @@
     /* inset so row focus rings are not clipped by the scrollport */
     padding: 4px;
     box-sizing: border-box;
+    /* fieldset defaults would fight the popover panel chrome */
+    margin: 0;
+    border: none;
+    min-inline-size: 0;
 }
 
 /**

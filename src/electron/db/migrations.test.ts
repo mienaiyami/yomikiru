@@ -1,7 +1,7 @@
 import fs from "node:fs";
 import path from "node:path";
-import { describe, expect, it, vi } from "vitest";
 import type Database from "better-sqlite3";
+import { describe, expect, it, vi } from "vitest";
 
 const { repoRoot } = vi.hoisted(() => ({
     repoRoot: process.cwd(),

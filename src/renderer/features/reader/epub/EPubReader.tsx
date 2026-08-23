@@ -1,19 +1,11 @@
-import { isExternalEpubReference, type EpubPackage } from "@common/epub";
+import { type EpubPackage, isExternalEpubReference } from "@common/epub";
 import type { BookProgress } from "@common/types/db";
 import { setAnilistCurrentListEntry } from "@store/anilist";
 import { setAppSettings, setEpubReaderSettings, setReaderSettings } from "@store/appSettings";
 import { addNote } from "@store/bookNotes";
 import { useAppDispatch, useAppSelector } from "@store/hooks";
-import {
-    selectLibraryItem,
-    updateCurrentItemProgress,
-} from "@store/library";
-import {
-    getReaderBook,
-    setReaderLoading,
-    setReaderOpen,
-    updateReaderBookProgress,
-} from "@store/reader";
+import { selectLibraryItem, updateCurrentItemProgress } from "@store/library";
+import { getReaderBook, setReaderLoading, setReaderOpen, updateReaderBookProgress } from "@store/reader";
 import { cyclePresetNext, cyclePresetPrev, selectPresetSlot } from "@store/readerPresets";
 import { getShortcutsMapped } from "@store/shortcuts";
 import { updateTrackerSnapshot } from "@store/trackers";
@@ -476,9 +468,7 @@ const EPubReader: React.FC = () => {
                 if (e) {
                     dispatch(setAnilistCurrentListEntry(e));
                     if (bookInReader.link)
-                        void dispatch(
-                            updateTrackerSnapshot(toAnilistTrackerSnapshotUpdate(bookInReader.link, e)),
-                        );
+                        void dispatch(updateTrackerSnapshot(toAnilistTrackerSnapshotUpdate(bookInReader.link, e)));
                 }
             });
     }, [bookProgress, appSettings.readerSettings.autoUpdateAnilistProgress]);

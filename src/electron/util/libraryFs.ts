@@ -1,17 +1,13 @@
 import fs from "node:fs";
 import fsp from "node:fs/promises";
 import path from "node:path";
-import { setLibraryIo, type LibraryIo } from "@common/library/io";
+import { type LibraryIo, setLibraryIo } from "@common/library/io";
 
 /**
  * `isDir` / `isFile` matching the preload bridge: lstat, then re-stat when the
  * path is a symlink so linked folders and files are scanned (D8).
  */
-const followsLink = (
-    filePath: string,
-    acceptSymbolicLink: boolean,
-    kind: "dir" | "file",
-): boolean => {
+const followsLink = (filePath: string, acceptSymbolicLink: boolean, kind: "dir" | "file"): boolean => {
     try {
         if (acceptSymbolicLink && fs.lstatSync(filePath).isSymbolicLink()) {
             const st = fs.statSync(filePath);

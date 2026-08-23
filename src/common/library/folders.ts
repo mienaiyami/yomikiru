@@ -102,7 +102,10 @@ export const normalizeLibraryFolders = (folders: readonly LibraryFolder[]): Libr
     const firstFlagged = withFlags.findIndex((folder) => folder.isDefaultLocation);
     const ensured =
         firstFlagged < 0
-            ? [emptyDefaultLibraryFolder(), ...withFlags.map((folder) => ({ ...folder, isDefaultLocation: false }))]
+            ? [
+                  emptyDefaultLibraryFolder(),
+                  ...withFlags.map((folder) => ({ ...folder, isDefaultLocation: false })),
+              ]
             : withFlags.map((folder, index) => ({
                   ...folder,
                   isDefaultLocation: index === firstFlagged,
@@ -257,7 +260,8 @@ export const withLibraryScanTimestamps = (
 export const libraryFoldersNeedHeal = (rawFolders: unknown): boolean => {
     if (!Array.isArray(rawFolders)) return true;
     const flagged = rawFolders.filter(
-        (row) => row !== null && typeof row === "object" && (row as { isDefaultLocation?: unknown }).isDefaultLocation,
+        (row) =>
+            row !== null && typeof row === "object" && (row as { isDefaultLocation?: unknown }).isDefaultLocation,
     );
     return flagged.length !== 1;
 };

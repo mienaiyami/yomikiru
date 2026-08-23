@@ -349,10 +349,7 @@ export const handleFailedSchemaMigrate = async (snapshotFileName: string | null)
               mainT("dbBackup.openBackupsFolder", { ns: "electron" }),
               mainT("dbBackup.quit", { ns: "electron" }),
           ]
-        : [
-              mainT("dbBackup.openBackupsFolder", { ns: "electron" }),
-              mainT("dbBackup.quit", { ns: "electron" }),
-          ];
+        : [mainT("dbBackup.openBackupsFolder", { ns: "electron" }), mainT("dbBackup.quit", { ns: "electron" })];
 
     const res = await dialog.showMessageBox({
         type: "error",

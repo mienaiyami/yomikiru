@@ -1,6 +1,6 @@
+import { compileLibraryScanSkipRegex } from "@common/library/classify";
 import { ItemTagsPicker } from "@features/home/gallery/components/ItemTagsPicker";
 import { useAppDispatch } from "@store/hooks";
-import { compileLibraryScanSkipRegex } from "@common/library/classify";
 import { useEffect, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { navigateToSetting } from "../utils/navigateToSetting";

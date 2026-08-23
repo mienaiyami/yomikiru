@@ -1,7 +1,13 @@
 import path from "node:path";
 import { stubFs } from "@test/mocks/preload";
 import { describe, expect, it } from "vitest";
-import { canonicalCoverAbsolutePath, libraryCoverSrc, parseDetailsCoverSource, resolveDetailsCoverSrc, trackerCoverUrlByItemLink } from "./libraryCover";
+import {
+    canonicalCoverAbsolutePath,
+    libraryCoverSrc,
+    parseDetailsCoverSource,
+    resolveDetailsCoverSrc,
+    trackerCoverUrlByItemLink,
+} from "./libraryCover";
 
 describe("canonicalCoverAbsolutePath", () => {
     it("joins userData/covers/<id>.webp", () => {
@@ -64,9 +70,12 @@ describe("resolveDetailsCoverSrc", () => {
         expect(resolveDetailsCoverSrc(item, "https://example.test/cover.jpg")).toBe(
             "https://example.test/cover.jpg",
         );
-        expect(resolveDetailsCoverSrc({ ...item, extra: { detailsCoverSource: "library" } }, "https://example.test/cover.jpg")).toBe(
-            "",
-        );
+        expect(
+            resolveDetailsCoverSrc(
+                { ...item, extra: { detailsCoverSource: "library" } },
+                "https://example.test/cover.jpg",
+            ),
+        ).toBe("");
         expect(resolveDetailsCoverSrc({ ...item, extra: { detailsCoverSource: "tracker" } }, "  ")).toBe("");
     });
 });

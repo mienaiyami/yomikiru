@@ -2,50 +2,59 @@ import fs from "node:fs";
 import path from "node:path";
 import { afterAll, afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
-const { tmpUserData, dbPath, showMessageBox, relaunch, quit, openPath, powerMonitorOn, powerMonitorOff, DatabaseMock } =
-    vi.hoisted(() => {
-        const fsHoisted = require("node:fs") as typeof import("node:fs");
-        const osHoisted = require("node:os") as typeof import("node:os");
-        const pathHoisted = require("node:path") as typeof import("node:path");
-        const tmp = fsHoisted.mkdtempSync(pathHoisted.join(osHoisted.tmpdir(), "yomikiru-dbbackup-"));
+const {
+    tmpUserData,
+    dbPath,
+    showMessageBox,
+    relaunch,
+    quit,
+    openPath,
+    powerMonitorOn,
+    powerMonitorOff,
+    DatabaseMock,
+} = vi.hoisted(() => {
+    const fsHoisted = require("node:fs") as typeof import("node:fs");
+    const osHoisted = require("node:os") as typeof import("node:os");
+    const pathHoisted = require("node:path") as typeof import("node:path");
+    const tmp = fsHoisted.mkdtempSync(pathHoisted.join(osHoisted.tmpdir(), "yomikiru-dbbackup-"));
 
-        /**
-         * Stand-in for better-sqlite3: integrity is driven by file magic, backup is a copy.
-         * Avoids Electron vs system Node ABI rebuild for this suite.
-         */
-        const DatabaseMock = vi.fn(function MockDatabase(
-            this: {
-                filePath: string;
-                backup: (dest: string) => Promise<void>;
-                pragma: (key: string, opts?: { simple?: boolean }) => string;
-                close: () => void;
-            },
-            filePath: string,
-        ) {
-            this.filePath = filePath;
-            this.backup = async (dest: string) => {
-                fsHoisted.copyFileSync(filePath, dest);
-            };
-            this.pragma = (key: string) => {
-                if (key !== "integrity_check") return "";
-                const body = fsHoisted.readFileSync(filePath, "utf-8");
-                return body.startsWith("OK:") ? "ok" : "fail";
-            };
-            this.close = vi.fn();
-        });
-
-        return {
-            tmpUserData: tmp,
-            dbPath: pathHoisted.join(tmp, "data.db"),
-            showMessageBox: vi.fn(async () => ({ response: 0 })),
-            relaunch: vi.fn(),
-            quit: vi.fn(),
-            openPath: vi.fn(async () => ""),
-            powerMonitorOn: vi.fn(),
-            powerMonitorOff: vi.fn(),
-            DatabaseMock,
+    /**
+     * Stand-in for better-sqlite3: integrity is driven by file magic, backup is a copy.
+     * Avoids Electron vs system Node ABI rebuild for this suite.
+     */
+    const DatabaseMock = vi.fn(function MockDatabase(
+        this: {
+            filePath: string;
+            backup: (dest: string) => Promise<void>;
+            pragma: (key: string, opts?: { simple?: boolean }) => string;
+            close: () => void;
+        },
+        filePath: string,
+    ) {
+        this.filePath = filePath;
+        this.backup = async (dest: string) => {
+            fsHoisted.copyFileSync(filePath, dest);
         };
+        this.pragma = (key: string) => {
+            if (key !== "integrity_check") return "";
+            const body = fsHoisted.readFileSync(filePath, "utf-8");
+            return body.startsWith("OK:") ? "ok" : "fail";
+        };
+        this.close = vi.fn();
     });
+
+    return {
+        tmpUserData: tmp,
+        dbPath: pathHoisted.join(tmp, "data.db"),
+        showMessageBox: vi.fn(async () => ({ response: 0 })),
+        relaunch: vi.fn(),
+        quit: vi.fn(),
+        openPath: vi.fn(async () => ""),
+        powerMonitorOn: vi.fn(),
+        powerMonitorOff: vi.fn(),
+        DatabaseMock,
+    };
+});
 
 type DbBackupSettingsState = {
     enabled: boolean;
@@ -153,6 +162,7 @@ vi.mock("@electron/util/mainSettings", () => ({
 import type Database from "better-sqlite3";
 import {
     applyPendingRestore,
+    BACKUP_NAME_RE,
     backupIfPendingMigrations,
     cleanTmpFiles,
     createBackup,
@@ -160,12 +170,11 @@ import {
     getBackupsDir,
     getDbBackupStatus,
     handleFailedSchemaMigrate,
+    importAndRestoreFromPath,
     isBackupDue,
     listBackups,
     parseBackupFileName,
-    BACKUP_NAME_RE,
     pruneBackups,
-    importAndRestoreFromPath,
     queueRestoreAndRelaunch,
     setLiveSqlite,
     startScheduler,

@@ -141,11 +141,7 @@ describe("ItemTagsPicker selection mode", () => {
     it("filters the catalog and reports checkbox changes without a library item", () => {
         const onSelectedIdsChange = vi.fn();
         renderWithProviders(
-            <ItemTagsPicker
-                selectedIds={[1]}
-                onSelectedIdsChange={onSelectedIdsChange}
-                onClose={vi.fn()}
-            />,
+            <ItemTagsPicker selectedIds={[1]} onSelectedIdsChange={onSelectedIdsChange} onClose={vi.fn()} />,
             { preloadedState: { tags: { catalog, assignments: [] } } },
         );
         expect(screen.getByRole("textbox", { name: home.gallery.tags.listFilter })).toBeInTheDocument();

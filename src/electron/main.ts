@@ -16,16 +16,21 @@ import { DRIZZLE_TAG_LIBRARY_ITEM_IDS } from "./db/migrations";
 import { registerI18nHandlers, setApplicationMenuRebuild } from "./i18n/ipc";
 import { initMainI18n, mainT } from "./i18n/mainI18n";
 import { noteLibraryItemIdMigrationAppliedThisLaunch, registerCoverHandlers } from "./ipc/covers";
-import { registerDbBackupHandlers, runDbBackupStartupBeforeOpen } from "./ipc/dbBackup";
 import { setupDatabaseHandlers } from "./ipc/database";
+import { registerDbBackupHandlers, runDbBackupStartupBeforeOpen } from "./ipc/dbBackup";
 import { registerDialogHandlers } from "./ipc/dialog";
 import { registerErrorReportingHandlers } from "./ipc/errorReporting";
 import { registerExplorerHandlers } from "./ipc/explorer";
 import { registerFSHandlers } from "./ipc/fs";
 import { registerLibraryScanHandlers, stopLibraryScan } from "./ipc/libraryScan";
 import { registerUpdateHandlers } from "./ipc/update";
+import {
+    backupIfPendingMigrations,
+    handleFailedSchemaMigrate,
+    setLiveSqlite,
+    stopScheduler,
+} from "./util/dbBackup";
 import handleSquirrelEvent from "./util/handleSquirrelEvent";
-import { backupIfPendingMigrations, handleFailedSchemaMigrate, setLiveSqlite, stopScheduler } from "./util/dbBackup";
 import { MainSettings } from "./util/mainSettings";
 /* Side-effect: installs process-wide library Io for common folder/format helpers. */
 import "./util/libraryFs";

@@ -1,10 +1,7 @@
 import path from "node:path";
 import { stubFs } from "@test/mocks/preload";
 import { describe, expect, it } from "vitest";
-import {
-    mangaDedicatedCoverPathForDb,
-    resolveMangaCoverSourcePath,
-} from "./libraryCoverSources";
+import { mangaDedicatedCoverPathForDb, resolveMangaCoverSourcePath } from "./libraryCoverSources";
 
 describe("mangaDedicatedCoverPathForDb / resolveMangaCoverSourcePath", () => {
     it("returns dedicated cover.* when findCover finds a file", () => {

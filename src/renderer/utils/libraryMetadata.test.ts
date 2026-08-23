@@ -7,10 +7,10 @@ import {
     parseGenreList,
     resolveAllItemMetadata,
     resolveItemMetadata,
+    toTrackerExternalRef,
     trackerByItemLink,
     trackerExternalOpenLabelKey,
     trackerMediaPageUrl,
-    toTrackerExternalRef,
 } from "./libraryMetadata";
 
 const overlay = (

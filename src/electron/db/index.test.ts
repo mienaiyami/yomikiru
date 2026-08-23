@@ -20,11 +20,18 @@ vi.mock("electron", () => ({
         // dirname(getAppPath()) + "/drizzle" -> repo drizzle folder
         getAppPath: () => path.join(repoRoot, "package.json"),
         setPath: vi.fn(),
+        isReady: () => true,
+        disableHardwareAcceleration: vi.fn(),
     },
     dialog: {
         showErrorBox: vi.fn(),
     },
     BrowserWindow: vi.fn(),
+    /* MainSettings.initialize registers IPC via ipcMain when mainI18n pulls it in */
+    ipcMain: {
+        handle: vi.fn(),
+        on: vi.fn(),
+    },
 }));
 
 /* Avoid loading util/index side effects (portable userData + electron-log setup). */

@@ -15,9 +15,7 @@ vi.mock("@renderer/App", () => ({
 }));
 
 /** Catalog fixture for the scan-root tags modal. */
-const catalog: LibraryTag[] = [
-    { id: 1, name: "Ongoing", color: "#2563eb", createdAt: new Date(0) },
-];
+const catalog: LibraryTag[] = [{ id: 1, name: "Ongoing", color: "#2563eb", createdAt: new Date(0) }];
 
 /** Renders {@link LibraryScanRootOptions} with optional prop and catalog overrides. */
 const renderOptions = (

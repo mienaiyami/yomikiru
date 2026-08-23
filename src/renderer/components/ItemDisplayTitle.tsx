@@ -15,7 +15,9 @@ type ItemDisplayTitleProps = {
 export const ItemDisplayTitle = ({ primary, original, className }: ItemDisplayTitleProps) => {
     const { t } = useTranslation("home");
     const originalText = original?.trim() || "";
-    const label = originalText ? t("gallery.details.titleWithOriginal", { title: primary, original: originalText }) : primary;
+    const label = originalText
+        ? t("gallery.details.titleWithOriginal", { title: primary, original: originalText })
+        : primary;
 
     return (
         <span className={className ? `itemDisplayTitle ${className}` : "itemDisplayTitle"} title={label}>

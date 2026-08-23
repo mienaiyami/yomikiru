@@ -90,6 +90,8 @@ const AnilistBar = memo((props: AnilistBarProps) => {
             dispatch(setAnilistCurrentListEntry(null));
             return;
         }
+        /* GraphQL list-entry needs a token; compact UI can still show cached listState */
+        if (!anilistToken) return;
         let cancelled = false;
         setFailedKey((prev) => (prev === listFetchKey ? null : prev));
         void getAnilistListEntry(Number(remoteId)).then((entry) => {
@@ -104,7 +106,7 @@ const AnilistBar = memo((props: AnilistBarProps) => {
         return () => {
             cancelled = true;
         };
-    }, [hasTracker, trackLink, isAniEditOpen, remoteId, listFetchKey, retryTick, dispatch]);
+    }, [hasTracker, trackLink, isAniEditOpen, remoteId, listFetchKey, retryTick, anilistToken, dispatch]);
 
     const openAnilistFlow = useCallback(
         (mode: "search" | "edit") => {

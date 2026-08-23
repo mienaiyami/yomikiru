@@ -193,7 +193,7 @@ const InputMultiSelect = ({
         };
 
         return (
-            <div className="inputMultiSelectPanel" role="group" aria-label={ariaLabel}>
+            <fieldset className="inputMultiSelectPanel" aria-label={ariaLabel}>
                 {header}
                 {showToggleAll && options.length > 0 ? (
                     <button
@@ -244,7 +244,7 @@ const InputMultiSelect = ({
                     );
                 })}
                 {footer}
-            </div>
+            </fieldset>
         );
     };
 

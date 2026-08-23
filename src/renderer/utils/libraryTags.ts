@@ -81,9 +81,7 @@ export const itemsWithAnyTag = <T extends { link: string }>(
 ): T[] => {
     if (tagIds.length === 0) return items as T[];
     const idSet = new Set(tagIds);
-    const links = new Set(
-        assignments.filter((row) => idSet.has(row.tagId)).map((row) => row.itemLink),
-    );
+    const links = new Set(assignments.filter((row) => idSet.has(row.tagId)).map((row) => row.itemLink));
     return items.filter((item) => links.has(item.link));
 };
 

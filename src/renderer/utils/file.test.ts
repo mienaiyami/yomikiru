@@ -1,7 +1,15 @@
 import path from "node:path";
 import { onInvoke } from "@test/mocks/preload";
 import { describe, expect, it, vi } from "vitest";
-import { fileSrcToImagePath, formatByteSize, formatUtils, makeFileSafe, promptSelectDir, toDialogExtensions, unzip } from "./file";
+import {
+    fileSrcToImagePath,
+    formatByteSize,
+    formatUtils,
+    makeFileSafe,
+    promptSelectDir,
+    toDialogExtensions,
+    unzip,
+} from "./file";
 
 describe("formatUtils", () => {
     it("detects image / packed manga / pdf / book / archive extensions", () => {

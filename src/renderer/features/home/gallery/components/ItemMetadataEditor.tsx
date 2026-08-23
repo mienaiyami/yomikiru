@@ -57,7 +57,9 @@ export const ItemMetadataEditor = ({ itemLink, userOverlay, onClose }: ItemMetad
 
     useEffect(() => () => window.clearTimeout(feedbackTimerRef.current), []);
 
-    const formHasValues = Boolean(title.trim() || author.trim() || description.trim() || parseGenreList(genres).length);
+    const formHasValues = Boolean(
+        title.trim() || author.trim() || description.trim() || parseGenreList(genres).length,
+    );
     const canReset = overlayHasEdits(userOverlay) || formHasValues;
     const busy = savePhase === "saving" || resetPhase === "saving";
 

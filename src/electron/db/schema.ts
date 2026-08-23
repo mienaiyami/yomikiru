@@ -268,10 +268,7 @@ export const libraryItemTags = sqliteTable(
             .references(() => libraryTags.id, { onDelete: "cascade" })
             .notNull(),
     },
-    (t) => [
-        primaryKey({ columns: [t.itemLink, t.tagId] }),
-        index("idx_library_item_tags_tag_id").on(t.tagId),
-    ],
+    (t) => [primaryKey({ columns: [t.itemLink, t.tagId] }), index("idx_library_item_tags_tag_id").on(t.tagId)],
 );
 
 export const libraryItemsRelations = relations(libraryItems, ({ one, many }) => ({

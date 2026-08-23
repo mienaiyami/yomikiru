@@ -210,9 +210,7 @@ const Popover: React.FC<PopoverProps> = ({
                         e.stopPropagation();
                     }}
                 >
-                    <FocusLock returnFocus>
-                        {popoverContent}
-                    </FocusLock>
+                    <FocusLock returnFocus>{popoverContent}</FocusLock>
                 </div>
             )}
         </span>

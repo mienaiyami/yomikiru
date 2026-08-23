@@ -1,10 +1,10 @@
 import type { I18nChangedPayload, I18nState, LanguageSource } from "@common/i18n";
+import type { MainSettingsType } from "@common/mainSettings";
 import type {
     LibraryScanStartRequest,
     LibraryScanStartResult,
     LibraryScanStatus,
 } from "@common/types/libraryScan";
-import type { MainSettingsType } from "@common/mainSettings";
 import type {
     AddBookBookmarkData,
     AddBookNoteData,

@@ -467,7 +467,10 @@ const handlers: {
         const uniqueIds = [...new Set(tagIds)];
         if (uniqueLinks.length === 0 || uniqueIds.length === 0) {
             if (uniqueLinks.length === 0) return [];
-            return await db.db.select().from(libraryItemTags).where(inArray(libraryItemTags.itemLink, uniqueLinks));
+            return await db.db
+                .select()
+                .from(libraryItemTags)
+                .where(inArray(libraryItemTags.itemLink, uniqueLinks));
         }
         const existingTags = await db.db
             .select({ id: libraryTags.id })
@@ -491,7 +494,10 @@ const handlers: {
             }
             throw error;
         }
-        const rows = await db.db.select().from(libraryItemTags).where(inArray(libraryItemTags.itemLink, uniqueLinks));
+        const rows = await db.db
+            .select()
+            .from(libraryItemTags)
+            .where(inArray(libraryItemTags.itemLink, uniqueLinks));
         pingDatabaseChange("db:tag:change");
         return rows;
     },

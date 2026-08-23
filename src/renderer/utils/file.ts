@@ -1,4 +1,4 @@
-import { setLibraryIo, type LibraryIo } from "@common/library/io";
+import { type LibraryIo, setLibraryIo } from "@common/library/io";
 import { createRendererLogger } from "./logger";
 
 export { formatUtils, toDialogExtensions } from "@common/library/formats";
@@ -54,10 +54,7 @@ export const makeFileSafe = (string: string): string => {
  * Formats a byte count for UI labels.
  * Pass translated unit strings from the caller.
  */
-export const formatByteSize = (
-    bytes: number,
-    units: { bytes: string; kb: string; mb: string },
-): string => {
+export const formatByteSize = (bytes: number, units: { bytes: string; kb: string; mb: string }): string => {
     if (bytes < 1024) return `${bytes} ${units.bytes}`;
     if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} ${units.kb}`;
     return `${(bytes / (1024 * 1024)).toFixed(1)} ${units.mb}`;

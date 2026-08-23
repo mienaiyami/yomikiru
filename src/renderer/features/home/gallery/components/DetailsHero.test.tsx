@@ -161,7 +161,9 @@ describe("DetailsHero", () => {
         fireEvent.click(screen.getByRole("button", { name: home.gallery.details.coverSourceLibrary }));
         expect(onCoverSourceChange).toHaveBeenCalledWith("tracker");
         expect(
-            screen.getByRole("button", { name: home.gallery.details.coverSourceLibrary }).closest(".details-hero-actions"),
+            screen
+                .getByRole("button", { name: home.gallery.details.coverSourceLibrary })
+                .closest(".details-hero-actions"),
         ).not.toBeNull();
     });
 
@@ -185,13 +187,7 @@ describe("DetailsHero", () => {
 
     it("hides cover source controls when no tracker image is available", () => {
         renderWithI18n(
-            <DetailsHero
-                title="Title"
-                coverSrc=""
-                coverAlt=""
-                onBack={vi.fn()}
-                onCoverContextMenu={vi.fn()}
-            />,
+            <DetailsHero title="Title" coverSrc="" coverAlt="" onBack={vi.fn()} onCoverContextMenu={vi.fn()} />,
         );
         expect(screen.queryByRole("button", { name: home.gallery.details.coverSourceLibrary })).toBeNull();
         expect(screen.queryByRole("button", { name: home.gallery.details.coverSourceAnilist })).toBeNull();

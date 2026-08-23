@@ -1,7 +1,11 @@
 import fs from "node:fs";
 import path from "node:path";
 import { libraryFoldersNeedHeal } from "@common/library/folders";
-import { mainSettingsSchema, parseMainSettings as parseMainSettingsJson, type MainSettingsType } from "@common/mainSettings";
+import {
+    type MainSettingsType,
+    mainSettingsSchema,
+    parseMainSettings as parseMainSettingsJson,
+} from "@common/mainSettings";
 import { ipc } from "@electron/ipc/utils";
 import { app } from "electron";
 import { createMainLogger } from "./logger";

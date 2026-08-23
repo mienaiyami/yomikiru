@@ -1,8 +1,8 @@
 import {
+    type EpubPackage,
     parseExtractedEpubDir,
     resolveEpubChapterReference,
     stripEpubInlineEventHandlers,
-    type EpubPackage,
 } from "@common/epub";
 import i18n from "@renderer/i18n";
 import { dialogUtils } from "./dialog";
@@ -28,9 +28,7 @@ const showEpubExtractError = async (error: unknown): Promise<void> => {
     const detail = errorDetail(error);
     await dialogUtils.customError({
         message: i18n.t("errors.extractError", { ns: "reader" }),
-        detail: detail.includes("spawn unzip ENOENT")
-            ? i18n.t("errors.unzipNotFound", { ns: "reader" })
-            : detail,
+        detail: detail.includes("spawn unzip ENOENT") ? i18n.t("errors.unzipNotFound", { ns: "reader" }) : detail,
     });
 };
 
@@ -116,7 +114,9 @@ export const parseEpubChapter = (source: string, chapterPath: string): string =>
     const parseError = doc.querySelector("parsererror");
     if (parseError) throw new Error(`EPUB chapter XML parse failed: ${parseError.textContent ?? "unknown error"}`);
 
-    doc.querySelectorAll("script").forEach((element) => element.remove());
+    doc.querySelectorAll("script").forEach((element) => {
+        element.remove();
+    });
     doc.querySelectorAll("[src]").forEach((element) => {
         const original = element.getAttribute("src");
         if (original === null) return;
@@ -148,9 +148,7 @@ export const parseEpubChapter = (source: string, chapterPath: string): string =>
     });
 
     const markup =
-        doc.documentElement.nodeName.toLowerCase() === "svg"
-            ? doc.documentElement.outerHTML
-            : doc.body.innerHTML;
+        doc.documentElement.nodeName.toLowerCase() === "svg" ? doc.documentElement.outerHTML : doc.body.innerHTML;
     /*
      * The serialized pass is retained because scanning attribute names through the
      * whole DOM is measurably expensive on very large chapters.

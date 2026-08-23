@@ -437,9 +437,7 @@ export const DetailsHero = ({
     const trackerPageHref = trackerExternal
         ? trackerMediaPageUrl(trackerExternal.provider, trackerExternal.remoteId)
         : null;
-    const trackerExternalLabel = trackerExternal
-        ? t(trackerExternalOpenLabelKey(trackerExternal.provider))
-        : null;
+    const trackerExternalLabel = trackerExternal ? t(trackerExternalOpenLabelKey(trackerExternal.provider)) : null;
     const trackerLinkEl =
         trackerPageHref && trackerExternalLabel ? (
             <div className="details-tracker-external">
