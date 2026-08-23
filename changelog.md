@@ -15,7 +15,7 @@
 
 # 2.25.0-beta
 
-### 2.25.0-beta.1
+### 2.25.0-beta.2
 
 Gallery mode has been on my mind for a long time. I started working on it almost over a year ago, but until the last couple of months I only really got about ~10% of the way there; life and other priorities kept getting in the way. The last two months I finally pushed hard to get it into a shape you can actually try.
 

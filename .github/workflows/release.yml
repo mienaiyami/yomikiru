@@ -129,7 +129,8 @@ jobs:
       - name: Use Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: 18.15.0
+          # serialize-javascript@7 (pnpm override) needs Node 20+ global crypto; docs/build.md recommends v21
+          node-version: 21
           cache: pnpm
 
       - name: Install dependencies
@@ -180,7 +181,8 @@ jobs:
       - name: Use Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: 18.15.0
+          # serialize-javascript@7 (pnpm override) needs Node 20+ global crypto; docs/build.md recommends v21
+          node-version: 21
           cache: pnpm
 
       - name: Install dependencies
