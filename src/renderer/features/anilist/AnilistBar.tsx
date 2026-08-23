@@ -19,8 +19,11 @@ export type AnilistBarProps = {
     localLibraryLink?: string;
     libraryTitle?: string;
     /**
-     * Layout of the tracking control. Gallery details uses `"compact"` so this bar
-     * does not include progress steppers; search/edit still use the existing overlays.
+     * Layout of the tracking control. Gallery details uses `"compact"` (no progress
+     * steppers; search/edit still use the existing overlays). Compact always mounts
+     * in details: untracked titles show a CTA (disabled without a token) with a
+     * richer-metadata tip; tracked titles use the status control. Reader `"bar"`
+     * stays gated by callers.
      */
     variant?: "bar" | "compact";
 };
@@ -30,6 +33,7 @@ const AnilistBar = memo((props: AnilistBarProps) => {
     const { localLibraryLink, libraryTitle, variant = "bar" } = props;
     const readerLink = useAppSelector((store) => store.reader.content?.link);
     const trackLink = localLibraryLink ?? readerLink ?? undefined;
+    const anilistToken = useAppSelector((store) => store.anilist.token);
     const anilistTracker = useAppSelector((store) => selectAnilistTracker(store, trackLink));
     const anilistCurrentListEntry = useAppSelector((store) => store.anilist.currentListEntry);
     const isAniEditOpen = useAppSelector((store) => store.ui.isOpen.anilist.edit);
@@ -142,10 +146,14 @@ const AnilistBar = memo((props: AnilistBarProps) => {
     );
 
     if (variant === "compact") {
-        return (
-            <div className="anilistBar anilistBar--compact">
-                {hasTracker ? (
-                    listEntry ? (
+        if (hasTracker) {
+            if (!anilistToken) {
+                // tracked row can outlive the token; no richer-metadata tip when already linked
+                return <div className="anilistBar anilistBar--compact">{compactPending}</div>;
+            }
+            return (
+                <div className="anilistBar anilistBar--compact">
+                    {listEntry ? (
                         <button type="button" onClick={() => openAnilistFlow("edit")}>
                             {t("bar.compactTracked", {
                                 brand: t("bar.brand"),
@@ -156,12 +164,25 @@ const AnilistBar = memo((props: AnilistBarProps) => {
                         retryControl
                     ) : (
                         compactPending
-                    )
-                ) : (
-                    <button type="button" onClick={() => openAnilistFlow("search")}>
+                    )}
+                </div>
+            );
+        }
+
+        // untracked: always show CTA; tip only here; disable until AniList login
+        const metadataHint = anilistToken ? t("bar.trackForMetadataHint") : t("bar.loginToTrackHint");
+        return (
+            <div className="anilistBar anilistBar--compact">
+                <span className="anilistBar-trackHint" data-tooltip={metadataHint}>
+                    <button
+                        type="button"
+                        disabled={!anilistToken}
+                        aria-label={t("bar.track")}
+                        onClick={anilistToken ? () => openAnilistFlow("search") : undefined}
+                    >
                         {t("bar.track")}
                     </button>
-                )}
+                </span>
             </div>
         );
     }

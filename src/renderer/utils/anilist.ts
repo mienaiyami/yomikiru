@@ -155,7 +155,7 @@ const resolveAnilistBearer = (): string => {
 
 /**
  * Loads the stored token into module state. Does not validate it.
- * Every window must call this so GraphQL has a bearer; token check is once per app.
+ * Every window must call this so GraphQL has a bearer; network token check is once per process.
  */
 export const hydrateAnilistClientFromStorage = (): void => {
     ensureAnilistNs();
@@ -164,8 +164,8 @@ export const hydrateAnilistClientFromStorage = (): void => {
 };
 
 /**
- * Loads the stored token and validates it with AniList. Call once per app
- * (first window to claim `anilist:claimStartupImport`).
+ * Loads the stored token and validates it with AniList.
+ * Call once per Electron process (from the anilist store legacy-startup claim).
  */
 export const initAnilist = (): void => {
     hydrateAnilistClientFromStorage();

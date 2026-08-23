@@ -256,14 +256,24 @@ describe("MangaDetailsPanel", () => {
         await waitForEmptyChapterList();
     });
 
-    it("hides compact AniList without a token and shows Track with one", async () => {
+    it("shows disabled Track without a token and an enabled Track with one", async () => {
         stubMangaOnDisk();
         const { unmount } = renderMangaPanel();
-        expect(screen.queryByRole("button", { name: anilistEn.bar.track })).not.toBeInTheDocument();
+        const loggedOut = screen.getByRole("button", { name: anilistEn.bar.track });
+        expect(loggedOut).toBeDisabled();
+        expect(loggedOut.closest("[data-tooltip]")).toHaveAttribute(
+            "data-tooltip",
+            anilistEn.bar.loginToTrackHint,
+        );
         await waitForEmptyChapterList();
         unmount();
         renderMangaPanel(makeMangaItem(), { anilistToken: "token" });
-        expect(screen.getByRole("button", { name: anilistEn.bar.track })).toBeInTheDocument();
+        const loggedIn = screen.getByRole("button", { name: anilistEn.bar.track });
+        expect(loggedIn).toBeEnabled();
+        expect(loggedIn.closest("[data-tooltip]")).toHaveAttribute(
+            "data-tooltip",
+            anilistEn.bar.trackForMetadataHint,
+        );
         await waitForEmptyChapterList();
     });
 

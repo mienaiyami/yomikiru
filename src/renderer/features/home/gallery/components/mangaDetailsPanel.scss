@@ -382,6 +382,19 @@
             display: inline-flex;
             align-items: stretch;
 
+            /* wrapper so disabled Track can still show data-tooltip on hover */
+            .anilistBar-trackHint {
+                display: inline-flex;
+                align-items: stretch;
+
+                /* below the control, same placement as .details-icon-btn */
+                &::before {
+                    top: 100%;
+                    left: 50%;
+                    --translate: -50%, 10px;
+                }
+            }
+
             button {
                 font-size: 1.2rem;
                 padding: 0 1.25rem;
@@ -410,7 +423,8 @@
 
         .details-synopsis,
         .details-genres,
-        .details-tracker-facts {
+        .details-tracker-facts,
+        .details-tracker-external {
             align-self: stretch;
             width: 100%;
         }
@@ -541,7 +555,17 @@
         line-height: 1.4;
     }
 
+    .details-tracker-external {
+        a {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.4rem;
+            font-size: 1.2rem;
+        }
+    }
+
     .details-tracker-facts + .details-genres,
+    .details-tracker-facts + .details-tracker-external,
     .details-tracker-facts + .details-synopsis {
         padding-top: 0.7rem;
         border-top: 1px solid var(--divider-color);

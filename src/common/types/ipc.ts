@@ -77,7 +77,7 @@ export type LibraryScanChannels = {
     "libraryScan:getStatus": ChannelDefinition<void, LibraryScanStatus | null>;
     "libraryScan:rendererReady": ChannelDefinition<void, void>;
     "libraryScan:status": ChannelDefinition<LibraryScanStatus | null, void, "m2r">;
-    "anilist:claimStartupImport": ChannelDefinition<void, boolean>;
+    "anilist:claimLegacyTrackingImport": ChannelDefinition<void, boolean>;
 };
 
 export type DatabaseChannels = {

@@ -74,6 +74,40 @@ describe("DetailsHero", () => {
         expect(screen.getByTitle("Edited (Folder Name)")).toBeInTheDocument();
     });
 
+    it("places an AniList external link above About without confirm", () => {
+        const openExternal = vi.mocked(window.electron.openExternal);
+        const { container } = renderWithI18n(
+            <DetailsHero
+                title="Title"
+                coverSrc=""
+                coverAlt=""
+                onBack={vi.fn()}
+                onCoverContextMenu={vi.fn()}
+                description="About text"
+                trackerExternal={{ provider: "anilist", remoteId: "99" }}
+            />,
+        );
+        const link = screen.getByText(home.gallery.details.openOnAnilist);
+        const main = container.querySelector(".details-facts-main")?.innerHTML ?? "";
+        expect(main.indexOf("details-tracker-external")).toBeLessThan(main.indexOf("details-synopsis"));
+        fireEvent.click(link);
+        expect(openExternal).toHaveBeenCalledWith("https://anilist.co/manga/99");
+    });
+
+    it("hides the tracker external link when remote id is missing from the url helper", () => {
+        renderWithI18n(
+            <DetailsHero
+                title="Title"
+                coverSrc=""
+                coverAlt=""
+                onBack={vi.fn()}
+                onCoverContextMenu={vi.fn()}
+                trackerExternal={{ provider: "anilist", remoteId: "  " }}
+            />,
+        );
+        expect(screen.queryByText(home.gallery.details.openOnAnilist)).toBeNull();
+    });
+
     it("places tracker catalog facts above genres", () => {
         const { container } = renderWithI18n(
             <DetailsHero

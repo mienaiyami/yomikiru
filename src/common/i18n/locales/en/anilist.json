@@ -13,6 +13,8 @@
         "brand": "AniList",
         "separator": " : ",
         "track": "Track",
+        "loginToTrackHint": "Log in and track with AniList to show richer metadata",
+        "trackForMetadataHint": "Track with AniList to show richer metadata",
         "compactTracked": "{{brand}} · {{progress}}",
         "networkError": "Network Error",
         "retry": "Retry",

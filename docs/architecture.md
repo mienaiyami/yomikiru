@@ -121,7 +121,7 @@ src/
 │   │   ├── dialog.ts       dialog:error / warn / confirm / showOpenDialog …
 │   │   ├── explorer.ts     Windows "Open with" context-menu integration
 │   │   ├── fs.ts           fs:unzip / fs:showInExplorer / fs:saveFile / fs:fileChanged
-│   │   ├── libraryScan.ts  libraryScan:start / cancel / getStatus / status; anilist:claimStartupImport
+│   │   ├── libraryScan.ts  libraryScan:start / cancel / getStatus / status; anilist:claimLegacyTrackingImport
 │   │   ├── reader.ts       reader:loadLink / reader:recordPage (m2r pushes)
 │   │   ├── update.ts       update:check:manual
 │   │   └── errorReporting.ts  error:report handler

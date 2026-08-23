@@ -39,7 +39,7 @@ import {
     pickAndApplyCustomCover,
     resetLibraryCoverToDefault,
 } from "@utils/libraryCoverService";
-import { resolveItemMetadata } from "@utils/libraryMetadata";
+import { resolveItemMetadata, toTrackerExternalRef } from "@utils/libraryMetadata";
 import {
     mangaPageForMissingKind,
     resolveMissingOpenPath,
@@ -96,7 +96,6 @@ const MangaDetailsPanel = ({
     const { t: tCommon } = useTranslation("common");
     const dispatch = useAppDispatch();
     const library = useAppSelector((store) => store.library.items);
-    const anilistToken = useAppSelector((store) => store.anilist.token);
 
     const [chapters, setChapters] = useState<MangaChapterChild[]>([]);
     const [activeTab, setActiveTab] = useState<"content" | "bookmarks">(initialTab);
@@ -676,6 +675,7 @@ const MangaDetailsPanel = ({
                     onCoverContextMenu={handleLibraryRootContextMenu}
                     description={resolved?.description}
                     genres={resolved?.genres}
+                    trackerExternal={toTrackerExternalRef(tracker)}
                     trackerMedia={
                         resolved
                             ? {
@@ -759,13 +759,11 @@ const MangaDetailsPanel = ({
                                     <FontAwesomeIcon icon={faFolderOpen} />
                                 </button>
                                 <DetailsCopyPathButton path={mangaLink} />
-                                {anilistToken ? (
-                                    <AnilistBar
-                                        variant="compact"
-                                        localLibraryLink={mangaLink}
-                                        libraryTitle={resolved?.title ?? manga.title}
-                                    />
-                                ) : null}
+                                <AnilistBar
+                                    variant="compact"
+                                    localLibraryLink={mangaLink}
+                                    libraryTitle={resolved?.title ?? manga.title}
+                                />
                             </>
                         )
                     }

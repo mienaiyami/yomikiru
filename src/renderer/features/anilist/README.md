@@ -37,7 +37,7 @@ Steps:
 3. Paste the token into the input.
 4. Click "Login" — the token is validated against the AniList API.
 
-The token is stored in `localStorage` via `setAnilistStorageToken` (key `anilist_token`). It stays in localStorage on purpose: library DB backups must not include the OAuth secret. On startup, every window calls `hydrateAnilistClientFromStorage()`. The first window to claim `anilist:claimStartupImport` also runs `initAnilist()` (token check) and the legacy tracking import; other windows skip those so you do not get N login-failed dialogs.
+The token is stored in `localStorage` via `setAnilistStorageToken` (key `anilist_token`). It stays in localStorage on purpose: library DB backups must not include the OAuth secret. On startup, every window calls `hydrateAnilistClientFromStorage()` (bearer for GraphQL) and `fetchAllTrackers()` (Redux hydrate from SQLite). Separately, the first window to claim `anilist:claimLegacyTrackingImport` runs `runAnilistLegacyStartupIfClaimed`: validate the stored token once (`initAnilist`) and copy legacy `anilist_tracking` into `item_trackers`. Other windows skip that claim so you do not get N login-failed dialogs or duplicate imports.
 
 ---
 
@@ -45,7 +45,7 @@ The token is stored in `localStorage` via `setAnilistStorageToken` (key `anilist
 
 Live tracking lives in SQLite `item_trackers`, not localStorage. Each row is keyed by `(itemLink, provider)` with `provider = "anilist"` today. `itemLink` is `library_items.link` (`ON DELETE CASCADE`). `remoteId` is the AniList media id (stored as TEXT). `remoteListId` is the MediaList entry id when known. `remoteUrl` is the canonical AniList page. `media` and `listState` are rebuildable cache (`TrackerMediaSnapshot` / `TrackerListState`) stamped with `syncedAt`.
 
-Redux `trackers.entries` is `ItemTracker[]` loaded by `fetchAllTrackers` (`db:trackers:getAll`). Add / remove / cache go through `db:trackers:upsert`, `db:trackers:remove`, and `db:trackers:updateSnapshot`. A `db:tracker:change` ping refetches the list.
+Redux `trackers.entries` is `ItemTracker[]` loaded by `fetchAllTrackers` (`db:trackers:getAll`) on every window boot (same as bookmarks / notes / metadata). Add / remove / cache go through `db:trackers:upsert`, `db:trackers:remove`, and `db:trackers:updateSnapshot`. A `db:tracker:change` ping refetches the list. The legacy-import claim never replaces this hydrate.
 
 Relocate rewrites `item_trackers.itemLink` in the same DB transaction as other child FKs. Removing a library item cascades the tracker row.
 
@@ -62,7 +62,7 @@ Older builds stored `{ localURL, anilistMediaId }[]` under `anilist_tracking`. O
 3. Upsert `{ itemLink, provider: "anilist", remoteId }` when a `library_items` row exists for that path; log and skip orphans.
 4. Set the marker. **Never delete** `anilist_tracking`.
 
-`importAnilistTrackingFromStorage` runs after `fetchAllItemsWithProgress` so the library map is populated.
+App boot: after `fetchAllItemsWithProgress`, dispatch `runAnilistLegacyStartupIfClaimed` (needs the library map). That thunk claims `anilist:claimLegacyTrackingImport`, runs `initAnilist`, then `importAnilistTrackingFromStorage`. If the import wrote rows, it refreshes `fetchAllTrackers` (in case `db:tracker:change` raced listener registration).
 
 ---
 
@@ -78,13 +78,15 @@ The `AnilistBar` component appears in:
 
 **Bar** (reader): progress counter with `+` / `-`, an edit control, and Track when unlinked. Progress uses a debounced 1-second save via `setAnilistListProgress`.
 
-**Compact** (gallery details): Track, or a status/count control that opens the existing search/edit overlays. No `+` / `-` on this page. While the list entry is loading, the control stays a same-height disabled button (brand, or cached progress when the tracker snapshot has it). A failed fetch is a **Network Error** button; tooltip is Retry.
+**Compact** (gallery details): Always mounted. Untracked titles show **Track** with a richer-metadata tooltip (login+track when logged out; track-only when logged in); without a token the button stays disabled. Tracked titles use the status/count control (or a same-height disabled brand/progress control if the token is missing). No `+` / `-` on this page. While the list entry is loading, the control stays a same-height disabled button (brand, or cached progress when the tracker snapshot has it). A failed fetch is a **Network Error** button; tooltip is Retry.
 
 When `localLibraryLink` prop is provided (gallery details), tracking resolves from that path instead of the open reader item.
 
 The session `currentListEntry` is shared. The bar only shows it when `mediaId` matches this item's `remoteId`, so opening details does not flash Network Error (or another title's progress) before the fetch returns.
 
 After a list-entry fetch, `cacheAnilistListEntry` writes description, genres, staff author, chapter count, score, and related fields into the tracker cache for details About / author / genres. The list-entry request is keyed on the remote media id (and edit-overlay open state), not the whole tracker row, so cache writes do not refetch.
+
+Gallery details also show an **Open on AniList** control above About when the item is tracked. The href comes from `trackerMediaPageUrl(provider, remoteId)` (not the cached `remoteUrl`) and opens with `Link` `confirmOpen={false}`.
 
 ---
 
@@ -157,7 +159,7 @@ Generic tracker rows: [`src/renderer/store/trackers.ts`](../../store/trackers.ts
 | `currentListEntry` | `anilist` | `ListEntry \| null` | AniList list entry for the currently open / gallery item |
 | `galleryTrackContext` | `anilist` | `{link, title} \| null` | Set when search is opened from the gallery |
 
-Thunks: `fetchAllTrackers`, `upsertTracker`, `removeTracker`, `updateTrackerSnapshot` on the trackers slice. AniList wrappers: `importAnilistTrackingFromStorage`, `addAnilistTracker`, `removeAnilistTracker`, `cacheAnilistListEntry`.
+Thunks: `fetchAllTrackers`, `upsertTracker`, `removeTracker`, `updateTrackerSnapshot` on the trackers slice. AniList: `runAnilistLegacyStartupIfClaimed`, `importAnilistTrackingFromStorage`, `addAnilistTracker`, `removeAnilistTracker`, `cacheAnilistListEntry`.
 
 `ui.isOpen.anilist.edit` / `.login` / `.search` — transient open/close flags in the `ui` slice.
 
@@ -167,7 +169,7 @@ Thunks: `fetchAllTrackers`, `upsertTracker`, `removeTracker`, `updateTrackerSnap
 
 [`src/renderer/utils/anilist.ts`](../../utils/anilist.ts)
 
-Named exports (no static class). Every window calls `hydrateAnilistClientFromStorage()` so GraphQL has a bearer; the first window to claim `anilist:claimStartupImport` also runs `initAnilist()` (token check) and the legacy tracking import. GraphQL falls back to the persisted `anilist_token` so Settings can request before that claim.
+Named exports (no static class). Every window calls `hydrateAnilistClientFromStorage()` so GraphQL has a bearer. Process-once token check and legacy tracking import go through `runAnilistLegacyStartupIfClaimed` (anilist store) after library hydrate. GraphQL falls back to the persisted `anilist_token` so Settings can request before that claim.
 
 | Export | Description |
 | --- | --- |

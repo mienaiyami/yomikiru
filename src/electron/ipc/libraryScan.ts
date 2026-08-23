@@ -12,11 +12,11 @@ import {
 } from "@electron/util/libraryScan";
 import { ipc } from "./utils";
 
-let anilistStartupImportClaimed = false;
+let anilistLegacyTrackingImportClaimed = false;
 
 /**
- * Registers process-wide library scan (walk + watch + interval) and the AniList
- * once-per-app token check + legacy tracking import claim. Call once after the database is open.
+ * Registers process-wide library scan (walk + watch + interval) and the once-per-process
+ * AniList legacy-tracking-import claim. Call once after the database is open.
  */
 export const registerLibraryScanHandlers = (db: DatabaseService): void => {
     setLibraryScanDatabase(db);
@@ -29,9 +29,14 @@ export const registerLibraryScanHandlers = (db: DatabaseService): void => {
     ipc.handle("libraryScan:rendererReady", () => {
         notifyLibraryScanRendererReady();
     });
-    ipc.handle("anilist:claimStartupImport", () => {
-        if (anilistStartupImportClaimed) return false;
-        anilistStartupImportClaimed = true;
+    /*
+     * First window only: migrate pre-SQLite AniList tracking from localStorage and
+     * validate the stored token once (avoids N login-failed dialogs). Does not load
+     * Redux trackers - every renderer calls fetchAllTrackers on boot.
+     */
+    ipc.handle("anilist:claimLegacyTrackingImport", () => {
+        if (anilistLegacyTrackingImportClaimed) return false;
+        anilistLegacyTrackingImportClaimed = true;
         return true;
     });
     startLibraryScanScheduler();

@@ -5,7 +5,11 @@ import { makeMangaItem } from "@test/fixtures/libraryItem";
 import { onInvoke } from "@test/mocks/preload";
 import { STORAGE_KEYS } from "@utils/localStorage";
 import { afterEach, describe, expect, it, vi } from "vitest";
-import anilistReducer, { importAnilistTrackingFromStorage, relocateGalleryTrackContext } from "./anilist";
+import anilistReducer, {
+    importAnilistTrackingFromStorage,
+    relocateGalleryTrackContext,
+    runAnilistLegacyStartupIfClaimed,
+} from "./anilist";
 import libraryReducer, { relocateLibraryItem } from "./library";
 import trackersReducer from "./trackers";
 
@@ -70,7 +74,11 @@ describe("importAnilistTrackingFromStorage", () => {
         onInvoke("db:trackers:upsert", upsert);
 
         const store = makeStore();
-        await store.dispatch(importAnilistTrackingFromStorage());
+        const first = await store.dispatch(importAnilistTrackingFromStorage());
+        expect(importAnilistTrackingFromStorage.fulfilled.match(first)).toBe(true);
+        if (importAnilistTrackingFromStorage.fulfilled.match(first)) {
+            expect(first.payload.importedCount).toBe(1);
+        }
 
         expect(upsert).toHaveBeenCalledTimes(1);
         expect(upsert).toHaveBeenCalledWith(
@@ -80,9 +88,53 @@ describe("importAnilistTrackingFromStorage", () => {
         expect(localStorage.getItem(STORAGE_KEYS.ANILIST_TRACKING_IMPORTED)).toBe("1");
 
         upsert.mockClear();
-        await store.dispatch(importAnilistTrackingFromStorage());
+        const second = await store.dispatch(importAnilistTrackingFromStorage());
+        expect(importAnilistTrackingFromStorage.fulfilled.match(second)).toBe(true);
+        if (importAnilistTrackingFromStorage.fulfilled.match(second)) {
+            expect(second.payload.importedCount).toBe(0);
+        }
         expect(upsert).not.toHaveBeenCalled();
         expect(localStorage.getItem(STORAGE_KEYS.ANILIST_TRACKING)).toBe(JSON.stringify(payload));
+    });
+});
+
+describe("runAnilistLegacyStartupIfClaimed", () => {
+    afterEach(() => {
+        localStorage.clear();
+        vi.restoreAllMocks();
+    });
+
+    it("no-ops when the process claim is already taken", async () => {
+        onInvoke("anilist:claimLegacyTrackingImport", () => false);
+        const upsert = vi.fn();
+        onInvoke("db:trackers:upsert", upsert);
+        const store = makeStore();
+        const result = await store.dispatch(runAnilistLegacyStartupIfClaimed());
+        expect(runAnilistLegacyStartupIfClaimed.fulfilled.match(result)).toBe(true);
+        if (runAnilistLegacyStartupIfClaimed.fulfilled.match(result)) {
+            expect(result.payload).toEqual({ claimed: false, importedCount: 0 });
+        }
+        expect(upsert).not.toHaveBeenCalled();
+    });
+
+    it("imports when claimed and refetches trackers after writing rows", async () => {
+        onInvoke("anilist:claimLegacyTrackingImport", () => true);
+        localStorage.setItem(
+            STORAGE_KEYS.ANILIST_TRACKING,
+            JSON.stringify([{ localURL: itemLink, anilistMediaId: 42 }]),
+        );
+        onInvoke("db:trackers:upsert", async (req) => trackerRow(req.itemLink, req.remoteId));
+        const getAll = vi.fn(async () => [trackerRow(itemLink, "42")]);
+        onInvoke("db:trackers:getAll", getAll);
+
+        const store = makeStore();
+        const result = await store.dispatch(runAnilistLegacyStartupIfClaimed());
+        expect(runAnilistLegacyStartupIfClaimed.fulfilled.match(result)).toBe(true);
+        if (runAnilistLegacyStartupIfClaimed.fulfilled.match(result)) {
+            expect(result.payload).toEqual({ claimed: true, importedCount: 1 });
+        }
+        expect(getAll).toHaveBeenCalled();
+        expect(store.getState().trackers.entries[0]?.remoteId).toBe("42");
     });
 });
 

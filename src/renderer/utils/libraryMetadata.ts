@@ -1,4 +1,4 @@
-import type { ItemTracker, LibraryItem, LibraryItemMetadata } from "@common/types/db";
+import type { ItemTracker, LibraryItem, LibraryItemMetadata, TrackerProvider } from "@common/types/db";
 
 /**
  * Display metadata after applying user > tracker > file > library-item base.
@@ -114,6 +114,63 @@ export const hasTrackerMediaFacts = (resolved: TrackerMediaFacts): boolean =>
             resolved.mediaScore != null ||
             resolved.totalChapters != null,
     );
+
+/**
+ * Canonical media page URL for a tracker binding from provider slug and remote id.
+ * Rebuilds the URL instead of trusting a cached {@link ItemTracker.remoteUrl} so a stale
+ * snapshot still opens the right page.
+ *
+ * @returns null when remote id is empty
+ */
+export const trackerMediaPageUrl = (
+    provider: TrackerProvider,
+    remoteId: string | null | undefined,
+): string | null => {
+    const id = remoteId?.trim();
+    if (!id) return null;
+    switch (provider) {
+        case "anilist":
+            return `https://anilist.co/manga/${encodeURIComponent(id)}`;
+        default: {
+            const _exhaustive: never = provider;
+            return _exhaustive;
+        }
+    }
+};
+
+/**
+ * Home-gallery `details` label key for the open-on-tracker link above About.
+ * Exhaustive on {@link TrackerProvider} so a new provider must add a key here.
+ */
+export const trackerExternalOpenLabelKey = (
+    provider: TrackerProvider,
+): "gallery.details.openOnAnilist" => {
+    switch (provider) {
+        case "anilist":
+            return "gallery.details.openOnAnilist";
+        default: {
+            const _exhaustive: never = provider;
+            return _exhaustive;
+        }
+    }
+};
+
+/** Provider + remote id for opening the tracker media page from details. */
+export type TrackerExternalRef = {
+    provider: TrackerProvider;
+    remoteId: string;
+};
+
+/**
+ * Builds a details external-link ref when the tracker row has a non-empty remote id.
+ */
+export const toTrackerExternalRef = (
+    tracker: Pick<ItemTracker, "provider" | "remoteId"> | null | undefined,
+): TrackerExternalRef | null => {
+    const remoteId = tracker?.remoteId?.trim();
+    if (!tracker || !remoteId) return null;
+    return { provider: tracker.provider, remoteId };
+};
 
 /**
  * Concatenates title layers and caller extras (type tokens, chapter extension) for list search.

@@ -3,7 +3,7 @@ import { confirmDeleteProgressForLinks } from "@features/home/classic/listSelect
 import { useDirectoryValidator } from "@features/reader/hooks/useDirectoryValidator";
 import { dispatchFocusPageSearchShortcut } from "@hooks/usePageSearchFocus";
 import {
-    importAnilistTrackingFromStorage,
+    runAnilistLegacyStartupIfClaimed,
     setAnilistCurrentListEntry,
     setGalleryTrackContext,
 } from "@store/anilist";
@@ -34,7 +34,7 @@ import {
     setLibraryScanStatus,
     toggleSettingsOpen,
 } from "@store/ui";
-import { hydrateAnilistClientFromStorage, initAnilist } from "@utils/anilist";
+import { hydrateAnilistClientFromStorage } from "@utils/anilist";
 import { dialogUtils } from "@utils/dialog";
 import { keyFormatter, mouseEventFormatter } from "@utils/keybindings";
 import { resolveMissingOpenPath } from "@utils/libraryMissingPath";
@@ -235,19 +235,14 @@ const App = (): ReactElement => {
         hydrateAnilistClientFromStorage();
         void dispatch(fetchAllItemsWithProgress()).then(() => {
             void window.electron.invoke("libraryScan:rendererReady");
-            // TODO: added temporarily to import old app's anilist data, remove later
-            void window.electron.invoke("anilist:claimStartupImport").then((claimed) => {
-                if (!claimed) return;
-                initAnilist();
-                void dispatch(importAnilistTrackingFromStorage()).then(() => {
-                    void dispatch(fetchAllTrackers());
-                });
-            });
+            // needs library map: legacy anilist_tracking paths match library_items.link
+            void dispatch(runAnilistLegacyStartupIfClaimed());
         });
         dispatch(fetchAllMetadata());
         dispatch(fetchAllTags());
         dispatch(fetchAllBookmarks());
         dispatch(fetchAllNotes());
+        void dispatch(fetchAllTrackers());
         void dispatch(getMainSettings()).then(() => {
             setMainSettingsReady(true);
         });

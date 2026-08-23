@@ -18,6 +18,8 @@
 
 # unreleased
 
+- feat: Gallery details always shows the AniList control. Untracked titles show **Track** (disabled until login) with a tip that tracking unlocks richer metadata; tracked titles keep the status control. Tracked titles also get an **Open on AniList** link above About (opens in the browser with no confirm).
+
 - feat: Gallery details **Reset Cover** clears a user-picked cover, restores a series-root `cover.*` sidecar when present, switches the details source back to the library image, deletes the cached WebP, and rebuilds from the folder or EPUB (including packed chapter series). Manga reader **Make Cover** now targets the correct library row for one-shots and persists the picked page after materialize.
 
 - feat: Gallery toolbar tag filter is a multi-select: pick one or more tags (OR), with select/unselect all in the dropdown. The closed control shows No filter, a single name, or a count — not every selected tag. The selection is persisted in app settings (`galleryTagFilterIds`).

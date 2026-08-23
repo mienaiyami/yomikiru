@@ -215,7 +215,7 @@ export const installPreloadMocks = (): void => {
     onInvoke("libraryScan:cancel", () => undefined);
     onInvoke("libraryScan:getStatus", () => null);
     onInvoke("libraryScan:rendererReady", () => undefined);
-    onInvoke("anilist:claimStartupImport", () => true);
+    onInvoke("anilist:claimLegacyTrackingImport", () => true);
     onInvoke("mainSettings:update", () => undefined);
     onInvoke("covers:materialize", () => ({ ok: true }));
     onInvoke("covers:acquirePdfRender", () => true);

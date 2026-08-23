@@ -67,6 +67,66 @@ describe("AnilistBar", () => {
         vi.clearAllMocks();
     });
 
+    it("keeps untracked compact Track disabled with a login hint when there is no token", () => {
+        renderWithProviders(<AnilistBar localLibraryLink={itemLink} variant="compact" />, {
+            preloadedState: {
+                anilist: { token: null, currentListEntry: null, galleryTrackContext: null },
+                trackers: { entries: [] },
+            },
+        });
+        const track = screen.getByRole("button", { name: anilistEn.bar.track });
+        expect(track).toBeDisabled();
+        expect(track.closest("[data-tooltip]")).toHaveAttribute(
+            "data-tooltip",
+            anilistEn.bar.loginToTrackHint,
+        );
+    });
+
+    it("shows a track-for-metadata tip on enabled Track when logged in and untracked", () => {
+        renderWithProviders(<AnilistBar localLibraryLink={itemLink} variant="compact" />, {
+            preloadedState: {
+                anilist: { token: "token", currentListEntry: null, galleryTrackContext: null },
+                trackers: { entries: [] },
+            },
+        });
+        const track = screen.getByRole("button", { name: anilistEn.bar.track });
+        expect(track).toBeEnabled();
+        expect(track.closest("[data-tooltip]")).toHaveAttribute(
+            "data-tooltip",
+            anilistEn.bar.trackForMetadataHint,
+        );
+    });
+
+    it("omits the richer-metadata tip when the item is already tracked without a token", () => {
+        renderWithProviders(<AnilistBar localLibraryLink={itemLink} variant="compact" />, {
+            preloadedState: {
+                anilist: { token: null, currentListEntry: null, galleryTrackContext: null },
+                trackers: {
+                    entries: [
+                        trackerRow({
+                            listState: {
+                                status: "CURRENT",
+                                progress: 3,
+                                progressVolumes: 0,
+                                score: null,
+                            },
+                        }),
+                    ],
+                },
+            },
+        });
+        expect(screen.queryByRole("button", { name: anilistEn.bar.track })).toBeNull();
+        expect(document.querySelector("[data-tooltip]")).toBeNull();
+        expect(
+            screen.getByRole("button", {
+                name: anilistEn.bar.compactTracked.replace("{{brand}}", anilistEn.bar.brand).replace(
+                    "{{progress}}",
+                    "3",
+                ),
+            }),
+        ).toBeDisabled();
+    });
+
     it("does not refetch when a list-entry cache write replaces the tracker row", async () => {
         vi.mocked(getAnilistListEntry).mockResolvedValue(listEntry);
         onInvoke("db:trackers:updateSnapshot", async (req) =>

@@ -156,13 +156,23 @@ describe("BookDetailsPanel", () => {
         expect(window.electron.showItemInFolder).toHaveBeenCalledWith(item.link);
     });
 
-    it("hides compact AniList without a token and shows Track with one", () => {
+    it("shows disabled Track without a token and an enabled Track with one", () => {
         stubBookOnDisk();
         const { unmount } = renderBookPanel();
-        expect(screen.queryByRole("button", { name: anilistEn.bar.track })).not.toBeInTheDocument();
+        const loggedOut = screen.getByRole("button", { name: anilistEn.bar.track });
+        expect(loggedOut).toBeDisabled();
+        expect(loggedOut.closest("[data-tooltip]")).toHaveAttribute(
+            "data-tooltip",
+            anilistEn.bar.loginToTrackHint,
+        );
         unmount();
         renderBookPanel(makeBookItem(), { anilistToken: "token" });
-        expect(screen.getByRole("button", { name: anilistEn.bar.track })).toBeInTheDocument();
+        const loggedIn = screen.getByRole("button", { name: anilistEn.bar.track });
+        expect(loggedIn).toBeEnabled();
+        expect(loggedIn.closest("[data-tooltip]")).toHaveAttribute(
+            "data-tooltip",
+            anilistEn.bar.trackForMetadataHint,
+        );
     });
 
     it("shows the missing-path banner while bookmark search stays mounted", () => {

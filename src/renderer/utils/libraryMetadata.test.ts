@@ -8,6 +8,9 @@ import {
     resolveAllItemMetadata,
     resolveItemMetadata,
     trackerByItemLink,
+    trackerExternalOpenLabelKey,
+    trackerMediaPageUrl,
+    toTrackerExternalRef,
 } from "./libraryMetadata";
 
 const overlay = (
@@ -173,6 +176,38 @@ describe("hasTrackerMediaFacts", () => {
                 totalChapters: null,
             }),
         ).toBe(true);
+    });
+});
+
+describe("trackerMediaPageUrl", () => {
+    it("builds the AniList manga page from the remote id", () => {
+        expect(trackerMediaPageUrl("anilist", "12345")).toBe("https://anilist.co/manga/12345");
+    });
+
+    it("returns null when the remote id is empty", () => {
+        expect(trackerMediaPageUrl("anilist", "")).toBeNull();
+        expect(trackerMediaPageUrl("anilist", "   ")).toBeNull();
+        expect(trackerMediaPageUrl("anilist", null)).toBeNull();
+    });
+});
+
+describe("trackerExternalOpenLabelKey", () => {
+    it("maps anilist to the Open on AniList details key", () => {
+        expect(trackerExternalOpenLabelKey("anilist")).toBe("gallery.details.openOnAnilist");
+    });
+});
+
+describe("toTrackerExternalRef", () => {
+    it("returns provider and trimmed remote id when present", () => {
+        expect(toTrackerExternalRef(tracker({ remoteId: " 99 " }))).toEqual({
+            provider: "anilist",
+            remoteId: "99",
+        });
+    });
+
+    it("returns null when remote id is missing", () => {
+        expect(toTrackerExternalRef(tracker({ remoteId: "  " }))).toBeNull();
+        expect(toTrackerExternalRef(null)).toBeNull();
     });
 });
 

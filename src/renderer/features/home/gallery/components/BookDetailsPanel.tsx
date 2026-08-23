@@ -23,7 +23,7 @@ import dateUtils from "@utils/date";
 import { dialogUtils } from "@utils/dialog";
 import { parseDetailsCoverSource, resolveDetailsCoverSrc } from "@utils/libraryCover";
 import { pickAndApplyCustomCover, resetLibraryCoverToDefault } from "@utils/libraryCoverService";
-import { resolveItemMetadata } from "@utils/libraryMetadata";
+import { resolveItemMetadata, toTrackerExternalRef } from "@utils/libraryMetadata";
 import { createRendererLogger } from "@utils/logger";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
@@ -68,7 +68,6 @@ const BookDetailsPanel = ({ bookLink, onClose, onRelocated, initialTab = "bookma
     const dispatch = useAppDispatch();
     const library = useAppSelector((store) => store.library.items);
     const confirmDeleteItem = useAppSelector((store) => store.appSettings.confirmDeleteItem);
-    const anilistToken = useAppSelector((store) => store.anilist.token);
 
     const [activeTab, setActiveTab] = useState<"bookmarks" | "notes">(initialTab);
     const [metadataEditorOpen, setMetadataEditorOpen] = useState(false);
@@ -530,6 +529,7 @@ const BookDetailsPanel = ({ bookLink, onClose, onRelocated, initialTab = "bookma
                     onCoverContextMenu={handleLibraryRootContextMenu}
                     description={resolved?.description}
                     genres={resolved?.genres}
+                    trackerExternal={toTrackerExternalRef(tracker)}
                     trackerMedia={
                         resolved
                             ? {
@@ -613,13 +613,11 @@ const BookDetailsPanel = ({ bookLink, onClose, onRelocated, initialTab = "bookma
                                     <FontAwesomeIcon icon={faFolderOpen} />
                                 </button>
                                 <DetailsCopyPathButton path={bookLink} />
-                                {anilistToken ? (
-                                    <AnilistBar
-                                        variant="compact"
-                                        localLibraryLink={bookLink}
-                                        libraryTitle={resolved?.title ?? book.title}
-                                    />
-                                ) : null}
+                                <AnilistBar
+                                    variant="compact"
+                                    localLibraryLink={bookLink}
+                                    libraryTitle={resolved?.title ?? book.title}
+                                />
                             </>
                         )
                     }

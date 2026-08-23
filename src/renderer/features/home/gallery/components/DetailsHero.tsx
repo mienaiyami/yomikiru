@@ -1,13 +1,19 @@
 import type { DetailsCoverSource } from "@common/types/db";
 import type { IconDefinition } from "@fortawesome/fontawesome-svg-core";
-import { faArrowLeft, faCopy } from "@fortawesome/free-solid-svg-icons";
+import { faArrowLeft, faArrowUpRightFromSquare, faCopy } from "@fortawesome/free-solid-svg-icons";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { ItemDisplayTitle } from "@renderer/components/ItemDisplayTitle";
 import { setAppSettings } from "@store/appSettings";
 import { useAppDispatch, useAppSelector } from "@store/hooks";
+import Link from "@ui/Link";
 import { anilistFormatLabel, anilistStatusLabel } from "@utils/anilist";
 import { DETAILS_ABOUT_HTML_TAGS, sanitizeHtmlAllowlist } from "@utils/html";
-import { hasTrackerMediaFacts } from "@utils/libraryMetadata";
+import {
+    hasTrackerMediaFacts,
+    type TrackerExternalRef,
+    trackerExternalOpenLabelKey,
+    trackerMediaPageUrl,
+} from "@utils/libraryMetadata";
 import type { KeyboardEvent, MouseEvent, ReactNode } from "react";
 import { useEffect, useLayoutEffect, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
@@ -324,6 +330,9 @@ export type DetailsTrackerMedia = {
     format?: string | null;
 };
 
+/** Binding used to open the remote media page above About. */
+export type DetailsTrackerExternal = TrackerExternalRef;
+
 type DetailsHeroProps = {
     title: string;
     /** Library row title when it differs from {@link DetailsHeroProps.title}. */
@@ -348,6 +357,11 @@ type DetailsHeroProps = {
      * Hidden when every field is empty. List-entry status/score stay on the AniList bar.
      */
     trackerMedia?: DetailsTrackerMedia | null;
+    /**
+     * When set, renders an external tracker page link above About.
+     * Href comes from {@link trackerMediaPageUrl}; opens without a confirm dialog.
+     */
+    trackerExternal?: DetailsTrackerExternal | null;
     actions?: ReactNode;
     facts?: ReactNode;
     note?: ReactNode;
@@ -363,6 +377,7 @@ type DetailsHeroProps = {
  * Shared gallery-details header: cover with overlay back, title/actions, then metadata.
  * Cover and title stay sticky in `.details-meta` while About and facts scroll.
  * About / genres render from resolved metadata (tracker facts then genres above About) and hide when empty.
+ * A tracked title can show an external tracker page link above About (no confirm).
  * Catalog tags render through {@link DetailsHeroProps.tags} above the item note.
  * Chapter / bookmark / note lists stay in each panel.
  */
@@ -379,6 +394,7 @@ export const DetailsHero = ({
     coverSource = "library",
     onCoverSourceChange,
     trackerMedia,
+    trackerExternal,
     actions,
     facts,
     note,
@@ -418,11 +434,27 @@ export const DetailsHero = ({
         showTrackerFacts && trackerFactParts.length > 0 ? (
             <div className="details-tracker-facts">{trackerFactParts.join(" · ")}</div>
         ) : null;
+    const trackerPageHref = trackerExternal
+        ? trackerMediaPageUrl(trackerExternal.provider, trackerExternal.remoteId)
+        : null;
+    const trackerExternalLabel = trackerExternal
+        ? t(trackerExternalOpenLabelKey(trackerExternal.provider))
+        : null;
+    const trackerLinkEl =
+        trackerPageHref && trackerExternalLabel ? (
+            <div className="details-tracker-external">
+                <Link href={trackerPageHref} confirmOpen={false}>
+                    {trackerExternalLabel}
+                    <FontAwesomeIcon icon={faArrowUpRightFromSquare} aria-hidden />
+                </Link>
+            </div>
+        ) : null;
     const aboutBlock =
-        descriptionHtml || genreList.length > 0 || trackerFactsEl ? (
+        descriptionHtml || genreList.length > 0 || trackerFactsEl || trackerLinkEl ? (
             <>
                 {trackerFactsEl}
                 {genreList.length > 0 ? <div className="details-genres">{genreList.join(" · ")}</div> : null}
+                {trackerLinkEl}
                 {descriptionHtml ? (
                     <div className="details-synopsis">
                         <div className="details-field-label">{t("gallery.details.about")}</div>
