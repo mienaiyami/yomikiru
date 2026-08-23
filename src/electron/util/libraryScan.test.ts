@@ -1,4 +1,5 @@
 import path from "node:path";
+import { Readable } from "node:stream";
 import { emptyDefaultLibraryFolder } from "@common/library/folders";
 import {
     LIBRARY_FOLDER_WATCH_DEBOUNCE_MS,
@@ -24,11 +25,13 @@ const { ipcSend, getAllWindows, watchMock, watcherOn, watcherClose, updateSettin
     };
 });
 
-const { addLibraryItem, materializeCoverFromSourcePath, withExtractedEpubPackage } = vi.hoisted(() => ({
-    addLibraryItem: vi.fn(),
-    materializeCoverFromSourcePath: vi.fn(async () => ({ ok: true as const })),
-    withExtractedEpubPackage: vi.fn(),
-}));
+const { addLibraryItem, materializeCoverFromSourcePath, materializeCoverFromStream, withEpubArchivePackage } =
+    vi.hoisted(() => ({
+        addLibraryItem: vi.fn(),
+        materializeCoverFromSourcePath: vi.fn(async () => ({ ok: true as const })),
+        materializeCoverFromStream: vi.fn(async () => ({ ok: true as const })),
+        withEpubArchivePackage: vi.fn(),
+    }));
 
 const foldersState = {
     folders: [emptyDefaultLibraryFolder()],
@@ -98,11 +101,12 @@ vi.mock("@electron/ipc/database", () => ({
 
 vi.mock("@electron/util/coverMaterialize", () => ({
     materializeCoverFromSourcePath,
+    materializeCoverFromStream,
 }));
 
 vi.mock("@electron/util/contentSource", () => ({
     withResolvedFirstImage: vi.fn(async () => undefined),
-    withExtractedEpubPackage,
+    withEpubArchivePackage,
 }));
 
 vi.mock("@common/library/classify", async () => {
@@ -116,11 +120,8 @@ vi.mock("@common/library/classify", async () => {
     };
 });
 
-import {
-    collectLibraryScanTargetFromEventPath,
-    collectLibraryScanTargets,
-} from "@common/library/classify";
-import { withExtractedEpubPackage as extractEpubPackage } from "@electron/util/contentSource";
+import { collectLibraryScanTargetFromEventPath, collectLibraryScanTargets } from "@common/library/classify";
+import { withEpubArchivePackage as readEpubArchivePackage } from "@electron/util/contentSource";
 import {
     cancelLibraryScan,
     getLibraryScanStatus,
@@ -170,8 +171,9 @@ describe("libraryScan engine", () => {
         updateSettings.mockClear();
         addLibraryItem.mockReset();
         materializeCoverFromSourcePath.mockClear();
-        withExtractedEpubPackage.mockReset();
-        withExtractedEpubPackage.mockResolvedValue(undefined);
+        materializeCoverFromStream.mockClear();
+        withEpubArchivePackage.mockReset();
+        withEpubArchivePackage.mockResolvedValue(undefined);
         vi.mocked(collectLibraryScanTargets).mockReset();
         vi.mocked(collectLibraryScanTargets).mockResolvedValue([]);
         vi.mocked(collectLibraryScanTargetFromEventPath).mockReset();
@@ -233,27 +235,18 @@ describe("libraryScan engine", () => {
 
     it("adds EPUB metadata and materializes its package cover", async () => {
         const epub = path.join(existingRoot, "novel.epub");
-        const cover = path.join(existingRoot, "extract", "cover.jpg");
+        const cover = Readable.from(["cover"]);
         vi.mocked(collectLibraryScanTargets).mockResolvedValue([{ type: "book", path: epub }]);
         addLibraryItem.mockResolvedValue({ id: 7, link: epub });
-        vi.mocked(extractEpubPackage).mockImplementation(async (_epubPath, usePackage) =>
-            usePackage(
-                {
-                    metadata: {
-                        title: "Package title",
-                        author: "Package author",
-                        cover,
-                        opfDir: path.dirname(cover),
-                        ncx_depth: 0,
-                    },
-                    manifest: new Map(),
-                    spine: [],
-                    toc: new Map(),
-                    ncx: [],
-                    styleSheets: [],
+        vi.mocked(readEpubArchivePackage).mockImplementation(async (_epubPath, consumePackage) =>
+            consumePackage({
+                metadata: {
+                    title: "Package title",
+                    author: "Package author",
+                    coverPath: "OPS/cover.jpg",
                 },
-                path.dirname(cover),
-            ),
+                openCover: async () => cover,
+            }),
         );
 
         const result = await startLibraryScan({ reason: "manual" });
@@ -269,7 +262,7 @@ describe("libraryScan engine", () => {
                 cover: null,
             },
         });
-        expect(materializeCoverFromSourcePath).toHaveBeenCalledWith(7, cover);
+        expect(materializeCoverFromStream).toHaveBeenCalledWith(7, cover);
     });
 
     it("broadcasts status to every living window while walking", async () => {
@@ -282,8 +275,16 @@ describe("libraryScan engine", () => {
             return [];
         });
         await startLibraryScan({ reason: "manual" });
-        expect(ipcSend).toHaveBeenCalledWith(a.webContents, "libraryScan:status", expect.objectContaining({ phase: "walking" }));
-        expect(ipcSend).toHaveBeenCalledWith(b.webContents, "libraryScan:status", expect.objectContaining({ phase: "walking" }));
+        expect(ipcSend).toHaveBeenCalledWith(
+            a.webContents,
+            "libraryScan:status",
+            expect.objectContaining({ phase: "walking" }),
+        );
+        expect(ipcSend).toHaveBeenCalledWith(
+            b.webContents,
+            "libraryScan:status",
+            expect.objectContaining({ phase: "walking" }),
+        );
         expect(ipcSend).toHaveBeenCalledWith(a.webContents, "libraryScan:status", null);
     });
 

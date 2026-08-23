@@ -1,20 +1,16 @@
-import { execFile } from "node:child_process";
 import fs from "node:fs";
 import fsp from "node:fs/promises";
-import os from "node:os";
 import path from "node:path";
-import { promisify } from "node:util";
-import { parseExtractedEpubDir, type EpubPackage } from "@common/epub";
-import { isPackedMangaFileName, isPdfFileName } from "@common/library/formats";
-import { firstImageInMangaFolder } from "@common/library/images";
+import type { Readable } from "node:stream";
+import { type EpubArchiveMetadata, parseEpubArchiveMetadata } from "@common/epub";
+import { isImageFileName, isPackedMangaFileName, isPdfFileName } from "@common/library/formats";
+import { compareImageNames, firstImageInMangaFolder } from "@common/library/images";
+import { type ArchiveEntry, archiveService } from "@electron/util/archive";
 import { mainLibraryIo } from "@electron/util/libraryFs";
 import { createMainLogger } from "@electron/util/logger";
-import * as crossZip from "cross-zip";
 
 const log = createMainLogger("contentSource");
 const io = mainLibraryIo;
-const unzip = promisify(crossZip.unzip);
-const runFile = promisify(execFile);
 
 /**
  * Flattens a packed-manga archive by replacing relative path separators with underscores.
@@ -56,78 +52,77 @@ const flattenExtractedManga = async (destination: string, source: string): Promi
  * @throws {Error} When the source is missing or the platform extractor fails
  */
 export const extractContentArchive = async (source: string, destination: string): Promise<void> => {
-    await fsp.access(source);
-    await fsp.rm(destination, { recursive: true, force: true });
     const ext = path.extname(source).toLowerCase();
-    if (ext === ".rar" || ext === ".cbr") {
-        await fsp.mkdir(destination, { recursive: true });
-        try {
-            await runFile("unrar", ["x", source, destination]);
-        } catch (err) {
-            if (err !== null && typeof err === "object" && "code" in err && err.code === "ENOENT") {
-                throw new Error("WinRAR not found. Make sure 'unrar' is available on PATH.");
-            }
-            throw err;
-        }
-        await flattenExtractedManga(destination, source);
-    } else {
-        await unzip(source, destination);
-        if (ext !== ".epub") await flattenExtractedManga(destination, source);
-    }
+    await archiveService.extractAll(source, destination);
+    if (ext !== ".epub") await flattenExtractedManga(destination, source);
     await fsp.writeFile(path.join(destination, "SOURCE"), source);
 };
 
-/**
- * Extracts an archive to an isolated temp directory for the lifetime of `useExtracted`.
- * Cleanup runs even when extraction or the callback fails.
- */
-const withExtractedArchive = async <T>(
-    archivePath: string,
-    tempPrefix: string,
-    useExtracted: (destination: string) => Promise<T>,
-): Promise<T | undefined> => {
-    const destination = await fsp.mkdtemp(path.join(os.tmpdir(), tempPrefix));
-    try {
-        await extractContentArchive(archivePath, destination);
-        return await useExtracted(destination);
-    } catch (err) {
-        log.warn("archive extract or read failed", { archivePath }, err);
-        return undefined;
-    } finally {
-        await fsp.rm(destination, { recursive: true, force: true }).catch((err) => {
-            log.warn("archive temp cleanup failed", { destination }, err);
-        });
-    }
-};
+/** Returns the first naturally ordered image entry from an archive listing. */
+const firstArchiveImage = (entries: readonly ArchiveEntry[]): ArchiveEntry | undefined =>
+    entries
+        .filter((entry) => !entry.isDirectory && isImageFileName(entry.path, path.extname))
+        .sort((a, b) => compareImageNames(a.path, b.path))[0];
 
 /**
- * Resolves the first image for a manga path and keeps extracted archive files alive while
- * `useSource` runs. PDFs return undefined because page rendering stays in the renderer.
+ * Resolves the first image for a manga path and passes a file path or archive stream to `consumeSource`.
+ * PDFs return undefined because page rendering stays in the renderer.
  */
 export const withResolvedFirstImage = async <T>(
     absPath: string,
-    useSource: (sourceAbsolutePath: string) => Promise<T>,
+    consumeSource: (source: string | Readable) => Promise<T>,
 ): Promise<T | undefined> => {
     if (!fs.existsSync(absPath) || isPdfFileName(absPath, path.extname)) return undefined;
     if (io.fs.isFile(absPath) && isPackedMangaFileName(absPath, path.extname)) {
-        return withExtractedArchive(absPath, "yomikiru-scan-cover-", async (destination) => {
-            const first = await firstImageInMangaFolder(io, destination);
-            return first ? useSource(first) : undefined;
-        });
+        try {
+            const first = firstArchiveImage(await archiveService.listEntries(absPath));
+            return first ? consumeSource(await archiveService.openEntry(absPath, first)) : undefined;
+        } catch (err) {
+            log.warn("archive cover read failed", { archivePath: absPath }, err);
+            return undefined;
+        }
     }
     if (!io.fs.isDir(absPath)) return undefined;
     const first = await firstImageInMangaFolder(io, absPath);
-    return first ? useSource(first) : undefined;
+    return first ? consumeSource(first) : undefined;
+};
+
+/** EPUB metadata and a lazily streamed package cover for scan and manual-cover operations. */
+export type EpubArchivePackage = {
+    metadata: EpubArchiveMetadata;
+    openCover: () => Promise<Readable | undefined>;
 };
 
 /**
- * Extracts an EPUB, parses its package, and keeps package paths alive while `usePackage` runs.
+ * Parses the EPUB container and OPF from archive entries without materializing the package on disk.
  */
-export const withExtractedEpubPackage = async <T>(
+export const withEpubArchivePackage = async <T>(
     epubPath: string,
-    usePackage: (pkg: EpubPackage, destination: string) => Promise<T>,
-): Promise<T | undefined> =>
-    withExtractedArchive(epubPath, "yomikiru-scan-epub-", async (destination) => {
-        const pkg = await parseExtractedEpubDir(destination, io);
-        return usePackage(pkg, destination);
-    });
+    consumePackage: (pkg: EpubArchivePackage) => Promise<T>,
+): Promise<T | undefined> => {
+    try {
+        const entries = await archiveService.listEntries(epubPath);
+        const byPath = new Map(entries.filter((entry) => !entry.isDirectory).map((entry) => [entry.path, entry]));
+        const metadata = await parseEpubArchiveMetadata({
+            readText: async (entryPath) => {
+                const entry = byPath.get(entryPath);
+                if (!entry) throw new Error(`EPUB package entry not found: ${entryPath}`);
+                const chunks: Buffer[] = [];
+                for await (const chunk of await archiveService.openEntry(epubPath, entry)) {
+                    chunks.push(Buffer.from(chunk));
+                }
+                return Buffer.concat(chunks).toString("utf-8");
+            },
+        });
+        return consumePackage({
+            metadata,
+            openCover: async () => {
+                const entry = metadata.coverPath ? byPath.get(metadata.coverPath) : undefined;
+                return entry ? archiveService.openEntry(epubPath, entry) : undefined;
+            },
+        });
+    } catch (err) {
+        log.warn("EPUB archive metadata or cover read failed", { epubPath }, err);
+        return undefined;
+    }
+};

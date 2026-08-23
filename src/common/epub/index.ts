@@ -7,7 +7,12 @@ export {
     resolveEpubChapterReference,
     stripEpubInlineEventHandlers,
 } from "./chapter";
-export { parseExtractedEpubDir } from "./parsePackage";
+export {
+    type EpubArchiveMetadata,
+    type EpubArchiveReader,
+    parseEpubArchiveMetadata,
+    parseExtractedEpubDir,
+} from "./parsePackage";
 export type {
     EpubManifest,
     EpubManifestItem,

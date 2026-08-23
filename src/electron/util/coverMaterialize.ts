@@ -1,14 +1,26 @@
 import fs from "node:fs";
+import { createRequire } from "node:module";
 import path from "node:path";
+import type { Readable } from "node:stream";
 import type { CoverOpResult } from "@common/types/ipc";
 import { app } from "electron";
-import sharp from "sharp";
 import { createMainLogger } from "./logger";
 
 const logger = createMainLogger("util/coverMaterialize");
 
 const MAX_EDGE = 400;
 const WEBP_QUALITY = 82;
+const SHARP_RUNTIME_RESOURCE_DIRECTORY = "sharp";
+
+/** Loads Sharp from its explicit external runtime in packages and the dependency tree in development. */
+const loadSharp = (): typeof import("sharp") => {
+    const runtimeRequire = app?.isPackaged
+        ? createRequire(path.join(process.resourcesPath, SHARP_RUNTIME_RESOURCE_DIRECTORY, "package.json"))
+        : createRequire(__filename);
+    return runtimeRequire("sharp") as typeof import("sharp");
+};
+
+const sharp = loadSharp();
 
 /*
  * libvips must not retain source file handles because extracted archive covers
@@ -57,6 +69,34 @@ export const materializeCoverFromSourcePath = async (
     } catch (e) {
         const msg = e instanceof Error ? e.message : String(e);
         logger.error(`materializeCover failed libraryId=${libraryId} src="${sourceAbsolutePath}"`, msg);
+        return { ok: false, message: msg };
+    }
+};
+
+/**
+ * Encodes an archive entry stream into the persistent cover cache without creating a temp image file.
+ * The source stream is consumed before this promise resolves.
+ */
+export const materializeCoverFromStream = async (libraryId: number, source: Readable): Promise<CoverOpResult> => {
+    try {
+        fs.mkdirSync(getCoversDirectoryAbsolute(), { recursive: true });
+        const outAbs = coverFilePathForLibraryId(libraryId);
+        await new Promise<void>((resolve, reject) => {
+            const transformer = sharp()
+                .rotate()
+                .resize(MAX_EDGE, MAX_EDGE, { fit: "inside", withoutEnlargement: true })
+                .webp({ quality: WEBP_QUALITY });
+            source.once("error", reject);
+            transformer.once("error", reject);
+            source
+                .pipe(transformer)
+                .toFile(outAbs)
+                .then(() => resolve(), reject);
+        });
+        return { ok: true };
+    } catch (e) {
+        const msg = e instanceof Error ? e.message : String(e);
+        logger.error(`materializeCover stream failed libraryId=${libraryId}`, msg);
         return { ok: false, message: msg };
     }
 };

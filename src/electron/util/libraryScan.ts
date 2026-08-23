@@ -10,8 +10,8 @@ import {
 } from "@common/library/classify";
 import type { LibraryFolder } from "@common/library/folders";
 import { isLibraryScanDue, withLibraryScanTimestamps } from "@common/library/folders";
-import { findCoverSidecar } from "@common/library/images";
 import { isBookFileName, isMangaFileName, isPdfFileName } from "@common/library/formats";
+import { findCoverSidecar } from "@common/library/images";
 import {
     LIBRARY_FOLDER_WATCH_DEBOUNCE_MS,
     LIBRARY_FOLDER_WATCH_DEPTH_PAD,
@@ -23,14 +23,14 @@ import {
     type LibraryScanStatus,
 } from "@common/types/libraryScan";
 import type { DatabaseService } from "@electron/db";
-import { libraryItemTags, libraryItems, libraryTags } from "@electron/db/schema";
+import { libraryItems, libraryItemTags, libraryTags } from "@electron/db/schema";
 import { pingDatabaseChange } from "@electron/ipc/database";
 import { ipc } from "@electron/ipc/utils";
-import { withExtractedEpubPackage, withResolvedFirstImage } from "@electron/util/contentSource";
+import { withEpubArchivePackage, withResolvedFirstImage } from "@electron/util/contentSource";
+import { materializeCoverFromSourcePath, materializeCoverFromStream } from "@electron/util/coverMaterialize";
 import { mainLibraryIo } from "@electron/util/libraryFs";
 import { createMainLogger } from "@electron/util/logger";
 import { MainSettings } from "@electron/util/mainSettings";
-import { materializeCoverFromSourcePath } from "@electron/util/coverMaterialize";
 import { watch as chokidarWatch } from "chokidar";
 import { inArray } from "drizzle-orm";
 import { BrowserWindow } from "electron";
@@ -190,7 +190,11 @@ const addMangaPath = async (norm: string, tagIds: readonly number[]): Promise<"a
         await unionFolderTags(item.link, tagIds);
         const libraryId = item.id;
         if (libraryId != null && !isPdfFileName(norm, io.path.extname)) {
-            await withResolvedFirstImage(norm, (source) => materializeCoverFromSourcePath(libraryId, source));
+            await withResolvedFirstImage(norm, (source) =>
+                typeof source === "string"
+                    ? materializeCoverFromSourcePath(libraryId, source)
+                    : materializeCoverFromStream(libraryId, source),
+            );
         }
         return "added";
     } catch (err) {
@@ -199,11 +203,11 @@ const addMangaPath = async (norm: string, tagIds: readonly number[]): Promise<"a
     }
 };
 
-/** Adds one EPUB from shared package metadata while its extracted cover remains alive. */
+/** Adds one EPUB from package metadata while streaming its optional cover into the cache. */
 const addBookPath = async (norm: string, tagIds: readonly number[]): Promise<"added" | "skipped" | "failed"> => {
     const db = dbRef;
     if (!db) return "failed";
-    const added = await withExtractedEpubPackage(norm, async (pkg) => {
+    const added = await withEpubArchivePackage(norm, async (pkg) => {
         const item = await db.addLibraryItem({
             type: "book",
             data: {
@@ -215,8 +219,9 @@ const addBookPath = async (norm: string, tagIds: readonly number[]): Promise<"ad
             },
         });
         await unionFolderTags(item.link, tagIds);
-        if (item.id != null && pkg.metadata.cover) {
-            await materializeCoverFromSourcePath(item.id, pkg.metadata.cover);
+        if (item.id != null) {
+            const cover = await pkg.openCover();
+            if (cover) await materializeCoverFromStream(item.id, cover);
         }
         return "added" as const;
     });
@@ -381,9 +386,7 @@ const runScan = async (
 /**
  * Starts a process-wide library scan and waits until it finishes or is cancelled.
  */
-export const startLibraryScan = async (
-    request?: LibraryScanStartRequest,
-): Promise<LibraryScanStartResult> => {
+export const startLibraryScan = async (request?: LibraryScanStartRequest): Promise<LibraryScanStartResult> => {
     const req = request ?? { reason: "manual" };
     if (inFlight) return idleScanResult();
     if (!dbRef) return idleScanResult();

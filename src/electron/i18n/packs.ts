@@ -1,6 +1,5 @@
 import fs from "node:fs";
 import path from "node:path";
-import { promisify } from "node:util";
 import {
     BUILTIN_SOURCES,
     isPlainResourceObject,
@@ -13,13 +12,11 @@ import {
     type TranslationPackManifest,
     validatePackListing,
 } from "@common/i18n";
+import { archiveService } from "@electron/util/archive";
 import { createMainLogger } from "@electron/util/logger";
-import * as crossZip from "cross-zip";
 import { app } from "electron";
 
 const logger = createMainLogger("i18n/packs");
-const unzip = promisify(crossZip.unzip);
-const zip = promisify(crossZip.zip);
 
 /**
  * Returns `{userData}/i18n-packs` (created if missing).
@@ -187,7 +184,7 @@ export const installPackFromArchive = async (
     const tempRoot = path.join(app.getPath("temp"), `yomikiru-i18n-pack-${Date.now()}`);
     fs.mkdirSync(tempRoot, { recursive: true });
     try {
-        await unzip(archivePath, tempRoot);
+        await archiveService.extractAll(archivePath, tempRoot);
         try {
             assertExtractedTreeSafe(tempRoot);
         } catch (err) {
@@ -254,7 +251,7 @@ export const exportPackToArchive = async (
     const validated = validatePackDirectory(packDir);
     if (!validated.ok) return validated;
     try {
-        await zip(packDir, destinationPath);
+        await archiveService.createZip(packDir, destinationPath);
         return { ok: true };
     } catch (err) {
         logger.error("export pack zip failed", { destinationPath }, err);

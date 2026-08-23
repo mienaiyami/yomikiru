@@ -1,11 +1,13 @@
 import fs from "node:fs";
+import type { Readable } from "node:stream";
 import type { CoverChannels, CoverOpResult } from "@common/types/ipc";
+import { withEpubArchivePackage, withResolvedFirstImage } from "@electron/util/contentSource";
 import {
     coverFilePathForLibraryId,
     getCoversDirectoryAbsolute,
     materializeCoverFromSourcePath,
+    materializeCoverFromStream,
 } from "@electron/util/coverMaterialize";
-import { withExtractedEpubPackage, withResolvedFirstImage } from "@electron/util/contentSource";
 import { createMainLogger } from "@electron/util/logger";
 import { ipcMain } from "electron";
 
@@ -29,10 +31,7 @@ const queuedPdfCoverRenderJobs: PdfCoverRenderJob[] = [];
 
 /** Grants queued jobs up to the process-wide PDF canvas limit. */
 const grantQueuedPdfCoverRenders = (): void => {
-    while (
-        activePdfCoverRenderJobs.size < PDF_COVER_RENDER_CONCURRENCY &&
-        queuedPdfCoverRenderJobs.length > 0
-    ) {
+    while (activePdfCoverRenderJobs.size < PDF_COVER_RENDER_CONCURRENCY && queuedPdfCoverRenderJobs.length > 0) {
         const job = queuedPdfCoverRenderJobs.shift();
         if (!job) return;
         activePdfCoverRenderJobs.set(job.libraryId, job);
@@ -95,18 +94,21 @@ const runCoverOp = async (label: string, work: () => Promise<CoverOpResult>): Pr
     }
 };
 
-/** Resolves a library item's process-owned cover source and materializes it before temp cleanup. */
+/** Resolves a library item's cover source and materializes archive entries without temp extraction. */
 const materializeFromLibraryPath = async (
     request: CoverChannels["covers:materializeFromLibraryPath"]["request"],
 ): Promise<CoverOpResult> => {
-    const useSource = (sourceAbsolutePath: string): Promise<CoverOpResult> =>
-        materializeCoverFromSourcePath(request.libraryId, sourceAbsolutePath);
+    const consumeSource = (source: string | Readable): Promise<CoverOpResult> =>
+        typeof source === "string"
+            ? materializeCoverFromSourcePath(request.libraryId, source)
+            : materializeCoverFromStream(request.libraryId, source);
     const result =
         request.itemType === "book"
-            ? await withExtractedEpubPackage(request.link, async (pkg) =>
-                  pkg.metadata.cover ? useSource(pkg.metadata.cover) : undefined,
-              )
-            : await withResolvedFirstImage(request.link, useSource);
+            ? await withEpubArchivePackage(request.link, async (pkg) => {
+                  const cover = await pkg.openCover();
+                  return cover ? consumeSource(cover) : undefined;
+              })
+            : await withResolvedFirstImage(request.link, consumeSource);
     return result ?? { ok: false, message: "cover source not found" };
 };
 

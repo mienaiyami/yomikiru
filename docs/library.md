@@ -400,7 +400,7 @@ sequenceDiagram
     Renderer->>Renderer: dispatch fetchAllItemsWithProgress (refresh cover URL)
 ```
 
-- **Source resolution**: [`src/electron/util/contentSource.ts`](../src/electron/util/contentSource.ts) resolves folder, packed-manga, and EPUB sources in main while temporary extracts are alive. Renderer `libraryCoverSources.ts` only handles sources already available in an open reader.
+- **Source resolution**: [`src/electron/util/contentSource.ts`](../src/electron/util/contentSource.ts) resolves folder, packed-manga, and EPUB sources in main. Archive cover and EPUB metadata reads stream only their needed entries; reader caches still use full extraction through [`src/electron/util/archive.ts`](../src/electron/util/archive.ts). Renderer `libraryCoverSources.ts` only handles sources already available in an open reader.
 - **Service layer**: [`src/renderer/utils/libraryCoverService.ts`](../src/renderer/utils/libraryCoverService.ts) requests main-owned library-path materialization, handles lazy PDF page rendering, and coordinates reader/custom-cover updates.
 - **Reader flow**: [`src/renderer/features/reader/services/readerCoverFlows.ts`](../src/renderer/features/reader/services/readerCoverFlows.ts) — `applyMangaCoverAfterChapterLoad` and `applyMakeCoverFromPageImage` coordinate the reader-triggered cover updates.
 - **Custom cover**: user can right-click a page in the manga reader → "Set as Cover", or use the "Pick Cover" button in the details panel.

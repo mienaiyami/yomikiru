@@ -131,7 +131,8 @@ src/
 │       ├── mainSettings.ts MainSettings persist (schema: src/common/mainSettings.ts)
 │       ├── libraryScan.ts  Process-wide library walk, watch, interval, cancel
 │       ├── libraryFs.ts    Preload-shaped fs adapter (symlink follow)
-│       ├── contentSource.ts Shared folder / packed-archive extraction and first-image source
+│       ├── archive.ts      Full 7-Zip list/stream/extract/ZIP-create module
+│       ├── contentSource.ts Folder/packed cover resolution and reader extraction bridge
 │       ├── coverMaterialize.ts  sharp WebP pipeline (userData/covers/<id>.webp)
 │       ├── migrate.ts      JSON -> SQLite migration (bookmarks.json / history.json)
 │       ├── logger.ts       createMainLogger (electron-log scoped sinks)

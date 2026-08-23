@@ -1,21 +1,15 @@
 import { spawn } from "node:child_process";
 import fs from "node:fs";
 import path from "node:path";
-import {
-    http,
-    HttpStatusError,
-    isHttpUrlLineList,
-    shouldReplaceTextSnapshot,
-    splitTextLines,
-} from "@common/http";
+import { HttpStatusError, http, isHttpUrlLineList, shouldReplaceTextSnapshot, splitTextLines } from "@common/http";
 import type { AppUpdateChannel } from "@common/types/ipc";
 import { mainT } from "@electron/i18n/mainI18n";
 import { exec as execSudo } from "@vscode/sudo-prompt";
-import * as crossZip from "cross-zip";
 import { app, BrowserWindow, dialog, shell } from "electron";
 import * as electronDl from "electron-dl";
 import * as semver from "semver";
 import { IS_PORTABLE, isArchLinux, sleep } from "./util";
+import { archiveService } from "./util/archive";
 import { createMainLogger } from "./util/logger";
 
 const logger = createMainLogger("updater");
@@ -74,8 +68,7 @@ const getArtifactDownloadUrl = async (version: string): Promise<string | null> =
 
         let match: ArtifactMetadata | null = null;
         if (platform === "win32") {
-            match =
-                catalog.find((a) => a.platform === "win32" && a.type === wantType && a.arch === arch) ?? null;
+            match = catalog.find((a) => a.platform === "win32" && a.type === wantType && a.arch === arch) ?? null;
         } else if (platform === "linux") {
             if (isArchLinux()) {
                 match = catalog.find((a) => a.platform === "linux" && a.name.endsWith(".pkg.tar.zst")) ?? null;
@@ -533,38 +526,40 @@ const downloadUpdates = (latestVersion: string, windowId: number, silent = false
 
                 downloadFile(dl, webContents, (file) => {
                     logger.log(`Update package saved: ${file.filename}`);
-                    crossZip.unzip(file.path, extractPath, (err) => {
-                        if (err) return logger.error("Portable update: unzip failed", err);
-                        logger.log(`Portable update: extracted to "${extractPath}"`);
-                        const appPath = path.join(app.getAppPath(), "../../");
-                        const appDirName = path.join(app.getPath("exe"), "../");
-                        setupInstallOnQuit = () => {
-                            app.once("quit", () => {
-                                logger.log("Portable update: copying files over install dir (on quit)");
-                                logger.log(`Portable update: target base "${appPath}"`);
-                                spawn(
-                                    `cmd.exe /c start powershell.exe " Write-Output 'Starting update...' ; Start-Sleep -Seconds 5.0 ;` +
-                                        ` $sourcePath = Join-Path '${extractPath}' '*' ; ` +
-                                        ` $destPath = '${appDirName}' ; ` +
-                                        ` Get-ChildItem -Path $destPath -Recurse -Force | Where-Object { $_.FullName -notmatch 'userdata'} | Remove-Item -Force -Recurse ; ` +
-                                        ` Write-Output 'Moving extracted files...' ; Start-Sleep -Seconds 1.9 ; ` +
-                                        ` Copy-Item -Path $sourcePath -Destination $destPath -Force -Recurse ; ` +
-                                        ` Write-Output 'Updated, launching app.' ; Start-Sleep -Seconds 2.0 ; ` +
-                                        ` & '${app.getPath("exe")}' ; "`,
-                                    { shell: true, cwd: appDirName },
-                                ).on("exit", process.exit);
-                                logger.log("Portable update: exiting so PowerShell can replace files");
-                            });
-                            logger.log("Portable update: will run file copy on next app quit");
-                        };
-                        performInstallNow = () => {
-                            setupInstallOnQuit?.();
-                            logger.log("Portable update: quitting now to start install");
-                            app.quit();
-                        };
-                        logger.log("Portable update: package ready; waiting for user install choice");
-                        promptInstall();
-                    });
+                    void archiveService
+                        .extractAll(file.path, extractPath)
+                        .then(() => {
+                            logger.log(`Portable update: extracted to "${extractPath}"`);
+                            const appPath = path.join(app.getAppPath(), "../../");
+                            const appDirName = path.join(app.getPath("exe"), "../");
+                            setupInstallOnQuit = () => {
+                                app.once("quit", () => {
+                                    logger.log("Portable update: copying files over install dir (on quit)");
+                                    logger.log(`Portable update: target base "${appPath}"`);
+                                    spawn(
+                                        `cmd.exe /c start powershell.exe " Write-Output 'Starting update...' ; Start-Sleep -Seconds 5.0 ;` +
+                                            ` $sourcePath = Join-Path '${extractPath}' '*' ; ` +
+                                            ` $destPath = '${appDirName}' ; ` +
+                                            ` Get-ChildItem -Path $destPath -Recurse -Force | Where-Object { $_.FullName -notmatch 'userdata'} | Remove-Item -Force -Recurse ; ` +
+                                            ` Write-Output 'Moving extracted files...' ; Start-Sleep -Seconds 1.9 ; ` +
+                                            ` Copy-Item -Path $sourcePath -Destination $destPath -Force -Recurse ; ` +
+                                            ` Write-Output 'Updated, launching app.' ; Start-Sleep -Seconds 2.0 ; ` +
+                                            ` & '${app.getPath("exe")}' ; "`,
+                                        { shell: true, cwd: appDirName },
+                                    ).on("exit", process.exit);
+                                    logger.log("Portable update: exiting so PowerShell can replace files");
+                                });
+                                logger.log("Portable update: will run file copy on next app quit");
+                            };
+                            performInstallNow = () => {
+                                setupInstallOnQuit?.();
+                                logger.log("Portable update: quitting now to start install");
+                                app.quit();
+                            };
+                            logger.log("Portable update: package ready; waiting for user install choice");
+                            promptInstall();
+                        })
+                        .catch((err) => logger.error("Portable update: archive extract failed", err));
                 });
             } else {
                 downloadFile(dl, webContents, (file) => {

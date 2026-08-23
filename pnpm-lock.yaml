@@ -45,6 +45,9 @@ importers:
 
   .:
     dependencies:
+      7zip-bin-full:
+        specifier: ^26.2.1
+        version: 26.2.1
       '@electron/remote':
         specifier: ^2.0.1
         version: 2.0.10(electron@22.3.25)
@@ -84,9 +87,6 @@ importers:
       color:
         specifier: ^4.2.3
         version: 4.2.3
-      cross-zip:
-        specifier: ^4.0.0
-        version: 4.0.0
       css:
         specifier: ^3.0.0
         version: 3.0.0
@@ -211,9 +211,6 @@ importers:
       '@types/color':
         specifier: ^3.0.3
         version: 3.0.3
-      '@types/cross-zip':
-        specifier: ^4.0.0
-        version: 4.0.0
       '@types/css':
         specifier: ^0.0.33
         version: 0.0.33
@@ -351,6 +348,9 @@ importers:
         version: 3.0.8(webpack@5.98.0(esbuild@0.25.12))
 
 packages:
+
+  7zip-bin-full@26.2.1:
+    resolution: {integrity: sha512-h1DE4G8WEJ3/LI4HTcuOpouP7cy9JGqYfZm5fzLhdzw8jI3wFyA9RFu5MP+ICzelKEYmWweRWApEvVWKmJIdVQ==}
 
   '@aashutoshrathi/word-wrap@1.2.6':
     resolution: {integrity: sha512-1Yjs2SvM8TflER/OD3cOjhWWOZb58A2t7wpE2S9XfBYTiIl+XFhQG2bjy4Pu1I+EAlCNUzRDYDdFwFYUKvXcIA==}
@@ -1355,9 +1355,6 @@ packages:
 
   '@types/connect@3.4.35':
     resolution: {integrity: sha512-cdeYyv4KWoEgpBISTxWvqYsVy444DOqehiF3fM3ne10AmJ62RSyNkUnxMJXHQWRQQX2eR94m5y1IZyDwBjV9FQ==}
-
-  '@types/cross-zip@4.0.0':
-    resolution: {integrity: sha512-jZRaaM3aib7qgVhCWeo76vVNJW+8+ujJzP/JHPPA4WUp5YBNMsqiyu5uYWg2eS05+jgSfb5NN8eqrAG72Ab2kA==}
 
   '@types/css@0.0.33':
     resolution: {integrity: sha512-qjeDgh86R0LIeEM588q65yatc8Yyo/VvSIYFqq8JOIHDolhGNX0rz7k/OuxqDpnpqlefoHj8X4Ai/6hT9IWtKQ==}
@@ -6093,6 +6090,8 @@ packages:
 
 snapshots:
 
+  7zip-bin-full@26.2.1: {}
+
   '@aashutoshrathi/word-wrap@1.2.6': {}
 
   '@adobe/css-tools@4.5.0': {}
@@ -7206,8 +7205,6 @@ snapshots:
   '@types/connect@3.4.35':
     dependencies:
       '@types/node': 20.5.6
-
-  '@types/cross-zip@4.0.0': {}
 
   '@types/css@0.0.33': {}
 

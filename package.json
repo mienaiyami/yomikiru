@@ -54,6 +54,7 @@
     },
     "license": "MIT",
     "dependencies": {
+        "7zip-bin-full": "^26.2.1",
         "@electron/remote": "^2.0.1",
         "@fortawesome/fontawesome-svg-core": "^6.2.1",
         "@fortawesome/free-brands-svg-icons": "^6.2.1",
@@ -67,7 +68,6 @@
         "better-sqlite3": "^11.8.1",
         "chokidar": "^3.5.3",
         "color": "^4.2.3",
-        "cross-zip": "^4.0.0",
         "css": "^3.0.0",
         "date-fns": "^4.1.0",
         "dotenv": "^16.4.7",
@@ -111,7 +111,6 @@
         "@testing-library/user-event": "^14.6.1",
         "@types/better-sqlite3": "^7.6.12",
         "@types/color": "^3.0.3",
-        "@types/cross-zip": "^4.0.0",
         "@types/css": "^0.0.33",
         "@types/electron-devtools-installer": "2.2.2",
         "@types/node": "^18.11.18",

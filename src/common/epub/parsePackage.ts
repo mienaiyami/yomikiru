@@ -1,8 +1,44 @@
 import type { LibraryIo } from "@common/library/io";
 import type { EpubManifest, EpubMetaData, EpubPackage, EpubParsedToc, EpubSpine, EpubToc } from "./types";
-import { parseXml, xmlAttr, xmlChildrenNamed, xmlFind, xmlFindAll, type XmlNode } from "./xml";
+import { parseXml, type XmlNode, xmlAttr, xmlChildrenNamed, xmlFind, xmlFindAll } from "./xml";
 
 const hasToken = (value: string, token: string): boolean => value.split(/\s+/).includes(token);
+
+/** Identifies ASCII control characters that make an archive-internal path unsafe. */
+const hasControlCharacter = (value: string): boolean =>
+    [...value].some((character) => character.charCodeAt(0) < 32);
+
+/** Metadata needed to catalogue an EPUB without extracting its reading package. */
+export type EpubArchiveMetadata = {
+    title: string;
+    author: string;
+    coverPath: string;
+};
+
+/** Read-only archive-entry access required by {@link parseEpubArchiveMetadata}. */
+export type EpubArchiveReader = {
+    readText: (entryPath: string) => Promise<string>;
+};
+
+/** Resolves an EPUB-internal reference without allowing it to escape the archive root. */
+const resolveArchiveEntryPath = (basePath: string, reference: string): string => {
+    const normalizedReference = reference.replace(/\\/g, "/");
+    if (normalizedReference.startsWith("/") || hasControlCharacter(normalizedReference)) {
+        throw new Error("parseEpubArchive: unsafe package path.");
+    }
+    const segments = basePath.split("/").filter(Boolean);
+    for (const segment of normalizedReference.split("#")[0].split("/")) {
+        if (!segment || segment === ".") continue;
+        if (segment === "..") {
+            if (segments.length === 0) throw new Error("parseEpubArchive: path escapes package root.");
+            segments.pop();
+        } else {
+            segments.push(segment);
+        }
+    }
+    if (segments.length === 0) throw new Error("parseEpubArchive: empty package path.");
+    return segments.join("/");
+};
 
 /** Reads package XML as trimmed UTF-8 so leading whitespace cannot confuse XML validation. */
 const readUtf8 = async (io: LibraryIo, filePath: string): Promise<string> => {
@@ -11,10 +47,7 @@ const readUtf8 = async (io: LibraryIo, filePath: string): Promise<string> => {
 };
 
 /** Returns the most recent nested TOC parent at `level`. */
-const nthDeepParent = (
-    tree: EpubParsedToc["ncx"],
-    level: number,
-): EpubParsedToc["ncx"][number] => {
+const nthDeepParent = (tree: EpubParsedToc["ncx"], level: number): EpubParsedToc["ncx"][number] => {
     if (level === 0) return tree[tree.length - 1] as EpubParsedToc["ncx"][number];
     return nthDeepParent((tree[tree.length - 1] as EpubParsedToc["ncx"][number]).sub, level - 1);
 };
@@ -95,10 +128,7 @@ const parseNav = (
     manifest: EpubManifest,
     io: LibraryIo,
 ): EpubParsedToc => {
-    const navElements = [
-        ...(tocXml.name === "nav" ? [tocXml] : []),
-        ...xmlFindAll(tocXml, "nav"),
-    ];
+    const navElements = [...(tocXml.name === "nav" ? [tocXml] : []), ...xmlFindAll(tocXml, "nav")];
     const nav = navElements.find((element) => hasToken(xmlAttr(element, "type"), "toc")) ?? navElements[0];
     if (!nav) throw new Error("parseEpubV3TOC: No TOC nav found.");
     const ol = xmlChildrenNamed(nav, "ol")[0] ?? xmlFind(nav, "ol");
@@ -183,6 +213,33 @@ const resolveCoverHref = (opf: XmlNode, manifestItems: XmlNode[]): string => {
 };
 
 /**
+ * Reads the EPUB container and OPF entries needed to catalogue a book without extracting it.
+ * `coverPath` is an archive-internal path that the main-process archive module can stream.
+ *
+ * @throws {Error} When the container or OPF cannot identify a valid package document
+ */
+export const parseEpubArchiveMetadata = async (reader: EpubArchiveReader): Promise<EpubArchiveMetadata> => {
+    const container = parseXml((await reader.readText("META-INF/container.xml")).trim());
+    const rootfile = xmlFind(container, "rootfile");
+    const rootPath = rootfile ? xmlAttr(rootfile, "full-path") : "";
+    if (!rootPath) throw new Error("parseEpubArchive: rootfile not found.");
+    const opfPath = resolveArchiveEntryPath("", rootPath);
+    const opf = parseXml((await reader.readText(opfPath)).trim());
+    const manifestEl = xmlFind(opf, "manifest");
+    const manifestItems = manifestEl ? xmlChildrenNamed(manifestEl, "item") : [];
+    if (manifestItems.length === 0) throw new Error("parseEpubArchive: no manifest items found.");
+    const coverHref = resolveCoverHref(opf, manifestItems);
+    return {
+        title: xmlFind(opf, "title")?.text || "No Title",
+        author: xmlFindAll(opf, "creator")
+            .map((element) => element.text)
+            .filter(Boolean)
+            .join(", "),
+        coverPath: coverHref ? resolveArchiveEntryPath(opfPath.split("/").slice(0, -1).join("/"), coverHref) : "",
+    };
+};
+
+/**
  * Parses an extracted EPUB directory (container.xml + OPF + NCX or nav).
  *
  * @throws {Error} When required package files or elements are missing
@@ -214,7 +271,10 @@ export const parseExtractedEpubDir = async (dirPath: string, io: LibraryIo): Pro
     const navItem = manifestItems.find((el) => hasToken(xmlAttr(el, "properties"), "nav"));
     const metadata: EpubMetaData = {
         title: titleNode?.text || "No Title",
-        author: creators.map((el) => el.text).filter(Boolean).join(", "),
+        author: creators
+            .map((el) => el.text)
+            .filter(Boolean)
+            .join(", "),
         cover: coverSrc,
         opfDir,
         ncx_depth: 0,
@@ -259,24 +319,12 @@ export const parseExtractedEpubDir = async (dirPath: string, io: LibraryIo): Pro
     let toc: EpubToc = new Map();
     if (ncxHref) {
         const ncxPath = io.path.join(opfDir, ncxHref);
-        const parsed = parseNcx(
-            parseXml(await readUtf8(io, ncxPath)),
-            ncxPath,
-            spineIdsByHref,
-            manifest,
-            io,
-        );
+        const parsed = parseNcx(parseXml(await readUtf8(io, ncxPath)), ncxPath, spineIdsByHref, manifest, io);
         ncx = parsed.ncx;
         toc = parsed.toc;
         metadata.ncx_depth = parsed.ncx_depth;
     } else if (tocPath) {
-        const parsed = parseNav(
-            parseXml(await readUtf8(io, tocPath)),
-            tocPath,
-            spineIdsByHref,
-            manifest,
-            io,
-        );
+        const parsed = parseNav(parseXml(await readUtf8(io, tocPath)), tocPath, spineIdsByHref, manifest, io);
         ncx = parsed.ncx;
         toc = parsed.toc;
         metadata.ncx_depth = parsed.ncx_depth;
