@@ -1,21 +1,55 @@
-import { useAppSelector } from "@store/hooks";
-import { Fragment } from "react";
-import { useSettingsContext } from "../Settings";
+import { useAppDispatch, useAppSelector } from "@store/hooks";
+import { Fragment, type ReactElement, type ReactNode } from "react";
+import { Trans, useTranslation } from "react-i18next";
+import { navigateToSetting } from "../utils/navigateToSetting";
+import { keysFor, PRESET_SLOT_COMMANDS } from "../utils/usageKeys";
 
-const Usage: React.FC = () => {
-    const { scrollIntoView } = useSettingsContext();
+type SettingsLinkProps = {
+    /** Opaque catalog id (see settingsTargets). */
+    targetId: string;
+    /** Optional DOM id on the anchor (Usage section anchors). */
+    id?: string;
+    children?: ReactNode;
+};
+
+/** In-app deep link that opens Settings (if needed) and navigates to a catalog target. */
+const SettingsLink = ({ targetId, id, children }: SettingsLinkProps): ReactElement => {
+    const dispatch = useAppDispatch();
+    return (
+        <a id={id} onClick={() => navigateToSetting(targetId, dispatch)}>
+            {children}
+        </a>
+    );
+};
+
+/**
+ * Settings Usage tab: a React skeleton whose copy comes from the `usage` namespace.
+ * Prose lives in structured keys; `Trans` fills mid-sentence markup and live shortcut
+ * / path values, so packs translate wording without shipping raw HTML.
+ */
+const Usage = (): ReactElement => {
+    const { t, ready } = useTranslation("usage");
     const shortcuts = useAppSelector((store) => store.shortcuts);
+
+    if (!ready) return <div className="content2 features" />;
+
+    const sep = window.path.sep;
+    const defaultMangaPath = process.platform === "win32" ? "D:\\manga" : "/home/manga";
 
     return (
         <div className="content2 features">
             <ul>
                 <li>
-                    It is recommended to set {'"Default Location"'} to the folder where you usually store manga.
+                    <Trans
+                        i18nKey="defaultLocation"
+                        ns="usage"
+                        components={{
+                            link: <SettingsLink targetId="setting:default-location" />,
+                        }}
+                    />
                 </li>
                 <li>
-                    <b>Recommended File Arrangement:</b> Though you can open manga from anywhere, it is recommended
-                    to arrange file in way as shown below for better experience and features like &quot;reader
-                    side-list&quot;.
+                    <b>{t("fileArrangement.title")}</b> {t("fileArrangement.body")}
                     <ul className="fileExample">
                         <li>
                             DEFAULT LOCATION\
@@ -24,7 +58,7 @@ const Usage: React.FC = () => {
                                     One Piece\
                                     <ul>
                                         <li>
-                                            Chapter 1\ <code>use &quot;Open&quot; here</code>
+                                            Chapter 1\ <code>{t("fileArrangement.useOpenHere")}</code>
                                             <ul>
                                                 <li>001.png</li>
                                                 <li>002.png</li>
@@ -46,7 +80,7 @@ const Usage: React.FC = () => {
                                     Bleach\
                                     <ul>
                                         <li>
-                                            Chapter 1\ <code>use &quot;Open&quot; here</code>
+                                            Chapter 1\ <code>{t("fileArrangement.useOpenHere")}</code>
                                             <ul>
                                                 <li>001.png</li>
                                             </ul>
@@ -59,366 +93,515 @@ const Usage: React.FC = () => {
                     </ul>
                 </li>
                 <li>
-                    Drag and Drop support.
+                    {t("dragDrop.title")}
                     <ul>
-                        <li>Dropping a folder will open the reader with that folders content.</li>
-                        <li>Dropping a supported image file will open its parent folder in the reader</li>
-                        <li>Dropping archive or epub file will open them in the reader</li>
+                        <li>{t("dragDrop.folder")}</li>
+                        <li>{t("dragDrop.image")}</li>
+                        <li>{t("dragDrop.archive")}</li>
                     </ul>
                 </li>
                 <li id="settings-usage-searchShortcutKeys">
-                    Search bar shortcut keys :
+                    {t("searchShortcuts.title")}
                     <ul>
                         <li>
-                            With any search bar focused click{" "}
-                            <code>{shortcuts.find((e) => e.command === "listDown")?.keys.join(", ")}</code> or{" "}
-                            <code> {shortcuts.find((e) => e.command === "listUp")?.keys.join(", ")}</code> to
-                            navigate through results.
+                            <Trans
+                                i18nKey="searchShortcuts.navigate"
+                                ns="usage"
+                                components={{ code: <code /> }}
+                                values={{
+                                    down: keysFor(shortcuts, "listDown"),
+                                    up: keysFor(shortcuts, "listUp"),
+                                }}
+                            />
                         </li>
                         <li>
-                            Click <code>{shortcuts.find((e) => e.command === "listSelect")?.keys.join(", ")}</code>{" "}
-                            (with item focused) to open.
+                            <Trans
+                                i18nKey="searchShortcuts.selectFocused"
+                                ns="usage"
+                                components={{ code: <code /> }}
+                                values={{ select: keysFor(shortcuts, "listSelect") }}
+                            />
                         </li>
                         <li>
-                            Click <code>{shortcuts.find((e) => e.command === "listSelect")?.keys.join(", ")}</code>{" "}
-                            (without item focused) if only one item in list to open.
+                            <Trans
+                                i18nKey="searchShortcuts.selectSingle"
+                                ns="usage"
+                                components={{ code: <code /> }}
+                                values={{ select: keysFor(shortcuts, "listSelect") }}
+                            />
                         </li>
                         <li>
-                            Click <code>{shortcuts.find((e) => e.command === "listSelect")?.keys.join(", ")}</code>{" "}
-                            on empty folder to open in reader.
+                            <Trans
+                                i18nKey="searchShortcuts.selectEmpty"
+                                ns="usage"
+                                components={{ code: <code /> }}
+                                values={{ select: keysFor(shortcuts, "listSelect") }}
+                            />
                         </li>
                         <li>
-                            Click <code>{shortcuts.find((e) => e.command === "dirUp")?.keys.join(", ")}</code> to
-                            go up a directory/folder.
+                            <Trans
+                                i18nKey="searchShortcuts.dirUp"
+                                ns="usage"
+                                components={{ code: <code /> }}
+                                values={{ up: keysFor(shortcuts, "dirUp") }}
+                            />
                         </li>
                         <li>
-                            Click{" "}
-                            <code>{shortcuts.find((e) => e.command === "contextMenu")?.keys.join(", ")}</code>{" "}
-                            buttons to get right click menu of focused item.
+                            <Trans
+                                i18nKey="searchShortcuts.contextMenu"
+                                ns="usage"
+                                components={{ code: <code /> }}
+                                values={{ menu: keysFor(shortcuts, "contextMenu") }}
+                            />
                         </li>
                         <li>
-                            Search by type: Type <code>manga|manhua|manhwa|webtoon|webcomic|comic</code> to search
-                            for manga/manhua/manhwa/webtoon/webcomic/comic or <code>epub</code> for epub.
+                            <Trans
+                                i18nKey="searchShortcuts.focusPageSearch"
+                                ns="usage"
+                                components={{ code: <code /> }}
+                                values={{ focus: keysFor(shortcuts, "focusPageSearch") }}
+                            />
+                        </li>
+                        <li>
+                            <Trans
+                                i18nKey="searchShortcuts.settingsJump"
+                                ns="usage"
+                                components={{ code: <code /> }}
+                                values={{ focus: keysFor(shortcuts, "focusPageSearch") }}
+                            />
+                        </li>
+                        <li>
+                            <Trans i18nKey="searchShortcuts.byType" ns="usage" components={{ code: <code /> }} />
                         </li>
                     </ul>
                 </li>
+                <li id="settings-usage-language">
+                    <SettingsLink targetId="setting:language">
+                        <b>{t("language.title")}</b>
+                    </SettingsLink>{" "}
+                    <Trans i18nKey="language.body" ns="usage" components={{ bold: <b />, code: <code /> }} />
+                </li>
+                <li id="settings-usage-dbBackup">
+                    <SettingsLink targetId="setting:db-backup">
+                        <b>{t("dbBackup.title")}</b>
+                    </SettingsLink>{" "}
+                    <Trans
+                        i18nKey="dbBackup.body"
+                        ns="usage"
+                        components={{
+                            bold: <b />,
+                            code: <code />,
+                            link: <SettingsLink targetId="setting:db-backup" />,
+                        }}
+                    />
+                </li>
                 <li>
-                    <b>Home Location tab :</b>
+                    <b>{t("homeLocation.title")}</b>
                     <ul>
+                        <li>{t("homeLocation.clickItem")}</li>
                         <li>
-                            In location tab, click item to see its content or double-click (if enabled in settings
-                            above) to open it in reader.
-                        </li>
-                        <li>
-                            <a
+                            <SettingsLink
                                 id="settings-usage-openDirectlyFromManga"
-                                onClick={() => {
-                                    scrollIntoView("#settings-openDirectlyFromManga", "settings");
-                                }}
+                                targetId="setting:open-directly-from-manga"
                             >
-                                Open chapter in reader directly if chapter is a sub-folder of sub-folder of
-                                &quot;Default Location&quot;.
-                            </a>
+                                {t("homeLocation.openDirectly.link")}
+                            </SettingsLink>
                             <br />
-                            Example: If the default location is set to{" "}
-                            {process.platform === "win32" ? <code>D:\manga</code> : <code>/home/manga</code>} and
-                            there is a folder named <code>One Piece</code> within it, any sub-folder located
-                            directly under <code>One Piece</code> will open automatically by clicking its link in
-                            the home location list. If no images are found then the sub-folder will be opened in
-                            location tab normally.
+                            <Trans
+                                i18nKey="homeLocation.openDirectly.example"
+                                ns="usage"
+                                components={{ code: <code /> }}
+                                values={{ path: defaultMangaPath }}
+                            />
                         </li>
                         <li>
-                            <b>Search:</b>
+                            <b>{t("homeLocation.search.title")}</b>
                             <ul>
+                                <li>{t("homeLocation.search.symlink")}</li>
                                 <li>
-                                    Symbolic links (symlinks) to directories are treated as directories in
-                                    Locations/Home Location, so you can browse and open content through linked
-                                    folders.
+                                    <Trans
+                                        i18nKey="homeLocation.search.partial"
+                                        ns="usage"
+                                        components={{ code: <code /> }}
+                                    />
                                 </li>
                                 <li>
-                                    You don&apos;t need to type the whole word in search. (e.g. For{" "}
-                                    <code>One Piece</code> type <code>op</code>).
+                                    <Trans
+                                        i18nKey="homeLocation.search.exact"
+                                        ns="usage"
+                                        components={{ code: <code /> }}
+                                    />
                                 </li>
+                                <li>{t("homeLocation.search.paste")}</li>
                                 <li>
-                                    For exact search, add <code>&quot;</code> or <code>`</code> in front of search.
-                                    (e.g. For <code>One Piece</code> type <code>`one</code>).
+                                    <Trans
+                                        i18nKey="homeLocation.search.goUp"
+                                        ns="usage"
+                                        components={{ code: <code /> }}
+                                        values={{ sep }}
+                                    />
                                 </li>
-                                <li>
-                                    Paste link to set browse pasted link in Locations tab. Or page link of a
-                                    supported file to open it in reader directly.
-                                </li>
-                                <li>
-                                    Type <code>..{window.path.sep}</code> to go up directory.
-                                </li>
-                                {process.platform === "win32" ? (
+                                {process.platform === "win32" && (
                                     <li>
-                                        Type let <code>D:\</code> to go to <code>D drive</code>.
+                                        <Trans
+                                            i18nKey="homeLocation.search.dDrive"
+                                            ns="usage"
+                                            components={{ code: <code /> }}
+                                        />
                                     </li>
-                                ) : (
-                                    ""
                                 )}
                                 <li>
-                                    Type name ending with <code>{window.path.sep}</code> to open it in search. e.g.
-                                    When there is a directory named <code>One piece</code> in current list, type{" "}
-                                    <code>One Piece{window.path.sep}</code> to open that as new list.
+                                    <Trans
+                                        i18nKey="homeLocation.search.openInSearch"
+                                        ns="usage"
+                                        components={{ code: <code /> }}
+                                        values={{ sep }}
+                                    />
                                 </li>
                             </ul>
                         </li>
                     </ul>
                 </li>
+                <li>{t("collapseTabs")}</li>
                 <li>
-                    Collapse/Un-collapse Bookmarks, History page tabs by clicking on the Dividers beside them in
-                    home screen.
+                    <b>{t("gallery.title")}</b>{" "}
+                    <Trans i18nKey="gallery.body" ns="usage" components={{ bold: <b /> }} />
                 </li>
                 <li>
-                    <b>Reader :</b>
+                    <b>{t("galleryToolbar.title")}</b>{" "}
+                    <Trans i18nKey="galleryToolbar.body" ns="usage" components={{ bold: <b /> }} />
                     <ul>
                         <li>
-                            When using the &quot;vertical Scroll&quot; mode, you can change chapters on the first
-                            or last page by clicking on either side of the screen or by clicking
-                            &quot;prevPage&quot; (
-                            <code>{shortcuts.find((e) => e.command === "prevPage")?.keys.join(", ")}</code>) or
-                            &quot;nextPage&quot; (
-                            <code>{shortcuts.find((e) => e.command === "nextPage")?.keys.join(", ")}</code>)
-                            shortcut keys. No response in center 20% of screen.
+                            <Trans i18nKey="galleryToolbar.types" ns="usage" components={{ bold: <b /> }} />
+                        </li>
+                        <li>
+                            <Trans i18nKey="galleryToolbar.tags" ns="usage" components={{ bold: <b /> }} />
+                        </li>
+                        <li>
+                            <Trans i18nKey="galleryToolbar.continue" ns="usage" components={{ bold: <b /> }} />
+                        </li>
+                        <li>
+                            <Trans i18nKey="galleryToolbar.library" ns="usage" components={{ bold: <b /> }} />
+                        </li>
+                        <li>
+                            <Trans i18nKey="galleryToolbar.bookmarks" ns="usage" components={{ bold: <b /> }} />
+                        </li>
+                        <li>
+                            <Trans i18nKey="galleryToolbar.favourites" ns="usage" components={{ bold: <b /> }} />
+                        </li>
+                        <li>
+                            <Trans i18nKey="galleryToolbar.clear" ns="usage" components={{ bold: <b /> }} />
+                        </li>
+                    </ul>
+                </li>
+                <li id="settings-usage-multiSelect">
+                    <b>{t("multiSelect.title")}</b>{" "}
+                    <Trans
+                        i18nKey="multiSelect.body"
+                        ns="usage"
+                        components={{
+                            bold: <b />,
+                            italic: <i />,
+                            code: <code />,
+                            link: <SettingsLink targetId="setting:classic-list-checkboxes" />,
+                        }}
+                        values={{ delete: keysFor(shortcuts, "deleteSelected") }}
+                    />
+                </li>
+                <li>
+                    <b>{t("covers.title")}</b>{" "}
+                    <Trans
+                        i18nKey="covers.body"
+                        ns="usage"
+                        components={{
+                            bold: <b />,
+                            code: <code />,
+                            link: <SettingsLink id="settings-usage-library" targetId="setting:library" />,
+                            clear: <SettingsLink targetId="setting:library-clear-unused-progress" />,
+                        }}
+                        values={{ libraryId: "<library id>.webp" }}
+                    />
+                </li>
+                <li>
+                    <SettingsLink id="settings-usage-library-scan" targetId="setting:library-scan-now">
+                        <b>{t("libraryScan.title")}</b>
+                    </SettingsLink>{" "}
+                    <Trans i18nKey="libraryScan.body" ns="usage" components={{ bold: <b /> }} />
+                    <ul>
+                        <li>
+                            <Trans
+                                i18nKey="libraryScan.regex"
+                                ns="usage"
+                                components={{
+                                    bold: <b />,
+                                    code: <code />,
+                                    link: <SettingsLink targetId="setting:default-location" />,
+                                }}
+                            />
+                        </li>
+                        <li>
+                            <Trans i18nKey="libraryScan.regexSimple" ns="usage" components={{ code: <code /> }} />
+                        </li>
+                        <li>
+                            <Trans i18nKey="libraryScan.regexStart" ns="usage" components={{ code: <code /> }} />
+                        </li>
+                        <li>
+                            <Trans i18nKey="libraryScan.regexExample" ns="usage" components={{ code: <code /> }} />
+                        </li>
+                        <li>
+                            <Trans
+                                i18nKey="libraryScan.ignoreFile"
+                                ns="usage"
+                                components={{ bold: <b />, code: <code /> }}
+                            />
+                        </li>
+                        <li>
+                            <Trans
+                                i18nKey="libraryScan.ignoreFolder"
+                                ns="usage"
+                                components={{ bold: <b />, code: <code /> }}
+                            />
+                        </li>
+                        <li>
+                            <Trans
+                                i18nKey="libraryScan.tags"
+                                ns="usage"
+                                components={{
+                                    bold: <b />,
+                                    link: <SettingsLink targetId="setting:default-location" />,
+                                }}
+                            />
+                        </li>
+                        <li>
+                            <Trans
+                                i18nKey="libraryScan.status"
+                                ns="usage"
+                                components={{
+                                    bold: <b />,
+                                    link: <SettingsLink targetId="setting:library-scan-now" />,
+                                }}
+                            />
+                        </li>
+                    </ul>
+                </li>
+                <li>
+                    <b>{t("reader.title")}</b>
+                    <ul>
+                        <li>
+                            <Trans
+                                i18nKey="reader.verticalScroll"
+                                ns="usage"
+                                components={{ code: <code /> }}
+                                values={{
+                                    prev: keysFor(shortcuts, "prevPage"),
+                                    next: keysFor(shortcuts, "nextPage"),
+                                }}
+                            />
                             <ul>
-                                <li>Left &nbsp;&nbsp;= Previous Chapter</li>
-                                <li>Right = Next Chapter</li>
-                                <li>
-                                    Limit width of images in reader. To use &quot;Max Image Width&quot; feature,
-                                    disable &quot;Size:Clamp&quot;.
-                                </li>
+                                <li>{t("reader.leftPrev")}</li>
+                                <li>{t("reader.rightNext")}</li>
+                                <li>{t("reader.maxWidth")}</li>
                             </ul>
                         </li>{" "}
+                        <li>{t("reader.mouseScroll")}</li>
+                        <li>{t("reader.middleMouse")}</li>
+                        <li>{t("reader.sideList")}</li>
                         <li>
-                            To scroll using mouse while viewing full page, use &quot;Left to Right&quot; or
-                            &quot;Right to Left&quot; reading mode, then &quot;Fit Vertically&quot; option or make
-                            image size lower than window height.
-                        </li>
-                        <li>Middle mouse button for auto scrolling.</li>
-                        <li>
-                            Access the side list by moving the mouse to left side of the screen. You can pin and
-                            resize the side list.
-                        </li>
-                        <li>
-                            <code>
-                                {shortcuts.find((e) => e.command === "focusSideListSearch")?.keys.join(", ")}
-                            </code>{" "}
-                            focuses the sidelist chapter search.{" "}
-                            <code>{shortcuts.find((e) => e.command === "randomChapter")?.keys.join(", ")}</code>{" "}
-                            opens a random chapter (avoids recently opened; works with shuffle mode).
+                            <Trans
+                                i18nKey="reader.sideListSearch"
+                                ns="usage"
+                                components={{ code: <code /> }}
+                                values={{
+                                    focus: keysFor(shortcuts, "focusPageSearch"),
+                                    random: keysFor(shortcuts, "randomChapter"),
+                                }}
+                            />
                         </li>
                         <li>
-                            <b>Shuffle mode</b> (shuffle icon in sidelist): randomizes chapter order once;
-                            prev/next follow shuffled order. Auto-refresh disabled in this mode. Session-only.
+                            <b>{t("reader.shuffle.title")}</b> {t("reader.shuffle.body")}
                         </li>
                         <li>
-                            <b>Sidelist search:</b> When filter is active, prev/next and random use the filtered
-                            list. Use the pin icon next to the search input to persist the filter when the list
-                            refreshes (e.g. auto-refresh, manual Refresh).
+                            <b>{t("reader.sidelistSearch2.title")}</b> {t("reader.sidelistSearch2.body")}
                         </li>
                         <li>
-                            Zen Mode (Full Screen Mode): Hides UI, Only shows images and page number if enabled.
-                            Can be enabled using the shortcut key defined,{" "}
-                            <code>{shortcuts.find((e) => e.command === "toggleZenMode")?.keys.join(", ")}</code>
+                            <Trans
+                                i18nKey="reader.zenMode"
+                                ns="usage"
+                                components={{ code: <code /> }}
+                                values={{ zen: keysFor(shortcuts, "toggleZenMode") }}
+                            />
                         </li>
                         <li>
-                            Double click to toggle zen mode. Working area by reading mode:
+                            {t("reader.doubleClick")}
                             <ul>
-                                <li>Vertical Scroll - 100%</li>
-                                <li>Vertical Scroll (chapter start/end) - center 60%</li>
-                                <li>LTR and RTL - center 20%</li>
+                                <li>{t("reader.zen.vertical")}</li>
+                                <li>{t("reader.zen.verticalEnds")}</li>
+                                <li>{t("reader.zen.ltrRtl")}</li>
                             </ul>
                         </li>
                     </ul>
                 </li>
                 <li>
-                    Open chapter directly from the file explorer after enabling{" "}
-                    <a
-                        onClick={() => {
-                            scrollIntoView("#settings-fileExplorerOption", "settings");
+                    <Trans
+                        i18nKey="fileExplorer.intro"
+                        ns="usage"
+                        components={{
+                            link: <SettingsLink targetId="setting:file-explorer" />,
                         }}
-                    >
-                        File Explorer Option
-                    </a>
-                    .
+                    />
                     <ul>
-                        <li>
-                            Right Click on folder or .cbz/.7z/.zip/.pdf/.epub &nbsp;&nbsp;&#8594;&nbsp;&nbsp; Show
-                            more options (win11) &nbsp;&nbsp;&#8594;&nbsp;&nbsp; Open in Yomikiru.
-                        </li>
-                        <li>Note that this only opens the chapter containing images, not the Manga Folder.</li>
+                        <li>{t("fileExplorer.rightClick")}</li>
+                        <li>{t("fileExplorer.note")}</li>
                     </ul>
                 </li>
                 <li>
-                    <b>Minimize to Tray:</b> Enable in{" "}
-                    <a onClick={() => scrollIntoView("#settings-otherSettings", "settings")}>Other Settings</a> to
-                    send the window to the system tray instead of the taskbar when minimizing. With one window,
-                    left-click the tray icon to show or hide it; with multiple windows, left-click restores hidden
-                    windows or focuses. Right-click for the window list, <b>Hide all Windows</b>, and Exit. Exit
-                    respects &quot;Confirm Close Window&quot; when enabled.
+                    <SettingsLink targetId="setting:minimize-to-tray">
+                        <b>{t("tray.title")}</b>
+                    </SettingsLink>{" "}
+                    <Trans
+                        i18nKey="tray.body"
+                        ns="usage"
+                        components={{
+                            bold: <b />,
+                            link: <SettingsLink targetId="setting:minimize-to-tray" />,
+                        }}
+                    />
                 </li>
                 <li>
-                    <a
-                        id="settings-usage-copyTheme"
-                        onClick={() => {
-                            scrollIntoView("#settings-copyTheme", "settings");
+                    <Trans
+                        i18nKey="theme.body"
+                        ns="usage"
+                        components={{
+                            link: <SettingsLink id="settings-usage-copyTheme" targetId="setting:copy-theme" />,
                         }}
-                    >
-                        Copy theme using &quot;Copy Current Theme to Clipboard&quot; under theme
-                    </a>
-                    , it will be copied as text and you can share it anywhere. To install the theme, copy whole
-                    text you received and click on &quot;Save Theme from Clipboard&quot;.
+                    />
                 </li>
                 <li id="settings-usage-readerPresets">
-                    <b>Reader Presets:</b> Quick-switch between reading setups (e.g. 2-page LTR manga vs
-                    vertical-scroll manhwa). Separate preset lists for manga and book (EPUB) readers.
+                    <SettingsLink targetId="setting:reader-presets">
+                        <b>{t("readerPresets.title")}</b>
+                    </SettingsLink>{" "}
+                    {t("readerPresets.body")}
                     <ul>
                         <li>
-                            <b>Defaults:</b> Manga — Paged LTR, Long Strip, Long Strip with Gaps. Book — Default,
-                            Continuous. On first run, a &quot;User&quot; preset per type is created with your
-                            current settings.
+                            <b>{t("readerPresets.defaults.title")}</b> {t("readerPresets.defaults.body")}
                         </li>
                         <li>
-                            <b>Select</b> applies a preset. <b>Delete</b> (trash icon) removes a custom preset; if
-                            the deleted preset was selected, another preset is auto-selected. The &quot;User&quot;
-                            preset cannot be removed.
+                            <Trans i18nKey="readerPresets.select" ns="usage" components={{ bold: <b /> }} />
                         </li>
                         <li>
-                            In Reader Settings: <b>+</b> adds a new preset (name via modal). <b>Autosave</b>{" "}
-                            toggle: when on, changes are saved into the selected preset automatically; off requires
-                            manual Update or <b>savePreset</b> shortcut. User preset has autosave on by default.{" "}
-                            <b>Save</b> (floppy icon) manually updates the selected preset.
+                            <Trans i18nKey="readerPresets.reader" ns="usage" components={{ bold: <b /> }} />
                         </li>
                         <li>
-                            <code>{shortcuts.find((e) => e.command === "savePreset")?.keys.join(", ")}</code> saves
-                            current settings into the selected preset. Works even when the Reader Settings panel is
-                            closed; feedback shows the preset name.
+                            <Trans
+                                i18nKey="readerPresets.savePreset"
+                                ns="usage"
+                                components={{ code: <code /> }}
+                                values={{ save: keysFor(shortcuts, "savePreset") }}
+                            />
                         </li>
                         <li>
-                            <b>Preset keybinds:</b>{" "}
-                            <code>{shortcuts.find((e) => e.command === "cyclePresetNext")?.keys.join(", ")}</code>{" "}
-                            /{" "}
-                            <code>{shortcuts.find((e) => e.command === "cyclePresetPrev")?.keys.join(", ")}</code>{" "}
-                            cycle to next/previous preset.{" "}
-                            {["selectPreset1", "selectPreset2", "selectPreset3", "selectPreset4", "selectPreset5"]
-                                .map((c, idx) => {
-                                    const keys = shortcuts.find((e) => e.command === c)?.keys.join(", ");
-                                    return keys ? (
-                                        <Fragment key={c}>
-                                            <code>
-                                                ({idx + 1}: {keys})
-                                            </code>{" "}
-                                            {idx < 4 ? ", " : ""}
-                                        </Fragment>
-                                    ) : null;
-                                })
-                                .filter(Boolean)}
-                            select preset 1-5 by display order. Slot keys are shared: in manga reader they select
-                            manga presets, in EPUB reader they select book presets. Use up/down buttons to reorder
-                            presets.
+                            <b>{t("readerPresets.keybinds.title")}</b>{" "}
+                            <code>{keysFor(shortcuts, "cyclePresetNext")}</code> /{" "}
+                            <code>{keysFor(shortcuts, "cyclePresetPrev")}</code>{" "}
+                            {t("readerPresets.keybinds.cycle")}{" "}
+                            {PRESET_SLOT_COMMANDS.map((c, idx) => {
+                                const keys = keysFor(shortcuts, c);
+                                return keys ? (
+                                    <Fragment key={c}>
+                                        <code>
+                                            ({idx + 1}: {keys})
+                                        </code>{" "}
+                                        {idx < 4 ? ", " : ""}
+                                    </Fragment>
+                                ) : null;
+                            }).filter(Boolean)}
+                            {t("readerPresets.keybinds.slots")}
                         </li>
                         <li>
-                            <b>Clipboard:</b> &quot;Copy Current Preset to Clipboard&quot; copies the selected
-                            preset (from each Manga/Book section). &quot;Save Preset from Clipboard&quot; (top,
-                            next to Reset) imports one preset; type is inferred from the JSON.
+                            <b>{t("readerPresets.clipboard.title")}</b> {t("readerPresets.clipboard.body")}
                         </li>
                         <li>
-                            <b>Export/Import:</b> Per manga or book. Export saves custom presets only (defaults
-                            excluded). Import from file for bulk transfer; duplicates by id are skipped.
+                            <b>{t("readerPresets.exportImport.title")}</b> {t("readerPresets.exportImport.body")}
                         </li>
                         <li>
-                            <b>Reset to Default Presets</b> restores built-in presets to their original state; if a
-                            &quot;User&quot; preset for manga or book is missing, it is recreated from your current
-                            reader settings. Custom presets are kept.
+                            <b>{t("readerPresets.reset.title")}</b> {t("readerPresets.reset.body")}
                         </li>
                     </ul>
                 </li>
                 <li>
-                    <a
-                        id="settings-usage-pdfScale"
-                        onClick={() => {
-                            scrollIntoView("#settings-pdfScale", "settings");
-                        }}
-                    >
-                        <b>PDF Scale:</b>
-                    </a>{" "}
-                    Set the quality of the images. Higher number means higher quality but also high initial cpu and
-                    storage usage. <br />
-                    <b>Do not use high scale with pdf which have high page count.</b>
+                    <SettingsLink id="settings-usage-pdfScale" targetId="setting:pdf">
+                        <b>{t("pdfScale.link")}</b>
+                    </SettingsLink>{" "}
+                    {t("pdfScale.body")} <br />
+                    <b>{t("pdfScale.warning")}</b>
                 </li>
                 <li id="settings-usage-anilist">
-                    <b>AniList Tracking : </b>
+                    <SettingsLink targetId="setting:anilist">
+                        <b>{t("anilist.title")}</b>
+                    </SettingsLink>
                     <ul>
                         <li>
-                            After logging in successfully you can enable tracking by opening a manga and checking
-                            side-list (moving mouse to left most part of app).
+                            <Trans
+                                i18nKey="anilist.login"
+                                ns="usage"
+                                components={{ code: <code /> }}
+                                values={{
+                                    down: keysFor(shortcuts, "listDown"),
+                                    up: keysFor(shortcuts, "listUp"),
+                                    select: keysFor(shortcuts, "listSelect"),
+                                }}
+                            />
                         </li>
+                        <li>{t("anilist.managed")}</li>
+                        <li>{t("anilist.adultContent")}</li>
                         <li>
-                            Tracker are managed according to the folder of manga. If manga folder is
-                            moved/renamed/deleted local tracker will be remove and user will need to add tracker
-                            again.
-                        </li>
-                        <li>
-                            Currently you need to manually update the progress entry but auto updating of tracker
-                            will be supported soon.
+                            <Trans i18nKey="anilist.autoUpdate" ns="usage" components={{ bold: <b /> }} />
                         </li>
                     </ul>
                 </li>
                 <li id="settings-usage-epubBackground">
-                    <b>EPUB Reader Background:</b> While reading EPUB, open Reader Settings. In{" "}
-                    <b>Styles &amp; Others</b>, <b>Page background color</b> is the canvas behind the column;{" "}
-                    <b>Content background color</b> is the text column. Expand <b>Content frame</b> for{" "}
-                    <b>Padding inline</b> and optional <b>Content border</b> (width, style, color). Expand the{" "}
-                    <b>Background</b> section for wallpaper.
+                    <b>{t("epubBackground.title")}</b>{" "}
+                    <Trans i18nKey="epubBackground.body" ns="usage" components={{ bold: <b /> }} />
                     <ul>
                         <li>
-                            Enable <b>Background image (wallpaper)</b>, select an image, then adjust dim intensity,
-                            brightness, and contrast.
+                            <Trans i18nKey="epubBackground.wallpaper" ns="usage" components={{ bold: <b /> }} />
                         </li>
                         <li>
-                            Optionally enable <b>Image layer overlay</b> and set its color and opacity.
+                            <Trans i18nKey="epubBackground.overlay" ns="usage" components={{ bold: <b /> }} />
                         </li>
                         <li>
-                            To make the text column transparent so the wallpaper shows through: set{" "}
-                            <b>Content background color</b> to transparent (e.g. <code>rgba(0,0,0,0)</code>).
+                            <Trans
+                                i18nKey="epubBackground.transparent"
+                                ns="usage"
+                                components={{ bold: <b />, code: <code /> }}
+                            />
                         </li>
                         <li>
-                            Some books ship strong text or background colors in their own CSS. Enable{" "}
-                            <b>Override EPUB colors (when customized)</b> so your non-default font, link, page, and
-                            content background colors win over the book&apos;s styles (same section as those
-                            options).
+                            <Trans i18nKey="epubBackground.override" ns="usage" components={{ bold: <b /> }} />
                         </li>
                     </ul>
                 </li>
                 <li>
-                    In{" "}
-                    <a
-                        onClick={() => {
-                            scrollIntoView("#settings-about", "about");
+                    <Trans
+                        i18nKey="about.body"
+                        ns="usage"
+                        components={{
+                            bold: <b />,
+                            link: <SettingsLink targetId="about" />,
                         }}
-                    >
-                        <b>About</b>
-                    </a>
-                    , use <b>Detailed Info</b> to view version, commit, build date, Electron/Node versions, and OS
-                    details. Use <b>Copy</b> to paste this info when reporting issues.
+                    />
                 </li>
                 <li id="settings-usage-customStylesheet">
-                    If you know how to write <code>.css</code>, you can customize style of app, more than just
-                    theme color that is enabled by &quot;Theme Maker&quot;, by making your custom <code>.css</code>
-                    file and adding it as{" "}
-                    <a
-                        onClick={() => {
-                            scrollIntoView("#settings-customStylesheet", "settings");
+                    <Trans
+                        i18nKey="customStylesheet.body"
+                        ns="usage"
+                        components={{
+                            code: <code />,
+                            link: <SettingsLink targetId="setting:custom-stylesheet" />,
                         }}
-                    >
-                        Custom Stylesheet
-                    </a>
-                    . You can use developer/inspect tool to check the element and existing styles.
+                    />
                     <br />
-                    NOTE: Do not move <code>&quot; .css &quot;</code> file in directly under app&apos;s folder. If
-                    you are using portable version, everything except <code>userdata</code> folder will be deleted.
-                    You can safely put it inside <code>userdata</code> folder.
+                    <Trans i18nKey="customStylesheet.note" ns="usage" components={{ code: <code /> }} />
                 </li>
             </ul>
         </div>

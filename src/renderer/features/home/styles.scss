@@ -1,0 +1,830 @@
+.homeContainer {
+    width: 100%;
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+}
+
+.galleryView {
+    width: 100%;
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+    position: relative;
+
+    // feed in react
+    --galleryItemWidth: 16em;
+
+    .galleryToolbar {
+        flex: 0 0 auto;
+        z-index: 50;
+        -webkit-app-region: no-drag;
+        /* Inner chrome matches classic .tools .row1 (44px); padding-block gives the bar air */
+        --galleryToolbarRowHeight: 44px;
+
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        padding: 6px 10px;
+        background-color: var(--topBar-color);
+        border-bottom: 1px solid var(--divider-color);
+        /* #app button sets overflow:hidden, which clips [data-tooltip]::before.
+         * Classic .listCont .tools button opts out the same way. */
+        overflow: visible;
+
+        button,
+        .btn {
+            overflow: visible;
+            /* same bottom placement as topBar / reader side list - default is right */
+            &::before {
+                top: 100%;
+                left: 50%;
+                --translate: -50%, 10px;
+            }
+        }
+
+        .galleryTabBar,
+        .galleryTypeFilterBar {
+            flex: 0 0 auto;
+            display: inline-flex;
+            align-items: center;
+            gap: 4px;
+            height: var(--galleryToolbarRowHeight);
+            padding: 2px;
+            border-radius: 6px;
+            background-color: var(--text-input-bg);
+            overflow: visible;
+
+            .galleryTab {
+                display: inline-flex;
+                align-items: center;
+                justify-content: center;
+                gap: 5px;
+                height: 100%;
+                padding: 0 8px;
+                border: none;
+                border-radius: 4px;
+                background: none;
+                cursor: pointer;
+                color: var(--font-color);
+                opacity: 0.72;
+                white-space: nowrap;
+                font-size: 1.2rem;
+
+                &:hover {
+                    opacity: 1;
+                    background-color: var(--topBar-btn-hover);
+                }
+
+                &.active {
+                    opacity: 1;
+                    background-color: var(--btn-color-focus);
+                }
+
+                .galleryTabIcon {
+                    font-size: 0.95em;
+                }
+
+                .galleryTabLabel {
+                    line-height: 1;
+                }
+            }
+            @media (max-width: 1550px) {
+                .galleryTab {
+                    width: 2.3em;
+                    .galleryTabLabel {
+                        display: none;
+                    }
+                }
+            }
+        }
+
+        .galleryTagFilterBar {
+            flex: 0 0 auto;
+            display: inline-flex;
+            align-items: stretch;
+            height: var(--galleryToolbarRowHeight);
+            min-width: 0;
+            max-width: 15em;
+            padding: 2px;
+            border-radius: 6px;
+            background-color: var(--text-input-bg);
+            overflow: visible;
+
+            .inputMultiSelect,
+            .popover-wrapper {
+                height: 100%;
+                width: 100%;
+            }
+
+            /* beat `#app button` chrome; pill matches type-filter / tab bar */
+            .galleryTagFilterActivator:not(#dummy#dummy) {
+                width: 100%;
+                max-width: 14em;
+                height: 100%;
+                padding: 0 0.5em 0 0.55em;
+                border-radius: 4px;
+                background: none;
+                border: none;
+                color: var(--font-color);
+                opacity: 0.78;
+
+                &:hover:not(:disabled) {
+                    opacity: 1;
+                    background-color: var(--topBar-btn-hover);
+                }
+
+                &.is-open,
+                &.has-selection {
+                    opacity: 1;
+                    background-color: var(--btn-color-focus);
+                }
+            }
+
+            .galleryTagFilterIcon {
+                flex-shrink: 0;
+                font-size: 0.9em;
+                opacity: 0.85;
+            }
+
+            .galleryTagFilterDots {
+                flex-shrink: 0;
+                display: flex;
+                flex-wrap: wrap;
+                align-content: flex-start;
+                gap: 0.5px;
+                width: max-content;
+                max-width: calc(4 * 0.65em + 3 * 0.5px);
+                max-height: calc(2 * 0.65em + 0.5px);
+                overflow: hidden;
+            }
+
+            .galleryTagFilterDot {
+                width: 0.65em;
+                height: 0.65em;
+                border-radius: 50%;
+                box-shadow: inset 0 0 0 1px rgba(0, 0, 0, 0.2);
+            }
+
+            .galleryTagFilterLabel {
+                min-width: 0;
+                overflow: hidden;
+                text-overflow: ellipsis;
+                white-space: nowrap;
+            }
+
+            /* smaller chips inside the multi-select panel (not the activator) */
+            .inputMultiSelectTagChip.item-tag-chip {
+                min-width: 0;
+                flex: 0 1 auto;
+                max-width: 100%;
+                overflow: hidden;
+                text-overflow: ellipsis;
+                white-space: nowrap;
+                font-size: 0.88em;
+                padding: 0.1em 0.42em;
+                line-height: 1.25;
+                font-weight: 600;
+            }
+        }
+
+        .toolbarDivider {
+            flex: 0 0 auto;
+            align-self: center;
+            width: 2px;
+            height: calc(var(--galleryToolbarRowHeight) * 0.6);
+            border-radius: 1px;
+            background-color: var(--divider-color);
+        }
+
+        .toolbarEnd {
+            /* hug actions+search on the trailing edge; growing this cluster
+             * leaves empty space after the search field */
+            margin-left: auto;
+            display: flex;
+            align-items: center;
+            justify-content: flex-end;
+            gap: 8px;
+            flex: 0 0 auto;
+            width: max-content;
+            max-width: 100%;
+            min-width: 0;
+            height: var(--galleryToolbarRowHeight);
+        }
+
+        .search {
+            flex: 0 1 auto;
+            display: flex;
+            /* stretch so the wrapper / input fill the row (classic .tools .row1) */
+            align-items: stretch;
+            height: var(--galleryToolbarRowHeight);
+            width: 27rem;
+            min-width: 10rem;
+            max-width: 100%;
+
+            &:empty {
+                width: 0;
+                min-width: 0;
+            }
+
+            .search-input-wrapper {
+                height: 100%;
+            }
+        }
+
+        .actions {
+            flex: 0 0 auto;
+            display: flex;
+            align-items: stretch;
+            gap: 2px;
+            height: var(--galleryToolbarRowHeight);
+        }
+
+        .actions button,
+        &.selection button {
+            background: none;
+            border: none;
+            padding: 0;
+            cursor: pointer;
+            border-radius: 6px;
+            /* same footprint as classic .listCont .tools action buttons */
+            width: var(--button-width);
+            height: 100%;
+            color: var(--font-color);
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.2rem;
+
+            &:hover:not(:disabled) {
+                background-color: var(--topBar-btn-hover);
+            }
+
+            &:disabled {
+                opacity: 0.4;
+                cursor: not-allowed;
+            }
+        }
+
+        .popover-wrapper:has(.gridSizeTrigger) {
+            height: 100%;
+        }
+        .gridSizeTrigger[aria-expanded="true"] {
+            background-color: var(--topBar-btn-hover);
+        }
+
+        .search-input {
+            width: 100%;
+            height: 100%;
+            padding: 6px 12px;
+            font-size: 1.2rem;
+            border-radius: 6px;
+            color: var(--font-color);
+            background-color: var(--text-input-bg);
+
+            &:focus {
+                outline: transparent;
+                box-shadow: 0 0 0 2px var(--btn-color);
+            }
+        }
+
+        &.selection {
+            display: flex;
+            justify-content: space-between;
+            background-color: var(--btn-color-hover);
+            color: var(--font-color);
+            box-shadow: inset 0 -1px 0 var(--btn-color-focus);
+
+            .selectionInfo {
+                display: flex;
+                align-items: center;
+                gap: 10px;
+                height: 100%;
+                .selectionCount {
+                    font-weight: 600;
+                    font-size: 1.2rem;
+                }
+            }
+
+            .selectionActions {
+                display: flex;
+                align-items: stretch;
+                gap: 4px;
+                height: var(--galleryToolbarRowHeight);
+            }
+
+            button {
+                color: var(--font-color);
+                &:hover:not(:disabled) {
+                    background-color: rgba(255, 255, 255, 0.2);
+                }
+            }
+        }
+
+        &.hidden {
+            display: none;
+        }
+    }
+
+    .galleryContent {
+        display: flex;
+        flex: 1;
+        min-height: 0;
+        overflow: hidden;
+        &.with-details {
+            .libraryGrid {
+                display: none;
+            }
+        }
+        .libraryGrid {
+            flex: 1;
+            min-height: 0;
+            overflow-y: auto;
+            scrollbar-gutter: stable;
+            padding: 16px;
+            .empty-message {
+                font-size: 2em;
+                text-align: center;
+                margin-top: 100px;
+            }
+
+            .galleryList {
+                display: grid;
+                grid-template-columns: repeat(auto-fill, minmax(var(--galleryItemWidth), 1fr));
+                gap: 16px;
+                list-style-type: none;
+                &.list {
+                    display: flex;
+                    flex-direction: column;
+                    padding-inline: 4em;
+                    .galleryItem {
+                        /* 10% taller than the previous 6em row */
+                        height: 6.6em;
+                        box-sizing: border-box;
+                        display: grid;
+                        grid-template-columns: auto auto 1fr;
+                        align-items: center;
+                        gap: 1em;
+                        text-align: left;
+                        padding: 0.5em 0.5em 0.5em 0.85em;
+                        &:hover {
+                            scale: 1;
+                            background-color: var(--listItem-bg-color-hover);
+                        }
+                        &.multiSelected {
+                            background-color: var(--listItem-bg-color-hover);
+                            /* List rows are short — keep a light inset ring instead of the cover tint. */
+                            .coverContainer::after {
+                                display: none;
+                            }
+                        }
+                        .epubBadge,
+                        .continueReadingBtn {
+                            display: none;
+                        }
+                        .galleryCheckbox {
+                            position: static;
+                            top: auto;
+                            left: auto;
+                            opacity: 1;
+                            background-color: transparent;
+                            backdrop-filter: none;
+                            .checkBox {
+                                border-color: var(--font-color);
+                            }
+                            input:checked + .checkBox {
+                                background-color: var(--font-color);
+                                border-color: var(--font-color);
+                                &::after {
+                                    border-color: var(--body-bg-color);
+                                }
+                            }
+                        }
+                        &:hover .galleryCheckbox,
+                        &.selectionMode .galleryCheckbox,
+                        &.multiSelected .galleryCheckbox {
+                            background-color: transparent;
+                            backdrop-filter: none;
+                        }
+                        .coverContainer {
+                            height: 100%;
+                            width: auto;
+                            aspect-ratio: 2 / 3;
+                            max-height: 100%;
+                        }
+                        .mangaTitle {
+                            align-items: center;
+                            font-size: 1.2em;
+                            justify-content: start;
+                            -webkit-line-clamp: 1;
+                            padding: 0;
+                            text-align: left;
+                        }
+                    }
+                }
+            }
+
+            .galleryItem {
+                cursor: pointer;
+                border-radius: 8px;
+                /* Keep overflow visible so multi-select outline/offset is not clipped;
+                   cover rounding is handled on `.coverContainer`. */
+                overflow: visible;
+                transition:
+                    transform 0.2s,
+                    box-shadow 0.2s,
+                    outline-color 0.12s ease;
+                box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+                position: relative;
+
+                transition: scale 0.1s ease-in-out;
+                transform-style: preserve-3d;
+                &:hover {
+                    // transform: translateY(-4px);
+                    scale: 1.01;
+                    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+
+                    .galleryCheckbox {
+                        opacity: 1;
+                    }
+                }
+
+                &.selected {
+                    box-shadow: 0 0 0 4px var(--btn-color);
+                    outline: 4px transparent;
+                    scale: 1.01;
+                }
+
+                &.multiSelected {
+                    outline: 2px solid var(--btn-color);
+                    outline-offset: 2px;
+                    box-shadow: 0 0 0 3px var(--btn-color-focus);
+
+                    .coverContainer {
+                        &::after {
+                            content: "";
+                            position: absolute;
+                            inset: 0;
+                            z-index: 2;
+                            pointer-events: none;
+                            background-color: var(--btn-color);
+                            opacity: 0.22;
+                        }
+                    }
+
+                    .coverContainer img {
+                        filter: brightness(0.82);
+                    }
+                }
+
+                &.selectionMode {
+                    .galleryCheckbox {
+                        opacity: 1;
+                    }
+                    .continueReadingBtn {
+                        display: none !important;
+                    }
+                }
+
+                .galleryCheckbox {
+                    position: absolute;
+                    top: 8px;
+                    left: 8px;
+                    z-index: 11;
+                    width: 32px;
+                    height: 32px;
+                    border-radius: 8px;
+                    cursor: pointer;
+                    opacity: 0;
+                    transition:
+                        opacity 0.15s ease,
+                        transform 0.12s ease;
+                    display: flex;
+                    align-items: center;
+                    justify-content: center;
+                    background-color: transparent;
+                    backdrop-filter: none;
+
+                    &:hover {
+                        transform: scale(1.05);
+                    }
+
+                    input[type="checkbox"] {
+                        position: absolute;
+                        inset: 0;
+                        margin: 0;
+                        opacity: 0 !important;
+                        appearance: none;
+                        pointer-events: none;
+                    }
+
+                    .checkBox {
+                        width: 20px;
+                        height: 20px;
+                        border-radius: 4px;
+                        border: 2px solid #fff;
+                        background-color: transparent;
+                        position: relative;
+                        transition:
+                            background-color 0.12s ease,
+                            border-color 0.12s ease;
+                    }
+
+                    input:checked + .checkBox {
+                        background-color: #fff;
+                        border-color: #fff;
+
+                        &::after {
+                            content: "";
+                            position: absolute;
+                            left: 5px;
+                            top: 1px;
+                            width: 5px;
+                            height: 11px;
+                            border: solid #000;
+                            border-width: 0 2px 2px 0;
+                            transform: rotate(45deg);
+                        }
+                    }
+                }
+
+                &:hover .galleryCheckbox,
+                &.selectionMode .galleryCheckbox,
+                &.multiSelected .galleryCheckbox {
+                    background-color: rgba(0, 0, 0, 0.55);
+                    backdrop-filter: blur(8px);
+                }
+
+                .coverContainer {
+                    position: relative;
+                    aspect-ratio: 2/3;
+                    border-radius: 8px;
+                    overflow: hidden;
+                    background-color: var(--listItem-bg-color);
+
+                    img {
+                        width: 100%;
+                        height: 100%;
+                        object-fit: cover;
+                    }
+
+                    .blankCover {
+                        display: flex;
+                        align-items: center;
+                        justify-content: center;
+                        width: 100%;
+                        height: 100%;
+                        font-size: 32px;
+                        color: var(--font-color);
+                        background-color: var(--listItem-bg-color-hover);
+                    }
+                }
+
+                .mangaTitle {
+                    padding: 0.4em;
+                    padding-bottom: 0.2em;
+                    display: flex;
+                    align-items: end;
+                    text-align: center;
+                    justify-content: center;
+                    &.compact {
+                        position: absolute;
+                        bottom: 0;
+                        left: 0;
+                        right: 0;
+                        height: 50%;
+                        padding: 0.6em;
+                        z-index: 2;
+                        /** Clicks should hit the card / cover like the rest of the tile. */
+                        pointer-events: none;
+                        .bg {
+                            position: absolute;
+                            inset: 0;
+                            z-index: 1;
+                            background: linear-gradient(to bottom, transparent 0%, var(--divider-color) 100%);
+                            // opacity: 0.9;
+                        }
+                        span:not(.bg) {
+                            z-index: 2;
+                        }
+                    }
+                    > span:not(.bg) {
+                        // text-overflow: ellipsis;
+                        /* white-space: nowrap; */
+                        -webkit-line-clamp: 2;
+                        display: -webkit-box;
+                        // word-break: break-all;
+                        -webkit-box-orient: vertical;
+                        overflow: hidden;
+                        font-size: 1em;
+                        // background-color: var(--listItem-bg-color);
+                    }
+                }
+
+                .readStatus {
+                    position: absolute;
+                    top: 8px;
+                    right: 8px;
+
+                    .readIndicator {
+                        display: flex;
+                        align-items: center;
+                        justify-content: center;
+                        width: 24px;
+                        height: 24px;
+                        border-radius: 50%;
+                        background-color: var(--btn-color);
+                        color: var(--btn-color-hover);
+                        font-size: 12px;
+                    }
+                }
+                .epubBadge {
+                    position: absolute;
+                    top: 2%;
+                    left: 2%;
+                    background-color: var(--btn-color);
+                    color: var(--icon-color);
+                    z-index: 10;
+                    font-size: 12px;
+                    padding: 0.4em;
+                    border-radius: 4px;
+                }
+                &:hover {
+                    .continueReadingBtn {
+                        display: flex;
+                    }
+                }
+                .continueReadingBtn {
+                    display: none;
+                    position: absolute;
+                    top: 2%;
+                    right: 2%;
+                    border-radius: 100%;
+                    aspect-ratio: 1/1;
+                    // using % is better coz item size is dynamic
+                    width: 20%;
+                    padding: 1em;
+                    font-size: 1.2em;
+                    align-items: center;
+                    justify-content: center;
+                }
+            }
+        }
+    }
+}
+
+/**
+ * Selection-mode toolbar reused above classic-view list tabs and detail-panel
+ * sub-tabs. Uses the brighter hover background + full-strength font color so
+ * the bar reads as an active state, not a greyed-out one.
+ */
+.listSelectionToolbar {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    width: 100%;
+    padding: 6px 10px;
+    background-color: var(--btn-color-hover);
+    color: var(--font-color);
+    border-radius: 6px;
+    box-shadow: inset 0 0 0 1px var(--btn-color-focus);
+
+    .listSelectionCount {
+        font-weight: 600;
+        font-size: 0.95em;
+    }
+
+    .spacer {
+        flex: 1;
+    }
+
+    button {
+        background: none;
+        border: none;
+        cursor: pointer;
+        padding: 6px 8px;
+        border-radius: 4px;
+        color: var(--font-color);
+        min-width: 32px;
+        height: 32px;
+
+        &:hover {
+            background-color: rgba(255, 255, 255, 0.2);
+        }
+    }
+}
+
+/**
+ * Selection state for bookmark / history list rows in the classic view. The
+ * `<li>` carries the multiSelected class so the accent strip + tint cover the
+ * full row including the leading checkbox slot.
+ */
+.listCont li.multiSelected {
+    background-color: var(--listItem-bg-color-hover) !important;
+    box-shadow: inset 3px 0 0 var(--btn-color);
+}
+
+/**
+ * Leading checkbox slot inside each `<li>` (classic list rows). The label is
+ * a sibling of the row's `<a>`; we make it span the full row height with
+ * generous horizontal padding for a forgiving hit target.
+ */
+.listCont li > .rowSelectCheck {
+    align-self: stretch;
+    padding: 0 14px;
+    margin: 0;
+}
+
+/* Chapter / bookmark / note rows in details panels. */
+.chapter-item.multiSelected,
+.bookmark-item.multiSelected,
+.note-item.multiSelected {
+    background-color: var(--listItem-bg-color-hover);
+    box-shadow: inset 3px 0 0 var(--btn-color);
+}
+
+/**
+ * Inside details-panel rows, ensure the parent is a flex container so the
+ * rowSelectCheck can stretch full height for a generous click target.
+ */
+.bookmark-item,
+.note-item {
+    display: flex;
+    align-items: stretch;
+
+    > .bookmark-content,
+    > .note-item-row {
+        flex: 1;
+        min-width: 0;
+    }
+}
+
+/**
+ * Pull the row checkbox to the absolute left edge of the row by absorbing the
+ * parent's left padding (14px top/bottom, 20px left/right). The label keeps
+ * its visible square centred while the hit area extends from the row's edge.
+ *
+ * Also force full opacity so `.chapter-item.read > *` (which fades read rows)
+ * doesn't make the checkbox disappear.
+ */
+.chapter-item .rowSelectCheck,
+.bookmark-item .rowSelectCheck,
+.note-item .rowSelectCheck {
+    align-self: stretch;
+    margin: -14px 0 -14px -20px;
+    padding: 14px 14px 14px 20px;
+    opacity: 1 !important;
+}
+
+/**
+ * `.chapter-item.read > *` applies opacity 0.3 to dim read chapters; restore
+ * it on the rowSelectCheck so the checkbox stays usable on read rows.
+ */
+.chapter-item.read > .rowSelectCheck {
+    opacity: 1 !important;
+}
+
+/**
+ * Variant styling for the grid-size popover. The generic `.popover` provides
+ * positioning + shell; we just style the inner content layout.
+ */
+.popover.gridSizePopover {
+    width: 320px;
+    padding: 16px 18px;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    font-size: 1.02em;
+
+    .gridSizePopoverHeader {
+        display: flex;
+        justify-content: space-between;
+        align-items: baseline;
+        font-size: 1em;
+
+        .gridSizeValue {
+            font-variant-numeric: tabular-nums;
+            font-weight: 600;
+            color: var(--font-color);
+        }
+    }
+
+    .gridSizeSlider {
+        width: 100%;
+        height: 28px;
+    }
+
+    .gridSizeBounds {
+        display: flex;
+        justify-content: space-between;
+        font-size: 0.88em;
+        opacity: 0.6;
+        font-variant-numeric: tabular-nums;
+    }
+}
+
+/** Tag-filter multi-select panel width; inset padding comes from `.inputMultiSelectPanel`. */
+.popover.galleryTagFilterPopover {
+    min-width: 15em;
+    max-width: min(22em, 90vw);
+}

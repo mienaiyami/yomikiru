@@ -66,6 +66,69 @@ html{
     --error-color: #c62828;
 }
 
+/*
+ * ListNavigator.SearchInput chrome.
+ *
+ * Deliberately left outside @layer main: every consumer toolbar (gallery, details
+ * panel, classic lists) ships an unlayered component stylesheet, and unlayered rules
+ * beat any layered rule regardless of specificity. These have to sit on the same
+ * footing to survive.
+ *
+ * The wrapper takes over the layout slot the bare input used to occupy and anchors
+ * the absolutely positioned clear button.
+ */
+.search-input-wrapper {
+    position: relative;
+    display: flex;
+    /* stretch, not center: several toolbars gave the bare input its height by
+     * stretching it as a flex child; the wrapper has to pass that through */
+    align-items: stretch;
+    /* width: 100% keeps the flex-basis the bare input had in those toolbars */
+    flex: 1 1 auto;
+    width: 100%;
+    min-width: 0;
+
+    > input.search-input {
+        width: 100%;
+        min-width: 0;
+    }
+
+    /* Consumers style .search-input with a padding shorthand from deeply nested
+     * (and therefore more specific) selectors. Keeping text out from under the clear
+     * button is a component invariant, so this one declaration has to force itself. */
+    &:has(> .search-input-clear) > input.search-input {
+        padding-right: 2.4em !important;
+    }
+
+    /* positioning only - visual style comes from the app's default button rules */
+    > .search-input-clear {
+        position: absolute;
+        right: 0.35em;
+        top: 50%;
+        transform: translateY(-50%);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        width: 1.8em;
+        height: calc(100% - 0.5em);
+        min-width: 0;
+        padding: 0;
+        font-size: 0.85em;
+        cursor: pointer;
+    }
+}
+
+/*
+ * Library item title: original folder/file name sits in muted parentheses after the
+ * edited or tracker title. Unlayered so gallery (unlayered home/styles) and details
+ * (unlayered mangaDetailsPanel.scss) cannot override the mute.
+ */
+.itemDisplayTitle-original {
+    color: var(--font-color-secondary);
+    font-weight: 400;
+    font-size: 0.85em;
+}
+
 @layer main {
     ::-webkit-scrollbar {
         width: 10px;
@@ -168,6 +231,9 @@ html{
 
         @import "./mini/inputs.scss";
         @import "./mini/topbar.scss";
+        @import "./mini/popover.scss";
+        @import "./mini/rowSelectCheck.scss";
+        @import "./mini/inputMultiSelect.scss";
 
         .icon {
             color: var(--icon-color) !important;
@@ -288,6 +354,44 @@ html{
             overflow: hidden;
         }
 
+        /*
+         * Non-dismissible lock above TopBar, Settings, and menus. Mouse is covered
+         * by the overlay; keyboard/pointer shortcuts are stopped in capture in the
+         * overlay component.
+         */
+        #uiBlockOverlay {
+            position: fixed;
+            inset: 0;
+            z-index: 2000000;
+            display: grid;
+            place-items: center;
+            gap: 1em;
+            background: var(--body-bg-color);
+            cursor: wait;
+            opacity: 0.7;
+            backdrop-filter: blur(4px);
+
+
+            @keyframes uiBlockPulse {
+                0% {
+                    opacity: 1;
+                }
+                50% {
+                    opacity: 0.2;
+                }
+                100% {
+                    opacity: 1;
+                }
+            }
+
+            .loadingText {
+                font-size: 2em;
+                text-align: center;
+                padding: 0 1em;
+                animation: 2s linear uiBlockPulse infinite;
+            }
+        }
+
         #app {
             position: absolute;
             top: var(--titleBar-height);
@@ -373,11 +477,25 @@ html{
                 overflow-y: auto;
                 background-color: var(--btn-color);
                 color: var(--font-color);
+                /* KeyboardList enables clicks only on :focus-within; filter-while-type lists stay unfocused */
+                &.retainFocus {
+                    pointer-events: all;
+                }
                 ul {
                     li {
                         padding: 5px 10px;
                         display: grid;
-                        grid-template-columns: 1em auto;
+                        grid-template-columns: 1em minmax(0, 1fr) auto;
+                        column-gap: 0.5em;
+                        align-items: baseline;
+                        .itemListLabel {
+                            min-width: 0;
+                        }
+                        .itemListDesc {
+                            opacity: 0.55;
+                            font-size: 0.85em;
+                            white-space: nowrap;
+                        }
                     }
                 }
             }
@@ -419,6 +537,9 @@ html{
                     p {
                         padding: 10px 20px;
                     }
+                    p.loginDesc {
+                        white-space: pre-line;
+                    }
                     .btns {
                         display: flex;
                         flex-direction: column;
@@ -456,6 +577,19 @@ html{
                     background: var(--body-bg-color);
                 }
                 --tabMoverHeight: 3em;
+                --settingsSearchHeight: 3.5em;
+                .settingsSearch {
+                    position: relative;
+                    z-index: 2;
+                    height: var(--settingsSearchHeight);
+                    padding: 0.5em 0.75em;
+                    box-sizing: border-box;
+                    border-bottom: 1px solid var(--divider-color);
+                    .search-input-wrapper,
+                    .search-input {
+                        height: 100%;
+                    }
+                }
                 .tabMovers {
                     height: var(--tabMoverHeight);
                     position: relative;
@@ -498,7 +632,7 @@ html{
                 .overlayCont {
                     position: relative;
                     width: 100%;
-                    height: calc(100% - var(--tabMoverHeight));
+                    height: calc(100% - var(--tabMoverHeight) - var(--settingsSearchHeight));
                     overflow: auto;
 
                     &.noScroll {
@@ -572,6 +706,9 @@ html{
                                     word-spacing: 0.3em;
                                     letter-spacing: 0.02em;
                                 }
+                                h4 {
+                                    margin-top: 1.2em;
+                                }
                                 ul {
                                     margin: 0;
                                     margin-left: 1.5em;
@@ -630,6 +767,11 @@ html{
                                     display: flex;
                                     color: var(--font-color);
                                     padding: 0.4em 1em;
+                                    /* Nested copy already sits in this padding (reader-preset layout). */
+                                    .desc {
+                                        padding-left: 0;
+                                        padding-right: 0;
+                                    }
                                     // align-items: center;
                                     justify-content: flex-start;
                                     // flex-wrap: wrap;
@@ -646,6 +788,82 @@ html{
                                     }
                                     label:has(.toggle-area) {
                                         font-size: 1.3em;
+                                    }
+                                    .libraryFolderCard {
+                                        width: 100%;
+                                        gap: 0.2em;
+                                        display: flex;
+                                        padding: 0.65em 0 0.2em;
+                                        box-shadow: inset 0 1px 0 0 var(--divider-color);
+                                        .libraryFolderPathLabel {
+                                            flex: 0 0 auto;
+                                            opacity: 0.8;
+                                        }
+                                    }
+                                    .libraryFolderControls {
+                                        width: 100%;
+                                        display: flex;
+                                        gap: 0.2em;
+                                    }
+                                    .libraryScanDefaultLocation {
+                                        width: 100%;
+                                        gap: 0.4em;
+                                    }
+                                    .libraryScanRootOptions {
+                                        width: 100%;
+                                        gap: 0.25em;
+                                        .libraryScanRootRow {
+                                            width: 100%;
+                                            label.noBG {
+                                                flex: 1 1 16em;
+                                                min-width: 0;
+                                                padding: 0;
+                                                gap: 0.5em;
+                                            }
+                                            .librarySkipPatternInput {
+                                                font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+                                                flex: 1 1 12em;
+                                                min-width: 8em;
+                                            }
+                                            > button {
+                                                flex: 0 0 auto;
+                                            }
+                                        }
+                                        .librarySkipPatternError {
+                                            color: var(--error-color);
+                                        }
+                                    }
+                                    .libraryFolderRow {
+                                        align-items: center;
+                                        flex-wrap: wrap;
+                                        gap: 0.45em 0.7em;
+                                        input[type="text"] {
+                                            flex: 1 1 12em;
+                                            min-width: 8em;
+                                            max-width: none;
+                                        }
+                                        label:has(.toggle-area) {
+                                            font-size: 1em;
+                                            flex-direction: row;
+                                            padding: 0.15em 0;
+                                            gap: 0.35em;
+                                            .toggle-area {
+                                                margin-left: 0;
+                                            }
+                                        }
+                                        /* Max depth / interval hints: below the label, wrapped */
+                                        [data-tooltip] {
+                                            overflow: visible;
+                                            &::before {
+                                                left: 50%;
+                                                top: 100%;
+                                                --translate: -50%, 0.5em;
+                                                white-space: normal;
+                                                max-width: min(22em, 90vw);
+                                                width: max-content;
+                                                padding: 0.4em 0.5em;
+                                            }
+                                        }
                                     }
                                     &:has(.themeButtons) {
                                         flex-wrap: wrap;
@@ -917,6 +1135,15 @@ html{
                         }
                     }
                 }
+                /*
+                 * Must follow .settingItem2 / .toggleItem box-shadow rules or they override.
+                 * Prefer outline + bg: chrome 108 has no color-mix; box-shadow alone loses to dividers.
+                 */
+                .settings-target-highlight {
+                    outline: 3px solid var(--btn-color-focus);
+                    outline-offset: 2px;
+                    background-color: rgba(255, 255, 0, 0.28);
+                }
             }
 
             #loadingScreen {
@@ -1108,42 +1335,34 @@ html{
                 }
             }
             #EPubReader {
-                // for .txt and .xhtml
-                &:not(.fake) {
-                    .readerSideList {
-                        .location-cont {
-                            li {
-                                // --level-top: 0;
-                                // font-size: calc(1rem + calc(calc(var(--level-top) / 3) * 1em));
-                                a {
-                                    grid-template-columns: auto;
+                .readerSideList {
+                    .location-cont {
+                        li {
+                            a {
+                                grid-template-columns: auto;
 
-                                    &::before {
-                                        display: none;
-                                    }
+                                &::before {
+                                    display: none;
                                 }
-                                // &.collapsed {
-                                //     display: none;
-                                // }
-                                &.collapsible {
+                            }
+                            &.collapsible {
+                                &::before {
+                                    content: "▼";
+                                    display: inline-block;
+                                    transform: rotate(0);
+                                    height: 100%;
+                                    aspect-ratio: 1;
+                                    margin-top: 0.2em;
+                                }
+                                &.collapsed {
+                                    display: flex;
+                                    align-items: center;
                                     &::before {
-                                        content: "▼";
-                                        display: inline-block;
-                                        transform: rotate(0);
-                                        height: 100%;
-                                        aspect-ratio: 1;
-                                        margin-top: 0.2em;
+                                        transform: rotate(-90deg);
+                                        margin-top: 0;
                                     }
-                                    &.collapsed {
-                                        display: flex;
-                                        align-items: center;
-                                        &::before {
-                                            transform: rotate(-90deg);
-                                            margin-top: 0;
-                                        }
-                                        & + ol {
-                                            display: none;
-                                        }
+                                    & + ol {
+                                        display: none;
                                     }
                                 }
                             }

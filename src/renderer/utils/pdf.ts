@@ -13,6 +13,7 @@ const renderPDF = async (
     renderPath: string,
     scale: number,
     onUpdate?: (total: number, done: number) => void,
+    pageLimit?: number,
 ): Promise<{ count: number; success: number; renderPath: string; link: string }> => {
     try {
         const loadingTask = pdfjsLib.getDocument(link);
@@ -30,9 +31,11 @@ const renderPDF = async (
         let count = 0;
         let success = 0;
 
+        const lastPage = pageLimit && pageLimit > 0 ? Math.min(totalPages, pageLimit) : totalPages;
+
         const renderPromises = [];
 
-        for (let i = 1; i <= totalPages; i++) {
+        for (let i = 1; i <= lastPage; i++) {
             renderPromises.push(
                 (async (pageNum) => {
                     try {

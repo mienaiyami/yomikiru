@@ -113,10 +113,11 @@
                 position: relative;
             }
         }
-    }
-    &.hideTextFileBadge {
-        .nonFolder[data-type-text="true"] {
-            display: none;
+        .anilistBar-retry {
+            white-space: nowrap;
+            font-size: 0.8em;
+            justify-self: start;
+            align-self: center;
         }
     }
     &.hidePageCountInSideList {

@@ -40,7 +40,12 @@ const Modal = memo((props: Props1 | Props2) => {
                         }
                     }}
                     onKeyDown={(e) => {
-                        if (e.key === "Escape") props.onClose();
+                        if (e.key === "Escape") {
+                            // Settings (and similar overlays) listen for Escape on React ancestors
+                            e.stopPropagation();
+                            props.onClose();
+                            return;
+                        }
                         if (e.key === " ") {
                             e.preventDefault();
                             e.currentTarget.click();

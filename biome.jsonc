@@ -15,7 +15,10 @@
             "!**/.webpack",
             "!**/*.d.ts",
             "!**/drizzle",
-            "!**/public"
+            "!**/public",
+            "!**/coverage",
+            "!**/playwright-report",
+            "!**/test-results"
         ]
     },
     "formatter": {
@@ -254,6 +257,19 @@
             "includes": ["**/src/electron/preload.ts"],
             "linter": {
                 "rules": {
+                    "style": {
+                        "noRestrictedImports": "off"
+                    }
+                }
+            }
+        },
+        {
+            "includes": ["**/src/test/**", "**/*.test.ts", "**/*.test.tsx", "**/vitest.config.mts"],
+            "linter": {
+                "rules": {
+                    "correctness": {
+                        "noNodejsModules": "off"
+                    },
                     "style": {
                         "noRestrictedImports": "off"
                     }

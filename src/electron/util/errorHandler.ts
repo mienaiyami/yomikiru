@@ -1,6 +1,7 @@
 import fs from "node:fs";
 import os from "node:os";
 import path from "node:path";
+import { mainT } from "@electron/i18n/mainI18n";
 import { app, BrowserWindow, dialog, shell } from "electron";
 import { createMainLogger } from "./logger";
 
@@ -277,12 +278,17 @@ export class ErrorHandler {
             return;
         }
 
+        const t = mainT;
         const result = await dialog.showMessageBox(window, {
             type: "question",
-            title: "Report Issue",
-            message: "Would you like to report this issue to help improve Yomikiru?",
-            detail: "This will open GitHub with error information pre-filled. No personal data is included.",
-            buttons: ["Report Issue", "Copy Error Info", "Cancel"],
+            title: t("errors.reportIssueTitle", { ns: "electron" }),
+            message: t("errors.reportIssueMessage", { ns: "electron" }),
+            detail: t("errors.reportIssueDetail", { ns: "electron" }),
+            buttons: [
+                t("errors.reportIssue", { ns: "electron" }),
+                t("errors.copyErrorInfo", { ns: "electron" }),
+                t("buttons.cancel", { ns: "dialogs" }),
+            ],
             defaultId: 0,
             cancelId: 2,
         });
@@ -293,9 +299,9 @@ export class ErrorHandler {
             await this.copyErrorInfoToClipboard();
             await dialog.showMessageBox(window, {
                 type: "info",
-                title: "Error Info Copied",
-                message: "Error information has been copied to clipboard.",
-                buttons: ["OK"],
+                title: t("errors.errorInfoCopiedTitle", { ns: "electron" }),
+                message: t("errors.errorInfoCopiedMessage", { ns: "electron" }),
+                buttons: [t("buttons.ok", { ns: "dialogs" })],
             });
         }
     }
@@ -364,14 +370,16 @@ export class ErrorHandler {
             return;
         }
 
-        const buttons = ["OK"];
+        const t = mainT;
+        const buttons = [t("buttons.ok", { ns: "dialogs" })];
         if (errorReport.severity === "high" || errorReport.severity === "critical") {
-            buttons.push("Report Issue");
+            buttons.push(t("errors.reportIssue", { ns: "electron" }));
         }
 
+        const severityLabel = errorReport.severity.charAt(0).toUpperCase() + errorReport.severity.slice(1);
         const result = await dialog.showMessageBox(window, {
             type: "error",
-            title: `${errorReport.severity.charAt(0).toUpperCase() + errorReport.severity.slice(1)} Error`,
+            title: t("errors.severityErrorTitle", { ns: "electron", severity: severityLabel }),
             message: errorReport.message,
             detail: this.formatErrorDetail(errorReport),
             buttons,
@@ -384,22 +392,25 @@ export class ErrorHandler {
     }
 
     private formatErrorDetail(errorReport: ErrorReport): string {
+        const t = mainT;
         const details = [];
 
         if (errorReport.context.source) {
-            details.push(`Source: ${errorReport.context.source}`);
+            details.push(t("errors.detailSource", { ns: "electron", source: errorReport.context.source }));
         }
 
         if (errorReport.context.action) {
-            details.push(`Action: ${errorReport.context.action}`);
+            details.push(t("errors.detailAction", { ns: "electron", action: errorReport.context.action }));
         }
 
         if (errorReport.context.ipcChannel) {
-            details.push(`IPC Channel: ${errorReport.context.ipcChannel}`);
+            details.push(
+                t("errors.detailIpcChannel", { ns: "electron", channel: errorReport.context.ipcChannel }),
+            );
         }
 
-        details.push(`Time: ${errorReport.timestamp.toLocaleString()}`);
-        details.push(`App Version: ${errorReport.appVersion}`);
+        details.push(t("errors.detailTime", { ns: "electron", time: errorReport.timestamp.toLocaleString() }));
+        details.push(t("errors.detailAppVersion", { ns: "electron", version: errorReport.appVersion }));
 
         return details.join("\n");
     }

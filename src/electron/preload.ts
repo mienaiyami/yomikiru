@@ -49,8 +49,11 @@ const fsAPI = {
             return false;
         }
     },
-    isFile: (path: string) => {
+    isFile: (path: string, acceptSymbolicLink = true) => {
         try {
+            if (acceptSymbolicLink && lstatSync(path).isSymbolicLink()) {
+                return statSync(path).isFile();
+            }
             return lstatSync(path).isFile();
         } catch (_error) {
             return false;
@@ -64,6 +67,8 @@ const pathAPI = {
     basename: path.basename,
     dirname: path.dirname,
     resolve: path.resolve,
+    relative: path.relative,
+    isAbsolute: path.isAbsolute,
     sep: path.sep,
 };
 // this will only return single type "will-resize" coz of typescript limitation?

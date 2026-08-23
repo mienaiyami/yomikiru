@@ -1,20 +1,7 @@
-import type { MainSettingsType } from "@electron/util/mainSettings";
+import { defaultMainSettings, type MainSettingsType } from "@common/mainSettings";
 import { createAsyncThunk, createSlice } from "@reduxjs/toolkit";
 
-/**
- * @see src/electron/util/mainSettings.ts
- */
-const initialState: MainSettingsType = {
-    hardwareAcceleration: true,
-    tempPath: window.electron.app.getPath("temp"),
-    openInExistingWindow: false,
-    askBeforeClosing: false,
-    minimizeToTray: false,
-    checkForUpdates: true,
-    skipPatch: false,
-    autoDownload: false,
-    channel: "stable",
-};
+const initialState: MainSettingsType = defaultMainSettings(window.electron.app.getPath("temp"));
 
 export const updateMainSettings = createAsyncThunk(
     "mainSettings/update",

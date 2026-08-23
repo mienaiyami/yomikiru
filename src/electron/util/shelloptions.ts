@@ -90,6 +90,9 @@ export const addOptionToExplorerMenu = async (): Promise<boolean> => {
     }
 };
 
+/**
+ * Registers Windows Explorer "Open in Yomikiru" for book files.
+ */
 export const addOptionToExplorerMenu_epub = async (): Promise<boolean> => {
     try {
         const appPath = IS_PORTABLE
@@ -105,15 +108,6 @@ export const addOptionToExplorerMenu_epub = async (): Promise<boolean> => {
         @="\\"${appPath}\\" \\"%V\\""
 
         [HKEY_CLASSES_ROOT\\.epub\\OpenWithProgids]
-        "Yomikiru"=""
-        
-        [HKEY_CLASSES_ROOT\\.txt\\OpenWithProgids]
-        "Yomikiru"=""
-        
-        [HKEY_CLASSES_ROOT\\.xhtml\\OpenWithProgids]
-        "Yomikiru"=""
-        
-        [HKEY_CLASSES_ROOT\\.html\\OpenWithProgids]
         "Yomikiru"=""
         `;
 
@@ -179,12 +173,28 @@ export const deleteOptionInExplorerMenu = async (): Promise<boolean> => {
     }
 };
 
+/**
+ * Removes Windows Explorer "Open in Yomikiru" for book files.
+ * Also clears leftover Open With progids from dropped standalone text formats
+ * so Remove still cleans associations added by older builds.
+ */
 export const deleteOptionInExplorerMenu_epub = async (): Promise<boolean> => {
     try {
         const regDelete = `Windows Registry Editor Version 5.00
         
         [-HKEY_CLASSES_ROOT\\.epub\\shell\\Yomikiru]
 
+        [HKEY_CLASSES_ROOT\\.epub\\OpenWithProgids]
+        "Yomikiru"=-
+
+        [HKEY_CLASSES_ROOT\\.txt\\OpenWithProgids]
+        "Yomikiru"=-
+
+        [HKEY_CLASSES_ROOT\\.xhtml\\OpenWithProgids]
+        "Yomikiru"=-
+
+        [HKEY_CLASSES_ROOT\\.html\\OpenWithProgids]
+        "Yomikiru"=-
         `;
 
         const tempPath = app.getPath("temp");

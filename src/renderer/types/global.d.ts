@@ -26,7 +26,16 @@ declare global {
                 copyPath: (url: string) => Menu.ListItem;
                 copyImage: (url: string) => Menu.ListItem;
                 addToBookmark: (args: Parameters<typeof addBookmark>["0"]) => Menu.ListItem;
-                removeHistory: (url: string, isInSideList?: boolean) => Menu.ListItem;
+                /**
+                 * Confirm and delete a library item (progress, bookmarks, notes).
+                 * Files on disk are left alone. Optional `onRemoved` runs after dispatch.
+                 */
+                removeHistory: (url: string, isInSideList?: boolean, onRemoved?: () => void) => Menu.ListItem;
+                /**
+                 * Confirm and drop reading progress for a catalogue row.
+                 * The library item, bookmarks, and notes stay. Disabled when there is no progress.
+                 */
+                removeProgress: (url: string, onRemoved?: () => void) => Menu.ListItem;
                 removeBookmark: (
                     itemLink: string,
                     bookmarkId: number,

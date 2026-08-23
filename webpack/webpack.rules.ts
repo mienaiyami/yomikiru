@@ -17,7 +17,12 @@ export const rules: Required<ModuleOptions>["rules"] = [
     },
     {
         test: /\.tsx?$/,
-        exclude: /(node_modules|\.webpack)/,
+        /*
+         * Skip deps, Forge output, and test/e2e sources if webpack resolves them
+         * so they never enter the pack. ts-loader still typechecks the tsconfig
+         * program; do not set onlyCompileBundledFiles (that drops ambient .d.ts).
+         */
+        exclude: /(node_modules|\.webpack|\.test\.tsx?$|[\\/]e2e[\\/]|[\\/]src[\\/]test[\\/])/,
         use: {
             loader: "ts-loader",
             // use this or `ForkTsCheckerWebpackPlugin` in `webpack/plugins.ts`

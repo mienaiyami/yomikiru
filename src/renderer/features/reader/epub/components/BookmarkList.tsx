@@ -6,24 +6,28 @@ import { getReaderBook } from "@store/reader";
 import dateUtils from "@utils/date";
 import { dialogUtils } from "@utils/dialog";
 import { createRendererLogger } from "@utils/logger";
-import { useCallback } from "react";
+import { useCallback, useMemo } from "react";
+import { useTranslation } from "react-i18next";
 
 const log = createRendererLogger("epub/BookmarkList");
 
-import { shallowEqual } from "react-redux";
 import { useAppContext } from "src/renderer/App";
+
+/** Stable fallback keeps an absent bookmark map from invalidating the selector result. */
+const EMPTY_BOOK_BOOKMARKS: readonly BookBookmark[] = [];
 
 const BookmarkList: React.FC<{
     openChapterById: (chapterId: string, position?: string) => void;
 }> = ({ openChapterById }) => {
+    const { t } = useTranslation("reader");
     const { setContextMenuData } = useAppContext();
     const bookInReader = useAppSelector(getReaderBook);
-    const bookmarksArray: BookBookmark[] = useAppSelector(
-        (store) =>
-            [...((bookInReader && store.bookmarks.book[bookInReader.link]) || [])].sort(
-                (b, a) => a.createdAt.getTime() - b.createdAt.getTime(),
-            ),
-        shallowEqual,
+    const bookmarks = useAppSelector((store) =>
+        bookInReader ? (store.bookmarks.book[bookInReader.link] ?? EMPTY_BOOK_BOOKMARKS) : EMPTY_BOOK_BOOKMARKS,
+    );
+    const bookmarksArray = useMemo(
+        () => [...bookmarks].sort((b, a) => a.createdAt.getTime() - b.createdAt.getTime()),
+        [bookmarks],
     );
     const handleBookmarkClick = useCallback(
         (e: React.MouseEvent<HTMLAnchorElement>) => {
@@ -38,11 +42,11 @@ const BookmarkList: React.FC<{
             } catch (error) {
                 log.error("navigate to chapter failed", error);
                 dialogUtils.customError({
-                    message: "Could not find the chapter for corresponding id.",
+                    message: t("errors.chapterIdNotFound"),
                 });
             }
         },
-        [bookmarksArray, bookInReader, openChapterById],
+        [bookmarksArray, openChapterById, t],
     );
     const handleBookmarkContextMenu = useCallback(
         (e: React.MouseEvent<HTMLAnchorElement>) => {
@@ -53,7 +57,7 @@ const BookmarkList: React.FC<{
             const bookmark = bookmarksArray.find((b) => b.id === bookmarkId);
             if (!bookmark) {
                 dialogUtils.customError({
-                    message: "Could not find the chapter for corresponding id.",
+                    message: t("errors.chapterIdNotFound"),
                 });
                 return;
             }
@@ -67,7 +71,7 @@ const BookmarkList: React.FC<{
                 items,
             });
         },
-        [bookmarksArray, setContextMenuData],
+        [bookmarksArray, setContextMenuData, t],
     );
     const renderBookmarkItem = (bookmark: BookBookmark, _index: number, isSelected: boolean) => {
         return (
@@ -96,7 +100,7 @@ const BookmarkList: React.FC<{
             <ListNavigator.Provider
                 items={bookmarksArray}
                 renderItem={renderBookmarkItem}
-                emptyMessage="No Bookmarks"
+                emptyMessage={t("sideList.noBookmarks")}
             >
                 <ListNavigator.List />
             </ListNavigator.Provider>

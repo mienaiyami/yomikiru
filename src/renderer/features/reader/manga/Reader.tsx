@@ -1,16 +1,19 @@
-import type { MangaProgress } from "@common/types/db";
-import { setAnilistCurrentManga } from "@store/anilist";
+import { applyMakeCoverFromPageImage } from "@features/reader/services/readerCoverFlows";
+import { setAnilistCurrentListEntry } from "@store/anilist";
 import { setAppSettings, setReaderSettings } from "@store/appSettings";
 import { useAppDispatch, useAppSelector } from "@store/hooks";
-import { addLibraryItem, selectLibraryItem, updateChaptersRead, updateMangaProgress } from "@store/library";
-import { setReaderLoading, setReaderOpen, updateReaderContent, updateReaderMangaCurrentPage } from "@store/reader";
+import { selectLibraryItem, updateChaptersRead } from "@store/library";
+import { setReaderLoading, setReaderOpen, updateReaderMangaCurrentPage } from "@store/reader";
 import { cyclePresetNext, cyclePresetPrev, selectPresetSlot } from "@store/readerPresets";
-import AniList from "@utils/anilist";
+import { updateTrackerSnapshot } from "@store/trackers";
+import { setAnilistListProgress, toAnilistTrackerSnapshotUpdate } from "@utils/anilist";
 import { processChapterNumber } from "@utils/chapterUtils";
-import { formatUtils } from "@utils/file";
+import { fileSrcToImagePath, formatUtils } from "@utils/file";
 import { keyFormatter, mouseEventFormatter } from "@utils/keybindings";
+import { syncMangaLibraryOnReaderOpen } from "@utils/libraryMissingPath";
 import { createRendererLogger } from "@utils/logger";
 import { Fragment, useCallback, useEffect, useLayoutEffect, useRef, useState } from "react";
+import { useTranslation } from "react-i18next";
 import { InView } from "react-intersection-observer";
 import { useAppContext } from "../../../App";
 import useSmoothScroll from "../hooks/useSmoothScroll";
@@ -54,7 +57,7 @@ const Reader: React.FC = () => {
     const mangaHasProgress = useAppSelector((store) =>
         store.reader.type === "manga" ? !!store.reader.content?.progress : false,
     );
-    const anilistCurrentManga = useAppSelector((store) => store.anilist.currentManga);
+    const anilistCurrentListEntry = useAppSelector((store) => store.anilist.currentListEntry);
     const isLoadingManga = useAppSelector((store) => store.reader.loading !== null);
 
     const libraryItem = useAppSelector((store) => selectLibraryItem(store, linkInReader));
@@ -89,6 +92,7 @@ const Reader: React.FC = () => {
     const [chapterChangerDisplay, setChapterChangerDisplay] = useState(false);
     const [wasMaximized, setWasMaximized] = useState(false);
     // display this text then shortcuts clicked
+    const { t } = useTranslation("reader");
     const [shortcutText, setShortcutText] = useState("");
     // for grab to scroll
     const [mouseDown, setMouseDown] = useState<null | { top: number; left: number; x: number; y: number }>(null);
@@ -364,9 +368,6 @@ const Reader: React.FC = () => {
                 case is(shortcutsMapped.prevChapter):
                     openPrevChapterRef.current?.click();
                     return true;
-                case is(shortcutsMapped.focusSideListSearch):
-                    sideListSearchRef.current?.focus();
-                    return true;
                 case is(shortcutsMapped.randomChapter):
                     openRandomChapterRef.current?.click();
                     return true;
@@ -381,8 +382,9 @@ const Reader: React.FC = () => {
                     return true;
                 case is(shortcutsMapped.showHidePageNumberInZen):
                     setShortcutText(
-                        (!appSettings.readerSettings.showPageNumberInZenMode ? "Show" : "Hide") +
-                            " page-number in Zen Mode",
+                        appSettings.readerSettings.showPageNumberInZenMode
+                            ? t("hud.hidePageNumberInZen")
+                            : t("hud.showPageNumberInZen"),
                     );
                     dispatch(
                         setReaderSettings({
@@ -394,10 +396,10 @@ const Reader: React.FC = () => {
                     let fitOption = appSettings.readerSettings.fitOption + (e.shiftKey ? -1 : 1);
                     if (fitOption < 0) fitOption = 3;
                     fitOption %= 4;
-                    if (fitOption === 0) setShortcutText("Free");
-                    if (fitOption === 1) setShortcutText("Fit Vertically");
-                    if (fitOption === 2) setShortcutText("Fit Horizontally");
-                    if (fitOption === 3) setShortcutText("1:1");
+                    if (fitOption === 0) setShortcutText(t("hud.free"));
+                    if (fitOption === 1) setShortcutText(t("hud.fitVertically"));
+                    if (fitOption === 2) setShortcutText(t("hud.fitHorizontally"));
+                    if (fitOption === 3) setShortcutText(t("hud.originalRatio"));
                     dispatch(
                         setReaderSettings({
                             fitOption: fitOption as 0 | 1 | 2 | 3,
@@ -406,15 +408,15 @@ const Reader: React.FC = () => {
                     return true;
                 }
                 case is(shortcutsMapped.selectReaderMode0):
-                    setShortcutText("Reading Mode - Vertical Scroll");
+                    setShortcutText(t("hud.readingModeVertical"));
                     dispatch(setReaderSettings({ readerTypeSelected: 0 }));
                     return true;
                 case is(shortcutsMapped.selectReaderMode1):
-                    setShortcutText("Reading Mode - Left to Right");
+                    setShortcutText(t("hud.readingModeLtr"));
                     dispatch(setReaderSettings({ readerTypeSelected: 1 }));
                     return true;
                 case is(shortcutsMapped.selectReaderMode2):
-                    setShortcutText("Reading Mode - Right to Left");
+                    setShortcutText(t("hud.readingModeRtl"));
                     dispatch(setReaderSettings({ readerTypeSelected: 2 }));
                     return true;
                 case is(shortcutsMapped.selectPagePerRow1):
@@ -425,7 +427,7 @@ const Reader: React.FC = () => {
                         if (readerWidth > (appSettings.readerSettings.widthClamped ? 100 : 500))
                             readerWidth = appSettings.readerSettings.widthClamped ? 100 : 500;
                         if (readerWidth < 1) readerWidth = 1;
-                        setShortcutText("Page per Row - 1");
+                        setShortcutText(t("hud.pagePerRow1"));
                         dispatch(setReaderSettings({ pagesPerRowSelected, readerWidth }));
                     }
                     return true;
@@ -438,7 +440,7 @@ const Reader: React.FC = () => {
                             readerWidth = appSettings.readerSettings.widthClamped ? 100 : 500;
                         if (readerWidth < 1) readerWidth = 1;
                     }
-                    setShortcutText("Page per Row - 2");
+                    setShortcutText(t("hud.pagePerRow2"));
                     dispatch(setReaderSettings({ pagesPerRowSelected, readerWidth }));
                     return true;
                 }
@@ -451,18 +453,18 @@ const Reader: React.FC = () => {
                             readerWidth = appSettings.readerSettings.widthClamped ? 100 : 500;
                         if (readerWidth < 1) readerWidth = 1;
                     }
-                    setShortcutText("Page per Row - 2odd");
+                    setShortcutText(t("hud.pagePerRow2odd"));
                     dispatch(setReaderSettings({ pagesPerRowSelected, readerWidth }));
                     return true;
                 }
                 case is(shortcutsMapped.cyclePresetNext): {
                     const name = dispatch(cyclePresetNext("manga"));
-                    if (name) setShortcutText(`Preset: ${name}`);
+                    if (name) setShortcutText(t("hud.presetNamed", { name }));
                     return true;
                 }
                 case is(shortcutsMapped.cyclePresetPrev): {
                     const name = dispatch(cyclePresetPrev("manga"));
-                    if (name) setShortcutText(`Preset: ${name}`);
+                    if (name) setShortcutText(t("hud.presetNamed", { name }));
                     return true;
                 }
                 case is(shortcutsMapped.selectPreset1):
@@ -479,7 +481,7 @@ const Reader: React.FC = () => {
                     ].findIndex((keys) => is(keys ?? []));
                     if (slotIdx >= 0) {
                         const name = dispatch(selectPresetSlot("manga", slotIdx));
-                        if (name) setShortcutText(`Preset: ${name}`);
+                        if (name) setShortcutText(t("hud.presetNamed", { name }));
                     }
                     return true;
                 }
@@ -675,57 +677,14 @@ const Reader: React.FC = () => {
             }),
         );
 
-        const linkSplitted = link.split(window.path.sep).filter((e) => e !== "");
-
-        const progress: MangaProgress = {
-            chapterLink: link,
+        const mangaItem = libraryItem?.type === "manga" ? libraryItem : null;
+        await syncMangaLibraryOnReaderOpen({
+            dispatch,
+            openedPath: link,
+            libraryItem: mangaItem,
+            images: imgs,
             currentPage: mangaOpenPage || 1,
-            lastReadAt: new Date(),
-            chapterName: linkSplitted.at(-1) || "",
-            itemLink: window.path.dirname(link),
-            totalPages: imgs.length,
-            chaptersRead: [],
-        };
-        if (libraryItem && libraryItem.type === "manga") {
-            progress.chaptersRead = Array.from(libraryItem.progress?.chaptersRead || []);
-            progress.chaptersRead.push(window.path.basename(link));
-
-            dispatch(
-                updateReaderContent({
-                    ...libraryItem,
-                    progress,
-                }),
-            );
-            dispatch(updateMangaProgress(progress));
-        } else {
-            const mangaOpened = {
-                type: "manga",
-                link: window.path.dirname(link),
-                title: linkSplitted[linkSplitted.length - 2],
-                author: null,
-                cover: imgs[0],
-                createdAt: new Date(),
-                updatedAt: new Date(),
-            } as const;
-            dispatch(
-                updateReaderContent({
-                    ...mangaOpened,
-                    progress,
-                }),
-            );
-            dispatch(
-                addLibraryItem({
-                    type: "manga",
-                    data: mangaOpened,
-                    progress: {
-                        chapterLink: link,
-                        currentPage: 1,
-                        totalPages: imgs.length,
-                        chapterName: linkSplitted.at(-1) || "",
-                    },
-                }),
-            );
-        }
+        });
         setImages(imgs);
         dispatch(setReaderOpen());
     };
@@ -798,7 +757,7 @@ const Reader: React.FC = () => {
                     canvas.width = 500;
                     canvas.height = 100;
                     ctx.fillStyle = window.getComputedStyle(document.body).color || "black";
-                    ctx.fillText("Error occurred while loading image.", 10, 10);
+                    ctx.fillText(t("errors.imageLoadFailed"), 10, 10);
 
                     imagesLoaded++;
                     onProgress(imagesLoaded);
@@ -853,6 +812,7 @@ const Reader: React.FC = () => {
     useEffect(() => {
         //todo use just src for image and canvas, add canvas using element outside
         appSettings.useCanvasBasedReader &&
+            // biome-ignore lint/style/noNonNullAssertion: <section.imgCont is guaranteed to be defined>
             [...document.querySelector("section.imgCont")!.children].forEach((e, i) => {
                 imageRow[i].i.forEach((canvasIndex) => {
                     const elem = imageData[canvasIndex].img;
@@ -950,8 +910,7 @@ const Reader: React.FC = () => {
         // anilist auto update progress
         if (updatedAnilistProgress || !appSettings.readerSettings.autoUpdateAnilistProgress) return;
         if (currentPageNumber / images.length > (images.length <= 4 ? 0.5 : 0.7)) {
-            if (!anilistCurrentManga || !mangaHasProgress || !mangaChapterName || !mangaProgressItemLink) {
-                // console.error("anilistCurrentManga is null, this should not happen");
+            if (!anilistCurrentListEntry || !mangaHasProgress || !mangaChapterName || !mangaProgressItemLink) {
                 return;
             }
             const chapterNumber = processChapterNumber(mangaChapterName);
@@ -970,14 +929,17 @@ const Reader: React.FC = () => {
                 }),
             );
             setUpdatedAnilistProgress(true);
-            if (chapterNumber > anilistCurrentManga.progress)
-                AniList.setCurrentMangaProgress(chapterNumber).then((e) => {
+            if (chapterNumber > anilistCurrentListEntry.progress)
+                setAnilistListProgress(chapterNumber).then((e) => {
                     if (e) {
-                        dispatch(setAnilistCurrentManga(e));
+                        dispatch(setAnilistCurrentListEntry(e));
+                        void dispatch(
+                            updateTrackerSnapshot(toAnilistTrackerSnapshotUpdate(mangaProgressItemLink, e)),
+                        );
                         log.log(`AniList auto-progress: synced list progress to chapter ${chapterNumber}`);
                     } else {
                         log.error(
-                            "AniList auto-progress: setCurrentMangaProgress returned empty (sync may have failed)",
+                            "AniList auto-progress: setAnilistListProgress returned empty (sync may have failed)",
                         );
                         // dialogUtils.customError({ message: "Failed to sync AniList progress.", log: false });
                     }
@@ -1063,28 +1025,28 @@ const Reader: React.FC = () => {
                 >
                     <span
                         className="a"
-                        data-tooltip={
-                            `press "${shortcuts.find((e) => e.command === "prevPage")?.keys}"` +
-                            ` or click left side of screen`
-                        }
+                        data-tooltip={t("chapterNav.prevTooltip", {
+                            keys: shortcuts.find((e) => e.command === "prevPage")?.keys,
+                        })}
                     >
-                        Previous :{/* <FontAwesomeIcon icon={faQuestionCircle} />: */}
+                        {t("chapterNav.previous")}
+                        {/* <FontAwesomeIcon icon={faQuestionCircle} />: */}
                     </span>
                     <span className="b">
                         {window.path.basename(
                             prevNextChapter.prev,
                             formatUtils.files.getExt(prevNextChapter.prev),
                         )}
-                        {formatUtils.files.test(prevNextChapter.prev) && (
+                        {formatUtils.mangaFile.test(prevNextChapter.prev) && (
                             <code>{formatUtils.files.getExt(prevNextChapter.prev)}</code>
                         )}
                     </span>
                 </div>
                 <div className="c">
-                    <span className="a">Current :</span>
+                    <span className="a">{t("chapterNav.current")}</span>
                     <span className="b">
                         {window.path.basename(mangaChapterName || "")}
-                        {formatUtils.files.test(mangaChapterName || "") && (
+                        {formatUtils.mangaFile.test(mangaChapterName || "") && (
                             <code>{formatUtils.files.getExt(mangaChapterName || "")}</code>
                         )}
                     </span>
@@ -1101,19 +1063,19 @@ const Reader: React.FC = () => {
                 >
                     <span
                         className="a"
-                        data-tooltip={
-                            `press "${shortcuts.find((e) => e.command === "nextPage")?.keys}"` +
-                            ` or click right side of screen`
-                        }
+                        data-tooltip={t("chapterNav.nextTooltip", {
+                            keys: shortcuts.find((e) => e.command === "nextPage")?.keys,
+                        })}
                     >
-                        Next :{/* <FontAwesomeIcon icon={faQuestionCircle} />: */}
+                        {t("chapterNav.next")}
+                        {/* <FontAwesomeIcon icon={faQuestionCircle} />: */}
                     </span>
                     <span className="b">
                         {window.path.basename(
                             prevNextChapter.next,
                             formatUtils.files.getExt(prevNextChapter.next),
                         )}
-                        {formatUtils.files.test(prevNextChapter.next) && (
+                        {formatUtils.mangaFile.test(prevNextChapter.next) && (
                             <code>{formatUtils.files.getExt(prevNextChapter.next)}</code>
                         )}
                     </span>
@@ -1169,13 +1131,13 @@ const Reader: React.FC = () => {
 
             <div className="hiddenPageMover" style={{ display: "none" }}>
                 <button ref={openPrevPageRef} onClick={openPrevPage}>
-                    Prev
+                    {t("chapterNav.prevHidden")}
                 </button>
                 <button ref={openNextPageRef} onClick={openNextPage}>
-                    Next
+                    {t("chapterNav.nextHidden")}
                 </button>
                 <button ref={navToPageButtonRef} onClick={() => pageNumberInputRef.current?.focus()}>
-                    Nav to page number
+                    {t("chapterNav.navToPage")}
                 </button>
             </div>
             {appSettings.readerSettings.showPageNumberInZenMode && (
@@ -1244,14 +1206,14 @@ const Reader: React.FC = () => {
                     e.stopPropagation();
                     const items: Menu.ListItem[] = [
                         {
-                            label: "Zen Mode",
+                            label: t("contextMenu.zenMode"),
                             selected: zenMode,
                             action() {
                                 setZenMode((init) => !init);
                             },
                         },
                         {
-                            label: "Hide Cursor in Zen Mode",
+                            label: t("contextMenu.hideCursorInZen"),
                             selected: appSettings.hideCursorInZenMode,
                             action() {
                                 dispatch(
@@ -1263,7 +1225,7 @@ const Reader: React.FC = () => {
                         },
                         window.contextMenu.template.divider(),
                         {
-                            label: "Bookmark",
+                            label: t("contextMenu.bookmark"),
                             disabled: false,
                             action() {
                                 addToBookmarkRef.current?.click();
@@ -1280,6 +1242,26 @@ const Reader: React.FC = () => {
                                 window.contextMenu.template.copyImage(src),
                                 window.contextMenu.template.copyPath(src),
                                 window.contextMenu.template.showInExplorer(src),
+                                {
+                                    label: t("contextMenu.makeCover"),
+                                    action() {
+                                        void (async () => {
+                                            const fsPath = fileSrcToImagePath(src || "");
+                                            const mangaRoot =
+                                                libraryItem?.link ?? window.path.dirname(linkInReader);
+                                            try {
+                                                await applyMakeCoverFromPageImage({
+                                                    dispatch,
+                                                    libraryId: libraryItem?.id,
+                                                    mangaRoot,
+                                                    fsPath,
+                                                });
+                                            } catch (err) {
+                                                log.error("Make Cover materialize failed", err);
+                                            }
+                                        })();
+                                    },
+                                },
                             );
                         else
                             items.push(

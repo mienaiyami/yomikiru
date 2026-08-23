@@ -1,5 +1,5 @@
 import { useAppDispatch, useAppSelector } from "@store/hooks";
-import { setSettingsOpen } from "@store/ui";
+import { clearPendingSettingsNav, setSettingsOpen } from "@store/ui";
 import { keyFormatter, mouseEventFormatter } from "@utils/keybindings";
 import { createRendererLogger } from "@utils/logger";
 import {
@@ -13,85 +13,121 @@ import {
     useState,
 } from "react";
 import FocusLock from "react-focus-lock";
+import { useTranslation } from "react-i18next";
 import About from "./components/About";
 import GeneralSettings from "./components/GeneralSettings";
+import SettingsSearch from "./components/SettingsSearch";
 import Shortcuts from "./components/Shortcuts";
 import ThemeCont from "./components/ThemeCont";
 import Usage from "./components/Usage";
-import { TAB_INFO } from "./utils/constants";
+import { SETTINGS_TABS, type SettingsTabKey, settingsTabIndex } from "./utils/constants";
+import { highlightSettingsTargetElement, waitForSettingsTargetElement } from "./utils/navigateToSetting";
+import { getSettingsTarget } from "./utils/settingsTargets";
 
 const log = createRendererLogger("Settings");
 
-type SettingsContext = {
+type SettingsContextValue = {
     currentTab: number;
     setCurrentTab: (tab: number) => void;
     nextTab: () => void;
     prevTab: () => void;
-    /**
-     * Scroll to element with query and set current tab to tab index
-     * @param elementQuery query to find element
-     * @param tab tab index
-     */
-    scrollIntoView: (elementQuery: string, tab: keyof typeof TAB_INFO) => void;
 };
 
-const SettingsContext = createContext<SettingsContext | null>(null);
+const SettingsContext = createContext<SettingsContextValue | null>(null);
 
-export const useSettingsContext = (): SettingsContext => {
+/**
+ * Settings shell context: current tab index and tab-cycle helpers.
+ * Deep-links use {@link navigateToSetting}, not this context.
+ */
+export const useSettingsContext = (): SettingsContextValue => {
     const context = useContext(SettingsContext);
     if (!context) throw new Error("SettingsContext not found");
     return context;
 };
 
-//todo: divide into components
+const renderTabPanel = (key: SettingsTabKey, usageTitle: string): ReactElement => {
+    switch (key) {
+        case "settings":
+            return <GeneralSettings />;
+        case "shortcutKeys":
+            return <Shortcuts />;
+        case "makeTheme":
+            return <ThemeCont />;
+        case "about":
+            return <About />;
+        case "extras":
+            return (
+                <>
+                    <h1>{usageTitle}</h1>
+                    <Usage />
+                </>
+            );
+    }
+};
+
 const Settings = (): ReactElement => {
+    const { t } = useTranslation("settings");
     const shortcuts = useAppSelector((store) => store.shortcuts);
     const isSettingOpen = useAppSelector((store) => store.ui.isOpen.settings);
-    /**
-     * index of current tab from TAB_INFO
-     */
+    const pendingSettingsNav = useAppSelector((store) => store.ui.pendingSettingsNav);
+    /** Index into {@link SETTINGS_TABS}. */
     const [currentTab, setCurrentTab] = useState(0);
 
     const dispatch = useAppDispatch();
 
     const settingContRef = useRef<HTMLDivElement>(null);
+    const clearHighlightRef = useRef<(() => void) | null>(null);
+    /** When true, the next currentTab layout effect skips scrollTop=0 (navigate owns scroll). */
+    const skipTabScrollResetRef = useRef(false);
 
     const nextTab = useCallback(() => {
-        setCurrentTab((init) => (init + 1) % Object.keys(TAB_INFO).length);
+        setCurrentTab((init) => (init + 1) % SETTINGS_TABS.length);
     }, []);
 
     const prevTab = useCallback(() => {
-        setCurrentTab((init) => (init - 1 + Object.keys(TAB_INFO).length) % Object.keys(TAB_INFO).length);
-    }, []);
-
-    const scrollIntoView = useCallback((elementQuery: string, tab: keyof typeof TAB_INFO) => {
-        setCurrentTab(TAB_INFO[tab][0]);
-        const onTimeout = () => {
-            const elem: HTMLElement | null = document.querySelector(elementQuery);
-            if (elem) {
-                elem.scrollIntoView({
-                    block: "start",
-                    behavior: "instant",
-                });
-                const color = elem.style.backgroundColor;
-                elem.style.backgroundColor = "yellow";
-                setTimeout(() => {
-                    if (elem) elem.style.backgroundColor = color;
-                }, 1000);
-            } else log.error(`scroll target not found (${elementQuery})`);
-        };
-        setTimeout(() => {
-            onTimeout();
-        }, 200);
+        setCurrentTab((init) => (init - 1 + SETTINGS_TABS.length) % SETTINGS_TABS.length);
     }, []);
 
     useEffect(() => {
-        if (isSettingOpen) {
-            setTimeout(() => {
-                settingContRef.current?.focus();
-            }, 300);
+        if (!isSettingOpen || !pendingSettingsNav) return;
+
+        let cancelled = false;
+        const { id } = pendingSettingsNav;
+        const target = getSettingsTarget(id);
+        if (!target) {
+            log.error("pending settings nav: unknown id", { id });
+            dispatch(clearPendingSettingsNav());
+            return;
         }
-    }, [isSettingOpen]);
+
+        setCurrentTab((prev) => {
+            const next = settingsTabIndex(target.tab);
+            if (next !== prev) skipTabScrollResetRef.current = true;
+            return next;
+        });
+
+        void waitForSettingsTargetElement(target.selector).then((elem) => {
+            if (cancelled) return;
+            if (!elem) {
+                log.error("settings nav target not found or hidden", { id, selector: target.selector });
+                dispatch(clearPendingSettingsNav());
+                return;
+            }
+            clearHighlightRef.current?.();
+            clearHighlightRef.current = highlightSettingsTargetElement(elem);
+            dispatch(clearPendingSettingsNav());
+        });
+
+        return () => {
+            cancelled = true;
+        };
+    }, [isSettingOpen, pendingSettingsNav, dispatch]);
+
+    useEffect(() => {
+        return () => {
+            clearHighlightRef.current?.();
+        };
+    }, []);
 
     useEffect(() => {
         const handleShortcut = (keyStr: string, e?: Event) => {
@@ -128,56 +164,57 @@ const Settings = (): ReactElement => {
     }, [shortcuts, nextTab, prevTab]);
 
     useLayoutEffect(() => {
-        // could use directly in classname but need focus()
+        if (skipTabScrollResetRef.current) {
+            skipTabScrollResetRef.current = false;
+            return;
+        }
         if (settingContRef.current) {
             settingContRef.current.scrollTop = 0;
         }
-        setTimeout(() => {
-            settingContRef.current?.focus();
+        const timer = window.setTimeout(() => {
+            const body = settingContRef.current;
+            if (!body) return;
+            // overlay is always mounted; skip while closed so this does not steal page focus
+            if (body.closest("#settings")?.getAttribute("data-state") !== "open") return;
+            body.focus();
         }, 100);
+        return () => window.clearTimeout(timer);
     }, [currentTab]);
 
     return (
-        <SettingsContext.Provider value={{ currentTab, setCurrentTab, nextTab, prevTab, scrollIntoView }}>
+        <SettingsContext.Provider value={{ currentTab, setCurrentTab, nextTab, prevTab }}>
             <FocusLock disabled={!isSettingOpen}>
-                <div id="settings" data-state={isSettingOpen ? "open" : "closed"}>
+                <div
+                    id="settings"
+                    data-state={isSettingOpen ? "open" : "closed"}
+                    onKeyDown={(e) => {
+                        if (e.key !== "Escape") return;
+                        if (!(e.target instanceof HTMLElement)) return;
+                        /* Combobox owns search-field Escape; nested Modal portals bubble here */
+                        if (e.target.closest(".settingsSearch") || e.target.closest(".modal-element")) return;
+                        dispatch(setSettingsOpen(false));
+                    }}
+                >
                     <div className="clickClose" onClick={() => dispatch(setSettingsOpen(false))}></div>
                     <div className="overflowWrap">
+                        <SettingsSearch />
                         <div className="tabMovers">
-                            {Object.entries(TAB_INFO).map(([key, value]) => (
+                            {SETTINGS_TABS.map((tab, index) => (
                                 <button
-                                    key={key}
-                                    className={`tabBtn ${currentTab === value[0] ? "selected " : ""}`}
-                                    onClick={() => setCurrentTab(value[0])}
+                                    key={tab.key}
+                                    className={`tabBtn ${currentTab === index ? "selected " : ""}`}
+                                    onClick={() => setCurrentTab(index)}
                                 >
-                                    {value[1]}
+                                    {t(tab.labelKey)}
                                 </button>
                             ))}
                         </div>
-                        <div
-                            className={"overlayCont settingCont"}
-                            onKeyDown={(e) => {
-                                if (e.key === "Escape") dispatch(setSettingsOpen(false));
-                            }}
-                            tabIndex={-1}
-                            ref={settingContRef}
-                        >
-                            <div className={`tab ${currentTab === TAB_INFO.settings[0] ? "selected " : ""}`}>
-                                <GeneralSettings />
-                            </div>
-                            <div className={`tab ${currentTab === TAB_INFO.shortcutKeys[0] ? "selected " : ""}`}>
-                                <Shortcuts />
-                            </div>
-                            <div className={`tab ${currentTab === TAB_INFO.makeTheme[0] ? "selected " : ""}`}>
-                                <ThemeCont />
-                            </div>
-                            <div className={`tab ${currentTab === TAB_INFO.about[0] ? "selected " : ""}`}>
-                                <About />
-                            </div>
-                            <div className={`tab ${currentTab === TAB_INFO.extras[0] ? "selected " : ""}`}>
-                                <h1>Usage & Features</h1>
-                                <Usage />
-                            </div>
+                        <div className={"overlayCont settingCont"} tabIndex={-1} ref={settingContRef}>
+                            {SETTINGS_TABS.map((tab, index) => (
+                                <div key={tab.key} className={`tab ${currentTab === index ? "selected " : ""}`}>
+                                    {renderTabPanel(tab.key, t("tabs.usageFeatures"))}
+                                </div>
+                            ))}
                         </div>
                     </div>
                 </div>

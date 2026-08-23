@@ -24,10 +24,23 @@
             "@features/*": ["src/renderer/features/*"],
             "@utils/*": ["src/renderer/utils/*"],
             "@renderer-types/*": ["src/renderer/types/*"],
-            "@renderer/*": ["src/renderer/*"]
+            "@renderer/*": ["src/renderer/*"],
+            "@test/*": ["src/test/*"]
         },
         "useDefineForClassFields": true,
         "forceConsistentCasingInFileNames": true
-    }
-    // "include": ["src/**/*"]
+    },
+    "exclude": [
+        "vitest.config.mts",
+        "playwright.config.ts",
+        "coverage",
+        "node_modules",
+        "dist",
+        ".webpack",
+        "out",
+        "e2e",
+        "src/test",
+        "**/*.test.ts",
+        "**/*.test.tsx"
+    ]
 }

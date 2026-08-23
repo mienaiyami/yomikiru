@@ -10,24 +10,34 @@ import readerReducer from "./reader";
 import readerPresetsReducer from "./readerPresets";
 import { readerPresetsAutosaveMiddleware } from "./readerPresetsAutosaveMiddleware";
 import shortcutsReducer from "./shortcuts";
+import tagsReducer from "./tags";
 import themesReducer from "./themes";
+import trackersReducer from "./trackers";
 import uiReducer from "./ui";
 
+/**
+ * Shared reducer map used by the app store and by isolated Vitest stores
+ * (`src/test/renderWithProviders.tsx`).
+ */
+export const rootReducer = {
+    appSettings: appSettingsReducer,
+    readerPresets: readerPresetsReducer,
+    theme: themesReducer,
+    bookmarks: bookmarksReducer,
+    bookNotes: bookNotesReducer,
+    library: libraryReducer,
+    prevNextChapter: prevNextChapterReducer,
+    shortcuts: shortcutsReducer,
+    anilist: anilistReducer,
+    trackers: trackersReducer,
+    tags: tagsReducer,
+    ui: uiReducer,
+    reader: readerReducer,
+    mainSettings: mainSettingsReducer,
+};
+
 const store = configureStore({
-    reducer: {
-        appSettings: appSettingsReducer,
-        readerPresets: readerPresetsReducer,
-        theme: themesReducer,
-        bookmarks: bookmarksReducer,
-        bookNotes: bookNotesReducer,
-        library: libraryReducer,
-        prevNextChapter: prevNextChapterReducer,
-        shortcuts: shortcutsReducer,
-        anilist: anilistReducer,
-        ui: uiReducer,
-        reader: readerReducer,
-        mainSettings: mainSettingsReducer,
-    },
+    reducer: rootReducer,
     middleware: (getDefaultMiddleware) =>
         getDefaultMiddleware({
             serializableCheck: false,

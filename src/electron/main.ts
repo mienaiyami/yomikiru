@@ -12,14 +12,28 @@ remote.initialize();
 if (require("electron-squirrel-startup")) app.quit();
 
 import { DatabaseService } from "./db";
+import { DRIZZLE_TAG_LIBRARY_ITEM_IDS } from "./db/migrations";
+import { registerI18nHandlers, setApplicationMenuRebuild } from "./i18n/ipc";
+import { initMainI18n, mainT } from "./i18n/mainI18n";
+import { noteLibraryItemIdMigrationAppliedThisLaunch, registerCoverHandlers } from "./ipc/covers";
 import { setupDatabaseHandlers } from "./ipc/database";
+import { registerDbBackupHandlers, runDbBackupStartupBeforeOpen } from "./ipc/dbBackup";
 import { registerDialogHandlers } from "./ipc/dialog";
 import { registerErrorReportingHandlers } from "./ipc/errorReporting";
 import { registerExplorerHandlers } from "./ipc/explorer";
 import { registerFSHandlers } from "./ipc/fs";
+import { registerLibraryScanHandlers, stopLibraryScan } from "./ipc/libraryScan";
 import { registerUpdateHandlers } from "./ipc/update";
+import {
+    backupIfPendingMigrations,
+    handleFailedSchemaMigrate,
+    setLiveSqlite,
+    stopScheduler,
+} from "./util/dbBackup";
 import handleSquirrelEvent from "./util/handleSquirrelEvent";
 import { MainSettings } from "./util/mainSettings";
+/* Side-effect: installs process-wide library Io for common folder/format helpers. */
+import "./util/libraryFs";
 import { checkForJSONMigration } from "./util/migrate";
 import { TrayManager } from "./util/tray";
 import { WindowManager } from "./util/window";
@@ -37,7 +51,9 @@ const errorHandler = getErrorHandler({
     enableCrashReporting: true,
 });
 
-const db = new DatabaseService();
+/* constructed in app.ready after restore + cold-start backup */
+let db: DatabaseService | null = null;
+let isShuttingDown = false;
 
 // when manga reader opened from context menu "open with manga reader"
 let openFolderOnLaunch = "";
@@ -73,70 +89,109 @@ if (app.isPackaged) {
     });
 }
 
+/**
+ * Builds the application menu from the current main i18n language.
+ * Electron `role` items stay OS-localized; custom labels use `menu` namespace keys.
+ */
+const rebuildApplicationMenu = (): void => {
+    const t = mainT;
+    const template: MenuItemConstructorOptions[] = [
+        {
+            label: t("edit", { ns: "menu" }),
+            submenu: [
+                { role: "undo" },
+                { role: "redo" },
+                { role: "cut" },
+                { role: "copy" },
+                { role: "paste" },
+                { role: "pasteAndMatchStyle" },
+                { role: "selectAll" },
+            ],
+        },
+        {
+            label: t("view", { ns: "menu" }),
+            submenu: [
+                { role: "reload" },
+                { role: "forceReload" },
+                { role: "toggleDevTools" },
+                { type: "separator" },
+            ],
+        },
+        {
+            label: t("others", { ns: "menu" }),
+            submenu: [
+                {
+                    role: "help",
+                    accelerator: "F1",
+                    click: () => shell.openExternal("https://github.com/mienaiyami/yomikiru"),
+                },
+                {
+                    label: t("newWindow", { ns: "menu" }),
+                    accelerator: process.platform === "darwin" ? "Cmd+N" : "Ctrl+N",
+                    click: () => WindowManager.createWindow(),
+                },
+                {
+                    label: t("close", { ns: "menu" }),
+                    accelerator: process.platform === "darwin" ? "Cmd+W" : "Ctrl+W",
+                    click: (_, window) => window?.close(),
+                },
+                {
+                    label: t("reportIssue", { ns: "menu" }),
+                    click: () => errorHandler.showIssueReportDialog(),
+                },
+            ],
+        },
+    ];
+    Menu.setApplicationMenu(Menu.buildFromTemplate(template));
+};
+
 app.on("ready", async () => {
     try {
-        // checkForJSONMigration depends on app ready to use dialog
-        checkForJSONMigration(db);
-        /**
-         * enables basic shortcut keys such as copy, paste, reload, etc.
-         */
-        const template: MenuItemConstructorOptions[] = [
-            {
-                label: "Edit",
-                submenu: [
-                    { role: "undo" },
-                    { role: "redo" },
-                    { role: "cut" },
-                    { role: "copy" },
-                    { role: "paste" },
-                    { role: "pasteAndMatchStyle" },
-                    { role: "selectAll" },
-                ],
-            },
-            {
-                label: "View",
-                submenu: [
-                    { role: "reload" },
-                    { role: "forceReload" },
-                    { role: "toggleDevTools" },
-                    { type: "separator" },
-                ],
-            },
-            {
-                label: "Others",
-                submenu: [
-                    {
-                        role: "help",
-                        accelerator: "F1",
-                        click: () => shell.openExternal("https://github.com/mienaiyami/yomikiru"),
-                    },
-                    {
-                        label: "New Window",
-                        accelerator: process.platform === "darwin" ? "Cmd+N" : "Ctrl+N",
-                        click: () => WindowManager.createWindow(),
-                    },
-                    {
-                        label: "Close",
-                        accelerator: process.platform === "darwin" ? "Cmd+W" : "Ctrl+W",
-                        click: (_, window) => window?.close(),
-                    },
-                    {
-                        label: "Report Issue",
-                        click: () => errorHandler.showIssueReportDialog(),
-                    },
-                ],
-            },
-        ];
-        const menu = Menu.buildFromTemplate(template);
-        Menu.setApplicationMenu(menu);
+        /* i18n before migration dialogs — checkForJSONMigration calls mainT() */
+        await initMainI18n();
+        setApplicationMenuRebuild(() => {
+            rebuildApplicationMenu();
+            WindowManager.setupWindowsTasks();
+            TrayManager.refreshMenu();
+        });
+        registerI18nHandlers();
+        rebuildApplicationMenu();
+        WindowManager.setupWindowsTasks();
 
-        await db.initialize();
+        const cold = await runDbBackupStartupBeforeOpen();
+
+        db = new DatabaseService();
+        setLiveSqlite(db.sqliteDb);
+        const pre = await backupIfPendingMigrations(db.sqliteDb, cold);
+        if (!pre.proceed) {
+            app.quit();
+            return;
+        }
+        try {
+            await db.initialize(pre.pendingTags);
+            /*
+             * todo(remove-after-0001-prompt): drop this branch with the post-0001 thumbnail prompt flow.
+             */
+            if (pre.pendingTags.includes(DRIZZLE_TAG_LIBRARY_ITEM_IDS)) {
+                noteLibraryItemIdMigrationAppliedThisLaunch();
+            }
+        } catch (err) {
+            logger.error("schema migrate failed", { tags: pre.pendingTags }, err);
+            await handleFailedSchemaMigrate(pre.snapshotFileName);
+            app.quit();
+            return;
+        }
+        await checkForJSONMigration(db);
+
         setupDatabaseHandlers(db);
+        registerDbBackupHandlers(db);
+        registerCoverHandlers();
 
         WindowManager.registerListeners();
 
         registerExplorerHandlers();
         registerFSHandlers();
+        registerLibraryScanHandlers(db);
         registerDialogHandlers();
         registerErrorReportingHandlers();
 
@@ -152,8 +207,23 @@ app.on("ready", async () => {
     }
 });
 
-app.on("before-quit", () => {
-    logger.log("Application shutdown (before-quit)");
+app.on("before-quit", (event) => {
+    if (isShuttingDown) return;
+    event.preventDefault();
+    isShuttingDown = true;
+    void (async () => {
+        try {
+            await stopScheduler();
+            stopLibraryScan();
+            setLiveSqlite(null);
+            db?.close();
+        } catch (err) {
+            logger.error("shutdown: backup stop or db close failed", err);
+        } finally {
+            logger.log("Application shutdown (before-quit)");
+            app.quit();
+        }
+    })();
 });
 app.on("activate", () => {
     if (BrowserWindow.getAllWindows().length === 0) {

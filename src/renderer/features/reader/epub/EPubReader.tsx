@@ -1,29 +1,27 @@
+import { type EpubPackage, isExternalEpubReference } from "@common/epub";
 import type { BookProgress } from "@common/types/db";
-import { setAnilistCurrentManga } from "@store/anilist";
+import { setAnilistCurrentListEntry } from "@store/anilist";
 import { setAppSettings, setEpubReaderSettings, setReaderSettings } from "@store/appSettings";
 import { addNote } from "@store/bookNotes";
 import { useAppDispatch, useAppSelector } from "@store/hooks";
-import { addLibraryItem, selectLibraryItem, updateBookProgress, updateCurrentItemProgress } from "@store/library";
-import {
-    getReaderBook,
-    setReaderLoading,
-    setReaderOpen,
-    updateReaderBookProgress,
-    updateReaderContent,
-} from "@store/reader";
+import { selectLibraryItem, updateCurrentItemProgress } from "@store/library";
+import { getReaderBook, setReaderLoading, setReaderOpen, updateReaderBookProgress } from "@store/reader";
 import { cyclePresetNext, cyclePresetPrev, selectPresetSlot } from "@store/readerPresets";
 import { getShortcutsMapped } from "@store/shortcuts";
-import AniList from "@utils/anilist";
+import { updateTrackerSnapshot } from "@store/trackers";
+import { setAnilistListProgress, toAnilistTrackerSnapshotUpdate } from "@utils/anilist";
 import { processChapterNumber } from "@utils/chapterUtils";
 import { colorUtils } from "@utils/color";
 import { dialogUtils } from "@utils/dialog";
-import EPUB, { type EPubData } from "@utils/epub";
+import { readEpubFile } from "@utils/epub";
 import { DEFAULT_HIGHLIGHT_COLORS, highlightUtils } from "@utils/highlight";
 import { keyFormatter, mouseEventFormatter } from "@utils/keybindings";
+import { syncBookLibraryOnReaderOpen } from "@utils/libraryMissingPath";
 import { createRendererLogger } from "@utils/logger";
 import { getCSSPath } from "@utils/utils";
 import type React from "react";
 import { useCallback, useEffect, useLayoutEffect, useRef, useState } from "react";
+import { useTranslation } from "react-i18next";
 import { shallowEqual } from "react-redux";
 import { useAppContext } from "src/renderer/App";
 import FootNodeModal from "./components/FootNodeModal";
@@ -43,21 +41,21 @@ const EPubReader: React.FC = () => {
     const shortcutsMapped = useAppSelector(getShortcutsMapped, shallowEqual);
     const isSettingOpen = useAppSelector((store) => store.ui.isOpen.settings);
     const readerState = useAppSelector((store) => store.reader);
-    const anilistCurrentManga = useAppSelector((store) => store.anilist.currentManga);
+    const anilistCurrentListEntry = useAppSelector((store) => store.anilist.currentListEntry);
     const isLoading = useAppSelector((store) => store.reader.loading !== null);
 
     const libraryItem = useAppSelector((store) => selectLibraryItem(store, readerState.link));
     const bookInReader = useAppSelector(getReaderBook);
 
     const dispatch = useAppDispatch();
-    const [epubData, setEpubData] = useState<EPubData | null>(null);
-    /** index of current chapter in EPUB.Spine */
+    const [epubData, setEpubData] = useState<EpubPackage | null>(null);
+    /** Index of the current chapter in {@link EpubPackage.spine}. */
     const [currentChapter, setCurrentChapter] = useState({
         index: -1,
         fragment: "",
     });
     /**
-     * `EPUB.Spine.id` before `currentChapter` that has a title in toc
+     * Spine id at or before `currentChapter` that has a title in the TOC.
      * only for display purpose in side-list, titlebar, history
      * it can be heavy to get because title only exists in toc, and not all href have a title
      * so it will find any last title before current chapter (href from spine) which has a occurrence in toc
@@ -69,6 +67,7 @@ const EPubReader: React.FC = () => {
     const [zenMode, setZenMode] = useState(appSettings.openInZenMode || false);
     const [wasMaximized, setWasMaximized] = useState(false);
     // display this text when shortcuts clicked
+    const { t } = useTranslation("reader");
     const [shortcutText, setShortcutText] = useState("");
     // [0-100]
     const [bookProgress, setBookProgress] = useState(0);
@@ -188,7 +187,7 @@ const EPubReader: React.FC = () => {
     }, [epubData]);
 
     /**
-     * @param chapterId - `EPUB.Spine[].id`
+     * @param chapterId - id from {@link EpubPackage.spine}
      * @param position - element query string of position to scroll to
      */
     const openChapterById = useCallback(
@@ -207,12 +206,12 @@ const EPubReader: React.FC = () => {
                     }
                 } else {
                     dialogUtils.customError({
-                        message: "Could not find the chapter for corresponding id.",
+                        message: t("errors.chapterIdNotFound"),
                     });
                 }
             }
         },
-        [epubData],
+        [epubData, t],
     );
 
     /**
@@ -226,10 +225,10 @@ const EPubReader: React.FC = () => {
             if (!epubData) return;
             const href = (ev.currentTarget as HTMLAnchorElement).getAttribute("data-href");
             if (href) {
-                if (href.startsWith("http")) {
+                if (isExternalEpubReference(href)) {
                     dialogUtils
                         .warn({
-                            message: "Open external link?",
+                            message: t("dialogs.openExternalLink"),
                             detail: href,
                             noOption: false,
                         })
@@ -266,7 +265,7 @@ const EPubReader: React.FC = () => {
                         const itemIdx = epubData.spine.findIndex((e) => e.href === href.split("#")[0]);
                         if (itemIdx < 0) {
                             dialogUtils.customError({
-                                message: "Could not find the chapter for corresponding link.",
+                                message: t("errors.chapterLinkNotFound"),
                             });
                             return;
                         }
@@ -277,7 +276,7 @@ const EPubReader: React.FC = () => {
                 }
             }
         },
-        [epubData, currentChapter.index],
+        [epubData, currentChapter.index, t],
     );
 
     const loadEPub = (link: string) => {
@@ -289,7 +288,7 @@ const EPubReader: React.FC = () => {
                 .catch((err) => log.error("temp extract dir delete failed", err));
 
         link = window.path.normalize(link);
-        EPUB.readEpubFile(link, appSettings.keepExtractedFiles)
+        readEpubFile(link, appSettings.keepExtractedFiles)
             .then(async (ed) => {
                 // todo : When current chapter is not top level(level=0), make BookItem.chapter concat of all parent chapters.
                 let currentChapterIndex = 0;
@@ -304,38 +303,15 @@ const EPubReader: React.FC = () => {
                     itemLink: link,
                     lastReadAt: new Date(),
                 };
-                if (libraryItem && libraryItem.type === "book") {
-                    dispatch(
-                        updateReaderContent({
-                            ...libraryItem,
-                            progress,
-                        }),
-                    );
-                    await dispatch(updateBookProgress(progress));
-                } else {
-                    const bookOpened = {
-                        type: "book",
-                        link,
-                        title: ed.metadata.title,
-                        author: ed.metadata.author,
-                        cover: ed.metadata.cover,
-                        createdAt: new Date(),
-                        updatedAt: new Date(),
-                    } as const;
-                    dispatch(
-                        updateReaderContent({
-                            ...bookOpened,
-                            progress,
-                        }),
-                    );
-                    await dispatch(
-                        addLibraryItem({
-                            type: "book",
-                            data: bookOpened,
-                            progress,
-                        }),
-                    );
-                }
+                await syncBookLibraryOnReaderOpen({
+                    dispatch,
+                    openedPath: link,
+                    libraryItem: libraryItem?.type === "book" ? libraryItem : null,
+                    progress,
+                    title: ed.metadata.title,
+                    author: ed.metadata.author || null,
+                    coverAbsolutePath: ed.metadata.cover,
+                });
                 setCurrentChapter({
                     index: currentChapterIndex,
                     fragment: "",
@@ -483,13 +459,17 @@ const EPubReader: React.FC = () => {
     useLayoutEffect(() => {
         if (updatedAnilistProgress || !appSettings.readerSettings.autoUpdateAnilistProgress) return;
         if (bookProgress < 70) return;
-        if (!anilistCurrentManga || !bookInReader?.progress) return;
+        if (!anilistCurrentListEntry || !bookInReader?.progress) return;
         const chapterNumber = processChapterNumber(bookInReader.progress.chapterName);
         if (!chapterNumber) return;
         setUpdatedAnilistProgress(true);
-        if (chapterNumber > anilistCurrentManga.progress)
-            AniList.setCurrentMangaProgress(chapterNumber).then((e) => {
-                if (e) dispatch(setAnilistCurrentManga(e));
+        if (chapterNumber > anilistCurrentListEntry.progress)
+            setAnilistListProgress(chapterNumber).then((e) => {
+                if (e) {
+                    dispatch(setAnilistCurrentListEntry(e));
+                    if (bookInReader.link)
+                        void dispatch(updateTrackerSnapshot(toAnilistTrackerSnapshotUpdate(bookInReader.link, e)));
+                }
             });
     }, [bookProgress, appSettings.readerSettings.autoUpdateAnilistProgress]);
 
@@ -501,7 +481,7 @@ const EPubReader: React.FC = () => {
             const selection = window.getSelection();
             if (!selection || selection.isCollapsed || !mainRef.current?.contains(selection.anchorNode)) {
                 dialogUtils.customError({
-                    message: "Please select some text first",
+                    message: t("errors.selectTextFirst"),
                 });
                 return;
             }
@@ -509,7 +489,7 @@ const EPubReader: React.FC = () => {
             const range = highlightUtils.getCurrentSelection();
             if (!range) {
                 dialogUtils.customError({
-                    message: "Could not get selection range",
+                    message: t("errors.selectionRangeFailed"),
                 });
                 return;
             }
@@ -536,7 +516,7 @@ const EPubReader: React.FC = () => {
                 }),
             );
         },
-        [bookInReader, dispatch],
+        [bookInReader, dispatch, t],
     );
 
     //todo remove behavior
@@ -687,8 +667,9 @@ const EPubReader: React.FC = () => {
                     return true;
                 case is(shortcutsMapped.showHidePageNumberInZen):
                     setShortcutText(
-                        (!appSettings.epubReaderSettings.showProgressInZenMode ? "Show" : "Hide") +
-                            " progress in Zen Mode",
+                        appSettings.epubReaderSettings.showProgressInZenMode
+                            ? t("hud.hideProgressInZen")
+                            : t("hud.showProgressInZen"),
                     );
                     dispatch(
                         setEpubReaderSettings({
@@ -698,12 +679,12 @@ const EPubReader: React.FC = () => {
                     return true;
                 case is(shortcutsMapped.cyclePresetNext): {
                     const name = dispatch(cyclePresetNext("book")) as string | null;
-                    if (name) setShortcutText(`Preset: ${name}`);
+                    if (name) setShortcutText(t("hud.presetNamed", { name }));
                     return true;
                 }
                 case is(shortcutsMapped.cyclePresetPrev): {
                     const name = dispatch(cyclePresetPrev("book")) as string | null;
-                    if (name) setShortcutText(`Preset: ${name}`);
+                    if (name) setShortcutText(t("hud.presetNamed", { name }));
                     return true;
                 }
                 case is(shortcutsMapped.selectPreset1):
@@ -720,7 +701,7 @@ const EPubReader: React.FC = () => {
                     ].findIndex((keys) => is(keys ?? []));
                     if (slotIdx >= 0) {
                         const name = dispatch(selectPresetSlot("book", slotIdx)) as string | null;
-                        if (name) setShortcutText(`Preset: ${name}`);
+                        if (name) setShortcutText(t("hud.presetNamed", { name }));
                     }
                     return true;
                 }
@@ -1014,14 +995,14 @@ const EPubReader: React.FC = () => {
                     e.stopPropagation();
                     const items: Menu.ListItem[] = [
                         {
-                            label: "Zen Mode",
+                            label: t("contextMenu.zenMode"),
                             selected: zenMode,
                             action() {
                                 setZenMode((init) => !init);
                             },
                         },
                         {
-                            label: "Hide Cursor in Zen Mode",
+                            label: t("contextMenu.hideCursorInZen"),
                             selected: appSettings.hideCursorInZenMode,
                             action() {
                                 dispatch(
@@ -1032,7 +1013,7 @@ const EPubReader: React.FC = () => {
                             },
                         },
                         {
-                            label: "Double Click Zen Mode",
+                            label: t("contextMenu.doubleClickZen"),
                             selected: !appSettings.epubReaderSettings.textSelect,
                             action() {
                                 dispatch(
@@ -1047,7 +1028,7 @@ const EPubReader: React.FC = () => {
                     const selection = window.getSelection();
                     if (selection && !selection.isCollapsed && mainRef.current?.contains(selection.anchorNode)) {
                         items.push({
-                            label: "Add Note",
+                            label: t("contextMenu.addNote"),
                             action() {
                                 handleAddNote();
                             },
@@ -1056,7 +1037,7 @@ const EPubReader: React.FC = () => {
                     items.push(
                         ...[
                             {
-                                label: "Bookmark",
+                                label: t("contextMenu.bookmark"),
                                 action() {
                                     addToBookmarkRef.current?.click();
                                 },

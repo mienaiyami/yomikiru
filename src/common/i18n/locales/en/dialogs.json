@@ -1,0 +1,20 @@
+{
+    "titles": {
+        "error": "Error",
+        "warning": "Warning",
+        "confirm": "Confirm"
+    },
+    "buttons": {
+        "yes": "Yes",
+        "no": "No",
+        "ok": "OK",
+        "okAlt": "Ok",
+        "cancel": "Cancel",
+        "homePage": "Home Page",
+        "show": "Show",
+        "dismiss": "Dismiss"
+    },
+    "nodeError": {
+        "message": "Error no.: {{errno}}"
+    }
+}

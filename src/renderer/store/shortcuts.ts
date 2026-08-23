@@ -1,6 +1,6 @@
 import { createSelector, createSlice, type PayloadAction } from "@reduxjs/toolkit";
 import { dialogUtils } from "@utils/dialog";
-import { SHORTCUT_COMMAND_MAP } from "@utils/keybindings";
+import { healShortcutEntries } from "@utils/keybindings";
 import { saveJSONfile, shortcutsPath } from "../utils/file";
 import { createRendererLogger } from "../utils/logger";
 import { readJsonFileWithRetrySync } from "../utils/readJsonFileWithRetry";
@@ -11,10 +11,8 @@ import type { RootState } from ".";
 
 const initialState: ShortcutSchema[] = [];
 
-const defaultShortcuts: ShortcutSchema[] = SHORTCUT_COMMAND_MAP.map((e) => ({
-    command: e.command,
-    keys: e.defaultKeys,
-}));
+/** Mutable default keymap; copies keys so Redux does not share frozen map tuples. */
+const defaultShortcuts: ShortcutSchema[] = healShortcutEntries([]);
 
 //todo make function readJSONfile
 if (window.fs.existsSync(shortcutsPath)) {
@@ -30,20 +28,26 @@ if (window.fs.existsSync(shortcutsPath)) {
             throw Error("old shortcuts.json detected");
         }
 
-        // check if shortcut key is missing in shortcuts.json, if so then add
-        const shortcutKeyEntries = data.map((e) => e.command);
-        const shortcutKeyOriginal = SHORTCUT_COMMAND_MAP.map((e) => e.command);
-        data = data.filter((e) => shortcutKeyOriginal.includes(e.command));
-        SHORTCUT_COMMAND_MAP.forEach((e) => {
-            if (!shortcutKeyEntries.includes(e.command)) {
-                log.log(`shortcuts.json: added missing command "${e.command}" with defaults`);
-                data.push({
-                    command: e.command,
-                    keys: e.defaultKeys,
-                });
+        const parsed = data;
+        const beforeCommands = new Set(parsed.map((e) => e.command as string));
+        data = healShortcutEntries(parsed);
+        for (const command of beforeCommands) {
+            if (!data.some((e) => e.command === command)) {
+                log.log(`shortcuts.json: dropped unknown command "${command}"`);
             }
-        });
-        saveJSONfile(shortcutsPath, data);
+        }
+        for (const e of data) {
+            if (!beforeCommands.has(e.command)) {
+                log.log(`shortcuts.json: added missing command "${e.command}" with defaults`);
+            }
+        }
+        const healedSameAsParsed =
+            parsed.length === data.length &&
+            parsed.every(
+                (row, i) =>
+                    row.command === data[i]?.command && JSON.stringify(row.keys) === JSON.stringify(data[i]?.keys),
+            );
+        if (!healedSameAsParsed) saveJSONfile(shortcutsPath, data);
         initialState.push(...data);
     } catch (err) {
         if (err instanceof Error && err.message.includes("old shortcuts")) {

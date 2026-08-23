@@ -7,8 +7,11 @@ import { colorUtils } from "@utils/color";
 import { promptSelectDir } from "@utils/file";
 import { defaultSettings } from "@utils/settingsSchema";
 import { memo } from "react";
+import { useTranslation } from "react-i18next";
 
 const BackgroundSettings = memo(() => {
+    const { t } = useTranslation("reader");
+    const { t: tSettings } = useTranslation("settings");
     const appSettings = useAppSelector((store) => store.appSettings);
     const dispatch = useAppDispatch();
 
@@ -30,7 +33,7 @@ const BackgroundSettings = memo(() => {
                     );
                 }}
             >
-                Background Image
+                {t("settings.backgroundImage")}
             </div>
             <div className="options col">
                 <InputCheckbox
@@ -45,14 +48,14 @@ const BackgroundSettings = memo(() => {
                             }),
                         );
                     }}
-                    labelAfter="Use Background Image"
+                    labelAfter={t("settings.useBackgroundImage")}
                 />
                 {appSettings.epubReaderSettings.backgroundImage.enabled && (
                     <>
                         <div className="row">
                             <input
                                 type="text"
-                                placeholder="No image selected"
+                                placeholder={t("settings.noImageSelected")}
                                 value={appSettings.epubReaderSettings.backgroundImage.path}
                                 readOnly
                             />
@@ -75,13 +78,13 @@ const BackgroundSettings = memo(() => {
                                         [
                                             {
                                                 extensions: ["jpg", "jpeg", "png", "webp", "gif", "svg"],
-                                                name: "Images",
+                                                name: t("settings.imagesFilter"),
                                             },
                                         ],
                                     );
                                 }}
                             >
-                                Select
+                                {tSettings("shared.select")}
                             </button>
                             <button
                                 onClick={() => {
@@ -95,7 +98,7 @@ const BackgroundSettings = memo(() => {
                                     );
                                 }}
                             >
-                                Clear
+                                {tSettings("shared.clear")}
                             </button>
                             <button
                                 onClick={() => {
@@ -109,7 +112,7 @@ const BackgroundSettings = memo(() => {
                                     );
                                 }}
                             >
-                                Reset
+                                {tSettings("shared.reset")}
                             </button>
                         </div>
                         <InputRange
@@ -118,7 +121,7 @@ const BackgroundSettings = memo(() => {
                             step={5}
                             value={appSettings.epubReaderSettings.backgroundImage.dimIntensity}
                             labeled
-                            labelText="Dim intensity"
+                            labelText={t("settings.dimIntensity")}
                             timeout={[
                                 350,
                                 (value) =>
@@ -138,7 +141,7 @@ const BackgroundSettings = memo(() => {
                             step={5}
                             value={appSettings.epubReaderSettings.backgroundImage.brightness}
                             labeled
-                            labelText="Brightness"
+                            labelText={t("settings.brightnessLabel")}
                             timeout={[
                                 350,
                                 (value) =>
@@ -158,7 +161,7 @@ const BackgroundSettings = memo(() => {
                             step={5}
                             value={appSettings.epubReaderSettings.backgroundImage.contrast}
                             labeled
-                            labelText="Contrast"
+                            labelText={t("settings.contrastLabel")}
                             timeout={[
                                 350,
                                 (value) =>
@@ -187,7 +190,7 @@ const BackgroundSettings = memo(() => {
                                     }),
                                 );
                             }}
-                            labelAfter="Image layer overlay"
+                            labelAfter={t("settings.imageLayerOverlay")}
                         />
 
                         <InputColor
@@ -209,7 +212,7 @@ const BackgroundSettings = memo(() => {
                                         }),
                                     ),
                             ]}
-                            paraBefore="Layer color&nbsp;:"
+                            paraBefore={t("settings.layerColor")}
                         />
                         <InputRange
                             min={0}
@@ -218,7 +221,7 @@ const BackgroundSettings = memo(() => {
                             disabled={!appSettings.epubReaderSettings.backgroundImage.layer.enabled}
                             value={appSettings.epubReaderSettings.backgroundImage.layer.opacity}
                             labeled
-                            labelText="Layer opacity"
+                            labelText={t("settings.layerOpacity")}
                             timeout={[
                                 350,
                                 (value) =>

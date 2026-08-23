@@ -1,0 +1,58 @@
+@use "./mixins" as mixins;
+
+/**
+ * Shared selection-checkbox chrome (`.rowSelectCheck` + `.checkBox`).
+ * Used by gallery/details row select and {@link InputMultiSelect} panel rows.
+ */
+.rowSelectCheck {
+    flex-shrink: 0;
+    align-self: stretch;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    user-select: none;
+    background-color: transparent;
+    padding: 0 10px;
+
+    input[type="checkbox"] {
+        position: absolute;
+        width: 1px;
+        height: 1px;
+        margin: 0;
+        padding: 0;
+        opacity: 0 !important;
+        appearance: none;
+        pointer-events: none;
+    }
+
+    .checkBox {
+        width: 20px;
+        height: 20px;
+        border-radius: 4px;
+        border: 2px solid var(--font-color);
+        background-color: transparent;
+        opacity: 0.75;
+        position: relative;
+        box-shadow: none;
+        transition:
+            background-color 0.12s ease,
+            border-color 0.12s ease,
+            opacity 0.12s ease,
+            transform 0.12s ease;
+    }
+
+    &:hover .checkBox {
+        opacity: 1;
+        transform: scale(1.05);
+        background-color: transparent;
+    }
+
+    input:checked + .checkBox {
+        @include mixins.rowSelectCheckBoxChecked();
+    }
+
+    input:focus-visible + .checkBox {
+        box-shadow: var(--btn-color-focus) 0 0 0 2px;
+    }
+}

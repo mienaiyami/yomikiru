@@ -74,3 +74,22 @@
         }
     }
 }
+
+/** Checked-state paint shared by `.rowSelectCheck` and {@link InputMultiSelect} row buttons. */
+@mixin rowSelectCheckBoxChecked() {
+    background-color: var(--font-color);
+    border-color: var(--font-color);
+    opacity: 1;
+
+    &::after {
+        content: "";
+        position: absolute;
+        left: 5px;
+        top: 1px;
+        width: 5px;
+        height: 11px;
+        border: solid var(--body-bg-color);
+        border-width: 0 2px 2px 0;
+        transform: rotate(45deg);
+    }
+}

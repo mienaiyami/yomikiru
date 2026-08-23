@@ -1,12 +1,38 @@
+import { faXmark } from "@fortawesome/free-solid-svg-icons";
+import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
+import { type PageSearchTargetOptions, usePageSearchFocus } from "@renderer/hooks/usePageSearchFocus";
 import { useAppSelector } from "@store/hooks";
 import { getShortcutsMapped } from "@store/shortcuts";
+import { useVirtualizer } from "@tanstack/react-virtual";
 import { keyFormatter } from "@utils/keybindings";
 import { createRendererLogger } from "@utils/logger";
-import React, { createContext, memo, useCallback, useContext, useEffect, useMemo, useRef, useState } from "react";
+import { scrollChildInContainer } from "@utils/utils";
+import React, {
+    createContext,
+    memo,
+    useCallback,
+    useContext,
+    useEffect,
+    useLayoutEffect,
+    useMemo,
+    useRef,
+    useState,
+} from "react";
+import { useTranslation } from "react-i18next";
+import { shallowEqual } from "react-redux";
 
 const log = createRendererLogger("components/ListNavigator");
 
-import { shallowEqual } from "react-redux";
+/**
+ * Row for listSelect / contextMenu. Classic list rows set `data-focused` on the
+ * `<li>` and the action lives on the inner `<a>`; gallery tiles and details rows
+ * set `data-focused` on the clickable row itself.
+ */
+const queryFocusedListRow = (list: HTMLOListElement | null): HTMLElement | null => {
+    const focused = list?.querySelector<HTMLElement>('[data-focused="true"]');
+    if (!focused) return null;
+    return focused.querySelector("a") ?? focused;
+};
 
 type ListNavigatorContextType<T> = {
     items: T[];
@@ -44,7 +70,12 @@ export type ListNavigatorProps<T> = {
     filterFn?: (filter: string, item: T) => boolean;
     renderItem: (item: T, index: number, isSelected: boolean) => React.ReactNode;
     onContextMenu?: (element: HTMLElement) => void;
-    handleExtraKeyDown?: (keyStr: string, shortcutsMapped: Record<ShortcutCommands, string[]>) => void;
+    /**
+     * Extra key handling hook layered on top of built-in list controls.
+     * Return `true` to mark the key as handled (ListNavigator will call
+     * `preventDefault` for that key).
+     */
+    handleExtraKeyDown?: (keyStr: string, shortcutsMapped: Record<ShortcutCommands, string[]>) => boolean;
     onSelect?: (element: HTMLElement) => void;
     emptyMessage?: string;
     /** When provided, assigned to the search input for external focus etc. */
@@ -63,12 +94,14 @@ function ListNavigatorProviderComponent<T>({
     onContextMenu,
     handleExtraKeyDown,
     onSelect,
-    emptyMessage = "No items",
+    emptyMessage,
     inputRef: inputRefProp,
     onFilteredItemsChange,
     persistFilterOnItemsChange,
     children,
 }: ListNavigatorProps<T>) {
+    const { t } = useTranslation("common");
+    const resolvedEmptyMessage = emptyMessage ?? t("list.noItems");
     const shortcutsMapped = useAppSelector(getShortcutsMapped, shallowEqual);
     const [filter, setFilter] = useState<string>("");
     const [focused, setFocused] = useState(-1);
@@ -79,6 +112,11 @@ function ListNavigatorProviderComponent<T>({
     const filteredItems = useMemo(() => {
         return filterFn ? items.filter((item) => filterFn(filter, item)) : items;
     }, [items, filter, filterFn]);
+
+    /* Keep latest callback without putting it in effect deps - parent often
+     * passes an inline function; depending on identity re-fires setState loops. */
+    const onFilteredItemsChangeRef = useRef(onFilteredItemsChange);
+    onFilteredItemsChangeRef.current = onFilteredItemsChange;
 
     useEffect(() => {
         setFocused(-1);
@@ -91,8 +129,8 @@ function ListNavigatorProviderComponent<T>({
     }, [items, inputRef, persistFilterOnItemsChange]);
 
     useEffect(() => {
-        onFilteredItemsChange?.(filteredItems, filter !== "");
-    }, [filteredItems, filter, onFilteredItemsChange]);
+        onFilteredItemsChangeRef.current?.(filteredItems, filter !== "");
+    }, [filteredItems, filter]);
 
     const handleKeyDown = useCallback(
         (e: React.KeyboardEvent) => {
@@ -119,7 +157,7 @@ function ListNavigatorProviderComponent<T>({
                     break;
 
                 case shortcutsMapped.contextMenu.includes(keyStr): {
-                    const elem = listRef.current?.querySelector('[data-focused="true"] a') as HTMLElement | null;
+                    const elem = queryFocusedListRow(listRef.current);
                     if (elem) {
                         e.stopPropagation();
                         e.preventDefault();
@@ -132,10 +170,10 @@ function ListNavigatorProviderComponent<T>({
                 }
 
                 case shortcutsMapped.listSelect.includes(keyStr): {
-                    const elem = listRef.current?.querySelector('[data-focused="true"] a') as HTMLElement | null;
+                    const elem = queryFocusedListRow(listRef.current);
                     if (elem) return onSelect?.(elem);
-                    const elems = listRef.current?.querySelectorAll("a");
-                    if (elems?.length === 1) return onSelect?.(elems[0] as HTMLElement);
+                    const anchors = listRef.current?.querySelectorAll("a");
+                    if (anchors?.length === 1) return onSelect?.(anchors[0] as HTMLElement);
                     break;
                 }
 
@@ -146,7 +184,10 @@ function ListNavigatorProviderComponent<T>({
                 default:
                     break;
             }
-            handleExtraKeyDown?.(keyStr, shortcutsMapped);
+            const handledByExtra = handleExtraKeyDown?.(keyStr, shortcutsMapped);
+            if (handledByExtra) {
+                e.preventDefault();
+            }
         },
         [shortcutsMapped, filteredItems.length, onContextMenu, onSelect, handleExtraKeyDown],
     );
@@ -245,7 +286,7 @@ function ListNavigatorProviderComponent<T>({
             renderItem,
             onContextMenu,
             onSelect,
-            emptyMessage,
+            emptyMessage: resolvedEmptyMessage,
         }),
         [
             items,
@@ -257,7 +298,7 @@ function ListNavigatorProviderComponent<T>({
             renderItem,
             onContextMenu,
             onSelect,
-            emptyMessage,
+            resolvedEmptyMessage,
         ],
     );
 
@@ -269,6 +310,11 @@ const ListNavigatorProvider = memo(ListNavigatorProviderComponent) as typeof Lis
 type SearchInputProps = {
     placeholder?: string;
     className?: string;
+    /**
+     * When set, this field is a candidate for {@link usePageSearchFocus}.
+     * Higher {@link PageSearchTargetOptions.priority} wins among shown, mounted fields.
+     */
+    pageSearch?: PageSearchTargetOptions;
     /** @returns value to set to the filter when `runOriginalOnChange` is true
      * or return anything when `runOriginalOnChange` is false
      */
@@ -279,6 +325,25 @@ type SearchInputProps = {
      * @default false
      */
     runOriginalOnChange?: boolean;
+    /**
+     * When true, focus the field after mount. Details lists pass false so Continue
+     * / Start can take initial focus.
+     * @default true
+     */
+    autoFocus?: boolean;
+    /**
+     * Wait this many milliseconds after mount before focusing when {@link SearchInputProps.autoFocus}
+     * is true. Overlay search uses it so focus lands after the host sets `data-state="open"`
+     * (visibility) and after FocusLock's mount effect, which otherwise steals the caret.
+     */
+    autoFocusDelayMs?: number;
+    /**
+     * Uncontrolled seed for the field (e.g. overlay search prefilled from a title).
+     * Also shows the clear button when non-empty. Pair with
+     * {@link ListNavigatorProps.persistFilterOnItemsChange} so the items-change
+     * reset does not wipe the seeded value.
+     */
+    defaultValue?: string;
 } & (
     | {
           onChange: (e: React.ChangeEvent<HTMLInputElement>) => string;
@@ -290,53 +355,126 @@ type SearchInputProps = {
       }
 );
 
+/**
+ * Search field for {@link ListNavigator}. Uncontrolled input with a clear button
+ * that appears while the field has text. Clear-button visibility is re-read from
+ * the DOM when the filter settles, because the provider (and custom `onChange`
+ * handlers) reset `input.value` directly.
+ */
 const SearchInputComponent: React.FC<SearchInputProps> = ({
-    placeholder = "Type to search",
+    placeholder,
     className = "search-input",
+    pageSearch,
     onChange,
     runOriginalOnChange = false,
+    autoFocus = true,
+    autoFocusDelayMs,
+    defaultValue,
 }) => {
-    const { inputRef, handleFilterChange, handleKeyDown, setFocused } = useListNavigator();
+    const { t } = useTranslation("common");
+    const resolvedPlaceholder = placeholder ?? t("list.typeToSearch");
+    const { inputRef, filter, handleFilterChange, handleKeyDown, setFocused } = useListNavigator();
+    const [hasValue, setHasValue] = useState(() => Boolean(defaultValue));
+
+    usePageSearchFocus(inputRef, {
+        id: pageSearch?.id ?? "",
+        priority: pageSearch?.priority ?? 0,
+        enabled: pageSearch?.enabled ?? true,
+    });
 
     useEffect(() => {
-        if (inputRef.current) {
-            inputRef.current.focus();
+        if (!autoFocus) return;
+        if (!autoFocusDelayMs) {
+            inputRef.current?.focus();
+            return;
         }
-    }, [inputRef]);
+        const id = window.setTimeout(() => {
+            inputRef.current?.focus();
+        }, autoFocusDelayMs);
+        return () => window.clearTimeout(id);
+    }, [autoFocus, autoFocusDelayMs, inputRef]);
+
+    /* The input is uncontrolled: the provider (and custom `onChange` handlers) reset
+     * `input.value` directly. Re-read the DOM value whenever the filter settles so the
+     * clear button never lingers after an external reset. */
+    useEffect(() => {
+        setHasValue(Boolean(inputRef.current?.value));
+    }, [filter, inputRef]);
+
+    /**
+     * Runs a custom {@link SearchInputProps.onChange} then the list filter, matching
+     * the input's onChange path so clear and typing stay in sync (remote-search
+     * parents see the empty value).
+     */
+    const applyChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+        if (onChange) {
+            const val = onChange(e);
+            if (val === undefined && runOriginalOnChange) {
+                throw new Error("onChange returned undefined but runOriginalOnChange is true");
+            }
+            // need to `typeof val === "string"` because empty string is valid
+            if (runOriginalOnChange && typeof val === "string") {
+                handleFilterChange(val);
+            } else if (typeof val === "string") {
+                handleFilterChange(e, true);
+            }
+            if (val === "") {
+                e.target.value = "";
+            }
+        } else {
+            handleFilterChange(e);
+        }
+        setHasValue(Boolean(e.target.value));
+    };
+
+    /**
+     * Clears the uncontrolled input and the list filter, then focuses the field.
+     * Uses the same change path as typing so a parent onChange sees the empty value.
+     */
+    const handleClear = () => {
+        const input = inputRef.current;
+        if (input) {
+            input.value = "";
+            input.focus();
+            applyChange({
+                target: input,
+                currentTarget: input,
+            } as React.ChangeEvent<HTMLInputElement>);
+            return;
+        }
+        handleFilterChange("");
+        setHasValue(false);
+    };
 
     return (
-        <input
-            type="text"
-            ref={inputRef}
-            className={className}
-            placeholder={placeholder}
-            spellCheck="false"
-            onKeyDown={handleKeyDown}
-            onBlur={() => setFocused(-1)}
-            onChange={(e) => {
-                if (onChange) {
-                    const val = onChange(e);
-                    if (val === undefined && runOriginalOnChange) {
-                        throw new Error("onChange returned undefined but runOriginalOnChange is true");
-                    }
-                    // need to `typeof val === "string"` because empty string is valid
-                    if (runOriginalOnChange && typeof val === "string") {
-                        handleFilterChange(val);
-                    } else if (typeof val === "string") {
-                        handleFilterChange(e, true);
-                    }
-                    if (val === "") {
-                        e.target.value = "";
-                    }
-                } else {
-                    handleFilterChange(e);
-                }
-            }}
-            onContextMenu={(e) => {
-                e.preventDefault();
-                e.stopPropagation();
-            }}
-        />
+        <div className={`${className}-wrapper`}>
+            <input
+                type="text"
+                ref={inputRef}
+                className={className}
+                placeholder={resolvedPlaceholder}
+                defaultValue={defaultValue}
+                spellCheck="false"
+                onKeyDown={handleKeyDown}
+                onBlur={() => setFocused(-1)}
+                onChange={applyChange}
+                onContextMenu={(e) => {
+                    e.preventDefault();
+                    e.stopPropagation();
+                }}
+            />
+            {hasValue && (
+                <button
+                    type="button"
+                    className={`${className}-clear`}
+                    aria-label={t("list.clearSearch")}
+                    onMouseDown={(e) => e.preventDefault()}
+                    onClick={handleClear}
+                >
+                    <FontAwesomeIcon icon={faXmark} />
+                </button>
+            )}
+        </div>
     );
 };
 
@@ -344,10 +482,23 @@ const SearchInput = SearchInputComponent;
 
 type ListProps = {
     className?: string;
+    /**
+     * Overflow parent that should move when keyboard focus changes. Omit when the
+     * `<ol>` itself scrolls, or when rows already scroll themselves (classic home lists).
+     */
+    scrollContainerRef?: React.RefObject<HTMLElement | null>;
 };
 
-const ListComponent = ({ className = "list-container" }: ListProps) => {
+const ListComponent = ({ className = "list-container", scrollContainerRef }: ListProps) => {
     const { filteredItems, focused, listRef, renderItem, emptyMessage } = useListNavigator();
+
+    useLayoutEffect(() => {
+        if (focused < 0) return;
+        const container = scrollContainerRef?.current;
+        const row = listRef.current?.querySelector<HTMLElement>('[data-focused="true"]');
+        if (!container || !row) return;
+        scrollChildInContainer(container, row, "nearest");
+    }, [focused, listRef, scrollContainerRef]);
 
     if (filteredItems.length === 0) {
         return <p className="empty-message">{emptyMessage}</p>;
@@ -364,10 +515,148 @@ const ListComponent = ({ className = "list-container" }: ListProps) => {
 
 const List = ListComponent;
 
+export type VirtualListProps = {
+    className?: string;
+    /** Ref to the element that has overflow-y: auto/scroll */
+    scrollContainerRef: React.RefObject<HTMLElement | null>;
+    /**
+     * Estimated row height in px. Used by useVirtualizer as the initial size;
+     * row elements are measured to refine height.
+     */
+    estimatedItemSize: number;
+    /** Items per row for grid layouts; 1 for single-column list. @default 1 */
+    columnCount?: number;
+    /** Extra rows rendered above and below visible area. @default 5 */
+    overscan?: number;
+    /**
+     * Horizontal gap between cells inside a row (CSS `gap` on the row grid). @default 16
+     */
+    gapPx?: number;
+    /**
+     * Vertical gap between virtual rows, passed to TanStack as `gap` (scroll-axis spacing).
+     * Use `0` for layouts that stack without inter-row gap (e.g. gallery list mode).
+     * @default 16
+     */
+    rowGapPx?: number;
+};
+
+/**
+ * Optional virtualized list: same context as {@link List}, but only visible items mount.
+ *
+ * **Why virtual “rows” instead of TanStack `lanes`:** In v3, `lanes` implements a
+ * masonry-style column fill (shortest column gets the next item), i.e. column-major order.
+ * A CSS Grid gallery is row-major (fill the row, then the next). For uniform grids, one
+ * virtual item per logical row matches that layout and keeps `gap` predictable: `rowGapPx`
+ * is the library’s scroll-axis `gap`; `gapPx` is the per-row CSS grid gap (columns, and row
+ * internal spacing inside that strip).
+ */
+const VirtualListComponent = ({
+    className = "list-container",
+    scrollContainerRef,
+    estimatedItemSize,
+    columnCount: columnCountProp = 1,
+    overscan = 5,
+    gapPx = 16,
+    rowGapPx = 16,
+}: VirtualListProps) => {
+    const { filteredItems, focused, listRef, renderItem, emptyMessage } = useListNavigator();
+
+    const cols = Math.max(1, columnCountProp);
+    const rowCount = Math.ceil(filteredItems.length / cols);
+
+    const virtualizer = useVirtualizer({
+        count: rowCount,
+        getScrollElement: () => scrollContainerRef.current,
+        estimateSize: (_index: number) => estimatedItemSize,
+        gap: rowGapPx,
+        overscan,
+        useAnimationFrameWithResizeObserver: true,
+    });
+
+    useEffect(() => {
+        const id = requestAnimationFrame(() => {
+            virtualizer.measure();
+        });
+        return () => {
+            cancelAnimationFrame(id);
+        };
+    }, [cols, estimatedItemSize, filteredItems.length, rowGapPx, virtualizer]);
+
+    useEffect(() => {
+        if (focused < 0 || filteredItems.length === 0) return;
+        const rowIndex = Math.floor(focused / cols);
+        /* instant: held listUp/listDown must not queue smooth animations */
+        virtualizer.scrollToIndex(rowIndex, { align: "auto", behavior: "instant" });
+    }, [cols, focused, filteredItems.length, virtualizer]);
+
+    if (filteredItems.length === 0) {
+        return <p className="empty-message">{emptyMessage}</p>;
+    }
+
+    const vItems = virtualizer.getVirtualItems();
+
+    return (
+        <ol
+            ref={listRef}
+            className={className}
+            style={{
+                display: "block",
+                position: "relative",
+                width: "100%",
+                height: `${virtualizer.getTotalSize()}px`,
+                listStyle: "none",
+                margin: 0,
+                padding: 0,
+            }}
+        >
+            {vItems.map((virtualRow) => {
+                const startIndex = virtualRow.index * cols;
+                const cells: React.ReactNode[] = [];
+                for (let c = 0; c < cols; c += 1) {
+                    const index = startIndex + c;
+                    if (index >= filteredItems.length) break;
+                    const item = filteredItems[index];
+                    cells.push(
+                        <React.Fragment key={index}>{renderItem(item, index, focused === index)}</React.Fragment>,
+                    );
+                }
+                return (
+                    <li
+                        key={String(virtualRow.key)}
+                        data-index={virtualRow.index}
+                        ref={virtualizer.measureElement}
+                        style={{
+                            position: "absolute",
+                            top: 0,
+                            left: 0,
+                            right: 0,
+                            display: "grid",
+                            gridTemplateColumns: `repeat(${cols}, minmax(0, 1fr))`,
+                            gap: `${gapPx}px`,
+                            transform: `translateY(${virtualRow.start}px)`,
+                            /**
+                             * Do not set `minHeight` to `virtualRow.size`: that value is only an
+                             * estimate. Forcing it makes rows taller than their content (visible gap
+                             * under tiles when grid items use `align-items: start`).
+                             */
+                            alignItems: "start",
+                        }}
+                    >
+                        {cells}
+                    </li>
+                );
+            })}
+        </ol>
+    );
+};
+
+const VirtualList = VirtualListComponent;
+
 const ListNavigator = {
     Provider: ListNavigatorProvider,
     SearchInput,
     List,
+    VirtualList,
 };
 
 export default ListNavigator;

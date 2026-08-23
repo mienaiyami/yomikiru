@@ -1,14 +1,15 @@
 import { spawn } from "node:child_process";
 import fs from "node:fs";
 import path from "node:path";
+import { HttpStatusError, http, isHttpUrlLineList, shouldReplaceTextSnapshot, splitTextLines } from "@common/http";
 import type { AppUpdateChannel } from "@common/types/ipc";
+import { mainT } from "@electron/i18n/mainI18n";
 import { exec as execSudo } from "@vscode/sudo-prompt";
-import * as crossZip from "cross-zip";
 import { app, BrowserWindow, dialog, shell } from "electron";
 import * as electronDl from "electron-dl";
-import fetch from "electron-fetch";
 import * as semver from "semver";
 import { IS_PORTABLE, isArchLinux, sleep } from "./util";
+import { archiveService } from "./util/archive";
 import { createMainLogger } from "./util/logger";
 
 const logger = createMainLogger("updater");
@@ -33,6 +34,18 @@ type ArtifactMetadata = {
     type: string;
 };
 
+/** Narrows unknown JSON array elements to {@link ArtifactMetadata}. */
+const isArtifactMetadata = (value: unknown): value is ArtifactMetadata => {
+    if (typeof value !== "object" || value === null) return false;
+    const rec = value as Record<string, unknown>;
+    return (
+        typeof rec.name === "string" &&
+        typeof rec.platform === "string" &&
+        typeof rec.arch === "string" &&
+        typeof rec.type === "string"
+    );
+};
+
 /**
  * Fetches artifacts.json from the release and returns the download URL for the current platform/arch.
  * @param version release tag (e.g. "v2.3.8")
@@ -42,13 +55,9 @@ const getArtifactDownloadUrl = async (version: string): Promise<string | null> =
     try {
         const url = version.startsWith("v") ? version : `v${version}`;
         const artifactsUrl = `${DOWNLOAD_LINK}/${url}/artifacts.json`;
-        const res = await fetch(artifactsUrl);
-        if (!res.ok) {
-            logger.warn(`Update: artifacts.json HTTP ${res.status} ${res.statusText} (${artifactsUrl})`);
-            return null;
-        }
-        const artifacts = (await res.json()) as ArtifactMetadata[];
-        if (!Array.isArray(artifacts) || artifacts.length === 0) {
+        const artifacts = await http.getJson(artifactsUrl);
+        const catalog = Array.isArray(artifacts) ? artifacts.filter(isArtifactMetadata) : [];
+        if (catalog.length === 0) {
             logger.warn(`Update: artifacts.json missing or empty for ${artifactsUrl}`);
             return null;
         }
@@ -59,13 +68,12 @@ const getArtifactDownloadUrl = async (version: string): Promise<string | null> =
 
         let match: ArtifactMetadata | null = null;
         if (platform === "win32") {
-            match =
-                artifacts.find((a) => a.platform === "win32" && a.type === wantType && a.arch === arch) ?? null;
+            match = catalog.find((a) => a.platform === "win32" && a.type === wantType && a.arch === arch) ?? null;
         } else if (platform === "linux") {
             if (isArchLinux()) {
-                match = artifacts.find((a) => a.platform === "linux" && a.name.endsWith(".pkg.tar.zst")) ?? null;
+                match = catalog.find((a) => a.platform === "linux" && a.name.endsWith(".pkg.tar.zst")) ?? null;
             } else {
-                match = artifacts.find((a) => a.platform === "linux" && a.name.endsWith(".deb")) ?? null;
+                match = catalog.find((a) => a.platform === "linux" && a.name.endsWith(".deb")) ?? null;
             }
         }
 
@@ -75,35 +83,56 @@ const getArtifactDownloadUrl = async (version: string): Promise<string | null> =
         }
         return `${DOWNLOAD_LINK}/${url}/${match.name}`;
     } catch (error) {
+        if (error instanceof HttpStatusError) {
+            logger.warn("Update: artifacts.json HTTP error", {
+                status: error.status,
+                statusText: error.statusText,
+                url: error.url,
+            });
+            return null;
+        }
         logger.error("Update: could not resolve download URL from artifacts.json", error);
         return null;
     }
 };
 
+/**
+ * Downloads announcements.txt and shows a dialog only for URLs not already stored locally.
+ * Failed HTTP responses throw from {@link http} and must not persist; error HTML would
+ * overwrite the seen list and re-alert on every later successful request.
+ */
 const checkForAnnouncements = async () => {
     try {
         await sleep(5000);
-        const raw = await fetch(ANNOUNCEMENTS_URL)
-            .then((data) => data.text())
-            .then((data) => data.split("\n").filter((e) => e !== ""));
+        const body = await http.getText(ANNOUNCEMENTS_URL);
+        const raw = splitTextLines(body);
         const existingPath = path.join(app.getPath("userData"), "announcements.txt");
         if (!fs.existsSync(existingPath)) {
             fs.writeFileSync(existingPath, "");
         }
-        const existing = fs
-            .readFileSync(path.join(app.getPath("userData"), "announcements.txt"), "utf-8")
-            .split("\n")
-            .filter((e) => e !== "");
+        const existing = splitTextLines(fs.readFileSync(existingPath, "utf-8"));
+        if (!shouldReplaceTextSnapshot(raw, existing)) {
+            logger.warn("Announcements: ok response was empty; keeping local seen list");
+            return;
+        }
+        if (!isHttpUrlLineList(raw)) {
+            logger.warn("Announcements: remote body is not an http(s) URL list; keeping local seen list", {
+                lineCount: raw.length,
+            });
+            return;
+        }
         const newAnnouncements = raw.filter((e) => !existing.includes(e));
+        // persist only after a validated 2xx body so a failed check cannot reset seen URLs
         fs.writeFileSync(existingPath, raw.join("\n"));
+        const t = mainT;
         if (newAnnouncements.length === 1)
             dialog
                 .showMessageBox({
                     type: "info",
-                    title: "New Announcement",
-                    message: "There's a new announcement. Check it out!",
+                    title: t("updater.newAnnouncementTitle", { ns: "electron" }),
+                    message: t("updater.newAnnouncementMessage", { ns: "electron" }),
                     detail: newAnnouncements[0],
-                    buttons: ["Show", "Dismiss"],
+                    buttons: [t("buttons.show", { ns: "dialogs" }), t("buttons.dismiss", { ns: "dialogs" })],
                     cancelId: 1,
                 })
                 .then((res) => {
@@ -113,10 +142,14 @@ const checkForAnnouncements = async () => {
             dialog
                 .showMessageBox({
                     type: "info",
-                    title: "New Announcements",
-                    message: "There are new announcements. Check them out!",
+                    title: t("updater.newAnnouncementsTitle", { ns: "electron" }),
+                    message: t("updater.newAnnouncementsMessage", { ns: "electron" }),
                     detail: newAnnouncements.join("\n"),
-                    buttons: ["Open Each", "Open Announcement Page", "Dismiss"],
+                    buttons: [
+                        t("updater.openEach", { ns: "electron" }),
+                        t("updater.openAnnouncementPage", { ns: "electron" }),
+                        t("buttons.dismiss", { ns: "dialogs" }),
+                    ],
                     cancelId: 2,
                 })
                 .then((res) => {
@@ -124,12 +157,19 @@ const checkForAnnouncements = async () => {
                     else if (res.response === 1) shell.openExternal(ANNOUNCEMENTS_DISCUSSION_URL);
                 });
     } catch (error) {
-        logger.error("Announcements: fetch or parse failed (non-fatal)", error);
+        logger.error("Announcements: request or parse failed (non-fatal)", error);
     }
 };
 
+/** GitHub releases API item fields used for channel filter and semver sort. */
+type GithubRelease = {
+    tag_name: string;
+    prerelease?: boolean;
+};
+
 /**
- * Check for updates and handle version comparison properly using semver
+ * Check for updates and handle version comparison properly using semver.
+ * Non-ok GitHub responses throw before JSON is treated as a release list.
  * @param windowId id of window in which message box should be shown
  * @param skipPatch skip patch updates for stable channel (e.g. 1.2.x to 1.2.y)
  * @param promptAfterCheck show message box if current version is same as latest version
@@ -146,7 +186,7 @@ const checkForUpdate = async (
     checkForAnnouncements();
 
     try {
-        const rawdata = await fetch(RELEASES_URL).then((data) => data.json());
+        const rawdata = await http.getJson(RELEASES_URL);
 
         if (!Array.isArray(rawdata) || rawdata.length === 0) {
             logger.log("Update check: GitHub releases API returned no usable releases");
@@ -160,20 +200,22 @@ const checkForUpdate = async (
         logger.log(`Update check: installed version ${currentVersion}`);
 
         const releases = rawdata
-            .filter((release: any) => {
-                const hasValidTagName =
-                    typeof release.tag_name === "string" && semver.clean(release.tag_name, { loose: true });
-                if (!hasValidTagName) return false;
-
+            .filter((value: unknown): value is GithubRelease => {
+                if (typeof value !== "object" || value === null) return false;
+                const release = value as { tag_name?: unknown; prerelease?: unknown };
+                if (typeof release.tag_name !== "string" || !semver.clean(release.tag_name, { loose: true })) {
+                    return false;
+                }
                 if (channel === "stable") {
                     return !release.prerelease;
-                } else if (channel === "beta") {
-                    // include all releases, the highest version will be selected later
+                }
+                // beta channel: every tagged release; the highest semver is picked after sort
+                if (channel === "beta") {
                     return true;
                 }
                 return false;
             })
-            .sort((a: any, b: any) => {
+            .sort((a, b) => {
                 const versionA = semver.clean(a.tag_name, { loose: true }) || "";
                 const versionB = semver.clean(b.tag_name, { loose: true }) || "";
                 return semver.rcompare(versionA, versionB);
@@ -212,10 +254,11 @@ const checkForUpdate = async (
         logger.log("Update check: already on latest matching release");
         if (promptAfterCheck) {
             const window = BrowserWindow.fromId(windowId ?? 1)!;
+            const t = mainT;
             dialog.showMessageBox(window, {
                 type: "info",
-                title: "Yomikiru",
-                message: "Running latest version",
+                title: t("updater.appTitle", { ns: "electron" }),
+                message: t("updater.runningLatest", { ns: "electron" }),
                 buttons: [],
             });
         }
@@ -223,10 +266,11 @@ const checkForUpdate = async (
         logger.error("Update check: GitHub API or semver comparison failed", error);
         if (promptAfterCheck) {
             const window = BrowserWindow.fromId(windowId ?? 1)!;
+            const t = mainT;
             dialog.showMessageBox(window, {
                 type: "error",
-                title: "Update Check Failed",
-                message: "Failed to check for updates.",
+                title: t("updater.checkFailedTitle", { ns: "electron" }),
+                message: t("updater.checkFailedMessage", { ns: "electron" }),
                 detail: error instanceof Error ? error.message : String(error),
             });
         }
@@ -238,10 +282,11 @@ const checkForUpdate = async (
  */
 const showNoReleasesMessage = (windowId: number, channel: string) => {
     const window = BrowserWindow.fromId(windowId ?? 1)!;
+    const t = mainT;
     dialog.showMessageBox(window, {
         type: "info",
-        title: "Yomikiru",
-        message: `No ${channel} releases available.`,
+        title: t("updater.appTitle", { ns: "electron" }),
+        message: t("updater.noReleases", { ns: "electron", channel }),
         buttons: [],
     });
 };
@@ -253,19 +298,26 @@ const showUpdateAvailableMessage = (
     versionDiff: string | null,
 ) => {
     const window = BrowserWindow.fromId(windowId ?? 1)!;
+    const t = mainT;
 
-    const skipPatchHint =
-        versionDiff === "patch"
-            ? `To skip check for patch updates, enable "skip patch update" in settings.\nYou can also enable "auto download".`
-            : "";
+    const skipPatchHint = versionDiff === "patch" ? t("updater.skipPatchHint", { ns: "electron" }) : "";
 
     dialog
         .showMessageBox(window, {
             type: "info",
-            title: "New Version Available",
-            message: `Current Version : ${currentVersion}\n` + `Latest Version   : ${latestVersion}`,
+            title: t("updater.newVersionTitle", { ns: "electron" }),
+            message: t("updater.versionCompare", {
+                ns: "electron",
+                current: currentVersion,
+                latest: latestVersion,
+            }),
             detail: skipPatchHint,
-            buttons: ["Download Now", "Download and show Changelog", "Show Changelog", "Download Later"],
+            buttons: [
+                t("updater.downloadNow", { ns: "electron" }),
+                t("updater.downloadAndChangelog", { ns: "electron" }),
+                t("updater.showChangelog", { ns: "electron" }),
+                t("updater.downloadLater", { ns: "electron" }),
+            ],
             cancelId: 3,
         })
         .then((response) => {
@@ -335,13 +387,17 @@ const downloadUpdates = (latestVersion: string, windowId: number, silent = false
         }
 
         const showMainPrompt = () => {
-            const buttons = ["Install Now", "Install on Quit"];
-            if (silent) buttons.push("Install and Show Changelog");
+            const t = mainT;
+            const buttons = [
+                t("updater.installNow", { ns: "electron" }),
+                t("updater.installOnQuit", { ns: "electron" }),
+            ];
+            if (silent) buttons.push(t("updater.installAndChangelog", { ns: "electron" }));
             dialog
                 .showMessageBox(window, {
                     type: "info",
-                    title: "Updates downloaded",
-                    message: "Updates downloaded.",
+                    title: t("updater.downloadedTitle", { ns: "electron" }),
+                    message: t("updater.downloadedMessage", { ns: "electron" }),
                     buttons,
                     cancelId: 1,
                 })
@@ -361,17 +417,18 @@ const downloadUpdates = (latestVersion: string, windowId: number, silent = false
 
         // https://github.com/mienaiyami/yomikiru/discussions/451#discussioncomment-13778852
         if (process.platform === "win32" && !IS_PORTABLE) {
+            const t = mainT;
             dialog
                 .showMessageBox(window, {
                     type: "warning",
-                    title: "Update Installation Notice",
-                    message: "Due to recent Windows security changes, auto-updates might fail.",
-                    detail: `You can either proceed with normal installation (which might fail) or install manually (just run the downloaded file).`,
+                    title: t("updater.installNoticeTitle", { ns: "electron" }),
+                    message: t("updater.installNoticeMessage", { ns: "electron" }),
+                    detail: t("updater.installNoticeDetail", { ns: "electron" }),
                     buttons: [
-                        "Try Normal Installation",
-                        "Install Manually (Recommended, show downloaded file)",
-                        "Install Manually and Show Changelog",
-                        "More Info",
+                        t("updater.tryNormalInstall", { ns: "electron" }),
+                        t("updater.installManually", { ns: "electron" }),
+                        t("updater.installManuallyChangelog", { ns: "electron" }),
+                        t("updater.moreInfo", { ns: "electron" }),
                     ],
                     cancelId: 1,
                 })
@@ -407,10 +464,14 @@ const downloadUpdates = (latestVersion: string, windowId: number, silent = false
                     logger.log(`Update download temp dir: "${tempPath}"`);
                     e.once("done", (_, state) => {
                         if (state !== "completed") {
+                            const t = mainT;
                             dialog.showMessageBox(window, {
                                 type: "error",
-                                title: "Error while downloading",
-                                message: state === "cancelled" ? "Download canceled." : "Download failed.",
+                                title: t("updater.downloadErrorTitle", { ns: "electron" }),
+                                message:
+                                    state === "cancelled"
+                                        ? t("updater.downloadCanceled", { ns: "electron" })
+                                        : t("updater.downloadFailed", { ns: "electron" }),
                             });
                         }
                     });
@@ -429,10 +490,11 @@ const downloadUpdates = (latestVersion: string, windowId: number, silent = false
             })
             .catch((e) => {
                 downloadItem = null;
+                const t = mainT;
                 dialog.showMessageBox(window, {
                     type: "error",
-                    title: "Error while downloading",
-                    message: `${e}\n\nPlease check the homepage if persist.`,
+                    title: t("updater.downloadErrorTitle", { ns: "electron" }),
+                    message: t("updater.downloadErrorPersist", { ns: "electron", error: String(e) }),
                 });
             });
     };
@@ -443,13 +505,13 @@ const downloadUpdates = (latestVersion: string, windowId: number, silent = false
         const dl = await getArtifactDownloadUrl(latestVersion);
         if (!dl) {
             logger.error(`Update download: no artifact URL for v${latestVersion} (see artifacts.json)`);
+            const t = mainT;
             dialog
                 .showMessageBox(window, {
                     type: "error",
-                    title: "Update Failed",
-                    message:
-                        "Could not find update file for this platform. Please download manually from the releases page.",
-                    buttons: ["Open Releases", "OK"],
+                    title: t("updater.updateFailedTitle", { ns: "electron" }),
+                    message: t("updater.noArtifact", { ns: "electron" }),
+                    buttons: [t("updater.openReleases", { ns: "electron" }), t("buttons.ok", { ns: "dialogs" })],
                 })
                 .then((res) => {
                     if (res.response === 0) shell.openExternal(RELEASES_PAGE);
@@ -464,38 +526,40 @@ const downloadUpdates = (latestVersion: string, windowId: number, silent = false
 
                 downloadFile(dl, webContents, (file) => {
                     logger.log(`Update package saved: ${file.filename}`);
-                    crossZip.unzip(file.path, extractPath, (err) => {
-                        if (err) return logger.error("Portable update: unzip failed", err);
-                        logger.log(`Portable update: extracted to "${extractPath}"`);
-                        const appPath = path.join(app.getAppPath(), "../../");
-                        const appDirName = path.join(app.getPath("exe"), "../");
-                        setupInstallOnQuit = () => {
-                            app.once("quit", () => {
-                                logger.log("Portable update: copying files over install dir (on quit)");
-                                logger.log(`Portable update: target base "${appPath}"`);
-                                spawn(
-                                    `cmd.exe /c start powershell.exe " Write-Output 'Starting update...' ; Start-Sleep -Seconds 5.0 ;` +
-                                        ` $sourcePath = Join-Path '${extractPath}' '*' ; ` +
-                                        ` $destPath = '${appDirName}' ; ` +
-                                        ` Get-ChildItem -Path $destPath -Recurse -Force | Where-Object { $_.FullName -notmatch 'userdata'} | Remove-Item -Force -Recurse ; ` +
-                                        ` Write-Output 'Moving extracted files...' ; Start-Sleep -Seconds 1.9 ; ` +
-                                        ` Copy-Item -Path $sourcePath -Destination $destPath -Force -Recurse ; ` +
-                                        ` Write-Output 'Updated, launching app.' ; Start-Sleep -Seconds 2.0 ; ` +
-                                        ` & '${app.getPath("exe")}' ; "`,
-                                    { shell: true, cwd: appDirName },
-                                ).on("exit", process.exit);
-                                logger.log("Portable update: exiting so PowerShell can replace files");
-                            });
-                            logger.log("Portable update: will run file copy on next app quit");
-                        };
-                        performInstallNow = () => {
-                            setupInstallOnQuit?.();
-                            logger.log("Portable update: quitting now to start install");
-                            app.quit();
-                        };
-                        logger.log("Portable update: package ready; waiting for user install choice");
-                        promptInstall();
-                    });
+                    void archiveService
+                        .extractAll(file.path, extractPath)
+                        .then(() => {
+                            logger.log(`Portable update: extracted to "${extractPath}"`);
+                            const appPath = path.join(app.getAppPath(), "../../");
+                            const appDirName = path.join(app.getPath("exe"), "../");
+                            setupInstallOnQuit = () => {
+                                app.once("quit", () => {
+                                    logger.log("Portable update: copying files over install dir (on quit)");
+                                    logger.log(`Portable update: target base "${appPath}"`);
+                                    spawn(
+                                        `cmd.exe /c start powershell.exe " Write-Output 'Starting update...' ; Start-Sleep -Seconds 5.0 ;` +
+                                            ` $sourcePath = Join-Path '${extractPath}' '*' ; ` +
+                                            ` $destPath = '${appDirName}' ; ` +
+                                            ` Get-ChildItem -Path $destPath -Recurse -Force | Where-Object { $_.FullName -notmatch 'userdata'} | Remove-Item -Force -Recurse ; ` +
+                                            ` Write-Output 'Moving extracted files...' ; Start-Sleep -Seconds 1.9 ; ` +
+                                            ` Copy-Item -Path $sourcePath -Destination $destPath -Force -Recurse ; ` +
+                                            ` Write-Output 'Updated, launching app.' ; Start-Sleep -Seconds 2.0 ; ` +
+                                            ` & '${app.getPath("exe")}' ; "`,
+                                        { shell: true, cwd: appDirName },
+                                    ).on("exit", process.exit);
+                                    logger.log("Portable update: exiting so PowerShell can replace files");
+                                });
+                                logger.log("Portable update: will run file copy on next app quit");
+                            };
+                            performInstallNow = () => {
+                                setupInstallOnQuit?.();
+                                logger.log("Portable update: quitting now to start install");
+                                app.quit();
+                            };
+                            logger.log("Portable update: package ready; waiting for user install choice");
+                            promptInstall();
+                        })
+                        .catch((err) => logger.error("Portable update: archive extract failed", err));
                 });
             } else {
                 downloadFile(dl, webContents, (file) => {
@@ -548,12 +612,13 @@ const downloadUpdates = (latestVersion: string, windowId: number, silent = false
             };
 
             const showInstallError = (err: unknown) => {
+                const t = mainT;
                 dialog.showMessageBox(window, {
                     type: "error",
-                    title: "Update Installation Failed",
-                    message: "Failed to install the update.",
+                    title: t("updater.installFailedTitle", { ns: "electron" }),
+                    message: t("updater.installFailedMessage", { ns: "electron" }),
                     detail: err instanceof Error ? err.message : String(err),
-                    buttons: ["OK"],
+                    buttons: [t("buttons.ok", { ns: "dialogs" })],
                 });
             };
 

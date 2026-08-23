@@ -6,28 +6,32 @@ import { dialogUtils } from "@utils/dialog";
 import { keyFormatter, mouseEventFormatter, SHORTCUT_COMMAND_MAP } from "@utils/keybindings";
 import { createRendererLogger } from "@utils/logger";
 import type { ReactElement } from "react";
-import { useSettingsContext } from "../Settings";
+import { useTranslation } from "react-i18next";
 import { reservedKeys, SHORTCUT_LIMIT } from "../utils/constants";
+import { navigateToSetting } from "../utils/navigateToSetting";
 
 const log = createRendererLogger("settings/Shortcuts");
 
 const ShortcutInput = ({ command }: { command: ShortcutCommands }) => {
+    const { t } = useTranslation("settings");
+    const { t: tReader } = useTranslation("reader");
     const shortcuts = useAppSelector((store) => store.shortcuts);
     const dispatch = useAppDispatch();
     const shortcut = shortcuts.find((e) => e.command === command);
-    if (!shortcut) return <p>Command &quot;{command}&quot; not found.</p>;
+    if (!shortcut) return <p>{t("shortcuts.commandNotFound", { command })}</p>;
 
     const tryAddShortcut = (newKey: string, inputRef?: HTMLInputElement) => {
         const dupIndex = shortcuts.findIndex((s) => s.keys.includes(newKey));
         if (dupIndex >= 0) {
-            const name =
+            const nameKey =
                 SHORTCUT_COMMAND_MAP.find((s) => s.command === shortcuts[dupIndex].command)?.name || command;
+            const name = nameKey.startsWith("shortcutNames.") ? tReader(nameKey) : nameKey;
             log.warn(`"${newKey}" already bound to "${shortcuts[dupIndex].command}"`);
-            dialogUtils.warn({ message: `"${newKey}" already bound to "${name}".` });
+            dialogUtils.warn({ message: t("shortcuts.alreadyBound", { key: newKey, name }) });
             return;
         }
         if (reservedKeys.includes(newKey)) {
-            dialogUtils.warn({ message: "Can't use reserved key combination." });
+            dialogUtils.warn({ message: t("shortcuts.reservedCombo") });
             log.warn(`"${newKey}" is reserved key combination.`);
             inputRef?.focus();
             return;
@@ -84,7 +88,7 @@ const ShortcutInput = ({ command }: { command: ShortcutCommands }) => {
                         e.stopPropagation();
                         tryAddShortcut(newKey);
                     }}
-                    placeholder="Add New"
+                    placeholder={t("shortcuts.addNew")}
                     readOnly
                     spellCheck={false}
                 />
@@ -94,21 +98,22 @@ const ShortcutInput = ({ command }: { command: ShortcutCommands }) => {
 };
 
 const Shortcuts = (): ReactElement => {
-    const { scrollIntoView } = useSettingsContext();
+    const { t } = useTranslation("settings");
+    const { t: tReader } = useTranslation("reader");
+    const dispatch = useAppDispatch();
     return (
         <div className="shortcutKey">
             <ul>
-                <li>Some changes may require app to restart.</li>
-                <li>You can use middle mouse button or grab to scroll reader.</li>
+                <li>{t("shortcuts.hintRestart")}</li>
+                <li>{t("shortcuts.hintMiddleMouse")}</li>
+                <li>{t("shortcuts.hintMouse45")}</li>
                 <li>
-                    Mouse button 4 or 5 (back/forward): hover over &quot;Add New&quot; input first, then click to
-                    bind.
+                    {t("shortcuts.hintBackspaceBefore")}
+                    <code>{t("shortcuts.backspace")}</code>
+                    {t("shortcuts.hintBackspaceAfter")}
                 </li>
                 <li>
-                    Use <code>Backspace</code> to clear key binding.
-                </li>
-                <li>
-                    Reserved Keys :{" "}
+                    {t("shortcuts.reservedKeys")}
                     {reservedKeys.map((e) => (
                         <span key={e}>
                             <code>{e}</code>{" "}
@@ -120,20 +125,27 @@ const Shortcuts = (): ReactElement => {
             <table>
                 <tbody>
                     <tr>
-                        <th>Function</th>
-                        <th>Key</th>
+                        <th>{t("shortcuts.function")}</th>
+                        <th>{t("shortcuts.key")}</th>
                     </tr>
                     {SHORTCUT_COMMAND_MAP.map((e) => (
-                        <tr key={e.command}>
+                        <tr key={e.command} id={`settings-shortcut-${e.command}`}>
                             <td>
-                                {e.name}
-                                {(["dirUp", "contextMenu"] as ShortcutCommands[]).includes(e.command) && (
+                                {tReader(e.name)}
+                                {(["dirUp", "contextMenu", "deleteSelected"] as ShortcutCommands[]).includes(
+                                    e.command,
+                                ) && (
                                     <a
                                         onClick={() => {
-                                            scrollIntoView("#settings-usage-searchShortcutKeys", "extras");
+                                            navigateToSetting(
+                                                e.command === "deleteSelected"
+                                                    ? "usage:multi-select"
+                                                    : "usage:search-shortcut-keys",
+                                                dispatch,
+                                            );
                                         }}
                                     >
-                                        More Info.
+                                        {t("shared.moreInfoDot")}
                                     </a>
                                 )}
                             </td>
@@ -143,37 +155,37 @@ const Shortcuts = (): ReactElement => {
                         </tr>
                     ))}
                     <tr>
-                        <td>New Window</td>
+                        <td>{t("shortcuts.newWindow")}</td>
                         <td>
                             <code>ctrl+n</code>
                         </td>
                     </tr>
                     <tr>
-                        <td>Close Window</td>
+                        <td>{t("shortcuts.closeWindow")}</td>
                         <td>
                             <code>ctrl+w</code>
                         </td>
                     </tr>
                     <tr>
-                        <td>Reader width</td>
+                        <td>{t("shortcuts.readerWidth")}</td>
                         <td>
                             <code>ctrl+scroll</code>
                         </td>
                     </tr>
                     <tr>
-                        <td>Reload UI</td>
+                        <td>{t("shortcuts.reloadUi")}</td>
                         <td>
                             <code>ctrl+r</code>
                         </td>
                     </tr>
                     <tr>
-                        <td>Reload UI and try to clear cache</td>
+                        <td>{t("shortcuts.reloadUiClearCache")}</td>
                         <td>
                             <code>ctrl+shift+r</code>
                         </td>
                     </tr>
                     <tr>
-                        <td>Dev Tool</td>
+                        <td>{t("shortcuts.devTool")}</td>
                         <td>
                             <code>ctrl+shift+i</code>
                         </td>

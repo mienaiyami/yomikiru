@@ -1,31 +1,46 @@
-import { removeAnilistTracker, setAnilistCurrentManga } from "@store/anilist";
+import { cacheAnilistListEntry, removeAnilistTracker, setAnilistCurrentListEntry } from "@store/anilist";
 import { useAppDispatch, useAppSelector } from "@store/hooks";
 import { setAnilistEditOpen } from "@store/ui";
 import InputCheckbox from "@ui/InputCheckbox";
 import InputNumber from "@ui/InputNumber";
 import InputSelect from "@ui/InputSelect";
 import Link from "@ui/Link";
-import AniList from "@utils/anilist";
+import { setAnilistListEntry } from "@utils/anilist";
 import { useEffect, useLayoutEffect, useRef, useState } from "react";
-
 import FocusLock from "react-focus-lock";
-
-const betterStatus = {
-    CURRENT: "Reading",
-    PLANNING: "Plan to Read",
-    COMPLETED: "Completed",
-    DROPPED: "Dropped",
-    PAUSED: "Paused",
-    REPEATING: "Repeating",
-};
+import { useTranslation } from "react-i18next";
 
 const AnilistEdit = () => {
+    const { t } = useTranslation("anilist");
+    const { t: tCommon } = useTranslation("common");
     const dispatch = useAppDispatch();
     const contRef = useRef<HTMLDivElement>(null);
-    const anilistCurrentManga = useAppSelector((store) => store.anilist.currentManga);
-    const mangaInReader = useAppSelector((store) => store.reader.content?.link);
+    const anilistCurrentListEntry = useAppSelector((store) => store.anilist.currentListEntry);
+    /** Local path for AniList tracking: gallery context when opened from home, otherwise the open reader item. */
+    const trackLocalLink = useAppSelector(
+        (store) => store.anilist.galleryTrackContext?.link ?? store.reader.content?.link,
+    );
 
-    const [tempData, setTempData] = useState(anilistCurrentManga);
+    const [tempData, setTempData] = useState(anilistCurrentListEntry);
+
+    const statusLabel = (status: Anilist.ListEntry["status"]): string => {
+        switch (status) {
+            case "CURRENT":
+                return t("edit.statusReading");
+            case "PLANNING":
+                return t("edit.statusPlanToRead");
+            case "COMPLETED":
+                return t("edit.statusCompleted");
+            case "DROPPED":
+                return t("edit.statusDropped");
+            case "PAUSED":
+                return t("edit.statusPaused");
+            case "REPEATING":
+                return t("edit.statusRepeating");
+            default:
+                return status;
+        }
+    };
 
     useEffect(() => {
         setTimeout(() => {
@@ -34,8 +49,8 @@ const AnilistEdit = () => {
     }, []);
 
     useLayoutEffect(() => {
-        setTempData(anilistCurrentManga);
-    }, [anilistCurrentManga]);
+        setTempData(anilistCurrentListEntry);
+    }, [anilistCurrentListEntry]);
 
     return (
         <FocusLock>
@@ -69,7 +84,11 @@ const AnilistEdit = () => {
                             ></span>
                             <div className="info">
                                 <div className="cover">
-                                    <img src={tempData.media.coverImage.medium} alt="Cover" draggable={false} />
+                                    <img
+                                        src={tempData.media.coverImage.medium}
+                                        alt={t("edit.coverAlt")}
+                                        draggable={false}
+                                    />
                                 </div>
                                 <div className="col">
                                     <span>
@@ -83,8 +102,6 @@ const AnilistEdit = () => {
                                         <Link href={tempData.media.siteUrl}>{tempData.media.siteUrl}</Link>
                                     </span>
                                 </div>
-                                {/* <div className="col">
-                            </div> */}
                             </div>
                             <div className="data">
                                 <div>
@@ -97,7 +114,7 @@ const AnilistEdit = () => {
                                             "PAUSED",
                                             "REPEATING",
                                         ].map((e) => ({
-                                            label: betterStatus[e as Anilist.MangaData["status"]],
+                                            label: statusLabel(e as Anilist.ListEntry["status"]),
                                             value: e,
                                             style: { textAlign: "center" },
                                         }))}
@@ -107,20 +124,20 @@ const AnilistEdit = () => {
                                                 if (init)
                                                     return {
                                                         ...init,
-                                                        status: value as Anilist.MangaData["status"],
+                                                        status: value as Anilist.ListEntry["status"],
                                                     };
                                                 return null;
                                             });
                                         }}
                                         labeled
-                                        labelBefore="Status"
+                                        labelBefore={t("edit.status")}
                                         className="noBG"
                                     />
                                 </div>
                                 <div>
                                     <InputNumber
                                         value={tempData.progress}
-                                        labelBefore="Chapters"
+                                        labelBefore={t("edit.chapters")}
                                         className="noBG"
                                         min={0}
                                         max={20000}
@@ -136,7 +153,7 @@ const AnilistEdit = () => {
                                 <div>
                                     <InputNumber
                                         value={tempData.progressVolumes}
-                                        labelBefore="Volumes"
+                                        labelBefore={t("edit.volumes")}
                                         className="noBG"
                                         min={0}
                                         max={20000}
@@ -152,7 +169,7 @@ const AnilistEdit = () => {
                                 <div>
                                     <InputNumber
                                         value={tempData.score}
-                                        labelBefore="Score"
+                                        labelBefore={t("edit.score")}
                                         className="noBG"
                                         min={0}
                                         max={10}
@@ -168,7 +185,7 @@ const AnilistEdit = () => {
                                 </div>
                                 <div>
                                     <label className="noBG">
-                                        Start Date
+                                        {t("edit.startDate")}
                                         <input
                                             type="date"
                                             value={
@@ -201,7 +218,7 @@ const AnilistEdit = () => {
                                 </div>
                                 <div>
                                     <label className="noBG">
-                                        Finish Date
+                                        {t("edit.finishDate")}
                                         <input
                                             type="date"
                                             value={
@@ -236,7 +253,7 @@ const AnilistEdit = () => {
                                 <div>
                                     <InputNumber
                                         value={tempData.repeat}
-                                        labelBefore="Repeat"
+                                        labelBefore={t("edit.repeat")}
                                         className="noBG"
                                         min={0}
                                         max={1000}
@@ -252,7 +269,7 @@ const AnilistEdit = () => {
                                 <div>
                                     <InputCheckbox
                                         checked={tempData.private}
-                                        labelAfter="Private"
+                                        labelAfter={t("edit.private")}
                                         onChange={(e) => {
                                             const value = e.currentTarget.checked;
                                             setTempData((init) => {
@@ -270,15 +287,23 @@ const AnilistEdit = () => {
                                 <div className="last">
                                     <button
                                         onClick={(e) => {
+                                            if (!tempData) return;
                                             const target = e.currentTarget;
                                             const oldText = target.innerText;
-                                            target.innerText = "Saving...";
-                                            AniList.setCurrentMangaData(tempData).then((e) => {
-                                                if (e) {
-                                                    dispatch(setAnilistCurrentManga(e));
-                                                    target.innerText = "Saved!";
+                                            target.innerText = t("edit.saving");
+                                            setAnilistListEntry(tempData).then((result) => {
+                                                if (result) {
+                                                    dispatch(setAnilistCurrentListEntry(result));
+                                                    if (trackLocalLink)
+                                                        void dispatch(
+                                                            cacheAnilistListEntry({
+                                                                itemLink: trackLocalLink,
+                                                                data: result,
+                                                            }),
+                                                        );
+                                                    target.innerText = t("edit.saved");
                                                 } else {
-                                                    target.innerText = "Failed!";
+                                                    target.innerText = t("edit.failed");
                                                 }
                                                 setTimeout(() => {
                                                     target.innerText = oldText;
@@ -286,17 +311,17 @@ const AnilistEdit = () => {
                                             });
                                         }}
                                     >
-                                        Save
+                                        {tCommon("actions.save")}
                                     </button>
                                 </div>
                                 <div className="last">
                                     <button
                                         onClick={() =>
-                                            mangaInReader && dispatch(removeAnilistTracker(mangaInReader))
+                                            trackLocalLink && dispatch(removeAnilistTracker(trackLocalLink))
                                         }
-                                        title="This only remove tracking locally. Anilist entry is not deleted."
+                                        title={t("edit.untrackTitle")}
                                     >
-                                        Untrack
+                                        {t("edit.untrack")}
                                     </button>
                                 </div>
                                 <div></div>

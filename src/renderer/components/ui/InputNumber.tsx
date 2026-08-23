@@ -18,6 +18,7 @@ const InputNumber = ({
     className = "",
     disabled = false,
     noSpin = false,
+    integerOnly = false,
     title,
     tooltip,
     timeout,
@@ -31,6 +32,8 @@ const InputNumber = ({
     step?: number;
     value: number;
     noSpin?: boolean;
+    /** When true, block decimal entry and truncate pasted or spun values to whole numbers. */
+    integerOnly?: boolean;
     onChange?: (currentTarget: HTMLInputElement) => void | number;
     /**
      * `[time_in_ms, fn_on_timeout]`
@@ -43,6 +46,19 @@ const InputNumber = ({
     disabled?: boolean;
 }) => {
     if (!onChange && !timeout) throw new Error("InputNumber: onChange or timeout must be defined");
+
+    const blockIntegerOnlyKey = (key: string) =>
+        integerOnly && (key === "." || key === "," || key === "e" || key === "E");
+
+    const normalizeInputValue = (input: HTMLInputElement) => {
+        const parsed = input.valueAsNumber;
+        if (!Number.isFinite(parsed)) return parsed;
+        if (!integerOnly) return parsed;
+        const whole = Math.trunc(parsed);
+        if (whole !== parsed) input.value = whole.toString();
+        return whole;
+    };
+
     const [valueProxy, setValueProxy] = useState(value);
     const repeater = useRef<NodeJS.Timer | null>(null);
     const mouseDownRef = useRef(false);
@@ -81,7 +97,9 @@ const InputNumber = ({
         if (aaa !== undefined) currentTarget.value = aaa.toString();
         if (timeout) {
             if (aaa === undefined) {
-                setValueProxy(currentTarget.valueAsNumber ?? parseFloat(min.toString()));
+                const fallback = parseFloat(min.toString());
+                const parsed = normalizeInputValue(currentTarget);
+                setValueProxy(Number.isFinite(parsed) ? parsed : fallback);
             } else setValueProxy(aaa);
         }
     };
@@ -177,16 +195,22 @@ const InputNumber = ({
                         max={max}
                         step={step}
                         onKeyDown={(e) => {
+                            if (blockIntegerOnlyKey(e.key)) {
+                                e.preventDefault();
+                                return;
+                            }
                             if (!["Escape", "Tab"].includes(e.key)) {
                                 e.stopPropagation();
                             }
                         }}
                         onChange={(e) => {
-                            const value = e.currentTarget.valueAsNumber;
-                            if (min !== undefined && value < parseFloat(min.toString()))
-                                e.currentTarget.value = min.toString();
-                            if (max !== undefined && value > parseFloat(max.toString()))
-                                e.currentTarget.value = max.toString();
+                            const value = normalizeInputValue(e.currentTarget);
+                            if (Number.isFinite(value)) {
+                                if (min !== undefined && value < parseFloat(min.toString()))
+                                    e.currentTarget.value = min.toString();
+                                if (max !== undefined && value > parseFloat(max.toString()))
+                                    e.currentTarget.value = max.toString();
+                            }
                             changeHandler();
                         }}
                     />
@@ -209,16 +233,22 @@ const InputNumber = ({
                     max={max}
                     step={step}
                     onKeyDown={(e) => {
+                        if (blockIntegerOnlyKey(e.key)) {
+                            e.preventDefault();
+                            return;
+                        }
                         if (e.key !== "Escape") {
                             e.stopPropagation();
                         }
                     }}
                     onChange={(e) => {
-                        const value = e.currentTarget.valueAsNumber;
-                        if (min !== undefined && value < parseFloat(min.toString()))
-                            e.currentTarget.value = min.toString();
-                        if (max !== undefined && value > parseFloat(max.toString()))
-                            e.currentTarget.value = max.toString();
+                        const value = normalizeInputValue(e.currentTarget);
+                        if (Number.isFinite(value)) {
+                            if (min !== undefined && value < parseFloat(min.toString()))
+                                e.currentTarget.value = min.toString();
+                            if (max !== undefined && value > parseFloat(max.toString()))
+                                e.currentTarget.value = max.toString();
+                        }
                         changeHandler();
                     }}
                     title={title}

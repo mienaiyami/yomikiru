@@ -58,7 +58,7 @@ For optimal organization and automatic recognition:
 - **Series Folders**: Create separate folders for each manga/book series
 - **Chapter Naming**: Use consistent naming conventions (e.g., "Chapter 1", "Ch 001")
 - **Image Formats**: PNG, JPG, JPEG, and WebP are supported
-- **Archive Support**: CBZ, CBR, ZIP, and RAR files work seamlessly
+- **Archive Support**: CBZ/ZIP, CBR/RAR, and CB7/7z files work seamlessly
 - **Mixed Formats**: You can mix folders and archives within the same series
 
 ## Supported Formats
@@ -69,7 +69,7 @@ For optimal organization and automatic recognition:
 |--------|-----------|-------|
 | Image Folders | `.png`, `.jpg`, `.jpeg`, `.webp` | Recommended for best performance |
 | Comic Book Archive | `.cbz`, `.cbr` | Standard comic formats |
-| Compressed Archives | `.zip`, `.rar` | Regular archives containing images |
+| Compressed Archives | `.zip`, `.cbz`, `.rar`, `.cbr`, `.7z`, `.cb7` | Regular archives containing images |
 | PDF Documents | `.pdf` | Supported with page navigation |
 
 ### Books/Novels

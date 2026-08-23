@@ -54,9 +54,9 @@ demo/
 
 Tree shape matches [GUIDE.md](./GUIDE.md) expectations: title folder → chapters as folders or single archive/PDF files.
 
-## CBR / unrar
+## CBR
 
-`MixedFormats_OneTitle/Ch03.cbr` is a public-domain Golden Age comic from the Internet Archive (RAR-based). Opening it requires the same system `unrar` support the app already expects for CBR. If the download fails, the script warns and continues; other formats still work.
+`MixedFormats_OneTitle/Ch03.cbr` is a public-domain Golden Age comic from the Internet Archive (RAR-based). It is opened through Yomikiru's bundled full 7-Zip backend; users do not need a system `unrar` installation. If the download fails, the script warns and continues; other formats still work.
 
 ## Regenerate
 

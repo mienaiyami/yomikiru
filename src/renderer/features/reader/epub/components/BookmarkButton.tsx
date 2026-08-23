@@ -6,6 +6,7 @@ import { useAppDispatch, useAppSelector } from "@store/hooks";
 import { getReaderBook } from "@store/reader";
 import { dialogUtils } from "@utils/dialog";
 import { memo, useEffect, useState } from "react";
+import { useTranslation } from "react-i18next";
 
 const BookmarkButton = memo(
     ({
@@ -19,6 +20,9 @@ const BookmarkButton = memo(
             callback?: (progress: { chapterName: string; chapterId: string; position: string }) => any,
         ) => void;
     }) => {
+        const { t } = useTranslation("reader");
+        const { t: tDialogs } = useTranslation("dialogs");
+        const { t: tCommon } = useTranslation("common");
         const bookInReader = useAppSelector(getReaderBook);
         const bookmarks = useAppSelector((store) => store.bookmarks);
         const dispatch = useAppDispatch();
@@ -41,17 +45,17 @@ const BookmarkButton = memo(
         return (
             <button
                 className="ctrl-menu-item"
-                data-tooltip="Bookmark"
+                data-tooltip={t("sideList.bookmark")}
                 ref={addToBookmarkRef}
                 onClick={() => {
                     if (!bookInReader || !bookInReader.progress) return;
                     if (bookmarkedId !== null) {
                         return dialogUtils
                             .warn({
-                                title: "Warning",
-                                message: "Remove - Remove Bookmark\n",
+                                title: tDialogs("titles.warning"),
+                                message: t("dialogs.removeBookmarkBook"),
                                 noOption: false,
-                                buttons: ["Cancel", "Remove"],
+                                buttons: [tDialogs("buttons.cancel"), tCommon("actions.remove")],
                                 defaultId: 0,
                             })
                             .then(({ response }) => {
@@ -78,7 +82,7 @@ const BookmarkButton = memo(
                                 },
                             }),
                         );
-                        setShortcutText("Bookmark Added");
+                        setShortcutText(t("hud.bookmarkAdded"));
                     });
                 }}
             >

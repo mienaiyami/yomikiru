@@ -13,6 +13,7 @@ declare namespace Anilist {
 
     type SearchMediaItem = {
         id: number;
+        idMal: number | null;
         title: {
             english: string | null;
             romaji: string | null;
@@ -26,16 +27,26 @@ declare namespace Anilist {
         format: MediaFormat;
         coverImage: {
             medium: string;
+            large?: string | null;
         };
+        bannerImage?: string | null;
+        siteUrl?: string | null;
+        description?: string | null;
+        genres?: string[];
+        chapters?: number | null;
+        volumes?: number | null;
+        averageScore?: number | null;
         status: MediaStatus;
     };
 
+    /** Legacy localStorage tracking row. Import-only; live tracking is `ItemTracker` in the DB. */
     type TrackItem = {
         localURL: string;
         anilistMediaId: number;
     };
     type TrackStore = TrackItem[];
-    type MangaData = {
+    /** AniList MediaListEntry payload (manga, novels, and other AniList `type: MANGA` formats). */
+    type ListEntry = {
         id: number;
         mediaId: number;
         status: "CURRENT" | "PLANNING" | "COMPLETED" | "DROPPED" | "PAUSED" | "REPEATING";
@@ -62,9 +73,26 @@ declare namespace Anilist {
             };
             coverImage: {
                 medium: string;
+                large?: string | null;
             };
             bannerImage: string;
             siteUrl: string;
+            description?: string | null;
+            genres?: string[];
+            chapters?: number | null;
+            volumes?: number | null;
+            averageScore?: number | null;
+            idMal?: number | null;
+            status?: MediaStatus | null;
+            format?: MediaFormat | null;
+            staff?: {
+                edges?: {
+                    role?: string | null;
+                    node?: {
+                        name?: { full?: string | null } | null;
+                    } | null;
+                }[] | null;
+            } | null;
         };
     };
 }

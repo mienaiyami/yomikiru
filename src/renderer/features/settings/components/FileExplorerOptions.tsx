@@ -1,58 +1,59 @@
 import type { ReactElement } from "react";
+import { useTranslation } from "react-i18next";
 import { useExplorerOptions } from "../hooks/useExplorerOptions";
 
 const FileExplorerOptions = (): ReactElement => {
+    const { t } = useTranslation("settings");
     const { isUpdating, handleInvoke } = useExplorerOptions();
 
     const handleAddOption = () => {
-        handleInvoke("explorer:addOption", "Explorer option added successfully for manga/image files");
+        handleInvoke("explorer:addOption", t("fileExplorer.addedManga"));
     };
 
     const handleRemoveOption = () => {
-        handleInvoke("explorer:removeOption", "Explorer option removed successfully for manga/image files");
+        handleInvoke("explorer:removeOption", t("fileExplorer.removedManga"));
     };
 
     const handleAddEpubOption = () => {
-        handleInvoke("explorer:addOption:epub", "Explorer option added successfully for epub/text files");
+        handleInvoke("explorer:addOption:epub", t("fileExplorer.addedEpub"));
     };
 
     const handleRemoveEpubOption = () => {
-        handleInvoke("explorer:removeOption:epub", "Explorer option removed successfully for epub/text files");
+        handleInvoke("explorer:removeOption:epub", t("fileExplorer.removedEpub"));
     };
 
     return (
         <div className="settingItem2" id="settings-fileExplorerOption">
-            <h3>File Explorer Option</h3>
-            <div className="desc">
-                Add file explorer option (right click menu) to open item in Yomikiru&apos;s reader directly from
-                File Explorer. Use &quot;Use Existing Window&quot; in Other Settings to open in current window.
-            </div>
+            <h3>{t("fileExplorer.title")}</h3>
+            <div className="desc">{t("fileExplorer.desc")}</div>
             <ul>
                 <li>
                     <div className="desc">
-                        For folders, <code>.zip/.cbz</code>, <code>.7z/.cb7</code>, <code>.rar/.cbr</code>,{" "}
-                        <code>.pdf</code> (Opened in Manga/Image Reader)
+                        {t("fileExplorer.mangaDescBefore")}
+                        <code>.zip/.cbz</code>, <code>.7z/.cb7</code>, <code>.rar/.cbr</code>, <code>.pdf</code>
+                        {t("fileExplorer.mangaDescAfter")}
                     </div>
                     <div className="main row">
                         <button onClick={handleAddOption} disabled={isUpdating}>
-                            {"Add"}
+                            {t("shared.add")}
                         </button>
                         <button onClick={handleRemoveOption} disabled={isUpdating}>
-                            {"Remove"}
+                            {t("shared.remove")}
                         </button>
                     </div>
                 </li>
                 <li>
                     <div className="desc">
-                        For <code>.epub</code>, <code>.txt</code>, <code>.html/.xhtml</code> (Opened in Epub/Text
-                        Reader)
+                        {t("fileExplorer.epubDescBefore")}
+                        <code>.epub</code>
+                        {t("fileExplorer.epubDescAfter")}
                     </div>
                     <div className="main row">
                         <button onClick={handleAddEpubOption} disabled={isUpdating}>
-                            {"Add"}
+                            {t("shared.add")}
                         </button>
                         <button onClick={handleRemoveEpubOption} disabled={isUpdating}>
-                            {"Remove"}
+                            {t("shared.remove")}
                         </button>
                     </div>
                 </li>

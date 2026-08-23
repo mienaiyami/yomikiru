@@ -1,7 +1,7 @@
 import AniLogin from "@features/anilist/AniLogin";
 import AnilistEdit from "@features/anilist/AnilistEdit";
 import AnilistSearch from "@features/anilist/AnilistSearch";
-import ClassicView from "@features/home/ClassicView";
+import HomeView from "@features/home";
 import EPubReader from "@features/reader/epub/EPubReader";
 import Reader from "@features/reader/manga/Reader";
 import Settings from "@features/settings/Settings";
@@ -26,6 +26,7 @@ const Main = (): ReactElement => {
 
     // todo: move anilist login to Settings component
     const anilistToken = useAppSelector((store) => store.anilist.token);
+    const galleryAnilistCtx = useAppSelector((store) => store.anilist.galleryTrackContext);
     const isAniLoginOpen = useAppSelector((store) => store.ui.isOpen.anilist.login);
     const isAniSearchOpen = useAppSelector((store) => store.ui.isOpen.anilist.search);
     const isAniEditOpen = useAppSelector((store) => store.ui.isOpen.anilist.edit);
@@ -34,15 +35,15 @@ const Main = (): ReactElement => {
 
     return (
         <div id="app" className={appSettings.disableListNumbering ? "noListNumbering " : ""}>
-            <ClassicView />
+            <HomeView />
             <Settings />
             <LoadingScreen />
             {contextMenuData && <ContextMenu />}
             {optSelectData && <MenuList />}
             {colorSelectData && <InputColorReal />}
             {!anilistToken && isAniLoginOpen && <AniLogin />}
-            {reader.link && isAniSearchOpen && <AnilistSearch />}
-            {reader.link && isAniEditOpen && <AnilistEdit />}
+            {(reader.link || galleryAnilistCtx) && isAniSearchOpen && <AnilistSearch />}
+            {(reader.link || galleryAnilistCtx) && isAniEditOpen && <AnilistEdit />}
             {reader.link && (reader.type === "manga" ? <Reader /> : reader.type === "book" ? <EPubReader /> : "")}
         </div>
     );

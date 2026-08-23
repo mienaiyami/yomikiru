@@ -1,0 +1,181 @@
+{
+    "language": {
+        "title": "Language:",
+        "body": "In Settings (after Theme), choose a language source (<code>locale - name</code>). Yomikiru ships English; you can <bold>Install pack...</bold> a community <code>.zip</code> (one locale per pack), <bold>Export...</bold> a pack to share, or remove an installed pack. Missing strings in a pack fall back to English."
+    },
+    "defaultLocation": "Set <link>Default Location</link> in Settings (Library section) to the folder where you usually store manga and books. On first launch, choose that root immediately or use your system home folder until you change it later.",
+    "fileArrangement": {
+        "title": "Recommended File Arrangement:",
+        "body": "Though you can open manga from anywhere, it is recommended to arrange file in way as shown below for better experience and features like \"reader side-list\".",
+        "useOpenHere": "use \"Open\" here"
+    },
+    "dragDrop": {
+        "title": "Drag and Drop support.",
+        "folder": "Dropping a folder will open the reader with that folders content.",
+        "image": "Dropping a supported image file will open its parent folder in the reader",
+        "archive": "Dropping archive or epub file will open them in the reader"
+    },
+    "searchShortcuts": {
+        "title": "Search bar shortcut keys :",
+        "navigate": "With any search bar focused click <code>{{down}}</code> or <code>{{up}}</code> to navigate through results.",
+        "selectFocused": "Click <code>{{select}}</code> (with item focused) to open.",
+        "selectSingle": "Click <code>{{select}}</code> (without item focused) if only one item in list to open.",
+        "selectEmpty": "Click <code>{{select}}</code> on empty folder to open in reader.",
+        "dirUp": "Click <code>{{up}}</code> to go up a directory/folder. In gallery details, the same shortcut returns to the cover grid and focuses search, including after closing the reader back to that page. It does not run while Settings or AniList overlays are open, or while typing in a field.",
+        "contextMenu": "Click <code>{{menu}}</code> buttons to get right click menu of focused item (classic lists, gallery tiles, and details rows).",
+        "focusPageSearch": "<code>{{focus}}</code> focuses the main search field on the current page (classic Continue Reading / History when that list is shown, otherwise Bookmarks then Locations; gallery toolbar, or the open details list; manga sidelist or book find-in-page; AniList search; and the Settings search field while Settings is open). Does not run while typing in an input.",
+        "settingsJump": "While Settings is open, type in the search field at the top to jump to a setting, shortcut, About, or Usage section. Selecting a result moves focus to that control. <code>{{focus}}</code> focuses the search field. Escape clears the query, then closes Settings.",
+        "byType": "Search by type: Type <code>manga|manhua|manhwa|webtoon|webcomic|comic</code> to search for manga/manhua/manhwa/webtoon/webcomic/comic or <code>epub</code> for epub."
+    },
+    "homeLocation": {
+        "title": "Home Location tab :",
+        "clickItem": "In location tab, click item to see its content or double-click (if enabled in settings above) to open it in reader.",
+        "openDirectly": {
+            "link": "Open chapter in reader directly if chapter is a sub-folder of sub-folder of \"Default Location\".",
+            "example": "Example: If the default location is set to <code>{{path}}</code> and there is a folder named <code>One Piece</code> within it, any sub-folder located directly under <code>One Piece</code> will open automatically by clicking its link in the home location list. If no images are found then the sub-folder will be opened in location tab normally."
+        },
+        "search": {
+            "title": "Search:",
+            "symlink": "Symbolic links (symlinks) to directories and to files are followed in Locations/Home Location and during library scan, so you can browse and open content through linked folders and files.",
+            "partial": "You don't need to type the whole word in search. (e.g. For <code>One Piece</code> type <code>op</code>).",
+            "exact": "For exact search, add <code>\"</code> or <code>`</code> in front of search. (e.g. For <code>One Piece</code> type <code>`one</code>).",
+            "paste": "Paste link to set browse pasted link in Locations tab. Or page link of a supported file to open it in reader directly.",
+            "goUp": "Type <code>..{{sep}}</code> to go up directory.",
+            "dDrive": "Type let <code>D:\\</code> to go to <code>D drive</code>.",
+            "openInSearch": "Type name ending with <code>{{sep}}</code> to open it in search. e.g. When there is a directory named <code>One piece</code> in current list, type <code>One Piece{{sep}}</code> to open that as new list."
+        }
+    },
+    "collapseTabs": "Collapse/Un-collapse Bookmarks, History page tabs by clicking on the Dividers beside them in home screen.",
+    "gallery": {
+        "title": "Gallery:",
+        "body": "Click a book to open its details page (bookmarks and notes from the reader; click an entry to open the book at that place). Click manga for chapters and bookmarks as before (empty image folders are hidden from the chapter list). Right-click a tile for <bold>Continue Reading</bold>, <bold>Show in File Explorer</bold>, copy path, <bold>Add to Favourites</bold> / <bold>Remove from Favourites</bold>, <bold>Remove Progress</bold> (library entry stays), <bold>Remove from Library</bold> (files on disk stay), and (with AniList connected) <bold>Track with AniList</bold>. In details, back is on the cover; the cover and title stay in view while About scrolls. When AniList has a cover image, details and tiles use it; a <bold>Cover: Default</bold> / <bold>Cover: AniList</bold> toggle next to Track switches back to the library cover if you want. List tabs match the gallery toolbar (no counts on the tabs); manga chapters-read is shown as read/total; click the title note to edit it, then <bold>Esc</bold> or click away to save. Copy Path briefly shows Copied. The header starts at a rem-sized auto height and scrolls if the metadata is taller; drag the divider to resize (the cover scales with the visible height; can go shorter than that auto size; remembered for manga and books). On manga Content, <bold>Locate current chapter</bold> scrolls to the last-read chapter. Hero buttons include favourite, edit metadata, <bold>Show in File Explorer</bold>, and <bold>Copy Path</bold>. A title you save in Edit metadata shows on gallery tiles, classic History/Bookmarks, search, the reader sidebar, and the window title, with the original folder/file name in muted parentheses when they differ (the window title uses the edited name only); search matches both (and a cached tracker title). Reset on that overlay asks first, then clears those fields so tracker and file metadata show again. About and genres appear when a tracker or your edits supply them. When a title is tracked, releasing status, score, and chapter count from the tracker sit above genres, separated by a divider. <bold>Edit tags</bold> assigns labels you create (not free-form). Directory Up returns to the grid and focuses search (including after closing the reader back to details). Right-click the cover for the same library path actions; use the compact AniList control next to Continue when logged in. If the library folder or EPUB is missing on disk, a highlighted error banner above the header shows <bold>Locate on disk</bold> (re-link the path; warns if the name does not match) or <bold>Remove from Library</bold> while cover, bookmarks, and notes stay visible. Classic History / Bookmark and Continue Reading use the same dialog when the library root is missing. For manga only: if the series folder is still there but the last-opened chapter is gone, choose <bold>Open first chapter</bold> or <bold>Locate chapter</bold> (pick the renamed/moved chapter folder/archive); bookmarks can still be removed. This does not apply to EPUB."
+    },
+    "galleryToolbar": {
+        "title": "Gallery toolbar:",
+        "body": "One bar above the grid with section tabs (<bold>Continue</bold> / <bold>Library</bold> / <bold>Bookmarks</bold> / <bold>Favourites</bold>), a type filter (<bold>All</bold> / <bold>Manga/Webcomic</bold> / <bold>eBook</bold>), a tag filter when you have created tags (<bold>No filter</bold> or one or more tags), then sort (every section except Continue), view mode (Cover + Title / Cover Only / Compact / List), and a grid-size control, with search on the right of those actions.",
+        "types": "<bold>Manga/Webcomic</bold> covers every image-based series (manga, manhwa, manhua, comics, webtoons); <bold>eBook</bold> covers EPUB files only, not PDF. Hover a segment for the full list. The choice is remembered and applies to all sections.",
+        "tags": "Create tags from a title's details page (<bold>Edit tags</bold>). Assign as many as you like from that list (names are unique ignoring case). The toolbar tag filter lets you pick one or more tags (OR); <bold>No filter</bold> shows every title, including those without tags. Combined with the type filter. The selection is remembered with your other gallery settings.",
+        "continue": "<bold>Continue Reading</bold> shows items with progress, always newest last-read first. There is no sort control on this tab.",
+        "library": "<bold>Library</bold> shows everything; sort by title, date, or last read in either direction.",
+        "bookmarks": "<bold>Bookmarks</bold> shows titles that have at least one bookmark. Search and sort match Library (title, date, or last read). Opening a tile shows the Bookmarks list in the details panel; play still continues last progress.",
+        "favourites": "<bold>Favourites</bold> lists titles you have starred from a tile's context menu, the details header, or bulk Add to Favourites. Search and sort match Library. Removing more than one favourite from the selection menu asks first.",
+        "clear": "Search fields across the app show a small <bold>x</bold> button while they contain text; click it to clear the filter."
+    },
+    "multiSelect": {
+        "title": "Multi-select:",
+        "body": "Tick the checkbox on a gallery tile, chapter, bookmark, or note to enter selection mode. Hold <code>Shift</code> and click another item to select the range between them. The toolbar swaps to show <bold>Select All</bold>, <bold>Invert Selection</bold> (gallery / details), a 3-dot menu with bulk actions (e.g. <italic>Copy Path</italic>, <italic>Bookmark</italic>, <italic>Add to Favourites</italic> / <italic>Remove from Favourites</italic>, <italic>Remove Bookmark</italic>, <italic>Remove from Library</italic>, <italic>Mark as Read/Unread</italic>, <italic>Delete Notes</italic>), and a cancel button. Gallery tiles and classic History also offer <italic>Remove Progress</italic> (library entry stays). Removing more than one favourite asks first. Copy Path on a remaining control briefly shows Copied. Use <code>Ctrl+A</code> (or <code>Cmd+A</code>) to select all and <code>Esc</code> to clear. With items selected, <code>{{delete}}</code> runs the list's remove action (from Library, history, bookmarks, or notes) after the same confirmation as the menu. These shortcuts do not run while typing in a search field, while the reader is open, or on manga chapter lists. Classic Bookmark / History checkboxes can be toggled under <link><bold>Other Settings</bold></link> (<italic>Classic List Checkboxes</italic>)."
+    },
+    "covers": {
+        "title": "Covers:",
+        "body": "Generated thumbnails are saved under user data <code>covers</code> as <code>{{libraryId}}</code>. The gallery uses that file when present. If you use <bold>Select Cover</bold> in the details panel, the app stores that image's absolute path on the library entry and shows it when the file still exists; otherwise it falls back to the cached WebP. <bold>Reset Cover</bold> in details clears that override, switches back to the default library image (not AniList), deletes the cached WebP, and rebuilds from the folder or EPUB. After an upgrade that adds cover ids, the app may ask once whether to generate thumbnails for titles already in the library; you can skip and use regenerate in Settings later. <link><bold>Library</bold></link> in Settings (first section) holds Default Location (Locations tab folder; same scan controls as extra folders), extra library folders (manga, books, or both; scan on start, interval, and live watch), <bold>Scan now</bold>, <clear><bold>Clear unused progress</bold></clear>, and thumbnail clear/regenerate. Nested series, one-shot image folders, packed manga, and EPUB books (title, author, and cover from the OPF) are added without reading progress, so Continue Reading stays empty until you open a title. PDF titles get a cover when a gallery tile is shown. If you move a series or book, opening the new path can update the old entry; Locate can merge a duplicate at that path. Missing files and folders are skipped during regenerate and reported in one warning at the end. Thumbnail rebuild can lock the window. Scan now, scan on start, interval, and watch keep the window usable and show a status on the title bar (Cancel in the popover). Watch asks before it is turned on, then adds new titles in the background."
+    },
+    "libraryScan": {
+        "title": "Library scan:",
+        "body": "Scan now, scan on start, and interval walks each enabled root in the main process (not once per window). Extra library folders nested under another root (including Default Location) are skipped on the parent walk so each series is owned by one folder. Watch uses the same skip rules. Default Location is one row in that same list.",
+        "regex": "Each root has <link>Skip names matching regex</link>: one JavaScript regular expression, no slashes. It is tested against the <bold>basename</bold> of folders and of files that can become library items (EPUB / packed manga), not the full path, and not the scan root's own name. Matching is case-insensitive. Empty turns it off. An invalid pattern is kept and shown as an error; scan treats it as matching nothing until you fix it.",
+        "regexSimple": "A simple example: <code>Completed|Archived</code> skips any folder or file whose name contains Completed or Archived (letter case does not matter). Put <code>|</code> between names, with no spaces around it.",
+        "regexStart": "Put <code>^</code> in front to match only names that start with something. Example: <code>^_</code> skips <code>_scratch</code> but not <code>my_notes</code>.",
+        "regexExample": "To skip only exact names, wrap them with <code>^</code> and <code>$</code>, and put <code>|</code> between choices. Example: <code>^(scans|credits)$|^_</code> skips a folder named <code>scans</code> or <code>Credits</code>, and any name that starts with <code>_</code> (such as <code>_scratch</code>), but not <code>ongoing</code> or <code>scans-extra</code>.",
+        "ignoreFile": "A <bold>file</bold> named <code>yomikiru-ignore</code> or <code>.yomikiru-ignore</code> (any letter case) inside a directory skips that directory: it is not added and scan does not walk into it. That is how you exclude one series without renaming it.",
+        "ignoreFolder": "A <bold>folder</bold> with that name is skipped (and everything inside it). Sibling series in the same parent still scan. Ignore names are never added as library items. Existing library rows are not removed.",
+        "tags": "Folder tags on Default Location and each extra folder are added to newly scanned or watched titles (union: other tags stay). <link>Apply to existing</link> does the same for titles already in the library under that folder, excluding titles that sit inside another library folder. Applying to more than one title asks first.",
+        "status": "While a scan runs, the title bar shows a live folder or add count. Click it for phase, root, the current path, and <bold>Cancel scan</bold>. <link>Scan now</link> uses the same status and does not lock the window. Short watch flushes stay quiet."
+    },
+    "reader": {
+        "title": "Reader :",
+        "verticalScroll": "When using the \"vertical Scroll\" mode, you can change chapters on the first or last page by clicking on either side of the screen or by clicking \"prevPage\" (<code>{{prev}}</code>) or \"nextPage\" (<code>{{next}}</code>) shortcut keys. No response in center 20% of screen.",
+        "leftPrev": "Left \u00a0\u00a0= Previous Chapter",
+        "rightNext": "Right = Next Chapter",
+        "maxWidth": "Limit width of images in reader. To use \"Max Image Width\" feature, disable \"Size:Clamp\".",
+        "mouseScroll": "To scroll using mouse while viewing full page, use \"Left to Right\" or \"Right to Left\" reading mode, then \"Fit Vertically\" option or make image size lower than window height.",
+        "middleMouse": "Middle mouse button for auto scrolling.",
+        "sideList": "Access the side list by moving the mouse to left side of the screen. You can pin and resize the side list.",
+        "sideListSearch": "<code>{{focus}}</code> focuses the sidelist chapter search (same Focus search command as home). <code>{{random}}</code> opens a random chapter (avoids recently opened; works with shuffle mode).",
+        "shuffle": {
+            "title": "Shuffle mode",
+            "body": "(shuffle icon in sidelist): randomizes chapter order once; prev/next follow shuffled order. Auto-refresh disabled in this mode. Session-only."
+        },
+        "sidelistSearch2": {
+            "title": "Sidelist search:",
+            "body": "When filter is active, prev/next and random use the filtered list. Use the pin icon next to the search input to persist the filter when the list refreshes (e.g. auto-refresh, manual Refresh)."
+        },
+        "zenMode": "Zen Mode (Full Screen Mode): Hides UI, Only shows images and page number if enabled. Can be enabled using the shortcut key defined, <code>{{zen}}</code>",
+        "doubleClick": "Double click to toggle zen mode. Working area by reading mode:",
+        "zen": {
+            "vertical": "Vertical Scroll - 100%",
+            "verticalEnds": "Vertical Scroll (chapter start/end) - center 60%",
+            "ltrRtl": "LTR and RTL - center 20%"
+        }
+    },
+    "fileExplorer": {
+        "intro": "Open chapter directly from the file explorer after enabling <link>File Explorer Option</link>.",
+        "rightClick": "Right Click on folder or .cbz/.7z/.zip/.pdf/.epub \u00a0\u00a0\u2192\u00a0\u00a0 Show more options (win11) \u00a0\u00a0\u2192\u00a0\u00a0 Open in Yomikiru.",
+        "note": "Note that this only opens the chapter containing images, not the Manga Folder."
+    },
+    "tray": {
+        "title": "Minimize to Tray:",
+        "body": "Enable in <link>Other Settings</link> to send the window to the system tray instead of the taskbar when minimizing. With one window, left-click the tray icon to show or hide it; with multiple windows, left-click restores hidden windows or focuses. Right-click for the window list, <bold>Hide all Windows</bold>, and Exit. Exit respects \"Confirm Close Window\" when enabled."
+    },
+    "theme": {
+        "body": "<link>Copy theme using \"Copy Current Theme to Clipboard\" under theme</link>, it will be copied as text and you can share it anywhere. To install the theme, copy whole text you received and click on \"Save Theme from Clipboard\"."
+    },
+    "readerPresets": {
+        "title": "Reader Presets:",
+        "body": "Quick-switch between reading setups (e.g. 2-page LTR manga vs vertical-scroll manhwa). Separate preset lists for manga and book (EPUB) readers.",
+        "defaults": {
+            "title": "Defaults:",
+            "body": "Manga \u2014 Paged LTR, Long Strip, Long Strip with Gaps. Book \u2014 Default, Continuous. On first run, a \"User\" preset per type is created with your current settings."
+        },
+        "select": "<bold>Select</bold> applies a preset. <bold>Delete</bold> (trash icon) removes a custom preset; if the deleted preset was selected, another preset is auto-selected. The \"User\" preset cannot be removed.",
+        "reader": "In Reader Settings: <bold>+</bold> adds a new preset (name via modal). <bold>Autosave</bold> toggle: when on, changes are saved into the selected preset automatically; off requires manual Update or <bold>savePreset</bold> shortcut. User preset has autosave on by default. <bold>Save</bold> (floppy icon) manually updates the selected preset.",
+        "savePreset": "<code>{{save}}</code> saves current settings into the selected preset. Works even when the Reader Settings panel is closed; feedback shows the preset name.",
+        "keybinds": {
+            "title": "Preset keybinds:",
+            "cycle": "cycle to next/previous preset.",
+            "slots": "select preset 1-5 by display order. Slot keys are shared: in manga reader they select manga presets, in EPUB reader they select book presets. Use up/down buttons to reorder presets."
+        },
+        "clipboard": {
+            "title": "Clipboard:",
+            "body": "\"Copy Current Preset to Clipboard\" copies the selected preset (from each Manga/Book section). \"Save Preset from Clipboard\" (top, next to Reset) imports one preset; type is inferred from the JSON."
+        },
+        "exportImport": {
+            "title": "Export/Import:",
+            "body": "Per manga or book. Export saves custom presets only (defaults excluded). Import from file for bulk transfer; duplicates by id are skipped."
+        },
+        "reset": {
+            "title": "Reset to Default Presets",
+            "body": "restores built-in presets to their original state; if a \"User\" preset for manga or book is missing, it is recreated from your current reader settings. Custom presets are kept."
+        }
+    },
+    "pdfScale": {
+        "link": "PDF Scale:",
+        "body": "Set the quality of the images. Higher number means higher quality but also high initial cpu and storage usage.",
+        "warning": "Do not use high scale with pdf which have high page count."
+    },
+    "anilist": {
+        "title": "AniList Tracking : ",
+        "login": "Gallery details always shows an AniList control. For untracked titles it is Track (disabled until you log in) with a tip that tracking unlocks richer metadata; after you track a title it becomes the status control. You can also add tracking from the reader side list, a gallery tile context menu, or the open manga side list. If that control shows Network Error, click it to retry. In Add Tracking, use <code>{{down}}</code> / <code>{{up}}</code> to move through results and <code>{{select}}</code> to link the focused title; Escape closes the overlay.",
+        "managed": "Tracking is stored in the library database per title and provider. Locate on disk keeps the tracker with the item; removing the library entry removes the tracker. Cached title metadata (About, genres, score, author, releasing status, chapter count) is stored locally and refreshed when you open or sync a tracked title. Gallery details show those catalog facts above genres, separated by a divider (not your AniList reading status), and an <bold>Open on AniList</bold> link above About that opens the remote page in your browser without asking. Edit metadata on the details page overrides title, author, About, and genres; Reset on that overlay asks first, then clears those fields. The overlay notes that tracking with AniList can fill them. Your AniList login token stays in this app's local storage, not in the database backup.",
+        "adultContent": "Search results follow the adult-content preference on your AniList account. Change that preference on AniList; Yomikiru does not provide a separate toggle.",
+        "autoUpdate": "Enable <bold>Auto-update AniList progress</bold> in reader settings to increment the remote progress when you finish a manga chapter or advance in a book. You can still edit status, score, and counts from the AniList editor."
+    },
+    "epubBackground": {
+        "title": "EPUB Reader Background:",
+        "body": "While reading EPUB, open Reader Settings. In <bold>Styles & Others</bold>, <bold>Page background color</bold> is the canvas behind the column; <bold>Content background color</bold> is the text column. Expand <bold>Content frame</bold> for <bold>Padding inline</bold> and optional <bold>Content border</bold> (width, style, color). Expand the <bold>Background</bold> section for wallpaper.",
+        "wallpaper": "Enable <bold>Background image (wallpaper)</bold>, select an image, then adjust dim intensity, brightness, and contrast.",
+        "overlay": "Optionally enable <bold>Image layer overlay</bold> and set its color and opacity.",
+        "transparent": "To make the text column transparent so the wallpaper shows through: set <bold>Content background color</bold> to transparent (e.g. <code>rgba(0,0,0,0)</code>).",
+        "override": "Some books ship strong text or background colors in their own CSS. Enable <bold>Override EPUB colors (when customized)</bold> so your non-default font, link, page, and content background colors win over the book's styles (same section as those options)."
+    },
+    "about": {
+        "body": "In <link><bold>About</bold></link>, use <bold>Detailed Info</bold> to view version, commit, build date, Electron/Node versions, and OS details. Use <bold>Copy</bold> to paste this info when reporting issues."
+    },
+    "customStylesheet": {
+        "body": "If you know how to write <code>.css</code>, you can customize style of app, more than just theme color that is enabled by \"Theme Maker\", by making your custom <code>.css</code> file and adding it as <link>Custom Stylesheet</link>. You can use developer/inspect tool to check the element and existing styles.",
+        "note": "NOTE: Do not move <code>\" .css \"</code> file in directly under app's folder. If you are using portable version, everything except <code>userdata</code> folder will be deleted. You can safely put it inside <code>userdata</code> folder."
+    },
+    "dbBackup": {
+        "title": "Library Database Backup:",
+        "body": "In <link><bold>Settings</bold></link>, enable automatic backups of the library database (bookmarks, history, reading progress). Choose how often (hours), how many newest files to keep, use <bold>Backup Now</bold>, <bold>Show backups</bold> to restore a snapshot or <bold>Show in File Explorer</bold> to highlight it, or <bold>Import & Restore</bold> a <code>.db</code> file from anywhere. Files live under the app data <code>backups</code> folder. Restore restarts the app and replaces <code>data.db</code>. Before a schema update, the app also snapshots the library even if automatic backups are off (that copy counts as the last successful backup). If that snapshot fails you can quit or continue without a backup. If the schema update itself fails, you can restore that snapshot or open the backups folder."
+    }
+}

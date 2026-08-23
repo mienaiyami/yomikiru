@@ -8,22 +8,23 @@ import InputSelect from "@ui/InputSelect";
 import { colorUtils } from "@utils/color";
 import type { BookReaderSettings } from "@utils/readerSettingsSchema";
 import { memo } from "react";
-
-const BORDER_STYLE_OPTIONS: Menu.OptSelectOption[] = [
-    { label: "Solid", value: "solid" },
-    { label: "Dashed", value: "dashed" },
-    { label: "Dotted", value: "dotted" },
-    { label: "Double", value: "double" },
-];
+import { useTranslation } from "react-i18next";
 
 /**
  * EPUB reader: content column padding and border (see `contentFrame` in book reader settings).
  */
 const ContentFrameSettings = memo(() => {
+    const { t } = useTranslation("reader");
     const appSettings = useAppSelector((store) => store.appSettings);
     const dispatch = useAppDispatch();
     const cf = appSettings.epubReaderSettings.contentFrame;
     const border = cf.border;
+    const borderStyleOptions: Menu.OptSelectOption[] = [
+        { label: t("settings.borderSolid"), value: "solid" },
+        { label: t("settings.borderDashed"), value: "dashed" },
+        { label: t("settings.borderDotted"), value: "dotted" },
+        { label: t("settings.borderDouble"), value: "double" },
+    ];
 
     return (
         <div className="settingItem">
@@ -43,7 +44,7 @@ const ContentFrameSettings = memo(() => {
                     );
                 }}
             >
-                Content Frame
+                {t("settings.contentFrame")}
             </div>
             <div className="options col">
                 <InputCheckboxColor
@@ -71,7 +72,7 @@ const ContentFrameSettings = memo(() => {
                                 }),
                             ),
                     ]}
-                    paraBefore="Content background color&nbsp;:"
+                    paraBefore={t("settings.contentBackgroundColor")}
                 />
                 <InputNumber
                     value={cf.paddingInline}
@@ -89,8 +90,8 @@ const ContentFrameSettings = memo(() => {
                                 }),
                             ),
                     ]}
-                    paraBefore="Horizontal spacing&nbsp;:"
-                    paraAfter="px"
+                    paraBefore={t("settings.horizontalSpacing")}
+                    paraAfter={t("settings.pxUnit")}
                 />
                 <InputCheckbox
                     checked={border.enabled}
@@ -107,7 +108,7 @@ const ContentFrameSettings = memo(() => {
                             }),
                         );
                     }}
-                    labelAfter="Content border"
+                    labelAfter={t("settings.contentBorder")}
                 />
                 <InputNumber
                     value={border.width}
@@ -129,8 +130,8 @@ const ContentFrameSettings = memo(() => {
                                 }),
                             ),
                     ]}
-                    paraBefore="Border width&nbsp;:"
-                    paraAfter="px"
+                    paraBefore={t("settings.borderWidth")}
+                    paraAfter={t("settings.pxUnit")}
                 />
                 <InputSelect
                     labeled
@@ -149,8 +150,8 @@ const ContentFrameSettings = memo(() => {
                             }),
                         );
                     }}
-                    options={BORDER_STYLE_OPTIONS}
-                    paraBefore="Border style&nbsp;:"
+                    options={borderStyleOptions}
+                    paraBefore={t("settings.borderStyle")}
                 />
                 <InputColor
                     labeled
@@ -171,7 +172,7 @@ const ContentFrameSettings = memo(() => {
                                 }),
                             ),
                     ]}
-                    paraBefore="Border color&nbsp;:"
+                    paraBefore={t("settings.borderColor")}
                 />
             </div>
         </div>

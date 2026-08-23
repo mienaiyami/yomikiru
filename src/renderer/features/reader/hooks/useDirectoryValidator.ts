@@ -1,7 +1,9 @@
+import i18n from "@renderer/i18n";
 import { useAppDispatch, useAppSelector } from "@store/hooks";
 import { setReaderLoading, setReaderState } from "@store/reader";
 import { dialogUtils } from "@utils/dialog";
 import { formatUtils } from "@utils/file";
+import { mangaPageForMissingKind, resolveMissingOpenPath } from "@utils/libraryMissingPath";
 import { createRendererLogger } from "@utils/logger";
 import { useCallback } from "react";
 import { DirectoryValidatorService } from "../services/directoryValidator";
@@ -90,28 +92,52 @@ export const useDirectoryValidator = () => {
                 mangaPageNumber = 1,
                 epubChapterId = "",
                 epubElementQueryString = "",
-                maxSubdirectoryDepth = formatUtils.packedManga.test(link) ? 1 : 0,
+                maxSubdirectoryDepth: maxSubdirectoryDepthOpt,
                 errorOnInvalid = true,
             } = options || {};
 
-            const normalizedLink = window.path.normalize(link);
+            let normalizedLink = window.path.normalize(link);
             if (linkInReader === normalizedLink) {
                 dispatch(setReaderLoading(null));
                 return true;
             }
 
+            let pageNumber = mangaPageNumber;
+            let chapterId = epubChapterId;
+            let elementQuery = epubElementQueryString;
+
+            if (!window.fs.existsSync(normalizedLink)) {
+                /* looks up library row from current store (not a closed-over snapshot) */
+                const resolved = await resolveMissingOpenPath(dispatch, normalizedLink);
+                if (!resolved) {
+                    dispatch(setReaderLoading(null));
+                    return false;
+                }
+                normalizedLink = window.path.normalize(resolved.openPath);
+                const page = mangaPageForMissingKind(resolved.kind);
+                if (page !== undefined) {
+                    pageNumber = page;
+                    chapterId = "";
+                    elementQuery = "";
+                }
+            }
+
+            /* resolve after missing-path remap so packed chapter fallbacks get depth 1 */
+            const maxSubdirectoryDepth =
+                maxSubdirectoryDepthOpt ?? (formatUtils.packedManga.test(normalizedLink) ? 1 : 0);
+
             window.electron.webFrame.clearCache();
 
             if (formatUtils.book.test(normalizedLink)) {
-                dispatch(setReaderLoading({ message: "PROCESSING EPUB" }));
+                dispatch(setReaderLoading({ message: i18n.t("loading.processingEpub", { ns: "reader" }) }));
                 dispatch(
                     setReaderState({
                         type: "book",
                         content: null,
                         link: normalizedLink,
                         mangaPageNumber: 0,
-                        epubChapterId,
-                        epubElementQueryString,
+                        epubChapterId: chapterId,
+                        epubElementQueryString: elementQuery,
                     }),
                 );
                 return true;
@@ -135,7 +161,7 @@ export const useDirectoryValidator = () => {
                         type: "manga",
                         content: null,
                         link: normalizedLink,
-                        mangaPageNumber,
+                        mangaPageNumber: pageNumber,
                     }),
                 );
                 return true;
@@ -143,8 +169,8 @@ export const useDirectoryValidator = () => {
             dispatch(setReaderLoading(null));
             if (errorOnInvalid) {
                 await dialogUtils.customError({
-                    title: "Invalid Folder",
-                    message: "The folder is not valid. Please check the folder and try again.",
+                    title: i18n.t("errors.invalidFolderTitle", { ns: "reader" }),
+                    message: i18n.t("errors.invalidFolderMessage", { ns: "reader" }),
                     detail: result.error instanceof Error ? result.error.message : String(result.error),
                 });
             }

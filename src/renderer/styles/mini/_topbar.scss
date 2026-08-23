@@ -27,8 +27,13 @@
         display: flex;
         flex-direction: row;
         align-items: center;
-        width: calc(var(--button-width) * 5);
+        width: auto;
+        min-width: calc(var(--button-width) * 4);
         height: 100%;
+
+        .popover-wrapper {
+            height: 100%;
+        }
 
         button {
             width: var(--button-width);
@@ -52,6 +57,35 @@
             &:active {
                 background: var(--topBar-btn-hover);
             }
+        }
+        .libraryScanStatus {
+            width: auto;
+            min-width: var(--button-width);
+            padding: 0 0.55em;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.4em;
+            svg {
+                animation: libraryScanPulse 1.4s ease-in-out infinite;
+            }
+            .libraryScanStatusLabel {
+                font-size: 11px;
+                max-width: 11em;
+                overflow: hidden;
+                text-overflow: ellipsis;
+                white-space: nowrap;
+                opacity: 0.88;
+                font-variant-numeric: tabular-nums;
+                letter-spacing: 0.02em;
+            }
+        }
+        .viewToggle {
+            display: flex;
+            height: 100%;
+            flex-direction: row;
+            align-items: center;
+            justify-content: center;
         }
     }
 
@@ -170,5 +204,107 @@
                 background: var(--topBar-btn-hover);
             }
         }
+    }
+}
+
+@keyframes libraryScanPulse {
+    0%,
+    100% {
+        opacity: 1;
+    }
+    50% {
+        opacity: 0.35;
+    }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    #topBar .homeBtns .libraryScanStatus svg {
+        animation: none;
+    }
+}
+
+.popover.libraryScanPopover {
+    width: 22em;
+    padding: 0.7em 0.9em 0.85em;
+    .libraryScanPopoverBody {
+        display: flex;
+        flex-direction: column;
+        gap: 0.35em;
+        width: 100%;
+        min-width: 0;
+    }
+    .libraryScanPopoverPhase,
+    .libraryScanPopoverFolder,
+    .libraryScanPopoverMeta {
+        width: 100%;
+        margin: 0;
+    }
+    .libraryScanPopoverPhase {
+        font-size: 0.78em;
+        letter-spacing: 0.08em;
+        text-transform: uppercase;
+        opacity: 0.7;
+    }
+    .libraryScanPopoverFolder {
+        font-size: 1.05em;
+        font-weight: 600;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+    }
+    .libraryScanPopoverMeta {
+        font-size: 0.85em;
+        opacity: 0.75;
+        font-variant-numeric: tabular-nums;
+    }
+    .libraryScanPopoverActions {
+        display: flex;
+        flex-direction: row;
+        flex-wrap: nowrap;
+        gap: 0.5em;
+        align-items: center;
+        justify-content: flex-end;
+        margin-top: 0.5em;
+        width: 100%;
+    }
+    /* match #app button chrome; popover lives under topBar so it misses that nest */
+    .libraryScanPopoverSettings {
+        margin-top: 0;
+        flex: 0 0 auto;
+        min-width: 0;
+        width: auto;
+        height: auto;
+        box-sizing: border-box;
+        font-family: inherit;
+        font-size: 0.85em;
+        text-decoration: none;
+        background: var(--btn-color);
+        border: none;
+        border-radius: 3px;
+        padding: 0.45em 0.85em;
+        cursor: pointer;
+        color: var(--font-color);
+        overflow: hidden;
+        text-align: center;
+        &:hover {
+            background: var(--btn-color-hover);
+        }
+        &:active {
+            background-color: var(--btn-color-focus);
+        }
+    }
+}
+
+/* beat #topBar .homeBtns button width/height/background and topBar hover tint */
+#topBar .homeBtns .libraryScanPopoverSettings {
+    width: auto;
+    height: auto;
+    font-size: 0.85em;
+    background: var(--btn-color);
+    &:hover {
+        background: var(--btn-color-hover);
+    }
+    &:active {
+        background-color: var(--btn-color-focus);
     }
 }

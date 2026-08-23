@@ -5,20 +5,22 @@ import { addThemes, deleteTheme, newTheme, setTheme } from "@store/themes";
 import { dialogUtils } from "@utils/dialog";
 import { createRendererLogger } from "@utils/logger";
 import { initThemeData } from "@utils/theme";
+import { useTranslation } from "react-i18next";
 import { useSettingsContext } from "../Settings";
+import { settingsTabIndex } from "../utils/constants";
+import { navigateToSetting } from "../utils/navigateToSetting";
 
 const log = createRendererLogger("settings/GeneralThemeSettings");
 
-import { TAB_INFO } from "../utils/constants";
-
 const GeneralThemeSettings: React.FC = () => {
-    const { scrollIntoView, setCurrentTab } = useSettingsContext();
+    const { t } = useTranslation("settings");
+    const { setCurrentTab } = useSettingsContext();
     const theme = useAppSelector((store) => store.theme.name);
     const allThemes = useAppSelector((store) => store.theme.allData);
     const dispatch = useAppDispatch();
     return (
         <div className="settingItem2" id="settings-theme">
-            <h3>Theme</h3>
+            <h3>{t("theme.title")}</h3>
             <div className="main row">
                 {allThemes.map((e) => (
                     <div className="themeButtons" key={e.name}>
@@ -36,7 +38,7 @@ const GeneralThemeSettings: React.FC = () => {
                 <div className="row">
                     <button
                         onClick={() => {
-                            setCurrentTab(TAB_INFO.makeTheme[0]);
+                            setCurrentTab(settingsTabIndex("makeTheme"));
                         }}
                     >
                         <FontAwesomeIcon icon={faPlus} /> <span className="icon">/</span>{" "}
@@ -47,7 +49,7 @@ const GeneralThemeSettings: React.FC = () => {
                             onClick={() => {
                                 dialogUtils
                                     .confirm({
-                                        message: `Delete theme "${theme}"`,
+                                        message: t("theme.deleteTheme", { theme }),
                                         noOption: false,
                                     })
                                     .then((res) => {
@@ -72,7 +74,7 @@ const GeneralThemeSettings: React.FC = () => {
                     <button
                         onClick={async () => {
                             const opt = await dialogUtils.showSaveDialog({
-                                title: "Export Themes",
+                                title: t("theme.exportTitle"),
                                 defaultPath: "yomikiru-themes.json",
                                 filters: [
                                     {
@@ -91,7 +93,7 @@ const GeneralThemeSettings: React.FC = () => {
                             });
                         }}
                     >
-                        Export
+                        {t("shared.export")}
                     </button>
                     <button
                         onClick={async () => {
@@ -120,9 +122,7 @@ const GeneralThemeSettings: React.FC = () => {
                                                 dataToAdd.map((a) => a.name).includes(e.name)
                                             ) {
                                                 dialogUtils.warn({
-                                                    message:
-                                                        "Same theme name detected. Wont be imported.\nName: " +
-                                                        e.name,
+                                                    message: t("theme.sameName", { name: e.name }),
                                                 });
                                             } else {
                                                 dataToAdd.push(e);
@@ -132,7 +132,7 @@ const GeneralThemeSettings: React.FC = () => {
                                     });
                                 } else {
                                     dialogUtils.customError({
-                                        message: "Data is not in correct format.",
+                                        message: t("theme.badFormat"),
                                         log: false,
                                     });
                                     return;
@@ -145,7 +145,7 @@ const GeneralThemeSettings: React.FC = () => {
                                             dataToAdd.map((a) => a.name).includes(e.name)
                                         ) {
                                             dialogUtils.warn({
-                                                message: `Same theme name detected. Wont be imported.\nName: ${e.name}`,
+                                                message: t("theme.sameName", { name: e.name }),
                                             });
                                         } else {
                                             dataToAdd.push(e);
@@ -154,32 +154,32 @@ const GeneralThemeSettings: React.FC = () => {
                                     } else log.warn(`Theme import: skipped invalid row at index ${i}`);
                                 });
                             dialogUtils.confirm({
-                                title: "Imported",
-                                message: `Imported ${importedCount} themes.`,
+                                title: t("theme.importedTitle"),
+                                message: t("theme.importedCount", { count: importedCount }),
                                 noOption: true,
                             });
                             dispatch(addThemes(dataToAdd));
                         }}
                     >
-                        Import
+                        {t("shared.import")}
                     </button>
                     <button
                         onClick={() =>
                             window.electron.openExternal("https://github.com/mienaiyami/yomikiru/discussions/191")
                         }
                     >
-                        Share Theme / Get more Themes
+                        {t("theme.shareTheme")}
                     </button>
                 </div>
                 <div className="desc">
-                    Share your custom theme easily.{" "}
+                    {t("theme.shareDesc")}{" "}
                     <a
                         onClick={() => {
-                            scrollIntoView("#settings-usage-copyTheme", "extras");
+                            navigateToSetting("usage:copy-theme", dispatch);
                         }}
                         id="settings-copyTheme"
                     >
-                        More Info.
+                        {t("shared.moreInfoDot")}
                     </a>
                 </div>
                 <div className="main row">
@@ -193,30 +193,28 @@ const GeneralThemeSettings: React.FC = () => {
                                         if ("name" in themeJSON && "main" in themeJSON) {
                                             if (allThemes.map((e) => e.name).includes(themeJSON.name)) {
                                                 dialogUtils.warn({
-                                                    message:
-                                                        "Same theme name detected. Wont be imported.\nName: " +
-                                                        themeJSON.name,
+                                                    message: t("theme.sameName", { name: themeJSON.name }),
                                                 });
                                             } else {
                                                 dispatch(newTheme(themeJSON));
                                             }
                                         } else
                                             dialogUtils.customError({
-                                                title: "Failed",
-                                                message: `Invalid theme data. Please note that data must be similar to the result of "Copy Current Theme to Clipboard"`,
+                                                title: t("theme.failedTitle"),
+                                                message: t("theme.invalidThemeData"),
                                             });
                                     }
                                 } catch (reason) {
                                     log.error("Theme import: file read or parse failed", reason);
                                     dialogUtils.customError({
-                                        title: "Failed",
-                                        message: `Invalid theme data. Please note that data must be similar to the result of "Copy Current Theme to Clipboard"`,
+                                        title: t("theme.failedTitle"),
+                                        message: t("theme.invalidThemeData"),
                                     });
                                 }
                             }
                         }}
                     >
-                        Save Theme from Clipboard
+                        {t("theme.saveFromClipboard")}
                     </button>
                     <button
                         onClick={(e) => {
@@ -226,7 +224,7 @@ const GeneralThemeSettings: React.FC = () => {
                                     window.electron.writeText(JSON.stringify(currentTheme, null, "\t"));
                                     const target = e.currentTarget;
                                     const oldText = target.innerText;
-                                    target.innerText = `${"\u00a0".repeat(23)}Copied!${"\u00a0".repeat(23)}`;
+                                    target.innerText = `${"\u00a0".repeat(23)}${t("shared.copied")}${"\u00a0".repeat(23)}`;
                                     target.disabled = true;
                                     setTimeout(() => {
                                         target.disabled = false;
@@ -234,13 +232,13 @@ const GeneralThemeSettings: React.FC = () => {
                                     }, 3000);
                                 } catch (reason) {
                                     dialogUtils.customError({
-                                        message: `Failed to copy theme: ${reason}`,
+                                        message: t("theme.failedToCopy", { reason }),
                                     });
                                 }
                             }
                         }}
                     >
-                        Copy Current Theme to Clipboard
+                        {t("theme.copyCurrent")}
                     </button>
                 </div>
             </div>

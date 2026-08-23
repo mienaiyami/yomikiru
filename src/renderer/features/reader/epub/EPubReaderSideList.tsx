@@ -1,9 +1,13 @@
+import type { EpubPackage, EpubSpine } from "@common/epub";
 import AnilistBar from "@features/anilist/AnilistBar";
 import { faArrowLeft, faArrowRight, faLocationDot, faThumbtack } from "@fortawesome/free-solid-svg-icons";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
+import { ItemDisplayTitle } from "@renderer/components/ItemDisplayTitle";
 import { useAppSelector } from "@store/hooks";
-import type { EPubData } from "@utils/epub";
+import { selectResolvedItemMetadata } from "@store/library";
+import { getReaderBook } from "@store/reader";
 import { memo, useEffect, useLayoutEffect, useRef, useState } from "react";
+import { useTranslation } from "react-i18next";
 import { useAppContext } from "src/renderer/App";
 import BookmarkButton from "./components/BookmarkButton";
 import BookmarkList from "./components/BookmarkList";
@@ -36,10 +40,10 @@ const EPubReaderSideList = memo(
     }: {
         openNextChapter: () => void;
         openPrevChapter: () => void;
-        currentChapter: EPUB.Spine[number];
+        currentChapter: EpubSpine[number];
         currentChapterFake: string;
         openChapterById: (chapterId: string, position?: string) => void;
-        epubData: EPubData;
+        epubData: EpubPackage;
         onEpubLinkClick: (ev: MouseEvent | React.MouseEvent<HTMLAnchorElement, MouseEvent>) => void;
         addToBookmarkRef: React.RefObject<HTMLButtonElement>;
         setShortcutText: React.Dispatch<React.SetStateAction<string>>;
@@ -60,9 +64,12 @@ const EPubReaderSideList = memo(
         const { contextMenuData, colorSelectData } = useAppContext();
         const appSettings = useAppSelector((store) => store.appSettings);
         const anilistToken = useAppSelector((store) => store.anilist.token);
+        const bookInReader = useAppSelector(getReaderBook);
+        const bookDisplay = useAppSelector((store) => selectResolvedItemMetadata(store, bookInReader?.link));
         const sideListRef = useRef<HTMLDivElement>(null);
         const [isListOpen, setListOpen] = useState(false);
         const [preventListClose, setPreventListClose] = useState(false);
+        const { t } = useTranslation("reader");
         const [draggingResizer, setDraggingResizer] = useState(false);
 
         const currentRef = useRef<HTMLAnchorElement | null>(null);
@@ -195,7 +202,7 @@ const EPubReaderSideList = memo(
                     <div className="row2">
                         <button
                             className="ctrl-menu-item"
-                            data-tooltip="Open Previous"
+                            data-tooltip={t("sideList.openPrevious")}
                             onClick={() => {
                                 openPrevChapter();
                             }}
@@ -209,7 +216,7 @@ const EPubReaderSideList = memo(
                         />
                         <button
                             className="ctrl-menu-item"
-                            data-tooltip="Open Next"
+                            data-tooltip={t("sideList.openNext")}
                             onClick={() => {
                                 openNextChapter();
                             }}
@@ -220,13 +227,16 @@ const EPubReaderSideList = memo(
                 </div>
                 <div className="in-reader">
                     <div>
-                        <span className="bold">Title</span>
+                        <span className="bold">{t("sideList.title")}</span>
                         <span className="bold"> : </span>
-                        <span>{epubData.metadata.title}</span>
+                        <ItemDisplayTitle
+                            primary={bookDisplay?.title ?? epubData.metadata.title}
+                            original={bookDisplay?.originalTitle}
+                        />
                     </div>
                     {appSettings.epubReaderSettings.loadOneChapter && (
                         <div>
-                            <span className="bold">Chapter</span>
+                            <span className="bold">{t("sideList.chapter")}</span>
                             <span className="bold"> : </span>
                             <span>{epubData.manifest.get(currentChapterFake)?.title || "~"}</span>
                         </div>
@@ -240,9 +250,9 @@ const EPubReaderSideList = memo(
                             onClick={() => {
                                 setDisplayList((init) => (init === "content" ? "" : "content"));
                             }}
-                            data-tooltip="Click again to hide"
+                            data-tooltip={t("sideList.clickAgainToHide")}
                         >
-                            Content
+                            {t("sideList.content")}
                         </button>
                         <button
                             className={`${displayList === "bookmarks" ? "selected" : ""}`}
@@ -250,7 +260,7 @@ const EPubReaderSideList = memo(
                                 setDisplayList((init) => (init === "bookmarks" ? "" : "bookmarks"));
                             }}
                         >
-                            Bookmarks
+                            {t("sideList.bookmarks")}
                         </button>
                         <button
                             className={`${displayList === "notes" ? "selected" : ""}`}
@@ -258,14 +268,14 @@ const EPubReaderSideList = memo(
                                 setDisplayList((init) => (init === "notes" ? "" : "notes"));
                             }}
                         >
-                            Notes
+                            {t("sideList.notes")}
                         </button>
                     </div>
                     {displayList === "content" && (
                         <div className="row2">
                             <button
                                 className="ctrl-menu-item"
-                                data-tooltip="Locate Current Chapter"
+                                data-tooltip={t("sideList.locateCurrentChapter")}
                                 onClick={() => {
                                     if (sideListRef.current) {
                                         const href =
@@ -304,7 +314,7 @@ const EPubReaderSideList = memo(
                                     }}
                                     className="btn"
                                 >
-                                    Show in-book TOC
+                                    {t("sideList.showInBookToc")}
                                 </a>
                             )}
                         </div>
@@ -320,12 +330,7 @@ const EPubReaderSideList = memo(
                         // }}
                     >
                         {/* //todo virtualize list */}
-                        {epubData.toc.size > 500 && (
-                            <p>
-                                Too many chapters, click &quot;Content&quot; to hide list to improve performance of
-                                application.
-                            </p>
-                        )}
+                        {epubData.toc.size > 500 && <p>{t("sideList.tooManyChapters")}</p>}
                         {epubData.ncx.length > 0 && (
                             <ContentList
                                 currentChapterHref={
@@ -337,9 +342,7 @@ const EPubReaderSideList = memo(
                                 sideListRef={sideListRef}
                             />
                         )}
-                        {epubData.ncx.length === 0 && (
-                            <p>No NCX found in epub, use &quot;Show in-book TOC&quot; to for Table of Contents.</p>
-                        )}
+                        {epubData.ncx.length === 0 && <p>{t("sideList.noNcx")}</p>}
                     </div>
                 )}
                 {displayList === "bookmarks" && <BookmarkList openChapterById={openChapterById} />}
