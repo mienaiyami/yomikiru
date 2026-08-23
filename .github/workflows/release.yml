@@ -160,7 +160,9 @@ jobs:
 
   build:
     needs: [check-ci-status, buildLinux]
-    runs-on: windows-latest
+    # windows-latest currently ships VS 2026; pnpm's bundled node-gyp cannot detect it
+    # when rebuilding better-sqlite3 (unknown version "undefined"). Pin VS 2022.
+    runs-on: windows-2022
     env:
       BUILD_COMMIT: ${{ needs.check-ci-status.outputs.commit-sha }}
       BUILD_VERSION: ${{ needs.check-ci-status.outputs.version }}
