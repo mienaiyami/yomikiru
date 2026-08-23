@@ -1,11 +1,8 @@
 > [!Note]
 > **Community Discord Server**: A Discord server for Yomikiru and Collection Extension is now open. Join for discussions, usage help, feedback, and updates. See [Discussion #495](https://github.com/mienaiyami/yomikiru/discussions/495).
->
-<!-- 
+
 > [!Note]
-> To keep getting beta updates, check the beta update channel in settings after downloading the beta version.
->
-> **Please report any issues you encounter with the beta tag so stable version can be released faster.** -->
+> To get this beta and later ones: in Settings, switch the update channel to **beta**, then **Check for update**. You do not need to download builds from GitHub by hand.
 
 > [!Important]
 > **Known Issue with Updates (July 2025)**: Due to recent Windows security policy changes, some users may experience crashes during the auto-update process. If updates fail, please:
@@ -16,66 +13,144 @@
 > Issue is only present to users using "Setup" version.
 > For more information, see [Announcement #451](https://github.com/mienaiyami/yomikiru/discussions/451)
 
-# unreleased
+# 2.25.0-beta
 
-- feat: After this launch applies the library-item id migration (cover cache key), one window asks whether to generate gallery thumbnails for existing titles once the UI has settled. You can skip and use **Regenerate all thumbnails** in Library settings later.
+### 2.25.0-beta.1
 
-- feat: Gallery details always shows the AniList control. Untracked titles show **Track** (disabled until login) with a tip that tracking unlocks richer metadata; tracked titles keep the status control. Tracked titles also get an **Open on AniList** link above About (opens in the browser with no confirm).
+Gallery mode has been on my mind for a long time. I started working on it almost over a year ago, but until the last couple of months I only really got about ~10% of the way there; life and other priorities kept getting in the way. The last two months I finally pushed hard to get it into a shape you can actually try.
 
-- feat: Gallery details **Reset Cover** clears a user-picked cover, restores a series-root `cover.*` sidecar when present, switches the details source back to the library image, deletes the cached WebP, and rebuilds from the folder or EPUB (including packed chapter series). Manga reader **Make Cover** now targets the correct library row for one-shots and persists the picked page after materialize.
+Huge thanks for waiting and for the support along the way. This build is still a beta: there will be bugs, rough edges, and some things that are missing on purpose or just not finished yet. If something feels wrong, broken, or incomplete, please say so, feedback and feature requests help a lot before this goes stable.
 
-- feat: Gallery toolbar tag filter is a multi-select: pick one or more tags (OR), with select/unselect all in the dropdown. The closed control shows No filter, a single name, or a count — not every selected tag. The selection is persisted in app settings (`galleryTagFilterIds`).
+Join Discord for chat and quicker feedback: <https://discord.gg/UHwBN9g22e> · [Discussion #495](https://github.com/mienaiyami/yomikiru/discussions/495)
 
-- feat: one bundled full 7-Zip backend now opens CBZ/ZIP, CBR/RAR, and CB7/7z archives without requiring a system `unrar` install. Library scans and cover refresh stream only the selected manga or EPUB cover instead of extracting the entire archive to temporary storage; reader extraction, language-pack archives, and portable-update ZIPs use the same backend.
+---
 
-- feat: Library scan adds EPUB books using the shared `fast-xml-parser` OPF adapter (title, author, cover). Folder, packed-manga (including rar/cbr), and EPUB cover sources are resolved in main and kept alive only through WebP materialization; PDF page 1 remains lazy and concurrency-limited. Scan cancellation reaches the filesystem walk, watch status stays visible while changes are applied, and changing a watched depth restarts that watcher. Directory validator is the reader image list only (covers no longer pass `firstImageOnly`). AniList token check runs once per app with the existing startup-import claim; other windows only hydrate the token from storage.
+## Before you update
 
-- chore: Renderer MainSettings Redux defaults come from the shared Zod schema instead of a hardcoded copy. File-extension testers, EPUB package types/parsing, and process-neutral chapter helpers live in common; each process installs `LibraryIo` once (main Node adapter, renderer preload). The renderer EPUB static class and dead renderer scan/add helpers are removed.
+### Breaking / behaviour changes
 
-- feat: Library scan can skip other library folders, skip names with a per-root regex, and skip `yomikiru-ignore` / `.yomikiru-ignore` sentinels (file skips that folder; a folder with that name skips only itself). Default Location and extra folders can attach catalog tags to newly found titles, with Apply to existing for titles already in the library (union; confirms when more than one). The title bar shows live scan progress in a popover instead of a silent icon, including **Cancel scan**.
+1. **Default Location moved**  
+   It now lives under Library settings. On first launch after upgrade it is reset once. The app will ask you to pick your Home library folder, or you can use the system home folder until you change it later.
 
-- feat: **Scan now** in Library settings walks nested folders under every library folder whose path exists (including Default Location when a folder is set). A series is a folder whose direct children are chapter folders or packed/PDF files (same rule as gallery details); grouping folders are not added. Scan does not write reading progress, so Continue Reading stays empty until you open a title. The walk runs in the main process and does not lock the window.
+2. **Books are EPUB-only**  
+   Standalone `.html`, `.xhtml`, and `.txt` are no longer opened, listed as chapters, or registered in Windows “Open with”. Old library rows for those files stay until you remove them. The Style Settings text-file badge toggle is gone.
 
-- feat: Library settings keep extra folders (manga, books, or both, default walk depth 2) and Default Location in one list (`main-settings.json`). **Scan now** across those roots, scan on start, interval scans (minutes; 0 is off), and live **Watch** (debounced; classifies from the changed path upward). Opening a one-shot image folder keeps that folder as the library item. Moving a series or book then opening or locating the new path can update the old row, or merge if a duplicate already exists at the new path. **Clear unused progress** removes leftover unread progress from older add-on-open rows (confirm first; catalogue stays). **Upgrade note:** Default Location is stored in main settings now and is reset once; startup offers to choose the Home library root immediately or use the system home folder until it is changed later. Symbolic links to files (not only directories) are followed when classifying and scanning.
+3. **“Focus sidelist search” shortcut is gone**  
+   Replaced by **Focus search** (default `/` and `Ctrl+Shift+F`) for the search field on the current page (home, gallery, reader sidelist, Settings, AniList, etc.).
 
-- feat: **Library** is the first Settings section and includes **Default Location** (Locations tab folder), Scan now / extra folders, and thumbnail clear/regenerate.
+4. **Library scan does not invent reading progress**  
+   Scan catalogues titles only. Continue Reading stays empty until you open a title.
 
-- feat: **Remove Progress** on library item context menus (gallery tiles, details cover, classic History) and the selection overflow menu. Confirms first; last position and chapter read marks are cleared. The library entry, bookmarks, and notes stay, so the title leaves Continue Reading until you open it again. Disabled when the item has no progress.
+5. **Database schema updates**  
+   First launch may migrate the library DB. The app snapshots `data.db` into `backups/` before that (even if auto-backup is off). Prefer quitting and restoring if a migrate fails.
 
-- feat: **Delete selected items** shortcut (default `Delete`, customizable in Settings → Shortcut Keys) removes the current multi-select: library tiles, classic History / Bookmarks, and details bookmarks or notes (same confirmations as the overflow menu). It does not run while typing, while the reader is open, or on manga chapter lists.
+### Still there
 
-- feat: Add Tracking (AniList search) uses the same list shortcuts as other search bars: move through results, Enter to link the focused title, Escape to close. The field still searches AniList remotely (not a local filter).
-- feat: before a library schema update, the app copies `data.db` into `backups/` even if automatic backups are off. If that copy fails you can quit or continue without a backup; if the update itself fails you can restore that snapshot or open the backups folder.
+- Classic home list still works — Gallery is a toggle, not a forced replacement.
+- AniList login token stays in localStorage (not inside DB backups).
+- Existing library rows, progress, bookmarks, and notes are kept across the upgrade.
 
-- feat: books are EPUB-only. Standalone `.html`, `.xhtml`, and `.txt` files are no longer opened, listed as chapters, or registered in Windows Explorer "Open with". Remove still clears leftover associations from older builds. Existing library rows for those files are kept until you remove them. Manga chapter lists (reader side-list, gallery details, locate-first-chapter) no longer include EPUB files; the Style Settings text-file badge toggle is removed.
-- feat: library tags are a catalog you create, then assign to titles (several per item, with a colour). Edit tags from gallery details. Filter the grid by one tag (with the type filter). Names are unique ignoring case; deleting a tag unassigns it.
-- feat: gallery details is a cover-and-title page (back on the cover; current chapter beside last-read date, manga page, and chapters-read as read/total; title note beside that block from mid width). Opening the page focuses Continue/Start. Copy Path briefly shows Copied. Click the title note to edit it (Esc or click away saves it on the library item). Hero actions include favourite, edit metadata (title, author, About, genres), Show in File Explorer, and Copy Path. A title you save there shows on gallery tiles, classic History/Bookmarks, search, the reader sidebar, and the window title as the edited name with the original folder/file name muted in parentheses when they differ (window title uses the edited name only); search matches every title layer (edited, tracker, file, library). Reset on Edit metadata asks first, then clears those overlay fields. About and genres appear when a tracker cache or your overlay supplies them. When tracked, releasing status, score, and chapter count from the tracker sit above genres, separated by a divider (not your list status). The metadata section is auto-sized with a rem min and scrolls if taller; drag the divider to resize (quiet grip on the bar; cover scales; can go below that min; one remembered height for manga and books). Cover and title stay in view while About scrolls. When AniList has a cover, details and tiles use it until you switch to Cover: Default (remembered on the item). Manga Content has Locate current chapter (same control as the reader sidelist; scrolls only the chapter list). Missing-from-disk banner sits above the hero. List tabs use the same toolbar chrome as gallery home (no counts on the tabs; sort/refresh left of search on gallery home and details). Directory Up closes details and focuses gallery search, including after returning from the reader (not while Settings or AniList overlays are open, and not while typing in a field). AniList on this page is a compact Track/status control without +/-. Missing-from-disk uses the same error color as other in-app errors.
-- feat: **Settings search** — type in the Settings overlay search field to jump to a setting, shortcut, About, or Usage section. Opening Settings focuses that field; use the same **Focus search** shortcut (`/` / `Ctrl+Shift+F`) while Settings is open. Other Settings and Style Settings jump to the individual control. After a jump, keyboard focus moves to a control in that section. Deep-links use stable target ids via `navigateToSetting`.
-- feat: **Focus search** shortcut (default `/` and `Ctrl+Shift+F`) moves focus to the main search field on the current page: classic Continue Reading / History (then Bookmarks, then Locations), gallery toolbar or the open details list, manga sidelist, book find-in-page, AniList search, and Settings search while Settings is open. It does not run while typing in an input. The old manga-only **Focus sidelist search** command is removed (the new command uses its own defaults).
-- feat: **Library database backups** — automatic snapshots of `data.db` under `userData/backups/` (`data-<unixMs>.db`), with cold-start + hourly / resume due-checks, Settings controls (enable, interval, how many newest to keep, Backup Now, list + Restore, Import & Restore), and restore via pending swap + relaunch before the DB opens. Corrupt restore sources show a dialog and clear pending; probing restores do not prune older originals.
-- feat: **App language / translations** — i18next for renderer and Electron main, English catalogs under `src/common/i18n` (common, dialogs, menu, settings, home, reader, anilist, electron, usage), and a **Language** section in General settings after Theme (main setting `languageSourceId`). Menus, trays, settings chrome, home, reader, AniList, shared UI, and context menus use catalogs; Settings → Usage is a React skeleton with structured prose keys in the `usage` namespace (`usage.json`). Install, export, and remove single-locale community packs as zip files under user data; incomplete packs fall back to English.
-- feat: AniList tracking is stored on the library item in the database (per title and provider), so Locate on disk keeps the link and removing the item removes the tracker. Existing `anilist_tracking` localStorage entries are imported once (orphans skipped; the original key is kept). The login token stays in localStorage and is not part of database backups. Tracked titles can cache About, genres, chapter count, and score for the details page. Tracker rows live in a generic `trackers` store; AniList keeps token and the open list entry. Helpers are prefixed (`getAnilistViewer`, `searchAnilistMedia`, `getAnilistListEntry`) so later providers do not collide.
-- feat: **Gallery home** (experimental) — switch Classic / Gallery from the top bar. Gallery is a cover grid with **Continue** / **Library** / **Bookmarks** / **Favourites** sections, a toolbar (search on every section, sort on Library / Bookmarks / Favourites, Cover + Title / Cover Only / Compact / List, default Compact, grid-size slider), and detail panels for manga (chapters and bookmarks) and books (bookmarks and notes). Continue lists items with progress, newest last-read first (no sort control). Bookmarks lists titles that have at least one bookmark and uses the same sort as Library; opening a tile shows the Bookmarks list in the details panel (play still continues last progress). Right-click a tile or details cover for Continue Reading, Show in File Explorer, copy path, Add to / Remove from Favourites, Remove from Library (files stay on disk), and AniList tracking when connected. Favourites lists titles you have starred from a tile context menu or the details header (search and sort still shown). Selection overflow can add or remove Favourites (removing more than one asks first) and still remove from the library. List view rows are a bit taller, with a leading checkbox and cover aligned to the title. Keyboard focus in the gallery list jumps instantly.
-- feat: gallery home has an item type filter (**All** / **Manga/Webcomic** / **eBook**) after the section tabs. Manga/Webcomic covers every image-based series (manga, manhwa, manhua, comics, webtoons); eBook covers EPUB only, not PDF. The choice is remembered across launches and applies to Continue, Library, Bookmarks, and Favourites.
-- feat: checkbox multi-select on gallery tiles (Shift-click for a range), on manga/book details lists (chapters, bookmarks, notes), and on classic Bookmark / History rows by default (**Other Settings → Classic List Checkboxes** to turn off). The selection toolbar offers Select All, Invert (gallery/details), and an overflow menu for bulk Copy Path, Bookmark, Remove, Mark as Read/Unread, Delete Notes, and related actions. Gallery/details support `Ctrl+A` / `Cmd+A` and `Esc` (not while typing in search).
-- feat: library cover thumbnails are generated on the main process as WebP under user data `covers/<library id>.webp`. Gallery prefers that cache; **Select Cover** still stores a custom absolute path when you pick one. Library settings can clear, regenerate (missing files and folders are skipped and reported in one warning), or bulk-import thumbnails.
-- feat: when a library folder or EPUB is missing on disk, gallery details and classic History/Bookmark offer **Locate on disk** (re-link the path and keep progress/bookmarks; confirm if the chosen name does not match) or remove the entry. Gallery manga chapter lists hide empty image folders (packed archives still listed).
-- feat: search fields show a clear (**x**) button inside the field while they contain text; it can be reached with `Tab`.
-- feat: symbolic links to directories are treated as directories in Locations / home location, so linked folders can be browsed and opened.
-- fix: re-opening a title already in the library no longer wipes a stored author, custom cover, or reading progress (conflict path updates title only; progress insert does not replace an existing row).
-- fix: renderer HTTP requests no longer set User-Agent, which Chromium refused as an unsafe header.
-- fix: popovers trap keyboard focus while open (Tab stays in the panel).
-- fix: updater version and announcement checks ignore non-ok GitHub responses instead of parsing error HTML/JSON as content, which was re-showing the same announcements many times a day. An empty ok announcement body no longer wipes the local seen list.
-- fix: stop reader scroll stutter caused by unstable Redux selectors and progress updates after reader presets (#523).
-- fix: gallery AniList bar no longer refetches the list entry every time the tracker cache is written (details was looping). Tracking fills author from AniList staff when overlays omit it. About keeps line breaks and emphasis from HTML and scrolls with the metadata block. Genres sit above About; catalog tags sit above the item note. Edit metadata notes that AniList tracking can fill those fields.
-- fix: AniList Track/status no longer shows Network Error before the list-entry fetch runs (or for another title's session entry). After a real miss, the same message is a button; tooltip Retry runs the fetch again.
-- dev: gallery details and reader auto-progress persist tracker cache through `selectTracker` / `updateTrackerSnapshot`; AniList bar, search, and edit still use AniList-named wrappers.
-- dev: AniList helpers are module functions (`initAnilist` at startup) instead of a static class; tracker rows and metadata overlays live in SQLite (`item_trackers`, `library_item_metadata`, plus `favouritedAt` / `note` / `extra` on `library_items`).
-- dev: shared HTTP client (`src/common/http`) using axios for Electron main and the renderer; updater and AniList no longer use fetch / electron-fetch.
-- dev: Vitest/RTL unit and temp-SQLite db test harness, Playwright Electron smoke (app opens to home), and CI coverage job.
-- dev: `pnpm demo:setup` fetches a gitignored local sample library for gallery/format testing.
-- dev: architecture, library, settings, and reader feature documentation.
+### How to get the beta
 
-#### 2.24.0
+1. In Settings, switch the update channel to **beta**, then use **Check for update**. You do not need to download this build from GitHub by hand.
+2. Stay on the beta channel so later beta builds are offered the same way.
+3. Report problems with the **beta** label so fixes can land before stable.
+
+---
+
+## Highlights
+
+- **Gallery home** — cover grid with Continue / Library / Bookmarks / Favourites, details pages, multi-select, tags, favourites, notes, and metadata.
+- **Real library scanning** — extra folders, scan on start / interval, live disk watch, skip rules, folder tags, progress in the title bar.
+- **Bundled 7-Zip** — CBZ/ZIP, CBR/RAR, CB7/7z without installing system `unrar`.
+- **Library DB backups** — automatic + manual backup/restore in Settings.
+- **App language** — English built-in; install community language packs as zip.
+- **Settings search** — jump to any setting, shortcut, About, or Usage section.
+- **Reader scroll stutter** addressed (#523).
+
+---
+
+## What’s new
+
+### Gallery home (experimental)
+
+Toggle **Classic / Gallery** in the top bar.
+
+- Cover grid with sections: **Continue**, **Library**, **Bookmarks**, **Favourites**.
+- Toolbar: search, sort (where it applies), view modes (Cover + Title / Cover Only / Compact / List), grid size.
+- Type filter: All / Manga·Webcomic / eBook (EPUB; not PDF).
+- Tag filter is multi-select (OR): one tag name, a count, or “No filter” when closed.
+- **Details page**: large cover, Continue/Start, favourite, edit title/author/About/genres, note, path copy, Show in File Explorer, chapter/bookmark/note lists.
+- AniList **Track** is always on the details page (disabled until you log in; tip when untracked). Tracked titles keep status and get **Open on AniList** above About.
+- Edited titles show everywhere; original folder/file name stays muted in parentheses when different.
+- When AniList is tracked: releasing status, score, chapter count, and optional AniList cover (switchable back to library cover).
+- **Locate on disk** when a folder/EPUB is missing; keep progress and bookmarks.
+- Empty image folders hidden in chapter lists (packed archives still listed).
+
+### Selection and bulk actions
+
+- Checkbox multi-select on gallery tiles (Shift-range), details lists, and classic Bookmark / History (toggle under Other Settings → Classic List Checkboxes).
+- Overflow: Copy Path, Bookmark, Remove from Library, Favourites, Mark Read/Unread, Delete Notes, **Remove Progress**, etc.
+- Shortcut **Delete selected** (default `Delete`) for the current selection (not while typing or in the reader).
+
+### Library tags, favourites, notes, metadata
+
+- Tag catalog with colours; several tags per title; filter the grid by one or more tags (OR).
+- Star favourites from tiles or details.
+- Per-title note and editable metadata overlay.
+- AniList tracking stored on the library item in the DB (survives Locate; removed with the item). Tracker rows hydrate on every window boot. Old `anilist_tracking` localStorage is imported once.
+
+### Library scan and folders
+
+- **Library** is the first Settings section: Default Location, extra folders (manga / books / both, depth), Scan now, scan on start, interval (minutes), **Watch**.
+- Scan runs in the main process; title-bar popover shows live status + Cancel.
+- Skip nested library folders, per-root skip regex, and `yomikiru-ignore` / `.yomikiru-ignore` sentinels.
+- Attach catalog tags to newly found titles per folder; **Apply to existing** (union; confirms when many).
+- One-shot image folders stay as that folder.
+- Moving a series and opening/locating the new path can update or merge the old row.
+- **Clear unused progress** and **Remove Progress** without deleting the catalogue entry.
+- EPUB scan/title/author/cover improved; covers stream from archives without full extract.
+
+### Archives (7-Zip)
+
+- One bundled 7-Zip backend for CBZ/ZIP, CBR/RAR, CB7/7z (no system `unrar`).
+- Same backend for reader extract, language packs, and portable-update ZIPs.
+
+### Backups
+
+- Automatic library DB snapshots under `userData/backups/`.
+- Settings: enable, interval, keep N newest, Backup Now, list + Restore, Import & Restore.
+- Always snapshot before a schema migrate.
+
+### Language / i18n
+
+- App UI driven by catalogs; Settings → Language for community packs (zip). Missing keys fall back to English.
+
+### Settings and shortcuts
+
+- **Settings search**; **Focus search** (`/` / `Ctrl+Shift+F`); clear (**x**) on search fields with text.
+
+### Covers
+
+- Library thumbnails as WebP on the main process (`covers/<id>.webp`).
+- Select Cover / Make Cover / **Reset Cover**.
+- After the library-id migration, one window can prompt to **generate gallery thumbnails** once the UI settles (skip anytime; regenerate later in Library settings).
+- Settings: clear, regenerate, bulk-import (missing paths skipped and reported).
+
+---
+
+## Fixes worth calling out
+
+- Reader scroll stutter / lag after presets (#523), plus follow-up so progress still saves without reintroducing stutter.
+- Re-opening a library title no longer wipes author, custom cover, or progress.
+- Make Cover targets the correct one-shot library row; Reset Cover restores folder/EPUB/packed defaults.
+- Updater no longer re-alerts announcements from bad GitHub error bodies.
+- Packed chapters stay under their parent series.
+- AniList adult-content preference stays in sync; Track stays visible and trackers stay hydrated across remounts.
+- EPUB scan accepts more real-world OPF/NCX; temp cover files released on Windows.
+- Gallery bookmarks open correctly; language select boots cleanly; side-list focus scroll fixed.
+- Popovers trap Tab focus; search Focus works when a button/select is focused.
+
+### 2.24.0
 
 <https://github.com/mienaiyami/yomikiru/releases/tag/v2.24.0>
