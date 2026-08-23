@@ -57,6 +57,11 @@ const settingSchema = z
          */
         galleryTypeFilter: z.union([z.literal("all"), z.literal("manga"), z.literal("book")]),
         /**
+         * Catalog tag ids for the gallery toolbar multi-tag filter (OR).
+         * Empty means no tag constraint. Ids missing from the catalog are ignored at filter time.
+         */
+        galleryTagFilterIds: z.array(z.number().int()),
+        /**
          * `normal` - normal grid view with title and cover
          * `compact` - compact grid view with title and cover (title overlapped on cover)
          * `cover-only` - compact grid view with only cover
@@ -152,6 +157,7 @@ const settingSchema = z
         gallerySortBy: "name",
         galleryActiveTab: "continue-reading",
         galleryTypeFilter: "all",
+        galleryTagFilterIds: [],
         galleryDisplayMode: "compact",
         galleryItemWidth: 16,
         galleryDetailsHeroHeight: 0,

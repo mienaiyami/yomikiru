@@ -232,6 +232,8 @@ html{
         @import "./mini/inputs.scss";
         @import "./mini/topbar.scss";
         @import "./mini/popover.scss";
+        @import "./mini/rowSelectCheck.scss";
+        @import "./mini/inputMultiSelect.scss";
 
         .icon {
             color: var(--icon-color) !important;

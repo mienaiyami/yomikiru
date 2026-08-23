@@ -102,35 +102,89 @@
         .galleryTagFilterBar {
             flex: 0 0 auto;
             display: inline-flex;
-            align-items: center;
+            align-items: stretch;
             height: var(--galleryToolbarRowHeight);
             min-width: 0;
-            max-width: 16em;
+            max-width: 15em;
+            padding: 2px;
+            border-radius: 6px;
+            background-color: var(--text-input-bg);
+            overflow: visible;
 
-            /* :not(#dummy#dummy) beats `#app button.optSelectBtn` the same way `.colorPickerBtn` does */
-            button.optSelectBtn:not(#dummy#dummy) {
-                position: relative;
-                display: block;
-                box-sizing: border-box;
-                flex: 1 1 auto;
+            .inputMultiSelect,
+            .popover-wrapper {
                 height: 100%;
-                width: auto;
+                width: 100%;
+            }
+
+            /* beat `#app button` chrome; pill matches type-filter / tab bar */
+            .galleryTagFilterActivator:not(#dummy#dummy) {
+                width: 100%;
+                max-width: 14em;
+                height: 100%;
+                padding: 0 0.5em 0 0.55em;
+                border-radius: 4px;
+                background: none;
+                border: none;
+                color: var(--font-color);
+                opacity: 0.78;
+
+                &:hover:not(:disabled) {
+                    opacity: 1;
+                    background-color: var(--topBar-btn-hover);
+                }
+
+                &.is-open,
+                &.has-selection {
+                    opacity: 1;
+                    background-color: var(--btn-color-focus);
+                }
+            }
+
+            .galleryTagFilterIcon {
+                flex-shrink: 0;
+                font-size: 0.9em;
+                opacity: 0.85;
+            }
+
+            .galleryTagFilterDots {
+                flex-shrink: 0;
+                display: flex;
+                flex-wrap: wrap;
+                align-content: flex-start;
+                gap: 0.5px;
+                width: max-content;
+                max-width: calc(4 * 0.65em + 3 * 0.5px);
+                max-height: calc(2 * 0.65em + 0.5px);
+                overflow: hidden;
+            }
+
+            .galleryTagFilterDot {
+                width: 0.65em;
+                height: 0.65em;
+                border-radius: 50%;
+                box-shadow: inset 0 0 0 1px rgba(0, 0, 0, 0.2);
+            }
+
+            .galleryTagFilterLabel {
                 min-width: 0;
-                max-width: 11em;
                 overflow: hidden;
                 text-overflow: ellipsis;
                 white-space: nowrap;
-                /* padding-left clears the stripe width seeded on the bar */
-                padding: 0 1.8em 0 calc(8px + var(--gallery-tag-filter-stripe));
-                text-align: left;
-                /* InputSelect only paints option.style on the open menu */
-                box-shadow: inset var(--gallery-tag-filter-stripe) 0 0 var(--gallery-tag-filter-color, transparent);
-                svg {
-                    position: absolute;
-                    right: 6px;
-                    top: 50%;
-                    transform: translateY(-50%);
-                }
+            }
+
+            /* smaller chips inside the multi-select panel (not the activator) */
+            .inputMultiSelectTagChip.item-tag-chip {
+                min-width: 0;
+                flex: 0 1 auto;
+                max-width: 100%;
+                overflow: hidden;
+                text-overflow: ellipsis;
+                white-space: nowrap;
+                font-size: 0.88em;
+                padding: 0.1em 0.42em;
+                line-height: 1.25;
+                font-weight: 600;
             }
         }
 
@@ -661,82 +715,6 @@
 }
 
 /**
- * Reusable per-row checkbox affordance. Rendered as a `<label>` so the entire
- * hit area is clickable; the visible square is `.checkBox`. The native input
- * is visually hidden (must beat global `input[type="checkbox"]` opacity).
- *
- * Sizing (20×20) and explicit colors (independent of `currentColor`) make the
- * box readable on any row state including `.read` rows that fade their text.
- */
-.rowSelectCheck {
-    flex-shrink: 0;
-    align-self: stretch;
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    cursor: pointer;
-    user-select: none;
-    /* Match the list row — no separate chip/bg behind the unchecked box. */
-    background-color: transparent;
-    /* Defaults — overridden by row-specific rules below to extend the click
-       strip to the row's left edge. */
-    padding: 0 10px;
-
-    /* Beat global `input[type="checkbox"]` opacity so the native control never shows. */
-    input[type="checkbox"] {
-        position: absolute;
-        width: 1px;
-        height: 1px;
-        margin: 0;
-        padding: 0;
-        opacity: 0 !important;
-        appearance: none;
-        pointer-events: none;
-    }
-
-    .checkBox {
-        width: 20px;
-        height: 20px;
-        border-radius: 4px;
-        border: 2px solid var(--font-color);
-        /* Transparent so the list-item background shows through when unchecked. */
-        background-color: transparent;
-        opacity: 0.75;
-        position: relative;
-        box-shadow: none;
-        transition:
-            background-color 0.12s ease,
-            border-color 0.12s ease,
-            opacity 0.12s ease,
-            transform 0.12s ease;
-    }
-
-    &:hover .checkBox {
-        opacity: 1;
-        transform: scale(1.05);
-        background-color: transparent;
-    }
-
-    input:checked + .checkBox {
-        background-color: var(--font-color);
-        border-color: var(--font-color);
-        opacity: 1;
-
-        &::after {
-            content: "";
-            position: absolute;
-            left: 5px;
-            top: 1px;
-            width: 5px;
-            height: 11px;
-            border: solid var(--body-bg-color);
-            border-width: 0 2px 2px 0;
-            transform: rotate(45deg);
-        }
-    }
-}
-
-/**
  * Selection state for bookmark / history list rows in the classic view. The
  * `<li>` carries the multiSelected class so the accent strip + tint cover the
  * full row including the leading checkbox slot.
@@ -843,4 +821,10 @@
         opacity: 0.6;
         font-variant-numeric: tabular-nums;
     }
+}
+
+/** Tag-filter multi-select panel width; inset padding comes from `.inputMultiSelectPanel`. */
+.popover.galleryTagFilterPopover {
+    min-width: 15em;
+    max-width: min(22em, 90vw);
 }

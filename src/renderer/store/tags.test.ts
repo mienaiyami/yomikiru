@@ -6,6 +6,7 @@ import { afterEach, describe, expect, it, vi } from "vitest";
 import tagsReducer, {
     createLibraryTag,
     deleteLibraryTag,
+    fetchAllTags,
     setLibraryItemTags,
     unionLibraryItemTags,
     updateLibraryTag,
@@ -26,12 +27,21 @@ const tagRow = (patch: Partial<LibraryTag> = {}): LibraryTag => ({
 const makeStore = (catalog: LibraryTag[] = [], assignments: LibraryItemTag[] = []) =>
     configureStore({
         reducer: { tags: tagsReducer },
-        preloadedState: { tags: { catalog, assignments } },
+        preloadedState: { tags: { catalog, assignments, hydrated: true } },
     });
 
 describe("tags thunks", () => {
     afterEach(() => {
         vi.restoreAllMocks();
+    });
+
+    it("marks the slice hydrated after fetchAllTags", async () => {
+        onInvoke("db:tags:getAll", async () => [tagRow()]);
+        onInvoke("db:library:getAllItemTags", async () => []);
+        const store = configureStore({ reducer: { tags: tagsReducer } });
+        expect(store.getState().tags.hydrated).toBe(false);
+        await store.dispatch(fetchAllTags());
+        expect(store.getState().tags.hydrated).toBe(true);
     });
 
     it("appends createLibraryTag to the catalog", async () => {

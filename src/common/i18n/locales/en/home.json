@@ -243,8 +243,12 @@
             "listFilter": "Filter tags",
             "noFilterMatches": "No tags match.",
             "filterAria": "Tag filter",
-            "filterAll": "All tags",
-            "filterAllTitle": "Show items regardless of tags",
+            "filterNoConstraint": "No filter",
+            "filterAllTitle": "Show every item, including titles with no tags",
+            "filterCount": "{{count}} selected",
+            "filterSelectAll": "Select all tags",
+            "filterUnselectAll": "Unselect all tags",
+            "filterOptionAria": "Filter by tag {{name}}",
             "assignAria": "Assign tag {{name}}"
         },
         "missing": {

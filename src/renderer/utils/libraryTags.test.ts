@@ -4,6 +4,7 @@ import {
     assignmentCountForTag,
     catalogHasName,
     isCssHexColor,
+    itemsWithAnyTag,
     itemsWithTag,
     normalizeTagName,
     tagChipTextColor,
@@ -47,6 +48,15 @@ describe("libraryTags helpers", () => {
         const items = [{ link: "a" }, { link: "b" }, { link: "c" }];
         const assignments = [assign("a", 1), assign("c", 1), assign("b", 2)];
         expect(itemsWithTag(items, assignments, 1).map((row) => row.link)).toEqual(["a", "c"]);
+    });
+
+    it("filters items that have any of the given tag ids", () => {
+        const items = [{ link: "a" }, { link: "b" }, { link: "c" }, { link: "d" }];
+        const assignments = [assign("a", 1), assign("b", 2), assign("c", 1), assign("c", 2)];
+        expect(itemsWithAnyTag(items, assignments, [])).toBe(items);
+        expect(itemsWithAnyTag(items, assignments, []).map((row) => row.link)).toEqual(["a", "b", "c", "d"]);
+        expect(itemsWithAnyTag(items, assignments, [1]).map((row) => row.link)).toEqual(["a", "c"]);
+        expect(itemsWithAnyTag(items, assignments, [1, 2]).map((row) => row.link)).toEqual(["a", "b", "c"]);
     });
 
     it("detects duplicate catalog names and counts assignments", () => {

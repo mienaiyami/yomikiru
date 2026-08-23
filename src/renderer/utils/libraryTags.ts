@@ -71,6 +71,23 @@ export const itemsWithTag = <T extends { link: string }>(
 };
 
 /**
+ * Library items that have at least one of `tagIds` assigned (OR).
+ * Empty `tagIds` returns the same `items` reference (no tag constraint).
+ */
+export const itemsWithAnyTag = <T extends { link: string }>(
+    items: readonly T[],
+    assignments: readonly LibraryItemTag[],
+    tagIds: readonly number[],
+): T[] => {
+    if (tagIds.length === 0) return items as T[];
+    const idSet = new Set(tagIds);
+    const links = new Set(
+        assignments.filter((row) => idSet.has(row.tagId)).map((row) => row.itemLink),
+    );
+    return items.filter((item) => links.has(item.link));
+};
+
+/**
  * True when `name` collides with an existing catalog row after trim + case-fold.
  * `excludeId` skips the row being renamed.
  */

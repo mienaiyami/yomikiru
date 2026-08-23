@@ -1,0 +1,160 @@
+/**
+ * {@link InputMultiSelect}: activator + popover panel rows reuse `.rowSelectCheck` chrome.
+ */
+.inputMultiSelect {
+    display: inline-flex;
+    align-items: stretch;
+    min-width: 0;
+    max-width: 100%;
+
+    .popover-wrapper {
+        display: inline-flex;
+        align-items: stretch;
+        min-width: 0;
+        max-width: 100%;
+        height: 100%;
+    }
+}
+
+.inputMultiSelectActivator {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.45em;
+    min-width: 0;
+    max-width: 100%;
+    height: 100%;
+    padding: 0 0.55em 0 0.65em;
+    border: none;
+    border-radius: 4px;
+    background: none;
+    color: var(--font-color);
+    cursor: pointer;
+    opacity: 0.78;
+    font-size: 1.05em;
+    line-height: 1;
+
+    &:hover:not(:disabled) {
+        opacity: 1;
+        background-color: var(--topBar-btn-hover);
+    }
+
+    &.is-open,
+    &.has-selection {
+        opacity: 1;
+        background-color: var(--btn-color-focus);
+    }
+
+    &:disabled {
+        opacity: 0.45;
+        cursor: default;
+    }
+
+    .inputMultiSelectActivatorBody {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.4em;
+        min-width: 0;
+        flex: 1 1 auto;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+        text-align: left;
+    }
+
+    .inputMultiSelectChevron {
+        flex-shrink: 0;
+        font-size: 0.75em;
+        opacity: 0.75;
+        transition: transform 0.12s ease;
+    }
+
+    &.is-open .inputMultiSelectChevron {
+        transform: rotate(180deg);
+    }
+}
+
+.popover.inputMultiSelectPopover {
+    min-width: 14em;
+    max-width: min(22em, 90vw);
+    padding: 4px;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+}
+
+.inputMultiSelectPanel {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    min-width: 0;
+    max-height: min(22em, 55vh);
+    overflow-y: auto;
+    /* inset so row focus rings are not clipped by the scrollport */
+    padding: 4px;
+    box-sizing: border-box;
+}
+
+/**
+ * One focusable row (toggle-all button or option div). Tab order follows DOM;
+ * arrow keys move focus in JS.
+ */
+.inputMultiSelectRow:not(#dummy#dummy) {
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    gap: 0.35em;
+    width: 100%;
+    min-height: 2.35em;
+    padding: 0.35em 0.45em;
+    border: none;
+    border-radius: 4px;
+    background: none;
+    color: var(--font-color);
+    cursor: pointer;
+    text-align: left;
+    font: inherit;
+    line-height: 1.25;
+    box-sizing: border-box;
+
+    /*
+     * Ring on hover as well as :focus-visible: programmatic focus() on mouseenter
+     * does not match :focus-visible until the user has used Tab once.
+     */
+    &:hover,
+    &:focus-visible {
+        background-color: var(--listItem-bg-color-hover);
+        outline: 2px solid var(--btn-color-focus);
+        outline-offset: 0;
+    }
+
+    &.is-disabled {
+        opacity: 0.45;
+        cursor: default;
+        pointer-events: none;
+    }
+
+    .rowSelectCheck.inputMultiSelectRowCheck {
+        flex-shrink: 0;
+        align-self: center;
+        padding: 0 0.2em 0 0;
+        cursor: inherit;
+
+        /* row shell owns focus ring; checkbox is visual + a11y name only */
+        input:focus-visible + .checkBox {
+            box-shadow: none;
+        }
+    }
+
+    .inputMultiSelectRowLabel {
+        min-width: 0;
+        flex: 1 1 auto;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+    }
+}
+
+.inputMultiSelectToggleAll {
+    font-weight: 600;
+    opacity: 0.92;
+}

@@ -9,11 +9,14 @@ type TagsState = {
     catalog: LibraryTag[];
     /** All `library_item_tags` assignment rows. */
     assignments: LibraryItemTag[];
+    /** True after the first {@link fetchAllTags} fulfillment (catalog may still be empty). */
+    hydrated: boolean;
 };
 
 const initialState: TagsState = {
     catalog: [],
     assignments: [],
+    hydrated: false,
 };
 
 /** Loads the tag catalog and every item assignment. */
@@ -84,6 +87,7 @@ const tagsSlice = createSlice({
             .addCase(fetchAllTags.fulfilled, (state, action) => {
                 state.catalog = action.payload.catalog;
                 state.assignments = action.payload.assignments;
+                state.hydrated = true;
             })
             .addCase(createLibraryTag.fulfilled, (state, action) => {
                 upsertCatalogRow(state, action.payload);

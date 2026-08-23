@@ -18,6 +18,8 @@
 
 # unreleased
 
+- feat: Gallery toolbar tag filter is a multi-select: pick one or more tags (OR), with select/unselect all in the dropdown. The closed control shows No filter, a single name, or a count — not every selected tag. The selection is persisted in app settings (`galleryTagFilterIds`).
+
 - feat: one bundled full 7-Zip backend now opens CBZ/ZIP, CBR/RAR, and CB7/7z archives without requiring a system `unrar` install. Library scans and cover refresh stream only the selected manga or EPUB cover instead of extracting the entire archive to temporary storage; reader extraction, language-pack archives, and portable-update ZIPs use the same backend.
 
 - feat: Library scan adds EPUB books using the shared `fast-xml-parser` OPF adapter (title, author, cover). Folder, packed-manga (including rar/cbr), and EPUB cover sources are resolved in main and kept alive only through WebP materialization; PDF page 1 remains lazy and concurrency-limited. Scan cancellation reaches the filesystem walk, watch status stays visible while changes are applied, and changing a watched depth restarts that watcher. Directory validator is the reader image list only (covers no longer pass `firstImageOnly`). AniList token check runs once per app with the existing startup-import claim; other windows only hydrate the token from storage.

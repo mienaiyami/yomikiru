@@ -17,10 +17,10 @@ import { setAppSettings } from "@store/appSettings";
 import { useAppDispatch, useAppSelector } from "@store/hooks";
 import { useTranslation } from "react-i18next";
 import GalleryTabBar, { type GalleryTabId } from "./GalleryTabBar";
-import GalleryTagFilterBar, { type GalleryTagFilterId } from "./GalleryTagFilterBar";
+import GalleryTagFilterBar, { type GalleryTagFilterIds } from "./GalleryTagFilterBar";
 import GalleryTypeFilterBar, { type GalleryTypeFilterId } from "./GalleryTypeFilterBar";
 
-export type { GalleryTabId, GalleryTagFilterId, GalleryTypeFilterId };
+export type { GalleryTabId, GalleryTagFilterIds, GalleryTypeFilterId };
 
 /** Clamp range and step for `galleryItemWidth` (em). */
 const GALLERY_ITEM_WIDTH_MIN = 10;
@@ -37,12 +37,12 @@ export type GalleryToolbarProps = {
     activeTypeFilter: GalleryTypeFilterId;
     /** Persist a new `galleryTypeFilter`. */
     onTypeFilterChange: (filter: GalleryTypeFilterId) => void;
-    /** Catalog for the session tag filter; the bar hides when empty. */
+    /** Catalog for the persisted tag filter; the bar hides when empty. */
     tagCatalog: readonly LibraryTag[];
-    /** Session tag filter id, or `null` for no tag constraint. */
-    selectedTagId: GalleryTagFilterId;
-    /** Set the session tag filter. */
-    onTagFilterChange: (tagId: GalleryTagFilterId) => void;
+    /** Current `galleryTagFilterIds` (catalog-valid ids only in the parent). */
+    selectedTagIds: GalleryTagFilterIds;
+    /** Persist a new `galleryTagFilterIds`. */
+    onTagFilterChange: (tagIds: GalleryTagFilterIds) => void;
     /** Hide the search field when the active tab does not query-filter. */
     hideSearch?: boolean;
     /** Hide sort when the active tab does not use `gallerySortBy` / `gallerySortType`. */
@@ -68,7 +68,7 @@ export type GalleryToolbarSelectionProps = {
 };
 
 /**
- * Top chrome for the gallery home: section tabs, type filter, session tag filter,
+ * Top chrome for the gallery home: section tabs, type filter, tag filter,
  * search, and view controls.
  * When `selection` is provided, swaps to a compact selection toolbar with bulk actions.
  *
@@ -81,7 +81,7 @@ const GalleryToolbar: React.FC<GalleryToolbarProps> = ({
     activeTypeFilter,
     onTypeFilterChange,
     tagCatalog,
-    selectedTagId,
+    selectedTagIds,
     onTagFilterChange,
     hideSearch,
     hideSort,
@@ -254,7 +254,7 @@ const GalleryToolbar: React.FC<GalleryToolbarProps> = ({
                     <span className="toolbarDivider" aria-hidden="true" />
                     <GalleryTagFilterBar
                         catalog={tagCatalog}
-                        selectedTagId={selectedTagId}
+                        selectedTagIds={selectedTagIds}
                         onFilterChange={onTagFilterChange}
                     />
                 </>
