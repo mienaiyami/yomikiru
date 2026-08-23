@@ -24,6 +24,7 @@
         "continueReading": "Continue Reading",
         "startReading": "Start Reading",
         "selectCover": "Select Cover",
+        "resetCover": "Reset Cover",
         "removeFromLibrary": {
             "title": "Remove from Library",
             "message_one": "Remove {{count}} item from library? Related bookmarks will also be removed. Files on disk are not deleted.",

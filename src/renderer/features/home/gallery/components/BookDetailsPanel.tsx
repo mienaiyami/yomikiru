@@ -1,7 +1,7 @@
 import type { BookBookmark, BookNote, LibraryItemWithProgress } from "@common/types/db";
 import AnilistBar from "@features/anilist/AnilistBar";
 import { faStar as faStarRegular } from "@fortawesome/free-regular-svg-icons";
-import { faBookmark, faFolderOpen, faImage, faPen, faStar } from "@fortawesome/free-solid-svg-icons";
+import { faBookmark, faFolderOpen, faImage, faPen, faStar, faSyncAlt } from "@fortawesome/free-solid-svg-icons";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { useAppContext } from "@renderer/App";
 import ListNavigator from "@renderer/components/ListNavigator";
@@ -22,7 +22,7 @@ import { selectTracker } from "@store/trackers";
 import dateUtils from "@utils/date";
 import { dialogUtils } from "@utils/dialog";
 import { parseDetailsCoverSource, resolveDetailsCoverSrc } from "@utils/libraryCover";
-import { pickAndApplyCustomCover } from "@utils/libraryCoverService";
+import { pickAndApplyCustomCover, resetLibraryCoverToDefault } from "@utils/libraryCoverService";
 import { resolveItemMetadata } from "@utils/libraryMetadata";
 import { createRendererLogger } from "@utils/logger";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
@@ -405,6 +405,11 @@ const BookDetailsPanel = ({ bookLink, onClose, onRelocated, initialTab = "bookma
         });
     }, [book, bookLink, dispatch]);
 
+    const handleResetCover = useCallback(async () => {
+        if (!book) return;
+        await resetLibraryCoverToDefault(dispatch, book);
+    }, [book, dispatch]);
+
     const handleContinueReading = useCallback(() => {
         if (pathMissing) return;
         openInReader(
@@ -451,6 +456,13 @@ const BookDetailsPanel = ({ bookLink, onClose, onRelocated, initialTab = "bookma
                             setMetadataEditorOpen(true);
                         },
                     },
+                    {
+                        label: t("shared.resetCover"),
+                        disabled: pathMissing,
+                        action() {
+                            void handleResetCover();
+                        },
+                    },
                     window.contextMenu.template.divider(),
                     window.contextMenu.template.removeProgress(bookLink),
                     window.contextMenu.template.removeHistory(bookLink, false, onClose),
@@ -458,7 +470,7 @@ const BookDetailsPanel = ({ bookLink, onClose, onRelocated, initialTab = "bookma
                 focusBackElem: e.currentTarget,
             });
         },
-        [bookLink, onClose, pathMissing, setContextMenuData, isFavourite, t, dispatch],
+        [bookLink, onClose, pathMissing, setContextMenuData, isFavourite, t, dispatch, handleResetCover],
     );
 
     if (!book || book.type !== "book") {
@@ -581,6 +593,15 @@ const BookDetailsPanel = ({ bookLink, onClose, onRelocated, initialTab = "bookma
                                     data-tooltip={t("shared.selectCover")}
                                 >
                                     <FontAwesomeIcon icon={faImage} />
+                                </button>
+                                <button
+                                    type="button"
+                                    className="details-icon-btn"
+                                    onClick={() => void handleResetCover()}
+                                    aria-label={t("shared.resetCover")}
+                                    data-tooltip={t("shared.resetCover")}
+                                >
+                                    <FontAwesomeIcon icon={faSyncAlt} />
                                 </button>
                                 <button
                                     type="button"

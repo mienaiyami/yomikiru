@@ -1247,7 +1247,8 @@ const Reader: React.FC = () => {
                                     action() {
                                         void (async () => {
                                             const fsPath = fileSrcToImagePath(src || "");
-                                            const mangaRoot = window.path.dirname(linkInReader);
+                                            const mangaRoot =
+                                                libraryItem?.link ?? window.path.dirname(linkInReader);
                                             try {
                                                 await applyMakeCoverFromPageImage({
                                                     dispatch,

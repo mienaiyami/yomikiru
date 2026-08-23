@@ -1,3 +1,4 @@
+import path from "node:path";
 import anilistEn from "@common/i18n/locales/en/anilist.json";
 import common from "@common/i18n/locales/en/common.json";
 import home from "@common/i18n/locales/en/home.json";
@@ -11,9 +12,10 @@ import { resolveMangaChapterPath } from "@utils/mangaChapterPath";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import MangaDetailsPanel from "./MangaDetailsPanel";
 
-const { materializeMangaLibraryThumbnail, openInReader } = vi.hoisted(() => ({
+const { materializeMangaLibraryThumbnail, openInReader, resetLibraryCoverToDefault } = vi.hoisted(() => ({
     materializeMangaLibraryThumbnail: vi.fn(async () => false),
     openInReader: vi.fn(),
+    resetLibraryCoverToDefault: vi.fn(async () => undefined),
 }));
 
 vi.mock("./mangaDetailsPanel.scss", () => ({}));
@@ -30,6 +32,7 @@ vi.mock("@utils/libraryCoverService", async (importOriginal) => {
     return {
         ...mod,
         materializeMangaLibraryThumbnail,
+        resetLibraryCoverToDefault,
     };
 });
 
@@ -393,6 +396,17 @@ describe("MangaDetailsPanel", () => {
         const { item } = renderMangaPanel();
         fireEvent.click(screen.getByRole("button", { name: common.contextMenu.showInExplorer }));
         expect(window.electron.showItemInFolder).toHaveBeenCalledWith(item.link);
+        await waitForEmptyChapterList();
+    });
+
+    it("resets the cover from the hero Reset Cover control", async () => {
+        stubMangaOnDisk();
+        const item = makeMangaItem({ cover: path.join("testdata", "picked.png") });
+        renderMangaPanel(item);
+        fireEvent.click(screen.getByRole("button", { name: home.shared.resetCover }));
+        await waitFor(() => {
+            expect(resetLibraryCoverToDefault).toHaveBeenCalledWith(expect.any(Function), item);
+        });
         await waitForEmptyChapterList();
     });
 

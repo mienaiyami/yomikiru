@@ -30,7 +30,7 @@ describe("readerCoverFlows", () => {
             fsPath: pageImg,
         });
         expect(materialize).not.toHaveBeenCalled();
-        expect(dispatch).toHaveBeenCalled();
+        expect(dispatch).toHaveBeenCalledTimes(2);
     });
 
     it("applyMakeCoverFromPageImage materializes when library id and file exist", async () => {
@@ -44,6 +44,7 @@ describe("readerCoverFlows", () => {
             fsPath: pageImg,
         });
         expect(materialize).toHaveBeenCalledWith(dispatch, 9, pageImg);
+        expect(dispatch).toHaveBeenCalledTimes(2);
     });
 
     it("applyMakeCoverFromPageImage falls back when materialize returns false", async () => {
@@ -56,7 +57,7 @@ describe("readerCoverFlows", () => {
             mangaRoot,
             fsPath: pageImg,
         });
-        expect(dispatch).toHaveBeenCalled();
+        expect(dispatch).toHaveBeenCalledTimes(2);
     });
 
     it("applyMangaCoverAfterChapterLoad skips materialize without a readable source", async () => {
@@ -97,6 +98,6 @@ describe("readerCoverFlows", () => {
             mangaRoot,
             fsPath: pageImg,
         });
-        expect(dispatch).toHaveBeenCalled();
+        expect(dispatch).toHaveBeenCalledTimes(2);
     });
 });

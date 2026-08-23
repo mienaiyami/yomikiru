@@ -1,7 +1,7 @@
 import fs from "node:fs";
 import type { Readable } from "node:stream";
 import type { CoverChannels, CoverOpResult } from "@common/types/ipc";
-import { withEpubArchivePackage, withResolvedFirstImage } from "@electron/util/contentSource";
+import { withEpubArchivePackage, withResolvedMangaLibraryCover } from "@electron/util/contentSource";
 import {
     coverFilePathForLibraryId,
     getCoversDirectoryAbsolute,
@@ -108,7 +108,7 @@ const materializeFromLibraryPath = async (
                   const cover = await pkg.openCover();
                   return cover ? consumeSource(cover) : undefined;
               })
-            : await withResolvedFirstImage(request.link, consumeSource);
+            : await withResolvedMangaLibraryCover(request.link, consumeSource);
     return result ?? { ok: false, message: "cover source not found" };
 };
 

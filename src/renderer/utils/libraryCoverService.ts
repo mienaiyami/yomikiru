@@ -5,9 +5,9 @@ import { fetchAllItemsWithProgress, updateLibraryItem } from "@store/library";
 import { dialogUtils } from "@utils/dialog";
 import { formatUtils } from "@utils/file";
 import { canonicalCoverAbsolutePath } from "@utils/libraryCover";
-import { renderPDF } from "@utils/pdf";
-import { resolveMangaCoverSourcePath } from "@utils/libraryCoverSources";
+import { mangaDedicatedCoverPathForDb, resolveMangaCoverSourcePath } from "@utils/libraryCoverSources";
 import { createRendererLogger } from "@utils/logger";
+import { renderPDF } from "@utils/pdf";
 
 const log = createRendererLogger("utils/libraryCoverService");
 
@@ -178,6 +178,39 @@ export const materializeMangaRootAfterAdd = async (opts: MaterializeMangaRootAft
     const { sourceForCover } = resolveMangaCoverSourcePath(mangaDir, firstPageImage);
     if (!sourceForCover || !window.fs.isFile(sourceForCover)) return false;
     return materializeCoverAndRefreshLibrary(dispatch, libraryId, sourceForCover);
+};
+
+/** Library row fields required to rebuild the default cover. */
+export type ResetLibraryCoverItem = Pick<LibraryItem, "id" | "type" | "link" | "extra">;
+
+/**
+ * Clears user-picked cover overrides and rebuilds the thumbnail from the on-disk library path
+ * (series-root cover file, first page, EPUB OPF cover, etc.).
+ * Sets the details cover preference to the library image so tracker art does not override.
+ */
+export const resetLibraryCoverToDefault = async (
+    dispatch: AppDispatch,
+    item: ResetLibraryCoverItem,
+): Promise<void> => {
+    if (item.id == null) return;
+    try {
+        await window.electron.invoke("covers:deleteForLibraryId", { libraryId: item.id });
+        const defaultCoverDb = item.type === "manga" ? mangaDedicatedCoverPathForDb(item.link) : null;
+        await dispatch(
+            updateLibraryItem({
+                link: item.link,
+                cover: defaultCoverDb,
+                extra: { ...item.extra, detailsCoverSource: "library" },
+            }),
+        );
+        if (item.type === "manga") {
+            await materializeMangaLibraryThumbnail(dispatch, item.id, item.link);
+            return;
+        }
+        await materializeBookLibraryThumbnail(dispatch, item.id, item.link);
+    } catch (err) {
+        log.error("reset cover to default failed", { id: item.id, link: item.link, type: item.type }, err);
+    }
 };
 
 export type PickAndApplyCustomCoverOpts = {

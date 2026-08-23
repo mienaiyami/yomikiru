@@ -13,7 +13,7 @@ vi.mock("@electron/util/logger", () => ({
     createMainLogger: () => ({ warn: vi.fn(), error: vi.fn(), info: vi.fn() }),
 }));
 
-import { withEpubArchivePackage, withResolvedFirstImage } from "./contentSource";
+import { withEpubArchivePackage, withResolvedFirstImage, withResolvedMangaLibraryCover } from "./contentSource";
 
 const roots: string[] = [];
 
@@ -53,6 +53,26 @@ describe("content archive sources", () => {
 
         expect(result).toBe("first-page");
         expect(openEntry).toHaveBeenCalledWith(archivePath, page);
+    });
+
+    it("falls back to the first packed chapter when the series root has no loose images", async () => {
+        const root = await fsp.mkdtemp(path.join(os.tmpdir(), "yomikiru-content-source-series-"));
+        roots.push(root);
+        const seriesDir = path.join(root, "series");
+        await fsp.mkdir(seriesDir);
+        const chapterPath = path.join(seriesDir, "01.cbz");
+        await fsp.writeFile(chapterPath, "cbz fixture");
+        const page = { path: "001.jpg", isDirectory: false, size: 10 };
+        listEntries.mockResolvedValue([page]);
+        openEntry.mockResolvedValue(Readable.from(["packed-page"]));
+
+        const result = await withResolvedMangaLibraryCover(seriesDir, async (source) => {
+            if (typeof source === "string") return source;
+            return streamText(source as NodeJS.ReadableStream);
+        });
+
+        expect(result).toBe("packed-page");
+        expect(listEntries).toHaveBeenCalledWith(chapterPath);
     });
 
     it("reads only container, OPF, and the declared EPUB cover entries", async () => {

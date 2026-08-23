@@ -34,7 +34,11 @@ import dateUtils from "@utils/date";
 import { dialogUtils } from "@utils/dialog";
 import { formatUtils } from "@utils/file";
 import { libraryCoverSrc, parseDetailsCoverSource, resolveDetailsCoverSrc } from "@utils/libraryCover";
-import { materializeMangaLibraryThumbnail, pickAndApplyCustomCover } from "@utils/libraryCoverService";
+import {
+    materializeMangaLibraryThumbnail,
+    pickAndApplyCustomCover,
+    resetLibraryCoverToDefault,
+} from "@utils/libraryCoverService";
 import { resolveItemMetadata } from "@utils/libraryMetadata";
 import {
     mangaPageForMissingKind,
@@ -537,6 +541,11 @@ const MangaDetailsPanel = ({
         });
     }, [manga, mangaLink, dispatch]);
 
+    const handleResetCover = useCallback(async () => {
+        if (!manga) return;
+        await resetLibraryCoverToDefault(dispatch, manga);
+    }, [manga, dispatch]);
+
     /** Context menu for the library manga folder (same entries as gallery grid). */
     const handleLibraryRootContextMenu = useCallback(
         (e: React.MouseEvent) => {
@@ -570,6 +579,13 @@ const MangaDetailsPanel = ({
                             setMetadataEditorOpen(true);
                         },
                     },
+                    {
+                        label: t("shared.resetCover"),
+                        disabled: pathMissing,
+                        action() {
+                            void handleResetCover();
+                        },
+                    },
                     window.contextMenu.template.divider(),
                     window.contextMenu.template.removeProgress(mangaLink),
                     window.contextMenu.template.removeHistory(mangaLink, false, onClose),
@@ -577,7 +593,7 @@ const MangaDetailsPanel = ({
                 focusBackElem: e.currentTarget,
             });
         },
-        [mangaLink, onClose, pathMissing, setContextMenuData, isFavourite, t, dispatch],
+        [mangaLink, onClose, pathMissing, setContextMenuData, isFavourite, t, dispatch, handleResetCover],
     );
 
     const handleContinueReading = useCallback(() => {
@@ -723,6 +739,15 @@ const MangaDetailsPanel = ({
                                     data-tooltip={t("shared.selectCover")}
                                 >
                                     <FontAwesomeIcon icon={faImage} />
+                                </button>
+                                <button
+                                    type="button"
+                                    className="details-icon-btn"
+                                    onClick={() => void handleResetCover()}
+                                    aria-label={t("shared.resetCover")}
+                                    data-tooltip={t("shared.resetCover")}
+                                >
+                                    <FontAwesomeIcon icon={faSyncAlt} />
                                 </button>
                                 <button
                                     type="button"

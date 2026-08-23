@@ -3,6 +3,7 @@ import fsp from "node:fs/promises";
 import path from "node:path";
 import type { Readable } from "node:stream";
 import { type EpubArchiveMetadata, parseEpubArchiveMetadata } from "@common/epub";
+import { listMangaChapterChildren, normalizeLibraryPath } from "@common/library/classify";
 import { isImageFileName, isPackedMangaFileName, isPdfFileName } from "@common/library/formats";
 import { compareImageNames, firstImageInMangaFolder } from "@common/library/images";
 import { type ArchiveEntry, archiveService } from "@electron/util/archive";
@@ -85,6 +86,28 @@ export const withResolvedFirstImage = async <T>(
     if (!io.fs.isDir(absPath)) return undefined;
     const first = await firstImageInMangaFolder(io, absPath);
     return first ? consumeSource(first) : undefined;
+};
+
+/**
+ * Resolves a manga catalogue row cover from the series root, then from the first packed chapter
+ * child when the root has no cover sidecar, loose pages, or folder chapters.
+ * Packed chapter files cannot yield a path from {@link firstImageInMangaFolder}; open them via
+ * {@link withResolvedFirstImage} instead of reusing reader start-path rules.
+ */
+export const withResolvedMangaLibraryCover = async <T>(
+    libraryLink: string,
+    consumeSource: (source: string | Readable) => Promise<T>,
+): Promise<T | undefined> => {
+    const root = normalizeLibraryPath(io, libraryLink);
+    const fromRoot = await withResolvedFirstImage(root, consumeSource);
+    if (fromRoot !== undefined) return fromRoot;
+    if (!io.fs.isDir(root)) return undefined;
+    const chapters = await listMangaChapterChildren(io, root);
+    const firstPacked = [...chapters]
+        .sort((a, b) => compareImageNames(a.name, b.name))
+        .find((c) => io.fs.isFile(c.link) && isPackedMangaFileName(c.link, path.extname));
+    if (!firstPacked) return undefined;
+    return withResolvedFirstImage(firstPacked.link, consumeSource);
 };
 
 /** EPUB metadata and a lazily streamed package cover for scan and manual-cover operations. */

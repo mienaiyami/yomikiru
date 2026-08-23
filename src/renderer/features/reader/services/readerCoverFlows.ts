@@ -1,6 +1,6 @@
 import type { LibraryItemWithProgress } from "@common/types/db";
 import type { AppDispatch } from "@store/index";
-import { updateLibraryItem } from "@store/library";
+import { setLibraryItemDetailsCoverSource, updateLibraryItem } from "@store/library";
 import { materializeCoverAndRefreshLibrary } from "@utils/libraryCoverService";
 import { resolveMangaCoverSourcePath } from "@utils/libraryCoverSources";
 
@@ -43,8 +43,9 @@ export const applyMangaCoverAfterChapterLoad = async (opts: {
 
 /**
  * Reader context menu: set gallery thumbnail from the selected page image path.
- * Falls back to writing the absolute path into `library_items.cover` if materialize is not possible
- * (no library id yet) or fails.
+ * Always writes the page path into `library_items.cover` so {@link libraryCoverSrc} prefers it over an
+ * older DB cover or series-root sidecar, and forces details cover source to library so tracker art
+ * does not hide the pick. Materialize still refreshes `userData/covers/<id>.webp` when a library id exists.
  */
 export const applyMakeCoverFromPageImage = async (opts: {
     dispatch: AppDispatch;
@@ -53,16 +54,21 @@ export const applyMakeCoverFromPageImage = async (opts: {
     fsPath: string;
 }): Promise<void> => {
     const { dispatch, libraryId, mangaRoot, fsPath } = opts;
-    if (!libraryId || !window.fs.isFile(fsPath)) {
+
+    /** Persists the picked page and prefers library cover over tracker for details/tiles. */
+    const persistPickedCover = async (): Promise<void> => {
         await dispatch(updateLibraryItem({ link: mangaRoot, cover: fsPath }));
+        await dispatch(setLibraryItemDetailsCoverSource({ link: mangaRoot, source: "library" }));
+    };
+
+    if (!libraryId || !window.fs.isFile(fsPath)) {
+        await persistPickedCover();
         return;
     }
     try {
-        const ok = await materializeCoverAndRefreshLibrary(dispatch, libraryId, fsPath);
-        if (!ok) {
-            await dispatch(updateLibraryItem({ link: mangaRoot, cover: fsPath }));
-        }
+        await materializeCoverAndRefreshLibrary(dispatch, libraryId, fsPath);
     } catch {
-        await dispatch(updateLibraryItem({ link: mangaRoot, cover: fsPath }));
+        // still persist the path so gallery can show the pick without WebP
     }
+    await persistPickedCover();
 };

@@ -18,6 +18,8 @@
 
 # unreleased
 
+- feat: Gallery details **Reset Cover** clears a user-picked cover, restores a series-root `cover.*` sidecar when present, switches the details source back to the library image, deletes the cached WebP, and rebuilds from the folder or EPUB (including packed chapter series). Manga reader **Make Cover** now targets the correct library row for one-shots and persists the picked page after materialize.
+
 - feat: Gallery toolbar tag filter is a multi-select: pick one or more tags (OR), with select/unselect all in the dropdown. The closed control shows No filter, a single name, or a count — not every selected tag. The selection is persisted in app settings (`galleryTagFilterIds`).
 
 - feat: one bundled full 7-Zip backend now opens CBZ/ZIP, CBR/RAR, and CB7/7z archives without requiring a system `unrar` install. Library scans and cover refresh stream only the selected manga or EPUB cover instead of extracting the entire archive to temporary storage; reader extraction, language-pack archives, and portable-update ZIPs use the same backend.

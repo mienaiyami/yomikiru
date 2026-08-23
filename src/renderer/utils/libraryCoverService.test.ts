@@ -7,7 +7,50 @@ const { renderPDF } = vi.hoisted(() => ({ renderPDF: vi.fn(async () => []) }));
 
 vi.mock("@utils/pdf", () => ({ renderPDF }));
 
-import { ensurePdfLibraryCover, regenerateLibraryThumbnails, showRegenSkippedWarning } from "./libraryCoverService";
+import {
+    ensurePdfLibraryCover,
+    regenerateLibraryThumbnails,
+    resetLibraryCoverToDefault,
+    showRegenSkippedWarning,
+} from "./libraryCoverService";
+
+describe("resetLibraryCoverToDefault", () => {
+    it("clears overrides, prefers library cover source, and rematerializes manga", async () => {
+        const item = makeMangaItem({
+            id: 12,
+            link: SAMPLE_MANGA_LINK,
+            cover: path.join("testdata", "custom.png"),
+            extra: { detailsCoverSource: "tracker", keep: true },
+        });
+        const deleteCover = vi.fn(async () => ({ ok: true as const }));
+        const materialize = vi.fn(async () => ({ ok: true as const }));
+        onInvoke("covers:deleteForLibraryId", deleteCover);
+        onInvoke("covers:materializeFromLibraryPath", materialize);
+        const dispatch = vi.fn(async () => undefined);
+        await resetLibraryCoverToDefault(dispatch as never, item);
+        expect(deleteCover).toHaveBeenCalledWith({ libraryId: 12 });
+        expect(dispatch).toHaveBeenCalledTimes(2);
+        expect(materialize).toHaveBeenCalledWith(
+            expect.objectContaining({ libraryId: 12, itemType: "manga", link: SAMPLE_MANGA_LINK }),
+        );
+    });
+
+    it("rematerializes books after clearing overrides", async () => {
+        const item = makeBookItem({
+            id: 13,
+            link: SAMPLE_BOOK_LINK,
+            cover: path.join("testdata", "custom.png"),
+        });
+        onInvoke("covers:deleteForLibraryId", async () => ({ ok: true as const }));
+        const materialize = vi.fn(async () => ({ ok: true as const }));
+        onInvoke("covers:materializeFromLibraryPath", materialize);
+        const dispatch = vi.fn(async () => undefined);
+        await resetLibraryCoverToDefault(dispatch as never, item);
+        expect(materialize).toHaveBeenCalledWith(
+            expect.objectContaining({ libraryId: 13, itemType: "book", link: SAMPLE_BOOK_LINK }),
+        );
+    });
+});
 
 describe("regenerateLibraryThumbnails", () => {
     it("skips missing library paths without parsing EPUBs", async () => {
