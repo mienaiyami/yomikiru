@@ -69,6 +69,13 @@ export type CoverChannels = {
     "covers:deleteForLibraryId": ChannelDefinition<{ libraryId: number }, CoverOpResult>;
     /** Removes all files under `userData/covers` and recreates the directory. */
     "covers:clearCache": ChannelDefinition<void, CoverOpResult>;
+    /**
+     * Once per process: true when migration 0001 ran this launch and this window may show the
+     * post-upgrade generate-thumbnails prompt. Other windows get false.
+     *
+     * todo(remove-after-0001-prompt): delete with the post-0001 thumbnail prompt flow.
+     */
+    "covers:claimPost0001ThumbnailPrompt": ChannelDefinition<void, boolean>;
 };
 
 export type LibraryScanChannels = {

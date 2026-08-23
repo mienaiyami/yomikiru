@@ -406,6 +406,7 @@ sequenceDiagram
 - **Custom cover**: user can right-click a page in the manga reader → "Set as Cover", or use the "Pick Cover" button in the details panel.
 - **Cache clear**: `covers:clearCache` IPC removes all files under `userData/covers/` and recreates the empty directory.
 - **Bulk regenerate / scan**: Settings -> Library (first section) includes Default Location, **Scan now** (nested series and EPUBs under that folder), and thumbnail clear/regenerate. Regenerating walks every library row; missing files/folders are skipped (not extracted or parsed) and a single warning reports how many were skipped. Thumbnail rebuild locks the app UI; every scan reason remains usable through the title-bar status and cancellation control.
+- **Post-upgrade prompt** (temporary): when this launch applies the Drizzle journal that adds `library_items.id`, one window asks whether to generate thumbnails for existing library titles after the UI settles. Skip is fine; Settings regenerate remains available. Remove this prompt once most users have migrated (`todo(remove-after-0001-prompt)` in code).
 
 The `library_items.cover` column stores only user-picked non-WebP paths (e.g. a `cover.jpg` in the manga root). The WebP thumbnail at `userData/covers/<id>.webp` is separate and not stored in the DB — the renderer resolves it from the library item `id` at render time via `libraryCoverSrc` in [`src/renderer/utils/libraryCover.ts`](../src/renderer/utils/libraryCover.ts).
 

@@ -16,6 +16,37 @@ const logger = createMainLogger("ipc/covers");
 /** Process-wide limit for renderer-owned PDF canvas work that writes the shared cover cache. */
 const PDF_COVER_RENDER_CONCURRENCY = 2;
 
+/*
+ * todo(remove-after-0001-prompt): delete these two flags, noteLibraryItemIdMigrationAppliedThisLaunch,
+ * claimPost0001ThumbnailPrompt, and the covers:claimPost0001ThumbnailPrompt handler once most users
+ * have migrated past journal 0001 (gallery covers already materialize for them).
+ */
+/** True when this launch applied the journal tag that adds `library_items.id`. */
+let libraryItemIdMigrationAppliedThisLaunch = false;
+/** True after one renderer claimed the post-0001 generate-thumbnails dialog. */
+let post0001ThumbnailPromptClaimed = false;
+
+/**
+ * Records that the library-item-id Drizzle migration ran on this launch so one window
+ * can claim {@link claimPost0001ThumbnailPrompt}.
+ *
+ * todo(remove-after-0001-prompt): remove with the post-0001 thumbnail prompt flow.
+ */
+export const noteLibraryItemIdMigrationAppliedThisLaunch = (): void => {
+    libraryItemIdMigrationAppliedThisLaunch = true;
+};
+
+/**
+ * Once per process: returns true only when 0001 ran this launch and no window has claimed yet.
+ *
+ * todo(remove-after-0001-prompt): remove with the post-0001 thumbnail prompt flow.
+ */
+export const claimPost0001ThumbnailPrompt = (): boolean => {
+    if (!libraryItemIdMigrationAppliedThisLaunch || post0001ThumbnailPromptClaimed) return false;
+    post0001ThumbnailPromptClaimed = true;
+    return true;
+};
+
 /** A renderer's queued or active request to render one PDF cover page. */
 type PdfCoverRenderJob = {
     libraryId: number;
@@ -167,4 +198,9 @@ export const registerCoverHandlers = (): void => {
             return { ok: true };
         }),
     );
+
+    /*
+     * todo(remove-after-0001-prompt): delete this handler with noteLibraryItemIdMigrationAppliedThisLaunch.
+     */
+    ipcMain.handle("covers:claimPost0001ThumbnailPrompt", () => claimPost0001ThumbnailPrompt());
 };

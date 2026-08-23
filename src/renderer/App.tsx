@@ -37,6 +37,7 @@ import {
 import { hydrateAnilistClientFromStorage } from "@utils/anilist";
 import { dialogUtils } from "@utils/dialog";
 import { keyFormatter, mouseEventFormatter } from "@utils/keybindings";
+import { maybePromptPost0001LibraryThumbnails } from "@utils/libraryCoverService";
 import { resolveMissingOpenPath } from "@utils/libraryMissingPath";
 import { getExistingBaseDir, promptForInitialDefaultLocation } from "@utils/librarySettingsImport";
 import {
@@ -109,6 +110,8 @@ const App = (): ReactElement => {
     const bookProgressRef: React.RefObject<HTMLInputElement> = createRef();
     const [firstRendered, setFirstRendered] = useState(false);
     const [mainSettingsReady, setMainSettingsReady] = useState(false);
+    /** True after the first `fetchAllItemsWithProgress` settles (empty catalogue still counts). */
+    const [libraryBootstrapped, setLibraryBootstrapped] = useState(false);
     const askedDefaultLocation = useRef(false);
     const [contextMenuData, setContextMenuData] = useState<Menu.ContextMenuData | null>(null);
     const [optSelectData, setOptSelectData] = useState<Menu.OptSelectData | null>(null);
@@ -157,6 +160,33 @@ const App = (): ReactElement => {
             dispatch(setTheme(theme));
         }
     }, [firstRendered, mainSettingsReady, libraryFolders, dispatch]);
+
+    /*
+     * todo(remove-after-0001-prompt): delete this effect with maybePromptPost0001LibraryThumbnails.
+     * After UI is ready and the Home root is configured, one window may offer bulk cover generation
+     * when migration 0001 ran this launch.
+     */
+    useEffect(() => {
+        if (!firstRendered || !mainSettingsReady || !libraryBootstrapped) return;
+        const configuredPath = getDefaultLocationPath(libraryFolders).trim();
+        // wait for first-run / missing-root dialogs so this prompt does not stack on them
+        if (!configuredPath || getExistingBaseDir(configuredPath) === null) return;
+
+        let cancelled = false;
+        void maybePromptPost0001LibraryThumbnails({
+            dispatch,
+            getItems: () =>
+                Object.values(store.getState().library.items).filter(
+                    (item): item is NonNullable<typeof item> => item != null,
+                ),
+            isCancelled: () => cancelled,
+        }).catch((err) => {
+            log.error("post-0001 thumbnail prompt failed", err);
+        });
+        return () => {
+            cancelled = true;
+        };
+    }, [firstRendered, mainSettingsReady, libraryBootstrapped, libraryFolders, dispatch]);
 
     const closeReader = async () => {
         // may leave Redux book position behind the viewport until % changes; flush before DB write
@@ -234,6 +264,7 @@ const App = (): ReactElement => {
         setFirstRendered(true);
         hydrateAnilistClientFromStorage();
         void dispatch(fetchAllItemsWithProgress()).then(() => {
+            setLibraryBootstrapped(true);
             void window.electron.invoke("libraryScan:rendererReady");
             // needs library map: legacy anilist_tracking paths match library_items.link
             void dispatch(runAnilistLegacyStartupIfClaimed());

@@ -26,7 +26,13 @@
         "defaultLocationMissing": "Your Home library root is no longer available. Select its new location.",
         "dropMultipleOnlyFirst": "More than one file/folder dropped. Only first in list will be loaded.",
         "dropError": "Error while dropping file",
-        "uiBlocked": "Please wait"
+        "uiBlocked": "Please wait",
+        "post0001ThumbnailsTitle": "Generate library covers?",
+        "post0001ThumbnailsMessage_one": "This update adds cover thumbnails for the gallery. Generate a thumbnail for your {{count}} library title now?",
+        "post0001ThumbnailsMessage_other": "This update adds cover thumbnails for the gallery. Generate thumbnails for your {{count}} library titles now?",
+        "post0001ThumbnailsDetail": "This may take several minutes if you have a lot of titles. You can skip and use Regenerate all thumbnails in Library settings later.",
+        "post0001ThumbnailsSkip": "Skip for now",
+        "post0001ThumbnailsGenerate": "Generate"
     },
     "topBar": {
         "home": "Home",

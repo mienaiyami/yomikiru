@@ -5,6 +5,15 @@ import { readMigrationFiles } from "drizzle-orm/migrator";
 import { app } from "electron";
 
 /**
+ * Journal tag for the migration that adds `library_items.id` (cover WebP cache key).
+ * Used to gate the one-shot post-upgrade thumbnail prompt.
+ *
+ * todo(remove-after-0001-prompt): drop this constant and all post-0001 thumbnail-prompt wiring
+ * once most users have migrated past this journal entry (covers already exist for them).
+ */
+export const DRIZZLE_TAG_LIBRARY_ITEM_IDS = "0001_redundant_sentinel";
+
+/**
  * One Drizzle journal file that sqlite `migrate()` would still apply.
  * `tag` comes from `_journal.json` (`readMigrationFiles` does not include it).
  */

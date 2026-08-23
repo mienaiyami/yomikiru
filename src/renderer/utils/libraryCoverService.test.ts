@@ -1,7 +1,7 @@
 import path from "node:path";
 import { makeBookItem, makeMangaItem, SAMPLE_BOOK_LINK, SAMPLE_MANGA_LINK } from "@test/fixtures/libraryItem";
 import { onInvoke, stubFs } from "@test/mocks/preload";
-import { describe, expect, it, vi } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 const { renderPDF } = vi.hoisted(() => ({ renderPDF: vi.fn(async () => []) }));
 
@@ -9,10 +9,16 @@ vi.mock("@utils/pdf", () => ({ renderPDF }));
 
 import {
     ensurePdfLibraryCover,
+    maybePromptPost0001LibraryThumbnails,
     regenerateLibraryThumbnails,
     resetLibraryCoverToDefault,
     showRegenSkippedWarning,
 } from "./libraryCoverService";
+
+/** Flushes the post-0001 settle wait (double rAF + timeout) under fake timers. */
+const flushPost0001Settle = async (): Promise<void> => {
+    await vi.runAllTimersAsync();
+};
 
 describe("resetLibraryCoverToDefault", () => {
     it("clears overrides, prefers library cover source, and rematerializes manga", async () => {
@@ -145,5 +151,113 @@ describe("showRegenSkippedWarning", () => {
                 noOption: true,
             }),
         );
+    });
+});
+
+describe("maybePromptPost0001LibraryThumbnails", () => {
+    beforeEach(() => {
+        vi.useFakeTimers();
+        vi.stubGlobal("requestAnimationFrame", (cb: FrameRequestCallback) => {
+            cb(0);
+            return 0;
+        });
+    });
+
+    afterEach(() => {
+        vi.useRealTimers();
+        vi.unstubAllGlobals();
+    });
+
+    it("does not claim when cancelled during the settle wait", async () => {
+        const claim = vi.fn(async () => true);
+        onInvoke("covers:claimPost0001ThumbnailPrompt", claim);
+        const warn = vi.fn(async () => ({ response: 0, checkboxChecked: false }));
+        onInvoke("dialog:warn", warn);
+
+        const run = maybePromptPost0001LibraryThumbnails({
+            dispatch: vi.fn() as never,
+            getItems: () => [makeMangaItem({ id: 1, link: SAMPLE_MANGA_LINK })],
+            isCancelled: () => true,
+        });
+        await flushPost0001Settle();
+        await run;
+
+        expect(claim).not.toHaveBeenCalled();
+        expect(warn).not.toHaveBeenCalled();
+    });
+
+    it("skips the dialog when the process claim is already taken", async () => {
+        onInvoke("covers:claimPost0001ThumbnailPrompt", async () => false);
+        const warn = vi.fn(async () => ({ response: 0, checkboxChecked: false }));
+        onInvoke("dialog:warn", warn);
+
+        const run = maybePromptPost0001LibraryThumbnails({
+            dispatch: vi.fn() as never,
+            getItems: () => [makeMangaItem({ id: 1, link: SAMPLE_MANGA_LINK })],
+        });
+        await flushPost0001Settle();
+        await run;
+
+        expect(warn).not.toHaveBeenCalled();
+    });
+
+    it("skips without claiming when the library is empty", async () => {
+        const claim = vi.fn(async () => true);
+        onInvoke("covers:claimPost0001ThumbnailPrompt", claim);
+        const warn = vi.fn(async () => ({ response: 0, checkboxChecked: false }));
+        onInvoke("dialog:warn", warn);
+
+        const run = maybePromptPost0001LibraryThumbnails({
+            dispatch: vi.fn() as never,
+            getItems: () => [],
+        });
+        await flushPost0001Settle();
+        await run;
+
+        expect(claim).not.toHaveBeenCalled();
+        expect(warn).not.toHaveBeenCalled();
+    });
+
+    it("prompts and regenerates when the user accepts", async () => {
+        stubFs({ existsSync: () => true });
+        onInvoke("covers:claimPost0001ThumbnailPrompt", async () => true);
+        const warn = vi.fn(async () => ({ response: 1, checkboxChecked: false }));
+        onInvoke("dialog:warn", warn);
+        const materialize = vi.fn(async () => ({ ok: false as const, message: "skip refresh" }));
+        onInvoke("covers:materializeFromLibraryPath", materialize);
+        const dispatch = vi.fn(async () => undefined);
+
+        const run = maybePromptPost0001LibraryThumbnails({
+            dispatch: dispatch as never,
+            getItems: () => [makeMangaItem({ id: 1, link: SAMPLE_MANGA_LINK })],
+        });
+        await flushPost0001Settle();
+        await run;
+
+        expect(warn).toHaveBeenCalledWith(
+            expect.objectContaining({
+                title: "Generate library covers?",
+                noOption: false,
+            }),
+        );
+        expect(materialize).toHaveBeenCalledWith(
+            expect.objectContaining({ libraryId: 1, itemType: "manga", link: SAMPLE_MANGA_LINK }),
+        );
+    });
+
+    it("does not regenerate when the user skips", async () => {
+        onInvoke("covers:claimPost0001ThumbnailPrompt", async () => true);
+        onInvoke("dialog:warn", async () => ({ response: 0, checkboxChecked: false }));
+        const materialize = vi.fn(async () => ({ ok: true as const }));
+        onInvoke("covers:materializeFromLibraryPath", materialize);
+
+        const run = maybePromptPost0001LibraryThumbnails({
+            dispatch: vi.fn() as never,
+            getItems: () => [makeMangaItem({ id: 1, link: SAMPLE_MANGA_LINK })],
+        });
+        await flushPost0001Settle();
+        await run;
+
+        expect(materialize).not.toHaveBeenCalled();
     });
 });

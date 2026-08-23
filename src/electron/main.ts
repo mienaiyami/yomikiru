@@ -12,9 +12,10 @@ remote.initialize();
 if (require("electron-squirrel-startup")) app.quit();
 
 import { DatabaseService } from "./db";
+import { DRIZZLE_TAG_LIBRARY_ITEM_IDS } from "./db/migrations";
 import { registerI18nHandlers, setApplicationMenuRebuild } from "./i18n/ipc";
 import { initMainI18n, mainT } from "./i18n/mainI18n";
-import { registerCoverHandlers } from "./ipc/covers";
+import { noteLibraryItemIdMigrationAppliedThisLaunch, registerCoverHandlers } from "./ipc/covers";
 import { registerDbBackupHandlers, runDbBackupStartupBeforeOpen } from "./ipc/dbBackup";
 import { setupDatabaseHandlers } from "./ipc/database";
 import { registerDialogHandlers } from "./ipc/dialog";
@@ -163,6 +164,12 @@ app.on("ready", async () => {
         }
         try {
             await db.initialize(pre.pendingTags);
+            /*
+             * todo(remove-after-0001-prompt): drop this branch with the post-0001 thumbnail prompt flow.
+             */
+            if (pre.pendingTags.includes(DRIZZLE_TAG_LIBRARY_ITEM_IDS)) {
+                noteLibraryItemIdMigrationAppliedThisLaunch();
+            }
         } catch (err) {
             logger.error("schema migrate failed", { tags: pre.pendingTags }, err);
             await handleFailedSchemaMigrate(pre.snapshotFileName);

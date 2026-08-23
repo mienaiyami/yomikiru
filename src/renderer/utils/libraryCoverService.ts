@@ -2,6 +2,7 @@ import type { LibraryItem } from "@common/types/db";
 import i18n from "@renderer/i18n";
 import type { AppDispatch } from "@store/index";
 import { fetchAllItemsWithProgress, updateLibraryItem } from "@store/library";
+import { blockUi, UI_BLOCK_ID_LIBRARY, unblockUi } from "@store/ui";
 import { dialogUtils } from "@utils/dialog";
 import { formatUtils } from "@utils/file";
 import { canonicalCoverAbsolutePath } from "@utils/libraryCover";
@@ -10,6 +11,9 @@ import { createRendererLogger } from "@utils/logger";
 import { renderPDF } from "@utils/pdf";
 
 const log = createRendererLogger("utils/libraryCoverService");
+
+/** Quiet window after first paint before the post-0001 cover prompt. */
+const POST_0001_THUMBNAIL_PROMPT_SETTLE_MS = 500;
 
 /** Library ids whose lazy PDF cover generation already ran in this renderer session. */
 const pdfCoverAttempted = new Set<number>();
@@ -116,9 +120,15 @@ export const regenerateLibraryThumbnails = async (
     }
     const skippedMissing = skippedMissingItems.length;
     if (skippedMissing > 0) {
+        /*
+         * electron-log `{text}` prints nested objects as `[object]`; keep only primitives so
+         * missing-path diagnostics stay readable in renderer.log.
+         */
         log.warn("regenerate thumbnails: skipped missing paths", {
             count: skippedMissing,
-            items: skippedMissingItems.map(({ id, type, link }) => ({ id, type, link })),
+            ids: skippedMissingItems.map((item) => item.id),
+            types: skippedMissingItems.map((item) => item.type),
+            links: skippedMissingItems.map((item) => item.link),
         });
     }
     log.info("regenerate thumbnails finished", { total: items.length, skippedMissing });
@@ -137,6 +147,107 @@ export const showRegenSkippedWarning = async (skippedMissing: number): Promise<v
         message: i18n.t("library.regenSkippedMessage", { ns: "settings", count: skippedMissing }),
         noOption: true,
     });
+};
+
+/**
+ * Waits for two animation frames plus a short settle so home chrome can paint before a dialog.
+ */
+const waitForUiStable = (): Promise<void> =>
+    new Promise((resolve) => {
+        requestAnimationFrame(() => {
+            requestAnimationFrame(() => {
+                window.setTimeout(resolve, POST_0001_THUMBNAIL_PROMPT_SETTLE_MS);
+            });
+        });
+    });
+
+/**
+ * Options for {@link maybePromptPost0001LibraryThumbnails}.
+ *
+ * todo(remove-after-0001-prompt): delete with the post-0001 thumbnail prompt flow.
+ */
+export type MaybePromptPost0001LibraryThumbnailsOpts = {
+    dispatch: AppDispatch;
+    /** Current catalogue rows; empty skips without claiming. */
+    getItems: () => readonly RegenLibraryThumbnailItem[];
+    /** When true after the settle wait, abort without claiming (effect cleanup / superseded run). */
+    isCancelled?: () => boolean;
+};
+
+/**
+ * After Drizzle 0001 (library item ids / cover cache key): one window per process may ask whether
+ * to generate WebP thumbnails for existing library rows. Declining is permanent for that launch;
+ * Settings still offers regenerate later.
+ *
+ * Call only after library hydrate and main settings are ready, and when the Home library root is
+ * configured so this dialog does not stack on first-run location prompts.
+ *
+ * todo(remove-after-0001-prompt): delete this export, its settle helper, App wiring, IPC claim,
+ * and i18n keys once most users have migrated past journal 0001.
+ */
+export const maybePromptPost0001LibraryThumbnails = async (
+    opts: MaybePromptPost0001LibraryThumbnailsOpts,
+): Promise<void> => {
+    const { dispatch, getItems, isCancelled } = opts;
+    await waitForUiStable();
+    if (isCancelled?.()) return;
+
+    const items = getItems().filter((item) => item.id != null);
+    if (items.length === 0) {
+        log.info("post-0001 thumbnail prompt skipped: empty library");
+        return;
+    }
+
+    const claimed = await window.electron.invoke("covers:claimPost0001ThumbnailPrompt");
+    if (!claimed) return;
+
+    const { response } = await dialogUtils.warn({
+        title: i18n.t("app.post0001ThumbnailsTitle", { ns: "common" }),
+        message: i18n.t("app.post0001ThumbnailsMessage", { ns: "common", count: items.length }),
+        detail: i18n.t("app.post0001ThumbnailsDetail", { ns: "common" }),
+        noOption: false,
+        buttons: [
+            i18n.t("app.post0001ThumbnailsSkip", { ns: "common" }),
+            i18n.t("app.post0001ThumbnailsGenerate", { ns: "common" }),
+        ],
+        defaultId: 1,
+        cancelId: 0,
+    });
+    if (!response) {
+        log.info("post-0001 thumbnail prompt declined", { count: items.length });
+        return;
+    }
+
+    const progressLabel = (done: number, total: number) =>
+        i18n.t("library.regenerating", { ns: "settings", label: `${done} / ${total}` });
+
+    dispatch(blockUi({ id: UI_BLOCK_ID_LIBRARY, message: progressLabel(0, items.length) }));
+    let skippedMissing = 0;
+    let failed = false;
+    try {
+        const result = await regenerateLibraryThumbnails(dispatch, items, (done, total) => {
+            dispatch(blockUi({ id: UI_BLOCK_ID_LIBRARY, message: progressLabel(done, total) }));
+        });
+        skippedMissing = result.skippedMissing;
+        await dispatch(fetchAllItemsWithProgress());
+        log.info("post-0001 thumbnail generate finished", {
+            total: items.length,
+            skippedMissing,
+        });
+    } catch (err) {
+        failed = true;
+        log.error("post-0001 thumbnail generate failed", { count: items.length }, err);
+    } finally {
+        dispatch(unblockUi(UI_BLOCK_ID_LIBRARY));
+    }
+    if (failed) {
+        await dialogUtils.customError({
+            message: i18n.t("library.regenError", { ns: "settings" }),
+        });
+        return;
+    }
+    // after unblock so follow-up dialogs are not under the full-window lock
+    await showRegenSkippedWarning(skippedMissing);
 };
 
 export type MaterializeBookCoverFromExtractedPathOpts = {
