@@ -40,19 +40,38 @@ describe("resolveMangaOpenSeries", () => {
     });
 
     it("uses dirname when the opened path is a chapter under the series", () => {
-        const series = path.join("testdata", "Series A");
-        const chapter = path.join(series, "Ch01");
+        const series = path.join("testdata", "series-root");
+        const chapter = path.join(series, "chapter-01");
         expect(resolveMangaOpenSeries(chapter, series)).toEqual({
             itemLink: series,
-            chapterName: "Ch01",
+            chapterName: "chapter-01",
         });
     });
 
-    it("treats a packed file as the series even without a catalogue row", () => {
-        const packed = path.join("testdata", "title.cbz");
+    it("keeps a packed chapter in its containing series", () => {
+        const series = path.join("testdata", "series-root");
+        const packedChapter = path.join(series, "chapter-01.cbz");
+        expect(resolveMangaOpenSeries(packedChapter, series)).toEqual({
+            itemLink: series,
+            chapterName: "chapter-01.cbz",
+        });
+    });
+
+    it("uses the containing folder when a packed chapter is its own catalogue row", () => {
+        const series = path.join("testdata", "series-root");
+        const packed = path.join(series, "chapter-01.cbz");
+        expect(resolveMangaOpenSeries(packed, packed)).toEqual({
+            itemLink: series,
+            chapterName: "chapter-01.cbz",
+        });
+    });
+
+    it("uses the containing folder for a packed chapter without a catalogue row", () => {
+        const series = path.join("testdata", "series-root");
+        const packed = path.join(series, "chapter-01.cbz");
         expect(resolveMangaOpenSeries(packed, null)).toEqual({
-            itemLink: packed,
-            chapterName: MANGA_ROOT_CHAPTER_NAME,
+            itemLink: series,
+            chapterName: "chapter-01.cbz",
         });
     });
 });
@@ -65,14 +84,28 @@ describe("findLibraryItemKeyForOpenPath", () => {
     });
 
     it("falls back to the parent for a chapter folder", () => {
-        const series = path.join("testdata", "Series A");
-        const chapter = path.join(series, "Ch01");
+        const series = path.join("testdata", "series-root");
+        const chapter = path.join(series, "chapter-01");
         const items = new Set([series]);
         expect(findLibraryItemKeyForOpenPath(chapter, (link) => items.has(link))).toBe(series);
     });
 
     it("does not dirname a packed file missing from the map", () => {
-        const packed = path.join("testdata", "title.cbz");
+        const packed = path.join("testdata", "archive.cbz");
         expect(findLibraryItemKeyForOpenPath(packed, () => false)).toBeNull();
+    });
+
+    it("finds the containing series for a packed chapter", () => {
+        const series = path.join("testdata", "series-root");
+        const packedChapter = path.join(series, "chapter-01.cbz");
+        const items = new Set([series]);
+        expect(findLibraryItemKeyForOpenPath(packedChapter, (link) => items.has(link))).toBe(series);
+    });
+
+    it("prefers the containing series over a scanned archive row", () => {
+        const series = path.join("testdata", "series-root");
+        const packedChapter = path.join(series, "chapter-01.cbz");
+        const items = new Set([series, packedChapter]);
+        expect(findLibraryItemKeyForOpenPath(packedChapter, (link) => items.has(link))).toBe(series);
     });
 });

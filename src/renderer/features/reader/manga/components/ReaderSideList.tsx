@@ -192,7 +192,7 @@ const ReaderSideList = memo(
             )
                 return setListOpen(false);
             setPreventListClose(true);
-        }, [contextMenuData]);
+        }, [contextMenuData, isSideListPinned]);
 
         useLayoutEffect(() => {
             if (isSideListPinned) {
@@ -217,11 +217,16 @@ const ReaderSideList = memo(
             isShuffleMode,
             mangaInReader,
             currentChapterPath,
+            setPrevNextChapter,
         ]);
 
-        const makeChapterList = async () => {
-            if (!mangaLink) return;
+        /** Builds a child chapter list only for folder-backed series. */
+        const makeChapterList = useCallback(async () => {
             recentChaptersRef.current = [];
+            if (!mangaLink || !window.fs.isDir(mangaLink)) {
+                setChapterData([]);
+                return;
+            }
 
             try {
                 const files = await window.fs.readdir(mangaLink);
@@ -286,50 +291,57 @@ const ReaderSideList = memo(
                 }
                 setChapterData([]);
             }
-        };
-        useLayoutEffect(() => {
-            makeChapterList();
-
-            if (mangaLink && appSettings.autoRefreshSideList && !isShuffleMode) {
-                const refresh = () => {
-                    if (timeout) clearTimeout(timeout);
-                    timeout = setTimeout(() => {
-                        makeChapterList();
-                    }, 1000);
-                };
-                const closeWatcher = window.chokidar.watch({
-                    path: mangaLink,
-                    event: "all",
-                    options: {
-                        depth: 0,
-                        ignoreInitial: true,
-                    },
-                    callback: refresh,
-                });
-                let timeout: NodeJS.Timeout;
-                return () => {
-                    closeWatcher();
-                };
-            }
         }, [mangaLink]);
 
-        const handleResizerDrag = (e: MouseEvent) => {
-            if (draggingResizer) {
-                if (isSideListPinned) {
-                    makeScrollPos();
+        useLayoutEffect(() => {
+            void makeChapterList();
+
+            if (!mangaLink || !window.fs.isDir(mangaLink) || !appSettings.autoRefreshSideList || isShuffleMode)
+                return;
+
+            let timeout: NodeJS.Timeout | undefined;
+            const refresh = () => {
+                if (timeout) clearTimeout(timeout);
+                timeout = setTimeout(() => {
+                    void makeChapterList();
+                }, 1000);
+            };
+            const closeWatcher = window.chokidar.watch({
+                path: mangaLink,
+                event: "all",
+                options: {
+                    depth: 0,
+                    ignoreInitial: true,
+                },
+                callback: refresh,
+            });
+            return () => {
+                if (timeout) clearTimeout(timeout);
+                closeWatcher();
+            };
+        }, [appSettings.autoRefreshSideList, isShuffleMode, makeChapterList, mangaLink]);
+
+        const handleResizerDrag = useCallback(
+            (e: MouseEvent) => {
+                if (draggingResizer) {
+                    if (isSideListPinned) {
+                        makeScrollPos();
+                    }
+                    const width =
+                        e.clientX > (window.innerWidth * 90) / 100
+                            ? (window.innerWidth * 90) / 100
+                            : e.clientX < 192
+                              ? 192
+                              : e.clientX;
+                    setSideListWidth(width);
                 }
-                const width =
-                    e.clientX > (window.innerWidth * 90) / 100
-                        ? (window.innerWidth * 90) / 100
-                        : e.clientX < 192
-                          ? 192
-                          : e.clientX;
-                setSideListWidth(width);
-            }
-        };
-        const handleResizerMouseUp = () => {
+            },
+            [draggingResizer, isSideListPinned, makeScrollPos, setSideListWidth],
+        );
+
+        const handleResizerMouseUp = useCallback(() => {
             setDraggingResizer(false);
-        };
+        }, []);
 
         const handleIndicatorClick = (e: React.MouseEvent<HTMLDivElement>) => {
             makeScrollPos();
@@ -572,7 +584,7 @@ const ReaderSideList = memo(
                 window.removeEventListener("mousemove", handleResizerDrag);
                 window.removeEventListener("mouseup", handleResizerMouseUp);
             };
-        }, [draggingResizer]);
+        }, [draggingResizer, handleResizerDrag, handleResizerMouseUp]);
 
         const renderChapterItem = (chapter: ChapterData, _index: number, isSelected: boolean) => {
             return (

@@ -736,13 +736,41 @@ export const maybeRelocateMissingSameNameOnOpen = async (
 
 /**
  * Ensures a manga catalogue row and progress when the reader loads images.
- * Relocate-before-add when exactly one missing same-name row matches.
+ * Legacy archive rows rekey to their parent only when no parent row exists. Existing parent rows
+ * remain canonical; other missing rows use the usual relocate-before-add recovery.
  */
 export const syncMangaLibraryOnReaderOpen = async (
     opts: SyncMangaLibraryOnOpenOpts,
 ): Promise<SyncMangaLibraryOnOpenResult> => {
     const { dispatch, openedPath, images, currentPage } = opts;
     const { itemLink, chapterName } = resolveMangaOpenSeries(openedPath, opts.libraryItem?.link ?? null);
+    let libraryItem: SyncMangaLibraryOnOpenOpts["libraryItem"] = opts.libraryItem;
+
+    if (
+        libraryItem?.type === "manga" &&
+        formatUtils.mangaFile.test(libraryItem.link) &&
+        normalizeMangaPathSegment(libraryItem.link) !== itemLink
+    ) {
+        const parentItem = store.getState().library.items[itemLink];
+        if (parentItem?.type === "manga") {
+            libraryItem = parentItem;
+        } else {
+            /*
+             * Earlier scans could catalogue an archive directly. Move its related history and metadata
+             * to the parent series instead of leaving the next reader save pointing at a file row.
+             */
+            const previousProgress = libraryItem.progress;
+            const relocated = await dispatchRelocateLibraryItem(dispatch, {
+                oldLink: libraryItem.link,
+                newLink: itemLink,
+            });
+            if (relocated?.type === "manga") {
+                libraryItem = { ...relocated, type: "manga", progress: previousProgress };
+            } else {
+                libraryItem = null;
+            }
+        }
+    }
 
     const progress: MangaProgress = {
         currentPage,
@@ -753,15 +781,8 @@ export const syncMangaLibraryOnReaderOpen = async (
         chaptersRead: [],
     };
 
-    if (opts.libraryItem) {
-        const next = await applyOpenedMangaItem(
-            dispatch,
-            opts.libraryItem,
-            itemLink,
-            chapterName,
-            images,
-            currentPage,
-        );
+    if (libraryItem) {
+        const next = await applyOpenedMangaItem(dispatch, libraryItem, itemLink, chapterName, images, currentPage);
         return { itemLink, chapterName, progress: next };
     }
 

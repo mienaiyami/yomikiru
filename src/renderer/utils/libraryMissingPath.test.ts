@@ -1,7 +1,8 @@
 import path from "node:path";
-import type { BookProgress, LibraryItem } from "@common/types/db";
+import type { BookProgress, LibraryItem, MangaProgress } from "@common/types/db";
 import { configureStore } from "@reduxjs/toolkit";
-import { rootReducer, type AppDispatch } from "@store/index";
+import store, { type AppDispatch, rootReducer } from "@store/index";
+import { setLibrary } from "@store/library";
 import { makeBookItem } from "@test/fixtures/libraryItem";
 import { onInvoke, stubFs } from "@test/mocks/preload";
 import { describe, expect, it, vi } from "vitest";
@@ -19,6 +20,7 @@ import {
     shouldOfferLibraryRelocate,
     shouldOfferMissingMangaChapterActions,
     syncBookLibraryOnReaderOpen,
+    syncMangaLibraryOnReaderOpen,
 } from "./libraryMissingPath";
 import { MANGA_ROOT_CHAPTER_NAME } from "./mangaChapterPath";
 
@@ -47,38 +49,38 @@ const bookItem = (link: string): LibraryItem =>
 describe("libraryMissingPath", () => {
     describe("libraryPathDisplayName / doesRelocateNameMatch", () => {
         it("uses folder basename for manga dirs and stem for books/archives", () => {
-            const mangaDir = path.join("library", "One Piece");
-            const mangaArchive = path.join("library", "One Piece.cbz");
+            const mangaDir = path.join("library", "manga-folder");
+            const mangaArchive = path.join("library", "manga-archive.cbz");
             const bookFile = path.join("library", "Novel.epub");
-            expect(libraryPathDisplayName(mangaDir, "manga")).toBe("One Piece");
-            expect(libraryPathDisplayName(mangaArchive, "manga")).toBe("One Piece");
+            expect(libraryPathDisplayName(mangaDir, "manga")).toBe("manga-folder");
+            expect(libraryPathDisplayName(mangaArchive, "manga")).toBe("manga-archive");
             expect(libraryPathDisplayName(bookFile, "book")).toBe("Novel");
         });
 
         it("matches on previous basename or library title", () => {
-            const oldLink = path.join("old", "Series A");
-            const sameName = path.join("new", "Series A");
+            const oldLink = path.join("old", "series-root");
+            const sameName = path.join("new", "series-root");
             const titleOnly = path.join("new", "Custom Title");
             const mismatch = path.join("new", "Other");
 
             expect(doesRelocateNameMatch(oldLink, sameName, "Anything", "manga")).toBe(true);
             expect(doesRelocateNameMatch(oldLink, titleOnly, "Custom Title", "manga")).toBe(true);
-            expect(doesRelocateNameMatch(oldLink, mismatch, "Series A", "manga")).toBe(false);
+            expect(doesRelocateNameMatch(oldLink, mismatch, "series-root", "manga")).toBe(false);
         });
 
         it("matches folder title to archive stem", () => {
-            const oldDir = path.join("old", "Series A");
-            const newArchive = path.join("new", "Series A.cbz");
+            const oldDir = path.join("old", "series-root");
+            const newArchive = path.join("new", "series-root.cbz");
             expect(doesRelocateNameMatch(oldDir, newArchive, "Other Title", "manga")).toBe(true);
         });
     });
 
     describe("findMissingSameNameCandidates", () => {
         it("returns missing same-name rows only, not live paths or other types", () => {
-            const missing = path.join("old", "Series A");
-            const live = path.join("live", "Series A");
-            const otherType = path.join("old", "Series A.epub");
-            const target = path.join("new", "Series A");
+            const missing = path.join("old", "series-root");
+            const live = path.join("live", "series-root");
+            const otherType = path.join("old", "series-root.epub");
+            const target = path.join("new", "series-root");
             stubFs({
                 existsSync: (p: string) => p === live || p === target,
             });
@@ -92,7 +94,7 @@ describe("libraryMissingPath", () => {
         });
 
         it("returns no candidates when the new path is already the only row", () => {
-            const target = path.join("new", "Series A");
+            const target = path.join("new", "series-root");
             stubFs({ existsSync: () => true });
             expect(findMissingSameNameCandidates({ [target]: mangaItem(target) }, target, "manga")).toEqual([]);
         });
@@ -418,6 +420,87 @@ describe("libraryMissingPath", () => {
             const result = await maybeRelocateMissingSameNameOnOpen(noopDispatch, {}, newLink, "book");
             expect(result).toBeNull();
             expect(confirm).not.toHaveBeenCalled();
+        });
+    });
+
+    describe("syncMangaLibraryOnReaderOpen", () => {
+        /** Store with library slice so archive-row repair uses the relocation thunk. */
+        const makeStore = () =>
+            configureStore({
+                reducer: rootReducer,
+                middleware: (getDefaultMiddleware) => getDefaultMiddleware({ serializableCheck: false }),
+            });
+
+        it("rekeys a scanned archive row to its parent before saving chapter progress", async () => {
+            const series = path.join("library", "series-root");
+            const archive = path.join(series, "chapter-01.cbz");
+            const archiveProgress: MangaProgress = {
+                itemLink: archive,
+                chapterName: MANGA_ROOT_CHAPTER_NAME,
+                currentPage: 3,
+                totalPages: 20,
+                chaptersRead: [],
+                lastReadAt: new Date("2024-06-01T00:00:00.000Z"),
+            };
+            const archiveItem = { ...mangaItem(archive), progress: archiveProgress };
+            let relocatedArgs: { oldLink: string; newLink: string } | null = null;
+            let savedProgress: MangaProgress | null = null;
+            onInvoke("db:library:relocateItem", async (args) => {
+                relocatedArgs = args;
+                return { ...archiveItem, link: series };
+            });
+            onInvoke("db:manga:updateProgress", async (args) => {
+                savedProgress = args;
+                return args;
+            });
+
+            await syncMangaLibraryOnReaderOpen({
+                dispatch: makeStore().dispatch,
+                openedPath: archive,
+                libraryItem: archiveItem,
+                images: ["data:image/png;base64,page"],
+                currentPage: 4,
+            });
+
+            expect(relocatedArgs).toEqual({ oldLink: archive, newLink: series });
+            expect(savedProgress).toMatchObject({
+                itemLink: series,
+                chapterName: "chapter-01.cbz",
+                currentPage: 4,
+            });
+        });
+
+        it("keeps an occupied parent series instead of merging archive metadata into it", async () => {
+            const series = path.join("library", "series-root");
+            const archive = path.join(series, "chapter-01.cbz");
+            const parentItem = { ...mangaItem(series), title: "Parent title", progress: null };
+            const archiveItem = { ...mangaItem(archive), title: "Archive title", progress: null };
+            const relocate = vi.fn();
+            let addedRequest: { data: { link: string }; progress: { chapterName: string } } | null = null;
+            onInvoke("db:library:relocateItem", relocate);
+            onInvoke("db:library:addItem", async (args) => {
+                addedRequest = args;
+                return parentItem;
+            });
+            store.dispatch(setLibrary({ [series]: parentItem }));
+
+            try {
+                await syncMangaLibraryOnReaderOpen({
+                    dispatch: makeStore().dispatch,
+                    openedPath: archive,
+                    libraryItem: archiveItem,
+                    images: ["data:image/png;base64,page"],
+                    currentPage: 4,
+                });
+
+                expect(relocate).not.toHaveBeenCalled();
+                expect(addedRequest).toMatchObject({
+                    data: { link: series },
+                    progress: { chapterName: "chapter-01.cbz" },
+                });
+            } finally {
+                store.dispatch(setLibrary({}));
+            }
         });
     });
 
