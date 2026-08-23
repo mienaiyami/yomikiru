@@ -15,9 +15,8 @@ import { selectResolvedItemMetadata } from "@store/library";
 import { setSysBtnColor } from "@store/themes";
 import { setSettingsOpen, toggleSettingsOpen } from "@store/ui";
 import { formatUtils } from "@utils/file";
-import { type ReactElement, useEffect, useLayoutEffect, useState } from "react";
+import { type ReactElement, useCallback, useEffect, useLayoutEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
-import { shallowEqual } from "react-redux";
 import { useAppContext } from "./App";
 import LibraryScanStatusButton from "./components/LibraryScanStatusButton";
 
@@ -27,50 +26,52 @@ const TopBar = (): ReactElement => {
     const { pageNumberInputRef, bookProgressRef, closeReader } = useAppContext();
     const [isMaximized, setMaximized] = useState(window.electron.currentWindow.isMaximized() || false);
     const [pageNumberChangeDisabled, setPageNumberChangeDisabled] = useState(false);
-    const readerContent = useAppSelector((store) => store.reader.content);
+    const readerContentLink = useAppSelector((store) => store.reader.content?.link ?? "");
+    const readerContentType = useAppSelector((store) => store.reader.content?.type ?? null);
+    const readerContentTitle = useAppSelector((store) => store.reader.content?.title ?? "");
+    const readerChapterName = useAppSelector((store) => store.reader.content?.progress?.chapterName ?? "");
+    const readerTotalPages = useAppSelector((store) =>
+        store.reader.type === "manga" ? (store.reader.content?.progress?.totalPages ?? 0) : 0,
+    );
     const readerDisplayTitle = useAppSelector((store) => {
-        const content = store.reader.content;
-        if (!content) return null;
+        const contentLink = store.reader.content?.link;
+        if (!contentLink) return "";
         // primary resolved title only; the muted original does not fit the title bar
-        return selectResolvedItemMetadata(store, content.link)?.title ?? content.title;
+        return selectResolvedItemMetadata(store, contentLink)?.title ?? store.reader.content?.title ?? "";
     });
     // todo: move input to separate component
     const currentPageNumber = useAppSelector((store) => {
-        if (store.reader.type === "manga" && store.reader.content?.progress) {
-            return store.reader.content.progress.currentPage;
+        if (store.reader.type === "manga") {
+            return store.reader.content?.progress?.currentPage ?? 1;
         }
         return 1;
-    }, shallowEqual);
+    });
     const appSettings = useAppSelector((store) => store.appSettings);
 
     const [pageScrollTimeoutID, setTimeoutID] = useState<NodeJS.Timeout | null>(null);
 
     const dispatch = useAppDispatch();
 
-    const setTitleWithSize = () => {
-        if (!readerContent) {
+    const setTitleWithSize = useCallback(() => {
+        if (!readerContentLink) {
             setTitle(window.electron.app.getName().concat(window.electron.app.isPackaged ? "" : " - dev"));
             document.title = window.electron.app.getName();
             return;
         }
-        if (readerContent.type === "manga") {
-            let mangaName = readerDisplayTitle ?? readerContent.title;
-            let chapterName = formatUtils.files.getName(readerContent.progress?.chapterName || "");
+        if (readerContentType === "manga") {
+            let mangaName = readerDisplayTitle || readerContentTitle;
+            let chapterName = formatUtils.files.getName(readerChapterName);
             if (mangaName.length > 13) mangaName = `${mangaName.substring(0, 20)}...`;
             if (chapterName.length > 83) chapterName = `${chapterName.substring(0, 80)}...`;
             const title = `${window.electron.app.getName()} - ${mangaName} | ${chapterName}`;
             setTitle(chapterName.concat(window.electron.app.isPackaged ? "" : " - dev"));
             document.title = title;
             return;
-        } else if (readerContent.type === "book") {
-            let bookTitle = readerDisplayTitle ?? readerContent.title;
+        } else if (readerContentType === "book") {
+            let bookTitle = readerDisplayTitle || readerContentTitle;
             let chapterName = "";
-            if (
-                appSettings.epubReaderSettings.loadOneChapter &&
-                readerContent.progress &&
-                readerContent.progress.chapterName !== "~"
-            ) {
-                chapterName = readerContent.progress.chapterName;
+            if (appSettings.epubReaderSettings.loadOneChapter && readerChapterName !== "~") {
+                chapterName = readerChapterName;
                 if (chapterName.length > 83) chapterName = `${chapterName.substring(0, 80)}...`;
             }
             if (bookTitle.length > 83) bookTitle = `${bookTitle.substring(0, 80)}...`;
@@ -83,7 +84,14 @@ const TopBar = (): ReactElement => {
             document.title = title;
             return;
         }
-    };
+    }, [
+        appSettings.epubReaderSettings.loadOneChapter,
+        readerChapterName,
+        readerContentLink,
+        readerContentTitle,
+        readerContentType,
+        readerDisplayTitle,
+    ]);
     useLayoutEffect(() => {
         const onBlur = () => {
             setSysBtnColor(true);
@@ -106,15 +114,16 @@ const TopBar = (): ReactElement => {
         };
     }, []);
     useEffect(() => {
+        const pageNumberInput = pageNumberInputRef.current;
         if (!pageNumberChangeDisabled && currentPageNumber) {
-            if (pageNumberInputRef.current) {
-                pageNumberInputRef.current.value = currentPageNumber.toString();
+            if (pageNumberInput) {
+                pageNumberInput.value = currentPageNumber.toString();
             }
         }
-    }, [currentPageNumber]);
+    }, [currentPageNumber, pageNumberChangeDisabled, pageNumberInputRef]);
     useEffect(() => {
         setTitleWithSize();
-    }, [readerContent, readerDisplayTitle]);
+    }, [setTitleWithSize]);
 
     const viewMode = useAppSelector((store) => store.appSettings.homeViewMode);
     const toggleViewMode = () => {
@@ -133,7 +142,7 @@ const TopBar = (): ReactElement => {
                     className="home"
                     onFocus={(e) => e.currentTarget.blur()}
                     onClick={() => {
-                        readerContent ? closeReader() : window.location.reload();
+                        readerContentLink ? closeReader() : window.location.reload();
                         dispatch(setSettingsOpen(false));
                     }}
                     tabIndex={-1}
@@ -179,7 +188,7 @@ const TopBar = (): ReactElement => {
                 <div className="title">{title}</div>
             </div>
             <div className="windowBtnCont">
-                {readerContent && readerContent.type === "manga" && (
+                {readerContentType === "manga" && (
                     <label
                         className="pageNumber noBG"
                         htmlFor="NavigateToPageInput"
@@ -193,7 +202,7 @@ const TopBar = (): ReactElement => {
                             placeholder={t("topBar.pageNumPlaceholder")}
                             ref={pageNumberInputRef}
                             min="1"
-                            max={readerContent.progress?.totalPages || 0}
+                            max={readerTotalPages}
                             onFocus={(e) => {
                                 e.currentTarget.select();
                             }}
@@ -220,8 +229,7 @@ const TopBar = (): ReactElement => {
                                 }
                                 if (e.key === "Enter") {
                                     let pagenumber = parseInt(e.currentTarget.value);
-                                    if (pagenumber > (readerContent.progress?.totalPages || 0))
-                                        pagenumber = readerContent.progress?.totalPages || 0;
+                                    if (pagenumber > readerTotalPages) pagenumber = readerTotalPages;
                                     if (pageNumberInputRef.current) {
                                         pageNumberInputRef.current.value = pagenumber.toString();
                                     }
@@ -234,8 +242,7 @@ const TopBar = (): ReactElement => {
                                 }
                                 if (/[0-9]/gi.test(e.key) || e.key === "Backspace") {
                                     let pagenumber = parseInt(e.currentTarget.value);
-                                    if (pagenumber > (readerContent.progress?.totalPages || 0))
-                                        pagenumber = readerContent.progress?.totalPages || 0;
+                                    if (pagenumber > readerTotalPages) pagenumber = readerTotalPages;
                                     if (pageNumberInputRef.current) {
                                         pageNumberInputRef.current.value = pagenumber.toString();
                                     }
@@ -252,10 +259,10 @@ const TopBar = (): ReactElement => {
                             }}
                             tabIndex={-1}
                         />
-                        <span className="totalPage">/{readerContent.progress?.totalPages || 0}</span>
+                        <span className="totalPage">/{readerTotalPages}</span>
                     </label>
                 )}
-                {readerContent && readerContent.type === "book" && (
+                {readerContentType === "book" && (
                     <label className="pageNumber noBG">
                         <input
                             className="pageNumberInput"

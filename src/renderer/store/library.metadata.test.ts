@@ -193,4 +193,26 @@ describe("selectResolvedItemMetadata", () => {
         expect(resolved?.title).toBe("Edited");
         expect(resolved?.originalTitle).toBe("Folder");
     });
+
+    it("returns the cached display metadata while source rows are unchanged", () => {
+        const item = makeMangaItem({ link: itemLink });
+        const store = configureStore({
+            reducer: { library: libraryReducer, trackers: trackersReducer },
+            preloadedState: {
+                library: {
+                    items: { [itemLink]: item },
+                    metadata: {},
+                    loading: false,
+                    error: null,
+                },
+                trackers: { entries: [] },
+            },
+        });
+        const state = store.getState() as Parameters<typeof selectResolvedItemMetadata>[0];
+
+        const first = selectResolvedItemMetadata(state, itemLink);
+        const second = selectResolvedItemMetadata(state, itemLink);
+
+        expect(second).toBe(first);
+    });
 });

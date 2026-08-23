@@ -3,7 +3,8 @@ import { configureStore } from "@reduxjs/toolkit";
 import { makeBookItem, makeMangaItem } from "@test/fixtures/libraryItem";
 import { onInvoke } from "@test/mocks/preload";
 import { afterEach, describe, expect, it, vi } from "vitest";
-import libraryReducer, { deleteProgressForLinks } from "./library";
+import libraryReducer, { deleteProgressForLinks, updateCurrentItemProgress } from "./library";
+import readerReducer, { setReaderState, updateReaderMangaCurrentPage } from "./reader";
 
 const mangaLink = path.join("library", "series");
 const bookLink = path.join("library", "novel.epub");
@@ -68,5 +69,32 @@ describe("deleteProgressForLinks", () => {
 
         expect(invoke).toHaveBeenCalledWith({ links: [mangaLink] });
         expect(store.getState().library.items[mangaLink]?.progress).toBeNull();
+    });
+});
+
+describe("updateCurrentItemProgress", () => {
+    it("persists current session progress without changing the chapter open target", async () => {
+        const store = configureStore({
+            reducer: { library: libraryReducer, reader: readerReducer },
+        });
+        const content = makeMangaItem({ link: mangaLink });
+        const updateProgress = vi.fn(async (progress: NonNullable<typeof content.progress>) => progress);
+        onInvoke("db:manga:updateProgress", updateProgress);
+
+        store.dispatch(
+            setReaderState({
+                type: "manga",
+                link: mangaLink,
+                content,
+                mangaPageNumber: content.progress?.currentPage ?? 1,
+            }),
+        );
+        store.dispatch(updateReaderMangaCurrentPage(8));
+
+        await store.dispatch(updateCurrentItemProgress()).unwrap();
+
+        expect(store.getState().reader.content?.progress?.currentPage).toBe(8);
+        expect(store.getState().reader.mangaPageNumber).toBe(content.progress?.currentPage);
+        expect(updateProgress).toHaveBeenCalledWith(expect.objectContaining({ currentPage: 8 }));
     });
 });

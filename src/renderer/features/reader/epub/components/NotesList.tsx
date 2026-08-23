@@ -11,12 +11,15 @@ import dateUtils from "@utils/date";
 import { dialogUtils } from "@utils/dialog";
 import { DEFAULT_HIGHLIGHT_COLORS } from "@utils/highlight";
 import { createRendererLogger } from "@utils/logger";
-import { memo, useCallback, useEffect, useLayoutEffect, useRef, useState } from "react";
+import { memo, useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { shallowEqual } from "react-redux";
 import { useAppContext } from "src/renderer/App";
 
 const log = createRendererLogger("epub/NotesList");
+
+/** Stable fallback keeps an absent note map from invalidating the selector result. */
+const EMPTY_BOOK_NOTES: readonly BookNote[] = [];
 
 const NoteModal: React.FC<{
     noteId: number;
@@ -137,12 +140,12 @@ const NotesList: React.FC<{
     const dispatch = useAppDispatch();
     const bookInReader = useAppSelector(getReaderBook);
 
-    const notesArray: BookNote[] = useAppSelector(
-        (store) =>
-            [...((bookInReader && store.bookNotes.book[bookInReader.link]) || [])].sort(
-                (b, a) => a.createdAt.getTime() - b.createdAt.getTime(),
-            ),
-        shallowEqual,
+    const notes = useAppSelector((store) =>
+        bookInReader ? (store.bookNotes.book[bookInReader.link] ?? EMPTY_BOOK_NOTES) : EMPTY_BOOK_NOTES,
+    );
+    const notesArray = useMemo(
+        () => [...notes].sort((b, a) => a.createdAt.getTime() - b.createdAt.getTime()),
+        [notes],
     );
 
     const handleNoteClick = useCallback(
@@ -220,7 +223,7 @@ const NotesList: React.FC<{
                 items,
             });
         },
-        [notesArray, setContextMenuData, bookInReader, confirmDeleteItem, t, tDialogs, dispatch],
+        [notesArray, setContextMenuData, bookInReader, confirmDeleteItem, t, tDialogs, dispatch, setEditNoteId],
     );
 
     useLayoutEffect(() => {

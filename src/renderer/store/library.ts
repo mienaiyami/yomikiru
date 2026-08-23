@@ -1,6 +1,6 @@
 import type { DetailsCoverSource, LibraryItem, LibraryItemMetadata } from "@common/types/db";
 import type { DatabaseChannels } from "@common/types/ipc";
-import { createAsyncThunk, createSlice, type PayloadAction } from "@reduxjs/toolkit";
+import { createAsyncThunk, createSelector, createSlice, type PayloadAction } from "@reduxjs/toolkit";
 import { type ResolvedItemMetadata, resolveItemMetadata } from "@utils/libraryMetadata";
 import { findLibraryItemKeyForOpenPath } from "@utils/mangaChapterPath";
 import { createRendererLogger } from "../utils/logger";
@@ -14,6 +14,9 @@ type LibraryState = {
     loading: boolean;
     error: string | null;
 };
+
+/** Stable fallback preserves selector identity when a library item has no metadata rows. */
+const EMPTY_ITEM_METADATA: LibraryItemMetadata[] = [];
 
 const initialState: LibraryState = {
     items: {},
@@ -156,7 +159,6 @@ export const resetLibrary = createAsyncThunk("library/reset", async () => {
 export const updateCurrentItemProgress = createAsyncThunk(
     "library/updateCurrentItemProgress",
     async (_, { getState }) => {
-        //todo test
         const readerState = (getState() as RootState).reader;
         if (!readerState.link) {
             log.error("updateCurrentItemProgress: no active reader link; skipping DB write");
@@ -350,23 +352,27 @@ export const selectLibraryItem = (state: RootState, path: string) => {
 
 /** Metadata overlay rows for a library path (user and, later, file). */
 export const selectItemMetadata = (state: RootState, itemLink: string): LibraryItemMetadata[] =>
-    state.library.metadata[itemLink] ?? [];
+    state.library.metadata[itemLink] ?? EMPTY_ITEM_METADATA;
 
 /**
  * Display metadata for a library path: user overlay > tracker snapshot > file overlay > row.
- * Returns null when the library map has no item for `itemLink`.
+ * Caches the resolved object until one of its source rows changes, so Redux subscribers
+ * can safely use the result without reacting to unrelated reader state updates.
  */
-export const selectResolvedItemMetadata = (
-    state: RootState,
-    itemLink: string | undefined,
-): ResolvedItemMetadata | null => {
-    if (!itemLink) return null;
-    const item = state.library.items[itemLink];
-    if (!item) return null;
-    const tracker = state.trackers.entries.find((row) => row.itemLink === itemLink && row.provider === "anilist");
-    return resolveItemMetadata({
-        item,
-        overlays: state.library.metadata[itemLink] ?? [],
-        tracker,
-    });
-};
+export const selectResolvedItemMetadata = createSelector(
+    [
+        (state: RootState, itemLink: string | undefined) =>
+            itemLink ? (state.library.items[itemLink] ?? null) : null,
+        (state: RootState, itemLink: string | undefined) =>
+            itemLink ? (state.library.metadata[itemLink] ?? EMPTY_ITEM_METADATA) : EMPTY_ITEM_METADATA,
+        (state: RootState, itemLink: string | undefined) =>
+            itemLink
+                ? (state.trackers.entries.find((row) => row.itemLink === itemLink && row.provider === "anilist") ??
+                  null)
+                : null,
+    ],
+    (item, overlays, tracker): ResolvedItemMetadata | null => {
+        if (!item) return null;
+        return resolveItemMetadata({ item, overlays, tracker });
+    },
+);

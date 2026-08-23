@@ -6,13 +6,15 @@ import { getReaderBook } from "@store/reader";
 import dateUtils from "@utils/date";
 import { dialogUtils } from "@utils/dialog";
 import { createRendererLogger } from "@utils/logger";
-import { useCallback } from "react";
+import { useCallback, useMemo } from "react";
 import { useTranslation } from "react-i18next";
 
 const log = createRendererLogger("epub/BookmarkList");
 
-import { shallowEqual } from "react-redux";
 import { useAppContext } from "src/renderer/App";
+
+/** Stable fallback keeps an absent bookmark map from invalidating the selector result. */
+const EMPTY_BOOK_BOOKMARKS: readonly BookBookmark[] = [];
 
 const BookmarkList: React.FC<{
     openChapterById: (chapterId: string, position?: string) => void;
@@ -20,12 +22,12 @@ const BookmarkList: React.FC<{
     const { t } = useTranslation("reader");
     const { setContextMenuData } = useAppContext();
     const bookInReader = useAppSelector(getReaderBook);
-    const bookmarksArray: BookBookmark[] = useAppSelector(
-        (store) =>
-            [...((bookInReader && store.bookmarks.book[bookInReader.link]) || [])].sort(
-                (b, a) => a.createdAt.getTime() - b.createdAt.getTime(),
-            ),
-        shallowEqual,
+    const bookmarks = useAppSelector((store) =>
+        bookInReader ? (store.bookmarks.book[bookInReader.link] ?? EMPTY_BOOK_BOOKMARKS) : EMPTY_BOOK_BOOKMARKS,
+    );
+    const bookmarksArray = useMemo(
+        () => [...bookmarks].sort((b, a) => a.createdAt.getTime() - b.createdAt.getTime()),
+        [bookmarks],
     );
     const handleBookmarkClick = useCallback(
         (e: React.MouseEvent<HTMLAnchorElement>) => {
@@ -44,7 +46,7 @@ const BookmarkList: React.FC<{
                 });
             }
         },
-        [bookmarksArray, bookInReader, openChapterById, t],
+        [bookmarksArray, openChapterById, t],
     );
     const handleBookmarkContextMenu = useCallback(
         (e: React.MouseEvent<HTMLAnchorElement>) => {

@@ -1,9 +1,8 @@
 import type { LibraryItemWithProgress } from "@common/types/db";
-import { createSlice, type PayloadAction } from "@reduxjs/toolkit";
-import { resolveItemMetadata, trackerByItemLink } from "@utils/libraryMetadata";
+import { createSelector, createSlice, type PayloadAction } from "@reduxjs/toolkit";
 import i18n from "../i18n";
 import type { RootState } from ".";
-import { updateChaptersRead, updateChaptersReadAll } from "./library";
+import { selectResolvedItemMetadata, updateChaptersRead, updateChaptersReadAll } from "./library";
 
 // ! ReaderState.content.progress is not linked to libraryItem.progress
 // ! both are independent to prevent issues with multiple windows
@@ -196,18 +195,20 @@ export const getReaderManga = (state: RootState) => {
 
 /**
  * Open reader item with the resolved display title (user overlay, else tracker, else file, else row).
- * AniList search and similar callers should use this instead of {@link LibraryItem.title}.
+ * The object stays referentially stable until its content or resolved metadata changes, so
+ * AniList search and similar Redux subscribers do not rerender for unrelated reader state.
  */
-export const getReaderContent = (state: RootState): { link: string; title: string } | null => {
-    const content = state.reader.content;
-    if (!content) return null;
-    const resolved = resolveItemMetadata({
-        item: content,
-        overlays: state.library.metadata[content.link] ?? [],
-        tracker: trackerByItemLink(state.trackers.entries)[content.link],
-    });
-    return { link: content.link, title: resolved.title };
-};
+export const getReaderContent = createSelector(
+    [
+        (state: RootState) => state.reader.content?.link,
+        (state: RootState) => state.reader.content?.title,
+        (state: RootState) => selectResolvedItemMetadata(state, state.reader.content?.link),
+    ],
+    (link, title, resolved): { link: string; title: string } | null => {
+        if (!link) return null;
+        return { link, title: resolved?.title ?? title ?? "" };
+    },
+);
 export const getReaderMangaState = (state: RootState) => {
     if (state.reader.type === "manga") {
         return state.reader;
