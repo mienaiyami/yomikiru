@@ -1,1 +1,2 @@
 https://github.com/mienaiyami/yomikiru/discussions/495
+https://github.com/mienaiyami/yomikiru/releases/tag/v2.25.0-beta.4#:~:text=2.25.0%2Dbeta,2.25.0%2Dbeta.4
