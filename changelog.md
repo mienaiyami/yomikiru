@@ -15,6 +15,8 @@
 
 # unreleased
 
+- fix: Space works in gallery **Edit metadata** fields and on the dialog buttons. Typing in those fields or the details item note no longer runs window shortcuts such as Home. (#537)
+
 - fix: Reader Presets settings use memoized preset selectors so the panel no longer triggers unstable `useSelector` warnings or extra re-renders.
 - feat: AniList tracker covers are saved as `covers/tracker-<id>.webp` when a title is tracked or its snapshot is refreshed (details bar, progress sync). That file is separate from the library thumbnail and includes a solid-color image when AniList has no raster cover. Gallery tiles and details always use the local file (or the library cover if it is not there yet); AniList search and the AniList editor still show the remote image.
 - feat: AniList cover pick for save, gallery, and details uses `extraLarge`, then `large`, then `medium`, then a solid color. Search and the AniList editor use `large`, then `medium`, then color.

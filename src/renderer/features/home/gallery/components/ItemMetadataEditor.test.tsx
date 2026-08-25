@@ -41,6 +41,38 @@ describe("ItemMetadataEditor", () => {
         expect(screen.getByText(home.gallery.details.metadataAnilistHint)).toBeInTheDocument();
     });
 
+    it("lets Space and letter keys reach text fields without preventDefault", () => {
+        renderWithProviders(
+            <ItemMetadataEditor itemLink={itemLink} userOverlay={userOverlay} onClose={vi.fn()} />,
+        );
+        const title = screen.getByLabelText(home.gallery.details.metadataTitle);
+        const description = screen.getByLabelText(home.gallery.details.metadataDescription);
+        expect(fireEvent.keyDown(title, { key: " ", code: "Space" })).toBe(true);
+        expect(fireEvent.keyDown(title, { key: "h", code: "KeyH" })).toBe(true);
+        expect(fireEvent.keyDown(description, { key: " ", code: "Space" })).toBe(true);
+    });
+
+    it("does not bubble field keydowns to window", () => {
+        renderWithProviders(
+            <ItemMetadataEditor itemLink={itemLink} userOverlay={userOverlay} onClose={vi.fn()} />,
+        );
+        const onWindow = vi.fn();
+        window.addEventListener("keydown", onWindow);
+        try {
+            fireEvent.keyDown(screen.getByLabelText(home.gallery.details.metadataTitle), {
+                key: "h",
+                code: "KeyH",
+            });
+            fireEvent.keyDown(screen.getByLabelText(home.gallery.details.metadataAuthor), {
+                key: " ",
+                code: "Space",
+            });
+            expect(onWindow).not.toHaveBeenCalled();
+        } finally {
+            window.removeEventListener("keydown", onWindow);
+        }
+    });
+
     it("swaps Save to Saving then Saved and closes after success", async () => {
         let resolveSave: (row: LibraryItemMetadata | null) => void = () => {
             /* replaced when the deferred setMetadata promise is created */

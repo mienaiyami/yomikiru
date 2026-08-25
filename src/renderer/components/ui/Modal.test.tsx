@@ -25,4 +25,24 @@ describe("Modal", () => {
         expect(onClose).toHaveBeenCalledTimes(1);
         expect(onParentEsc).not.toHaveBeenCalled();
     });
+
+    it("does not preventDefault Space when the target is a text field", () => {
+        render(
+            <Modal open onClose={vi.fn()}>
+                <textarea aria-label="note" />
+            </Modal>,
+        );
+        const field = screen.getByRole("textbox", { name: "note" });
+        expect(fireEvent.keyDown(field, { key: " ", code: "Space" })).toBe(true);
+    });
+
+    it("does not preventDefault Space on a button inside the overlay", () => {
+        render(
+            <Modal open onClose={vi.fn()}>
+                <button type="button">cancel</button>
+            </Modal>,
+        );
+        const cancel = screen.getByRole("button", { name: "cancel" });
+        expect(fireEvent.keyDown(cancel, { key: " ", code: "Space" })).toBe(true);
+    });
 });

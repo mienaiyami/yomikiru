@@ -5,7 +5,7 @@ import Modal from "@ui/Modal";
 import { dialogUtils } from "@utils/dialog";
 import { formatGenreList, parseGenreList } from "@utils/libraryMetadata";
 import { appRootElement } from "@utils/utils";
-import { useEffect, useRef, useState } from "react";
+import { type KeyboardEvent, useEffect, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import { useTranslation } from "react-i18next";
 
@@ -154,6 +154,11 @@ export const ItemMetadataEditor = ({ itemLink, userOverlay, onClose }: ItemMetad
                 ? tCommon("actions.failed")
                 : tCommon("actions.reset");
 
+    // window shortcuts must not see typed keys (same as ItemTagsPicker fields)
+    const stopModalKeys = (e: KeyboardEvent) => {
+        e.stopPropagation();
+    };
+
     /* details meta containment clips position:fixed; host on #app without changing Modal */
     return createPortal(
         <Modal open onClose={onClose} className="item-metadata-editor">
@@ -166,6 +171,7 @@ export const ItemMetadataEditor = ({ itemLink, userOverlay, onClose }: ItemMetad
                     type="text"
                     value={title}
                     onChange={(e) => setTitle(e.currentTarget.value)}
+                    onKeyDown={stopModalKeys}
                 />
             </div>
             <div className="item-metadata-editor-field">
@@ -175,6 +181,7 @@ export const ItemMetadataEditor = ({ itemLink, userOverlay, onClose }: ItemMetad
                     type="text"
                     value={author}
                     onChange={(e) => setAuthor(e.currentTarget.value)}
+                    onKeyDown={stopModalKeys}
                 />
             </div>
             <div className="item-metadata-editor-field">
@@ -183,6 +190,7 @@ export const ItemMetadataEditor = ({ itemLink, userOverlay, onClose }: ItemMetad
                     id={FIELD_IDS.description}
                     value={description}
                     onChange={(e) => setDescription(e.currentTarget.value)}
+                    onKeyDown={stopModalKeys}
                     rows={5}
                 />
             </div>
@@ -193,6 +201,7 @@ export const ItemMetadataEditor = ({ itemLink, userOverlay, onClose }: ItemMetad
                     type="text"
                     value={genres}
                     onChange={(e) => setGenres(e.currentTarget.value)}
+                    onKeyDown={stopModalKeys}
                     placeholder={t("gallery.details.metadataGenresHint")}
                 />
             </div>

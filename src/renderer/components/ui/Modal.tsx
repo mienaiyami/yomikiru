@@ -46,7 +46,8 @@ const Modal = memo((props: Props1 | Props2) => {
                             props.onClose();
                             return;
                         }
-                        if (e.key === " ") {
+                        // space on the overlay itself; leave buttons and fields to native behavior
+                        if (e.key === " " && e.target === e.currentTarget) {
                             e.preventDefault();
                             e.currentTarget.click();
                         }

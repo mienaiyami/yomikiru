@@ -144,9 +144,10 @@ export const DetailsItemNote = ({ value, onChange, onCommit }: DetailsItemNotePr
     };
 
     const handleEditorKeyDown = (e: KeyboardEvent<HTMLTextAreaElement>) => {
+        // same as TextInputModal: do not let window shortcuts see typing
+        e.stopPropagation();
         if (e.key !== "Escape") return;
         e.preventDefault();
-        e.stopPropagation();
         leaveEdit();
     };
 

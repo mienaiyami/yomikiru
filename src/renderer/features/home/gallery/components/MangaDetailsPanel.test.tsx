@@ -381,6 +381,34 @@ describe("MangaDetailsPanel", () => {
         await waitForEmptyChapterList();
     });
 
+    it("does not preventDefault Space or letters in the item note editor", async () => {
+        stubMangaOnDisk();
+        renderMangaPanel();
+        fireEvent.click(screen.getByRole("button", { name: home.gallery.details.itemNote }));
+        const editor = screen.getByRole("textbox", { name: home.gallery.details.itemNote });
+        expect(fireEvent.keyDown(editor, { key: " ", code: "Space" })).toBe(true);
+        expect(fireEvent.keyDown(editor, { key: "h", code: "KeyH" })).toBe(true);
+        await waitForEmptyChapterList();
+    });
+
+    it("does not bubble item-note keydowns to window", async () => {
+        stubMangaOnDisk();
+        renderMangaPanel();
+        fireEvent.click(screen.getByRole("button", { name: home.gallery.details.itemNote }));
+        const onWindow = vi.fn();
+        window.addEventListener("keydown", onWindow);
+        try {
+            fireEvent.keyDown(screen.getByRole("textbox", { name: home.gallery.details.itemNote }), {
+                key: "h",
+                code: "KeyH",
+            });
+            expect(onWindow).not.toHaveBeenCalled();
+        } finally {
+            window.removeEventListener("keydown", onWindow);
+        }
+        await waitForEmptyChapterList();
+    });
+
     it("persists the item note on commit", async () => {
         stubMangaOnDisk();
         const updateItem = vi.fn(async (req: { link: string; note?: string | null }) => ({
