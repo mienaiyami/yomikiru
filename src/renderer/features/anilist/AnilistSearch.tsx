@@ -4,7 +4,12 @@ import { addAnilistTracker, setGalleryTrackContext } from "@store/anilist";
 import { useAppDispatch, useAppSelector } from "@store/hooks";
 import { getReaderContent } from "@store/reader";
 import { setAnilistSearchOpen } from "@store/ui";
-import { anilistFormatLabel, anilistStatusLabel, searchAnilistMedia } from "@utils/anilist";
+import {
+    anilistFormatLabel,
+    anilistOverlayCoverSrc,
+    anilistStatusLabel,
+    searchAnilistMedia,
+} from "@utils/anilist";
 import { type ChangeEvent, useCallback, useEffect, useRef, useState } from "react";
 import FocusLock from "react-focus-lock";
 import { useTranslation } from "react-i18next";
@@ -149,6 +154,7 @@ const ResultListItem = ({ item, isSelected, onClick }: ResultListItemProps) => {
     const startDateStr = `${startDate.year ?? "?"}-${startDate.month ?? "?"}-${startDate.day ?? "?"}`;
     const formatStr = anilistFormatLabel(format);
     const statusStr = anilistStatusLabel(status);
+    const overlayCover = anilistOverlayCoverSrc(coverImage);
 
     /* Same shape as ListItem: highlight on the <li>, click on an inner <a>
      * with no href so it is not a Tab stop. ListNavigator keeps caret in SearchInput;
@@ -156,7 +162,14 @@ const ResultListItem = ({ item, isSelected, onClick }: ResultListItemProps) => {
     return (
         <li data-focused={isSelected}>
             <a className="row" onClick={onClick}>
-                <div className="cover" style={{ backgroundImage: `url(${coverImage.medium})` }} />
+                <div
+                    className="cover"
+                    style={
+                        overlayCover
+                            ? { backgroundImage: `url("${overlayCover.replaceAll('"', "%22")}")` }
+                            : undefined
+                    }
+                />
                 <div className="col">
                     <span title={displayTitle}>{displayTitle}</span>
                     <span title={title.romaji ?? "~"}>{title.romaji ?? "~"}</span>

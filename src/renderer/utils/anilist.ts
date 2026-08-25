@@ -250,19 +250,39 @@ export const authorFromAnilistStaff = (staff: Anilist.ListEntry["media"]["staff"
 };
 
 /**
- * Resolves a cover image source from AniList {@link Anilist.CoverImage} for snapshot storage.
- * Uses a raster URL when present; otherwise a solid SVG from `color`.
- *
- * @returns Raster URL or {@link hexToSvgDataUri} result, or `null` when none of those are usable
+ * First non-empty trimmed URL in `urls`, or `null`.
  */
-export const anilistCoverImageSrc = (cover: Anilist.CoverImage): string | null => {
-    for (const url of [cover.extraLarge, cover.large, cover.medium]) {
+const firstTrimmedUrl = (urls: readonly (string | null | undefined)[]): string | null => {
+    for (const url of urls) {
         const trimmed = url?.trim();
         if (trimmed) return trimmed;
     }
+    return null;
+};
+
+/**
+ * Solid SVG from {@link Anilist.CoverImage} `color`, or `null`.
+ */
+const anilistCoverColorSrc = (cover: Anilist.CoverImage): string | null => {
     const color = cover.color?.trim();
     return color ? hexToSvgDataUri(color) : null;
 };
+
+/**
+ * Resolves a cover image source from AniList {@link Anilist.CoverImage} for snapshot storage
+ * and gallery/details materialize. Prefers extraLarge, then large, then medium; otherwise `color`.
+ *
+ * @returns Raster URL or {@link hexToSvgDataUri} result, or `null` when none of those are usable
+ */
+export const anilistCoverImageSrc = (cover: Anilist.CoverImage): string | null =>
+    firstTrimmedUrl([cover.extraLarge, cover.large, cover.medium]) ?? anilistCoverColorSrc(cover);
+
+/**
+ * Cover URL for AniList search and edit overlays. Prefers large, then medium; otherwise `color`.
+ * Does not use `extraLarge` (gallery/details materialize use {@link anilistCoverImageSrc}).
+ */
+export const anilistOverlayCoverSrc = (cover: Anilist.CoverImage): string | null =>
+    firstTrimmedUrl([cover.large, cover.medium]) ?? anilistCoverColorSrc(cover);
 
 /**
  * Maps an AniList media payload to the provider-agnostic tracker snapshot stored in the DB.
@@ -411,7 +431,6 @@ export const searchAnilistMedia = async (name: string): Promise<Anilist.SearchMe
                     }
                     format
                     coverImage{
-                        extraLarge
                         large
                         medium
                         color

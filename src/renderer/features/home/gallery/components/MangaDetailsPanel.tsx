@@ -34,6 +34,7 @@ import dateUtils from "@utils/date";
 import { dialogUtils } from "@utils/dialog";
 import { formatUtils } from "@utils/file";
 import {
+    fileUrlToAbsolutePath,
     hasLocalTrackerCover,
     hasTrackerCoverHint,
     libraryCoverSrc,
@@ -552,15 +553,46 @@ const MangaDetailsPanel = ({
         await resetLibraryCoverToDefault(dispatch, manga);
     }, [manga, dispatch]);
 
-    /** Context menu for the library manga folder (same entries as gallery grid). */
-    const handleLibraryRootContextMenu = useCallback(
+    const handleContinueReading = useCallback(() => {
+        if (pathMissing || !manga) return;
+        if (manga.progress?.itemLink && manga.progress.chapterName) {
+            openInReader(resolveMangaChapterPath(manga.progress.itemLink, manga.progress.chapterName), {
+                mangaPageNumber: manga.progress.currentPage || 0,
+            });
+            return;
+        }
+        void (async () => {
+            const startPath = await resolveMangaStartPath(mangaLink);
+            if (startPath) await openInReader(startPath);
+        })();
+    }, [manga, mangaLink, openInReader, pathMissing]);
+
+    const coverHint = hasTrackerCoverHint(tracker?.media?.coverImage);
+    /* non-empty coverArtSrc is always a file:// URL from a local disk path (see resolveDetailsCoverSrc) */
+    const coverArtSrc = useMemo(
+        () => (manga ? resolveDetailsCoverSrc(manga, coverHint) : ""),
+        [manga, coverHint, coverCacheGeneration],
+    );
+    const trackerCoverAvailable = Boolean(manga && hasLocalTrackerCover(manga.id));
+
+    /** Cover context menu: show the displayed cover file, then the same entries as gallery grid tiles. */
+    const handleCoverContextMenu = useCallback(
         (e: React.MouseEvent) => {
             e.preventDefault();
             e.stopPropagation();
+            const displayedCoverPath = fileUrlToAbsolutePath(coverArtSrc);
             setContextMenuData({
                 clickX: e.clientX,
                 clickY: e.clientY,
                 items: [
+                    {
+                        label: tCommon("contextMenu.showCoverInExplorer"),
+                        disabled: !displayedCoverPath,
+                        action() {
+                            if (displayedCoverPath) window.electron.showItemInFolder(displayedCoverPath);
+                        },
+                    },
+                    window.contextMenu.template.divider(),
                     {
                         ...window.contextMenu.template.openInNewWindow(mangaLink),
                         disabled: pathMissing,
@@ -599,29 +631,20 @@ const MangaDetailsPanel = ({
                 focusBackElem: e.currentTarget,
             });
         },
-        [mangaLink, onClose, pathMissing, setContextMenuData, isFavourite, t, dispatch, handleResetCover],
+        [
+            coverArtSrc,
+            mangaLink,
+            onClose,
+            pathMissing,
+            setContextMenuData,
+            isFavourite,
+            t,
+            tCommon,
+            dispatch,
+            handleResetCover,
+        ],
     );
 
-    const handleContinueReading = useCallback(() => {
-        if (pathMissing || !manga) return;
-        if (manga.progress?.itemLink && manga.progress.chapterName) {
-            openInReader(resolveMangaChapterPath(manga.progress.itemLink, manga.progress.chapterName), {
-                mangaPageNumber: manga.progress.currentPage || 0,
-            });
-            return;
-        }
-        void (async () => {
-            const startPath = await resolveMangaStartPath(mangaLink);
-            if (startPath) await openInReader(startPath);
-        })();
-    }, [manga, mangaLink, openInReader, pathMissing]);
-
-    const coverHint = hasTrackerCoverHint(tracker?.media?.coverImage);
-    const coverArtSrc = useMemo(
-        () => (manga ? resolveDetailsCoverSrc(manga, coverHint) : ""),
-        [manga, coverHint, coverCacheGeneration],
-    );
-    const trackerCoverAvailable = Boolean(manga && hasLocalTrackerCover(manga.id));
     const title = manga?.title || t("gallery.details.unknownManga");
     const mangaProgress = manga?.type === "manga" ? manga.progress : null;
     const currentChapterLink =
@@ -683,7 +706,7 @@ const MangaDetailsPanel = ({
                             : undefined
                     }
                     onBack={onClose}
-                    onCoverContextMenu={handleLibraryRootContextMenu}
+                    onCoverContextMenu={handleCoverContextMenu}
                     description={resolved?.description}
                     genres={resolved?.genres}
                     tracker={tracker ?? null}

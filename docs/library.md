@@ -410,7 +410,18 @@ sequenceDiagram
 - **Bulk regenerate / scan**: Settings -> Library (first section) includes Default Location, **Scan now** (nested series and EPUBs under that folder), and thumbnail clear/regenerate. Regenerating walks every library row; missing files/folders are skipped (not extracted or parsed) and a single warning reports how many were skipped. Thumbnail rebuild locks the app UI; every scan reason remains usable through the title-bar status and cancellation control.
 - **Post-upgrade prompt** (temporary): when this launch applies the Drizzle journal that adds `library_items.id`, one window asks whether to generate thumbnails for existing library titles after the UI settles. Skip is fine; Settings regenerate remains available. Remove this prompt once most users have migrated (`todo(remove-after-0001-prompt)` in code).
 
-The `library_items.cover` column stores only user-picked non-WebP paths (e.g. a `cover.jpg` in the manga root). The WebP thumbnail at `userData/covers/<id>.webp` is separate and not stored in the DB — the renderer resolves it from the library item `id` at render time via `libraryCoverSrc` in [`src/renderer/utils/libraryCover.ts`](../src/renderer/utils/libraryCover.ts). Tracker (AniList) art uses a second file, `userData/covers/tracker-<id>.webp` (`ManagedCoverSlot` `tracker` in [`src/common/library/covers.ts`](../src/common/library/covers.ts)), so Reset Cover does not drop remote art. Filenames are shared with main via `managedCoverFileName`. Gallery tiles and details never use the snapshot HTTPS URL as an image source; AniList search and edit still do.
+The `library_items.cover` column stores only user-picked non-WebP paths (e.g. a `cover.jpg` in the manga root). The WebP thumbnail at `userData/covers/<id>.webp` is separate and not stored in the DB — the renderer resolves it from the library item `id` at render time via `libraryCoverSrc` in [`src/renderer/utils/libraryCover.ts`](../src/renderer/utils/libraryCover.ts). Tracker (AniList) art uses a second file, `userData/covers/tracker-<id>.webp` (`ManagedCoverSlot` `tracker` in [`src/common/library/covers.ts`](../src/common/library/covers.ts)), so Reset Cover does not drop remote art. Filenames are shared with main via `managedCoverFileName`. Gallery details right-click on the cover opens **Show cover in File Explorer** for the image file on disk (`resolveDetailsCoverAbsolutePath`).
+
+**AniList `MediaCoverImage` sizes** (typical longest edge for portrait posters; AniList does not guarantee exact pixels):
+
+| Field | Typical size | Yomikiru use |
+| --- | --- | --- |
+| `extraLarge` | ~600 px | Snapshot URL, gallery/details materialize, cached tracker WebP |
+| `large` | ~300 px | AniList search and edit overlays |
+| `medium` | ~100 px | Fallback when larger raster URLs are missing |
+| `color` | hex accent | Solid SVG when no raster URL is available |
+
+Snapshot storage picks `extraLarge`, then `large`, then `medium`, then a color SVG. Search and the AniList editor pick `large`, then `medium`, then color (remote HTTPS only there). Sharp materialize fits both library and tracker WebP within `MAX_EDGE` in [`src/electron/util/coverMaterialize.ts`](../src/electron/util/coverMaterialize.ts) (sized for `extraLarge`). Gallery tiles and details never use the snapshot HTTPS URL as an image source.
 
 ---
 

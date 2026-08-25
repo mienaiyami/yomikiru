@@ -8,22 +8,25 @@ import { onInvoke, stubFs } from "@test/mocks/preload";
 import { renderWithProviders } from "@test/renderWithProviders";
 import { cleanup, fireEvent, screen, waitFor } from "@testing-library/react";
 import dateUtils from "@utils/date";
+import { canonicalCoverAbsolutePath } from "@utils/libraryCover";
 import { resolveMangaChapterPath } from "@utils/mangaChapterPath";
-import { afterEach, describe, expect, it, vi } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import MangaDetailsPanel from "./MangaDetailsPanel";
 
-const { materializeMangaLibraryThumbnail, openInReader, resetLibraryCoverToDefault } = vi.hoisted(() => ({
-    materializeMangaLibraryThumbnail: vi.fn(async () => false),
-    openInReader: vi.fn(),
-    resetLibraryCoverToDefault: vi.fn(async () => undefined),
-}));
+const { materializeMangaLibraryThumbnail, openInReader, resetLibraryCoverToDefault, setContextMenuData } =
+    vi.hoisted(() => ({
+        materializeMangaLibraryThumbnail: vi.fn(async () => false),
+        openInReader: vi.fn(),
+        resetLibraryCoverToDefault: vi.fn(async () => undefined),
+        setContextMenuData: vi.fn(),
+    }));
 
 vi.mock("./mangaDetailsPanel.scss", () => ({}));
 
 vi.mock("@renderer/App", () => ({
     useAppContext: () => ({
         openInReader,
-        setContextMenuData: vi.fn(),
+        setContextMenuData,
     }),
 }));
 
@@ -90,7 +93,53 @@ const waitForEmptyChapterList = () =>
         expect(screen.getByText(home.gallery.details.noChapters)).toBeInTheDocument();
     });
 
+/** Minimal {@link window.contextMenu.template} for cover context menu tests. */
+const installContextMenuTemplate = (): void => {
+    window.contextMenu.template = {
+        divider: () => ({ label: "", action: () => undefined, divider: true }),
+        open: (url: string) => ({
+            label: common.contextMenu.open,
+            disabled: !url,
+            action: vi.fn(),
+        }),
+        openInNewWindow: (url: string) => ({
+            label: common.contextMenu.openInNewWindow,
+            disabled: !url,
+            action: vi.fn(),
+        }),
+        showInExplorer: (url: string) => ({
+            label: common.contextMenu.showInExplorer,
+            disabled: !url,
+            action: vi.fn(),
+        }),
+        copyPath: (url: string) => ({
+            label: common.contextMenu.copyPath,
+            disabled: !url,
+            action: vi.fn(),
+        }),
+        copyImage: (url: string) => ({
+            label: common.contextMenu.copyImage,
+            disabled: !url,
+            action: vi.fn(),
+        }),
+        removeProgress: (url: string) => ({
+            label: common.contextMenu.removeProgress,
+            disabled: !url,
+            action: vi.fn(),
+        }),
+        removeHistory: (url: string) => ({
+            label: common.contextMenu.removeFromLibrary,
+            disabled: !url,
+            action: vi.fn(),
+        }),
+    };
+};
+
 describe("MangaDetailsPanel", () => {
+    beforeEach(() => {
+        installContextMenuTemplate();
+    });
+
     afterEach(() => {
         cleanup();
         materializeMangaLibraryThumbnail.mockClear();
@@ -407,6 +456,35 @@ describe("MangaDetailsPanel", () => {
         const { item } = renderMangaPanel();
         fireEvent.click(screen.getByRole("button", { name: common.contextMenu.showInExplorer }));
         expect(window.electron.showItemInFolder).toHaveBeenCalledWith(item.link);
+        await waitForEmptyChapterList();
+    });
+
+    it("reveals the cover file from the hero cover context menu", async () => {
+        const item = makeMangaItem();
+        const canonical = canonicalCoverAbsolutePath(item.id);
+        stubFs({
+            existsSync: () => true,
+            isDir: () => true,
+            isFile: (p) => p === canonical,
+            readdir: async () => [],
+            access: async () => undefined,
+            stat: async () =>
+                ({
+                    mtimeMs: 1,
+                    isDir: true,
+                    isFile: false,
+                }) as Awaited<ReturnType<Window["fs"]["stat"]>>,
+        });
+        setContextMenuData.mockClear();
+        renderMangaPanel(item);
+        fireEvent.contextMenu(screen.getByRole("img", { name: item.title }));
+        const menuData = setContextMenuData.mock.calls[0]?.[0];
+        const showCoverItem = menuData?.items.find(
+            (menuItem: { label?: string }) => menuItem.label === common.contextMenu.showCoverInExplorer,
+        );
+        expect(showCoverItem?.label).toBe(common.contextMenu.showCoverInExplorer);
+        showCoverItem?.action();
+        expect(window.electron.showItemInFolder).toHaveBeenCalledWith(canonical);
         await waitForEmptyChapterList();
     });
 

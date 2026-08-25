@@ -3,10 +3,12 @@ import { stubFs } from "@test/mocks/preload";
 import { describe, expect, it } from "vitest";
 import {
     canonicalCoverAbsolutePath,
+    fileUrlToAbsolutePath,
     hasLocalTrackerCover,
     hasTrackerCoverHint,
     libraryCoverSrc,
     parseDetailsCoverSource,
+    resolveDetailsCoverAbsolutePath,
     resolveDetailsCoverSrc,
     trackerCoverAbsolutePath,
     trackerCoverHintByItemLink,
@@ -23,6 +25,20 @@ describe("trackerCoverAbsolutePath", () => {
     it("joins userData/covers/tracker-<id>.webp", () => {
         const userData = window.electron.app.getPath("userData");
         expect(trackerCoverAbsolutePath(42)).toBe(path.join(userData, "covers", "tracker-42.webp"));
+    });
+});
+
+describe("fileUrlToAbsolutePath", () => {
+    it("reverses file:// URLs from libraryCoverSrc", () => {
+        const abs = path.resolve("testdata", "a#b.png");
+        stubFs({ isFile: (p) => p === window.path.normalize(abs) });
+        const fileUrl = libraryCoverSrc({ id: 1, cover: abs });
+        expect(fileUrlToAbsolutePath(fileUrl)).toBe(window.path.normalize(abs));
+    });
+
+    it("returns null for empty or non-file URLs", () => {
+        expect(fileUrlToAbsolutePath("")).toBeNull();
+        expect(fileUrlToAbsolutePath("https://example.test/cover.jpg")).toBeNull();
     });
 });
 
@@ -104,6 +120,27 @@ describe("resolveDetailsCoverSrc", () => {
         expect(resolveDetailsCoverSrc({ id: 3, cover: null, extra: {} }, true)).toBe(
             `file://${cached.replaceAll("#", "%23")}`,
         );
+    });
+});
+
+describe("resolveDetailsCoverAbsolutePath", () => {
+    it("prefers tracker WebP when the resolved source is tracker", () => {
+        const cached = trackerCoverAbsolutePath(5);
+        const canonical = canonicalCoverAbsolutePath(5);
+        stubFs({ isFile: (p) => p === cached || p === canonical });
+        expect(resolveDetailsCoverAbsolutePath({ id: 5, cover: null, extra: {} }, true)).toBe(cached);
+    });
+
+    it("falls back to user-picked cover and library WebP", () => {
+        const abs = path.resolve("testdata", "picked.png");
+        stubFs({ isFile: (p) => p === window.path.normalize(abs) });
+        expect(resolveDetailsCoverAbsolutePath({ id: 2, cover: abs, extra: {} }, false)).toBe(
+            window.path.normalize(abs),
+        );
+
+        const canonical = canonicalCoverAbsolutePath(8);
+        stubFs({ isFile: (p) => p === canonical });
+        expect(resolveDetailsCoverAbsolutePath({ id: 8, cover: null, extra: {} }, false)).toBe(canonical);
     });
 });
 

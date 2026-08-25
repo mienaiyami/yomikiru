@@ -184,8 +184,8 @@ Named exports (no static class). Every window calls `hydrateAnilistClientFromSto
 | `setAnilistListProgress(n)` | Update progress count; returns updated `ListEntry` |
 | `getAnilistStorageToken` / `setAnilistStorageToken` | Token localStorage persistence |
 | `readStoredTracking` | Legacy `anilist_tracking` read for the one-shot import |
-| `toTrackerMediaSnapshot` / `toTrackerListState` / `toAnilistTrackerSnapshotUpdate` / `authorFromAnilistStaff` / `anilistCoverImageSrc` | Map GraphQL payloads into DB cache columns / `updateTrackerSnapshot` args; cover URL prefers extraLarge, then large, then medium, then a hex SVG from `coverImage.color` |
+| `toTrackerMediaSnapshot` / `toTrackerListState` / `toAnilistTrackerSnapshotUpdate` / `authorFromAnilistStaff` / `anilistCoverImageSrc` / `anilistOverlayCoverSrc` | Map GraphQL payloads into DB cache columns / `updateTrackerSnapshot` args; snapshot and gallery/details materialize prefer AniList `extraLarge`, then `large`, then `medium`, then a hex SVG from `coverImage.color`. Search and the edit overlay use `anilistOverlayCoverSrc` (`large`, then `medium`, then color). |
 
-The GraphQL mutation (`SaveMediaListEntry`) is a module-level query string and requests description, genres, chapters, volumes, averageScore, coverImage (extraLarge, large, medium, color), idMal, and staff (for cached author) in addition to the list-entry fields. Search uses the same `coverImage` selection.
+The GraphQL list-entry query requests `coverImage` extraLarge, large, medium, and color (plus description, genres, chapters, volumes, averageScore, idMal, staff). Search omits extraLarge because overlays only need large and below. The save mutation (`SaveMediaListEntry`) is a module-level query string and requests the same list-entry media fields.
 
 API calls use the shared HTTP client (`@common/http` / axios). Token is sent as `Authorization: Bearer <token>` header.

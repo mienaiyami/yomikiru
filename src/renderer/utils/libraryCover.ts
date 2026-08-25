@@ -9,6 +9,17 @@ const absolutePathToFileUrl = (absPath: string): string => {
 };
 
 /**
+ * Inverse of {@link absolutePathToFileUrl} for local cover `file://` URLs.
+ *
+ * @returns Absolute path when {@link fileUrl} is a non-empty `file://` URL from that helper
+ */
+export const fileUrlToAbsolutePath = (fileUrl: string): string | null => {
+    const trimmed = fileUrl.trim();
+    if (!trimmed.startsWith("file://")) return null;
+    return trimmed.slice("file://".length).replaceAll("%23", "#");
+};
+
+/**
  * Resolves `library_items.cover` when it may be absolute or a legacy `covers/...` fragment under userData.
  */
 const coverDatabasePathToAbsolute = (c: string): string => {
@@ -88,19 +99,40 @@ export const parseDetailsCoverSource = (
 };
 
 /**
- * Cover URL for gallery tiles and details: local tracker WebP when the resolved source is
- * tracker and that file exists, otherwise {@link libraryCoverSrc}. Never returns http(s).
+ * Cover URL for gallery tiles and details. Non-empty values are always `file://` URLs from a
+ * local disk path (tracker WebP, user-picked cover, or library thumbnail); never http(s).
+ * Use {@link fileUrlToAbsolutePath} when IPC needs the underlying path.
  */
 export const resolveDetailsCoverSrc = (
     item: Pick<LibraryItem, "id" | "cover" | "extra">,
     hasCoverHint: boolean,
 ): string => {
-    if (parseDetailsCoverSource(item.extra, hasCoverHint) !== "tracker") {
-        return libraryCoverSrc(item);
+    const abs = resolveDetailsCoverAbsolutePath(item, hasCoverHint);
+    return abs ? absolutePathToFileUrl(abs) : "";
+};
+
+/**
+ * Absolute path for the cover image shown in gallery details (tracker WebP, user-picked
+ * cover, or library thumbnail). Mirrors {@link resolveDetailsCoverSrc} without a file URL.
+ *
+ * @returns Path when a cover file exists on disk, otherwise `null`
+ */
+export const resolveDetailsCoverAbsolutePath = (
+    item: Pick<LibraryItem, "id" | "cover" | "extra">,
+    hasCoverHint: boolean,
+): string | null => {
+    if (parseDetailsCoverSource(item.extra, hasCoverHint) === "tracker") {
+        const cached = trackerCoverAbsolutePath(item.id);
+        if (window.fs.isFile(cached)) return cached;
     }
-    const cached = trackerCoverAbsolutePath(item.id);
-    if (window.fs.isFile(cached)) return absolutePathToFileUrl(cached);
-    return libraryCoverSrc(item);
+    const db = item.cover?.trim();
+    if (db) {
+        const abs = coverDatabasePathToAbsolute(db);
+        if (window.fs.isFile(abs)) return abs;
+    }
+    const canonical = canonicalCoverAbsolutePath(item.id);
+    if (window.fs.isFile(canonical)) return canonical;
+    return null;
 };
 
 /**

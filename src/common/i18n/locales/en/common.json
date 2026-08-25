@@ -74,6 +74,7 @@
         "open": "Open",
         "openInNewWindow": "Open in new Window",
         "showInExplorer": "Show in File Explorer",
+        "showCoverInExplorer": "Show cover in File Explorer",
         "copyPath": "Copy Path",
         "copyImage": "Copy Image",
         "removeFromLibrary": "Remove from Library",

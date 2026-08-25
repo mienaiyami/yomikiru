@@ -9,8 +9,10 @@ import { createMainLogger } from "./logger";
 
 const logger = createMainLogger("util/coverMaterialize");
 
-const MAX_EDGE = 400;
-const WEBP_QUALITY = 82;
+/** Longest edge in pixels for materialized cover WebP (library and tracker slots). */
+const MAX_EDGE = 650;
+/** Sharp WebP quality for materialized covers. */
+const WEBP_QUALITY = 90;
 const SHARP_RUNTIME_RESOURCE_DIRECTORY = "sharp";
 
 /** Loads Sharp from its explicit external runtime in packages and the dependency tree in development. */

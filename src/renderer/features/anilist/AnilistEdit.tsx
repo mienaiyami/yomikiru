@@ -5,7 +5,7 @@ import InputCheckbox from "@ui/InputCheckbox";
 import InputNumber from "@ui/InputNumber";
 import InputSelect from "@ui/InputSelect";
 import Link from "@ui/Link";
-import { anilistCoverImageSrc, setAnilistListEntry } from "@utils/anilist";
+import { anilistOverlayCoverSrc, setAnilistListEntry } from "@utils/anilist";
 import { useEffect, useLayoutEffect, useRef, useState } from "react";
 import FocusLock from "react-focus-lock";
 import { useTranslation } from "react-i18next";
@@ -22,7 +22,7 @@ const AnilistEdit = () => {
     );
 
     const [tempData, setTempData] = useState(anilistCurrentListEntry);
-    const editCoverSrc = tempData ? anilistCoverImageSrc(tempData.media.coverImage) : null;
+    const editCoverSrc = tempData ? anilistOverlayCoverSrc(tempData.media.coverImage) : null;
 
     const statusLabel = (status: Anilist.ListEntry["status"]): string => {
         switch (status) {
@@ -98,7 +98,9 @@ const AnilistEdit = () => {
                                     <span>{tempData.media.title.romaji || "~"}</span>
                                     <span>{tempData.media.title.native || "~"}</span>
                                     <span>
-                                        <Link href={tempData.media.siteUrl}>{tempData.media.siteUrl}</Link>
+                                        <Link href={tempData.media.siteUrl} confirmOpen={false}>
+                                            {tempData.media.siteUrl}
+                                        </Link>
                                     </span>
                                 </div>
                             </div>

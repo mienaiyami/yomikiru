@@ -19,7 +19,8 @@
     .overlayCont {
         width: min(700px, 80%);
         display: grid;
-        grid-template-rows: 200px auto;
+        --max-cover-height: 200px;
+        grid-template-rows: var(--max-cover-height) auto;
         .banner {
             position: absolute;
             background-size: cover;
@@ -32,7 +33,7 @@
         }
         .info {
             display: grid;
-            grid-template-columns: 20% 80%;
+            grid-template-columns: 25% 75%;
             padding: 10px 0;
             height: 100%;
             background-size: cover;
@@ -44,6 +45,7 @@
                 place-items: center;
                 img {
                     height: 100%;
+                    max-height: var(--max-cover-height);
                     box-shadow: var(--body-bg-color) 0px 3px 15px -3px;
                     border-radius: 6px;
                 }

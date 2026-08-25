@@ -3,6 +3,7 @@ import { HttpNetworkError, HttpStatusError, http } from "@common/http";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import {
     anilistCoverImageSrc,
+    anilistOverlayCoverSrc,
     anilistRequest,
     authorFromAnilistStaff,
     getAnilistListEntry,
@@ -104,6 +105,15 @@ describe("anilistCoverImageSrc", () => {
     });
 });
 
+describe("anilistOverlayCoverSrc", () => {
+    it("prefers large, then medium, then color, and skips extraLarge", () => {
+        expect(anilistOverlayCoverSrc({ extraLarge: "xl", large: "l", medium: "m" })).toBe("l");
+        expect(anilistOverlayCoverSrc({ extraLarge: "xl", medium: "m" })).toBe("m");
+        expect(anilistOverlayCoverSrc({ extraLarge: "xl", color: "#112233" })).toBe(hexToSvgDataUri("#112233"));
+        expect(anilistOverlayCoverSrc({ extraLarge: "xl" })).toBeNull();
+    });
+});
+
 describe("anilistRequest token", () => {
     beforeEach(() => {
         localStorage.clear();
@@ -150,10 +160,11 @@ describe("searchAnilistMedia coverImage fields", () => {
         setAnilistClientToken("");
     });
 
-    it("requests extraLarge, large, medium, and color on coverImage", async () => {
+    it("requests large, medium, and color on coverImage", async () => {
         await searchAnilistMedia("title");
         const payload = vi.mocked(http.postJson).mock.calls[0]?.[1] as { query: string };
-        expect(payload.query).toMatch(/coverImage\{\s*extraLarge\s+large\s+medium\s+color/);
+        expect(payload.query).toMatch(/coverImage\{\s*large\s+medium\s+color/);
+        expect(payload.query).not.toMatch(/extraLarge/);
     });
 });
 

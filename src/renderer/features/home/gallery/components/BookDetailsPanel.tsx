@@ -22,6 +22,7 @@ import { selectTracker, selectTrackerCoverCacheGeneration } from "@store/tracker
 import dateUtils from "@utils/date";
 import { dialogUtils } from "@utils/dialog";
 import {
+    fileUrlToAbsolutePath,
     hasLocalTrackerCover,
     hasTrackerCoverHint,
     parseDetailsCoverSource,
@@ -428,15 +429,31 @@ const BookDetailsPanel = ({ bookLink, onClose, onRelocated, initialTab = "bookma
         );
     }, [book, bookLink, openInReader, pathMissing]);
 
-    /** Context menu for the library `.epub` path (same entries as gallery grid). */
-    const handleLibraryRootContextMenu = useCallback(
+    const coverHint = hasTrackerCoverHint(tracker?.media?.coverImage);
+    /* non-empty coverArtSrc is always a file:// URL from a local disk path (see resolveDetailsCoverSrc) */
+    const coverArtSrc = useMemo(
+        () => (book && book.type === "book" ? resolveDetailsCoverSrc(book, coverHint) : ""),
+        [book, coverHint, coverCacheGeneration],
+    );
+
+    /** Cover context menu: show the displayed cover file, then the same entries as gallery grid tiles. */
+    const handleCoverContextMenu = useCallback(
         (e: React.MouseEvent) => {
             e.preventDefault();
             e.stopPropagation();
+            const displayedCoverPath = fileUrlToAbsolutePath(coverArtSrc);
             setContextMenuData({
                 clickX: e.clientX,
                 clickY: e.clientY,
                 items: [
+                    {
+                        label: tCommon("contextMenu.showCoverInExplorer"),
+                        disabled: !displayedCoverPath,
+                        action() {
+                            if (displayedCoverPath) window.electron.showItemInFolder(displayedCoverPath);
+                        },
+                    },
+                    window.contextMenu.template.divider(),
                     {
                         ...window.contextMenu.template.openInNewWindow(bookLink),
                         disabled: pathMissing,
@@ -475,13 +492,18 @@ const BookDetailsPanel = ({ bookLink, onClose, onRelocated, initialTab = "bookma
                 focusBackElem: e.currentTarget,
             });
         },
-        [bookLink, onClose, pathMissing, setContextMenuData, isFavourite, t, dispatch, handleResetCover],
-    );
-
-    const coverHint = hasTrackerCoverHint(tracker?.media?.coverImage);
-    const coverArtSrc = useMemo(
-        () => (book && book.type === "book" ? resolveDetailsCoverSrc(book, coverHint) : ""),
-        [book, coverHint, coverCacheGeneration],
+        [
+            coverArtSrc,
+            bookLink,
+            onClose,
+            pathMissing,
+            setContextMenuData,
+            isFavourite,
+            t,
+            tCommon,
+            dispatch,
+            handleResetCover,
+        ],
     );
 
     if (!book || book.type !== "book") {
@@ -537,7 +559,7 @@ const BookDetailsPanel = ({ bookLink, onClose, onRelocated, initialTab = "bookma
                         void dispatch(setLibraryItemDetailsCoverSource({ link: bookLink, source }));
                     }}
                     onBack={onClose}
-                    onCoverContextMenu={handleLibraryRootContextMenu}
+                    onCoverContextMenu={handleCoverContextMenu}
                     description={resolved?.description}
                     genres={resolved?.genres}
                     tracker={tracker ?? null}

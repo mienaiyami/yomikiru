@@ -38,7 +38,7 @@ Typical pattern:
 
 | Layer | Detail |
 | --- | --- |
-| Pipeline | [`src/electron/util/coverMaterialize.ts`](../src/electron/util/coverMaterialize.ts) — Sharp `rotate` → `resize(400)` → WebP → `userData/covers/<id>.webp` |
+| Pipeline | [`src/electron/util/coverMaterialize.ts`](../src/electron/util/coverMaterialize.ts) — Sharp `rotate` → resize to `MAX_EDGE` → WebP → `userData/covers/<id>.webp` |
 | Allowed ext | `.avif` is in [`IMAGE_EXTS`](../src/common/library/formats.ts) |
 | Sharp version | `^0.34.5` ([`package.json`](../package.json)) |
 | Prebuilt limit | Sharp **0.34.x** prebuilt `@img/sharp-libvips-*` binaries decode **8-bit AVIF only** |
