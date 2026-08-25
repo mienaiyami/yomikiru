@@ -3,16 +3,26 @@ import { stubFs } from "@test/mocks/preload";
 import { describe, expect, it } from "vitest";
 import {
     canonicalCoverAbsolutePath,
+    hasLocalTrackerCover,
+    hasTrackerCoverHint,
     libraryCoverSrc,
     parseDetailsCoverSource,
     resolveDetailsCoverSrc,
-    trackerCoverUrlByItemLink,
+    trackerCoverAbsolutePath,
+    trackerCoverHintByItemLink,
 } from "./libraryCover";
 
 describe("canonicalCoverAbsolutePath", () => {
     it("joins userData/covers/<id>.webp", () => {
         const userData = window.electron.app.getPath("userData");
         expect(canonicalCoverAbsolutePath(42)).toBe(path.join(userData, "covers", "42.webp"));
+    });
+});
+
+describe("trackerCoverAbsolutePath", () => {
+    it("joins userData/covers/tracker-<id>.webp", () => {
+        const userData = window.electron.app.getPath("userData");
+        expect(trackerCoverAbsolutePath(42)).toBe(path.join(userData, "covers", "tracker-42.webp"));
     });
 });
 
@@ -50,48 +60,65 @@ describe("libraryCoverSrc", () => {
     });
 });
 
+describe("hasTrackerCoverHint", () => {
+    it("is true only for a non-empty snapshot cover string", () => {
+        expect(hasTrackerCoverHint(undefined)).toBe(false);
+        expect(hasTrackerCoverHint("  ")).toBe(false);
+        expect(hasTrackerCoverHint("https://example.test/cover.jpg")).toBe(true);
+    });
+});
+
+describe("hasLocalTrackerCover", () => {
+    it("follows whether the tracker slot file exists", () => {
+        const cached = trackerCoverAbsolutePath(9);
+        stubFs({ isFile: (p) => p === cached });
+        expect(hasLocalTrackerCover(9)).toBe(true);
+        stubFs({ isFile: () => false });
+        expect(hasLocalTrackerCover(9)).toBe(false);
+    });
+});
+
 describe("parseDetailsCoverSource", () => {
-    it("uses the tracker image when tracked unless extra asks for the library file", () => {
+    it("uses the tracker slot when a hint exists unless extra asks for the library file", () => {
         expect(parseDetailsCoverSource(undefined)).toBe("library");
         expect(parseDetailsCoverSource({})).toBe("library");
-        expect(parseDetailsCoverSource({}, "https://example.test/cover.jpg")).toBe("tracker");
-        expect(parseDetailsCoverSource({ detailsCoverSource: "library" }, "https://example.test/cover.jpg")).toBe(
-            "library",
-        );
+        expect(parseDetailsCoverSource({}, true)).toBe("tracker");
+        expect(parseDetailsCoverSource({ detailsCoverSource: "library" }, true)).toBe("library");
         expect(parseDetailsCoverSource({ detailsCoverSource: "tracker" })).toBe("tracker");
         expect(parseDetailsCoverSource({ keep: 1 })).toBe("library");
     });
 });
 
 describe("resolveDetailsCoverSrc", () => {
-    it("uses the tracker URL when tracked unless extra prefers the library file", () => {
+    it("never returns an http(s) snapshot URL", () => {
         stubFs({ isFile: () => false });
         const item = { id: 1, cover: null, extra: {} };
-        expect(resolveDetailsCoverSrc(item, "https://example.test/cover.jpg")).toBe(
-            "https://example.test/cover.jpg",
+        expect(resolveDetailsCoverSrc(item, true)).toBe("");
+        expect(resolveDetailsCoverSrc({ ...item, extra: { detailsCoverSource: "library" } }, true)).toBe("");
+        expect(resolveDetailsCoverSrc({ ...item, extra: { detailsCoverSource: "tracker" } }, false)).toBe("");
+    });
+
+    it("uses the cached tracker WebP when the source is tracker", () => {
+        const cached = trackerCoverAbsolutePath(3);
+        stubFs({ isFile: (p) => p === cached });
+        expect(resolveDetailsCoverSrc({ id: 3, cover: null, extra: {} }, true)).toBe(
+            `file://${cached.replaceAll("#", "%23")}`,
         );
-        expect(
-            resolveDetailsCoverSrc(
-                { ...item, extra: { detailsCoverSource: "library" } },
-                "https://example.test/cover.jpg",
-            ),
-        ).toBe("");
-        expect(resolveDetailsCoverSrc({ ...item, extra: { detailsCoverSource: "tracker" } }, "  ")).toBe("");
     });
 });
 
-describe("trackerCoverUrlByItemLink", () => {
-    it("keeps the first snapshot cover per library path", () => {
+describe("trackerCoverHintByItemLink", () => {
+    it("keeps the first snapshot cover hint per library path", () => {
         expect(
-            trackerCoverUrlByItemLink([
+            trackerCoverHintByItemLink([
                 { itemLink: "a", media: { coverImage: "https://first.test/a.jpg" } },
                 { itemLink: "a", media: { coverImage: "https://second.test/a.jpg" } },
                 { itemLink: "b", media: {} },
                 { itemLink: "c", media: { coverImage: "  https://c.test/c.jpg  " } },
             ]),
         ).toEqual({
-            a: "https://first.test/a.jpg",
-            c: "https://c.test/c.jpg",
+            a: true,
+            c: true,
         });
     });
 });

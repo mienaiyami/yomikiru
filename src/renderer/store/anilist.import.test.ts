@@ -52,6 +52,7 @@ const makeStore = () =>
             },
             trackers: {
                 entries: [trackerRow(itemLink, "1")],
+                coverCacheGeneration: 0,
             },
         },
     });

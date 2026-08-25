@@ -15,6 +15,7 @@ Use these from library, gallery details, app bootstrap, relocate, readers (cache
 | `removeTracker` | Delete one `(itemLink, provider)` row |
 | `updateTrackerSnapshot` | Write cached `media` / `listState` / `syncedAt` |
 | `selectTracker(state, itemLink, provider)` | One row, or `undefined` |
+| `selectTrackerCoverCacheGeneration` | Bumped after a tracker WebP write so gallery/details re-read disk |
 
 `resolveItemMetadata` already takes a generic `ItemTracker`. Pass whatever `selectTracker` returns.
 
@@ -51,7 +52,7 @@ Readers still call `setAnilistListProgress` and `setAnilistCurrentListEntry`: au
 
 ### Already generic / AniList-UI (leave)
 
-- App.tsx: `fetchAllTrackers` on every window boot (with bookmarks / notes / metadata) and on `db:tracker:change`. After library hydrate, `runAnilistLegacyStartupIfClaimed` may migrate legacy localStorage tracking (once per process) and refetch only when that import wrote rows. Clearing `currentListEntry` / gallery track context on reader close is AniList session.
+- App.tsx: `fetchAllTrackers` on every window boot (with bookmarks / notes / metadata) and on `db:tracker:change`. After library hydrate, `runAnilistLegacyStartupIfClaimed` may migrate legacy localStorage tracking (once per process) and refetch only when that import wrote rows. Clearing `currentListEntry` / gallery track context on reader close is AniList session. `upsertTracker` / `updateTrackerSnapshot` cache a missing http(s) tracker cover (same moment as media snapshot populate) and bump `coverCacheGeneration` so library views re-read the local file.
 - [`GalleryView.tsx`](../features/home/gallery/GalleryView.tsx): `setGalleryTrackContext` + AniList search overlay is AniList UI.
 - [`AnilistBar.tsx`](../features/anilist/AnilistBar.tsx), [`AnilistSearch.tsx`](../features/anilist/AnilistSearch.tsx), [`AnilistEdit.tsx`](../features/anilist/AnilistEdit.tsx), login / Settings.
 

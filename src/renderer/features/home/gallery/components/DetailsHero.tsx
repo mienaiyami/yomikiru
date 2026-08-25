@@ -1,4 +1,4 @@
-import type { DetailsCoverSource } from "@common/types/db";
+import type { DetailsCoverSource, ItemTracker } from "@common/types/db";
 import type { IconDefinition } from "@fortawesome/fontawesome-svg-core";
 import { faArrowLeft, faArrowUpRightFromSquare, faCopy } from "@fortawesome/free-solid-svg-icons";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
@@ -8,12 +8,7 @@ import { useAppDispatch, useAppSelector } from "@store/hooks";
 import Link from "@ui/Link";
 import { anilistFormatLabel, anilistStatusLabel } from "@utils/anilist";
 import { DETAILS_ABOUT_HTML_TAGS, sanitizeHtmlAllowlist } from "@utils/html";
-import {
-    hasTrackerMediaFacts,
-    type TrackerExternalRef,
-    trackerExternalOpenLabelKey,
-    trackerMediaPageUrl,
-} from "@utils/libraryMetadata";
+import { hasTrackerMediaFacts, trackerExternalOpenLabelKey, trackerMediaHref } from "@utils/libraryMetadata";
 import type { KeyboardEvent, MouseEvent, ReactNode } from "react";
 import { useEffect, useLayoutEffect, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
@@ -330,8 +325,8 @@ export type DetailsTrackerMedia = {
     format?: string | null;
 };
 
-/** Binding used to open the remote media page above About. */
-export type DetailsTrackerExternal = TrackerExternalRef;
+/** Tracker row fields used to open the remote media page above About. */
+export type DetailsTrackerLink = Pick<ItemTracker, "provider" | "remoteId" | "remoteUrl">;
 
 type DetailsHeroProps = {
     title: string;
@@ -359,9 +354,9 @@ type DetailsHeroProps = {
     trackerMedia?: DetailsTrackerMedia | null;
     /**
      * When set, renders an external tracker page link above About.
-     * Href comes from {@link trackerMediaPageUrl}; opens without a confirm dialog.
+     * Href comes from {@link trackerMediaHref} (`remoteUrl`, else provider + `remoteId`).
      */
-    trackerExternal?: DetailsTrackerExternal | null;
+    tracker?: DetailsTrackerLink | null;
     actions?: ReactNode;
     facts?: ReactNode;
     note?: ReactNode;
@@ -394,7 +389,7 @@ export const DetailsHero = ({
     coverSource = "library",
     onCoverSourceChange,
     trackerMedia,
-    trackerExternal,
+    tracker,
     actions,
     facts,
     note,
@@ -434,10 +429,8 @@ export const DetailsHero = ({
         showTrackerFacts && trackerFactParts.length > 0 ? (
             <div className="details-tracker-facts">{trackerFactParts.join(" · ")}</div>
         ) : null;
-    const trackerPageHref = trackerExternal
-        ? trackerMediaPageUrl(trackerExternal.provider, trackerExternal.remoteId)
-        : null;
-    const trackerExternalLabel = trackerExternal ? t(trackerExternalOpenLabelKey(trackerExternal.provider)) : null;
+    const trackerPageHref = tracker ? trackerMediaHref(tracker) : null;
+    const trackerExternalLabel = tracker ? t(trackerExternalOpenLabelKey(tracker.provider)) : null;
     const trackerLinkEl =
         trackerPageHref && trackerExternalLabel ? (
             <div className="details-tracker-external">

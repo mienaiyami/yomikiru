@@ -5,7 +5,7 @@ import InputCheckbox from "@ui/InputCheckbox";
 import InputNumber from "@ui/InputNumber";
 import InputSelect from "@ui/InputSelect";
 import Link from "@ui/Link";
-import { setAnilistListEntry } from "@utils/anilist";
+import { anilistCoverImageSrc, setAnilistListEntry } from "@utils/anilist";
 import { useEffect, useLayoutEffect, useRef, useState } from "react";
 import FocusLock from "react-focus-lock";
 import { useTranslation } from "react-i18next";
@@ -22,6 +22,7 @@ const AnilistEdit = () => {
     );
 
     const [tempData, setTempData] = useState(anilistCurrentListEntry);
+    const editCoverSrc = tempData ? anilistCoverImageSrc(tempData.media.coverImage) : null;
 
     const statusLabel = (status: Anilist.ListEntry["status"]): string => {
         switch (status) {
@@ -84,11 +85,9 @@ const AnilistEdit = () => {
                             ></span>
                             <div className="info">
                                 <div className="cover">
-                                    <img
-                                        src={tempData.media.coverImage.medium}
-                                        alt={t("edit.coverAlt")}
-                                        draggable={false}
-                                    />
+                                    {editCoverSrc ? (
+                                        <img src={editCoverSrc} alt={t("edit.coverAlt")} draggable={false} />
+                                    ) : null}
                                 </div>
                                 <div className="col">
                                     <span>

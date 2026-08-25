@@ -17,8 +17,8 @@ const AnilistSetting: React.FC = () => {
 
     useEffect(() => {
         if (anilistToken)
-            getAnilistViewer().then((viewer) => {
-                if (viewer?.name) setAnilistUsername(viewer.name);
+            getAnilistViewer().then((result) => {
+                if (result.ok && result.viewer.name) setAnilistUsername(result.viewer.name);
             });
     }, [anilistToken]);
     return (

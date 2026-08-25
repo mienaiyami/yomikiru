@@ -14,7 +14,7 @@ const httpRuntimeForbidsUserAgentHeader = (): boolean => typeof XMLHttpRequest !
 
 export type HttpMethod = "GET" | "POST";
 
-export type HttpParseAs = "json" | "text";
+export type HttpParseAs = "json" | "text" | "arraybuffer";
 
 /** Optional fields shared by convenience methods and {@link HttpRequest}. */
 export type HttpRequestInit = {
@@ -153,6 +153,14 @@ export type HttpClient = {
      */
     getText: (url: string, init?: HttpRequestInit) => Promise<string>;
     /**
+     * GET with a binary body (images, etc.).
+     *
+     * @throws {HttpStatusError} when status is outside 2xx
+     * @throws {HttpNetworkError} when the transport fails without a status
+     * @throws {HttpError} when the decoded body is not an ArrayBuffer view
+     */
+    getBuffer: (url: string, init?: HttpRequestInit) => Promise<ArrayBuffer>;
+    /**
      * POST JSON and decode a JSON body.
      *
      * @throws {HttpStatusError} when status is outside 2xx
@@ -169,6 +177,20 @@ const isHtmlContentType = (contentType: string): boolean => contentType.toLowerC
 /** True when a decoded body looks like an HTML document rather than JSON or a text list. */
 const looksLikeHtml = (data: unknown): boolean =>
     typeof data === "string" && stripBom(data).trimStart().startsWith("<");
+
+/**
+ * Normalizes axios/Node binary bodies to {@link ArrayBuffer} without using Node `Buffer` (this module is shared with the renderer).
+ *
+ * @throws {HttpError} when `data` is not an ArrayBuffer or ArrayBuffer view
+ */
+const arrayBufferFromHttpBody = (data: unknown, url: string): ArrayBuffer => {
+    if (data instanceof ArrayBuffer) return data;
+    if (ArrayBuffer.isView(data)) {
+        const view = data;
+        return view.buffer.slice(view.byteOffset, view.byteOffset + view.byteLength);
+    }
+    throw new HttpError(`${url}: expected binary body`, url);
+};
 
 /** Lowercases header names so Content-Type checks do not depend on transport casing. */
 const normalizeHeaders = (headers: Record<string, string> | undefined): Record<string, string> => {
@@ -232,8 +254,11 @@ export const createHttpClient = (transport: HttpTransport): HttpClient => {
             throw new HttpStatusError(url, raw.status, raw.statusText, raw.data);
         }
 
-        if (isHtmlContentType(contentType) || looksLikeHtml(raw.data)) {
-            throw new HttpMediaTypeError(url, contentType);
+        // binary payloads are not HTML documents; skip the text/html sniff
+        if (normalized.parseAs !== "arraybuffer") {
+            if (isHtmlContentType(contentType) || looksLikeHtml(raw.data)) {
+                throw new HttpMediaTypeError(url, contentType);
+            }
         }
 
         return {
@@ -258,6 +283,10 @@ export const createHttpClient = (transport: HttpTransport): HttpClient => {
             }
             return res.data;
         },
+        getBuffer: async (url, init) => {
+            const res = await request({ ...init, url, method: "GET", parseAs: "arraybuffer" });
+            return arrayBufferFromHttpBody(res.data, url);
+        },
         postJson: async (url, json, init) => {
             const res = await request({ ...init, url, method: "POST", json, parseAs: "json" });
             return res.data;
@@ -277,7 +306,8 @@ const axiosTransport: HttpTransport = async (request) => {
         headers: request.headers,
         data: request.json,
         timeout: request.timeoutMs,
-        responseType: request.parseAs === "text" ? "text" : "json",
+        responseType:
+            request.parseAs === "text" ? "text" : request.parseAs === "arraybuffer" ? "arraybuffer" : "json",
         validateStatus: () => true,
         maxRedirects: 5,
     });
@@ -331,6 +361,25 @@ export const isAbsoluteHttpUrl = (value: string): boolean => {
         return parsed.protocol === "http:" || parsed.protocol === "https:";
     } catch {
         return false;
+    }
+};
+
+/**
+ * Decodes a percent-encoded `data:` URL (not base64) into bytes.
+ * Used to materialize inline SVG tracker covers without HTTP.
+ *
+ * @returns Payload bytes, or `null` when the string is not that kind of data URL
+ */
+export const decodePercentEncodedDataUrl = (value: string): Uint8Array | null => {
+    const trimmed = value.trim();
+    if (!trimmed.startsWith("data:")) return null;
+    const comma = trimmed.indexOf(",");
+    if (comma < 0) return null;
+    if (trimmed.slice(5, comma).toLowerCase().includes(";base64")) return null;
+    try {
+        return new TextEncoder().encode(decodeURIComponent(trimmed.slice(comma + 1)));
+    } catch {
+        return null;
     }
 };
 

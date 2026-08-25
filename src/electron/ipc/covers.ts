@@ -1,10 +1,12 @@
 import fs from "node:fs";
 import type { Readable } from "node:stream";
+import { decodePercentEncodedDataUrl, http, isAbsoluteHttpUrl } from "@common/http";
 import type { CoverChannels, CoverOpResult } from "@common/types/ipc";
 import { withEpubArchivePackage, withResolvedMangaLibraryCover } from "@electron/util/contentSource";
 import {
     coverFilePathForLibraryId,
     getCoversDirectoryAbsolute,
+    materializeCoverFromBuffer,
     materializeCoverFromSourcePath,
     materializeCoverFromStream,
 } from "@electron/util/coverMaterialize";
@@ -184,6 +186,26 @@ export const registerCoverHandlers = (): void => {
                 const abs = coverFilePathForLibraryId(request.libraryId);
                 if (fs.existsSync(abs)) fs.unlinkSync(abs);
                 return { ok: true };
+            }),
+    );
+
+    ipcMain.handle(
+        "covers:materializeFromUrl",
+        (_, request: CoverChannels["covers:materializeFromUrl"]["request"]) =>
+            runCoverOp(`covers:materializeFromUrl id=${request.libraryId}`, async () => {
+                let bytes: ArrayBuffer;
+                if (isAbsoluteHttpUrl(request.url)) {
+                    bytes = await http.getBuffer(request.url);
+                } else {
+                    const decoded = decodePercentEncodedDataUrl(request.url);
+                    if (!decoded) {
+                        return { ok: false, message: "url must be http(s) or a percent-encoded data URL" };
+                    }
+                    const copy = new Uint8Array(decoded.byteLength);
+                    copy.set(decoded);
+                    bytes = copy.buffer;
+                }
+                return materializeCoverFromBuffer(request.libraryId, bytes, "tracker");
             }),
     );
 

@@ -67,6 +67,11 @@ export type CoverChannels = {
         CoverOpResult
     >;
     "covers:deleteForLibraryId": ChannelDefinition<{ libraryId: number }, CoverOpResult>;
+    /**
+     * Writes the tracker cover slot from an http(s) image URL or a percent-encoded `data:` URL.
+     * Does not replace the library thumbnail.
+     */
+    "covers:materializeFromUrl": ChannelDefinition<{ libraryId: number; url: string }, CoverOpResult>;
     /** Removes all files under `userData/covers` and recreates the directory. */
     "covers:clearCache": ChannelDefinition<void, CoverOpResult>;
     /**

@@ -84,20 +84,28 @@ const AniLogin: React.FC = () => {
                                             const token = inputRef.current.value.trimEnd();
                                             const elem = e.currentTarget;
                                             elem.innerText = t("login.checking");
-                                            getAnilistViewer(token).then((viewer) => {
-                                                if (viewer) {
+                                            getAnilistViewer(token).then((result) => {
+                                                if (result.ok) {
                                                     elem.innerText = t("login.linked");
                                                     setTimeout(() => {
                                                         dispatch(setAnilistToken(token));
                                                         dispatch(setAnilistLoginOpen(false));
                                                     }, 1000);
-                                                } else {
-                                                    elem.innerText = t("login.invalidToken");
-                                                    if (inputRef.current) inputRef.current.value = "";
+                                                    return;
+                                                }
+                                                if (result.reason !== "unauthorized") {
+                                                    // network / 5xx: keep the pasted token so retry is one click
+                                                    elem.innerText = t("login.failed");
                                                     setTimeout(() => {
                                                         elem.innerText = t("login.submit");
                                                     }, 2000);
+                                                    return;
                                                 }
+                                                elem.innerText = t("login.invalidToken");
+                                                if (inputRef.current) inputRef.current.value = "";
+                                                setTimeout(() => {
+                                                    elem.innerText = t("login.submit");
+                                                }, 2000);
                                             });
                                         }
                                     }}

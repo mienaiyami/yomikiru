@@ -39,6 +39,8 @@ Steps:
 
 The token is stored in `localStorage` via `setAnilistStorageToken` (key `anilist_token`). It stays in localStorage on purpose: library DB backups must not include the OAuth secret. On startup, every window calls `hydrateAnilistClientFromStorage()` (bearer for GraphQL) and `fetchAllTrackers()` (Redux hydrate from SQLite). Separately, the first window to claim `anilist:claimLegacyTrackingImport` runs `runAnilistLegacyStartupIfClaimed`: validate the stored token once (`initAnilist`) and copy legacy `anilist_tracking` into `item_trackers`. Other windows skip that claim so you do not get N login-failed dialogs or duplicate imports.
 
+`getAnilistViewer` returns `{ ok: true, viewer } | { ok: false, reason: "unauthorized" | "unavailable" }` and never opens a dialog. `initAnilist` shows the login-failed dialog only for `unauthorized` (401/403 or GraphQL Invalid token). Offline, timeouts, and other non-auth HTTP failures are `unavailable` (log only). Tracker covers are materialized to `userData/covers/tracker-<libraryId>.webp` when a snapshot is written (if that file is missing), including the details-bar list-entry refresh. Gallery tiles and details resolve that file only; AniList search and edit still use the remote cover URL.
+
 ---
 
 ## Tracker rows
@@ -174,16 +176,16 @@ Named exports (no static class). Every window calls `hydrateAnilistClientFromSto
 | Export | Description |
 | --- | --- |
 | `hydrateAnilistClientFromStorage()` | Load stored token into module state (no network) |
-| `initAnilist()` | Hydrate then validate the stored token (once per app) |
-| `getAnilistViewer(token?)` | Fetch the viewer profile, validate a token, and synchronize viewer preferences |
+| `initAnilist()` | Hydrate then validate the stored token (once per app); dialog only on unauthorized |
+| `getAnilistViewer(token?)` | Viewer probe as `AnilistViewerLookup`; no dialogs; syncs adult-content preference on success |
 | `searchAnilistMedia(query)` | Search media by title; returns array of results. GraphQL `type: MANGA` includes novels |
 | `getAnilistListEntry(mediaId)` | Create or fetch a MediaListEntry for the given media |
 | `setAnilistListEntry(data)` | Save mutation for the current MediaListEntry |
 | `setAnilistListProgress(n)` | Update progress count; returns updated `ListEntry` |
 | `getAnilistStorageToken` / `setAnilistStorageToken` | Token localStorage persistence |
 | `readStoredTracking` | Legacy `anilist_tracking` read for the one-shot import |
-| `toTrackerMediaSnapshot` / `toTrackerListState` / `toAnilistTrackerSnapshotUpdate` / `authorFromAnilistStaff` | Map GraphQL payloads into DB cache columns / `updateTrackerSnapshot` args |
+| `toTrackerMediaSnapshot` / `toTrackerListState` / `toAnilistTrackerSnapshotUpdate` / `authorFromAnilistStaff` / `anilistCoverImageSrc` | Map GraphQL payloads into DB cache columns / `updateTrackerSnapshot` args; cover URL prefers extraLarge, then large, then medium, then a hex SVG from `coverImage.color` |
 
-The GraphQL mutation (`SaveMediaListEntry`) is a module-level query string and requests description, genres, chapters, volumes, averageScore, coverImage.large, idMal, and staff (for cached author) in addition to the list-entry fields.
+The GraphQL mutation (`SaveMediaListEntry`) is a module-level query string and requests description, genres, chapters, volumes, averageScore, coverImage (extraLarge, large, medium, color), idMal, and staff (for cached author) in addition to the list-entry fields. Search uses the same `coverImage` selection.
 
 API calls use the shared HTTP client (`@common/http` / axios). Token is sent as `Authorization: Bearer <token>` header.

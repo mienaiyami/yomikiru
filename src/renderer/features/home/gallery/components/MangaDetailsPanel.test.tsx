@@ -44,6 +44,7 @@ const emptyAnilist = {
 
 const emptyTrackers = {
     entries: [] as [],
+    coverCacheGeneration: 0,
 };
 
 /**
@@ -483,6 +484,7 @@ describe("MangaDetailsPanel", () => {
                             createdAt: new Date(0),
                         },
                     ],
+                    coverCacheGeneration: 0,
                 },
             },
         });

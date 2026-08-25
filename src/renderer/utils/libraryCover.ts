@@ -1,3 +1,4 @@
+import { type ManagedCoverSlot, managedCoverFileName } from "@common/library/covers";
 import type { DetailsCoverSource, ItemTracker, LibraryItem, LibraryItemExtra } from "@common/types/db";
 
 /**
@@ -21,11 +22,28 @@ const coverDatabasePathToAbsolute = (c: string): string => {
 };
 
 /**
- * Canonical managed thumbnail written by main-process materialize: `userData/covers/<id>.webp`.
+ * Absolute path for a managed cover WebP under `userData/covers/`.
+ * Filename comes from {@link managedCoverFileName} so main and renderer stay aligned.
  */
-export const canonicalCoverAbsolutePath = (libraryId: number): string => {
-    return window.path.join(window.electron.app.getPath("userData"), "covers", `${libraryId}.webp`);
+export const managedCoverAbsolutePath = (libraryId: number, slot: ManagedCoverSlot = "library"): string => {
+    return window.path.join(
+        window.electron.app.getPath("userData"),
+        "covers",
+        managedCoverFileName(libraryId, slot),
+    );
 };
+
+/**
+ * Library thumbnail slot (`covers/<id>.webp`).
+ */
+export const canonicalCoverAbsolutePath = (libraryId: number): string =>
+    managedCoverAbsolutePath(libraryId, "library");
+
+/**
+ * Tracker-art slot (`covers/tracker-<id>.webp`), separate from the library thumbnail.
+ */
+export const trackerCoverAbsolutePath = (libraryId: number): string =>
+    managedCoverAbsolutePath(libraryId, "tracker");
 
 /**
  * Cover image URL for a library row: **DB `cover`** if that file exists (user-picked image or series-root `cover.*`),
@@ -43,45 +61,59 @@ export const libraryCoverSrc = (item: Pick<LibraryItem, "id" | "cover">): string
 };
 
 /**
+ * Whether a tracker snapshot has cover art (URL or color SVG). Used only as a source hint;
+ * library views never load that string as an image source.
+ */
+export const hasTrackerCoverHint = (coverImage?: string | null): boolean => Boolean(coverImage?.trim());
+
+/**
+ * True when `covers/tracker-<id>.webp` exists on disk.
+ */
+export const hasLocalTrackerCover = (libraryId: number): boolean =>
+    window.fs.isFile(trackerCoverAbsolutePath(libraryId));
+
+/**
  * Reads {@link LibraryItemExtra.detailsCoverSource}.
- * When that key is omitted, a non-empty tracker cover URL selects the tracker image.
+ * When that key is omitted, a tracker cover hint selects the tracker slot.
  *
- * @param trackerCoverUrl Snapshot cover URL used only when extra does not name a source
+ * @param hasCoverHint Snapshot has cover art; used only when extra does not name a source
  */
 export const parseDetailsCoverSource = (
     extra: LibraryItemExtra | undefined,
-    trackerCoverUrl?: string | null,
+    hasCoverHint = false,
 ): DetailsCoverSource => {
     if (extra?.detailsCoverSource === "library") return "library";
     if (extra?.detailsCoverSource === "tracker") return "tracker";
-    return trackerCoverUrl?.trim() ? "tracker" : "library";
+    return hasCoverHint ? "tracker" : "library";
 };
 
 /**
- * Cover URL for details and gallery tiles: tracker snapshot image when the resolved source
- * is tracker and a URL exists, otherwise {@link libraryCoverSrc}.
+ * Cover URL for gallery tiles and details: local tracker WebP when the resolved source is
+ * tracker and that file exists, otherwise {@link libraryCoverSrc}. Never returns http(s).
  */
 export const resolveDetailsCoverSrc = (
     item: Pick<LibraryItem, "id" | "cover" | "extra">,
-    trackerCoverUrl: string | null | undefined,
+    hasCoverHint: boolean,
 ): string => {
-    const trackerUrl = trackerCoverUrl?.trim() ?? "";
-    if (parseDetailsCoverSource(item.extra, trackerUrl) === "tracker" && trackerUrl) return trackerUrl;
+    if (parseDetailsCoverSource(item.extra, hasCoverHint) !== "tracker") {
+        return libraryCoverSrc(item);
+    }
+    const cached = trackerCoverAbsolutePath(item.id);
+    if (window.fs.isFile(cached)) return absolutePathToFileUrl(cached);
     return libraryCoverSrc(item);
 };
 
 /**
- * First non-empty tracker snapshot cover per library path.
- * ponytail: multiple providers can share a path; first row with an image wins until a picker exists.
+ * First library path that has a tracker snapshot cover hint.
+ * ponytail: multiple providers can share a path; first row with a hint wins until a picker exists.
  */
-export const trackerCoverUrlByItemLink = (
+export const trackerCoverHintByItemLink = (
     entries: readonly Pick<ItemTracker, "itemLink" | "media">[],
-): Record<string, string> => {
-    const map: Record<string, string> = {};
+): Record<string, true> => {
+    const map: Record<string, true> = {};
     for (const row of entries) {
         if (map[row.itemLink]) continue;
-        const url = row.media?.coverImage?.trim();
-        if (url) map[row.itemLink] = url;
+        if (hasTrackerCoverHint(row.media?.coverImage)) map[row.itemLink] = true;
     }
     return map;
 };

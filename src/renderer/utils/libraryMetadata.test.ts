@@ -7,9 +7,9 @@ import {
     parseGenreList,
     resolveAllItemMetadata,
     resolveItemMetadata,
-    toTrackerExternalRef,
     trackerByItemLink,
     trackerExternalOpenLabelKey,
+    trackerMediaHref,
     trackerMediaPageUrl,
 } from "./libraryMetadata";
 
@@ -197,17 +197,21 @@ describe("trackerExternalOpenLabelKey", () => {
     });
 });
 
-describe("toTrackerExternalRef", () => {
-    it("returns provider and trimmed remote id when present", () => {
-        expect(toTrackerExternalRef(tracker({ remoteId: " 99 " }))).toEqual({
-            provider: "anilist",
-            remoteId: "99",
-        });
+describe("trackerMediaHref", () => {
+    it("prefers the stored remote page URL", () => {
+        expect(trackerMediaHref(tracker({ remoteId: "99", remoteUrl: " https://anilist.co/manga/99 " }))).toBe(
+            "https://anilist.co/manga/99",
+        );
     });
 
-    it("returns null when remote id is missing", () => {
-        expect(toTrackerExternalRef(tracker({ remoteId: "  " }))).toBeNull();
-        expect(toTrackerExternalRef(null)).toBeNull();
+    it("falls back to provider + remote id when remoteUrl is empty", () => {
+        expect(trackerMediaHref(tracker({ remoteId: " 99 ", remoteUrl: null }))).toBe(
+            "https://anilist.co/manga/99",
+        );
+    });
+
+    it("returns null when neither remoteUrl nor remote id is usable", () => {
+        expect(trackerMediaHref(tracker({ remoteId: "  ", remoteUrl: "  " }))).toBeNull();
     });
 });
 

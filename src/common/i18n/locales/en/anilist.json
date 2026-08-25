@@ -7,7 +7,8 @@
         "submit": "Submit",
         "checking": "Checking...",
         "linked": "Linked!",
-        "invalidToken": "Invalid Token / Error"
+        "invalidToken": "Invalid Token / Error",
+        "failed": "Failed!"
     },
     "bar": {
         "brand": "AniList",

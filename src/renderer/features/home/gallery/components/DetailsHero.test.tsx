@@ -84,7 +84,7 @@ describe("DetailsHero", () => {
                 onBack={vi.fn()}
                 onCoverContextMenu={vi.fn()}
                 description="About text"
-                trackerExternal={{ provider: "anilist", remoteId: "99" }}
+                tracker={{ provider: "anilist", remoteId: "99", remoteUrl: null }}
             />,
         );
         const link = screen.getByText(home.gallery.details.openOnAnilist);
@@ -102,10 +102,30 @@ describe("DetailsHero", () => {
                 coverAlt=""
                 onBack={vi.fn()}
                 onCoverContextMenu={vi.fn()}
-                trackerExternal={{ provider: "anilist", remoteId: "  " }}
+                tracker={{ provider: "anilist", remoteId: "  ", remoteUrl: null }}
             />,
         );
         expect(screen.queryByText(home.gallery.details.openOnAnilist)).toBeNull();
+    });
+
+    it("opens the stored remoteUrl when present instead of rebuilding from remoteId", () => {
+        const openExternal = vi.mocked(window.electron.openExternal);
+        renderWithI18n(
+            <DetailsHero
+                title="Title"
+                coverSrc=""
+                coverAlt=""
+                onBack={vi.fn()}
+                onCoverContextMenu={vi.fn()}
+                tracker={{
+                    provider: "anilist",
+                    remoteId: "99",
+                    remoteUrl: "https://anilist.co/manga/12345",
+                }}
+            />,
+        );
+        fireEvent.click(screen.getByText(home.gallery.details.openOnAnilist));
+        expect(openExternal).toHaveBeenCalledWith("https://anilist.co/manga/12345");
     });
 
     it("places tracker catalog facts above genres", () => {

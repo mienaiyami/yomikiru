@@ -25,9 +25,11 @@ import { http, HttpStatusError, splitTextLines } from "@common/http";
 const releases = await http.getJson("https://api.github.com/repos/org/app/releases");
 const text = await http.getText("https://example.com/notes.txt");
 const graphql = await http.postJson("https://graphql.example.com", { query }, { headers: { Authorization: `Bearer ${token}` } });
+const bytes = await http.getBuffer("https://example.com/cover.jpg");
 ```
 
 - `http.request` when you need status/headers as well as `data`.
+- `http.getBuffer` for binary bodies (`ArrayBuffer`); skips the HTML Content-Type / body sniff used for JSON/text.
 - Override `timeoutMs` / `headers` per call. Defaults: `HTTP_DEFAULT_TIMEOUT_MS`, User-Agent `HTTP_USER_AGENT` (ignored in the browser).
 - `createHttpClient(transport)` for tests or a one-off backend.
 
@@ -52,6 +54,6 @@ Catch `HttpStatusError` when a 4xx body still needs inspection (e.g. API error p
 2. Use `getJson` / `getText` / `postJson`.
 3. Catch `HttpError` (or a subclass) at the feature boundary; log and show UI there, not inside `http.ts`.
 
-Retries stay in `@electron/util/retry` when a caller needs them; the client does not retry.
+- `isAbsoluteHttpUrl` / `isHttpUrlLineList` for stored URL snapshots. `decodePercentEncodedDataUrl` for inline `data:` cover payloads (not base64).
 
-Binary downloads stay on `electron-dl` (progress, cancel, disk). This module is JSON/text only.
+Large user-facing downloads with progress/cancel/disk stay on `electron-dl`. Small binary GETs (e.g. tracker cover materialize) use `http.getBuffer`.

@@ -221,6 +221,7 @@ export const installPreloadMocks = (): void => {
     onInvoke("covers:acquirePdfRender", () => true);
     onInvoke("covers:releasePdfRender", () => undefined);
     onInvoke("covers:materializeFromLibraryPath", () => ({ ok: true }));
+    onInvoke("covers:materializeFromUrl", () => ({ ok: true }));
     onInvoke("covers:claimPost0001ThumbnailPrompt", () => false);
     onInvoke("db:library:getAllAndProgress", () => []);
 };

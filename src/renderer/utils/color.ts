@@ -3,6 +3,25 @@ import { createRendererLogger } from "./logger";
 
 const log = createRendererLogger("utils/color");
 
+/** CSS hex (#RGB or #RRGGBB) accepted as a solid-fill SVG source. */
+const HEX_COLOR_RE = /^#(?:[0-9a-fA-F]{3}|[0-9a-fA-F]{6})$/;
+
+/** Prefix for an inline SVG used as an `img` / CSS `url()` source. */
+const SVG_DATA_URI_PREFIX = "data:image/svg+xml,";
+
+/**
+ * Wraps a hex color in a 100% rect SVG data URI for use as an image source.
+ * `#` in the fill is percent-encoded so it is not treated as a URL fragment.
+ *
+ * @returns Data URI, or `null` when `hex` is not a 3- or 6-digit CSS hex color
+ */
+export const hexToSvgDataUri = (hex: string): string | null => {
+    const trimmed = hex.trim();
+    if (!HEX_COLOR_RE.test(trimmed)) return null;
+    const svg = `<svg xmlns='http://www.w3.org/2000/svg'><rect width='100%' height='100%' fill='${trimmed}'/></svg>`;
+    return `${SVG_DATA_URI_PREFIX}${encodeURIComponent(svg)}`;
+};
+
 type ColorUtils = {
     new: (...args: Parameters<typeof Colorjs>) => Colorjs;
     /**

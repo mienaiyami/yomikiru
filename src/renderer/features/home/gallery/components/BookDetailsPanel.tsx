@@ -18,12 +18,17 @@ import {
     setLibraryItemFavourite,
     setLibraryItemNote,
 } from "@store/library";
-import { selectTracker } from "@store/trackers";
+import { selectTracker, selectTrackerCoverCacheGeneration } from "@store/trackers";
 import dateUtils from "@utils/date";
 import { dialogUtils } from "@utils/dialog";
-import { parseDetailsCoverSource, resolveDetailsCoverSrc } from "@utils/libraryCover";
+import {
+    hasLocalTrackerCover,
+    hasTrackerCoverHint,
+    parseDetailsCoverSource,
+    resolveDetailsCoverSrc,
+} from "@utils/libraryCover";
 import { pickAndApplyCustomCover, resetLibraryCoverToDefault } from "@utils/libraryCoverService";
-import { resolveItemMetadata, toTrackerExternalRef } from "@utils/libraryMetadata";
+import { resolveItemMetadata } from "@utils/libraryMetadata";
 import { createRendererLogger } from "@utils/logger";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
@@ -76,6 +81,7 @@ const BookDetailsPanel = ({ bookLink, onClose, onRelocated, initialTab = "bookma
     const book = library[bookLink] as (LibraryItemWithProgress & { type: "book" }) | undefined;
     const overlays = useAppSelector((store) => selectItemMetadata(store, bookLink));
     const tracker = useAppSelector((store) => selectTracker(store, bookLink, "anilist"));
+    const coverCacheGeneration = useAppSelector(selectTrackerCoverCacheGeneration);
     const resolved = useMemo(
         () => (book ? resolveItemMetadata({ item: book, overlays, tracker }) : null),
         [book, overlays, tracker],
@@ -472,6 +478,12 @@ const BookDetailsPanel = ({ bookLink, onClose, onRelocated, initialTab = "bookma
         [bookLink, onClose, pathMissing, setContextMenuData, isFavourite, t, dispatch, handleResetCover],
     );
 
+    const coverHint = hasTrackerCoverHint(tracker?.media?.coverImage);
+    const coverArtSrc = useMemo(
+        () => (book && book.type === "book" ? resolveDetailsCoverSrc(book, coverHint) : ""),
+        [book, coverHint, coverCacheGeneration],
+    );
+
     if (!book || book.type !== "book") {
         return (
             <div className="manga-details-panel">
@@ -486,8 +498,7 @@ const BookDetailsPanel = ({ bookLink, onClose, onRelocated, initialTab = "bookma
         );
     }
 
-    const coverArtSrc = resolveDetailsCoverSrc(book, tracker?.media?.coverImage);
-    const trackerCoverAvailable = Boolean(tracker?.media?.coverImage?.trim());
+    const trackerCoverAvailable = hasLocalTrackerCover(book.id);
 
     const tabBar = (
         <DetailsTabBar
@@ -521,7 +532,7 @@ const BookDetailsPanel = ({ bookLink, onClose, onRelocated, initialTab = "bookma
                     coverSrc={coverArtSrc}
                     coverAlt={resolved?.title || book.title}
                     trackerCoverAvailable={trackerCoverAvailable}
-                    coverSource={parseDetailsCoverSource(book.extra, tracker?.media?.coverImage)}
+                    coverSource={parseDetailsCoverSource(book.extra, coverHint)}
                     onCoverSourceChange={(source) => {
                         void dispatch(setLibraryItemDetailsCoverSource({ link: bookLink, source }));
                     }}
@@ -529,7 +540,7 @@ const BookDetailsPanel = ({ bookLink, onClose, onRelocated, initialTab = "bookma
                     onCoverContextMenu={handleLibraryRootContextMenu}
                     description={resolved?.description}
                     genres={resolved?.genres}
-                    trackerExternal={toTrackerExternalRef(tracker)}
+                    tracker={tracker ?? null}
                     trackerMedia={
                         resolved
                             ? {

@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 import {
     createHttpClient,
+    decodePercentEncodedDataUrl,
     HttpMediaTypeError,
     HttpNetworkError,
     HttpStatusError,
@@ -102,6 +103,25 @@ describe("createHttpClient status handling", () => {
             (error: unknown) => error instanceof HttpNetworkError && error.url === "https://example.com/api",
         );
     });
+
+    it("returns ArrayBuffer for getBuffer and skips the HTML sniff", async () => {
+        const bytes = new Uint8Array([0x89, 0x50, 0x4e, 0x47]).buffer;
+        const client = clientWith({
+            status: 200,
+            statusText: "OK",
+            headers: { "content-type": "image/png" },
+            data: bytes,
+        });
+        await expect(client.getBuffer("https://example.com/cover.png")).resolves.toBe(bytes);
+
+        const htmlLooking = clientWith({
+            status: 200,
+            statusText: "OK",
+            headers: { "content-type": "application/octet-stream" },
+            data: new TextEncoder().encode("<html>not really</html>").buffer,
+        });
+        await expect(htmlLooking.getBuffer("https://example.com/bin")).resolves.toBeInstanceOf(ArrayBuffer);
+    });
 });
 
 describe("createHttpClient request headers", () => {
@@ -179,5 +199,14 @@ describe("isHttpUrlLineList", () => {
         expect(isHttpUrlLineList(["404: Not Found"])).toBe(false);
         expect(isHttpUrlLineList(["ftp://example.com/a"])).toBe(false);
         expect(isHttpUrlLineList([])).toBe(true);
+    });
+});
+
+describe("decodePercentEncodedDataUrl", () => {
+    it("decodes a percent-encoded SVG data URL and rejects base64 or non-data", () => {
+        const uri = `data:image/svg+xml,${encodeURIComponent("<svg xmlns='http://www.w3.org/2000/svg'></svg>")}`;
+        expect(new TextDecoder().decode(decodePercentEncodedDataUrl(uri) ?? new Uint8Array())).toContain("<svg");
+        expect(decodePercentEncodedDataUrl("data:image/png;base64,aaaa")).toBeNull();
+        expect(decodePercentEncodedDataUrl("https://example.test/a.jpg")).toBeNull();
     });
 });

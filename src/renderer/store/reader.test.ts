@@ -37,7 +37,7 @@ describe("getReaderContent", () => {
                     loading: false,
                     error: null,
                 },
-                trackers: { entries: [] },
+                trackers: { entries: [], coverCacheGeneration: 0 },
             },
         });
         store.dispatch(

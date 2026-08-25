@@ -1,6 +1,7 @@
-import { HttpStatusError, http } from "@common/http";
+import { HttpNetworkError, HttpStatusError, http } from "@common/http";
 import type { TrackerListState, TrackerMediaSnapshot, UpdateTrackerSnapshotData } from "@common/types/db";
 import i18n from "@renderer/i18n";
+import { hexToSvgDataUri } from "./color";
 import { dialogUtils } from "./dialog";
 import { getStorageItem, setStorageItem } from "./localStorage";
 import { createRendererLogger } from "./logger";
@@ -60,8 +61,10 @@ const SAVE_MEDIA_LIST_ENTRY = `#graphql
             native
           }
           coverImage{
-            medium
+            extraLarge
             large
+            medium
+            color
           }
           bannerImage
           siteUrl
@@ -120,6 +123,24 @@ type AnilistGraphqlData = {
 /** AniList profile fields shared by token validation and the Settings account label. */
 type AnilistViewer = NonNullable<AnilistGraphqlData["Viewer"]>;
 
+/**
+ * Result of a Viewer probe. `unauthorized` is a rejected token; `unavailable` is offline, 5xx, or a malformed body.
+ */
+export type AnilistViewerLookup =
+    | { ok: true; viewer: AnilistViewer }
+    | { ok: false; reason: "unauthorized" | "unavailable" };
+
+/** True when AniList rejected the bearer (HTTP 401/403 or GraphQL Invalid token). */
+const isAnilistUnauthorized = (reason: unknown): boolean => {
+    if (!(reason instanceof HttpStatusError)) return false;
+    if (reason.status === 401 || reason.status === 403) return true;
+    const errors =
+        reason.data && typeof reason.data === "object" && "errors" in reason.data
+            ? (reason.data as { errors?: { message?: string } }).errors
+            : undefined;
+    return errors?.message === "Invalid token";
+};
+
 /** Ensures the lazy `anilist` catalog is available before util dialogs / labels run. */
 const ensureAnilistNs = (): void => {
     void i18n.loadNamespaces("anilist");
@@ -171,11 +192,12 @@ export const initAnilist = (): void => {
     hydrateAnilistClientFromStorage();
     const stored = getAnilistStorageToken() || "";
     if (!stored) return;
-    void getAnilistViewer(stored).then((viewer) => {
-        if (!viewer)
-            dialogUtils.customError({
-                message: i18n.t("errors.loginFailed", { ns: "anilist" }),
-            });
+    void getAnilistViewer(stored).then((result) => {
+        if (result.ok) return;
+        if (result.reason !== "unauthorized") return;
+        dialogUtils.customError({
+            message: i18n.t("errors.loginFailed", { ns: "anilist" }),
+        });
     });
 };
 
@@ -228,12 +250,27 @@ export const authorFromAnilistStaff = (staff: Anilist.ListEntry["media"]["staff"
 };
 
 /**
+ * Resolves a cover image source from AniList {@link Anilist.CoverImage} for snapshot storage.
+ * Uses a raster URL when present; otherwise a solid SVG from `color`.
+ *
+ * @returns Raster URL or {@link hexToSvgDataUri} result, or `null` when none of those are usable
+ */
+export const anilistCoverImageSrc = (cover: Anilist.CoverImage): string | null => {
+    for (const url of [cover.extraLarge, cover.large, cover.medium]) {
+        const trimmed = url?.trim();
+        if (trimmed) return trimmed;
+    }
+    const color = cover.color?.trim();
+    return color ? hexToSvgDataUri(color) : null;
+};
+
+/**
  * Maps an AniList media payload to the provider-agnostic tracker snapshot stored in the DB.
  */
 export const toTrackerMediaSnapshot = (media: Anilist.ListEntry["media"]): TrackerMediaSnapshot => ({
     title: media.title.english || media.title.romaji || media.title.native,
     author: authorFromAnilistStaff(media.staff),
-    coverImage: media.coverImage.large || media.coverImage.medium,
+    coverImage: anilistCoverImageSrc(media.coverImage),
     bannerImage: media.bannerImage,
     description: media.description ?? null,
     genres: media.genres,
@@ -273,13 +310,14 @@ export const toAnilistTrackerSnapshotUpdate = (
 /**
  * Fetches the AniList viewer and applies account preferences to this renderer.
  * Pass a bearer while validating a newly entered token; otherwise the current session token is used.
+ * Does not open a dialog: offline, timeouts, and non-auth HTTP statuses are `unavailable`.
  *
- * @returns Viewer data on success, or undefined when the profile is unavailable
+ * @returns Discriminated lookup; {@link initAnilist} only warns on `unauthorized`
  */
-export const getAnilistViewer = async (bearer = resolveAnilistBearer()): Promise<AnilistViewer | undefined> => {
+export const getAnilistViewer = async (bearer = resolveAnilistBearer()): Promise<AnilistViewerLookup> => {
     if (!bearer) {
         log.error("getAnilistViewer: skipped (no access token; user not logged in)");
-        return;
+        return { ok: false, reason: "unavailable" };
     }
     try {
         const json = await postAnilistGraphql(bearer, { query: ANILIST_VIEWER_QUERY });
@@ -288,16 +326,21 @@ export const getAnilistViewer = async (bearer = resolveAnilistBearer()): Promise
             const viewer = data?.Viewer;
             if (viewer) {
                 displayAdultContent = Boolean(viewer.options?.displayAdultContent);
-                return viewer;
+                return { ok: true, viewer };
             }
         }
-        return;
+        return { ok: false, reason: "unavailable" };
     } catch (reason) {
-        if (reason instanceof HttpStatusError) {
-            return;
+        if (isAnilistUnauthorized(reason)) {
+            log.error("getAnilistViewer: unauthorized", reason);
+            return { ok: false, reason: "unauthorized" };
         }
-        dialogUtils.customError({ message: i18n.t("errors.requestFailed", { ns: "anilist" }) });
+        if (reason instanceof HttpNetworkError || reason instanceof HttpStatusError) {
+            log.error("getAnilistViewer: AniList unreachable or non-auth HTTP error", reason);
+            return { ok: false, reason: "unavailable" };
+        }
         log.error("getAnilistViewer: request failed", reason);
+        return { ok: false, reason: "unavailable" };
     }
 };
 
@@ -368,8 +411,10 @@ export const searchAnilistMedia = async (name: string): Promise<Anilist.SearchMe
                     }
                     format
                     coverImage{
-                        medium
+                        extraLarge
                         large
+                        medium
+                        color
                     }
                     bannerImage
                     siteUrl

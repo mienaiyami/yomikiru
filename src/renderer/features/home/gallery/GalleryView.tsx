@@ -17,6 +17,7 @@ import { setAppSettings } from "@store/appSettings";
 import { useAppDispatch, useAppSelector } from "@store/hooks";
 import { deleteLibraryItem, setLibraryItemFavourite } from "@store/library";
 import { getShortcutsMapped } from "@store/shortcuts";
+import { selectTrackerCoverCacheGeneration } from "@store/trackers";
 import { setAnilistSearchOpen } from "@store/ui";
 import { confirmWhenMany, dialogUtils } from "@utils/dialog";
 import { formatUtils } from "@utils/file";
@@ -27,7 +28,7 @@ import {
     sortGalleryItems,
 } from "@utils/gallerySort";
 import { isShortcutEventFromInputTarget, keyFormatter } from "@utils/keybindings";
-import { resolveDetailsCoverSrc, trackerCoverUrlByItemLink } from "@utils/libraryCover";
+import { resolveDetailsCoverSrc, trackerCoverHintByItemLink } from "@utils/libraryCover";
 import { ensurePdfLibraryCover } from "@utils/libraryCoverService";
 import { libraryItemSearchText, resolveAllItemMetadata, trackerByItemLink } from "@utils/libraryMetadata";
 import { itemsWithAnyTag } from "@utils/libraryTags";
@@ -88,7 +89,8 @@ const GalleryView: React.FC = () => {
     const tagsHydrated = useAppSelector((store) => store.tags.hydrated);
     const tagAssignments = useAppSelector((store) => store.tags.assignments);
     const trackerEntries = useAppSelector((store) => store.trackers.entries);
-    const trackerCoverByLink = useMemo(() => trackerCoverUrlByItemLink(trackerEntries), [trackerEntries]);
+    const coverCacheGeneration = useAppSelector(selectTrackerCoverCacheGeneration);
+    const trackerCoverHintByLink = useMemo(() => trackerCoverHintByItemLink(trackerEntries), [trackerEntries]);
     const displayByLink = useMemo(() => {
         const items = Object.values(library).filter((item): item is LibraryItemWithProgress => item !== null);
         return resolveAllItemMetadata(items, metadataByLink, trackerByItemLink(trackerEntries));
@@ -327,7 +329,7 @@ const GalleryView: React.FC = () => {
 
     const renderMangaItem = useCallback(
         (item: LibraryItemWithProgress, _index: number, isSelected: boolean) => {
-            const coverSrc = resolveDetailsCoverSrc(item, trackerCoverByLink[item.link]);
+            const coverSrc = resolveDetailsCoverSrc(item, Boolean(trackerCoverHintByLink[item.link]));
             const isChecked = selection.isSelected(item.link);
             const inSelectionMode = selection.isSelectionMode;
             const display = displayByLink[item.link];
@@ -411,7 +413,8 @@ const GalleryView: React.FC = () => {
             appSettings.galleryDisplayMode,
             selection,
             t,
-            trackerCoverByLink,
+            trackerCoverHintByLink,
+            coverCacheGeneration,
             displayByLink,
         ],
     );

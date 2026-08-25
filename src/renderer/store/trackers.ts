@@ -1,6 +1,8 @@
 import type { ItemTracker, TrackerProvider } from "@common/types/db";
 import type { DatabaseChannels } from "@common/types/ipc";
-import { createAsyncThunk, createSlice } from "@reduxjs/toolkit";
+import { createAction, createAsyncThunk, createSlice } from "@reduxjs/toolkit";
+import { trackerCoverAbsolutePath } from "@utils/libraryCover";
+import { cacheTrackerCoverFromUrl } from "@utils/libraryCoverService";
 import type { RootState } from ".";
 import { relocateLibraryItem } from "./library";
 
@@ -15,10 +17,13 @@ import { relocateLibraryItem } from "./library";
 type TrackersState = {
     /** All `item_trackers` rows (every provider). */
     entries: ItemTracker[];
+    /** Bumped after a tracker WebP is written so gallery/details re-read disk. */
+    coverCacheGeneration: number;
 };
 
 const initialState: TrackersState = {
     entries: [],
+    coverCacheGeneration: 0,
 };
 
 /** Loads every `item_trackers` row into `trackers.entries`. */
@@ -26,11 +31,33 @@ export const fetchAllTrackers = createAsyncThunk("trackers/fetchAll", async () =
     return await window.electron.invoke("db:trackers:getAll");
 });
 
+/** Signals that `covers/tracker-<id>.webp` was written so library views re-read disk. */
+export const trackerCoverCached = createAction("trackers/coverCached");
+
+/**
+ * Downloads a missing tracker cover after a row write so later offline views can use a local file.
+ * Skips when the tracker slot already exists (progress syncs must not re-download).
+ */
+const maybeCacheTrackerCover = async (
+    row: ItemTracker | null,
+    getState: () => unknown,
+    dispatch: (action: ReturnType<typeof trackerCoverCached>) => void,
+): Promise<void> => {
+    const url = row?.media?.coverImage?.trim();
+    const item = row ? (getState() as RootState).library?.items?.[row.itemLink] : undefined;
+    if (!row || !url || item?.id == null) return;
+    if (window.fs.isFile(trackerCoverAbsolutePath(item.id))) return;
+    const ok = await cacheTrackerCoverFromUrl(item.id, url);
+    if (ok) dispatch(trackerCoverCached());
+};
+
 /** Inserts or replaces a tracker row for one library path and provider. */
 export const upsertTracker = createAsyncThunk(
     "trackers/upsert",
-    async (args: DatabaseChannels["db:trackers:upsert"]["request"]) => {
-        return await window.electron.invoke("db:trackers:upsert", args);
+    async (args: DatabaseChannels["db:trackers:upsert"]["request"], { getState, dispatch }) => {
+        const row = await window.electron.invoke("db:trackers:upsert", args);
+        void maybeCacheTrackerCover(row, getState, dispatch);
+        return row;
     },
 );
 
@@ -46,8 +73,10 @@ export const removeTracker = createAsyncThunk(
 /** Writes cached media / list-state fields on an existing tracker row. */
 export const updateTrackerSnapshot = createAsyncThunk(
     "trackers/updateSnapshot",
-    async (args: DatabaseChannels["db:trackers:updateSnapshot"]["request"]) => {
-        return await window.electron.invoke("db:trackers:updateSnapshot", args);
+    async (args: DatabaseChannels["db:trackers:updateSnapshot"]["request"], { getState, dispatch }) => {
+        const row = await window.electron.invoke("db:trackers:updateSnapshot", args);
+        void maybeCacheTrackerCover(row, getState, dispatch);
+        return row;
     },
 );
 
@@ -84,6 +113,9 @@ const trackersSlice = createSlice({
             .addCase(updateTrackerSnapshot.fulfilled, (state, action) => {
                 upsertEntry(state, action.payload);
             })
+            .addCase(trackerCoverCached, (state) => {
+                state.coverCacheGeneration += 1;
+            })
             // keep tracker keys valid before db:tracker:change refetch finishes
             .addCase(relocateLibraryItem.fulfilled, (state, action) => {
                 const item = action.payload;
@@ -107,3 +139,6 @@ export const selectTracker = (
     itemLink
         ? state.trackers.entries.find((item) => item.itemLink === itemLink && item.provider === provider)
         : undefined;
+
+/** Generation counter so gallery/details re-resolve local tracker covers after a cache write. */
+export const selectTrackerCoverCacheGeneration = (state: RootState): number => state.trackers.coverCacheGeneration;

@@ -1,10 +1,16 @@
 import path from "node:path";
 import type { ItemTracker } from "@common/types/db";
 import { configureStore } from "@reduxjs/toolkit";
-import { onInvoke } from "@test/mocks/preload";
+import { onInvoke, stubFs } from "@test/mocks/preload";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import type { RootState } from ".";
-import trackersReducer, { removeTracker, selectTracker, updateTrackerSnapshot, upsertTracker } from "./trackers";
+import trackersReducer, {
+    removeTracker,
+    selectTracker,
+    trackerCoverCached,
+    updateTrackerSnapshot,
+    upsertTracker,
+} from "./trackers";
 
 const itemLink = path.join("library", "tracked");
 
@@ -27,7 +33,7 @@ const trackerRow = (patch: Partial<ItemTracker> = {}): ItemTracker => ({
 const makeStore = (entries: ItemTracker[] = []) =>
     configureStore({
         reducer: { trackers: trackersReducer },
-        preloadedState: { trackers: { entries } },
+        preloadedState: { trackers: { entries, coverCacheGeneration: 0 } },
     });
 
 describe("trackers thunks", () => {
@@ -69,11 +75,33 @@ describe("trackers thunks", () => {
         expect(store.getState().trackers.entries[0]?.media?.title).toBe("Cached");
         expect(store.getState().trackers.entries[0]?.media?.status).toBe("RELEASING");
     });
+
+    it("bumps coverCacheGeneration after a successful tracker cover download", async () => {
+        const row = trackerRow({ media: { coverImage: "https://example.test/c.jpg" } });
+        onInvoke("db:trackers:upsert", async () => row);
+        onInvoke("covers:materializeFromUrl", async () => ({ ok: true as const }));
+        stubFs({ isFile: () => false });
+        const store = configureStore({
+            reducer: {
+                trackers: trackersReducer,
+                library: (state = { items: { [itemLink]: { id: 42 } } }) => state,
+            },
+            preloadedState: {
+                trackers: { entries: [], coverCacheGeneration: 0 },
+                library: { items: { [itemLink]: { id: 42 } } },
+            },
+        });
+        await store.dispatch(upsertTracker({ itemLink, provider: "anilist", remoteId: "1" }));
+        await vi.waitFor(() => {
+            expect(store.getState().trackers.coverCacheGeneration).toBe(1);
+        });
+    });
 });
 
 describe("selectTracker", () => {
     /** Minimal root state so {@link selectTracker} can read `trackers.entries`. */
-    const asRoot = (entries: ItemTracker[]): RootState => ({ trackers: { entries } }) as RootState;
+    const asRoot = (entries: ItemTracker[]): RootState =>
+        ({ trackers: { entries, coverCacheGeneration: 0 } }) as RootState;
 
     it("returns the row for the library path and provider", () => {
         const row = trackerRow({ remoteId: "99" });
@@ -86,5 +114,13 @@ describe("selectTracker", () => {
 
     it("returns undefined when itemLink is missing", () => {
         expect(selectTracker(asRoot([trackerRow()]), undefined, "anilist")).toBeUndefined();
+    });
+});
+
+describe("trackerCoverCached", () => {
+    it("increments coverCacheGeneration", () => {
+        const store = makeStore();
+        store.dispatch(trackerCoverCached());
+        expect(store.getState().trackers.coverCacheGeneration).toBe(1);
     });
 });

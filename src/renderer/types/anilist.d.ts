@@ -25,10 +25,7 @@ declare namespace Anilist {
             day: number | null;
         };
         format: MediaFormat;
-        coverImage: {
-            medium: string;
-            large?: string | null;
-        };
+        coverImage: CoverImage;
         bannerImage?: string | null;
         siteUrl?: string | null;
         description?: string | null;
@@ -45,6 +42,15 @@ declare namespace Anilist {
         anilistMediaId: number;
     };
     type TrackStore = TrackItem[];
+
+    /** `MediaCoverImage` fields used for display and {@link TrackerMediaSnapshot.coverImage}. */
+    type CoverImage = {
+        extraLarge?: string | null;
+        large?: string | null;
+        medium?: string | null;
+        color?: string | null;
+    };
+
     /** AniList MediaListEntry payload (manga, novels, and other AniList `type: MANGA` formats). */
     type ListEntry = {
         id: number;
@@ -71,10 +77,7 @@ declare namespace Anilist {
                 romaji: string;
                 native: string;
             };
-            coverImage: {
-                medium: string;
-                large?: string | null;
-            };
+            coverImage: CoverImage;
             bannerImage: string;
             siteUrl: string;
             description?: string | null;

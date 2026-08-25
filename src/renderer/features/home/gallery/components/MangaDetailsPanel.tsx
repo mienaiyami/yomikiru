@@ -29,17 +29,23 @@ import {
     setLibraryItemNote,
     updateChaptersReadAll,
 } from "@store/library";
-import { selectTracker } from "@store/trackers";
+import { selectTracker, selectTrackerCoverCacheGeneration } from "@store/trackers";
 import dateUtils from "@utils/date";
 import { dialogUtils } from "@utils/dialog";
 import { formatUtils } from "@utils/file";
-import { libraryCoverSrc, parseDetailsCoverSource, resolveDetailsCoverSrc } from "@utils/libraryCover";
+import {
+    hasLocalTrackerCover,
+    hasTrackerCoverHint,
+    libraryCoverSrc,
+    parseDetailsCoverSource,
+    resolveDetailsCoverSrc,
+} from "@utils/libraryCover";
 import {
     materializeMangaLibraryThumbnail,
     pickAndApplyCustomCover,
     resetLibraryCoverToDefault,
 } from "@utils/libraryCoverService";
-import { resolveItemMetadata, toTrackerExternalRef } from "@utils/libraryMetadata";
+import { resolveItemMetadata } from "@utils/libraryMetadata";
 import {
     mangaPageForMissingKind,
     resolveMissingOpenPath,
@@ -107,6 +113,7 @@ const MangaDetailsPanel = ({
     const manga = library[mangaLink] as LibraryItemWithProgress & { type: "manga" };
     const overlays = useAppSelector((store) => selectItemMetadata(store, mangaLink));
     const tracker = useAppSelector((store) => selectTracker(store, mangaLink, "anilist"));
+    const coverCacheGeneration = useAppSelector(selectTrackerCoverCacheGeneration);
     /* book details uses the same overlay+tracker resolve; no shared hook until a third caller */
     const resolved = useMemo(
         () => (manga ? resolveItemMetadata({ item: manga, overlays, tracker }) : null),
@@ -609,8 +616,12 @@ const MangaDetailsPanel = ({
         })();
     }, [manga, mangaLink, openInReader, pathMissing]);
 
-    const coverArtSrc = manga ? resolveDetailsCoverSrc(manga, tracker?.media?.coverImage) : "";
-    const trackerCoverAvailable = Boolean(tracker?.media?.coverImage?.trim());
+    const coverHint = hasTrackerCoverHint(tracker?.media?.coverImage);
+    const coverArtSrc = useMemo(
+        () => (manga ? resolveDetailsCoverSrc(manga, coverHint) : ""),
+        [manga, coverHint, coverCacheGeneration],
+    );
+    const trackerCoverAvailable = Boolean(manga && hasLocalTrackerCover(manga.id));
     const title = manga?.title || t("gallery.details.unknownManga");
     const mangaProgress = manga?.type === "manga" ? manga.progress : null;
     const currentChapterLink =
@@ -663,7 +674,7 @@ const MangaDetailsPanel = ({
                     coverSrc={coverArtSrc}
                     coverAlt={resolved?.title || manga?.title || t("gallery.details.coverAlt")}
                     trackerCoverAvailable={Boolean(manga) && trackerCoverAvailable}
-                    coverSource={parseDetailsCoverSource(manga?.extra, tracker?.media?.coverImage)}
+                    coverSource={parseDetailsCoverSource(manga?.extra, coverHint)}
                     onCoverSourceChange={
                         manga
                             ? (source) => {
@@ -675,7 +686,7 @@ const MangaDetailsPanel = ({
                     onCoverContextMenu={handleLibraryRootContextMenu}
                     description={resolved?.description}
                     genres={resolved?.genres}
-                    trackerExternal={toTrackerExternalRef(tracker)}
+                    tracker={tracker ?? null}
                     trackerMedia={
                         resolved
                             ? {

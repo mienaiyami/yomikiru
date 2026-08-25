@@ -1,3 +1,4 @@
+import { decodePercentEncodedDataUrl, isAbsoluteHttpUrl } from "@common/http";
 import type { LibraryItem } from "@common/types/db";
 import i18n from "@renderer/i18n";
 import type { AppDispatch } from "@store/index";
@@ -402,4 +403,20 @@ export const ensurePdfLibraryCover = async (
             });
         }
     }
+};
+
+/**
+ * Writes a tracker cover into the tracker slot WebP (`covers/tracker-<id>.webp`).
+ * Accepts http(s) URLs and percent-encoded `data:` URLs (color SVG snapshots). Failures are logged, not dialogs.
+ *
+ * @returns whether main wrote the tracker WebP
+ */
+export const cacheTrackerCoverFromUrl = async (libraryId: number, url: string): Promise<boolean> => {
+    if (!isAbsoluteHttpUrl(url) && decodePercentEncodedDataUrl(url) === null) return false;
+    const result = await window.electron.invoke("covers:materializeFromUrl", { libraryId, url });
+    if (!result.ok) {
+        log.warn("cache tracker cover failed", { libraryId, url, message: result.message });
+        return false;
+    }
+    return true;
 };

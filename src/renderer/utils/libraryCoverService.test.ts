@@ -8,6 +8,7 @@ const { renderPDF } = vi.hoisted(() => ({ renderPDF: vi.fn(async () => []) }));
 vi.mock("@utils/pdf", () => ({ renderPDF }));
 
 import {
+    cacheTrackerCoverFromUrl,
     ensurePdfLibraryCover,
     maybePromptPost0001LibraryThumbnails,
     regenerateLibraryThumbnails,
@@ -259,5 +260,23 @@ describe("maybePromptPost0001LibraryThumbnails", () => {
         await run;
 
         expect(materialize).not.toHaveBeenCalled();
+    });
+});
+
+describe("cacheTrackerCoverFromUrl", () => {
+    afterEach(() => {
+        vi.restoreAllMocks();
+    });
+
+    it("skips junk strings and materializes http(s) and percent-encoded data URLs", async () => {
+        const materialize = vi.fn(async () => ({ ok: true as const }));
+        onInvoke("covers:materializeFromUrl", materialize);
+
+        await expect(cacheTrackerCoverFromUrl(1, "not-a-url")).resolves.toBe(false);
+        expect(materialize).not.toHaveBeenCalled();
+
+        await expect(cacheTrackerCoverFromUrl(1, "https://example.test/a.jpg")).resolves.toBe(true);
+        await expect(cacheTrackerCoverFromUrl(1, "data:image/svg+xml,x")).resolves.toBe(true);
+        expect(materialize).toHaveBeenCalledTimes(2);
     });
 });

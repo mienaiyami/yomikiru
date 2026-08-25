@@ -31,6 +31,7 @@ const emptyAnilist = {
 
 const emptyTrackers = {
     entries: [] as [],
+    coverCacheGeneration: 0,
 };
 
 /**

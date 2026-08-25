@@ -1,4 +1,4 @@
-import type { ItemTracker, LibraryItem, LibraryItemMetadata, TrackerProvider } from "@common/types/db";
+import type { ItemTracker, LibraryItem, LibraryItemMetadata } from "@common/types/db";
 
 /**
  * Display metadata after applying user > tracker > file > library-item base.
@@ -116,14 +116,26 @@ export const hasTrackerMediaFacts = (resolved: TrackerMediaFacts): boolean =>
     );
 
 /**
+ * Canonical media page URL for a tracker row.
+ * Prefers stored {@link ItemTracker.remoteUrl}; otherwise builds from {@link ItemTracker.provider} and {@link ItemTracker.remoteId}.
+ *
+ * @returns null when neither a stored URL nor a remote id is usable
+ */
+export const trackerMediaHref = (
+    tracker: Pick<ItemTracker, "provider" | "remoteId" | "remoteUrl">,
+): string | null => {
+    const stored = tracker.remoteUrl?.trim();
+    if (stored) return stored;
+    return trackerMediaPageUrl(tracker.provider, tracker.remoteId);
+};
+
+/**
  * Canonical media page URL for a tracker binding from provider slug and remote id.
- * Rebuilds the URL instead of trusting a cached {@link ItemTracker.remoteUrl} so a stale
- * snapshot still opens the right page.
  *
  * @returns null when remote id is empty
  */
 export const trackerMediaPageUrl = (
-    provider: TrackerProvider,
+    provider: ItemTracker["provider"],
     remoteId: string | null | undefined,
 ): string | null => {
     const id = remoteId?.trim();
@@ -140,9 +152,11 @@ export const trackerMediaPageUrl = (
 
 /**
  * Home-gallery `details` label key for the open-on-tracker link above About.
- * Exhaustive on {@link TrackerProvider} so a new provider must add a key here.
+ * Exhaustive on {@link ItemTracker.provider} so a new provider must add a key here.
  */
-export const trackerExternalOpenLabelKey = (provider: TrackerProvider): "gallery.details.openOnAnilist" => {
+export const trackerExternalOpenLabelKey = (
+    provider: ItemTracker["provider"],
+): "gallery.details.openOnAnilist" => {
     switch (provider) {
         case "anilist":
             return "gallery.details.openOnAnilist";
@@ -151,23 +165,6 @@ export const trackerExternalOpenLabelKey = (provider: TrackerProvider): "gallery
             return _exhaustive;
         }
     }
-};
-
-/** Provider + remote id for opening the tracker media page from details. */
-export type TrackerExternalRef = {
-    provider: TrackerProvider;
-    remoteId: string;
-};
-
-/**
- * Builds a details external-link ref when the tracker row has a non-empty remote id.
- */
-export const toTrackerExternalRef = (
-    tracker: Pick<ItemTracker, "provider" | "remoteId"> | null | undefined,
-): TrackerExternalRef | null => {
-    const remoteId = tracker?.remoteId?.trim();
-    if (!tracker || !remoteId) return null;
-    return { provider: tracker.provider, remoteId };
 };
 
 /**

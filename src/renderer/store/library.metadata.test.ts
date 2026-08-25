@@ -183,7 +183,7 @@ describe("selectResolvedItemMetadata", () => {
                     loading: false,
                     error: null,
                 },
-                trackers: { entries: [] },
+                trackers: { entries: [], coverCacheGeneration: 0 },
             },
         });
         const resolved = selectResolvedItemMetadata(
@@ -205,7 +205,7 @@ describe("selectResolvedItemMetadata", () => {
                     loading: false,
                     error: null,
                 },
-                trackers: { entries: [] },
+                trackers: { entries: [], coverCacheGeneration: 0 },
             },
         });
         const state = store.getState() as Parameters<typeof selectResolvedItemMetadata>[0];

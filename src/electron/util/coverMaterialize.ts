@@ -2,6 +2,7 @@ import fs from "node:fs";
 import { createRequire } from "node:module";
 import path from "node:path";
 import type { Readable } from "node:stream";
+import { type ManagedCoverSlot, managedCoverFileName } from "@common/library/covers";
 import type { CoverOpResult } from "@common/types/ipc";
 import { app } from "electron";
 import { createMainLogger } from "./logger";
@@ -36,67 +37,82 @@ export const getCoversDirectoryAbsolute = (): string => {
 };
 
 /**
- * @returns Absolute path to the canonical materialized WebP file for a given library row id.
+ * Absolute path under the covers directory for {@link managedCoverFileName}.
  */
-export const coverFilePathForLibraryId = (libraryId: number): string => {
-    return path.join(getCoversDirectoryAbsolute(), `${libraryId}.webp`);
+export const coverFilePathForLibraryId = (libraryId: number, slot: ManagedCoverSlot = "library"): string => {
+    return path.join(getCoversDirectoryAbsolute(), managedCoverFileName(libraryId, slot));
 };
 
 /**
- * Reads a source image from disk, resizes to fit within {@link MAX_EDGE} (preserving aspect), encodes WebP, and writes `userData/covers/<libraryId>.webp`.
+ * Resizes to fit within {@link MAX_EDGE} (preserving aspect), encodes WebP, and writes the slot file.
  *
  * TODO: offload to a dedicated main-process worker thread when batch or large-library work becomes noticeable.
+ */
+const writeManagedCover = async (
+    libraryId: number,
+    input: string | Buffer | Readable,
+    slot: ManagedCoverSlot,
+): Promise<CoverOpResult> => {
+    try {
+        fs.mkdirSync(getCoversDirectoryAbsolute(), { recursive: true });
+        const outAbs = coverFilePathForLibraryId(libraryId, slot);
+        const applyWebp = (instance: ReturnType<typeof sharp>) =>
+            instance
+                .rotate()
+                .resize(MAX_EDGE, MAX_EDGE, { fit: "inside", withoutEnlargement: true })
+                .webp({ quality: WEBP_QUALITY });
+        if (typeof input === "string" || Buffer.isBuffer(input)) {
+            await applyWebp(sharp(input)).toFile(outAbs);
+        } else {
+            await new Promise<void>((resolve, reject) => {
+                const transformer = applyWebp(sharp());
+                input.once("error", reject);
+                transformer.once("error", reject);
+                input
+                    .pipe(transformer)
+                    .toFile(outAbs)
+                    .then(() => resolve(), reject);
+            });
+        }
+        return { ok: true };
+    } catch (e) {
+        const msg = e instanceof Error ? e.message : String(e);
+        logger.error(`materializeCover failed libraryId=${libraryId} slot=${slot}`, msg);
+        return { ok: false, message: msg };
+    }
+};
+
+/**
+ * Reads a source image from disk and writes the library thumbnail slot.
  */
 export const materializeCoverFromSourcePath = async (
     libraryId: number,
     sourceAbsolutePath: string,
 ): Promise<CoverOpResult> => {
-    try {
-        if (!sourceAbsolutePath.trim()) {
-            return { ok: false, message: "empty source path" };
-        }
-        if (!fs.existsSync(sourceAbsolutePath) || !fs.statSync(sourceAbsolutePath).isFile()) {
-            return { ok: false, message: "source file missing" };
-        }
-        fs.mkdirSync(getCoversDirectoryAbsolute(), { recursive: true });
-        const outAbs = coverFilePathForLibraryId(libraryId);
-        await sharp(sourceAbsolutePath)
-            .rotate()
-            .resize(MAX_EDGE, MAX_EDGE, { fit: "inside", withoutEnlargement: true })
-            .webp({ quality: WEBP_QUALITY })
-            .toFile(outAbs);
-        return { ok: true };
-    } catch (e) {
-        const msg = e instanceof Error ? e.message : String(e);
-        logger.error(`materializeCover failed libraryId=${libraryId} src="${sourceAbsolutePath}"`, msg);
-        return { ok: false, message: msg };
+    if (!sourceAbsolutePath.trim()) {
+        return { ok: false, message: "empty source path" };
     }
+    if (!fs.existsSync(sourceAbsolutePath) || !fs.statSync(sourceAbsolutePath).isFile()) {
+        return { ok: false, message: "source file missing" };
+    }
+    return writeManagedCover(libraryId, sourceAbsolutePath, "library");
 };
 
 /**
- * Encodes an archive entry stream into the persistent cover cache without creating a temp image file.
+ * Encodes a raw image buffer into a managed cover slot (tracker remote art uses {@link ManagedCoverSlot} `tracker`).
+ */
+export const materializeCoverFromBuffer = async (
+    libraryId: number,
+    bytes: ArrayBuffer,
+    slot: ManagedCoverSlot,
+): Promise<CoverOpResult> => {
+    return writeManagedCover(libraryId, Buffer.from(new Uint8Array(bytes)), slot);
+};
+
+/**
+ * Encodes an archive entry stream into the library thumbnail slot without a temp image file.
  * The source stream is consumed before this promise resolves.
  */
 export const materializeCoverFromStream = async (libraryId: number, source: Readable): Promise<CoverOpResult> => {
-    try {
-        fs.mkdirSync(getCoversDirectoryAbsolute(), { recursive: true });
-        const outAbs = coverFilePathForLibraryId(libraryId);
-        await new Promise<void>((resolve, reject) => {
-            const transformer = sharp()
-                .rotate()
-                .resize(MAX_EDGE, MAX_EDGE, { fit: "inside", withoutEnlargement: true })
-                .webp({ quality: WEBP_QUALITY });
-            source.once("error", reject);
-            transformer.once("error", reject);
-            source
-                .pipe(transformer)
-                .toFile(outAbs)
-                .then(() => resolve(), reject);
-        });
-        return { ok: true };
-    } catch (e) {
-        const msg = e instanceof Error ? e.message : String(e);
-        logger.error(`materializeCover stream failed libraryId=${libraryId}`, msg);
-        return { ok: false, message: msg };
-    }
+    return writeManagedCover(libraryId, source, "library");
 };
