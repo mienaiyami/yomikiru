@@ -15,6 +15,7 @@
 
 # unreleased
 
+- fix: Reader Presets settings use memoized preset selectors so the panel no longer triggers unstable `useSelector` warnings or extra re-renders.
 - feat: AniList tracker covers are saved as `covers/tracker-<id>.webp` when a title is tracked or its snapshot is refreshed (details bar, progress sync). That file is separate from the library thumbnail and includes a solid-color image when AniList has no raster cover. Gallery tiles and details always use the local file (or the library cover if it is not there yet); AniList search and the AniList editor still show the remote image.
 - feat: AniList cover pick prefers extraLarge, then large, then medium, then a solid color when the API returns no image URL.
 - fix: Opening the app offline no longer pops AniList login/request error dialogs; only a rejected token warns.

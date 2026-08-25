@@ -5,6 +5,8 @@ import {
     addBookPresets,
     addMangaPresets,
     deleteReaderPresetWithFallback,
+    getBookPresets,
+    getMangaPresets,
     movePreset,
     resetReaderPresetsToDefaults,
     selectReaderPreset,
@@ -18,17 +20,18 @@ import { navigateToSetting } from "../utils/navigateToSetting";
 
 const log = createRendererLogger("settings/GeneralReaderPresetsSettings");
 
-type PresetActionsRowProps = {
+type PresetActionsRowViewProps = {
     type: "manga" | "book";
     title: string;
+    presets: Array<MangaReaderPreset | BookReaderPreset>;
+    currentPresetId: string;
 };
 
-const PresetActionsRow = ({ type, title }: PresetActionsRowProps) => {
+/**
+ * Shared reader-preset list UI (reorder, select, export/import, copy). Wired by manga/book settings rows.
+ */
+const PresetActionsRowView = ({ type, title, presets, currentPresetId }: PresetActionsRowViewProps) => {
     const { t } = useTranslation("settings");
-    const presets = useAppSelector((s) => s.readerPresets.presets.filter((p) => p.type === type));
-    const currentPresetId = useAppSelector(
-        (s) => s.appSettings[type === "manga" ? "mangaReaderPresetId" : "bookReaderPresetId"],
-    );
     const dispatch = useAppDispatch();
     return (
         <div className="col">
@@ -182,6 +185,20 @@ const PresetActionsRow = ({ type, title }: PresetActionsRowProps) => {
     );
 };
 
+/** Manga preset list row; subscribes only to {@link getMangaPresets}. */
+const MangaPresetActionsRow = () => {
+    const presets = useAppSelector(getMangaPresets);
+    const currentPresetId = useAppSelector((s) => s.appSettings.mangaReaderPresetId);
+    return <PresetActionsRowView type="manga" title="Manga" presets={presets} currentPresetId={currentPresetId} />;
+};
+
+/** Book preset list row; subscribes only to {@link getBookPresets}. */
+const BookPresetActionsRow = () => {
+    const presets = useAppSelector(getBookPresets);
+    const currentPresetId = useAppSelector((s) => s.appSettings.bookReaderPresetId);
+    return <PresetActionsRowView type="book" title="Book" presets={presets} currentPresetId={currentPresetId} />;
+};
+
 /**
  * Reader presets: reset defaults, manga/book export/import/share.
  */
@@ -244,8 +261,8 @@ const GeneralReaderPresetsSettings: React.FC = () => {
                     </button>
                     <button onClick={handleSavePresetFromClipboard}>{t("readerPresets.saveFromClipboard")}</button>
                 </div>
-                <PresetActionsRow type="manga" title="Manga" />
-                <PresetActionsRow type="book" title="Book" />
+                <MangaPresetActionsRow />
+                <BookPresetActionsRow />
             </div>
         </div>
     );
