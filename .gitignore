@@ -18,3 +18,5 @@ test-results
 # Dev-only demo library (populated by `pnpm demo:setup`; never ship)
 /demo/**
 !/demo/.gitkeep
+.agents
+build.cmd
