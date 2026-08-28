@@ -16,6 +16,8 @@
 # unreleased
 
 - fix: Space works in gallery **Edit metadata** fields and on the dialog buttons. Typing in those fields or the details item note no longer runs window shortcuts such as Home. (#537)
+- fix: Next/previous manga chapter (shortcut or side-list buttons) opens at the first page instead of keeping the previous chapter's page. Continue and bookmarks still restore their stored page. (#536)
+- fix: Opening a manga chapter at a stored page (Continue, bookmark) no longer flashes the first page while images finish loading.
 
 - fix: Reader Presets settings use memoized preset selectors so the panel no longer triggers unstable `useSelector` warnings or extra re-renders.
 - feat: AniList tracker covers are saved as `covers/tracker-<id>.webp` when a title is tracked or its snapshot is refreshed (details bar, progress sync). That file is separate from the library thumbnail and includes a solid-color image when AniList has no raster cover. Gallery tiles and details always use the local file (or the library cover if it is not there yet); AniList search and the AniList editor still show the remote image.

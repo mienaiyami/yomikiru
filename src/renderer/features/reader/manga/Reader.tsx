@@ -88,6 +88,16 @@ const Reader: React.FC = () => {
     const [currentImageRow, setCurrentImageRow] = useState(1);
     const currentPageNumberRef = useRef(1);
     const currentImageRowRef = useRef(1);
+    /*
+     * Manga Reader stays mounted across chapters. Live page state (`currentPageNumber` /
+     * `currentPageNumberRef`) tracks the viewport and is rewritten by changePageNumber, so it
+     * cannot be the chapter-open target. `chapterOpenPageRef` holds reader.mangaPageNumber
+     * (next/prev first page, Continue/bookmark stored page) until scrollToPage has used it.
+     * `pendingChapterOpenScrollRef` blocks viewport detection until that scroll; otherwise a
+     * leftover scroller or a missed `[data-pagenumber]` query restores the previous chapter page.
+     */
+    const chapterOpenPageRef = useRef(1);
+    const pendingChapterOpenScrollRef = useRef(true);
 
     const [chapterChangerDisplay, setChapterChangerDisplay] = useState(false);
     const [wasMaximized, setWasMaximized] = useState(false);
@@ -143,7 +153,7 @@ const Reader: React.FC = () => {
 
     const scrollToPage = (pageNumber: number, behavior: ScrollBehavior = "smooth", callback?: () => void) => {
         if (readerRef.current) {
-            if (pageNumber >= 1 && pageNumber <= (mangaTotalPages || 1)) {
+            if (pageNumber >= 1 && pageNumber <= (mangaTotalPages || images.length || 1)) {
                 const imgElem = document.querySelector(`#reader .imgCont [data-pagenumber='${pageNumber}']`);
                 if ([1, 2].includes(appSettings.readerSettings.readerTypeSelected)) {
                     const rowNumber = parseInt(imgElem?.parentElement?.getAttribute("data-imagerow") || "1");
@@ -192,13 +202,6 @@ const Reader: React.FC = () => {
     useEffect(() => {
         readerRef.current?.focus();
     }, [isReaderOpen]);
-    useEffect(() => {
-        if (!isLoadingManga) {
-            setTimeout(() => {
-                scrollToPage(currentPageNumber, "auto");
-            }, 100);
-        }
-    }, [isLoadingManga]);
     useEffect(() => {
         if ((zenMode && !window.electron.currentWindow.isMaximized()) || (!zenMode && !wasMaximized)) {
             setTimeout(() => {
@@ -562,6 +565,8 @@ const Reader: React.FC = () => {
      * so mid-page scroll does not re-render the reader image tree.
      */
     const changePageNumber = () => {
+        // skip until the chapter-open scroll so leftover DOM does not keep the previous page
+        if (isLoadingManga || pendingChapterOpenScrollRef.current) return;
         if (imgContRef.current) {
             const elem = document.elementFromPoint(
                 imgContRef.current.clientWidth / 2 + imgContRef.current.offsetLeft,
@@ -624,19 +629,18 @@ const Reader: React.FC = () => {
         if (readerRef.current) readerRef.current.scrollTop = 0;
     };
     /**
-     * Check if directory `link` have images or not.
-     * If any image is found then load images otherwise keep linkInReader same as before.
-     * @param link Local link of folder containing images.
-     * @example
-     * "D://manga/chapter/"
+     * Load images for `options.link` when the folder is valid.
+     * `options.page` is reader `mangaPageNumber` (chapter-open target). The manga Reader stays
+     * mounted across chapters, so this applies that target before leftover viewport detection runs.
      */
     const checkForImgsAndLoad = (options: { link: string; page: number }) => {
+        const page = options.page >= 1 ? options.page : 1;
+        chapterOpenPageRef.current = page;
+        pendingChapterOpenScrollRef.current = true;
+        currentPageNumberRef.current = page;
+        setCurrentPageNumber(page);
         if (window.cachedImageList?.link === options.link && window.cachedImageList.images) {
-            // console.log("using cached image list for " + link);
-            const page = options.page || 1;
-            currentPageNumberRef.current = page;
-            setCurrentPageNumber(page);
-            loadImgs(options.link, window.cachedImageList.images);
+            loadImgs(options.link, window.cachedImageList.images, page);
             window.cachedImageList = { link: "", images: [] };
             return;
         }
@@ -646,19 +650,20 @@ const Reader: React.FC = () => {
             showLoading: false,
         }).then((result) => {
             if (result.isValid && result.images) {
-                const page = options.page || 1;
-                currentPageNumberRef.current = page;
-                setCurrentPageNumber(page);
-                loadImgs(options.link, result.images);
+                loadImgs(options.link, result.images, page);
+            } else {
+                pendingChapterOpenScrollRef.current = false;
             }
         });
     };
-    const loadImgs = async (link: string, imgs: string[]) => {
+    /**
+     * Replace the image list and persist open progress for `page` (chapter-open target).
+     */
+    const loadImgs = async (link: string, imgs: string[], page: number) => {
         link = window.path.normalize(link);
         if (link[link.length - 1] === window.path.sep) link = link.substring(0, link.length - 1);
-        //mark, reset
         setImages([]);
-        if (pageNumberInputRef.current) pageNumberInputRef.current.value = "1";
+        if (pageNumberInputRef.current) pageNumberInputRef.current.value = String(page);
         currentImageRowRef.current = 1;
         setCurrentImageRow(1);
         setImageData([]);
@@ -667,10 +672,7 @@ const Reader: React.FC = () => {
         setUpdatedAnilistProgress(false);
         setCurrentlyDecoding(false);
         setChapterChangerDisplay(false);
-        /**
-         * adding this here will make options.page work even when dynamic loading is enabled
-         * check useLayoutEffect [isLoadingManga] above
-         */
+        /* overlay stays until the imageRow open-scroll so a stored page does not flash page 1 */
         dispatch(
             setReaderLoading({
                 percent: 0.1,
@@ -683,7 +685,7 @@ const Reader: React.FC = () => {
             openedPath: link,
             libraryItem: mangaItem,
             images: imgs,
-            currentPage: mangaOpenPage || 1,
+            currentPage: page,
         });
         setImages(imgs);
         dispatch(setReaderOpen());
@@ -691,7 +693,6 @@ const Reader: React.FC = () => {
     useLayoutEffect(() => {
         // window.electron.webFrame.clearCache();
         const dynamic = appSettings.readerSettings.dynamicLoading;
-
         const isWide = (width: number, height: number) => {
             const ratio = height / width;
             /**
@@ -703,13 +704,16 @@ const Reader: React.FC = () => {
         };
 
         const onProgress = (loaded: number) => {
-            if (loaded === images.length) dispatch(setReaderLoading(null));
-            else
-                dispatch(
-                    setReaderLoading({
-                        percent: 10 + Math.round((loaded / images.length) * 90),
-                    }),
-                );
+            if (loaded === images.length) {
+                // last image: keep overlay while pending so the open-scroll can run first
+                if (!pendingChapterOpenScrollRef.current) dispatch(setReaderLoading(null));
+                return;
+            }
+            dispatch(
+                setReaderLoading({
+                    percent: 10 + Math.round((loaded / images.length) * 90),
+                }),
+            );
         };
         let imagesLoaded = 0;
         images.forEach((imgURL, i) => {
@@ -820,6 +824,24 @@ const Reader: React.FC = () => {
                 });
             });
     }, [imageRow]);
+    /*
+     * Open-scroll after row commit and the canvas-attach effect above. scrollToPage queries
+     * `[data-pagenumber]`, which is not reliably in the layout tree in the same turn, so we
+     * yield one macrotask. Cleanup reschedules if imageRow is replaced before that runs.
+     * Overlay stays until then so a stored page does not paint the first page first.
+     */
+    useEffect(() => {
+        if (!pendingChapterOpenScrollRef.current || imageRow.length === 0) return;
+        const page = chapterOpenPageRef.current;
+        const timeoutId = window.setTimeout(() => {
+            scrollToPage(page, "auto");
+            pendingChapterOpenScrollRef.current = false;
+            dispatch(setReaderLoading(null));
+        }, 1);
+        return () => {
+            window.clearTimeout(timeoutId);
+        };
+    }, [imageRow]);
     useLayoutEffect(() => {
         if (images.length > 0 && images.length === imageData.length) {
             imageData.sort((a, b) => a.index - b.index);
@@ -887,8 +909,9 @@ const Reader: React.FC = () => {
         if (!linkInReader) return;
         checkForImgsAndLoad({
             link: linkInReader,
-            page: mangaOpenPage || 1,
+            page: mangaOpenPage && mangaOpenPage >= 1 ? mangaOpenPage : 1,
         });
+        /* mangaOpenPage comes from the same setReaderState as link (open target, not scroll progress) */
     }, [linkInReader]);
 
     useLayoutEffect(() => {

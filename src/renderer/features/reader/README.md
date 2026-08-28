@@ -74,7 +74,7 @@ reader: {
   loading: string | null        // null = not loading, string = what is being loaded
   link: string                  // current file/folder path
   type: "manga" | "book" | null
-  mangaPageNumber: number       // for manga: current 1-based page
+  mangaPageNumber: number       // chapter-open page target (not live scroll progress)
   content: {
     type: "manga" | "book"
     title: string
@@ -152,7 +152,7 @@ After loading images (`checkForImgsAndLoad`):
 
 ### Chapter Navigation
 
-- Previous / next chapter: navigates within the sibling list (`prevNextChapter` Redux slice).
+- Previous / next chapter: `setReaderState` on the sibling path with `mangaPageNumber` 1 (chapter-open target). Manga `Reader` stays mounted, so live page state still reflects the previous viewport. A dedicated open-page ref plus a pending flag apply that target after `imageRow` (and canvas attach) exists and `[data-pagenumber]` is queryable; viewport detection stays off until then. The loading overlay stays up until that scroll so Continue / bookmarks do not flash page 1.
 - Chapter list comes from the manga root directory sorted by the configured sort method.
 - **Random chapter** (`r` key): picks a chapter from the list, biased away from the last `RECENT_CHAPTERS_SIZE = 10` recently-opened chapters.
 - **Shuffle mode**: session-only full shuffle of the chapter list; prev/next follows the shuffled order until shuffle is disabled.
