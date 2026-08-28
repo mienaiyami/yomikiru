@@ -65,6 +65,21 @@ export const SHORTCUT_COMMAND_MAP = [
         defaultKeys: ["slash", "ctrl+shift+f"],
     },
     {
+        command: "deletePage" as const,
+        name: "shortcutNames.deletePage",
+        defaultKeys: ["delete"],
+    },
+    {
+        command: "deleteFolder" as const,
+        name: "shortcutNames.deleteFolder",
+        defaultKeys: ["ctrl+shift+delete"],
+    },
+    {
+        command: "focusSideListSearch" as const,
+        name: "shortcutNames.focusSideListSearch",
+        defaultKeys: ["ctrl+shift+f"],
+    },
+    {
         command: "randomChapter" as const,
         name: "shortcutNames.randomChapter",
         defaultKeys: ["r"],
@@ -152,7 +167,7 @@ export const SHORTCUT_COMMAND_MAP = [
     {
         command: "selectReaderMode2" as const,
         name: "shortcutNames.selectReaderMode2",
-        defaultKeys: [],
+        defaultKeys: ["ctrl+0"],
     },
     {
         command: "selectPagePerRow1" as const,

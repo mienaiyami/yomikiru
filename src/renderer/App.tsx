@@ -625,6 +625,7 @@ const App = (): ReactElement => {
                     dispatch(toggleSettingsOpen());
                     break;
                 case i(shortcutsMapped.uiSizeReset):
+                    if (isReaderOpen) break;
                     e.preventDefault();
                     window.electron.webFrame.setZoomFactor(1);
                     afterUIScale();

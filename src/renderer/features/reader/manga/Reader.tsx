@@ -8,6 +8,7 @@ import { cyclePresetNext, cyclePresetPrev, selectPresetSlot } from "@store/reade
 import { updateTrackerSnapshot } from "@store/trackers";
 import { setAnilistListProgress, toAnilistTrackerSnapshotUpdate } from "@utils/anilist";
 import { processChapterNumber } from "@utils/chapterUtils";
+import { dialogUtils } from "@utils/dialog";
 import { fileSrcToImagePath, formatUtils } from "@utils/file";
 import { keyFormatter, mouseEventFormatter } from "@utils/keybindings";
 import { syncMangaLibraryOnReaderOpen } from "@utils/libraryMissingPath";
@@ -25,7 +26,7 @@ const SCROLLBAR_THRESHOLD = 20;
 const log = createRendererLogger("manga/Reader");
 
 const Reader: React.FC = () => {
-    const { pageNumberInputRef, validateDirectory, setContextMenuData } = useAppContext();
+    const { pageNumberInputRef, validateDirectory, setContextMenuData, closeReader } = useAppContext();
 
     // todo: create a slice for reader state and actions,
     // add things like sideList-states, scrollpos%, zenMode, prevNextChapter, currentPageNumber, currentImageRow,
@@ -113,6 +114,7 @@ const Reader: React.FC = () => {
     const readerRef = useRef<HTMLDivElement>(null);
     const imgContRef = useRef<HTMLDivElement>(null);
     const shortcutTextRef = useRef<HTMLDivElement>(null);
+    const isPageDeletionRef = useRef(false);
 
     useSmoothScroll(isSideListPinned ? imgContRef : readerRef);
 
@@ -368,6 +370,15 @@ const Reader: React.FC = () => {
                 case is(shortcutsMapped.prevChapter):
                     openPrevChapterRef.current?.click();
                     return true;
+                case is(shortcutsMapped.deletePage):
+                    handleDeletePage();
+                    return true;
+                case is(shortcutsMapped.deleteFolder):
+                    handleDeleteFolder();
+                    return true;
+                case is(shortcutsMapped.focusSideListSearch):
+                    sideListSearchRef.current?.focus();
+                    return true;
                 case is(shortcutsMapped.randomChapter):
                     openRandomChapterRef.current?.click();
                     return true;
@@ -542,7 +553,18 @@ const Reader: React.FC = () => {
             window.removeEventListener("keyup", onPointerUp);
             window.removeEventListener("mouseup", onPointerUp);
         };
-    }, [isSideListPinned, appSettings, shortcuts, isLoadingManga, isSettingOpen, isReaderOpen]);
+    }, [
+        isSideListPinned,
+        appSettings,
+        shortcuts,
+        isLoadingManga,
+        isSettingOpen,
+        isReaderOpen,
+        images,
+        currentPageNumber,
+        linkInReader,
+        prevNextChapter,
+    ]);
 
     const makeScrollPos = useCallback(() => {
         if (isSideListPinned && imgContRef.current)
@@ -604,6 +626,131 @@ const Reader: React.FC = () => {
         });
         if (readerRef.current) readerRef.current.scrollTop = 0;
     };
+    const handleDeletePage = async () => {
+        if (images.length === 0 || !linkInReader) return;
+        const currentIndex = Math.max(0, Math.min(currentPageNumber - 1, images.length - 1));
+        const imagePath = images[currentIndex];
+        if (!imagePath) return;
+
+        const res = await dialogUtils.confirm({
+            title: "Delete Page",
+            message: "Are you sure you want to delete this page?",
+            detail: `${window.path.basename(imagePath)}\n${imagePath}`,
+            noOption: false,
+            buttons: ["Yes", "No"],
+            defaultId: 1,
+            cancelId: 1,
+            type: "question",
+        });
+
+        if (res.response !== 0) return;
+
+        try {
+            await window.fs.rm(imagePath, { force: true });
+        } catch (err) {
+            if (err instanceof Error) dialogUtils.nodeError(err);
+            return;
+        }
+
+        setShortcutText("Page Deleted");
+
+        if (images.length <= 1) {
+            if (prevNextChapter.next && prevNextChapter.next !== "~") {
+                openNextChapterRef.current?.click();
+            } else if (prevNextChapter.prev && prevNextChapter.prev !== "~") {
+                openPrevChapterRef.current?.click();
+            } else {
+                closeReader();
+            }
+        } else {
+            const newImgs = images.filter((_, idx) => idx !== currentIndex);
+            const targetPage = Math.min(currentIndex + 1, newImgs.length);
+            const newImageData = imageData
+                .filter((e) => e.index !== currentIndex)
+                .map((e) => ({
+                    ...e,
+                    index: e.index > currentIndex ? e.index - 1 : e.index,
+                }));
+
+            isPageDeletionRef.current = true;
+            setImageData(newImageData);
+            setImages(newImgs);
+            setCurrentPageNumber(targetPage);
+            if (pageNumberInputRef.current) pageNumberInputRef.current.value = `${targetPage}`;
+
+            if (libraryItem && libraryItem.type === "manga") {
+                dispatch(
+                    updateReaderMangaCurrentPage({
+                        page: targetPage,
+                        totalPages: newImgs.length,
+                    }),
+                );
+            }
+
+            if ([1, 2].includes(appSettings.readerSettings.readerTypeSelected)) {
+                setTimeout(() => {
+                    scrollToPage(targetPage, "auto");
+                }, 50);
+            }
+        }
+    };
+
+    const handleDeleteFolder = async () => {
+        const chapterPath = linkInReader;
+        if (!chapterPath) return;
+
+        const res = await dialogUtils.confirm({
+            title: "Delete Chapter Folder",
+            message: "Are you sure you want to delete this chapter folder?",
+            detail: `${window.path.basename(chapterPath)}\n${chapterPath}`,
+            noOption: false,
+            buttons: ["Yes", "No"],
+            defaultId: 1,
+            cancelId: 1,
+            type: "question",
+        });
+
+        if (res.response !== 0) return;
+
+        const nextChapter = prevNextChapter.next;
+        const prevChapter = prevNextChapter.prev;
+
+        try {
+            await window.fs.rm(chapterPath, { recursive: true, force: true });
+        } catch (err) {
+            if (err instanceof Error) dialogUtils.nodeError(err);
+            return;
+        }
+
+        setShortcutText("Folder Deleted");
+
+        if (nextChapter && nextChapter !== "~") {
+            dispatch(
+                setReaderState({
+                    link: nextChapter,
+                    type: "manga",
+                    content: null,
+                    mangaPageNumber: 1,
+                    epubChapterId: "",
+                    epubElementQueryString: "",
+                }),
+            );
+        } else if (prevChapter && prevChapter !== "~") {
+            dispatch(
+                setReaderState({
+                    link: prevChapter,
+                    type: "manga",
+                    content: null,
+                    mangaPageNumber: 1,
+                    epubChapterId: "",
+                    epubElementQueryString: "",
+                }),
+            );
+        } else {
+            closeReader();
+        }
+    };
+
     const openNextPage = () => {
         if (currentImageRow >= imageRow.length) {
             if (
@@ -667,15 +814,16 @@ const Reader: React.FC = () => {
         setUpdatedAnilistProgress(false);
         setCurrentlyDecoding(false);
         setChapterChangerDisplay(false);
-        /**
-         * adding this here will make options.page work even when dynamic loading is enabled
-         * check useLayoutEffect [isLoadingManga] above
-         */
-        dispatch(
-            setReaderLoading({
-                percent: 0.1,
-            }),
-        );
+        const isPagedMode = [1, 2].includes(appSettings.readerSettings.readerTypeSelected);
+        if (!isPagedMode) {
+            dispatch(
+                setReaderLoading({
+                    percent: 0.1,
+                }),
+            );
+        } else {
+            dispatch(setReaderLoading(null));
+        }
 
         const mangaItem = libraryItem?.type === "manga" ? libraryItem : null;
         await syncMangaLibraryOnReaderOpen({
@@ -689,6 +837,24 @@ const Reader: React.FC = () => {
         dispatch(setReaderOpen());
     };
     useLayoutEffect(() => {
+        if (isPageDeletionRef.current) {
+            isPageDeletionRef.current = false;
+            return;
+        }
+        if (images.length === 0) return;
+
+        const isPagedMode = [1, 2].includes(appSettings.readerSettings.readerTypeSelected);
+        if (isPagedMode) {
+            const mappedData = images.map((imgURL, i) => ({
+                img: `file://${imgURL.replaceAll("#", "%23")}`,
+                index: i,
+                isWide: false,
+            }));
+            setImageData(mappedData);
+            dispatch(setReaderLoading(null));
+            return;
+        }
+
         // window.electron.webFrame.clearCache();
         const dynamic = appSettings.readerSettings.dynamicLoading;
 

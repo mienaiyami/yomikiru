@@ -1,6 +1,6 @@
 import { getDefaultLocationPath, planLocationsListLoad } from "@common/library/folders";
 import LocationListItem from "@features/home/classic/components/LocationListItem";
-import { faAngleUp, faSort } from "@fortawesome/free-solid-svg-icons";
+import { faAngleUp, faFolderOpen, faSort } from "@fortawesome/free-solid-svg-icons";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import ListNavigator from "@renderer/components/ListNavigator";
 import { PAGE_SEARCH_PRIORITY } from "@renderer/hooks/usePageSearchFocus";
@@ -245,6 +245,23 @@ const LocationsTab = (): ReactElement => {
         [currentLink, locations, openInReader, setCurrentLink],
     );
 
+    const handleBrowseFolder = async () => {
+        try {
+            const result = await window.electron.invoke("dialog:showOpenDialog", {
+                defaultPath: window.fs.existsSync(currentLink) ? currentLink : undefined,
+                properties: ["openDirectory"],
+            });
+            if (!result.canceled && result.filePaths && result.filePaths.length > 0) {
+                const selectedPath = window.path.normalize(result.filePaths[0]);
+                if (window.fs.existsSync(selectedPath) && window.fs.isDir(selectedPath)) {
+                    setCurrentLink(selectedPath);
+                }
+            }
+        } catch (err) {
+            log.error("Failed to browse folder", err);
+        }
+    };
+
     return (
         <div className="contTab listCont" id="locationTab">
             <ListNavigator.Provider
@@ -256,7 +273,17 @@ const LocationsTab = (): ReactElement => {
                 onSelect={handleSelect}
                 emptyMessage={t("classic.location.empty")}
             >
-                <h2>{t("classic.location.title")}</h2>
+                <h2>
+                    {t("classic.location.title")}
+                    <button
+                        className="browseFolderBtn"
+                        data-tooltip="Browse Folder"
+                        onClick={handleBrowseFolder}
+                        aria-label="Browse Folder"
+                    >
+                        <FontAwesomeIcon icon={faFolderOpen} />
+                    </button>
+                </h2>
                 <div className="tools">
                     <div className="row1">
                         <button
