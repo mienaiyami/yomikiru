@@ -424,6 +424,9 @@ const Usage = (): ReactElement => {
                             <b>{t("reader.sidelistSearch2.title")}</b> {t("reader.sidelistSearch2.body")}
                         </li>
                         <li>
+                            <b>{t("reader.sidelistPrevNext.title")}</b> {t("reader.sidelistPrevNext.body")}
+                        </li>
+                        <li>
                             <Trans
                                 i18nKey="reader.zenMode"
                                 ns="usage"

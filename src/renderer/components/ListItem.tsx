@@ -1,6 +1,6 @@
+import { useAppContext } from "@renderer/App";
 import type React from "react";
 import { useEffect, useRef, useState } from "react";
-import { useAppContext } from "src/renderer/App";
 
 export type ListItemProps = {
     /** whether the item is currently focused via keyboard navigation */

@@ -1,9 +1,9 @@
+import { useAppContext } from "@renderer/App";
 import ListItem from "@renderer/components/ListItem";
 import { useAppSelector } from "@store/hooks";
 import { formatUtils } from "@utils/file";
 import { memo } from "react";
 import { useTranslation } from "react-i18next";
-import { useAppContext } from "src/renderer/App";
 
 type ReaderSideListItemProps = {
     name: string;

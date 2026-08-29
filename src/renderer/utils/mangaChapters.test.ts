@@ -10,7 +10,16 @@ import {
 import { clampLibraryScanMaxDepth, LIBRARY_SCAN_MAX_DEPTH_CEILING } from "@common/types/libraryScan";
 import { stubFs } from "@test/mocks/preload";
 import { describe, expect, it } from "vitest";
-import { listMangaChapterChildren, rendererLibraryIo } from "./mangaChapters";
+import {
+    CHAPTER_NAV_NONE,
+    listMangaChapterChildren,
+    mangaChapterPathExists,
+    orderMangaChapterList,
+    pickChapterNavOpenPath,
+    rendererLibraryIo,
+    resolvePrevNextChapter,
+    selectChapterNavList,
+} from "./mangaChapters";
 
 const classifyLibraryNode = (absPath: string) => classifyLibraryNodeWith(rendererLibraryIo(), absPath);
 const collectLibraryScanTargets = (root: string, opts: Parameters<typeof collectLibraryScanTargetsWith>[2]) =>
@@ -74,6 +83,179 @@ describe("clampLibraryScanMaxDepth", () => {
         expect(clampLibraryScanMaxDepth(-1)).toBe(0);
         expect(clampLibraryScanMaxDepth(2.6)).toBe(3);
         expect(clampLibraryScanMaxDepth(LIBRARY_SCAN_MAX_DEPTH_CEILING + 5)).toBe(LIBRARY_SCAN_MAX_DEPTH_CEILING);
+    });
+});
+
+describe("selectChapterNavList", () => {
+    const full = ["a", "b", "c"];
+    const filtered = ["b"];
+
+    it("uses the full list while search is unpinned", () => {
+        expect(selectChapterNavList(full, filtered, { filterPinned: false, filterActive: true })).toBe(full);
+    });
+
+    it("uses the filtered list only while the pin is on and a filter is active", () => {
+        expect(selectChapterNavList(full, filtered, { filterPinned: true, filterActive: true })).toBe(filtered);
+        expect(selectChapterNavList(full, filtered, { filterPinned: true, filterActive: false })).toBe(full);
+        expect(selectChapterNavList(full, [], { filterPinned: true, filterActive: true })).toBe(full);
+    });
+});
+
+describe("resolvePrevNextChapter", () => {
+    const list = [{ link: "a" }, { link: "b" }, { link: "c" }];
+    const sorted = { inverseSort: false, shuffle: false };
+
+    it("returns none/none when the open path is empty or the list is empty", () => {
+        expect(resolvePrevNextChapter(list, "", sorted)).toEqual({
+            prev: CHAPTER_NAV_NONE,
+            next: CHAPTER_NAV_NONE,
+        });
+        expect(resolvePrevNextChapter([], "a", sorted)).toEqual({
+            prev: CHAPTER_NAV_NONE,
+            next: CHAPTER_NAV_NONE,
+        });
+    });
+
+    it("places a missing current path among name-sorted neighbors", () => {
+        expect(resolvePrevNextChapter(list, "z", sorted)).toEqual({ prev: "c", next: CHAPTER_NAV_NONE });
+        expect(
+            resolvePrevNextChapter([{ link: "ch01" }, { link: "ch02aaaa" }, { link: "ch03" }], "ch02", sorted),
+        ).toEqual({ prev: "ch01", next: "ch02aaaa" });
+    });
+
+    it("returns the neighbors of the open chapter", () => {
+        expect(resolvePrevNextChapter(list, "a", sorted)).toEqual({ prev: CHAPTER_NAV_NONE, next: "b" });
+        expect(resolvePrevNextChapter(list, "b", sorted)).toEqual({ prev: "a", next: "c" });
+        expect(resolvePrevNextChapter(list, "c", sorted)).toEqual({ prev: "b", next: CHAPTER_NAV_NONE });
+    });
+
+    it("swaps the pair for inverse sort unless shuffle owns the order", () => {
+        expect(resolvePrevNextChapter(list, "b", { inverseSort: true, shuffle: false })).toEqual({
+            prev: "c",
+            next: "a",
+        });
+        expect(resolvePrevNextChapter(list, "b", { inverseSort: true, shuffle: true })).toEqual({
+            prev: "a",
+            next: "c",
+        });
+    });
+});
+
+describe("orderMangaChapterList", () => {
+    const a = { link: "a", dateModified: 2 };
+    const b = { link: "b", dateModified: 1 };
+
+    it("keeps incoming name order and reverses for inverse", () => {
+        expect(orderMangaChapterList([a, b], { sortBy: "name", inverse: false }).map((x) => x.link)).toEqual([
+            "a",
+            "b",
+        ]);
+        expect(orderMangaChapterList([a, b], { sortBy: "name", inverse: true }).map((x) => x.link)).toEqual([
+            "b",
+            "a",
+        ]);
+    });
+
+    it("sorts by dateModified when sortBy is date", () => {
+        expect(orderMangaChapterList([a, b], { sortBy: "date", inverse: false }).map((x) => x.link)).toEqual([
+            "b",
+            "a",
+        ]);
+    });
+
+    it("keeps shuffled session order for links that still exist", () => {
+        const c = { link: "c", dateModified: 3 };
+        expect(
+            orderMangaChapterList([a, b, c], {
+                sortBy: "name",
+                inverse: false,
+                shuffled: [c, a, b],
+            }).map((x) => x.link),
+        ).toEqual(["c", "a", "b"]);
+        expect(
+            orderMangaChapterList([a, c], {
+                sortBy: "name",
+                inverse: false,
+                shuffled: [c, a, b],
+            }).map((x) => x.link),
+        ).toEqual(["c", "a"]);
+        expect(
+            orderMangaChapterList([a, b, c], {
+                sortBy: "name",
+                inverse: false,
+                shuffled: [c, a],
+            }).map((x) => x.link),
+        ).toEqual(["c", "a", "b"]);
+    });
+});
+
+describe("mangaChapterPathExists", () => {
+    it("is true for existing dirs and packed files, false for the none sentinel", () => {
+        const dir = path.join("testdata", "ch");
+        const packed = path.join("testdata", "ch.cbz");
+        stubFs({
+            existsSync: (p) => p === dir || p === packed,
+            isDir: (p) => p === dir,
+        });
+        expect(mangaChapterPathExists(dir)).toBe(true);
+        expect(mangaChapterPathExists(packed)).toBe(true);
+        expect(mangaChapterPathExists(CHAPTER_NAV_NONE)).toBe(false);
+        expect(mangaChapterPathExists("missing")).toBe(false);
+    });
+});
+
+describe("pickChapterNavOpenPath", () => {
+    const compareNames = (a: string, b: string) =>
+        a.localeCompare(b, undefined, { numeric: true, sensitivity: "base" });
+
+    it("returns the planned sibling when it still exists", async () => {
+        const exists = new Set(["a", "b", "c"]);
+        await expect(
+            pickChapterNavOpenPath({
+                list: [{ link: "a" }, { link: "b" }, { link: "c" }],
+                currentLink: "a",
+                direction: "next",
+                inverseSort: false,
+                shuffle: false,
+                compareNames,
+                pathExists: (p) => exists.has(p),
+                refreshList: async () => {
+                    throw new Error("refresh should not run");
+                },
+            }),
+        ).resolves.toBe("b");
+    });
+
+    it("rescans and opens the renamed sibling when the planned next is missing", async () => {
+        const exists = new Set(["a", "c", "b-renamed"]);
+        await expect(
+            pickChapterNavOpenPath({
+                list: [{ link: "a" }, { link: "b" }, { link: "c" }],
+                currentLink: "a",
+                direction: "next",
+                inverseSort: false,
+                shuffle: false,
+                compareNames,
+                pathExists: (p) => exists.has(p),
+                refreshList: async () => [{ link: "a" }, { link: "b-renamed" }, { link: "c" }],
+            }),
+        ).resolves.toBe("b-renamed");
+    });
+
+    it("uses name insertion when the current path is missing", async () => {
+        const exists = new Set(["a", "b-renamed", "c"]);
+        await expect(
+            pickChapterNavOpenPath({
+                list: [{ link: "a" }, { link: "b-renamed" }, { link: "c" }],
+                currentLink: "b",
+                direction: "next",
+                inverseSort: false,
+                shuffle: false,
+                compareNames,
+                pathExists: (p) => exists.has(p),
+                refreshList: async () => [{ link: "a" }, { link: "b-renamed" }, { link: "c" }],
+            }),
+        ).resolves.toBe("b-renamed");
     });
 });
 

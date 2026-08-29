@@ -12,6 +12,7 @@ import {
     faThumbtack,
 } from "@fortawesome/free-solid-svg-icons";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
+import { useAppContext } from "@renderer/App";
 import { ItemDisplayTitle } from "@renderer/components/ItemDisplayTitle";
 import ListNavigator from "@renderer/components/ListNavigator";
 import { PAGE_SEARCH_PRIORITY } from "@renderer/hooks/usePageSearchFocus";
@@ -19,23 +20,33 @@ import { setAppSettings } from "@store/appSettings";
 import { addBookmark, removeBookmark } from "@store/bookmarks";
 import { useAppDispatch, useAppSelector } from "@store/hooks";
 import { selectResolvedItemMetadata } from "@store/library";
-import { setReaderState } from "@store/reader";
 import { dialogUtils } from "@utils/dialog";
 import { formatUtils } from "@utils/file";
 import { createRendererLogger } from "@utils/logger";
-import { resolveMangaChapterPath } from "@utils/mangaChapterPath";
+import { normalizeMangaPathSegment, resolveMangaChapterPath } from "@utils/mangaChapterPath";
+import {
+    CHAPTER_NAV_NONE,
+    type ChapterNavDirection,
+    listMangaChapterChildren,
+    type MangaChapterChild,
+    mangaChapterPathExists,
+    orderMangaChapterList,
+    pickChapterNavOpenPath,
+    resolvePrevNextChapter,
+    selectChapterNavList,
+    shuffleArray,
+} from "@utils/mangaChapters";
 import { memo, useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 
 const log = createRendererLogger("manga/ReaderSideList");
 
 import { shallowEqual } from "react-redux";
-import { useAppContext } from "src/renderer/App";
 import AnilistBar from "../../../anilist/AnilistBar";
 import BookmarkList from "./BookmarkList";
 import ReaderSideListItem from "./ReaderSideListItem";
 
-type ChapterData = { name: string; pages: number; link: string; dateModified: number };
+type ChapterData = MangaChapterChild;
 
 const filterChapter = (filter: string, chapter: ChapterData) => {
     return new RegExp(filter, "ig").test(chapter.name);
@@ -48,16 +59,6 @@ const EMPTY_MANGA_BOOKMARKS: readonly MangaBookmark[] = [];
 
 /** Stable fallback prevents an unloaded manga from creating a new chapter history reference. */
 const EMPTY_CHAPTERS_READ: readonly string[] = [];
-
-/** Fisher-Yates shuffle. Returns new shuffled array. */
-function shuffleArray<T>(arr: T[]): T[] {
-    const result = [...arr];
-    for (let i = result.length - 1; i > 0; i--) {
-        const j = Math.floor(Math.random() * (i + 1));
-        [result[i], result[j]] = [result[j], result[i]];
-    }
-    return result;
-}
 
 const handleContextMenu = (elem: HTMLElement) => {
     elem.dispatchEvent(window.contextMenu.fakeEvent(elem));
@@ -79,7 +80,6 @@ const ReaderSideList = memo(
         setSideListPinned,
         setSideListWidth,
         makeScrollPos,
-        prevNextChapter,
         setPrevNextChapter,
     }: {
         openNextChapterRef: React.RefObject<HTMLButtonElement>;
@@ -92,8 +92,11 @@ const ReaderSideList = memo(
         setSideListPinned: React.Dispatch<React.SetStateAction<boolean>>;
         setSideListWidth: React.Dispatch<React.SetStateAction<number>>;
         makeScrollPos: () => void;
-        // todo: temp solution only, improve
-        prevNextChapter: { prev: string; next: string };
+        /**
+         * Pushes derived prev/next into the manga Reader for the chapter-changer labels.
+         * State (not a ref) so those labels re-render; siblings are computed here from the
+         * chapter list and open path, including while content is cleared on a chapter switch.
+         */
         setPrevNextChapter: React.Dispatch<React.SetStateAction<{ prev: string; next: string }>>;
     }) => {
         const { contextMenuData, openInReader, setContextMenuData, closeReader } = useAppContext();
@@ -147,36 +150,58 @@ const ReaderSideList = memo(
         const [filteredItemsFromList, setFilteredItemsFromList] = useState<ChapterData[]>([]);
         const [filterActive, setFilterActive] = useState(false);
         const recentChaptersRef = useRef<string[]>([]);
+        const chapterNavInFlightRef = useRef(false);
 
         const currentChapterPath = useMemo(() => {
-            if (!mangaProgressItemLink || !mangaChapterName) return "";
-            return resolveMangaChapterPath(mangaProgressItemLink, mangaChapterName);
-        }, [mangaChapterName, mangaProgressItemLink]);
+            if (mangaProgressItemLink && mangaChapterName) {
+                return resolveMangaChapterPath(mangaProgressItemLink, mangaChapterName);
+            }
+            // content is null during chapter switch; reader.link is already the target chapter
+            if (readerType === "manga" && readerLink) return normalizeMangaPathSegment(readerLink);
+            return "";
+        }, [mangaChapterName, mangaProgressItemLink, readerLink, readerType]);
 
-        const sortedLocations = useMemo(() => {
-            if (chapterData.length === 0) return [];
-            const sorted = [...chapterData].sort((a, b) => {
-                // chapterData is already sorted by name
-                if (appSettings.locationListSortBy === "date") return a.dateModified - b.dateModified;
-                return 0;
-            });
-
-            return appSettings.locationListSortType === "inverse" ? sorted.reverse() : sorted;
-        }, [chapterData, appSettings.locationListSortBy, appSettings.locationListSortType]);
+        const sortedLocations = useMemo(
+            () =>
+                orderMangaChapterList(chapterData, {
+                    sortBy: appSettings.locationListSortBy,
+                    inverse: appSettings.locationListSortType === "inverse",
+                }),
+            [appSettings.locationListSortBy, appSettings.locationListSortType, chapterData],
+        );
 
         const locationsToUse = isShuffleMode ? shuffledLocations : sortedLocations;
-        const effectiveListForNav =
-            filterActive && filteredItemsFromList.length > 0 ? filteredItemsFromList : locationsToUse;
+        // unpinned search is display-only; prev/next/random follow the pin
+        const effectiveListForNav = selectChapterNavList(locationsToUse, filteredItemsFromList, {
+            filterPinned: isSearchFixed,
+            filterActive,
+        });
+        const chapterNavSiblings = useMemo(
+            () =>
+                resolvePrevNextChapter(effectiveListForNav, currentChapterPath, {
+                    inverseSort: appSettings.locationListSortType === "inverse",
+                    shuffle: isShuffleMode,
+                    compareNames: (a, b) => window.app.betterSortOrder(a, b),
+                }),
+            [appSettings.locationListSortType, currentChapterPath, effectiveListForNav, isShuffleMode],
+        );
 
         useEffect(() => {
             if (!isShuffleMode) {
                 setShuffledLocations([]);
                 return;
             }
-            if (sortedLocations.length > 0) {
-                setShuffledLocations(shuffleArray(sortedLocations));
-            }
-        }, [isShuffleMode, sortedLocations]);
+            if (sortedLocations.length === 0) return;
+            /* keep session order across a rescan; empty prev means first shuffle or a full refresh */
+            setShuffledLocations((prev) => {
+                if (prev.length === 0) return shuffleArray(sortedLocations);
+                return orderMangaChapterList(sortedLocations, {
+                    sortBy: appSettings.locationListSortBy,
+                    inverse: appSettings.locationListSortType === "inverse",
+                    shuffled: prev,
+                });
+            });
+        }, [appSettings.locationListSortBy, appSettings.locationListSortType, isShuffleMode, sortedLocations]);
 
         useEffect(() => {
             if (currentChapterPath) {
@@ -205,89 +230,35 @@ const ReaderSideList = memo(
             }
         }, [isSideListPinned]);
 
-        useEffect(() => {
-            if (effectiveListForNav.length >= 0 && mangaContentLink) {
-                const index = effectiveListForNav.findIndex((e) => e.link === currentChapterPath);
-                const prevCh = index <= 0 ? "~" : effectiveListForNav[index - 1].link;
-                const nextCh = index >= effectiveListForNav.length - 1 ? "~" : effectiveListForNav[index + 1].link;
-                if (appSettings.locationListSortType === "inverse" && !isShuffleMode) {
-                    setPrevNextChapter({ prev: nextCh, next: prevCh });
-                } else {
-                    setPrevNextChapter({ prev: prevCh, next: nextCh });
-                }
-            }
-        }, [
-            effectiveListForNav,
-            appSettings.locationListSortType,
-            isShuffleMode,
-            mangaContentLink,
-            currentChapterPath,
-            setPrevNextChapter,
-        ]);
+        /* chapter-changer labels in Reader read this state; skip set when the pair is unchanged */
+        useLayoutEffect(() => {
+            setPrevNextChapter((init) =>
+                init.prev === chapterNavSiblings.prev && init.next === chapterNavSiblings.next
+                    ? init
+                    : chapterNavSiblings,
+            );
+        }, [chapterNavSiblings, setPrevNextChapter]);
 
-        /** Builds a child chapter list only for folder-backed series. */
-        const makeChapterList = useCallback(async () => {
-            recentChaptersRef.current = [];
+        /**
+         * Scans the series folder and returns the name-sorted chapter list.
+         * Does not clear random-chapter history; callers that mean a full refresh do that.
+         */
+        const scanMangaChapters = useCallback(async (): Promise<ChapterData[]> => {
             if (!mangaLink || !window.fs.isDir(mangaLink)) {
                 setChapterData([]);
-                return;
+                return [];
             }
 
             try {
-                const files = await window.fs.readdir(mangaLink);
-                const chapterPromises = files.map(async (fileName): Promise<ChapterData | null> => {
-                    try {
-                        const filePath = window.path.join(mangaLink, fileName);
-                        const stat = await window.fs.stat(filePath);
-
-                        if (stat.isDir) {
-                            try {
-                                const dirContents = await window.fs.readdir(filePath);
-                                const imageFiles = dirContents.filter((file) => formatUtils.image.test(file));
-
-                                if (imageFiles.length > 0) {
-                                    return {
-                                        name: fileName,
-                                        pages: imageFiles.length,
-                                        link: filePath,
-                                        dateModified: stat.mtimeMs,
-                                    };
-                                }
-                            } catch (err) {
-                                log.error(`readdir failed for "${filePath}"`, err);
-                            }
-                        } else if (formatUtils.mangaFile.test(filePath)) {
-                            return {
-                                name: fileName,
-                                pages: 0,
-                                link: filePath,
-                                dateModified: stat.mtimeMs,
-                            };
-                        }
-
-                        return null;
-                    } catch (err) {
-                        log.error(`could not stat or read "${fileName}"`, err);
-                        return null;
-                    }
-                });
-
-                const results = await Promise.allSettled(chapterPromises);
-                const validChapters = results
-                    .filter(
-                        (result): result is PromiseFulfilledResult<ChapterData> =>
-                            result.status === "fulfilled" && result.value !== null,
-                    )
-                    .map((result) => result.value);
-
-                setChapterData(
-                    validChapters.sort((a, b) =>
-                        window.app.betterSortOrder(
-                            formatUtils.files.getName(a.name),
-                            formatUtils.files.getName(b.name),
-                        ),
+                const children = await listMangaChapterChildren(mangaLink);
+                const sorted = [...children].sort((a, b) =>
+                    window.app.betterSortOrder(
+                        formatUtils.files.getName(a.name),
+                        formatUtils.files.getName(b.name),
                     ),
                 );
+                setChapterData(sorted);
+                return sorted;
             } catch (err) {
                 if (err instanceof Error) {
                     dialogUtils.nodeError(err);
@@ -295,8 +266,16 @@ const ReaderSideList = memo(
                     log.error(`chapter list build failed for "${mangaLink}"`, err);
                 }
                 setChapterData([]);
+                return [];
             }
         }, [mangaLink]);
+
+        /** Manual / watcher refresh: rescan and reset recency; empty shuffle so the list is shuffled again. */
+        const makeChapterList = useCallback(async () => {
+            recentChaptersRef.current = [];
+            setShuffledLocations([]);
+            await scanMangaChapters();
+        }, [scanMangaChapters]);
 
         useLayoutEffect(() => {
             void makeChapterList();
@@ -447,60 +426,68 @@ const ReaderSideList = memo(
             });
         };
 
-        const handlePrevChapterClick = () => {
-            if (prevNextChapter.prev === "~") {
-                dialogUtils
-                    .confirm({
-                        message: t("dialogs.noPreviousChapter"),
-                        buttons: [tDialogs("buttons.okAlt"), t("dialogs.home")],
-                        noOption: false,
-                        noLink: true,
-                    })
-                    .then((e) => {
-                        if (e.response === 1) {
-                            closeReader();
-                        }
-                    });
-                return;
+        /** Confirm when prev/next has no existing sibling after a disk rescan. */
+        const showNoNeighborDialog = (direction: ChapterNavDirection) => {
+            dialogUtils
+                .confirm({
+                    message: direction === "next" ? t("dialogs.noNextChapter") : t("dialogs.noPreviousChapter"),
+                    buttons: [tDialogs("buttons.okAlt"), t("dialogs.home")],
+                    noOption: false,
+                    noLink: true,
+                })
+                .then((e) => {
+                    if (e.response === 1) {
+                        closeReader();
+                    }
+                });
+        };
+
+        /**
+         * Opens prev/next after checking the target still exists. If the current chapter
+         * or the planned sibling is gone (rename/delete before auto-refresh), rescans
+         * and opens the name-neighbor instead of setting reader.link to a missing path.
+         */
+        const goToNeighborChapter = async (direction: ChapterNavDirection) => {
+            if (chapterNavInFlightRef.current) return;
+            chapterNavInFlightRef.current = true;
+            try {
+                const target = await pickChapterNavOpenPath({
+                    list: effectiveListForNav,
+                    currentLink: currentChapterPath,
+                    direction,
+                    inverseSort: appSettings.locationListSortType === "inverse",
+                    shuffle: isShuffleMode,
+                    compareNames: (a, b) => window.app.betterSortOrder(a, b),
+                    pathExists: mangaChapterPathExists,
+                    refreshList: async () => {
+                        const scanned = await scanMangaChapters();
+                        const ordered = orderMangaChapterList(scanned, {
+                            sortBy: appSettings.locationListSortBy,
+                            inverse: appSettings.locationListSortType === "inverse",
+                            shuffled: isShuffleMode ? shuffledLocations : undefined,
+                        });
+                        return selectChapterNavList(ordered, filteredItemsFromList, {
+                            filterPinned: isSearchFixed,
+                            filterActive,
+                        });
+                    },
+                });
+                if (target === CHAPTER_NAV_NONE) {
+                    showNoNeighborDialog(direction);
+                    return;
+                }
+                await openInReader(target);
+            } finally {
+                chapterNavInFlightRef.current = false;
             }
-            dispatch(
-                setReaderState({
-                    link: prevNextChapter.prev,
-                    type: "manga",
-                    content: null,
-                    mangaPageNumber: 1,
-                    epubChapterId: "",
-                    epubElementQueryString: "",
-                }),
-            );
+        };
+
+        const handlePrevChapterClick = () => {
+            void goToNeighborChapter("prev");
         };
 
         const handleNextChapterClick = () => {
-            if (prevNextChapter.next === "~") {
-                dialogUtils
-                    .confirm({
-                        message: t("dialogs.noNextChapter"),
-                        buttons: [tDialogs("buttons.okAlt"), t("dialogs.home")],
-                        noOption: false,
-                        noLink: true,
-                    })
-                    .then((e) => {
-                        if (e.response === 1) {
-                            closeReader();
-                        }
-                    });
-                return;
-            }
-            dispatch(
-                setReaderState({
-                    link: prevNextChapter.next,
-                    type: "manga",
-                    content: null,
-                    mangaPageNumber: 1,
-                    epubChapterId: "",
-                    epubElementQueryString: "",
-                }),
-            );
+            void goToNeighborChapter("next");
         };
 
         const handleLocateClick = () => {
@@ -616,6 +603,7 @@ const ReaderSideList = memo(
                     inputRef={sideListSearchRef}
                     onFilteredItemsChange={handleFilteredItemsChange}
                     persistFilterOnItemsChange={isSearchFixed}
+                    resetFilterKey={currentChapterPath}
                 >
                     <div className="tools">
                         <div className="row1">

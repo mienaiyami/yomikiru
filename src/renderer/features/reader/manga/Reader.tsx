@@ -107,6 +107,7 @@ const Reader: React.FC = () => {
     // for grab to scroll
     const [mouseDown, setMouseDown] = useState<null | { top: number; left: number; x: number; y: number }>(null);
     const [updatedAnilistProgress, setUpdatedAnilistProgress] = useState(false);
+    // sibling paths for the chapter-changer overlay; state so those labels re-render
     const [prevNextChapter, setPrevNextChapter] = useState<{ prev: string; next: string }>({ prev: "", next: "" });
 
     const readerSettingExtender = useRef<HTMLButtonElement>(null);
@@ -653,6 +654,7 @@ const Reader: React.FC = () => {
                 loadImgs(options.link, result.images, page);
             } else {
                 pendingChapterOpenScrollRef.current = false;
+                log.warn("chapter folder is not readable; images were not loaded", { link: options.link });
             }
         });
     };
@@ -1148,7 +1150,6 @@ const Reader: React.FC = () => {
                 setSideListPinned={setSideListPinned}
                 setSideListWidth={setSideListWidth}
                 makeScrollPos={makeScrollPos}
-                prevNextChapter={prevNextChapter}
                 setPrevNextChapter={setPrevNextChapter}
             />
 

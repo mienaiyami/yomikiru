@@ -82,8 +82,13 @@ export type ListNavigatorProps<T> = {
     inputRef?: React.RefObject<HTMLInputElement>;
     /** Invoked when filteredItems or filterActive state changes. */
     onFilteredItemsChange?: (items: T[], filterActive: boolean) => void;
-    /** When true, filter is not cleared when items change (e.g. on list refresh). */
+    /** When true, filter is not cleared when items or {@link ListNavigatorProps.resetFilterKey} change. */
     persistFilterOnItemsChange?: boolean;
+    /**
+     * Extra reset signal besides `items` identity. When this value changes, an
+     * unpinned filter is cleared the same way as an items-identity change.
+     */
+    resetFilterKey?: unknown;
     children: React.ReactNode;
 };
 
@@ -98,6 +103,7 @@ function ListNavigatorProviderComponent<T>({
     inputRef: inputRefProp,
     onFilteredItemsChange,
     persistFilterOnItemsChange,
+    resetFilterKey,
     children,
 }: ListNavigatorProps<T>) {
     const { t } = useTranslation("common");
@@ -118,6 +124,7 @@ function ListNavigatorProviderComponent<T>({
     const onFilteredItemsChangeRef = useRef(onFilteredItemsChange);
     onFilteredItemsChangeRef.current = onFilteredItemsChange;
 
+    /* items identity and resetFilterKey both drop an unpinned filter */
     useEffect(() => {
         setFocused(-1);
         if (!persistFilterOnItemsChange) {
@@ -126,7 +133,7 @@ function ListNavigatorProviderComponent<T>({
                 inputRef.current.value = "";
             }
         }
-    }, [items, inputRef, persistFilterOnItemsChange]);
+    }, [items, inputRef, persistFilterOnItemsChange, resetFilterKey]);
 
     useEffect(() => {
         onFilteredItemsChangeRef.current?.(filteredItems, filter !== "");

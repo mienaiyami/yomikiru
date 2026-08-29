@@ -208,7 +208,8 @@ Key capabilities:
 - Keyboard navigation: arrow keys move focus, Enter/Space select, Home/End jump to ends.
 - `handleExtraKeyDown` hook allows caller to intercept additional keys (e.g. shortcut commands).
 - `onFilteredItemsChange` callback lets callers track the visible subset (used by multi-select).
-- `persistFilterOnItemsChange` — when true, the filter is not cleared when the item list refreshes.
+- `persistFilterOnItemsChange` — when true, the filter is not cleared when the item list refreshes or `resetFilterKey` changes.
+- `resetFilterKey` — extra reset signal so unpinned search clears when that value changes (not only when `items` identity changes).
 
 ---
 

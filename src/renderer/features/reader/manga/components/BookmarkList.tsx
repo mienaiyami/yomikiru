@@ -1,4 +1,5 @@
 import type { MangaBookmark } from "@common/types/db";
+import { useAppContext } from "@renderer/App";
 import ListItem from "@renderer/components/ListItem";
 import ListNavigator from "@renderer/components/ListNavigator";
 import { useAppSelector } from "@store/hooks";
@@ -10,8 +11,6 @@ import { useCallback, useMemo } from "react";
 import { useTranslation } from "react-i18next";
 
 const log = createRendererLogger("manga/BookmarkList");
-
-import { useAppContext } from "src/renderer/App";
 
 /** Stable fallback keeps an absent bookmark map from invalidating the selector result. */
 const EMPTY_MANGA_BOOKMARKS: readonly MangaBookmark[] = [];

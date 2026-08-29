@@ -15,6 +15,8 @@
 
 # unreleased
 
+- fix: Manga prev/next no longer opens a missing folder when the sibling was renamed or deleted (including before auto-refresh). Next/prev rescans the series and opens the chapter that now sits in that place, and a second next/prev after a chapter switch still follows the new link while content is loading.
+- fix: Manga sidelist search no longer traps prev/next/random in the query unless the filter pin is on. Unpinned search only filters the displayed list and clears when you change chapter, so rename/delete refresh and chapter nav follow the full list again. (#507)
 - fix: Space works in gallery **Edit metadata** fields and on the dialog buttons. Typing in those fields or the details item note no longer runs window shortcuts such as Home. (#537)
 - fix: Next/previous manga chapter (shortcut or side-list buttons) opens at the first page instead of keeping the previous chapter's page. Continue and bookmarks still restore their stored page. (#536)
 - fix: Opening a manga chapter at a stored page (Continue, bookmark) no longer flashes the first page while images finish loading.

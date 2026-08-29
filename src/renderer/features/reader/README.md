@@ -1,6 +1,6 @@
 # Reader Feature
 
-> Last updated: 2026-08-09. Covers v2.24.x.
+> Last updated: 2026-08-29. Covers v2.25.x.
 
 Yomikiru has two separate reader implementations mounted side-by-side in `Main.tsx`:
 
@@ -152,11 +152,11 @@ After loading images (`checkForImgsAndLoad`):
 
 ### Chapter Navigation
 
-- Previous / next chapter: `setReaderState` on the sibling path with `mangaPageNumber` 1 (chapter-open target). Manga `Reader` stays mounted, so live page state still reflects the previous viewport. A dedicated open-page ref plus a pending flag apply that target after `imageRow` (and canvas attach) exists and `[data-pagenumber]` is queryable; viewport detection stays off until then. The loading overlay stays up until that scroll so Continue / bookmarks do not flash page 1.
+- Previous / next chapter: `openInReader` on a path that still exists on disk (`mangaPageNumber` defaults to 1). Siblings are derived from the chapter list plus the open path (`reader.link` while content is cleared for the switch). If the current chapter or the planned sibling is missing (rename/delete before auto-refresh), the series folder is scanned again and neighbors are taken from where that name would sort, so a renamed next chapter still opens. Manga `Reader` stays mounted, so live page state still reflects the previous viewport. A dedicated open-page ref plus a pending flag apply that target after `imageRow` (and canvas attach) exists and `[data-pagenumber]` is queryable; viewport detection stays off until then. The loading overlay stays up until that scroll so Continue / bookmarks do not flash page 1.
 - Chapter list comes from the manga root directory sorted by the configured sort method.
 - **Random chapter** (`r` key): picks a chapter from the list, biased away from the last `RECENT_CHAPTERS_SIZE = 10` recently-opened chapters.
 - **Shuffle mode**: session-only full shuffle of the chapter list; prev/next follows the shuffled order until shuffle is disabled.
-- **Search persistence**: "Fix search" toggle keeps the side-list filter active across chapter navigations.
+- **Search persistence**: the search pin keeps the side-list filter across chapter changes and list refresh; prev/next and random then follow that filtered list. Unpinned search only filters displayed rows and clears when the chapter changes.
 - After the last page, a chapter-transition screen appears (unless `disableChapterTransitionScreen` is on).
 
 ### Page Number Input
@@ -307,9 +307,9 @@ Slides in from the left. Displays:
 - **Chapter list** — all siblings in the manga root, filtered by search. Each row shows name, page count, read indicator, and progress bar.
 - **Bookmark list** ([`manga/components/BookmarkList.tsx`](manga/components/BookmarkList.tsx)) — all bookmarks for the current manga.
 - AniList bar.
-- Prev/next chapter buttons, random chapter button, shuffle toggle.
+- Prev/next chapter buttons (rescan the series if the sibling path is gone), random chapter button, shuffle toggle.
 - Sort button (name/date, normal/inverse) and refresh sit to the right of the chapter search field.
-- "Fix search" toggle — keeps the filter active when changing chapters.
+- "Fix search" pin — keeps the filter when changing chapters or when the list refreshes; prev/next and random then use the filtered list. Unpinned search is display-only and clears on chapter change.
 - Pin button — pins the side list open (shifts the reading area).
 
 Resizable: drag the edge to adjust `sideListWidth` (persisted in reader settings).

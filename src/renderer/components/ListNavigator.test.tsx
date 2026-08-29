@@ -77,6 +77,72 @@ describe("ListNavigator.Provider", () => {
             expect(items).toEqual(["alpha"]);
         });
     });
+
+    it("clears the filter when items change unless persistFilterOnItemsChange is set", async () => {
+        const Harness = ({ items }: { items: string[] }) => (
+            <ListNavigator.Provider
+                items={items}
+                filterFn={(filter, item) => new RegExp(filter, "i").test(item)}
+                renderItem={(item) => <span>{item}</span>}
+            >
+                <ListNavigator.SearchInput />
+                <ListNavigator.List />
+            </ListNavigator.Provider>
+        );
+        const { rerender, container } = renderWithProviders(<Harness items={ITEMS} />);
+        const input = container.querySelector("input.search-input") as HTMLInputElement;
+        await act(async () => {
+            fireEvent.change(input, { target: { value: "alp" } });
+        });
+        await waitFor(() => expect(input.value).toBe("alp"));
+        rerender(<Harness items={[...ITEMS, "gamma"]} />);
+        await waitFor(() => expect(input.value).toBe(""));
+    });
+
+    it("clears the filter when resetFilterKey changes unless persist is on", async () => {
+        const Harness = ({ resetKey, persist }: { resetKey: string; persist?: boolean }) => (
+            <ListNavigator.Provider
+                items={ITEMS}
+                filterFn={(filter, item) => new RegExp(filter, "i").test(item)}
+                renderItem={(item) => <span>{item}</span>}
+                persistFilterOnItemsChange={persist}
+                resetFilterKey={resetKey}
+            >
+                <ListNavigator.SearchInput />
+                <ListNavigator.List />
+            </ListNavigator.Provider>
+        );
+        const { rerender, container } = renderWithProviders(<Harness resetKey="ch01" />);
+        const input = container.querySelector("input.search-input") as HTMLInputElement;
+        await act(async () => {
+            fireEvent.change(input, { target: { value: "alp" } });
+        });
+        await waitFor(() => expect(input.value).toBe("alp"));
+        rerender(<Harness resetKey="ch02" />);
+        await waitFor(() => expect(input.value).toBe(""));
+    });
+
+    it("keeps the filter across resetFilterKey changes when persistFilterOnItemsChange is set", async () => {
+        const Harness = ({ resetKey }: { resetKey: string }) => (
+            <ListNavigator.Provider
+                items={ITEMS}
+                filterFn={(filter, item) => new RegExp(filter, "i").test(item)}
+                renderItem={(item) => <span>{item}</span>}
+                persistFilterOnItemsChange
+                resetFilterKey={resetKey}
+            >
+                <ListNavigator.SearchInput />
+                <ListNavigator.List />
+            </ListNavigator.Provider>
+        );
+        const { rerender, container } = renderWithProviders(<Harness resetKey="ch01" />);
+        const input = container.querySelector("input.search-input") as HTMLInputElement;
+        await act(async () => {
+            fireEvent.change(input, { target: { value: "alp" } });
+        });
+        rerender(<Harness resetKey="ch02" />);
+        expect(input.value).toBe("alp");
+    });
 });
 
 describe("ListNavigator.SearchInput", () => {
