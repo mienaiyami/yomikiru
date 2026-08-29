@@ -3,7 +3,7 @@
 
 > [!Note]
 > To get this beta and later ones: in Settings, switch the update channel to **beta**, then **Check for update**. You do not need to download builds from GitHub by hand.
-
+<!-- 
 > [!Important]
 > **Known Issue with Updates (July 2025)**: Due to recent Windows security policy changes, some users may experience crashes during the auto-update process. If updates fail, please:
 >
@@ -11,25 +11,27 @@
 > 2. Install it over your existing installation
 >
 > Issue is only present to users using "Setup" version.
-> For more information, see [Announcement #451](https://github.com/mienaiyami/yomikiru/discussions/451)
+> For more information, see [Announcement #451](https://github.com/mienaiyami/yomikiru/discussions/451) -->
 
-# unreleased
+# 2.25.0-beta
 
-- fix: Manga prev/next no longer opens a missing folder when the sibling was renamed or deleted (including before auto-refresh). Next/prev rescans the series and opens the chapter that now sits in that place, and a second next/prev after a chapter switch still follows the new link while content is loading.
-- fix: Manga sidelist search no longer traps prev/next/random in the query unless the filter pin is on. Unpinned search only filters the displayed list and clears when you change chapter, so rename/delete refresh and chapter nav follow the full list again. (#507)
-- fix: Space works in gallery **Edit metadata** fields and on the dialog buttons. Typing in those fields or the details item note no longer runs window shortcuts such as Home. (#537)
-- fix: Next/previous manga chapter (shortcut or side-list buttons) opens at the first page instead of keeping the previous chapter's page. Continue and bookmarks still restore their stored page. (#536)
-- fix: Opening a manga chapter at a stored page (Continue, bookmark) no longer flashes the first page while images finish loading.
+### 2.25.0-beta.5
 
-- fix: Reader Presets settings use memoized preset selectors so the panel no longer triggers unstable `useSelector` warnings or extra re-renders.
+Follow-up to the gallery beta: AniList covers are stored on disk, manga next/prev and sidelist search work again after rename/delete, and a few editor/reader glitches from beta.4 are fixed.
+
 - feat: AniList tracker covers are saved as `covers/tracker-<id>.webp` when a title is tracked or its snapshot is refreshed (details bar, progress sync). That file is separate from the library thumbnail and includes a solid-color image when AniList has no raster cover. Gallery tiles and details always use the local file (or the library cover if it is not there yet); AniList search and the AniList editor still show the remote image.
 - feat: AniList cover pick for save, gallery, and details uses `extraLarge`, then `large`, then `medium`, then a solid color. Search and the AniList editor use `large`, then `medium`, then color.
+- feat: Gallery details cover right-click adds **Show cover in File Explorer** for the displayed image file (library WebP, tracker WebP, or user-picked cover), above the existing library tile menu.
 - fix: Opening the app offline no longer pops AniList login/request error dialogs; only a rejected token warns.
 - fix: Materialized library and tracker covers encode at a max edge matched to AniList `extraLarge` (with WebP quality for on-screen details). Existing files update when you regenerate thumbnails or when a tracker cover is written again.
 - fix: AniList editor cover art stays inside the dialog (contained poster with a max height).
-- feat: Gallery details cover right-click adds **Show cover in File Explorer** for the displayed image file (library WebP, tracker WebP, or user-picked cover), above the existing library tile menu.
-
-# 2.25.0-beta
+- fix: Reader Presets settings use memoized preset selectors so the panel no longer triggers unstable `useSelector` warnings or extra re-renders.
+- fix: Space works in gallery **Edit metadata** fields and on the dialog buttons. Typing in those fields or the details item note no longer runs window shortcuts such as Home. (#537)
+- fix: Next/previous manga chapter (shortcut or side-list buttons) opens at the first page instead of keeping the previous chapter's page. Continue and bookmarks still restore their stored page. (#536)
+- fix: Opening a manga chapter at a stored page (Continue, bookmark) no longer flashes the first page while images finish loading.
+- fix: Manga prev/next no longer opens a missing folder when the sibling was renamed or deleted (including before auto-refresh). Next/prev rescans the series and opens the chapter that now sits in that place, and a second next/prev after a chapter switch still follows the new link while content is loading.
+- fix: Manga sidelist search no longer traps prev/next/random in the query unless the filter pin is on. Unpinned search only filters the displayed list and clears when you change chapter, so rename/delete refresh and chapter nav follow the full list again. (#507)
+- **dev**: Document the Sharp 10-bit AVIF cover decode blocker and the intended Electron/Sharp upgrade path (`docs/electron-upgrade-sharp-avif-cover-blocker.md`).
 
 ### 2.25.0-beta.4
 
