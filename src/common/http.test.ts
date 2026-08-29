@@ -114,11 +114,13 @@ describe("createHttpClient status handling", () => {
         });
         await expect(client.getBuffer("https://example.com/cover.png")).resolves.toBe(bytes);
 
+        // copy into this realm: Node TextEncoder.buffer fails ArrayBuffer instanceof under jsdom
+        const htmlLookingBytes = new Uint8Array(new TextEncoder().encode("<html>not really</html>"));
         const htmlLooking = clientWith({
             status: 200,
             statusText: "OK",
             headers: { "content-type": "application/octet-stream" },
-            data: new TextEncoder().encode("<html>not really</html>").buffer,
+            data: htmlLookingBytes.buffer,
         });
         await expect(htmlLooking.getBuffer("https://example.com/bin")).resolves.toBeInstanceOf(ArrayBuffer);
     });

@@ -15,7 +15,7 @@
 
 # 2.25.0-beta
 
-### 2.25.0-beta.5
+### 2.25.0-beta.6
 
 Follow-up to the gallery beta: AniList covers are stored on disk, manga next/prev and sidelist search work again after rename/delete, and a few editor/reader glitches from beta.4 are fixed.
 
@@ -32,6 +32,7 @@ Follow-up to the gallery beta: AniList covers are stored on disk, manga next/pre
 - fix: Manga prev/next no longer opens a missing folder when the sibling was renamed or deleted (including before auto-refresh). Next/prev rescans the series and opens the chapter that now sits in that place, and a second next/prev after a chapter switch still follows the new link while content is loading.
 - fix: Manga sidelist search no longer traps prev/next/random in the query unless the filter pin is on. Unpinned search only filters the displayed list and clears when you change chapter, so rename/delete refresh and chapter nav follow the full list again. (#507)
 - **dev**: Document the Sharp 10-bit AVIF cover decode blocker and the intended Electron/Sharp upgrade path (`docs/electron-upgrade-sharp-avif-cover-blocker.md`).
+- **dev**: `pnpm release` runs unit tests and only tags/pushes if they pass.
 
 ### 2.25.0-beta.4
 
