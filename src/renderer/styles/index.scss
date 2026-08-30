@@ -191,6 +191,14 @@ html{
                     // visibility: hidden;
                     display: none;
                 }
+                /*
+                 * Zen hides the side list, so drop the closed-list inset.
+                 * :not(.sideListPinned) keeps this as specific as the unpinned
+                 * padding rule declared later under body #app.
+                 */
+                &:not(.sideListPinned) {
+                    padding-left: 0;
+                }
             }
             #EPubReader {
                 section.main {
@@ -1210,6 +1218,15 @@ html{
                 overflow-x: hidden;
                 overflow: auto;
                 --sideListWidth: 450px;
+                /*
+                 * Closed unpinned list stays translated so the resize strip remains
+                 * on-screen. In-flow pages inset by that peek so they are not covered.
+                 * Zen mode zeros this; a pinned list uses the grid column instead.
+                 */
+                --reader-sideList-closed-peek: 10px;
+                &:not(.sideListPinned) {
+                    padding-left: var(--reader-sideList-closed-peek);
+                }
                 &.noCursor {
                     cursor: none;
                 }

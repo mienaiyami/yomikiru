@@ -13,7 +13,7 @@
     padding: 10px;
     padding-top: 5px;
     box-sizing: border-box;
-    transform: translateX(calc(-100% + 10px));
+    transform: translateX(calc(-100% + var(--reader-sideList-closed-peek)));
     transition: 0.2s transform;
     .indicator {
         position: absolute;
@@ -41,7 +41,7 @@
         right: 0;
         top: 0;
         background-color: var(--sideList-bg);
-        width: 10px;
+        width: var(--reader-sideList-closed-peek);
         height: 100%;
         &:hover {
             background-color: var(--btn-color-hover);

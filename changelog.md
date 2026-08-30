@@ -13,6 +13,10 @@
 > Issue is only present to users using "Setup" version.
 > For more information, see [Announcement #451](https://github.com/mienaiyami/yomikiru/discussions/451) -->
 
+# unreleased
+
+- fix: Unpinned reader side list no longer covers the left edge of pages when zen mode is off. The reading area is inset by the closed-list peek (the resize strip); zen mode and a pinned list are unchanged. (#551)
+
 # 2.25.0-beta
 
 ### 2.25.0-beta.6
