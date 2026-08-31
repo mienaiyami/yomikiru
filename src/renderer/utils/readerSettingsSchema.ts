@@ -154,10 +154,10 @@ export type MangaReaderSettings = z.infer<typeof mangaReaderSettingsSchema>;
 
 export const defaultMangaReaderSettings: MangaReaderSettings = {
     readerWidth: 60,
-    variableImageSize: true,
+    variableImageSize: false,
     readerTypeSelected: 0,
     pagesPerRowSelected: 0,
-    gapBetweenRows: true,
+    gapBetweenRows: false,
     sideListWidth: 450,
     widthClamped: true,
     gapSize: 10,
@@ -204,7 +204,7 @@ export const defaultMangaReaderSettings: MangaReaderSettings = {
         customColorFilter: true,
         others: false,
     },
-    focusChapterInList: true,
+    focusChapterInList: false,
     hideSideList: false,
     autoUpdateAnilistProgress: false,
     enableTouchScroll: false,
@@ -411,7 +411,7 @@ export const defaultBookReaderSettings: BookReaderSettings = {
     },
     quickFontFamily: ["Roboto", "Cambria"],
     textSelect: true,
-    focusChapterInList: true,
+    focusChapterInList: false,
     hideSideList: false,
     backgroundImage: {
         enabled: false,
