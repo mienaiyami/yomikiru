@@ -158,6 +158,15 @@ const About: React.FC = () => {
                         <FontAwesomeIcon icon={faGithub} /> {t("about.submitIssue")}
                     </button>
                     <button
+                        onClick={() =>
+                            window.electron.openExternal(
+                                "https://github.com/mienaiyami/yomikiru/blob/master/PRIVACY.md",
+                            )
+                        }
+                    >
+                        <FontAwesomeIcon icon={faGithub} /> {t("about.privacyPolicy")}
+                    </button>
+                    <button
                         onClick={() => window.electron.openExternal("https://github.com/sponsors/mienaiyami")}
                         style={{
                             gap: "4px",

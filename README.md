@@ -8,6 +8,8 @@ Yomikiru is a feature-rich desktop application designed for reading locally stor
 [![Github All Releases](https://img.shields.io/github/downloads/mienaiyami/yomikiru/total.svg?style=flat-square&logo=github)](https://github.com/mienaiyami/yomikiru/releases) |
 [![License](https://img.shields.io/github/license/mienaiyami/yomikiru?style=flat-square)](LICENSE)
 
+[Privacy Policy](PRIVACY.md)
+
 ## Join the Community
 
 If you have questions, ideas, or want to stay updated with development, join our Discord server.
