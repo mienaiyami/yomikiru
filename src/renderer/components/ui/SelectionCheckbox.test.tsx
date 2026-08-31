@@ -30,6 +30,23 @@ describe("SelectionCheckbox", () => {
         expect(getByRole("checkbox")).toBeChecked();
     });
 
+    it("sets indeterminate mixed and excluded dash without implying checked", () => {
+        const { getByRole, rerender } = render(
+            <SelectionCheckbox checked={false} indeterminate onToggle={vi.fn()} ariaLabel="Pick" />,
+        );
+        const mixed = getByRole("checkbox") as HTMLInputElement;
+        expect(mixed.indeterminate).toBe(true);
+        expect(mixed).toHaveAttribute("aria-checked", "mixed");
+        expect(mixed).not.toBeChecked();
+
+        rerender(<SelectionCheckbox checked={false} excluded onToggle={vi.fn()} ariaLabel="Pick" />);
+        const excluded = getByRole("checkbox") as HTMLInputElement;
+        expect(excluded.indeterminate).toBe(false);
+        expect(excluded).toHaveAttribute("aria-checked", "false");
+        expect(excluded).toHaveAttribute("data-excluded", "true");
+        expect(excluded).not.toBeChecked();
+    });
+
     it("stays out of the tab order unless tabIndex is set", () => {
         const { getByRole, rerender } = render(
             <SelectionCheckbox checked={false} onToggle={vi.fn()} ariaLabel="Pick" />,

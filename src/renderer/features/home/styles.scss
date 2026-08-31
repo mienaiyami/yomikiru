@@ -162,8 +162,15 @@
             .galleryTagFilterDot {
                 width: 0.65em;
                 height: 0.65em;
+                flex-shrink: 0;
                 border-radius: 50%;
                 box-shadow: inset 0 0 0 1px rgba(0, 0, 0, 0.2);
+            }
+
+            .galleryTagFilterMarkTriangle {
+                border-radius: 0;
+                clip-path: polygon(50% 0, 100% 100%, 0 100%);
+                box-shadow: none;
             }
 
             .galleryTagFilterLabel {

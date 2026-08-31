@@ -57,8 +57,9 @@ const settingSchema = z
          */
         galleryTypeFilter: z.union([z.literal("all"), z.literal("manga"), z.literal("book")]),
         /**
-         * Catalog tag ids for the gallery toolbar multi-tag filter (OR).
-         * Empty means no tag constraint. Ids missing from the catalog are ignored at filter time.
+         * Signed catalog tag ids for the gallery toolbar filter.
+         * Positive id = include (OR), negative id = exclude. Empty = no tag constraint.
+         * Decode to include/exclude catalog id lists at the settings boundary.
          */
         galleryTagFilterIds: z.array(z.number().int()),
         /**

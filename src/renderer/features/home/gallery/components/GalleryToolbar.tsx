@@ -17,10 +17,10 @@ import { setAppSettings } from "@store/appSettings";
 import { useAppDispatch, useAppSelector } from "@store/hooks";
 import { useTranslation } from "react-i18next";
 import GalleryTabBar, { type GalleryTabId } from "./GalleryTabBar";
-import GalleryTagFilterBar, { type GalleryTagFilterIds } from "./GalleryTagFilterBar";
+import GalleryTagFilterBar, { type GalleryTagFilterSelection } from "./GalleryTagFilterBar";
 import GalleryTypeFilterBar, { type GalleryTypeFilterId } from "./GalleryTypeFilterBar";
 
-export type { GalleryTabId, GalleryTagFilterIds, GalleryTypeFilterId };
+export type { GalleryTabId, GalleryTagFilterSelection, GalleryTypeFilterId };
 
 /** Clamp range and step for `galleryItemWidth` (em). */
 const GALLERY_ITEM_WIDTH_MIN = 10;
@@ -39,10 +39,10 @@ export type GalleryToolbarProps = {
     onTypeFilterChange: (filter: GalleryTypeFilterId) => void;
     /** Catalog for the persisted tag filter; the bar hides when empty. */
     tagCatalog: readonly LibraryTag[];
-    /** Current `galleryTagFilterIds` (catalog-valid ids only in the parent). */
-    selectedTagIds: GalleryTagFilterIds;
-    /** Persist a new `galleryTagFilterIds`. */
-    onTagFilterChange: (tagIds: GalleryTagFilterIds) => void;
+    /** Current decoded `galleryTagFilterIds` (catalog-valid ids only in the parent). */
+    tagFilter: GalleryTagFilterSelection;
+    /** Persist a new tag filter selection (parent encodes signed ids). */
+    onTagFilterChange: (next: GalleryTagFilterSelection) => void;
     /** Hide the search field when the active tab does not query-filter. */
     hideSearch?: boolean;
     /** Hide sort when the active tab does not use `gallerySortBy` / `gallerySortType`. */
@@ -81,7 +81,7 @@ const GalleryToolbar: React.FC<GalleryToolbarProps> = ({
     activeTypeFilter,
     onTypeFilterChange,
     tagCatalog,
-    selectedTagIds,
+    tagFilter,
     onTagFilterChange,
     hideSearch,
     hideSort,
@@ -254,7 +254,7 @@ const GalleryToolbar: React.FC<GalleryToolbarProps> = ({
                     <span className="toolbarDivider" aria-hidden="true" />
                     <GalleryTagFilterBar
                         catalog={tagCatalog}
-                        selectedTagIds={selectedTagIds}
+                        tagFilter={tagFilter}
                         onFilterChange={onTagFilterChange}
                     />
                 </>

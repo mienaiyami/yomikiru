@@ -2,36 +2,39 @@ import type { LibraryTag } from "@common/types/db";
 import { faTags } from "@fortawesome/free-solid-svg-icons";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import InputMultiSelect, { type InputMultiSelectOption } from "@ui/InputMultiSelect";
-import { tagChipTextColor } from "@utils/libraryTags";
+import { type GalleryTagFilterSelection, tagChipTextColor, tagFilterActivatorMarks } from "@utils/libraryTags";
 import { useMemo } from "react";
 import { useTranslation } from "react-i18next";
 
-/** Cap on colour dots in the closed activator (extra selected tags are omitted). */
-const ACTIVATOR_COLOR_DOT_MAX = 8;
+/** Cap on colour marks in the closed activator (extra selected tags are omitted). */
+const ACTIVATOR_COLOR_MARK_MAX = 8;
 
-/** Persisted gallery tag filter: empty means every item (no tag constraint). */
-export type GalleryTagFilterIds = readonly number[];
+export type { GalleryTagFilterSelection };
 
 /** Props for {@link GalleryTagFilterBar}. */
 export type GalleryTagFilterBarProps = {
     catalog: readonly LibraryTag[];
-    selectedTagIds: GalleryTagFilterIds;
-    onFilterChange: (tagIds: GalleryTagFilterIds) => void;
+    tagFilter: GalleryTagFilterSelection;
+    onFilterChange: (next: GalleryTagFilterSelection) => void;
 };
 
 /**
- * Multi-tag filter (OR) persisted as `galleryTagFilterIds`: empty means no tag constraint.
- * Uses {@link InputMultiSelect}; activator shows no filter / one name / count,
- * plus a capped row of selected-tag colour dots.
+ * Multi-tag filter persisted as signed `galleryTagFilterIds`.
+ * Empty include and exclude means no tag constraint. Opt-in tri-state on {@link InputMultiSelect}:
+ * off -> include -> exclude. Activator shows the tag name when only one is included or
+ * excluded, otherwise the include/exclude count keys, plus same-sized circle/triangle marks.
  * Hidden by the parent when the catalog is empty.
  */
-const GalleryTagFilterBar = ({ catalog, selectedTagIds, onFilterChange }: GalleryTagFilterBarProps) => {
+const GalleryTagFilterBar = ({ catalog, tagFilter, onFilterChange }: GalleryTagFilterBarProps) => {
     const { t } = useTranslation("home");
+    const includeIds = tagFilter.includeIds;
+    const excludeIds = tagFilter.excludeIds;
     const sorted = useMemo(() => [...catalog].sort((a, b) => a.name.localeCompare(b.name)), [catalog]);
     const tagById = useMemo(() => new Map(sorted.map((tag) => [tag.id, tag])), [sorted]);
-    const selectedIdSet = new Set(selectedTagIds);
-    const selectedTags = sorted.filter((tag) => selectedIdSet.has(tag.id));
-    const activatorDots = selectedTags.slice(0, ACTIVATOR_COLOR_DOT_MAX);
+    const includeSet = new Set(includeIds);
+    const excludeSet = new Set(excludeIds);
+    const activatorMarks = tagFilterActivatorMarks(sorted, tagFilter, ACTIVATOR_COLOR_MARK_MAX);
+    const isEmpty = includeIds.length === 0 && excludeIds.length === 0;
 
     /* stable option/value arrays so InputMultiSelect does not see new refs every parent paint */
     const options: InputMultiSelectOption[] = useMemo(
@@ -42,48 +45,85 @@ const GalleryTagFilterBar = ({ catalog, selectedTagIds, onFilterChange }: Galler
             })),
         [sorted],
     );
-    const valueStrings = useMemo(() => selectedTagIds.map(String), [selectedTagIds]);
+    const includeStrings = useMemo(() => includeIds.map(String), [includeIds]);
+    const excludeStrings = useMemo(() => excludeIds.map(String), [excludeIds]);
 
     const emptyActivatorLabel = t("gallery.tags.filterNoConstraint");
+    const activatorCountLabel = (() => {
+        if (isEmpty) return emptyActivatorLabel;
+        if (includeIds.length === 1 && excludeIds.length === 0) {
+            const includeId = includeIds[0];
+            return (
+                (includeId !== undefined && tagById.get(includeId)?.name) ||
+                t("gallery.tags.filterPlusCount", { count: 1 })
+            );
+        }
+        if (includeIds.length === 0 && excludeIds.length === 1) {
+            const excludeId = excludeIds[0];
+            return (
+                (excludeId !== undefined && tagById.get(excludeId)?.name) ||
+                t("gallery.tags.filterMinusCount", { count: 1 })
+            );
+        }
+        if (excludeIds.length === 0) return t("gallery.tags.filterPlusCount", { count: includeIds.length });
+        if (includeIds.length === 0) return t("gallery.tags.filterMinusCount", { count: excludeIds.length });
+        return t("gallery.tags.filterPlusMinusCount", {
+            plus: includeIds.length,
+            minus: excludeIds.length,
+        });
+    })();
 
     return (
         <nav className="galleryTagFilterBar" aria-label={t("gallery.tags.filterAria")}>
             <InputMultiSelect
+                triState
                 className="galleryTagFilterSelect"
                 activatorClassName="galleryTagFilterActivator"
                 popoverClassName="galleryTagFilterPopover"
-                value={valueStrings}
-                onChange={(next) => onFilterChange(next.map(Number))}
+                value={includeStrings}
+                excludedValues={excludeStrings}
+                onChange={(included, excluded = []) =>
+                    onFilterChange({
+                        includeIds: included.map(Number),
+                        excludeIds: excluded.map(Number),
+                    })
+                }
                 options={options}
                 emptyLabel={emptyActivatorLabel}
-                activatorTitle={selectedTagIds.length === 0 ? t("gallery.tags.filterAllTitle") : undefined}
+                activatorTitle={isEmpty ? t("gallery.tags.filterAllTitle") : undefined}
                 multipleLabel={(count) => t("gallery.tags.filterCount", { count })}
-                toggleAllLabel={(allSelected) =>
-                    allSelected ? t("gallery.tags.filterUnselectAll") : t("gallery.tags.filterSelectAll")
-                }
-                optionAriaLabel={(option) => t("gallery.tags.filterOptionAria", { name: option.label })}
+                toggleAllLabel={(_allSelected, aggregate = "off") => {
+                    if (aggregate === "on") return t("gallery.tags.filterExcludeAll");
+                    if (aggregate === "exclude") return t("gallery.tags.filterUnselectAll");
+                    return t("gallery.tags.filterSelectAll");
+                }}
+                optionAriaLabel={(option) => {
+                    const name = option.label;
+                    const id = Number(option.value);
+                    if (includeSet.has(id)) return t("gallery.tags.filterOptionIncludedAria", { name });
+                    if (excludeSet.has(id)) return t("gallery.tags.filterOptionExcludedAria", { name });
+                    return t("gallery.tags.filterOptionOffAria", { name });
+                }}
                 aria-label={t("gallery.tags.filterAria")}
-                renderActivatorLabel={({ isEmpty, selectedOptions }) => (
+                renderActivatorLabel={() => (
                     <>
                         <FontAwesomeIcon icon={faTags} className="galleryTagFilterIcon" aria-hidden />
-                        {activatorDots.length > 0 ? (
+                        {activatorMarks.length > 0 ? (
                             <span className="galleryTagFilterDots" aria-hidden>
-                                {activatorDots.map((tag) => (
+                                {activatorMarks.map((mark) => (
                                     <span
-                                        key={tag.id}
-                                        className="galleryTagFilterDot"
-                                        style={{ backgroundColor: tag.color }}
+                                        key={mark.id}
+                                        className={
+                                            mark.shape === "triangle"
+                                                ? "galleryTagFilterDot galleryTagFilterMarkTriangle"
+                                                : "galleryTagFilterDot"
+                                        }
+                                        style={{ backgroundColor: mark.color }}
                                     />
                                 ))}
                             </span>
                         ) : null}
-                        <span className="galleryTagFilterLabel">
-                            {isEmpty
-                                ? emptyActivatorLabel
-                                : selectedOptions.length === 1
-                                  ? selectedOptions[0]!.label
-                                  : t("gallery.tags.filterCount", { count: selectedOptions.length })}
-                        </span>
+                        <span className="galleryTagFilterLabel">{activatorCountLabel}</span>
                     </>
                 )}
                 renderOption={({ option, checkbox }) => {

@@ -14,6 +14,21 @@
     user-select: none;
     background-color: transparent;
     padding: 0 10px;
+    gap: 0;
+    position: relative;
+    box-shadow: none;
+
+    /*
+     * Beat global `label` / `label:hover` chrome from `_inputs.scss` so the
+     * hit area is not a padded pill around the square.
+     */
+    &:hover,
+    &:focus,
+    &:active,
+    &:has(input:focus) {
+        background-color: transparent;
+        box-shadow: none;
+    }
 
     input[type="checkbox"] {
         position: absolute;
@@ -52,7 +67,51 @@
         @include mixins.rowSelectCheckBoxChecked();
     }
 
+    input:indeterminate + .checkBox,
+    input[data-excluded="true"] + .checkBox {
+        @include mixins.rowSelectCheckBoxDash();
+    }
+
     input:focus-visible + .checkBox {
         box-shadow: var(--btn-color-focus) 0 0 0 2px;
+    }
+}
+
+/*
+ * Compact square for {@link InputMultiSelect} rows: shrink-wrap the box, skip
+ * list-row hit padding, and beat global `label` hover/focus chrome.
+ */
+.rowSelectCheck.inputMultiSelectRowCheck {
+    align-self: center;
+    flex: 0 0 auto;
+    width: auto;
+    height: auto;
+    min-width: 0;
+    min-height: 0;
+    margin: 0;
+    padding: 0;
+    gap: 0;
+    overflow: hidden;
+    background: none !important;
+    box-shadow: none !important;
+
+    &:hover,
+    &:focus,
+    &:active,
+    &:has(input:focus) {
+        background: none !important;
+        box-shadow: none !important;
+    }
+
+    &:hover .checkBox {
+        transform: none;
+    }
+
+    input[type="checkbox"] {
+        inset: 0;
+        width: 0;
+        height: 0;
+        overflow: hidden;
+        clip-path: inset(50%);
     }
 }

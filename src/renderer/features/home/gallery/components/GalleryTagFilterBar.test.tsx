@@ -18,85 +18,212 @@ const catalog: LibraryTag[] = [
     { id: 9, name: "G", color: "#777777", createdAt: new Date(0) },
 ];
 
+const emptyFilter = { includeIds: [] as number[], excludeIds: [] as number[] };
+
 describe("GalleryTagFilterBar", () => {
     afterEach(() => {
         cleanup();
     });
 
-    it("reports selected tag ids when the tag chip label is clicked", () => {
+    it("cycles a tag off to include when the chip label is clicked", () => {
         const onFilterChange = vi.fn();
         renderWithProviders(
-            <GalleryTagFilterBar catalog={catalog} selectedTagIds={[]} onFilterChange={onFilterChange} />,
+            <GalleryTagFilterBar catalog={catalog} tagFilter={emptyFilter} onFilterChange={onFilterChange} />,
         );
         fireEvent.click(screen.getByRole("button", { name: home.gallery.tags.filterAria }));
         const dialog = screen.getByRole("dialog", { name: home.gallery.tags.filterAria });
+        expect(
+            within(dialog).getByRole("checkbox", {
+                name: home.gallery.tags.filterOptionOffAria.replace("{{name}}", "Done"),
+            }),
+        ).toBeInTheDocument();
         fireEvent.click(within(dialog).getByText("Done"));
-        expect(onFilterChange).toHaveBeenCalledWith([2]);
+        expect(onFilterChange).toHaveBeenCalledWith({ includeIds: [2], excludeIds: [] });
     });
 
-    it("reports selected tag ids when options are toggled", () => {
+    it("cycles include to exclude on a second click", () => {
         const onFilterChange = vi.fn();
         renderWithProviders(
-            <GalleryTagFilterBar catalog={catalog} selectedTagIds={[]} onFilterChange={onFilterChange} />,
+            <GalleryTagFilterBar
+                catalog={catalog}
+                tagFilter={{ includeIds: [1], excludeIds: [] }}
+                onFilterChange={onFilterChange}
+            />,
         );
         fireEvent.click(screen.getByRole("button", { name: home.gallery.tags.filterAria }));
         const dialog = screen.getByRole("dialog", { name: home.gallery.tags.filterAria });
         fireEvent.click(
             within(dialog).getByRole("checkbox", {
-                name: home.gallery.tags.filterOptionAria.replace("{{name}}", "Ongoing"),
+                name: home.gallery.tags.filterOptionIncludedAria.replace("{{name}}", "Ongoing"),
             }),
         );
-        expect(onFilterChange).toHaveBeenCalledWith([1]);
+        expect(onFilterChange).toHaveBeenCalledWith({ includeIds: [], excludeIds: [1] });
         expect(dialog).toBeInTheDocument();
+    });
+
+    it("cycles exclude back to off", () => {
+        const onFilterChange = vi.fn();
+        renderWithProviders(
+            <GalleryTagFilterBar
+                catalog={catalog}
+                tagFilter={{ includeIds: [], excludeIds: [1] }}
+                onFilterChange={onFilterChange}
+            />,
+        );
+        fireEvent.click(screen.getByRole("button", { name: home.gallery.tags.filterAria }));
+        fireEvent.click(
+            within(screen.getByRole("dialog")).getByRole("checkbox", {
+                name: home.gallery.tags.filterOptionExcludedAria.replace("{{name}}", "Ongoing"),
+            }),
+        );
+        expect(onFilterChange).toHaveBeenCalledWith({ includeIds: [], excludeIds: [] });
     });
 
     it("shows no filter on the activator when nothing is selected", () => {
         renderWithProviders(
-            <GalleryTagFilterBar catalog={catalog} selectedTagIds={[]} onFilterChange={vi.fn()} />,
+            <GalleryTagFilterBar catalog={catalog} tagFilter={emptyFilter} onFilterChange={vi.fn()} />,
         );
         expect(screen.getByRole("button", { name: home.gallery.tags.filterAria })).toHaveTextContent(
             home.gallery.tags.filterNoConstraint,
         );
     });
 
-    it("shows a count label when more than one tag is selected", () => {
-        renderWithProviders(
-            <GalleryTagFilterBar catalog={catalog} selectedTagIds={[1, 2]} onFilterChange={vi.fn()} />,
-        );
-        expect(screen.getByRole("button", { name: home.gallery.tags.filterAria })).toHaveTextContent(
-            home.gallery.tags.filterCount.replace("{{count}}", "2"),
-        );
-    });
-
-    it("clears the filter via unselect all when every tag is selected", () => {
-        const onFilterChange = vi.fn();
-        const allIds = catalog.map((tag) => tag.id);
-        renderWithProviders(
-            <GalleryTagFilterBar catalog={catalog} selectedTagIds={allIds} onFilterChange={onFilterChange} />,
-        );
-        fireEvent.click(screen.getByRole("button", { name: home.gallery.tags.filterAria }));
-        fireEvent.click(screen.getByRole("button", { name: home.gallery.tags.filterUnselectAll }));
-        expect(onFilterChange).toHaveBeenCalledWith([]);
-    });
-
-    it("shows colour dots for selected tags on the activator, capped at eight", () => {
+    it("shows the tag name when only one is included or excluded, otherwise +n -m", () => {
         const { rerender } = renderWithProviders(
-            <GalleryTagFilterBar catalog={catalog} selectedTagIds={[]} onFilterChange={vi.fn()} />,
+            <GalleryTagFilterBar
+                catalog={catalog}
+                tagFilter={{ includeIds: [1], excludeIds: [] }}
+                onFilterChange={vi.fn()}
+            />,
         );
-        expect(document.querySelectorAll(".galleryTagFilterDot")).toHaveLength(0);
-
-        rerender(<GalleryTagFilterBar catalog={catalog} selectedTagIds={[1]} onFilterChange={vi.fn()} />);
-        const oneDot = document.querySelector(".galleryTagFilterDot") as HTMLElement;
-        expect(oneDot).toHaveStyle({ backgroundColor: "rgb(37, 99, 235)" });
+        expect(screen.getByRole("button", { name: home.gallery.tags.filterAria })).toHaveTextContent("Ongoing");
 
         rerender(
             <GalleryTagFilterBar
                 catalog={catalog}
-                selectedTagIds={[1, 2, 3, 4, 5, 6, 7, 8, 9]}
+                tagFilter={{ includeIds: [], excludeIds: [1] }}
                 onFilterChange={vi.fn()}
             />,
         );
-        expect(document.querySelectorAll(".galleryTagFilterDot")).toHaveLength(8);
+        expect(screen.getByRole("button", { name: home.gallery.tags.filterAria })).toHaveTextContent("Ongoing");
+
+        rerender(
+            <GalleryTagFilterBar
+                catalog={catalog}
+                tagFilter={{ includeIds: [1, 2], excludeIds: [] }}
+                onFilterChange={vi.fn()}
+            />,
+        );
+        expect(screen.getByRole("button", { name: home.gallery.tags.filterAria })).toHaveTextContent(
+            home.gallery.tags.filterPlusCount.replace("{{count}}", "2"),
+        );
+
+        rerender(
+            <GalleryTagFilterBar
+                catalog={catalog}
+                tagFilter={{ includeIds: [], excludeIds: [1, 2] }}
+                onFilterChange={vi.fn()}
+            />,
+        );
+        expect(screen.getByRole("button", { name: home.gallery.tags.filterAria })).toHaveTextContent(
+            home.gallery.tags.filterMinusCount.replace("{{count}}", "2"),
+        );
+
+        rerender(
+            <GalleryTagFilterBar
+                catalog={catalog}
+                tagFilter={{ includeIds: [1, 2], excludeIds: [3] }}
+                onFilterChange={vi.fn()}
+            />,
+        );
+        expect(screen.getByRole("button", { name: home.gallery.tags.filterAria })).toHaveTextContent(
+            home.gallery.tags.filterPlusMinusCount.replace("{{plus}}", "2").replace("{{minus}}", "1"),
+        );
+    });
+
+    it("snaps mixed master state to include-all", () => {
+        const onFilterChange = vi.fn();
+        const sortedIds = [...catalog].sort((a, b) => a.name.localeCompare(b.name)).map((tag) => tag.id);
+        renderWithProviders(
+            <GalleryTagFilterBar
+                catalog={catalog}
+                tagFilter={{ includeIds: [1], excludeIds: [2] }}
+                onFilterChange={onFilterChange}
+            />,
+        );
+        fireEvent.click(screen.getByRole("button", { name: home.gallery.tags.filterAria }));
+        fireEvent.click(screen.getByText(home.gallery.tags.filterSelectAll));
+        expect(onFilterChange).toHaveBeenCalledWith({ includeIds: sortedIds, excludeIds: [] });
+    });
+
+    it("cycles master from all-include to exclude-all", () => {
+        const onFilterChange = vi.fn();
+        const sortedIds = [...catalog].sort((a, b) => a.name.localeCompare(b.name)).map((tag) => tag.id);
+        renderWithProviders(
+            <GalleryTagFilterBar
+                catalog={catalog}
+                tagFilter={{ includeIds: sortedIds, excludeIds: [] }}
+                onFilterChange={onFilterChange}
+            />,
+        );
+        fireEvent.click(screen.getByRole("button", { name: home.gallery.tags.filterAria }));
+        fireEvent.click(screen.getByText(home.gallery.tags.filterExcludeAll));
+        expect(onFilterChange).toHaveBeenCalledWith({ includeIds: [], excludeIds: sortedIds });
+    });
+
+    it("clears the filter from exclude-all via the master row", () => {
+        const onFilterChange = vi.fn();
+        const sortedIds = [...catalog].sort((a, b) => a.name.localeCompare(b.name)).map((tag) => tag.id);
+        renderWithProviders(
+            <GalleryTagFilterBar
+                catalog={catalog}
+                tagFilter={{ includeIds: [], excludeIds: sortedIds }}
+                onFilterChange={onFilterChange}
+            />,
+        );
+        fireEvent.click(screen.getByRole("button", { name: home.gallery.tags.filterAria }));
+        fireEvent.click(screen.getByText(home.gallery.tags.filterUnselectAll));
+        expect(onFilterChange).toHaveBeenCalledWith({ includeIds: [], excludeIds: [] });
+    });
+
+    it("shows colour dots and triangles in the same mark container, capped at eight", () => {
+        const { rerender } = renderWithProviders(
+            <GalleryTagFilterBar catalog={catalog} tagFilter={emptyFilter} onFilterChange={vi.fn()} />,
+        );
+        expect(document.querySelectorAll(".galleryTagFilterDot")).toHaveLength(0);
+
+        rerender(
+            <GalleryTagFilterBar
+                catalog={catalog}
+                tagFilter={{ includeIds: [1], excludeIds: [] }}
+                onFilterChange={vi.fn()}
+            />,
+        );
+        const oneDot = document.querySelector(".galleryTagFilterDot") as HTMLElement;
+        expect(oneDot).toHaveStyle({ backgroundColor: "rgb(37, 99, 235)" });
+        expect(oneDot.className).not.toContain("galleryTagFilterMarkTriangle");
+
+        rerender(
+            <GalleryTagFilterBar
+                catalog={catalog}
+                tagFilter={{ includeIds: [], excludeIds: [2] }}
+                onFilterChange={vi.fn()}
+            />,
+        );
+        const triangle = document.querySelector(".galleryTagFilterMarkTriangle") as HTMLElement;
+        expect(triangle).toBeTruthy();
+        expect(triangle).toHaveStyle({ backgroundColor: "rgb(22, 163, 74)" });
+
+        rerender(
+            <GalleryTagFilterBar
+                catalog={catalog}
+                tagFilter={{ includeIds: [1, 2, 3, 4], excludeIds: [5, 6, 7, 8, 9] }}
+                onFilterChange={vi.fn()}
+            />,
+        );
+        const marks = document.querySelectorAll(".galleryTagFilterDots .galleryTagFilterDot");
+        expect(marks).toHaveLength(8);
+        expect(document.querySelectorAll(".galleryTagFilterMarkTriangle")).toHaveLength(4);
 
         fireEvent.click(screen.getByRole("button", { name: home.gallery.tags.filterAria }));
         const ongoing = within(screen.getByRole("dialog")).getByText("Ongoing");

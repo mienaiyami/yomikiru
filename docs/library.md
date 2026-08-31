@@ -355,7 +355,7 @@ User organization labels are a **catalog plus assignments**, not free-form strin
 
 IPC: `db:tags:getAll`, `db:tags:create`, `db:tags:update`, `db:tags:delete`, `db:library:getAllItemTags`, `db:library:setItemTags` (replace-set of ids for one item), ping `db:tag:change`.
 
-Renderer: [`src/renderer/store/tags.ts`](../src/renderer/store/tags.ts) holds the catalog and assignments. Details chips and picker: [`ItemTagsRow`](../src/renderer/features/home/gallery/components/ItemTagsPicker.tsx). Gallery home filters by one tag from a toolbar `InputSelect` (session state, not an app setting), combined with `galleryTypeFilter`. Overlay `library_item_metadata.tags` stays file-derived and is not this catalog.
+Renderer: [`src/renderer/store/tags.ts`](../src/renderer/store/tags.ts) holds the catalog and assignments. Details chips and picker: [`ItemTagsRow`](../src/renderer/features/home/gallery/components/ItemTagsPicker.tsx). Gallery home filters by include and/or exclude tags from a toolbar `InputMultiSelect` (persisted as signed `galleryTagFilterIds`, combined with `galleryTypeFilter`). Overlay `library_item_metadata.tags` stays file-derived and is not this catalog.
 
 `relocateLibraryItem` rewrites `library_item_tags.itemLink` in the same FK-off transaction as other children.
 

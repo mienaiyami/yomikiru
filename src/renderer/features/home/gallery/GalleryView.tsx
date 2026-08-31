@@ -31,7 +31,12 @@ import { isShortcutEventFromInputTarget, keyFormatter } from "@utils/keybindings
 import { resolveDetailsCoverSrc, trackerCoverHintByItemLink } from "@utils/libraryCover";
 import { ensurePdfLibraryCover } from "@utils/libraryCoverService";
 import { libraryItemSearchText, resolveAllItemMetadata, trackerByItemLink } from "@utils/libraryMetadata";
-import { itemsWithAnyTag } from "@utils/libraryTags";
+import {
+    itemsMatchingTagFilter,
+    pruneSignedTagFilterIds,
+    signedTagFilterIdsFromSelection,
+    tagFilterSelectionFromSignedIds,
+} from "@utils/libraryTags";
 import { resolveMangaChapterPath } from "@utils/mangaChapterPath";
 import { resolveMangaStartPath } from "@utils/mangaChapters";
 import type { RefObject } from "react";
@@ -42,7 +47,7 @@ import ListNavigator from "../../../components/ListNavigator";
 import BookDetailsPanel from "./components/BookDetailsPanel";
 import GalleryToolbar, {
     type GalleryTabId,
-    type GalleryTagFilterIds,
+    type GalleryTagFilterSelection,
     type GalleryTypeFilterId,
 } from "./components/GalleryToolbar";
 import MangaDetailsPanel from "./components/MangaDetailsPanel";
@@ -61,7 +66,7 @@ const GalleryPdfCoverKickoff = ({ item, hasCover }: { item: LibraryItemWithProgr
 
 /**
  * Gallery home: cover grid for {@link GalleryTabId}, `galleryTypeFilter`,
- * persisted `galleryTagFilterIds`, and a details panel.
+ * persisted signed `galleryTagFilterIds`, and a details panel.
  */
 const GalleryView: React.FC = () => {
     const { t } = useTranslation("home");
@@ -95,17 +100,17 @@ const GalleryView: React.FC = () => {
         const items = Object.values(library).filter((item): item is LibraryItemWithProgress => item !== null);
         return resolveAllItemMetadata(items, metadataByLink, trackerByItemLink(trackerEntries));
     }, [library, metadataByLink, trackerEntries]);
-    const selectedTagIds = appSettings.galleryTagFilterIds;
-    /* drop ids removed from the catalog; memo so toolbar does not see a new array every render */
-    const activeTagIds = useMemo(
-        () => selectedTagIds.filter((id) => tagCatalog.some((tag) => tag.id === id)),
-        [selectedTagIds, tagCatalog],
-    );
+    const signedTagFilterIds = appSettings.galleryTagFilterIds;
+    const catalogIdSet = useMemo(() => new Set(tagCatalog.map((tag) => tag.id)), [tagCatalog]);
     /* trust settings until the catalog is loaded; then drop ids for deleted tags */
-    const filterTagIds = tagsHydrated ? activeTagIds : selectedTagIds;
+    const filterSelection = useMemo(() => {
+        const signed = tagsHydrated
+            ? pruneSignedTagFilterIds(signedTagFilterIds, catalogIdSet)
+            : signedTagFilterIds;
+        return tagFilterSelectionFromSignedIds(signed);
+    }, [tagsHydrated, signedTagFilterIds, catalogIdSet]);
     /* stable key for selection-clear effect when the filter membership changes */
-    const activeTagFilterKey = filterTagIds
-        .slice()
+    const activeTagFilterKey = [...filterSelection.includeIds, ...filterSelection.excludeIds.map((id) => -id)]
         .sort((a, b) => a - b)
         .join(",");
 
@@ -126,8 +131,8 @@ const GalleryView: React.FC = () => {
     );
 
     const setTagFilter = useCallback(
-        (tagIds: GalleryTagFilterIds) => {
-            dispatch(setAppSettings({ galleryTagFilterIds: [...tagIds] }));
+        (next: GalleryTagFilterSelection) => {
+            dispatch(setAppSettings({ galleryTagFilterIds: signedTagFilterIdsFromSelection(next) }));
         },
         [dispatch],
     );
@@ -135,9 +140,15 @@ const GalleryView: React.FC = () => {
     /* drop deleted catalog ids from persisted filter once tags are loaded */
     useEffect(() => {
         if (!tagsHydrated) return;
-        if (selectedTagIds.length === activeTagIds.length) return;
-        dispatch(setAppSettings({ galleryTagFilterIds: [...activeTagIds] }));
-    }, [tagsHydrated, selectedTagIds, activeTagIds, dispatch]);
+        const nextSigned = signedTagFilterIdsFromSelection(filterSelection);
+        if (
+            nextSigned.length === signedTagFilterIds.length &&
+            nextSigned.every((id, index) => id === signedTagFilterIds[index])
+        ) {
+            return;
+        }
+        dispatch(setAppSettings({ galleryTagFilterIds: nextSigned }));
+    }, [tagsHydrated, signedTagFilterIds, filterSelection, dispatch]);
 
     const rootFontSizePx = useMemo(
         () => Number.parseFloat(getComputedStyle(document.documentElement).fontSize) || 16,
@@ -164,14 +175,14 @@ const GalleryView: React.FC = () => {
     /**
      * Library slice for `galleryActiveTab`. `continue-reading` uses a fixed
      * last-read order; `library`, `bookmarks`, and `favourites` use {@link sortGalleryItems}.
-     * `galleryTypeFilter` is applied first, then `galleryTagFilterIds` (OR).
+     * `galleryTypeFilter` is applied first, then signed `galleryTagFilterIds` (include OR, exclude NOR).
      */
     const tabItems = useMemo<LibraryItemWithProgress[]>(() => {
         const typed = Object.values(library).filter(
             (item): item is LibraryItemWithProgress =>
                 item !== null && (activeTypeFilter === "all" || item.type === activeTypeFilter),
         );
-        const all = filterTagIds.length === 0 ? typed : itemsWithAnyTag(typed, tagAssignments, filterTagIds);
+        const all = itemsMatchingTagFilter(typed, tagAssignments, filterSelection);
         const titleOf = (item: LibraryItemWithProgress) => displayByLink[item.link]?.title ?? item.title;
 
         if (activeTab === "continue-reading") {
@@ -199,7 +210,7 @@ const GalleryView: React.FC = () => {
         library,
         activeTab,
         activeTypeFilter,
-        activeTagFilterKey,
+        filterSelection,
         tagAssignments,
         bookmarks,
         appSettings.gallerySortBy,
@@ -329,6 +340,8 @@ const GalleryView: React.FC = () => {
 
     const renderMangaItem = useCallback(
         (item: LibraryItemWithProgress, _index: number, isSelected: boolean) => {
+            // tracker covers rewrite the same file URL; generation changes so tiles refresh
+            void coverCacheGeneration;
             const coverSrc = resolveDetailsCoverSrc(item, Boolean(trackerCoverHintByLink[item.link]));
             const isChecked = selection.isSelected(item.link);
             const inSelectionMode = selection.isSelectionMode;
@@ -609,7 +622,7 @@ const GalleryView: React.FC = () => {
                     activeTypeFilter={activeTypeFilter}
                     onTypeFilterChange={setActiveTypeFilter}
                     tagCatalog={tagCatalog}
-                    selectedTagIds={filterTagIds}
+                    tagFilter={filterSelection}
                     onTagFilterChange={setTagFilter}
                     hidden={detailsOpen}
                     hideSort={activeTab === "continue-reading"}

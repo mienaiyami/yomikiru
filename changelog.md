@@ -15,6 +15,7 @@
 
 # unreleased
 
+- feat: Gallery tag filter is a three-state control per tag (off, include, exclude) in one list. Include still means any of those tags; exclude hides titles that have any of the excluded tags (untagged titles stay visible when you only exclude). The closed control shows the tag name when only one is included or excluded, otherwise `+n -m`, plus the same colour-mark grid (circles for include, triangles for exclude). Saved as signed ids in `galleryTagFilterIds` so older include-only lists keep working.
 - fix: Unpinned reader side list no longer covers the left edge of pages when zen mode is off. The reading area is inset by the closed-list peek (the resize strip); zen mode and a pinned list are unchanged. (#551)
 
 # 2.25.0-beta

@@ -56,6 +56,25 @@ describe("InputMultiSelect", () => {
         expect(screen.getByRole("button", { name: "Tag filter" })).toHaveTextContent("2 selected");
     });
 
+    it("shows the option name on the activator for a single exclude when tri-state", () => {
+        renderWithProviders(
+            <InputMultiSelect
+                triState
+                value={[]}
+                excludedValues={["2"]}
+                onChange={vi.fn()}
+                options={options}
+                emptyLabel="No filter"
+                multipleLabel={(count) => `${count} selected`}
+                toggleAllLabel={(_all, aggregate = "off") =>
+                    aggregate === "on" ? "Exclude all" : aggregate === "exclude" ? "Unselect all" : "Select all"
+                }
+                aria-label="Tag filter"
+            />,
+        );
+        expect(screen.getByRole("button", { name: "Tag filter" })).toHaveTextContent("Done");
+    });
+
     it("toggles options without closing the panel", () => {
         const onChange = vi.fn();
         renderWithProviders(
@@ -168,5 +187,51 @@ describe("InputMultiSelect", () => {
         fireEvent.click(screen.getByRole("button", { name: "Tag filter" }));
         fireEvent.click(screen.getByRole("button", { name: "Select all" }));
         expect(onChange).toHaveBeenCalledWith(["1", "2", "3"]);
+    });
+
+    it("cycles tri-state rows and the master control without closing", () => {
+        const onChange = vi.fn();
+        const { rerender } = renderWithProviders(
+            <InputMultiSelect
+                triState
+                value={[]}
+                excludedValues={[]}
+                onChange={onChange}
+                options={options}
+                emptyLabel="No filter"
+                multipleLabel={(count) => `${count} selected`}
+                toggleAllLabel={(_all, aggregate = "off") =>
+                    aggregate === "on" ? "Exclude all" : aggregate === "exclude" ? "Unselect all" : "Select all"
+                }
+                aria-label="Tag filter"
+            />,
+        );
+        fireEvent.click(screen.getByRole("button", { name: "Tag filter" }));
+        const dialog = screen.getByRole("dialog", { name: "Tag filter" });
+        fireEvent.click(within(dialog).getByText("Ongoing"));
+        expect(onChange).toHaveBeenCalledWith(["1"], []);
+
+        rerender(
+            <InputMultiSelect
+                triState
+                value={["1"]}
+                excludedValues={[]}
+                onChange={onChange}
+                options={options}
+                emptyLabel="No filter"
+                multipleLabel={(count) => `${count} selected`}
+                toggleAllLabel={(_all, aggregate = "off") =>
+                    aggregate === "on" ? "Exclude all" : aggregate === "exclude" ? "Unselect all" : "Select all"
+                }
+                aria-label="Tag filter"
+            />,
+        );
+        fireEvent.click(within(screen.getByRole("dialog")).getByText("Ongoing"));
+        expect(onChange).toHaveBeenLastCalledWith([], ["1"]);
+
+        onChange.mockClear();
+        fireEvent.click(within(screen.getByRole("dialog")).getByText("Select all"));
+        expect(onChange).toHaveBeenCalledWith(["1", "2", "3"], []);
+        expect(screen.getByRole("dialog", { name: "Tag filter" })).toBeInTheDocument();
     });
 });

@@ -138,9 +138,6 @@
     }
 
     .rowSelectCheck.inputMultiSelectRowCheck {
-        flex-shrink: 0;
-        align-self: center;
-        padding: 0 0.2em 0 0;
         cursor: inherit;
 
         /* row shell owns focus ring; checkbox is visual + a11y name only */

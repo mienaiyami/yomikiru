@@ -93,3 +93,22 @@
         transform: rotate(45deg);
     }
 }
+
+/** Dash paint for mixed (`:indeterminate`) and exclude (`data-excluded`) checkbox states. */
+@mixin rowSelectCheckBoxDash() {
+    background-color: var(--font-color);
+    border-color: var(--font-color);
+    opacity: 1;
+
+    &::after {
+        content: "";
+        position: absolute;
+        left: 4px;
+        top: 7px;
+        width: 8px;
+        height: 2px;
+        background-color: var(--body-bg-color);
+        border: none;
+        transform: none;
+    }
+}

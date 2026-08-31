@@ -18,6 +18,12 @@ export type InputMultiSelectOption = {
     style?: CSSProperties;
 };
 
+/**
+ * Master-row aggregate when {@link InputMultiSelectProps.triState} is on.
+ * `"on"` means every enabled option is included (checked).
+ */
+export type InputMultiSelectTriStateAggregate = "off" | "on" | "exclude" | "mixed";
+
 /** Closed-state context for {@link InputMultiSelectProps.renderActivatorLabel}. */
 export type InputMultiSelectActivatorContext = {
     selectedValues: readonly string[];
@@ -27,10 +33,13 @@ export type InputMultiSelectActivatorContext = {
 
 /** Props for {@link InputMultiSelect}. */
 export type InputMultiSelectProps = {
-    /** Selected option values (controlled). */
+    /** Selected option values (controlled). Include list when {@link InputMultiSelectProps.triState}. */
     value: readonly string[];
-    /** Replace the full selection; panel stays open while toggling. */
-    onChange: (next: readonly string[]) => void;
+    /**
+     * Replace the selection; panel stays open while toggling.
+     * Second argument is passed only when {@link InputMultiSelectProps.triState} is on.
+     */
+    onChange: (next: readonly string[], excluded?: readonly string[]) => void;
     options: readonly InputMultiSelectOption[];
     /** Closed label when nothing is selected. */
     emptyLabel: string;
@@ -38,8 +47,11 @@ export type InputMultiSelectProps = {
     multipleLabel: (count: number) => string;
     /** Accessible name for the activator and popover. */
     "aria-label": string;
-    /** Toggle-all row label; receives whether every enabled option is selected. */
-    toggleAllLabel: (allSelected: boolean) => string;
+    /**
+     * Toggle-all row label; receives whether every enabled option is selected.
+     * When {@link InputMultiSelectProps.triState}, the second argument is the master aggregate.
+     */
+    toggleAllLabel: (allSelected: boolean, aggregate?: InputMultiSelectTriStateAggregate) => string;
     /** Per-option checkbox accessible name; defaults to the option label. */
     optionAriaLabel?: (option: InputMultiSelectOption) => string;
     /** Optional tooltip on the closed activator (e.g. explain empty selection). */
@@ -50,12 +62,24 @@ export type InputMultiSelectProps = {
     disabled?: boolean;
     /** When true, show the select/unselect-all control above the list. */
     showToggleAll?: boolean;
+    /**
+     * Opt-in include / exclude / off cycle per row. Default off (binary checkboxes).
+     * When on, {@link InputMultiSelectProps.excludedValues} is the exclude list.
+     */
+    triState?: boolean;
+    /** Exclude list when {@link InputMultiSelectProps.triState} is on. Ignored otherwise. */
+    excludedValues?: readonly string[];
     align?: PopoverAlign;
     placement?: PopoverPlacement;
     /** Fully override closed activator body (chevron is still rendered). */
     renderActivatorLabel?: (ctx: InputMultiSelectActivatorContext) => ReactNode;
     /** Override one option row body; row shell handles focus and toggle. */
-    renderOption?: (ctx: { option: InputMultiSelectOption; checked: boolean; checkbox: ReactNode }) => ReactNode;
+    renderOption?: (ctx: {
+        option: InputMultiSelectOption;
+        checked: boolean;
+        excluded?: boolean;
+        checkbox: ReactNode;
+    }) => ReactNode;
     /** Optional content above the row list. */
     header?: ReactNode;
     /** Optional content below the row list. */
@@ -63,8 +87,30 @@ export type InputMultiSelectProps = {
 };
 
 /**
+ * Include/exclude aggregate of enabled option values versus the two controlled lists.
+ */
+const triStateAggregateOf = (
+    enabledValues: readonly string[],
+    included: ReadonlySet<string>,
+    excluded: ReadonlySet<string>,
+): InputMultiSelectTriStateAggregate => {
+    if (enabledValues.length === 0) return "off";
+    let includeCount = 0;
+    let excludeCount = 0;
+    for (const value of enabledValues) {
+        if (included.has(value)) includeCount += 1;
+        else if (excluded.has(value)) excludeCount += 1;
+    }
+    if (includeCount === enabledValues.length) return "on";
+    if (excludeCount === enabledValues.length) return "exclude";
+    if (includeCount === 0 && excludeCount === 0) return "off";
+    return "mixed";
+};
+
+/**
  * Multi-value select built on {@link Popover}. Option rows are focusable divs with
- * {@link SelectionCheckbox}; the full row toggles selection. Toggle-all is a button.
+ * {@link SelectionCheckbox}; the full row toggles selection. Toggle-all is a button
+ * unless {@link InputMultiSelectProps.triState}, then it is a 3-state checkbox row.
  * Escape closes and refocuses the activator.
  */
 const InputMultiSelect = ({
@@ -82,6 +128,8 @@ const InputMultiSelect = ({
     popoverClassName = "",
     disabled = false,
     showToggleAll = true,
+    triState = false,
+    excludedValues = [],
     align = "start",
     placement = "bottom",
     renderActivatorLabel,
@@ -94,35 +142,82 @@ const InputMultiSelect = ({
     const activatorRef = useRef<HTMLButtonElement | null>(null);
 
     const selectedSet = new Set(value);
+    const excludedSet = new Set(triState ? excludedValues : []);
     const enabledOptions = options.filter((opt) => !opt.disabled);
+    const enabledValues = enabledOptions.map((opt) => opt.value);
     const allSelected = enabledOptions.length > 0 && enabledOptions.every((opt) => selectedSet.has(opt.value));
+    const triAggregate = triState ? triStateAggregateOf(enabledValues, selectedSet, excludedSet) : undefined;
     const selectedOptions = options.filter((opt) => selectedSet.has(opt.value));
+    const hasSelection = value.length > 0 || (triState && excludedValues.length > 0);
     const activatorCtx: InputMultiSelectActivatorContext = {
         selectedValues: value,
         selectedOptions,
-        isEmpty: value.length === 0,
+        isEmpty: !hasSelection,
     };
 
     const defaultActivatorLabel = (): ReactNode => {
-        if (value.length === 0) return emptyLabel;
-        if (value.length === 1) return selectedOptions[0]?.label ?? emptyLabel;
+        if (!hasSelection) return emptyLabel;
+        if (value.length === 1 && (!triState || excludedValues.length === 0)) {
+            return selectedOptions[0]?.label ?? emptyLabel;
+        }
+        if (triState && value.length === 0 && excludedValues.length === 1) {
+            return options.find((opt) => opt.value === excludedValues[0])?.label ?? emptyLabel;
+        }
         return multipleLabel(value.length);
     };
 
+    const emitBinary = (next: readonly string[]) => {
+        onChange(next);
+    };
+
+    const emitTriState = (included: readonly string[], excluded: readonly string[]) => {
+        onChange(included, excluded);
+    };
+
     const toggleValue = (optionValue: string) => {
-        if (selectedSet.has(optionValue)) {
-            onChange(value.filter((v) => v !== optionValue));
+        if (triState) {
+            if (selectedSet.has(optionValue)) {
+                emitTriState(
+                    value.filter((v) => v !== optionValue),
+                    [...excludedValues, optionValue],
+                );
+                return;
+            }
+            if (excludedSet.has(optionValue)) {
+                emitTriState(
+                    value,
+                    excludedValues.filter((v) => v !== optionValue),
+                );
+                return;
+            }
+            emitTriState([...value, optionValue], excludedValues);
             return;
         }
-        onChange([...value, optionValue]);
+        if (selectedSet.has(optionValue)) {
+            emitBinary(value.filter((v) => v !== optionValue));
+            return;
+        }
+        emitBinary([...value, optionValue]);
     };
 
     const toggleAll = () => {
-        if (allSelected) {
-            onChange([]);
+        if (triState) {
+            if (triAggregate === "off" || triAggregate === "mixed") {
+                emitTriState(enabledValues, []);
+                return;
+            }
+            if (triAggregate === "on") {
+                emitTriState([], enabledValues);
+                return;
+            }
+            emitTriState([], []);
             return;
         }
-        onChange(enabledOptions.map((opt) => opt.value));
+        if (allSelected) {
+            emitBinary([]);
+            return;
+        }
+        emitBinary(enabledValues);
     };
 
     /** Focusable panel rows in DOM order (toggle-all when shown, then each option). */
@@ -171,16 +266,24 @@ const InputMultiSelect = ({
         }
     };
 
-    const optionCheckbox = (option: InputMultiSelectOption, checked: boolean, toggle: () => void) => (
+    const optionCheckbox = (
+        option: InputMultiSelectOption,
+        checked: boolean,
+        excluded: boolean,
+        toggle: () => void,
+    ) => (
         <SelectionCheckbox
-            className="rowSelectCheck inputMultiSelectRowCheck"
+            className="rowSelectCheck inputMultiSelectRowCheck noBG"
             boxClassName="checkBox"
             checked={checked}
+            excluded={excluded}
             onToggle={() => toggle()}
             ariaLabel={optionAriaLabel?.(option) ?? option.label}
             tabIndex={-1}
         />
     );
+
+    const toggleAllLabelText = toggleAllLabel(allSelected, triAggregate);
 
     const panelBody = (close: () => void) => {
         let rowSlot = 0;
@@ -192,34 +295,66 @@ const InputMultiSelect = ({
             };
         };
 
+        const toggleAllCheckbox =
+            triState && triAggregate ? (
+                <SelectionCheckbox
+                    className="rowSelectCheck inputMultiSelectRowCheck noBG"
+                    boxClassName="checkBox"
+                    checked={triAggregate === "on"}
+                    excluded={triAggregate === "exclude"}
+                    indeterminate={triAggregate === "mixed"}
+                    onToggle={() => toggleAll()}
+                    ariaLabel={toggleAllLabelText}
+                    tabIndex={-1}
+                />
+            ) : null;
+
         return (
             <fieldset className="inputMultiSelectPanel" aria-label={ariaLabel}>
                 {header}
                 {showToggleAll && options.length > 0 ? (
-                    <button
-                        type="button"
-                        ref={bindRowRef()}
-                        className="inputMultiSelectRow inputMultiSelectToggleAll"
-                        onClick={toggleAll}
-                        onMouseEnter={(e) => e.currentTarget.focus()}
-                        onKeyDown={(e) => onRowKeyDown(e, close, toggleAll)}
-                    >
-                        {toggleAllLabel(allSelected)}
-                    </button>
+                    triState ? (
+                        <div
+                            ref={bindRowRef()}
+                            role="option"
+                            aria-label={toggleAllLabelText}
+                            aria-selected={triAggregate === "on" || triAggregate === "exclude"}
+                            tabIndex={0}
+                            className="inputMultiSelectRow inputMultiSelectToggleAll"
+                            onClick={toggleAll}
+                            onMouseEnter={(e) => e.currentTarget.focus()}
+                            onKeyDown={(e) => onRowKeyDown(e, close, toggleAll)}
+                        >
+                            {toggleAllCheckbox}
+                            <span className="inputMultiSelectRowLabel">{toggleAllLabelText}</span>
+                        </div>
+                    ) : (
+                        <button
+                            type="button"
+                            ref={bindRowRef()}
+                            className="inputMultiSelectRow inputMultiSelectToggleAll"
+                            onClick={toggleAll}
+                            onMouseEnter={(e) => e.currentTarget.focus()}
+                            onKeyDown={(e) => onRowKeyDown(e, close, toggleAll)}
+                        >
+                            {toggleAllLabelText}
+                        </button>
+                    )
                 ) : null}
                 {options.map((option) => {
                     const checked = selectedSet.has(option.value);
+                    const excluded = excludedSet.has(option.value);
                     const toggle = () => {
                         if (option.disabled) return;
                         toggleValue(option.value);
                     };
-                    const checkbox = optionCheckbox(option, checked, toggle);
+                    const checkbox = optionCheckbox(option, checked, excluded, toggle);
                     return (
                         <div
                             key={option.value}
                             ref={bindRowRef()}
                             role="option"
-                            aria-selected={checked}
+                            aria-selected={checked || excluded}
                             aria-disabled={option.disabled || undefined}
                             tabIndex={option.disabled ? -1 : 0}
                             className={`inputMultiSelectRow${option.disabled ? " is-disabled" : ""}`}
@@ -231,7 +366,7 @@ const InputMultiSelect = ({
                             onKeyDown={(e) => onRowKeyDown(e, close, toggle)}
                         >
                             {renderOption ? (
-                                renderOption({ option, checked, checkbox })
+                                renderOption({ option, checked, excluded, checkbox })
                             ) : (
                                 <>
                                     {checkbox}
@@ -266,7 +401,7 @@ const InputMultiSelect = ({
                             "inputMultiSelectActivator",
                             activatorClassName,
                             open ? "is-open" : "",
-                            value.length > 0 ? "has-selection" : "",
+                            hasSelection ? "has-selection" : "",
                         ]
                             .filter(Boolean)
                             .join(" ")}

@@ -247,10 +247,16 @@
             "filterAria": "Tag filter",
             "filterNoConstraint": "No filter",
             "filterAllTitle": "Show every item, including titles with no tags",
+            "filterPlusCount": "+{{count}}",
+            "filterMinusCount": "-{{count}}",
+            "filterPlusMinusCount": "+{{plus}} -{{minus}}",
             "filterCount": "{{count}} selected",
             "filterSelectAll": "Select all tags",
+            "filterExcludeAll": "Exclude all tags",
             "filterUnselectAll": "Unselect all tags",
-            "filterOptionAria": "Filter by tag {{name}}",
+            "filterOptionOffAria": "Off: {{name}}",
+            "filterOptionIncludedAria": "Included: {{name}}",
+            "filterOptionExcludedAria": "Excluded: {{name}}",
             "assignAria": "Assign tag {{name}}"
         },
         "missing": {
