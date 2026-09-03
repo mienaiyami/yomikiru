@@ -678,13 +678,13 @@ const addNewMangaOnOpen = async (
             updateReaderContent({
                 ...added,
                 type: "manga",
-                progress,
+                progress: { ...progress, itemLink: added.link },
             }),
         );
         await materializeMangaRootAfterAdd({
             dispatch,
             libraryId: added?.id,
-            mangaDir: itemLink,
+            mangaDir: added.link,
             firstPageImage: images[0],
         });
     } catch (err) {
@@ -823,7 +823,7 @@ export type SyncBookLibraryOnOpenOpts = {
  */
 export const syncBookLibraryOnReaderOpen = async (opts: SyncBookLibraryOnOpenOpts): Promise<void> => {
     const { dispatch, title, author, coverAbsolutePath } = opts;
-    const itemLink = normalizeMangaPathSegment(opts.openedPath);
+    let itemLink = normalizeMangaPathSegment(opts.openedPath);
     const progress: BookProgress = { ...opts.progress, itemLink };
 
     let item = opts.libraryItem?.type === "book" ? opts.libraryItem : null;
@@ -848,7 +848,7 @@ export const syncBookLibraryOnReaderOpen = async (opts: SyncBookLibraryOnOpenOpt
         const stored = item.progress;
         const openedEmpty = progress.position.trim() === "";
         const keepStored = Boolean(stored && stored.position.trim() !== "" && openedEmpty);
-        const nextProgress = keepStored && stored ? { ...stored, itemLink } : progress;
+        const nextProgress = keepStored && stored ? { ...stored, itemLink } : { ...progress, itemLink };
         dispatch(updateReaderContent({ ...item, progress: nextProgress }));
         await dispatch(
             updateLibraryItem({
@@ -857,7 +857,7 @@ export const syncBookLibraryOnReaderOpen = async (opts: SyncBookLibraryOnOpenOpt
                 title,
             }),
         );
-        if (!keepStored) await dispatch(updateBookProgress(progress));
+        if (!keepStored) await dispatch(updateBookProgress({ ...progress, itemLink }));
         return;
     }
 
@@ -879,7 +879,7 @@ export const syncBookLibraryOnReaderOpen = async (opts: SyncBookLibraryOnOpenOpt
             updateReaderContent({
                 ...added,
                 type: "book",
-                progress,
+                progress: { ...progress, itemLink: added.link },
             }),
         );
         await materializeBookCoverFromExtractedPath({

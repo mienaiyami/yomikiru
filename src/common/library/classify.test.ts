@@ -4,13 +4,17 @@ import {
     collectLibraryScanTargetFromEventPath,
     collectLibraryScanTargets,
     type LibraryIo,
+    resolveLibraryRealPath,
+    stripWindowsLongPathPrefix,
 } from "@common/library/classify";
 import { describe, expect, it } from "vitest";
+
+type IoFsExtra = Partial<Pick<LibraryIo["fs"], "realpath">>;
 
 /**
  * Builds a {@link LibraryIo} over in-memory directory/file sets (preload-shaped).
  */
-const ioForTree = (dirs: Record<string, string[]>, files: string[] = []): LibraryIo => {
+const ioForTree = (dirs: Record<string, string[]>, files: string[] = [], fsExtra: IoFsExtra = {}): LibraryIo => {
     const dirSet = new Set(Object.keys(dirs));
     const fileSet = new Set(files);
     return {
@@ -22,6 +26,7 @@ const ioForTree = (dirs: Record<string, string[]>, files: string[] = []): Librar
             access: async () => undefined,
             stat: async () => ({ mtimeMs: 1 }),
             constants: { R_OK: 4 },
+            ...fsExtra,
         },
         path,
     };
@@ -86,5 +91,23 @@ describe("classifyLibraryNode with injected fs", () => {
         });
 
         expect(target).toEqual({ type: "book", path: epub });
+    });
+});
+
+describe("stripWindowsLongPathPrefix", () => {
+    it("unwraps drive and UNC long-path prefixes", () => {
+        expect(stripWindowsLongPathPrefix("\\\\?\\C:\\lib\\series")).toBe("C:\\lib\\series");
+        expect(stripWindowsLongPathPrefix("\\\\?\\UNC\\server\\share\\a")).toBe("\\\\server\\share\\a");
+        expect(stripWindowsLongPathPrefix("/home/lib/series")).toBe("/home/lib/series");
+    });
+});
+
+describe("resolveLibraryRealPath", () => {
+    it("keeps a missing path lexical when realpath is omitted or echoes the input", () => {
+        const missing = path.join("testdata", "no-such-library-item");
+        expect(resolveLibraryRealPath(ioForTree({}, []), missing)).toBe(path.normalize(missing));
+        expect(resolveLibraryRealPath(ioForTree({}, [], { realpath: (p) => p }), missing)).toBe(
+            path.normalize(missing),
+        );
     });
 });

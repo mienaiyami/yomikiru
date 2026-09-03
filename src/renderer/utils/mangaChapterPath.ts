@@ -1,4 +1,5 @@
-import { formatUtils } from "./file";
+import { resolveLibraryRealPath } from "@common/library/classify";
+import { formatUtils, rendererLibraryIo } from "./file";
 
 /**
  * Stored `chapterName` when progress addresses the library item itself rather than a child.
@@ -38,6 +39,7 @@ export const resolveMangaChapterPath = (itemLink: string, chapterName: string): 
  * Series `link` and chapter key for an opened reader path.
  * Packed manga always belongs to its direct parent so archive chapters and folder chapters
  * share one progress identity. The root token remains for an opened manga folder and legacy data.
+ * Opening through a symlink matches a catalogue row stored as {@link resolveLibraryRealPath}.
  */
 export const resolveMangaOpenSeries = (
     openedPath: string,
@@ -45,18 +47,27 @@ export const resolveMangaOpenSeries = (
 ): { itemLink: string; chapterName: string } => {
     const opened = normalizeMangaPathSegment(openedPath);
     const series = seriesLink ? normalizeMangaPathSegment(seriesLink) : null;
-    if (series === opened && !formatUtils.mangaFile.test(opened)) {
-        return { itemLink: series, chapterName: MANGA_ROOT_CHAPTER_NAME };
+    const io = rendererLibraryIo();
+    if (series && !formatUtils.mangaFile.test(opened)) {
+        if (series === opened || resolveLibraryRealPath(io, series) === resolveLibraryRealPath(io, opened)) {
+            return { itemLink: series, chapterName: MANGA_ROOT_CHAPTER_NAME };
+        }
     }
-    if (series && window.path.dirname(opened) === series) {
+    const openedParent = window.path.dirname(opened);
+    if (
+        series &&
+        (openedParent === series ||
+            resolveLibraryRealPath(io, openedParent) === resolveLibraryRealPath(io, series))
+    ) {
         return { itemLink: series, chapterName: window.path.basename(opened) };
     }
-    return { itemLink: window.path.dirname(opened), chapterName: window.path.basename(opened) };
+    return { itemLink: openedParent, chapterName: window.path.basename(opened) };
 };
 
 /**
  * Catalogue map key for an open path: prefer a containing manga series, then an exact link.
  * This keeps an archive chapter from replacing an established parent series in the reader.
+ * Lexical keys and {@link resolveLibraryRealPath} keys are both tried.
  */
 export const findLibraryItemKeyForOpenPath = (
     openedPath: string,
@@ -64,10 +75,17 @@ export const findLibraryItemKeyForOpenPath = (
 ): string | null => {
     const opened = normalizeMangaPathSegment(openedPath);
     const parent = window.path.dirname(opened);
-    if (formatUtils.mangaFile.test(opened) && hasItem(parent)) return parent;
+    const io = rendererLibraryIo();
+    const openedReal = resolveLibraryRealPath(io, opened);
+    const parentReal = resolveLibraryRealPath(io, parent);
+    if (formatUtils.mangaFile.test(opened) && (hasItem(parent) || hasItem(parentReal))) {
+        return hasItem(parent) ? parent : parentReal;
+    }
     if (hasItem(opened)) return opened;
+    if (hasItem(openedReal)) return openedReal;
     if (hasItem(openedPath)) return openedPath;
     if (formatUtils.book.test(opened)) return null;
     if (hasItem(parent)) return parent;
+    if (hasItem(parentReal)) return parentReal;
     return null;
 };

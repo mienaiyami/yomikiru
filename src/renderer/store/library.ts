@@ -340,6 +340,9 @@ const librarySlice = createSlice({
 export const { clearError: clearError_library, setLibrary } = librarySlice.actions;
 export default librarySlice.reducer;
 
+/**
+ * Library row for a reader/open path.
+ */
 export const selectLibraryItem = (state: RootState, path: string) => {
     try {
         const key = findLibraryItemKeyForOpenPath(path, (link) => Boolean(state.library.items[link]));

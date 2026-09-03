@@ -54,11 +54,11 @@ export type CollectLibraryScanTargetsOpts = {
     content: "manga" | "book" | "both";
     /** Grouping-folder steps from the root (capped by {@link LIBRARY_SCAN_MAX_DEPTH_CEILING}). */
     maxDepth: number;
-    /** Normalized library `link` values that must not be emitted again. */
+    /** {@link resolveLibraryRealPath} keys of catalogue rows that must not be emitted again. */
     existingLinks: ReadonlySet<string>;
     /**
      * Other library-folder paths this walk must not enter.
-     * Compared after normalize; the current root is never listed here by callers.
+     * Compared after {@link resolveLibraryRealPath}; the current root is never listed here by callers.
      */
     skipRoots?: readonly string[];
     /**
@@ -116,11 +116,36 @@ export const normalizeLibraryPath = (io: LibraryIo, link: string): string => {
 };
 
 /**
- * True when `absPath` is `root` or a descendant of `root` after normalize.
+ * Drops a Windows `\\?\` prefix from {@link LibraryFs.realpath} so catalogue keys match
+ * ordinary absolute paths. No-op on other platforms and on paths without the prefix.
+ */
+export const stripWindowsLongPathPrefix = (resolved: string): string => {
+    if (resolved.startsWith("\\\\?\\UNC\\")) return `\\\\${resolved.slice(8)}`;
+    if (resolved.startsWith("\\\\?\\")) return resolved.slice(4);
+    return resolved;
+};
+
+/**
+ * Normalized path used as `library_items.link`: `realpath` when the adapter provides it
+ * and the path exists, otherwise {@link normalizeLibraryPath}.
+ *
+ * ponytail: identity is realpath only. Hardlinks, NTFS case-fold, and subst/mapped-drive
+ * aliases stay distinct; upgrade with inode / casefold keys if those reports show up.
+ */
+export const resolveLibraryRealPath = (io: LibraryIo, link: string): string => {
+    const normalized = normalizeLibraryPath(io, link);
+    if (!normalized) return normalized;
+    const real = io.fs.realpath?.(normalized);
+    if (!real) return normalized;
+    return stripWindowsLongPathPrefix(normalizeLibraryPath(io, real));
+};
+
+/**
+ * True when `absPath` is `root` or a descendant of `root` after {@link resolveLibraryRealPath}.
  */
 export const pathIsInsideRoot = (io: LibraryIo, absPath: string, root: string): boolean => {
-    const a = normalizeLibraryPath(io, absPath);
-    const r = normalizeLibraryPath(io, root);
+    const a = resolveLibraryRealPath(io, absPath);
+    const r = resolveLibraryRealPath(io, root);
     if (a === r) return true;
     const rel = io.path.relative(r, a);
     return rel !== "" && !rel.startsWith("..") && !io.path.isAbsolute(rel);
@@ -143,12 +168,10 @@ const allowsBook = (content: CollectLibraryScanTargetsOpts["content"]): boolean 
     content === "book" || content === "both";
 
 const skipRootsNormalized = (io: LibraryIo, skipRoots: readonly string[] | undefined): string[] =>
-    (skipRoots ?? []).map((root) => normalizeLibraryPath(io, root)).filter(Boolean);
+    (skipRoots ?? []).map((root) => resolveLibraryRealPath(io, root)).filter(Boolean);
 
-const isUnderSkipRoot = (io: LibraryIo, absPath: string, skipRoots: readonly string[]): boolean => {
-    const a = normalizeLibraryPath(io, absPath);
-    return skipRoots.some((root) => pathIsInsideRoot(io, a, root));
-};
+const isUnderSkipRoot = (io: LibraryIo, absPath: string, skipRoots: readonly string[]): boolean =>
+    skipRoots.some((root) => pathIsInsideRoot(io, absPath, root));
 
 /**
  * True when `dir` has a direct child *file* named as an ignore sentinel.
@@ -325,26 +348,31 @@ export const classifyLibraryNode = async (io: LibraryIo, absPath: string): Promi
     return { kind: "skip", path: normalized };
 };
 
+/**
+ * Pushes a classified node onto `out` using {@link resolveLibraryRealPath} as the catalogue path.
+ */
 const emitTarget = (
+    io: LibraryIo,
     node: ClassifiedLibraryNode,
     opts: CollectLibraryScanTargetsOpts,
     out: LibraryScanTarget[],
 ): void => {
-    if (opts.existingLinks.has(node.path)) return;
+    const canonical = resolveLibraryRealPath(io, node.path);
+    if (opts.existingLinks.has(canonical)) return;
     if (node.kind === "series" && allowsManga(opts.content)) {
-        out.push({ type: "manga", path: node.path });
+        out.push({ type: "manga", path: canonical });
         return;
     }
     if (node.kind === "packedManga" && allowsManga(opts.content)) {
-        out.push({ type: "manga", path: node.path });
+        out.push({ type: "manga", path: canonical });
         return;
     }
     if (node.kind === "book" && allowsBook(opts.content)) {
-        out.push({ type: "book", path: node.path });
+        out.push({ type: "book", path: canonical });
         return;
     }
     if (node.kind === "oneshot" && allowsManga(opts.content)) {
-        out.push({ type: "manga", path: node.path });
+        out.push({ type: "manga", path: canonical });
     }
 };
 
@@ -397,7 +425,7 @@ const emitDirectBookChildren = async (
         ) {
             continue;
         }
-        emitTarget({ kind: "book", path: normalizeLibraryPath(io, child) }, opts, out);
+        emitTarget(io, { kind: "book", path: normalizeLibraryPath(io, child) }, opts, out);
     }
 };
 
@@ -405,7 +433,8 @@ const emitDirectBookChildren = async (
  * Walks `root` for catalogue paths. Recurses grouping and skip dirs (EPUBs in otherwise-empty
  * folders); terminal manga directories are not descended, but their direct book siblings are
  * still emitted for mixed roots. Skip regex, ignore sentinels, and
- * {@link CollectLibraryScanTargetsOpts.skipRoots} prune whole subtrees.
+ * {@link CollectLibraryScanTargetsOpts.skipRoots} prune whole subtrees. Emitted `path` values
+ * are {@link resolveLibraryRealPath}; a directory whose realpath was already walked is skipped.
  */
 export const collectLibraryScanTargets = async (
     io: LibraryIo,
@@ -416,6 +445,7 @@ export const collectLibraryScanTargets = async (
     const remaining = Math.min(Math.max(0, opts.maxDepth), LIBRARY_SCAN_MAX_DEPTH_CEILING);
     const out: LibraryScanTarget[] = [];
     const skipRoots = skipRootsNormalized(io, opts.skipRoots);
+    const visitedReal = new Set<string>();
 
     if (opts.shouldStop?.() || !io.fs.existsSync(normalizedRoot)) return out;
 
@@ -428,7 +458,7 @@ export const collectLibraryScanTargets = async (
 
     const rootNode = await classifyLibraryNode(io, normalizedRoot);
     if (rootNode.kind !== "grouping" && rootNode.kind !== "skip") {
-        emitTarget(rootNode, opts, out);
+        emitTarget(io, rootNode, opts, out);
         if (rootNode.kind === "series" || rootNode.kind === "oneshot") {
             await emitDirectBookChildren(io, normalizedRoot, opts, { skipRoots }, out);
         }
@@ -437,6 +467,9 @@ export const collectLibraryScanTargets = async (
 
     const walk = async (dir: string, depthLeft: number): Promise<void> => {
         if (opts.shouldStop?.() || !io.fs.isDir(dir)) return;
+        const dirReal = resolveLibraryRealPath(io, dir);
+        if (visitedReal.has(dirReal)) return;
+        visitedReal.add(dirReal);
         opts.onWalkProgress?.(dir);
         let names: string[] = [];
         try {
@@ -457,12 +490,13 @@ export const collectLibraryScanTargets = async (
                 continue;
             }
             const node = await classifyLibraryNode(io, child);
-            emitTarget(node, opts, out);
+            emitTarget(io, node, opts, out);
             if (node.kind === "series" || node.kind === "oneshot") {
                 await emitDirectBookChildren(io, child, opts, { skipRoots }, out);
             }
             /* skip dirs still hold epubs/packed files; do not enter series or oneshot folders */
             if (io.fs.isDir(child) && node.kind !== "series" && node.kind !== "oneshot" && depthLeft > 0) {
+                if (visitedReal.has(resolveLibraryRealPath(io, child))) continue;
                 await walk(child, depthLeft - 1);
             }
         }
@@ -527,17 +561,18 @@ export const collectLibraryScanTargetFromEventPath = async (
         const entered = groupingsEnteredFromRoot(io, rootN, node.path);
         const withinDepth = entered !== null && entered <= remaining;
 
+        const nodeReal = resolveLibraryRealPath(io, node.path);
         if (node.kind === "series") {
             // event is inside a known series: do not promote a chapter folder to a new item
-            if (opts.existingLinks.has(node.path)) return fallback?.type === "book" ? fallback : null;
+            if (opts.existingLinks.has(nodeReal)) return fallback?.type === "book" ? fallback : null;
             if (withinDepth) {
                 const out: LibraryScanTarget[] = [];
-                emitTarget(node, opts, out);
+                emitTarget(io, node, opts, out);
                 if (out[0]) return out[0];
             }
-        } else if (withinDepth && !opts.existingLinks.has(node.path)) {
+        } else if (withinDepth && !opts.existingLinks.has(nodeReal)) {
             const out: LibraryScanTarget[] = [];
-            emitTarget(node, opts, out);
+            emitTarget(io, node, opts, out);
             if (out[0] && !fallback) fallback = out[0];
         }
 

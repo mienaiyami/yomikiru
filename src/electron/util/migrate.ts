@@ -26,8 +26,7 @@ export const migrateToSqlite = async (
         const backupPath = path.join(userDataURL, `data.db-${Date.now()}.backup`);
         await fs.copyFile(DB_PATH, backupPath);
         await db.migrateFromJSON(history, bookmarks);
-        await pingDatabaseChange("db:library:change");
-        await pingDatabaseChange("db:bookmark:change");
+        pingDatabaseChange(["db:library:change", "db:bookmark:change"]);
         await fs.rename(bookmarksPath, path.join(userDataURL, "bookmarks.json.old"));
         await fs.rename(historyPath, path.join(userDataURL, "history.json.old"));
     } catch (error) {

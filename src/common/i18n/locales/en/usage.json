@@ -36,7 +36,7 @@
         },
         "search": {
             "title": "Search:",
-            "symlink": "Symbolic links (symlinks) to directories and to files are followed in Locations/Home Location and during library scan, so you can browse and open content through linked folders and files.",
+            "symlink": "Symbolic links (symlinks) to directories and to files are followed in Locations/Home Location and during library scan, so you can browse and open content through linked folders and files. The library stores the resolved path, so a real folder and a link to it stay one catalogue row (progress, tags, and trackers are shared). Show in File Explorer opens that resolved location. Pointing a symlink at a different folder or file does not keep progress on the old alias; that history stays with the previous resolved path.",
             "partial": "You don't need to type the whole word in search. (e.g. For <code>One Piece</code> type <code>op</code>).",
             "exact": "For exact search, add <code>\"</code> or <code>`</code> in front of search. (e.g. For <code>One Piece</code> type <code>`one</code>).",
             "paste": "Paste link to set browse pasted link in Locations tab. Or page link of a supported file to open it in reader directly.",

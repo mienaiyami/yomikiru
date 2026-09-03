@@ -1,9 +1,12 @@
-import type { LibraryFolder } from "@common/library/folders";
+import {
+    type LibraryFolder,
+    listForeignLibraryFolderSkipPaths,
+} from "@common/library/folders";
 import type { LibraryItemWithProgress } from "@common/types/db";
 import i18n from "@renderer/i18n";
 import { dialogUtils } from "@utils/dialog";
 import { promptSelectDir } from "@utils/file";
-import { pathIsInsideRoot } from "@utils/mangaChapters";
+import { pathIsInsideRoot, rendererLibraryIo } from "@utils/mangaChapters";
 
 export {
     isDuplicateLibraryFolderPath,
@@ -77,22 +80,12 @@ export const existingLibraryFolderPaths = (folders: readonly LibraryFolder[]): s
 export const listForeignLibraryScanSkipPaths = (
     currentRoot: string,
     folders: readonly LibraryFolder[],
-): string[] => {
-    const current = window.path.normalize(currentRoot.trim());
-    const out: string[] = [];
-    const push = (raw: string): void => {
-        const n = window.path.normalize(raw.trim());
-        if (!n || n === current) return;
-        /* ancestor skip roots match every descendant of the current walk */
-        if (pathIsInsideRoot(current, n)) return;
-        if (out.some((p) => window.path.normalize(p) === n)) return;
-        out.push(n);
-    };
-    for (const folder of folders) {
-        push(folder.path);
-    }
-    return out;
-};
+): string[] =>
+    listForeignLibraryFolderSkipPaths(
+        rendererLibraryIo(),
+        currentRoot,
+        folders.map((folder) => folder.path),
+    );
 
 /**
  * Catalogue links that sit under `rootPath` and not under a foreign skip root.

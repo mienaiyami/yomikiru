@@ -26,6 +26,11 @@ export type LibraryFs = {
     access: (path: string, mode?: number) => Promise<void>;
     stat: (path: string) => Promise<{ mtimeMs: number }>;
     constants: { R_OK: number };
+    /**
+     * Follows directory and file symlinks to a stable path. Omit in in-memory
+     * test fakes so callers treat the given path as already canonical.
+     */
+    realpath?: (path: string) => string;
 };
 
 /** Path helpers matching the preload `path` bridge / `node:path`. */

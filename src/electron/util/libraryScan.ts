@@ -6,10 +6,14 @@ import {
     collectLibraryScanTargets,
     compileLibraryScanSkipRegex,
     listMangaChapterChildren,
-    pathIsInsideRoot,
+    resolveLibraryRealPath,
 } from "@common/library/classify";
-import type { LibraryFolder } from "@common/library/folders";
-import { isLibraryScanDue, withLibraryScanTimestamps } from "@common/library/folders";
+import {
+    type LibraryFolder,
+    isLibraryScanDue,
+    listForeignLibraryFolderSkipPaths,
+    withLibraryScanTimestamps,
+} from "@common/library/folders";
 import { isBookFileName, isMangaFileName, isPdfFileName } from "@common/library/formats";
 import { findCoverSidecar } from "@common/library/images";
 import {
@@ -24,7 +28,7 @@ import {
 } from "@common/types/libraryScan";
 import type { DatabaseService } from "@electron/db";
 import { libraryItems, libraryItemTags, libraryTags } from "@electron/db/schema";
-import { pingDatabaseChange } from "@electron/ipc/database";
+import { LIBRARY_ITEM_LINK_CHANGE_CHANNELS, pingDatabaseChange } from "@electron/ipc/database";
 import { ipc } from "@electron/ipc/utils";
 import { withEpubArchivePackage, withResolvedFirstImage } from "@electron/util/contentSource";
 import { materializeCoverFromSourcePath, materializeCoverFromStream } from "@electron/util/coverMaterialize";
@@ -97,18 +101,12 @@ export const cancelLibraryScan = (): void => {
  * Other configured roots a walk of `currentRoot` must not enter.
  * Ancestors are omitted because excluding one would also exclude the current walk.
  */
-const listForeignSkipPaths = (currentRoot: string, folders: readonly LibraryFolder[]): string[] => {
-    const current = normalizeRoot(currentRoot);
-    const out: string[] = [];
-    for (const folder of folders) {
-        const n = normalizeRoot(folder.path);
-        if (!n || n === current) continue;
-        if (pathIsInsideRoot(io, current, n)) continue;
-        if (out.some((p) => normalizeRoot(p) === n)) continue;
-        out.push(n);
-    }
-    return out;
-};
+const listForeignSkipPaths = (currentRoot: string, folders: readonly LibraryFolder[]): string[] =>
+    listForeignLibraryFolderSkipPaths(
+        io,
+        currentRoot,
+        folders.map((folder) => folder.path),
+    );
 
 /** Returns a folder row only when its configured root currently exists. */
 const libraryFolderScanRoot = (folder: LibraryFolder) => {
@@ -128,7 +126,7 @@ const rootsFromFolders = (
         if (!include(folder)) continue;
         const root = libraryFolderScanRoot(folder);
         if (!root) continue;
-        const n = normalizeRoot(root.path);
+        const n = resolveLibraryRealPath(io, root.path);
         if (seen.has(n)) continue;
         seen.add(n);
         out.push(root);
@@ -136,11 +134,37 @@ const rootsFromFolders = (
     return out;
 };
 
-/** Reads the catalogue's natural keys so a walk cannot re-add existing titles. */
-const existingLibraryLinks = async (): Promise<Set<string>> => {
-    if (!dbRef) return new Set();
-    const rows = await dbRef.db.select({ link: libraryItems.link }).from(libraryItems);
-    return new Set(rows.map((row) => row.link));
+/**
+ * Catalogue realpaths, plus leftover alias keys (stored link is not the realpath, or two
+ * stored links share a realpath) for a one-shot merge at the start of a library scan.
+ */
+type CatalogueLinkIndex = {
+    existing: Set<string>;
+    dirty: { canonical: string; type: "manga" | "book" }[];
+};
+
+/** Builds skip keys and leftover-alias keys for one scan. */
+const indexCatalogueLinks = async (): Promise<CatalogueLinkIndex> => {
+    if (!dbRef) return { existing: new Set(), dirty: [] };
+    const rows = await dbRef.db.select({ link: libraryItems.link, type: libraryItems.type }).from(libraryItems);
+    const existing = new Set<string>();
+    const firstStored = new Map<string, string>();
+    const typeByCanonical = new Map<string, "manga" | "book">();
+    const dirtyCanonical = new Set<string>();
+    for (const row of rows) {
+        const canonical = resolveLibraryRealPath(io, row.link);
+        existing.add(canonical);
+        typeByCanonical.set(canonical, row.type);
+        const prev = firstStored.get(canonical);
+        if (prev === undefined) firstStored.set(canonical, row.link);
+        else if (prev !== row.link) dirtyCanonical.add(canonical);
+        if (row.link !== canonical) dirtyCanonical.add(canonical);
+    }
+    const dirty = [...dirtyCanonical].map((canonical) => ({
+        canonical,
+        type: typeByCanonical.get(canonical) ?? "manga",
+    }));
+    return { existing, dirty };
 };
 
 /**
@@ -252,12 +276,18 @@ const addScanTarget = async (
 const walkAndAdd = async (
     folders: readonly LibraryFolder[],
     allFolders: readonly LibraryFolder[],
-): Promise<{ added: number; skipped: number; failed: number; completedPaths: string[] }> => {
+): Promise<{ added: number; skipped: number; failed: number; collapsed: number; completedPaths: string[] }> => {
     let added = 0;
     let skipped = 0;
     let failed = 0;
+    let collapsed = 0;
     const completedPaths: string[] = [];
-    const existing = await existingLibraryLinks();
+    const { existing, dirty } = await indexCatalogueLinks();
+    if (dbRef) {
+        for (const row of dirty) {
+            if (await dbRef.collapsePathIdentity(row.canonical, row.type)) collapsed += 1;
+        }
+    }
     const rootCount = folders.length;
 
     for (let i = 0; i < folders.length; i += 1) {
@@ -312,7 +342,7 @@ const walkAndAdd = async (
         }
         completedPaths.push(folder.path);
     }
-    return { added, skipped, failed, completedPaths };
+    return { added, skipped, failed, collapsed, completedPaths };
 };
 
 /** Persists last-scan timestamps for roots that completed without cancellation. */
@@ -365,10 +395,17 @@ const runScan = async (
             addTotal: 0,
         });
         if (reason !== "watch") await stampCompleted(result.completedPaths);
-        pingDatabaseChange("db:library:change");
-        pingDatabaseChange("db:tag:change");
+        pingDatabaseChange(
+            result.collapsed > 0 || result.added > 0 ? LIBRARY_ITEM_LINK_CHANGE_CHANNELS : "db:library:change",
+        );
         log.info("library scan finished", { reason, ...result });
-        return { started: true, cancelled: false, ...result };
+        return {
+            started: true,
+            cancelled: false,
+            added: result.added,
+            skipped: result.skipped,
+            failed: result.failed,
+        };
     } catch (err) {
         if (err instanceof Error && err.name === "AbortError") {
             log.info("library scan cancelled", { reason });
@@ -423,7 +460,7 @@ const watchDepth = (maxDepth: number): number =>
 const flushWatchRoot = async (root: string, eventPaths: string[]): Promise<void> => {
     const folder = MainSettings.settings.library.folders.find((row) => normalizeRoot(row.path) === root);
     if (!folder || eventPaths.length === 0) return;
-    const existing = await existingLibraryLinks();
+    const { existing } = await indexCatalogueLinks();
     const compiled = compileLibraryScanSkipRegex(folder.skipPattern);
     const skipRegex = compiled.status === "ok" ? compiled.regex : null;
     const allFolders = MainSettings.settings.library.folders;
@@ -468,8 +505,7 @@ const flushWatchRoot = async (root: string, eventPaths: string[]): Promise<void>
         }
     }
     if (added > 0) {
-        pingDatabaseChange("db:library:change");
-        pingDatabaseChange("db:tag:change");
+        pingDatabaseChange(LIBRARY_ITEM_LINK_CHANGE_CHANNELS);
         log.info("library folder watch added", { root, added });
     }
 };

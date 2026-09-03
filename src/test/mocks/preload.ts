@@ -67,6 +67,7 @@ export type TestFsOverrides = {
     mkdir?: (filePath: string) => Promise<void>;
     access?: (filePath: string) => Promise<void>;
     writeFile?: (filePath: string, data: string) => Promise<void>;
+    realpath?: (filePath: string) => string;
 };
 
 /**
@@ -88,6 +89,7 @@ const createFsStub = (): Window["fs"] =>
         mkdir: throwStub("fs", "mkdir"),
         isDir: () => false,
         isFile: () => false,
+        realpath: (filePath: string) => filePath,
     }) as Window["fs"];
 
 /**

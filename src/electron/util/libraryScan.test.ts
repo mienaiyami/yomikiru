@@ -95,9 +95,13 @@ vi.mock("@electron/util/mainSettings", () => ({
     },
 }));
 
-vi.mock("@electron/ipc/database", () => ({
-    pingDatabaseChange: vi.fn(),
-}));
+vi.mock("@electron/ipc/database", async (importOriginal) => {
+    const actual = await importOriginal<typeof import("@electron/ipc/database")>();
+    return {
+        ...actual,
+        pingDatabaseChange: vi.fn(),
+    };
+});
 
 vi.mock("@electron/util/coverMaterialize", () => ({
     materializeCoverFromSourcePath,
@@ -192,6 +196,7 @@ describe("libraryScan engine", () => {
                 }),
             },
             addLibraryItem,
+            collapsePathIdentity: vi.fn(async () => false),
         } as never);
     });
 

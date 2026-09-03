@@ -1,4 +1,4 @@
-import { accessSync, existsSync, lstatSync, readFileSync, statSync } from "node:fs";
+import { accessSync, existsSync, lstatSync, readFileSync, realpathSync, statSync } from "node:fs";
 import fs from "node:fs/promises";
 import os from "node:os";
 import path from "node:path";
@@ -57,6 +57,13 @@ const fsAPI = {
             return lstatSync(path).isFile();
         } catch (_error) {
             return false;
+        }
+    },
+    realpath: (filePath: string) => {
+        try {
+            return realpathSync(filePath);
+        } catch {
+            return filePath;
         }
     },
 };

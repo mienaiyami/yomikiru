@@ -1,5 +1,6 @@
 import fs from "node:fs";
 import path from "node:path";
+import { resolveLibraryRealPath } from "@common/library/classify";
 import type {
     AddToLibraryData,
     BookProgress,
@@ -17,6 +18,7 @@ import { drizzle } from "drizzle-orm/better-sqlite3";
 import { migrate } from "drizzle-orm/better-sqlite3/migrator";
 import { app, dialog } from "electron";
 import { dateFromOldDateString, electronOnly } from "../util";
+import { mainLibraryIo } from "../util/libraryFs";
 import { createMainLogger } from "../util/logger";
 
 const logger = createMainLogger("db");
@@ -265,9 +267,22 @@ const mergeOccupiedIntoKeeper = (sqlite: Database.Database, oldLink: string, new
     return discard.id;
 };
 
+type LibraryIdentityRow = { id: number; link: string };
+
+/**
+ * Prefers a row that already has progress, then the older `id` (cover cache).
+ */
+const pickLiveDuplicateKeeper = (matches: LibraryIdentityRow[], progressLinks: Set<string>): LibraryIdentityRow => {
+    const withProgress = matches.filter((row) => progressLinks.has(row.link));
+    const pool = withProgress.length > 0 ? withProgress : matches;
+    return pool.reduce((best, row) => (row.id < best.id ? row : best));
+};
+
 export class DatabaseService {
     private readonly sqlite = new Database(DB_PATH);
     private readonly _db = drizzle({ client: this.sqlite, schema });
+    /** Set by {@link addLibraryItem} when live alias rows were merged or relocated. */
+    private identityCollapsedOnLastAdd = false;
 
     get db(): ReturnType<typeof drizzle> {
         return this._db;
@@ -363,9 +378,87 @@ export class DatabaseService {
             logger.log("drizzle migrations complete", { tags: pendingTags });
         }
     }
+
+    /**
+     * True when the last {@link addLibraryItem} merged or relocated live alias rows.
+     * IPC uses this to refresh child slices keyed by `itemLink`.
+     */
+    didLastAddCollapseIdentity(): boolean {
+        return this.identityCollapsedOnLastAdd;
+    }
+
+    /**
+     * Folds live rows whose path resolves to `canonical` into one keeper, then relocates
+     * that keeper onto `canonical` when the stored link still differs.
+     *
+     * ponytail: O(n) realpath over same-type catalogue rows per add. Upgrade: persist a
+     * realpath column if libraries grow large enough that this shows up in profiles.
+     *
+     * @returns whether any row was merged or relocated
+     */
+    private async collapseLiveDuplicates(canonical: string, type: AddToLibraryData["type"]): Promise<boolean> {
+        const rows = this.sqlite
+            .prepare(`SELECT id, link FROM library_items WHERE type = ?`)
+            .all(type) as LibraryIdentityRow[];
+        const io = mainLibraryIo;
+        const matches = rows.filter(
+            (row) => row.link === canonical || resolveLibraryRealPath(io, row.link) === canonical,
+        );
+        if (matches.length === 0) return false;
+
+        const links = matches.map((row) => row.link);
+        const placeholders = links.map(() => "?").join(",");
+        const mangaHits = this.sqlite
+            .prepare(`SELECT itemLink FROM manga_progress WHERE itemLink IN (${placeholders})`)
+            .all(...links) as { itemLink: string }[];
+        const bookHits = this.sqlite
+            .prepare(`SELECT itemLink FROM book_progress WHERE itemLink IN (${placeholders})`)
+            .all(...links) as { itemLink: string }[];
+        const progressLinks = new Set([...mangaHits, ...bookHits].map((row) => row.itemLink));
+        const keeper = pickLiveDuplicateKeeper(matches, progressLinks);
+        const others = matches.filter((row) => row.link !== keeper.link);
+        let changed = others.length > 0;
+
+        if (others.length > 0) {
+            const discardedIds: number[] = [];
+            this.withForeignKeysOff(() => {
+                this.sqlite.transaction(() => {
+                    for (const row of others) {
+                        const discarded = mergeOccupiedIntoKeeper(this.sqlite, keeper.link, row.link);
+                        if (discarded != null) discardedIds.push(discarded);
+                    }
+                })();
+            });
+            for (const id of discardedIds) deleteCoverCacheFile(id);
+        }
+
+        if (keeper.link !== canonical) {
+            changed = true;
+            const relocated = await this.relocateLibraryItem(keeper.link, canonical);
+            if (!relocated) {
+                logger.warn("addLibraryItem: failed to relocate keeper to canonical path", {
+                    keeper: keeper.link,
+                    canonical,
+                });
+            }
+        }
+        return changed;
+    }
+
+    /**
+     * Merges leftover alias rows for this path's {@link resolveLibraryRealPath}.
+     * Library scan calls this for stale catalogue links before walking so skip-if-existing
+     * does not leave those rows behind.
+     *
+     * @returns whether any row was merged or relocated
+     */
+    async collapsePathIdentity(link: string, type: AddToLibraryData["type"]): Promise<boolean> {
+        return this.collapseLiveDuplicates(resolveLibraryRealPath(mainLibraryIo, link), type);
+    }
+
     /**
      * Inserts a library item, optionally with a progress row, or refreshes the title when
-     * the item is already present.
+     * the item is already present. `link` is stored as {@link resolveLibraryRealPath}.
      *
      * Re-adding is a safe no-op for everything the user or an earlier session stored.
      * Callers echo a full row back on every open - manga readers pass `author: null` and a
@@ -373,16 +466,20 @@ export class DatabaseService {
      * cover - so the conflict path updates only the title. Author and cover have their own
      * update path (`db:library:updateItem`). Existing progress is likewise kept rather than
      * reset to the freshly opened position. Scan/import omit `progress` so the row stays
-     * catalogue-only until the reader writes one.
+     * catalogue-only until the reader writes one. Live symlink aliases of the same disk
+     * object are merged with the occupied-path relocate merge before insert.
      */
     async addLibraryItem(data: AddToLibraryData): Promise<LibraryItem> {
+        const canonical = resolveLibraryRealPath(mainLibraryIo, data.data.link);
+        this.identityCollapsedOnLastAdd = await this.collapseLiveDuplicates(canonical, data.type);
+        const row = { ...data.data, link: canonical };
         return await this._db.transaction(async (tx) => {
             const [item] = await tx
                 .insert(libraryItems)
-                .values(data.data)
+                .values(row)
                 .onConflictDoUpdate({
                     target: [libraryItems.link],
-                    set: { title: data.data.title },
+                    set: { title: row.title },
                 })
                 .returning();
             if (data.progress && data.type === "manga") {

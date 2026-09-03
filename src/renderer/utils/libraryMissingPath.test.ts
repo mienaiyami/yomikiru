@@ -449,6 +449,11 @@ describe("libraryMissingPath", () => {
                 relocatedArgs = args;
                 return { ...archiveItem, link: series };
             });
+            onInvoke("db:library:addItem", async (args) => ({
+                ...archiveItem,
+                link: args.data.link,
+                title: args.data.title,
+            }));
             onInvoke("db:manga:updateProgress", async (args) => {
                 savedProgress = args;
                 return args;
@@ -526,7 +531,7 @@ describe("libraryMissingPath", () => {
             return row;
         };
 
-        it("updates an existing book and does not add", async () => {
+        it("updates an existing book without re-adding it", async () => {
             const link = path.join("library", "Novel.epub");
             const libraryItem = makeBookItem({ link, title: "Old" });
             let added = false;
@@ -564,6 +569,7 @@ describe("libraryMissingPath", () => {
             const link = path.join("library", "Novel.epub");
             const libraryItem = makeBookItem({ link, title: "Old" });
             let progressWritten = false;
+            onInvoke("db:library:addItem", async () => libraryRowFromBook(libraryItem));
             onInvoke("db:library:updateItem", async (req) =>
                 libraryRowFromBook(makeBookItem({ link: req.link, title: req.title, author: req.author })),
             );

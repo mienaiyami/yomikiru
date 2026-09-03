@@ -51,7 +51,9 @@ vi.mock("../util/logger", () => ({
     }),
 }));
 
-import { eq } from "drizzle-orm";
+import { resolveLibraryRealPath } from "@common/library/classify";
+import { eq, inArray } from "drizzle-orm";
+import { mainLibraryIo } from "../util/libraryFs";
 import { DatabaseService } from "./index";
 import {
     itemTrackers,
@@ -575,5 +577,151 @@ describe("DatabaseService", () => {
                 remoteId: "2",
             }),
         ).rejects.toThrow();
+    });
+
+    it("merges live symlink aliases onto realpath when adding", async ({ skip }) => {
+        const realDir = path.join(tmpUserData, "ident-real");
+        const aliasDir = path.join(tmpUserData, "ident-alias");
+        fs.mkdirSync(realDir, { recursive: true });
+        try {
+            fs.symlinkSync(realDir, aliasDir, process.platform === "win32" ? "junction" : "dir");
+        } catch {
+            skip();
+            return;
+        }
+        await dbService.db.insert(libraryItems).values({
+            type: "manga",
+            link: aliasDir,
+            title: "Alias Title",
+        });
+        await dbService.db.insert(libraryItems).values({
+            type: "manga",
+            link: realDir,
+            title: "Real Title",
+        });
+        await dbService.db.insert(mangaProgress).values({
+            itemLink: aliasDir,
+            chapterName: "ch1",
+            currentPage: 3,
+            totalPages: 10,
+            chaptersRead: ["ch1"],
+        });
+
+        const item = await dbService.addLibraryItem({
+            type: "manga",
+            data: { type: "manga", link: aliasDir, title: "Opened" },
+        });
+        const canonical = resolveLibraryRealPath(mainLibraryIo, aliasDir);
+        expect(item.link).toBe(canonical);
+
+        const remaining = await dbService.db
+            .select()
+            .from(libraryItems)
+            .where(inArray(libraryItems.link, [aliasDir, realDir, canonical]));
+        expect(remaining).toHaveLength(1);
+        expect(remaining[0]?.link).toBe(canonical);
+        expect(remaining[0]?.id).toBe(item.id);
+
+        const progressRows = await dbService.db
+            .select()
+            .from(mangaProgress)
+            .where(eq(mangaProgress.itemLink, canonical));
+        expect(progressRows).toHaveLength(1);
+        expect(progressRows[0]?.currentPage).toBe(3);
+    });
+
+    it("merges an alias row into a keeper already at realpath without moving the keeper", async ({ skip }) => {
+        const realDir = path.join(tmpUserData, "ident-keep-real");
+        const aliasDir = path.join(tmpUserData, "ident-keep-alias");
+        fs.mkdirSync(realDir, { recursive: true });
+        try {
+            fs.symlinkSync(realDir, aliasDir, process.platform === "win32" ? "junction" : "dir");
+        } catch {
+            skip();
+            return;
+        }
+        const [keeper] = await dbService.db
+            .insert(libraryItems)
+            .values({ type: "manga", link: realDir, title: "Canonical" })
+            .returning();
+        await dbService.db.insert(libraryItems).values({
+            type: "manga",
+            link: aliasDir,
+            title: "Alias leftover",
+        });
+        await dbService.db.insert(mangaProgress).values({
+            itemLink: realDir,
+            chapterName: "ch1",
+            currentPage: 4,
+            totalPages: 10,
+            chaptersRead: ["ch1"],
+        });
+
+        const item = await dbService.addLibraryItem({
+            type: "manga",
+            data: { type: "manga", link: aliasDir, title: "Opened alias" },
+        });
+        const canonical = resolveLibraryRealPath(mainLibraryIo, aliasDir);
+        expect(item.link).toBe(canonical);
+        expect(item.id).toBe(keeper?.id);
+
+        const remaining = await dbService.db
+            .select()
+            .from(libraryItems)
+            .where(inArray(libraryItems.link, [aliasDir, realDir, canonical]));
+        expect(remaining).toHaveLength(1);
+        expect(remaining[0]?.link).toBe(canonical);
+        expect(remaining[0]?.id).toBe(keeper?.id);
+    });
+
+    it("stores realpath when adding through an alias of a new folder", async ({ skip }) => {
+        const realDir = path.join(tmpUserData, "ident-add-real");
+        const aliasDir = path.join(tmpUserData, "ident-add-alias");
+        fs.mkdirSync(realDir, { recursive: true });
+        try {
+            fs.symlinkSync(realDir, aliasDir, process.platform === "win32" ? "junction" : "dir");
+        } catch {
+            skip();
+            return;
+        }
+        const item = await dbService.addLibraryItem({
+            type: "manga",
+            data: { type: "manga", link: aliasDir, title: "Via Alias" },
+        });
+        expect(item.link).toBe(resolveLibraryRealPath(mainLibraryIo, aliasDir));
+        expect(item.link).not.toBe(aliasDir);
+    });
+
+    it("collapses leftover aliases for one path without addLibraryItem", async ({ skip }) => {
+        const realDir = path.join(tmpUserData, "ident-stale-real");
+        const aliasDir = path.join(tmpUserData, "ident-stale-alias");
+        fs.mkdirSync(realDir, { recursive: true });
+        try {
+            fs.symlinkSync(realDir, aliasDir, process.platform === "win32" ? "junction" : "dir");
+        } catch {
+            skip();
+            return;
+        }
+        await dbService.db.insert(libraryItems).values([
+            { type: "manga", link: realDir, title: "Canonical" },
+            { type: "manga", link: aliasDir, title: "Alias leftover" },
+        ]);
+        await dbService.db.insert(mangaProgress).values({
+            itemLink: realDir,
+            chapterName: "ch1",
+            currentPage: 2,
+            totalPages: 8,
+            chaptersRead: ["ch1"],
+        });
+
+        const changed = await dbService.collapsePathIdentity(aliasDir, "manga");
+        expect(changed).toBe(true);
+        const canonical = resolveLibraryRealPath(mainLibraryIo, aliasDir);
+        const remaining = await dbService.db
+            .select()
+            .from(libraryItems)
+            .where(inArray(libraryItems.link, [aliasDir, realDir, canonical]));
+        expect(remaining).toHaveLength(1);
+        expect(remaining[0]?.link).toBe(canonical);
     });
 });

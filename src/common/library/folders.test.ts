@@ -1,4 +1,5 @@
 import path from "node:path";
+import { stubFs } from "@test/mocks/preload";
 import { describe, expect, it } from "vitest";
 import {
     emptyDefaultLibraryFolder,
@@ -95,6 +96,19 @@ describe("setDefaultLocationPath / duplicates", () => {
         expect(isDuplicateLibraryFolderPath(folders, path.join("testdata", "other"))).toBe(false);
         expect(isDuplicateLibraryFolderPath(folders, "")).toBe(false);
         expect(isDuplicateLibraryFolderPath(folders, folders[0]?.path ?? "")).toBe(true);
+    });
+
+    it("treats paths that share a realpath as duplicates", () => {
+        const realDir = path.join("testdata", "lib-real");
+        const aliasDir = path.join("testdata", "lib-alias");
+        stubFs({
+            realpath: (filePath) => {
+                const n = path.normalize(filePath);
+                return n === path.normalize(aliasDir) ? realDir : filePath;
+            },
+        });
+        expect(isDuplicateLibraryFolderPath([{ path: realDir }], aliasDir)).toBe(true);
+        expect(isDuplicateLibraryFolderPath([{ path: realDir }], path.join("testdata", "other"))).toBe(false);
     });
 });
 

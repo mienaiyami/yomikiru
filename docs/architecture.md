@@ -79,7 +79,7 @@ There are two settings stores: `settings.json` (renderer app settings) and `main
 
 **Preload** exposes a secure surface to the renderer:
 
-- `window.fs` — async/sync filesystem subset (read, write, stat, rm, mkdir, existsSync, isDir, isFile). `isDir` / `isFile` follow directory and file symlinks by default.
+- `window.fs` — async/sync filesystem subset (read, write, stat, rm, mkdir, existsSync, isDir, isFile, realpath). `isDir` / `isFile` follow directory and file symlinks by default; `realpath` follows them for library identity.
 - `window.path` — path utilities (join, basename, extname, sep…)
 - `window.electron` — app info, clipboard, shell, webFrame zoom, currentWindow events, typed IPC (`.invoke` / `.send` / `.on`)
 - `window.chokidar` — single-path file watcher returning a cleanup function

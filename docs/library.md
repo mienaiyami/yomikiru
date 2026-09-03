@@ -162,7 +162,7 @@ A "library item" is:
 - **manga** (`type = "manga"`) — a directory that contains image chapters, or a directly readable file (CBZ/ZIP/PDF).
 - **book** (`type = "book"`) — an `.epub` file.
 
-`link` is the absolute filesystem path and is the natural key. `id` is an auto-increment integer used for the cover system.
+`link` is the absolute filesystem path after following symlinks (`realpath`) and is the natural key. `id` is an auto-increment integer used for the cover system. A directory or file reachable through more than one path (real folder plus a link) is one row; adding the other path, or running a library scan, merges into that row using the occupied-path relocate merge. If you retarget a symlink at a different folder or file, progress stays with the old resolved location, not the alias path. Broken links keep the lexical path and use Locate / Remove. Hardlinks and case-only path variants are not collapsed.
 
 Items are added to the library automatically the first time a file/folder is opened in either reader.
 They are never deleted automatically — only via explicit user action (context menu "Remove" / gallery bulk-delete).

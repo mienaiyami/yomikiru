@@ -1,4 +1,5 @@
-import { libraryIo } from "@common/library/io";
+import { pathIsInsideRoot, resolveLibraryRealPath } from "@common/library/classify";
+import { type LibraryIo, libraryIo } from "@common/library/io";
 import {
     clampLibraryScanMaxDepth,
     LIBRARY_SCAN_DEFAULT_MAX_DEPTH,
@@ -170,7 +171,7 @@ export const setDefaultLocationPath = (folders: readonly LibraryFolder[], nextPa
 };
 
 /**
- * True when `candidate` matches an existing folder path after trim + normalize.
+ * True when `candidate` matches an existing folder path after trim + {@link resolveLibraryRealPath}.
  * Empty candidates are never duplicates (Default Location may be empty).
  */
 export const isDuplicateLibraryFolderPath = (
@@ -179,12 +180,36 @@ export const isDuplicateLibraryFolderPath = (
 ): boolean => {
     const trimmed = candidate.trim();
     if (!trimmed) return false;
-    const { normalize } = libraryIo().path;
-    const n = normalize(trimmed);
+    const io = libraryIo();
+    const n = resolveLibraryRealPath(io, trimmed);
     return folders.some((folder) => {
         const existing = folder.path.trim();
-        return existing !== "" && normalize(existing) === n;
+        return existing !== "" && resolveLibraryRealPath(io, existing) === n;
     });
+};
+
+/**
+ * Other configured library-folder paths a walk of `currentRoot` must not enter.
+ * Same-realpath roots and ancestors of the current walk are omitted.
+ */
+export const listForeignLibraryFolderSkipPaths = (
+    io: LibraryIo,
+    currentRoot: string,
+    folderPaths: readonly string[],
+): string[] => {
+    const current = io.path.normalize(currentRoot.trim());
+    const currentReal = resolveLibraryRealPath(io, current);
+    const out: string[] = [];
+    for (const raw of folderPaths) {
+        const n = io.path.normalize(raw.trim());
+        if (!n) continue;
+        const nReal = resolveLibraryRealPath(io, n);
+        if (nReal === currentReal) continue;
+        if (pathIsInsideRoot(io, current, n)) continue;
+        if (out.some((p) => resolveLibraryRealPath(io, p) === nReal)) continue;
+        out.push(n);
+    }
+    return out;
 };
 
 /**

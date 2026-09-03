@@ -48,6 +48,19 @@ import { ipc } from "./utils";
 const logger = createMainLogger("ipc/database");
 
 /**
+ * Catalogue plus every child slice keyed by `itemLink`, for relocate, delete, or identity merge.
+ */
+export const LIBRARY_ITEM_LINK_CHANGE_CHANNELS = [
+    "db:library:change",
+    "db:bookmark:change",
+    "db:bookNote:change",
+    "db:tracker:change",
+    "db:tag:change",
+] as const satisfies readonly (keyof DatabaseChangeChannels)[];
+
+type DatabaseChangeChannel = keyof DatabaseChangeChannels;
+
+/**
  * Copies own enumerable keys whose value is not `undefined`. Used so drizzle `.set()`
  * never receives omitted optional fields (which would be written as NULL).
  */
@@ -67,27 +80,24 @@ const isSqliteConstraintError = (err: unknown): boolean =>
     String((err as { code: unknown }).code).startsWith("SQLITE_CONSTRAINT");
 
 /**
- * Sends database change notifications to all open windows
- * @param channel The database change channel
- * @param data The data to send
+ * Broadcasts one or more {@link DatabaseChangeChannels} to every living renderer window.
+ * Pass a list when several slices must refresh together so each window is visited once.
  */
-export const pingDatabaseChange = async <T extends keyof DatabaseChangeChannels>(
-    channel: T,
-    // data: DatabaseChangeChannels[T]["request"],
-): Promise<void> => {
-    // todo: maybe send whole data on channel and then update store?
-    const windows = BrowserWindow.getAllWindows();
-    windows.forEach((window) => {
-        if (!window.isDestroyed()) {
+export const pingDatabaseChange = (
+    channel: DatabaseChangeChannel | readonly DatabaseChangeChannel[],
+): void => {
+    const channels: readonly DatabaseChangeChannel[] = typeof channel === "string" ? [channel] : channel;
+    if (channels.length === 0) return;
+    for (const window of BrowserWindow.getAllWindows()) {
+        if (window.isDestroyed()) continue;
+        for (const name of channels) {
             try {
-                // Use type assertion to resolve TypeScript error
-                // This is safe because DatabaseChangeChannels should be part of MainToRendererChannels
-                ipc.send(window.webContents, channel as any);
+                ipc.send(window.webContents, name);
             } catch (error) {
-                logger.error(`Could not broadcast DB change "${String(channel)}" to a window`, error);
+                logger.error(`Could not broadcast DB change "${name}" to a window`, error);
             }
         }
-    });
+    }
 };
 
 const handlers: {
@@ -118,7 +128,9 @@ const handlers: {
     },
     "db:library:addItem": async (db, request) => {
         const data = (await db.addLibraryItem(AddToLibrarySchema.parse(request))) ?? null;
-        pingDatabaseChange("db:library:change");
+        pingDatabaseChange(
+            db.didLastAddCollapseIdentity() ? LIBRARY_ITEM_LINK_CHANGE_CHANNELS : "db:library:change",
+        );
         return data;
     },
     "db:library:updateItem": async (db, request) => {
@@ -145,11 +157,7 @@ const handlers: {
                 }
             }
             await db.delete(libraryItems).where(eq(libraryItems.link, request.link));
-            pingDatabaseChange("db:library:change");
-            pingDatabaseChange("db:bookmark:change");
-            pingDatabaseChange("db:bookNote:change");
-            pingDatabaseChange("db:tracker:change");
-            pingDatabaseChange("db:tag:change");
+            pingDatabaseChange(LIBRARY_ITEM_LINK_CHANGE_CHANNELS);
             return true;
         } catch (error) {
             logger.error('"db:library:deleteItem": delete failed', error);
@@ -167,11 +175,7 @@ const handlers: {
             const { oldLink, newLink } = RelocateLibraryItemSchema.parse(request);
             const item = await db.relocateLibraryItem(oldLink, newLink);
             if (!item) return null;
-            pingDatabaseChange("db:library:change");
-            pingDatabaseChange("db:bookmark:change");
-            pingDatabaseChange("db:bookNote:change");
-            pingDatabaseChange("db:tracker:change");
-            pingDatabaseChange("db:tag:change");
+            pingDatabaseChange(LIBRARY_ITEM_LINK_CHANGE_CHANNELS);
             return item;
         } catch (error) {
             logger.error('"db:library:relocateItem": relocate failed', error);

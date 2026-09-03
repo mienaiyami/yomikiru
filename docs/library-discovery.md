@@ -32,6 +32,7 @@ Two product bugs share one cause: bulk add reused the **reader image scanner** a
 | D9 Volumes | `Series / Vol1 / Ch1 / images`: the library item is `Vol1` (matches details + `chapterName` = direct child). Nested chapter keys are out of scope. |
 | D10 Dummy progress | No silent healer. Settings action to clear unused progress, with confirm. |
 | D11 Move + re-open | Prefer relocate-before-add when a **missing** row looks like the same title. If a duplicate row already exists at the new path, Locate **merges** (does not no-op). |
+| D12 Path identity | Catalogue `link` is `realpath` (broken links stay lexical). Two live paths to the same directory or file are one row. New adds (scan, watch, Settings, first reader open) store the resolved path and merge on collision using D11 field rules (keeper: has progress, else older `id`). Leftover alias rows from before this rewrite are merged on the next library scan. No startup pass. Retargeting a symlink does not keep progress on the old alias; the next add follows the new `realpath`. Hardlinks / case-fold / subst are out of scope. |
 
 ---
 
@@ -103,7 +104,7 @@ UI: Settings -> Library (same section as Default Location and thumbnails).
 - **Scan now** walks every folder whose path exists on disk (including Default Location when a path is set). Nested other roots are skip-paths even if their own scan flags are off.
 - One-line Continue Reading explanation: titles appear there after you open them in the reader.
 
-When walking root R, other library-folder paths that sit inside R are not entered. Ancestor roots are not skip targets, so a nested extra folder still walks its own children. Skip regex is case-insensitive against descendant basenames only (a pattern with no special characters matches as a substring). A sentinel **file** named `yomikiru-ignore` or `.yomikiru-ignore` inside D skips D; a **folder** with that name skips that folder only. Folder tags are unioned onto new scan/watch items; backfill uses the same foreign-root exclusion. Scan never auto-removes catalogue rows.
+When walking root R, other library-folder paths that sit inside R (including after following symlinks) are not entered. Ancestor roots are not skip targets, so a nested extra folder still walks its own children. Skip regex is case-insensitive against descendant basenames only (a pattern with no special characters matches as a substring). A sentinel **file** named `yomikiru-ignore` or `.yomikiru-ignore` inside D skips D; a **folder** with that name skips that folder only. Folder tags are unioned onto new scan/watch items; backfill uses the same foreign-root exclusion. Scan never auto-removes catalogue rows.
 
 The title bar shows live scan status (phase, root, current path) in a popover on every window, with **Cancel scan**. Scan now does **not** lock the window (thumbnail regenerate still can). Scan, interval, and folder watch run in the main process. Cancellation is checked during the walk, not only after a root finishes. EPUB files are added with title, author, and cover from the OPF (shared `fast-xml-parser` adapter). PDF manga is added without a cover; the first gallery window that shows the tile generates page 1 (limited concurrency). Packed zip/cbz/7z and rar/cbr covers are resolved in main through the same extraction owner used by open/extract; temporary scan and regeneration sources are removed after materialization.
 
@@ -118,7 +119,7 @@ Renderer (any window):
 - `libraryScan:getStatus` / `libraryScan:status` — live DTO or `null` when idle.
 - `libraryScan:rendererReady` — first living window triggers scan-on-start once per process.
 
-Classifier: `src/common/library/classify.ts` with an injected fs/path matching preload (`isDir` / `isFile` follow symlinks). Main adapter: `src/electron/util/libraryFs.ts` (also `setLibraryIo` for `formatUtils` / folder normalize). `src/common` does not import Node builtins.
+Classifier: `src/common/library/classify.ts` with an injected fs/path matching preload (`isDir` / `isFile` follow symlinks; `realpath` is catalogue identity). Main adapter: `src/electron/util/libraryFs.ts` (also `setLibraryIo` for `formatUtils` / folder normalize). `src/common` does not import Node builtins.
 
 ---
 
@@ -149,7 +150,7 @@ Before `addLibraryItem` for a path that is **not** already in the map:
 4. **One** candidate: confirm “This looks like {title}. Update its location instead of adding a new entry?” Yes -> relocate (no second row). No -> add new (user’s choice).
 5. **Several** candidates: warn that more than one missing title matches, then add as a new row (named ceiling: no picker). Locate or open-before-add with a single match still relocates.
 
-Scan uses the same helper but **does not auto-relocate**. Scan never silently attaches a new folder to a missing row (wrong series, same folder name). Scan may **skip** adding if an existing row already has that exact path. Missing same-name rows stay missing until the user Locates or opens.
+Scan uses the same helper but **does not auto-relocate**. Scan never silently attaches a new folder to a missing row (wrong series, same folder name). Scan may **skip** adding if an existing row already has that path after `realpath`. Missing same-name rows stay missing until the user Locates or opens.
 
 ### Merge when Locate hits an occupied path
 

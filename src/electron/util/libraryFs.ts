@@ -5,7 +5,8 @@ import { type LibraryIo, setLibraryIo } from "@common/library/io";
 
 /**
  * `isDir` / `isFile` matching the preload bridge: lstat, then re-stat when the
- * path is a symlink so linked folders and files are scanned (D8).
+ * path is a symlink so linked folders and files are scanned (D8). `realpath`
+ * follows the same links for catalogue identity.
  */
 const followsLink = (filePath: string, acceptSymbolicLink: boolean, kind: "dir" | "file"): boolean => {
     try {
@@ -29,6 +30,13 @@ export const createMainLibraryIo = (): LibraryIo => ({
         existsSync: fs.existsSync,
         isDir: (filePath, acceptSymbolicLink = true) => followsLink(filePath, acceptSymbolicLink, "dir"),
         isFile: (filePath, acceptSymbolicLink = true) => followsLink(filePath, acceptSymbolicLink, "file"),
+        realpath: (filePath) => {
+            try {
+                return fs.realpathSync(filePath);
+            } catch {
+                return filePath;
+            }
+        },
         readdir: (filePath) => fsp.readdir(filePath),
         readFile: (filePath, encoding = "utf-8") => fsp.readFile(filePath, encoding as BufferEncoding),
         access: (filePath, mode) => fsp.access(filePath, mode),
