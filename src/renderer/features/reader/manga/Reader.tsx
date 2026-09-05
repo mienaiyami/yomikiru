@@ -1172,7 +1172,7 @@ const Reader: React.FC = () => {
                 </button>
             </div>
             {readerSettings.showPageNumberInZenMode && (
-                <div className={"zenModePageNumber " + "show"}>
+                <div className="zenModePageNumber show">
                     {currentPageNumber}/{mangaTotalPages}
                 </div>
             )}

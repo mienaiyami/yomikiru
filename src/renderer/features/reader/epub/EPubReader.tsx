@@ -882,7 +882,7 @@ const EPubReader: React.FC = () => {
             )}
             {epubReaderSettings.showProgressInZenMode && (
                 <div
-                    className={"zenModePageNumber " + " show"}
+                    className="zenModePageNumber show"
                     style={{
                         backgroundColor: epubReaderSettings.useDefault_progressBackgroundColor
                             ? "var(--body-bg-color)"

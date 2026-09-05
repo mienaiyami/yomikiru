@@ -128,7 +128,7 @@ const EPUBReaderSettings = memo(
                     <BookReaderPresetSection />
                     <div className="settingItem">
                         <div
-                            className={"name " + (!epubReaderSettings.settingsCollapsed.size ? "expanded " : "")}
+                            className={`name ${!epubReaderSettings.settingsCollapsed.size ? "expanded " : ""}`}
                             tabIndex={0}
                             onKeyDown={(e) => {
                                 if (e.key === " " || e.key === "Enter") e.currentTarget.click();
@@ -217,7 +217,7 @@ const EPUBReaderSettings = memo(
                     </div>
                     <div className="settingItem">
                         <div
-                            className={"name " + (!epubReaderSettings.settingsCollapsed.font ? "expanded " : "")}
+                            className={`name ${!epubReaderSettings.settingsCollapsed.font ? "expanded " : ""}`}
                             tabIndex={0}
                             onKeyDown={(e) => {
                                 if (e.key === " " || e.key === "Enter") e.currentTarget.click();
@@ -488,7 +488,7 @@ const EPUBReaderSettings = memo(
                     </div>
                     <div className="settingItem">
                         <div
-                            className={"name " + (!epubReaderSettings.settingsCollapsed.styles ? "expanded " : "")}
+                            className={`name ${!epubReaderSettings.settingsCollapsed.styles ? "expanded " : ""}`}
                             onKeyDown={(e) => {
                                 if (e.key === " " || e.key === "Enter") e.currentTarget.click();
                             }}
@@ -664,9 +664,7 @@ const EPUBReaderSettings = memo(
                     <BackgroundSettings />
                     <div className="settingItem">
                         <div
-                            className={
-                                "name " + (!epubReaderSettings.settingsCollapsed.scrollSpeed ? "expanded " : "")
-                            }
+                            className={`name ${!epubReaderSettings.settingsCollapsed.scrollSpeed ? "expanded " : ""}`}
                             onKeyDown={(e) => {
                                 if (e.key === " " || e.key === "Enter") e.currentTarget.click();
                             }}

@@ -5,6 +5,7 @@ import type { AppDispatch, RootState } from "./index";
 import { patchPresetSessionSettings } from "./reader";
 import { updateBookPreset, updateMangaPreset } from "./readerPresets";
 
+/** Quiet window before writing an autosave-enabled preset blob; upgrade: coalesce across windows. */
 const AUTOSAVE_DEBOUNCE_MS = 400;
 
 type DebounceTimer = { current: ReturnType<typeof setTimeout> | null };
@@ -60,12 +61,18 @@ const scheduleBookAutosave = (
     }, AUTOSAVE_DEBOUNCE_MS);
 };
 
+/**
+ * Session manga blob for autosave, or null when this window has no manga session.
+ */
 const mangaSessionTarget = (state: RootState): MangaAutosaveTarget | null => {
     const live = state.reader.presetSession;
     if (!live || state.reader.type !== "manga") return null;
     return { presetId: live.presetId, data: live.settings as MangaReaderSettings };
 };
 
+/**
+ * Session book blob for autosave, or null when this window has no book session.
+ */
 const bookSessionTarget = (state: RootState): BookAutosaveTarget | null => {
     const live = state.reader.presetSession;
     if (!live || state.reader.type !== "book") return null;

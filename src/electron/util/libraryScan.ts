@@ -9,8 +9,8 @@ import {
     resolveLibraryRealPath,
 } from "@common/library/classify";
 import {
-    type LibraryFolder,
     isLibraryScanDue,
+    type LibraryFolder,
     listForeignLibraryFolderSkipPaths,
     withLibraryScanTimestamps,
 } from "@common/library/folders";

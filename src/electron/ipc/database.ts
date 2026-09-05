@@ -83,9 +83,7 @@ const isSqliteConstraintError = (err: unknown): boolean =>
  * Broadcasts one or more {@link DatabaseChangeChannels} to every living renderer window.
  * Pass a list when several slices must refresh together so each window is visited once.
  */
-export const pingDatabaseChange = (
-    channel: DatabaseChangeChannel | readonly DatabaseChangeChannel[],
-): void => {
+export const pingDatabaseChange = (channel: DatabaseChangeChannel | readonly DatabaseChangeChannel[]): void => {
     const channels: readonly DatabaseChangeChannel[] = typeof channel === "string" ? [channel] : channel;
     if (channels.length === 0) return;
     for (const window of BrowserWindow.getAllWindows()) {

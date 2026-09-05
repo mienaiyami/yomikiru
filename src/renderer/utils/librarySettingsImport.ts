@@ -1,7 +1,4 @@
-import {
-    type LibraryFolder,
-    listForeignLibraryFolderSkipPaths,
-} from "@common/library/folders";
+import { type LibraryFolder, listForeignLibraryFolderSkipPaths } from "@common/library/folders";
 import type { LibraryItemWithProgress } from "@common/types/db";
 import i18n from "@renderer/i18n";
 import { dialogUtils } from "@utils/dialog";

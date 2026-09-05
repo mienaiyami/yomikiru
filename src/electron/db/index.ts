@@ -271,8 +271,14 @@ type LibraryIdentityRow = { id: number; link: string };
 
 /**
  * Prefers a row that already has progress, then the older `id` (cover cache).
+ *
+ * @param matches Catalogue rows that share one real path.
+ * @param progressLinks {@link mangaProgress} / {@link bookProgress} item links that already have a progress row.
  */
-const pickLiveDuplicateKeeper = (matches: LibraryIdentityRow[], progressLinks: Set<string>): LibraryIdentityRow => {
+const pickLiveDuplicateKeeper = (
+    matches: LibraryIdentityRow[],
+    progressLinks: Set<string>,
+): LibraryIdentityRow => {
     const withProgress = matches.filter((row) => progressLinks.has(row.link));
     const pool = withProgress.length > 0 ? withProgress : matches;
     return pool.reduce((best, row) => (row.id < best.id ? row : best));

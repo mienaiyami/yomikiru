@@ -209,7 +209,7 @@ const ReaderSettings = memo(
                     </div>
                     <div className={"settingItem "}>
                         <div
-                            className={"name " + (!readerSettings.settingsCollapsed.fitOption ? "expanded " : "")}
+                            className={`name ${!readerSettings.settingsCollapsed.fitOption ? "expanded " : ""}`}
                             tabIndex={0}
                             onKeyDown={(e) => {
                                 if (e.key === " " || e.key === "Enter") e.currentTarget.click();
@@ -331,9 +331,7 @@ const ReaderSettings = memo(
                     </div>
                     <div className={"settingItem "}>
                         <div
-                            className={
-                                "name " + (!readerSettings.settingsCollapsed.readingMode ? "expanded " : "")
-                            }
+                            className={`name ${!readerSettings.settingsCollapsed.readingMode ? "expanded " : ""}`}
                             tabIndex={0}
                             onKeyDown={(e) => {
                                 if (e.key === " " || e.key === "Enter") e.currentTarget.click();
@@ -374,7 +372,7 @@ const ReaderSettings = memo(
                     </div>
                     <div className={"settingItem "}>
                         <div
-                            className={"name " + (!readerSettings.settingsCollapsed.pagePerRow ? "expanded " : "")}
+                            className={`name ${!readerSettings.settingsCollapsed.pagePerRow ? "expanded " : ""}`}
                             tabIndex={0}
                             onKeyDown={(e) => {
                                 if (e.key === " " || e.key === "Enter") e.currentTarget.click();
@@ -446,9 +444,7 @@ const ReaderSettings = memo(
                     </div>
                     <div className={"settingItem "}>
                         <div
-                            className={
-                                "name " + (!readerSettings.settingsCollapsed.readingSide ? "expanded " : "")
-                            }
+                            className={`name ${!readerSettings.settingsCollapsed.readingSide ? "expanded " : ""}`}
                             tabIndex={0}
                             onKeyDown={(e) => {
                                 if (e.key === " " || e.key === "Enter") e.currentTarget.click();
@@ -489,9 +485,7 @@ const ReaderSettings = memo(
                     </div>
                     <div className={"settingItem "}>
                         <div
-                            className={
-                                "name " + (!readerSettings.settingsCollapsed.scrollSpeed ? "expanded " : "")
-                            }
+                            className={`name ${!readerSettings.settingsCollapsed.scrollSpeed ? "expanded " : ""}`}
                             tabIndex={0}
                             onKeyDown={(e) => {
                                 if (e.key === " " || e.key === "Enter") e.currentTarget.click();
@@ -602,9 +596,7 @@ const ReaderSettings = memo(
                     </div>
                     <div className={"settingItem "}>
                         <div
-                            className={
-                                "name " + (!readerSettings.settingsCollapsed.customColorFilter ? "expanded " : "")
-                            }
+                            className={`name ${!readerSettings.settingsCollapsed.customColorFilter ? "expanded " : ""}`}
                             tabIndex={0}
                             onKeyDown={(e) => {
                                 if (e.key === " " || e.key === "Enter") e.currentTarget.click();

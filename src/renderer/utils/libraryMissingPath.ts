@@ -823,7 +823,8 @@ export type SyncBookLibraryOnOpenOpts = {
  */
 export const syncBookLibraryOnReaderOpen = async (opts: SyncBookLibraryOnOpenOpts): Promise<void> => {
     const { dispatch, title, author, coverAbsolutePath } = opts;
-    let itemLink = normalizeMangaPathSegment(opts.openedPath);
+    // relocate rewrites the missing row onto this opened path; the key does not change
+    const itemLink = normalizeMangaPathSegment(opts.openedPath);
     const progress: BookProgress = { ...opts.progress, itemLink };
 
     let item = opts.libraryItem?.type === "book" ? opts.libraryItem : null;
