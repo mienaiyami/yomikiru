@@ -529,6 +529,16 @@ const Usage = (): ReactElement => {
                         <li>
                             <b>{t("readerPresets.reset.title")}</b> {t("readerPresets.reset.body")}
                         </li>
+                        <li>
+                            <Trans
+                                i18nKey="readerPresets.rememberPerItem"
+                                ns="usage"
+                                components={{
+                                    bold: <b />,
+                                    link: <SettingsLink targetId="setting:remember-reader-preset-per-item" />,
+                                }}
+                            />
+                        </li>
                     </ul>
                 </li>
                 <li>

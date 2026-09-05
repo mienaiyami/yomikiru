@@ -5,6 +5,7 @@ import { onInvoke } from "@test/mocks/preload";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import libraryReducer, {
     fetchAllMetadata,
+    patchLibraryItemExtra,
     selectResolvedItemMetadata,
     setLibraryItemDetailsCoverSource,
     setLibraryItemFavourite,
@@ -93,6 +94,39 @@ describe("library metadata thunks", () => {
         expect(store.getState().library.items[itemLink]?.extra).toEqual({
             keep: true,
             detailsCoverSource: "tracker",
+        });
+    });
+
+    it("merges extra.readerPresetId without dropping other keys", async () => {
+        const item = makeMangaItem({ link: itemLink, extra: { keep: true, detailsCoverSource: "library" } });
+        const store = configureStore({
+            reducer: { library: libraryReducer },
+            preloadedState: {
+                library: {
+                    items: { [itemLink]: item },
+                    metadata: {},
+                    loading: false,
+                    error: null,
+                },
+            },
+        });
+        const updateItem = vi.fn(async (req: { link: string; extra?: Record<string, unknown> }) => ({
+            ...makeMangaItem({ link: req.link, extra: req.extra ?? {} }),
+        }));
+        onInvoke("db:library:updateItem", updateItem);
+        await store.dispatch(
+            patchLibraryItemExtra({ link: itemLink, extra: { readerPresetId: "manga-preset-long-strip" } }),
+        );
+        expect(updateItem).toHaveBeenCalledWith(
+            expect.objectContaining({
+                link: itemLink,
+                extra: { keep: true, detailsCoverSource: "library", readerPresetId: "manga-preset-long-strip" },
+            }),
+        );
+        expect(store.getState().library.items[itemLink]?.extra).toEqual({
+            keep: true,
+            detailsCoverSource: "library",
+            readerPresetId: "manga-preset-long-strip",
         });
     });
 

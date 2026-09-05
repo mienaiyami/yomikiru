@@ -9,18 +9,67 @@ import {
     isUserPresetId,
     type MangaReaderPreset,
     parseReaderPresetsStateWithMeta,
+    type ReaderPreset,
     type ReaderPresetsState,
+    resolveLibraryItemReaderPresetId,
     USER_PRESET_BOOK_ID,
     USER_PRESET_MANGA_ID,
 } from "../utils/readerPresets";
 import type { BookReaderSettings, MangaReaderSettings } from "../utils/readerSettingsSchema";
 import { readJsonFileWithRetrySync } from "../utils/readJsonFileWithRetry";
 
-const log = createRendererLogger("store/readerPresets");
-
 import { parseAppSettings } from "../utils/settingsSchema";
 import { setAppSettings, setEpubReaderSettings, setReaderSettings } from "./appSettings";
 import type { AppDispatch, RootState } from "./index";
+import { patchLibraryItemExtra } from "./library";
+import {
+    patchPresetSessionSettings,
+    selectLiveBookPresetId,
+    selectLiveMangaPresetId,
+    setPresetSession,
+} from "./reader";
+
+const log = createRendererLogger("store/readerPresets");
+
+/** library_items.type / open reader type; selects the matching preset catalog. */
+type ReaderItemType = "manga" | "book";
+
+/** Detach session settings from the catalog blob so live patches do not mutate the preset until autosave. */
+const clonePresetSettings = <T>(settings: T): T => structuredClone(settings);
+
+/**
+ * Catalog preset whose id and {@link ReaderItemType} both match, or undefined when the pin is stale.
+ */
+const presetOfType = (
+    presets: readonly ReaderPreset[],
+    itemType: ReaderItemType,
+    presetId: string,
+): ReaderPreset | undefined => presets.find((preset) => preset.id === presetId && preset.type === itemType);
+
+/**
+ * Replaces the window-local session with a cloned catalog preset. Does not write extra.
+ *
+ * @param itemLink Library row path bound to this session (manga series, not a chapter folder).
+ */
+const setSessionFromPreset = (dispatch: AppDispatch, itemLink: string, preset: ReaderPreset): void => {
+    dispatch(
+        setPresetSession({
+            itemLink,
+            presetId: preset.id,
+            settings: clonePresetSettings(preset.data),
+        }),
+    );
+};
+
+/**
+ * Session plus {@link patchLibraryItemExtra} so extra.readerPresetId matches the live preset.
+ *
+ * @param itemLink Library row path bound to this session.
+ */
+const bindItemToPreset = (dispatch: AppDispatch, itemLink: string, preset: ReaderPreset): void => {
+    setSessionFromPreset(dispatch, itemLink, preset);
+    void dispatch(patchLibraryItemExtra({ link: itemLink, extra: { readerPresetId: preset.id } }));
+};
 
 let initialState: ReaderPresetsState = initReaderPresets;
 // TODO: normalize reader settings + presets; remove duplications and only keep IDs in appSettings?
@@ -272,51 +321,193 @@ export const {
 } = readerPresets.actions;
 
 /**
- * Cycles to next preset of given type. Dispatches selectReaderPreset. Returns preset name for shortcut feedback.
+ * Highlighted {@link ReaderPreset.id} for this window: session pin when it matches itemType, else the global selected id.
+ */
+const livePresetIdForType = (state: RootState, itemType: ReaderItemType): string =>
+    itemType === "manga" ? selectLiveMangaPresetId(state) : selectLiveBookPresetId(state);
+
+/**
+ * Applies a catalog preset. With an active per-item session, updates that session.
+ * Writes extra.readerPresetId only while rememberReaderPresetPerItem is enabled.
+ * With no session, delegates to {@link selectReaderPreset}.
+ *
+ * @param presetId {@link ReaderPreset.id} in the in-memory catalog.
+ */
+export const selectPresetInContext =
+    (presetId: string) =>
+    (dispatch: AppDispatch, getState: () => RootState): void => {
+        const state = getState();
+        const session = state.reader.presetSession;
+        if (!session || state.reader.type === null) {
+            dispatch(selectReaderPreset(presetId));
+            return;
+        }
+        const itemType = state.reader.type;
+        const preset = presetOfType(state.readerPresets.presets, itemType, presetId);
+        if (!preset) {
+            log.warn("selectPresetInContext: catalog id does not match open reader type", { presetId, itemType });
+            return;
+        }
+        if (state.appSettings.rememberReaderPresetPerItem) {
+            bindItemToPreset(dispatch, session.itemLink, preset);
+            return;
+        }
+        setSessionFromPreset(dispatch, session.itemLink, preset);
+    };
+
+/**
+ * Live manga settings patch: session merge while a manga session is active, else {@link setReaderSettings}.
+ *
+ * @param settingsPatch Fields to merge into the live manga reader blob.
+ */
+export const patchLiveMangaReaderSettings =
+    (settingsPatch: Partial<MangaReaderSettings>) =>
+    (dispatch: AppDispatch, getState: () => RootState): void => {
+        const state = getState();
+        if (state.reader.presetSession && state.reader.type === "manga") {
+            dispatch(patchPresetSessionSettings(settingsPatch));
+            return;
+        }
+        dispatch(setReaderSettings(settingsPatch));
+    };
+
+/**
+ * Live book settings patch: session merge while a book session is active, else {@link setEpubReaderSettings}.
+ *
+ * @param settingsPatch Fields to merge into the live book reader blob.
+ */
+export const patchLiveBookReaderSettings =
+    (settingsPatch: Partial<BookReaderSettings>) =>
+    (dispatch: AppDispatch, getState: () => RootState): void => {
+        const state = getState();
+        if (state.reader.presetSession && state.reader.type === "book") {
+            dispatch(patchPresetSessionSettings(settingsPatch));
+            return;
+        }
+        dispatch(setEpubReaderSettings(settingsPatch));
+    };
+
+/**
+ * Starts or keeps a per-item preset session for the library row at `opts.itemLink`.
+ * Stamps extra.readerPresetId when the stored id is missing or stale.
+ *
+ * @param opts.itemLink Library row path (manga series folder, not a chapter path).
+ * @param opts.itemType {@link ReaderItemType} of that row; must match library_items.type.
+ */
+export const ensureReaderPresetSession =
+    (opts: { itemLink: string; itemType: ReaderItemType }) =>
+    async (dispatch: AppDispatch, getState: () => RootState): Promise<void> => {
+        const { itemLink, itemType } = opts;
+        const state = getState();
+        const session = state.reader.presetSession;
+        const rememberPerItem = state.appSettings.rememberReaderPresetPerItem;
+
+        if (!rememberPerItem) {
+            if (session && session.itemLink !== itemLink) {
+                dispatch(setPresetSession(null));
+            }
+            return;
+        }
+
+        const libraryItem = state.library.items[itemLink];
+        if (!libraryItem || libraryItem.type !== itemType) return;
+
+        /* same library row: keep live tweaks; heal extra if the pin vanished */
+        if (session?.itemLink === itemLink && state.reader.type === itemType) {
+            const extraPresetId = resolveLibraryItemReaderPresetId(
+                libraryItem.extra,
+                itemType,
+                state.readerPresets.presets,
+            );
+            if (extraPresetId === session.presetId) return;
+            if (!extraPresetId) {
+                await dispatch(
+                    patchLibraryItemExtra({ link: itemLink, extra: { readerPresetId: session.presetId } }),
+                );
+            }
+            return;
+        }
+
+        const catalog = state.readerPresets.presets;
+        let catalogPresetId = resolveLibraryItemReaderPresetId(libraryItem.extra, itemType, catalog);
+        if (!catalogPresetId) {
+            const globalPresetId =
+                itemType === "manga"
+                    ? state.appSettings.mangaReaderPresetId
+                    : state.appSettings.bookReaderPresetId;
+            catalogPresetId =
+                presetOfType(catalog, itemType, globalPresetId)?.id ??
+                catalog.find((preset) => preset.type === itemType)?.id ??
+                undefined;
+            if (!catalogPresetId) {
+                log.warn("ensureReaderPresetSession: no preset to stamp", { itemLink, itemType });
+                return;
+            }
+            await dispatch(patchLibraryItemExtra({ link: itemLink, extra: { readerPresetId: catalogPresetId } }));
+        }
+        const preset = presetOfType(getState().readerPresets.presets, itemType, catalogPresetId);
+        if (!preset) {
+            log.warn("ensureReaderPresetSession: stamp id missing from catalog", { itemLink, catalogPresetId });
+            return;
+        }
+        setSessionFromPreset(dispatch, itemLink, preset);
+    };
+
+/**
+ * Cycles to the next catalog preset of the given item type. Dispatches {@link selectPresetInContext}.
+ *
+ * @param itemType Which preset catalog to walk.
+ * @returns That preset's display name for shortcut feedback, or null when the catalog is empty.
  */
 export const cyclePresetNext =
-    (type: "manga" | "book") =>
+    (itemType: ReaderItemType) =>
     (dispatch: AppDispatch, getState: () => RootState): string | null => {
         const state = getState();
-        const presets = state.readerPresets.presets.filter((p) => p.type === type);
-        if (presets.length === 0) return null;
-        const currentId =
-            type === "manga" ? state.appSettings.mangaReaderPresetId : state.appSettings.bookReaderPresetId;
-        const currIdx = presets.findIndex((p) => p.id === currentId);
-        const nextIdx = currIdx < 0 ? 0 : (currIdx + 1) % presets.length;
-        const next = presets[nextIdx];
-        dispatch(selectReaderPreset(next.id));
-        return next.name;
+        const catalog = state.readerPresets.presets.filter((preset) => preset.type === itemType);
+        if (catalog.length === 0) return null;
+        const livePresetId = livePresetIdForType(state, itemType);
+        const liveIndex = catalog.findIndex((preset) => preset.id === livePresetId);
+        const nextIndex = liveIndex < 0 ? 0 : (liveIndex + 1) % catalog.length;
+        const nextPreset = catalog[nextIndex];
+        dispatch(selectPresetInContext(nextPreset.id));
+        return nextPreset.name;
     };
 
 /**
- * Cycles to previous preset of given type. Dispatches selectReaderPreset. Returns preset name for shortcut feedback.
+ * Cycles to the previous catalog preset of the given item type. Dispatches {@link selectPresetInContext}.
+ *
+ * @param itemType Which preset catalog to walk.
+ * @returns That preset's display name for shortcut feedback, or null when the catalog is empty.
  */
 export const cyclePresetPrev =
-    (type: "manga" | "book") =>
+    (itemType: ReaderItemType) =>
     (dispatch: AppDispatch, getState: () => RootState): string | null => {
         const state = getState();
-        const presets = state.readerPresets.presets.filter((p) => p.type === type);
-        if (presets.length === 0) return null;
-        const currentId =
-            type === "manga" ? state.appSettings.mangaReaderPresetId : state.appSettings.bookReaderPresetId;
-        const currIdx = presets.findIndex((p) => p.id === currentId);
-        const nextIdx = currIdx <= 0 ? presets.length - 1 : currIdx - 1;
-        const next = presets[nextIdx];
-        dispatch(selectReaderPreset(next.id));
-        return next.name;
+        const catalog = state.readerPresets.presets.filter((preset) => preset.type === itemType);
+        if (catalog.length === 0) return null;
+        const livePresetId = livePresetIdForType(state, itemType);
+        const liveIndex = catalog.findIndex((preset) => preset.id === livePresetId);
+        const prevIndex = liveIndex <= 0 ? catalog.length - 1 : liveIndex - 1;
+        const prevPreset = catalog[prevIndex];
+        dispatch(selectPresetInContext(prevPreset.id));
+        return prevPreset.name;
     };
 
 /**
- * Selects preset at slot (0-based) for given type. Dispatches selectReaderPreset. Returns preset name for shortcut feedback.
+ * Selects the catalog preset at a 0-based index among presets of the given item type.
+ * Dispatches {@link selectPresetInContext}.
+ *
+ * @param itemType Which preset catalog to index.
+ * @param slotIndex 0-based index in that filtered catalog (shortcut slot).
+ * @returns That preset's display name for shortcut feedback, or null when the index is out of range.
  */
 export const selectPresetSlot =
-    (type: "manga" | "book", slot: number) =>
+    (itemType: ReaderItemType, slotIndex: number) =>
     (dispatch: AppDispatch, getState: () => RootState): string | null => {
-        const presets = getState().readerPresets.presets.filter((p) => p.type === type);
-        if (slot < 0 || slot >= presets.length) return null;
-        const preset = presets[slot];
-        dispatch(selectReaderPreset(preset.id));
+        const catalog = getState().readerPresets.presets.filter((preset) => preset.type === itemType);
+        if (slotIndex < 0 || slotIndex >= catalog.length) return null;
+        const preset = catalog[slotIndex];
+        dispatch(selectPresetInContext(preset.id));
         return preset.name;
     };
 
@@ -336,12 +527,15 @@ export const resetReaderPresetsToDefaults =
     };
 
 /**
- * Applies reader preset by id to reader settings and sets it as selected.
+ * Copies the catalog preset's data into the global reader blob and sets the matching
+ * appSettings selected-preset id. Does not write library extra or the window session.
+ *
+ * @param presetId {@link ReaderPreset.id}.
  */
 export const selectReaderPreset =
-    (id: string) =>
+    (presetId: string) =>
     (dispatch: AppDispatch, getState: () => RootState): void => {
-        const preset = getState().readerPresets.presets.find((p) => p.id === id);
+        const preset = getState().readerPresets.presets.find((entry) => entry.id === presetId);
         if (!preset) {
             dialogUtils.customError({ message: "Preset not found." });
             return;
@@ -356,37 +550,45 @@ export const selectReaderPreset =
     };
 
 /**
- * Deletes reader preset by id and syncs appSettings to fallback when the deleted preset was selected.
+ * Deletes a catalog preset and heals global selection plus any window session that used it.
+ *
+ * @param presetId {@link ReaderPreset.id} to remove (User presets are rejected).
  */
 export const deleteReaderPresetWithFallback =
-    (id: string) =>
+    (presetId: string) =>
     (dispatch: AppDispatch, getState: () => RootState): void => {
-        if (isUserPresetId(id)) {
+        if (isUserPresetId(presetId)) {
             dialogUtils.warn({ message: "Cannot delete the User preset." });
             return;
         }
         const state = getState();
-        const preset = state.readerPresets.presets.find((p) => p.id === id);
-        const presetType = preset?.type;
-        const presetIdKey = presetType === "manga" ? "mangaReaderPresetId" : "bookReaderPresetId";
-        const wasSelected = presetType && state.appSettings[presetIdKey] === id;
-        const fallback = presetType
-            ? state.readerPresets.presets.find((p) => p.type === presetType && p.id !== id)
+        const preset = state.readerPresets.presets.find((entry) => entry.id === presetId);
+        const itemType = preset?.type;
+        const globalPresetIdKey = itemType === "manga" ? "mangaReaderPresetId" : "bookReaderPresetId";
+        const wasGlobalSelected = Boolean(itemType && state.appSettings[globalPresetIdKey] === presetId);
+        const fallbackPreset = itemType
+            ? state.readerPresets.presets.find((entry) => entry.type === itemType && entry.id !== presetId)
             : undefined;
-        const defaultId = presetType === "manga" ? USER_PRESET_MANGA_ID : USER_PRESET_BOOK_ID;
+        const userPresetId = itemType === "manga" ? USER_PRESET_MANGA_ID : USER_PRESET_BOOK_ID;
 
-        if (presetType === "manga") dispatch(deleteMangaPreset(id));
-        else if (presetType === "book") dispatch(deleteBookPreset(id));
+        if (itemType === "manga") dispatch(deleteMangaPreset(presetId));
+        else if (itemType === "book") dispatch(deleteBookPreset(presetId));
 
-        if (wasSelected && fallback) {
-            dispatch(selectReaderPreset(fallback.id));
-        } else if (wasSelected && presetType) {
-            dispatch(setAppSettings({ [presetIdKey]: defaultId }));
+        const session = state.reader.presetSession;
+        if (session?.presetId === presetId && fallbackPreset) {
+            bindItemToPreset(dispatch, session.itemLink, fallbackPreset);
+        }
+
+        if (wasGlobalSelected && fallbackPreset) {
+            dispatch(selectReaderPreset(fallbackPreset.id));
+        } else if (wasGlobalSelected && itemType) {
+            dispatch(setAppSettings({ [globalPresetIdKey]: userPresetId }));
         }
     };
 
 /**
- * Refreshes presets from file and reconciles appSettings if presetIds are stale.
+ * Reloads presets from disk and heals stale mangaReaderPresetId / bookReaderPresetId
+ * plus the window session pin when that catalog id is gone.
  */
 export const refreshReaderPresetsWithReconcile =
     () =>
@@ -394,23 +596,41 @@ export const refreshReaderPresetsWithReconcile =
         dispatch(refreshReaderPresets());
 
         const state = getState();
-        const presets = state.readerPresets.presets;
+        const catalog = state.readerPresets.presets;
 
-        const mangaId = state.appSettings.mangaReaderPresetId;
-        if (!presets.some((p) => p.type === "manga" && p.id === mangaId)) {
-            const fallback = presets.find((p) => p.type === "manga");
-            if (fallback) {
-                dispatch(selectReaderPreset(fallback.id));
-                log.log(`Preset reconcile: manga active id -> "${fallback.id}"`);
+        const mangaReaderPresetId = state.appSettings.mangaReaderPresetId;
+        if (!catalog.some((preset) => preset.type === "manga" && preset.id === mangaReaderPresetId)) {
+            const fallbackPreset = catalog.find((preset) => preset.type === "manga");
+            if (fallbackPreset) {
+                dispatch(selectReaderPreset(fallbackPreset.id));
+                log.log(`Preset reconcile: manga active id -> "${fallbackPreset.id}"`);
             }
         }
 
-        const bookId = state.appSettings.bookReaderPresetId;
-        if (!presets.some((p) => p.type === "book" && p.id === bookId)) {
-            const fallback = presets.find((p) => p.type === "book");
-            if (fallback) {
-                dispatch(selectReaderPreset(fallback.id));
-                log.log(`Preset reconcile: book active id -> "${fallback.id}"`);
+        const bookReaderPresetId = state.appSettings.bookReaderPresetId;
+        if (!catalog.some((preset) => preset.type === "book" && preset.id === bookReaderPresetId)) {
+            const fallbackPreset = catalog.find((preset) => preset.type === "book");
+            if (fallbackPreset) {
+                dispatch(selectReaderPreset(fallbackPreset.id));
+                log.log(`Preset reconcile: book active id -> "${fallbackPreset.id}"`);
+            }
+        }
+
+        const stateAfterRefresh = getState();
+        const session = stateAfterRefresh.reader.presetSession;
+        if (session && stateAfterRefresh.reader.type) {
+            const sessionItemType = stateAfterRefresh.reader.type;
+            const sessionPresetInCatalog = stateAfterRefresh.readerPresets.presets.some(
+                (preset) => preset.id === session.presetId && preset.type === sessionItemType,
+            );
+            if (!sessionPresetInCatalog) {
+                const fallbackPreset = stateAfterRefresh.readerPresets.presets.find(
+                    (preset) => preset.type === sessionItemType,
+                );
+                if (fallbackPreset) {
+                    bindItemToPreset(dispatch, session.itemLink, fallbackPreset);
+                    log.log(`Preset reconcile: session id -> "${fallbackPreset.id}"`);
+                }
             }
         }
     };
@@ -420,35 +640,31 @@ export default readerPresets.reducer;
 /**
  * Manga reader presets only. Memoized so `.filter` does not force settings UI re-renders on unrelated updates.
  */
-export const getMangaPresets = createSelector([(state: RootState) => state.readerPresets.presets], (presets) =>
-    presets.filter((p): p is MangaReaderPreset => p.type === "manga"),
+export const getMangaPresets = createSelector([(state: RootState) => state.readerPresets.presets], (catalog) =>
+    catalog.filter((preset): preset is MangaReaderPreset => preset.type === "manga"),
 );
 
 /**
  * Book/EPUB reader presets only. Memoized counterpart of {@link getMangaPresets}.
  */
-export const getBookPresets = createSelector([(state: RootState) => state.readerPresets.presets], (presets) =>
-    presets.filter((p): p is BookReaderPreset => p.type === "book"),
+export const getBookPresets = createSelector([(state: RootState) => state.readerPresets.presets], (catalog) =>
+    catalog.filter((preset): preset is BookReaderPreset => preset.type === "book"),
 );
 
 /**
- * Display name of the active manga reader preset, or null if none.
+ * Display name of the live manga reader preset, or null if none.
  */
 export const getActiveMangaPresetName = createSelector(
-    [
-        (state: RootState) => state.appSettings.mangaReaderPresetId,
-        (state: RootState) => state.readerPresets.presets,
-    ],
-    (id, presets) => (id ? (presets.find((p) => p.id === id)?.name ?? null) : null),
+    [selectLiveMangaPresetId, (state: RootState) => state.readerPresets.presets],
+    (livePresetId, catalog) =>
+        livePresetId ? (catalog.find((preset) => preset.id === livePresetId)?.name ?? null) : null,
 );
 
 /**
- * Display name of the active book reader preset, or null if none.
+ * Display name of the live book reader preset, or null if none.
  */
 export const getActiveBookPresetName = createSelector(
-    [
-        (state: RootState) => state.appSettings.bookReaderPresetId,
-        (state: RootState) => state.readerPresets.presets,
-    ],
-    (id, presets) => (id ? (presets.find((p) => p.id === id)?.name ?? null) : null),
+    [selectLiveBookPresetId, (state: RootState) => state.readerPresets.presets],
+    (livePresetId, catalog) =>
+        livePresetId ? (catalog.find((preset) => preset.id === livePresetId)?.name ?? null) : null,
 );

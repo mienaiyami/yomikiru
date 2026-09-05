@@ -174,7 +174,7 @@ chosen path and the previous basename or library title asks for confirmation bef
 
 `favouritedAt` is a nullable timestamp: set means the item is in the gallery Favourites tab; null means not favourited.
 `note` is free-text commentary on the library item (not chapter / bookmark / EPUB highlight notes).
-`extra` is a JSON object (`LibraryItemExtra`) for fields that have not earned a column yet. Named keys include `detailsCoverSource` (`library` | `tracker`): which cover gallery details and tiles prefer when a tracker snapshot has an image. Omitted uses the tracker image when one exists.
+`extra` is a JSON object (`LibraryItemExtra`) for fields that have not earned a column yet. Named keys include `detailsCoverSource` (`library` | `tracker`): which cover gallery details and tiles prefer when a tracker snapshot has an image. Omitted uses the tracker image when one exists. `readerPresetId` is the named reader preset last used on that title while `rememberReaderPresetPerItem` is enabled.
 
 Re-adding an existing path (`addLibraryItem` conflict) updates **title only**. Author, cover, favourite, note, and `extra` stay as stored. Progress insert uses `onConflictDoNothing()` so an existing progress row is not reset.
 

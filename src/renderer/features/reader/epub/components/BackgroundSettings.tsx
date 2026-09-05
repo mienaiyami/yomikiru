@@ -1,5 +1,6 @@
-import { setEpubReaderSettings } from "@store/appSettings";
 import { useAppDispatch, useAppSelector } from "@store/hooks";
+import { selectLiveBookReaderSettings } from "@store/reader";
+import { patchLiveBookReaderSettings } from "@store/readerPresets";
 import InputCheckbox from "@ui/InputCheckbox";
 import InputColor from "@ui/InputColor";
 import InputRange from "@ui/InputRange";
@@ -12,22 +13,22 @@ import { useTranslation } from "react-i18next";
 const BackgroundSettings = memo(() => {
     const { t } = useTranslation("reader");
     const { t: tSettings } = useTranslation("settings");
-    const appSettings = useAppSelector((store) => store.appSettings);
+    const epubReaderSettings = useAppSelector(selectLiveBookReaderSettings);
     const dispatch = useAppDispatch();
 
     return (
         <div className="settingItem">
             <div
-                className={`name ${!appSettings.epubReaderSettings.settingsCollapsed.background ? "expanded " : ""}`}
+                className={`name ${!epubReaderSettings.settingsCollapsed.background ? "expanded " : ""}`}
                 onKeyDown={(e) => {
                     if (e.key === " " || e.key === "Enter") e.currentTarget.click();
                 }}
                 onClick={() => {
                     dispatch(
-                        setEpubReaderSettings({
+                        patchLiveBookReaderSettings({
                             settingsCollapsed: {
-                                ...appSettings.epubReaderSettings.settingsCollapsed,
-                                background: !appSettings.epubReaderSettings.settingsCollapsed.background,
+                                ...epubReaderSettings.settingsCollapsed,
+                                background: !epubReaderSettings.settingsCollapsed.background,
                             },
                         }),
                     );
@@ -37,12 +38,12 @@ const BackgroundSettings = memo(() => {
             </div>
             <div className="options col">
                 <InputCheckbox
-                    checked={appSettings.epubReaderSettings.backgroundImage.enabled}
+                    checked={epubReaderSettings.backgroundImage.enabled}
                     onChange={(e) => {
                         dispatch(
-                            setEpubReaderSettings({
+                            patchLiveBookReaderSettings({
                                 backgroundImage: {
-                                    ...appSettings.epubReaderSettings.backgroundImage,
+                                    ...epubReaderSettings.backgroundImage,
                                     enabled: e.currentTarget.checked,
                                 },
                             }),
@@ -50,13 +51,13 @@ const BackgroundSettings = memo(() => {
                     }}
                     labelAfter={t("settings.useBackgroundImage")}
                 />
-                {appSettings.epubReaderSettings.backgroundImage.enabled && (
+                {epubReaderSettings.backgroundImage.enabled && (
                     <>
                         <div className="row">
                             <input
                                 type="text"
                                 placeholder={t("settings.noImageSelected")}
-                                value={appSettings.epubReaderSettings.backgroundImage.path}
+                                value={epubReaderSettings.backgroundImage.path}
                                 readOnly
                             />
                         </div>
@@ -66,9 +67,9 @@ const BackgroundSettings = memo(() => {
                                     promptSelectDir(
                                         (path) => {
                                             dispatch(
-                                                setEpubReaderSettings({
+                                                patchLiveBookReaderSettings({
                                                     backgroundImage: {
-                                                        ...appSettings.epubReaderSettings.backgroundImage,
+                                                        ...epubReaderSettings.backgroundImage,
                                                         path: path as string,
                                                     },
                                                 }),
@@ -89,9 +90,9 @@ const BackgroundSettings = memo(() => {
                             <button
                                 onClick={() => {
                                     dispatch(
-                                        setEpubReaderSettings({
+                                        patchLiveBookReaderSettings({
                                             backgroundImage: {
-                                                ...appSettings.epubReaderSettings.backgroundImage,
+                                                ...epubReaderSettings.backgroundImage,
                                                 path: "",
                                             },
                                         }),
@@ -103,10 +104,10 @@ const BackgroundSettings = memo(() => {
                             <button
                                 onClick={() => {
                                     dispatch(
-                                        setEpubReaderSettings({
+                                        patchLiveBookReaderSettings({
                                             backgroundImage: {
                                                 ...defaultSettings.epubReaderSettings.backgroundImage,
-                                                enabled: appSettings.epubReaderSettings.backgroundImage.enabled,
+                                                enabled: epubReaderSettings.backgroundImage.enabled,
                                             },
                                         }),
                                     );
@@ -119,16 +120,16 @@ const BackgroundSettings = memo(() => {
                             min={0}
                             max={100}
                             step={5}
-                            value={appSettings.epubReaderSettings.backgroundImage.dimIntensity}
+                            value={epubReaderSettings.backgroundImage.dimIntensity}
                             labeled
                             labelText={t("settings.dimIntensity")}
                             timeout={[
                                 350,
                                 (value) =>
                                     dispatch(
-                                        setEpubReaderSettings({
+                                        patchLiveBookReaderSettings({
                                             backgroundImage: {
-                                                ...appSettings.epubReaderSettings.backgroundImage,
+                                                ...epubReaderSettings.backgroundImage,
                                                 dimIntensity: value,
                                             },
                                         }),
@@ -139,16 +140,16 @@ const BackgroundSettings = memo(() => {
                             min={50}
                             max={150}
                             step={5}
-                            value={appSettings.epubReaderSettings.backgroundImage.brightness}
+                            value={epubReaderSettings.backgroundImage.brightness}
                             labeled
                             labelText={t("settings.brightnessLabel")}
                             timeout={[
                                 350,
                                 (value) =>
                                     dispatch(
-                                        setEpubReaderSettings({
+                                        patchLiveBookReaderSettings({
                                             backgroundImage: {
-                                                ...appSettings.epubReaderSettings.backgroundImage,
+                                                ...epubReaderSettings.backgroundImage,
                                                 brightness: value,
                                             },
                                         }),
@@ -159,16 +160,16 @@ const BackgroundSettings = memo(() => {
                             min={50}
                             max={150}
                             step={5}
-                            value={appSettings.epubReaderSettings.backgroundImage.contrast}
+                            value={epubReaderSettings.backgroundImage.contrast}
                             labeled
                             labelText={t("settings.contrastLabel")}
                             timeout={[
                                 350,
                                 (value) =>
                                     dispatch(
-                                        setEpubReaderSettings({
+                                        patchLiveBookReaderSettings({
                                             backgroundImage: {
-                                                ...appSettings.epubReaderSettings.backgroundImage,
+                                                ...epubReaderSettings.backgroundImage,
                                                 contrast: value,
                                             },
                                         }),
@@ -176,14 +177,14 @@ const BackgroundSettings = memo(() => {
                             ]}
                         />
                         <InputCheckbox
-                            checked={appSettings.epubReaderSettings.backgroundImage.layer.enabled}
+                            checked={epubReaderSettings.backgroundImage.layer.enabled}
                             onChange={(e) => {
                                 dispatch(
-                                    setEpubReaderSettings({
+                                    patchLiveBookReaderSettings({
                                         backgroundImage: {
-                                            ...appSettings.epubReaderSettings.backgroundImage,
+                                            ...epubReaderSettings.backgroundImage,
                                             layer: {
-                                                ...appSettings.epubReaderSettings.backgroundImage.layer,
+                                                ...epubReaderSettings.backgroundImage.layer,
                                                 enabled: e.currentTarget.checked,
                                             },
                                         },
@@ -195,17 +196,17 @@ const BackgroundSettings = memo(() => {
 
                         <InputColor
                             labeled
-                            disabled={!appSettings.epubReaderSettings.backgroundImage.layer.enabled}
-                            value={colorUtils.new(appSettings.epubReaderSettings.backgroundImage.layer.color)}
+                            disabled={!epubReaderSettings.backgroundImage.layer.enabled}
+                            value={colorUtils.new(epubReaderSettings.backgroundImage.layer.color)}
                             timeout={[
                                 500,
                                 (value) =>
                                     dispatch(
-                                        setEpubReaderSettings({
+                                        patchLiveBookReaderSettings({
                                             backgroundImage: {
-                                                ...appSettings.epubReaderSettings.backgroundImage,
+                                                ...epubReaderSettings.backgroundImage,
                                                 layer: {
-                                                    ...appSettings.epubReaderSettings.backgroundImage.layer,
+                                                    ...epubReaderSettings.backgroundImage.layer,
                                                     color: value.hexa(),
                                                 },
                                             },
@@ -218,19 +219,19 @@ const BackgroundSettings = memo(() => {
                             min={0}
                             max={1}
                             step={0.05}
-                            disabled={!appSettings.epubReaderSettings.backgroundImage.layer.enabled}
-                            value={appSettings.epubReaderSettings.backgroundImage.layer.opacity}
+                            disabled={!epubReaderSettings.backgroundImage.layer.enabled}
+                            value={epubReaderSettings.backgroundImage.layer.opacity}
                             labeled
                             labelText={t("settings.layerOpacity")}
                             timeout={[
                                 350,
                                 (value) =>
                                     dispatch(
-                                        setEpubReaderSettings({
+                                        patchLiveBookReaderSettings({
                                             backgroundImage: {
-                                                ...appSettings.epubReaderSettings.backgroundImage,
+                                                ...epubReaderSettings.backgroundImage,
                                                 layer: {
-                                                    ...appSettings.epubReaderSettings.backgroundImage.layer,
+                                                    ...epubReaderSettings.backgroundImage.layer,
                                                     opacity: value,
                                                 },
                                             },

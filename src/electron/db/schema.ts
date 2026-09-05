@@ -17,6 +17,8 @@ export type DetailsCoverSource = "library" | "tracker";
 export type LibraryItemExtra = {
     [key: string]: unknown;
     detailsCoverSource?: DetailsCoverSource;
+    /** Named reader preset last used on this title while rememberReaderPresetPerItem is on. */
+    readerPresetId?: string;
 };
 
 /** Tracker slug stored on {@link itemTrackers.provider}. SQLite has no CHECK; this is TypeScript-only. */

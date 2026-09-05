@@ -1,8 +1,16 @@
 import { configureStore } from "@reduxjs/toolkit";
 import { makeMangaItem } from "@test/fixtures/libraryItem";
 import { describe, expect, it } from "vitest";
+import { defaultMangaReaderSettings } from "../utils/readerSettingsSchema";
 import libraryReducer from "./library";
-import readerReducer, { getReaderContent, setReaderState, updateReaderMangaCurrentPage } from "./reader";
+import readerReducer, {
+    getReaderContent,
+    patchPresetSessionSettings,
+    resetReaderState,
+    setPresetSession,
+    setReaderState,
+    updateReaderMangaCurrentPage,
+} from "./reader";
 import trackersReducer from "./trackers";
 
 describe("updateReaderMangaCurrentPage", () => {
@@ -53,5 +61,68 @@ describe("getReaderContent", () => {
         const afterPageChange = getReaderContent(store.getState() as Parameters<typeof getReaderContent>[0]);
 
         expect(afterPageChange).toBe(beforePageChange);
+    });
+});
+
+describe("presetSession", () => {
+    it("resetReaderState drops the session", () => {
+        const content = makeMangaItem();
+        const opened = readerReducer(
+            undefined,
+            setReaderState({
+                type: "manga",
+                link: content.link,
+                content,
+                mangaPageNumber: 1,
+            }),
+        );
+        const withSession = readerReducer(
+            opened,
+            setPresetSession({
+                itemLink: content.link,
+                presetId: "manga-preset-long-strip",
+                settings: defaultMangaReaderSettings,
+            }),
+        );
+        expect(withSession.presetSession?.presetId).toBe("manga-preset-long-strip");
+        expect(readerReducer(withSession, resetReaderState()).presetSession).toBeNull();
+    });
+
+    it("patchPresetSessionSettings merges without replacing the session id", () => {
+        const content = makeMangaItem();
+        let state = readerReducer(
+            undefined,
+            setReaderState({
+                type: "manga",
+                link: content.link,
+                content,
+                mangaPageNumber: 1,
+            }),
+        );
+        state = readerReducer(
+            state,
+            setPresetSession({
+                itemLink: content.link,
+                presetId: "manga-preset-long-strip",
+                settings: defaultMangaReaderSettings,
+            }),
+        );
+        state = readerReducer(state, patchPresetSessionSettings({ readerWidth: 42 }));
+        expect(state.presetSession?.presetId).toBe("manga-preset-long-strip");
+        expect((state.presetSession?.settings as typeof defaultMangaReaderSettings).readerWidth).toBe(42);
+    });
+
+    it("patchPresetSessionSettings still merges when reader.type is null", () => {
+        let state = readerReducer(
+            undefined,
+            setPresetSession({
+                itemLink: "x",
+                presetId: "manga-preset-long-strip",
+                settings: defaultMangaReaderSettings,
+            }),
+        );
+        expect(state.type).toBeNull();
+        state = readerReducer(state, patchPresetSessionSettings({ readerWidth: 7 }));
+        expect((state.presetSession?.settings as typeof defaultMangaReaderSettings).readerWidth).toBe(7);
     });
 });

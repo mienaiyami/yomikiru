@@ -149,7 +149,8 @@
         "reset": {
             "title": "Reset to Default Presets",
             "body": "restores built-in presets to their original state; if a \"User\" preset for manga or book is missing, it is recreated from your current reader settings. Custom presets are kept."
-        }
+        },
+        "rememberPerItem": "Enable <link><bold>Remember preset per title</bold></link> so each manga, manhwa, or book can keep its own reader layout. Opening a title restores the last preset you used on it. Switching presets in the reader updates that title only. Use Select in Reader presets for the default on titles that do not have one yet."
     },
     "pdfScale": {
         "link": "PDF Scale:",

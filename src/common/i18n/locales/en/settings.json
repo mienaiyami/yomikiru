@@ -290,7 +290,11 @@
         "idExists": "Preset with this id already exists.",
         "importedPreset": "Imported preset \"{{name}}\".",
         "invalidClipboard": "Invalid preset data in clipboard.",
-        "resetDefaultsConfirm": "Reset default presets to their original state? Custom presets are kept."
+        "resetDefaultsConfirm": "Reset default presets to their original state? Custom presets are kept.",
+        "rememberPerItem": {
+            "label": "Remember preset per title",
+            "desc": "Each title can keep its own reader layout. Opening it restores the last preset you used there; changing presets in the reader does not change other titles. Use Select below to set the default for titles that do not have one yet."
+        }
     },
     "fileExplorer": {
         "title": "File Explorer Option",

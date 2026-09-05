@@ -1,12 +1,25 @@
 import { type EpubPackage, isExternalEpubReference } from "@common/epub";
 import type { BookProgress } from "@common/types/db";
 import { setAnilistCurrentListEntry } from "@store/anilist";
-import { setAppSettings, setEpubReaderSettings, setReaderSettings } from "@store/appSettings";
+import { setAppSettings, setReaderSettings } from "@store/appSettings";
 import { addNote } from "@store/bookNotes";
 import { useAppDispatch, useAppSelector } from "@store/hooks";
+import store from "@store/index";
 import { selectLibraryItem, updateCurrentItemProgress } from "@store/library";
-import { getReaderBook, setReaderLoading, setReaderOpen, updateReaderBookProgress } from "@store/reader";
-import { cyclePresetNext, cyclePresetPrev, selectPresetSlot } from "@store/readerPresets";
+import {
+    getReaderBook,
+    selectLiveBookReaderSettings,
+    setReaderLoading,
+    setReaderOpen,
+    updateReaderBookProgress,
+} from "@store/reader";
+import {
+    cyclePresetNext,
+    cyclePresetPrev,
+    ensureReaderPresetSession,
+    patchLiveBookReaderSettings,
+    selectPresetSlot,
+} from "@store/readerPresets";
 import { getShortcutsMapped } from "@store/shortcuts";
 import { updateTrackerSnapshot } from "@store/trackers";
 import { setAnilistListProgress, toAnilistTrackerSnapshotUpdate } from "@utils/anilist";
@@ -38,6 +51,7 @@ const EPubReader: React.FC = () => {
     const { bookProgressRef, setContextMenuData } = useAppContext();
 
     const appSettings = useAppSelector((store) => store.appSettings);
+    const epubReaderSettings = useAppSelector(selectLiveBookReaderSettings);
     const shortcutsMapped = useAppSelector(getShortcutsMapped, shallowEqual);
     const isSettingOpen = useAppSelector((store) => store.ui.isOpen.settings);
     const readerState = useAppSelector((store) => store.reader);
@@ -114,7 +128,7 @@ const EPubReader: React.FC = () => {
         }
     }, [readerState.link]);
     useLayoutEffect(() => {
-        if (appSettings.epubReaderSettings.loadOneChapter && readerRef.current) readerRef.current.scrollTop = 0;
+        if (epubReaderSettings.loadOneChapter && readerRef.current) readerRef.current.scrollTop = 0;
         const abortController = new AbortController();
         (async () => {
             if (epubData) {
@@ -237,7 +251,7 @@ const EPubReader: React.FC = () => {
                         });
                 } else {
                     setProgressPosition("");
-                    if (appSettings.epubReaderSettings.loadOneChapter) {
+                    if (epubReaderSettings.loadOneChapter) {
                         const fragment = href.split("#")[1] || "";
                         if (
                             href.startsWith("#") ||
@@ -312,12 +326,16 @@ const EPubReader: React.FC = () => {
                     author: ed.metadata.author || null,
                     coverAbsolutePath: ed.metadata.cover,
                 });
+                /* primary bind after the row exists; skip when openInReaderIfValid already started this session */
+                if (store.getState().reader.presetSession?.itemLink !== link) {
+                    await dispatch(ensureReaderPresetSession({ itemLink: link, itemType: "book" }));
+                }
                 setCurrentChapter({
                     index: currentChapterIndex,
                     fragment: "",
                 });
                 setEpubData(ed);
-                // if (ed.toc.length > 200 && !appSettings.epubReaderSettings.loadOneChapter)
+                // if (ed.toc.length > 200 && !epubReaderSettings.loadOneChapter)
                 //     dialogUtils.warn({
                 //         message: "Too many chapters in book.",
                 //         detail: "It might cause instability and high RAM usage. It is recommended to enable option to load and show only chapter at a time from Settings -> Other Settings.",
@@ -667,13 +685,13 @@ const EPubReader: React.FC = () => {
                     return true;
                 case is(shortcutsMapped.showHidePageNumberInZen):
                     setShortcutText(
-                        appSettings.epubReaderSettings.showProgressInZenMode
+                        epubReaderSettings.showProgressInZenMode
                             ? t("hud.hideProgressInZen")
                             : t("hud.showProgressInZen"),
                     );
                     dispatch(
-                        setEpubReaderSettings({
-                            showProgressInZenMode: !appSettings.epubReaderSettings.showProgressInZenMode,
+                        patchLiveBookReaderSettings({
+                            showProgressInZenMode: !epubReaderSettings.showProgressInZenMode,
                         }),
                     );
                     return true;
@@ -712,17 +730,17 @@ const EPubReader: React.FC = () => {
                 switch (true) {
                     case is(shortcutsMapped.largeScrollReverse):
                         e.preventDefault();
-                        scrollReader(0 - appSettings.epubReaderSettings.scrollSpeedB);
+                        scrollReader(0 - epubReaderSettings.scrollSpeedB);
                         return true;
                     case is(shortcutsMapped.largeScroll):
                         e.preventDefault();
-                        scrollReader(appSettings.epubReaderSettings.scrollSpeedB);
+                        scrollReader(epubReaderSettings.scrollSpeedB);
                         return true;
                     case is(shortcutsMapped.scrollDown):
-                        scrollReader(appSettings.epubReaderSettings.scrollSpeedA);
+                        scrollReader(epubReaderSettings.scrollSpeedA);
                         return true;
                     case is(shortcutsMapped.scrollUp):
-                        scrollReader(0 - appSettings.epubReaderSettings.scrollSpeedA);
+                        scrollReader(0 - epubReaderSettings.scrollSpeedA);
                         return true;
                     default:
                         break;
@@ -773,18 +791,18 @@ const EPubReader: React.FC = () => {
             });
     }, [
         epubData,
-        appSettings.epubReaderSettings.readerWidth,
+        epubReaderSettings.readerWidth,
         isSideListPinned,
-        appSettings.epubReaderSettings.fontSize,
-        appSettings.epubReaderSettings.lineSpacing,
-        appSettings.epubReaderSettings.paragraphSpacing,
+        epubReaderSettings.fontSize,
+        epubReaderSettings.lineSpacing,
+        epubReaderSettings.paragraphSpacing,
         //! these were not needed caused bad auto scroll
-        // appSettings.epubReaderSettings.fontFamily,
-        // appSettings.epubReaderSettings.wordSpacing,
-        // appSettings.epubReaderSettings.useDefault_fontFamily,
-        appSettings.epubReaderSettings.useDefault_lineSpacing,
-        appSettings.epubReaderSettings.useDefault_paragraphSpacing,
-        // appSettings.epubReaderSettings.useDefault_wordSpacing,
+        // epubReaderSettings.fontFamily,
+        // epubReaderSettings.wordSpacing,
+        // epubReaderSettings.useDefault_fontFamily,
+        epubReaderSettings.useDefault_lineSpacing,
+        epubReaderSettings.useDefault_paragraphSpacing,
+        // epubReaderSettings.useDefault_wordSpacing,
     ]);
 
     useEffect(() => {
@@ -862,16 +880,16 @@ const EPubReader: React.FC = () => {
                     setDisplayList={setDisplayList}
                 />
             )}
-            {appSettings.epubReaderSettings.showProgressInZenMode && (
+            {epubReaderSettings.showProgressInZenMode && (
                 <div
                     className={"zenModePageNumber " + " show"}
                     style={{
-                        backgroundColor: appSettings.epubReaderSettings.useDefault_progressBackgroundColor
+                        backgroundColor: epubReaderSettings.useDefault_progressBackgroundColor
                             ? "var(--body-bg-color)"
-                            : appSettings.epubReaderSettings.progressBackgroundColor,
-                        color: appSettings.epubReaderSettings.useDefault_fontColor
+                            : epubReaderSettings.progressBackgroundColor,
+                        color: epubReaderSettings.useDefault_fontColor
                             ? "currentColor"
-                            : appSettings.epubReaderSettings.fontColor,
+                            : epubReaderSettings.fontColor,
                     }}
                 >
                     {bookProgress}%
@@ -880,115 +898,110 @@ const EPubReader: React.FC = () => {
             <div className="shortcutClicked faded" ref={shortcutTextRef}>
                 {shortcutText}
             </div>
-            {appSettings.epubReaderSettings.forceLowBrightness.enabled && (
+            {epubReaderSettings.forceLowBrightness.enabled && (
                 <div
                     className="forcedLowBrightness"
-                    style={{ "--neg-brightness": appSettings.epubReaderSettings.forceLowBrightness.value }}
+                    style={{ "--neg-brightness": epubReaderSettings.forceLowBrightness.value }}
                 ></div>
             )}
-            {appSettings.epubReaderSettings.backgroundImage.enabled &&
-                appSettings.epubReaderSettings.backgroundImage.path && (
-                    <>
+            {epubReaderSettings.backgroundImage.enabled && epubReaderSettings.backgroundImage.path && (
+                <>
+                    <div
+                        className="epubBackgroundWallpaper"
+                        style={{
+                            backgroundImage: `url("file:///${epubReaderSettings.backgroundImage.path.replace(/\\/g, "/").replaceAll("#", "%23")}")`,
+                            filter: `brightness(${epubReaderSettings.backgroundImage.brightness / 100}) contrast(${epubReaderSettings.backgroundImage.contrast / 100})`,
+                        }}
+                    />
+                    {epubReaderSettings.backgroundImage.dimIntensity > 0 && (
                         <div
-                            className="epubBackgroundWallpaper"
+                            className="epubBackgroundDim"
                             style={{
-                                backgroundImage: `url("file:///${appSettings.epubReaderSettings.backgroundImage.path.replace(/\\/g, "/").replaceAll("#", "%23")}")`,
-                                filter: `brightness(${appSettings.epubReaderSettings.backgroundImage.brightness / 100}) contrast(${appSettings.epubReaderSettings.backgroundImage.contrast / 100})`,
+                                opacity: epubReaderSettings.backgroundImage.dimIntensity / 100,
                             }}
                         />
-                        {appSettings.epubReaderSettings.backgroundImage.dimIntensity > 0 && (
-                            <div
-                                className="epubBackgroundDim"
-                                style={{
-                                    opacity: appSettings.epubReaderSettings.backgroundImage.dimIntensity / 100,
-                                }}
-                            />
-                        )}
-                        {appSettings.epubReaderSettings.backgroundImage.layer.enabled && (
-                            <div
-                                className="epubBackgroundLayer"
-                                style={{
-                                    backgroundColor: appSettings.epubReaderSettings.backgroundImage.layer.color,
-                                    opacity: appSettings.epubReaderSettings.backgroundImage.layer.opacity,
-                                }}
-                            />
-                        )}
-                    </>
-                )}
+                    )}
+                    {epubReaderSettings.backgroundImage.layer.enabled && (
+                        <div
+                            className="epubBackgroundLayer"
+                            style={{
+                                backgroundColor: epubReaderSettings.backgroundImage.layer.color,
+                                opacity: epubReaderSettings.backgroundImage.layer.opacity,
+                            }}
+                        />
+                    )}
+                </>
+            )}
             <section
                 className={
                     "main " +
-                    (appSettings.epubReaderSettings.backgroundImage.enabled &&
-                    appSettings.epubReaderSettings.backgroundImage.path
+                    (epubReaderSettings.backgroundImage.enabled && epubReaderSettings.backgroundImage.path
                         ? "hasBackgroundImage "
                         : "") +
-                    (appSettings.epubReaderSettings.useDefault_fontFamily ? "" : "forceFont ") +
-                    (appSettings.epubReaderSettings.useDefault_fontWeight ? "" : "forceFontWeight ") +
-                    (appSettings.epubReaderSettings.useDefault_paragraphSpacing ? "" : "forceParaGap ") +
-                    (appSettings.epubReaderSettings.hyphenation ? "hyphen " : "") +
-                    (appSettings.epubReaderSettings.limitImgHeight ? "limitImgHeight " : "") +
-                    (appSettings.epubReaderSettings.noIndent ? "noIndent " : "") +
-                    (appSettings.epubReaderSettings.invertImageColor ? "blendImage " : "") +
-                    (appSettings.epubReaderSettings.textSelect ? "textSelect " : "") +
-                    (appSettings.epubReaderSettings.overrideEpubColors &&
-                    !appSettings.epubReaderSettings.useDefault_fontColor
+                    (epubReaderSettings.useDefault_fontFamily ? "" : "forceFont ") +
+                    (epubReaderSettings.useDefault_fontWeight ? "" : "forceFontWeight ") +
+                    (epubReaderSettings.useDefault_paragraphSpacing ? "" : "forceParaGap ") +
+                    (epubReaderSettings.hyphenation ? "hyphen " : "") +
+                    (epubReaderSettings.limitImgHeight ? "limitImgHeight " : "") +
+                    (epubReaderSettings.noIndent ? "noIndent " : "") +
+                    (epubReaderSettings.invertImageColor ? "blendImage " : "") +
+                    (epubReaderSettings.textSelect ? "textSelect " : "") +
+                    (epubReaderSettings.overrideEpubColors && !epubReaderSettings.useDefault_fontColor
                         ? "overrideEpubFontColor "
                         : "") +
-                    (appSettings.epubReaderSettings.overrideEpubColors &&
-                    !appSettings.epubReaderSettings.useDefault_linkColor
+                    (epubReaderSettings.overrideEpubColors && !epubReaderSettings.useDefault_linkColor
                         ? "overrideEpubLinkColor "
                         : "") +
-                    (appSettings.epubReaderSettings.overrideEpubColors &&
-                    !appSettings.epubReaderSettings.useDefault_backgroundColor
+                    (epubReaderSettings.overrideEpubColors && !epubReaderSettings.useDefault_backgroundColor
                         ? "overrideEpubPageBg "
                         : "") +
-                    (appSettings.epubReaderSettings.overrideEpubColors &&
-                    !appSettings.epubReaderSettings.contentFrame.useDefault_contentBackgroundColor
+                    (epubReaderSettings.overrideEpubColors &&
+                    !epubReaderSettings.contentFrame.useDefault_contentBackgroundColor
                         ? "overrideEpubContentBg "
                         : "")
                 }
                 ref={mainRef}
                 style={{
-                    fontSize: `${appSettings.epubReaderSettings.fontSize}px`,
-                    "--font-family": appSettings.epubReaderSettings.useDefault_fontFamily
+                    fontSize: `${epubReaderSettings.fontSize}px`,
+                    "--font-family": epubReaderSettings.useDefault_fontFamily
                         ? "inherit"
-                        : appSettings.epubReaderSettings.fontFamily,
-                    "--font-weight": appSettings.epubReaderSettings.useDefault_fontWeight
+                        : epubReaderSettings.fontFamily,
+                    "--font-weight": epubReaderSettings.useDefault_fontWeight
                         ? "inherit"
-                        : appSettings.epubReaderSettings.fontWeight,
-                    "--line-height": appSettings.epubReaderSettings.useDefault_lineSpacing
+                        : epubReaderSettings.fontWeight,
+                    "--line-height": epubReaderSettings.useDefault_lineSpacing
                         ? "normal"
-                        : `${appSettings.epubReaderSettings.lineSpacing}em`,
-                    "--word-spacing": appSettings.epubReaderSettings.useDefault_wordSpacing
+                        : `${epubReaderSettings.lineSpacing}em`,
+                    "--word-spacing": epubReaderSettings.useDefault_wordSpacing
                         ? "normal"
-                        : `${appSettings.epubReaderSettings.wordSpacing}em`,
-                    "--letter-spacing": appSettings.epubReaderSettings.useDefault_letterSpacing
+                        : `${epubReaderSettings.wordSpacing}em`,
+                    "--letter-spacing": epubReaderSettings.useDefault_letterSpacing
                         ? "normal"
-                        : `${appSettings.epubReaderSettings.letterSpacing}em`,
-                    "--paragraph-gap": appSettings.epubReaderSettings.useDefault_paragraphSpacing
+                        : `${epubReaderSettings.letterSpacing}em`,
+                    "--paragraph-gap": epubReaderSettings.useDefault_paragraphSpacing
                         ? "auto"
-                        : `${appSettings.epubReaderSettings.paragraphSpacing / 2}em 0`,
-                    "--width": `${appSettings.epubReaderSettings.readerWidth}%`,
-                    "--epub-font-color": appSettings.epubReaderSettings.useDefault_fontColor
+                        : `${epubReaderSettings.paragraphSpacing / 2}em 0`,
+                    "--width": `${epubReaderSettings.readerWidth}%`,
+                    "--epub-font-color": epubReaderSettings.useDefault_fontColor
                         ? "none"
-                        : appSettings.epubReaderSettings.fontColor,
-                    "--epub-link-color": appSettings.epubReaderSettings.useDefault_linkColor
+                        : epubReaderSettings.fontColor,
+                    "--epub-link-color": epubReaderSettings.useDefault_linkColor
                         ? "none"
-                        : appSettings.epubReaderSettings.linkColor,
-                    "--epub-background-color": appSettings.epubReaderSettings.useDefault_backgroundColor
+                        : epubReaderSettings.linkColor,
+                    "--epub-background-color": epubReaderSettings.useDefault_backgroundColor
                         ? "var(--body-bg-color)"
-                        : appSettings.epubReaderSettings.backgroundColor,
-                    "--epub-content-background-color": appSettings.epubReaderSettings.contentFrame
+                        : epubReaderSettings.backgroundColor,
+                    "--epub-content-background-color": epubReaderSettings.contentFrame
                         .useDefault_contentBackgroundColor
                         ? "transparent"
-                        : appSettings.epubReaderSettings.contentFrame.contentBackgroundColor,
-                    "--epub-cont-padding-inline": `${appSettings.epubReaderSettings.contentFrame.paddingInline}px`,
-                    "--epub-content-border-width": appSettings.epubReaderSettings.contentFrame.border.enabled
-                        ? `${appSettings.epubReaderSettings.contentFrame.border.width}px`
+                        : epubReaderSettings.contentFrame.contentBackgroundColor,
+                    "--epub-cont-padding-inline": `${epubReaderSettings.contentFrame.paddingInline}px`,
+                    "--epub-content-border-width": epubReaderSettings.contentFrame.border.enabled
+                        ? `${epubReaderSettings.contentFrame.border.width}px`
                         : "0px",
-                    "--epub-content-border-style": appSettings.epubReaderSettings.contentFrame.border.style,
-                    "--epub-content-border-color": appSettings.epubReaderSettings.contentFrame.border.enabled
-                        ? appSettings.epubReaderSettings.contentFrame.border.color
+                    "--epub-content-border-style": epubReaderSettings.contentFrame.border.style,
+                    "--epub-content-border-color": epubReaderSettings.contentFrame.border.enabled
+                        ? epubReaderSettings.contentFrame.border.color
                         : "transparent",
                 }}
                 onContextMenu={(e) => {
@@ -1014,11 +1027,11 @@ const EPubReader: React.FC = () => {
                         },
                         {
                             label: t("contextMenu.doubleClickZen"),
-                            selected: !appSettings.epubReaderSettings.textSelect,
+                            selected: !epubReaderSettings.textSelect,
                             action() {
                                 dispatch(
-                                    setEpubReaderSettings({
-                                        textSelect: !appSettings.epubReaderSettings.textSelect,
+                                    patchLiveBookReaderSettings({
+                                        textSelect: !epubReaderSettings.textSelect,
                                     }),
                                 );
                             },
@@ -1056,7 +1069,7 @@ const EPubReader: React.FC = () => {
                     });
                 }}
                 onClick={(e) => {
-                    if (readerRef.current && appSettings.epubReaderSettings.loadOneChapter) {
+                    if (readerRef.current && epubReaderSettings.loadOneChapter) {
                         if (
                             Math.ceil(
                                 readerRef.current.scrollTop +
@@ -1075,7 +1088,7 @@ const EPubReader: React.FC = () => {
                     }
                 }}
                 onDoubleClick={(e) => {
-                    if (!appSettings.epubReaderSettings.textSelect) {
+                    if (!epubReaderSettings.textSelect) {
                         let clickPos = (e.clientX / e.currentTarget.offsetWidth) * 100;
                         if (isSideListPinned) {
                             clickPos = ((e.clientX - sideListWidth) / e.currentTarget.offsetWidth) * 100;
@@ -1092,7 +1105,7 @@ const EPubReader: React.FC = () => {
                 <StyleSheets sheets={epubData?.styleSheets || []} />
                 {epubData && (
                     <HTMLPart
-                        // loadOneChapter={appSettings.epubReaderSettings.loadOneChapter}
+                        // loadOneChapter={epubReaderSettings.loadOneChapter}
                         key={`epub${currentChapter.index}`}
                         onEpubLinkClick={onEpubLinkClick}
                         currentChapter={{

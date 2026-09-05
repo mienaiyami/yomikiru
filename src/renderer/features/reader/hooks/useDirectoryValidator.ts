@@ -1,6 +1,9 @@
 import i18n from "@renderer/i18n";
 import { useAppDispatch, useAppSelector } from "@store/hooks";
-import { setReaderLoading, setReaderState } from "@store/reader";
+import store from "@store/index";
+import { selectLibraryItem } from "@store/library";
+import { setPresetSession, setReaderLoading, setReaderState } from "@store/reader";
+import { ensureReaderPresetSession } from "@store/readerPresets";
 import { dialogUtils } from "@utils/dialog";
 import { formatUtils } from "@utils/file";
 import { mangaPageForMissingKind, resolveMissingOpenPath } from "@utils/libraryMissingPath";
@@ -140,6 +143,15 @@ export const useDirectoryValidator = () => {
                         epubElementQueryString: elementQuery,
                     }),
                 );
+                const bookItem = selectLibraryItem(store.getState(), normalizedLink);
+                if (bookItem?.type === "book") {
+                    /* skip when this title is already bound; chapter/open re-entry is a no-op */
+                    if (store.getState().reader.presetSession?.itemLink !== bookItem.link) {
+                        await dispatch(ensureReaderPresetSession({ itemLink: bookItem.link, itemType: "book" }));
+                    }
+                } else {
+                    dispatch(setPresetSession(null));
+                }
                 return true;
             }
             const result = await validateDirectory(normalizedLink, {
@@ -164,6 +176,15 @@ export const useDirectoryValidator = () => {
                         mangaPageNumber: pageNumber,
                     }),
                 );
+                const mangaItem = selectLibraryItem(store.getState(), normalizedLink);
+                if (mangaItem?.type === "manga") {
+                    /* skip when this series is already bound; chapter change must not rebuild the session */
+                    if (store.getState().reader.presetSession?.itemLink !== mangaItem.link) {
+                        await dispatch(ensureReaderPresetSession({ itemLink: mangaItem.link, itemType: "manga" }));
+                    }
+                } else {
+                    dispatch(setPresetSession(null));
+                }
                 return true;
             }
             dispatch(setReaderLoading(null));

@@ -1,5 +1,6 @@
 import { faChevronDown, faChevronUp, faTrash } from "@fortawesome/free-solid-svg-icons";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
+import { setAppSettings } from "@store/appSettings";
 import { useAppDispatch, useAppSelector } from "@store/hooks";
 import {
     addBookPresets,
@@ -11,6 +12,7 @@ import {
     resetReaderPresetsToDefaults,
     selectReaderPreset,
 } from "@store/readerPresets";
+import InputCheckbox from "@ui/InputCheckbox";
 import { dialogUtils } from "@utils/dialog";
 import { createRendererLogger } from "@utils/logger";
 import type { BookReaderPreset, MangaReaderPreset } from "@utils/readerPresets";
@@ -206,6 +208,7 @@ const GeneralReaderPresetsSettings: React.FC = () => {
     const { t } = useTranslation("settings");
     const dispatch = useAppDispatch();
     const presets = useAppSelector((s) => s.readerPresets.presets);
+    const rememberReaderPresetPerItem = useAppSelector((s) => s.appSettings.rememberReaderPresetPerItem);
 
     const handleSavePresetFromClipboard = () => {
         const text = window.electron.readText("clipboard");
@@ -242,6 +245,17 @@ const GeneralReaderPresetsSettings: React.FC = () => {
                 <a onClick={() => navigateToSetting("usage:reader-presets", dispatch)} id="settings-readerPresets">
                     {t("shared.moreInfo")}
                 </a>
+            </div>
+            <div className="toggleItem" id="settings-remember-reader-preset-per-item">
+                <InputCheckbox
+                    checked={rememberReaderPresetPerItem}
+                    className="noBG"
+                    onChange={(e) =>
+                        dispatch(setAppSettings({ rememberReaderPresetPerItem: e.currentTarget.checked }))
+                    }
+                    labelAfter={t("readerPresets.rememberPerItem.label")}
+                />
+                <div className="desc">{t("readerPresets.rememberPerItem.desc")}</div>
             </div>
             <div className="main col">
                 <div className="row">

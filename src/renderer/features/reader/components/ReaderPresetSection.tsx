@@ -1,14 +1,21 @@
 import { faPlus, faSave, faSync, faTrash } from "@fortawesome/free-solid-svg-icons";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import { setEpubReaderSettings, setReaderSettings } from "@store/appSettings";
 import { useAppDispatch, useAppSelector } from "@store/hooks";
+import {
+    selectLiveBookPresetId,
+    selectLiveBookReaderSettings,
+    selectLiveMangaPresetId,
+    selectLiveMangaReaderSettings,
+} from "@store/reader";
 import {
     addBookPreset,
     addMangaPreset,
     deleteReaderPresetWithFallback,
     getBookPresets,
     getMangaPresets,
-    selectReaderPreset,
+    patchLiveBookReaderSettings,
+    patchLiveMangaReaderSettings,
+    selectPresetInContext,
     setPresetAutosave,
     updateBookPreset,
     updateMangaPreset,
@@ -150,8 +157,8 @@ export const MangaReaderPresetSection = memo(() => {
     const { t } = useTranslation("reader");
     const dispatch = useAppDispatch();
     const presets = useAppSelector(getMangaPresets);
-    const presetId = useAppSelector((s) => s.appSettings.mangaReaderPresetId);
-    const readerSettings = useAppSelector((s) => s.appSettings.readerSettings);
+    const presetId = useAppSelector(selectLiveMangaPresetId);
+    const readerSettings = useAppSelector(selectLiveMangaReaderSettings);
     const isCollapsed = readerSettings.settingsCollapsed.preset ?? false;
 
     return (
@@ -161,7 +168,7 @@ export const MangaReaderPresetSection = memo(() => {
             isCollapsed={isCollapsed}
             onToggleCollapsed={() =>
                 dispatch(
-                    setReaderSettings({
+                    patchLiveMangaReaderSettings({
                         settingsCollapsed: {
                             ...readerSettings.settingsCollapsed,
                             preset: !isCollapsed,
@@ -169,7 +176,7 @@ export const MangaReaderPresetSection = memo(() => {
                     }),
                 )
             }
-            onSelect={(id) => dispatch(selectReaderPreset(id))}
+            onSelect={(id) => dispatch(selectPresetInContext(id))}
             onAdd={(name) => {
                 const newId = crypto.randomUUID();
                 const payload: MangaReaderPreset = {
@@ -180,7 +187,7 @@ export const MangaReaderPresetSection = memo(() => {
                     data: readerSettings,
                 };
                 dispatch(addMangaPreset(payload));
-                dispatch(selectReaderPreset(newId));
+                dispatch(selectPresetInContext(newId));
             }}
             onToggleAutosave={(id, autosave) => dispatch(setPresetAutosave({ id, autosave }))}
             onUpdateSelected={() => {
@@ -208,8 +215,8 @@ export const BookReaderPresetSection = memo(() => {
     const { t } = useTranslation("reader");
     const dispatch = useAppDispatch();
     const presets = useAppSelector(getBookPresets);
-    const presetId = useAppSelector((s) => s.appSettings.bookReaderPresetId);
-    const epubReaderSettings = useAppSelector((s) => s.appSettings.epubReaderSettings);
+    const presetId = useAppSelector(selectLiveBookPresetId);
+    const epubReaderSettings = useAppSelector(selectLiveBookReaderSettings);
     const isCollapsed = epubReaderSettings.settingsCollapsed.preset ?? false;
 
     return (
@@ -219,7 +226,7 @@ export const BookReaderPresetSection = memo(() => {
             isCollapsed={isCollapsed}
             onToggleCollapsed={() =>
                 dispatch(
-                    setEpubReaderSettings({
+                    patchLiveBookReaderSettings({
                         settingsCollapsed: {
                             ...epubReaderSettings.settingsCollapsed,
                             preset: !isCollapsed,
@@ -227,7 +234,7 @@ export const BookReaderPresetSection = memo(() => {
                     }),
                 )
             }
-            onSelect={(id) => dispatch(selectReaderPreset(id))}
+            onSelect={(id) => dispatch(selectPresetInContext(id))}
             onAdd={(name) => {
                 const newId = crypto.randomUUID();
                 const payload: BookReaderPreset = {
@@ -238,7 +245,7 @@ export const BookReaderPresetSection = memo(() => {
                     data: epubReaderSettings,
                 };
                 dispatch(addBookPreset(payload));
-                dispatch(selectReaderPreset(newId));
+                dispatch(selectPresetInContext(newId));
             }}
             onToggleAutosave={(id, autosave) => dispatch(setPresetAutosave({ id, autosave }))}
             onUpdateSelected={() => {

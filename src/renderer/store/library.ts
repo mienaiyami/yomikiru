@@ -1,4 +1,4 @@
-import type { DetailsCoverSource, LibraryItem, LibraryItemMetadata } from "@common/types/db";
+import type { DetailsCoverSource, LibraryItem, LibraryItemExtra, LibraryItemMetadata } from "@common/types/db";
 import type { DatabaseChannels } from "@common/types/ipc";
 import { createAsyncThunk, createSelector, createSlice, type PayloadAction } from "@reduxjs/toolkit";
 import { type ResolvedItemMetadata, resolveItemMetadata } from "@utils/libraryMetadata";
@@ -59,22 +59,35 @@ export const setLibraryItemFavourite = createAsyncThunk(
 );
 
 /**
- * Merges {@link LibraryItemExtra.detailsCoverSource} into the row extra JSON.
+ * Merges keys into the row extra JSON.
  * `db:library:updateItem` replaces `extra` wholesale, so this reads the current map first.
- * Omitted extra follows the tracker image once a snapshot URL exists.
+ *
+ * @param link library row path
+ * @param extra fields to merge into the existing extra object
  */
-export const setLibraryItemDetailsCoverSource = createAsyncThunk(
-    "library/setDetailsCoverSource",
-    async ({ link, source }: { link: string; source: DetailsCoverSource }, { getState }) => {
+export const patchLibraryItemExtra = createAsyncThunk(
+    "library/patchExtra",
+    async ({ link, extra }: { link: string; extra: Partial<LibraryItemExtra> }, { getState }) => {
         const item = (getState() as RootState).library.items[link];
         if (!item) {
-            log.warn("setDetailsCoverSource: no library row", { link });
+            log.warn("patchLibraryItemExtra: no library row", { link });
             return null;
         }
         return await window.electron.invoke("db:library:updateItem", {
             link,
-            extra: { ...item.extra, detailsCoverSource: source },
+            extra: { ...item.extra, ...extra },
         });
+    },
+);
+
+/**
+ * Merges {@link LibraryItemExtra.detailsCoverSource} into the row extra JSON.
+ * Omitted extra follows the tracker image once a snapshot URL exists.
+ */
+export const setLibraryItemDetailsCoverSource = createAsyncThunk(
+    "library/setDetailsCoverSource",
+    async ({ link, source }: { link: string; source: DetailsCoverSource }, { dispatch }) => {
+        return await dispatch(patchLibraryItemExtra({ link, extra: { detailsCoverSource: source } })).unwrap();
     },
 );
 
@@ -271,6 +284,9 @@ const librarySlice = createSlice({
                 applyLibraryItemPatch(state, action.payload);
             })
             .addCase(setLibraryItemNote.fulfilled, (state, action) => {
+                applyLibraryItemPatch(state, action.payload);
+            })
+            .addCase(patchLibraryItemExtra.fulfilled, (state, action) => {
                 applyLibraryItemPatch(state, action.payload);
             })
             .addCase(setLibraryItemDetailsCoverSource.fulfilled, (state, action) => {

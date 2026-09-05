@@ -55,6 +55,7 @@ Key groupings in the schema:
 - **Gallery** — `galleryActiveTab`, `galleryTypeFilter`, `galleryDisplayMode`, `galleryItemWidth`, `gallerySortBy` / `gallerySortType`
 - **Reader general** — `openInZenMode`, `hideCursorInZenMode`, `keepExtractedFiles`, `syncSettings`, `syncThemes`, `customStylesheet`
 - **Active presets** — `mangaReaderPresetId`, `bookReaderPresetId` (which named preset is selected)
+- **Per-item presets** — `rememberReaderPresetPerItem`: while enabled, each library item stores `extra.readerPresetId` and the reader applies it in a window-local session without changing the Settings selected preset ids.
 - **Reader sub-objects** — `readerSettings` (manga) and `epubReaderSettings` (book); both are embedded objects, see their own schemas below
 
 ---
@@ -118,7 +119,9 @@ A preset is a named snapshot of all manga or book reader settings. Presets are d
 
 **User preset** (`USER_PRESET_MANGA_ID` / `USER_PRESET_BOOK_ID`) — one per type, cannot be deleted, always recreated if missing.
 
-**Autosave** — when `preset.autosave = true`, the `readerPresetsAutosaveMiddleware` in [`src/renderer/store/readerPresetsAutosaveMiddleware.ts`](../src/renderer/store/readerPresetsAutosaveMiddleware.ts) writes any settings change back into the active preset automatically.
+**Autosave** — when `preset.autosave = true`, the `readerPresetsAutosaveMiddleware` in [`src/renderer/store/readerPresetsAutosaveMiddleware.ts`](../src/renderer/store/readerPresetsAutosaveMiddleware.ts) writes any settings change back into the active preset automatically. While a per-item session is active, in-reader setting edits autosave into that session's preset, not the Settings-selected id.
+
+**Per-item** — `rememberReaderPresetPerItem` (Settings -> Reader presets, **Remember preset per title**). Opening a library item binds/restores `extra.readerPresetId` in `reader.presetSession`. In-reader preset select/cycle updates that item only. Settings overlay Select still changes `mangaReaderPresetId` / `bookReaderPresetId` as the default for titles without a stored id. Turning the setting off leaves stored extra keys in place.
 
 **Import / export** — JSON; import merges by id (no duplicates). Export works to clipboard or file.
 

@@ -1,5 +1,6 @@
-import { setEpubReaderSettings } from "@store/appSettings";
 import { useAppDispatch, useAppSelector } from "@store/hooks";
+import { selectLiveBookReaderSettings } from "@store/reader";
+import { patchLiveBookReaderSettings } from "@store/readerPresets";
 import InputCheckbox from "@ui/InputCheckbox";
 import InputCheckboxColor from "@ui/InputCheckboxColor";
 import InputColor from "@ui/InputColor";
@@ -15,9 +16,9 @@ import { useTranslation } from "react-i18next";
  */
 const ContentFrameSettings = memo(() => {
     const { t } = useTranslation("reader");
-    const appSettings = useAppSelector((store) => store.appSettings);
+    const epubReaderSettings = useAppSelector(selectLiveBookReaderSettings);
     const dispatch = useAppDispatch();
-    const cf = appSettings.epubReaderSettings.contentFrame;
+    const cf = epubReaderSettings.contentFrame;
     const border = cf.border;
     const borderStyleOptions: Menu.OptSelectOption[] = [
         { label: t("settings.borderSolid"), value: "solid" },
@@ -29,16 +30,16 @@ const ContentFrameSettings = memo(() => {
     return (
         <div className="settingItem">
             <div
-                className={`name ${!appSettings.epubReaderSettings.settingsCollapsed.contentFrame ? "expanded " : ""}`}
+                className={`name ${!epubReaderSettings.settingsCollapsed.contentFrame ? "expanded " : ""}`}
                 onKeyDown={(e) => {
                     if (e.key === " " || e.key === "Enter") e.currentTarget.click();
                 }}
                 onClick={() => {
                     dispatch(
-                        setEpubReaderSettings({
+                        patchLiveBookReaderSettings({
                             settingsCollapsed: {
-                                ...appSettings.epubReaderSettings.settingsCollapsed,
-                                contentFrame: !appSettings.epubReaderSettings.settingsCollapsed.contentFrame,
+                                ...epubReaderSettings.settingsCollapsed,
+                                contentFrame: !epubReaderSettings.settingsCollapsed.contentFrame,
                             },
                         }),
                     );
@@ -51,7 +52,7 @@ const ContentFrameSettings = memo(() => {
                     checked={!cf.useDefault_contentBackgroundColor}
                     onChangeCheck={(e) => {
                         dispatch(
-                            setEpubReaderSettings({
+                            patchLiveBookReaderSettings({
                                 contentFrame: {
                                     ...cf,
                                     useDefault_contentBackgroundColor: !e.currentTarget.checked,
@@ -64,7 +65,7 @@ const ContentFrameSettings = memo(() => {
                         500,
                         (value) =>
                             dispatch(
-                                setEpubReaderSettings({
+                                patchLiveBookReaderSettings({
                                     contentFrame: {
                                         ...cf,
                                         contentBackgroundColor: value.hexa(),
@@ -82,7 +83,7 @@ const ContentFrameSettings = memo(() => {
                         1000,
                         (value) =>
                             dispatch(
-                                setEpubReaderSettings({
+                                patchLiveBookReaderSettings({
                                     contentFrame: {
                                         ...cf,
                                         paddingInline: value,
@@ -97,7 +98,7 @@ const ContentFrameSettings = memo(() => {
                     checked={border.enabled}
                     onChange={(e) => {
                         dispatch(
-                            setEpubReaderSettings({
+                            patchLiveBookReaderSettings({
                                 contentFrame: {
                                     ...cf,
                                     border: {
@@ -119,7 +120,7 @@ const ContentFrameSettings = memo(() => {
                         1000,
                         (value) =>
                             dispatch(
-                                setEpubReaderSettings({
+                                patchLiveBookReaderSettings({
                                     contentFrame: {
                                         ...cf,
                                         border: {
@@ -139,7 +140,7 @@ const ContentFrameSettings = memo(() => {
                     value={border.style}
                     onChange={(value) => {
                         dispatch(
-                            setEpubReaderSettings({
+                            patchLiveBookReaderSettings({
                                 contentFrame: {
                                     ...cf,
                                     border: {
@@ -161,7 +162,7 @@ const ContentFrameSettings = memo(() => {
                         500,
                         (value) =>
                             dispatch(
-                                setEpubReaderSettings({
+                                patchLiveBookReaderSettings({
                                     contentFrame: {
                                         ...cf,
                                         border: {

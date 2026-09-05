@@ -1,9 +1,9 @@
 import { BookReaderPresetSection } from "@features/reader/components/ReaderPresetSection";
 import { faBars, faMinus, faPlus, faTimes } from "@fortawesome/free-solid-svg-icons";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import { setEpubReaderSettings } from "@store/appSettings";
 import { useAppDispatch, useAppSelector } from "@store/hooks";
-import { getActiveBookPresetName, updateBookPreset } from "@store/readerPresets";
+import { selectLiveBookPresetId, selectLiveBookReaderSettings } from "@store/reader";
+import { getActiveBookPresetName, patchLiveBookReaderSettings, updateBookPreset } from "@store/readerPresets";
 import { getShortcutsMapped } from "@store/shortcuts";
 import InputCheckbox from "@ui/InputCheckbox";
 import InputCheckboxColor from "@ui/InputCheckboxColor";
@@ -44,6 +44,8 @@ const EPUBReaderSettings = memo(
     }) => {
         const { t } = useTranslation("reader");
         const appSettings = useAppSelector((store) => store.appSettings);
+        const epubReaderSettings = useAppSelector(selectLiveBookReaderSettings);
+        const bookPresetId = useAppSelector(selectLiveBookPresetId);
         const shortcutsMapped = useAppSelector(getShortcutsMapped);
         const currentPresetName = useAppSelector(getActiveBookPresetName);
         const dispatch = useAppDispatch();
@@ -73,9 +75,9 @@ const EPUBReaderSettings = memo(
                 const keyStr = keyFormatter(e);
                 if (keyStr && shortcutsMapped.savePreset?.includes(keyStr)) {
                     e.preventDefault();
-                    const id = appSettings.bookReaderPresetId;
+                    const id = bookPresetId;
                     if (id) {
-                        dispatch(updateBookPreset({ id, data: appSettings.epubReaderSettings }));
+                        dispatch(updateBookPreset({ id, data: epubReaderSettings }));
                         setShortcutText(
                             t("hud.savedToPreset", { name: currentPresetName ?? t("hud.unknownPreset") }),
                         );
@@ -87,8 +89,8 @@ const EPUBReaderSettings = memo(
         }, [
             isReaderSettingsOpen,
             shortcutsMapped,
-            appSettings.bookReaderPresetId,
-            appSettings.epubReaderSettings,
+            bookPresetId,
+            epubReaderSettings,
             currentPresetName,
             dispatch,
             setShortcutText,
@@ -126,20 +128,17 @@ const EPUBReaderSettings = memo(
                     <BookReaderPresetSection />
                     <div className="settingItem">
                         <div
-                            className={
-                                "name " +
-                                (!appSettings.epubReaderSettings.settingsCollapsed.size ? "expanded " : "")
-                            }
+                            className={"name " + (!epubReaderSettings.settingsCollapsed.size ? "expanded " : "")}
                             tabIndex={0}
                             onKeyDown={(e) => {
                                 if (e.key === " " || e.key === "Enter") e.currentTarget.click();
                             }}
                             onClick={() => {
                                 dispatch(
-                                    setEpubReaderSettings({
+                                    patchLiveBookReaderSettings({
                                         settingsCollapsed: {
-                                            ...appSettings.epubReaderSettings.settingsCollapsed,
-                                            size: !appSettings.epubReaderSettings.settingsCollapsed.size,
+                                            ...epubReaderSettings.settingsCollapsed,
+                                            size: !epubReaderSettings.settingsCollapsed.size,
                                         },
                                     }),
                                 );
@@ -149,7 +148,7 @@ const EPUBReaderSettings = memo(
                         </div>
                         <div className="options">
                             <InputNumber
-                                value={appSettings.epubReaderSettings.readerWidth}
+                                value={epubReaderSettings.readerWidth}
                                 min={1}
                                 max={maxWidth}
                                 // onChange={(e) => {
@@ -157,7 +156,7 @@ const EPUBReaderSettings = memo(
                                 // }}
                                 timeout={[
                                     1000,
-                                    (value) => dispatch(setEpubReaderSettings({ readerWidth: value })),
+                                    (value) => dispatch(patchLiveBookReaderSettings({ readerWidth: value })),
                                 ]}
                                 labelAfter={t("settings.percentUnit")}
                             />
@@ -166,16 +165,16 @@ const EPUBReaderSettings = memo(
                                 onClick={(e) => {
                                     // makeScrollPos();
                                     // was 20 before
-                                    const steps = appSettings.epubReaderSettings.readerWidth <= 40 ? 5 : 10;
+                                    const steps = epubReaderSettings.readerWidth <= 40 ? 5 : 10;
                                     const readerWidth =
-                                        appSettings.epubReaderSettings.readerWidth - steps > maxWidth
+                                        epubReaderSettings.readerWidth - steps > maxWidth
                                             ? maxWidth
-                                            : appSettings.epubReaderSettings.readerWidth - steps < 1
+                                            : epubReaderSettings.readerWidth - steps < 1
                                               ? 1
-                                              : appSettings.epubReaderSettings.readerWidth - steps;
+                                              : epubReaderSettings.readerWidth - steps;
                                     if (document.activeElement !== e.currentTarget)
                                         setShortcutText(`${readerWidth}%`);
-                                    dispatch(setEpubReaderSettings({ readerWidth }));
+                                    dispatch(patchLiveBookReaderSettings({ readerWidth }));
                                     // e.currentTarget.dispatchEvent(new MouseEvent(type:"")))
                                 }}
                             >
@@ -185,28 +184,28 @@ const EPUBReaderSettings = memo(
                                 ref={sizePlusRef}
                                 onClick={(e) => {
                                     // makeScrollPos();
-                                    const steps = appSettings.epubReaderSettings.readerWidth <= 40 ? 5 : 10;
+                                    const steps = epubReaderSettings.readerWidth <= 40 ? 5 : 10;
                                     const readerWidth =
-                                        appSettings.epubReaderSettings.readerWidth + steps > maxWidth
+                                        epubReaderSettings.readerWidth + steps > maxWidth
                                             ? maxWidth
-                                            : appSettings.epubReaderSettings.readerWidth + steps < 1
+                                            : epubReaderSettings.readerWidth + steps < 1
                                               ? 1
-                                              : appSettings.epubReaderSettings.readerWidth + steps;
+                                              : epubReaderSettings.readerWidth + steps;
 
                                     if (document.activeElement !== e.currentTarget)
                                         setShortcutText(`${readerWidth}%`);
-                                    dispatch(setEpubReaderSettings({ readerWidth }));
+                                    dispatch(patchLiveBookReaderSettings({ readerWidth }));
                                 }}
                             >
                                 <FontAwesomeIcon icon={faPlus} />
                             </button>
                             <div className="col">
                                 <InputCheckbox
-                                    checked={appSettings.epubReaderSettings.limitImgHeight}
+                                    checked={epubReaderSettings.limitImgHeight}
                                     onChange={(e) => {
                                         // makeScrollPos();
                                         dispatch(
-                                            setEpubReaderSettings({
+                                            patchLiveBookReaderSettings({
                                                 limitImgHeight: e.currentTarget.checked,
                                             }),
                                         );
@@ -218,20 +217,17 @@ const EPUBReaderSettings = memo(
                     </div>
                     <div className="settingItem">
                         <div
-                            className={
-                                "name " +
-                                (!appSettings.epubReaderSettings.settingsCollapsed.font ? "expanded " : "")
-                            }
+                            className={"name " + (!epubReaderSettings.settingsCollapsed.font ? "expanded " : "")}
                             tabIndex={0}
                             onKeyDown={(e) => {
                                 if (e.key === " " || e.key === "Enter") e.currentTarget.click();
                             }}
                             onClick={() => {
                                 dispatch(
-                                    setEpubReaderSettings({
+                                    patchLiveBookReaderSettings({
                                         settingsCollapsed: {
-                                            ...appSettings.epubReaderSettings.settingsCollapsed,
-                                            font: !appSettings.epubReaderSettings.settingsCollapsed.font,
+                                            ...epubReaderSettings.settingsCollapsed,
+                                            font: !epubReaderSettings.settingsCollapsed.font,
                                         },
                                     }),
                                 );
@@ -242,7 +238,7 @@ const EPUBReaderSettings = memo(
                         <div className="options">
                             <div className="row">
                                 <InputNumber
-                                    value={appSettings.epubReaderSettings.fontSize}
+                                    value={epubReaderSettings.fontSize}
                                     min={1}
                                     max={100}
                                     // onChange={(e) => {
@@ -250,7 +246,7 @@ const EPUBReaderSettings = memo(
                                     // }}
                                     timeout={[
                                         1000,
-                                        (value) => dispatch(setEpubReaderSettings({ fontSize: value })),
+                                        (value) => dispatch(patchLiveBookReaderSettings({ fontSize: value })),
                                     ]}
                                     labelAfter={t("settings.pxUnit")}
                                 />
@@ -258,12 +254,12 @@ const EPUBReaderSettings = memo(
                                     ref={fontSizeMinusRef}
                                     onClick={(e) => {
                                         // makeScrollPos();
-                                        let newSize = appSettings.epubReaderSettings.fontSize - 1;
+                                        let newSize = epubReaderSettings.fontSize - 1;
 
                                         newSize = newSize < 1 ? 1 : newSize;
                                         if (document.activeElement !== e.currentTarget)
                                             setShortcutText(`${newSize}px`);
-                                        dispatch(setEpubReaderSettings({ fontSize: newSize }));
+                                        dispatch(patchLiveBookReaderSettings({ fontSize: newSize }));
                                     }}
                                 >
                                     <FontAwesomeIcon icon={faMinus} />
@@ -272,12 +268,12 @@ const EPUBReaderSettings = memo(
                                     ref={fontSizePlusRef}
                                     onClick={(e) => {
                                         // makeScrollPos();
-                                        let newSize = appSettings.epubReaderSettings.fontSize + 1;
+                                        let newSize = epubReaderSettings.fontSize + 1;
 
                                         newSize = newSize > 100 ? 100 : newSize;
                                         if (document.activeElement !== e.currentTarget)
                                             setShortcutText(`${newSize}px`);
-                                        dispatch(setEpubReaderSettings({ fontSize: newSize }));
+                                        dispatch(patchLiveBookReaderSettings({ fontSize: newSize }));
                                     }}
                                 >
                                     <FontAwesomeIcon icon={faPlus} />
@@ -285,11 +281,11 @@ const EPUBReaderSettings = memo(
                             </div>
                             <div className="col">
                                 <InputCheckbox
-                                    checked={!appSettings.epubReaderSettings.useDefault_fontFamily}
+                                    checked={!epubReaderSettings.useDefault_fontFamily}
                                     onChange={(e) => {
                                         // makeScrollPos();
                                         dispatch(
-                                            setEpubReaderSettings({
+                                            patchLiveBookReaderSettings({
                                                 useDefault_fontFamily: !e.currentTarget.checked,
                                             }),
                                         );
@@ -297,18 +293,18 @@ const EPUBReaderSettings = memo(
                                     paraAfter={t("settings.customFontFamily")}
                                 />
                                 <InputSelect
-                                    disabled={appSettings.epubReaderSettings.useDefault_fontFamily}
-                                    value={appSettings.epubReaderSettings.fontFamily}
+                                    disabled={epubReaderSettings.useDefault_fontFamily}
+                                    value={epubReaderSettings.fontFamily}
                                     onChange={(value) => {
                                         // makeScrollPos();
                                         dispatch(
-                                            setEpubReaderSettings({
+                                            patchLiveBookReaderSettings({
                                                 fontFamily: value,
                                             }),
                                         );
                                     }}
                                     options={[
-                                        ...appSettings.epubReaderSettings.quickFontFamily.map(
+                                        ...epubReaderSettings.quickFontFamily.map(
                                             (e) =>
                                                 ({
                                                     label: `★ ${e.replaceAll('"', "")}`,
@@ -327,44 +323,41 @@ const EPUBReaderSettings = memo(
                                     ]}
                                 />
                                 <button
-                                    disabled={appSettings.epubReaderSettings.useDefault_fontFamily}
+                                    disabled={epubReaderSettings.useDefault_fontFamily}
                                     onClick={() => {
                                         if (
-                                            appSettings.epubReaderSettings.quickFontFamily.includes(
-                                                appSettings.epubReaderSettings.fontFamily,
+                                            epubReaderSettings.quickFontFamily.includes(
+                                                epubReaderSettings.fontFamily,
                                             )
                                         ) {
                                             dispatch(
-                                                setEpubReaderSettings({
-                                                    quickFontFamily:
-                                                        appSettings.epubReaderSettings.quickFontFamily.filter(
-                                                            (e) => e !== appSettings.epubReaderSettings.fontFamily,
-                                                        ),
+                                                patchLiveBookReaderSettings({
+                                                    quickFontFamily: epubReaderSettings.quickFontFamily.filter(
+                                                        (e) => e !== epubReaderSettings.fontFamily,
+                                                    ),
                                                 }),
                                             );
                                         } else {
                                             dispatch(
-                                                setEpubReaderSettings({
+                                                patchLiveBookReaderSettings({
                                                     quickFontFamily: [
-                                                        ...appSettings.epubReaderSettings.quickFontFamily,
-                                                        appSettings.epubReaderSettings.fontFamily,
+                                                        ...epubReaderSettings.quickFontFamily,
+                                                        epubReaderSettings.fontFamily,
                                                     ],
                                                 }),
                                             );
                                         }
                                     }}
                                 >
-                                    {appSettings.epubReaderSettings.quickFontFamily.includes(
-                                        appSettings.epubReaderSettings.fontFamily,
-                                    )
+                                    {epubReaderSettings.quickFontFamily.includes(epubReaderSettings.fontFamily)
                                         ? t("settings.removeStar")
                                         : t("settings.starFontFamily")}
                                 </button>
                                 <InputCheckbox
-                                    checked={!appSettings.epubReaderSettings.useDefault_fontWeight}
+                                    checked={!epubReaderSettings.useDefault_fontWeight}
                                     onChange={(e) => {
                                         dispatch(
-                                            setEpubReaderSettings({
+                                            patchLiveBookReaderSettings({
                                                 useDefault_fontWeight: !e.currentTarget.checked,
                                             }),
                                         );
@@ -373,8 +366,8 @@ const EPUBReaderSettings = memo(
                                     paraAfter={t("settings.fontWeight")}
                                 />
                                 <InputRange
-                                    value={appSettings.epubReaderSettings.fontWeight}
-                                    disabled={appSettings.epubReaderSettings.useDefault_fontWeight}
+                                    value={epubReaderSettings.fontWeight}
+                                    disabled={epubReaderSettings.useDefault_fontWeight}
                                     min={100}
                                     max={900}
                                     step={100}
@@ -384,18 +377,18 @@ const EPUBReaderSettings = memo(
                                         350,
                                         (value) =>
                                             dispatch(
-                                                setEpubReaderSettings({
+                                                patchLiveBookReaderSettings({
                                                     fontWeight: value,
                                                 }),
                                             ),
                                     ]}
                                 />
                                 <InputCheckboxNumber
-                                    checked={!appSettings.epubReaderSettings.useDefault_lineSpacing}
+                                    checked={!epubReaderSettings.useDefault_lineSpacing}
                                     onChangeCheck={(e) => {
                                         // makeScrollPos();
                                         dispatch(
-                                            setEpubReaderSettings({
+                                            patchLiveBookReaderSettings({
                                                 useDefault_lineSpacing: !e.currentTarget.checked,
                                             }),
                                         );
@@ -403,20 +396,20 @@ const EPUBReaderSettings = memo(
                                     step={0.1}
                                     min={0}
                                     max={10}
-                                    value={appSettings.epubReaderSettings.lineSpacing}
+                                    value={epubReaderSettings.lineSpacing}
                                     timeout={[
                                         1000,
-                                        (value) => dispatch(setEpubReaderSettings({ lineSpacing: value })),
+                                        (value) => dispatch(patchLiveBookReaderSettings({ lineSpacing: value })),
                                     ]}
                                     paraBefore={t("settings.lineHeight")}
                                     paraAfter={t("settings.emUnit")}
                                 />
                                 <InputCheckboxNumber
-                                    checked={!appSettings.epubReaderSettings.useDefault_paragraphSpacing}
+                                    checked={!epubReaderSettings.useDefault_paragraphSpacing}
                                     onChangeCheck={(e) => {
                                         // makeScrollPos();
                                         dispatch(
-                                            setEpubReaderSettings({
+                                            patchLiveBookReaderSettings({
                                                 useDefault_paragraphSpacing: !e.currentTarget.checked,
                                             }),
                                         );
@@ -424,19 +417,20 @@ const EPUBReaderSettings = memo(
                                     step={0.1}
                                     min={0}
                                     max={10}
-                                    value={appSettings.epubReaderSettings.paragraphSpacing}
+                                    value={epubReaderSettings.paragraphSpacing}
                                     timeout={[
                                         1000,
-                                        (value) => dispatch(setEpubReaderSettings({ paragraphSpacing: value })),
+                                        (value) =>
+                                            dispatch(patchLiveBookReaderSettings({ paragraphSpacing: value })),
                                     ]}
                                     paraBefore={t("settings.paragraphSpacing")}
                                     paraAfter={t("settings.emUnit")}
                                 />
                                 <InputCheckboxNumber
-                                    checked={!appSettings.epubReaderSettings.useDefault_wordSpacing}
+                                    checked={!epubReaderSettings.useDefault_wordSpacing}
                                     onChangeCheck={(e) => {
                                         dispatch(
-                                            setEpubReaderSettings({
+                                            patchLiveBookReaderSettings({
                                                 useDefault_wordSpacing: !e.currentTarget.checked,
                                             }),
                                         );
@@ -444,19 +438,19 @@ const EPUBReaderSettings = memo(
                                     step={0.1}
                                     min={-1}
                                     max={5}
-                                    value={appSettings.epubReaderSettings.wordSpacing}
+                                    value={epubReaderSettings.wordSpacing}
                                     timeout={[
                                         1000,
-                                        (value) => dispatch(setEpubReaderSettings({ wordSpacing: value })),
+                                        (value) => dispatch(patchLiveBookReaderSettings({ wordSpacing: value })),
                                     ]}
                                     paraBefore={t("settings.wordSpacing")}
                                     paraAfter={t("settings.emUnit")}
                                 />
                                 <InputCheckboxNumber
-                                    checked={!appSettings.epubReaderSettings.useDefault_letterSpacing}
+                                    checked={!epubReaderSettings.useDefault_letterSpacing}
                                     onChangeCheck={(e) => {
                                         dispatch(
-                                            setEpubReaderSettings({
+                                            patchLiveBookReaderSettings({
                                                 useDefault_letterSpacing: !e.currentTarget.checked,
                                             }),
                                         );
@@ -464,26 +458,28 @@ const EPUBReaderSettings = memo(
                                     step={0.01}
                                     min={-1}
                                     max={1}
-                                    value={appSettings.epubReaderSettings.letterSpacing}
+                                    value={epubReaderSettings.letterSpacing}
                                     timeout={[
                                         1000,
-                                        (value) => dispatch(setEpubReaderSettings({ letterSpacing: value })),
+                                        (value) => dispatch(patchLiveBookReaderSettings({ letterSpacing: value })),
                                     ]}
                                     paraBefore={t("settings.letterSpacing")}
                                     paraAfter={t("settings.emUnit")}
                                 />
 
                                 <InputCheckbox
-                                    checked={!appSettings.epubReaderSettings.noIndent}
+                                    checked={!epubReaderSettings.noIndent}
                                     onChange={(e) => {
-                                        dispatch(setEpubReaderSettings({ noIndent: !e.currentTarget.checked }));
+                                        dispatch(
+                                            patchLiveBookReaderSettings({ noIndent: !e.currentTarget.checked }),
+                                        );
                                     }}
                                     paraAfter={t("settings.indentation")}
                                 />
                                 {/* <InputCheckbox
-                                    checked={appSettings.epubReaderSettings.hyphenation}
+                                    checked={epubReaderSettings.hyphenation}
                                     onChange={(e) => {
-                                        dispatch(setEpubReaderSettings({ hyphenation: e.currentTarget.checked }));
+                                        dispatch(patchLiveBookReaderSettings({ hyphenation: e.currentTarget.checked }));
                                     }}
                                     paraAfter="Hyphenation"
                                 /> */}
@@ -492,19 +488,16 @@ const EPUBReaderSettings = memo(
                     </div>
                     <div className="settingItem">
                         <div
-                            className={
-                                "name " +
-                                (!appSettings.epubReaderSettings.settingsCollapsed.styles ? "expanded " : "")
-                            }
+                            className={"name " + (!epubReaderSettings.settingsCollapsed.styles ? "expanded " : "")}
                             onKeyDown={(e) => {
                                 if (e.key === " " || e.key === "Enter") e.currentTarget.click();
                             }}
                             onClick={() => {
                                 dispatch(
-                                    setEpubReaderSettings({
+                                    patchLiveBookReaderSettings({
                                         settingsCollapsed: {
-                                            ...appSettings.epubReaderSettings.settingsCollapsed,
-                                            styles: !appSettings.epubReaderSettings.settingsCollapsed.styles,
+                                            ...epubReaderSettings.settingsCollapsed,
+                                            styles: !epubReaderSettings.settingsCollapsed.styles,
                                         },
                                     }),
                                 );
@@ -514,20 +507,20 @@ const EPUBReaderSettings = memo(
                         </div>
                         <div className="options col">
                             <InputCheckboxColor
-                                checked={!appSettings.epubReaderSettings.useDefault_fontColor}
+                                checked={!epubReaderSettings.useDefault_fontColor}
                                 onChangeCheck={(e) => {
                                     dispatch(
-                                        setEpubReaderSettings({
+                                        patchLiveBookReaderSettings({
                                             useDefault_fontColor: !e.currentTarget.checked,
                                         }),
                                     );
                                 }}
-                                value={colorUtils.new(appSettings.epubReaderSettings.fontColor)}
+                                value={colorUtils.new(epubReaderSettings.fontColor)}
                                 timeout={[
                                     500,
                                     (value) =>
                                         dispatch(
-                                            setEpubReaderSettings({
+                                            patchLiveBookReaderSettings({
                                                 fontColor: value.hexa(),
                                             }),
                                         ),
@@ -535,20 +528,20 @@ const EPUBReaderSettings = memo(
                                 paraBefore={t("settings.fontColor")}
                             />
                             <InputCheckboxColor
-                                checked={!appSettings.epubReaderSettings.useDefault_linkColor}
+                                checked={!epubReaderSettings.useDefault_linkColor}
                                 onChangeCheck={(e) => {
                                     dispatch(
-                                        setEpubReaderSettings({
+                                        patchLiveBookReaderSettings({
                                             useDefault_linkColor: !e.currentTarget.checked,
                                         }),
                                     );
                                 }}
-                                value={colorUtils.new(appSettings.epubReaderSettings.linkColor)}
+                                value={colorUtils.new(epubReaderSettings.linkColor)}
                                 timeout={[
                                     500,
                                     (value) =>
                                         dispatch(
-                                            setEpubReaderSettings({
+                                            patchLiveBookReaderSettings({
                                                 linkColor: value.hexa(),
                                             }),
                                         ),
@@ -556,20 +549,20 @@ const EPUBReaderSettings = memo(
                                 paraBefore={t("settings.linkColor")}
                             />
                             <InputCheckboxColor
-                                checked={!appSettings.epubReaderSettings.useDefault_backgroundColor}
+                                checked={!epubReaderSettings.useDefault_backgroundColor}
                                 onChangeCheck={(e) => {
                                     dispatch(
-                                        setEpubReaderSettings({
+                                        patchLiveBookReaderSettings({
                                             useDefault_backgroundColor: !e.currentTarget.checked,
                                         }),
                                     );
                                 }}
-                                value={colorUtils.new(appSettings.epubReaderSettings.backgroundColor)}
+                                value={colorUtils.new(epubReaderSettings.backgroundColor)}
                                 timeout={[
                                     500,
                                     (value) =>
                                         dispatch(
-                                            setEpubReaderSettings({
+                                            patchLiveBookReaderSettings({
                                                 backgroundColor: value.hexa(),
                                             }),
                                         ),
@@ -577,10 +570,10 @@ const EPUBReaderSettings = memo(
                                 paraBefore={t("settings.pageBackgroundColor")}
                             />
                             <InputCheckbox
-                                checked={appSettings.epubReaderSettings.overrideEpubColors}
+                                checked={epubReaderSettings.overrideEpubColors}
                                 onChange={(e) => {
                                     dispatch(
-                                        setEpubReaderSettings({
+                                        patchLiveBookReaderSettings({
                                             overrideEpubColors: e.currentTarget.checked,
                                         }),
                                     );
@@ -589,20 +582,20 @@ const EPUBReaderSettings = memo(
                                 paraAfter={t("settings.overrideEpubColors")}
                             />
                             <InputCheckboxColor
-                                checked={!appSettings.epubReaderSettings.useDefault_progressBackgroundColor}
+                                checked={!epubReaderSettings.useDefault_progressBackgroundColor}
                                 onChangeCheck={(e) => {
                                     dispatch(
-                                        setEpubReaderSettings({
+                                        patchLiveBookReaderSettings({
                                             useDefault_progressBackgroundColor: !e.currentTarget.checked,
                                         }),
                                     );
                                 }}
-                                value={colorUtils.new(appSettings.epubReaderSettings.progressBackgroundColor)}
+                                value={colorUtils.new(epubReaderSettings.progressBackgroundColor)}
                                 timeout={[
                                     500,
                                     (value) =>
                                         dispatch(
-                                            setEpubReaderSettings({
+                                            patchLiveBookReaderSettings({
                                                 progressBackgroundColor: value.hexa(),
                                             }),
                                         ),
@@ -610,12 +603,12 @@ const EPUBReaderSettings = memo(
                                 paraBefore={t("settings.progressBackgroundColor")}
                             />
                             <InputCheckbox
-                                checked={appSettings.epubReaderSettings.forceLowBrightness.enabled}
+                                checked={epubReaderSettings.forceLowBrightness.enabled}
                                 onChange={(e) => {
                                     dispatch(
-                                        setEpubReaderSettings({
+                                        patchLiveBookReaderSettings({
                                             forceLowBrightness: {
-                                                ...appSettings.epubReaderSettings.forceLowBrightness,
+                                                ...epubReaderSettings.forceLowBrightness,
                                                 enabled: e.currentTarget.checked,
                                             },
                                         }),
@@ -628,16 +621,16 @@ const EPUBReaderSettings = memo(
                                 min={0}
                                 max={0.9}
                                 step={0.05}
-                                value={appSettings.epubReaderSettings.forceLowBrightness.value}
-                                disabled={!appSettings.epubReaderSettings.forceLowBrightness.enabled}
+                                value={epubReaderSettings.forceLowBrightness.value}
+                                disabled={!epubReaderSettings.forceLowBrightness.enabled}
                                 labeled={true}
                                 timeout={[
                                     350,
                                     (value) =>
                                         dispatch(
-                                            setEpubReaderSettings({
+                                            patchLiveBookReaderSettings({
                                                 forceLowBrightness: {
-                                                    ...appSettings.epubReaderSettings.forceLowBrightness,
+                                                    ...epubReaderSettings.forceLowBrightness,
                                                     value,
                                                 },
                                             }),
@@ -645,18 +638,22 @@ const EPUBReaderSettings = memo(
                                 ]}
                             />
                             <InputCheckbox
-                                checked={appSettings.epubReaderSettings.invertImageColor}
+                                checked={epubReaderSettings.invertImageColor}
                                 onChange={(e) => {
-                                    dispatch(setEpubReaderSettings({ invertImageColor: e.currentTarget.checked }));
+                                    dispatch(
+                                        patchLiveBookReaderSettings({ invertImageColor: e.currentTarget.checked }),
+                                    );
                                 }}
                                 title={t("settings.invertBlendTitle")}
                                 paraAfter={t("settings.invertBlendImage")}
                             />
                             <InputCheckbox
-                                checked={appSettings.epubReaderSettings.showProgressInZenMode}
+                                checked={epubReaderSettings.showProgressInZenMode}
                                 onChange={(e) => {
                                     dispatch(
-                                        setEpubReaderSettings({ showProgressInZenMode: e.currentTarget.checked }),
+                                        patchLiveBookReaderSettings({
+                                            showProgressInZenMode: e.currentTarget.checked,
+                                        }),
                                     );
                                 }}
                                 paraAfter={t("settings.showProgressInZen")}
@@ -668,19 +665,17 @@ const EPUBReaderSettings = memo(
                     <div className="settingItem">
                         <div
                             className={
-                                "name " +
-                                (!appSettings.epubReaderSettings.settingsCollapsed.scrollSpeed ? "expanded " : "")
+                                "name " + (!epubReaderSettings.settingsCollapsed.scrollSpeed ? "expanded " : "")
                             }
                             onKeyDown={(e) => {
                                 if (e.key === " " || e.key === "Enter") e.currentTarget.click();
                             }}
                             onClick={() => {
                                 dispatch(
-                                    setEpubReaderSettings({
+                                    patchLiveBookReaderSettings({
                                         settingsCollapsed: {
-                                            ...appSettings.epubReaderSettings.settingsCollapsed,
-                                            scrollSpeed:
-                                                !appSettings.epubReaderSettings.settingsCollapsed.scrollSpeed,
+                                            ...epubReaderSettings.settingsCollapsed,
+                                            scrollSpeed: !epubReaderSettings.settingsCollapsed.scrollSpeed,
                                         },
                                     }),
                                 );
@@ -691,23 +686,23 @@ const EPUBReaderSettings = memo(
                         </div>
                         <div className="options">
                             <InputNumber
-                                value={appSettings.epubReaderSettings.scrollSpeedA}
+                                value={epubReaderSettings.scrollSpeedA}
                                 min={1}
                                 max={500}
                                 timeout={[
                                     1000,
-                                    (value) => dispatch(setEpubReaderSettings({ scrollSpeedA: value })),
+                                    (value) => dispatch(patchLiveBookReaderSettings({ scrollSpeedA: value })),
                                 ]}
                                 labelBefore={t("settings.scrollAEpub")}
                                 labelAfter={t("settings.pxUnit")}
                             />
                             <InputNumber
-                                value={appSettings.epubReaderSettings.scrollSpeedB}
+                                value={epubReaderSettings.scrollSpeedB}
                                 min={1}
                                 max={500}
                                 timeout={[
                                     1000,
-                                    (value) => dispatch(setEpubReaderSettings({ scrollSpeedB: value })),
+                                    (value) => dispatch(patchLiveBookReaderSettings({ scrollSpeedB: value })),
                                 ]}
                                 labelBefore={t("settings.scrollBEpub")}
                                 labelAfter={t("settings.pxUnit")}

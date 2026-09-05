@@ -136,6 +136,12 @@ const settingSchema = z
         /** Show page count badge on chapter rows in the manga reader side-list. */
         showPageCountInSideList: z.boolean(),
 
+        /**
+         * When true, opening a library item in the reader binds/restores that title's
+         * extra.readerPresetId in a window-local session.
+         */
+        rememberReaderPresetPerItem: z.boolean(),
+
         readerSettings: mangaReaderSettingsSchema,
         epubReaderSettings: bookReaderSettingsSchema,
         /** Id of the active manga reader preset; applied to `readerSettings` on selection. */
@@ -184,6 +190,7 @@ const settingSchema = z
         syncThemes: true,
         confirmDeleteItem: true,
         showPageCountInSideList: true,
+        rememberReaderPresetPerItem: true,
         readerSettings: defaultMangaReaderSettings,
         epubReaderSettings: defaultBookReaderSettings,
         mangaReaderPresetId: USER_PRESET_MANGA_ID,

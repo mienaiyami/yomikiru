@@ -1,5 +1,6 @@
 import type { EpubNcxTree, EpubToc } from "@common/epub";
 import { useAppSelector } from "@store/hooks";
+import { selectLiveBookReaderSettings } from "@store/reader";
 import { Fragment, memo, useState } from "react";
 import { useTranslation } from "react-i18next";
 
@@ -19,7 +20,9 @@ const ContentList = memo(
     }) => {
         //todo add button to show toc.xhtml if exist
         const { t } = useTranslation("reader");
-        const appSettings = useAppSelector((store) => store.appSettings);
+        const focusChapterInList = useAppSelector(
+            (store) => selectLiveBookReaderSettings(store).focusChapterInList,
+        );
         const [listShow, setListShow] = useState(new Array(epubTOC.size).fill(false));
 
         if (epubTOC.size === 0) return <p>{t("sideList.noToc")}</p>;
@@ -54,7 +57,7 @@ const ContentList = memo(
                                     data-depth={e.level}
                                     //todo check if works
                                     ref={
-                                        appSettings.epubReaderSettings.focusChapterInList
+                                        focusChapterInList
                                             ? (node) => {
                                                   if (node && epubTOC.get(e.navId)?.href === currentChapterHref) {
                                                       if (listShow[e.ncx_index2] === false)

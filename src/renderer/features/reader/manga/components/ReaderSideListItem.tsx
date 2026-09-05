@@ -1,6 +1,7 @@
 import { useAppContext } from "@renderer/App";
 import ListItem from "@renderer/components/ListItem";
 import { useAppSelector } from "@store/hooks";
+import { selectLiveMangaReaderSettings } from "@store/reader";
 import { formatUtils } from "@utils/file";
 import { memo } from "react";
 import { useTranslation } from "react-i18next";
@@ -18,7 +19,9 @@ type ReaderSideListItemProps = {
 const ReaderSideListItem = memo(
     ({ name, pages, link, inHistory, current, focused, onClick }: ReaderSideListItemProps) => {
         const { t } = useTranslation("reader");
-        const focusChapterInList = useAppSelector((state) => state.appSettings.readerSettings?.focusChapterInList);
+        const focusChapterInList = useAppSelector(
+            (state) => selectLiveMangaReaderSettings(state).focusChapterInList,
+        );
         const { openInReader, setContextMenuData } = useAppContext();
 
         const handleClick = () => {

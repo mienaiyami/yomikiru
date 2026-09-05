@@ -20,6 +20,7 @@ import { setAppSettings } from "@store/appSettings";
 import { addBookmark, removeBookmark } from "@store/bookmarks";
 import { useAppDispatch, useAppSelector } from "@store/hooks";
 import { selectResolvedItemMetadata } from "@store/library";
+import { selectLiveMangaReaderSettings } from "@store/reader";
 import { dialogUtils } from "@utils/dialog";
 import { formatUtils } from "@utils/file";
 import { createRendererLogger } from "@utils/logger";
@@ -130,6 +131,7 @@ const ReaderSideList = memo(
             selectResolvedItemMetadata(store, mangaContentLink ?? mangaLink),
         );
         const appSettings = useAppSelector((store) => store.appSettings);
+        const hideSideList = useAppSelector((store) => selectLiveMangaReaderSettings(store).hideSideList);
         const anilistToken = useAppSelector((store) => store.anilist.token);
         const dispatch = useAppDispatch();
 
@@ -749,7 +751,7 @@ const ReaderSideList = memo(
                         <div
                             className="location-cont"
                             style={{
-                                display: appSettings.readerSettings.hideSideList ? "none" : "initial",
+                                display: hideSideList ? "none" : "initial",
                             }}
                         >
                             <ListNavigator.List />

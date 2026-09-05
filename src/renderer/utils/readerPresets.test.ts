@@ -1,10 +1,13 @@
 import { describe, expect, it } from "vitest";
 import {
+    initReaderPresets,
     normalizeReaderPreset,
     parseBookPreset,
+    parseLibraryItemReaderPresetId,
     parseMangaPreset,
     parsePresetImport,
     parseReaderPresetsStateWithMeta,
+    resolveLibraryItemReaderPresetId,
     USER_PRESET_BOOK_ID,
     USER_PRESET_MANGA_ID,
 } from "./readerPresets";
@@ -37,6 +40,36 @@ describe("normalizeReaderPreset / parsePresetImport", () => {
             ],
         });
         expect(list.map((p) => p.id)).toEqual(["m1", "b1"]);
+    });
+});
+
+describe("parseLibraryItemReaderPresetId", () => {
+    it("returns a non-empty string id and ignores missing or invalid extra values", () => {
+        expect(parseLibraryItemReaderPresetId({ readerPresetId: "manga-preset-long-strip" })).toBe(
+            "manga-preset-long-strip",
+        );
+        expect(parseLibraryItemReaderPresetId(undefined)).toBeUndefined();
+        expect(parseLibraryItemReaderPresetId({})).toBeUndefined();
+        expect(parseLibraryItemReaderPresetId({ readerPresetId: "" })).toBeUndefined();
+        expect(parseLibraryItemReaderPresetId({ readerPresetId: 1 })).toBeUndefined();
+    });
+});
+
+describe("resolveLibraryItemReaderPresetId", () => {
+    const presets = initReaderPresets.presets;
+
+    it("returns the stored id only when a catalog preset of the same type exists", () => {
+        expect(resolveLibraryItemReaderPresetId({ readerPresetId: USER_PRESET_MANGA_ID }, "manga", presets)).toBe(
+            USER_PRESET_MANGA_ID,
+        );
+        expect(resolveLibraryItemReaderPresetId({ readerPresetId: USER_PRESET_BOOK_ID }, "book", presets)).toBe(
+            USER_PRESET_BOOK_ID,
+        );
+        expect(
+            resolveLibraryItemReaderPresetId({ readerPresetId: USER_PRESET_BOOK_ID }, "manga", presets),
+        ).toBeUndefined();
+        expect(resolveLibraryItemReaderPresetId({ readerPresetId: "gone" }, "manga", presets)).toBeUndefined();
+        expect(resolveLibraryItemReaderPresetId({}, "manga", presets)).toBeUndefined();
     });
 });
 

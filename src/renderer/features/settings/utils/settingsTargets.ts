@@ -198,6 +198,16 @@ export const SETTINGS_TARGETS_STATIC: readonly SettingsTarget[] = [
         keywords: ["preset"],
         contentPath: "readerPresets",
     }),
+    setting(
+        "setting:remember-reader-preset-per-item",
+        "#settings-remember-reader-preset-per-item",
+        "readerPresets.rememberPerItem.label",
+        {
+            keywords: ["library item", "per title", "manhwa", "preset"],
+            contentPath: "readerPresets.rememberPerItem",
+            groupLabelKey: "readerPresets.title",
+        },
+    ),
     setting("setting:file-explorer", "#settings-fileExplorerOption", "fileExplorer.title", {
         platform: "win32",
         keywords: ["context menu", "shell"],

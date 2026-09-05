@@ -105,7 +105,12 @@ describe("settingsTargets", () => {
         expect(getSettingsTarget("setting:library-clear-unused-progress")?.selector).toBe(
             "#settings-library-clear-unused-progress",
         );
-        expect(getSettingsTarget("about")?.tab).toBe("about");
+        expect(getSettingsTarget("setting:remember-reader-preset-per-item")?.selector).toBe(
+            "#settings-remember-reader-preset-per-item",
+        );
+        expect(getSettingsTarget("setting:remember-reader-preset-per-item")?.groupLabelKey).toBe(
+            "readerPresets.title",
+        );
         expect(getSettingsTarget("missing:id")).toBeUndefined();
         expect(getAllSettingsTargets().length).toBe(SETTINGS_TARGETS_STATIC.length + SHORTCUT_COMMAND_MAP.length);
     });

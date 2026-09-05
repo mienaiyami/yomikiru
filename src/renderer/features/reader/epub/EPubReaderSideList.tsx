@@ -5,7 +5,7 @@ import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { ItemDisplayTitle } from "@renderer/components/ItemDisplayTitle";
 import { useAppSelector } from "@store/hooks";
 import { selectResolvedItemMetadata } from "@store/library";
-import { getReaderBook } from "@store/reader";
+import { getReaderBook, selectLiveBookReaderSettings } from "@store/reader";
 import { memo, useEffect, useLayoutEffect, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { useAppContext } from "src/renderer/App";
@@ -62,7 +62,7 @@ const EPubReaderSideList = memo(
         setDisplayList: React.Dispatch<React.SetStateAction<"" | "content" | "bookmarks" | "notes">>;
     }) => {
         const { contextMenuData, colorSelectData } = useAppContext();
-        const appSettings = useAppSelector((store) => store.appSettings);
+        const loadOneChapter = useAppSelector((store) => selectLiveBookReaderSettings(store).loadOneChapter);
         const anilistToken = useAppSelector((store) => store.anilist.token);
         const bookInReader = useAppSelector(getReaderBook);
         const bookDisplay = useAppSelector((store) => selectResolvedItemMetadata(store, bookInReader?.link));
@@ -234,7 +234,7 @@ const EPubReaderSideList = memo(
                             original={bookDisplay?.originalTitle}
                         />
                     </div>
-                    {appSettings.epubReaderSettings.loadOneChapter && (
+                    {loadOneChapter && (
                         <div>
                             <span className="bold">{t("sideList.chapter")}</span>
                             <span className="bold"> : </span>

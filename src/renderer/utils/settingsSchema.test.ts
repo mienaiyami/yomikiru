@@ -3,6 +3,20 @@ import { defaultSettings, settingSchema } from "./settingsSchema";
 import { repairZodInputWithDefaults } from "./zodRepair";
 
 describe("settingSchema library keys", () => {
+    it("fills rememberReaderPresetPerItem when missing from settings.json", () => {
+        const repaired = repairZodInputWithDefaults(settingSchema, {}, (path) => {
+            let cur: unknown = defaultSettings;
+            for (const part of path) {
+                if (cur === null || typeof cur !== "object" || !(String(part) in cur)) return undefined;
+                cur = (cur as Record<string, unknown>)[String(part)];
+            }
+            return cur;
+        });
+        expect(repaired.success).toBe(true);
+        if (!repaired.success) return;
+        expect(repaired.data.rememberReaderPresetPerItem).toBe(true);
+    });
+
     it("fills galleryTagFilterIds with an empty array when missing from settings.json", () => {
         const repaired = repairZodInputWithDefaults(settingSchema, {}, (path) => {
             let cur: unknown = defaultSettings;
