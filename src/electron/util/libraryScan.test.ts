@@ -63,6 +63,7 @@ vi.mock("@electron/util/logger", () => ({
         verbose: vi.fn(),
         debug: vi.fn(),
     }),
+    setupMainProcessLogging: vi.fn(),
 }));
 
 vi.mock("chokidar", () => ({
@@ -95,13 +96,17 @@ vi.mock("@electron/util/mainSettings", () => ({
     },
 }));
 
-vi.mock("@electron/ipc/database", async (importOriginal) => {
-    const actual = await importOriginal<typeof import("@electron/ipc/database")>();
-    return {
-        ...actual,
-        pingDatabaseChange: vi.fn(),
-    };
-});
+/* stub only the ping surface; importOriginal loads ipc/database -> db -> util barrel */
+vi.mock("@electron/ipc/database", () => ({
+    pingDatabaseChange: vi.fn(),
+    LIBRARY_ITEM_LINK_CHANGE_CHANNELS: [
+        "db:library:change",
+        "db:bookmark:change",
+        "db:bookNote:change",
+        "db:tracker:change",
+        "db:tag:change",
+    ],
+}));
 
 vi.mock("@electron/util/coverMaterialize", () => ({
     materializeCoverFromSourcePath,
