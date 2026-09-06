@@ -93,9 +93,6 @@
         "autoFocusChapter": "Auto-Focus current chapter in side-list ",
         "autoFocusChapterDesc": "Automatically focus/scroll to current chapter entry in side-list when changing chapter. Can cause huge performance loss in case of epub with large number (> 500) of chapters.",
         "epubAutoFocusChapter": "EPUB: Auto-Focus current chapter in side-list ",
-        "epubLoadByChapter": "EPUB: Load By Chapter",
-        "epubLoadByChapterDesc1": "Load and show one chapter at a time (from TOC). If disabled whole epub file will be displayed (high RAM usage).",
-        "epubLoadByChapterDesc2": "Drawback : Content outside of TOC will not be accessible.",
         "epubDisableTextSelect": "EPUB: Disable Text Select / Enable double-click zen mode",
         "epubDisableTextSelectDesc": "Removes ability to select text in epub reader and enabled double-click zen mode."
     },

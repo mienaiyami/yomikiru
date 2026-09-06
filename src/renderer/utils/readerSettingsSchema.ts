@@ -216,12 +216,12 @@ export const defaultMangaReaderSettings: MangaReaderSettings = {
  * Aligns with libraryItems.type "book" in electron/db/schema.ts.
  */
 export const bookReaderSettingsSchema = z.object({
-    /**load and show only one chapter at a time from TOC */
-    loadOneChapter: z.boolean(),
     /**
      * width of reader in percent
      */
     readerWidth: z.number(),
+    /** Keep adjacent chapters in one reader session instead of rebuilding the reader at each boundary. */
+    continuousChapters: z.boolean().default(false),
     /**
      * font size in px.
      */
@@ -286,6 +286,8 @@ export const bookReaderSettingsSchema = z.object({
 
     settingsCollapsed: z.object({
         preset: z.boolean().default(false),
+        /** Whether the in-reader continuous-chapters section is collapsed. */
+        continuousChapters: z.boolean().default(false),
         size: z.boolean(),
         font: z.boolean(),
         styles: z.boolean(),
@@ -366,8 +368,8 @@ export const bookReaderSettingsSchema = z.object({
 export type BookReaderSettings = z.infer<typeof bookReaderSettingsSchema>;
 
 export const defaultBookReaderSettings: BookReaderSettings = {
-    loadOneChapter: true,
     readerWidth: 50,
+    continuousChapters: false,
     fontSize: 20,
     useDefault_fontFamily: true,
     fontFamily: "Roboto",
@@ -397,6 +399,7 @@ export const defaultBookReaderSettings: BookReaderSettings = {
     invertImageColor: false,
     settingsCollapsed: {
         preset: false,
+        continuousChapters: false,
         size: false,
         font: false,
         styles: true,

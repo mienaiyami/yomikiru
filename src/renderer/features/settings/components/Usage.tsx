@@ -572,6 +572,10 @@ const Usage = (): ReactElement => {
                         </li>
                     </ul>
                 </li>
+                <li id="settings-usage-epubContinuousScroll">
+                    <b>{t("epubContinuousScroll.title")}</b>{" "}
+                    <Trans i18nKey="epubContinuousScroll.body" ns="usage" components={{ bold: <b /> }} />
+                </li>
                 <li id="settings-usage-epubBackground">
                     <b>{t("epubBackground.title")}</b>{" "}
                     <Trans i18nKey="epubBackground.body" ns="usage" components={{ bold: <b /> }} />

@@ -28,3 +28,13 @@ export const resolveEpubChapterReference = (
  */
 export const stripEpubInlineEventHandlers = (markup: string): string =>
     markup.replace(INLINE_EVENT_HANDLER_ATTRIBUTE, "");
+
+/**
+ * Spine index for an in-package `data-href` (optional `#fragment`).
+ * Fragment-only hrefs return `-1` (same spine item as the click).
+ */
+export const findSpineIndexByHref = (spine: readonly { href: string }[], href: string): number => {
+    const pathPart = href.split("#")[0];
+    if (!pathPart) return -1;
+    return spine.findIndex((item) => item.href === pathPart);
+};

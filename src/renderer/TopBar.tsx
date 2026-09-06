@@ -12,6 +12,7 @@ import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { setAppSettings } from "@store/appSettings";
 import { useAppDispatch, useAppSelector } from "@store/hooks";
 import { selectResolvedItemMetadata } from "@store/library";
+import { selectLiveBookReaderSettings } from "@store/reader";
 import { setSysBtnColor } from "@store/themes";
 import { setSettingsOpen, toggleSettingsOpen } from "@store/ui";
 import { formatUtils } from "@utils/file";
@@ -32,6 +33,9 @@ const TopBar = (): ReactElement => {
     const readerChapterName = useAppSelector((store) => store.reader.content?.progress?.chapterName ?? "");
     const readerTotalPages = useAppSelector((store) =>
         store.reader.type === "manga" ? (store.reader.content?.progress?.totalPages ?? 0) : 0,
+    );
+    const hasContinuousBookProgress = useAppSelector(
+        (store) => store.reader.type === "book" && selectLiveBookReaderSettings(store).continuousChapters,
     );
     const readerDisplayTitle = useAppSelector((store) => {
         const contentLink = store.reader.content?.link;
@@ -70,7 +74,7 @@ const TopBar = (): ReactElement => {
         } else if (readerContentType === "book") {
             let bookTitle = readerDisplayTitle || readerContentTitle;
             let chapterName = "";
-            if (appSettings.epubReaderSettings.loadOneChapter && readerChapterName !== "~") {
+            if (readerChapterName !== "~") {
                 chapterName = readerChapterName;
                 if (chapterName.length > 83) chapterName = `${chapterName.substring(0, 80)}...`;
             }
@@ -84,14 +88,7 @@ const TopBar = (): ReactElement => {
             document.title = title;
             return;
         }
-    }, [
-        appSettings.epubReaderSettings.loadOneChapter,
-        readerChapterName,
-        readerContentLink,
-        readerContentTitle,
-        readerContentType,
-        readerDisplayTitle,
-    ]);
+    }, [readerChapterName, readerContentLink, readerContentTitle, readerContentType, readerDisplayTitle]);
     useLayoutEffect(() => {
         const onBlur = () => {
             setSysBtnColor(true);
@@ -265,7 +262,7 @@ const TopBar = (): ReactElement => {
                 {readerContentType === "book" && (
                     <label className="pageNumber noBG">
                         <input
-                            className="pageNumberInput"
+                            className={`pageNumberInput${hasContinuousBookProgress ? " continuousChapterProgress" : ""}`}
                             ref={bookProgressRef}
                             type="number"
                             defaultValue={0}
@@ -278,7 +275,7 @@ const TopBar = (): ReactElement => {
                                 e.stopPropagation();
                                 if (
                                     !(
-                                        /[0-9]/gi.test(e.key) ||
+                                        /[0-9.]/gi.test(e.key) ||
                                         e.key === "Backspace" ||
                                         e.key === "Enter" ||
                                         e.key === "Escape"
@@ -290,13 +287,11 @@ const TopBar = (): ReactElement => {
                                 if (e.key === "Enter" || e.key === "Escape") {
                                     e.currentTarget.blur();
                                 }
-                                if (/[0-9]/gi.test(e.key) || e.key === "Backspace") {
-                                    let percent = parseInt(e.currentTarget.value);
+                                if (/[0-9.]/gi.test(e.key) || e.key === "Backspace") {
+                                    let percent = Number.parseFloat(e.currentTarget.value);
+                                    if (!Number.isFinite(percent)) return;
                                     if (percent > 100) percent = 100;
-                                    if (bookProgressRef.current) {
-                                        bookProgressRef.current.value = percent.toString();
-                                    }
-                                    // if (!percent) return;
+                                    if (percent < 0) percent = 0;
                                     window.app.scrollToPage(percent, "auto");
                                     return;
                                 }

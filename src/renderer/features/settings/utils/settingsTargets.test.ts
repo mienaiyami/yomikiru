@@ -154,6 +154,16 @@ describe("settingsTargets", () => {
     it("does not keep the removed manga side-list book-file badge target", () => {
         expect(getSettingsTarget("setting:show-text-file-badge")).toBeUndefined();
     });
+
+    it("does not keep the removed EPUB load-by-chapter overlay control", () => {
+        expect(getSettingsTarget("setting:epub-load-by-chapter")).toBeUndefined();
+    });
+
+    it("indexes EPUB continuous scroll Usage copy", () => {
+        expect(getSettingsTarget("usage:epub-continuous-scroll")?.selector).toBe(
+            "#settings-usage-epubContinuousScroll",
+        );
+    });
 });
 
 describe("collectI18nStringLeaves", () => {

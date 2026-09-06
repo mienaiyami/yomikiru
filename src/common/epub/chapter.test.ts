@@ -1,6 +1,11 @@
 import path from "node:path";
 import { describe, expect, it } from "vitest";
-import { isExternalEpubReference, resolveEpubChapterReference, stripEpubInlineEventHandlers } from "./chapter";
+import {
+    findSpineIndexByHref,
+    isExternalEpubReference,
+    resolveEpubChapterReference,
+    stripEpubInlineEventHandlers,
+} from "./chapter";
 
 describe("EPUB chapter references", () => {
     it("keeps web and fragment references while resolving package-relative paths", () => {
@@ -18,5 +23,12 @@ describe("EPUB chapter references", () => {
     it("removes quoted and unquoted inline event handlers without truncating nearby markup", () => {
         const markup = `<p class="safe" onclick="run with spaces()" onfocus='focus()'>Text</p><img onload=load() src="a.jpg">`;
         expect(stripEpubInlineEventHandlers(markup)).toBe(`<p class="safe">Text</p><img src="a.jpg">`);
+    });
+
+    it("maps package hrefs to spine index and treats fragment-only as current chapter", () => {
+        const spine = [{ href: path.join("book", "a.xhtml") }, { href: path.join("book", "b.xhtml") }];
+        expect(findSpineIndexByHref(spine, `${spine[1].href}#note`)).toBe(1);
+        expect(findSpineIndexByHref(spine, "#note")).toBe(-1);
+        expect(findSpineIndexByHref(spine, "missing.xhtml")).toBe(-1);
     });
 });

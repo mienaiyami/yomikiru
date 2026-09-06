@@ -1,29 +1,49 @@
 import { formatUtils } from "./file";
 
-export const getCSSPath = (el: Element): string => {
-    if (!(el instanceof Element)) return "";
-    const path = [] as string[];
-    let elem = el;
-    while (elem.nodeType === Node.ELEMENT_NODE) {
+/**
+ * CSS path from `element` up to (not including) `chapterRoot`, stopping at the first id.
+ * Pass `chapterRoot` null for a document-wide path ({@link getCSSPath}).
+ * Empty when `element` is `chapterRoot` or not a descendant.
+ *
+ * @param element - node to describe
+ * @param chapterRoot - stop before this ancestor; null walks to the document
+ */
+export const getCSSPathWithin = (element: Element, chapterRoot: Element | null): string => {
+    if (
+        !(element instanceof Element) ||
+        (chapterRoot && (element === chapterRoot || !chapterRoot.contains(element)))
+    )
+        return "";
+    const path: string[] = [];
+    let elem = element;
+    while (elem.nodeType === Node.ELEMENT_NODE && elem !== chapterRoot) {
         let selector = elem.nodeName.toLowerCase();
         if (elem.id) {
-            selector += `#${elem.id.trim().replaceAll(".", "\\.")}`;
-            path.unshift(selector);
+            path.unshift(`${selector}#${elem.id.trim().replaceAll(".", "\\.")}`);
             break;
-        } else {
-            let sib = elem,
-                nth = 1;
-            while (sib.previousElementSibling) {
-                sib = sib.previousElementSibling;
-                if (sib.nodeName.toLowerCase() === selector) nth++;
-            }
-            if (nth !== 1) selector += `:nth-of-type(${nth})`;
         }
+        let sib = elem;
+        let nth = 1;
+        while (sib.previousElementSibling) {
+            sib = sib.previousElementSibling;
+            if (sib.nodeName.toLowerCase() === selector) nth++;
+        }
+        if (nth !== 1) selector += `:nth-of-type(${nth})`;
         path.unshift(selector);
-        elem = elem.parentNode as Element;
+        const parent = elem.parentNode;
+        if (!(parent instanceof Element)) break;
+        elem = parent;
     }
     return path.join(" > ");
 };
+
+/**
+ * Document-wide CSS path for `element`, stopping at the first id.
+ * Prefer {@link getCSSPathWithin} for EPUB locators so the path stays inside one chapter root.
+ *
+ * @param element - node to describe
+ */
+export const getCSSPath = (element: Element): string => getCSSPathWithin(element, null);
 
 /**
  * `#app` when the shell is mounted, otherwise `document.body` (unit tests).

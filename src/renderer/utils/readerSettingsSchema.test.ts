@@ -12,6 +12,12 @@ describe("readerSettingsSchema", () => {
         expect(bookReaderSettingsSchema.parse(defaultBookReaderSettings)).toEqual(defaultBookReaderSettings);
     });
 
+    it("repairs older book settings with continuous chapters disabled", () => {
+        const { continuousChapters: _continuousChapters, ...olderBookSettings } = defaultBookReaderSettings;
+
+        expect(bookReaderSettingsSchema.parse(olderBookSettings).continuousChapters).toBe(false);
+    });
+
     it("rejects invalid manga readerType / fitOption literals", () => {
         expect(
             mangaReaderSettingsSchema.safeParse({

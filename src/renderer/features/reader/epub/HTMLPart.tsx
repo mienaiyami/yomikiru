@@ -1,185 +1,141 @@
 import type { EpubManifest } from "@common/epub";
+import { useAppContext } from "@renderer/App";
 import { useAppSelector } from "@store/hooks";
-import { readEpubChapter } from "@utils/epub";
+import { queryEpubPosition, readEpubChapter } from "@utils/epub";
 import { highlightUtils } from "@utils/highlight";
 import { createRendererLogger } from "@utils/logger";
-import { memo, useEffect, useLayoutEffect, useRef, useState } from "react";
+import { memo, useLayoutEffect, useRef, useState } from "react";
 import { shallowEqual } from "react-redux";
-import { useAppContext } from "src/renderer/App";
 
 const log = createRendererLogger("epub/HTMLPart");
 
-type ChapterEvents = {
-    link: (ev: MouseEvent | React.MouseEvent<HTMLAnchorElement>) => void;
-    image: (ev: MouseEvent) => void;
-} | null;
-
+/** Injects one chapter and its notes while preserving DOM across progress and callback updates. */
 const HTMLPart = memo(
     ({
         epubManifest,
         onEpubLinkClick,
         currentChapter,
+        onHtmlInjected,
     }: {
         epubManifest: EpubManifest;
         currentChapter: {
             id: string;
-            /** id of element to scroll to, `#` part of url */
+            /** Fragment identifier within the chapter. */
             fragment: string;
-            /** query string of element to scroll to, take priority over `fragment` */
+            /** Initial stored locator, with priority over the fragment. */
             elementQuery: string;
         };
-        // bookmarkedElem: string;
-        onEpubLinkClick: (ev: MouseEvent | React.MouseEvent<HTMLAnchorElement, MouseEvent>) => void;
+        onEpubLinkClick: (event: MouseEvent | React.MouseEvent<HTMLAnchorElement, MouseEvent>) => void;
+        /** Signals completed injection, including valid empty chapters, for continuous row measurement. */
+        onHtmlInjected?: (chapterId: string) => void;
     }) => {
         const { setContextMenuData } = useAppContext();
-        const eventsRef = useRef<ChapterEvents>(null);
         const containerRef = useRef<HTMLDivElement>(null);
-        const [htmlContent, setHtmlContent] = useState<string>("");
-        const [initialScrolled, setInitialScrolled] = useState(false);
-        const notes = useAppSelector((store) => {
-            const link = store.reader.content?.link;
-            if (!link) return [];
-            return store.bookNotes.book[link]?.filter((note) => note.chapterId === currentChapter.id) || [];
+        const [htmlContent, setHtmlContent] = useState<string | null>(null);
+        const linkHandlerRef = useRef(onEpubLinkClick);
+        linkHandlerRef.current = onEpubLinkClick;
+        const contextMenuRef = useRef(setContextMenuData);
+        contextMenuRef.current = setContextMenuData;
+        const initialPositionRef = useRef(currentChapter.elementQuery);
+        const notes = useAppSelector((state) => {
+            const itemLink = state.reader.content?.link;
+            if (!itemLink) return [];
+            return state.bookNotes.book[itemLink]?.filter((note) => note.chapterId === currentChapter.id) || [];
         }, shallowEqual);
 
-        const cleanupEvents = () => {
-            if (!containerRef.current) return;
-            containerRef.current.querySelectorAll("a").forEach((elem) => {
-                elem.removeEventListener("click", eventsRef.current?.link as EventListener);
-            });
-            containerRef.current.querySelectorAll("img, image").forEach((elem) => {
-                elem.removeEventListener("contextmenu", eventsRef.current?.image as EventListener);
-            });
-            eventsRef.current = null;
-        };
-
         useLayoutEffect(() => {
-            const setHTML = async () => {
+            let cancelled = false;
+            /** Discards IO that finishes after this chapter leaves the mounted spine window. */
+            const loadChapter = async () => {
                 const manifestItem = epubManifest.get(currentChapter.id);
                 if (!manifestItem) {
-                    log.error(`EPUB manifest: no item for chapter id "${currentChapter.id}"`);
-                    return `Error: manifest item not found for id: ${currentChapter.id}`;
+                    log.error("EPUB manifest item missing", { chapterId: currentChapter.id });
+                    return;
                 }
-                setHtmlContent(await readEpubChapter(manifestItem.href));
+                const chapterMarkup = await readEpubChapter(manifestItem.href);
+                if (!cancelled) setHtmlContent(chapterMarkup);
             };
-            setHTML();
+            void loadChapter();
+            return () => {
+                cancelled = true;
+            };
         }, [currentChapter.id, epubManifest]);
 
-        useEffect(() => {
-            if (currentChapter.elementQuery || currentChapter.fragment) {
-                setInitialScrolled(false);
+        useLayoutEffect(() => {
+            const chapterRoot = containerRef.current;
+            if (!chapterRoot || htmlContent === null) return;
+            const fragment = document.createRange().createContextualFragment(htmlContent);
+            chapterRoot.replaceChildren(fragment);
+            for (const note of notes) {
+                try {
+                    highlightUtils.highlight(chapterRoot, {
+                        id: note.id.toString(),
+                        range: note.range,
+                        color: note.color || "yellow",
+                        content: note.content || "",
+                    });
+                } catch (error) {
+                    log.error("EPUB note highlight: DOM highlight failed", error);
+                }
             }
-        }, [currentChapter.elementQuery, currentChapter.fragment]);
+
+            const onLinkClick = (event: MouseEvent) => linkHandlerRef.current(event);
+            /** Keeps image actions bound to the latest shell context without replacing chapter markup. */
+            const onImageContextMenu = (event: Event) => {
+                if (!(event instanceof MouseEvent)) return;
+                event.stopPropagation();
+                const target = event.currentTarget as Element;
+                const imageUrl = target.getAttribute("src") || target.getAttribute("data-src") || "";
+                contextMenuRef.current({
+                    clickX: event.clientX,
+                    clickY: event.clientY,
+                    items: [
+                        window.contextMenu.template.copyImage(imageUrl),
+                        window.contextMenu.template.showInExplorer(imageUrl),
+                        window.contextMenu.template.copyPath(imageUrl),
+                    ],
+                });
+            };
+            const links = chapterRoot.querySelectorAll("a");
+            const images = chapterRoot.querySelectorAll<HTMLElement | SVGElement>("img, image");
+            for (const link of links) link.addEventListener("click", onLinkClick);
+            for (const image of images) {
+                image.addEventListener("contextmenu", onImageContextMenu);
+                if (image instanceof HTMLImageElement) image.loading = "lazy";
+            }
+            chapterRoot.dataset.epubReady = "true";
+            onHtmlInjected?.(currentChapter.id);
+            return () => {
+                for (const link of links) link.removeEventListener("click", onLinkClick);
+                for (const image of images) image.removeEventListener("contextmenu", onImageContextMenu);
+            };
+        }, [notes, htmlContent, currentChapter.id, onHtmlInjected]);
 
         useLayoutEffect(() => {
-            if (!containerRef.current) return;
-            /**
-             * ! node must be present in the DOM
-             */
-            const highlight = (node: HTMLElement) => {
-                const highlights = node.querySelectorAll(".text-highlight");
-                highlights.forEach((h) => {
-                    const parent = h.parentNode;
-                    if (parent) {
-                        parent.replaceChild(document.createTextNode(h.textContent || ""), h);
-                        parent.normalize();
-                    }
-                });
-                notes.forEach((note) => {
-                    try {
-                        containerRef.current &&
-                            highlightUtils.highlight(containerRef.current, {
-                                id: note.id.toString(),
-                                range: note.range,
-                                color: note.color || "yellow",
-                                content: note.content || "",
-                            });
-                    } catch (error) {
-                        log.error("EPUB note highlight: DOM highlight failed", error);
-                    }
-                });
-            };
-            const injectHTML = () => {
-                const node = containerRef.current;
-                if (!node) return;
-                const fragment = document.createRange().createContextualFragment(htmlContent);
-                node.innerHTML = "";
-                node.appendChild(fragment);
-            };
-            const attachEvents = (node: HTMLElement) => {
-                const linkEventHandler = (e: MouseEvent | React.MouseEvent<HTMLAnchorElement, MouseEvent>) =>
-                    onEpubLinkClick(e);
-                const imageEventHandler = (e: Event) => onContextMenu(e as MouseEvent);
-                eventsRef.current = {
-                    link: linkEventHandler,
-                    image: imageEventHandler,
-                };
-                node.querySelectorAll("a").forEach((link) => {
-                    link.addEventListener("click", linkEventHandler);
-                });
-                node.querySelectorAll("img, image").forEach((img) => {
-                    img.addEventListener("contextmenu", imageEventHandler);
-                    if (img instanceof HTMLImageElement) {
-                        img.loading = "lazy";
-                    }
-                });
-            };
-            const scrollToElem = () => {
-                if (initialScrolled || !htmlContent) return;
-                if (currentChapter.elementQuery) {
-                    setTimeout(() => {
-                        containerRef.current
-                            ?.querySelector(currentChapter.elementQuery)
-                            ?.scrollIntoView({ block: "start" });
-                        setInitialScrolled(true);
-                    });
-                } else if (currentChapter.fragment) {
-                    setTimeout(() => {
-                        containerRef.current
-                            ?.querySelector(`[data-epub-id="${currentChapter.fragment}"]`)
-                            ?.scrollIntoView({ block: "start" });
-                        setInitialScrolled(true);
-                    });
-                }
-            };
-            injectHTML();
-            highlight(containerRef.current);
-            attachEvents(containerRef.current);
-            scrollToElem();
-
-            return cleanupEvents;
-        }, [notes, htmlContent, currentChapter]);
-
-        const onContextMenu = (ev: MouseEvent) => {
-            ev.stopPropagation();
-            const target = ev.currentTarget as Element;
-            const url = target.getAttribute("src") || target.getAttribute("data-src") || "";
-            setContextMenuData({
-                clickX: ev.clientX,
-                clickY: ev.clientY,
-                items: [
-                    window.contextMenu.template.copyImage(url),
-                    window.contextMenu.template.showInExplorer(url),
-                    window.contextMenu.template.copyPath(url),
-                ],
+            if (htmlContent === null) return;
+            const position = initialPositionRef.current;
+            const fragment = currentChapter.fragment;
+            if (!position && !fragment) return;
+            // chapter-at-a-time owns its initial scroll; continuous mode supplies neither target here
+            const timeoutId = window.setTimeout(() => {
+                const chapterRoot = containerRef.current;
+                if (!chapterRoot) return;
+                const target = position
+                    ? queryEpubPosition(chapterRoot, position)
+                    : chapterRoot.querySelector(`[data-epub-id="${CSS.escape(fragment)}"]`);
+                target?.scrollIntoView({ block: "start" });
             });
-        };
+            return () => window.clearTimeout(timeoutId);
+        }, [htmlContent, currentChapter.fragment]);
 
-        return (
-            <div
-                className="cont htmlCont"
-                key={currentChapter.id + currentChapter.fragment}
-                id={`epub-${currentChapter.id}`}
-                ref={containerRef}
-            ></div>
-        );
+        return <div className="cont htmlCont" id={`epub-${currentChapter.id}`} ref={containerRef} />;
     },
-    (prev, next) => {
-        const currentChapterId = prev.currentChapter.id === next.currentChapter.id;
-        const currentChapterFragment = prev.currentChapter.fragment === next.currentChapter.fragment;
-        const epubManifest = prev.epubManifest.size === next.epubManifest.size;
-        return currentChapterId && currentChapterFragment && epubManifest;
-    },
+    (previous, current) =>
+        previous.currentChapter.id === current.currentChapter.id &&
+        previous.currentChapter.fragment === current.currentChapter.fragment &&
+        previous.epubManifest === current.epubManifest &&
+        previous.onHtmlInjected === current.onHtmlInjected &&
+        previous.onEpubLinkClick === current.onEpubLinkClick,
 );
 HTMLPart.displayName = "EPUB Reader HTML Content";
 

@@ -203,7 +203,7 @@ html{
             #EPubReader {
                 section.main {
                     &.limitImgHeight {
-                        > .cont img {
+                        .htmlCont img {
                             max-height: 90vh;
                         }
                     }
@@ -1352,6 +1352,50 @@ html{
                 }
             }
             #EPubReader {
+                .epubSpineVirtual {
+                    position: relative;
+                    width: 100%;
+                }
+                .epubSpineItem {
+                    position: absolute;
+                    top: 0;
+                    left: 0;
+                    width: 100%;
+                    display: flex;
+                    flex-direction: column;
+                    align-items: center;
+                    /* top-align so an empty row does not center then jump when HTML injects */
+                    justify-content: flex-start;
+                }
+                .epubChapterBreak {
+                    width: 100%;
+                    display: flex;
+                    align-items: center;
+                    gap: 0.75em;
+                    padding: 1.4em 12% 0.9em;
+                    pointer-events: none;
+                    &::before,
+                    &::after {
+                        content: "";
+                        flex: 1;
+                        height: 1px;
+                        background: currentColor;
+                        opacity: 0.22;
+                    }
+                    &:not(:has(.epubChapterBreakTitle))::after {
+                        display: none;
+                    }
+                }
+                .epubChapterBreakTitle {
+                    font-size: 0.72em;
+                    letter-spacing: 0.1em;
+                    text-transform: uppercase;
+                    opacity: 0.42;
+                    max-width: 50%;
+                    overflow: hidden;
+                    text-overflow: ellipsis;
+                    white-space: nowrap;
+                }
                 .readerSideList {
                     .location-cont {
                         li {
@@ -1444,27 +1488,27 @@ html{
                         }
                     }
                     &.forceFont {
-                        > .cont * {
+                        .htmlCont * {
                             font-family: var(--font-family) !important;
                         }
                     }
                     &.forceFontWeight {
-                        > .cont * {
+                        .htmlCont * {
                             font-weight: var(--font-weight) !important;
                         }
                     }
                     &.forceParaGap {
-                        > .cont p {
+                        .htmlCont p {
                             margin: var(--paragraph-gap) !important;
                         }
                     }
                     /** Book reader: `overrideEpubColors` + non-default font color. */
                     &.overrideEpubFontColor {
-                        > .cont *:not(a) {
+                        .htmlCont *:not(a) {
                             color: var(--epub-font-color) !important;
                         }
                     }
-                    &.overrideEpubLinkColor > .cont a {
+                    &.overrideEpubLinkColor .htmlCont a {
                         color: var(--epub-link-color) !important;
                     }
                     &.overrideEpubPageBg {
@@ -1475,15 +1519,15 @@ html{
                      * (exclude elements where background is usually intentional).
                      */
                     &.overrideEpubContentBg {
-                        > .cont {
+                        .htmlCont {
                             background-color: var(--epub-content-background-color) !important;
                         }
-                        > .cont *:not(pre):not(code):not(img):not(svg):not(video):not(canvas) {
+                        .htmlCont *:not(pre):not(code):not(img):not(svg):not(video):not(canvas) {
                             background-color: transparent !important;
                         }
                     }
                     &.limitImgHeight {
-                        > .cont {
+                        .htmlCont {
                             img,
                             svg:has(image) {
                                 max-height: calc(90vh - var(--titleBar-height)) !important;
@@ -1491,12 +1535,12 @@ html{
                         }
                     }
                     &.noIndent {
-                        > .cont p {
+                        .htmlCont p {
                             text-indent: 0 !important;
                         }
                     }
                     &.blendImage {
-                        > .cont {
+                        .htmlCont {
                             img,
                             svg:has(image) {
                                 filter: invert(1);
@@ -1505,7 +1549,7 @@ html{
                         }
                     }
                     &.textSelect {
-                        > .cont {
+                        .htmlCont {
                             * {
                                 user-select: text !important;
                             }
@@ -1573,7 +1617,7 @@ html{
                             }
                         }
                     }
-                    > .cont {
+                    .htmlCont {
                         display: flex;
                         flex-direction: column;
                         justify-content: center;

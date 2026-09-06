@@ -171,6 +171,10 @@
                 box-sizing: border-box;
                 color: var(--font-color);
 
+                &.continuousChapterProgress {
+                    width: calc(var(--button-width) * 1.5);
+                }
+
                 &::-webkit-outer-spin-button,
                 &::-webkit-inner-spin-button {
                     -webkit-appearance: none;

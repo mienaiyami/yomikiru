@@ -1,3 +1,7 @@
+import {
+    BookReaderSettingSection,
+    MangaReaderSettingSection,
+} from "@features/reader/components/ReaderSettingSection";
 import { faPlus, faSave, faSync, faTrash } from "@fortawesome/free-solid-svg-icons";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { useAppDispatch, useAppSelector } from "@store/hooks";
@@ -13,8 +17,6 @@ import {
     deleteReaderPresetWithFallback,
     getBookPresets,
     getMangaPresets,
-    patchLiveBookReaderSettings,
-    patchLiveMangaReaderSettings,
     selectPresetInContext,
     setPresetAutosave,
     updateBookPreset,
@@ -35,8 +37,8 @@ type PresetRow = {
 type ReaderPresetSectionViewProps = {
     presets: PresetRow[];
     presetId: string;
-    isCollapsed: boolean;
-    onToggleCollapsed: () => void;
+    /** Which live `settingsCollapsed.preset` map to toggle. */
+    itemType: "manga" | "book";
     onSelect: (id: string) => void;
     onAdd: (name: string) => void;
     onToggleAutosave: (id: string, next: boolean) => void;
@@ -51,8 +53,7 @@ const ReaderPresetSectionView = memo(
     ({
         presets,
         presetId,
-        isCollapsed,
-        onToggleCollapsed,
+        itemType,
         onSelect,
         onAdd,
         onToggleAutosave,
@@ -62,76 +63,62 @@ const ReaderPresetSectionView = memo(
         const { t } = useTranslation("reader");
         const [showPresetNameModal, setShowPresetNameModal] = useState(false);
         const preset = presets.find((p) => p.id === presetId);
+        const Section = itemType === "manga" ? MangaReaderSettingSection : BookReaderSettingSection;
 
         return (
             <>
-                <div className="settingItem">
-                    <div
-                        className={`name ${!isCollapsed ? "expanded " : ""}`}
-                        tabIndex={0}
-                        onKeyDown={(e) => {
-                            if (e.key === " " || e.key === "Enter") e.currentTarget.click();
-                        }}
-                        onClick={onToggleCollapsed}
-                    >
-                        {t("settings.preset")}
-                    </div>
-                    <div className="options">
-                        <div className="col">
-                            {presets.map((p, idx) => {
-                                const isSelected = presetId === p.id;
-                                return (
-                                    <button
-                                        key={p.id}
-                                        className={isSelected ? "optionSelected" : ""}
-                                        onClick={() => onSelect(p.id)}
-                                        title={p.name}
-                                    >
-                                        {idx < 5 ? (
-                                            <>
-                                                <code>{idx + 1}</code>{" "}
-                                            </>
-                                        ) : (
-                                            ""
-                                        )}
-                                        {p.name}
-                                    </button>
-                                );
-                            })}
-                            <div className="row stretch-content">
+                <Section title={t("settings.preset")} collapsedKey="preset">
+                    <div className="col">
+                        {presets.map((p, idx) => {
+                            const isSelected = presetId === p.id;
+                            return (
                                 <button
-                                    onClick={() => setShowPresetNameModal(true)}
-                                    title={t("presets.saveAsNew")}
+                                    key={p.id}
+                                    className={isSelected ? "optionSelected" : ""}
+                                    onClick={() => onSelect(p.id)}
+                                    title={p.name}
                                 >
-                                    <FontAwesomeIcon icon={faPlus} />
+                                    {idx < 5 ? (
+                                        <>
+                                            <code>{idx + 1}</code>{" "}
+                                        </>
+                                    ) : (
+                                        ""
+                                    )}
+                                    {p.name}
                                 </button>
-                                {preset && (
-                                    <>
-                                        <button
-                                            className={preset.autosave ? "optionSelected" : ""}
-                                            onClick={() => onToggleAutosave(preset.id, !preset.autosave)}
-                                            title={
-                                                preset.autosave
-                                                    ? t("presets.disableAutosave")
-                                                    : t("presets.enableAutosave")
-                                            }
-                                        >
-                                            <FontAwesomeIcon icon={faSync} />
+                            );
+                        })}
+                        <div className="row stretch-content">
+                            <button onClick={() => setShowPresetNameModal(true)} title={t("presets.saveAsNew")}>
+                                <FontAwesomeIcon icon={faPlus} />
+                            </button>
+                            {preset && (
+                                <>
+                                    <button
+                                        className={preset.autosave ? "optionSelected" : ""}
+                                        onClick={() => onToggleAutosave(preset.id, !preset.autosave)}
+                                        title={
+                                            preset.autosave
+                                                ? t("presets.disableAutosave")
+                                                : t("presets.enableAutosave")
+                                        }
+                                    >
+                                        <FontAwesomeIcon icon={faSync} />
+                                    </button>
+                                    <button onClick={onUpdateSelected} title={t("presets.updateSelected")}>
+                                        <FontAwesomeIcon icon={faSave} />
+                                    </button>
+                                    {presets.length > 1 && presetId && !isUserPresetId(presetId) && (
+                                        <button onClick={onDeleteSelected} title={t("presets.deletePreset")}>
+                                            <FontAwesomeIcon icon={faTrash} />
                                         </button>
-                                        <button onClick={onUpdateSelected} title={t("presets.updateSelected")}>
-                                            <FontAwesomeIcon icon={faSave} />
-                                        </button>
-                                        {presets.length > 1 && presetId && !isUserPresetId(presetId) && (
-                                            <button onClick={onDeleteSelected} title={t("presets.deletePreset")}>
-                                                <FontAwesomeIcon icon={faTrash} />
-                                            </button>
-                                        )}
-                                    </>
-                                )}
-                            </div>
+                                    )}
+                                </>
+                            )}
                         </div>
                     </div>
-                </div>
+                </Section>
                 {showPresetNameModal && (
                     <TextInputModal
                         title={t("presets.nameTitle")}
@@ -159,23 +146,12 @@ export const MangaReaderPresetSection = memo(() => {
     const presets = useAppSelector(getMangaPresets);
     const presetId = useAppSelector(selectLiveMangaPresetId);
     const readerSettings = useAppSelector(selectLiveMangaReaderSettings);
-    const isCollapsed = readerSettings.settingsCollapsed.preset ?? false;
 
     return (
         <ReaderPresetSectionView
             presets={presets}
             presetId={presetId}
-            isCollapsed={isCollapsed}
-            onToggleCollapsed={() =>
-                dispatch(
-                    patchLiveMangaReaderSettings({
-                        settingsCollapsed: {
-                            ...readerSettings.settingsCollapsed,
-                            preset: !isCollapsed,
-                        },
-                    }),
-                )
-            }
+            itemType="manga"
             onSelect={(id) => dispatch(selectPresetInContext(id))}
             onAdd={(name) => {
                 const newId = crypto.randomUUID();
@@ -217,23 +193,12 @@ export const BookReaderPresetSection = memo(() => {
     const presets = useAppSelector(getBookPresets);
     const presetId = useAppSelector(selectLiveBookPresetId);
     const epubReaderSettings = useAppSelector(selectLiveBookReaderSettings);
-    const isCollapsed = epubReaderSettings.settingsCollapsed.preset ?? false;
 
     return (
         <ReaderPresetSectionView
             presets={presets}
             presetId={presetId}
-            isCollapsed={isCollapsed}
-            onToggleCollapsed={() =>
-                dispatch(
-                    patchLiveBookReaderSettings({
-                        settingsCollapsed: {
-                            ...epubReaderSettings.settingsCollapsed,
-                            preset: !isCollapsed,
-                        },
-                    }),
-                )
-            }
+            itemType="book"
             onSelect={(id) => dispatch(selectPresetInContext(id))}
             onAdd={(name) => {
                 const newId = crypto.randomUUID();

@@ -328,14 +328,6 @@ export const SETTINGS_TARGETS_STATIC: readonly SettingsTarget[] = [
         "otherSettings.epubAutoFocusChapter",
     ),
     otherSetting(
-        "setting:epub-load-by-chapter",
-        "#settings-epubLoadByChapter",
-        "otherSettings.epubLoadByChapter",
-        {
-            contentPath: ["otherSettings.epubLoadByChapterDesc1", "otherSettings.epubLoadByChapterDesc2"],
-        },
-    ),
-    otherSetting(
         "setting:epub-disable-text-select",
         "#settings-epubDisableTextSelect",
         "otherSettings.epubDisableTextSelect",
@@ -415,6 +407,10 @@ export const SETTINGS_TARGETS_STATIC: readonly SettingsTarget[] = [
         contentPath: "pdfScale",
     }),
     usage("usage:anilist", "#settings-usage-anilist", "anilist.title", { contentPath: "anilist" }),
+    usage("usage:epub-continuous-scroll", "#settings-usage-epubContinuousScroll", "epubContinuousScroll.title", {
+        keywords: ["epub", "scroll", "chapters"],
+        contentPath: "epubContinuousScroll",
+    }),
     usage("usage:epub-background", "#settings-usage-epubBackground", "epubBackground.title", {
         contentPath: "epubBackground",
     }),

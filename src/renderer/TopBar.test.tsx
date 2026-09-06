@@ -1,4 +1,7 @@
+import { makeBookItem, SAMPLE_BOOK_LINK } from "@test/fixtures/libraryItem";
 import { act, fireEvent } from "@testing-library/react";
+import { USER_PRESET_BOOK_ID } from "@utils/readerPresets";
+import { defaultBookReaderSettings } from "@utils/readerSettingsSchema";
 import { describe, expect, it, vi } from "vitest";
 import { renderWithProviders } from "../test/renderWithProviders";
 import { setLibraryScanStatus } from "./store/ui";
@@ -40,6 +43,33 @@ const walkingStatus = {
     addIndex: 0,
     addTotal: 0,
 };
+
+describe("TopBar book progress", () => {
+    it("widens continuous book progress for decimal precision", () => {
+        const book = makeBookItem();
+        const { getByRole } = renderWithProviders(<TopBar />, {
+            preloadedState: {
+                library: { items: { [SAMPLE_BOOK_LINK]: book }, metadata: {}, loading: false, error: null },
+                reader: {
+                    type: "book",
+                    link: SAMPLE_BOOK_LINK,
+                    content: book as typeof book & { type: "book" },
+                    active: true,
+                    loading: null,
+                    presetSession: {
+                        itemLink: SAMPLE_BOOK_LINK,
+                        presetId: USER_PRESET_BOOK_ID,
+                        settings: { ...defaultBookReaderSettings, continuousChapters: true },
+                    },
+                    epubChapterId: "chap-1",
+                    epubElementQueryString: "",
+                },
+            },
+        });
+
+        expect(getByRole("spinbutton").classList.contains("continuousChapterProgress")).toBe(true);
+    });
+});
 
 describe("TopBar library scan status", () => {
     it("hides the scan control when idle", () => {

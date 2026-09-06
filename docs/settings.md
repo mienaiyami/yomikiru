@@ -102,7 +102,7 @@ Subkey `appSettings.epubReaderSettings`. Schema: `bookReaderSettingsSchema` in [
 All fields have JSDoc. Behavioural notes:
 
 - **`useDefault_*` toggles** — every typography and color property has a paired `useDefault_` boolean. When `true`, the EPUB's own CSS wins; `false` applies the override. This lets you override only what you care about.
-- **`loadOneChapter`** — renders only the current spine chapter in the DOM. Lower memory, but loses continuous scroll across chapters.
+- **`continuousChapters`** — experimental chapter-flow behavior stored in book reader settings and presets. The current EPUB renderer uses one virtualized vertical scroll; a missing or `false` value keeps chapter-at-a-time behavior. Changing it captures the current reading place and remounts the reader. Old `loadOneChapter` values are stripped and ignored.
 - **`overrideEpubColors`** — injects a stylesheet that wins over EPUB-authored colors for books that hard-code dark/light themes with `!important` or inline styles.
 - **`contentFrame`** — separates the text column background from the page background so you can have a solid reading area with a visible wallpaper around it.
 - **`backgroundImage`** — wallpaper image fixed behind the content; stays in place when zooming text. `layer` is an additional color overlay between the wallpaper and the text column.

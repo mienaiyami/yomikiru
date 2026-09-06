@@ -25,6 +25,7 @@ describe("parseMangaPreset / parseBookPreset", () => {
         const parsed = parseBookPreset({ type: "book", id: "b", name: "B" });
         expect(parsed?.type).toBe("book");
         expect(parsed?.id).toBe("b");
+        expect(parsed?.data.continuousChapters).toBe(false);
     });
 });
 

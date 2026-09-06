@@ -1,3 +1,4 @@
+import { BookReaderSettingSection } from "@features/reader/components/ReaderSettingSection";
 import { useAppDispatch, useAppSelector } from "@store/hooks";
 import { selectLiveBookReaderSettings } from "@store/reader";
 import { patchLiveBookReaderSettings } from "@store/readerPresets";
@@ -28,155 +29,139 @@ const ContentFrameSettings = memo(() => {
     ];
 
     return (
-        <div className="settingItem">
-            <div
-                className={`name ${!epubReaderSettings.settingsCollapsed.contentFrame ? "expanded " : ""}`}
-                onKeyDown={(e) => {
-                    if (e.key === " " || e.key === "Enter") e.currentTarget.click();
-                }}
-                onClick={() => {
+        <BookReaderSettingSection
+            title={t("settings.contentFrame")}
+            collapsedKey="contentFrame"
+            optionsClassName="col"
+        >
+            <InputCheckboxColor
+                checked={!cf.useDefault_contentBackgroundColor}
+                onChangeCheck={(e) => {
                     dispatch(
                         patchLiveBookReaderSettings({
-                            settingsCollapsed: {
-                                ...epubReaderSettings.settingsCollapsed,
-                                contentFrame: !epubReaderSettings.settingsCollapsed.contentFrame,
+                            contentFrame: {
+                                ...cf,
+                                useDefault_contentBackgroundColor: !e.currentTarget.checked,
                             },
                         }),
                     );
                 }}
-            >
-                {t("settings.contentFrame")}
-            </div>
-            <div className="options col">
-                <InputCheckboxColor
-                    checked={!cf.useDefault_contentBackgroundColor}
-                    onChangeCheck={(e) => {
+                value={colorUtils.new(cf.contentBackgroundColor)}
+                timeout={[
+                    500,
+                    (value) =>
                         dispatch(
                             patchLiveBookReaderSettings({
                                 contentFrame: {
                                     ...cf,
-                                    useDefault_contentBackgroundColor: !e.currentTarget.checked,
+                                    contentBackgroundColor: value.hexa(),
                                 },
                             }),
-                        );
-                    }}
-                    value={colorUtils.new(cf.contentBackgroundColor)}
-                    timeout={[
-                        500,
-                        (value) =>
-                            dispatch(
-                                patchLiveBookReaderSettings({
-                                    contentFrame: {
-                                        ...cf,
-                                        contentBackgroundColor: value.hexa(),
-                                    },
-                                }),
-                            ),
-                    ]}
-                    paraBefore={t("settings.contentBackgroundColor")}
-                />
-                <InputNumber
-                    value={cf.paddingInline}
-                    min={0}
-                    max={200}
-                    timeout={[
-                        1000,
-                        (value) =>
-                            dispatch(
-                                patchLiveBookReaderSettings({
-                                    contentFrame: {
-                                        ...cf,
-                                        paddingInline: value,
-                                    },
-                                }),
-                            ),
-                    ]}
-                    paraBefore={t("settings.horizontalSpacing")}
-                    paraAfter={t("settings.pxUnit")}
-                />
-                <InputCheckbox
-                    checked={border.enabled}
-                    onChange={(e) => {
+                        ),
+                ]}
+                paraBefore={t("settings.contentBackgroundColor")}
+            />
+            <InputNumber
+                value={cf.paddingInline}
+                min={0}
+                max={200}
+                timeout={[
+                    1000,
+                    (value) =>
                         dispatch(
                             patchLiveBookReaderSettings({
                                 contentFrame: {
                                     ...cf,
-                                    border: {
-                                        ...border,
-                                        enabled: e.currentTarget.checked,
-                                    },
+                                    paddingInline: value,
                                 },
                             }),
-                        );
-                    }}
-                    labelAfter={t("settings.contentBorder")}
-                />
-                <InputNumber
-                    value={border.width}
-                    min={0}
-                    max={32}
-                    disabled={!border.enabled}
-                    timeout={[
-                        1000,
-                        (value) =>
-                            dispatch(
-                                patchLiveBookReaderSettings({
-                                    contentFrame: {
-                                        ...cf,
-                                        border: {
-                                            ...border,
-                                            width: value,
-                                        },
-                                    },
-                                }),
-                            ),
-                    ]}
-                    paraBefore={t("settings.borderWidth")}
-                    paraAfter={t("settings.pxUnit")}
-                />
-                <InputSelect
-                    labeled
-                    disabled={!border.enabled}
-                    value={border.style}
-                    onChange={(value) => {
+                        ),
+                ]}
+                paraBefore={t("settings.horizontalSpacing")}
+                paraAfter={t("settings.pxUnit")}
+            />
+            <InputCheckbox
+                checked={border.enabled}
+                onChange={(e) => {
+                    dispatch(
+                        patchLiveBookReaderSettings({
+                            contentFrame: {
+                                ...cf,
+                                border: {
+                                    ...border,
+                                    enabled: e.currentTarget.checked,
+                                },
+                            },
+                        }),
+                    );
+                }}
+                labelAfter={t("settings.contentBorder")}
+            />
+            <InputNumber
+                value={border.width}
+                min={0}
+                max={32}
+                disabled={!border.enabled}
+                timeout={[
+                    1000,
+                    (value) =>
                         dispatch(
                             patchLiveBookReaderSettings({
                                 contentFrame: {
                                     ...cf,
                                     border: {
                                         ...border,
-                                        style: value as BookReaderSettings["contentFrame"]["border"]["style"],
+                                        width: value,
                                     },
                                 },
                             }),
-                        );
-                    }}
-                    options={borderStyleOptions}
-                    paraBefore={t("settings.borderStyle")}
-                />
-                <InputColor
-                    labeled
-                    value={colorUtils.new(border.color)}
-                    disabled={!border.enabled}
-                    timeout={[
-                        500,
-                        (value) =>
-                            dispatch(
-                                patchLiveBookReaderSettings({
-                                    contentFrame: {
-                                        ...cf,
-                                        border: {
-                                            ...border,
-                                            color: value.hexa(),
-                                        },
+                        ),
+                ]}
+                paraBefore={t("settings.borderWidth")}
+                paraAfter={t("settings.pxUnit")}
+            />
+            <InputSelect
+                labeled
+                disabled={!border.enabled}
+                value={border.style}
+                onChange={(value) => {
+                    dispatch(
+                        patchLiveBookReaderSettings({
+                            contentFrame: {
+                                ...cf,
+                                border: {
+                                    ...border,
+                                    style: value as BookReaderSettings["contentFrame"]["border"]["style"],
+                                },
+                            },
+                        }),
+                    );
+                }}
+                options={borderStyleOptions}
+                paraBefore={t("settings.borderStyle")}
+            />
+            <InputColor
+                labeled
+                value={colorUtils.new(border.color)}
+                disabled={!border.enabled}
+                timeout={[
+                    500,
+                    (value) =>
+                        dispatch(
+                            patchLiveBookReaderSettings({
+                                contentFrame: {
+                                    ...cf,
+                                    border: {
+                                        ...border,
+                                        color: value.hexa(),
                                     },
-                                }),
-                            ),
-                    ]}
-                    paraBefore={t("settings.borderColor")}
-                />
-            </div>
-        </div>
+                                },
+                            }),
+                        ),
+                ]}
+                paraBefore={t("settings.borderColor")}
+            />
+        </BookReaderSettingSection>
     );
 });
 

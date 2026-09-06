@@ -7,6 +7,7 @@ import Reader from "@features/reader/manga/Reader";
 import Settings from "@features/settings/Settings";
 import { useAppContext } from "@renderer/App";
 import { useAppSelector } from "@store/hooks";
+import { selectLiveBookReaderSettings } from "@store/reader";
 import InputColorReal from "@ui/InputColorReal";
 import MenuList from "@ui/MenuList";
 import type { ReactElement } from "react";
@@ -20,6 +21,8 @@ const Main = (): ReactElement => {
         (store) => ({
             type: store.reader.type,
             link: store.reader.link,
+            continuousChapters:
+                store.reader.type === "book" && selectLiveBookReaderSettings(store).continuousChapters,
         }),
         shallowEqual,
     );
@@ -44,7 +47,14 @@ const Main = (): ReactElement => {
             {!anilistToken && isAniLoginOpen && <AniLogin />}
             {(reader.link || galleryAnilistCtx) && isAniSearchOpen && <AnilistSearch />}
             {(reader.link || galleryAnilistCtx) && isAniEditOpen && <AnilistEdit />}
-            {reader.link && (reader.type === "manga" ? <Reader /> : reader.type === "book" ? <EPubReader /> : "")}
+            {reader.link &&
+                (reader.type === "manga" ? (
+                    <Reader />
+                ) : reader.type === "book" ? (
+                    <EPubReader key={`${reader.link}:${reader.continuousChapters ? "c" : "1"}`} />
+                ) : (
+                    ""
+                ))}
         </div>
     );
 };

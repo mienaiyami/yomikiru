@@ -6,6 +6,7 @@ import {
     debounce,
     findCover,
     getCSSPath,
+    getCSSPathWithin,
     randomString,
     scrollChildInContainer,
     sleep,
@@ -32,6 +33,34 @@ describe("getCSSPath", () => {
         const el = document.querySelector("section p:last-child");
         expect(el).toBeTruthy();
         expect(getCSSPath(el!)).toContain("p:nth-of-type(2)");
+    });
+});
+
+describe("getCSSPathWithin", () => {
+    afterEach(() => {
+        document.body.innerHTML = "";
+    });
+
+    it("returns a path relative to the chapter root, not the document", () => {
+        document.body.innerHTML = `<div id="epub-ch1"><p>a</p><p id="keep">b</p></div>`;
+        const root = document.getElementById("epub-ch1");
+        const el = document.getElementById("keep");
+        expect(root && el).toBeTruthy();
+        expect(getCSSPathWithin(el!, root!)).toBe("p#keep");
+    });
+
+    it("returns empty when the node is the root", () => {
+        document.body.innerHTML = `<div id="epub-ch1"><p>a</p></div>`;
+        const root = document.getElementById("epub-ch1");
+        expect(root).toBeTruthy();
+        expect(getCSSPathWithin(root!, root!)).toBe("");
+    });
+
+    it("matches getCSSPath when root is null", () => {
+        document.body.innerHTML = `<section><p>a</p><p>b</p></section>`;
+        const el = document.querySelector("section p:last-child");
+        expect(el).toBeTruthy();
+        expect(getCSSPath(el!)).toBe(getCSSPathWithin(el!, null));
     });
 });
 

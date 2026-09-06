@@ -210,7 +210,11 @@ Each EPUB spine item is rendered as an `<HTMLPart>` component ([`epub/HTMLPart.t
 - Intercepts `<a>` clicks to navigate to another spine item or scroll to a fragment.
 - Footnote links open a modal (`FootNodeModal`) instead of navigating away.
 
-`loadOneChapter` mode: only the current chapter is rendered in the DOM (lower memory). Scrolling to the next chapter changes `currentChapter.index`.
+Default is **chapter-at-a-time**: one `HTMLPart` for the current spine item. **Continuous chapters** is an independent, experimental book reader setting. When on, the current EPUB renderer presents the spine as one scroll and `@tanstack/react-virtual` keeps a window of spine `HTMLPart`s in `#EPubReader`. Unmeasured row height is proportional to spine file size; a small item overscan keeps the DOM window small. One giant XHTML file is not split.
+
+Place after font/size/zen pins the on-screen paragraph through remasure. Top-bar `%` uses two decimal places. Native scrollbar total height can still look wrong. Details: [`epub/continuous-scroll.md`](epub/continuous-scroll.md).
+
+The in-reader **Continuous chapters (experimental)** section updates `BookReaderSettings.continuousChapters` and remounts `EPubReader` after capturing the live reading place. The option is part of book reader presets; per-title preset memory supplies title-specific behavior when enabled. It is not part of the Settings overlay catalog. Collapse state for that section lives in `epubReaderSettings.settingsCollapsed.continuousChapters`.
 
 ### EPUB Stylesheets and Color Override
 
@@ -237,11 +241,11 @@ Position is tracked as a CSS selector string pointing to the topmost visible ele
 `makeScrollPos` scans `document.elementsFromPoint` at the top of the scroll area.
 On chapter load, `setProgressPosition(queryString)` restores the scroll anchor.
 
-Book progress percentage (`[0-100]`) is shown in the TopBar progress input and derived from spine index / total spine length.
+Book progress percentage (`[0-100]`) is shown in the TopBar progress input. Chapter-at-a-time uses in-chapter scroll. Continuous mode derives whole-book % from extracted spine file sizes plus in-chapter fraction (not virtualizer pixel height). Locators stay `chapterId` + CSS `position`.
 
 ### Find in Page
 
-[`epub/components/FindInPage.tsx`](epub/components/FindInPage.tsx) — searches the rendered HTML content for a string using the browser's `querySelector` and highlight logic. Forward/backward navigation moves through matches.
+[`epub/components/FindInPage.tsx`](epub/components/FindInPage.tsx) — case-insensitive substring search in the **current spine chapter** only (Range/TreeWalker highlights; does not replace `innerHTML`). Next/prev cycle matches in that chapter. Whole-book find is not implemented yet (`collectSpineFindMatches` is the planned spine walk).
 
 ### Notes and Highlights
 

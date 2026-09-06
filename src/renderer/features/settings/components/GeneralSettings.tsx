@@ -348,25 +348,6 @@ const GeneralSettings: React.FC = () => {
                         labelAfter={t("otherSettings.epubAutoFocusChapter")}
                     />
                 </div>
-                <div className="toggleItem" id="settings-epubLoadByChapter">
-                    <InputCheckbox
-                        checked={appSettings.epubReaderSettings.loadOneChapter}
-                        className="noBG"
-                        onChange={(e) => {
-                            dispatch(
-                                setEpubReaderSettings({
-                                    loadOneChapter: e.currentTarget.checked,
-                                }),
-                            );
-                        }}
-                        labelAfter={t("otherSettings.epubLoadByChapter")}
-                    />
-                    <div className="desc">
-                        {t("otherSettings.epubLoadByChapterDesc1")}
-                        <br />
-                        {t("otherSettings.epubLoadByChapterDesc2")}
-                    </div>
-                </div>
                 <div className="toggleItem" id="settings-epubDisableTextSelect">
                     <InputCheckbox
                         checked={!appSettings.epubReaderSettings.textSelect}
