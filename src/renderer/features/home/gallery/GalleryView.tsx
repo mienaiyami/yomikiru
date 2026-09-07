@@ -624,6 +624,7 @@ const GalleryView: React.FC = () => {
             <ListNavigator.Provider
                 items={tabItems}
                 filterFn={filterManga}
+                persistFilterOnItemsChange
                 renderItem={renderMangaItem}
                 emptyMessage={emptyMessage}
                 onContextMenu={handleListContextMenu}
