@@ -23,6 +23,7 @@ import { selectModalOverlayOpen, setAnilistSearchOpen } from "@store/ui";
 import { confirmWhenMany, dialogUtils } from "@utils/dialog";
 import { formatUtils } from "@utils/file";
 import {
+    filterGalleryItemsByTracking,
     selectBookmarkedItems,
     selectFavouritedItems,
     sortContinueReadingItems,
@@ -130,6 +131,25 @@ const GalleryView: React.FC = () => {
         [dispatch],
     );
 
+    const activeTrackingFilter = appSettings.galleryTrackingFilter;
+    const setTrackingFilter = useCallback(
+        (filter: AppSettings["galleryTrackingFilter"]) => {
+            dispatch(setAppSettings({ galleryTrackingFilter: filter }));
+        },
+        [dispatch],
+    );
+    const anilistTrackerItemLinks = useMemo(
+        () =>
+            new Set(
+                trackerEntries
+                    .filter((tracker) => tracker.provider === "anilist")
+                    .map((tracker) => tracker.itemLink),
+            ),
+        [trackerEntries],
+    );
+    // avoid leaving a hidden tracker filter active after the AniList session ends
+    const effectiveTrackingFilter = anilistToken ? activeTrackingFilter : "all";
+
     const setTagFilter = useCallback(
         (next: GalleryTagFilterSelection) => {
             dispatch(setAppSettings({ galleryTagFilterIds: signedTagFilterIdsFromSelection(next) }));
@@ -175,14 +195,16 @@ const GalleryView: React.FC = () => {
     /**
      * Library slice for `galleryActiveTab`. `continue-reading` uses a fixed
      * last-read order; `library`, `bookmarks`, and `favourites` use {@link sortGalleryItems}.
-     * `galleryTypeFilter` is applied first, then signed `galleryTagFilterIds` (include OR, exclude NOR).
+     * `galleryTypeFilter` is applied first, then signed `galleryTagFilterIds` (include OR, exclude NOR),
+     * and finally AniList tracker membership while an AniList session is present.
      */
     const tabItems = useMemo<LibraryItemWithProgress[]>(() => {
         const typed = Object.values(library).filter(
             (item): item is LibraryItemWithProgress =>
                 item !== null && (activeTypeFilter === "all" || item.type === activeTypeFilter),
         );
-        const all = itemsMatchingTagFilter(typed, tagAssignments, filterSelection);
+        const tagged = itemsMatchingTagFilter(typed, tagAssignments, filterSelection);
+        const all = filterGalleryItemsByTracking(tagged, anilistTrackerItemLinks, effectiveTrackingFilter);
         const titleOf = (item: LibraryItemWithProgress) => displayByLink[item.link]?.title ?? item.title;
 
         if (activeTab === "continue-reading") {
@@ -210,6 +232,8 @@ const GalleryView: React.FC = () => {
         library,
         activeTab,
         activeTypeFilter,
+        effectiveTrackingFilter,
+        anilistTrackerItemLinks,
         filterSelection,
         tagAssignments,
         bookmarks,
@@ -221,11 +245,11 @@ const GalleryView: React.FC = () => {
     const tabIds = useMemo(() => tabItems.map((it) => it.link), [tabItems]);
     const selection = useMultiSelect<string>(tabIds);
 
-    /* clear when the gallery tab or type/tag filter changes; extra deps are triggers */
+    /* clear when the gallery tab or a visible-results filter changes; extra deps are triggers */
     // biome-ignore lint/correctness/useExhaustiveDependencies: clear selection on tab/filter change
     useEffect(() => {
         selection.clearSelection();
-    }, [activeTab, activeTypeFilter, activeTagFilterKey, selection.clearSelection]);
+    }, [activeTab, activeTypeFilter, activeTagFilterKey, effectiveTrackingFilter, selection.clearSelection]);
 
     /**
      * Open details for a tile. Captures inner tab `"bookmarks"` only when
@@ -639,6 +663,9 @@ const GalleryView: React.FC = () => {
                     tagCatalog={tagCatalog}
                     tagFilter={filterSelection}
                     onTagFilterChange={setTagFilter}
+                    showTrackingFilter={Boolean(anilistToken)}
+                    trackingFilter={activeTrackingFilter}
+                    onTrackingFilterChange={setTrackingFilter}
                     hidden={detailsOpen}
                     hideSort={activeTab === "continue-reading"}
                     selection={selectionToolbarProps}

@@ -1,6 +1,6 @@
 import home from "@common/i18n/locales/en/home.json";
 import { renderWithProviders } from "@test/renderWithProviders";
-import { fireEvent, waitFor } from "@testing-library/react";
+import { fireEvent, screen, waitFor } from "@testing-library/react";
 import { describe, expect, it, vi } from "vitest";
 import GalleryView from "./GalleryView";
 
@@ -25,5 +25,23 @@ describe("GalleryView", () => {
         fireEvent.click(getByRole("button", { name: home.gallery.tabs.library.title }));
 
         await waitFor(() => expect(searchInput.value).toBe("needle"));
+    });
+
+    it("shows the tracking filter only for a signed-in AniList session", () => {
+        const trackingButtonName = home.gallery.trackingFilter.all.ariaLabel;
+        renderWithProviders(<GalleryView />);
+        expect(screen.queryByRole("button", { name: trackingButtonName })).not.toBeInTheDocument();
+
+        const { store } = renderWithProviders(<GalleryView />, {
+            preloadedState: {
+                anilist: {
+                    token: "test-token",
+                    currentListEntry: null,
+                    galleryTrackContext: null,
+                },
+            },
+        });
+        fireEvent.click(screen.getByRole("button", { name: trackingButtonName }));
+        expect(store.getState().appSettings.galleryTrackingFilter).toBe("tracked");
     });
 });

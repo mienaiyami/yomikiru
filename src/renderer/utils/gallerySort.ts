@@ -1,5 +1,8 @@
 import type { LibraryItemWithProgress } from "@common/types/db";
 
+/** Persisted gallery filter for AniList tracker membership. */
+export type GalleryTrackingFilter = AppSettings["galleryTrackingFilter"];
+
 /**
  * Link-keyed bookmark lists used to derive the `bookmarks` gallery tab.
  * Matches the manga/book maps on the Redux bookmarks slice (`null` = empty).
@@ -52,6 +55,20 @@ export const sortContinueReadingItems = (items: LibraryItemWithProgress[]): Libr
     const sorted = [...items];
     sorted.sort((a, b) => lastReadTime(b) - lastReadTime(a));
     return sorted;
+};
+
+/**
+ * Narrows gallery items by their AniList tracker membership.
+ * The all mode preserves the input reference so unfiltered gallery work is not repeated.
+ */
+export const filterGalleryItemsByTracking = <T extends { link: string }>(
+    items: T[],
+    trackedItemLinks: ReadonlySet<string>,
+    trackingFilter: GalleryTrackingFilter,
+): T[] => {
+    if (trackingFilter === "all") return items;
+    const shouldIncludeTracked = trackingFilter === "tracked";
+    return items.filter((item) => trackedItemLinks.has(item.link) === shouldIncludeTracked);
 };
 
 /** Bookmark list for a library item, or empty/`null` when it has none. */

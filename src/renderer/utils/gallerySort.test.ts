@@ -1,12 +1,33 @@
 import { makeBookItem, makeMangaItem } from "@test/fixtures/libraryItem";
 import { describe, expect, it } from "vitest";
 import {
+    filterGalleryItemsByTracking,
     type GalleryBookmarkMaps,
     selectBookmarkedItems,
     selectFavouritedItems,
     sortContinueReadingItems,
     sortGalleryItems,
 } from "./gallerySort";
+
+describe("filterGalleryItemsByTracking", () => {
+    const items = [
+        makeMangaItem({ title: "Tracked", link: "tracked" }, null),
+        makeBookItem({ id: 2, title: "Untracked", link: "untracked" }, null),
+        makeMangaItem({ id: 3, title: "Also tracked", link: "also-tracked" }, null),
+    ];
+    const trackedItemLinks = new Set(["tracked", "also-tracked"]);
+
+    it("keeps every item for the all mode and narrows the other tracking modes", () => {
+        expect(filterGalleryItemsByTracking(items, trackedItemLinks, "all")).toBe(items);
+        expect(filterGalleryItemsByTracking(items, trackedItemLinks, "tracked").map((item) => item.link)).toEqual([
+            "tracked",
+            "also-tracked",
+        ]);
+        expect(
+            filterGalleryItemsByTracking(items, trackedItemLinks, "untracked").map((item) => item.link),
+        ).toEqual(["untracked"]);
+    });
+});
 
 describe("sortGalleryItems", () => {
     const items = [

@@ -134,6 +134,21 @@
                 "title": "Includes EPUB books. PDF is not included."
             }
         },
+        "trackingFilter": {
+            "ariaLabel": "AniList tracking filter",
+            "all": {
+                "ariaLabel": "Tracking filter: all titles",
+                "tooltip": "Tracking filter: all titles"
+            },
+            "tracked": {
+                "ariaLabel": "Tracking filter: tracked titles",
+                "tooltip": "Tracking filter: tracked titles"
+            },
+            "untracked": {
+                "ariaLabel": "Tracking filter: untracked titles",
+                "tooltip": "Tracking filter: untracked titles"
+            }
+        },
         "toolbar": {
             "searchPlaceholder": "Type to Search",
             "viewTooltip": "View: {{mode}}",

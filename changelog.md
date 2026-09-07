@@ -24,6 +24,7 @@
 - feat: Optional **Remember preset per title** (Settings -> Reader presets, on by default). Each title can keep its own reader layout (so manga and manhwa can differ). Opening a title restores the last preset used there; in-reader changes stay on that title. Select in Reader presets remains the default for titles that do not have one yet.
 
 - feat: Gallery tag filter is a three-state control per tag (off, include, exclude) in one list. Include still means any of those tags; exclude hides titles that have any of the excluded tags (untagged titles stay visible when you only exclude). The closed control shows the tag name when only one is included or excluded, otherwise `+n -m`, plus the same colour-mark grid (circles for include, triangles for exclude). Saved as signed ids in `galleryTagFilterIds` so older include-only lists keep working.
+- feat: When AniList is connected, the gallery toolbar now has a remembered three-state tracking filter for all titles, tracked titles, and untracked titles. It stays inactive while signed out so a hidden filter never narrows the gallery.
 - fix: Gallery search now stays active while switching between Continue, Library, Bookmarks, and Favourites.
 - fix: The custom tag colour picker now sits beside the tag name when creating or renaming a tag, separate from the fixed-colour preset row.
 - fix: Unpinned reader side list no longer covers the left edge of pages when zen mode is off. The reading area is inset by the closed-list peek (the resize strip); zen mode and a pinned list are unchanged. (#551)

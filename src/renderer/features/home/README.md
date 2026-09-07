@@ -153,6 +153,7 @@ Contains:
 - Tab switcher (`galleryActiveTab`).
 - Type filter (`galleryTypeFilter`), after a vertical divider.
 - Tag filter (`GalleryTagFilterBar` / `InputMultiSelect`) when the catalog is non-empty. Per-tag cycle off / include / exclude; include is OR, exclude hides titles with any of those tags. Empty include and exclude means no tag constraint. Persisted as signed `galleryTagFilterIds` (positive include, negative exclude).
+- AniList tracking filter (`GalleryTrackingFilterBar`) when AniList is connected. It cycles all titles, tracked titles, and untracked titles, and persists as `galleryTrackingFilter`. A saved non-all filter is inactive while AniList is disconnected so results are not filtered by a hidden control.
 - Search input, right-aligned after sort / view / grid-size (hidden when `hideSearch`). Height and action buttons match classic home tools (`--button-width`).
 - Sort controls when the tab uses `gallerySortBy` / `gallerySortType` (hidden when `hideSort`).
 - Display mode toggle (`galleryDisplayMode`).

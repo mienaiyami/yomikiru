@@ -69,6 +69,25 @@ describe("settingSchema library keys", () => {
         expect(repaired.data.galleryTagFilterIds).toEqual([]);
     });
 
+    it("fills the gallery tracking filter with all titles when missing from settings.json", () => {
+        const repaired = repairZodInputWithDefaults(settingSchema, {}, (path) => {
+            let cur: unknown = defaultSettings;
+            for (const part of path) {
+                if (cur === null || typeof cur !== "object" || !(String(part) in cur)) return undefined;
+                cur = (cur as Record<string, unknown>)[String(part)];
+            }
+            return cur;
+        });
+        expect(repaired.success).toBe(true);
+        if (!repaired.success) return;
+        expect(repaired.data.galleryTrackingFilter).toBe("all");
+    });
+
+    it("preserves a saved gallery tracking filter", () => {
+        const parsed = settingSchema.parse({ ...defaultSettings, galleryTrackingFilter: "untracked" });
+        expect(parsed.galleryTrackingFilter).toBe("untracked");
+    });
+
     it("keeps signed galleryTagFilterIds (include and exclude) when repairing", () => {
         const repaired = repairZodInputWithDefaults(settingSchema, { galleryTagFilterIds: [1, -2] }, (path) => {
             let cur: unknown = defaultSettings;

@@ -15,9 +15,11 @@ import Popover from "@renderer/components/ui/Popover";
 import { PAGE_SEARCH_PRIORITY } from "@renderer/hooks/usePageSearchFocus";
 import { setAppSettings } from "@store/appSettings";
 import { useAppDispatch, useAppSelector } from "@store/hooks";
+import type { GalleryTrackingFilter } from "@utils/gallerySort";
 import { useTranslation } from "react-i18next";
 import GalleryTabBar, { type GalleryTabId } from "./GalleryTabBar";
 import GalleryTagFilterBar, { type GalleryTagFilterSelection } from "./GalleryTagFilterBar";
+import GalleryTrackingFilterBar from "./GalleryTrackingFilterBar";
 import GalleryTypeFilterBar, { type GalleryTypeFilterId } from "./GalleryTypeFilterBar";
 
 export type { GalleryTabId, GalleryTagFilterSelection, GalleryTypeFilterId };
@@ -45,6 +47,12 @@ export type GalleryToolbarProps = {
     tagFilter: GalleryTagFilterSelection;
     /** Persist a new tag filter selection (parent encodes signed ids). */
     onTagFilterChange: (next: GalleryTagFilterSelection) => void;
+    /** Whether an AniList session makes the tracker-membership filter available. */
+    showTrackingFilter: boolean;
+    /** Current `galleryTrackingFilter`. */
+    trackingFilter: GalleryTrackingFilter;
+    /** Persist a new `galleryTrackingFilter`. */
+    onTrackingFilterChange: (filter: GalleryTrackingFilter) => void;
     /** Hide the search field when the active tab does not query-filter. */
     hideSearch?: boolean;
     /** Hide sort when the active tab does not use `gallerySortBy` / `gallerySortType`. */
@@ -85,6 +93,9 @@ const GalleryToolbar: React.FC<GalleryToolbarProps> = ({
     tagCatalog,
     tagFilter,
     onTagFilterChange,
+    showTrackingFilter,
+    trackingFilter,
+    onTrackingFilterChange,
     hideSearch,
     hideSort,
     hidden,
@@ -258,6 +269,15 @@ const GalleryToolbar: React.FC<GalleryToolbarProps> = ({
                         catalog={tagCatalog}
                         tagFilter={tagFilter}
                         onFilterChange={onTagFilterChange}
+                    />
+                </>
+            ) : null}
+            {showTrackingFilter ? (
+                <>
+                    <span className="toolbarDivider" aria-hidden="true" />
+                    <GalleryTrackingFilterBar
+                        trackingFilter={trackingFilter}
+                        onFilterChange={onTrackingFilterChange}
                     />
                 </>
             ) : null}

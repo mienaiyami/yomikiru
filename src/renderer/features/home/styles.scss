@@ -99,7 +99,8 @@
             }
         }
 
-        .galleryTagFilterBar {
+        .galleryTagFilterBar,
+        .galleryTrackingFilterBar {
             flex: 0 0 auto;
             display: inline-flex;
             align-items: stretch;
@@ -136,6 +137,28 @@
 
                 &.is-open,
                 &.has-selection {
+                    opacity: 1;
+                    background-color: var(--btn-color-focus);
+                }
+            }
+
+            .galleryTrackingFilterButton:not(#dummy#dummy) {
+                width: 100%;
+                min-width: calc(var(--galleryToolbarRowHeight) - 4px);
+                height: 100%;
+                padding: 0 0.7em;
+                border: none;
+                border-radius: 4px;
+                background: none;
+                color: var(--font-color);
+                opacity: 0.78;
+
+                &:hover:not(:disabled) {
+                    opacity: 1;
+                    background-color: var(--topBar-btn-hover);
+                }
+
+                &.active {
                     opacity: 1;
                     background-color: var(--btn-color-focus);
                 }

@@ -20,6 +20,8 @@ const sortByEnum = z.union([z.literal("name"), z.literal("date")]);
 const viewModeEnum = z.union([z.literal("classic"), z.literal("gallery")]);
 /** Gallery details hero compositions persisted by {@link settingSchema}. */
 const detailsHeroLayoutEnum = z.union([z.literal("vertical"), z.literal("horizontal")]);
+/** Tracker membership filters supported by the gallery toolbar. */
+const galleryTrackingFilterEnum = z.union([z.literal("all"), z.literal("tracked"), z.literal("untracked")]);
 
 const settingSchema = z
     .object({
@@ -64,6 +66,8 @@ const settingSchema = z
          * Decode to include/exclude catalog id lists at the settings boundary.
          */
         galleryTagFilterIds: z.array(z.number().int()),
+        /** AniList tracking membership shown by the gallery toolbar when AniList is connected. */
+        galleryTrackingFilter: galleryTrackingFilterEnum,
         /**
          * `normal` - normal grid view with title and cover
          * `compact` - compact grid view with title and cover (title overlapped on cover)
@@ -171,6 +175,7 @@ const settingSchema = z
         galleryActiveTab: "continue-reading",
         galleryTypeFilter: "all",
         galleryTagFilterIds: [],
+        galleryTrackingFilter: "all",
         galleryDisplayMode: "compact",
         galleryItemWidth: 16,
         galleryDetailsHeroLayout: "vertical",
