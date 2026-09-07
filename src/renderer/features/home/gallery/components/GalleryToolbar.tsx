@@ -21,6 +21,8 @@ import GalleryTagFilterBar, { type GalleryTagFilterSelection } from "./GalleryTa
 import GalleryTypeFilterBar, { type GalleryTypeFilterId } from "./GalleryTypeFilterBar";
 
 export type { GalleryTabId, GalleryTagFilterSelection, GalleryTypeFilterId };
+export { GALLERY_TAB_IDS } from "./GalleryTabBar";
+export { GALLERY_TYPE_FILTER_IDS } from "./GalleryTypeFilterBar";
 
 /** Clamp range and step for `galleryItemWidth` (em). */
 const GALLERY_ITEM_WIDTH_MIN = 10;

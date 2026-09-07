@@ -255,6 +255,26 @@ export const SHORTCUT_COMMAND_MAP = [
         defaultKeys: ["enter"],
     },
     {
+        command: "cycleBar1Prev" as const,
+        name: "shortcutNames.cycleBar1Prev",
+        defaultKeys: ["alt+bracketleft"],
+    },
+    {
+        command: "cycleBar1Next" as const,
+        name: "shortcutNames.cycleBar1Next",
+        defaultKeys: ["alt+bracketright"],
+    },
+    {
+        command: "cycleBar2Prev" as const,
+        name: "shortcutNames.cycleBar2Prev",
+        defaultKeys: ["alt+minus"],
+    },
+    {
+        command: "cycleBar2Next" as const,
+        name: "shortcutNames.cycleBar2Next",
+        defaultKeys: ["alt+equal"],
+    },
+    {
         command: "deleteSelected" as const,
         name: "shortcutNames.deleteSelected",
         defaultKeys: ["delete"],

@@ -35,6 +35,9 @@ const TYPE_FILTERS: readonly TypeFilterConfig[] = [
     },
 ] as const;
 
+/** Ordered gallery type-filter ids shared by the filter bar and cycle shortcuts. */
+export const GALLERY_TYPE_FILTER_IDS: readonly GalleryTypeFilterId[] = TYPE_FILTERS.map((filter) => filter.id);
+
 /** Props for {@link GalleryTypeFilterBar}. */
 export type GalleryTypeFilterBarProps = {
     activeFilter: GalleryTypeFilterId;

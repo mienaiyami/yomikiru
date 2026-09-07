@@ -96,6 +96,10 @@ describe("settingsTargets", () => {
         );
         expect(getSettingsTarget("setting:default-location")?.selector).toBe("#settings-default-location");
         expect(getSettingsTarget("usage:multi-select")?.selector).toBe("#settings-usage-multiSelect");
+        expect(getSettingsTarget("usage:gallery-toolbar")).toMatchObject({
+            selector: "#settings-usage-galleryToolbar",
+            contentPath: "galleryToolbar",
+        });
         expect(getSettingsTarget("usage:library-scan")?.selector).toBe("#settings-usage-library-scan");
         expect(getSettingsTarget("setting:library-folders")?.selector).toBe("#settings-library-folders");
         expect(getSettingsTarget("setting:library-folders-list")?.selector).toBe(

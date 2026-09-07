@@ -267,7 +267,7 @@ const Usage = (): ReactElement => {
                     <b>{t("gallery.title")}</b>{" "}
                     <Trans i18nKey="gallery.body" ns="usage" components={{ bold: <b /> }} />
                 </li>
-                <li>
+                <li id="settings-usage-galleryToolbar">
                     <b>{t("galleryToolbar.title")}</b>{" "}
                     <Trans i18nKey="galleryToolbar.body" ns="usage" components={{ bold: <b /> }} />
                     <ul>
@@ -288,6 +288,23 @@ const Usage = (): ReactElement => {
                         </li>
                         <li>
                             <Trans i18nKey="galleryToolbar.favourites" ns="usage" components={{ bold: <b /> }} />
+                        </li>
+                        <li>
+                            <Trans
+                                i18nKey="galleryToolbar.cycleBars"
+                                ns="usage"
+                                components={{
+                                    code: <code />,
+                                    bar1Link: <SettingsLink targetId="shortcut:cycleBar1Next" />,
+                                    bar2Link: <SettingsLink targetId="shortcut:cycleBar2Next" />,
+                                }}
+                                values={{
+                                    bar1Prev: keysFor(shortcuts, "cycleBar1Prev"),
+                                    bar1Next: keysFor(shortcuts, "cycleBar1Next"),
+                                    bar2Prev: keysFor(shortcuts, "cycleBar2Prev"),
+                                    bar2Next: keysFor(shortcuts, "cycleBar2Next"),
+                                }}
+                            />
                         </li>
                         <li>
                             <Trans i18nKey="galleryToolbar.clear" ns="usage" components={{ bold: <b /> }} />

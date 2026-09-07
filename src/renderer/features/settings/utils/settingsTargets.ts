@@ -391,6 +391,10 @@ export const SETTINGS_TARGETS_STATIC: readonly SettingsTarget[] = [
         keywords: ["delete", "selection", "ctrl+a"],
         contentPath: "multiSelect",
     }),
+    usage("usage:gallery-toolbar", "#settings-usage-galleryToolbar", "galleryToolbar.title", {
+        keywords: ["gallery", "tabs", "filter", "shortcut"],
+        contentPath: "galleryToolbar",
+    }),
     {
         id: "usage:copy-theme",
         tab: "extras",

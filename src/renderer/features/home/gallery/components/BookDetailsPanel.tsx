@@ -6,6 +6,7 @@ import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { useAppContext } from "@renderer/App";
 import ListNavigator from "@renderer/components/ListNavigator";
 import SelectionCheckbox from "@renderer/components/ui/SelectionCheckbox";
+import { useCycleShortcutGroups } from "@renderer/hooks/useCycleShortcutGroups";
 import { useMultiSelect } from "@renderer/hooks/useMultiSelect";
 import { PAGE_SEARCH_PRIORITY } from "@renderer/hooks/usePageSearchFocus";
 import { useSelectionShortcuts } from "@renderer/hooks/useSelectionShortcuts";
@@ -19,6 +20,7 @@ import {
     setLibraryItemNote,
 } from "@store/library";
 import { selectTracker, selectTrackerCoverCacheGeneration } from "@store/trackers";
+import { selectModalOverlayOpen } from "@store/ui";
 import dateUtils from "@utils/date";
 import { dialogUtils } from "@utils/dialog";
 import {
@@ -51,6 +53,11 @@ import "./mangaDetailsPanel.scss";
 
 const log = createRendererLogger("gallery/BookDetailsPanel");
 
+/** Ordered inner-tab ids shared by book details chrome and shortcut cycling. */
+const BOOK_DETAILS_TAB_IDS = ["bookmarks", "notes"] as const;
+
+type BookDetailsTabId = (typeof BOOK_DETAILS_TAB_IDS)[number];
+
 type BookDetailsPanelProps = {
     /** Library primary key: path to the `.epub` file */
     bookLink: string;
@@ -59,7 +66,7 @@ type BookDetailsPanelProps = {
      * Inner tab shown on open. Omit to use this panel's default.
      * Parent remounts the panel (`key` = item link) when the selection changes.
      */
-    initialTab?: "bookmarks" | "notes";
+    initialTab?: BookDetailsTabId;
     /** After Locate on disk succeeds, parent should select the new library link. */
     onRelocated?: (newLink: string) => void;
 };
@@ -75,7 +82,7 @@ const BookDetailsPanel = ({ bookLink, onClose, onRelocated, initialTab = "bookma
     const library = useAppSelector((store) => store.library.items);
     const confirmDeleteItem = useAppSelector((store) => store.appSettings.confirmDeleteItem);
 
-    const [activeTab, setActiveTab] = useState<"bookmarks" | "notes">(initialTab);
+    const [activeTab, setActiveTab] = useState<BookDetailsTabId>(initialTab);
     const [metadataEditorOpen, setMetadataEditorOpen] = useState(false);
     const [itemNote, setItemNote] = useState("");
 
@@ -83,6 +90,8 @@ const BookDetailsPanel = ({ bookLink, onClose, onRelocated, initialTab = "bookma
     const overlays = useAppSelector((store) => selectItemMetadata(store, bookLink));
     const tracker = useAppSelector((store) => selectTracker(store, bookLink, "anilist"));
     const coverCacheGeneration = useAppSelector(selectTrackerCoverCacheGeneration);
+    const readerActive = useAppSelector((store) => store.reader.active);
+    const modalOverlayOpen = useAppSelector(selectModalOverlayOpen);
     const resolved = useMemo(
         () => (book ? resolveItemMetadata({ item: book, overlays, tracker }) : null),
         [book, overlays, tracker],
@@ -90,6 +99,19 @@ const BookDetailsPanel = ({ bookLink, onClose, onRelocated, initialTab = "bookma
     const userOverlay = overlays.find((row) => row.source === "user");
     const isFavourite = Boolean(book?.favouritedAt);
     const pathMissing = Boolean(book) && !window.fs.existsSync(bookLink);
+
+    useCycleShortcutGroups(
+        {
+            bar1: {
+                values: BOOK_DETAILS_TAB_IDS,
+                current: activeTab,
+                onChange: setActiveTab,
+            },
+        },
+        {
+            enabled: Boolean(book) && !readerActive && !modalOverlayOpen && !metadataEditorOpen,
+        },
+    );
 
     const bookmarksArray = useAppSelector(
         (store) =>
@@ -525,8 +547,8 @@ const BookDetailsPanel = ({ bookLink, onClose, onRelocated, initialTab = "bookma
     const tabBar = (
         <DetailsTabBar
             tabs={[
-                { id: "bookmarks", label: t("gallery.details.bookmarks"), icon: faBookmark },
-                { id: "notes", label: t("gallery.details.notes"), icon: faPen },
+                { id: BOOK_DETAILS_TAB_IDS[0], label: t("gallery.details.bookmarks"), icon: faBookmark },
+                { id: BOOK_DETAILS_TAB_IDS[1], label: t("gallery.details.notes"), icon: faPen },
             ]}
             activeId={activeTab}
             onChange={setActiveTab}

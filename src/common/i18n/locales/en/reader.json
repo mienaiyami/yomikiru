@@ -49,6 +49,10 @@
         "listDown": "List Down",
         "listUp": "List Up",
         "listSelect": "List Select",
+        "cycleBar1Prev": "Previous in first tab bar",
+        "cycleBar1Next": "Next in first tab bar",
+        "cycleBar2Prev": "Previous in second tab bar",
+        "cycleBar2Next": "Next in second tab bar",
         "deleteSelected": "Delete selected items"
     },
     "hud": {

@@ -15,6 +15,8 @@
 
 # unreleased
 
+- feat: Gallery section tabs and type filters can now be cycled with rebindable shortcut pairs, and the same first-bar pair switches manga or book details tabs. The shortcuts wrap, work while the related search field is focused, and are added with defaults without changing existing bindings.
+
 - feat: EPUB **Continuous chapters (experimental)** is an independent book reader preset option. The current renderer keeps chapters in one virtualized scroll with a light break between them, avoiding a full reader rebuild at chapter boundaries; progress percent is through the whole book (from file sizes), shows two decimal places, and gets a wider TopBar input while enabled. Per-title preset memory can retain title-specific behavior. Reopening restores the saved chapter and paragraph; chapter jumps, percentage seeking, and layout restoration share cancellable navigation. Scroll-position capture is viewport-bounded and throttled. Find stays in the current chapter (whole-book search later). AniList auto-progress is off while enabled. The old Settings **EPUB: Load By Chapter** toggle is gone (it did not actually load the whole book). The native scrollbar can still look wrong because most chapters are not measured.
 
 - feat: Optional **Remember preset per title** (Settings -> Reader presets, on by default). Each title can keep its own reader layout (so manga and manhwa can differ). Opening a title restores the last preset used there; in-reader changes stay on that title. Select in Reader presets remains the default for titles that do not have one yet.

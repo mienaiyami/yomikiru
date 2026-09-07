@@ -100,4 +100,31 @@ describe("useKeybindings", () => {
         );
         expect(handler).not.toHaveBeenCalled();
     });
+
+    it("runs capture handlers before an input stops the bubble phase", () => {
+        const { Wrapper } = createWrapper();
+        const handler = vi.fn();
+        const input = document.createElement("input");
+        input.addEventListener("keydown", (event) => event.stopPropagation());
+        document.body.append(input);
+        renderHook(
+            () =>
+                useKeybindings([{ command: "nextPage", handler, allowInInputs: true }], {
+                    capture: true,
+                }),
+            { wrapper: Wrapper },
+        );
+
+        input.dispatchEvent(
+            new KeyboardEvent("keydown", {
+                key: "d",
+                code: "KeyD",
+                bubbles: true,
+                cancelable: true,
+            }),
+        );
+
+        expect(handler).toHaveBeenCalledOnce();
+        input.remove();
+    });
 });

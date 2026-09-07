@@ -50,14 +50,24 @@ export type KeybindingsOptions = {
      * if provided, shortcuts will only work when this element is focused
      */
     focusElement?: RefObject<HTMLElement>;
+    /**
+     * whether to listen during capture so descendants cannot hide a shortcut
+     * @default false
+     */
+    capture?: boolean;
 };
 
+/**
+ * Registers command-based keyboard handlers against the configured event target.
+ * Returns helpers for matching or directly triggering the registered commands.
+ */
 export const useKeybindings = (handlers: KeybindHandlerConfig[], options: KeybindingsOptions = {}) => {
     const {
         limitedKeyFormat = true,
         targetElement = typeof window !== "undefined" ? window : null,
         enabled = true,
         focusElement,
+        capture = false,
     } = options;
 
     const shortcutsMapped = useAppSelector(getShortcutsMapped, shallowEqual);
@@ -121,13 +131,17 @@ export const useKeybindings = (handlers: KeybindHandlerConfig[], options: Keybin
 
         targetElement.addEventListener("keydown", handleKeyDown as EventListener, {
             signal: abortController.signal,
+            capture,
         });
-        targetElement.addEventListener("keyup", handleKeyUp as EventListener, { signal: abortController.signal });
+        targetElement.addEventListener("keyup", handleKeyUp as EventListener, {
+            signal: abortController.signal,
+            capture,
+        });
 
         return () => {
             abortController.abort();
         };
-    }, [targetElement, handleKeyDown, handleKeyUp]);
+    }, [targetElement, handleKeyDown, handleKeyUp, capture]);
 
     const triggerShortcut = useCallback(
         (command: ShortcutCommands) => {

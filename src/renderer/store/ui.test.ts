@@ -1,6 +1,16 @@
 import { configureStore } from "@reduxjs/toolkit";
 import { describe, expect, it } from "vitest";
-import uiReducer, { blockUi, setLibraryScanStatus, UI_BLOCK_ID_LIBRARY, unblockUi } from "./ui";
+import uiReducer, {
+    blockUi,
+    selectModalOverlayOpen,
+    setAnilistEditOpen,
+    setAnilistLoginOpen,
+    setAnilistSearchOpen,
+    setLibraryScanStatus,
+    setSettingsOpen,
+    UI_BLOCK_ID_LIBRARY,
+    unblockUi,
+} from "./ui";
 
 /**
  * Minimal store with only the ui slice for lock-stack tests.
@@ -62,5 +72,18 @@ describe("ui libraryScanStatus", () => {
         expect(store.getState().ui.libraryScanStatus?.phase).toBe("walking");
         store.dispatch(setLibraryScanStatus(null));
         expect(store.getState().ui.libraryScanStatus).toBeNull();
+    });
+});
+
+describe("selectModalOverlayOpen", () => {
+    it("reports any Settings or AniList modal as open", () => {
+        const store = createUiStore();
+        expect(selectModalOverlayOpen(store.getState())).toBe(false);
+
+        for (const setOpen of [setSettingsOpen, setAnilistLoginOpen, setAnilistSearchOpen, setAnilistEditOpen]) {
+            store.dispatch(setOpen(true));
+            expect(selectModalOverlayOpen(store.getState())).toBe(true);
+            store.dispatch(setOpen(false));
+        }
     });
 });

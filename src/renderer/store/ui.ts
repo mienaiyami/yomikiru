@@ -19,7 +19,8 @@ export type UiBlock = {
     message?: string;
 };
 
-type UIState = {
+/** Renderer-local overlay, navigation, and blocking UI state. */
+export type UIState = {
     isOpen: {
         settings: boolean;
         anilist: {
@@ -54,6 +55,12 @@ const initialState: UIState = {
     pendingSettingsNav: null,
     blocks: [],
     libraryScanStatus: null,
+};
+
+/** Selects whether a Settings or AniList modal overlay owns keyboard interaction. */
+export const selectModalOverlayOpen = (store: { ui: UIState }): boolean => {
+    const open = store.ui.isOpen;
+    return open.settings || open.anilist.login || open.anilist.search || open.anilist.edit;
 };
 
 const uiSlice = createSlice({

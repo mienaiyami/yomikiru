@@ -16,6 +16,7 @@ import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { useAppContext } from "@renderer/App";
 import ListNavigator from "@renderer/components/ListNavigator";
 import SelectionCheckbox from "@renderer/components/ui/SelectionCheckbox";
+import { useCycleShortcutGroups } from "@renderer/hooks/useCycleShortcutGroups";
 import { useMultiSelect } from "@renderer/hooks/useMultiSelect";
 import { PAGE_SEARCH_PRIORITY } from "@renderer/hooks/usePageSearchFocus";
 import { useSelectionShortcuts } from "@renderer/hooks/useSelectionShortcuts";
@@ -30,6 +31,7 @@ import {
     updateChaptersReadAll,
 } from "@store/library";
 import { selectTracker, selectTrackerCoverCacheGeneration } from "@store/trackers";
+import { selectModalOverlayOpen } from "@store/ui";
 import dateUtils from "@utils/date";
 import { dialogUtils } from "@utils/dialog";
 import { formatUtils } from "@utils/file";
@@ -77,6 +79,11 @@ import "./mangaDetailsPanel.scss";
 
 const log = createRendererLogger("gallery/MangaDetailsPanel");
 
+/** Ordered inner-tab ids shared by manga details chrome and shortcut cycling. */
+const MANGA_DETAILS_TAB_IDS = ["content", "bookmarks"] as const;
+
+type MangaDetailsTabId = (typeof MANGA_DETAILS_TAB_IDS)[number];
+
 type MangaDetailsPanelProps = {
     mangaLink: string;
     onClose: () => void;
@@ -84,7 +91,7 @@ type MangaDetailsPanelProps = {
      * Inner tab shown on open. Omit to use this panel's default.
      * Parent remounts the panel (`key` = item link) when the selection changes.
      */
-    initialTab?: "content" | "bookmarks";
+    initialTab?: MangaDetailsTabId;
     /** After Locate on disk succeeds, parent should select the new library link. */
     onRelocated?: (newLink: string) => void;
 };
@@ -105,7 +112,7 @@ const MangaDetailsPanel = ({
     const library = useAppSelector((store) => store.library.items);
 
     const [chapters, setChapters] = useState<MangaChapterChild[]>([]);
-    const [activeTab, setActiveTab] = useState<"content" | "bookmarks">(initialTab);
+    const [activeTab, setActiveTab] = useState<MangaDetailsTabId>(initialTab);
     const [metadataEditorOpen, setMetadataEditorOpen] = useState(false);
     const [itemNote, setItemNote] = useState("");
     const sortBy = useAppSelector((store) => store.appSettings.locationListSortBy);
@@ -115,6 +122,8 @@ const MangaDetailsPanel = ({
     const overlays = useAppSelector((store) => selectItemMetadata(store, mangaLink));
     const tracker = useAppSelector((store) => selectTracker(store, mangaLink, "anilist"));
     const coverCacheGeneration = useAppSelector(selectTrackerCoverCacheGeneration);
+    const readerActive = useAppSelector((store) => store.reader.active);
+    const modalOverlayOpen = useAppSelector(selectModalOverlayOpen);
     /* book details uses the same overlay+tracker resolve; no shared hook until a third caller */
     const resolved = useMemo(
         () => (manga ? resolveItemMetadata({ item: manga, overlays, tracker }) : null),
@@ -122,6 +131,19 @@ const MangaDetailsPanel = ({
     );
     const userOverlay = overlays.find((row) => row.source === "user");
     const isFavourite = Boolean(manga?.favouritedAt);
+
+    useCycleShortcutGroups(
+        {
+            bar1: {
+                values: MANGA_DETAILS_TAB_IDS,
+                current: activeTab,
+                onChange: setActiveTab,
+            },
+        },
+        {
+            enabled: Boolean(manga) && !readerActive && !modalOverlayOpen && !metadataEditorOpen,
+        },
+    );
 
     useEffect(() => {
         setItemNote(manga?.note ?? "");
@@ -669,8 +691,8 @@ const MangaDetailsPanel = ({
     const tabBar = (
         <DetailsTabBar
             tabs={[
-                { id: "content", label: t("gallery.details.content"), icon: faBookOpen },
-                { id: "bookmarks", label: t("gallery.details.bookmarks"), icon: faBookmark },
+                { id: MANGA_DETAILS_TAB_IDS[0], label: t("gallery.details.content"), icon: faBookOpen },
+                { id: MANGA_DETAILS_TAB_IDS[1], label: t("gallery.details.bookmarks"), icon: faBookmark },
             ]}
             activeId={activeTab}
             onChange={setActiveTab}

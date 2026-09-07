@@ -159,6 +159,10 @@ Contains:
 - Item width slider (`galleryItemWidth`).
 - Selection toolbar (injected when multi-select is active).
 
+Keyboard cycling uses the generic first-bar commands for section tabs and the second-bar commands for the
+type filter. The commands wrap, remain available while gallery search is focused, and are disabled while the
+toolbar is hidden, selection mode owns the toolbar, a modal overlay is open, or the reader is active.
+
 ### MangaDetailsPanel / BookDetailsPanel
 
 [`gallery/components/MangaDetailsPanel.tsx`](gallery/components/MangaDetailsPanel.tsx), [`gallery/components/BookDetailsPanel.tsx`](gallery/components/BookDetailsPanel.tsx), shared chrome [`gallery/components/DetailsHero.tsx`](gallery/components/DetailsHero.tsx).
@@ -167,6 +171,8 @@ Full-page replacement of the gallery grid (not a side drawer). Shared hero: cove
 
 - Manga tabs: **Content** (chapter list; empty image folders omitted, packed archives still listed) and **Bookmarks**. Tab labels have no counts. Content toolbar locate scrolls to the in-progress chapter.
 - Book tabs: **Bookmarks** / **Notes** from the reader.
+- The generic first-bar cycle commands switch the visible panel's inner tabs, including while details search
+  is focused. They are disabled while editing metadata, while a modal overlay is open, or while the reader is active.
 - Display title / author / About / genres come from `resolveItemMetadata` (user overlay > tracker snapshot > file overlay > `library_items` base). When the resolved title differs from the library row, tiles, details, classic History/Bookmarks, reader sidebars, and search show `resolved (library name muted)`; the window title and AniList search seed use the primary title only. Search haystacks include every title layer and name-sort uses the resolved title. Tracker rows for that snapshot are selected with `selectTracker` from [`store/trackers.ts`](../../store/trackers.ts) (`trackers.md`); compact AniList UI still uses [`AnilistBar`](../anilist/AnilistBar.tsx). About may include a short HTML allowlist (line breaks and emphasis) and grows with the metadata block. Catalog tags sit above the item note so About has more column space. Edit metadata opens [`ItemMetadataEditor`](gallery/components/ItemMetadataEditor.tsx) and writes the `user` overlay (the overlay notes that AniList tracking can fill those fields). **Reset** confirms, then clears overlay fields (`null` = fall through). File overlays are reserved for later ComicInfo / EPUB extraction. Library tags (user catalog, not overlay JSON) are chips plus [`ItemTagsRow`](gallery/components/ItemTagsPicker.tsx); create/assign/rename/delete live in that overlay. Gallery home can include and exclude tags via [`InputMultiSelect`](../../components/ui/InputMultiSelect.tsx) (persisted signed `galleryTagFilterIds`, after the type filter).
 - Missing on-disk path: [`MissingLibraryPathPanel`](gallery/components/MissingLibraryPathPanel.tsx) is an error-styled banner **above** the hero (`--error-color`; **Locate on disk** / Remove); cover, metadata, and lists stay visible. Classic History / Continue Reading (manga only): if the series folder exists but a chapter path is missing, the dialog offers **Open first chapter** / **Locate chapter** (pick renamed/moved chapter) — never open the series root (cover-only) and never relocate the library link to a chapter.
 

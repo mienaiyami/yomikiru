@@ -59,6 +59,7 @@
         "library": "<bold>Library</bold> shows everything; sort by title, date, or last read in either direction.",
         "bookmarks": "<bold>Bookmarks</bold> shows titles that have at least one bookmark. Search and sort match Library (title, date, or last read). Opening a tile shows the Bookmarks list in the details panel; play still continues last progress.",
         "favourites": "<bold>Favourites</bold> lists titles you have starred from a tile's context menu, the details header, or bulk Add to Favourites. Search and sort match Library. Removing more than one favourite from the selection menu asks first.",
+        "cycleBars": "Use <bar1Link><code>{{bar1Prev}}</code> / <code>{{bar1Next}}</code></bar1Link> to cycle gallery sections or the open details tabs. Use <bar2Link><code>{{bar2Prev}}</code> / <code>{{bar2Next}}</code></bar2Link> to cycle the gallery type filter. Both pairs wrap and work while gallery or details search is focused.",
         "clear": "Search fields across the app show a small <bold>x</bold> button while they contain text; click it to clear the filter."
     },
     "multiSelect": {

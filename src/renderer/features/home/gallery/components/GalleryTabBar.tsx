@@ -49,6 +49,9 @@ const TABS: readonly TabConfig[] = [
     },
 ] as const;
 
+/** Ordered gallery section ids shared by the tab bar and cycle shortcuts. */
+export const GALLERY_TAB_IDS: readonly GalleryTabId[] = TABS.map((tab) => tab.id);
+
 /** Props for {@link GalleryTabBar}. */
 export type GalleryTabBarProps = {
     activeTab: GalleryTabId;

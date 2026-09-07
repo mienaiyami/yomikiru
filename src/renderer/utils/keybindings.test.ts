@@ -34,6 +34,20 @@ describe("SHORTCUT_COMMAND_MAP", () => {
         const entry = SHORTCUT_COMMAND_MAP.find((c) => c.command === "deleteSelected");
         expect(entry?.defaultKeys).toEqual(["delete"]);
     });
+
+    it("assigns the four tab-bar cycle commands to distinct Alt key pairs", () => {
+        const expectedDefaults = {
+            cycleBar1Prev: ["alt+bracketleft"],
+            cycleBar1Next: ["alt+bracketright"],
+            cycleBar2Prev: ["alt+minus"],
+            cycleBar2Next: ["alt+equal"],
+        } as const;
+
+        for (const [command, defaultKeys] of Object.entries(expectedDefaults)) {
+            const entry = SHORTCUT_COMMAND_MAP.find((candidate) => candidate.command === command);
+            expect(entry?.defaultKeys).toEqual(defaultKeys);
+        }
+    });
 });
 
 describe("isShortcutEventFromInputTarget", () => {

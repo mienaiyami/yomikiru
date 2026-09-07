@@ -8,6 +8,7 @@ import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { useAppContext } from "@renderer/App";
 import { ItemDisplayTitle } from "@renderer/components/ItemDisplayTitle";
 import SelectionCheckbox from "@renderer/components/ui/SelectionCheckbox";
+import { useCycleShortcutGroups } from "@renderer/hooks/useCycleShortcutGroups";
 import { useMultiSelect } from "@renderer/hooks/useMultiSelect";
 import { focusPrimaryPageSearch } from "@renderer/hooks/usePageSearchFocus";
 import { useResizeObserverRafWidth } from "@renderer/hooks/useResizeObserverRafWidth";
@@ -18,7 +19,7 @@ import { useAppDispatch, useAppSelector } from "@store/hooks";
 import { deleteLibraryItem, setLibraryItemFavourite } from "@store/library";
 import { getShortcutsMapped } from "@store/shortcuts";
 import { selectTrackerCoverCacheGeneration } from "@store/trackers";
-import { setAnilistSearchOpen } from "@store/ui";
+import { selectModalOverlayOpen, setAnilistSearchOpen } from "@store/ui";
 import { confirmWhenMany, dialogUtils } from "@utils/dialog";
 import { formatUtils } from "@utils/file";
 import {
@@ -46,6 +47,8 @@ import { shallowEqual } from "react-redux";
 import ListNavigator from "../../../components/ListNavigator";
 import BookDetailsPanel from "./components/BookDetailsPanel";
 import GalleryToolbar, {
+    GALLERY_TAB_IDS,
+    GALLERY_TYPE_FILTER_IDS,
     type GalleryTabId,
     type GalleryTagFilterSelection,
     type GalleryTypeFilterId,
@@ -79,10 +82,7 @@ const GalleryView: React.FC = () => {
     const anilistToken = useAppSelector((store) => store.anilist.token);
     const shortcutsMapped = useAppSelector(getShortcutsMapped, shallowEqual);
     const readerActive = useAppSelector((store) => store.reader.active);
-    const detailsDirUpBlocked = useAppSelector((store) => {
-        const open = store.ui.isOpen;
-        return open.settings || open.anilist.login || open.anilist.search || open.anilist.edit;
-    });
+    const modalOverlayOpen = useAppSelector(selectModalOverlayOpen);
     const { openInReader, setContextMenuData } = useAppContext();
 
     const [selectedManga, setSelectedManga] = useState<string | null>(null);
@@ -525,11 +525,25 @@ const GalleryView: React.FC = () => {
 
     const detailsOpen = Boolean(selectedManga || selectedBook);
 
+    useCycleShortcutGroups(
+        {
+            bar1: { values: GALLERY_TAB_IDS, current: activeTab, onChange: setActiveTab },
+            bar2: {
+                values: GALLERY_TYPE_FILTER_IDS,
+                current: activeTypeFilter,
+                onChange: setActiveTypeFilter,
+            },
+        },
+        {
+            enabled: !detailsOpen && !readerActive && !selection.isSelectionMode && !modalOverlayOpen,
+        },
+    );
+
     useEffect(() => {
         /* Home stays mounted with display:none during the reader; keep this
          * listener off then. After close, window capture still runs when focus
          * is on the TopBar (tree capture on .galleryView did not). */
-        if (!detailsOpen || readerActive || detailsDirUpBlocked) return;
+        if (!detailsOpen || readerActive || modalOverlayOpen) return;
         const onKeyDown = (e: KeyboardEvent) => {
             if (isShortcutEventFromInputTarget(e)) return;
             const keyStr = keyFormatter(e);
@@ -541,7 +555,7 @@ const GalleryView: React.FC = () => {
         /* capture: details search stopPropagation would skip a bubble listener */
         window.addEventListener("keydown", onKeyDown, true);
         return () => window.removeEventListener("keydown", onKeyDown, true);
-    }, [detailsOpen, readerActive, detailsDirUpBlocked, shortcutsMapped, handleCloseMangaDetails]);
+    }, [detailsOpen, readerActive, modalOverlayOpen, shortcutsMapped, handleCloseMangaDetails]);
 
     useSelectionShortcuts({
         selection,
