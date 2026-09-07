@@ -151,4 +151,18 @@ describe("ItemTagsPicker selection mode", () => {
         expect(onSelectedIdsChange).toHaveBeenCalledWith([1, 2]);
         expect(screen.queryByRole("button", { name: home.gallery.tags.edit })).toBeNull();
     });
+
+    it("keeps the custom colour input beside the tag name and outside the preset row", () => {
+        renderWithProviders(<ItemTagsPicker selectedIds={[]} onSelectedIdsChange={vi.fn()} onClose={vi.fn()} />, {
+            preloadedState: { tags: { catalog, assignments: [] } },
+        });
+        const createFields = document.querySelector(".item-tags-picker-create-fields");
+        expect(createFields).toContainElement(screen.getByPlaceholderText(home.gallery.tags.newNamePlaceholder));
+        expect(createFields?.querySelector(".colorPickerBtn")).not.toBeNull();
+        expect(document.querySelector(".item-tags-picker-swatches .colorPickerBtn")).toBeNull();
+
+        fireEvent.click(screen.getAllByRole("button", { name: home.gallery.tags.rename })[0]);
+        const renameInput = screen.getByRole("textbox", { name: home.gallery.tags.rename });
+        expect(renameInput.parentElement?.querySelector(".item-tags-picker-custom-color")).not.toBeNull();
+    });
 });

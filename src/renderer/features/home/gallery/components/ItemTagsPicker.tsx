@@ -47,7 +47,7 @@ export type ItemTagsPickerProps = ItemTagsPickerBase &
           }
     );
 
-type ColorSwatchesProps = {
+type TagColorControlProps = {
     value: string;
     onChange: (color: string) => void;
 };
@@ -95,9 +95,24 @@ const TagListFilter = ({ value, onChange, onKeyDown }: TagListFilterProps) => {
 };
 
 /**
- * Preset swatches (same chrome as book-note colour chips) plus {@link InputColor} for a custom hex.
+ * Opens the custom colour input beside a tag name field.
  */
-const ColorSwatches = ({ value, onChange }: ColorSwatchesProps) => {
+const TagColorInput = ({ value, onChange }: TagColorControlProps) => {
+    const { t } = useTranslation("home");
+    return (
+        <span className="item-tags-picker-custom-color">
+            <InputColor
+                value={colorUtils.new(value)}
+                onChange={(next) => onChange(next.hex().toLowerCase())}
+                showAlpha={false}
+                title={t("gallery.tags.color")}
+            />
+        </span>
+    );
+};
+
+/** Preset tag colours shown separately from the custom colour input. */
+const ColorSwatches = ({ value, onChange }: TagColorControlProps) => {
     const { t } = useTranslation("home");
     const selected = value.toLowerCase();
     return (
@@ -113,12 +128,6 @@ const ColorSwatches = ({ value, onChange }: ColorSwatchesProps) => {
                     onClick={() => onChange(color)}
                 />
             ))}
-            <InputColor
-                value={colorUtils.new(value)}
-                onChange={(next) => onChange(next.hex().toLowerCase())}
-                showAlpha={false}
-                title={t("gallery.tags.color")}
-            />
         </div>
     );
 };
@@ -280,6 +289,7 @@ export const ItemTagsPicker = (props: ItemTagsPickerProps) => {
                                             onKeyDown={stopModalKeys}
                                             aria-label={t("gallery.tags.rename")}
                                         />
+                                        <TagColorInput value={editColor} onChange={setEditColor} />
                                         <button type="button" onClick={() => setEditingId(null)}>
                                             {tCommon("actions.cancel")}
                                         </button>
@@ -312,14 +322,17 @@ export const ItemTagsPicker = (props: ItemTagsPickerProps) => {
                 <label className="item-metadata-editor-field" htmlFor="item-tags-new-name">
                     {t("gallery.tags.newName")}
                 </label>
-                <input
-                    id="item-tags-new-name"
-                    type="text"
-                    value={newName}
-                    onChange={(e) => setNewName(e.currentTarget.value)}
-                    onKeyDown={stopModalKeys}
-                    placeholder={t("gallery.tags.newNamePlaceholder")}
-                />
+                <div className="item-tags-picker-create-fields">
+                    <input
+                        id="item-tags-new-name"
+                        type="text"
+                        value={newName}
+                        onChange={(e) => setNewName(e.currentTarget.value)}
+                        onKeyDown={stopModalKeys}
+                        placeholder={t("gallery.tags.newNamePlaceholder")}
+                    />
+                    <TagColorInput value={newColor} onChange={setNewColor} />
+                </div>
                 <ColorSwatches value={newColor} onChange={setNewColor} />
                 {createError ? <p className="item-tags-picker-error">{createError}</p> : null}
                 <button type="button" onClick={() => void handleCreate()} disabled={!normalizeTagName(newName)}>

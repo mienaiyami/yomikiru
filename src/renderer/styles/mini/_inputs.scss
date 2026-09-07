@@ -421,7 +421,7 @@ input[type="color"] {
 
     &.item-tags-picker {
         .modal-overlayCont {
-            width: min(36rem, 92vw);
+            width: min(32rem, 92vw);
             max-height: min(80vh, 42rem);
             /* list scrolls; title / filter / create stay put */
             overflow: hidden;
@@ -513,11 +513,22 @@ input[type="color"] {
                     box-shadow: var(--btn-color-focus) 0 0 0 2px;
                 }
             }
-            /* custom picker is the app colour control, distinct from the solid presets */
+        }
+        .item-tags-picker-custom-color {
+            display: flex;
+            flex: 0 0 auto;
             .colorPickerBtn:not(#dummy#dummy) {
                 width: 3.2em;
                 aspect-ratio: 1;
-                flex: 0 0 auto;
+            }
+        }
+        .item-tags-picker-create-fields {
+            display: flex;
+            align-items: stretch;
+            gap: 0.4em;
+            input {
+                flex: 1 1 auto;
+                min-width: 0;
             }
         }
         .item-tags-picker-create {
